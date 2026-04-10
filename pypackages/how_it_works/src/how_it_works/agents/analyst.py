@@ -36,7 +36,7 @@ async def analyze_node(state: dict[str, Any]) -> dict[str, Any]:
                 "content": f"App name: **{app.name}**\n\nSource files:\n\n{files_text}",
             },
         ],
-        max_tokens=4_500,
+        max_tokens=6_000,
     )
 
     if state.get("verbose"):

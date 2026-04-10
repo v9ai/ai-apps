@@ -90,3 +90,60 @@ class TestValidationCatchesErrors:
         data = HowItWorksData.model_validate(json.loads(SAMPLE_INVALID_JSON))
         errors = _validate_data(data)
         assert len(errors) >= 8, f"Only {len(errors)} errors caught: {errors}"
+
+
+class TestNewValidationRules:
+    """Tests for enhanced validation: technicalDetails, duplicate headings, valid types."""
+
+    def test_valid_technical_details_pass(self):
+        raw = json.loads(SAMPLE_GENERATED_JSON)
+        raw["technicalDetails"] = [
+            {"type": "table", "heading": "API Routes", "items": []},
+            {"type": "code", "heading": "Query Pattern", "code": "SELECT 1"},
+        ]
+        data = HowItWorksData.model_validate(raw)
+        errors = _validate_data(data)
+        assert not any("technicalDetails" in e for e in errors)
+
+    def test_too_many_technical_details(self):
+        raw = json.loads(SAMPLE_GENERATED_JSON)
+        raw["technicalDetails"] = [
+            {"type": "table", "heading": f"Section {i}"} for i in range(6)
+        ]
+        data = HowItWorksData.model_validate(raw)
+        errors = _validate_data(data)
+        assert any("technicalDetails count" in e for e in errors)
+
+    def test_single_technical_detail_too_few(self):
+        raw = json.loads(SAMPLE_GENERATED_JSON)
+        raw["technicalDetails"] = [{"type": "table", "heading": "Only One"}]
+        data = HowItWorksData.model_validate(raw)
+        errors = _validate_data(data)
+        assert any("technicalDetails count" in e for e in errors)
+
+    def test_invalid_technical_detail_type(self):
+        raw = json.loads(SAMPLE_GENERATED_JSON)
+        raw["technicalDetails"] = [
+            {"type": "invalid-type", "heading": "Bad"},
+            {"type": "table", "heading": "OK"},
+        ]
+        data = HowItWorksData.model_validate(raw)
+        errors = _validate_data(data)
+        assert any("technicalDetail type" in e for e in errors)
+
+    def test_duplicate_extra_section_headings(self):
+        raw = json.loads(SAMPLE_GENERATED_JSON)
+        raw["extraSections"] = [
+            {"heading": "System Architecture", "content": "First."},
+            {"heading": "Security & Auth", "content": "Second."},
+            {"heading": "System Architecture", "content": "Duplicate."},
+        ]
+        data = HowItWorksData.model_validate(raw)
+        errors = _validate_data(data)
+        assert any("duplicate" in e.lower() for e in errors)
+
+    def test_empty_technical_details_no_error(self):
+        """No technicalDetails is fine — validation only triggers when present."""
+        data = HowItWorksData.model_validate(json.loads(SAMPLE_GENERATED_JSON))
+        errors = _validate_data(data)
+        assert not any("technicalDetails" in e for e in errors)
