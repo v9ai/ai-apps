@@ -12,6 +12,9 @@ export { overlay, dialog, dialogHeader, dialogFooter } from "./modal";
 export { tabList, tabTrigger, tabContent } from "./tabs";
 export { callout } from "./callout";
 export { container, pageHeader, panel } from "./layout";
+export { grid, gridItem } from "./grid";
+export { stack, hstack, spacer, center } from "./stack";
+export { divider, dividerWithLabel } from "./divider";
 export { markdown } from "./markdown";
 export {
   landingSection,

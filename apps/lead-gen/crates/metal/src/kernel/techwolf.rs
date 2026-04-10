@@ -1033,21 +1033,20 @@ mod tests {
     #[test]
     fn test_esco_mapping_exact() {
         let map = EscoMapping::default();
-        assert!(map.len() > 0);
-        assert!(!map.is_empty());
+        assert!(map.mapped_tag_count() > 0);
 
-        // Exact matches.
-        assert_eq!(map.esco_to_tag("python"), Some("python".to_string()));
-        assert_eq!(map.esco_to_tag("Python (computer programming)"), Some("python".to_string()));
-        assert_eq!(map.esco_to_tag("kubernetes"), Some("kubernetes".to_string()));
-        assert_eq!(map.esco_to_tag("Amazon Web Services"), Some("aws".to_string()));
+        // Exact matches via fuzzy_match_esco (delegates to esco module).
+        assert_eq!(map.fuzzy_match_esco("python"), Some("python"));
+        assert_eq!(map.fuzzy_match_esco("Python (computer programming)"), Some("python"));
+        assert_eq!(map.fuzzy_match_esco("kubernetes"), Some("kubernetes"));
+        assert_eq!(map.fuzzy_match_esco("Amazon Web Services"), Some("aws"));
     }
 
     #[test]
     fn test_esco_mapping_reverse() {
         let map = EscoMapping::default();
-        let esco = map.tag_to_esco("python");
-        assert!(esco.is_some());
+        let labels = map.esco_labels_for_tag("python");
+        assert!(labels.is_some());
     }
 
     #[test]

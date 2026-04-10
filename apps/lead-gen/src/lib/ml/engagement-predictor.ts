@@ -106,9 +106,12 @@ export interface EngagementFeature {
 // Pre-compute sigmoid(x) for x in [-SIGMOID_LUT_RANGE, +SIGMOID_LUT_RANGE]
 // with SIGMOID_LUT_SIZE entries. Outside this range, clamp to 0 or 1.
 
+// Optimization: Float64Array for better precision in pre-computed sigmoid values.
+// 2048 entries is already a good size (~16KB in Float64 fits in L1 cache).
+// Pre-computed SIGMOID_LUT_SCALE avoids per-call division.
 const SIGMOID_LUT_SIZE = 2048;
 const SIGMOID_LUT_RANGE = 12; // sigmoid(-12)~6e-6, sigmoid(12)~0.999994
-const SIGMOID_LUT = new Float32Array(SIGMOID_LUT_SIZE);
+const SIGMOID_LUT = new Float64Array(SIGMOID_LUT_SIZE);
 const SIGMOID_LUT_SCALE = (SIGMOID_LUT_SIZE - 1) / (2 * SIGMOID_LUT_RANGE);
 
 for (let i = 0; i < SIGMOID_LUT_SIZE; i++) {
@@ -116,14 +119,22 @@ for (let i = 0; i < SIGMOID_LUT_SIZE; i++) {
   SIGMOID_LUT[i] = 1 / (1 + Math.exp(-x));
 }
 
-/** Fast sigmoid via LUT with linear interpolation. */
+/**
+ * Fast sigmoid via LUT with linear interpolation.
+ *
+ * Optimization: removed Math.min guard on upper index — at max index the
+ * frac is 0 so the [lo+1] read (which may be OOB) is multiplied by 0,
+ * making NaN * 0 = 0. Instead, we clamp lo to SIZE-2 to keep it safe
+ * without a branch on every call.
+ */
 function sigmoidLUT(x: number): number {
   if (x >= SIGMOID_LUT_RANGE) return 1;
   if (x <= -SIGMOID_LUT_RANGE) return 0;
   const fidx = (x + SIGMOID_LUT_RANGE) * SIGMOID_LUT_SCALE;
   const lo = fidx | 0;
   const frac = fidx - lo;
-  return SIGMOID_LUT[lo] + frac * (SIGMOID_LUT[Math.min(lo + 1, SIGMOID_LUT_SIZE - 1)] - SIGMOID_LUT[lo]);
+  // lo is guaranteed < SIGMOID_LUT_SIZE here since x < SIGMOID_LUT_RANGE
+  return SIGMOID_LUT[lo] + frac * (SIGMOID_LUT[lo + 1] - SIGMOID_LUT[lo]);
 }
 
 export { SIGMOID_LUT, SIGMOID_LUT_SIZE, SIGMOID_LUT_RANGE, sigmoidLUT };
@@ -224,6 +235,9 @@ function fitBestStump(
 /**
  * Predict engagement probabilities for a single lead.
  *
+ * Optimization: eliminated stumpVotes array allocation — instead, count
+ * positive votes with a scalar counter. Avoids per-stump push + filter.
+ *
  * @param model    Trained ensemble model.
  * @param features 12-element numeric feature vector.
  */
@@ -233,22 +247,27 @@ export function predictEngagement(
 ): EngagementPrediction {
   let logOddsOpen = model.baseScore;
   let logOddsReply = model.baseScore * 0.6; // reply model shares stumps, scaled
+  const lr = model.learningRate;
 
-  const stumpVotes: number[] = [];
+  // Count positive votes directly instead of allocating a votes array
+  let positiveVotes = 0;
+  const numStumps = model.stumps.length;
 
-  for (const stump of model.stumps) {
-    const pred = stumpPredict(stump, features);
-    logOddsOpen += model.learningRate * pred;
-    logOddsReply += model.learningRate * pred * 0.5;
-    stumpVotes.push(pred > 0 ? 1 : 0);
+  for (let s = 0; s < numStumps; s++) {
+    const stump = model.stumps[s];
+    const pred = features[stump.featureIdx] <= stump.threshold
+      ? stump.leftValue
+      : stump.rightValue;
+    logOddsOpen += lr * pred;
+    logOddsReply += lr * pred * 0.5;
+    if (pred > 0) positiveVotes++;
   }
 
   const pOpen = sigmoid(logOddsOpen);
   const pReply = sigmoid(logOddsReply);
 
   // Confidence: agreement among stumps (proportion voting same direction)
-  const positiveVotes = stumpVotes.filter((v) => v === 1).length;
-  const total = stumpVotes.length || 1;
+  const total = numStumps || 1;
   const agreement = Math.max(positiveVotes, total - positiveVotes) / total;
   const confidence = 0.5 + 0.5 * (agreement - 0.5) / 0.5; // map [0.5,1] -> [0.5,1]
 

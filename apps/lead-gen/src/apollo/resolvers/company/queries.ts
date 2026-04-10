@@ -102,6 +102,12 @@ export const companyQueries = {
       // Pagination pushed to SQL
       const paginatedCompanies = await query.limit(limit).offset(offset);
 
+      // Prime the company loader cache so field resolvers that later request
+      // the same company by ID get an instant hit instead of a DB round-trip.
+      for (const c of paginatedCompanies) {
+        context.loaders.company.prime(c.id, c);
+      }
+
       return {
         companies: paginatedCompanies,
         totalCount,
@@ -131,6 +137,10 @@ export const companyQueries = {
       }
 
       const [result] = await query.limit(1);
+      // Prime the loader cache for consistency with list queries
+      if (result) {
+        context.loaders.company.prime(result.id, result);
+      }
       return result || null;
     } catch (error) {
       console.error("Error fetching company:", error);
