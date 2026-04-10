@@ -1003,6 +1003,17 @@ export const contactResolvers = {
       }
 
       const allCompanies = await context.db.select().from(companies);
+
+      // Batch-fetch all contacts upfront to avoid N+1 per-company queries
+      const allContacts = await context.db.select().from(contacts);
+      const contactsByCompanyId = new Map<number, typeof allContacts>();
+      for (const ct of allContacts) {
+        if (ct.company_id == null) continue;
+        const arr = contactsByCompanyId.get(ct.company_id);
+        if (arr) arr.push(ct);
+        else contactsByCompanyId.set(ct.company_id, [ct]);
+      }
+
       const errors: string[] = [];
       let companiesProcessed = 0;
       let totalContactsProcessed = 0;

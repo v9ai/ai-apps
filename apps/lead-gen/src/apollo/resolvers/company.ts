@@ -510,7 +510,7 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
-        const updateData: Record<string, unknown> = { ...args.input };
+        const updateData: Partial<typeof companies.$inferInsert> = { ...args.input };
 
         // Validate category enum
         if (args.input.category) {
@@ -903,7 +903,7 @@ export const companyResolvers = {
 
         if (companyRow) {
           // Update missing fields
-          const updates: Record<string, unknown> = {};
+          const updates: Partial<typeof companies.$inferInsert> = {};
           if (!companyRow.website && website) updates.website = website;
           if (!companyRow.linkedin_url && linkedinUrl) updates.linkedin_url = linkedinUrl;
           if (Object.keys(updates).length > 0) {
