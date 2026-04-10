@@ -590,6 +590,85 @@ export const intentSignals = pgTable(
 export type IntentSignal = typeof intentSignals.$inferSelect;
 export type NewIntentSignal = typeof intentSignals.$inferInsert;
 
+// Voyager Job Counts (remote job count snapshots per company/query over time)
+export const voyagerJobCounts = pgTable(
+  "voyager_job_counts",
+  {
+    id: serial("id").primaryKey(),
+    company_id: integer("company_id")
+      .references(() => companies.id, { onDelete: "cascade" }),
+    query: text("query").notNull(),               // search query used, e.g. "AI engineer remote"
+    remote_count: integer("remote_count").notNull().default(0),
+    total_count: integer("total_count").notNull().default(0),
+    counted_at: text("counted_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    index("idx_voyager_job_counts_company_id").on(table.company_id),
+    index("idx_voyager_job_counts_query").on(table.query),
+    index("idx_voyager_job_counts_counted_at").on(table.counted_at),
+    index("idx_voyager_job_counts_company_query").on(table.company_id, table.query),
+  ],
+);
+
+export type VoyagerJobCount = typeof voyagerJobCounts.$inferSelect;
+export type NewVoyagerJobCount = typeof voyagerJobCounts.$inferInsert;
+
+// Voyager Sessions (LinkedIn API session management — cookies + health tracking)
+export const voyagerSessions = pgTable(
+  "voyager_sessions",
+  {
+    id: serial("id").primaryKey(),
+    session_id: text("session_id").notNull().unique(), // opaque identifier
+    li_at: text("li_at").notNull(),                    // LinkedIn li_at cookie
+    jsessionid: text("jsessionid").notNull(),          // JSESSIONID cookie
+    csrf_token: text("csrf_token").notNull(),          // CSRF token
+    user_agent: text("user_agent").notNull(),
+    last_used: text("last_used")
+      .notNull()
+      .default(sql`now()::text`),
+    request_count: integer("request_count").notNull().default(0),
+    is_healthy: boolean("is_healthy").notNull().default(true),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    index("idx_voyager_sessions_is_healthy").on(table.is_healthy),
+    index("idx_voyager_sessions_last_used").on(table.last_used),
+  ],
+);
+
+export type VoyagerSession = typeof voyagerSessions.$inferSelect;
+export type NewVoyagerSession = typeof voyagerSessions.$inferInsert;
+
+// Voyager Sync Log (tracks each sync operation — query, counts, timing, errors)
+export const voyagerSyncLog = pgTable(
+  "voyager_sync_log",
+  {
+    id: serial("id").primaryKey(),
+    sync_id: text("sync_id").notNull().unique(),    // e.g. sync_<timestamp>_<random>
+    query: text("query").notNull(),                  // search query used
+    jobs_found: integer("jobs_found").notNull().default(0),
+    jobs_new: integer("jobs_new").notNull().default(0),
+    jobs_updated: integer("jobs_updated").notNull().default(0),
+    started_at: text("started_at").notNull(),
+    completed_at: text("completed_at"),
+    errors: text("errors"),                          // JSON array of error strings
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    index("idx_voyager_sync_log_started_at").on(table.started_at),
+    index("idx_voyager_sync_log_query").on(table.query),
+  ],
+);
+
+export type VoyagerSyncLog = typeof voyagerSyncLog.$inferSelect;
+export type NewVoyagerSyncLog = typeof voyagerSyncLog.$inferInsert;
+
 // ---------------------------------------------------------------------------
 // Drizzle relations() declarations
 // ---------------------------------------------------------------------------
@@ -601,6 +680,7 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   emailCampaigns: many(emailCampaigns),
   linkedinPosts: many(linkedinPosts),
   intentSignals: many(intentSignals),
+  voyagerJobCounts: many(voyagerJobCounts),
 }));
 
 export const companyFactsRelations = relations(companyFacts, ({ one }) => ({
@@ -655,5 +735,12 @@ export const linkedinPostsRelations = relations(linkedinPosts, ({ one }) => ({
   contact: one(contacts, {
     fields: [linkedinPosts.contact_id],
     references: [contacts.id],
+  }),
+}));
+
+export const voyagerJobCountsRelations = relations(voyagerJobCounts, ({ one }) => ({
+  company: one(companies, {
+    fields: [voyagerJobCounts.company_id],
+    references: [companies.id],
   }),
 }));

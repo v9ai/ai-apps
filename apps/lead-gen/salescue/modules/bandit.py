@@ -138,6 +138,88 @@ class OutreachBandit(BaseModule):
         struct = kwargs.get("structured_features", None)
         return self._recommend(cls, struct)
 
+    def process_batch(self, batch_encoded: dict, texts: list[str], **kwargs: Any) -> list[dict[str, Any]]:
+        """Batch outreach recommendation.
+
+        The text_compressor MLP runs on the full (B, hidden) CLS tensor
+        in one pass. Thompson sampling (arm weight sampling + dot products)
+        is per-item due to the stochastic nature of posterior sampling.
+        """
+        cls_all = batch_encoded["encoder_output"].last_hidden_state[:, 0]  # (B, hidden)
+        B = cls_all.shape[0]
+
+        # Batched text compression
+        text_ctx_all = self.text_compressor(cls_all)  # (B, 64)
+
+        struct = kwargs.get("structured_features", None)
+        results = []
+        for i in range(B):
+            cls_i = cls_all[i:i+1]
+            text_ctx = text_ctx_all[i]  # (64,)
+
+            # Build per-item context
+            if struct is not None:
+                if isinstance(struct, torch.Tensor):
+                    sf = struct[i] if struct.dim() > 1 else struct
+                else:
+                    sf = torch.tensor(struct, dtype=torch.float32, device=cls_all.device)
+                if sf.dim() > 1:
+                    sf = sf.squeeze(0)
+                pad = torch.zeros(8, device=cls_all.device)
+                pad[:min(len(sf), 8)] = sf[:8]
+            else:
+                pad = torch.zeros(8, device=cls_all.device)
+
+            context = torch.cat([text_ctx, pad])
+
+            # Thompson Sampling per item (stochastic, cannot be batched)
+            temperature = self.log_temperature.exp().item()
+            sampled_rewards = []
+            expected_rewards = []
+
+            for arm in self.arms:
+                w = arm.sample_weight()
+                sampled = (w * context).sum().item() * temperature
+                sampled_rewards.append(sampled)
+                expected_rewards.append(arm.expected_reward(context))
+
+            best_idx = max(range(NUM_ARMS), key=lambda j: sampled_rewards[j])
+
+            template_idx = best_idx // (len(TIMINGS) * len(SUBJECT_STYLES))
+            remainder = best_idx % (len(TIMINGS) * len(SUBJECT_STYLES))
+            timing_idx = remainder // len(SUBJECT_STYLES)
+            style_idx = remainder % len(SUBJECT_STYLES)
+
+            ranked = sorted(range(NUM_ARMS), key=lambda j: sampled_rewards[j], reverse=True)
+            alternatives = []
+            for idx in ranked[1:4]:
+                t_i = idx // (len(TIMINGS) * len(SUBJECT_STYLES))
+                rem = idx % (len(TIMINGS) * len(SUBJECT_STYLES))
+                ti_i = rem // len(SUBJECT_STYLES)
+                s_i = rem % len(SUBJECT_STYLES)
+                alternatives.append({
+                    "template": TEMPLATES[t_i],
+                    "timing": TIMINGS[ti_i],
+                    "subject_style": SUBJECT_STYLES[s_i],
+                    "sampled_reward": round(sampled_rewards[idx], 4),
+                })
+
+            results.append({
+                "best_arm": {
+                    "template": TEMPLATES[template_idx],
+                    "timing": TIMINGS[timing_idx],
+                    "subject_style": SUBJECT_STYLES[style_idx],
+                },
+                "expected_reward": round(expected_rewards[best_idx], 4),
+                "sampled_reward": round(sampled_rewards[best_idx], 4),
+                "exploration_temperature": round(temperature, 3),
+                "alternatives": alternatives,
+                "arm_index": best_idx,
+                "total_arms": NUM_ARMS,
+            })
+
+        return results
+
     def predict(self, text: str, **kwargs: Any) -> dict[str, Any]:
         """Public API — recommend best outreach action for a prospect.
 
