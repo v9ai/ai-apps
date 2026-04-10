@@ -909,7 +909,7 @@ export const companyResolvers = {
 
         if (companyRow) {
           // Update missing fields
-          const updates: Partial<typeof companies.$inferInsert> = {};
+          const updates: CompanyUpdate = {};
           if (!companyRow.website && website) updates.website = website;
           if (!companyRow.linkedin_url && linkedinUrl) updates.linkedin_url = linkedinUrl;
           if (Object.keys(updates).length > 0) {
