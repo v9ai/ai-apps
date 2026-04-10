@@ -439,28 +439,34 @@ function ReceivedList() {
         </Card>
       ) : (
         emails.map((email) => (
-          <Card key={email.id}>
-            <Flex justify="between" align="start" gap="4">
-              <Box style={{ minWidth: 0, flex: 1 }}>
-                <Flex gap="2" align="center" mb="1">
-                  <EnvelopeOpenIcon />
-                  <Text size="2" weight="bold" style={{ flex: 1 }}>
-                    {email.subject || "(no subject)"}
+          <Link key={email.id} href={`/admin/emails/${email.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+            <Card style={{ cursor: "pointer" }} className="rt-hover-card">
+              <Flex justify="between" align="start" gap="4">
+                <Box style={{ minWidth: 0, flex: 1 }}>
+                  <Flex gap="2" align="center" mb="1">
+                    <EnvelopeOpenIcon />
+                    <Text size="2" weight="bold" style={{ flex: 1 }}>
+                      {email.subject || "(no subject)"}
+                    </Text>
+                  </Flex>
+                  <Text size="1" color="gray">From: {email.fromEmail}</Text>
+                  <Text size="1" color="gray" as="div">
+                    {new Date(email.receivedAt).toLocaleString()}
                   </Text>
-                </Flex>
-                <Text size="1" color="gray">From: {email.fromEmail}</Text>
-                <Text size="1" color="gray" as="div">
-                  {new Date(email.receivedAt).toLocaleString()}
-                </Text>
-              </Box>
-              <button
-                className={button({ variant: "ghost", size: "sm" })}
-                onClick={() => showArchived ? handleUnarchive(email.id) : handleArchive(email.id)}
-              >
-                {showArchived ? "Unarchive" : "Archive"}
-              </button>
-            </Flex>
-          </Card>
+                </Box>
+                <button
+                  className={button({ variant: "ghost", size: "sm" })}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showArchived ? handleUnarchive(email.id) : handleArchive(email.id);
+                  }}
+                >
+                  {showArchived ? "Unarchive" : "Archive"}
+                </button>
+              </Flex>
+            </Card>
+          </Link>
         ))
       )}
     </Flex>
