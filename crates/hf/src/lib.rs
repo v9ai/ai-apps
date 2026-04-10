@@ -29,4 +29,9 @@ pub mod db;
 pub use client::HfClient;
 pub use error::Error;
 pub use org::OrgScanner;
-pub use types::*;
+pub use types::{
+    FetchRequest, FetchResult, ListOptions, RepoInfo, RepoType, SiblingFile,
+    OrgProfile, OrgSummary, TrainingSignal, TrainingSignalType,
+    ModelMaturity, EffortLevel, SalesSignal, SalesCategory,
+    OrgFingerprint, SimilarOrg, SimilarOrgOptions,
+};

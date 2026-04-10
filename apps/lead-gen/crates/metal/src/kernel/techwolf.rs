@@ -1092,15 +1092,6 @@ pub fn run_full_eval(data_dir: &DatasetDir) -> anyhow::Result<FullEvalReport> {
     };
 
     // ── Check remaining datasets for completeness ───────────────────────
-    let extra_datasets = [
-        ("vacancy-job-to-skill", data_dir.load_vacancy_job_to_skill()),
-        ("Skill-XL", data_dir.load_skill_xl().map(|_| ())),
-        ("skill-extraction-house", data_dir.load_skill_extraction("house").map(|_| ())),
-        ("skill-extraction-tech", data_dir.load_skill_extraction("tech").map(|_| ())),
-        ("anonymous-working-histories", data_dir.load_work_histories().map(|_| ())),
-    ];
-
-    // Helper trait not needed — just handle each tuple.
     for (name, result) in [
         ("vacancy-job-to-skill", data_dir.load_vacancy_job_to_skill().map(|_| ())),
         ("Skill-XL", data_dir.load_skill_xl().map(|_| ())),

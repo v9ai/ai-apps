@@ -106,6 +106,22 @@ export function waitForTabLoad(tabId: number, timeoutMs = 20000): Promise<void> 
   });
 }
 
+/**
+ * Scroll to bottom of page multiple times to trigger lazy-loading.
+ * Used by both seed phase and BFS discovery in find-related crawl.
+ */
+export async function scrollToBottom(tabId: number, iterations = 3, delayMs = 2500): Promise<void> {
+  for (let i = 0; i < iterations; i++) {
+    if (!(await isTabAlive(tabId))) return;
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => window.scrollTo(0, document.body.scrollHeight),
+    }).catch(() => {});
+    await randomDelay(delayMs);
+  }
+}
+
 export function clickSeeMore(tabId: number): Promise<number> {
   return chrome.scripting
     .executeScript({

@@ -45,6 +45,7 @@ export const Tooltip = forwardRef<HTMLSpanElement, TooltipProps>(
             fontSize: "xs",
             lineHeight: "compact",
             whiteSpace: "nowrap",
+            borderRadius: "sm",
             pointerEvents: "none",
             opacity: 0,
             visibility: "hidden",
