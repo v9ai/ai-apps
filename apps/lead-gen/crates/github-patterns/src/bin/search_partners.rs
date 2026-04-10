@@ -506,6 +506,7 @@ async fn main() -> anyhow::Result<()> {
                     &item.login,
                     threshold,
                     &format!("cpn:bio/{location}"),
+                    false,
                 )
                 .await
                 {
@@ -649,7 +650,9 @@ async fn print_top_partners(db: &ContributorsDb, n: usize) -> anyhow::Result<()>
             user.company.as_deref().unwrap_or(""),
         );
         let skills = extract_skills(&skill_text);
-        let fitness = compute_partner_fitness(&user, &skills);
+        // We don't have source_tag in RisingStar, so we can't determine starred_anthropic here.
+        // Default to false — the print_top_partners view is a re-ranking approximation.
+        let fitness = compute_partner_fitness(&user, &skills, false);
 
         scored.push((
             star.login.clone(),
