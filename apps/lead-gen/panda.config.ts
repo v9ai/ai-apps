@@ -31,6 +31,10 @@ export default defineConfig({
           "ui.surfaceRaised": { value: "#18191B" },
           "ui.surfaceHover": { value: "#18191B" },
 
+          // ---- surface variants ----
+          "ui.surfaceGlass": { value: "rgba(17, 17, 19, 0.8)" },
+          "ui.surfaceOverlay": { value: "rgba(10, 10, 15, 0.9)" },
+
           // ---- borders ----
           "ui.border": { value: "#2C2C2F" },
           "ui.borderHover": { value: "#393939" },
@@ -49,10 +53,29 @@ export default defineConfig({
           "accent.subtle": { value: "rgba(62, 99, 221, 0.12)" },
           "accent.border": { value: "rgba(62, 99, 221, 0.30)" },
 
+          // ---- secondary accent (amber) ----
+          "accent2.primary": { value: "#F5A623" },
+          "accent2.hover": { value: "#F7B84E" },
+          "accent2.subtle": { value: "rgba(245, 166, 35, 0.12)" },
+
           // ---- status (Radix green dark) ----
           "status.positive": { value: "#30A46C" },
           "status.positiveHover": { value: "#2B9362" },
           "status.positiveDim": { value: "rgba(48, 164, 108, 0.15)" },
+
+          // ---- status (error / warning / info) ----
+          "status.error": { value: "#E5484D" },
+          "status.warning": { value: "#F5A623" },
+          "status.info": { value: "#3E63DD" },
+
+          // ---- gradients as colors ----
+          "gradient.accent": {
+            value: "linear-gradient(135deg, #3E63DD, #7B93EE)",
+          },
+          "gradient.subtle": {
+            value:
+              "linear-gradient(180deg, rgba(62, 99, 221, 0.08), transparent)",
+          },
 
           // ---- white-alpha scale ----
           "whiteAlpha.3": { value: "rgba(255, 255, 255, 0.03)" },
@@ -126,6 +149,29 @@ export default defineConfig({
         shadows: {
           card: { value: "0 1px 2px rgba(0, 0, 0, 0.30)" },
           navBorder: { value: "0 1px 0 rgba(255, 255, 255, 0.08)" },
+          elevated: { value: "0 4px 16px rgba(0, 0, 0, 0.4)" },
+          glow: { value: "0 0 24px rgba(62, 99, 221, 0.15)" },
+          glowStrong: { value: "0 0 48px rgba(62, 99, 221, 0.25)" },
+        },
+
+        zIndex: {
+          nav: { value: 100 },
+          dropdown: { value: 200 },
+          modal: { value: 300 },
+          overlay: { value: 400 },
+          tooltip: { value: 500 },
+        },
+
+        sizes: {
+          "container.sm": { value: "640px" },
+          "container.md": { value: "768px" },
+          "container.lg": { value: "1024px" },
+          "container.xl": { value: "1280px" },
+        },
+
+        borderWidths: {
+          thin: { value: "1px" },
+          medium: { value: "2px" },
         },
 
         radii: {

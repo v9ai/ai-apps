@@ -873,6 +873,18 @@ nav a.active {
 .headline-word:nth-child(5) { animation-delay: 0.33s; }
 .headline-word:nth-child(6) { animation-delay: 0.40s; }
 
+/* --- 6. Hero background glow pulse --- */
+@keyframes hero-glow-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.08);
+  }
+}
+
 /* ==========================================================
    END LANDING PAGE MICRO-INTERACTIONS
    ========================================================== */

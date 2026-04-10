@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { css } from "styled-system/css";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { css, cx } from "styled-system/css";
 import { flex, container } from "styled-system/patterns";
 import {
   HamburgerMenuIcon,
@@ -14,7 +14,7 @@ import {
 } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { button } from "@/recipes/button";
-import { cx } from "styled-system/css";
+import { navAnchor, mobilePanel } from "@/recipes/nav";
 
 const SECTION_ANCHORS = [
   { id: "hero", label: "home" },
@@ -36,36 +36,48 @@ export function LandingNav() {
   const [activeSection, setActiveSection] = useState("hero");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const rafRef = useRef<number>(0);
 
-  // track scroll position for sticky reveal + progress bar
+  /* ── scroll tracking with rAF throttle ── */
   useEffect(() => {
-    function onScroll() {
+    let ticking = false;
+
+    function update() {
       const scrollY = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
 
-      // show nav after scrolling past 120px
-      setVisible(scrollY > 120);
-
-      // progress 0..1
+      setVisible(scrollY > 80);
       setScrollProgress(docHeight > 0 ? Math.min(scrollY / docHeight, 1) : 0);
 
-      // detect active section
-      const sections = SECTION_ANCHORS.map(({ id }) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+      /* detect active section — last one whose top crossed threshold */
+      const sections = SECTION_ANCHORS
+        .map(({ id }) => document.getElementById(id))
+        .filter(Boolean) as HTMLElement[];
       let current = "hero";
       for (const section of sections) {
-        const rect = section.getBoundingClientRect();
-        if (rect.top <= 100) {
+        if (section.getBoundingClientRect().top <= 120) {
           current = section.id;
         }
       }
       setActiveSection(current);
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        rafRef.current = requestAnimationFrame(update);
+        ticking = true;
+      }
     }
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
-  // close mobile menu on escape
+  /* ── escape to close mobile menu ── */
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setMobileOpen(false);
@@ -74,10 +86,12 @@ export function LandingNav() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // lock body scroll when mobile menu open
+  /* ── lock body scroll when mobile menu is open ── */
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileOpen]);
 
   const scrollToSection = useCallback((id: string) => {
@@ -97,10 +111,10 @@ export function LandingNav() {
           top: 0,
           left: 0,
           height: "2px",
-          bg: "accent.primary",
-          zIndex: 51,
-          transition: "opacity 200ms ease",
+          zIndex: 52,
           pointerEvents: "none",
+          transition: "opacity 300ms ease",
+          background: "linear-gradient(90deg, token(colors.accent.primary), token(colors.status.positive))",
         })}
         style={{
           width: `${scrollProgress * 100}%`,
@@ -116,164 +130,201 @@ export function LandingNav() {
           left: 0,
           right: 0,
           zIndex: 50,
-          bg: "rgba(10, 10, 15, 0.85)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid",
-          borderBottomColor: "ui.border",
-          transition: "transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease",
-          transform: visible ? "translateY(0)" : "translateY(-100%)",
-          opacity: visible ? 1 : 0,
+          transition: "transform 400ms cubic-bezier(0.16, 1, 0.30, 1), opacity 300ms ease",
           pointerEvents: visible ? "auto" : "none",
         })}
-        style={{ WebkitBackdropFilter: "blur(12px)" }}
+        style={{
+          transform: visible ? "translateY(0)" : "translateY(-100%)",
+          opacity: visible ? 1 : 0,
+        }}
       >
+        {/* glass layer */}
         <div
-          className={container({ maxW: "breakpoint-lg" })}
-          style={{ padding: "0 16px" }}
+          className={css({
+            bg: "rgba(10, 10, 15, 0.60)",
+            backdropFilter: "blur(20px) saturate(1.4)",
+            borderBottom: "1px solid",
+            borderBottomColor: "whiteAlpha.8",
+          })}
+          style={{ WebkitBackdropFilter: "blur(20px) saturate(1.4)" }}
         >
           <div
-            className={flex({
-              align: "center",
-              justify: "space-between",
-              h: "48px",
-            })}
+            className={container({ maxW: "breakpoint-lg" })}
+            style={{ padding: "0 20px" }}
           >
-            {/* logo */}
-            <Link
-              href="/"
-              className={flex({ align: "center", gap: "2", flexShrink: 0 })}
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              <span
-                className={css({
-                  fontSize: "sm",
-                  fontWeight: "bold",
-                  color: "accent.primary",
-                  letterSpacing: "-0.02em",
-                })}
-              >
-                agentic lead gen
-              </span>
-            </Link>
-
-            {/* desktop: section anchors */}
-            <nav
-              className={flex({
-                align: "center",
-                gap: "1",
-                display: { base: "none", md: "flex" },
-              })}
-            >
-              {SECTION_ANCHORS.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => scrollToSection(id)}
-                  className={cx(
-                    button({ variant: "link" }),
-                    css({
-                      px: "3",
-                      py: "1.5",
-                      fontSize: "sm",
-                      fontWeight: activeSection === id ? "bold" : "medium",
-                      color: activeSection === id ? "ui.heading" : "ui.tertiary",
-                      position: "relative",
-                      _hover: { color: "ui.secondary" },
-                      _after: activeSection === id ? {
-                        content: '""',
-                        position: "absolute",
-                        bottom: "-1px",
-                        left: "12px",
-                        right: "12px",
-                        height: "2px",
-                        bg: "accent.primary",
-                      } : {},
-                    })
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-
-            {/* desktop: site links */}
             <div
               className={flex({
                 align: "center",
-                gap: "1",
-                display: { base: "none", md: "flex" },
+                justify: "space-between",
+                h: "52px",
               })}
             >
-              {SITE_LINKS.slice(0, 3).map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
+              {/* ── brand / logo ── */}
+              <Link
+                href="/"
+                className={flex({ align: "center", gap: "2.5", flexShrink: 0 })}
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                {/* logo mark */}
+                <span
                   className={css({
-                    px: "3",
-                    py: "1.5",
-                    fontSize: "sm",
-                    fontWeight: "medium",
-                    color: "ui.tertiary",
-                    letterSpacing: "normal",
-                    textTransform: "lowercase",
-                    textDecoration: "none",
-                    transition: "color 150ms ease",
-                    _hover: {
-                      color: "ui.heading",
-                    },
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    w: "24px",
+                    h: "24px",
+                    bg: "accent.primary",
+                    color: "accent.contrast",
+                    fontSize: "2xs",
+                    fontWeight: "bold",
+                    letterSpacing: "tight",
+                    lineHeight: "none",
+                    flexShrink: 0,
                   })}
                 >
-                  {label}
-                </Link>
-              ))}
-            </div>
+                  AL
+                </span>
+                <span
+                  className={css({
+                    fontSize: "sm",
+                    fontWeight: "semibold",
+                    color: "ui.heading",
+                    letterSpacing: "tight",
+                    textTransform: "lowercase",
+                  })}
+                >
+                  agentic lead gen
+                </span>
+              </Link>
 
-            {/* mobile: hamburger button */}
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className={cx(
-                button({ variant: "ghost", size: "sm" }),
-                css({
-                  display: { base: "flex", md: "none" },
-                  alignItems: "center",
-                  justifyContent: "center",
-                  w: "36px",
-                  h: "36px",
-                  px: "0",
-                })
-              )}
-              aria-label={mobileOpen ? "close menu" : "open menu"}
-            >
-              {mobileOpen ? (
-                <Cross1Icon width={16} height={16} />
-              ) : (
-                <HamburgerMenuIcon width={16} height={16} />
-              )}
-            </button>
+              {/* ── desktop: section anchors (center) ── */}
+              <nav
+                className={flex({
+                  align: "center",
+                  gap: "0.5",
+                  display: { base: "none", md: "flex" },
+                  position: "absolute",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                })}
+              >
+                {SECTION_ANCHORS.map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => scrollToSection(id)}
+                    className={navAnchor({ active: activeSection === id })}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </nav>
+
+              {/* ── desktop: site links (right) ── */}
+              <div
+                className={flex({
+                  align: "center",
+                  gap: "0.5",
+                  display: { base: "none", md: "flex" },
+                })}
+              >
+                {SITE_LINKS.slice(0, 3).map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={css({
+                      px: "2.5",
+                      py: "1.5",
+                      fontSize: "sm",
+                      fontWeight: "medium",
+                      color: "ui.tertiary",
+                      letterSpacing: "normal",
+                      textTransform: "lowercase",
+                      textDecoration: "none",
+                      transition: "color 200ms ease",
+                      _hover: {
+                        color: "ui.heading",
+                      },
+                    })}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+
+              {/* ── mobile: hamburger button ── */}
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className={cx(
+                  button({ variant: "ghost", size: "sm" }),
+                  css({
+                    display: { base: "flex", md: "none" },
+                    alignItems: "center",
+                    justifyContent: "center",
+                    w: "36px",
+                    h: "36px",
+                    px: "0",
+                    borderColor: mobileOpen ? "ui.borderHover" : "ui.border",
+                    transition: "border-color 200ms ease, transform 200ms ease",
+                  })
+                )}
+                aria-label={mobileOpen ? "close menu" : "open menu"}
+              >
+                {mobileOpen ? (
+                  <Cross1Icon width={15} height={15} />
+                ) : (
+                  <HamburgerMenuIcon width={15} height={15} />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* ── mobile overlay menu ── */}
-      {mobileOpen && (
-        <div
-          className={css({
-            position: "fixed",
-            inset: 0,
-            zIndex: 49,
-            bg: "rgba(10, 10, 15, 0.95)",
-            backdropFilter: "blur(16px)",
-            display: { base: "flex", md: "none" },
-            flexDirection: "column",
-            pt: "60px",
-            px: "6",
-          })}
-          style={{ WebkitBackdropFilter: "blur(16px)" }}
-        >
-          {/* brand header */}
-          <div className={css({ mb: "6" })}>
+      {/* ── mobile backdrop overlay ── */}
+      <div
+        className={css({
+          position: "fixed",
+          inset: 0,
+          zIndex: 48,
+          bg: "rgba(0, 0, 0, 0.50)",
+          pointerEvents: mobileOpen ? "auto" : "none",
+          transition: "opacity 300ms ease",
+          display: { base: "block", md: "none" },
+        })}
+        style={{ opacity: mobileOpen ? 1 : 0 }}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* ── mobile slide-out panel ── */}
+      <div
+        className={mobilePanel({ open: mobileOpen })}
+        style={{ WebkitBackdropFilter: "blur(24px)" }}
+      >
+        {/* brand header */}
+        <div className={css({ mb: "8" })}>
+          <div className={flex({ align: "center", gap: "2.5", mb: "2" })}>
+            <span
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                w: "28px",
+                h: "28px",
+                bg: "accent.primary",
+                color: "accent.contrast",
+                fontSize: "xs",
+                fontWeight: "bold",
+                letterSpacing: "tight",
+                lineHeight: "none",
+                flexShrink: 0,
+              })}
+            >
+              AL
+            </span>
             <p
               className={css({
                 fontSize: "xl",
@@ -284,80 +335,92 @@ export function LandingNav() {
             >
               Agentic Lead Gen
             </p>
-            <p
-              className={css({
-                fontSize: "2xs",
-                color: "ui.dim",
-                mt: "1",
-              })}
-            >
-              Autonomous B2B lead generation
-            </p>
           </div>
-
-          {/* section anchors */}
           <p
             className={css({
               fontSize: "2xs",
               color: "ui.dim",
-              textTransform: "uppercase",
-              letterSpacing: "editorial",
-              mb: "3",
-              mt: "4",
+              mt: "1",
+              pl: "40px",
             })}
           >
-            on this page
+            Autonomous B2B lead generation
           </p>
+        </div>
+
+        {/* section anchors */}
+        <p
+          className={css({
+            fontSize: "2xs",
+            color: "ui.dim",
+            textTransform: "uppercase",
+            letterSpacing: "editorial",
+            mb: "2",
+          })}
+        >
+          on this page
+        </p>
+        <div className={css({ mb: "6" })}>
           {SECTION_ANCHORS.map(({ id, label }) => (
             <button
               key={id}
               onClick={() => scrollToSection(id)}
-              className={cx(
-                button({ variant: "link" }),
-                css({
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "2",
-                  borderBottom: "1px solid",
-                  borderBottomColor: "ui.border",
-                  py: "3",
-                  px: "0",
-                  fontSize: "lg",
-                  fontWeight: activeSection === id ? "bold" : "normal",
-                  color: activeSection === id ? "ui.heading" : "ui.secondary",
-                  letterSpacing: "snug",
-                  textAlign: "left",
-                  width: "100%",
-                })
-              )}
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                gap: "3",
+                width: "100%",
+                py: "3",
+                px: "0",
+                borderBottom: "1px solid",
+                borderBottomColor: "whiteAlpha.6",
+                fontSize: "lg",
+                fontWeight: activeSection === id ? "semibold" : "normal",
+                color: activeSection === id ? "ui.heading" : "ui.secondary",
+                letterSpacing: "snug",
+                textAlign: "left",
+                textTransform: "lowercase",
+                background: "transparent",
+                border: "none",
+                borderBottomStyle: "solid",
+                borderBottomWidth: "1px",
+                fontFamily: "inherit",
+                cursor: "pointer",
+                transition: "color 200ms ease",
+                _hover: {
+                  color: "ui.heading",
+                },
+              })}
             >
-              {activeSection === id && (
-                <span
-                  className={css({
-                    w: "6px",
-                    h: "6px",
-                    bg: "accent.primary",
-                    flexShrink: 0,
-                  })}
-                />
-              )}
+              {/* active dot indicator */}
+              <span
+                className={css({
+                  w: "5px",
+                  h: "5px",
+                  bg: activeSection === id ? "accent.primary" : "transparent",
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                  transition: "background 250ms ease",
+                })}
+              />
               {label}
             </button>
           ))}
+        </div>
 
-          {/* site navigation */}
-          <p
-            className={css({
-              fontSize: "2xs",
-              color: "ui.dim",
-              textTransform: "uppercase",
-              letterSpacing: "editorial",
-              mb: "3",
-              mt: "6",
-            })}
-          >
-            navigate
-          </p>
+        {/* site navigation */}
+        <p
+          className={css({
+            fontSize: "2xs",
+            color: "ui.dim",
+            textTransform: "uppercase",
+            letterSpacing: "editorial",
+            mb: "2",
+          })}
+        >
+          navigate
+        </p>
+        <div className={css({ mb: "6" })}>
           {SITE_LINKS.map(({ href, label, icon }) => (
             <Link
               key={href}
@@ -368,14 +431,14 @@ export function LandingNav() {
                 gap: "3",
                 py: "3",
                 borderBottom: "1px solid",
-                borderBottomColor: "ui.border",
+                borderBottomColor: "whiteAlpha.6",
                 fontSize: "lg",
                 fontWeight: "normal",
                 color: "ui.secondary",
                 textTransform: "lowercase",
                 letterSpacing: "snug",
                 textDecoration: "none",
-                transition: "color 150ms ease",
+                transition: "color 200ms ease",
                 _hover: {
                   color: "ui.heading",
                 },
@@ -386,30 +449,30 @@ export function LandingNav() {
               {label}
             </Link>
           ))}
-
-          {/* github link at bottom */}
-          <div className={css({ mt: "auto", pb: "6" })}>
-            <a
-              href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={flex({
-                align: "center",
-                gap: "2",
-              })}
-              style={{
-                color: "var(--gray-9)",
-                fontSize: "12px",
-                textDecoration: "none",
-                letterSpacing: "0.02em",
-              }}
-            >
-              <GitHubLogoIcon width={14} height={14} />
-              source code
-            </a>
-          </div>
         </div>
-      )}
+
+        {/* github link pinned to bottom */}
+        <div className={css({ mt: "auto", pb: "2" })}>
+          <a
+            href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={flex({
+              align: "center",
+              gap: "2",
+            })}
+            style={{
+              color: "var(--gray-9)",
+              fontSize: "12px",
+              textDecoration: "none",
+              letterSpacing: "0.02em",
+            }}
+          >
+            <GitHubLogoIcon width={14} height={14} />
+            source code
+          </a>
+        </div>
+      </div>
     </>
   );
 }
