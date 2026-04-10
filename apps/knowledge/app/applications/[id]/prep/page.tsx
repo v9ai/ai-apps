@@ -107,6 +107,34 @@ function inferClassName(
   return count === 1 ? base : `${base}-${count}`;
 }
 
+/** If HTML is plain text (no tags) but CSS has .sN classes, wrap lines in <div> elements */
+function scaffoldHtmlFromCss(html: string, css: string): { html: string; css: string } {
+  if (/<\w/.test(html)) return { html, css };
+
+  const classRe = /\.(s\d+)\s*\{([^}]*)\}/g;
+  const classes: { name: string; props: string }[] = [];
+  let m;
+  while ((m = classRe.exec(css)) !== null) {
+    classes.push({ name: m[1], props: m[2] });
+  }
+  if (classes.length === 0) return { html, css };
+
+  const containerIdx = classes.findIndex(c => /display\s*:\s*(grid|flex)/.test(c.props));
+  const itemClasses = classes.filter((_, i) => i !== containerIdx);
+  const lines = html.split("\n").filter(l => l.trim());
+
+  const items = lines.map((line, i) => {
+    const cls = itemClasses[i]?.name;
+    return cls ? `  <div class="${cls}">${line.trim()}</div>` : `  <div>${line.trim()}</div>`;
+  }).join("\n");
+
+  const scaffolded = containerIdx >= 0
+    ? `<div class="${classes[containerIdx].name}">\n${items}\n</div>`
+    : items;
+
+  return { html: scaffolded, css };
+}
+
 /** Rename generic sN class names to meaningful semantic names */
 function semanticRenameClasses(html: string, css: string): { html: string; css: string } {
   if (!/\.s\d+\b/.test(css)) return { html, css };
@@ -427,7 +455,8 @@ function PrepPageInner() {
         if (isHtmlCss) {
           const htmlBlock = blocks.find((b) => b.lang.toLowerCase() === "html")!;
           const cssBlock = blocks.find((b) => b.lang.toLowerCase() === "css")!;
-          const renamed = semanticRenameClasses(htmlBlock.code, cssBlock.code);
+          const scaffolded = scaffoldHtmlFromCss(htmlBlock.code, cssBlock.code);
+          const renamed = semanticRenameClasses(scaffolded.html, scaffolded.css);
           return <InteractiveCodePlayground initialHtml={renamed.html} initialCss={renamed.css} />;
         }
 
