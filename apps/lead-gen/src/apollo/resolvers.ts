@@ -1,6 +1,6 @@
-import { companyResolvers } from "./resolvers/company";
+import { companyResolvers } from "./resolvers/company/index";
 import { userSettingsResolvers } from "./resolvers/user-settings";
-import { contactResolvers } from "./resolvers/contacts";
+import { contactResolvers } from "./resolvers/contacts/index";
 import { remindersResolvers } from "./resolvers/reminders";
 
 import { emailCampaignResolvers } from "./resolvers/email-campaigns";
