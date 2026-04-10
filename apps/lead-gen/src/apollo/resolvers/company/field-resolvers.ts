@@ -1,0 +1,178 @@
+/**
+ * Company, CompanyFact, CompanySnapshot, and Evidence field resolvers.
+ */
+
+import type {
+  Company as DbCompany,
+  CompanyFact as DbCompanyFact,
+  CompanySnapshot as DbCompanySnapshot,
+} from "@/db/schema";
+import type { GraphQLContext } from "../../context";
+import { safeJsonParse } from "./utils";
+
+export const CompanyField = {
+  ai_tier(parent: DbCompany) {
+    return parent.ai_tier ?? 0;
+  },
+  ai_classification_confidence(parent: DbCompany) {
+    return parent.ai_classification_confidence ?? 0.5;
+  },
+  ai_classification_reason(parent: DbCompany) {
+    return parent.ai_classification_reason ?? null;
+  },
+  blocked(parent: DbCompany) {
+    return parent.blocked ?? false;
+  },
+  // Validate and sanitize category enum
+  category(parent: DbCompany) {
+    const validCategories = ["CONSULTANCY", "UNKNOWN"];
+    const category = parent.category?.toUpperCase() || "UNKNOWN";
+    return validCategories.includes(category) ? category : "UNKNOWN";
+  },
+  // Parse JSON fields with proper error handling
+  tags(parent: DbCompany) {
+    return safeJsonParse(parent.tags, []);
+  },
+  services(parent: DbCompany) {
+    if (!parent.services) return [];
+    const parsed = safeJsonParse<string[] | null>(parent.services, null);
+    if (parsed !== null) return parsed;
+    // Fallback: plain comma-separated string
+    return parent.services.split(',').map((s: string) => s.trim()).filter(Boolean);
+  },
+  service_taxonomy(parent: DbCompany) {
+    return safeJsonParse(parent.service_taxonomy, []);
+  },
+  industries(parent: DbCompany) {
+    return safeJsonParse(parent.industries, []);
+  },
+  score_reasons(parent: DbCompany) {
+    return safeJsonParse(parent.score_reasons, []);
+  },
+  email(parent: DbCompany) {
+    return parent.email ?? null;
+  },
+  emailsList(parent: DbCompany) {
+    return safeJsonParse(parent.emails, []);
+  },
+  githubUrl(parent: DbCompany) {
+    return parent.github_url ?? null;
+  },
+  async facts(
+    parent: DbCompany,
+    args: { limit?: number; offset?: number; field?: string },
+    context: GraphQLContext,
+  ) {
+    try {
+      const limit = args.limit ?? 200;
+      const offset = args.offset ?? 0;
+
+      let facts = await context.loaders.companyFacts.load(parent.id);
+      if (args.field) {
+        facts = facts.filter((f) => f.field === args.field);
+      }
+      return facts.slice(offset, offset + limit);
+    } catch (error) {
+      console.error("Error fetching company facts:", error);
+      return [];
+    }
+  },
+  async facts_count(parent: DbCompany, _args: unknown, context: GraphQLContext) {
+    try {
+      const facts = await context.loaders.companyFacts.load(parent.id);
+      return facts.length;
+    } catch (error) {
+      console.error("Error counting company facts:", error);
+      return 0;
+    }
+  },
+  async snapshots(parent: DbCompany, args: { limit?: number; offset?: number }, context: GraphQLContext) {
+    try {
+      const limit = args.limit ?? 50;
+      const offset = args.offset ?? 0;
+
+      const snapshots = await context.loaders.companySnapshots.load(parent.id);
+      return snapshots.slice(offset, offset + limit);
+    } catch (error) {
+      console.error("Error fetching company snapshots:", error);
+      return [];
+    }
+  },
+  async snapshots_count(parent: DbCompany, _args: unknown, context: GraphQLContext) {
+    try {
+      const snapshots = await context.loaders.companySnapshots.load(parent.id);
+      return snapshots.length;
+    } catch (error) {
+      console.error("Error counting company snapshots:", error);
+      return 0;
+    }
+  },
+};
+
+export const EvidenceField = {
+  warc(parent: DbCompanyFact) {
+    if (!parent.warc_filename) return null;
+    return {
+      filename: parent.warc_filename,
+      offset: parent.warc_offset,
+      length: parent.warc_length,
+      digest: parent.warc_digest,
+    };
+  },
+};
+
+export const CompanyFactField = {
+  value_json(parent: DbCompanyFact) {
+    return parent.value_json ? JSON.parse(parent.value_json) : null;
+  },
+  normalized_value(parent: DbCompanyFact) {
+    return parent.normalized_value
+      ? JSON.parse(parent.normalized_value)
+      : null;
+  },
+  evidence(parent: DbCompanyFact) {
+    return {
+      source_type: parent.source_type,
+      source_url: parent.source_url,
+      crawl_id: parent.crawl_id,
+      capture_timestamp: parent.capture_timestamp,
+      observed_at: parent.observed_at,
+      method: parent.method,
+      extractor_version: parent.extractor_version,
+      http_status: parent.http_status,
+      mime: parent.mime,
+      content_hash: parent.content_hash,
+      warc_filename: parent.warc_filename,
+      warc_offset: parent.warc_offset,
+      warc_length: parent.warc_length,
+      warc_digest: parent.warc_digest,
+    };
+  },
+};
+
+export const CompanySnapshotField = {
+  jsonld(parent: DbCompanySnapshot) {
+    return parent.jsonld ? JSON.parse(parent.jsonld) : null;
+  },
+  extracted(parent: DbCompanySnapshot) {
+    return parent.extracted ? JSON.parse(parent.extracted) : null;
+  },
+  evidence(parent: DbCompanySnapshot) {
+    return {
+      source_type: parent.source_type,
+      source_url: parent.source_url,
+      crawl_id: parent.crawl_id,
+      capture_timestamp: parent.capture_timestamp,
+      observed_at: parent.fetched_at,
+      method: parent.method,
+      extractor_version: parent.extractor_version,
+      http_status: parent.http_status,
+      mime: parent.mime,
+      content_hash: parent.content_hash,
+      warc_filename: parent.warc_filename,
+      warc_offset: parent.warc_offset,
+      warc_length: parent.warc_length,
+      warc_digest: parent.warc_digest,
+    };
+  },
+};
