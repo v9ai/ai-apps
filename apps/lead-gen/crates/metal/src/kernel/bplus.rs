@@ -354,10 +354,15 @@ impl BPlusTree {
             #[cfg(target_arch = "aarch64")]
             {
                 let next_ptr = self.page_ptr(next_page);
-                // Prefetch header (first cache line)
-                unsafe { core::arch::aarch64::_prefetch(next_ptr as *const i8, 0, 3); }
-                // Prefetch first key region (second cache line)
-                unsafe { core::arch::aarch64::_prefetch(next_ptr.add(64) as *const i8, 0, 3); }
+                unsafe {
+                    // PRFM PLDL1KEEP: prefetch for read into L1, temporal (keep in cache)
+                    std::arch::asm!(
+                        "prfm pldl1keep, [{0}]",
+                        "prfm pldl1keep, [{0}, #64]",
+                        in(reg) next_ptr,
+                        options(nostack, preserves_flags)
+                    );
+                }
             }
 
             #[cfg(target_arch = "x86_64")]
@@ -676,8 +681,14 @@ impl BPlusTree {
             #[cfg(target_arch = "aarch64")]
             {
                 let sib_ptr = self.page_ptr(sibling);
-                unsafe { core::arch::aarch64::_prefetch(sib_ptr as *const i8, 0, 3); }
-                unsafe { core::arch::aarch64::_prefetch(sib_ptr.add(64) as *const i8, 0, 3); }
+                unsafe {
+                    std::arch::asm!(
+                        "prfm pldl1keep, [{0}]",
+                        "prfm pldl1keep, [{0}, #64]",
+                        in(reg) sib_ptr,
+                        options(nostack, preserves_flags)
+                    );
+                }
             }
             #[cfg(target_arch = "x86_64")]
             {
