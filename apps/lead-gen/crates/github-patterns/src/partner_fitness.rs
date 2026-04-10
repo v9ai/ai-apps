@@ -230,21 +230,18 @@ pub fn compute_partner_fitness(user: &GhUser, skills: &[&str], starred_anthropic
         .any(|c| company_lower.contains(c));
     let consulting_boost: f32 = if is_consulting_company { 0.15 } else { 0.0 };
 
-    // ── Anthropic stargazer boost (highest signal) ──────────────────────────
-    // A consulting employee who starred anthropic-sdk-python scores much higher
-    // than someone with "solution architect" in bio and no Anthropic signal.
-    let star_boost: f32 = if starred_anthropic { 0.30 } else { 0.0 };
-
     // ── Composite score ─────────────────────────────────────────────────────
-    // Weights: star(0.30) + archetype(0.25) + ai(0.20) + seniority(0.15)
-    //        + engagement(0.10) + consulting(0.15)
-    let raw = star_boost
-        + archetype_score * 0.25
-        + ai_depth * 0.20
-        + seniority_signal * 0.15
+    // Base: archetype(0.30) + ai_depth(0.25) + seniority(0.20)
+    //       + engagement(0.10) + consulting(0.15) = 1.00 max
+    let base = archetype_score * 0.30
+        + ai_depth * 0.25
+        + seniority_signal * 0.20
         + engagement_readiness * 0.10
         + consulting_boost;
-    let score = raw.min(1.0);
+
+    // Stargazer multiplier: amplifies existing quality, not a floor lift
+    let multiplier: f32 = if starred_anthropic { 1.4 } else { 1.0 };
+    let score = base * multiplier;
 
     PartnerFitness {
         score,
@@ -320,23 +317,20 @@ mod tests {
     }
 
     #[test]
-    fn stargazer_boost_outweighs_archetype() {
-        // A generic user who starred an Anthropic repo should outscore
-        // an architect without the stargazer signal.
-        let user = make_user(Some("Software engineer"), None);
-        let starred = compute_partner_fitness(&user, &[], true);
-        let architect = compute_partner_fitness(
-            &make_user(Some("Solutions Architect"), None),
-            &[],
-            false,
-        );
+    fn starred_architect_beats_unstarred() {
+        // Same profile, star signal amplifies the score
+        let user = make_user(Some("Solutions Architect at AWS"), None);
+        let skills = vec!["llm", "rag"];
+        let starred = compute_partner_fitness(&user, &skills, true);
+        let unstarred = compute_partner_fitness(&user, &skills, false);
         assert!(
-            starred.score > architect.score,
-            "starred ({:.2}) should beat architect ({:.2})",
+            starred.score > unstarred.score * 1.3,
+            "starred ({:.2}) should be >1.3x unstarred ({:.2})",
             starred.score,
-            architect.score,
+            unstarred.score,
         );
         assert!(starred.starred_anthropic);
+        assert!(!unstarred.starred_anthropic);
     }
 
     #[test]

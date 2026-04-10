@@ -619,6 +619,12 @@ async fn hydrate_user(
     let skills = extract_skills(&skill_text);
     let fitness = compute_partner_fitness(&user, &skills, starred_anthropic);
 
+    // Skip pure hobbyist stargazers: no archetype, not consulting, just starred
+    if starred_anthropic && fitness.archetypes.is_empty() && !fitness.is_consulting_company {
+        info!("  skip {login}: stargazer but no archetype or consulting signal");
+        return None;
+    }
+
     if fitness.score < threshold {
         return None;
     }
@@ -643,10 +649,18 @@ async fn hydrate_user(
             contributions: 0,
         }],
         total_contributions: 0,
-        extra_tags: if starred_anthropic {
-            vec!["cpn:starred".into()]
-        } else {
-            vec![]
+        extra_tags: {
+            let mut tags = Vec::new();
+            if starred_anthropic {
+                tags.push("cpn:starred".into());
+            }
+            // Extract source prefix: "cpn:star/repo" -> "star", "cpn:org/name" -> "org"
+            let src = source_tag
+                .strip_prefix("cpn:")
+                .and_then(|s| s.split('/').next())
+                .unwrap_or("unknown");
+            tags.push(format!("cpn:src:{src}"));
+            tags
         },
     })
 }
@@ -688,7 +702,8 @@ async fn print_top_partners(db: &ContributorsDb, n: usize) -> anyhow::Result<()>
         return Ok(());
     }
 
-    let mut scored: Vec<(String, PartnerFitness, String, String, String)> = Vec::new();
+    // (login, fitness, name, company, location, source, starred)
+    let mut scored: Vec<(String, PartnerFitness, String, String, String, String, bool)> = Vec::new();
 
     for star in &stars {
         let user = star_to_user(star);
@@ -699,6 +714,10 @@ async fn print_top_partners(db: &ContributorsDb, n: usize) -> anyhow::Result<()>
         );
         let skills = extract_skills(&skill_text);
         let starred = star.skills.iter().any(|s| s == "cpn:starred");
+        let source = star.skills.iter()
+            .find_map(|s| s.strip_prefix("cpn:src:"))
+            .unwrap_or("?")
+            .to_string();
         let fitness = compute_partner_fitness(&user, &skills, starred);
 
         scored.push((
@@ -707,6 +726,8 @@ async fn print_top_partners(db: &ContributorsDb, n: usize) -> anyhow::Result<()>
             star.name.clone().unwrap_or_default(),
             star.company.clone().unwrap_or_default(),
             star.location.clone().unwrap_or_default(),
+            source,
+            starred,
         ));
     }
 
@@ -724,14 +745,14 @@ async fn print_top_partners(db: &ContributorsDb, n: usize) -> anyhow::Result<()>
         "╠════════════════════════════════════════════════════════════════════════════════════╣"
     );
     println!(
-        "║ {:<4} {:<22} {:<6} {:<26} {:<22} ║",
-        "#", "Name", "Score", "Archetypes", "Company"
+        "║ {:<4} {:<22} {:<6} {:<5} {:<2} {:<22} {:<18} ║",
+        "#", "Name", "Score", "Src", "★", "Archetypes", "Company"
     );
     println!(
         "╠════════════════════════════════════════════════════════════════════════════════════╣"
     );
 
-    for (i, (login, fitness, name, company, location)) in scored.iter().enumerate() {
+    for (i, (login, fitness, name, company, location, source, starred)) in scored.iter().enumerate() {
         let archetypes_str = if fitness.archetypes.is_empty() {
             "—".to_string()
         } else {
@@ -747,14 +768,17 @@ async fn print_top_partners(db: &ContributorsDb, n: usize) -> anyhow::Result<()>
         } else {
             company.as_str()
         };
+        let star_icon = if *starred { "⭐" } else { "" };
 
         println!(
-            "║ {:<4} {:<22} {:<6.2} {:<26} {:<22} ║",
+            "║ {:<4} {:<22} {:<6.2} {:<5} {:<2} {:<22} {:<18} ║",
             i + 1,
             &display_name[..display_name.len().min(22)],
             fitness.score,
-            &archetypes_str[..archetypes_str.len().min(26)],
-            &display_company[..display_company.len().min(22)],
+            &source[..source.len().min(5)],
+            star_icon,
+            &archetypes_str[..archetypes_str.len().min(22)],
+            &display_company[..display_company.len().min(18)],
         );
         if !location.is_empty() {
             println!("║      └─ {:<71} ║", &location[..location.len().min(71)]);
