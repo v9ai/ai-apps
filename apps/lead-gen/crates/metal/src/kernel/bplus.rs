@@ -7,8 +7,10 @@ use crate::storage::btree::{BTreeOps, RecordPtr};
 const PAGE_SIZE: usize = 4096;
 const KEY_SIZE: usize = 24;
 
-/// B+ tree node header (16 bytes)
-#[repr(C)]
+/// B+ tree node header — padded to 64 bytes (one cache line) so that
+/// reading the header never straddles a cache-line boundary.
+/// Active fields occupy 16 bytes; the remaining 48 bytes are reserved padding.
+#[repr(C, align(64))]
 #[derive(Clone, Copy)]
 struct NodeHeader {
     flags: u16,       // bit 0: is_leaf, bit 1: is_root
@@ -16,6 +18,7 @@ struct NodeHeader {
     parent: u32,
     right_sibling: u32,
     _reserved: u32,
+    _pad: [u8; 48],   // pad to exactly 64 bytes (cache-line)
 }
 
 const NODE_FLAG_LEAF: u16 = 1;
@@ -344,7 +347,29 @@ impl BPlusTree {
                 }
             }
 
-            page_id = self.internal_child(page_id, lo);
+            let next_page = self.internal_child(page_id, lo);
+
+            // Prefetch the next node's header + first keys into L1 cache
+            // before we loop back. This hides memory latency on deep trees.
+            #[cfg(target_arch = "aarch64")]
+            {
+                let next_ptr = self.page_ptr(next_page);
+                // Prefetch header (first cache line)
+                unsafe { core::arch::aarch64::_prefetch(next_ptr as *const i8, 0, 3); }
+                // Prefetch first key region (second cache line)
+                unsafe { core::arch::aarch64::_prefetch(next_ptr.add(64) as *const i8, 0, 3); }
+            }
+
+            #[cfg(target_arch = "x86_64")]
+            {
+                let next_ptr = self.page_ptr(next_page);
+                unsafe {
+                    core::arch::x86_64::_mm_prefetch(next_ptr as *const i8, core::arch::x86_64::_MM_HINT_T0);
+                    core::arch::x86_64::_mm_prefetch(next_ptr.add(64) as *const i8, core::arch::x86_64::_MM_HINT_T0);
+                }
+            }
+
+            page_id = next_page;
         }
     }
 

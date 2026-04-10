@@ -15,6 +15,12 @@
 
 // ── Aho-Corasick Automaton ───────────────────────────────────────────────
 
+/** Output entry stored in each trie node: label + unique pattern ID. */
+interface PatternOutput {
+  label: string;
+  patternId: number;
+}
+
 /**
  * A single node in the Aho-Corasick trie. Each node represents a state
  * in the pattern matching automaton.
@@ -24,8 +30,8 @@ export class TrieNode {
   children: Map<string, TrieNode> = new Map();
   /** Failure link — longest proper suffix that is also a prefix in the trie. */
   fail: TrieNode | null = null;
-  /** Labels emitted when this state is reached (direct matches + via suffix links). */
-  output: string[] = [];
+  /** Outputs emitted when this state is reached (direct matches + via suffix links). */
+  output: PatternOutput[] = [];
 }
 
 /**
@@ -42,21 +48,27 @@ export class TrieNode {
  * ```
  *
  * All patterns and search text are expected to be pre-lowercased by the caller.
+ *
+ * Semantics: `search()` counts **distinct patterns** that match per label,
+ * matching `String.includes()` semantics (present-or-not per pattern).
+ * If "llm" appears 5 times in the text, it still contributes +1 to its label.
  */
 export class AhoCorasickAutomaton {
   private root: TrieNode = new TrieNode();
   private built = false;
+  private nextPatternId = 0;
 
   /**
    * Insert a pattern into the trie, associating it with a label.
    * Multiple patterns may share the same label (e.g., all AI core terms
-   * share the "ai_core" label). The search method counts distinct pattern
-   * matches per label.
+   * share the "ai_core" label). Each pattern gets a unique ID so the
+   * search method counts distinct patterns, not total occurrences.
    */
   addPattern(pattern: string, label: string): void {
     if (this.built) {
       throw new Error("Cannot add patterns after build()");
     }
+    const patternId = this.nextPatternId++;
     let node = this.root;
     for (const ch of pattern) {
       let child = node.children.get(ch);
@@ -66,7 +78,7 @@ export class AhoCorasickAutomaton {
       }
       node = child;
     }
-    node.output.push(label);
+    node.output.push({ label, patternId });
   }
 
   /**
@@ -116,14 +128,17 @@ export class AhoCorasickAutomaton {
   /**
    * Run the automaton over `text` in a single linear pass.
    *
-   * @returns Map from label to the number of distinct pattern matches
-   *          for that label found in the text.
+   * @returns Map from label to the number of **distinct patterns** matched
+   *          for that label. Each pattern is counted at most once regardless
+   *          of how many times it appears in the text, matching the semantics
+   *          of the legacy `countHits()` (which uses `String.includes()`).
    */
   search(text: string): Map<string, number> {
     if (!this.built) {
       throw new Error("Must call build() before search()");
     }
 
+    const seen = new Set<number>();         // deduplicate by patternId
     const counts = new Map<string, number>();
     let node = this.root;
 
@@ -133,10 +148,13 @@ export class AhoCorasickAutomaton {
       }
       node = node.children.get(ch) ?? this.root;
 
-      // Emit all labels at this state (includes suffix-link outputs)
+      // Emit all outputs at this state (includes suffix-link outputs)
       if (node.output.length > 0) {
-        for (const label of node.output) {
-          counts.set(label, (counts.get(label) ?? 0) + 1);
+        for (const { label, patternId } of node.output) {
+          if (!seen.has(patternId)) {
+            seen.add(patternId);
+            counts.set(label, (counts.get(label) ?? 0) + 1);
+          }
         }
       }
     }

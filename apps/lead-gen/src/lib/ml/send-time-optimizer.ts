@@ -93,6 +93,54 @@ function isBusinessHour(dow: number, hour: number): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Pre-computed timezone offset table for batch optimization
+// ---------------------------------------------------------------------------
+// Maps (utcHour, tzOffset) -> localHour for all 24*49 combinations
+// (offsets from -12 to +14 in half-hour steps = 53 entries, but we use
+// integer offsets -12..+14 = 27 entries for the common case)
+
+const TZ_OFFSET_MIN = -12;
+const TZ_OFFSET_MAX = 14;
+const TZ_OFFSET_COUNT = TZ_OFFSET_MAX - TZ_OFFSET_MIN + 1; // 27
+
+/**
+ * Pre-computed business-hour mask: businessHourMask[dow * 24 + localHour] = 1/0.
+ * Total 168 entries for a full week.
+ */
+const BUSINESS_HOUR_MASK = new Uint8Array(168);
+for (let dow = 0; dow < 7; dow++) {
+  for (let hour = 0; hour < 24; hour++) {
+    BUSINESS_HOUR_MASK[dow * 24 + hour] = isBusinessHour(dow, hour) ? 1 : 0;
+  }
+}
+
+/**
+ * Pre-computed local-hour table: localHourTable[utcHour * TZ_OFFSET_COUNT + (offset - TZ_OFFSET_MIN)]
+ * gives the local hour for that UTC hour and timezone offset.
+ */
+const LOCAL_HOUR_TABLE = new Uint8Array(24 * TZ_OFFSET_COUNT);
+for (let utcHour = 0; utcHour < 24; utcHour++) {
+  for (let oi = 0; oi < TZ_OFFSET_COUNT; oi++) {
+    const offset = TZ_OFFSET_MIN + oi;
+    LOCAL_HOUR_TABLE[utcHour * TZ_OFFSET_COUNT + oi] =
+      ((utcHour + offset) % 24 + 24) % 24;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Batch optimization types
+// ---------------------------------------------------------------------------
+
+export interface RecipientProfile {
+  /** UTC timezone offset in integer hours (e.g., -5 for EST, +1 for CET) */
+  timezoneOffset: number;
+  /** 0=unknown, 1=junior, 2=mid, 3=senior, 4=c-suite */
+  seniorityIdx: number;
+  /** Optional per-recipient stats (if omitted, uses global stats) */
+  stats?: SendTimeStats;
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -183,3 +231,125 @@ export function updateStats(
   stats.totalObservations += 1;
   return stats;
 }
+
+/**
+ * Batch-optimize send times for multiple recipients.
+ *
+ * Returns a Uint8Array of length `recipients.length` where each entry is
+ * the recommended hour (0-23 UTC) for that recipient. Uses pre-computed
+ * timezone offset tables and business-hour masks to avoid per-recipient
+ * branching in the inner loop.
+ *
+ * For large batches (100+ recipients), this is significantly faster than
+ * calling thompsonSampleBestSlot() per recipient because:
+ * - Business-hour eligibility is a table lookup, not a branch
+ * - Local-hour conversion is a table lookup, not modular arithmetic
+ * - Recipients sharing the same (tzOffset, seniority) can reuse samples
+ *
+ * @param recipients    Array of recipient profiles.
+ * @param globalStats   Shared stats to use when recipient has no per-recipient stats.
+ * @param targetDow     Specific day-of-week to optimize for (0-6), or -1 for best across all days.
+ */
+export function optimizeBatch(
+  recipients: RecipientProfile[],
+  globalStats: SendTimeStats = createDefaultStats(),
+  targetDow = -1,
+): Uint8Array {
+  const n = recipients.length;
+  const result = new Uint8Array(n);
+
+  if (n === 0) return result;
+
+  // Group recipients by (clampedTzOffset, seniorityBucket) to share Thompson samples
+  // Key: tzOffset * 8 + seniorityIdx (seniority is 0-4, fits in 3 bits)
+  const groupMap = new Map<number, number[]>();
+
+  for (let i = 0; i < n; i++) {
+    const r = recipients[i];
+    const clampedTz = Math.max(TZ_OFFSET_MIN, Math.min(TZ_OFFSET_MAX, Math.round(r.timezoneOffset)));
+    const senBucket = Math.min(4, Math.max(0, r.seniorityIdx | 0));
+    const groupKey = (clampedTz - TZ_OFFSET_MIN) * 8 + senBucket;
+
+    let group = groupMap.get(groupKey);
+    if (!group) {
+      group = [];
+      groupMap.set(groupKey, group);
+    }
+    group.push(i);
+  }
+
+  // For each group, Thompson-sample once and assign to all members
+  for (const [groupKey, indices] of groupMap) {
+    const senBucket = groupKey & 7;
+    const tzIdx = (groupKey >> 3);
+    const tzOffset = tzIdx + TZ_OFFSET_MIN;
+
+    // Use per-recipient stats if the first member has them, else global
+    const stats = recipients[indices[0]].stats ?? globalStats;
+
+    // Determine which DOWs to search
+    const dowStart = targetDow >= 0 ? targetDow : 0;
+    const dowEnd = targetDow >= 0 ? targetDow + 1 : 7;
+
+    let bestSample = -1;
+    let bestHour = 9; // safe default
+
+    for (let dow = dowStart; dow < dowEnd; dow++) {
+      for (let utcHour = 0; utcHour < 24; utcHour++) {
+        // Look up local hour from pre-computed table
+        const oiIdx = tzIdx; // tzIdx = clampedTz - TZ_OFFSET_MIN
+        const localHour = LOCAL_HOUR_TABLE[utcHour * TZ_OFFSET_COUNT + oiIdx];
+
+        // Check business-hour eligibility from mask
+        if (!BUSINESS_HOUR_MASK[dow * 24 + localHour]) continue;
+
+        const slotIdx = dow * 24 + utcHour;
+        let alpha = stats.alphaBeta[slotIdx * 2];
+        let beta = stats.alphaBeta[slotIdx * 2 + 1];
+
+        // C-suite narrowing: penalize outside 9am-12pm local
+        if (senBucket >= 3 && (localHour < 9 || localHour > 12)) {
+          beta += stats.seniorityModifier || 2;
+        }
+
+        const sample = betaSample(alpha, beta);
+        if (sample > bestSample) {
+          bestSample = sample;
+          bestHour = utcHour;
+        }
+      }
+    }
+
+    // Assign the same hour to all recipients in this group
+    for (const idx of indices) {
+      result[idx] = bestHour;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Batch-optimize with full recommendation details per recipient.
+ *
+ * Like `optimizeBatch` but returns full SendTimeRecommendation objects
+ * instead of just hour indices. Slightly slower due to object allocation.
+ */
+export function optimizeBatchFull(
+  recipients: RecipientProfile[],
+  globalStats: SendTimeStats = createDefaultStats(),
+): SendTimeRecommendation[] {
+  const n = recipients.length;
+  const results: SendTimeRecommendation[] = new Array(n);
+
+  for (let i = 0; i < n; i++) {
+    const r = recipients[i];
+    const stats = r.stats ?? globalStats;
+    results[i] = thompsonSampleBestSlot(stats, r.seniorityIdx, r.timezoneOffset);
+  }
+
+  return results;
+}
+
+// Export pre-computed tables for testing / external consumers
+export { BUSINESS_HOUR_MASK, LOCAL_HOUR_TABLE, TZ_OFFSET_COUNT, TZ_OFFSET_MIN, TZ_OFFSET_MAX };

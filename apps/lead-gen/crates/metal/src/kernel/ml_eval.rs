@@ -333,6 +333,138 @@ pub fn evaluate_scoring(
     }
 }
 
+/// Compute AUC-ROC from raw scores and boolean labels using the efficient
+/// sorting-based algorithm.
+///
+/// Sorts samples by score descending, walks the ROC curve, and accumulates
+/// trapezoid areas.  Returns `0.5` for degenerate inputs (empty, or all one class).
+///
+/// This is the public API; the internal `compute_auc_roc` takes `(f32, f32)` pairs.
+pub fn auc_roc(scores: &[f32], labels: &[bool]) -> f32 {
+    assert_eq!(scores.len(), labels.len(), "scores and labels must have equal length");
+    if scores.is_empty() {
+        return 0.5;
+    }
+
+    let total_pos = labels.iter().filter(|&&l| l).count() as f32;
+    let total_neg = labels.len() as f32 - total_pos;
+
+    if total_pos == 0.0 || total_neg == 0.0 {
+        return 0.5;
+    }
+
+    // Sort indices by score descending.
+    let mut indices: Vec<usize> = (0..scores.len()).collect();
+    indices.sort_unstable_by(|&a, &b| {
+        scores[b]
+            .partial_cmp(&scores[a])
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    let mut auc = 0.0_f32;
+    let mut tpr_prev = 0.0_f32;
+    let mut fpr_prev = 0.0_f32;
+    let mut tp = 0.0_f32;
+    let mut fp = 0.0_f32;
+
+    for &idx in &indices {
+        if labels[idx] {
+            tp += 1.0;
+        } else {
+            fp += 1.0;
+        }
+
+        let tpr = tp / total_pos;
+        let fpr = fp / total_neg;
+
+        auc += (fpr - fpr_prev) * (tpr + tpr_prev) / 2.0;
+
+        tpr_prev = tpr;
+        fpr_prev = fpr;
+    }
+
+    auc
+}
+
+/// Compute the mean logistic (binary cross-entropy) loss.
+///
+/// `log_loss = -1/N * sum( y * ln(p) + (1-y) * ln(1-p) )`
+///
+/// Predictions are clamped to `[eps, 1-eps]` to avoid `ln(0)`.
+/// Returns `0.0` for empty input.
+pub fn log_loss(predictions: &[f32], labels: &[bool]) -> f32 {
+    assert_eq!(
+        predictions.len(),
+        labels.len(),
+        "predictions and labels must have equal length"
+    );
+    if predictions.is_empty() {
+        return 0.0;
+    }
+
+    let eps = 1e-7_f32;
+    let mut total = 0.0_f32;
+
+    for (&p, &y) in predictions.iter().zip(labels.iter()) {
+        let p_clamped = p.clamp(eps, 1.0 - eps);
+        if y {
+            total -= p_clamped.ln();
+        } else {
+            total -= (1.0 - p_clamped).ln();
+        }
+    }
+
+    total / predictions.len() as f32
+}
+
+/// Produce a stratified train/test split preserving the class ratio.
+///
+/// Returns `(train_indices, test_indices)` where `train_ratio` fraction of
+/// each class is assigned to the training set.  Indices within each split
+/// are in their original order (stable).
+///
+/// # Panics
+/// Panics if `train_ratio` is not in `(0, 1)`.
+pub fn stratified_split(labels: &[bool], train_ratio: f32) -> (Vec<usize>, Vec<usize>) {
+    assert!(
+        train_ratio > 0.0 && train_ratio < 1.0,
+        "train_ratio must be in (0, 1), got {train_ratio}"
+    );
+
+    let mut pos_indices: Vec<usize> = Vec::new();
+    let mut neg_indices: Vec<usize> = Vec::new();
+
+    for (i, &label) in labels.iter().enumerate() {
+        if label {
+            pos_indices.push(i);
+        } else {
+            neg_indices.push(i);
+        }
+    }
+
+    let pos_train_count = ((pos_indices.len() as f32 * train_ratio).round() as usize)
+        .max(if pos_indices.is_empty() { 0 } else { 1 })
+        .min(pos_indices.len());
+    let neg_train_count = ((neg_indices.len() as f32 * train_ratio).round() as usize)
+        .max(if neg_indices.is_empty() { 0 } else { 1 })
+        .min(neg_indices.len());
+
+    let mut train = Vec::with_capacity(pos_train_count + neg_train_count);
+    let mut test = Vec::with_capacity(labels.len() - pos_train_count - neg_train_count);
+
+    train.extend_from_slice(&pos_indices[..pos_train_count]);
+    test.extend_from_slice(&pos_indices[pos_train_count..]);
+
+    train.extend_from_slice(&neg_indices[..neg_train_count]);
+    test.extend_from_slice(&neg_indices[neg_train_count..]);
+
+    // Sort to restore original order.
+    train.sort_unstable();
+    test.sort_unstable();
+
+    (train, test)
+}
+
 /// Compute the F1 score from parallel slices of predicted and actual labels.
 ///
 /// Both slices must have the same length.  Returns `0.0` when precision and
