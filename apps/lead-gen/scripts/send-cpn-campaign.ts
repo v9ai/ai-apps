@@ -173,14 +173,24 @@ async function main() {
     const { subject, text } = buildEmail(row);
     const scheduledAt = getScheduledAt(i);
     try {
-      await resend.emails.send({
+      const result = await resend.emails.send({
         from: "Vadim Nicolai <contact@vadim.blog>",
         to: row.email.trim(),
         subject,
         text,
         scheduledAt,
       });
-      if (scheduledAt) {
+      if (result.error) {
+        failed++;
+        const total = (scheduledAt ? scheduled : sent) + failed;
+        process.stdout.write(
+          `  [${total}/${rows.length}] ✗ ${row.email} — ${result.error.message}\n`,
+        );
+        if (result.error.name === "daily_quota_exceeded") {
+          console.log(`\n  Daily quota hit. Stopping.\n`);
+          break;
+        }
+      } else if (scheduledAt) {
         scheduled++;
         process.stdout.write(`  [${scheduled + failed}/${rows.length}] ⏱ ${row.email} → ${scheduledAt}\n`);
       } else {
