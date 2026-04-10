@@ -375,7 +375,15 @@ function PrepPageInner() {
   useEffect(() => {
     if (!loading && app) {
       const saved = localStorage.getItem(scrollKey);
-      if (saved) window.scrollTo(0, parseInt(saved, 10));
+      if (saved) {
+        const y = parseInt(saved, 10);
+        // Defer until after React commits the markdown DOM
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            window.scrollTo(0, y);
+          });
+        });
+      }
     }
   }, [loading, app, scrollKey]);
 
