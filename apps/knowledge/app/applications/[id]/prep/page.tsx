@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback, useMemo, memo, type KeyboardEvent, type ChangeEvent } from "react";
+import { Suspense, useState, useEffect, useCallback, useMemo, useRef, memo, type KeyboardEvent, type ChangeEvent } from "react";
 import type { ReactElement } from "react";
 import {
   Heading,
@@ -353,6 +353,13 @@ function PrepPageInner() {
   const [error, setError] = useState<string | null>(null);
 
   const scrollKey = `prep-scroll-${params.id}`;
+  const restoredRef = useRef(false);
+
+  // Disable browser's own scroll restoration
+  useEffect(() => {
+    history.scrollRestoration = "manual";
+    return () => { history.scrollRestoration = "auto"; };
+  }, []);
 
   useEffect(() => {
     if (params.id) {
@@ -380,16 +387,20 @@ function PrepPageInner() {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             window.scrollTo(0, y);
+            restoredRef.current = true;
           });
         });
+      } else {
+        restoredRef.current = true;
       }
     }
   }, [loading, app, scrollKey]);
 
-  // Persist scroll position on scroll
+  // Persist scroll position on scroll — only after restore completes
   useEffect(() => {
     let raf = 0;
     const onScroll = () => {
+      if (!restoredRef.current) return;
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         localStorage.setItem(scrollKey, String(window.scrollY));
