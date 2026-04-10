@@ -141,6 +141,105 @@ function hawkesIntensity(
   return mu + sum;
 }
 
+/**
+ * LUT-accelerated Hawkes intensity. Replaces Math.exp() with the pre-computed
+ * exponential decay lookup table for the hot scoring path.
+ */
+function hawkesIntensityLUT(
+  events: EngagementEvent[],
+  t: number,
+  params: HawkesParams,
+): number {
+  const { mu, alpha, beta } = params;
+  let sum = 0;
+  for (let i = 0; i < events.length; i++) {
+    const ev = events[i];
+    if (ev.timestamp >= t) continue;
+    const dt = (t - ev.timestamp) / MS_PER_DAY;
+    const w = EVENT_WEIGHTS[ev.type] ?? 0.1;
+    sum += alpha * w * expDecayLUT(beta * dt);
+  }
+  return mu + sum;
+}
+
+/**
+ * Recursive Hawkes intensity computation for sorted event streams.
+ *
+ * Instead of the naive O(n^2) sum over all past events for each evaluation
+ * point, exploits the recursive structure of the exponential kernel:
+ *
+ *   S(t_n) = Σ_{i<n} w_i · exp(-β(t_n - t_i))
+ *          = w_{n-1} + exp(-β·Δt) · S(t_{n-1})
+ *
+ * where Δt = t_n - t_{n-1}. This gives O(n) total computation.
+ *
+ * @param sortedEvents Events pre-sorted by ascending timestamp.
+ * @param t            Evaluation time in ms.
+ * @param params       Hawkes parameters.
+ * @returns [intensityAtT, intensityThreeDaysBeforeT]
+ */
+function hawkesIntensityRecursive(
+  sortedEvents: EngagementEvent[],
+  t: number,
+  params: HawkesParams,
+): [number, number] {
+  const { mu, alpha, beta } = params;
+  const n = sortedEvents.length;
+  if (n === 0) return [mu, mu];
+
+  const threeDaysAgo = t - 3 * MS_PER_DAY;
+
+  // Running weighted sum S that can be propagated forward:
+  // S_n = w_{n-1} + exp(-beta * dt) * S_{n-1}
+  let S = 0;
+  let intensityAtThreeDaysAgo = mu;
+  let capturedThreeDaysAgo = false;
+
+  let prevTimestamp = sortedEvents[0].timestamp;
+
+  for (let i = 0; i < n; i++) {
+    const ev = sortedEvents[i];
+    if (ev.timestamp >= t) break;
+
+    const dt = (ev.timestamp - prevTimestamp) / MS_PER_DAY;
+    if (i > 0) {
+      // Propagate the running sum forward by the time gap
+      S = S * expDecayLUT(beta * dt);
+    }
+
+    // Before adding this event's weight, check if we've passed the 3-day mark
+    if (!capturedThreeDaysAgo && ev.timestamp > threeDaysAgo) {
+      // Decay S from prevTimestamp to threeDaysAgo
+      const dtToMark = (threeDaysAgo - prevTimestamp) / MS_PER_DAY;
+      intensityAtThreeDaysAgo = mu + alpha * S * expDecayLUT(beta * Math.max(0, dtToMark));
+      capturedThreeDaysAgo = true;
+    }
+
+    // Add this event's weight to the running sum
+    const w = EVENT_WEIGHTS[ev.type] ?? 0.1;
+    S += w;
+    prevTimestamp = ev.timestamp;
+  }
+
+  // Decay S from last event to evaluation time t
+  const dtFinal = (t - prevTimestamp) / MS_PER_DAY;
+  const intensityAtT = mu + alpha * S * expDecayLUT(beta * dtFinal);
+
+  // If threeDaysAgo was before all events, compute it by decaying from last event
+  if (!capturedThreeDaysAgo) {
+    const dtToMark = (threeDaysAgo - prevTimestamp) / MS_PER_DAY;
+    if (dtToMark >= 0) {
+      // threeDaysAgo is after all events
+      intensityAtThreeDaysAgo = mu + alpha * S * expDecayLUT(beta * dtToMark);
+    } else {
+      // threeDaysAgo is before all events
+      intensityAtThreeDaysAgo = mu;
+    }
+  }
+
+  return [intensityAtT, intensityAtThreeDaysAgo];
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
