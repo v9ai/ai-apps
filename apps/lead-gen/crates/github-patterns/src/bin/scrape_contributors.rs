@@ -188,6 +188,7 @@ async fn scrape_single_repo(
                             contributions: c.contributions,
                         }],
                         user,
+                        extra_tags: vec![],
                     });
                 }
                 Err(e) => warn!("failed to fetch user {}: {e}", c.login),
