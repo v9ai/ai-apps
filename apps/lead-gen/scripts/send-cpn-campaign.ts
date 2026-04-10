@@ -83,10 +83,7 @@ Want me to send you the details?
 
 Vadim Nicolai
 vadim.blog
-
-—
-You received this because your email is public on GitHub.
-Reply "unsubscribe" to opt out.`;
+`;
 
   return { subject, text };
 }
@@ -169,10 +166,6 @@ async function main() {
       try {
         await resend.emails.send({
           from: "Vadim Nicolai <contact@vadim.blog>",
-          headers: {
-            "List-Unsubscribe": "<mailto:contact@vadim.blog?subject=unsubscribe>",
-            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-          },
           to: row.email.trim(),
           subject,
           text,
