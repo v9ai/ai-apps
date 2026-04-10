@@ -1284,6 +1284,13 @@ const NOISE_TAG_PREFIXES: &[&str] = &[
     "endpoints_compatible",
     "has_space",
     "infinity_compatible",
+    "size_categories:",
+    "format:",
+    "modality:",
+    "library:",
+    "task_categories:",
+    "base_model:",
+    "base_model:finetune:",
 ];
 
 const NOISE_TAGS: &[&str] = &[

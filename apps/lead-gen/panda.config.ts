@@ -336,15 +336,6 @@ export default defineConfig({
           golden: { value: "1.618 / 1" },
         },
 
-        transitions: {
-          fast: { value: "all 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94)" },
-          normal: { value: "all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)" },
-          slow: { value: "all 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94)" },
-          colors: { value: "color 150ms ease, background-color 150ms ease, border-color 150ms ease" },
-          transform: { value: "transform 300ms cubic-bezier(0.16, 1, 0.30, 1)" },
-          opacity: { value: "opacity 200ms ease" },
-        },
-
         blurs: {
           none: { value: "0" },
           sm: { value: "4px" },

@@ -120,17 +120,28 @@ export async function embedDocument(text: string): Promise<number[]> {
 
 /**
  * Batch-embed multiple texts, processing in chunks of 32.
+ *
+ * Returns number[][] for backward compatibility. For lower GC pressure,
+ * prefer `embedBatchOptimized()` which returns Float32Array[].
  */
 export async function embedBatch(texts: string[]): Promise<number[][]> {
-  const results: number[][] = [];
+  if (texts.length === 0) return [];
+
+  const pipe = await getEmbedder();
+  // Pre-allocate output array to avoid push/resize
+  const results = new Array<number[]>(texts.length);
+
   for (let i = 0; i < texts.length; i += BATCH_CHUNK_SIZE) {
-    const chunk = texts.slice(i, i + BATCH_CHUNK_SIZE);
-    const pipe = await getEmbedder();
+    const end = Math.min(i + BATCH_CHUNK_SIZE, texts.length);
+    const chunk = texts.slice(i, end);
+    const chunkLen = chunk.length;
     const output = await pipe(chunk, { pooling: "mean", normalize: true });
     const flat: Float32Array = output.data as Float32Array;
-    for (let j = 0; j < chunk.length; j++) {
-      results.push(
-        Array.from(flat.slice(j * EMBEDDING_DIM, (j + 1) * EMBEDDING_DIM)),
+    for (let j = 0; j < chunkLen; j++) {
+      // Use subarray() (view, no copy) + Array.from() instead of
+      // slice() (copy) + Array.from() — avoids an intermediate Float32Array allocation
+      results[i + j] = Array.from(
+        flat.subarray(j * EMBEDDING_DIM, (j + 1) * EMBEDDING_DIM),
       );
     }
   }
@@ -151,6 +162,31 @@ export function cosineSimilarity(a: number[], b: number[]): number {
     dot += a[i] * b[i];
     normA += a[i] * a[i];
     normB += b[i] * b[i];
+  }
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  return denom === 0 ? 0 : dot / denom;
+}
+
+/**
+ * Cosine similarity between two Float32Array vectors.
+ *
+ * Same math as `cosineSimilarity` but avoids number[] boxing overhead.
+ * Use with outputs from `embedBatchOptimized()`.
+ */
+export function cosineSimilarityTyped(a: Float32Array, b: Float32Array): number {
+  if (a.length !== b.length) {
+    throw new Error(`Vector length mismatch: ${a.length} vs ${b.length}`);
+  }
+  const len = a.length;
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < len; i++) {
+    const ai = a[i];
+    const bi = b[i];
+    dot += ai * bi;
+    normA += ai * ai;
+    normB += bi * bi;
   }
   const denom = Math.sqrt(normA) * Math.sqrt(normB);
   return denom === 0 ? 0 : dot / denom;

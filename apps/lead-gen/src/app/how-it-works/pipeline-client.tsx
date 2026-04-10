@@ -149,7 +149,7 @@ function ParallelNode({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        padding: "5px 12px", borderRadius: 0,
+        padding: "5px 12px", borderRadius: 4,
         background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
         boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
@@ -626,7 +626,7 @@ function StageFlow({
       style={{
         width: "100%",
         height,
-        borderRadius: 0,
+        borderRadius: 8,
         overflow: "hidden",
         border: "1px solid var(--gray-a4)",
         background: "color-mix(in srgb, var(--color-background) 95%, var(--gray-3))",
@@ -692,7 +692,7 @@ function NodeTypeLegend() {
       <Flex gap="4" wrap="wrap">
         <Flex align="center" gap="2">
           <div style={{
-            width: 28, height: 20, borderRadius: 0,
+            width: 28, height: 20, borderRadius: 4,
             background: "color-mix(in srgb, var(--violet-9) 14%, var(--color-background))",
             border: "1.5px solid color-mix(in srgb, var(--violet-9) 45%, transparent)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -706,7 +706,7 @@ function NodeTypeLegend() {
         </Flex>
         <Flex align="center" gap="2">
           <div style={{
-            width: 28, height: 20, borderRadius: 0,
+            width: 28, height: 20, borderRadius: 4,
             background: "color-mix(in srgb, var(--green-9) 10%, var(--color-background))",
             border: "1.5px solid color-mix(in srgb, var(--green-9) 35%, transparent)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -720,7 +720,7 @@ function NodeTypeLegend() {
         </Flex>
         <Flex align="center" gap="2">
           <div style={{
-            width: 28, height: 20, borderRadius: 0,
+            width: 28, height: 20, borderRadius: 4,
             background: "color-mix(in srgb, var(--orange-9) 16%, var(--color-background))",
             border: "1.5px solid color-mix(in srgb, var(--orange-9) 40%, transparent)",
             display: "flex", alignItems: "center", justifyContent: "center",

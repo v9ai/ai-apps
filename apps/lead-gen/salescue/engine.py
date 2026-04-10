@@ -1,7 +1,12 @@
-"""salescue/engine.py — Unified Engine with preload.
+"""salescue/engine.py — Unified Engine with preload and true batch inference.
 
 Batch processing with module preloading. Manages the shared encoder
 lifecycle and provides a simple API for running multiple modules.
+
+run_batch() encodes all texts through the shared DeBERTa backbone in a
+single forward pass, then dispatches the full batch tensor to each module's
+process_batch() method — avoiding the N separate encode() calls that
+dominated latency in the previous implementation.
 
 Usage:
     engine = Engine(modules=["score", "intent", "reply"])
@@ -81,6 +86,10 @@ class Engine:
     then provides .run() for single texts and .run_batch() for lists.
     """
 
+    # Maximum texts per backbone forward pass. Larger batches are chunked
+    # to avoid OOM on GPU/MPS while still getting the batching benefit.
+    MAX_BATCH_CHUNK = 32
+
     def __init__(self, modules: list[str] | None = None):
         """Initialize the engine with specified module names.
 
@@ -144,8 +153,104 @@ class Engine:
         }
 
     def run_batch(self, texts: list[str]) -> list[dict[str, Any]]:
-        """Run all modules on a batch of texts."""
-        return [self.run(text) for text in texts]
+        """Run all modules on a batch of texts with true batched inference.
+
+        Optimizations over the naive per-item loop:
+        1. Single backbone forward pass — DeBERTa encodes all texts at once
+           (or in MAX_BATCH_CHUNK-sized chunks) instead of N separate calls.
+        2. Module-level batching — each module's process_batch() receives the
+           full batch tensor. Modules that override process_batch() (e.g.
+           LeadScorer, NeuralHawkesIntentPredictor) can do vectorized
+           forward passes; others fall back to slicing + per-item process().
+
+        Returns:
+            List of result dicts (same format as run()), one per input text.
+        """
+        if not texts:
+            return []
+
+        if not self._loaded:
+            self.preload()
+
+        # Validate all texts upfront
+        validated = [validate_text(t) for t in texts]
+        n = len(validated)
+
+        # ── Phase 1: Batch encode through the shared backbone ──
+        # SharedEncoder.encode_batch handles length-sorting for minimal padding.
+        # For very large batches, chunk to avoid OOM.
+        t_encode_start = time.perf_counter()
+
+        if n <= self.MAX_BATCH_CHUNK:
+            batch_encoded = SharedEncoder.encode_batch(validated)
+        else:
+            # Chunk into sub-batches, encode each, then concatenate
+            import torch
+            chunk_results = []
+            for start in range(0, n, self.MAX_BATCH_CHUNK):
+                chunk = validated[start : start + self.MAX_BATCH_CHUNK]
+                chunk_results.append(
+                    SharedEncoder.encode_batch(chunk, sort_by_length=False)
+                )
+            batch_encoded = _concat_encoded(chunk_results)
+
+        # If encode_batch sorted by length, restore original order
+        original_order = batch_encoded.pop("_original_order", None)
+
+        encode_time = round(time.perf_counter() - t_encode_start, 4)
+
+        # ── Phase 2: Run each module on the full batch ──
+        # Initialize per-item result accumulators
+        all_results: list[dict[str, Any]] = [
+            {"results": {}, "timings": {}, "errors": []} for _ in range(n)
+        ]
+
+        # Determine text order (sorted or original) for module dispatch
+        if original_order is not None:
+            # batch_encoded is in sorted order; we need texts in same order
+            inv_order = [0] * n
+            for sorted_pos, orig_pos in enumerate(original_order):
+                inv_order[orig_pos] = sorted_pos
+            sorted_texts = [validated[original_order[i]] for i in range(n)]
+        else:
+            sorted_texts = validated
+            inv_order = None
+
+        for mod_name, module in self._modules.items():
+            t0 = time.perf_counter()
+            try:
+                # Dispatch to module's batch processor
+                batch_module_results = module.process_batch(
+                    batch_encoded, sorted_texts
+                )
+                elapsed = round(time.perf_counter() - t0, 4)
+
+                # Distribute results to per-item accumulators
+                for sorted_idx in range(n):
+                    orig_idx = (
+                        original_order[sorted_idx]
+                        if original_order is not None
+                        else sorted_idx
+                    )
+                    all_results[orig_idx]["results"][mod_name] = batch_module_results[sorted_idx]
+                    all_results[orig_idx]["timings"][mod_name] = round(elapsed / n, 4)
+
+            except Exception as e:
+                elapsed = round(time.perf_counter() - t0, 4)
+                for i in range(n):
+                    all_results[i]["errors"].append(
+                        {"module": mod_name, "error": str(e)}
+                    )
+                    all_results[i]["timings"][mod_name] = round(elapsed / n, 4)
+
+        # Compute totals
+        for item in all_results:
+            item["total_time"] = round(
+                sum(item["timings"].values()) + encode_time / n, 4
+            )
+            item["timings"]["_encode"] = round(encode_time / n, 4)
+
+        return all_results
 
     def unload(self) -> None:
         """Release all modules and the shared encoder."""
@@ -156,3 +261,42 @@ class Engine:
     def __repr__(self) -> str:
         status = "loaded" if self._loaded else "not loaded"
         return f"Engine(modules={self.module_names}, {status})"
+
+
+def _concat_encoded(chunks: list[dict]) -> dict:
+    """Concatenate multiple batch-encoded dicts along the batch dimension."""
+    import torch
+
+    # Stack encoder outputs
+    all_hidden = torch.cat(
+        [c["encoder_output"].last_hidden_state for c in chunks], dim=0
+    )
+
+    # Build a lightweight output wrapper
+    class _ConcatOutput:
+        def __init__(self, hidden_states_cat):
+            self.last_hidden_state = hidden_states_cat
+            self.attentions = None
+            self.hidden_states = None
+
+    all_input_ids = torch.cat([c["input_ids"] for c in chunks], dim=0)
+    all_masks = (
+        torch.cat([c["attention_mask"] for c in chunks], dim=0)
+        if chunks[0].get("attention_mask") is not None
+        else None
+    )
+
+    result = {
+        "encoder_output": _ConcatOutput(all_hidden),
+        "input_ids": all_input_ids,
+        "attention_mask": all_masks,
+    }
+
+    # Concat tokens dict if present
+    if chunks[0].get("tokens") is not None:
+        result["tokens"] = {
+            k: torch.cat([c["tokens"][k] for c in chunks], dim=0)
+            for k in chunks[0]["tokens"]
+        }
+
+    return result
