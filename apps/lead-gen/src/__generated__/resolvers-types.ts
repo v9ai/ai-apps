@@ -47,6 +47,35 @@ export type ApplyEmailPatternResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ArbitrageOpportunity = {
+  __typename?: 'ArbitrageOpportunity';
+  companyName: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  isHighSalaryRegionPay: Scalars['Boolean']['output'];
+  jobTitle: Scalars['String']['output'];
+  jobUrl: Scalars['String']['output'];
+  postedLocation: Scalars['String']['output'];
+  salaryMax: Scalars['Float']['output'];
+  salaryMedian: Scalars['Float']['output'];
+  salaryMin: Scalars['Float']['output'];
+  salaryPercentile: Scalars['Float']['output'];
+  salaryPremium: Scalars['Float']['output'];
+};
+
+export type ArbitrageRegion = {
+  __typename?: 'ArbitrageRegion';
+  avgPremium: Scalars['Float']['output'];
+  count: Scalars['Int']['output'];
+  region: Scalars['String']['output'];
+};
+
+export type ArbitrageReport = {
+  __typename?: 'ArbitrageReport';
+  byRegion: Array<ArbitrageRegion>;
+  topOpportunities: Array<ArbitrageOpportunity>;
+  totalOpportunities: Scalars['Int']['output'];
+};
+
 export type ArchiveEmailResult = {
   __typename?: 'ArchiveEmailResult';
   message: Scalars['String']['output'];
@@ -274,6 +303,42 @@ export type CompanySnapshot = {
   text_sample: Maybe<Scalars['String']['output']>;
 };
 
+export type CompanyVelocity = {
+  __typename?: 'CompanyVelocity';
+  companyId: Scalars['Int']['output'];
+  companyKey: Scalars['String']['output'];
+  companyName: Scalars['String']['output'];
+  jobsPostedLastWeek: Scalars['Int']['output'];
+  jobsPostedThisWeek: Scalars['Int']['output'];
+  remoteJobsPercent: Scalars['Float']['output'];
+  rollingAvgWeekly: Scalars['Float']['output'];
+  velocityDelta: Scalars['Int']['output'];
+  velocityTrend: Scalars['String']['output'];
+};
+
+export type CompetitiveReport = {
+  __typename?: 'CompetitiveReport';
+  fastestGrowing: Array<CompetitorProfile>;
+  newEntrants: Array<CompetitorProfile>;
+  period: Scalars['String']['output'];
+  topHirers: Array<CompetitorProfile>;
+};
+
+export type CompetitorProfile = {
+  __typename?: 'CompetitorProfile';
+  aiMlOpenings: Scalars['Int']['output'];
+  avgSalaryMidpoint: Maybe<Scalars['Float']['output']>;
+  companyId: Scalars['Int']['output'];
+  companyKey: Scalars['String']['output'];
+  companyName: Scalars['String']['output'];
+  hiringVelocity: Scalars['Float']['output'];
+  rank: Scalars['Int']['output'];
+  remoteOpenings: Scalars['Int']['output'];
+  remotePercent: Scalars['Float']['output'];
+  topSkillsSought: Array<Scalars['String']['output']>;
+  totalOpenings: Scalars['Int']['output'];
+};
+
 export type ComputeNextTouchScoresResult = {
   __typename?: 'ComputeNextTouchScoresResult';
   contactsUpdated: Scalars['Int']['output'];
@@ -444,6 +509,19 @@ export type ContactsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type CountRemoteVoyagerJobsInput = {
+  /** Company LinkedIn numeric IDs to count remote jobs for */
+  companyNumericIds: Array<Scalars['String']['input']>;
+};
+
+/** Result of a countRemoteVoyagerJobs mutation. */
+export type CountRemoteVoyagerJobsResult = {
+  __typename?: 'CountRemoteVoyagerJobsResult';
+  counts: Array<VoyagerCompanyJobCount>;
+  errors: Array<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type CreateCampaignInput = {
   addAntiThreadHeader?: InputMaybe<Scalars['Boolean']['input']>;
   addUnsubscribeHeaders?: InputMaybe<Scalars['Boolean']['input']>;
@@ -512,6 +590,16 @@ export type CreateReminderInput = {
   note?: InputMaybe<Scalars['String']['input']>;
   recurrence?: InputMaybe<Scalars['String']['input']>;
   remindAt: Scalars['String']['input'];
+};
+
+export type DailyJobCount = {
+  __typename?: 'DailyJobCount';
+  date: Scalars['String']['output'];
+  newJobs24h: Scalars['Int']['output'];
+  query: Scalars['String']['output'];
+  remoteJobs: Scalars['Int']['output'];
+  remoteRatio: Scalars['Float']['output'];
+  totalJobs: Scalars['Int']['output'];
 };
 
 export type DataQualityScore = {
@@ -641,6 +729,27 @@ export type EmailTemplatesResult = {
   __typename?: 'EmailTemplatesResult';
   templates: Array<EmailTemplate>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type EmergingRole = {
+  __typename?: 'EmergingRole';
+  avgSalaryMidpoint: Maybe<Scalars['Float']['output']>;
+  count: Scalars['Int']['output'];
+  firstSeenDate: Scalars['String']['output'];
+  isNovel: Scalars['Boolean']['output'];
+  normalizedTitle: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  topCompanies: Array<Scalars['String']['output']>;
+  topSkills: Array<Scalars['String']['output']>;
+  weekOverWeekGrowth: Scalars['Float']['output'];
+};
+
+export type EmergingRolesReport = {
+  __typename?: 'EmergingRolesReport';
+  declining: Array<EmergingRole>;
+  novelTitles: Array<EmergingRole>;
+  period: Scalars['String']['output'];
+  surging: Array<EmergingRole>;
 };
 
 export type EnhanceAllContactsResult = {
@@ -817,6 +926,14 @@ export type GenerateReplyResult = {
   subject: Scalars['String']['output'];
 };
 
+export type GrowthReport = {
+  __typename?: 'GrowthReport';
+  byIndustry: Array<IndustryGrowth>;
+  byRegion: Array<RegionGrowth>;
+  overallGrowthRate: Scalars['Float']['output'];
+  period: Scalars['String']['output'];
+};
+
 export type ImportCompaniesResult = {
   __typename?: 'ImportCompaniesResult';
   errors: Array<Scalars['String']['output']>;
@@ -869,6 +986,15 @@ export type ImportResendResult = {
   success: Scalars['Boolean']['output'];
   totalFetched: Scalars['Int']['output'];
   updatedCount: Scalars['Int']['output'];
+};
+
+export type IndustryGrowth = {
+  __typename?: 'IndustryGrowth';
+  currentCount: Scalars['Int']['output'];
+  growthRate: Scalars['Float']['output'];
+  industry: Scalars['String']['output'];
+  previousCount: Scalars['Int']['output'];
+  remoteRatio: Scalars['Float']['output'];
 };
 
 export type IntentDashboard = {
@@ -924,6 +1050,16 @@ export type IntentSignalsResponse = {
   __typename?: 'IntentSignalsResponse';
   signals: Array<IntentSignal>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type JobCountTrend = {
+  __typename?: 'JobCountTrend';
+  avgDailyRemote: Scalars['Float']['output'];
+  dataPoints: Array<DailyJobCount>;
+  growthRate: Scalars['Float']['output'];
+  period: Scalars['String']['output'];
+  query: Scalars['String']['output'];
+  trend: Scalars['String']['output'];
 };
 
 export type LinkedInPost = {
@@ -996,6 +1132,12 @@ export type Mutation = {
   classifyReceivedEmail: ClassifyEmailResult;
   computeContactDeletionScores: BatchOperationResult;
   computeNextTouchScores: ComputeNextTouchScoresResult;
+  /**
+   * Count remote jobs for a batch of companies via Voyager API.
+   * Stores counts as company metadata (for voyagerRemoteJobCounts query).
+   * Admin only.
+   */
+  countRemoteVoyagerJobs: CountRemoteVoyagerJobsResult;
   createCompany: Company;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
@@ -1042,6 +1184,12 @@ export type Mutation = {
   sendScheduledEmailNow: SendNowResult;
   snoozeReminder: ContactReminder;
   syncResendEmails: SyncResendResult;
+  /**
+   * Fetch jobs from Voyager API and upsert into linkedin_posts (type='job').
+   * Optionally creates intent_signals (hiring_intent) for each company with postings.
+   * Admin only.
+   */
+  syncVoyagerJobs: SyncVoyagerJobsResult;
   unarchiveEmail: ArchiveEmailResult;
   unblockCompany: Company;
   unflagContactForDeletion: Contact;
@@ -1122,6 +1270,11 @@ export type MutationComputeContactDeletionScoresArgs = {
 
 export type MutationComputeNextTouchScoresArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationCountRemoteVoyagerJobsArgs = {
+  input: CountRemoteVoyagerJobsInput;
 };
 
 
@@ -1356,6 +1509,11 @@ export type MutationSyncResendEmailsArgs = {
 };
 
 
+export type MutationSyncVoyagerJobsArgs = {
+  input: SyncVoyagerJobsInput;
+};
+
+
 export type MutationUnarchiveEmailArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1504,6 +1662,47 @@ export type Query = {
   similarCompanies: Array<SimilarCompanyResult>;
   similarPosts: Array<SimilarPost>;
   userSettings: Maybe<UserSettings>;
+  /** Full analytics dashboard — runs all 10 metrics in parallel. */
+  voyagerAnalyticsDashboard: VoyagerAnalyticsDashboard;
+  /** 10. Geographic arbitrage opportunities (remote roles with high-salary-region pay). */
+  voyagerArbitrage: ArbitrageReport;
+  /**
+   * Get all Voyager-sourced jobs for a specific company.
+   * Reads from linkedin_posts where type='job' and raw_data contains voyager metadata.
+   */
+  voyagerCompanyJobs: Array<LinkedInPost>;
+  /** 8. Competitive analysis (most aggressive remote hirers). */
+  voyagerCompetitiveAnalysis: CompetitiveReport;
+  /** 9. Emerging role detection (new job titles appearing). */
+  voyagerEmergingRoles: EmergingRolesReport;
+  /** 3. Remote job growth rate by industry and region. */
+  voyagerGrowthReport: GrowthReport;
+  /** 2. Company hiring velocity detection (jobs posted per week). */
+  voyagerHiringVelocity: Array<CompanyVelocity>;
+  /** 1. Daily remote job count tracking by query/keyword. */
+  voyagerJobCountTrend: JobCountTrend;
+  /**
+   * Search LinkedIn jobs via Voyager API proxy.
+   * Requires CSRF token forwarded from an authenticated LinkedIn session.
+   * Results are NOT persisted — use syncVoyagerJobs to store.
+   */
+  voyagerJobSearch: VoyagerJobSearchResult;
+  /**
+   * Get cached remote job counts per company.
+   * Reads from the most recent countRemoteVoyagerJobs result stored in DB,
+   * NOT a live Voyager call. Use the mutation to refresh.
+   */
+  voyagerRemoteJobCounts: Array<VoyagerCompanyJobCount>;
+  /** Aggregate remote-work metrics across all companies with Voyager data. */
+  voyagerRemoteMetrics: VoyagerRemoteMetrics;
+  /** 7. Repost frequency analysis (indicator of hard-to-fill roles). */
+  voyagerRepostAnalysis: RepostReport;
+  /** 4. Salary trend analysis for remote roles. */
+  voyagerSalaryTrends: SalaryTrend;
+  /** 5. Skills demand tracking (most requested skills in remote AI/ML jobs). */
+  voyagerSkillsDemand: SkillsDemandReport;
+  /** 6. Time-to-fill estimation (how long jobs stay open). */
+  voyagerTimeToFill: TimeToFillReport;
 };
 
 
@@ -1742,6 +1941,76 @@ export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
 };
 
+
+export type QueryVoyagerAnalyticsDashboardArgs = {
+  query?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerArbitrageArgs = {
+  minPremiumPercent?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type QueryVoyagerCompanyJobsArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryVoyagerCompetitiveAnalysisArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerEmergingRolesArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerGrowthReportArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerHiringVelocityArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryVoyagerJobCountTrendArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+  query: Scalars['String']['input'];
+};
+
+
+export type QueryVoyagerJobSearchArgs = {
+  input: VoyagerJobSearchInput;
+};
+
+
+export type QueryVoyagerRemoteJobCountsArgs = {
+  companyIds: Array<Scalars['Int']['input']>;
+};
+
+
+export type QueryVoyagerRemoteMetricsArgs = {
+  minRemoteJobs?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryVoyagerSalaryTrendsArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+  query?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerSkillsDemandArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+  query?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type RankedContact = {
   __typename?: 'RankedContact';
   contact: Contact;
@@ -1792,6 +2061,37 @@ export type RefreshIntentResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type RegionGrowth = {
+  __typename?: 'RegionGrowth';
+  currentCount: Scalars['Int']['output'];
+  growthRate: Scalars['Float']['output'];
+  location: Scalars['String']['output'];
+  previousCount: Scalars['Int']['output'];
+  remoteCount: Scalars['Int']['output'];
+};
+
+export type RepostReport = {
+  __typename?: 'RepostReport';
+  avgDaysOpen: Scalars['Float']['output'];
+  avgRepostCount: Scalars['Float']['output'];
+  hardToFillJobs: Array<RepostSignal>;
+  repostRate: Scalars['Float']['output'];
+  repostedJobs: Scalars['Int']['output'];
+  totalJobsTracked: Scalars['Int']['output'];
+};
+
+export type RepostSignal = {
+  __typename?: 'RepostSignal';
+  companyName: Scalars['String']['output'];
+  daysSinceFirst: Scalars['Float']['output'];
+  firstSeenDate: Scalars['String']['output'];
+  isHardToFill: Scalars['Boolean']['output'];
+  jobTitle: Scalars['String']['output'];
+  jobUrl: Scalars['String']['output'];
+  lastSeenDate: Scalars['String']['output'];
+  repostCount: Scalars['Int']['output'];
+};
+
 export type ResendEmailDetail = {
   __typename?: 'ResendEmailDetail';
   bcc: Maybe<Array<Scalars['String']['output']>>;
@@ -1805,6 +2105,41 @@ export type ResendEmailDetail = {
   subject: Maybe<Scalars['String']['output']>;
   text: Maybe<Scalars['String']['output']>;
   to: Array<Scalars['String']['output']>;
+};
+
+export type SalaryBand = {
+  __typename?: 'SalaryBand';
+  currency: Scalars['String']['output'];
+  max: Scalars['Float']['output'];
+  median: Scalars['Float']['output'];
+  min: Scalars['Float']['output'];
+  p25: Scalars['Float']['output'];
+  p75: Scalars['Float']['output'];
+  sampleCount: Scalars['Int']['output'];
+};
+
+export type SalaryRegionBreakdown = {
+  __typename?: 'SalaryRegionBreakdown';
+  band: SalaryBand;
+  region: Scalars['String']['output'];
+};
+
+export type SalarySeniorityBreakdown = {
+  __typename?: 'SalarySeniorityBreakdown';
+  band: SalaryBand;
+  level: Scalars['String']['output'];
+};
+
+export type SalaryTrend = {
+  __typename?: 'SalaryTrend';
+  byRegion: Array<SalaryRegionBreakdown>;
+  bySeniority: Array<SalarySeniorityBreakdown>;
+  currentBand: SalaryBand;
+  medianDelta: Scalars['Float']['output'];
+  period: Scalars['String']['output'];
+  previousBand: SalaryBand;
+  query: Scalars['String']['output'];
+  trend: Scalars['String']['output'];
 };
 
 export type SalescueAnalyzeResult = {
@@ -2247,11 +2582,32 @@ export type SimilarPost = {
   similarity: Scalars['Float']['output'];
 };
 
+export type SkillDemand = {
+  __typename?: 'SkillDemand';
+  avgConfidence: Scalars['Float']['output'];
+  count: Scalars['Int']['output'];
+  escoLabel: Maybe<Scalars['String']['output']>;
+  pctOfTotal: Scalars['Float']['output'];
+  skill: Scalars['String']['output'];
+  trend: Scalars['String']['output'];
+  weeksInTop20: Scalars['Int']['output'];
+};
+
 export type SkillMatchResult = {
   __typename?: 'SkillMatchResult';
   claimedSkills: Array<Scalars['String']['output']>;
   githubLanguages: Array<Scalars['String']['output']>;
   matched: Scalars['Boolean']['output'];
+};
+
+export type SkillsDemandReport = {
+  __typename?: 'SkillsDemandReport';
+  decliningSkills: Array<SkillDemand>;
+  emergingSkills: Array<SkillDemand>;
+  period: Scalars['String']['output'];
+  query: Scalars['String']['output'];
+  topSkills: Array<SkillDemand>;
+  totalJobsAnalyzed: Scalars['Int']['output'];
 };
 
 export type SourceType =
@@ -2268,6 +2624,64 @@ export type SyncResendResult = {
   success: Scalars['Boolean']['output'];
   totalCount: Scalars['Int']['output'];
   updatedCount: Scalars['Int']['output'];
+};
+
+export type SyncVoyagerJobsInput = {
+  /** Company LinkedIn numeric IDs to sync jobs for */
+  companyNumericIds: Array<Scalars['String']['input']>;
+  /** Create intent_signals for hiring_intent. Default true. */
+  createIntentSignals?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Link to existing companies by linkedin_url match. Default true. */
+  matchCompanies?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Only sync remote jobs (workplaceType=2). Default true. */
+  remoteOnly?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Result of a syncVoyagerJobs mutation. */
+export type SyncVoyagerJobsResult = {
+  __typename?: 'SyncVoyagerJobsResult';
+  /** Companies matched or newly created */
+  companiesMatched: Scalars['Int']['output'];
+  errors: Array<Scalars['String']['output']>;
+  /** Intent signals created from job discoveries */
+  intentSignalsCreated: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  /** Jobs upserted into linkedin_posts */
+  upserted: Scalars['Int']['output'];
+};
+
+export type TimeToFillEstimate = {
+  __typename?: 'TimeToFillEstimate';
+  avgDays: Scalars['Float']['output'];
+  medianDays: Scalars['Float']['output'];
+  p90Days: Scalars['Float']['output'];
+  sampleSize: Scalars['Int']['output'];
+};
+
+export type TimeToFillIndustry = {
+  __typename?: 'TimeToFillIndustry';
+  estimate: TimeToFillEstimate;
+  industry: Scalars['String']['output'];
+};
+
+export type TimeToFillRemoteComparison = {
+  __typename?: 'TimeToFillRemoteComparison';
+  onsite: TimeToFillEstimate;
+  remote: TimeToFillEstimate;
+};
+
+export type TimeToFillReport = {
+  __typename?: 'TimeToFillReport';
+  byIndustry: Array<TimeToFillIndustry>;
+  byRemoteVsOnsite: TimeToFillRemoteComparison;
+  bySeniority: Array<TimeToFillSeniority>;
+  overall: TimeToFillEstimate;
+};
+
+export type TimeToFillSeniority = {
+  __typename?: 'TimeToFillSeniority';
+  estimate: TimeToFillEstimate;
+  level: Scalars['String']['output'];
 };
 
 export type UnverifyContactsResult = {
@@ -2423,6 +2837,98 @@ export type VerifyEmailResult = {
   verified: Maybe<Scalars['Boolean']['output']>;
 };
 
+export type VoyagerAnalyticsDashboard = {
+  __typename?: 'VoyagerAnalyticsDashboard';
+  arbitrage: ArbitrageReport;
+  competitiveAnalysis: CompetitiveReport;
+  emergingRoles: EmergingRolesReport;
+  generatedAt: Scalars['String']['output'];
+  growthReport: GrowthReport;
+  hiringVelocity: Array<CompanyVelocity>;
+  jobCounts: JobCountTrend;
+  query: Scalars['String']['output'];
+  repostAnalysis: RepostReport;
+  salaryTrends: SalaryTrend;
+  skillsDemand: SkillsDemandReport;
+  timeToFill: TimeToFillReport;
+};
+
+/** Remote job count for a single company (via Voyager jobCards endpoint). */
+export type VoyagerCompanyJobCount = {
+  __typename?: 'VoyagerCompanyJobCount';
+  companyId: Scalars['Int']['output'];
+  companyName: Scalars['String']['output'];
+  companyNumericId: Scalars['String']['output'];
+  fetchedAt: Scalars['String']['output'];
+  remoteJobCount: Scalars['Int']['output'];
+  /** 'ok' | 'auth_error' | 'rate_limited' | 'error' */
+  status: Scalars['String']['output'];
+};
+
+/** A single job card returned by the Voyager jobSearch endpoint. */
+export type VoyagerJobCard = {
+  __typename?: 'VoyagerJobCard';
+  /** Company name (denormalized from Voyager) */
+  companyName: Maybe<Scalars['String']['output']>;
+  /** Company LinkedIn numeric ID (for cross-referencing) */
+  companyNumericId: Maybe<Scalars['String']['output']>;
+  /** Employment type from Voyager (full-time, contract, etc.) */
+  employmentType: Maybe<Scalars['String']['output']>;
+  /** If stored locally, the linkedin_posts.id */
+  linkedInPostId: Maybe<Scalars['Int']['output']>;
+  /** Location string from Voyager */
+  location: Maybe<Scalars['String']['output']>;
+  /** When posted (ISO timestamp, derived from listedAt epoch) */
+  postedAt: Maybe<Scalars['String']['output']>;
+  /** Job title from Voyager payload */
+  title: Scalars['String']['output'];
+  /** LinkedIn canonical URL for this job */
+  url: Scalars['String']['output'];
+  /** LinkedIn job posting URN (e.g. urn:li:fsd_jobPosting:1234567890) */
+  urn: Scalars['String']['output'];
+  /** Workplace type: 1=on-site, 2=remote, 3=hybrid */
+  workplaceType: Maybe<Scalars['Int']['output']>;
+};
+
+export type VoyagerJobSearchInput = {
+  /** Company LinkedIn numeric IDs to filter by */
+  companyIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Geographic region ID (92000000 = Worldwide) */
+  geoId?: InputMaybe<Scalars['String']['input']>;
+  /** Free-text keyword query */
+  keywords?: InputMaybe<Scalars['String']['input']>;
+  /** Maximum results to return (capped at 100 server-side) */
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  /** Pagination offset */
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  /** Workplace type filter: 1=on-site, 2=remote, 3=hybrid */
+  workplaceType?: InputMaybe<Scalars['Int']['input']>;
+};
+
+/** Paginated result from a Voyager job search. */
+export type VoyagerJobSearchResult = {
+  __typename?: 'VoyagerJobSearchResult';
+  /** Whether more pages exist beyond the returned window */
+  hasMore: Scalars['Boolean']['output'];
+  jobs: Array<VoyagerJobCard>;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** Aggregate remote-work metrics derived from Voyager job data. */
+export type VoyagerRemoteMetrics = {
+  __typename?: 'VoyagerRemoteMetrics';
+  /** Number of companies queried */
+  companiesQueried: Scalars['Int']['output'];
+  /** Number of companies that have at least 1 remote posting */
+  companiesWithRemoteJobs: Scalars['Int']['output'];
+  /** When this metrics snapshot was computed */
+  computedAt: Scalars['String']['output'];
+  /** Top companies by remote job count */
+  topCompanies: Array<VoyagerCompanyJobCount>;
+  /** Total remote jobs found across queried companies */
+  totalRemoteJobs: Scalars['Int']['output'];
+};
+
 export type WarcPointer = {
   __typename?: 'WarcPointer';
   digest: Maybe<Scalars['String']['output']>;
@@ -2514,6 +3020,9 @@ export type ResolversTypes = {
   AnalyzeCompanyResponse: ResolverTypeWrapper<Partial<AnalyzeCompanyResponse>>;
   AnalyzePostsResult: ResolverTypeWrapper<Partial<AnalyzePostsResult>>;
   ApplyEmailPatternResult: ResolverTypeWrapper<Partial<ApplyEmailPatternResult>>;
+  ArbitrageOpportunity: ResolverTypeWrapper<Partial<ArbitrageOpportunity>>;
+  ArbitrageRegion: ResolverTypeWrapper<Partial<ArbitrageRegion>>;
+  ArbitrageReport: ResolverTypeWrapper<Partial<ArbitrageReport>>;
   ArchiveEmailResult: ResolverTypeWrapper<Partial<ArchiveEmailResult>>;
   BatchDetectIntentResult: ResolverTypeWrapper<Partial<BatchDetectIntentResult>>;
   BatchOperationResult: ResolverTypeWrapper<Partial<BatchOperationResult>>;
@@ -2533,6 +3042,9 @@ export type ResolversTypes = {
   CompanyImportInput: ResolverTypeWrapper<Partial<CompanyImportInput>>;
   CompanyOrderBy: ResolverTypeWrapper<Partial<CompanyOrderBy>>;
   CompanySnapshot: ResolverTypeWrapper<Partial<CompanySnapshot>>;
+  CompanyVelocity: ResolverTypeWrapper<Partial<CompanyVelocity>>;
+  CompetitiveReport: ResolverTypeWrapper<Partial<CompetitiveReport>>;
+  CompetitorProfile: ResolverTypeWrapper<Partial<CompetitorProfile>>;
   ComputeNextTouchScoresResult: ResolverTypeWrapper<Partial<ComputeNextTouchScoresResult>>;
   Contact: ResolverTypeWrapper<Partial<Contact>>;
   ContactAIGitHubRepo: ResolverTypeWrapper<Partial<ContactAiGitHubRepo>>;
@@ -2544,11 +3056,14 @@ export type ResolversTypes = {
   ContactReminder: ResolverTypeWrapper<Partial<ContactReminder>>;
   ContactReminderWithContact: ResolverTypeWrapper<Partial<ContactReminderWithContact>>;
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
+  CountRemoteVoyagerJobsInput: ResolverTypeWrapper<Partial<CountRemoteVoyagerJobsInput>>;
+  CountRemoteVoyagerJobsResult: ResolverTypeWrapper<Partial<CountRemoteVoyagerJobsResult>>;
   CreateCampaignInput: ResolverTypeWrapper<Partial<CreateCampaignInput>>;
   CreateCompanyInput: ResolverTypeWrapper<Partial<CreateCompanyInput>>;
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
   CreateEmailTemplateInput: ResolverTypeWrapper<Partial<CreateEmailTemplateInput>>;
   CreateReminderInput: ResolverTypeWrapper<Partial<CreateReminderInput>>;
+  DailyJobCount: ResolverTypeWrapper<Partial<DailyJobCount>>;
   DataQualityScore: ResolverTypeWrapper<Partial<DataQualityScore>>;
   DateTime: ResolverTypeWrapper<Partial<Scalars['DateTime']['output']>>;
   DeleteCampaignResult: ResolverTypeWrapper<Partial<DeleteCampaignResult>>;
@@ -2564,6 +3079,8 @@ export type ResolversTypes = {
   EmailStats: ResolverTypeWrapper<Partial<EmailStats>>;
   EmailTemplate: ResolverTypeWrapper<Partial<EmailTemplate>>;
   EmailTemplatesResult: ResolverTypeWrapper<Partial<EmailTemplatesResult>>;
+  EmergingRole: ResolverTypeWrapper<Partial<EmergingRole>>;
+  EmergingRolesReport: ResolverTypeWrapper<Partial<EmergingRolesReport>>;
   EnhanceAllContactsResult: ResolverTypeWrapper<Partial<EnhanceAllContactsResult>>;
   EnhanceCompanyResponse: ResolverTypeWrapper<Partial<EnhanceCompanyResponse>>;
   EnrichAIContactResult: ResolverTypeWrapper<Partial<EnrichAiContactResult>>;
@@ -2584,12 +3101,14 @@ export type ResolversTypes = {
   GenerateEmbeddingsResult: ResolverTypeWrapper<Partial<GenerateEmbeddingsResult>>;
   GenerateReplyInput: ResolverTypeWrapper<Partial<GenerateReplyInput>>;
   GenerateReplyResult: ResolverTypeWrapper<Partial<GenerateReplyResult>>;
+  GrowthReport: ResolverTypeWrapper<Partial<GrowthReport>>;
   ImportCompaniesResult: ResolverTypeWrapper<Partial<ImportCompaniesResult>>;
   ImportCompanyResult: ResolverTypeWrapper<Partial<ImportCompanyResult>>;
   ImportCompanyWithContactsInput: ResolverTypeWrapper<Partial<ImportCompanyWithContactsInput>>;
   ImportContactInput: ResolverTypeWrapper<Partial<ImportContactInput>>;
   ImportContactsResult: ResolverTypeWrapper<Partial<ImportContactsResult>>;
   ImportResendResult: ResolverTypeWrapper<Partial<ImportResendResult>>;
+  IndustryGrowth: ResolverTypeWrapper<Partial<IndustryGrowth>>;
   Int: ResolverTypeWrapper<Partial<Scalars['Int']['output']>>;
   IntentDashboard: ResolverTypeWrapper<Partial<IntentDashboard>>;
   IntentScore: ResolverTypeWrapper<Partial<IntentScore>>;
@@ -2597,6 +3116,7 @@ export type ResolversTypes = {
   IntentSignalType: ResolverTypeWrapper<Partial<IntentSignalType>>;
   IntentSignalsResponse: ResolverTypeWrapper<Partial<IntentSignalsResponse>>;
   JSON: ResolverTypeWrapper<Partial<Scalars['JSON']['output']>>;
+  JobCountTrend: ResolverTypeWrapper<Partial<JobCountTrend>>;
   LinkedInPost: ResolverTypeWrapper<Partial<LinkedInPost>>;
   LinkedInPostType: ResolverTypeWrapper<Partial<LinkedInPostType>>;
   MLStats: ResolverTypeWrapper<Partial<MlStats>>;
@@ -2612,7 +3132,14 @@ export type ResolversTypes = {
   ReceivedEmailsResult: ResolverTypeWrapper<Partial<ReceivedEmailsResult>>;
   RecommendedCompany: ResolverTypeWrapper<Partial<RecommendedCompany>>;
   RefreshIntentResult: ResolverTypeWrapper<Partial<RefreshIntentResult>>;
+  RegionGrowth: ResolverTypeWrapper<Partial<RegionGrowth>>;
+  RepostReport: ResolverTypeWrapper<Partial<RepostReport>>;
+  RepostSignal: ResolverTypeWrapper<Partial<RepostSignal>>;
   ResendEmailDetail: ResolverTypeWrapper<Partial<ResendEmailDetail>>;
+  SalaryBand: ResolverTypeWrapper<Partial<SalaryBand>>;
+  SalaryRegionBreakdown: ResolverTypeWrapper<Partial<SalaryRegionBreakdown>>;
+  SalarySeniorityBreakdown: ResolverTypeWrapper<Partial<SalarySeniorityBreakdown>>;
+  SalaryTrend: ResolverTypeWrapper<Partial<SalaryTrend>>;
   SalescueAnalyzeResult: ResolverTypeWrapper<Partial<SalescueAnalyzeResult>>;
   SalescueAnomalyResult: ResolverTypeWrapper<Partial<SalescueAnomalyResult>>;
   SalescueBanditAlternative: ResolverTypeWrapper<Partial<SalescueBanditAlternative>>;
@@ -2661,10 +3188,19 @@ export type ResolversTypes = {
   SignalTypeCount: ResolverTypeWrapper<Partial<SignalTypeCount>>;
   SimilarCompanyResult: ResolverTypeWrapper<Partial<SimilarCompanyResult>>;
   SimilarPost: ResolverTypeWrapper<Partial<SimilarPost>>;
+  SkillDemand: ResolverTypeWrapper<Partial<SkillDemand>>;
   SkillMatchResult: ResolverTypeWrapper<Partial<SkillMatchResult>>;
+  SkillsDemandReport: ResolverTypeWrapper<Partial<SkillsDemandReport>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
+  SyncVoyagerJobsInput: ResolverTypeWrapper<Partial<SyncVoyagerJobsInput>>;
+  SyncVoyagerJobsResult: ResolverTypeWrapper<Partial<SyncVoyagerJobsResult>>;
+  TimeToFillEstimate: ResolverTypeWrapper<Partial<TimeToFillEstimate>>;
+  TimeToFillIndustry: ResolverTypeWrapper<Partial<TimeToFillIndustry>>;
+  TimeToFillRemoteComparison: ResolverTypeWrapper<Partial<TimeToFillRemoteComparison>>;
+  TimeToFillReport: ResolverTypeWrapper<Partial<TimeToFillReport>>;
+  TimeToFillSeniority: ResolverTypeWrapper<Partial<TimeToFillSeniority>>;
   URL: ResolverTypeWrapper<Partial<Scalars['URL']['output']>>;
   UnverifyContactsResult: ResolverTypeWrapper<Partial<UnverifyContactsResult>>;
   UpdateCampaignInput: ResolverTypeWrapper<Partial<UpdateCampaignInput>>;
@@ -2680,6 +3216,12 @@ export type ResolversTypes = {
   VerifyAuthenticityResult: ResolverTypeWrapper<Partial<VerifyAuthenticityResult>>;
   VerifyCompanyContactsResult: ResolverTypeWrapper<Partial<VerifyCompanyContactsResult>>;
   VerifyEmailResult: ResolverTypeWrapper<Partial<VerifyEmailResult>>;
+  VoyagerAnalyticsDashboard: ResolverTypeWrapper<Partial<VoyagerAnalyticsDashboard>>;
+  VoyagerCompanyJobCount: ResolverTypeWrapper<Partial<VoyagerCompanyJobCount>>;
+  VoyagerJobCard: ResolverTypeWrapper<Partial<VoyagerJobCard>>;
+  VoyagerJobSearchInput: ResolverTypeWrapper<Partial<VoyagerJobSearchInput>>;
+  VoyagerJobSearchResult: ResolverTypeWrapper<Partial<VoyagerJobSearchResult>>;
+  VoyagerRemoteMetrics: ResolverTypeWrapper<Partial<VoyagerRemoteMetrics>>;
   WarcPointer: ResolverTypeWrapper<Partial<WarcPointer>>;
   WarcPointerInput: ResolverTypeWrapper<Partial<WarcPointerInput>>;
 };
@@ -2689,6 +3231,9 @@ export type ResolversParentTypes = {
   AnalyzeCompanyResponse: Partial<AnalyzeCompanyResponse>;
   AnalyzePostsResult: Partial<AnalyzePostsResult>;
   ApplyEmailPatternResult: Partial<ApplyEmailPatternResult>;
+  ArbitrageOpportunity: Partial<ArbitrageOpportunity>;
+  ArbitrageRegion: Partial<ArbitrageRegion>;
+  ArbitrageReport: Partial<ArbitrageReport>;
   ArchiveEmailResult: Partial<ArchiveEmailResult>;
   BatchDetectIntentResult: Partial<BatchDetectIntentResult>;
   BatchOperationResult: Partial<BatchOperationResult>;
@@ -2706,6 +3251,9 @@ export type ResolversParentTypes = {
   CompanyFilterInput: Partial<CompanyFilterInput>;
   CompanyImportInput: Partial<CompanyImportInput>;
   CompanySnapshot: Partial<CompanySnapshot>;
+  CompanyVelocity: Partial<CompanyVelocity>;
+  CompetitiveReport: Partial<CompetitiveReport>;
+  CompetitorProfile: Partial<CompetitorProfile>;
   ComputeNextTouchScoresResult: Partial<ComputeNextTouchScoresResult>;
   Contact: Partial<Contact>;
   ContactAIGitHubRepo: Partial<ContactAiGitHubRepo>;
@@ -2717,11 +3265,14 @@ export type ResolversParentTypes = {
   ContactReminder: Partial<ContactReminder>;
   ContactReminderWithContact: Partial<ContactReminderWithContact>;
   ContactsResult: Partial<ContactsResult>;
+  CountRemoteVoyagerJobsInput: Partial<CountRemoteVoyagerJobsInput>;
+  CountRemoteVoyagerJobsResult: Partial<CountRemoteVoyagerJobsResult>;
   CreateCampaignInput: Partial<CreateCampaignInput>;
   CreateCompanyInput: Partial<CreateCompanyInput>;
   CreateContactInput: Partial<CreateContactInput>;
   CreateEmailTemplateInput: Partial<CreateEmailTemplateInput>;
   CreateReminderInput: Partial<CreateReminderInput>;
+  DailyJobCount: Partial<DailyJobCount>;
   DataQualityScore: Partial<DataQualityScore>;
   DateTime: Partial<Scalars['DateTime']['output']>;
   DeleteCampaignResult: Partial<DeleteCampaignResult>;
@@ -2737,6 +3288,8 @@ export type ResolversParentTypes = {
   EmailStats: Partial<EmailStats>;
   EmailTemplate: Partial<EmailTemplate>;
   EmailTemplatesResult: Partial<EmailTemplatesResult>;
+  EmergingRole: Partial<EmergingRole>;
+  EmergingRolesReport: Partial<EmergingRolesReport>;
   EnhanceAllContactsResult: Partial<EnhanceAllContactsResult>;
   EnhanceCompanyResponse: Partial<EnhanceCompanyResponse>;
   EnrichAIContactResult: Partial<EnrichAiContactResult>;
@@ -2756,18 +3309,21 @@ export type ResolversParentTypes = {
   GenerateEmbeddingsResult: Partial<GenerateEmbeddingsResult>;
   GenerateReplyInput: Partial<GenerateReplyInput>;
   GenerateReplyResult: Partial<GenerateReplyResult>;
+  GrowthReport: Partial<GrowthReport>;
   ImportCompaniesResult: Partial<ImportCompaniesResult>;
   ImportCompanyResult: Partial<ImportCompanyResult>;
   ImportCompanyWithContactsInput: Partial<ImportCompanyWithContactsInput>;
   ImportContactInput: Partial<ImportContactInput>;
   ImportContactsResult: Partial<ImportContactsResult>;
   ImportResendResult: Partial<ImportResendResult>;
+  IndustryGrowth: Partial<IndustryGrowth>;
   Int: Partial<Scalars['Int']['output']>;
   IntentDashboard: Partial<IntentDashboard>;
   IntentScore: Partial<IntentScore>;
   IntentSignal: Partial<IntentSignal>;
   IntentSignalsResponse: Partial<IntentSignalsResponse>;
   JSON: Partial<Scalars['JSON']['output']>;
+  JobCountTrend: Partial<JobCountTrend>;
   LinkedInPost: Partial<LinkedInPost>;
   MLStats: Partial<MlStats>;
   MarkRepliedResult: Partial<MarkRepliedResult>;
@@ -2782,7 +3338,14 @@ export type ResolversParentTypes = {
   ReceivedEmailsResult: Partial<ReceivedEmailsResult>;
   RecommendedCompany: Partial<RecommendedCompany>;
   RefreshIntentResult: Partial<RefreshIntentResult>;
+  RegionGrowth: Partial<RegionGrowth>;
+  RepostReport: Partial<RepostReport>;
+  RepostSignal: Partial<RepostSignal>;
   ResendEmailDetail: Partial<ResendEmailDetail>;
+  SalaryBand: Partial<SalaryBand>;
+  SalaryRegionBreakdown: Partial<SalaryRegionBreakdown>;
+  SalarySeniorityBreakdown: Partial<SalarySeniorityBreakdown>;
+  SalaryTrend: Partial<SalaryTrend>;
   SalescueAnalyzeResult: Partial<SalescueAnalyzeResult>;
   SalescueAnomalyResult: Partial<SalescueAnomalyResult>;
   SalescueBanditAlternative: Partial<SalescueBanditAlternative>;
@@ -2830,9 +3393,18 @@ export type ResolversParentTypes = {
   SignalTypeCount: Partial<SignalTypeCount>;
   SimilarCompanyResult: Partial<SimilarCompanyResult>;
   SimilarPost: Partial<SimilarPost>;
+  SkillDemand: Partial<SkillDemand>;
   SkillMatchResult: Partial<SkillMatchResult>;
+  SkillsDemandReport: Partial<SkillsDemandReport>;
   String: Partial<Scalars['String']['output']>;
   SyncResendResult: Partial<SyncResendResult>;
+  SyncVoyagerJobsInput: Partial<SyncVoyagerJobsInput>;
+  SyncVoyagerJobsResult: Partial<SyncVoyagerJobsResult>;
+  TimeToFillEstimate: Partial<TimeToFillEstimate>;
+  TimeToFillIndustry: Partial<TimeToFillIndustry>;
+  TimeToFillRemoteComparison: Partial<TimeToFillRemoteComparison>;
+  TimeToFillReport: Partial<TimeToFillReport>;
+  TimeToFillSeniority: Partial<TimeToFillSeniority>;
   URL: Partial<Scalars['URL']['output']>;
   UnverifyContactsResult: Partial<UnverifyContactsResult>;
   UpdateCampaignInput: Partial<UpdateCampaignInput>;
@@ -2848,6 +3420,12 @@ export type ResolversParentTypes = {
   VerifyAuthenticityResult: Partial<VerifyAuthenticityResult>;
   VerifyCompanyContactsResult: Partial<VerifyCompanyContactsResult>;
   VerifyEmailResult: Partial<VerifyEmailResult>;
+  VoyagerAnalyticsDashboard: Partial<VoyagerAnalyticsDashboard>;
+  VoyagerCompanyJobCount: Partial<VoyagerCompanyJobCount>;
+  VoyagerJobCard: Partial<VoyagerJobCard>;
+  VoyagerJobSearchInput: Partial<VoyagerJobSearchInput>;
+  VoyagerJobSearchResult: Partial<VoyagerJobSearchResult>;
+  VoyagerRemoteMetrics: Partial<VoyagerRemoteMetrics>;
   WarcPointer: Partial<WarcPointer>;
   WarcPointerInput: Partial<WarcPointerInput>;
 };
@@ -2872,6 +3450,32 @@ export type ApplyEmailPatternResultResolvers<ContextType = GraphQLContext, Paren
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   pattern?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type ArbitrageOpportunityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ArbitrageOpportunity'] = ResolversParentTypes['ArbitrageOpportunity']> = {
+  companyName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  currency?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isHighSalaryRegionPay?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  jobTitle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  jobUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  postedLocation?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  salaryMax?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  salaryMedian?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  salaryMin?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  salaryPercentile?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  salaryPremium?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type ArbitrageRegionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ArbitrageRegion'] = ResolversParentTypes['ArbitrageRegion']> = {
+  avgPremium?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  region?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ArbitrageReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ArbitrageReport'] = ResolversParentTypes['ArbitrageReport']> = {
+  byRegion?: Resolver<Array<ResolversTypes['ArbitrageRegion']>, ParentType, ContextType>;
+  topOpportunities?: Resolver<Array<ResolversTypes['ArbitrageOpportunity']>, ParentType, ContextType>;
+  totalOpportunities?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type ArchiveEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ArchiveEmailResult'] = ResolversParentTypes['ArchiveEmailResult']> = {
@@ -3024,6 +3628,39 @@ export type CompanySnapshotResolvers<ContextType = GraphQLContext, ParentType ex
   text_sample?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
+export type CompanyVelocityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompanyVelocity'] = ResolversParentTypes['CompanyVelocity']> = {
+  companyId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  companyKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  companyName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  jobsPostedLastWeek?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  jobsPostedThisWeek?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  remoteJobsPercent?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  rollingAvgWeekly?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  velocityDelta?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  velocityTrend?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type CompetitiveReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompetitiveReport'] = ResolversParentTypes['CompetitiveReport']> = {
+  fastestGrowing?: Resolver<Array<ResolversTypes['CompetitorProfile']>, ParentType, ContextType>;
+  newEntrants?: Resolver<Array<ResolversTypes['CompetitorProfile']>, ParentType, ContextType>;
+  period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  topHirers?: Resolver<Array<ResolversTypes['CompetitorProfile']>, ParentType, ContextType>;
+};
+
+export type CompetitorProfileResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompetitorProfile'] = ResolversParentTypes['CompetitorProfile']> = {
+  aiMlOpenings?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  avgSalaryMidpoint?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  companyId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  companyKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  companyName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  hiringVelocity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  rank?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  remoteOpenings?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  remotePercent?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  topSkillsSought?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  totalOpenings?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type ComputeNextTouchScoresResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ComputeNextTouchScoresResult'] = ResolversParentTypes['ComputeNextTouchScoresResult']> = {
   contactsUpdated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3170,6 +3807,21 @@ export type ContactsResultResolvers<ContextType = GraphQLContext, ParentType ext
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
+export type CountRemoteVoyagerJobsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CountRemoteVoyagerJobsResult'] = ResolversParentTypes['CountRemoteVoyagerJobsResult']> = {
+  counts?: Resolver<Array<ResolversTypes['VoyagerCompanyJobCount']>, ParentType, ContextType>;
+  errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type DailyJobCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DailyJobCount'] = ResolversParentTypes['DailyJobCount']> = {
+  date?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  newJobs24h?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  query?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  remoteJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  remoteRatio?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  totalJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type DataQualityScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DataQualityScore'] = ResolversParentTypes['DataQualityScore']> = {
   completeness?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   composite?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
@@ -3294,6 +3946,25 @@ export type EmailTemplatesResultResolvers<ContextType = GraphQLContext, ParentTy
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
+export type EmergingRoleResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmergingRole'] = ResolversParentTypes['EmergingRole']> = {
+  avgSalaryMidpoint?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  firstSeenDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isNovel?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  normalizedTitle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  topCompanies?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  topSkills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  weekOverWeekGrowth?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type EmergingRolesReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmergingRolesReport'] = ResolversParentTypes['EmergingRolesReport']> = {
+  declining?: Resolver<Array<ResolversTypes['EmergingRole']>, ParentType, ContextType>;
+  novelTitles?: Resolver<Array<ResolversTypes['EmergingRole']>, ParentType, ContextType>;
+  period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  surging?: Resolver<Array<ResolversTypes['EmergingRole']>, ParentType, ContextType>;
+};
+
 export type EnhanceAllContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EnhanceAllContactsResult'] = ResolversParentTypes['EnhanceAllContactsResult']> = {
   companiesProcessed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3406,6 +4077,13 @@ export type GenerateReplyResultResolvers<ContextType = GraphQLContext, ParentTyp
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type GrowthReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GrowthReport'] = ResolversParentTypes['GrowthReport']> = {
+  byIndustry?: Resolver<Array<ResolversTypes['IndustryGrowth']>, ParentType, ContextType>;
+  byRegion?: Resolver<Array<ResolversTypes['RegionGrowth']>, ParentType, ContextType>;
+  overallGrowthRate?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type ImportCompaniesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ImportCompaniesResult'] = ResolversParentTypes['ImportCompaniesResult']> = {
   errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -3439,6 +4117,14 @@ export type ImportResendResultResolvers<ContextType = GraphQLContext, ParentType
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   totalFetched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   updatedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type IndustryGrowthResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IndustryGrowth'] = ResolversParentTypes['IndustryGrowth']> = {
+  currentCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  growthRate?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  industry?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  previousCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  remoteRatio?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
 export type IntentDashboardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntentDashboard'] = ResolversParentTypes['IntentDashboard']> = {
@@ -3487,6 +4173,15 @@ export type IntentSignalsResponseResolvers<ContextType = GraphQLContext, ParentT
 export interface JsonScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['JSON'], any> {
   name: 'JSON';
 }
+
+export type JobCountTrendResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['JobCountTrend'] = ResolversParentTypes['JobCountTrend']> = {
+  avgDailyRemote?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  dataPoints?: Resolver<Array<ResolversTypes['DailyJobCount']>, ParentType, ContextType>;
+  growthRate?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  query?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  trend?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
 
 export type LinkedInPostResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LinkedInPost'] = ResolversParentTypes['LinkedInPost']> = {
   analyzedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3548,6 +4243,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   classifyReceivedEmail?: Resolver<ResolversTypes['ClassifyEmailResult'], ParentType, ContextType, RequireFields<MutationClassifyReceivedEmailArgs, 'id'>>;
   computeContactDeletionScores?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationComputeContactDeletionScoresArgs>>;
   computeNextTouchScores?: Resolver<ResolversTypes['ComputeNextTouchScoresResult'], ParentType, ContextType, RequireFields<MutationComputeNextTouchScoresArgs, 'companyId'>>;
+  countRemoteVoyagerJobs?: Resolver<ResolversTypes['CountRemoteVoyagerJobsResult'], ParentType, ContextType, RequireFields<MutationCountRemoteVoyagerJobsArgs, 'input'>>;
   createCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationCreateCompanyArgs, 'input'>>;
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationCreateContactArgs, 'input'>>;
   createDraftCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationCreateDraftCampaignArgs, 'input'>>;
@@ -3593,6 +4289,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   sendScheduledEmailNow?: Resolver<ResolversTypes['SendNowResult'], ParentType, ContextType, RequireFields<MutationSendScheduledEmailNowArgs, 'resendId'>>;
   snoozeReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationSnoozeReminderArgs, 'days' | 'id'>>;
   syncResendEmails?: Resolver<ResolversTypes['SyncResendResult'], ParentType, ContextType, Partial<MutationSyncResendEmailsArgs>>;
+  syncVoyagerJobs?: Resolver<ResolversTypes['SyncVoyagerJobsResult'], ParentType, ContextType, RequireFields<MutationSyncVoyagerJobsArgs, 'input'>>;
   unarchiveEmail?: Resolver<ResolversTypes['ArchiveEmailResult'], ParentType, ContextType, RequireFields<MutationUnarchiveEmailArgs, 'id'>>;
   unblockCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUnblockCompanyArgs, 'id'>>;
   unflagContactForDeletion?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationUnflagContactForDeletionArgs, 'id'>>;
@@ -3663,6 +4360,21 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   similarCompanies?: Resolver<Array<ResolversTypes['SimilarCompanyResult']>, ParentType, ContextType, RequireFields<QuerySimilarCompaniesArgs, 'query'>>;
   similarPosts?: Resolver<Array<ResolversTypes['SimilarPost']>, ParentType, ContextType, RequireFields<QuerySimilarPostsArgs, 'postId'>>;
   userSettings?: Resolver<Maybe<ResolversTypes['UserSettings']>, ParentType, ContextType, RequireFields<QueryUserSettingsArgs, 'userId'>>;
+  voyagerAnalyticsDashboard?: Resolver<ResolversTypes['VoyagerAnalyticsDashboard'], ParentType, ContextType, Partial<QueryVoyagerAnalyticsDashboardArgs>>;
+  voyagerArbitrage?: Resolver<ResolversTypes['ArbitrageReport'], ParentType, ContextType, Partial<QueryVoyagerArbitrageArgs>>;
+  voyagerCompanyJobs?: Resolver<Array<ResolversTypes['LinkedInPost']>, ParentType, ContextType, RequireFields<QueryVoyagerCompanyJobsArgs, 'companyId'>>;
+  voyagerCompetitiveAnalysis?: Resolver<ResolversTypes['CompetitiveReport'], ParentType, ContextType, Partial<QueryVoyagerCompetitiveAnalysisArgs>>;
+  voyagerEmergingRoles?: Resolver<ResolversTypes['EmergingRolesReport'], ParentType, ContextType, Partial<QueryVoyagerEmergingRolesArgs>>;
+  voyagerGrowthReport?: Resolver<ResolversTypes['GrowthReport'], ParentType, ContextType, Partial<QueryVoyagerGrowthReportArgs>>;
+  voyagerHiringVelocity?: Resolver<Array<ResolversTypes['CompanyVelocity']>, ParentType, ContextType, Partial<QueryVoyagerHiringVelocityArgs>>;
+  voyagerJobCountTrend?: Resolver<ResolversTypes['JobCountTrend'], ParentType, ContextType, RequireFields<QueryVoyagerJobCountTrendArgs, 'query'>>;
+  voyagerJobSearch?: Resolver<ResolversTypes['VoyagerJobSearchResult'], ParentType, ContextType, RequireFields<QueryVoyagerJobSearchArgs, 'input'>>;
+  voyagerRemoteJobCounts?: Resolver<Array<ResolversTypes['VoyagerCompanyJobCount']>, ParentType, ContextType, RequireFields<QueryVoyagerRemoteJobCountsArgs, 'companyIds'>>;
+  voyagerRemoteMetrics?: Resolver<ResolversTypes['VoyagerRemoteMetrics'], ParentType, ContextType, Partial<QueryVoyagerRemoteMetricsArgs>>;
+  voyagerRepostAnalysis?: Resolver<ResolversTypes['RepostReport'], ParentType, ContextType>;
+  voyagerSalaryTrends?: Resolver<ResolversTypes['SalaryTrend'], ParentType, ContextType, Partial<QueryVoyagerSalaryTrendsArgs>>;
+  voyagerSkillsDemand?: Resolver<ResolversTypes['SkillsDemandReport'], ParentType, ContextType, Partial<QueryVoyagerSkillsDemandArgs>>;
+  voyagerTimeToFill?: Resolver<ResolversTypes['TimeToFillReport'], ParentType, ContextType>;
 };
 
 export type RankedContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RankedContact'] = ResolversParentTypes['RankedContact']> = {
@@ -3710,6 +4422,34 @@ export type RefreshIntentResultResolvers<ContextType = GraphQLContext, ParentTyp
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type RegionGrowthResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RegionGrowth'] = ResolversParentTypes['RegionGrowth']> = {
+  currentCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  growthRate?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  location?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  previousCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  remoteCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type RepostReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RepostReport'] = ResolversParentTypes['RepostReport']> = {
+  avgDaysOpen?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  avgRepostCount?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  hardToFillJobs?: Resolver<Array<ResolversTypes['RepostSignal']>, ParentType, ContextType>;
+  repostRate?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  repostedJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalJobsTracked?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type RepostSignalResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RepostSignal'] = ResolversParentTypes['RepostSignal']> = {
+  companyName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  daysSinceFirst?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  firstSeenDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isHardToFill?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  jobTitle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  jobUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastSeenDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  repostCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type ResendEmailDetailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResendEmailDetail'] = ResolversParentTypes['ResendEmailDetail']> = {
   bcc?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   cc?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
@@ -3722,6 +4462,37 @@ export type ResendEmailDetailResolvers<ContextType = GraphQLContext, ParentType 
   subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   to?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type SalaryBandResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalaryBand'] = ResolversParentTypes['SalaryBand']> = {
+  currency?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  max?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  median?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  min?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  p25?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  p75?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  sampleCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type SalaryRegionBreakdownResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalaryRegionBreakdown'] = ResolversParentTypes['SalaryRegionBreakdown']> = {
+  band?: Resolver<ResolversTypes['SalaryBand'], ParentType, ContextType>;
+  region?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalarySeniorityBreakdownResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalarySeniorityBreakdown'] = ResolversParentTypes['SalarySeniorityBreakdown']> = {
+  band?: Resolver<ResolversTypes['SalaryBand'], ParentType, ContextType>;
+  level?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalaryTrendResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalaryTrend'] = ResolversParentTypes['SalaryTrend']> = {
+  byRegion?: Resolver<Array<ResolversTypes['SalaryRegionBreakdown']>, ParentType, ContextType>;
+  bySeniority?: Resolver<Array<ResolversTypes['SalarySeniorityBreakdown']>, ParentType, ContextType>;
+  currentBand?: Resolver<ResolversTypes['SalaryBand'], ParentType, ContextType>;
+  medianDelta?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  previousBand?: Resolver<ResolversTypes['SalaryBand'], ParentType, ContextType>;
+  query?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  trend?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type SalescueAnalyzeResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueAnalyzeResult'] = ResolversParentTypes['SalescueAnalyzeResult']> = {
@@ -4074,10 +4845,29 @@ export type SimilarPostResolvers<ContextType = GraphQLContext, ParentType extend
   similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
+export type SkillDemandResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillDemand'] = ResolversParentTypes['SkillDemand']> = {
+  avgConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  escoLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  pctOfTotal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  skill?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  trend?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  weeksInTop20?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type SkillMatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillMatchResult'] = ResolversParentTypes['SkillMatchResult']> = {
   claimedSkills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   githubLanguages?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   matched?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type SkillsDemandReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillsDemandReport'] = ResolversParentTypes['SkillsDemandReport']> = {
+  decliningSkills?: Resolver<Array<ResolversTypes['SkillDemand']>, ParentType, ContextType>;
+  emergingSkills?: Resolver<Array<ResolversTypes['SkillDemand']>, ParentType, ContextType>;
+  period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  query?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  topSkills?: Resolver<Array<ResolversTypes['SkillDemand']>, ParentType, ContextType>;
+  totalJobsAnalyzed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SyncResendResult'] = ResolversParentTypes['SyncResendResult']> = {
@@ -4086,6 +4876,43 @@ export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType e
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   updatedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type SyncVoyagerJobsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SyncVoyagerJobsResult'] = ResolversParentTypes['SyncVoyagerJobsResult']> = {
+  companiesMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  intentSignalsCreated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  upserted?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type TimeToFillEstimateResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillEstimate'] = ResolversParentTypes['TimeToFillEstimate']> = {
+  avgDays?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  medianDays?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  p90Days?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  sampleSize?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type TimeToFillIndustryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillIndustry'] = ResolversParentTypes['TimeToFillIndustry']> = {
+  estimate?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
+  industry?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type TimeToFillRemoteComparisonResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillRemoteComparison'] = ResolversParentTypes['TimeToFillRemoteComparison']> = {
+  onsite?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
+  remote?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
+};
+
+export type TimeToFillReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillReport'] = ResolversParentTypes['TimeToFillReport']> = {
+  byIndustry?: Resolver<Array<ResolversTypes['TimeToFillIndustry']>, ParentType, ContextType>;
+  byRemoteVsOnsite?: Resolver<ResolversTypes['TimeToFillRemoteComparison'], ParentType, ContextType>;
+  bySeniority?: Resolver<Array<ResolversTypes['TimeToFillSeniority']>, ParentType, ContextType>;
+  overall?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
+};
+
+export type TimeToFillSeniorityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillSeniority'] = ResolversParentTypes['TimeToFillSeniority']> = {
+  estimate?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
+  level?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export interface UrlScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['URL'], any> {
@@ -4147,6 +4974,57 @@ export type VerifyEmailResultResolvers<ContextType = GraphQLContext, ParentType 
   verified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
 };
 
+export type VoyagerAnalyticsDashboardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerAnalyticsDashboard'] = ResolversParentTypes['VoyagerAnalyticsDashboard']> = {
+  arbitrage?: Resolver<ResolversTypes['ArbitrageReport'], ParentType, ContextType>;
+  competitiveAnalysis?: Resolver<ResolversTypes['CompetitiveReport'], ParentType, ContextType>;
+  emergingRoles?: Resolver<ResolversTypes['EmergingRolesReport'], ParentType, ContextType>;
+  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  growthReport?: Resolver<ResolversTypes['GrowthReport'], ParentType, ContextType>;
+  hiringVelocity?: Resolver<Array<ResolversTypes['CompanyVelocity']>, ParentType, ContextType>;
+  jobCounts?: Resolver<ResolversTypes['JobCountTrend'], ParentType, ContextType>;
+  query?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  repostAnalysis?: Resolver<ResolversTypes['RepostReport'], ParentType, ContextType>;
+  salaryTrends?: Resolver<ResolversTypes['SalaryTrend'], ParentType, ContextType>;
+  skillsDemand?: Resolver<ResolversTypes['SkillsDemandReport'], ParentType, ContextType>;
+  timeToFill?: Resolver<ResolversTypes['TimeToFillReport'], ParentType, ContextType>;
+};
+
+export type VoyagerCompanyJobCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerCompanyJobCount'] = ResolversParentTypes['VoyagerCompanyJobCount']> = {
+  companyId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  companyName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  companyNumericId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  fetchedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  remoteJobCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type VoyagerJobCardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerJobCard'] = ResolversParentTypes['VoyagerJobCard']> = {
+  companyName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  companyNumericId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  employmentType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  linkedInPostId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  location?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  postedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  urn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  workplaceType?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+};
+
+export type VoyagerJobSearchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerJobSearchResult'] = ResolversParentTypes['VoyagerJobSearchResult']> = {
+  hasMore?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  jobs?: Resolver<Array<ResolversTypes['VoyagerJobCard']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type VoyagerRemoteMetricsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerRemoteMetrics'] = ResolversParentTypes['VoyagerRemoteMetrics']> = {
+  companiesQueried?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  companiesWithRemoteJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  computedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  topCompanies?: Resolver<Array<ResolversTypes['VoyagerCompanyJobCount']>, ParentType, ContextType>;
+  totalRemoteJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type WarcPointerResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WarcPointer'] = ResolversParentTypes['WarcPointer']> = {
   digest?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   filename?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -4158,6 +5036,9 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AnalyzeCompanyResponse?: AnalyzeCompanyResponseResolvers<ContextType>;
   AnalyzePostsResult?: AnalyzePostsResultResolvers<ContextType>;
   ApplyEmailPatternResult?: ApplyEmailPatternResultResolvers<ContextType>;
+  ArbitrageOpportunity?: ArbitrageOpportunityResolvers<ContextType>;
+  ArbitrageRegion?: ArbitrageRegionResolvers<ContextType>;
+  ArbitrageReport?: ArbitrageReportResolvers<ContextType>;
   ArchiveEmailResult?: ArchiveEmailResultResolvers<ContextType>;
   BatchDetectIntentResult?: BatchDetectIntentResultResolvers<ContextType>;
   BatchOperationResult?: BatchOperationResultResolvers<ContextType>;
@@ -4170,6 +5051,9 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CompanyContactEmail?: CompanyContactEmailResolvers<ContextType>;
   CompanyFact?: CompanyFactResolvers<ContextType>;
   CompanySnapshot?: CompanySnapshotResolvers<ContextType>;
+  CompanyVelocity?: CompanyVelocityResolvers<ContextType>;
+  CompetitiveReport?: CompetitiveReportResolvers<ContextType>;
+  CompetitorProfile?: CompetitorProfileResolvers<ContextType>;
   ComputeNextTouchScoresResult?: ComputeNextTouchScoresResultResolvers<ContextType>;
   Contact?: ContactResolvers<ContextType>;
   ContactAIGitHubRepo?: ContactAiGitHubRepoResolvers<ContextType>;
@@ -4180,6 +5064,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactReminder?: ContactReminderResolvers<ContextType>;
   ContactReminderWithContact?: ContactReminderWithContactResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
+  CountRemoteVoyagerJobsResult?: CountRemoteVoyagerJobsResultResolvers<ContextType>;
+  DailyJobCount?: DailyJobCountResolvers<ContextType>;
   DataQualityScore?: DataQualityScoreResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   DeleteCampaignResult?: DeleteCampaignResultResolvers<ContextType>;
@@ -4195,6 +5081,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   EmailStats?: EmailStatsResolvers<ContextType>;
   EmailTemplate?: EmailTemplateResolvers<ContextType>;
   EmailTemplatesResult?: EmailTemplatesResultResolvers<ContextType>;
+  EmergingRole?: EmergingRoleResolvers<ContextType>;
+  EmergingRolesReport?: EmergingRolesReportResolvers<ContextType>;
   EnhanceAllContactsResult?: EnhanceAllContactsResultResolvers<ContextType>;
   EnhanceCompanyResponse?: EnhanceCompanyResponseResolvers<ContextType>;
   EnrichAIContactResult?: EnrichAiContactResultResolvers<ContextType>;
@@ -4209,15 +5097,18 @@ export type Resolvers<ContextType = GraphQLContext> = {
   GenerateEmailResult?: GenerateEmailResultResolvers<ContextType>;
   GenerateEmbeddingsResult?: GenerateEmbeddingsResultResolvers<ContextType>;
   GenerateReplyResult?: GenerateReplyResultResolvers<ContextType>;
+  GrowthReport?: GrowthReportResolvers<ContextType>;
   ImportCompaniesResult?: ImportCompaniesResultResolvers<ContextType>;
   ImportCompanyResult?: ImportCompanyResultResolvers<ContextType>;
   ImportContactsResult?: ImportContactsResultResolvers<ContextType>;
   ImportResendResult?: ImportResendResultResolvers<ContextType>;
+  IndustryGrowth?: IndustryGrowthResolvers<ContextType>;
   IntentDashboard?: IntentDashboardResolvers<ContextType>;
   IntentScore?: IntentScoreResolvers<ContextType>;
   IntentSignal?: IntentSignalResolvers<ContextType>;
   IntentSignalsResponse?: IntentSignalsResponseResolvers<ContextType>;
   JSON?: GraphQLScalarType;
+  JobCountTrend?: JobCountTrendResolvers<ContextType>;
   LinkedInPost?: LinkedInPostResolvers<ContextType>;
   MLStats?: MlStatsResolvers<ContextType>;
   MarkRepliedResult?: MarkRepliedResultResolvers<ContextType>;
@@ -4231,7 +5122,14 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ReceivedEmailsResult?: ReceivedEmailsResultResolvers<ContextType>;
   RecommendedCompany?: RecommendedCompanyResolvers<ContextType>;
   RefreshIntentResult?: RefreshIntentResultResolvers<ContextType>;
+  RegionGrowth?: RegionGrowthResolvers<ContextType>;
+  RepostReport?: RepostReportResolvers<ContextType>;
+  RepostSignal?: RepostSignalResolvers<ContextType>;
   ResendEmailDetail?: ResendEmailDetailResolvers<ContextType>;
+  SalaryBand?: SalaryBandResolvers<ContextType>;
+  SalaryRegionBreakdown?: SalaryRegionBreakdownResolvers<ContextType>;
+  SalarySeniorityBreakdown?: SalarySeniorityBreakdownResolvers<ContextType>;
+  SalaryTrend?: SalaryTrendResolvers<ContextType>;
   SalescueAnalyzeResult?: SalescueAnalyzeResultResolvers<ContextType>;
   SalescueAnomalyResult?: SalescueAnomalyResultResolvers<ContextType>;
   SalescueBanditAlternative?: SalescueBanditAlternativeResolvers<ContextType>;
@@ -4276,8 +5174,16 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SignalTypeCount?: SignalTypeCountResolvers<ContextType>;
   SimilarCompanyResult?: SimilarCompanyResultResolvers<ContextType>;
   SimilarPost?: SimilarPostResolvers<ContextType>;
+  SkillDemand?: SkillDemandResolvers<ContextType>;
   SkillMatchResult?: SkillMatchResultResolvers<ContextType>;
+  SkillsDemandReport?: SkillsDemandReportResolvers<ContextType>;
   SyncResendResult?: SyncResendResultResolvers<ContextType>;
+  SyncVoyagerJobsResult?: SyncVoyagerJobsResultResolvers<ContextType>;
+  TimeToFillEstimate?: TimeToFillEstimateResolvers<ContextType>;
+  TimeToFillIndustry?: TimeToFillIndustryResolvers<ContextType>;
+  TimeToFillRemoteComparison?: TimeToFillRemoteComparisonResolvers<ContextType>;
+  TimeToFillReport?: TimeToFillReportResolvers<ContextType>;
+  TimeToFillSeniority?: TimeToFillSeniorityResolvers<ContextType>;
   URL?: GraphQLScalarType;
   UnverifyContactsResult?: UnverifyContactsResultResolvers<ContextType>;
   Upload?: GraphQLScalarType;
@@ -4286,6 +5192,11 @@ export type Resolvers<ContextType = GraphQLContext> = {
   VerifyAuthenticityResult?: VerifyAuthenticityResultResolvers<ContextType>;
   VerifyCompanyContactsResult?: VerifyCompanyContactsResultResolvers<ContextType>;
   VerifyEmailResult?: VerifyEmailResultResolvers<ContextType>;
+  VoyagerAnalyticsDashboard?: VoyagerAnalyticsDashboardResolvers<ContextType>;
+  VoyagerCompanyJobCount?: VoyagerCompanyJobCountResolvers<ContextType>;
+  VoyagerJobCard?: VoyagerJobCardResolvers<ContextType>;
+  VoyagerJobSearchResult?: VoyagerJobSearchResultResolvers<ContextType>;
+  VoyagerRemoteMetrics?: VoyagerRemoteMetricsResolvers<ContextType>;
   WarcPointer?: WarcPointerResolvers<ContextType>;
 };
 

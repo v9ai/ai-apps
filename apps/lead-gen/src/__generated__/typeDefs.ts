@@ -29,6 +29,32 @@ type ApplyEmailPatternResult {
   success: Boolean!
 }
 
+type ArbitrageOpportunity {
+  companyName: String!
+  currency: String!
+  isHighSalaryRegionPay: Boolean!
+  jobTitle: String!
+  jobUrl: String!
+  postedLocation: String!
+  salaryMax: Float!
+  salaryMedian: Float!
+  salaryMin: Float!
+  salaryPercentile: Float!
+  salaryPremium: Float!
+}
+
+type ArbitrageRegion {
+  avgPremium: Float!
+  count: Int!
+  region: String!
+}
+
+type ArbitrageReport {
+  byRegion: [ArbitrageRegion!]!
+  topOpportunities: [ArbitrageOpportunity!]!
+  totalOpportunities: Int!
+}
+
 type ArchiveEmailResult {
   message: String!
   success: Boolean!
@@ -233,6 +259,39 @@ type CompanySnapshot {
   text_sample: String
 }
 
+type CompanyVelocity {
+  companyId: Int!
+  companyKey: String!
+  companyName: String!
+  jobsPostedLastWeek: Int!
+  jobsPostedThisWeek: Int!
+  remoteJobsPercent: Float!
+  rollingAvgWeekly: Float!
+  velocityDelta: Int!
+  velocityTrend: String!
+}
+
+type CompetitiveReport {
+  fastestGrowing: [CompetitorProfile!]!
+  newEntrants: [CompetitorProfile!]!
+  period: String!
+  topHirers: [CompetitorProfile!]!
+}
+
+type CompetitorProfile {
+  aiMlOpenings: Int!
+  avgSalaryMidpoint: Float
+  companyId: Int!
+  companyKey: String!
+  companyName: String!
+  hiringVelocity: Float!
+  rank: Int!
+  remoteOpenings: Int!
+  remotePercent: Float!
+  topSkillsSought: [String!]!
+  totalOpenings: Int!
+}
+
 type ComputeNextTouchScoresResult {
   contactsUpdated: Int!
   message: String!
@@ -393,6 +452,18 @@ type ContactsResult {
   totalCount: Int!
 }
 
+input CountRemoteVoyagerJobsInput {
+  """Company LinkedIn numeric IDs to count remote jobs for"""
+  companyNumericIds: [String!]!
+}
+
+"""Result of a countRemoteVoyagerJobs mutation."""
+type CountRemoteVoyagerJobsResult {
+  counts: [VoyagerCompanyJobCount!]!
+  errors: [String!]!
+  success: Boolean!
+}
+
 input CreateCampaignInput {
   addAntiThreadHeader: Boolean
   addUnsubscribeHeaders: Boolean
@@ -461,6 +532,15 @@ input CreateReminderInput {
   note: String
   recurrence: String
   remindAt: String!
+}
+
+type DailyJobCount {
+  date: String!
+  newJobs24h: Int!
+  query: String!
+  remoteJobs: Int!
+  remoteRatio: Float!
+  totalJobs: Int!
 }
 
 type DataQualityScore {
@@ -581,6 +661,25 @@ type EmailTemplate {
 type EmailTemplatesResult {
   templates: [EmailTemplate!]!
   totalCount: Int!
+}
+
+type EmergingRole {
+  avgSalaryMidpoint: Float
+  count: Int!
+  firstSeenDate: String!
+  isNovel: Boolean!
+  normalizedTitle: String!
+  title: String!
+  topCompanies: [String!]!
+  topSkills: [String!]!
+  weekOverWeekGrowth: Float!
+}
+
+type EmergingRolesReport {
+  declining: [EmergingRole!]!
+  novelTitles: [EmergingRole!]!
+  period: String!
+  surging: [EmergingRole!]!
 }
 
 type EnhanceAllContactsResult {
@@ -744,6 +843,13 @@ type GenerateReplyResult {
   subject: String!
 }
 
+type GrowthReport {
+  byIndustry: [IndustryGrowth!]!
+  byRegion: [RegionGrowth!]!
+  overallGrowthRate: Float!
+  period: String!
+}
+
 type ImportCompaniesResult {
   errors: [String!]!
   failed: Int!
@@ -792,6 +898,14 @@ type ImportResendResult {
   success: Boolean!
   totalFetched: Int!
   updatedCount: Int!
+}
+
+type IndustryGrowth {
+  currentCount: Int!
+  growthRate: Float!
+  industry: String!
+  previousCount: Int!
+  remoteRatio: Float!
 }
 
 type IntentDashboard {
@@ -847,6 +961,15 @@ type IntentSignalsResponse {
 }
 
 scalar JSON
+
+type JobCountTrend {
+  avgDailyRemote: Float!
+  dataPoints: [DailyJobCount!]!
+  growthRate: Float!
+  period: String!
+  query: String!
+  trend: String!
+}
 
 type LinkedInPost {
   analyzedAt: String
@@ -913,6 +1036,12 @@ type Mutation {
   classifyReceivedEmail(id: Int!): ClassifyEmailResult!
   computeContactDeletionScores(companyId: Int): BatchOperationResult!
   computeNextTouchScores(companyId: Int!): ComputeNextTouchScoresResult!
+  """
+  Count remote jobs for a batch of companies via Voyager API.
+  Stores counts as company metadata (for voyagerRemoteJobCounts query).
+  Admin only.
+  """
+  countRemoteVoyagerJobs(input: CountRemoteVoyagerJobsInput!): CountRemoteVoyagerJobsResult!
   createCompany(input: CreateCompanyInput!): Company!
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
@@ -959,6 +1088,12 @@ type Mutation {
   sendScheduledEmailNow(resendId: String!): SendNowResult!
   snoozeReminder(days: Int!, id: Int!): ContactReminder!
   syncResendEmails(companyId: Int): SyncResendResult!
+  """
+  Fetch jobs from Voyager API and upsert into linkedin_posts (type='job').
+  Optionally creates intent_signals (hiring_intent) for each company with postings.
+  Admin only.
+  """
+  syncVoyagerJobs(input: SyncVoyagerJobsInput!): SyncVoyagerJobsResult!
   unarchiveEmail(id: Int!): ArchiveEmailResult!
   unblockCompany(id: Int!): Company!
   unflagContactForDeletion(id: Int!): Contact!
@@ -1049,6 +1184,51 @@ type Query {
   similarCompanies(limit: Int, minAiTier: Int, minScore: Float, query: String!): [SimilarCompanyResult!]!
   similarPosts(limit: Int, minScore: Float, postId: Int!): [SimilarPost!]!
   userSettings(userId: String!): UserSettings
+  """Full analytics dashboard — runs all 10 metrics in parallel."""
+  voyagerAnalyticsDashboard(query: String): VoyagerAnalyticsDashboard!
+  """
+  10. Geographic arbitrage opportunities (remote roles with high-salary-region pay).
+  """
+  voyagerArbitrage(minPremiumPercent: Float): ArbitrageReport!
+  """
+  Get all Voyager-sourced jobs for a specific company.
+  Reads from linkedin_posts where type='job' and raw_data contains voyager metadata.
+  """
+  voyagerCompanyJobs(companyId: Int!, limit: Int, offset: Int): [LinkedInPost!]!
+  """8. Competitive analysis (most aggressive remote hirers)."""
+  voyagerCompetitiveAnalysis(period: String): CompetitiveReport!
+  """9. Emerging role detection (new job titles appearing)."""
+  voyagerEmergingRoles(period: String): EmergingRolesReport!
+  """3. Remote job growth rate by industry and region."""
+  voyagerGrowthReport(period: String): GrowthReport!
+  """2. Company hiring velocity detection (jobs posted per week)."""
+  voyagerHiringVelocity(limit: Int): [CompanyVelocity!]!
+  """1. Daily remote job count tracking by query/keyword."""
+  voyagerJobCountTrend(period: String, query: String!): JobCountTrend!
+  """
+  Search LinkedIn jobs via Voyager API proxy.
+  Requires CSRF token forwarded from an authenticated LinkedIn session.
+  Results are NOT persisted — use syncVoyagerJobs to store.
+  """
+  voyagerJobSearch(input: VoyagerJobSearchInput!): VoyagerJobSearchResult!
+  """
+  Get cached remote job counts per company.
+  Reads from the most recent countRemoteVoyagerJobs result stored in DB,
+  NOT a live Voyager call. Use the mutation to refresh.
+  """
+  voyagerRemoteJobCounts(companyIds: [Int!]!): [VoyagerCompanyJobCount!]!
+  """Aggregate remote-work metrics across all companies with Voyager data."""
+  voyagerRemoteMetrics(minRemoteJobs: Int): VoyagerRemoteMetrics!
+  """7. Repost frequency analysis (indicator of hard-to-fill roles)."""
+  voyagerRepostAnalysis: RepostReport!
+  """4. Salary trend analysis for remote roles."""
+  voyagerSalaryTrends(period: String, query: String): SalaryTrend!
+  """
+  5. Skills demand tracking (most requested skills in remote AI/ML jobs).
+  """
+  voyagerSkillsDemand(period: String, query: String): SkillsDemandReport!
+  """6. Time-to-fill estimation (how long jobs stay open)."""
+  voyagerTimeToFill: TimeToFillReport!
 }
 
 type RankedContact {
@@ -1096,6 +1276,34 @@ type RefreshIntentResult {
   success: Boolean!
 }
 
+type RegionGrowth {
+  currentCount: Int!
+  growthRate: Float!
+  location: String!
+  previousCount: Int!
+  remoteCount: Int!
+}
+
+type RepostReport {
+  avgDaysOpen: Float!
+  avgRepostCount: Float!
+  hardToFillJobs: [RepostSignal!]!
+  repostRate: Float!
+  repostedJobs: Int!
+  totalJobsTracked: Int!
+}
+
+type RepostSignal {
+  companyName: String!
+  daysSinceFirst: Float!
+  firstSeenDate: String!
+  isHardToFill: Boolean!
+  jobTitle: String!
+  jobUrl: String!
+  lastSeenDate: String!
+  repostCount: Int!
+}
+
 type ResendEmailDetail {
   bcc: [String!]
   cc: [String!]
@@ -1108,6 +1316,37 @@ type ResendEmailDetail {
   subject: String
   text: String
   to: [String!]!
+}
+
+type SalaryBand {
+  currency: String!
+  max: Float!
+  median: Float!
+  min: Float!
+  p25: Float!
+  p75: Float!
+  sampleCount: Int!
+}
+
+type SalaryRegionBreakdown {
+  band: SalaryBand!
+  region: String!
+}
+
+type SalarySeniorityBreakdown {
+  band: SalaryBand!
+  level: String!
+}
+
+type SalaryTrend {
+  byRegion: [SalaryRegionBreakdown!]!
+  bySeniority: [SalarySeniorityBreakdown!]!
+  currentBand: SalaryBand!
+  medianDelta: Float!
+  period: String!
+  previousBand: SalaryBand!
+  query: String!
+  trend: String!
 }
 
 type SalescueAnalyzeResult {
@@ -1507,10 +1746,29 @@ type SimilarPost {
   similarity: Float!
 }
 
+type SkillDemand {
+  avgConfidence: Float!
+  count: Int!
+  escoLabel: String
+  pctOfTotal: Float!
+  skill: String!
+  trend: String!
+  weeksInTop20: Int!
+}
+
 type SkillMatchResult {
   claimedSkills: [String!]!
   githubLanguages: [String!]!
   matched: Boolean!
+}
+
+type SkillsDemandReport {
+  decliningSkills: [SkillDemand!]!
+  emergingSkills: [SkillDemand!]!
+  period: String!
+  query: String!
+  topSkills: [SkillDemand!]!
+  totalJobsAnalyzed: Int!
 }
 
 enum SourceType {
@@ -1527,6 +1785,58 @@ type SyncResendResult {
   success: Boolean!
   totalCount: Int!
   updatedCount: Int!
+}
+
+input SyncVoyagerJobsInput {
+  """Company LinkedIn numeric IDs to sync jobs for"""
+  companyNumericIds: [String!]!
+  """Create intent_signals for hiring_intent. Default true."""
+  createIntentSignals: Boolean
+  """Link to existing companies by linkedin_url match. Default true."""
+  matchCompanies: Boolean
+  """Only sync remote jobs (workplaceType=2). Default true."""
+  remoteOnly: Boolean
+}
+
+"""Result of a syncVoyagerJobs mutation."""
+type SyncVoyagerJobsResult {
+  """Companies matched or newly created"""
+  companiesMatched: Int!
+  errors: [String!]!
+  """Intent signals created from job discoveries"""
+  intentSignalsCreated: Int!
+  success: Boolean!
+  """Jobs upserted into linkedin_posts"""
+  upserted: Int!
+}
+
+type TimeToFillEstimate {
+  avgDays: Float!
+  medianDays: Float!
+  p90Days: Float!
+  sampleSize: Int!
+}
+
+type TimeToFillIndustry {
+  estimate: TimeToFillEstimate!
+  industry: String!
+}
+
+type TimeToFillRemoteComparison {
+  onsite: TimeToFillEstimate!
+  remote: TimeToFillEstimate!
+}
+
+type TimeToFillReport {
+  byIndustry: [TimeToFillIndustry!]!
+  byRemoteVsOnsite: TimeToFillRemoteComparison!
+  bySeniority: [TimeToFillSeniority!]!
+  overall: TimeToFillEstimate!
+}
+
+type TimeToFillSeniority {
+  estimate: TimeToFillEstimate!
+  level: String!
 }
 
 scalar URL
@@ -1678,6 +1988,93 @@ type VerifyEmailResult {
   success: Boolean!
   suggestedCorrection: String
   verified: Boolean
+}
+
+type VoyagerAnalyticsDashboard {
+  arbitrage: ArbitrageReport!
+  competitiveAnalysis: CompetitiveReport!
+  emergingRoles: EmergingRolesReport!
+  generatedAt: String!
+  growthReport: GrowthReport!
+  hiringVelocity: [CompanyVelocity!]!
+  jobCounts: JobCountTrend!
+  query: String!
+  repostAnalysis: RepostReport!
+  salaryTrends: SalaryTrend!
+  skillsDemand: SkillsDemandReport!
+  timeToFill: TimeToFillReport!
+}
+
+"""Remote job count for a single company (via Voyager jobCards endpoint)."""
+type VoyagerCompanyJobCount {
+  companyId: Int!
+  companyName: String!
+  companyNumericId: String!
+  fetchedAt: String!
+  remoteJobCount: Int!
+  """'ok' | 'auth_error' | 'rate_limited' | 'error'"""
+  status: String!
+}
+
+"""A single job card returned by the Voyager jobSearch endpoint."""
+type VoyagerJobCard {
+  """Company name (denormalized from Voyager)"""
+  companyName: String
+  """Company LinkedIn numeric ID (for cross-referencing)"""
+  companyNumericId: String
+  """Employment type from Voyager (full-time, contract, etc.)"""
+  employmentType: String
+  """If stored locally, the linkedin_posts.id"""
+  linkedInPostId: Int
+  """Location string from Voyager"""
+  location: String
+  """When posted (ISO timestamp, derived from listedAt epoch)"""
+  postedAt: String
+  """Job title from Voyager payload"""
+  title: String!
+  """LinkedIn canonical URL for this job"""
+  url: String!
+  """LinkedIn job posting URN (e.g. urn:li:fsd_jobPosting:1234567890)"""
+  urn: String!
+  """Workplace type: 1=on-site, 2=remote, 3=hybrid"""
+  workplaceType: Int
+}
+
+input VoyagerJobSearchInput {
+  """Company LinkedIn numeric IDs to filter by"""
+  companyIds: [String!]
+  """Geographic region ID (92000000 = Worldwide)"""
+  geoId: String
+  """Free-text keyword query"""
+  keywords: String
+  """Maximum results to return (capped at 100 server-side)"""
+  limit: Int
+  """Pagination offset"""
+  offset: Int
+  """Workplace type filter: 1=on-site, 2=remote, 3=hybrid"""
+  workplaceType: Int
+}
+
+"""Paginated result from a Voyager job search."""
+type VoyagerJobSearchResult {
+  """Whether more pages exist beyond the returned window"""
+  hasMore: Boolean!
+  jobs: [VoyagerJobCard!]!
+  totalCount: Int!
+}
+
+"""Aggregate remote-work metrics derived from Voyager job data."""
+type VoyagerRemoteMetrics {
+  """Number of companies queried"""
+  companiesQueried: Int!
+  """Number of companies that have at least 1 remote posting"""
+  companiesWithRemoteJobs: Int!
+  """When this metrics snapshot was computed"""
+  computedAt: String!
+  """Top companies by remote job count"""
+  topCompanies: [VoyagerCompanyJobCount!]!
+  """Total remote jobs found across queried companies"""
+  totalRemoteJobs: Int!
 }
 
 type WarcPointer {

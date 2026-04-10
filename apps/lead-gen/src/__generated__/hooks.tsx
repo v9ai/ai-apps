@@ -47,6 +47,35 @@ export type ApplyEmailPatternResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ArbitrageOpportunity = {
+  __typename?: 'ArbitrageOpportunity';
+  companyName: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  isHighSalaryRegionPay: Scalars['Boolean']['output'];
+  jobTitle: Scalars['String']['output'];
+  jobUrl: Scalars['String']['output'];
+  postedLocation: Scalars['String']['output'];
+  salaryMax: Scalars['Float']['output'];
+  salaryMedian: Scalars['Float']['output'];
+  salaryMin: Scalars['Float']['output'];
+  salaryPercentile: Scalars['Float']['output'];
+  salaryPremium: Scalars['Float']['output'];
+};
+
+export type ArbitrageRegion = {
+  __typename?: 'ArbitrageRegion';
+  avgPremium: Scalars['Float']['output'];
+  count: Scalars['Int']['output'];
+  region: Scalars['String']['output'];
+};
+
+export type ArbitrageReport = {
+  __typename?: 'ArbitrageReport';
+  byRegion: Array<ArbitrageRegion>;
+  topOpportunities: Array<ArbitrageOpportunity>;
+  totalOpportunities: Scalars['Int']['output'];
+};
+
 export type ArchiveEmailResult = {
   __typename?: 'ArchiveEmailResult';
   message: Scalars['String']['output'];
@@ -274,6 +303,42 @@ export type CompanySnapshot = {
   text_sample: Maybe<Scalars['String']['output']>;
 };
 
+export type CompanyVelocity = {
+  __typename?: 'CompanyVelocity';
+  companyId: Scalars['Int']['output'];
+  companyKey: Scalars['String']['output'];
+  companyName: Scalars['String']['output'];
+  jobsPostedLastWeek: Scalars['Int']['output'];
+  jobsPostedThisWeek: Scalars['Int']['output'];
+  remoteJobsPercent: Scalars['Float']['output'];
+  rollingAvgWeekly: Scalars['Float']['output'];
+  velocityDelta: Scalars['Int']['output'];
+  velocityTrend: Scalars['String']['output'];
+};
+
+export type CompetitiveReport = {
+  __typename?: 'CompetitiveReport';
+  fastestGrowing: Array<CompetitorProfile>;
+  newEntrants: Array<CompetitorProfile>;
+  period: Scalars['String']['output'];
+  topHirers: Array<CompetitorProfile>;
+};
+
+export type CompetitorProfile = {
+  __typename?: 'CompetitorProfile';
+  aiMlOpenings: Scalars['Int']['output'];
+  avgSalaryMidpoint: Maybe<Scalars['Float']['output']>;
+  companyId: Scalars['Int']['output'];
+  companyKey: Scalars['String']['output'];
+  companyName: Scalars['String']['output'];
+  hiringVelocity: Scalars['Float']['output'];
+  rank: Scalars['Int']['output'];
+  remoteOpenings: Scalars['Int']['output'];
+  remotePercent: Scalars['Float']['output'];
+  topSkillsSought: Array<Scalars['String']['output']>;
+  totalOpenings: Scalars['Int']['output'];
+};
+
 export type ComputeNextTouchScoresResult = {
   __typename?: 'ComputeNextTouchScoresResult';
   contactsUpdated: Scalars['Int']['output'];
@@ -444,6 +509,19 @@ export type ContactsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type CountRemoteVoyagerJobsInput = {
+  /** Company LinkedIn numeric IDs to count remote jobs for */
+  companyNumericIds: Array<Scalars['String']['input']>;
+};
+
+/** Result of a countRemoteVoyagerJobs mutation. */
+export type CountRemoteVoyagerJobsResult = {
+  __typename?: 'CountRemoteVoyagerJobsResult';
+  counts: Array<VoyagerCompanyJobCount>;
+  errors: Array<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type CreateCampaignInput = {
   addAntiThreadHeader?: InputMaybe<Scalars['Boolean']['input']>;
   addUnsubscribeHeaders?: InputMaybe<Scalars['Boolean']['input']>;
@@ -512,6 +590,16 @@ export type CreateReminderInput = {
   note?: InputMaybe<Scalars['String']['input']>;
   recurrence?: InputMaybe<Scalars['String']['input']>;
   remindAt: Scalars['String']['input'];
+};
+
+export type DailyJobCount = {
+  __typename?: 'DailyJobCount';
+  date: Scalars['String']['output'];
+  newJobs24h: Scalars['Int']['output'];
+  query: Scalars['String']['output'];
+  remoteJobs: Scalars['Int']['output'];
+  remoteRatio: Scalars['Float']['output'];
+  totalJobs: Scalars['Int']['output'];
 };
 
 export type DataQualityScore = {
@@ -641,6 +729,27 @@ export type EmailTemplatesResult = {
   __typename?: 'EmailTemplatesResult';
   templates: Array<EmailTemplate>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type EmergingRole = {
+  __typename?: 'EmergingRole';
+  avgSalaryMidpoint: Maybe<Scalars['Float']['output']>;
+  count: Scalars['Int']['output'];
+  firstSeenDate: Scalars['String']['output'];
+  isNovel: Scalars['Boolean']['output'];
+  normalizedTitle: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  topCompanies: Array<Scalars['String']['output']>;
+  topSkills: Array<Scalars['String']['output']>;
+  weekOverWeekGrowth: Scalars['Float']['output'];
+};
+
+export type EmergingRolesReport = {
+  __typename?: 'EmergingRolesReport';
+  declining: Array<EmergingRole>;
+  novelTitles: Array<EmergingRole>;
+  period: Scalars['String']['output'];
+  surging: Array<EmergingRole>;
 };
 
 export type EnhanceAllContactsResult = {
@@ -817,6 +926,14 @@ export type GenerateReplyResult = {
   subject: Scalars['String']['output'];
 };
 
+export type GrowthReport = {
+  __typename?: 'GrowthReport';
+  byIndustry: Array<IndustryGrowth>;
+  byRegion: Array<RegionGrowth>;
+  overallGrowthRate: Scalars['Float']['output'];
+  period: Scalars['String']['output'];
+};
+
 export type ImportCompaniesResult = {
   __typename?: 'ImportCompaniesResult';
   errors: Array<Scalars['String']['output']>;
@@ -869,6 +986,15 @@ export type ImportResendResult = {
   success: Scalars['Boolean']['output'];
   totalFetched: Scalars['Int']['output'];
   updatedCount: Scalars['Int']['output'];
+};
+
+export type IndustryGrowth = {
+  __typename?: 'IndustryGrowth';
+  currentCount: Scalars['Int']['output'];
+  growthRate: Scalars['Float']['output'];
+  industry: Scalars['String']['output'];
+  previousCount: Scalars['Int']['output'];
+  remoteRatio: Scalars['Float']['output'];
 };
 
 export type IntentDashboard = {
@@ -924,6 +1050,16 @@ export type IntentSignalsResponse = {
   __typename?: 'IntentSignalsResponse';
   signals: Array<IntentSignal>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type JobCountTrend = {
+  __typename?: 'JobCountTrend';
+  avgDailyRemote: Scalars['Float']['output'];
+  dataPoints: Array<DailyJobCount>;
+  growthRate: Scalars['Float']['output'];
+  period: Scalars['String']['output'];
+  query: Scalars['String']['output'];
+  trend: Scalars['String']['output'];
 };
 
 export type LinkedInPost = {
@@ -996,6 +1132,12 @@ export type Mutation = {
   classifyReceivedEmail: ClassifyEmailResult;
   computeContactDeletionScores: BatchOperationResult;
   computeNextTouchScores: ComputeNextTouchScoresResult;
+  /**
+   * Count remote jobs for a batch of companies via Voyager API.
+   * Stores counts as company metadata (for voyagerRemoteJobCounts query).
+   * Admin only.
+   */
+  countRemoteVoyagerJobs: CountRemoteVoyagerJobsResult;
   createCompany: Company;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
@@ -1042,6 +1184,12 @@ export type Mutation = {
   sendScheduledEmailNow: SendNowResult;
   snoozeReminder: ContactReminder;
   syncResendEmails: SyncResendResult;
+  /**
+   * Fetch jobs from Voyager API and upsert into linkedin_posts (type='job').
+   * Optionally creates intent_signals (hiring_intent) for each company with postings.
+   * Admin only.
+   */
+  syncVoyagerJobs: SyncVoyagerJobsResult;
   unarchiveEmail: ArchiveEmailResult;
   unblockCompany: Company;
   unflagContactForDeletion: Contact;
@@ -1122,6 +1270,11 @@ export type MutationComputeContactDeletionScoresArgs = {
 
 export type MutationComputeNextTouchScoresArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationCountRemoteVoyagerJobsArgs = {
+  input: CountRemoteVoyagerJobsInput;
 };
 
 
@@ -1356,6 +1509,11 @@ export type MutationSyncResendEmailsArgs = {
 };
 
 
+export type MutationSyncVoyagerJobsArgs = {
+  input: SyncVoyagerJobsInput;
+};
+
+
 export type MutationUnarchiveEmailArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1504,6 +1662,47 @@ export type Query = {
   similarCompanies: Array<SimilarCompanyResult>;
   similarPosts: Array<SimilarPost>;
   userSettings: Maybe<UserSettings>;
+  /** Full analytics dashboard — runs all 10 metrics in parallel. */
+  voyagerAnalyticsDashboard: VoyagerAnalyticsDashboard;
+  /** 10. Geographic arbitrage opportunities (remote roles with high-salary-region pay). */
+  voyagerArbitrage: ArbitrageReport;
+  /**
+   * Get all Voyager-sourced jobs for a specific company.
+   * Reads from linkedin_posts where type='job' and raw_data contains voyager metadata.
+   */
+  voyagerCompanyJobs: Array<LinkedInPost>;
+  /** 8. Competitive analysis (most aggressive remote hirers). */
+  voyagerCompetitiveAnalysis: CompetitiveReport;
+  /** 9. Emerging role detection (new job titles appearing). */
+  voyagerEmergingRoles: EmergingRolesReport;
+  /** 3. Remote job growth rate by industry and region. */
+  voyagerGrowthReport: GrowthReport;
+  /** 2. Company hiring velocity detection (jobs posted per week). */
+  voyagerHiringVelocity: Array<CompanyVelocity>;
+  /** 1. Daily remote job count tracking by query/keyword. */
+  voyagerJobCountTrend: JobCountTrend;
+  /**
+   * Search LinkedIn jobs via Voyager API proxy.
+   * Requires CSRF token forwarded from an authenticated LinkedIn session.
+   * Results are NOT persisted — use syncVoyagerJobs to store.
+   */
+  voyagerJobSearch: VoyagerJobSearchResult;
+  /**
+   * Get cached remote job counts per company.
+   * Reads from the most recent countRemoteVoyagerJobs result stored in DB,
+   * NOT a live Voyager call. Use the mutation to refresh.
+   */
+  voyagerRemoteJobCounts: Array<VoyagerCompanyJobCount>;
+  /** Aggregate remote-work metrics across all companies with Voyager data. */
+  voyagerRemoteMetrics: VoyagerRemoteMetrics;
+  /** 7. Repost frequency analysis (indicator of hard-to-fill roles). */
+  voyagerRepostAnalysis: RepostReport;
+  /** 4. Salary trend analysis for remote roles. */
+  voyagerSalaryTrends: SalaryTrend;
+  /** 5. Skills demand tracking (most requested skills in remote AI/ML jobs). */
+  voyagerSkillsDemand: SkillsDemandReport;
+  /** 6. Time-to-fill estimation (how long jobs stay open). */
+  voyagerTimeToFill: TimeToFillReport;
 };
 
 
@@ -1742,6 +1941,76 @@ export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
 };
 
+
+export type QueryVoyagerAnalyticsDashboardArgs = {
+  query?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerArbitrageArgs = {
+  minPremiumPercent?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type QueryVoyagerCompanyJobsArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryVoyagerCompetitiveAnalysisArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerEmergingRolesArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerGrowthReportArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerHiringVelocityArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryVoyagerJobCountTrendArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+  query: Scalars['String']['input'];
+};
+
+
+export type QueryVoyagerJobSearchArgs = {
+  input: VoyagerJobSearchInput;
+};
+
+
+export type QueryVoyagerRemoteJobCountsArgs = {
+  companyIds: Array<Scalars['Int']['input']>;
+};
+
+
+export type QueryVoyagerRemoteMetricsArgs = {
+  minRemoteJobs?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryVoyagerSalaryTrendsArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+  query?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryVoyagerSkillsDemandArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+  query?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type RankedContact = {
   __typename?: 'RankedContact';
   contact: Contact;
@@ -1792,6 +2061,37 @@ export type RefreshIntentResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type RegionGrowth = {
+  __typename?: 'RegionGrowth';
+  currentCount: Scalars['Int']['output'];
+  growthRate: Scalars['Float']['output'];
+  location: Scalars['String']['output'];
+  previousCount: Scalars['Int']['output'];
+  remoteCount: Scalars['Int']['output'];
+};
+
+export type RepostReport = {
+  __typename?: 'RepostReport';
+  avgDaysOpen: Scalars['Float']['output'];
+  avgRepostCount: Scalars['Float']['output'];
+  hardToFillJobs: Array<RepostSignal>;
+  repostRate: Scalars['Float']['output'];
+  repostedJobs: Scalars['Int']['output'];
+  totalJobsTracked: Scalars['Int']['output'];
+};
+
+export type RepostSignal = {
+  __typename?: 'RepostSignal';
+  companyName: Scalars['String']['output'];
+  daysSinceFirst: Scalars['Float']['output'];
+  firstSeenDate: Scalars['String']['output'];
+  isHardToFill: Scalars['Boolean']['output'];
+  jobTitle: Scalars['String']['output'];
+  jobUrl: Scalars['String']['output'];
+  lastSeenDate: Scalars['String']['output'];
+  repostCount: Scalars['Int']['output'];
+};
+
 export type ResendEmailDetail = {
   __typename?: 'ResendEmailDetail';
   bcc: Maybe<Array<Scalars['String']['output']>>;
@@ -1805,6 +2105,41 @@ export type ResendEmailDetail = {
   subject: Maybe<Scalars['String']['output']>;
   text: Maybe<Scalars['String']['output']>;
   to: Array<Scalars['String']['output']>;
+};
+
+export type SalaryBand = {
+  __typename?: 'SalaryBand';
+  currency: Scalars['String']['output'];
+  max: Scalars['Float']['output'];
+  median: Scalars['Float']['output'];
+  min: Scalars['Float']['output'];
+  p25: Scalars['Float']['output'];
+  p75: Scalars['Float']['output'];
+  sampleCount: Scalars['Int']['output'];
+};
+
+export type SalaryRegionBreakdown = {
+  __typename?: 'SalaryRegionBreakdown';
+  band: SalaryBand;
+  region: Scalars['String']['output'];
+};
+
+export type SalarySeniorityBreakdown = {
+  __typename?: 'SalarySeniorityBreakdown';
+  band: SalaryBand;
+  level: Scalars['String']['output'];
+};
+
+export type SalaryTrend = {
+  __typename?: 'SalaryTrend';
+  byRegion: Array<SalaryRegionBreakdown>;
+  bySeniority: Array<SalarySeniorityBreakdown>;
+  currentBand: SalaryBand;
+  medianDelta: Scalars['Float']['output'];
+  period: Scalars['String']['output'];
+  previousBand: SalaryBand;
+  query: Scalars['String']['output'];
+  trend: Scalars['String']['output'];
 };
 
 export type SalescueAnalyzeResult = {
@@ -2247,11 +2582,32 @@ export type SimilarPost = {
   similarity: Scalars['Float']['output'];
 };
 
+export type SkillDemand = {
+  __typename?: 'SkillDemand';
+  avgConfidence: Scalars['Float']['output'];
+  count: Scalars['Int']['output'];
+  escoLabel: Maybe<Scalars['String']['output']>;
+  pctOfTotal: Scalars['Float']['output'];
+  skill: Scalars['String']['output'];
+  trend: Scalars['String']['output'];
+  weeksInTop20: Scalars['Int']['output'];
+};
+
 export type SkillMatchResult = {
   __typename?: 'SkillMatchResult';
   claimedSkills: Array<Scalars['String']['output']>;
   githubLanguages: Array<Scalars['String']['output']>;
   matched: Scalars['Boolean']['output'];
+};
+
+export type SkillsDemandReport = {
+  __typename?: 'SkillsDemandReport';
+  decliningSkills: Array<SkillDemand>;
+  emergingSkills: Array<SkillDemand>;
+  period: Scalars['String']['output'];
+  query: Scalars['String']['output'];
+  topSkills: Array<SkillDemand>;
+  totalJobsAnalyzed: Scalars['Int']['output'];
 };
 
 export type SourceType =
@@ -2268,6 +2624,64 @@ export type SyncResendResult = {
   success: Scalars['Boolean']['output'];
   totalCount: Scalars['Int']['output'];
   updatedCount: Scalars['Int']['output'];
+};
+
+export type SyncVoyagerJobsInput = {
+  /** Company LinkedIn numeric IDs to sync jobs for */
+  companyNumericIds: Array<Scalars['String']['input']>;
+  /** Create intent_signals for hiring_intent. Default true. */
+  createIntentSignals?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Link to existing companies by linkedin_url match. Default true. */
+  matchCompanies?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Only sync remote jobs (workplaceType=2). Default true. */
+  remoteOnly?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Result of a syncVoyagerJobs mutation. */
+export type SyncVoyagerJobsResult = {
+  __typename?: 'SyncVoyagerJobsResult';
+  /** Companies matched or newly created */
+  companiesMatched: Scalars['Int']['output'];
+  errors: Array<Scalars['String']['output']>;
+  /** Intent signals created from job discoveries */
+  intentSignalsCreated: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  /** Jobs upserted into linkedin_posts */
+  upserted: Scalars['Int']['output'];
+};
+
+export type TimeToFillEstimate = {
+  __typename?: 'TimeToFillEstimate';
+  avgDays: Scalars['Float']['output'];
+  medianDays: Scalars['Float']['output'];
+  p90Days: Scalars['Float']['output'];
+  sampleSize: Scalars['Int']['output'];
+};
+
+export type TimeToFillIndustry = {
+  __typename?: 'TimeToFillIndustry';
+  estimate: TimeToFillEstimate;
+  industry: Scalars['String']['output'];
+};
+
+export type TimeToFillRemoteComparison = {
+  __typename?: 'TimeToFillRemoteComparison';
+  onsite: TimeToFillEstimate;
+  remote: TimeToFillEstimate;
+};
+
+export type TimeToFillReport = {
+  __typename?: 'TimeToFillReport';
+  byIndustry: Array<TimeToFillIndustry>;
+  byRemoteVsOnsite: TimeToFillRemoteComparison;
+  bySeniority: Array<TimeToFillSeniority>;
+  overall: TimeToFillEstimate;
+};
+
+export type TimeToFillSeniority = {
+  __typename?: 'TimeToFillSeniority';
+  estimate: TimeToFillEstimate;
+  level: Scalars['String']['output'];
 };
 
 export type UnverifyContactsResult = {
@@ -2421,6 +2835,98 @@ export type VerifyEmailResult = {
   success: Scalars['Boolean']['output'];
   suggestedCorrection: Maybe<Scalars['String']['output']>;
   verified: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type VoyagerAnalyticsDashboard = {
+  __typename?: 'VoyagerAnalyticsDashboard';
+  arbitrage: ArbitrageReport;
+  competitiveAnalysis: CompetitiveReport;
+  emergingRoles: EmergingRolesReport;
+  generatedAt: Scalars['String']['output'];
+  growthReport: GrowthReport;
+  hiringVelocity: Array<CompanyVelocity>;
+  jobCounts: JobCountTrend;
+  query: Scalars['String']['output'];
+  repostAnalysis: RepostReport;
+  salaryTrends: SalaryTrend;
+  skillsDemand: SkillsDemandReport;
+  timeToFill: TimeToFillReport;
+};
+
+/** Remote job count for a single company (via Voyager jobCards endpoint). */
+export type VoyagerCompanyJobCount = {
+  __typename?: 'VoyagerCompanyJobCount';
+  companyId: Scalars['Int']['output'];
+  companyName: Scalars['String']['output'];
+  companyNumericId: Scalars['String']['output'];
+  fetchedAt: Scalars['String']['output'];
+  remoteJobCount: Scalars['Int']['output'];
+  /** 'ok' | 'auth_error' | 'rate_limited' | 'error' */
+  status: Scalars['String']['output'];
+};
+
+/** A single job card returned by the Voyager jobSearch endpoint. */
+export type VoyagerJobCard = {
+  __typename?: 'VoyagerJobCard';
+  /** Company name (denormalized from Voyager) */
+  companyName: Maybe<Scalars['String']['output']>;
+  /** Company LinkedIn numeric ID (for cross-referencing) */
+  companyNumericId: Maybe<Scalars['String']['output']>;
+  /** Employment type from Voyager (full-time, contract, etc.) */
+  employmentType: Maybe<Scalars['String']['output']>;
+  /** If stored locally, the linkedin_posts.id */
+  linkedInPostId: Maybe<Scalars['Int']['output']>;
+  /** Location string from Voyager */
+  location: Maybe<Scalars['String']['output']>;
+  /** When posted (ISO timestamp, derived from listedAt epoch) */
+  postedAt: Maybe<Scalars['String']['output']>;
+  /** Job title from Voyager payload */
+  title: Scalars['String']['output'];
+  /** LinkedIn canonical URL for this job */
+  url: Scalars['String']['output'];
+  /** LinkedIn job posting URN (e.g. urn:li:fsd_jobPosting:1234567890) */
+  urn: Scalars['String']['output'];
+  /** Workplace type: 1=on-site, 2=remote, 3=hybrid */
+  workplaceType: Maybe<Scalars['Int']['output']>;
+};
+
+export type VoyagerJobSearchInput = {
+  /** Company LinkedIn numeric IDs to filter by */
+  companyIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Geographic region ID (92000000 = Worldwide) */
+  geoId?: InputMaybe<Scalars['String']['input']>;
+  /** Free-text keyword query */
+  keywords?: InputMaybe<Scalars['String']['input']>;
+  /** Maximum results to return (capped at 100 server-side) */
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  /** Pagination offset */
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  /** Workplace type filter: 1=on-site, 2=remote, 3=hybrid */
+  workplaceType?: InputMaybe<Scalars['Int']['input']>;
+};
+
+/** Paginated result from a Voyager job search. */
+export type VoyagerJobSearchResult = {
+  __typename?: 'VoyagerJobSearchResult';
+  /** Whether more pages exist beyond the returned window */
+  hasMore: Scalars['Boolean']['output'];
+  jobs: Array<VoyagerJobCard>;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** Aggregate remote-work metrics derived from Voyager job data. */
+export type VoyagerRemoteMetrics = {
+  __typename?: 'VoyagerRemoteMetrics';
+  /** Number of companies queried */
+  companiesQueried: Scalars['Int']['output'];
+  /** Number of companies that have at least 1 remote posting */
+  companiesWithRemoteJobs: Scalars['Int']['output'];
+  /** When this metrics snapshot was computed */
+  computedAt: Scalars['String']['output'];
+  /** Top companies by remote job count */
+  topCompanies: Array<VoyagerCompanyJobCount>;
+  /** Total remote jobs found across queried companies */
+  totalRemoteJobs: Scalars['Int']['output'];
 };
 
 export type WarcPointer = {
@@ -2867,7 +3373,7 @@ export type GetReceivedEmailQueryVariables = Exact<{
 }>;
 
 
-export type GetReceivedEmailQuery = { __typename?: 'Query', receivedEmail: { __typename?: 'ReceivedEmail', id: number, resendId: string, fromEmail: string | null, toEmails: Array<string>, ccEmails: Array<string>, replyToEmails: Array<string>, subject: string | null, messageId: string | null, htmlContent: string | null, textContent: string | null, attachments: any | null, receivedAt: string, archivedAt: string | null, createdAt: string, updatedAt: string } | null };
+export type GetReceivedEmailQuery = { __typename?: 'Query', receivedEmail: { __typename?: 'ReceivedEmail', id: number, resendId: string, fromEmail: string | null, toEmails: Array<string>, ccEmails: Array<string>, replyToEmails: Array<string>, subject: string | null, messageId: string | null, htmlContent: string | null, textContent: string | null, attachments: any | null, receivedAt: string, archivedAt: string | null, classification: string | null, classificationConfidence: number | null, classifiedAt: string | null, matchedContactId: number | null, matchedOutboundId: number | null, createdAt: string, updatedAt: string } | null };
 
 export type ArchiveEmailMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -5452,6 +5958,11 @@ export const GetReceivedEmailDocument = gql`
     attachments
     receivedAt
     archivedAt
+    classification
+    classificationConfidence
+    classifiedAt
+    matchedContactId
+    matchedOutboundId
     createdAt
     updatedAt
   }
