@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { css, cx } from "styled-system/css";
+import { css } from "styled-system/css";
 import { flex, grid, container } from "styled-system/patterns";
 import { BarChartIcon } from "@radix-ui/react-icons";
 
