@@ -130,13 +130,56 @@ class _SalesCuePipeline:
             Single result dict or list of result dicts.
         """
         if isinstance(inputs, list):
-            return [self._predict_one(text, **kwargs) for text in inputs]
+            return self._predict_batch(inputs, **kwargs)
         return self._predict_one(inputs, **kwargs)
 
     def _predict_one(self, text: str, **kwargs) -> dict[str, Any]:
         if hasattr(self._module, "predict"):
             return self._module.predict(text, **kwargs)
         return self._module(text, **kwargs)
+
+    def _predict_batch(self, texts: list[str], **kwargs) -> list[dict[str, Any]]:
+        """Batch prediction with single backbone pass.
+
+        Encodes all texts through the shared backbone in one forward pass,
+        then dispatches to the module's process_batch() if available.
+        Falls back to per-item prediction otherwise.
+        """
+        if not texts:
+            return []
+
+        from .validation import validate_text
+        from .backbone import SharedEncoder
+
+        # Validate all texts
+        validated = [validate_text(t) for t in texts]
+
+        # Check if the module supports batch processing
+        if hasattr(self._module, "process_batch"):
+            # Single backbone pass for all texts
+            batch_encoded = SharedEncoder.encode_batch(validated)
+            original_order = batch_encoded.pop("_original_order", None)
+
+            if original_order is not None:
+                sorted_texts = [validated[original_order[i]] for i in range(len(validated))]
+            else:
+                sorted_texts = validated
+
+            batch_results = self._module.process_batch(
+                batch_encoded, sorted_texts, **kwargs
+            )
+
+            # Restore original order if needed
+            if original_order is not None:
+                reordered = [None] * len(validated)
+                for sorted_idx, result in enumerate(batch_results):
+                    reordered[original_order[sorted_idx]] = result
+                return reordered
+
+            return batch_results
+
+        # Fallback: per-item prediction
+        return [self._predict_one(text, **kwargs) for text in texts]
 
     def __repr__(self) -> str:
         return f"<SalesCuePipeline task={self.name!r}>"

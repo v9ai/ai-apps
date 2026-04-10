@@ -121,6 +121,9 @@ export function createDefaultRankerWeights(): LeadRankerWeights {
 /**
  * Score a single lead given its 42-element feature vector.
  *
+ * Optimization: 4-way unrolled dot product for the 42-feature vector
+ * (42 / 4 = 10 full iterations + 2 remainder).
+ *
  * @param features 42-element numeric array (LeadFeatureVector order).
  * @param weights  Ranker weights.
  * @returns Score in [0, 1] via logistic link.
@@ -131,8 +134,19 @@ export function scoreLeads(
 ): number {
   let z = weights.bias;
   const n = Math.min(features.length, weights.weights.length);
-  for (let i = 0; i < n; i++) {
-    z += weights.weights[i] * features[i];
+  const w = weights.weights;
+
+  // 4-way unrolled dot product
+  let i = 0;
+  for (; i + 3 < n; i += 4) {
+    z +=
+      w[i] * features[i] +
+      w[i + 1] * features[i + 1] +
+      w[i + 2] * features[i + 2] +
+      w[i + 3] * features[i + 3];
+  }
+  for (; i < n; i++) {
+    z += w[i] * features[i];
   }
   return sigmoid(z);
 }
