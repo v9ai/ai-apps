@@ -448,7 +448,6 @@ async fn main() -> anyhow::Result<()> {
 
             // Get org members (public) — paginate
             for page in 1..=5u32 {
-                let url_path = format!("/orgs/{org_login}/members?per_page=100&page={page}");
                 let members: Vec<github_patterns::SearchUserItem> = match gh
                     .search_users(
                         &format!("org:{org_login} type:user"),
