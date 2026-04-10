@@ -443,7 +443,7 @@ SAMPLE_INVALID_JSON = """{
   "papers": [
     {"slug": "NextJS", "number": 1, "title": "Next.js", "category": "Frontend", "wordCount": 0, "readingTimeMin": 2, "categoryColor": "var(--blue-9)"},
     {"slug": "drizzle", "number": 3, "title": "Drizzle", "category": "Database", "wordCount": 0, "readingTimeMin": 2, "categoryColor": "var(--green-9)"},
-    {"slug": "better-auth", "number": 2, "title": "better-auth", "category": "Auth", "wordCount": 0, "readingTimeMin": 2, "categoryColor": "var(--pink-9)"}
+    {"slug": "better-auth", "number": 2, "title": "better-auth", "category": "Auth", "wordCount": 0, "readingTimeMin": 2, "categoryColor": "var(--magenta-9)"}
   ],
   "agents": [
     {"name": "Auth", "description": "Handles auth."},

@@ -18,6 +18,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="How It Works Pipeline")
     parser.add_argument("--verbose", "-v", action="store_true", help="Show full analysis")
     parser.add_argument("--app", type=str, default=None, help="Process single app")
+    parser.add_argument("--dry-run", action="store_true", help="Scan only — show what would be processed without calling LLMs")
     args = parser.parse_args()
 
     banner = "━" * 58
@@ -26,7 +27,32 @@ def main() -> None:
     print(banner)
     if args.app:
         print(f"  Filter: {args.app}")
+    if args.dry_run:
+        print("  Mode: dry-run (no LLM calls)")
     print()
+
+    if args.dry_run:
+        from how_it_works.agents.scanner import build_scanner_graph
+
+        scanner = build_scanner_graph()
+        scan_result = asyncio.run(scanner.ainvoke({"filter_app": args.app}))
+        apps = scan_result.get("discovered_apps", [])
+        print(f"\n{banner}")
+        print("  Dry Run Summary")
+        print(banner)
+        for app in apps:
+            status = "update" if app.has_how_it_works else "new"
+            flags = []
+            if app.has_db:
+                flags.append("db")
+            if app.has_auth:
+                flags.append("auth")
+            if app.has_ai:
+                flags.append("ai")
+            flag_str = f"  [{', '.join(flags)}]" if flags else ""
+            print(f"  {'↺' if app.has_how_it_works else '+'} {app.name:<28} {status}{flag_str}")
+        print(f"\n  {len(apps)} app(s) would be processed.\n")
+        return
 
     if not os.getenv("DEEPSEEK_API_KEY"):
         print("Error: DEEPSEEK_API_KEY not set.", file=sys.stderr)

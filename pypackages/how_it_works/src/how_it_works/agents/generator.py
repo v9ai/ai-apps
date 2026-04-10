@@ -32,9 +32,10 @@ VALID_COLORS = {
     "var(--orange-9)", "var(--red-9)", "var(--cyan-9)", "var(--indigo-9)",
     "var(--gray-9)", "var(--teal-9)", "var(--pink-9)", "var(--violet-9)",
 }
+VALID_TD_TYPES = {"table", "card-grid", "code", "diagram"}
 
 
-def _validate_data(data: HowItWorksData) -> list[str]:
+def _validate_data(data: HowItWorksData, *, has_db: bool = True) -> list[str]:
     """Run structural validation beyond Pydantic and return error messages."""
     errors: list[str] = []
 
@@ -65,9 +66,30 @@ def _validate_data(data: HowItWorksData) -> list[str]:
     if not any("security" in h or "auth" in h for h in headings):
         errors.append("missing required extraSection: Security & Auth")
 
+    # Duplicate extraSection headings
+    raw_headings = [s.heading.lower() for s in data.extra_sections]
+    seen: set[str] = set()
+    for h in raw_headings:
+        if h in seen:
+            errors.append(f"duplicate extraSection heading: '{h}'")
+        seen.add(h)
+
     sentences = [s.strip() for s in data.story.split(".") if s.strip()]
     if not (3 <= len(sentences) <= 6):
         errors.append(f"story has {len(sentences)} sentences, expected 3-6")
+
+    # technicalDetails validation
+    if data.technical_details:
+        if not (2 <= len(data.technical_details) <= 5):
+            errors.append(
+                f"technicalDetails count {len(data.technical_details)} not in [2, 5]"
+            )
+        for td in data.technical_details:
+            if td.type not in VALID_TD_TYPES:
+                errors.append(
+                    f"technicalDetail type '{td.type}' is invalid, "
+                    f"expected one of {sorted(VALID_TD_TYPES)}"
+                )
 
     return errors
 
@@ -112,7 +134,9 @@ async def validate_node(state: dict[str, Any]) -> dict[str, Any]:
     if data is None:
         return {"validation_errors": state.get("validation_errors", ["data is None"])}
 
-    errors = _validate_data(data)
+    app = state.get("app")
+    has_db = app.has_db if app else True
+    errors = _validate_data(data, has_db=has_db)
     if errors:
         print(f"  ⚠   Validation: {len(errors)} issue(s)")
         for e in errors:
