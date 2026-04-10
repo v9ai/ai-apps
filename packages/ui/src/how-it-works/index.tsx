@@ -74,9 +74,8 @@ export type { Paper, PipelineAgent, Stat, HowItWorksProps, TechnicalDetail, Tech
 // ─── Shared styles ────────────────────────────────────────────────
 
 const prose: React.CSSProperties = {
-  maxWidth: 960,
   margin: "0 auto",
-  padding: "0 1.25rem",
+  padding: "0 clamp(1.25rem, 3vw, 4rem)",
   paddingBottom: "4rem",
   lineHeight: 1.75,
   fontSize: "1.05rem",
