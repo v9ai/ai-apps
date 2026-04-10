@@ -374,7 +374,7 @@ function PrepPageInner() {
   // Restore scroll position after content renders
   useEffect(() => {
     if (!loading && app) {
-      const saved = sessionStorage.getItem(scrollKey);
+      const saved = localStorage.getItem(scrollKey);
       if (saved) window.scrollTo(0, parseInt(saved, 10));
     }
   }, [loading, app, scrollKey]);
@@ -385,7 +385,7 @@ function PrepPageInner() {
     const onScroll = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        sessionStorage.setItem(scrollKey, String(window.scrollY));
+        localStorage.setItem(scrollKey, String(window.scrollY));
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
