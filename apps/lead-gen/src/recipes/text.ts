@@ -29,6 +29,12 @@ export const heading = cva({
         fontWeight: "semibold",
         lineHeight: "compact",
       },
+      display: {
+        fontSize: { base: "4xl", md: "5xl", lg: "6xl" },
+        letterSpacing: "tighter",
+        lineHeight: "none",
+        fontWeight: "bold",
+      },
     },
   },
   defaultVariants: {
@@ -81,5 +87,46 @@ export const text = cva({
   },
   defaultVariants: {
     variant: "body",
+  },
+});
+
+export const truncate = cva({
+  base: {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  variants: {
+    lines: {
+      1: {
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      },
+      2: {
+        display: "-webkit-box",
+        WebkitLineClamp: "2",
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+        whiteSpace: "normal",
+      },
+      3: {
+        display: "-webkit-box",
+        WebkitLineClamp: "3",
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+        whiteSpace: "normal",
+      },
+      4: {
+        display: "-webkit-box",
+        WebkitLineClamp: "4",
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+        whiteSpace: "normal",
+      },
+    },
+  },
+  defaultVariants: {
+    lines: 1,
   },
 });
