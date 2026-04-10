@@ -287,7 +287,7 @@ function InlineCompose({
                   <Box
                     style={{
                       background: "var(--green-a2)",
-                      borderRadius: 0,
+                      borderRadius: 6,
                       padding: "var(--space-4)",
                       border: "1px solid var(--green-a5)",
                     }}
@@ -592,7 +592,7 @@ export function CreateEmailClient({
               <Box
                 style={{
                   background: "var(--gray-a2)",
-                  borderRadius: 0,
+                  borderRadius: 6,
                   padding: "var(--space-5)",
                   maxWidth: 640,
                 }}
@@ -612,7 +612,7 @@ export function CreateEmailClient({
               <Box
                 style={{
                   background: "var(--gray-a2)",
-                  borderRadius: 0,
+                  borderRadius: 6,
                   padding: "var(--space-5)",
                   maxWidth: 640,
                 }}

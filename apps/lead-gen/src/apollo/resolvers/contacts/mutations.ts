@@ -457,6 +457,19 @@ export const contactMutations = {
 
     const nbClient = new NeverBounceClient(apiKey);
 
+    // Fetch all contacts once and group by company_id (eliminates N+1 SELECT per company)
+    const allContacts = await context.db.select().from(contacts);
+    const contactsByCompanyId = new Map<number, typeof allContacts>();
+    for (const contact of allContacts) {
+      if (contact.company_id == null) continue;
+      const existing = contactsByCompanyId.get(contact.company_id);
+      if (existing) {
+        existing.push(contact);
+      } else {
+        contactsByCompanyId.set(contact.company_id, [contact]);
+      }
+    }
+
     for (const company of allCompanies) {
       if (!company.website) continue;
 
@@ -464,11 +477,7 @@ export const contactMutations = {
       if (!domain) continue;
 
       try {
-        // TODO: use DataLoader -- this issues one SELECT per company (N+1); fetch all contacts upfront and group by company_id
-        const companyContacts = await context.db
-          .select()
-          .from(contacts)
-          .where(eq(contacts.company_id, company.id));
+        const companyContacts = contactsByCompanyId.get(company.id) ?? [];
 
         if (companyContacts.length === 0) continue;
 

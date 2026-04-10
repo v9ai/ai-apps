@@ -354,6 +354,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Stop Find Related crawl ──
+  if (message.action === "stopFindRelated") {
+    setFindRelatedCancelled(true);
+    sendResponse({ success: true });
+    return true;
+  }
+
   // ── Stop People Scraping (browsePeople / importPeopleFromCurrentPage) ──
   if (message.action === "stopPeopleScraping") {
     setPeopleCancelled(true);

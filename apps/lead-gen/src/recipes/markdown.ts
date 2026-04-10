@@ -23,11 +23,11 @@ export const markdown = cva({
       fontSize: "sm",
       bg: "ui.surfaceRaised",
       px: "1",
-      borderRadius: "0",
+      borderRadius: "xs",
     },
     "& pre": {
       bg: "ui.surfaceRaised",
-      borderRadius: "0",
+      borderRadius: "md",
       p: "3",
       overflowX: "auto",
       mb: "3",

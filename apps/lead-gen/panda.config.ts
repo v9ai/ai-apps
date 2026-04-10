@@ -188,6 +188,12 @@ export default defineConfig({
           "container.md": { value: "768px" },
           "container.lg": { value: "1024px" },
           "container.xl": { value: "1280px" },
+          "container.2xl": { value: "1536px" },
+          "sidebar.expanded": { value: "200px" },
+          "sidebar.collapsed": { value: "56px" },
+          "topbar.height": { value: "36px" },
+          "row.height": { value: "64px" },
+          "row.compact": { value: "48px" },
         },
 
         borderWidths: {
