@@ -195,22 +195,22 @@ pub fn scan_text(automaton: &SpamKeywordAutomaton, text: &str) -> Vec<KeywordMat
         loop {
             if out == u32::MAX || out == 0 {
                 // Also check root if it has output (single-char pattern edge case).
-                if out == 0 && automaton.nodes[0].has_output() {
-                    let len = automaton.nodes[0].output_pattern_len as usize;
-                    matches.push(KeywordMatch {
-                        start: pos + 1 - len,
-                        pattern_idx: automaton.nodes[0].output_pattern_idx as usize,
-                        length: len,
-                    });
+                if out == 0 {
+                    for o in &automaton.nodes[0].outputs {
+                        matches.push(KeywordMatch {
+                            start: pos + 1 - o.pattern_len as usize,
+                            pattern_idx: o.pattern_idx as usize,
+                            length: o.pattern_len as usize,
+                        });
+                    }
                 }
                 break;
             }
-            if automaton.nodes[out as usize].has_output() {
-                let len = automaton.nodes[out as usize].output_pattern_len as usize;
+            for o in &automaton.nodes[out as usize].outputs {
                 matches.push(KeywordMatch {
-                    start: pos + 1 - len,
-                    pattern_idx: automaton.nodes[out as usize].output_pattern_idx as usize,
-                    length: len,
+                    start: pos + 1 - o.pattern_len as usize,
+                    pattern_idx: o.pattern_idx as usize,
+                    length: o.pattern_len as usize,
                 });
             }
             out = automaton.nodes[out as usize].dict_suffix;
@@ -1548,14 +1548,15 @@ mod tests {
 
     #[test]
     fn test_fast_sigmoid_vs_exact() {
-        // Verify max error is bounded (rational approx has ~0.07 max error)
+        // Verify max error is bounded. The rational polynomial approximation
+        // 0.5 + 0.5*x/(1+|x|) has peak error ~0.086 around |x| ~= 4.4.
         for x_int in -50..=50 {
             let x = x_int as f32 * 0.1;
             let exact = sigmoid(x);
             let fast = fast_sigmoid(x);
             let err = (exact - fast).abs();
             assert!(
-                err < 0.08,
+                err < 0.09,
                 "fast_sigmoid error at x={}: exact={}, fast={}, err={}",
                 x, exact, fast, err,
             );

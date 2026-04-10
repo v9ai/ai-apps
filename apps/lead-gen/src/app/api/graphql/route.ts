@@ -44,13 +44,37 @@ function depthLimitRule(context: ValidationContext) {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// KNOWN ISSUE: No CORS policy is configured on this route.
-// All origins can POST to /api/graphql. To fix, add an OPTIONS handler that
-// returns the appropriate Access-Control-Allow-* headers and restrict
-// Access-Control-Allow-Origin to your production domain(s).
+// CORS policy — allow only the app's own origin
+const ALLOWED_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+function getAllowedOrigin(request: NextRequest): string | null {
+  const origin = request.headers.get("origin");
+  if (!origin) return null;
+  // Exact match against the configured app URL
+  if (origin === ALLOWED_ORIGIN) return origin;
+  // In development, also allow localhost variants
+  if (process.env.NODE_ENV === "development" && origin.startsWith("http://localhost:")) {
+    return origin;
+  }
+  return null;
+}
+
+function withCorsHeaders(response: NextResponse, request: NextRequest): NextResponse {
+  const allowedOrigin = getAllowedOrigin(request);
+  if (allowedOrigin) {
+    response.headers.set("Access-Control-Allow-Origin", allowedOrigin);
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+  }
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  response.headers.set("Access-Control-Max-Age", "86400");
+  return response;
+}
 
 // Simple in-memory rate limiter
-// Production: Consider using Redis or Cloudflare KV for distributed rate limiting
+// TODO: Replace with Redis/Vercel KV-based rate limiting for multi-instance deployments.
+// This in-memory store is per-process and will not share state across serverless invocations
+// or multiple deployment instances, allowing users to bypass limits by hitting different instances.
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 const RATE_LIMIT = {
@@ -91,6 +115,7 @@ setInterval(() => {
 const apolloServer = new ApolloServer<GraphQLContext>({
   schema,
   validationRules: [depthLimitRule],
+  introspection: process.env.NODE_ENV !== "production",
 });
 
 const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
