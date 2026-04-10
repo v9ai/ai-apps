@@ -13,9 +13,10 @@ import type {
   NewCompanyFact,
   NewCompanySnapshot,
 } from "@/db/schema";
+import type { PgUpdateSetSource } from "drizzle-orm/pg-core/query-builders/update";
 
-/** Partial update type for companies — accepts null for nullable columns (matches GraphQL InputMaybe) */
-type CompanyUpdate = Partial<Record<keyof typeof companies.$inferInsert, typeof companies.$inferInsert[keyof typeof companies.$inferInsert] | null>>;
+/** Typed update object for companies table — matches what Drizzle's .set() accepts */
+type CompanyUpdate = PgUpdateSetSource<typeof companies>;
 import { eq, and, or, like, ilike, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
