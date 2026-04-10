@@ -291,7 +291,7 @@ export function LandingHero() {
       <div className={glowStyle} aria-hidden="true" />
 
       <div
-        className={container({ maxW: "breakpoint-lg" })}
+        className={container({})}
         style={{ position: "relative", zIndex: 1 }}
       >
         {/* --- trust badge row --- */}

@@ -6,7 +6,6 @@ import { LandingHero } from "@/components/landing-hero";
 import { LandingPipeline } from "@/components/landing-pipeline";
 
 import { LandingFeatures } from "@/components/landing-features";
-import { LandingBuilder } from "@/components/landing-builder";
 import { LandingClosing } from "@/components/landing-closing";
 import { LandingFooter } from "@/components/landing-footer";
 import { LandingMetrics } from "@/components/landing-metrics";
@@ -55,7 +54,6 @@ export default function HomePage() {
       <div className={sectionDivider} />
       <LandingPipeline />
       <LandingMetrics />
-      <LandingBuilder />
       <div className={sectionDivider} />
       <LandingFeatures />
       <LandingClosing />

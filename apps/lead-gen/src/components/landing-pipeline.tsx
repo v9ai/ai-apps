@@ -413,7 +413,7 @@ export function LandingPipeline() {
     >
       <style dangerouslySetInnerHTML={{ __html: KEYFRAMES_CSS }} />
 
-      <div className={container({ maxW: "breakpoint-lg" })}>
+      <div className={container({})}>
         {/* ── Section header ─────────────────────────────────────── */}
         <div
           className={css({

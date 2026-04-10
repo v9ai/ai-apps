@@ -59,7 +59,7 @@ export function LandingFooter() {
         mt: { base: "8", lg: "10" },
       })}
     >
-      <div className={container({ maxW: "breakpoint-lg" })}>
+      <div className={container({})}>
         {/* ---- Main footer grid ---- */}
         <div
           className={grid({
