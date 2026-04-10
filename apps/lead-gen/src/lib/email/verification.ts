@@ -318,7 +318,7 @@ export class NeverBounceClient {
         executionTimeMs: 0,
         timestamp: new Date(),
       };
-      verificationCache.set(normalizedEmail, outcome);
+      setCached(normalizedEmail, outcome);
       return outcome;
     }
 
@@ -366,7 +366,7 @@ export class NeverBounceClient {
       timestamp: new Date(),
     };
 
-    verificationCache.set(normalizedEmail, outcome);
+    setCached(normalizedEmail, outcome);
     return outcome;
   }
 
@@ -416,7 +416,7 @@ export class NeverBounceClient {
       executionTimeMs: 0,
       timestamp: new Date(),
     };
-    verificationCache.set(email.toLowerCase(), outcome);
+    setCached(email.toLowerCase(), outcome);
     return { email, outcome };
   }
 }

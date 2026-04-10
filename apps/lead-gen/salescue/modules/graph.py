@@ -149,6 +149,48 @@ class CompanyGraphScorer(BaseModule):
 
         return self._score_with_graph(cls, graph_data)
 
+    def process_batch(self, batch_encoded: dict, texts: list[str], **kwargs: Any) -> list[dict[str, Any]]:
+        """Batch graph scoring.
+
+        For the common no-graph case, the node_encoder, scorer, and label_head
+        run on the full (B, hidden) tensor in a single pass. When graph data
+        is provided per-item, falls back to per-item processing.
+        """
+        cls_all = batch_encoded["encoder_output"].last_hidden_state[:, 0]  # (B, hidden)
+        B = cls_all.shape[0]
+        graph_data = kwargs.get("graph", None)
+
+        if graph_data is not None:
+            # Per-item graph processing required
+            from ..base import _slice_encoded
+            return [
+                self.process(_slice_encoded(batch_encoded, i), texts[i], **kwargs)
+                for i in range(B)
+            ]
+
+        # Fast path: no graph context — vectorized text-only scoring
+        struct_features = torch.zeros(B, STRUCT_DIM, device=cls_all.device)
+        combined = torch.cat([cls_all, struct_features], dim=-1)  # (B, hidden+STRUCT_DIM)
+        node_feats = self.node_encoder(combined)  # (B, NODE_DIM)
+
+        scores = torch.sigmoid(self.scorer(node_feats))  # (B, 1)
+        label_logits = self.label_head(node_feats)  # (B, n_labels)
+        label_probs = F.softmax(label_logits, dim=-1)
+        label_idxs = label_probs.argmax(dim=-1)  # (B,)
+
+        results = []
+        for i in range(B):
+            label_idx = label_idxs[i].item()
+            results.append({
+                "graph_score": round(scores[i].item() * 100, 1),
+                "graph_label": GRAPH_LABELS[label_idx],
+                "label_confidence": round(label_probs[i, label_idx].item(), 3),
+                "similar_companies": [],
+                "graph_signals": [],
+                "note": "no graph context provided — text-only score",
+            })
+        return results
+
     def predict(self, text: str, **kwargs: Any) -> dict[str, Any]:
         """Public API.
 

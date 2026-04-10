@@ -113,21 +113,46 @@ export function scoreContact(features: ContactRankFeatures): number {
 /**
  * Score a single contact using INT8 quantized weights.
  *
+ * Optimization: 4-way unrolled absmax and dot product loops for small
+ * feature vectors (12 elements). Multiplication by invFeatureScale avoids
+ * repeated division.
+ *
  * @param features - Float32Array of length NUM_CONTACT_FEATURES (same order as CONTACT_FEATURE_KEYS)
  * @returns score (0..1) via sigmoid
  */
 export function scoreContactQuantized(features: Float32Array): number {
+  // Find feature scale factor — unrolled 4-way
   let fMax = 0;
-  for (let i = 0; i < NUM_CONTACT_FEATURES; i++) {
+  let i = 0;
+  for (; i + 3 < NUM_CONTACT_FEATURES; i += 4) {
+    const a0 = Math.abs(features[i]!);
+    const a1 = Math.abs(features[i + 1]!);
+    const a2 = Math.abs(features[i + 2]!);
+    const a3 = Math.abs(features[i + 3]!);
+    const m01 = a0 > a1 ? a0 : a1;
+    const m23 = a2 > a3 ? a2 : a3;
+    const m = m01 > m23 ? m01 : m23;
+    if (m > fMax) fMax = m;
+  }
+  for (; i < NUM_CONTACT_FEATURES; i++) {
     const a = Math.abs(features[i]!);
     if (a > fMax) fMax = a;
   }
   const featureScale = fMax > 0 ? fMax / 127 : 1;
+  const invFeatureScale = 1 / featureScale;
 
+  // Integer dot product — unrolled 4-way
   let acc = 0;
-  for (let i = 0; i < NUM_CONTACT_FEATURES; i++) {
-    const qi = Math.round(features[i]! / featureScale);
-    acc += CONTACT_WEIGHTS_INT8[i]! * qi;
+  i = 0;
+  for (; i + 3 < NUM_CONTACT_FEATURES; i += 4) {
+    acc +=
+      CONTACT_WEIGHTS_INT8[i]! * Math.round(features[i]! * invFeatureScale) +
+      CONTACT_WEIGHTS_INT8[i + 1]! * Math.round(features[i + 1]! * invFeatureScale) +
+      CONTACT_WEIGHTS_INT8[i + 2]! * Math.round(features[i + 2]! * invFeatureScale) +
+      CONTACT_WEIGHTS_INT8[i + 3]! * Math.round(features[i + 3]! * invFeatureScale);
+  }
+  for (; i < NUM_CONTACT_FEATURES; i++) {
+    acc += CONTACT_WEIGHTS_INT8[i]! * Math.round(features[i]! * invFeatureScale);
   }
 
   const logit = acc * CONTACT_WEIGHT_SCALE * featureScale + BIAS;
@@ -136,6 +161,9 @@ export function scoreContactQuantized(features: Float32Array): number {
 
 /**
  * Rank a list of contacts by their computed outreach score.
+ *
+ * Optimization: uses indexed CONTACT_WEIGHTS_F32 instead of Record property
+ * lookup for feature contribution calculation.
  *
  * @returns Sorted array (descending score) with reasons for top features.
  */
@@ -146,10 +174,11 @@ export function rankContacts(
     .map(({ id, features }) => {
       const score = scoreContact(features);
 
-      // Build reasons from top contributing features
+      // Build reasons from top contributing features — indexed access
       const contributions: { name: string; value: number }[] = [];
-      for (const key of CONTACT_FEATURE_KEYS) {
-        const c = WEIGHTS[key] * features[key];
+      for (let i = 0; i < NUM_CONTACT_FEATURES; i++) {
+        const key = CONTACT_FEATURE_KEYS[i]!;
+        const c = CONTACT_WEIGHTS_F32[i]! * features[key];
         if (Math.abs(c) >= 0.02) {
           contributions.push({ name: key, value: c });
         }
@@ -173,6 +202,11 @@ export function rankContacts(
  * Extracts all contact features into a contiguous Float32Array matrix,
  * then performs batch matrix-vector multiplication with sigmoid activation.
  *
+ * Optimizations:
+ * - 4-way unrolled dot product for the 12-feature vector (12 / 4 = 3 full iterations)
+ * - Sigmoid LUT instead of Math.exp() per contact
+ * - Pre-allocated output Float32Array
+ *
  * @param contacts - Array of ContactRankFeatures objects
  * @returns Float32Array of scores (same order as input), values in (0..1)
  */
@@ -191,14 +225,26 @@ export function rankContactsBatch(contacts: ContactRankFeatures[]): Float32Array
   }
 
   // Batch dot product: scores[i] = sigmoid(matrix[i] . WEIGHTS + BIAS)
+  // Optimization: unrolled 4-way dot product + sigmoidFast LUT
   const scores = new Float32Array(batchSize);
   for (let row = 0; row < batchSize; row++) {
     const offset = row * NUM_CONTACT_FEATURES;
     let logit = BIAS;
-    for (let j = 0; j < NUM_CONTACT_FEATURES; j++) {
+
+    // 4-way unrolled dot product (12 features = 3 full iterations, 0 remainder)
+    let j = 0;
+    for (; j + 3 < NUM_CONTACT_FEATURES; j += 4) {
+      logit +=
+        matrix[offset + j]! * CONTACT_WEIGHTS_F32[j]! +
+        matrix[offset + j + 1]! * CONTACT_WEIGHTS_F32[j + 1]! +
+        matrix[offset + j + 2]! * CONTACT_WEIGHTS_F32[j + 2]! +
+        matrix[offset + j + 3]! * CONTACT_WEIGHTS_F32[j + 3]!;
+    }
+    for (; j < NUM_CONTACT_FEATURES; j++) {
       logit += matrix[offset + j]! * CONTACT_WEIGHTS_F32[j]!;
     }
-    scores[row] = Math.round(sigmoid(logit) * 1000) / 1000;
+
+    scores[row] = Math.round(sigmoidFast(logit) * 1000) / 1000;
   }
 
   return scores;

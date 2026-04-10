@@ -150,6 +150,84 @@ class DeepSurvivalMachine(BaseModule):
 
         return self._predict(cls, struct_features)
 
+    def process_batch(self, batch_encoded: dict, texts: list[str], **kwargs: Any) -> list[dict[str, Any]]:
+        """Vectorized batch survival prediction.
+
+        The struct_encoder, fusion MLP, Weibull parameter nets, and risk_head
+        all run on the full (B, hidden) CLS tensor in a single forward pass.
+        Only median-finding (binary search) and result formatting loop per item.
+        """
+        cls_all = batch_encoded["encoder_output"].last_hidden_state[:, 0]  # (B, hidden)
+        B = cls_all.shape[0]
+
+        # Build batch struct features
+        struct_features = kwargs.get("structured_features", None)
+        if struct_features is None:
+            struct_all = torch.zeros(B, STRUCTURED_DIM, device=cls_all.device)
+        elif isinstance(struct_features, torch.Tensor):
+            struct_all = struct_features
+            if struct_all.dim() == 1:
+                struct_all = struct_all.unsqueeze(0).expand(B, -1)
+        else:
+            struct_all = torch.tensor(
+                [struct_features] if not isinstance(struct_features[0], (list, tuple)) else struct_features,
+                dtype=torch.float32, device=cls_all.device,
+            )
+            if struct_all.shape[0] == 1 and B > 1:
+                struct_all = struct_all.expand(B, -1)
+
+        # Batched forward pass through all nets
+        struct_encoded = self.struct_encoder(struct_all)  # (B, 64)
+        combined = torch.cat([cls_all, struct_encoded], dim=-1)  # (B, hidden+64)
+        fused = self.fusion(combined)  # (B, 256)
+
+        params = self.weibull(fused)  # shapes/scales/weights each (B, K)
+        risk_logits = self.risk_head(fused)  # (B, n_risk_groups)
+        risk_probs = F.softmax(risk_logits, dim=-1)
+        risk_idxs = risk_probs.argmax(dim=-1)  # (B,)
+
+        # Vectorized survival at key horizons
+        horizons = [7, 14, 30, 60, 90]
+        horizon_survivals = {}
+        for t_val in horizons:
+            t = torch.tensor(float(t_val), device=cls_all.device).expand(B)
+            s_t = self.weibull.survival(params, t)  # (B,)
+            horizon_survivals[t_val] = s_t
+
+        # Format per-item results (only median search loops)
+        results = []
+        for i in range(B):
+            survival_curve = {
+                f"{t_val}d": round(horizon_survivals[t_val][i].item(), 3)
+                for t_val in horizons
+            }
+
+            # Per-item median via binary search on single-item params
+            single_params = {
+                k: v[i:i+1] for k, v in params.items()
+            }
+            median_t = self._find_median(single_params, device=cls_all.device)
+
+            p_30d = round(1 - survival_curve["30d"], 3)
+            p_90d = round(1 - survival_curve["90d"], 3)
+            risk_idx = risk_idxs[i].item()
+
+            results.append({
+                "median_days_to_conversion": round(median_t, 1),
+                "p_convert_30d": p_30d,
+                "p_convert_90d": p_90d,
+                "risk_group": RISK_GROUPS[risk_idx],
+                "risk_confidence": round(risk_probs[i, risk_idx].item(), 3),
+                "survival_curve": survival_curve,
+                "weibull_params": {
+                    "shapes": params["shapes"][i].detach().tolist(),
+                    "scales": params["scales"][i].detach().tolist(),
+                    "weights": params["weights"][i].detach().tolist(),
+                },
+            })
+
+        return results
+
     def predict(self, text: str, **kwargs: Any) -> dict[str, Any]:
         """Public API for survival prediction.
 

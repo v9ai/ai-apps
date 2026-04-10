@@ -163,6 +163,35 @@ class SignalAnomalyDetector(BaseModule):
 
         return self._detect(cls, signals)
 
+    def process_batch(self, batch_encoded: dict, texts: list[str], **kwargs: Any) -> list[dict[str, Any]]:
+        """Batch anomaly detection.
+
+        When signal data is not provided (common in engine batch runs),
+        returns the no-data sentinel for all items without touching the
+        autoencoder. When signals are provided, the autoencoder + GMM
+        run on the stacked batch.
+        """
+        B = batch_encoded["input_ids"].shape[0]
+
+        signals_list = kwargs.get("signals_list", None)
+        if signals_list is None:
+            # No signal data for any item
+            return [
+                {"anomaly_score": 0, "is_anomalous": False,
+                 "anomaly_type": "normal", "error": "no signal data provided"}
+                for _ in range(B)
+            ]
+
+        # Fall back to per-item for mixed signal data
+        from ..base import _slice_encoded
+        return [
+            self.process(
+                _slice_encoded(batch_encoded, i), texts[i],
+                signals=signals_list[i] if i < len(signals_list) else None,
+            )
+            for i in range(B)
+        ]
+
     def predict(self, text: str, **kwargs: Any) -> dict[str, Any]:
         """Public API.
 
