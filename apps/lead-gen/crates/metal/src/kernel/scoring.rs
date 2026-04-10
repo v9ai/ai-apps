@@ -27,21 +27,22 @@ pub fn fast_sigmoid(x: f32) -> f32 {
 }
 
 /// Prefetch a cache line for read. No-op if the target doesn't support it.
-/// Uses `_MM_HINT_T0` (L1) locality hint.
+/// On x86_64: emits PREFETCHT0. On aarch64 stable: volatile read hint.
+/// For explicit PRFM on nightly, gate behind `#![feature(stdarch_aarch64_prefetch)]`.
 #[inline(always)]
 fn prefetch_read<T>(ptr: *const T) {
     #[cfg(target_arch = "x86_64")]
     unsafe {
         std::arch::x86_64::_mm_prefetch(ptr as *const i8, std::arch::x86_64::_MM_HINT_T0);
     }
-    #[cfg(target_arch = "aarch64")]
-    unsafe {
-        // PRFM PLDL1KEEP
-        std::arch::asm!("prfm pldl1keep, [{x}]", x = in(reg) ptr, options(nostack, preserves_flags));
-    }
-    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+    #[cfg(not(target_arch = "x86_64"))]
     {
-        let _ = ptr;
+        // Portable: volatile read of a single byte forces the cache line into L1.
+        // The value is unused, but the memory access side-effect triggers prefetch
+        // on most architectures. LLVM is smart enough to not elide volatile reads.
+        unsafe {
+            let _ = std::ptr::read_volatile(ptr as *const u8);
+        }
     }
 }
 
