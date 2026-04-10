@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::str::FromStr;
 use serde::{Deserialize, Serialize};
@@ -292,4 +292,62 @@ pub struct OrgSummary {
     pub total_likes: u64,
     pub libraries: Vec<String>,
     pub pipeline_tags: Vec<String>,
+}
+
+// ── Organization similarity types ───────────────────────────────
+
+/// Fingerprint of an org's ML focus, extracted from its HF repos.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrgFingerprint {
+    pub org_name: String,
+    pub pipeline_tags: HashSet<String>,
+    pub libraries: HashSet<String>,
+    /// Domain-specific tags (noise like `license:*`, `region:*` filtered out).
+    pub domain_tags: HashSet<String>,
+    /// Keywords extracted from dataset names/tags.
+    pub dataset_keywords: HashSet<String>,
+}
+
+/// A candidate org discovered through similarity search.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimilarOrg {
+    pub org_name: String,
+    pub similarity_score: f32,
+    pub model_count: usize,
+    pub dataset_count: usize,
+    pub total_downloads: u64,
+    pub total_likes: u64,
+    pub shared_pipeline_tags: Vec<String>,
+    pub shared_libraries: Vec<String>,
+    pub shared_domain_tags: Vec<String>,
+    /// How many distinct search queries surfaced this org.
+    pub query_hits: usize,
+    pub repos: Vec<RepoInfo>,
+}
+
+/// Configuration for the similarity search.
+#[derive(Debug, Clone)]
+pub struct SimilarOrgOptions {
+    /// Max results per individual HF API query (default: 200).
+    pub per_query_limit: usize,
+    /// Max similar orgs to return (default: 50).
+    pub max_results: usize,
+    /// Minimum similarity score to include (default: 0.05).
+    pub min_score: f32,
+    /// Minimum total downloads for a candidate org (default: 100).
+    pub min_downloads: u64,
+    /// Exclude these orgs from results.
+    pub exclude_orgs: Vec<String>,
+}
+
+impl Default for SimilarOrgOptions {
+    fn default() -> Self {
+        Self {
+            per_query_limit: 200,
+            max_results: 50,
+            min_score: 0.05,
+            min_downloads: 100,
+            exclude_orgs: vec![],
+        }
+    }
 }

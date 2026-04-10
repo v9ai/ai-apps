@@ -6,7 +6,7 @@ export const input = cva({
     border: "1px solid",
     borderColor: "ui.border",
     color: "ui.body",
-    borderRadius: "0",
+    borderRadius: "md",
     outline: "none",
     fontSize: "base",
     fontFamily: "inherit",

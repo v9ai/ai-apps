@@ -31,7 +31,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-to-content">
           skip to content
         </a>
-        <Theme appearance="dark">
+        <Theme appearance="dark" radius="medium">
           <Providers>
             <ErrorBoundary>
               <SidebarProvider>
