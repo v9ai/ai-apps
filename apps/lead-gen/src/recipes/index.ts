@@ -1,7 +1,7 @@
 export { button } from "./button";
 export { badge } from "./badge";
 export { pipelineCard, iconHolder, featureCard, metricCard, glassCard } from "./cards";
-export { heading, text } from "./text";
+export { heading, text, truncate } from "./text";
 export { navLink, sidebar } from "./nav";
 export { topbar } from "./topbar";
 export { input, textarea, fieldLabel } from "./input";
