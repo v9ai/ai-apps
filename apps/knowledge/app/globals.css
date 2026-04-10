@@ -1414,11 +1414,11 @@ body {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
 }
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .code-triple-grid { grid-template-columns: 1fr 1fr; }
   .code-triple-grid > :last-child { grid-column: 1 / -1; }
 }
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .code-triple-grid { grid-template-columns: 1fr; }
   .code-triple-grid > :last-child { grid-column: auto; }
 }
