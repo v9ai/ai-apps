@@ -93,94 +93,51 @@ const PIPELINE_STAGES: StageData[] = [
   },
 ];
 
-// ── Keyframes (injected once) ──────────────────────────────────────────────────
+// ── Keyframes injected once via <style> ────────────────────────────────────────
 
-const keyframesStyle = css.raw({});
-
-const keyframesCSS = `
-@keyframes pipelineSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(32px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+const KEYFRAMES_CSS = `
+@keyframes plSlideUp {
+  from { opacity: 0; transform: translateY(32px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes plConnectorGrow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes plConnectorGrowV {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+@keyframes plDotTravel {
+  0%   { left: 0%;   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+@keyframes plDotTravelV {
+  0%   { top: 0%;    opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%;  opacity: 0; }
 }
 
-@keyframes pipelineConnectorGrow {
-  from {
-    transform: scaleX(0);
+/* ── Hover-to-reveal description on desktop ── */
+@media (min-width: 768px) {
+  .pl-card:hover .pl-desc {
+    max-height: 120px;
+    opacity: 1;
+    margin-top: 4px;
   }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-@keyframes pipelineConnectorGrowVertical {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-
-@keyframes pipelinePulse {
-  0%, 100% {
-    opacity: 0.4;
-  }
-  50% {
+  .pl-card:hover .pl-glow {
     opacity: 1;
   }
-}
-
-@keyframes pipelineDotTravel {
-  0% {
-    left: 0%;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    left: 100%;
-    opacity: 0;
-  }
-}
-
-@keyframes pipelineDotTravelVertical {
-  0% {
-    top: 0%;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    top: 100%;
-    opacity: 0;
-  }
-}
-
-@keyframes pipelineGlowPulse {
-  0%, 100% {
-    box-shadow: 0 0 8px 2px rgba(62, 99, 221, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 20px 6px rgba(62, 99, 221, 0.3);
+  .pl-card:hover .pl-icon-ring {
+    box-shadow: 0 0 16px 4px currentColor;
   }
 }
 `;
 
-// ── Hook: intersection observer for entrance ───────────────────────────────────
+// ── Hook: intersection observer for scroll-triggered entrance ──────────────────
 
 function useScrollReveal(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -216,62 +173,67 @@ function StageCard({
   index: number;
   visible: boolean;
 }) {
-  const accentColor = `hsl(${stage.accentHue}, 70%, 55%)`;
-  const accentColorDim = `hsla(${stage.accentHue}, 70%, 55%, 0.12)`;
-  const accentColorBorder = `hsla(${stage.accentHue}, 70%, 55%, 0.25)`;
+  const accent = `hsl(${stage.accentHue}, 70%, 55%)`;
+  const accentDim = `hsla(${stage.accentHue}, 70%, 55%, 0.12)`;
+  const accentBorder = `hsla(${stage.accentHue}, 70%, 55%, 0.25)`;
 
   return (
     <div
       className={css({
-        position: "relative",
         opacity: 0,
         willChange: "transform, opacity",
       })}
       style={{
         animation: visible
-          ? `pipelineSlideUp 0.6s cubic-bezier(0.16, 1, 0.30, 1) ${index * 0.1}s forwards`
+          ? `plSlideUp 0.6s cubic-bezier(0.16, 1, 0.30, 1) ${index * 0.1}s forwards`
           : "none",
       }}
     >
       <div
-        className={css({
-          position: "relative",
-          bg: "ui.surface",
-          border: "1px solid",
-          borderColor: "ui.border",
-          p: "5",
-          transition:
-            "background 300ms ease, border-color 300ms ease, box-shadow 300ms ease, transform 300ms ease",
-          cursor: "default",
-          overflow: "hidden",
-          _hover: {
-            bg: "ui.surfaceHover",
-            borderColor: "ui.borderHover",
-            transform: "translateY(-2px)",
-          },
-        })}
+        className={cx(
+          "pl-card",
+          css({
+            position: "relative",
+            bg: "ui.surface",
+            border: "1px solid",
+            borderColor: "ui.border",
+            p: "5",
+            transition:
+              "background 300ms ease, border-color 300ms ease, transform 300ms cubic-bezier(0.16, 1, 0.30, 1)",
+            cursor: "default",
+            overflow: "hidden",
+            _hover: {
+              bg: "ui.surfaceHover",
+              borderColor: "ui.borderHover",
+              transform: "translateY(-2px)",
+            },
+          }),
+        )}
         style={{
           borderTopWidth: "2px",
-          borderTopColor: accentColorBorder,
+          borderTopColor: accentBorder,
         }}
       >
-        {/* Accent glow on hover -- via pseudo-element */}
+        {/* Ambient glow overlay -- revealed on hover via .pl-card:hover .pl-glow */}
         <div
-          className={css({
-            position: "absolute",
-            inset: 0,
-            opacity: 0,
-            transition: "opacity 300ms ease",
-            pointerEvents: "none",
-            zIndex: 0,
-          })}
+          className={cx(
+            "pl-glow",
+            css({
+              position: "absolute",
+              inset: 0,
+              opacity: 0,
+              transition: "opacity 400ms ease",
+              pointerEvents: "none",
+              zIndex: 0,
+            }),
+          )}
           style={{
-            background: `radial-gradient(ellipse at top center, ${accentColorDim} 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse at top center, ${accentDim} 0%, transparent 70%)`,
           }}
           aria-hidden
         />
 
-        {/* Step number */}
+        {/* Step number watermark */}
         <span
           className={css({
             fontSize: "3xl",
@@ -284,7 +246,7 @@ function StageCard({
             userSelect: "none",
             zIndex: 1,
           })}
-          style={{ color: accentColorBorder }}
+          style={{ color: accentBorder }}
         >
           {stage.step}
         </span>
@@ -299,23 +261,25 @@ function StageCard({
             zIndex: 1,
           })}
         >
-          {/* Icon container with accent ring */}
           <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              w: "10",
-              h: "10",
-              border: "1px solid",
-              transition:
-                "border-color 300ms ease, box-shadow 300ms ease, background 300ms ease",
-            })}
+            className={cx(
+              "pl-icon-ring",
+              css({
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                w: "10",
+                h: "10",
+                border: "1px solid",
+                transition:
+                  "border-color 300ms ease, box-shadow 400ms ease, background 300ms ease",
+              }),
+            )}
             style={{
-              borderColor: accentColorBorder,
-              background: accentColorDim,
-              color: accentColor,
+              borderColor: accentBorder,
+              background: accentDim,
+              color: accent,
             }}
           >
             {stage.icon}
@@ -338,50 +302,33 @@ function StageCard({
           {stage.title}
         </p>
 
-        {/* Description -- visible by default on mobile, revealed on hover on desktop */}
+        {/* Description -- always visible on mobile, hover-revealed on desktop */}
         <p
-          className={css({
-            fontSize: "xs",
-            color: "ui.secondary",
-            lineHeight: "normal",
-            position: "relative",
-            zIndex: 1,
-            // Mobile: always visible
-            maxHeight: { base: "100px", md: "0px" },
-            overflow: "hidden",
-            opacity: { base: 1, md: 0 },
-            transition:
-              "max-height 400ms cubic-bezier(0.16, 1, 0.30, 1), opacity 300ms ease, margin 300ms ease",
-            mt: { base: "1", md: "0" },
-          })}
+          className={cx(
+            "pl-desc",
+            css({
+              fontSize: "xs",
+              color: "ui.secondary",
+              lineHeight: "normal",
+              position: "relative",
+              zIndex: 1,
+              maxHeight: { base: "120px", md: "0px" },
+              overflow: "hidden",
+              opacity: { base: 1, md: 0 },
+              transition:
+                "max-height 400ms cubic-bezier(0.16, 1, 0.30, 1), opacity 300ms ease, margin-top 300ms ease",
+              mt: { base: "1", md: "0" },
+            }),
+          )}
         >
           {stage.description}
         </p>
       </div>
-
-      {/* Inject hover rule for description reveal on desktop via a style tag */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-          .pipeline-stage-${index}:hover .pipeline-desc-${index} {
-            max-height: 100px !important;
-            opacity: 1 !important;
-            margin-top: 4px !important;
-          }
-          .pipeline-stage-${index}:hover .pipeline-glow-${index} {
-            opacity: 1 !important;
-          }
-          .pipeline-stage-${index}:hover .pipeline-icon-${index} {
-            box-shadow: 0 0 16px 4px ${accentColorDim};
-          }
-        `,
-        }}
-      />
     </div>
   );
 }
 
-// ── Connector (horizontal for desktop, vertical for mobile) ────────────────────
+// ── Animated connector between stages ──────────────────────────────────────────
 
 function Connector({
   index,
@@ -392,7 +339,8 @@ function Connector({
   visible: boolean;
   direction: "horizontal" | "vertical";
 }) {
-  const isHorizontal = direction === "horizontal";
+  const h = direction === "horizontal";
+  const delay = (index + 1) * 0.1 + 0.3;
 
   return (
     <div
@@ -404,30 +352,31 @@ function Connector({
         flexShrink: 0,
       })}
       style={{
-        width: isHorizontal ? 40 : "auto",
-        height: isHorizontal ? 2 : 28,
-        alignSelf: isHorizontal ? "center" : "stretch",
-        margin: isHorizontal ? "0" : "0 auto",
+        width: h ? 40 : "auto",
+        height: h ? 2 : 28,
+        alignSelf: h ? "center" : "stretch",
+        margin: h ? "0" : "0 auto",
       }}
     >
-      {/* Line */}
+      {/* Gradient line */}
       <div
         className={css({
           position: "absolute",
-          transformOrigin: isHorizontal ? "left center" : "top center",
         })}
         style={{
-          width: isHorizontal ? "100%" : 2,
-          height: isHorizontal ? 2 : "100%",
-          background: "linear-gradient(90deg, rgba(62, 99, 221, 0.2), rgba(62, 99, 221, 0.4), rgba(62, 99, 221, 0.2))",
+          width: h ? "100%" : 2,
+          height: h ? 2 : "100%",
+          transformOrigin: h ? "left center" : "top center",
+          background:
+            "linear-gradient(90deg, rgba(62,99,221,0.2), rgba(62,99,221,0.4), rgba(62,99,221,0.2))",
+          transform: h ? "scaleX(0)" : "scaleY(0)",
           animation: visible
-            ? `${isHorizontal ? "pipelineConnectorGrow" : "pipelineConnectorGrowVertical"} 0.5s cubic-bezier(0.16, 1, 0.30, 1) ${(index + 1) * 0.1 + 0.3}s forwards`
+            ? `${h ? "plConnectorGrow" : "plConnectorGrowV"} 0.5s cubic-bezier(0.16,1,0.30,1) ${delay}s forwards`
             : "none",
-          transform: isHorizontal ? "scaleX(0)" : "scaleY(0)",
         }}
       />
 
-      {/* Traveling dot */}
+      {/* Traveling data dot */}
       <div
         className={css({
           position: "absolute",
@@ -437,11 +386,11 @@ function Connector({
           borderRadius: "9999px",
         })}
         style={{
+          boxShadow: "0 0 6px 2px rgba(62,99,221,0.5)",
+          [h ? "left" : "top"]: "0%",
           animation: visible
-            ? `${isHorizontal ? "pipelineDotTravel" : "pipelineDotTravelVertical"} 2s ease-in-out ${(index + 1) * 0.1 + 0.8}s infinite`
+            ? `${h ? "plDotTravel" : "plDotTravelV"} 2s ease-in-out ${delay + 0.5}s infinite`
             : "none",
-          boxShadow: "0 0 6px 2px rgba(62, 99, 221, 0.5)",
-          [isHorizontal ? "left" : "top"]: "0%",
         }}
       />
     </div>
@@ -462,11 +411,10 @@ export function LandingPipeline() {
         scrollMarginTop: "56px",
       })}
     >
-      {/* Inject keyframes */}
-      <style dangerouslySetInnerHTML={{ __html: keyframesCSS }} />
+      <style dangerouslySetInnerHTML={{ __html: KEYFRAMES_CSS }} />
 
       <div className={container({ maxW: "breakpoint-lg" })}>
-        {/* Section header */}
+        {/* ── Section header ─────────────────────────────────────── */}
         <div
           className={css({
             mb: { base: "8", md: "12" },
@@ -475,7 +423,7 @@ export function LandingPipeline() {
           })}
           style={{
             animation: visible
-              ? "pipelineSlideUp 0.6s cubic-bezier(0.16, 1, 0.30, 1) 0s forwards"
+              ? "plSlideUp 0.6s cubic-bezier(0.16,1,0.30,1) 0s forwards"
               : "none",
           }}
         >
@@ -511,96 +459,75 @@ export function LandingPipeline() {
           </p>
         </div>
 
-        {/* ── Desktop: horizontal flow ─────────────────────────────── */}
+        {/* ── Desktop: snaking horizontal flow (row 1 L-R, row 2 R-L) ─ */}
         <div
           className={css({
             display: { base: "none", md: "block" },
           })}
         >
-          {/* Row 1: stages 0-3 */}
+          {/* Row 1: stages 0..3, left to right */}
           <div
             className={css({
               display: "flex",
               alignItems: "stretch",
               justifyContent: "center",
-              mb: "4",
             })}
           >
             {PIPELINE_STAGES.slice(0, 4).map((stage, i) => (
               <div
                 key={stage.step}
-                className={cx(
-                  css({ display: "flex", alignItems: "stretch" }),
-                  `pipeline-stage-${i}`,
-                )}
+                className={css({
+                  display: "flex",
+                  alignItems: "stretch",
+                })}
               >
-                <div
-                  className={css({ flex: 1, minW: "180px", maxW: "220px" })}
-                >
+                <div className={css({ flex: 1, minW: "180px", maxW: "220px" })}>
                   <StageCard stage={stage} index={i} visible={visible} />
-                  {/* Re-apply class names for hover interactivity */}
-                  <style
-                    dangerouslySetInnerHTML={{
-                      __html: `
-                      .pipeline-stage-${i} [class*="pipeline-desc"] { }
-                    `,
-                    }}
-                  />
                 </div>
                 {i < 3 && (
-                  <Connector
-                    index={i}
-                    visible={visible}
-                    direction="horizontal"
-                  />
+                  <Connector index={i} visible={visible} direction="horizontal" />
                 )}
               </div>
             ))}
           </div>
 
-          {/* Vertical connector between rows */}
+          {/* Vertical turn connector -- aligns to right end of row 1 */}
           <div
             className={css({
               display: "flex",
               justifyContent: "flex-end",
-              pr: "calc(110px)",
+              pr: "110px",
             })}
           >
             <Connector index={3} visible={visible} direction="vertical" />
           </div>
 
-          {/* Row 2: stages 4-6 (reversed for snaking flow) */}
+          {/* Row 2: stages 4..6, right to left (snaking) */}
           <div
             className={css({
               display: "flex",
               alignItems: "stretch",
               justifyContent: "center",
-              mt: "4",
               flexDirection: "row-reverse",
             })}
           >
             {PIPELINE_STAGES.slice(4).map((stage, i) => {
-              const globalIndex = i + 4;
+              const gi = i + 4;
               return (
                 <div
                   key={stage.step}
-                  className={cx(
-                    css({ display: "flex", alignItems: "stretch", flexDirection: "row-reverse" }),
-                    `pipeline-stage-${globalIndex}`,
-                  )}
+                  className={css({
+                    display: "flex",
+                    alignItems: "stretch",
+                    flexDirection: "row-reverse",
+                  })}
                 >
-                  <div
-                    className={css({ flex: 1, minW: "180px", maxW: "220px" })}
-                  >
-                    <StageCard
-                      stage={stage}
-                      index={globalIndex}
-                      visible={visible}
-                    />
+                  <div className={css({ flex: 1, minW: "180px", maxW: "220px" })}>
+                    <StageCard stage={stage} index={gi} visible={visible} />
                   </div>
                   {i < 2 && (
                     <Connector
-                      index={globalIndex}
+                      index={gi}
                       visible={visible}
                       direction="horizontal"
                     />
@@ -611,7 +538,7 @@ export function LandingPipeline() {
           </div>
         </div>
 
-        {/* ── Mobile: vertical stack ───────────────────────────────── */}
+        {/* ── Mobile: vertical stack with connectors ───────────────── */}
         <div
           className={css({
             display: { base: "flex", md: "none" },
@@ -622,7 +549,11 @@ export function LandingPipeline() {
           {PIPELINE_STAGES.map((stage, i) => (
             <div key={stage.step}>
               {i > 0 && (
-                <Connector index={i - 1} visible={visible} direction="vertical" />
+                <Connector
+                  index={i - 1}
+                  visible={visible}
+                  direction="vertical"
+                />
               )}
               <StageCard stage={stage} index={i} visible={visible} />
             </div>
