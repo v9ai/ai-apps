@@ -414,6 +414,7 @@ export type ContactAiProfile = {
   synthesisConfidence: Scalars['Float']['output'];
   synthesisRationale: Maybe<Scalars['String']['output']>;
   trigger: Scalars['String']['output'];
+  workExperience: Array<ContactWorkExperience>;
 };
 
 export type ContactEmail = {
@@ -520,6 +521,20 @@ export type ContactReminderWithContact = {
   __typename?: 'ContactReminderWithContact';
   contact: Contact;
   reminder: ContactReminder;
+};
+
+export type ContactWorkExperience = {
+  __typename?: 'ContactWorkExperience';
+  company: Scalars['String']['output'];
+  companyLogo: Maybe<Scalars['String']['output']>;
+  description: Maybe<Scalars['String']['output']>;
+  duration: Maybe<Scalars['String']['output']>;
+  employmentType: Maybe<Scalars['String']['output']>;
+  endDate: Maybe<Scalars['String']['output']>;
+  location: Maybe<Scalars['String']['output']>;
+  skills: Array<Scalars['String']['output']>;
+  startDate: Scalars['String']['output'];
+  title: Scalars['String']['output'];
 };
 
 export type ContactsResult = {

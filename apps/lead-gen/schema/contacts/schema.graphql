@@ -122,6 +122,19 @@ type ContactAIGitHubRepo {
   topics: [String!]!
 }
 
+type ContactWorkExperience {
+  company: String!
+  companyLogo: String
+  title: String!
+  employmentType: String
+  startDate: String!
+  endDate: String
+  duration: String
+  location: String
+  description: String
+  skills: [String!]!
+}
+
 type ContactAIProfile {
   trigger: String!
   enrichedAt: String!
@@ -137,6 +150,7 @@ type ContactAIProfile {
   experienceLevel: String!
   synthesisConfidence: Float!
   synthesisRationale: String
+  workExperience: [ContactWorkExperience!]!
 }
 
 type EnrichAIContactResult {

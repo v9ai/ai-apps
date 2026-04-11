@@ -158,6 +158,18 @@ export const Contact = {
       experienceLevel: raw.experience_level ?? "unknown",
       synthesisConfidence: raw.synthesis_confidence ?? 0,
       synthesisRationale: raw.synthesis_rationale ?? null,
+      workExperience: ((raw.work_experience as any[]) ?? []).map((w: any) => ({
+        company: w.company,
+        companyLogo: w.company_logo ?? null,
+        title: w.title,
+        employmentType: w.employment_type ?? null,
+        startDate: w.start_date,
+        endDate: w.end_date ?? null,
+        duration: w.duration ?? null,
+        location: w.location ?? null,
+        description: w.description ?? null,
+        skills: w.skills ?? [],
+      })),
     };
   },
   toBeDeleted(parent: DbContact) {

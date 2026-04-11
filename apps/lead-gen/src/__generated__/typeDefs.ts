@@ -363,6 +363,7 @@ type ContactAIProfile {
   synthesisConfidence: Float!
   synthesisRationale: String
   trigger: String!
+  workExperience: [ContactWorkExperience!]!
 }
 
 type ContactEmail {
@@ -463,6 +464,19 @@ type ContactReminder {
 type ContactReminderWithContact {
   contact: Contact!
   reminder: ContactReminder!
+}
+
+type ContactWorkExperience {
+  company: String!
+  companyLogo: String
+  description: String
+  duration: String
+  employmentType: String
+  endDate: String
+  location: String
+  skills: [String!]!
+  startDate: String!
+  title: String!
 }
 
 type ContactsResult {

@@ -414,6 +414,7 @@ export type ContactAiProfile = {
   synthesisConfidence: Scalars['Float']['output'];
   synthesisRationale: Maybe<Scalars['String']['output']>;
   trigger: Scalars['String']['output'];
+  workExperience: Array<ContactWorkExperience>;
 };
 
 export type ContactEmail = {
@@ -520,6 +521,20 @@ export type ContactReminderWithContact = {
   __typename?: 'ContactReminderWithContact';
   contact: Contact;
   reminder: ContactReminder;
+};
+
+export type ContactWorkExperience = {
+  __typename?: 'ContactWorkExperience';
+  company: Scalars['String']['output'];
+  companyLogo: Maybe<Scalars['String']['output']>;
+  description: Maybe<Scalars['String']['output']>;
+  duration: Maybe<Scalars['String']['output']>;
+  employmentType: Maybe<Scalars['String']['output']>;
+  endDate: Maybe<Scalars['String']['output']>;
+  location: Maybe<Scalars['String']['output']>;
+  skills: Array<Scalars['String']['output']>;
+  startDate: Scalars['String']['output'];
+  title: Scalars['String']['output'];
 };
 
 export type ContactsResult = {
@@ -3097,6 +3112,7 @@ export type ResolversTypes = {
   ContactNextTouch: ResolverTypeWrapper<Partial<ContactNextTouch>>;
   ContactReminder: ResolverTypeWrapper<Partial<ContactReminder>>;
   ContactReminderWithContact: ResolverTypeWrapper<Partial<ContactReminderWithContact>>;
+  ContactWorkExperience: ResolverTypeWrapper<Partial<ContactWorkExperience>>;
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
   CountRemoteVoyagerJobsInput: ResolverTypeWrapper<Partial<CountRemoteVoyagerJobsInput>>;
   CountRemoteVoyagerJobsResult: ResolverTypeWrapper<Partial<CountRemoteVoyagerJobsResult>>;
@@ -3308,6 +3324,7 @@ export type ResolversParentTypes = {
   ContactNextTouch: Partial<ContactNextTouch>;
   ContactReminder: Partial<ContactReminder>;
   ContactReminderWithContact: Partial<ContactReminderWithContact>;
+  ContactWorkExperience: Partial<ContactWorkExperience>;
   ContactsResult: Partial<ContactsResult>;
   CountRemoteVoyagerJobsInput: Partial<CountRemoteVoyagerJobsInput>;
   CountRemoteVoyagerJobsResult: Partial<CountRemoteVoyagerJobsResult>;
@@ -3777,6 +3794,7 @@ export type ContactAiProfileResolvers<ContextType = GraphQLContext, ParentType e
   synthesisConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   synthesisRationale?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   trigger?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  workExperience?: Resolver<Array<ResolversTypes['ContactWorkExperience']>, ParentType, ContextType>;
 };
 
 export type ContactEmailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactEmail'] = ResolversParentTypes['ContactEmail']> = {
@@ -3863,6 +3881,19 @@ export type ContactReminderResolvers<ContextType = GraphQLContext, ParentType ex
 export type ContactReminderWithContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactReminderWithContact'] = ResolversParentTypes['ContactReminderWithContact']> = {
   contact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType>;
   reminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType>;
+};
+
+export type ContactWorkExperienceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactWorkExperience'] = ResolversParentTypes['ContactWorkExperience']> = {
+  company?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  companyLogo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  duration?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  employmentType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  endDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  location?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  skills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  startDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type ContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactsResult'] = ResolversParentTypes['ContactsResult']> = {
@@ -5143,6 +5174,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactNextTouch?: ContactNextTouchResolvers<ContextType>;
   ContactReminder?: ContactReminderResolvers<ContextType>;
   ContactReminderWithContact?: ContactReminderWithContactResolvers<ContextType>;
+  ContactWorkExperience?: ContactWorkExperienceResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
   CountRemoteVoyagerJobsResult?: CountRemoteVoyagerJobsResultResolvers<ContextType>;
   DailyJobCount?: DailyJobCountResolvers<ContextType>;
