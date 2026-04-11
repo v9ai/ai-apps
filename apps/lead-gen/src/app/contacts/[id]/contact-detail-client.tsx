@@ -1145,6 +1145,121 @@ export function ContactDetailClient({ contactId }: { contactId: number }) {
           </Box>
         </Card>
 
+        {/* AI Profile + Work Experience */}
+        {contact.aiProfile && (
+          <Card>
+            <Box p="4">
+              <Flex direction="column" gap="4">
+                {/* Profile header */}
+                <Flex align="center" justify="between" wrap="wrap" gap="2">
+                  <Flex align="center" gap="2">
+                    <Heading size="4">Profile</Heading>
+                    <Badge color="violet" variant="soft" size="1">
+                      {contact.aiProfile.experienceLevel}
+                    </Badge>
+                  </Flex>
+                  {contact.aiProfile.specialization && (
+                    <Text size="2" color="gray">{contact.aiProfile.specialization}</Text>
+                  )}
+                </Flex>
+
+                {contact.aiProfile.linkedinHeadline && (
+                  <Text size="2" as="p" color="gray" style={{ fontStyle: "italic" }}>
+                    {contact.aiProfile.linkedinHeadline}
+                  </Text>
+                )}
+
+                {/* Skills */}
+                {contact.aiProfile.skills.length > 0 && (
+                  <Box>
+                    <Text size="2" color="gray" weight="medium">Skills</Text>
+                    <Flex gap="1" mt="2" wrap="wrap">
+                      {contact.aiProfile.skills.map((skill) => (
+                        <Badge key={skill} color="blue" variant="soft" size="1">{skill}</Badge>
+                      ))}
+                    </Flex>
+                  </Box>
+                )}
+
+                {/* Research areas */}
+                {contact.aiProfile.researchAreas.length > 0 && (
+                  <Box>
+                    <Text size="2" color="gray" weight="medium">Research areas</Text>
+                    <Flex gap="1" mt="2" wrap="wrap">
+                      {contact.aiProfile.researchAreas.map((area) => (
+                        <Badge key={area} color="purple" variant="soft" size="1">{area}</Badge>
+                      ))}
+                    </Flex>
+                  </Box>
+                )}
+
+                {/* Confidence + enriched date */}
+                <Flex gap="4" wrap="wrap">
+                  <Text size="1" color="gray">
+                    Confidence: {Math.round((contact.aiProfile.synthesisConfidence ?? 0) * 100)}%
+                  </Text>
+                  <Text size="1" color="gray">
+                    Enriched: {new Date(contact.aiProfile.enrichedAt).toLocaleDateString()}
+                  </Text>
+                </Flex>
+
+                {/* Work Experience */}
+                {contact.aiProfile.workExperience.length > 0 && (
+                  <>
+                    <Separator size="4" />
+                    <Flex align="center" gap="2">
+                      <Heading size="3">Experience</Heading>
+                      <Badge color="gray" variant="soft" size="1">
+                        {contact.aiProfile.workExperience.length}
+                      </Badge>
+                    </Flex>
+
+                    {contact.aiProfile.workExperience.map((exp, i) => (
+                      <Box key={i}>
+                        {i > 0 && <Separator size="4" mb="3" />}
+                        <Flex direction="column" gap="2">
+                          <Flex justify="between" align="start" wrap="wrap" gap="2">
+                            <Box>
+                              <Text size="3" weight="medium">{exp.title}</Text>
+                              <Text size="2" color="gray" as="p">
+                                {exp.company}
+                                {exp.employmentType && ` · ${exp.employmentType}`}
+                              </Text>
+                            </Box>
+                            {exp.duration && (
+                              <Badge color="gray" variant="soft" size="1">{exp.duration}</Badge>
+                            )}
+                          </Flex>
+                          <Flex gap="3" wrap="wrap">
+                            <Text size="1" color="gray">
+                              {exp.startDate} — {exp.endDate ?? "Present"}
+                            </Text>
+                            {exp.location && (
+                              <Text size="1" color="gray">{exp.location}</Text>
+                            )}
+                          </Flex>
+                          {exp.description && (
+                            <Text size="2" as="p" style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}>
+                              {exp.description}
+                            </Text>
+                          )}
+                          {exp.skills.length > 0 && (
+                            <Flex gap="1" wrap="wrap">
+                              {exp.skills.map((skill) => (
+                                <Badge key={skill} color="blue" variant="soft" size="1">{skill}</Badge>
+                              ))}
+                            </Flex>
+                          )}
+                        </Flex>
+                      </Box>
+                    ))}
+                  </>
+                )}
+              </Flex>
+            </Box>
+          </Card>
+        )}
+
         {/* Bottom actions */}
         <Flex gap="2" wrap="wrap">
           {contact.email && (
