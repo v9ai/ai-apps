@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   useGetReceivedEmailQuery,
@@ -21,6 +21,7 @@ import {
 } from "@radix-ui/themes";
 import {
   ArrowLeftIcon,
+  CheckCircledIcon,
   EnvelopeOpenIcon,
   PaperPlaneIcon,
 } from "@radix-ui/react-icons";
@@ -37,6 +38,18 @@ const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "orange" | "blue" 
 export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
   const router = useRouter();
   const [replyOpen, setReplyOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string } | null>(null);
+
+  const handleSendSuccess = useCallback((toEmail: string) => {
+    setToast({ message: `Email sent to ${toEmail}` });
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
   const { data, loading, error, refetch } = useGetReceivedEmailQuery({
     variables: { id: emailId },
   });
@@ -222,7 +235,31 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
           `Replying to email from ${email.fromEmail || "unknown"} with subject "${email.subject || ""}". ` +
           `Original message:\n\n${email.textContent || "(no text content)"}`
         }
+        onSuccess={handleSendSuccess}
       />
+
+      {/* Success toast */}
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            padding: "12px 20px",
+            backgroundColor: "#30A46C",
+            color: "white",
+            borderRadius: 6,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            zIndex: 9999,
+            animation: "fadeIn 200ms ease-out",
+          }}
+        >
+          <Flex align="center" gap="2">
+            <CheckCircledIcon />
+            <Text size="2" weight="medium">{toast.message}</Text>
+          </Flex>
+        </div>
+      )}
     </Container>
   );
 }
