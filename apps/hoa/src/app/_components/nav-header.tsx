@@ -83,41 +83,19 @@ export default function NavHeader({
             href="/"
             className={css({
               fontSize: '1.125rem',
-              fontWeight: 'semibold',
+              fontWeight: 'bold',
               color: 'white',
-              letterSpacing: '-0.03em',
+              letterSpacing: '-0.04em',
               transition: 'colors',
               display: 'flex',
               alignItems: 'center',
-              gap: '2.5',
               h: 'full',
               _hover: { color: 'white' },
             })}
           >
-            {/* Logo mark — abstract neural node */}
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 22 22"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-              className={css({ flexShrink: 0 })}
-            >
-              {/* Central node */}
-              <circle cx="11" cy="11" r="3.5" fill="#A78BFA" />
-              {/* Outer ring */}
-              <circle cx="11" cy="11" r="9" stroke="#A78BFA" strokeWidth="1.2" opacity="0.35" />
-              {/* Satellite nodes */}
-              <circle cx="11" cy="2" r="1.5" fill="#A78BFA" opacity="0.7" />
-              <circle cx="18.36" cy="15.5" r="1.5" fill="#A78BFA" opacity="0.5" />
-              <circle cx="3.64" cy="15.5" r="1.5" fill="#A78BFA" opacity="0.5" />
-              {/* Connection lines */}
-              <line x1="11" y1="3.5" x2="11" y2="7.5" stroke="#A78BFA" strokeWidth="0.8" opacity="0.4" />
-              <line x1="14.2" y1="12.8" x2="17.2" y2="14.8" stroke="#A78BFA" strokeWidth="0.8" opacity="0.3" />
-              <line x1="7.8" y1="12.8" x2="4.8" y2="14.8" stroke="#A78BFA" strokeWidth="0.8" opacity="0.3" />
-            </svg>
-            Humans of AI
+            <span className={css({ color: 'white' })}>humans</span>
+            <span className={css({ color: 'rgba(167, 139, 250, 0.7)' })}>of</span>
+            <span className={css({ color: 'white' })}>ai</span>
           </Link>
 
           <div

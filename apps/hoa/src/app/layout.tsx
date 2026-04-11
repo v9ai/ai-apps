@@ -14,7 +14,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://humans-of-ai.vercel.app"),
+  metadataBase: new URL("https://humansofai.space"),
   title: {
     default: "Humans of AI",
     template: "%s | Humans of AI",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     "LLM",
     "generative AI",
   ],
-  authors: [{ name: "Humans of AI", url: "https://humans-of-ai.vercel.app" }],
+  authors: [{ name: "Humans of AI", url: "https://humansofai.space" }],
   creator: "Humans of AI",
   publisher: "Humans of AI",
   robots: {
@@ -58,10 +58,10 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://humans-of-ai.vercel.app",
+    canonical: "https://humansofai.space",
     types: {
-      "application/rss+xml": "https://humans-of-ai.vercel.app/feed.xml",
-      "application/feed+json": "https://humans-of-ai.vercel.app/feed.json",
+      "application/rss+xml": "https://humansofai.space/feed.xml",
+      "application/feed+json": "https://humansofai.space/feed.json",
     },
   },
   openGraph: {
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     siteName: "Humans of AI",
     locale: "en_US",
     type: "website",
-    url: "https://humans-of-ai.vercel.app",
+    url: "https://humansofai.space",
   },
   twitter: {
     card: "summary_large_image",
@@ -123,13 +123,13 @@ export default function RootLayout({
               name: "Humans of AI",
               description:
                 "Intimate portraits of the minds building artificial intelligence",
-              url: "https://humans-of-ai.vercel.app",
+              url: "https://humansofai.space",
               potentialAction: {
                 "@type": "SearchAction",
                 target: {
                   "@type": "EntryPoint",
                   urlTemplate:
-                    "https://humans-of-ai.vercel.app/?q={search_term_string}",
+                    "https://humansofai.space/?q={search_term_string}",
                 },
                 "query-input": "required name=search_term_string",
               },
