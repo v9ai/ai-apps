@@ -50,6 +50,11 @@
   width: auto;
 }
 
+/* Hide "View all authors" link on author pages */
+.blog-authors-posts-page header > a[href="/authors"] {
+  display: none;
+}
+
 /* Article titles: sans-serif font */
 .blog-wrapper article h1,
 .blog-wrapper article h2:first-child,
