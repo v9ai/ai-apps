@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useCallback, useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useGetContactsQuery } from "@/__generated__/hooks";
 import type { GetContactsQuery } from "@/__generated__/hooks";
 import Link from "next/link";
@@ -40,8 +41,13 @@ export function ContactsClient() {
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const initialSearch = searchParams.get("search") ?? "";
+
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [page, setPage] = useState(0);
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -49,8 +55,17 @@ export function ContactsClient() {
     setSearch(val);
     setPage(0);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 300);
-  }, []);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(val);
+      const params = new URLSearchParams(searchParams.toString());
+      if (val) {
+        params.set("search", val);
+      } else {
+        params.delete("search");
+      }
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }, 300);
+  }, [searchParams, router, pathname]);
 
   const { data, loading } = useGetContactsQuery({
     variables: {
