@@ -474,6 +474,25 @@ export type ContactMlScore = {
   seniority: Scalars['String']['output'];
 };
 
+export type ContactMessage = {
+  __typename?: 'ContactMessage';
+  channel: Scalars['String']['output'];
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  contactEmailId: Maybe<Scalars['Int']['output']>;
+  contactId: Maybe<Scalars['Int']['output']>;
+  content: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  direction: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  senderName: Maybe<Scalars['String']['output']>;
+  senderProfileUrl: Maybe<Scalars['String']['output']>;
+  sentAt: Scalars['String']['output'];
+  subject: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type ContactNextTouch = {
   __typename?: 'ContactNextTouch';
   contactId: Scalars['Int']['output'];
@@ -1624,6 +1643,7 @@ export type Query = {
   contact: Maybe<Contact>;
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
+  contactMessages: Array<ContactMessage>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
   dueReminders: Array<ContactReminderWithContact>;
@@ -1766,6 +1786,11 @@ export type QueryContactByEmailArgs = {
 
 
 export type QueryContactEmailsArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactMessagesArgs = {
   contactId: Scalars['Int']['input'];
 };
 
@@ -3052,6 +3077,7 @@ export type ResolversTypes = {
   ContactEmail: ResolverTypeWrapper<Partial<ContactEmail>>;
   ContactInput: ResolverTypeWrapper<Partial<ContactInput>>;
   ContactMLScore: ResolverTypeWrapper<Partial<ContactMlScore>>;
+  ContactMessage: ResolverTypeWrapper<Partial<ContactMessage>>;
   ContactNextTouch: ResolverTypeWrapper<Partial<ContactNextTouch>>;
   ContactReminder: ResolverTypeWrapper<Partial<ContactReminder>>;
   ContactReminderWithContact: ResolverTypeWrapper<Partial<ContactReminderWithContact>>;
@@ -3261,6 +3287,7 @@ export type ResolversParentTypes = {
   ContactEmail: Partial<ContactEmail>;
   ContactInput: Partial<ContactInput>;
   ContactMLScore: Partial<ContactMlScore>;
+  ContactMessage: Partial<ContactMessage>;
   ContactNextTouch: Partial<ContactNextTouch>;
   ContactReminder: Partial<ContactReminder>;
   ContactReminderWithContact: Partial<ContactReminderWithContact>;
@@ -3774,6 +3801,24 @@ export type ContactMlScoreResolvers<ContextType = GraphQLContext, ParentType ext
   dmReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   isDecisionMaker?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   seniority?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ContactMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactMessage'] = ResolversParentTypes['ContactMessage']> = {
+  channel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  classification?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  classificationConfidence?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  contactEmailId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  contactId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  direction?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  senderName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  senderProfileUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sentAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type ContactNextTouchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactNextTouch'] = ResolversParentTypes['ContactNextTouch']> = {
@@ -4326,6 +4371,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactArgs, 'id'>>;
   contactByEmail?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactByEmailArgs, 'email'>>;
   contactEmails?: Resolver<Array<ResolversTypes['ContactEmail']>, ParentType, ContextType, RequireFields<QueryContactEmailsArgs, 'contactId'>>;
+  contactMessages?: Resolver<Array<ResolversTypes['ContactMessage']>, ParentType, ContextType, RequireFields<QueryContactMessagesArgs, 'contactId'>>;
   contactReminders?: Resolver<Array<ResolversTypes['ContactReminder']>, ParentType, ContextType, RequireFields<QueryContactRemindersArgs, 'contactId'>>;
   contacts?: Resolver<ResolversTypes['ContactsResult'], ParentType, ContextType, Partial<QueryContactsArgs>>;
   dueReminders?: Resolver<Array<ResolversTypes['ContactReminderWithContact']>, ParentType, ContextType>;
@@ -5060,6 +5106,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactAIProfile?: ContactAiProfileResolvers<ContextType>;
   ContactEmail?: ContactEmailResolvers<ContextType>;
   ContactMLScore?: ContactMlScoreResolvers<ContextType>;
+  ContactMessage?: ContactMessageResolvers<ContextType>;
   ContactNextTouch?: ContactNextTouchResolvers<ContextType>;
   ContactReminder?: ContactReminderResolvers<ContextType>;
   ContactReminderWithContact?: ContactReminderWithContactResolvers<ContextType>;

@@ -3,8 +3,27 @@ extend type Query {
   contact(id: Int!): Contact
   contactByEmail(email: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
+  contactMessages(contactId: Int!): [ContactMessage!]!
   companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
   resendEmail(resendId: String!): ResendEmailDetail
+}
+
+type ContactMessage {
+  id: Int!
+  channel: String!
+  direction: String!
+  contactId: Int
+  companyId: Int
+  contactEmailId: Int
+  senderName: String
+  senderProfileUrl: String
+  content: String
+  subject: String
+  sentAt: String!
+  classification: String
+  classificationConfidence: Float
+  createdAt: String!
+  updatedAt: String!
 }
 
 type ResendEmailDetail {

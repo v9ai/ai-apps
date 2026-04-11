@@ -471,6 +471,25 @@ export type ContactMlScore = {
   seniority: Scalars['String']['output'];
 };
 
+export type ContactMessage = {
+  __typename: 'ContactMessage';
+  channel: Scalars['String']['output'];
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  contactEmailId: Maybe<Scalars['Int']['output']>;
+  contactId: Maybe<Scalars['Int']['output']>;
+  content: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  direction: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  senderName: Maybe<Scalars['String']['output']>;
+  senderProfileUrl: Maybe<Scalars['String']['output']>;
+  sentAt: Scalars['String']['output'];
+  subject: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type ContactNextTouch = {
   __typename: 'ContactNextTouch';
   contactId: Scalars['Int']['output'];
@@ -1621,6 +1640,7 @@ export type Query = {
   contact: Maybe<Contact>;
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
+  contactMessages: Array<ContactMessage>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
   dueReminders: Array<ContactReminderWithContact>;
@@ -1763,6 +1783,11 @@ export type QueryContactByEmailArgs = {
 
 
 export type QueryContactEmailsArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactMessagesArgs = {
   contactId: Scalars['Int']['input'];
 };
 

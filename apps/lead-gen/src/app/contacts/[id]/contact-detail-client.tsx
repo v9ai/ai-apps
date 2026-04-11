@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   useGetContactQuery,
   useGetContactEmailsQuery,
+  useGetContactMessagesQuery,
   useGetResendEmailQuery,
   useFindContactEmailMutation,
   useUpdateContactMutation,
@@ -47,6 +48,7 @@ import {
   PaperPlaneIcon,
   Pencil1Icon,
   TrashIcon,
+  ChatBubbleIcon,
 } from "@radix-ui/react-icons";
 
 // ─── Generate Email Dialog ────────────────────────────────────────────────────
@@ -783,6 +785,14 @@ export function ContactDetailClient({ contactId }: { contactId: number }) {
     skip: !contactId || isNaN(contactId) || !isAdmin,
   });
 
+  const {
+    data: messagesData,
+    loading: messagesLoading,
+  } = useGetContactMessagesQuery({
+    variables: { contactId },
+    skip: !contactId || isNaN(contactId) || !isAdmin,
+  });
+
   const [findEmail, { loading: finding }] = useFindContactEmailMutation();
   const [findResult, setFindResult] = useState<{
     type: "success" | "error";
@@ -1173,6 +1183,64 @@ export function ContactDetailClient({ contactId }: { contactId: number }) {
             <Flex direction="column" gap="2">
               {emailsData.contactEmails.map((email) => (
                 <EmailDetailDialog key={email.id} email={email} />
+              ))}
+            </Flex>
+          )}
+        </Box>
+
+        {/* LinkedIn Messages */}
+        <Box>
+          <Flex align="center" justify="between" mb="3">
+            <Flex align="center" gap="2">
+              <LinkedInLogoIcon />
+              <Heading size="4">Messages</Heading>
+            </Flex>
+            {messagesData?.contactMessages && messagesData.contactMessages.length > 0 && (
+              <Badge color="purple" variant="soft">
+                {messagesData.contactMessages.length}
+              </Badge>
+            )}
+          </Flex>
+
+          {messagesLoading ? (
+            <Flex justify="center" py="4">
+              <Spinner size="2" />
+            </Flex>
+          ) : !messagesData?.contactMessages || messagesData.contactMessages.length === 0 ? (
+            <Text size="2" color="gray">No messages yet.</Text>
+          ) : (
+            <Flex direction="column" gap="2">
+              {messagesData.contactMessages.map((msg) => (
+                <Card key={msg.id} size="1" style={{ backgroundColor: msg.direction === "inbound" ? "var(--purple-2)" : undefined }}>
+                  <Flex direction="column" gap="1">
+                    <Flex align="center" justify="between">
+                      <Flex align="center" gap="2">
+                        <ChatBubbleIcon />
+                        <Text size="2" weight="medium">{msg.senderName}</Text>
+                        <Badge
+                          color={msg.direction === "inbound" ? "purple" : "blue"}
+                          variant="soft"
+                          size="1"
+                        >
+                          {msg.direction}
+                        </Badge>
+                        {msg.classification && (
+                          <Badge
+                            color={msg.classification === "interested" ? "green" : "gray"}
+                            variant="soft"
+                            size="1"
+                          >
+                            {msg.classification}
+                          </Badge>
+                        )}
+                      </Flex>
+                      <Text size="1" color="gray">
+                        {new Date(msg.sentAt).toLocaleString()}
+                      </Text>
+                    </Flex>
+                    <Text size="2" style={{ whiteSpace: "pre-wrap" }}>{msg.content}</Text>
+                  </Flex>
+                </Card>
               ))}
             </Flex>
           )}

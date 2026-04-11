@@ -12,6 +12,7 @@ import type {
   Contact as DbContact,
   ContactEmail as DbContactEmail,
   Company as DbCompany,
+  Message as DbMessage,
 } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { parseJsonArray } from "./classification";
@@ -240,4 +241,16 @@ export const CompanyContactEmailField = {
   contactFirstName: (parent: DbCompanyContactEmailRow) => parent.contact_first_name,
   contactLastName: (parent: DbCompanyContactEmailRow) => parent.contact_last_name,
   contactPosition: (parent: DbCompanyContactEmailRow) => parent.contact_position ?? null,
+};
+
+export const ContactMessageField = {
+  contactId: (parent: DbMessage) => parent.contact_id ?? null,
+  companyId: (parent: DbMessage) => parent.company_id ?? null,
+  contactEmailId: (parent: DbMessage) => parent.contact_email_id ?? null,
+  senderName: (parent: DbMessage) => parent.sender_name ?? null,
+  senderProfileUrl: (parent: DbMessage) => parent.sender_profile_url ?? null,
+  sentAt: (parent: DbMessage) => parent.sent_at,
+  classificationConfidence: (parent: DbMessage) => parent.classification_confidence ?? null,
+  createdAt: (parent: DbMessage) => parent.created_at,
+  updatedAt: (parent: DbMessage) => parent.updated_at,
 };
