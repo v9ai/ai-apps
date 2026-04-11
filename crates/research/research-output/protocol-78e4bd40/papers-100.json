@@ -25,12 +25,12 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "University of California, Irvine",
-      "National Taiwan University",
-      "National Taiwan University Hospital",
-      "Irvine University",
+      "National Taipei University",
       "Yale University",
-      "National Taipei University"
+      "Irvine University",
+      "National Taiwan University Hospital",
+      "University of California, Irvine",
+      "National Taiwan University"
     ],
     "venue": "Nature Communications"
   },
@@ -57,11 +57,11 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Hunan Cancer Hospital",
       "Xiangya Hospital Central South University",
-      "National Clinical Research",
       "Central South University",
-      "SKiN Health"
+      "SKiN Health",
+      "Hunan Cancer Hospital",
+      "National Clinical Research"
     ],
     "venue": "Signal Transduction and Targeted Therapy"
   },
@@ -114,36 +114,36 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Institute of Cancer Research",
-      "Georgetown University",
-      "Royal Marsden Hospital",
-      "Beaumont Hospital",
-      "Washington University in St. Louis",
+      "University of Michigan",
       "University of Iowa",
+      "Seattle Cancer Care Alliance",
+      "Royal Marsden NHS Foundation Trust",
+      "The University of Texas MD Anderson Cancer Center",
+      "Fred Hutch Cancer Center",
+      "National Cancer Institute",
+      "Smilow Cancer Hospital",
+      "Cleveland Clinic",
+      "Breast Cancer Alliance",
+      "Beaumont Hospital",
+      "University of Washington",
+      "Colorectal Cancer Alliance",
+      "American Society of Clinical Oncology",
+      "Washington University in St. Louis",
+      "Sidney Kimmel Comprehensive Cancer Center",
+      "Royal Marsden Hospital",
+      "City of Hope",
+      "Huntsman Cancer Institute",
+      "University of Utah",
       "NYU Langone Health",
       "Scripps MD Anderson Cancer Center",
-      "American Society of Clinical Oncology",
-      "Colorectal Cancer Alliance",
-      "University of Utah",
-      "Johns Hopkins University",
-      "Smilow Cancer Hospital",
-      "Fred Hutch Cancer Center",
-      "The Ohio State University Wexner Medical Center",
-      "Royal Marsden NHS Foundation Trust",
-      "University of Michigan",
-      "Sidney Kimmel Comprehensive Cancer Center",
-      "Seattle Cancer Care Alliance",
-      "University of Washington",
-      "City of Hope",
-      "The University of Texas MD Anderson Cancer Center",
-      "Michigan Medicine",
-      "Breast Cancer Alliance",
-      "Cleveland Clinic",
-      "Memorial Sloan Kettering Cancer Center",
       "Georgetown Lombardi Comprehensive Cancer Center",
+      "Georgetown University",
+      "Michigan Medicine",
+      "Institute of Cancer Research",
+      "Memorial Sloan Kettering Cancer Center",
+      "The Ohio State University Wexner Medical Center",
       "Virginia Cancer Specialists",
-      "National Cancer Institute",
-      "Huntsman Cancer Institute"
+      "Johns Hopkins University"
     ],
     "venue": "Journal of Clinical Oncology"
   },
@@ -224,11 +224,11 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
+      "Zhejiang University",
       "Zhejiang Lab",
       "Zhejiang University-University of Edinburgh Institute",
-      "Zhejiang University",
-      "First Affiliated Hospital Zhejiang University",
-      "Hangzhou First People's Hospital"
+      "Hangzhou First People's Hospital",
+      "First Affiliated Hospital Zhejiang University"
     ],
     "venue": "Signal Transduction and Targeted Therapy"
   },
@@ -261,9 +261,9 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Keele University",
+      "Stanford University",
       "Vinmec International Hospital",
-      "Stanford University"
+      "Keele University"
     ],
     "venue": "Signal Transduction and Targeted Therapy"
   },
@@ -384,8 +384,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Institute for Health Metrics and Evaluation",
-      "University of Washington"
+      "University of Washington",
+      "Institute for Health Metrics and Evaluation"
     ],
     "venue": "The Lancet"
   },
@@ -414,20 +414,20 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Rutgers, The State University of New Jersey",
+      "University of Pisa",
       "Rutgers New Jersey Medical School",
-      "Cardiff University",
       "National Skin Centre",
-      "Shriners Hospitals for Children - Erie",
-      "Boston University",
-      "VA Northern California Health Care System",
-      "Boston University Academy",
-      "University of Pennsylvania",
-      "Shriners Hospitals for Children - Northern California",
-      "University of Massachusetts Boston",
-      "The University of Melbourne",
       "University of California, Davis",
-      "University of Pisa"
+      "Shriners Hospitals for Children - Erie",
+      "University of Pennsylvania",
+      "University of Massachusetts Boston",
+      "VA Northern California Health Care System",
+      "The University of Melbourne",
+      "Shriners Hospitals for Children - Northern California",
+      "Rutgers, The State University of New Jersey",
+      "Boston University",
+      "Boston University Academy",
+      "Cardiff University"
     ],
     "venue": "Nature Reviews Disease Primers"
   },
@@ -459,8 +459,8 @@
     "categories": null,
     "affiliations": [
       "First Hospital of China Medical University",
-      "Liaoning University",
       "China Medical University",
+      "Liaoning University",
       "Chengdu University of Traditional Chinese Medicine"
     ],
     "venue": "Signal Transduction and Targeted Therapy"
@@ -494,15 +494,15 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Memorial Sloan Kettering Cancer Center",
-      "Harvard University",
-      "Vanderbilt University Medical Center",
-      "Johns Hopkins University",
-      "Johns Hopkins Medicine",
-      "Westmead Hospital",
-      "Uppsala University",
-      "University of Michigan",
       "University of Gothenburg",
+      "Westmead Hospital",
+      "Vanderbilt University Medical Center",
+      "Memorial Sloan Kettering Cancer Center",
+      "Johns Hopkins University",
+      "University of Michigan",
+      "Uppsala University",
+      "Johns Hopkins Medicine",
+      "Harvard University",
       "Centre international de recherche sur le cancer"
     ],
     "venue": "European Urology"
@@ -529,9 +529,9 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Judge Baker Children's Center",
       "Institut Pasteur of Shanghai",
       "Harvard University",
+      "Judge Baker Children's Center",
       "Boston Children's Hospital",
       "Chinese Academy of Sciences"
     ],
@@ -568,16 +568,16 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "University of Aberdeen",
-      "University of Wrocław",
-      "Masaryk University",
-      "Nicolaus Copernicus University",
       "Wroclaw Medical University",
+      "Nicolaus Copernicus University",
+      "Poznan University of Medical Sciences",
+      "University of Wrocław",
       "King's College London",
+      "Masaryk University",
       "Virginia Commonwealth University",
       "North Carolina State University",
-      "Poznan University of Medical Sciences",
-      "Guarulhos University"
+      "Guarulhos University",
+      "University of Aberdeen"
     ],
     "venue": "Journal of Clinical Medicine"
   },
@@ -611,19 +611,19 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "University of Oulu",
       "Cardiff University",
-      "Louisiana State University",
-      "Eastern Health",
-      "Erasmus University Rotterdam",
-      "University of Pennsylvania",
-      "Monash University",
       "Oulu University Hospital",
-      "UNSW Sydney",
-      "The University of Adelaide",
-      "Pennington Biomedical Research Center",
       "National Health and Medical Research Council",
-      "Monash Health"
+      "Monash University",
+      "Erasmus University Rotterdam",
+      "UNSW Sydney",
+      "University of Pennsylvania",
+      "Pennington Biomedical Research Center",
+      "Eastern Health",
+      "Monash Health",
+      "University of Oulu",
+      "The University of Adelaide",
+      "Louisiana State University"
     ],
     "venue": "The Journal of Clinical Endocrinology & Metabolism"
   },
@@ -681,8 +681,8 @@
     "categories": null,
     "affiliations": [
       "National Clinical Research Center for Digestive Diseases",
-      "State Key Laboratory of Diagnosis and Treatment of Infectious Diseases",
-      "First Affiliated Hospital Zhejiang University"
+      "First Affiliated Hospital Zhejiang University",
+      "State Key Laboratory of Diagnosis and Treatment of Infectious Diseases"
     ],
     "venue": "Signal Transduction and Targeted Therapy"
   },
@@ -709,12 +709,12 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Lutheran Family Health Centers",
-      "Johns Hopkins University",
-      "Johns Hopkins Medicine",
       "New York University",
       "University of Colorado Denver",
+      "Johns Hopkins University",
       "VA NY Harbor Healthcare System",
+      "Lutheran Family Health Centers",
+      "Johns Hopkins Medicine",
       "University of Minnesota Medical Center"
     ],
     "venue": "JAMA"
@@ -770,8 +770,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Hallym University Dongtan Sacred Heart Hospital",
       "Seoul National University",
+      "Hallym University Dongtan Sacred Heart Hospital",
       "Dr Youth Clinic"
     ],
     "venue": "Cells"
@@ -795,9 +795,9 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
+      "University Children's Hospital Zurich",
       "Isfahan University of Technology",
-      "University of Zurich",
-      "University Children's Hospital Zurich"
+      "University of Zurich"
     ],
     "venue": "Biomolecules"
   },
@@ -845,10 +845,10 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
+      "Second Xiangya Hospital of Central South University",
       "Central South University",
       "The University of Texas Southwestern Medical Center",
-      "University of Michigan",
-      "Second Xiangya Hospital of Central South University"
+      "University of Michigan"
     ],
     "venue": "Autophagy"
   },
@@ -877,8 +877,8 @@
     "categories": null,
     "affiliations": [
       "University of Nebraska–Lincoln",
-      "University of Nebraska Medical Center",
       "MedStar Georgetown University Hospital",
+      "University of Nebraska Medical Center",
       "Georgetown University"
     ],
     "venue": "Advanced Science"
@@ -941,24 +941,24 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Brigham and Women's Hospital",
-      "Columbia University",
-      "University of California, San Francisco",
-      "University Hospital Heidelberg",
-      "Baylor College of Medicine",
-      "Hospital for Sick Children",
-      "Howard Hughes Medical Institute",
-      "University of Toronto",
-      "Technion – Israel Institute of Technology",
-      "German Cancer Research Center",
-      "Technical University of Munich",
-      "SickKids Foundation",
-      "Stanford University",
       "Heidelberg University",
-      "The University of Texas MD Anderson Cancer Center",
       "Monash University",
-      "National Center for Tumor Diseases",
-      "Washington University in St. Louis"
+      "The University of Texas MD Anderson Cancer Center",
+      "Technical University of Munich",
+      "Hospital for Sick Children",
+      "Columbia University",
+      "University of Toronto",
+      "Stanford University",
+      "University of California, San Francisco",
+      "Howard Hughes Medical Institute",
+      "University Hospital Heidelberg",
+      "German Cancer Research Center",
+      "Baylor College of Medicine",
+      "Washington University in St. Louis",
+      "SickKids Foundation",
+      "Brigham and Women's Hospital",
+      "Technion – Israel Institute of Technology",
+      "National Center for Tumor Diseases"
     ],
     "venue": "Cell"
   },
@@ -985,15 +985,15 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "University of Padua",
-      "University of Groningen",
-      "Amsterdam University Medical Centers",
-      "University Children's Hospital Zurich",
       "University Medical Center Groningen",
       "Oregon Health & Science University",
-      "University of Utah",
       "University of Amsterdam",
-      "Emma Kinderziekenhuis"
+      "University Children's Hospital Zurich",
+      "University of Groningen",
+      "University of Utah",
+      "Amsterdam University Medical Centers",
+      "Emma Kinderziekenhuis",
+      "University of Padua"
     ],
     "venue": "Nature Reviews Disease Primers"
   },
@@ -1107,8 +1107,8 @@
     "categories": null,
     "affiliations": [
       "University of Phayao",
-      "Trakia University",
-      "Charité - Universitätsmedizin Berlin"
+      "Charité - Universitätsmedizin Berlin",
+      "Trakia University"
     ],
     "venue": "International Journal of Molecular Sciences"
   },
@@ -1136,8 +1136,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Sanjay Gandhi Post Graduate Institute of Medical Sciences",
-      "ICMR National Institute for Research in Environmental Health"
+      "ICMR National Institute for Research in Environmental Health",
+      "Sanjay Gandhi Post Graduate Institute of Medical Sciences"
     ],
     "venue": "Journal of Clinical Medicine"
   },
@@ -1164,9 +1164,9 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "University of Bologna",
       "University Hospital Hradec Králové",
-      "Charles University"
+      "Charles University",
+      "University of Bologna"
     ],
     "venue": "Nutrients"
   },
@@ -1225,28 +1225,28 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
+      "Children's Hospital of Philadelphia",
+      "Cornell University",
+      "University of Pennsylvania",
       "Georgetown University",
       "The University of Texas Medical Branch at Galveston",
-      "Georgetown University Medical Center",
-      "University of Pennsylvania",
-      "Morehouse School of Medicine",
-      "Medical University of South Carolina",
-      "Duke Medical Center",
-      "Texas Scottish Rite Hospital for Children",
       "Hampton University",
-      "University of California San Diego",
-      "Cornell University",
-      "Stanford University",
-      "Duke University Hospital",
-      "University of North Carolina at Chapel Hill",
-      "Children's Hospital of Philadelphia",
-      "Rice University",
-      "Queens University",
-      "Ames Research Center",
       "Queen's University Belfast",
-      "University of California, San Francisco",
       "Wake Forest University",
-      "Johnson Space Center"
+      "Morehouse School of Medicine",
+      "Johnson Space Center",
+      "Duke University Hospital",
+      "Rice University",
+      "Duke Medical Center",
+      "Georgetown University Medical Center",
+      "University of North Carolina at Chapel Hill",
+      "Queens University",
+      "Stanford University",
+      "Texas Scottish Rite Hospital for Children",
+      "University of California San Diego",
+      "Medical University of South Carolina",
+      "Ames Research Center",
+      "University of California, San Francisco"
     ],
     "venue": "Cell"
   },
@@ -1299,8 +1299,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "University of Calabria",
-      "University of Bari Aldo Moro"
+      "University of Bari Aldo Moro",
+      "University of Calabria"
     ],
     "venue": "International Journal of Molecular Sciences"
   },
@@ -1429,18 +1429,18 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Monash University",
-      "Penn State Milton S. Hershey Medical Center",
-      "Cedars-Sinai Medical Center",
-      "Pennsylvania State University",
-      "University of Pennsylvania",
-      "Erasmus University Rotterdam",
-      "Karolinska Institutet",
-      "Monash Health",
       "Erasmus MC",
       "University of Rochester",
+      "Monash Health",
       "Oulu University Hospital",
-      "University of Oulu"
+      "University of Oulu",
+      "Penn State Milton S. Hershey Medical Center",
+      "Monash University",
+      "Pennsylvania State University",
+      "University of Pennsylvania",
+      "Cedars-Sinai Medical Center",
+      "Karolinska Institutet",
+      "Erasmus University Rotterdam"
     ],
     "venue": "Nature Reviews Disease Primers"
   },
@@ -1503,32 +1503,32 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Somerset NHS Foundation Trust",
-      "Taunton & Somerset NHS Foundation Trust",
-      "Somerset County Council",
-      "University of Nottingham",
-      "North Bristol NHS Trust",
-      "University of Bristol",
-      "Imperial College London",
-      "Plymouth Hospital",
-      "Brunel University of London",
-      "Hudklinikken",
-      "University Hospitals Plymouth NHS Trust",
-      "Japan Patent Office",
-      "Farnham Road Hospital",
-      "Betsi Cadwaladr University Health Board",
-      "Peninsula College of Medicine and Dentistry",
-      "Leeds Teaching Hospitals NHS Trust",
-      "Homerton University Hospital NHS Foundation Trust",
-      "Southmead Hospital",
-      "University College London",
-      "University of East Anglia",
-      "Portsmouth Hospitals NHS Trust",
-      "National Institute for Health Research",
-      "Musgrove Park Hospital",
-      "University College Hospital",
       "Sunderland Royal Hospital",
-      "Homerton University Hospital"
+      "Plymouth Hospital",
+      "Taunton & Somerset NHS Foundation Trust",
+      "Brunel University of London",
+      "University of Nottingham",
+      "Homerton University Hospital",
+      "University Hospitals Plymouth NHS Trust",
+      "University College London",
+      "Betsi Cadwaladr University Health Board",
+      "Portsmouth Hospitals NHS Trust",
+      "Peninsula College of Medicine and Dentistry",
+      "Somerset NHS Foundation Trust",
+      "Hudklinikken",
+      "University College Hospital",
+      "University of East Anglia",
+      "National Institute for Health Research",
+      "Japan Patent Office",
+      "Southmead Hospital",
+      "Somerset County Council",
+      "Farnham Road Hospital",
+      "Leeds Teaching Hospitals NHS Trust",
+      "University of Bristol",
+      "Musgrove Park Hospital",
+      "Homerton University Hospital NHS Foundation Trust",
+      "Imperial College London",
+      "North Bristol NHS Trust"
     ],
     "venue": "Obesity Reviews"
   },
@@ -1551,9 +1551,9 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "PepsiCo (United Kingdom)",
+      "Gatorade Sports Science Institute",
       "Pepsi (United States)",
-      "Gatorade Sports Science Institute"
+      "PepsiCo (United Kingdom)"
     ],
     "venue": "European Journal of Applied Physiology"
   },
@@ -1610,13 +1610,13 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Chinese University of Hong Kong, Shenzhen",
       "Southern Medical University",
-      "Prince of Wales Hospital",
       "Nanfang Hospital",
+      "Hubei University of Medicine",
       "Taihe Hospital",
-      "Chinese University of Hong Kong",
-      "Hubei University of Medicine"
+      "Chinese University of Hong Kong, Shenzhen",
+      "Prince of Wales Hospital",
+      "Chinese University of Hong Kong"
     ],
     "venue": "Signal Transduction and Targeted Therapy"
   },
@@ -1641,9 +1641,9 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
+      "Mardin Artuklu University",
       "Kahramanmaraş Sütçü İmam University",
-      "Tokat Gaziosmanpaşa Üniversitesi",
-      "Mardin Artuklu University"
+      "Tokat Gaziosmanpaşa Üniversitesi"
     ],
     "venue": "Advanced Pharmaceutical Bulletin"
   },
@@ -1668,8 +1668,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Medical Protective",
-      "Huazhong University of Science and Technology"
+      "Huazhong University of Science and Technology",
+      "Medical Protective"
     ],
     "venue": "Theranostics"
   },
@@ -1718,11 +1718,11 @@
     "categories": null,
     "affiliations": [
       "University of Padua",
-      "University of Verona",
       "Universidad Católica de Murcia",
       "IRCCS Ospedale San Raffaele",
       "University of Palermo",
-      "Istituto di Ricovero e Cura a Carattere Scientifico San Raffaele"
+      "Istituto di Ricovero e Cura a Carattere Scientifico San Raffaele",
+      "University of Verona"
     ],
     "venue": "Journal of Translational Medicine"
   },
@@ -1794,27 +1794,27 @@
     "categories": null,
     "affiliations": [
       "University Hospital of Geneva",
-      "Monash University",
-      "University of Turin",
-      "KU Leuven",
-      "University of Verona",
-      "Istituto Clinico Sant'Ambrogio",
-      "University of Oslo",
-      "San Francisco VA Medical Center",
       "Queen Mary University of London",
+      "KU Leuven",
       "Università Campus Bio-Medico",
-      "Vita-Salute San Raffaele University",
-      "Queen's University",
-      "Grace (United States)",
-      "Instituto de Investigación Sanitaria de Santiago",
-      "Virginia Commonwealth University",
-      "University of Pisa",
-      "University of Eastern Finland",
-      "University of Wisconsin–Madison",
       "American University of Beirut",
-      "Sapienza University of Rome",
+      "University of Eastern Finland",
+      "San Francisco VA Medical Center",
+      "Virginia Commonwealth University",
       "Fondazione Ricerca Molinette",
-      "Centro de Investigación Biomédica en Red"
+      "Grace (United States)",
+      "Istituto Clinico Sant'Ambrogio",
+      "Monash University",
+      "Centro de Investigación Biomédica en Red",
+      "University of Turin",
+      "University of Verona",
+      "Vita-Salute San Raffaele University",
+      "University of Wisconsin–Madison",
+      "Instituto de Investigación Sanitaria de Santiago",
+      "Sapienza University of Rome",
+      "University of Pisa",
+      "Queen's University",
+      "University of Oslo"
     ],
     "venue": "Endocrine Reviews"
   },
@@ -1896,15 +1896,15 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Instituto de Salud Carlos III",
-      "Biomedical Research Networking Center in Bioengineering, Biomaterials and Nanomedicine",
-      "BTI Biotechnology Institute",
-      "Singapore Eye Research Institute",
-      "Instituto de Química y Fisicoquímica Biológicas",
-      "Consejo Nacional de Investigaciones Científicas y Técnicas",
       "Universidad de Buenos Aires",
-      "Technical University of Denmark",
+      "Biomedical Research Networking Center in Bioengineering, Biomaterials and Nanomedicine",
+      "Consejo Nacional de Investigaciones Científicas y Técnicas",
+      "Instituto de Química y Fisicoquímica Biológicas",
+      "Singapore Eye Research Institute",
       "University of the Basque Country",
+      "Instituto de Salud Carlos III",
+      "Technical University of Denmark",
+      "BTI Biotechnology Institute",
       "University of Sharjah"
     ],
     "venue": "Pharmaceutics"
@@ -1959,12 +1959,12 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Danylo Halytsky Lviv National Medical University",
       "Ternopil Ivan Pului National Technical University",
+      "The Research Council of Norway",
       "I.Horbachevsky Ternopil National Medical University",
       "University of Sassari",
       "Lviv University",
-      "The Research Council of Norway"
+      "Danylo Halytsky Lviv National Medical University"
     ],
     "venue": "Molecules"
   },
@@ -2012,12 +2012,12 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Université de Rouen Normandie",
       "Institut Universitaire Européen de la Mer",
-      "Université de Bretagne Sud",
       "Laboratoire de Biotechnologie et Chimie Marines",
-      "Université catholique de l'ouest",
-      "Université de Bretagne Occidentale"
+      "Université de Bretagne Occidentale",
+      "Université de Rouen Normandie",
+      "Université de Bretagne Sud",
+      "Université catholique de l'ouest"
     ],
     "venue": "Microorganisms"
   },
@@ -2069,8 +2069,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Pomeranian Medical University",
-      "University of Szczecin"
+      "University of Szczecin",
+      "Pomeranian Medical University"
     ],
     "venue": "International Journal of Molecular Sciences"
   },
@@ -2146,8 +2146,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Aarhus University Hospital",
-      "University of Bari Aldo Moro"
+      "University of Bari Aldo Moro",
+      "Aarhus University Hospital"
     ],
     "venue": "International Journal of Molecular Sciences"
   },
@@ -2230,17 +2230,17 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Massachusetts General Hospital",
-      "VIB-KU Leuven Center for Cancer Biology",
-      "Whitehead Institute for Biomedical Research",
-      "Massachusetts Institute of Technology",
-      "Ragon Institute of MGH, MIT and Harvard",
-      "Arizona State University",
-      "Broad Institute",
-      "Harvard University",
       "Sun Yat-sen University",
+      "Ragon Institute of MGH, MIT and Harvard",
+      "Whitehead Institute for Biomedical Research",
+      "VIB-KU Leuven Center for Cancer Biology",
+      "Arizona State University",
+      "Harvard University",
+      "Broad Institute",
+      "Massachusetts General Hospital",
+      "Aarhus University",
       "The Ohio State University",
-      "Aarhus University"
+      "Massachusetts Institute of Technology"
     ],
     "venue": "Cell Reports"
   },
@@ -2296,8 +2296,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Shenzhen University",
-      "Shenzhen Research Institute of Big Data"
+      "Shenzhen Research Institute of Big Data",
+      "Shenzhen University"
     ],
     "venue": "Frontiers in Psychiatry"
   },
@@ -2348,14 +2348,14 @@
     "categories": null,
     "affiliations": [
       "Baylor College of Medicine",
-      "Universidade Federal de São Paulo",
-      "The University of Texas Health Science Center at Houston",
-      "Medizinische Hochschule Brandenburg Theodor Fontane",
+      "Heinrich Heine University Düsseldorf",
       "Leibniz Institute of Environmental Medicine",
-      "The University of Texas Health Science Center",
-      "Centre Hospitalier Universitaire de Nice",
+      "Universidade Federal de São Paulo",
       "Inserm",
-      "Heinrich Heine University Düsseldorf"
+      "The University of Texas Health Science Center at Houston",
+      "Centre Hospitalier Universitaire de Nice",
+      "The University of Texas Health Science Center",
+      "Medizinische Hochschule Brandenburg Theodor Fontane"
     ],
     "venue": "Journal of the European Academy of Dermatology and Venereology"
   },
@@ -2413,13 +2413,13 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Taif University",
-      "Punjab Agricultural University",
-      "Slovak University of Agriculture in Nitra",
-      "Indian Institute of Soil Science",
       "Bangladesh Wheat and Maize Research Institute",
+      "Punjab Agricultural University",
+      "Indian Institute of Soil Science",
+      "Taif University",
       "Czech University of Life Sciences Prague",
-      "Indian Agricultural Research Institute"
+      "Indian Agricultural Research Institute",
+      "Slovak University of Agriculture in Nitra"
     ],
     "venue": "Molecules"
   },
@@ -2468,9 +2468,9 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Scotland's Rural College",
       "Delhi Pharmaceutical Science and Research University",
-      "University of Petroleum and Energy Studies"
+      "University of Petroleum and Energy Studies",
+      "Scotland's Rural College"
     ],
     "venue": "ACS Omega"
   },
@@ -2524,18 +2524,18 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "University Hospital Heidelberg",
-      "Heidelberg University",
-      "Ospedale Santa Maria",
-      "Westmead Hospital",
-      "Institut Claudius Regaud",
-      "Memorial Sloan Kettering Cancer Center",
       "The University of Sydney",
-      "Heinrich Heine University Düsseldorf",
-      "Università Campus Bio-Medico",
-      "Martin Luther University Halle-Wittenberg",
+      "Netherlands Comprehensive Cancer Organisation",
       "Santa Maria Nuova Hospital",
-      "Netherlands Comprehensive Cancer Organisation"
+      "University Hospital Heidelberg",
+      "Institut Claudius Regaud",
+      "Martin Luther University Halle-Wittenberg",
+      "Università Campus Bio-Medico",
+      "Memorial Sloan Kettering Cancer Center",
+      "Ospedale Santa Maria",
+      "Heidelberg University",
+      "Westmead Hospital",
+      "Heinrich Heine University Düsseldorf"
     ],
     "venue": "Annals of Oncology"
   },
@@ -2624,45 +2624,45 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Vanderbilt University Medical Center",
-      "Universidade Nove de Julho",
-      "Hasselt University",
-      "University of Rochester Medical Center",
-      "Amsterdam University Medical Centers",
-      "Dana-Farber Cancer Institute",
-      "Dana-Farber Brigham Cancer Center",
-      "New York College of Health Professions",
-      "University of Connecticut",
-      "University at Buffalo, State University of New York",
-      "Centre de Haute Energie",
-      "Aja University of Medical Sciences",
-      "University of Bergen",
-      "Gold Coast Hospital",
-      "Florida College",
-      "Griffith University",
-      "University of Amsterdam",
-      "Hospital Sírio-Libanês",
-      "Center for Clinical Research (United States)",
-      "Sinai Health System",
-      "University of Florida",
-      "Hebrew University of Jerusalem",
-      "Institut Curie",
-      "Université Libre de Bruxelles",
-      "New York University",
-      "Academic Center for Dentistry Amsterdam",
-      "University of Brescia",
       "Brigham and Women's Hospital",
-      "Institute of Infection and Immunity",
-      "Massachusetts General Hospital",
-      "NYU Langone Health",
-      "Institut Jules Bordet",
+      "Hebrew University of Jerusalem",
+      "Aja University of Medical Sciences",
+      "Griffith University",
+      "Center for Clinical Research (United States)",
       "Manipal Academy of Higher Education",
-      "City Of Hope National Medical Center",
+      "Eastman Chemical Company (United States)",
+      "Institute of Infection and Immunity",
+      "University of Florida",
       "City of Hope",
-      "Academic Medical Center",
-      "Harvard University",
+      "Institut Jules Bordet",
+      "Vanderbilt University Medical Center",
+      "New York University",
+      "University of Rochester Medical Center",
+      "Dana-Farber Brigham Cancer Center",
+      "Dana-Farber Cancer Institute",
+      "City Of Hope National Medical Center",
+      "Hospital Sírio-Libanês",
+      "NYU Langone Health",
+      "University of Connecticut",
       "University of Helsinki",
-      "Eastman Chemical Company (United States)"
+      "Centre de Haute Energie",
+      "Hasselt University",
+      "Université Libre de Bruxelles",
+      "Massachusetts General Hospital",
+      "Institut Curie",
+      "New York College of Health Professions",
+      "Gold Coast Hospital",
+      "Sinai Health System",
+      "University of Bergen",
+      "Academic Medical Center",
+      "Academic Center for Dentistry Amsterdam",
+      "Harvard University",
+      "Universidade Nove de Julho",
+      "University at Buffalo, State University of New York",
+      "Florida College",
+      "University of Amsterdam",
+      "University of Brescia",
+      "Amsterdam University Medical Centers"
     ],
     "venue": "Frontiers in Oncology"
   },
@@ -2689,12 +2689,12 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Antwerp University Hospital",
       "Ghent University",
-      "Ghent University Hospital",
-      "University of Antwerp",
       "Université de Lille",
-      "Vlaams Instituut voor Biotechnologie"
+      "Vlaams Instituut voor Biotechnologie",
+      "University of Antwerp",
+      "Antwerp University Hospital",
+      "Ghent University Hospital"
     ],
     "venue": "Trends in Cell Biology"
   },
@@ -2756,11 +2756,11 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Clinical Research Center for Hair and Skin Science",
-      "University of Bologna",
       "Seascape Consultants (United Kingdom)",
       "Charité - Universitätsmedizin Berlin",
-      "Almirall (Spain)"
+      "University of Bologna",
+      "Almirall (Spain)",
+      "Clinical Research Center for Hair and Skin Science"
     ],
     "venue": "Journal of the European Academy of Dermatology and Venereology"
   },
@@ -2788,12 +2788,12 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Magna Graecia University",
-      "University of Brescia",
-      "University of Pavia",
+      "University of Bologna",
       "University of Catania",
+      "University of Pavia",
       "Ospedale Sandro Pertini",
-      "University of Bologna"
+      "Magna Graecia University",
+      "University of Brescia"
     ],
     "venue": "Frontiers in Endocrinology"
   },
@@ -2820,12 +2820,12 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Biotechnology Research Center",
-      "Sabin Vaccine Institute",
-      "Hull York Medical School",
-      "University of Hull",
-      "The University of Western Australia",
       "Isfahan University of Medical Sciences",
+      "Biotechnology Research Center",
+      "The University of Western Australia",
+      "University of Hull",
+      "Hull York Medical School",
+      "Sabin Vaccine Institute",
       "Mashhad University of Medical Sciences"
     ],
     "venue": "Phytotherapy Research"
@@ -2855,8 +2855,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Lanzhou University",
-      "University of Connecticut"
+      "University of Connecticut",
+      "Lanzhou University"
     ],
     "venue": "Science Advances"
   },
@@ -2882,13 +2882,13 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "National Taipei University",
       "Columbia University",
+      "National Taipei University",
+      "Academia Sinica",
+      "Institute of Biological Chemistry, Academia Sinica",
       "National Taiwan University",
       "National Taiwan University Hospital",
       "National Taipei University of Business",
-      "Institute of Biological Chemistry, Academia Sinica",
-      "Academia Sinica",
       "National Taipei University of Nursing and Health Science"
     ],
     "venue": "Journal of Biomedical Science"
@@ -2913,10 +2913,10 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Touro University California",
       "University of California, Davis",
-      "California Northstate University",
-      "University of South Florida"
+      "Touro University California",
+      "University of South Florida",
+      "California Northstate University"
     ],
     "venue": "Journal of Clinical Medicine"
   },
@@ -2977,37 +2977,37 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
+      "Université Claude Bernard Lyon 1",
+      "Hospital Juárez de México",
+      "Experimental Medicine and Biology Institute",
+      "IRCCS Humanitas Research Hospital",
+      "Hygeia Hospital",
+      "Medical University of Sofia",
+      "Virginia Commonwealth University",
+      "Universidad Nacional Autónoma de México",
+      "Iakentro",
+      "University College London",
       "Hospices Civils de Lyon",
       "Ospedale di Livorno",
-      "Fondazione Cassa di Risparmio Civitavecchia",
-      "Iakentro",
-      "Université Claude Bernard Lyon 1",
-      "Ospedale di Santo Spirito",
-      "University of Maryland, Baltimore",
-      "Inserm",
-      "Ospedale Filippo Del Ponte Varese",
-      "IRCCS Humanitas Research Hospital",
-      "Istituti di Ricovero e Cura a Carattere Scientifico",
-      "Sapienza University of Rome",
-      "Medical University of Sofia",
-      "Institut National des Sciences Appliquées de Lyon",
-      "Hospital Juárez de México",
-      "Université de Lille",
-      "Tel Aviv University",
       "National University of Singapore",
-      "Experimental Medicine and Biology Institute",
+      "Ospedale di Santo Spirito",
       "Consejo Nacional de Investigaciones Científicas y Técnicas",
+      "Institut National des Sciences Appliquées de Lyon",
+      "Inserm",
       "University of Insubria",
-      "University of Modena and Reggio Emilia",
-      "Hygeia Hospital",
-      "Near East University",
-      "Medical University of Lublin",
-      "Laboratoire CarMeN",
-      "Universidad Nacional Autónoma de México",
-      "Virginia Commonwealth University",
-      "University College London",
+      "Istituti di Ricovero e Cura a Carattere Scientifico",
       "Centro di Terapia Metacognitiva Interpersonale",
-      "University of Messina"
+      "University of Maryland, Baltimore",
+      "University of Messina",
+      "Ospedale Filippo Del Ponte Varese",
+      "Fondazione Cassa di Risparmio Civitavecchia",
+      "Sapienza University of Rome",
+      "Near East University",
+      "Laboratoire CarMeN",
+      "Tel Aviv University",
+      "University of Modena and Reggio Emilia",
+      "Université de Lille",
+      "Medical University of Lublin"
     ],
     "venue": "International Journal of Molecular Sciences"
   },
@@ -3111,10 +3111,10 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "First People's Hospital of Foshan",
       "Central South University",
-      "Hunan University",
-      "Xiangya Hospital Central South University"
+      "Xiangya Hospital Central South University",
+      "First People's Hospital of Foshan",
+      "Hunan University"
     ],
     "venue": "Stem Cell Research & Therapy"
   },
@@ -3163,8 +3163,8 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "The Maria Sklodowska-Curie National Research Institute of Oncology",
-      "Postgraduate School of Molecular Medicine"
+      "Postgraduate School of Molecular Medicine",
+      "The Maria Sklodowska-Curie National Research Institute of Oncology"
     ],
     "venue": "International Journal of Molecular Sciences"
   },
@@ -3192,12 +3192,12 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Ottawa Hospital Research Institute",
-      "McMaster University",
-      "Ottawa Hospital",
-      "Impact",
+      "University of Maryland, Baltimore",
       "University of Ottawa",
-      "University of Maryland, Baltimore"
+      "Impact",
+      "Ottawa Hospital",
+      "Ottawa Hospital Research Institute",
+      "McMaster University"
     ],
     "venue": "BMC Complementary Medicine and Therapies"
   },
@@ -3232,20 +3232,20 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Ghent University",
-      "San Gallicano Hospital",
-      "Istituti di Ricovero e Cura a Carattere Scientifico",
-      "University of Debrecen",
-      "First Affiliated Hospital of Kunming Medical University",
-      "Otto-von-Guericke University Magdeburg",
-      "Tohoku University",
-      "University of Michigan–Ann Arbor",
-      "Kunming Medical University",
       "RIKEN Center for Integrative Medical Sciences",
-      "University of Cologne",
+      "First Affiliated Hospital of Kunming Medical University",
+      "Kunming Medical University",
+      "University of Debrecen",
       "Leipzig University",
+      "Medizinische Hochschule Brandenburg Theodor Fontane",
       "Kyoto University",
-      "Medizinische Hochschule Brandenburg Theodor Fontane"
+      "University of Michigan–Ann Arbor",
+      "Istituti di Ricovero e Cura a Carattere Scientifico",
+      "Ghent University",
+      "Otto-von-Guericke University Magdeburg",
+      "San Gallicano Hospital",
+      "University of Cologne",
+      "Tohoku University"
     ],
     "venue": "Frontiers in Immunology"
   },
@@ -3300,24 +3300,24 @@
     "primary_category": null,
     "categories": null,
     "affiliations": [
-      "Griffith University",
-      "Sinai Health System",
-      "Academic Center for Dentistry Amsterdam",
-      "Queensland Health",
-      "Gold Coast Hospital",
-      "Harvard University",
-      "Amsterdam University Medical Centers",
-      "Institut Jules Bordet",
-      "Cambridge Health Alliance",
-      "University of Amsterdam",
-      "Gold Coast Health",
       "City of Hope",
-      "University at Buffalo, State University of New York",
+      "Griffith University",
+      "Cambridge Health Alliance",
+      "Academic Center for Dentistry Amsterdam",
+      "University of Amsterdam",
+      "Centre de Haute Energie",
+      "Sinai Health System",
       "Amsterdam University of Applied Sciences",
+      "Gold Coast Health",
+      "Amsterdam University Medical Centers",
       "University of Florida",
-      "Hasselt University",
+      "Gold Coast Hospital",
       "Vrije Universiteit Amsterdam",
-      "Centre de Haute Energie"
+      "University at Buffalo, State University of New York",
+      "Institut Jules Bordet",
+      "Hasselt University",
+      "Queensland Health",
+      "Harvard University"
     ],
     "venue": "Cancer Medicine"
   },
