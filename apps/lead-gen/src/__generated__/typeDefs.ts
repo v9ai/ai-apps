@@ -903,6 +903,7 @@ type ImportContactsResult {
   failed: Int!
   imported: Int!
   success: Boolean!
+  updated: Int!
 }
 
 type ImportResendResult {

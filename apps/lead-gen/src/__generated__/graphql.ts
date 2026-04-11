@@ -990,6 +990,7 @@ export type ImportContactsResult = {
   failed: Scalars['Int']['output'];
   imported: Scalars['Int']['output'];
   success: Scalars['Boolean']['output'];
+  updated: Scalars['Int']['output'];
 };
 
 export type ImportResendResult = {

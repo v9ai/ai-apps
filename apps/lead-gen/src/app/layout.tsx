@@ -28,9 +28,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.variable}>
-        <a href="#main-content" className="skip-to-content">
-          skip to content
-        </a>
         <Theme appearance="dark" radius="medium">
           <Providers>
             <ErrorBoundary>

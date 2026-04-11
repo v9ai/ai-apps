@@ -190,6 +190,7 @@ type BatchOperationResult {
 type ImportContactsResult {
   success: Boolean!
   imported: Int!
+  updated: Int!
   failed: Int!
   errors: [String!]!
 }

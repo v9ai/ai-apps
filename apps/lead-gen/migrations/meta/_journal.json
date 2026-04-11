@@ -85,6 +85,20 @@
       "when": 1775889539559,
       "tag": "0011_bizarre_greymalkin",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775900101594,
+      "tag": "0012_aspiring_mysterio",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1775900214916,
+      "tag": "0013_misty_bloodstorm",
+      "breakpoints": true
     }
   ]
 }

@@ -22,6 +22,7 @@ interface SendEmailRequest {
   subject: string;
   body: string;
   includeResume?: boolean;
+  receivedEmailId?: number;
 }
 
 function textToHtml(text: string): string {
