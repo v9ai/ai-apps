@@ -166,3 +166,8 @@ path = "src/bin/kv_quant_research.rs"
 name = "protocol-research"
 path = "src/bin/protocol_research.rs"
 required-features = ["neon"]
+
+[[bin]]
+name = "hair-papers"
+path = "src/bin/hair_papers.rs"
+required-features = ["neon"]

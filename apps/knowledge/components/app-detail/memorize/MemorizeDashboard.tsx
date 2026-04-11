@@ -1,0 +1,341 @@
+"use client";
+
+import { useState, useCallback, useMemo } from "react";
+import { Heading, Text, Flex, Button, Badge, Box } from "@radix-ui/themes";
+import type { CssProperty, CssCategory } from "@/lib/css-properties";
+import { ProgressBar } from "./ProgressBar";
+import { FlashcardDeck } from "./FlashcardDeck";
+import { FillInTheBlank } from "./FillInTheBlank";
+import { VisualMatcher } from "./VisualMatcher";
+import { TimedDrill } from "./TimedDrill";
+import { PropertyExplorer } from "./PropertyExplorer";
+
+export type MasteryMap = Record<
+  string,
+  {
+    pMastery: number;
+    masteryLevel: string;
+    totalInteractions: number;
+    correctInteractions: number;
+    lastInteractionAt: Date | null;
+  }
+>;
+
+type Mode = "dashboard" | "flashcards" | "fill" | "matcher" | "drill" | "explorer";
+
+interface MemorizeDashboardProps {
+  categories: CssCategory[];
+  mastery: MasteryMap;
+  appSlug: string;
+  onRate: (propertyId: string, isCorrect: boolean) => void;
+}
+
+function getFilteredProps(
+  categories: CssCategory[],
+  activeCategory: string | null,
+): CssProperty[] {
+  if (!activeCategory) return categories.flatMap((c) => c.properties);
+  return categories.find((c) => c.id === activeCategory)?.properties ?? [];
+}
+
+function getSmartPracticeProps(
+  allProps: CssProperty[],
+  mastery: MasteryMap,
+): CssProperty[] {
+  // Sort by lowest mastery first, unseen properties first
+  return [...allProps].sort((a, b) => {
+    const ma = mastery[a.id]?.pMastery ?? 0;
+    const mb = mastery[b.id]?.pMastery ?? 0;
+    return ma - mb;
+  });
+}
+
+export function MemorizeDashboard({
+  categories,
+  mastery,
+  appSlug,
+  onRate,
+}: MemorizeDashboardProps) {
+  const [mode, setMode] = useState<Mode>("dashboard");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const allProps = useMemo(
+    () => categories.flatMap((c) => c.properties),
+    [categories],
+  );
+
+  const filteredProps = useMemo(
+    () => getFilteredProps(categories, activeCategory),
+    [categories, activeCategory],
+  );
+
+  const smartProps = useMemo(
+    () => getSmartPracticeProps(allProps, mastery),
+    [allProps, mastery],
+  );
+
+  // Overall stats
+  const totalProps = allProps.length;
+  const masteredCount = allProps.filter(
+    (p) => (mastery[p.id]?.pMastery ?? 0) >= 0.6,
+  ).length;
+  const overallMastery =
+    totalProps > 0
+      ? allProps.reduce((sum, p) => sum + (mastery[p.id]?.pMastery ?? 0), 0) /
+        totalProps
+      : 0;
+
+  const handlePractice = useCallback(
+    (propertyId: string) => {
+      const cat = categories.find((c) =>
+        c.properties.some((p) => p.id === propertyId),
+      );
+      if (cat) setActiveCategory(cat.id);
+      setMode("flashcards");
+    },
+    [categories],
+  );
+
+  const handleBack = useCallback(() => {
+    setMode("dashboard");
+  }, []);
+
+  // Render active mode
+  if (mode === "flashcards") {
+    return (
+      <div>
+        <ModeHeader
+          title="Flashcards"
+          subtitle={activeCategory ?? "All categories"}
+          onBack={handleBack}
+        />
+        <FlashcardDeck
+          properties={activeCategory ? filteredProps : smartProps}
+          categories={categories}
+          onRate={onRate}
+        />
+      </div>
+    );
+  }
+
+  if (mode === "fill") {
+    return (
+      <div>
+        <ModeHeader
+          title="Fill in the Blank"
+          subtitle={activeCategory ?? "All categories"}
+          onBack={handleBack}
+        />
+        <FillInTheBlank
+          properties={activeCategory ? filteredProps : smartProps}
+          onRate={onRate}
+        />
+      </div>
+    );
+  }
+
+  if (mode === "matcher") {
+    return (
+      <div>
+        <ModeHeader
+          title="Visual Matcher"
+          subtitle={activeCategory ?? "All categories"}
+          onBack={handleBack}
+        />
+        <VisualMatcher
+          properties={activeCategory ? filteredProps : smartProps}
+          onRate={onRate}
+        />
+      </div>
+    );
+  }
+
+  if (mode === "drill") {
+    return (
+      <div>
+        <ModeHeader title="Timed Drill" subtitle="60 seconds" onBack={handleBack} />
+        <TimedDrill properties={allProps} onRate={onRate} />
+      </div>
+    );
+  }
+
+  if (mode === "explorer") {
+    return (
+      <div>
+        <ModeHeader title="Property Explorer" subtitle="Browse & study" onBack={handleBack} />
+        <PropertyExplorer
+          categories={categories}
+          mastery={mastery}
+          onPractice={handlePractice}
+        />
+      </div>
+    );
+  }
+
+  // Dashboard view
+  return (
+    <div className="memorize-dashboard">
+      {/* Overall progress */}
+      <div className="memorize-overall">
+        <Flex justify="between" align="baseline">
+          <Heading size="4">CSS Properties</Heading>
+          <Text size="2" color="gray">
+            {masteredCount} / {totalProps} mastered
+          </Text>
+        </Flex>
+        <div className="memorize-overall-bar">
+          <div
+            className="memorize-overall-fill"
+            style={{ width: `${Math.round(overallMastery * 100)}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Category cards */}
+      <div className="memorize-categories">
+        {categories.map((cat) => {
+          const catMastery =
+            cat.properties.length > 0
+              ? cat.properties.reduce(
+                  (sum, p) => sum + (mastery[p.id]?.pMastery ?? 0),
+                  0,
+                ) / cat.properties.length
+              : 0;
+          const isActive = activeCategory === cat.id;
+
+          return (
+            <div
+              key={cat.id}
+              className={`memorize-cat-card ${isActive ? "memorize-cat-card--active" : ""}`}
+              onClick={() =>
+                setActiveCategory(isActive ? null : cat.id)
+              }
+            >
+              <span className="memorize-cat-icon">{cat.icon}</span>
+              <div className="memorize-cat-name">{cat.name}</div>
+              <div className="memorize-cat-count">
+                {cat.properties.length} properties
+              </div>
+              <ProgressBar pMastery={catMastery} showLabel={false} />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Active category filter indicator */}
+      {activeCategory && (
+        <Flex align="center" gap="2" mb="3">
+          <Text size="2" color="gray">
+            Filtered to:
+          </Text>
+          <Badge color="violet" variant="soft">
+            {categories.find((c) => c.id === activeCategory)?.name}
+          </Badge>
+          <Button
+            size="1"
+            variant="ghost"
+            color="gray"
+            onClick={() => setActiveCategory(null)}
+          >
+            Clear
+          </Button>
+        </Flex>
+      )}
+
+      {/* Mode buttons */}
+      <Heading size="3" mb="3">
+        Practice Modes
+      </Heading>
+      <div className="memorize-modes">
+        <Button
+          size="3"
+          variant="solid"
+          color="violet"
+          onClick={() => setMode("flashcards")}
+        >
+          Flashcards
+        </Button>
+        <Button
+          size="3"
+          variant="soft"
+          color="cyan"
+          onClick={() => setMode("fill")}
+        >
+          Fill in the Blank
+        </Button>
+        <Button
+          size="3"
+          variant="soft"
+          color="orange"
+          onClick={() => setMode("matcher")}
+        >
+          Visual Matcher
+        </Button>
+        <Button
+          size="3"
+          variant="soft"
+          color="crimson"
+          onClick={() => setMode("drill")}
+        >
+          Timed Drill
+        </Button>
+        <Button
+          size="3"
+          variant="outline"
+          color="gray"
+          onClick={() => setMode("explorer")}
+        >
+          Browse All
+        </Button>
+      </div>
+
+      {/* Smart practice CTA */}
+      <Box mt="5" p="4" style={{ background: "var(--violet-2)", borderRadius: "var(--radius-3)", borderLeft: "3px solid var(--violet-8)" }}>
+        <Flex justify="between" align="center" wrap="wrap" gap="3">
+          <div>
+            <Text size="2" weight="bold" style={{ display: "block" }}>
+              Smart Practice
+            </Text>
+            <Text size="1" color="gray">
+              Focus on your weakest properties first, sorted by lowest mastery.
+            </Text>
+          </div>
+          <Button
+            size="2"
+            variant="solid"
+            color="violet"
+            onClick={() => {
+              setActiveCategory(null);
+              setMode("flashcards");
+            }}
+          >
+            Start
+          </Button>
+        </Flex>
+      </Box>
+    </div>
+  );
+}
+
+/** Shared header for active modes */
+function ModeHeader({
+  title,
+  subtitle,
+  onBack,
+}: {
+  title: string;
+  subtitle: string;
+  onBack: () => void;
+}) {
+  return (
+    <Flex align="center" gap="3" mb="5">
+      <Button size="1" variant="ghost" color="gray" onClick={onBack}>
+        &larr; Back
+      </Button>
+      <Heading size="4">{title}</Heading>
+      <Text size="2" color="gray">
+        {subtitle}
+      </Text>
+    </Flex>
+  );
+}
