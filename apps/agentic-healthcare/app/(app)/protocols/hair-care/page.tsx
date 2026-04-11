@@ -1,7 +1,11 @@
 import { Box, Badge, Card, Callout, Flex, Heading, Separator, Text } from "@radix-ui/themes";
 import Link from "next/link";
-import { Sparkles, AlertTriangle, Clock, Pill, FlaskConical, Shield } from "lucide-react";
+import { Sparkles, AlertTriangle, Clock, Pill, FlaskConical, Shield, BookOpen } from "lucide-react";
 import { css } from "styled-system/css";
+import { db } from "@/lib/db";
+import { protocolResearches } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { MarkdownProse } from "@/components/markdown-prose";
 import {
   NUTRITIONAL_MARKERS,
   DHT_TREATMENT_TIERS,
@@ -10,6 +14,7 @@ import {
   AUTOIMMUNE_MARKERS,
   DAILY_STACK,
   RETEST_SCHEDULE,
+  HAIR_CARE_PROTOCOL_ID,
 } from "./data";
 import type { BloodMarker } from "./data";
 
@@ -127,6 +132,71 @@ function MarkerCard({ marker, color }: { marker: BloodMarker; color: "green" | "
             ))}
           </Flex>
         )}
+      </Flex>
+    </Card>
+  );
+}
+
+// ── Research Section ─────────────────────────────────────────────
+
+async function ResearchSection() {
+  const [research] = await db
+    .select()
+    .from(protocolResearches)
+    .where(eq(protocolResearches.protocolId, HAIR_CARE_PROTOCOL_ID))
+    .orderBy(desc(protocolResearches.createdAt))
+    .limit(1);
+
+  if (!research || research.status !== "completed") return null;
+
+  return (
+    <Card>
+      <Flex direction="column" gap="3">
+        <Flex align="center" gap="2">
+          <BookOpen size={16} style={{ color: "var(--indigo-11)" }} />
+          <Heading size="3">Research</Heading>
+          <Badge color="green" variant="soft" size="1">
+            {research.supplementCount} topics &middot; {(Number(research.durationMs) / 1000).toFixed(0)}s
+          </Badge>
+        </Flex>
+
+        {research.synthesis && (
+          <Card variant="surface">
+            <Flex direction="column" gap="2">
+              <Text size="2" weight="medium" color="indigo">Synthesis</Text>
+              <MarkdownProse content={research.synthesis} />
+            </Flex>
+          </Card>
+        )}
+
+        {Array.isArray(research.supplementFindings) &&
+          (research.supplementFindings as Array<{ supplement_name: string; findings: string }>).length > 0 && (
+          <Flex direction="column" gap="2">
+            <Text size="2" weight="medium" color="gray">Per-Topic Findings</Text>
+            {(research.supplementFindings as Array<{ supplement_name: string; findings: string }>).map(
+              (sf, i) => (
+                <details key={i}>
+                  <summary className={summaryClass}>
+                    {sf.supplement_name}
+                  </summary>
+                  <div
+                    className={css({
+                      padding: "12px",
+                      maxHeight: "500px",
+                      overflow: "auto",
+                    })}
+                  >
+                    <MarkdownProse content={sf.findings} />
+                  </div>
+                </details>
+              ),
+            )}
+          </Flex>
+        )}
+
+        <Text size="1" color="gray">
+          Researched {research.createdAt.toLocaleDateString()}
+        </Text>
       </Flex>
     </Card>
   );
@@ -290,6 +360,10 @@ export default function HairCareProtocolPage() {
                 </div>
               </div>
             </details>
+
+            {/* ── Research ──────────────────────────────── */}
+            <Separator size="4" />
+            <ResearchSection />
           </Flex>
 
           {/* ── Sidebar ─────────────────────────────────────── */}

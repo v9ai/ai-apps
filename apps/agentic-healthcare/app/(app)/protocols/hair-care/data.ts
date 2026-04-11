@@ -1,3 +1,7 @@
+// ── Protocol ID (DB record for research) ─────────────────────────
+
+export const HAIR_CARE_PROTOCOL_ID = "78e4bd40-a075-45f5-9f48-f9173cf479f7";
+
 // ── Types ────────────────────────────────────────────────────────
 
 export type Treatment = {
