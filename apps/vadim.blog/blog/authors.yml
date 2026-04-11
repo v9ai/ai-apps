@@ -4,7 +4,8 @@ v9ai:
   description: "Senior Software Engineer building AI-powered products with TypeScript, Rust, and LLMs. Writes about AI agents, eval-driven development, and edge computing."
   url: https://www.linkedin.com/in/v9ai/
   image_url: https://github.com/v9ai.png
-  page: true
+  page:
+    permalink: v9ai
   socials:
     github: v9ai
     linkedin: v9ai
