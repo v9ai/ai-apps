@@ -421,6 +421,24 @@ type ContactMLScore {
   seniority: String!
 }
 
+type ContactMessage {
+  channel: String!
+  classification: String
+  classificationConfidence: Float
+  companyId: Int
+  contactEmailId: Int
+  contactId: Int
+  content: String
+  createdAt: String!
+  direction: String!
+  id: Int!
+  senderName: String
+  senderProfileUrl: String
+  sentAt: String!
+  subject: String
+  updatedAt: String!
+}
+
 type ContactNextTouch {
   contactId: Int!
   firstName: String!
@@ -1144,6 +1162,7 @@ type Query {
   contact(id: Int!): Contact
   contactByEmail(email: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
+  contactMessages(contactId: Int!): [ContactMessage!]!
   contactReminders(contactId: Int!): [ContactReminder!]!
   contacts(companyId: Int, limit: Int, offset: Int, search: String): ContactsResult!
   dueReminders: [ContactReminderWithContact!]!

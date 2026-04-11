@@ -65,6 +65,22 @@ query GetResendEmail($resendId: String!) {
   }
 }
 
+query GetContactMessages($contactId: Int!) {
+  contactMessages(contactId: $contactId) {
+    id
+    channel
+    direction
+    contactId
+    senderName
+    senderProfileUrl
+    content
+    subject
+    sentAt
+    classification
+    createdAt
+  }
+}
+
 query GetContactEmails($contactId: Int!) {
   contactEmails(contactId: $contactId) {
     id

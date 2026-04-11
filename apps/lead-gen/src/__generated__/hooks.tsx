@@ -474,6 +474,25 @@ export type ContactMlScore = {
   seniority: Scalars['String']['output'];
 };
 
+export type ContactMessage = {
+  __typename?: 'ContactMessage';
+  channel: Scalars['String']['output'];
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  contactEmailId: Maybe<Scalars['Int']['output']>;
+  contactId: Maybe<Scalars['Int']['output']>;
+  content: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  direction: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  senderName: Maybe<Scalars['String']['output']>;
+  senderProfileUrl: Maybe<Scalars['String']['output']>;
+  sentAt: Scalars['String']['output'];
+  subject: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type ContactNextTouch = {
   __typename?: 'ContactNextTouch';
   contactId: Scalars['Int']['output'];
@@ -1624,6 +1643,7 @@ export type Query = {
   contact: Maybe<Contact>;
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
+  contactMessages: Array<ContactMessage>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
   dueReminders: Array<ContactReminderWithContact>;
@@ -1766,6 +1786,11 @@ export type QueryContactByEmailArgs = {
 
 
 export type QueryContactEmailsArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactMessagesArgs = {
   contactId: Scalars['Int']['input'];
 };
 
@@ -3159,6 +3184,13 @@ export type GetResendEmailQueryVariables = Exact<{
 
 
 export type GetResendEmailQuery = { __typename?: 'Query', resendEmail: { __typename?: 'ResendEmailDetail', id: string, from: string, to: Array<string>, subject: string | null, text: string | null, html: string | null, lastEvent: string | null, createdAt: string, scheduledAt: string | null, cc: Array<string> | null, bcc: Array<string> | null } | null };
+
+export type GetContactMessagesQueryVariables = Exact<{
+  contactId: Scalars['Int']['input'];
+}>;
+
+
+export type GetContactMessagesQuery = { __typename?: 'Query', contactMessages: Array<{ __typename?: 'ContactMessage', id: number, channel: string, direction: string, contactId: number | null, senderName: string | null, senderProfileUrl: string | null, content: string | null, subject: string | null, sentAt: string, classification: string | null, createdAt: string }> };
 
 export type GetContactEmailsQueryVariables = Exact<{
   contactId: Scalars['Int']['input'];
@@ -4724,6 +4756,59 @@ export type GetResendEmailQueryHookResult = ReturnType<typeof useGetResendEmailQ
 export type GetResendEmailLazyQueryHookResult = ReturnType<typeof useGetResendEmailLazyQuery>;
 export type GetResendEmailSuspenseQueryHookResult = ReturnType<typeof useGetResendEmailSuspenseQuery>;
 export type GetResendEmailQueryResult = Apollo.QueryResult<GetResendEmailQuery, GetResendEmailQueryVariables>;
+export const GetContactMessagesDocument = gql`
+    query GetContactMessages($contactId: Int!) {
+  contactMessages(contactId: $contactId) {
+    id
+    channel
+    direction
+    contactId
+    senderName
+    senderProfileUrl
+    content
+    subject
+    sentAt
+    classification
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useGetContactMessagesQuery__
+ *
+ * To run a query within a React component, call `useGetContactMessagesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetContactMessagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetContactMessagesQuery({
+ *   variables: {
+ *      contactId: // value for 'contactId'
+ *   },
+ * });
+ */
+export function useGetContactMessagesQuery(baseOptions: Apollo.QueryHookOptions<GetContactMessagesQuery, GetContactMessagesQueryVariables> & ({ variables: GetContactMessagesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetContactMessagesQuery, GetContactMessagesQueryVariables>(GetContactMessagesDocument, options);
+      }
+export function useGetContactMessagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetContactMessagesQuery, GetContactMessagesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetContactMessagesQuery, GetContactMessagesQueryVariables>(GetContactMessagesDocument, options);
+        }
+// @ts-ignore
+export function useGetContactMessagesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetContactMessagesQuery, GetContactMessagesQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactMessagesQuery, GetContactMessagesQueryVariables>;
+export function useGetContactMessagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactMessagesQuery, GetContactMessagesQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactMessagesQuery | undefined, GetContactMessagesQueryVariables>;
+export function useGetContactMessagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactMessagesQuery, GetContactMessagesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetContactMessagesQuery, GetContactMessagesQueryVariables>(GetContactMessagesDocument, options);
+        }
+export type GetContactMessagesQueryHookResult = ReturnType<typeof useGetContactMessagesQuery>;
+export type GetContactMessagesLazyQueryHookResult = ReturnType<typeof useGetContactMessagesLazyQuery>;
+export type GetContactMessagesSuspenseQueryHookResult = ReturnType<typeof useGetContactMessagesSuspenseQuery>;
+export type GetContactMessagesQueryResult = Apollo.QueryResult<GetContactMessagesQuery, GetContactMessagesQueryVariables>;
 export const GetContactEmailsDocument = gql`
     query GetContactEmails($contactId: Int!) {
   contactEmails(contactId: $contactId) {

@@ -2,7 +2,7 @@
  * Contact query resolvers.
  */
 
-import { contacts, companies, contactEmails } from "@/db/schema";
+import { contacts, companies, contactEmails, messages } from "@/db/schema";
 import { resend } from "@/lib/resend";
 import { eq, and, like, or, count, desc } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
@@ -85,6 +85,18 @@ export const contactQueries = {
       .from(contactEmails)
       .where(eq(contactEmails.contact_id, args.contactId))
       .orderBy(contactEmails.created_at);
+  },
+
+  async contactMessages(
+    _parent: unknown,
+    args: { contactId: number },
+    context: GraphQLContext,
+  ) {
+    return context.db
+      .select()
+      .from(messages)
+      .where(eq(messages.contact_id, args.contactId))
+      .orderBy(messages.sent_at);
   },
 
   async companyContactEmails(
