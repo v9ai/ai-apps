@@ -87,7 +87,7 @@ export default function NavHeader({
               justifyContent: 'center',
               h: 'full',
               textDecoration: 'none',
-              gap: '1px',
+              gap: '4px',
               _hover: {
                 '& .logo-dot': {
                   boxShadow: '0 0 5px 1.5px rgba(167,139,250,1), 0 0 14px 3px rgba(139,92,246,0.65), 0 0 24px 6px rgba(139,92,246,0.3)',
@@ -122,22 +122,22 @@ export default function NavHeader({
                   'logo-dot',
                   css({
                     display: 'inline-block',
-                    w: '5px',
-                    h: '5px',
+                    w: '6px',
+                    h: '6px',
                     rounded: 'full',
                     bg: 'accent.purple',
                     flexShrink: 0,
-                    boxShadow: '0 0 4px 1px rgba(167,139,250,0.9), 0 0 10px 2px rgba(139,92,246,0.5), 0 0 18px 4px rgba(139,92,246,0.2)',
+                    boxShadow: '0 0 3px 1px rgba(167,139,250,0.85), 0 0 8px 2px rgba(139,92,246,0.4), 0 0 14px 3px rgba(139,92,246,0.15)',
                     transition: 'box-shadow 0.3s ease',
-                    mr: '2px',
+                    mr: '3px',
                   }),
                 )}
               />
               <span
                 className={css({
-                  fontSize: '0.6875rem',
-                  fontWeight: '400',
-                  letterSpacing: '0.04em',
+                  fontSize: '0.75rem',
+                  fontWeight: '500',
+                  letterSpacing: '0.06em',
                   color: 'ui.faint',
                 })}
               >

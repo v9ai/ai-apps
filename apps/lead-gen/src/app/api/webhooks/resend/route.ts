@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { contactEmails, contacts, receivedEmails } from "@/db/schema";
 import { classifyReply } from "@/lib/email/reply-classifier";
 import { matchContact } from "@/lib/email/contact-matcher";
+import { resend } from "@/lib/resend";
 
 /**
  * Resend Webhook Handler
@@ -351,9 +352,36 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
     console.log(`[RESEND_WEBHOOK] email.received persisted: ${emailId}`);
   });
 
+  // 1b. Fetch full email content from Resend API (webhook payload lacks body)
+  if (!html && !text) {
+    await withRetry(`handleReceived/fetchContent(${emailId})`, async () => {
+      const full = await resend.instance.getReceivedEmail(emailId);
+      if (full && (full.html || full.text)) {
+        await db
+          .update(receivedEmails)
+          .set({
+            html_content: full.html ?? null,
+            text_content: full.text ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .where(eq(receivedEmails.resend_id, emailId));
+        console.log(`[RESEND_WEBHOOK] fetched content for ${emailId}`);
+      }
+    });
+  }
+
   // 2. Classify reply and match to contact
   await withRetry(`handleReceived/classify(${emailId})`, async () => {
-    const textBody = text || "";
+    // Use webhook body if available, otherwise read from DB (fetched in step 1b)
+    let textBody = text || "";
+    if (!textBody) {
+      const [row] = await db
+        .select({ text_content: receivedEmails.text_content })
+        .from(receivedEmails)
+        .where(eq(receivedEmails.resend_id, emailId))
+        .limit(1);
+      textBody = row?.text_content || "";
+    }
     const emailSubject = subject || "";
 
     // Classify the reply
