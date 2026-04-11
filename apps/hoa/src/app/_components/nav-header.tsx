@@ -87,7 +87,7 @@ export default function NavHeader({
               justifyContent: 'center',
               h: 'full',
               textDecoration: 'none',
-              gap: '4px',
+              gap: '6px',
               _hover: {
                 '& .logo-dot': {
                   boxShadow: '0 0 5px 1.5px rgba(167,139,250,1), 0 0 14px 3px rgba(139,92,246,0.65), 0 0 24px 6px rgba(139,92,246,0.3)',
