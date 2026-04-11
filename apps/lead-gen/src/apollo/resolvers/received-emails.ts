@@ -40,7 +40,7 @@ export const receivedEmailResolvers = {
         .select()
         .from(contactEmails)
         .where(eq(contactEmails.in_reply_to_received_id, parent.id))
-        .orderBy(contactEmails.sent_at);
+        .orderBy(desc(contactEmails.sent_at));
 
       if (explicit.length > 0) return explicit;
 
@@ -51,7 +51,7 @@ export const receivedEmailResolvers = {
         .select()
         .from(contactEmails)
         .where(eq(contactEmails.contact_id, parent.matched_contact_id))
-        .orderBy(contactEmails.sent_at);
+        .orderBy(desc(contactEmails.sent_at));
     },
     createdAt: (parent: DbReceivedEmail) => parent.created_at,
     updatedAt: (parent: DbReceivedEmail) => parent.updated_at,
