@@ -227,7 +227,6 @@ export default function HairCareProtocolPage() {
                 </Flex>
                 <Text size="2" color="gray">
                   Blood-test-driven hair restoration protocol. Act on each result below based on your lab work.
-                  Inspired by Bryan Johnson&apos;s evidence-based approach.
                 </Text>
               </Flex>
             </Card>
@@ -376,7 +375,7 @@ export default function HairCareProtocolPage() {
                   <Heading size="3">Daily Stack</Heading>
                 </Flex>
                 <Text size="1" color="gray">
-                  Johnson-inspired, adjusted to your blood work results.
+                  Evidence-based, adjusted to your blood work results.
                 </Text>
                 <Separator size="4" />
                 {DAILY_STACK.map((group) => (

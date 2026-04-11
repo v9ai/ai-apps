@@ -175,14 +175,14 @@ export const NUTRITIONAL_MARKERS: BloodMarker[] = [
 export const DHT_TREATMENT_TIERS: DHTTreatmentTier[] = [
   {
     tier: 1,
-    label: "Topical (Johnson's preference)",
+    label: "Topical (preferred)",
     description: "Topical finasteride 0.1% + minoxidil 5% compounded together, applied to scalp daily. Keeps DHT-blocking local, far fewer systemic side effects than oral.",
     items: [],
   },
   {
     tier: 2,
     label: "Oral finasteride",
-    description: "1 mg/day, the standard prescription. Johnson avoids this due to potential sexual side effects (2\u20134% of users).",
+    description: "1 mg/day, the standard prescription. Some avoid this due to potential sexual side effects (2\u20134% of users).",
     items: [
       "Get baseline hormone panels before starting",
       "Recheck at 3 and 6 months",
@@ -191,7 +191,7 @@ export const DHT_TREATMENT_TIERS: DHTTreatmentTier[] = [
   {
     tier: 3,
     label: "Natural DHT blockers",
-    description: "Weaker than finasteride but some studies show modest benefit. Johnson doesn't rely on these.",
+    description: "Weaker than finasteride but some studies show modest benefit.",
     items: [
       "Saw palmetto: 320 mg/day",
       "Pumpkin seed oil: 400 mg/day",
@@ -199,7 +199,7 @@ export const DHT_TREATMENT_TIERS: DHTTreatmentTier[] = [
   },
   {
     tier: 4,
-    label: "Johnson's full topical formula",
+    label: "Full topical formula",
     description: "Compounded by a pharmacy. A dermatologist can write a prescription for a similar compound.",
     items: [
       "Minoxidil",
@@ -300,7 +300,7 @@ export const ENDOCRINE_MARKERS: BloodMarker[] = [
     clinicalNotes: [
       "Insulin resistance worsens androgenetic alopecia by increasing androgen activity.",
       "Reduce refined carbs and sugar, strength train regularly.",
-      "Johnson's approach: last meal early, low body fat, daily exercise.",
+      "Recommended approach: last meal early, low body fat, daily exercise.",
     ],
   },
 ];
@@ -315,7 +315,7 @@ export const AUTOIMMUNE_MARKERS: BloodMarker[] = [
     retestInterval: "Per rheumatologist",
     clinicalNotes: [
       "Suggests autoimmune involvement \u2014 possibly alopecia areata, lupus-related hair loss, or another autoimmune condition.",
-      "This changes the entire approach away from Johnson's protocol (androgenetic alopecia) toward immunomodulation.",
+      "This changes the entire approach away from the androgenetic-alopecia protocol toward immunomodulation.",
       "See a dermatologist and potentially a rheumatologist.",
       "Treatments may include: corticosteroid injections, JAK inhibitors (like baricitinib), or topical immunotherapy.",
     ],
