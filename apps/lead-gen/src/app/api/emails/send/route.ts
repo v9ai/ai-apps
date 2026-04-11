@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Invalid request body" }, { status: 400 });
   }
 
-  const { contactId, to, name, subject, body, includeResume } = input;
+  const { contactId, to, name, subject, body, includeResume, receivedEmailId } = input;
 
   if (!to || !subject || !body) {
     return NextResponse.json({ success: false, error: "to, subject, and body are required" }, { status: 400 });
@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
         status: "sent",
         sent_at: new Date().toISOString(),
         recipient_name: name || null,
+        ...(receivedEmailId ? { in_reply_to_received_id: receivedEmailId } : {}),
       });
     } catch (err) {
       // Non-fatal — email was sent, just log the persistence failure
