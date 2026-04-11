@@ -150,7 +150,7 @@ export default function Home() {
                   </Text>
                 </Flex>
                 <a
-                  href="https://github.com/nicolad/ai-apps"
+                  href="https://github.com/v9ai/ai-apps"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={css({ color: "var(--gray-a11)", display: "flex" })}

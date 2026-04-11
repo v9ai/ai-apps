@@ -899,4 +899,4 @@ The combination of Helius LaserStream's ultra-low latency gRPC streaming and Clo
 - [Cloudflare Containers Docs](https://developers.cloudflare.com/containers/)
 - [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
 - [Wrangler CLI Reference](https://developers.cloudflare.com/workers/wrangler/)
-- [Example repository](https://github.com/nicolad/solana-trading-apps/tree/main/laserstream-container)
+- [Example repository](https://github.com/v9ai/solana-trading-apps/tree/main/laserstream-container)

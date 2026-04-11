@@ -305,7 +305,7 @@ export function LandingHero() {
         >
           {/* open source badge */}
           <a
-            href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
+            href="https://github.com/v9ai/ai-apps/tree/main/apps/lead-gen"
             target="_blank"
             rel="noopener noreferrer"
             className={css({

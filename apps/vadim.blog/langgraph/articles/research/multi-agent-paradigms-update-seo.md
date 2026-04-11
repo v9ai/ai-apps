@@ -208,7 +208,7 @@ Add these questions to the existing FAQ section. Each is structured as a feature
 ---
 
 **What is the Rust equivalent of Claude Code agent teams?**
-The `team.rs` module in the [nomadically.work research crate](https://github.com/nicolad/nomadically.work) implements full parity: `TaskQueue` replaces the shared task list, `TaskQueue::claim` handles atomic claiming, `Mailbox::send` and `Mailbox::broadcast` replace `SendMessage`, `PlanGate` implements the plan approval gate, and `ShutdownToken` (via `tokio::sync::watch`) handles cooperative shutdown. Every agent-teams primitive has a direct Rust/Tokio equivalent.
+The `team.rs` module in the [nomadically.work research crate](https://github.com/v9ai/nomadically.work) implements full parity: `TaskQueue` replaces the shared task list, `TaskQueue::claim` handles atomic claiming, `Mailbox::send` and `Mailbox::broadcast` replace `SendMessage`, `PlanGate` implements the plan approval gate, and `ShutdownToken` (via `tokio::sync::watch`) handles cooperative shutdown. Every agent-teams primitive has a direct Rust/Tokio equivalent.
 
 ---
 
@@ -315,8 +315,8 @@ The `team.rs` addition widens the article's moat significantly. The new content 
 
 ## 9. Internal Linking Additions
 
-- **Link from Section A ("The Third Path")** to the `team.rs` source file on GitHub: "The full implementation is in [`research/src/team.rs`](https://github.com/nicolad/nomadically.work/blob/main/research/src/team.rs) — 640 lines of Rust implementing every agent-teams coordination primitive."
-- **Link from Section C ("2-Step Pipeline")** to the `study.rs` source file: "The full pipeline is in [`research/src/study.rs`](https://github.com/nicolad/nomadically.work/blob/main/research/src/study.rs)"
+- **Link from Section A ("The Third Path")** to the `team.rs` source file on GitHub: "The full implementation is in [`research/src/team.rs`](https://github.com/v9ai/nomadically.work/blob/main/research/src/team.rs) — 640 lines of Rust implementing every agent-teams coordination primitive."
+- **Link from Section C ("2-Step Pipeline")** to the `study.rs` source file: "The full pipeline is in [`research/src/study.rs`](https://github.com/v9ai/nomadically.work/blob/main/research/src/study.rs)"
 - **From the human-in-the-loop / PlanGate content**, link to the existing "human-in-the-loop agent patterns" study topic if it gets published as a standalone page
 
 ---

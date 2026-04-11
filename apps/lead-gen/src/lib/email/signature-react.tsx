@@ -31,7 +31,7 @@ export const vadimSignatureConfig: SignatureConfig = {
   website: "https://vadim.blog/",
   calendly: "https://calendly.com/nicolad",
   linkedin: "https://www.linkedin.com/in/vadimnicolai/",
-  github: "https://github.com/nicolad",
+  github: "https://github.com/v9ai",
 };
 
 const styles = {
