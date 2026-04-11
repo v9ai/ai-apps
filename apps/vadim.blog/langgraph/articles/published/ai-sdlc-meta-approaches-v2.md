@@ -2,7 +2,7 @@
 slug: ai-sdlc-meta-approaches
 title: "The Two-Layer Model That Separates AI Teams That Ship from Those That Demo"
 description: "Why do AI demos fail in production? The two-layer model — Eval-First, Grounding-First, Spec-Driven — explains how top AI teams build systems that actually ship."
-authors: [nicolad]
+authors: [v9ai]
 tags: [ai, sdlc, strategy, llm, agents, rag, evals, llmops, grounding, spec-driven]
 date: 2026-02-25
 ---

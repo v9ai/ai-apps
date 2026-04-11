@@ -194,7 +194,7 @@ slug: test-article
 title: "Test Article"
 description: "test"
 date: 2026-03-16
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - test
   - article
@@ -217,7 +217,7 @@ slug: remote-work-productivity
 title: "Remote Work Productivity: What the Data Shows"
 description: "Four large-scale studies find remote workers are 13-20 percent more productive than on-site peers."
 date: 2026-03-16
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - remote work
   - productivity
@@ -253,7 +253,7 @@ slug: remote-work-analysis
 title: "Remote Work Analysis: Why It Matters"
 description: "An analysis of remote work trends and their impact on modern organizations."
 date: 2026-03-16
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - remote work
   - productivity
@@ -273,7 +273,7 @@ slug: remote-work-analysis
 title: "Remote Work Analysis: Why It Matters"
 description: "An analysis of remote work trends and their impact on modern organizations."
 date: 2026-03-16
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - remote work
   - productivity
@@ -293,7 +293,7 @@ slug: remote-work-analysis
 title: "Remote Work Analysis: Why It Matters"
 description: "An analysis of remote work trends and their impact on modern organizations."
 date: 2026-03-16
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - remote work
   - productivity

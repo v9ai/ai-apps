@@ -24,7 +24,7 @@
       },
       {
         "network": "github",
-        "username": "nicolad",
+        "username": "v9ai",
         "url": "https://github.com/v9ai"
       },
       {
@@ -263,7 +263,7 @@
       "id": "1",
       "organization": "Nautilus Trader",
       "position": "Open-Source Contributor -- Algorithmic Trading Engine",
-      "url": "https://github.com/nautechsystems/nautilus_trader/pulls?q=is%3Apr+is%3Aclosed+author%3Anicolad",
+      "url": "https://github.com/nautechsystems/nautilus_trader/pulls?q=is%3Apr+is%3Aclosed+author%3Av9ai",
       "startDate": "April 2025",
       "endDate": null,
       "summary": "<ul><li>Contributed 100+ pull requests to core trading engine and exchange connectivity modules in Rust and Python.</li><li>Built production exchange adapters for dYdX v4 and Hyperliquid with REST, WebSocket, gRPC, authentication, rate limiting, and execution clients.</li><li>Enhanced OKX and Kraken integrations with historical data support, pagination, and WebSocket reliability improvements.</li><li>Implemented high-performance technical indicators in Rust with Python/Cython parity, improving PnL calculations and monetary precision.</li></ul>",

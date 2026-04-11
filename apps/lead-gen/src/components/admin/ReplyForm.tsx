@@ -102,7 +102,7 @@ export function ReplyForm({ originalEmail, onSuccess }: ReplyFormProps) {
 
     try {
       const calendlyLink = includeCalendly
-        ? `<p><a href="https://calendly.com/nicolad" style="color: #228be6; text-decoration: none;">Schedule a call: https://calendly.com/nicolad</a></p>`
+        ? `<p><a href="https://calendly.com/v9ai" style="color: #228be6; text-decoration: none;">Schedule a call: https://calendly.com/v9ai</a></p>`
         : "";
 
       const replyHtml = `
