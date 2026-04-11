@@ -1,6 +1,6 @@
 import { Box, Badge, Card, Callout, Flex, Heading, Separator, Text } from "@radix-ui/themes";
 import Link from "next/link";
-import { Sparkles, AlertTriangle, Clock, Pill, FlaskConical, Shield, BookOpen } from "lucide-react";
+import { Sparkles, AlertTriangle, Clock, Pill, FlaskConical, Shield, BookOpen, FileText, ExternalLink } from "lucide-react";
 import { css } from "styled-system/css";
 import { db } from "@/lib/db";
 import { protocolResearches } from "@/lib/db/schema";
@@ -202,6 +202,147 @@ async function ResearchSection() {
   );
 }
 
+// ── Papers Section ──────────────────────────────────────────────
+
+type PaperRecord = {
+  title: string;
+  authors: string[];
+  year: number | null;
+  doi: string | null;
+  citation_count: number | null;
+  url: string | null;
+  venue: string | null;
+  source: string;
+};
+
+const SOURCE_COLORS: Record<string, "indigo" | "green" | "amber" | "orange" | "violet"> = {
+  SemanticScholar: "indigo",
+  OpenAlex: "green",
+  Crossref: "amber",
+  Arxiv: "orange",
+  Zenodo: "violet",
+};
+
+const paperRowClass = css({
+  padding: "var(--space-3) 0",
+  borderTop: "1px solid var(--gray-a3)",
+  "&:first-child": { borderTop: "none" },
+});
+
+async function PapersSection() {
+  const [research] = await db
+    .select()
+    .from(protocolResearches)
+    .where(eq(protocolResearches.protocolId, HAIR_CARE_PROTOCOL_ID))
+    .orderBy(desc(protocolResearches.createdAt))
+    .limit(1);
+
+  if (!research) return null;
+
+  const papers = (research.papers as PaperRecord[] | null) ?? [];
+  if (papers.length === 0) return null;
+
+  return (
+    <Card>
+      <Flex direction="column" gap="3">
+        <Flex align="center" gap="2">
+          <FileText size={16} style={{ color: "var(--indigo-11)" }} />
+          <Heading size="3">Research Papers</Heading>
+          <Badge color="indigo" variant="soft" size="1">
+            {papers.length} papers &middot; 2020+
+          </Badge>
+        </Flex>
+
+        <details>
+          <summary className={summaryClass}>
+            <FileText size={14} style={{ color: "var(--gray-9)" }} />
+            View all {papers.length} papers (sorted by citations)
+          </summary>
+          <div className={detailsContentClass}>
+            <Flex direction="column">
+              {papers.map((p, i) => {
+                const authors = p.authors.slice(0, 3).join(", ") +
+                  (p.authors.length > 3 ? ` et al.` : "");
+                const href = p.doi
+                  ? `https://doi.org/${p.doi}`
+                  : p.url || undefined;
+
+                return (
+                  <div key={i} className={paperRowClass}>
+                    <Flex direction="column" gap="1">
+                      <Flex align="start" gap="2">
+                        <Text size="1" color="gray" style={{ flexShrink: 0, minWidth: 24 }}>
+                          {i + 1}.
+                        </Text>
+                        <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
+                          <Text size="2" weight="medium" style={{ lineHeight: 1.4 }}>
+                            {href ? (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: "var(--indigo-11)", textDecoration: "none" }}
+                              >
+                                {p.title}
+                                <ExternalLink
+                                  size={11}
+                                  style={{
+                                    display: "inline",
+                                    marginLeft: 4,
+                                    verticalAlign: "middle",
+                                    opacity: 0.6,
+                                  }}
+                                />
+                              </a>
+                            ) : (
+                              p.title
+                            )}
+                          </Text>
+                          <Flex align="center" gap="2" wrap="wrap">
+                            <Text size="1" color="gray">{authors}</Text>
+                            {p.year && <Text size="1" color="gray">({p.year})</Text>}
+                            {p.venue && (
+                              <Text
+                                size="1"
+                                color="gray"
+                                style={{
+                                  fontStyle: "italic",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  maxWidth: 200,
+                                }}
+                              >
+                                {p.venue}
+                              </Text>
+                            )}
+                            {p.citation_count != null && p.citation_count > 0 && (
+                              <Badge color="gray" variant="outline" size="1">
+                                {p.citation_count} cited
+                              </Badge>
+                            )}
+                            <Badge
+                              color={SOURCE_COLORS[p.source] ?? "gray"}
+                              variant="soft"
+                              size="1"
+                            >
+                              {p.source}
+                            </Badge>
+                          </Flex>
+                        </Flex>
+                      </Flex>
+                    </Flex>
+                  </div>
+                );
+              })}
+            </Flex>
+          </div>
+        </details>
+      </Flex>
+    </Card>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────
 
 export default function HairCareProtocolPage() {
@@ -363,6 +504,7 @@ export default function HairCareProtocolPage() {
             {/* ── Research ──────────────────────────────── */}
             <Separator size="4" />
             <ResearchSection />
+            <PapersSection />
           </Flex>
 
           {/* ── Sidebar ─────────────────────────────────────── */}
