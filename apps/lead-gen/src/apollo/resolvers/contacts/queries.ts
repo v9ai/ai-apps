@@ -125,7 +125,33 @@ export const contactQueries = {
       .orderBy(desc(contactEmails.created_at));
   },
 
-  async resendEmail(_parent: unknown, args: { resendId: string }) {
+  async resendEmail(_parent: unknown, args: { resendId: string }, context: GraphQLContext) {
+    const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // Non-Resend records (LinkedIn DMs, etc.) — serve from DB
+    if (!isValidUUID.test(args.resendId)) {
+      const [row] = await context.db
+        .select()
+        .from(contactEmails)
+        .where(eq(contactEmails.resend_id, args.resendId))
+        .limit(1);
+      if (!row) return null;
+      const toEmails = JSON.parse(row.to_emails) as string[];
+      return {
+        id: row.resend_id,
+        from: row.from_email,
+        to: toEmails,
+        subject: row.subject ?? null,
+        text: row.text_content ?? null,
+        html: row.html_content ?? null,
+        lastEvent: row.status,
+        createdAt: row.sent_at ?? row.created_at,
+        scheduledAt: null,
+        cc: null,
+        bcc: null,
+      };
+    }
+
     const data = await resend.instance.getEmail(args.resendId);
     if (!data) return null;
     return {
