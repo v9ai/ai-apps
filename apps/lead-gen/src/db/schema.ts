@@ -790,3 +790,58 @@ export const voyagerJobCountsRelations = relations(voyagerJobCounts, ({ one }) =
 }));
 
 export const voyagerSnapshotsRelations = relations(voyagerSnapshots, () => ({}));
+
+// Messages (LinkedIn DMs, other non-email touchpoints)
+export const messages = pgTable(
+  "messages",
+  {
+    id: serial("id").primaryKey(),
+    channel: text("channel").notNull(), // "linkedin" | "telegram" | "whatsapp" | "other"
+    direction: text("direction").notNull(), // "inbound" | "outbound"
+    contact_id: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+    company_id: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+    // Link to outbound email that triggered this conversation
+    contact_email_id: integer("contact_email_id").references(() => contactEmails.id, { onDelete: "set null" }),
+    sender_name: text("sender_name"),
+    sender_profile_url: text("sender_profile_url"),
+    content: text("content"),
+    subject: text("subject"), // optional — thread topic or first line
+    sent_at: text("sent_at").notNull(),
+    // Classification (same enum as received_emails)
+    classification: text("classification"), // interested | not_interested | auto_reply | info_request
+    classification_confidence: real("classification_confidence"),
+    raw_data: text("raw_data"), // JSON blob for extra metadata
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+    updated_at: text("updated_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => ({
+    contactIdIdx: index("idx_messages_contact_id").on(table.contact_id),
+    companyIdIdx: index("idx_messages_company_id").on(table.company_id),
+    contactEmailIdIdx: index("idx_messages_contact_email_id").on(table.contact_email_id),
+    channelIdx: index("idx_messages_channel").on(table.channel),
+    directionIdx: index("idx_messages_direction").on(table.direction),
+    sentAtIdx: index("idx_messages_sent_at").on(table.sent_at),
+  }),
+);
+
+export type Message = typeof messages.$inferSelect;
+export type NewMessage = typeof messages.$inferInsert;
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [messages.contact_id],
+    references: [contacts.id],
+  }),
+  company: one(companies, {
+    fields: [messages.company_id],
+    references: [companies.id],
+  }),
+  contactEmail: one(contactEmails, {
+    fields: [messages.contact_email_id],
+    references: [contactEmails.id],
+  }),
+}));
