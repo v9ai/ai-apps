@@ -2849,6 +2849,19 @@ export async function getJournalAnalysis(journalEntryId: number, userId: string)
   };
 }
 
+export async function getJournalAnalysisPublic(journalEntryId: number) {
+  const rows = await neonSql`SELECT * FROM journal_analyses WHERE journal_entry_id = ${journalEntryId} ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id as number,
+    journalEntryId: r.journal_entry_id as number,
+    summary: r.summary as string,
+    actionableRecommendations: safeJsonParse(r.actionable_recommendations as string, []),
+    createdAt: r.created_at as string,
+  };
+}
+
 export async function createJournalAnalysis(data: {
   journalEntryId: number;
   userId: string;
@@ -3190,6 +3203,7 @@ export const db = {
   getTodayLogForHabit,
   // Journal Analyses
   getJournalAnalysis,
+  getJournalAnalysisPublic,
   createJournalAnalysis,
   deleteJournalAnalysis,
   // Conversations
