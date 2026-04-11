@@ -2060,7 +2060,7 @@ export type ReceivedEmail = {
   messageId: Maybe<Scalars['String']['output']>;
   receivedAt: Scalars['String']['output'];
   replyToEmails: Array<Scalars['String']['output']>;
-  resendId: Scalars['String']['output'];
+  resendId: Maybe<Scalars['String']['output']>;
   subject: Maybe<Scalars['String']['output']>;
   textContent: Maybe<Scalars['String']['output']>;
   toEmails: Array<Scalars['String']['output']>;
@@ -4445,7 +4445,7 @@ export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType exte
   messageId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   receivedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   replyToEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  resendId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  resendId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;

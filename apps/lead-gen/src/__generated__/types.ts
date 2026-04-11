@@ -2057,7 +2057,7 @@ export type ReceivedEmail = {
   messageId: Maybe<Scalars['String']['output']>;
   receivedAt: Scalars['String']['output'];
   replyToEmails: Array<Scalars['String']['output']>;
-  resendId: Scalars['String']['output'];
+  resendId: Maybe<Scalars['String']['output']>;
   subject: Maybe<Scalars['String']['output']>;
   textContent: Maybe<Scalars['String']['output']>;
   toEmails: Array<Scalars['String']['output']>;

@@ -1272,7 +1272,7 @@ type ReceivedEmail {
   messageId: String
   receivedAt: String!
   replyToEmails: [String!]!
-  resendId: String!
+  resendId: String
   subject: String
   textContent: String
   toEmails: [String!]!
