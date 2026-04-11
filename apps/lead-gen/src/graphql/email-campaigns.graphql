@@ -156,6 +156,17 @@ query GetReceivedEmail($id: Int!) {
     classifiedAt
     matchedContactId
     matchedOutboundId
+    sentReplies {
+      id
+      resendId
+      fromEmail
+      toEmails
+      subject
+      textContent
+      status
+      sentAt
+      createdAt
+    }
     createdAt
     updatedAt
   }

@@ -37,6 +37,8 @@ export interface EmailComposerProps {
   subject?: string;
   /** Original email text for reply context — passed to AI generation */
   replyContext?: string;
+  /** ID of the received email being replied to — links the outbound reply in DB */
+  receivedEmailId?: number;
   onSuccess?: (toEmail: string) => void;
 }
 
@@ -57,6 +59,7 @@ export function EmailComposer({
   companyName = "",
   subject: subjectProp = "",
   replyContext,
+  receivedEmailId,
   onSuccess,
 }: EmailComposerProps) {
   // Form fields
@@ -149,6 +152,7 @@ export function EmailComposer({
           subject: subject.trim(),
           body: body.trim(),
           includeResume,
+          ...(receivedEmailId ? { receivedEmailId } : {}),
         }),
       });
 

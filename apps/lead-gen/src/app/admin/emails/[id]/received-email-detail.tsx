@@ -212,6 +212,41 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
           )}
         </Card>
 
+        {/* Sent replies */}
+        {email.sentReplies && email.sentReplies.length > 0 && (
+          <Flex direction="column" gap="3">
+            <Heading size="3">Replies ({email.sentReplies.length})</Heading>
+            {email.sentReplies.map((reply) => (
+              <Card key={reply.id} style={{ borderLeft: "3px solid var(--accent-9)" }}>
+                <Flex direction="column" gap="2">
+                  <Flex justify="between" align="center">
+                    <Flex gap="2" align="center">
+                      <PaperPlaneIcon />
+                      <Text size="2" weight="bold">You replied</Text>
+                      <Badge color="green" size="1" variant="soft">{reply.status}</Badge>
+                    </Flex>
+                    <Text size="1" color="gray">
+                      {reply.sentAt ? new Date(reply.sentAt).toLocaleString() : "—"}
+                    </Text>
+                  </Flex>
+                  <Text size="2" weight="medium">{reply.subject}</Text>
+                  <Separator size="4" />
+                  <Box
+                    style={{
+                      whiteSpace: "pre-wrap",
+                      fontFamily: "var(--default-font-family)",
+                      fontSize: "var(--font-size-2)",
+                      lineHeight: "var(--line-height-2)",
+                    }}
+                  >
+                    {reply.textContent || "(no content)"}
+                  </Box>
+                </Flex>
+              </Card>
+            ))}
+          </Flex>
+        )}
+
         {/* Metadata footer */}
         {email.messageId && (
           <Text size="1" color="gray">
@@ -224,6 +259,8 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
       <EmailComposer
         open={replyOpen}
         onOpenChange={setReplyOpen}
+        contactId={email.matchedContactId ?? undefined}
+        receivedEmailId={emailId}
         to={email.replyToEmails?.[0] || email.fromEmail || ""}
         name={email.fromEmail?.split("@")[0] || ""}
         subject={
@@ -235,7 +272,10 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
           `Replying to email from ${email.fromEmail || "unknown"} with subject "${email.subject || ""}". ` +
           `Original message:\n\n${email.textContent || "(no text content)"}`
         }
-        onSuccess={handleSendSuccess}
+        onSuccess={(toEmail) => {
+          handleSendSuccess(toEmail);
+          refetch();
+        }}
       />
 
       {/* Success toast */}
