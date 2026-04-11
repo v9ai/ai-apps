@@ -21,6 +21,39 @@ query GetContact($id: Int!) {
     nbSuggestedCorrection
     createdAt
     updatedAt
+    aiProfile {
+      trigger
+      enrichedAt
+      linkedinHeadline
+      linkedinBio
+      specialization
+      skills
+      researchAreas
+      experienceLevel
+      synthesisConfidence
+      synthesisRationale
+      githubBio
+      githubTopLanguages
+      githubTotalStars
+      githubAiRepos {
+        name
+        description
+        stars
+        topics
+      }
+      workExperience {
+        company
+        companyLogo
+        title
+        employmentType
+        startDate
+        endDate
+        duration
+        location
+        description
+        skills
+      }
+    }
   }
 }
 
