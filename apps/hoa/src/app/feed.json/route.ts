@@ -5,7 +5,7 @@ import {
   getAvatarUrl,
 } from "@/lib/personalities";
 
-const SITE_URL = "https://humans-of-ai.vercel.app";
+const SITE_URL = "https://humansofai.space";
 
 export async function GET() {
   try {

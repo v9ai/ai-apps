@@ -12,12 +12,12 @@ export const metadata: Metadata = {
   description: "Aggregate statistics across AI leaders featured on Humans of AI — GitHub stars, Hugging Face downloads, podcast appearances, research papers, and programming language distribution.",
   keywords: ["AI statistics", "GitHub stars", "Hugging Face downloads", "AI podcast stats", "machine learning researchers", "open source AI"],
   alternates: {
-    canonical: "https://humans-of-ai.vercel.app/stats",
+    canonical: "https://humansofai.space/stats",
   },
   openGraph: {
     title: "Stats — Humans of AI",
     description: "Aggregate statistics across AI leaders — GitHub stars, Hugging Face downloads, podcast appearances, and research papers.",
-    url: "https://humans-of-ai.vercel.app/stats",
+    url: "https://humansofai.space/stats",
   },
 };
 

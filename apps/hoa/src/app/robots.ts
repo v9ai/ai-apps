@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
       },
     ],
-    sitemap: "https://humans-of-ai.vercel.app/sitemap.xml",
-    host: "https://humans-of-ai.vercel.app",
+    sitemap: "https://humansofai.space/sitemap.xml",
+    host: "https://humansofai.space",
   };
 }

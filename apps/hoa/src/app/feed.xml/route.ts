@@ -4,7 +4,7 @@ import {
 } from "@/lib/personalities";
 import { getEnrichment } from "@/lib/enrichment";
 
-const SITE_URL = "https://humans-of-ai.vercel.app";
+const SITE_URL = "https://humansofai.space";
 
 function escapeXml(str: string): string {
   return str
@@ -46,8 +46,8 @@ export async function GET() {
     <language>en-us</language>
     <lastBuildDate>${pubDate}</lastBuildDate>
     <atom:link href="${SITE_URL}/feed.xml" rel="self" type="application/rss+xml" />
-    <managingEditor>hello@humans-of-ai.vercel.app</managingEditor>
-    <webMaster>hello@humans-of-ai.vercel.app</webMaster>
+    <managingEditor>hello@humansofai.space</managingEditor>
+    <webMaster>hello@humansofai.space</webMaster>
     <copyright>Copyright ${new Date().getFullYear()} Humans of AI</copyright>
     <generator>Next.js</generator>
     <image>

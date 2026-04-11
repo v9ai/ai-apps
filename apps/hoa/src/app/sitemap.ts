@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllPersonalities } from "@/lib/personalities";
 
-const BASE_URL = "https://humans-of-ai.vercel.app";
+const BASE_URL = "https://humansofai.space";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const personalities = getAllPersonalities();

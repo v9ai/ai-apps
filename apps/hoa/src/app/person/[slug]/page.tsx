@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!person) return {};
   const title = person.name;
   const description = person.description;
-  const url = `https://humans-of-ai.vercel.app/person/${slug}`;
+  const url = `https://humansofai.space/person/${slug}`;
   return {
     title,
     description,
@@ -119,7 +119,7 @@ export default async function PersonPage({ params }: Props) {
               name: person.org,
             },
             description: person.description,
-            url: `https://humans-of-ai.vercel.app/person/${slug}`,
+            url: `https://humansofai.space/person/${slug}`,
             ...(person.github
               ? { sameAs: [`https://github.com/${person.github}`] }
               : {}),
@@ -140,13 +140,13 @@ export default async function PersonPage({ params }: Props) {
                 "@type": "ListItem",
                 position: 1,
                 name: "Home",
-                item: "https://humans-of-ai.vercel.app",
+                item: "https://humansofai.space",
               },
               {
                 "@type": "ListItem",
                 position: 2,
                 name: person.name,
-                item: `https://humans-of-ai.vercel.app/person/${slug}`,
+                item: `https://humansofai.space/person/${slug}`,
               },
             ],
           }),
