@@ -8,7 +8,7 @@ import { css } from "styled-system/css";
 
 /* ── Page metadata ────────────────────────────────────────────── */
 
-const SITE_URL = "https://humans-of-ai.vercel.app";
+const SITE_URL = "https://humansofai.space";
 
 export const metadata: Metadata = {
   title: "Humans of AI — Intimate Portraits of the Minds Building AI",
