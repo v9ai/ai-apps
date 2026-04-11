@@ -49,7 +49,7 @@ async function main() {
   const sql = neon(process.env.NEON_DATABASE_URL!);
   const resend = new Resend(process.env.RESEND_API_KEY);
 
-  // Fetch contacts with needs_response tag
+  // Fetch contacts with needs_response tag + their reply
   const rows = await sql`
     SELECT
       ce.id as email_id,
@@ -59,9 +59,14 @@ async function main() {
       c.last_name,
       c.email,
       c.company,
-      c.github_handle
+      c.github_handle,
+      re.resend_id as reply_resend_id,
+      re.text_content as reply_text,
+      re.html_content as reply_html,
+      re.subject as reply_subject
     FROM contact_emails ce
     JOIN contacts c ON c.id = ce.contact_id
+    LEFT JOIN received_emails re ON re.matched_outbound_id = ce.id
     WHERE ce.tags LIKE '%needs_response%'
       AND ce.tags LIKE '%cpn-outreach%'
     ORDER BY c.first_name
@@ -84,15 +89,38 @@ async function main() {
     const name = `${row.first_name} ${row.last_name ?? ""}`.trim();
     const { subject, text } = buildFollowup(row.first_name);
 
+    // Fetch their reply
+    let replyText = row.reply_text || row.reply_html || null;
+    if (!replyText && row.reply_resend_id) {
+      try {
+        const { data: full } = await resend.emails.receiving.get(row.reply_resend_id);
+        replyText = full?.text || full?.html || null;
+        if (replyText) {
+          // Update DB so we don't re-fetch next time
+          await sql`UPDATE received_emails SET text_content = ${full?.text ?? null}, html_content = ${full?.html ?? null} WHERE resend_id = ${row.reply_resend_id}`;
+        }
+      } catch { /* ignore fetch errors */ }
+    }
+
     console.log(`── [${i + 1}/${rows.length}] ──────────────────────────────`);
     console.log(`  Name:    ${name}`);
     console.log(`  Email:   ${row.email}`);
     if (row.company) console.log(`  Company: ${row.company}`);
     if (row.github_handle) console.log(`  GitHub:  ${row.github_handle}`);
+
+    // Show their reply
+    console.log(`\n  ── Their reply ──`);
+    if (replyText) {
+      const lines = replyText.replace(/<[^>]+>/g, "").trim().split("\n").slice(0, 10);
+      console.log(lines.map((l: string) => `  │ ${l}`).join("\n"));
+    } else {
+      console.log(`  │ (no reply text captured)`);
+    }
+
+    console.log(`\n  ── Follow-up ──`);
     console.log(`  Subject: ${subject}`);
-    console.log(`  ─────`);
     console.log(text.split("\n").map((l: string) => `  ${l}`).join("\n"));
-    console.log(`  ─────\n`);
+    console.log(`  ──────\n`);
 
     if (dryRun) {
       skipped++;
