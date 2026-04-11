@@ -227,6 +227,15 @@ function classifyByKeywords(subject: string, body: string): ClassificationResult
     scores.interested += 0.5;
   }
 
+  // Negation priority: "not interested" contains "interested" as substring,
+  // so both match. Specific negation should suppress generic positive.
+  if (scores.not_interested > 0 && scores.interested > 0) {
+    scores.interested = 0;
+  }
+  if (scores.unsubscribe > 0 && scores.interested > 0) {
+    scores.interested = 0;
+  }
+
   let best: ReplyClass = "not_interested";
   let bestScore = 0;
 
