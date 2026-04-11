@@ -15,25 +15,52 @@ const MIN_YEAR: u32 = 2020;
 const TARGET: usize = 100;
 
 const QUERIES: &[&str] = &[
-    "iron deficiency telogen effluvium ferritin hair loss",
-    "vitamin D deficiency alopecia hair follicle supplementation",
-    "zinc supplementation hair loss alopecia treatment",
-    "vitamin B12 folate deficiency hair loss",
-    "magnesium hair follicle growth supplementation",
-    "omega-3 EPA DHA scalp inflammation hair loss",
-    "topical finasteride androgenetic alopecia efficacy",
-    "oral minoxidil androgenetic alopecia low dose",
-    "saw palmetto 5-alpha-reductase inhibitor hair",
-    "pumpkin seed oil DHT hair growth clinical",
-    "selenium thyroid autoimmune hair loss Hashimoto",
-    "berberine insulin resistance androgenetic alopecia",
-    "inositol PCOS hair loss hormonal treatment",
-    "low-level laser therapy LLLT hair growth photobiomodulation",
-    "microneedling dermaroller minoxidil hair regrowth",
-    "nutritional deficiency alopecia systematic review",
-    "dihydrotestosterone androgenetic alopecia pathogenesis treatment",
-    "red light therapy hair follicle stimulation",
+    "iron deficiency telogen effluvium hair loss",
+    "ferritin serum level alopecia hair shedding",
+    "vitamin D deficiency alopecia areata hair follicle",
+    "zinc deficiency hair loss alopecia treatment",
+    "vitamin B12 folate hair loss telogen effluvium",
+    "omega-3 fatty acids hair loss scalp alopecia",
+    "topical finasteride androgenetic alopecia",
+    "oral minoxidil androgenetic alopecia hair regrowth",
+    "minoxidil efficacy hair loss alopecia",
+    "finasteride dutasteride hair loss male pattern baldness",
+    "saw palmetto hair loss androgenetic alopecia",
+    "pumpkin seed oil hair growth alopecia",
+    "selenium hair loss thyroid alopecia",
+    "low-level laser therapy hair growth alopecia",
+    "microneedling hair regrowth alopecia minoxidil",
+    "nutritional deficiency alopecia hair loss review",
+    "androgenetic alopecia pathogenesis DHT hair follicle",
+    "platelet-rich plasma PRP hair loss alopecia",
+    "alopecia areata treatment immunotherapy hair",
+    "female pattern hair loss treatment alopecia",
+    "hair follicle stem cell regeneration alopecia",
+    "scalp microbiome hair loss alopecia",
+    "mesotherapy hair loss alopecia treatment",
+    "exosome therapy hair regeneration alopecia",
 ];
+
+/// Hair/alopecia relevance keywords — at least one must appear in title or abstract.
+const RELEVANCE_KEYWORDS: &[&str] = &[
+    "hair", "alopecia", "follicle", "scalp", "tricholog", "baldness",
+    "minoxidil", "finasteride", "telogen", "anagen", "catagen",
+    "androgenetic", "dermatitis seborrheic", "thinning hair",
+];
+
+/// Check if a paper is actually about hair/alopecia.
+fn is_hair_relevant(paper: &ResearchPaper) -> bool {
+    let title_lower = paper.title.to_lowercase();
+    let abstract_lower = paper
+        .abstract_text
+        .as_deref()
+        .unwrap_or("")
+        .to_lowercase();
+    let combined = format!("{} {}", title_lower, abstract_lower);
+    RELEVANCE_KEYWORDS
+        .iter()
+        .any(|kw| combined.contains(kw))
+}
 
 /// Normalize a title for dedup: lowercase, strip non-alphanumeric.
 fn norm_title(t: &str) -> String {
@@ -153,6 +180,10 @@ async fn main() -> Result<()> {
     // Filter year >= 2020
     all_papers.retain(|p| p.year.unwrap_or(0) >= MIN_YEAR);
     eprintln!("After year filter (>=2020): {}", all_papers.len());
+
+    // Filter for hair/alopecia relevance
+    all_papers.retain(|p| is_hair_relevant(p));
+    eprintln!("After relevance filter: {}", all_papers.len());
 
     // Deduplicate by DOI first, then by normalized title
     let mut seen_dois: HashSet<String> = HashSet::new();
