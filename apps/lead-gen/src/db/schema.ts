@@ -445,7 +445,8 @@ export const receivedEmails = pgTable(
   "received_emails",
   {
     id: serial("id").primaryKey(),
-    resend_id: text("resend_id").notNull().unique(),
+    resend_id: text("resend_id").unique(),
+    source: text("source").notNull().default("email"), // email | linkedin_dm
     from_email: text("from_email"),
     to_emails: text("to_emails").notNull().default("[]"), // JSON array
     cc_emails: text("cc_emails").default("[]"), // JSON array
