@@ -2059,6 +2059,7 @@ export type ReceivedEmail = {
   receivedAt: Scalars['String']['output'];
   replyToEmails: Array<Scalars['String']['output']>;
   resendId: Maybe<Scalars['String']['output']>;
+  sentReplies: Array<SentReply>;
   subject: Maybe<Scalars['String']['output']>;
   textContent: Maybe<Scalars['String']['output']>;
   toEmails: Array<Scalars['String']['output']>;
@@ -2585,6 +2586,20 @@ export type SendOutreachEmailResult = {
   error: Maybe<Scalars['String']['output']>;
   subject: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type SentReply = {
+  __typename: 'SentReply';
+  createdAt: Scalars['String']['output'];
+  fromEmail: Scalars['String']['output'];
+  htmlContent: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  resendId: Maybe<Scalars['String']['output']>;
+  sentAt: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
+  textContent: Maybe<Scalars['String']['output']>;
+  toEmails: Array<Scalars['String']['output']>;
 };
 
 export type SignalTypeCount = {

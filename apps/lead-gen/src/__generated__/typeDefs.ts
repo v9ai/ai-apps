@@ -1274,6 +1274,7 @@ type ReceivedEmail {
   receivedAt: String!
   replyToEmails: [String!]!
   resendId: String
+  sentReplies: [SentReply!]!
   subject: String
   textContent: String
   toEmails: [String!]!
@@ -1749,6 +1750,19 @@ type SendOutreachEmailResult {
   error: String
   subject: String
   success: Boolean!
+}
+
+type SentReply {
+  createdAt: String!
+  fromEmail: String!
+  htmlContent: String
+  id: Int!
+  resendId: String
+  sentAt: String
+  status: String!
+  subject: String!
+  textContent: String
+  toEmails: [String!]!
 }
 
 type SignalTypeCount {

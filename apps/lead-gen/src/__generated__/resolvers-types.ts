@@ -2062,6 +2062,7 @@ export type ReceivedEmail = {
   receivedAt: Scalars['String']['output'];
   replyToEmails: Array<Scalars['String']['output']>;
   resendId: Maybe<Scalars['String']['output']>;
+  sentReplies: Array<SentReply>;
   subject: Maybe<Scalars['String']['output']>;
   textContent: Maybe<Scalars['String']['output']>;
   toEmails: Array<Scalars['String']['output']>;
@@ -2588,6 +2589,20 @@ export type SendOutreachEmailResult = {
   error: Maybe<Scalars['String']['output']>;
   subject: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type SentReply = {
+  __typename?: 'SentReply';
+  createdAt: Scalars['String']['output'];
+  fromEmail: Scalars['String']['output'];
+  htmlContent: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  resendId: Maybe<Scalars['String']['output']>;
+  sentAt: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
+  textContent: Maybe<Scalars['String']['output']>;
+  toEmails: Array<Scalars['String']['output']>;
 };
 
 export type SignalTypeCount = {
@@ -3212,6 +3227,7 @@ export type ResolversTypes = {
   SendNowResult: ResolverTypeWrapper<Partial<SendNowResult>>;
   SendOutreachEmailInput: ResolverTypeWrapper<Partial<SendOutreachEmailInput>>;
   SendOutreachEmailResult: ResolverTypeWrapper<Partial<SendOutreachEmailResult>>;
+  SentReply: ResolverTypeWrapper<Partial<SentReply>>;
   SignalTypeCount: ResolverTypeWrapper<Partial<SignalTypeCount>>;
   SimilarCompanyResult: ResolverTypeWrapper<Partial<SimilarCompanyResult>>;
   SimilarPost: ResolverTypeWrapper<Partial<SimilarPost>>;
@@ -3418,6 +3434,7 @@ export type ResolversParentTypes = {
   SendNowResult: Partial<SendNowResult>;
   SendOutreachEmailInput: Partial<SendOutreachEmailInput>;
   SendOutreachEmailResult: Partial<SendOutreachEmailResult>;
+  SentReply: Partial<SentReply>;
   SignalTypeCount: Partial<SignalTypeCount>;
   SimilarCompanyResult: Partial<SimilarCompanyResult>;
   SimilarPost: Partial<SimilarPost>;
@@ -4448,6 +4465,7 @@ export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType exte
   receivedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   replyToEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   resendId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sentReplies?: Resolver<Array<ResolversTypes['SentReply']>, ParentType, ContextType>;
   subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -4878,6 +4896,19 @@ export type SendOutreachEmailResultResolvers<ContextType = GraphQLContext, Paren
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type SentReplyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SentReply'] = ResolversParentTypes['SentReply']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  fromEmail?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  htmlContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  resendId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sentAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
 export type SignalTypeCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SignalTypeCount'] = ResolversParentTypes['SignalTypeCount']> = {
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   signalType?: Resolver<ResolversTypes['IntentSignalType'], ParentType, ContextType>;
@@ -5220,6 +5251,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SendEmailResult?: SendEmailResultResolvers<ContextType>;
   SendNowResult?: SendNowResultResolvers<ContextType>;
   SendOutreachEmailResult?: SendOutreachEmailResultResolvers<ContextType>;
+  SentReply?: SentReplyResolvers<ContextType>;
   SignalTypeCount?: SignalTypeCountResolvers<ContextType>;
   SimilarCompanyResult?: SimilarCompanyResultResolvers<ContextType>;
   SimilarPost?: SimilarPostResolvers<ContextType>;

@@ -1,4 +1,4 @@
-import { receivedEmails, contacts, contactEmails, type ReceivedEmail as DbReceivedEmail } from "@/db/schema";
+import { receivedEmails, contacts, contactEmails, type ReceivedEmail as DbReceivedEmail, type ContactEmail } from "@/db/schema";
 import { eq, and, count, desc, isNull, isNotNull } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -35,8 +35,25 @@ export const receivedEmailResolvers = {
     classifiedAt: (parent: DbReceivedEmail) => parent.classified_at ?? null,
     matchedContactId: (parent: DbReceivedEmail) => parent.matched_contact_id ?? null,
     matchedOutboundId: (parent: DbReceivedEmail) => parent.matched_outbound_id ?? null,
+    async sentReplies(parent: DbReceivedEmail, _args: unknown, context: GraphQLContext) {
+      return context.db
+        .select()
+        .from(contactEmails)
+        .where(eq(contactEmails.in_reply_to_received_id, parent.id))
+        .orderBy(desc(contactEmails.sent_at));
+    },
     createdAt: (parent: DbReceivedEmail) => parent.created_at,
     updatedAt: (parent: DbReceivedEmail) => parent.updated_at,
+  },
+
+  SentReply: {
+    resendId: (parent: ContactEmail) => parent.resend_id,
+    fromEmail: (parent: ContactEmail) => parent.from_email,
+    toEmails: (parent: ContactEmail) => parseJsonArray(parent.to_emails),
+    textContent: (parent: ContactEmail) => parent.text_content ?? null,
+    htmlContent: (parent: ContactEmail) => parent.html_content ?? null,
+    sentAt: (parent: ContactEmail) => parent.sent_at ?? null,
+    createdAt: (parent: ContactEmail) => parent.created_at,
   },
 
   Query: {

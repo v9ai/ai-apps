@@ -350,8 +350,22 @@ type ReceivedEmail {
   classifiedAt: String
   matchedContactId: Int
   matchedOutboundId: Int
+  sentReplies: [SentReply!]!
   createdAt: String!
   updatedAt: String!
+}
+
+type SentReply {
+  id: Int!
+  resendId: String
+  fromEmail: String!
+  toEmails: [String!]!
+  subject: String!
+  textContent: String
+  htmlContent: String
+  status: String!
+  sentAt: String
+  createdAt: String!
 }
 
 type ReceivedEmailsResult {
