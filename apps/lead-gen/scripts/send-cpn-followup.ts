@@ -29,16 +29,15 @@ function buildFollowup(firstName: string): { subject: string; text: string } {
   const subject = `Re: Claude Partner Network — ${firstName}`;
   const text = `Hi ${firstName},
 
-Thanks for getting back to me. Here's the update:
+Here's what I have from Karl Kadon (Head of Partner Experience, Anthropic):
 
-Karl Kadon (Head of Partner Experience, Anthropic) confirmed the training path is opening next week. The first step is "Pick Your Ten" — each person in the cohort brings 10 people to run through the CPN training path together.
+The Claude Partner Network training path opens next week. The first step is getting a cohort through it together — that's what I'm putting together now.
 
-Here's what to do now:
-1. Start a list of your active Anthropic/Claude engagements (clients, projects, internal tools)
-2. Think about 10 people you'd bring into the training path
-3. Registration opens in the coming weeks — I'll send you the link as soon as it's live
+Karl's advice for anyone joining:
+1. List your active Claude/Anthropic work — client projects, internal tools, anything you're building with Claude
+2. Registration opens in the coming weeks — I'll forward the link the moment it's live
 
-If you have questions about the program or want to discuss how it fits your work, just reply here.
+You're on my list. I'll loop you in as soon as the next steps land.
 
 Vadim Nicolai
 vadim.blog`;
