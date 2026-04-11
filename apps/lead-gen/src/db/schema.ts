@@ -269,7 +269,7 @@ export const contacts = pgTable(
       .default(sql`now()::text`),
   },
   (table) => ({
-    emailIdx: index("idx_contacts_email").on(table.email),
+    emailIdx: uniqueIndex("idx_contacts_email").on(table.email),
     companyIdIdx: index("idx_contacts_company_id").on(table.company_id),
     linkedinUrlIdx: index("idx_contacts_linkedin_url").on(table.linkedin_url),
   }),
@@ -347,6 +347,9 @@ export const contactEmails = pgTable(
     idempotency_key: text("idempotency_key"),
     // Reply classification (populated when a received email is matched to this outbound)
     reply_classification: text("reply_classification"), // interested | not_interested | auto_reply | bounced | info_request | unsubscribe
+    // Link to the received email this outbound is replying to
+    in_reply_to_received_id: integer("in_reply_to_received_id")
+      .references(() => receivedEmails.id, { onDelete: "set null" }),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
@@ -360,6 +363,7 @@ export const contactEmails = pgTable(
     statusIdx: index("idx_contact_emails_status").on(table.status),
     companyIdIdx: index("idx_contact_emails_company_id").on(table.company_id),
     parentEmailIdIdx: index("idx_contact_emails_parent_email_id").on(table.parent_email_id),
+    inReplyToReceivedIdx: index("idx_contact_emails_in_reply_to_received").on(table.in_reply_to_received_id),
   }),
 );
 

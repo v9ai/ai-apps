@@ -1,0 +1,3 @@
+ALTER TABLE "contact_emails" ADD COLUMN "in_reply_to_received_id" integer;--> statement-breakpoint
+ALTER TABLE "contact_emails" ADD CONSTRAINT "contact_emails_in_reply_to_received_id_received_emails_id_fk" FOREIGN KEY ("in_reply_to_received_id") REFERENCES "public"."received_emails"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "idx_contact_emails_in_reply_to_received" ON "contact_emails" USING btree ("in_reply_to_received_id");

@@ -991,6 +991,7 @@ export type ImportContactsResult = {
   failed: Scalars['Int']['output'];
   imported: Scalars['Int']['output'];
   success: Scalars['Boolean']['output'];
+  updated: Scalars['Int']['output'];
 };
 
 export type ImportResendResult = {
@@ -4149,6 +4150,7 @@ export type ImportContactsResultResolvers<ContextType = GraphQLContext, ParentTy
   failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   imported?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  updated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type ImportResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ImportResendResult'] = ResolversParentTypes['ImportResendResult']> = {

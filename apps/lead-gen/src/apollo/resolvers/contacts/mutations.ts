@@ -167,17 +167,56 @@ export const contactMutations = {
       }
     }
 
+    // Deduplicate: find existing contacts by email so we merge tags instead of creating duplicates
+    const emailsToCheck = valuesToInsert
+      .map((v) => v.email)
+      .filter((e): e is string => e != null && e !== "");
+    const existingByEmail = new Map<string, { id: number; tags: string }>();
+    if (emailsToCheck.length > 0) {
+      const existing = await context.db
+        .select({ id: contacts.id, email: contacts.email, tags: contacts.tags })
+        .from(contacts)
+        .where(inArray(contacts.email, emailsToCheck));
+      for (const row of existing) {
+        if (row.email) existingByEmail.set(row.email.toLowerCase(), { id: row.id, tags: row.tags ?? "[]" });
+      }
+    }
+
+    // Split: contacts with existing emails get tags merged; new contacts get inserted
+    const toInsert: NewContact[] = [];
     let imported = 0;
-    if (valuesToInsert.length > 0) {
+    let updated = 0;
+
+    for (const row of valuesToInsert) {
+      const match = row.email ? existingByEmail.get(row.email.toLowerCase()) : null;
+      if (match) {
+        try {
+          const existingTags: string[] = JSON.parse(match.tags);
+          const newTags: string[] = JSON.parse(row.tags ?? "[]");
+          const mergedTags = [...new Set([...existingTags, ...newTags])];
+          await context.db
+            .update(contacts)
+            .set({ tags: JSON.stringify(mergedTags), updated_at: sql`now()::text` })
+            .where(eq(contacts.id, match.id));
+          updated++;
+        } catch (err) {
+          errors.push(err instanceof Error ? err.message : String(err));
+        }
+      } else {
+        toInsert.push(row);
+      }
+    }
+
+    if (toInsert.length > 0) {
       try {
         const result = await context.db
           .insert(contacts)
-          .values(valuesToInsert)
+          .values(toInsert)
           .returning({ id: contacts.id });
         imported = result.length;
       } catch (err) {
         // If batch fails, fall back to individual inserts to identify bad rows
-        for (const row of valuesToInsert) {
+        for (const row of toInsert) {
           try {
             await context.db.insert(contacts).values(row);
             imported++;
@@ -191,6 +230,7 @@ export const contactMutations = {
     return {
       success: errors.length === 0,
       imported,
+      updated,
       failed: errors.length,
       errors,
     };

@@ -1044,24 +1044,6 @@ nav a.active {
   }
 }
 
-/* ---------- skip-to-content link (a11y) ---------- */
-.skip-to-content {
-  position: absolute;
-  top: -100%;
-  left: 16px;
-  z-index: 9999;
-  padding: 8px 16px;
-  background: var(--accent-9);
-  color: var(--accent-contrast);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 6px;
-  outline: none;
-}
-.skip-to-content:focus {
-  top: 8px;
-}
 
 /* ---------- prefers-contrast: more (WCAG AAA support) ---------- */
 @media (prefers-contrast: more) {
