@@ -4,7 +4,7 @@ import { brainHealthProtocols, protocolSupplements } from "@/lib/db/schema";
 import { eq, desc, count } from "drizzle-orm";
 import { Box, Badge, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
-import { Brain } from "lucide-react";
+import { Brain, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AddProtocolForm } from "./add-form";
 import { deleteProtocol } from "./actions";
@@ -183,6 +183,37 @@ export default function ProtocolsPage() {
           <Heading size="4">New protocol</Heading>
           <AddProtocolForm />
         </Flex>
+
+        {/* Reference Protocols */}
+        <Link
+          href="/protocols/hair-care"
+          className={css({
+            textDecoration: "none",
+            display: "block",
+            padding: "var(--space-4)",
+            borderRadius: "var(--radius-3)",
+            background: "var(--indigo-a2)",
+            border: "1px solid var(--indigo-a5)",
+            transition: "background 150ms ease, box-shadow 150ms ease",
+            _hover: {
+              background: "var(--indigo-a3)",
+              boxShadow: "0 2px 8px var(--shadow-2)",
+            },
+          })}
+        >
+          <Flex align="center" gap="3">
+            <Sparkles size={20} style={{ color: "var(--indigo-11)" }} />
+            <Flex direction="column" gap="1" style={{ flex: 1 }}>
+              <Flex align="center" gap="2">
+                <Text size="2" weight="bold">Hair Care Protocol</Text>
+                <Badge color="indigo" variant="soft" size="1">Reference</Badge>
+              </Flex>
+              <Text size="1" color="gray">
+                Blood-test-driven hair restoration. Supplements, topicals, and treatment timelines based on lab results.
+              </Text>
+            </Flex>
+          </Flex>
+        </Link>
 
         <Separator size="4" />
 
