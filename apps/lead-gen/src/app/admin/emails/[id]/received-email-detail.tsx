@@ -215,7 +215,7 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
         {/* Sent replies */}
         {email.sentReplies && email.sentReplies.length > 0 && (
           <Flex direction="column" gap="3">
-            <Heading size="3">Replies ({email.sentReplies.length})</Heading>
+            <Heading size="3">Your emails ({email.sentReplies.length})</Heading>
             {email.sentReplies.map((reply) => (
               <Card key={reply.id} style={{ borderLeft: "3px solid var(--accent-9)" }}>
                 <Flex direction="column" gap="2">
