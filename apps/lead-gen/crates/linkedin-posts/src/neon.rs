@@ -110,6 +110,52 @@ pub async fn update_contact_authority(contact_id: i32, score: f32) -> Result<()>
     Ok(())
 }
 
+/// Insert or update a contact by linkedin_url. Returns the contact ID.
+pub async fn upsert_contact_by_linkedin(
+    client: &tokio_postgres::Client,
+    first_name: &str,
+    last_name: &str,
+    linkedin_url: &str,
+    position: Option<&str>,
+    company: Option<&str>,
+    tags_json: &str,
+    seniority: Option<&str>,
+    department: Option<&str>,
+) -> Result<i32> {
+    // Check for existing contact by linkedin_url
+    let existing = client
+        .query_opt(
+            "SELECT id FROM contacts WHERE linkedin_url = $1",
+            &[&linkedin_url],
+        )
+        .await
+        .context("Failed to check existing contact")?;
+
+    if let Some(row) = existing {
+        let id: i32 = row.get(0);
+        client
+            .execute(
+                "UPDATE contacts SET position = COALESCE($1, position), company = COALESCE($2, company), tags = $3, seniority = COALESCE($4, seniority), department = COALESCE($5, department), updated_at = now()::text WHERE id = $6",
+                &[&position, &company, &tags_json, &seniority, &department, &id],
+            )
+            .await
+            .context("Failed to update existing contact")?;
+        tracing::info!("Updated existing contact id={id}");
+        Ok(id)
+    } else {
+        let row = client
+            .query_one(
+                "INSERT INTO contacts (first_name, last_name, linkedin_url, position, company, tags, seniority, department, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now()::text, now()::text) RETURNING id",
+                &[&first_name, &last_name, &linkedin_url, &position, &company, &tags_json, &seniority, &department],
+            )
+            .await
+            .context("Failed to insert contact")?;
+        let id: i32 = row.get(0);
+        tracing::info!("Inserted new contact id={id}");
+        Ok(id)
+    }
+}
+
 /// Fetch contacts whose position matches recruiter-related keywords.
 pub async fn fetch_recruiter_contacts() -> Result<Vec<Contact>> {
     let client = connect_neon().await?;
