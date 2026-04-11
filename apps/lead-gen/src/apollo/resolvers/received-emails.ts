@@ -36,11 +36,22 @@ export const receivedEmailResolvers = {
     matchedContactId: (parent: DbReceivedEmail) => parent.matched_contact_id ?? null,
     matchedOutboundId: (parent: DbReceivedEmail) => parent.matched_outbound_id ?? null,
     async sentReplies(parent: DbReceivedEmail, _args: unknown, context: GraphQLContext) {
-      return context.db
+      const explicit = await context.db
         .select()
         .from(contactEmails)
         .where(eq(contactEmails.in_reply_to_received_id, parent.id))
-        .orderBy(desc(contactEmails.sent_at));
+        .orderBy(contactEmails.sent_at);
+
+      if (explicit.length > 0) return explicit;
+
+      // Fallback: all outbound emails to the same matched contact
+      if (!parent.matched_contact_id) return [];
+
+      return context.db
+        .select()
+        .from(contactEmails)
+        .where(eq(contactEmails.contact_id, parent.matched_contact_id))
+        .orderBy(contactEmails.sent_at);
     },
     createdAt: (parent: DbReceivedEmail) => parent.created_at,
     updatedAt: (parent: DbReceivedEmail) => parent.updated_at,
