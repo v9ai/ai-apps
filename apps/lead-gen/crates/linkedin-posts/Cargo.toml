@@ -17,7 +17,13 @@ path = "src/main.rs"
 name = "process-posts"
 path = "src/bin/process_posts.rs"
 
+[[bin]]
+name = "ingest-contact"
+path = "src/bin/ingest_contact.rs"
+
 [dependencies]
+jobbert = { path = "../jobbert" }
+dotenvy = "0.15"
 lancedb = "0.27"
 arrow-array = "57"
 arrow-schema = "57"
