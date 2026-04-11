@@ -87,7 +87,7 @@ export default function NavHeader({
               justifyContent: 'center',
               h: 'full',
               textDecoration: 'none',
-              gap: '6px',
+              gap: '3px',
               _hover: {
                 '& .logo-dot': {
                   boxShadow: '0 0 5px 1.5px rgba(167,139,250,1), 0 0 14px 3px rgba(139,92,246,0.65), 0 0 24px 6px rgba(139,92,246,0.3)',
@@ -129,7 +129,7 @@ export default function NavHeader({
                     flexShrink: 0,
                     boxShadow: '0 0 3px 1px rgba(167,139,250,0.85), 0 0 8px 2px rgba(139,92,246,0.4), 0 0 14px 3px rgba(139,92,246,0.15)',
                     transition: 'box-shadow 0.3s ease',
-                    mr: '3px',
+                    mr: '6px',
                   }),
                 )}
               />
