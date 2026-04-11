@@ -82,20 +82,68 @@ export default function NavHeader({
           <Link
             href="/"
             className={css({
-              fontSize: '1.125rem',
-              fontWeight: 'bold',
-              color: 'white',
-              letterSpacing: '-0.04em',
-              transition: 'colors',
               display: 'flex',
-              alignItems: 'center',
+              flexDir: 'column',
+              justifyContent: 'center',
               h: 'full',
-              _hover: { color: 'white' },
+              textDecoration: 'none',
+              gap: '1px',
+              _hover: {
+                '& .logo-dot': {
+                  boxShadow: '0 0 5px 1.5px rgba(167,139,250,1), 0 0 14px 3px rgba(139,92,246,0.65), 0 0 24px 6px rgba(139,92,246,0.3)',
+                },
+              },
             })}
           >
-            <span className={css({ color: 'white' })}>humans</span>
-            <span className={css({ color: 'rgba(167, 139, 250, 0.7)' })}>of</span>
-            <span className={css({ color: 'white' })}>ai</span>
+            <span
+              className={css({
+                fontSize: '0.9375rem',
+                fontWeight: '600',
+                letterSpacing: '-0.03em',
+                lineHeight: '1.15',
+                backgroundImage: 'linear-gradient(160deg, #FFFFFF 0%, #F2EFFF 35%, #A89EC4 100%)',
+                backgroundClip: 'text',
+                color: 'transparent',
+              })}
+              style={{ WebkitBackgroundClip: 'text' }}
+            >
+              Humans of AI
+            </span>
+            <span
+              className={css({
+                display: 'flex',
+                alignItems: 'center',
+                lineHeight: '1.15',
+              })}
+            >
+              <span
+                aria-hidden="true"
+                className={cx(
+                  'logo-dot',
+                  css({
+                    display: 'inline-block',
+                    w: '5px',
+                    h: '5px',
+                    rounded: 'full',
+                    bg: 'accent.purple',
+                    flexShrink: 0,
+                    boxShadow: '0 0 4px 1px rgba(167,139,250,0.9), 0 0 10px 2px rgba(139,92,246,0.5), 0 0 18px 4px rgba(139,92,246,0.2)',
+                    transition: 'box-shadow 0.3s ease',
+                    mr: '2px',
+                  }),
+                )}
+              />
+              <span
+                className={css({
+                  fontSize: '0.6875rem',
+                  fontWeight: '400',
+                  letterSpacing: '0.04em',
+                  color: 'ui.faint',
+                })}
+              >
+                space
+              </span>
+            </span>
           </Link>
 
           <div
