@@ -48,7 +48,7 @@ const mainStyle = css({
   minH: "screen",
   bg: "ui.base",
   color: "ui.heading",
-  pt: "16",
+  pt: "0",
   overflowX: "hidden",
 });
 

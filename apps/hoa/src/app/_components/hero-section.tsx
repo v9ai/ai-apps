@@ -4,8 +4,8 @@ const section = css({
   pos: "relative",
   overflow: "hidden",
   overflowX: "clip",
-  pt: { base: "8", sm: "10", md: "12", lg: "14" },
-  pb: { base: "4", sm: "5", md: "6", lg: "8" },
+  pt: { base: "24", sm: "28", md: "32", lg: "36" },
+  pb: { base: "2", sm: "3", md: "4", lg: "5" },
   textAlign: "center",
   display: "flex",
   flexDir: "column",
@@ -25,6 +25,7 @@ const h1 = css({
   fontWeight: "bold",
   letterSpacing: "-0.03em",
   fontFamily: "sans",
+  lineHeight: "1.1",
   fontSize: "clamp(2rem, 6vw, 4.5rem)",
   backgroundImage:
     "linear-gradient(160deg, #FFFFFF 0%, #F2EFFF 35%, #A89EC4 100%)",

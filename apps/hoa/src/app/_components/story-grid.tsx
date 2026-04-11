@@ -62,7 +62,7 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
               lg: "repeat(4, 1fr)",
               xl: "repeat(4, 1fr)",
             },
-            gap: { base: "2.5", sm: "3", md: "3", lg: "4" },
+            gap: { base: "2.5", sm: "3", md: "3.5", lg: "4" },
             alignItems: "start",
           })}
           role="list"
