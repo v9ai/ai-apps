@@ -229,6 +229,8 @@ async fn main() -> Result<()> {
     let papers_json = serde_json::to_value(&deduped)?;
     let paper_count = deduped.len().to_string();
 
+    let protocol_uuid: sqlx::types::Uuid = PROTOCOL_ID.parse().context("invalid protocol UUID")?;
+
     let result = sqlx::query(
         "UPDATE protocol_researches \
          SET papers = $1, paper_count = $2, updated_at = now() \
@@ -240,7 +242,7 @@ async fn main() -> Result<()> {
     )
     .bind(&papers_json)
     .bind(&paper_count)
-    .bind(PROTOCOL_ID)
+    .bind(protocol_uuid)
     .execute(&pool)
     .await?;
 
