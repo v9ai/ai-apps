@@ -29,7 +29,7 @@ export const vadimSignatureConfig: SignatureConfig = {
   phone: "+40774005428",
   email: "contact@vadim.blog",
   website: "https://vadim.blog/",
-  calendly: "https://calendly.com/nicolad",
+  calendly: "https://calendly.com/v9ai",
   linkedin: "https://www.linkedin.com/in/vadimnicolai/",
   github: "https://github.com/v9ai",
 };

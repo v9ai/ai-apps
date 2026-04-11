@@ -2,7 +2,7 @@
 slug: ai-sdlc-meta-approaches
 title: "The Two-Layer Model That Separates AI Teams That Ship from Those That Demo"
 description: A strategic guide to the two-layer model of AI development—meta approaches (what you optimize for) and the X-driven methods (how you iterate). Research-backed, with adoption data and ecosystem maps.
-authors: [nicolad]
+authors: [v9ai]
 tags: [ai, sdlc, strategy, llm, agents, rag, evals, llmops, grounding, spec-driven]
 ---
 

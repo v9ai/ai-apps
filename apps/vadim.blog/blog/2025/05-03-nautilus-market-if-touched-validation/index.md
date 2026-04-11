@@ -95,4 +95,4 @@ Whether you’re building discretionary tooling or a fully automated strategy on
 
 ---
 
-[1]: https://github.com/nautechsystems/nautilus_trader/pull/2533 "Improve validations for LimitIfTouchedOrder by nicolad · Pull Request #2533 · nautechsystems/nautilus_trader · GitHub"
+[1]: https://github.com/nautechsystems/nautilus_trader/pull/2533 "Improve validations for LimitIfTouchedOrder by v9ai · Pull Request #2533 · nautechsystems/nautilus_trader · GitHub"

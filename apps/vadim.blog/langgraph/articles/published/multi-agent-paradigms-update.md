@@ -3,7 +3,7 @@ slug: two-paradigms-multi-agent-ai-rust-vs-claude-teams
 title: "Two Paradigms of Multi-Agent AI: Rust Parallel Agents vs Claude Code Agent Teams"
 description: "From static Tokio fan-out to full agent-teams parity in Rust — a technical comparison of three multi-agent coordination models, with real implementation code including TaskQueue, Mailbox, PlanGate, and ShutdownToken."
 date: 2026-03-01
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - rust
   - rust-async

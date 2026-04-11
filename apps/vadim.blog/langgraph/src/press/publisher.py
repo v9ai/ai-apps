@@ -104,7 +104,7 @@ slug: {slug}
 title: "{title}"
 description: "{description}"
 date: {date_full}
-authors: [nicolad]
+authors: [v9ai]
 tags:
 {tags_yaml}
 ---
