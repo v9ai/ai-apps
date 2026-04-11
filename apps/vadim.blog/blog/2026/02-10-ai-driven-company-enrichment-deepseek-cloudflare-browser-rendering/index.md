@@ -200,6 +200,6 @@ Saving the full `ExtractionResult` into `companySnapshots.extracted` buys you:
 
 ## References
 
-[https://github.com/nicolad/nomadically.work](https://github.com/nicolad/nomadically.work)
+[https://github.com/v9ai/nomadically.work](https://github.com/v9ai/nomadically.work)
 
 [https://nomadically.work/](https://nomadically.work/)

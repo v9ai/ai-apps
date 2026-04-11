@@ -234,7 +234,7 @@ ecomm = ds['train'].filter(lambda x: x['success'] and 'product' in x['user_promp
 **Live application**: [agenticleadgen.xyz](https://agenticleadgen.xyz/) — a B2B lead generation
 platform built on Next.js + Rust ML crates, visualized with xyflow.
 
-**GitHub**: [nicolad/ai-apps — apps/lead-gen](https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen)
+**GitHub**: [nicolad/ai-apps — apps/lead-gen](https://github.com/v9ai/ai-apps/tree/main/apps/lead-gen)
 
 The lead-gen app's extraction stack illustrates where and why specialized extraction
 matters in production. It uses:

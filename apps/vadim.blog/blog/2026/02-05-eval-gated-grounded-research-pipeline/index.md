@@ -365,4 +365,4 @@ The repo structure usually exposes these responsibilities clearly:
 ## URLs
 
 * [https://researchthera.com/notes/state-of-remote-work](https://researchthera.com/notes/state-of-remote-work)
-* [https://github.com/nicolad/research-thera](https://github.com/nicolad/research-thera)
+* [https://github.com/v9ai/research-thera](https://github.com/v9ai/research-thera)

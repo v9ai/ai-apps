@@ -5,7 +5,7 @@
     "image": "",
     "email": "nicolai.vadim@gmail.com",
     "phone": "+40774005428",
-    "url": "https://github.com/nicolad",
+    "url": "https://github.com/v9ai",
     "summary": "Senior Full Stack Engineer with 12+ years of experience building scalable web applications using React, TypeScript, Go, and Rust. Expert in modern frontend architectures, microservices, GraphQL APIs, and performance-critical systems. Delivering 5 AI-powered projects with multi-model LLM orchestration, agentic pipelines, RAG search, eval-driven development, and production observability. Domain expertise in E-commerce, FinTech, AI/ML, and enterprise SaaS.",
     "keySkills": "React • TypeScript • JavaScript • Next.js • Node.js • Go • Rust • GraphQL • Apollo • REST API • Microservices • gRPC • AWS • Cloudflare • MongoDB • DynamoDB • Docker • CI/CD • Jest • Git • AI/LLM Orchestration",
     "location": {
@@ -25,7 +25,7 @@
       {
         "network": "github",
         "username": "nicolad",
-        "url": "https://github.com/nicolad"
+        "url": "https://github.com/v9ai"
       },
       {
         "network": "linkedin",
@@ -188,7 +188,7 @@
         "id": "0",
         "name": "Agentic Lead Gen",
         "description": "Autonomous B2B lead generation platform with a 5-agent agentic pipeline (Discovery Scout → Enrichment Specialist → Contact Hunter + QA Auditor → Outreach Composer), GraphQL API backed by Neon PostgreSQL, LLM-powered company enrichment, MLX local contact scoring at 4,618 embeddings/sec, and LangSmith observability.",
-        "githubUrl": "https://github.com/nicolad/agentic-lead-gen",
+        "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
           "5-agent pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
@@ -205,7 +205,7 @@
         "id": "1",
         "name": "Agentic Healthcare",
         "description": "Clinical biomarker trajectory analysis across derived metrics, AI-driven risk classification with cosine embedding similarity, pgvector search, server actions, automated accuracy evals with Braintrust experiment tracking.",
-        "githubUrl": "https://github.com/nicolad/agentic-healthcare",
+        "githubUrl": "https://github.com/v9ai/agentic-healthcare",
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
           "Biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
@@ -218,7 +218,7 @@
         "id": "2",
         "name": "Knowledge",
         "description": "Knowledge graph with pgvector cosine similarity search, Bayesian mastery tracing per user per concept, automated quality evals with DeepEval RAG triad, LangGraph multi-agent fan-out/fan-in editorial pipeline.",
-        "githubUrl": "https://github.com/nicolad/knowledge",
+        "githubUrl": "https://github.com/v9ai/knowledge",
         "websiteUrl": "https://agentic-knowledge.vercel.app/",
         "highlights": [
           "Knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
@@ -232,7 +232,7 @@
         "id": "3",
         "name": "ResearchThera.com",
         "description": "Multi-agent orchestration with LLM quality gating, clinical research ingestion from 7 sources, RAG-powered vector search, runtime prompt versioning with distributed tracing, automated quality evals with Harbor containerized harness.",
-        "githubUrl": "https://github.com/nicolad/research-thera",
+        "githubUrl": "https://github.com/v9ai/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
           "Agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
@@ -246,7 +246,7 @@
         "id": "4",
         "name": "Law Adversarial",
         "description": "6-agent adversarial debate pipeline with citation verification and fabrication detection, jurisdiction precedent analysis, red-teaming and safety evals with Promptfoo YAML suites and DeepTeam attack methods.",
-        "githubUrl": "https://github.com/nicolad/law-adversarial",
+        "githubUrl": "https://github.com/v9ai/law-adversarial",
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
           "6-agent adversarial pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",

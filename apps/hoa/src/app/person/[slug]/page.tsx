@@ -102,7 +102,7 @@ export default async function PersonPage({ params }: Props) {
     (enriched.huggingface && enriched.huggingface.totalDownloads > 0) ||
     (enriched.github?.profile && enriched.github.profile.followers > 0);
 
-  const editUrl = `https://github.com/nicolad/ai-apps/blob/main/apps/podcasts/personalities/${slug}.ts`;
+  const editUrl = `https://github.com/v9ai/ai-apps/blob/main/apps/podcasts/personalities/${slug}.ts`;
 
   return (
     <main className={css({ minH: 'screen', bg: '#0B0B0F' })}>

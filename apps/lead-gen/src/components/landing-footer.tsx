@@ -117,7 +117,7 @@ export function LandingFooter() {
             {/* Social / external links */}
             <div className={flex({ gap: "4", mt: "5", align: "center" })}>
               <a
-                href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
+                href="https://github.com/v9ai/ai-apps/tree/main/apps/lead-gen"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={flex({ align: "center", gap: "2" })}

@@ -70,7 +70,7 @@ export default function HowItWorksPage() {
                   </Text>
                 </Flex>
                 <a
-                  href="https://github.com/nicolad/ai-apps"
+                  href="https://github.com/v9ai/ai-apps"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: "var(--gray-a11)", display: "flex" }}

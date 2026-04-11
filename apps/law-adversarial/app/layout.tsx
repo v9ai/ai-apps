@@ -77,7 +77,7 @@ export default function RootLayout({
                       <Text size="2" weight="medium">How It Works</Text>
                     </Link>
                     <a
-                      href="https://github.com/nicolad/ai-apps/tree/main/apps/law-adversarial"
+                      href="https://github.com/v9ai/ai-apps/tree/main/apps/law-adversarial"
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ color: "var(--gray-10)", display: "flex", alignItems: "center" }}

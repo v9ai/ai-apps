@@ -751,4 +751,4 @@ The pattern can be adapted for other use cases like podcast generation, audioboo
 This implementation is used in production at:
 
 - [Research Thera](https://researchthera.com/) - AI-powered therapeutic audio platform
-- [GitHub Repository](https://github.com/nicolad/research-thera) - Open source implementation
+- [GitHub Repository](https://github.com/v9ai/research-thera) - Open source implementation

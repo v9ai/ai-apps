@@ -94,7 +94,7 @@ export function Header() {
                 aria-label="View source on GitHub"
               >
                 <a
-                  href="https://github.com/nicolad/research-thera"
+                  href="https://github.com/v9ai/research-thera"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

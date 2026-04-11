@@ -454,7 +454,7 @@ export function LandingNav() {
         {/* github link pinned to bottom */}
         <div className={css({ mt: "auto", pb: "2" })}>
           <a
-            href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
+            href="https://github.com/v9ai/ai-apps/tree/main/apps/lead-gen"
             target="_blank"
             rel="noopener noreferrer"
             className={flex({
