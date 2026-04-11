@@ -37,7 +37,7 @@ export interface EmailComposerProps {
   subject?: string;
   /** Original email text for reply context — passed to AI generation */
   replyContext?: string;
-  onSuccess?: () => void;
+  onSuccess?: (toEmail: string) => void;
 }
 
 interface SendResponse {
@@ -155,23 +155,21 @@ export function EmailComposer({
       const json = (await res.json()) as SendResponse;
 
       if (json.success) {
-        setSendResult({
-          type: "success",
-          message: `Email sent to ${to.trim()}.`,
-        });
-        onSuccess?.();
+        const recipient = to.trim();
+        onSuccess?.(recipient);
+        handleOpenChange(false);
       } else {
         setSendResult({
           type: "error",
           message: json.error ?? "Send failed. Please try again.",
         });
+        setSending(false);
       }
     } catch (err) {
       setSendResult({
         type: "error",
         message: err instanceof Error ? err.message : "Unexpected error.",
       });
-    } finally {
       setSending(false);
     }
   }
@@ -185,7 +183,7 @@ export function EmailComposer({
     subject.trim().length > 0 &&
     body.trim().length > 0;
 
-  const hasSentSuccessfully = sendResult?.type === "success";
+  const hasError = sendResult?.type === "error";
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -218,7 +216,7 @@ export function EmailComposer({
                 placeholder="jane@company.com"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                disabled={hasSentSuccessfully}
+                disabled={sending}
               />
             </Box>
             <Box style={{ flex: "1 1 45%" }}>
@@ -229,7 +227,7 @@ export function EmailComposer({
                 placeholder="Jane Smith"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                disabled={hasSentSuccessfully}
+                disabled={sending}
               />
             </Box>
           </Flex>
@@ -243,7 +241,7 @@ export function EmailComposer({
               placeholder="Re: open roles at Acme"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              disabled={hasSentSuccessfully}
+              disabled={sending}
             />
           </Box>
 
@@ -252,7 +250,7 @@ export function EmailComposer({
             <button
               className={button({ variant: "ghost" })}
               onClick={() => void handleGenerate()}
-              disabled={isStreaming || hasSentSuccessfully}
+              disabled={isStreaming || sending}
             >
               <MagicWandIcon />
               {isStreaming ? "Generating…" : "AI Generate"}
@@ -271,7 +269,7 @@ export function EmailComposer({
               </Badge>
             )}
 
-            {content && !isStreaming && !hasSentSuccessfully && (
+            {content && !isStreaming && !sending && (
               <button
                 className={button({ variant: "ghost", size: "sm" })}
                 onClick={() => {
@@ -335,7 +333,7 @@ export function EmailComposer({
               onChange={(e) => setBody(e.target.value)}
               rows={12}
               style={{ fontFamily: "var(--default-font-family)" }}
-              disabled={hasSentSuccessfully}
+              disabled={sending}
             />
           </Box>
 
@@ -347,7 +345,7 @@ export function EmailComposer({
                   id={resumeCheckId}
                   checked={includeResume}
                   onCheckedChange={(checked) => setIncludeResume(checked === true)}
-                  disabled={hasSentSuccessfully}
+                  disabled={sending}
                 />
                 <Text size="2">Include resume (PDF attachment)</Text>
               </label>
@@ -358,22 +356,18 @@ export function EmailComposer({
                   id={calendlyCheckId}
                   checked={includeCalendly}
                   onCheckedChange={(checked) => setIncludeCalendly(checked === true)}
-                  disabled={hasSentSuccessfully}
+                  disabled={sending}
                 />
                 <Text size="2">Include Calendly link in body</Text>
               </label>
             </Flex>
           </Flex>
 
-          {/* Send result feedback */}
-          {sendResult && (
-            <Callout.Root color={sendResult.type === "success" ? "green" : "red"} size="1">
+          {/* Send error feedback */}
+          {hasError && sendResult && (
+            <Callout.Root color="red" size="1">
               <Callout.Icon>
-                {sendResult.type === "success" ? (
-                  <CheckCircledIcon />
-                ) : (
-                  <ExclamationTriangleIcon />
-                )}
+                <ExclamationTriangleIcon />
               </Callout.Icon>
               <Callout.Text>{sendResult.message}</Callout.Text>
             </Callout.Root>
@@ -381,46 +375,28 @@ export function EmailComposer({
 
           {/* Footer actions */}
           <Flex justify="between" align="center" gap="3" mt="1">
-            {hasSentSuccessfully ? (
-              <>
-                <button
-                  className={button({ variant: "ghost" })}
-                  onClick={() => {
-                    resetForm();
-                  }}
-                >
-                  Compose Another
-                </button>
-                <Dialog.Close>
-                  <button className={button({ variant: "solid" })}>Done</button>
-                </Dialog.Close>
-              </>
-            ) : (
-              <>
-                <Dialog.Close>
-                  <button className={button({ variant: "ghost" })}>
-                    Cancel
-                  </button>
-                </Dialog.Close>
-                <button
-                  className={button({ variant: "solid" })}
-                  disabled={!canSend}
-                  onClick={() => void handleSend()}
-                >
-                  {sending ? (
-                    <>
-                      <Spinner size="1" />
-                      Sending…
-                    </>
-                  ) : (
-                    <>
-                      <PaperPlaneIcon />
-                      Send
-                    </>
-                  )}
-                </button>
-              </>
-            )}
+            <Dialog.Close>
+              <button className={button({ variant: "ghost" })}>
+                Cancel
+              </button>
+            </Dialog.Close>
+            <button
+              className={button({ variant: "solid" })}
+              disabled={!canSend}
+              onClick={() => void handleSend()}
+            >
+              {sending ? (
+                <>
+                  <Spinner size="1" />
+                  Sending…
+                </>
+              ) : (
+                <>
+                  <PaperPlaneIcon />
+                  Send
+                </>
+              )}
+            </button>
           </Flex>
         </Flex>
       </Dialog.Content>
