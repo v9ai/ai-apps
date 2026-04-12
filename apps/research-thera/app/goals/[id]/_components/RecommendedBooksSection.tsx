@@ -14,6 +14,8 @@ import {
   Link,
 } from "@radix-ui/themes";
 import { GlassButton } from "@/app/components/GlassButton";
+import NextLink from "next/link";
+import { useParams } from "next/navigation";
 import {
   useGetRecommendedBooksQuery,
   useGenerateRecommendedBooksMutation,
@@ -39,6 +41,9 @@ function getCategoryColor(category: string) {
 }
 
 export default function RecommendedBooksSection({ goalId, hasResearch }: RecommendedBooksSectionProps) {
+  const params = useParams();
+  const paramValue = params.id as string;
+
   const { data, refetch } = useGetRecommendedBooksQuery({
     variables: { goalId },
   });
@@ -82,9 +87,18 @@ export default function RecommendedBooksSection({ goalId, hasResearch }: Recomme
     <Card>
       <Flex direction="column" gap="3" p="4">
         <Flex justify="between" align="center" wrap="wrap" gap="2">
-          <Heading size="4">
-            Recommended Books {books.length > 0 ? `(${books.length})` : ""}
-          </Heading>
+          <Flex align="center" gap="2">
+            <Heading size="4">
+              Recommended Books {books.length > 0 ? `(${books.length})` : ""}
+            </Heading>
+            {books.length > 0 && (
+              <Button variant="ghost" size="1" color="gray" asChild>
+                <NextLink href={`/goals/${paramValue}/books`}>
+                  View All
+                </NextLink>
+              </Button>
+            )}
+          </Flex>
           <Flex gap="2">
             {books.length > 0 && (
               <AlertDialog.Root>
