@@ -563,3 +563,19 @@ export const memoryBaseline = pgTable(
   },
   (table) => [uniqueIndex("mb_user_idx").on(table.userId)],
 );
+
+export const memoryResearch = pgTable(
+  "memory_research",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" })
+      .unique(),
+    papers: jsonb("papers").notNull().default([]),
+    paperCount: text("paper_count"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("mr_user_idx").on(table.userId)],
+);
