@@ -117,14 +117,6 @@
   flex-shrink: 0;
 }
 
-.flashcard-fullscreen > div:last-child {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 0 16px 16px;
-  min-height: 0;
-}
-
 .flashcard-split-wrapper {
   flex: 1;
   display: grid;
@@ -132,6 +124,7 @@
   grid-template-rows: 1fr auto;
   gap: 16px;
   min-height: 0;
+  padding: 0 16px 16px;
 }
 
 .flashcard-left {
