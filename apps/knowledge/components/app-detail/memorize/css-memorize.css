@@ -165,7 +165,7 @@
   width: 100%;
   height: 100%;
   border: none;
-  background: #fff;
+  background: #111113;
 }
 
 .flashcard-controls {
@@ -334,7 +334,7 @@
   height: 140px;
   border: 1px solid var(--gray-4);
   border-radius: var(--radius-2);
-  background: #fff;
+  background: #111113;
 }
 
 .fill-blank-controls {
@@ -380,7 +380,7 @@
   width: 100%;
   height: 180px;
   border: none;
-  background: #fff;
+  background: #111113;
 }
 
 .matcher-options {
@@ -702,7 +702,7 @@
   width: 100%;
   height: 140px;
   border: none;
-  background: #fff;
+  background: #111113;
 }
 
 /* ── Empty / loading states ─────────────────────────────────────── */

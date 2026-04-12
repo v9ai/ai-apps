@@ -1432,9 +1432,8 @@ body {
 .live-preview-wrapper iframe {
   flex: 1;
   min-height: 200px;
-  background: var(--gray-1);
+  background: #111113;
   border: none;
-  background: #ffffff;
 }
 .code-block-wrapper {
   position: relative;
