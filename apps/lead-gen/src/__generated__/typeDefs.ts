@@ -695,6 +695,29 @@ type EmailTemplatesResult {
   totalCount: Int!
 }
 
+type EmailThread {
+  classification: String
+  classificationConfidence: Float
+  companyKey: String
+  companyName: String
+  contactEmail: String
+  contactId: Int!
+  contactName: String!
+  contactPosition: String
+  hasReply: Boolean!
+  lastMessageAt: String!
+  lastMessageDirection: String!
+  lastMessagePreview: String
+  latestStatus: String
+  messages: [ThreadMessage!]!
+  totalMessages: Int!
+}
+
+type EmailThreadsResult {
+  threads: [EmailThread!]!
+  totalCount: Int!
+}
+
 type EmergingRole {
   avgSalaryMidpoint: Float
   count: Int!
@@ -1186,6 +1209,8 @@ type Query {
   emailStats: EmailStats!
   emailTemplate(id: Int!): EmailTemplate
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
+  emailThread(contactId: Int!): EmailThread
+  emailThreads(classification: String, limit: Int, offset: Int, search: String): EmailThreadsResult!
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
   findCompany(name: String, website: String): FindCompanyResult!
   intentDashboard: IntentDashboard!
@@ -1856,6 +1881,22 @@ type SyncVoyagerJobsResult {
   success: Boolean!
   """Jobs upserted into linkedin_posts"""
   upserted: Int!
+}
+
+type ThreadMessage {
+  classification: String
+  classificationConfidence: Float
+  direction: String!
+  fromEmail: String!
+  htmlContent: String
+  id: Int!
+  sentAt: String
+  sequenceNumber: String
+  sequenceType: String
+  status: String
+  subject: String!
+  textContent: String
+  toEmails: [String!]!
 }
 
 type TimeToFillEstimate {

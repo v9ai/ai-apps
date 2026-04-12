@@ -765,6 +765,31 @@ export type EmailTemplatesResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type EmailThread = {
+  __typename?: 'EmailThread';
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  contactEmail: Maybe<Scalars['String']['output']>;
+  contactId: Scalars['Int']['output'];
+  contactName: Scalars['String']['output'];
+  contactPosition: Maybe<Scalars['String']['output']>;
+  hasReply: Scalars['Boolean']['output'];
+  lastMessageAt: Scalars['String']['output'];
+  lastMessageDirection: Scalars['String']['output'];
+  lastMessagePreview: Maybe<Scalars['String']['output']>;
+  latestStatus: Maybe<Scalars['String']['output']>;
+  messages: Array<ThreadMessage>;
+  totalMessages: Scalars['Int']['output'];
+};
+
+export type EmailThreadsResult = {
+  __typename?: 'EmailThreadsResult';
+  threads: Array<EmailThread>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type EmergingRole = {
   __typename?: 'EmergingRole';
   avgSalaryMidpoint: Maybe<Scalars['Float']['output']>;
@@ -1668,6 +1693,8 @@ export type Query = {
   emailStats: EmailStats;
   emailTemplate: Maybe<EmailTemplate>;
   emailTemplates: EmailTemplatesResult;
+  emailThread: Maybe<EmailThread>;
+  emailThreads: EmailThreadsResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
   findCompany: FindCompanyResult;
   intentDashboard: IntentDashboard;
@@ -1845,6 +1872,19 @@ export type QueryEmailTemplatesArgs = {
   category?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryEmailThreadArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryEmailThreadsArgs = {
+  classification?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2706,6 +2746,23 @@ export type SyncVoyagerJobsResult = {
   upserted: Scalars['Int']['output'];
 };
 
+export type ThreadMessage = {
+  __typename?: 'ThreadMessage';
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  direction: Scalars['String']['output'];
+  fromEmail: Scalars['String']['output'];
+  htmlContent: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  sentAt: Maybe<Scalars['String']['output']>;
+  sequenceNumber: Maybe<Scalars['String']['output']>;
+  sequenceType: Maybe<Scalars['String']['output']>;
+  status: Maybe<Scalars['String']['output']>;
+  subject: Scalars['String']['output'];
+  textContent: Maybe<Scalars['String']['output']>;
+  toEmails: Array<Scalars['String']['output']>;
+};
+
 export type TimeToFillEstimate = {
   __typename?: 'TimeToFillEstimate';
   avgDays: Scalars['Float']['output'];
@@ -3511,6 +3568,23 @@ export type DeleteEmailTemplateMutationVariables = Exact<{
 
 
 export type DeleteEmailTemplateMutation = { __typename?: 'Mutation', deleteEmailTemplate: { __typename?: 'DeleteEmailTemplateResult', success: boolean, message: string | null } };
+
+export type GetEmailThreadsQueryVariables = Exact<{
+  classification?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetEmailThreadsQuery = { __typename?: 'Query', emailThreads: { __typename?: 'EmailThreadsResult', totalCount: number, threads: Array<{ __typename?: 'EmailThread', contactId: number, contactName: string, contactEmail: string | null, contactPosition: string | null, companyName: string | null, companyKey: string | null, lastMessageAt: string, lastMessagePreview: string | null, lastMessageDirection: string, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, latestStatus: string | null }> } };
+
+export type GetEmailThreadQueryVariables = Exact<{
+  contactId: Scalars['Int']['input'];
+}>;
+
+
+export type GetEmailThreadQuery = { __typename?: 'Query', emailThread: { __typename?: 'EmailThread', contactId: number, contactName: string, contactEmail: string | null, contactPosition: string | null, companyName: string | null, companyKey: string | null, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, messages: Array<{ __typename?: 'ThreadMessage', id: number, direction: string, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, htmlContent: string | null, sentAt: string | null, status: string | null, sequenceType: string | null, sequenceNumber: string | null, classification: string | null, classificationConfidence: number | null }> } | null };
 
 export type GetLinkedInPostsQueryVariables = Exact<{
   type?: InputMaybe<LinkedInPostType>;
@@ -6582,6 +6656,140 @@ export function useDeleteEmailTemplateMutation(baseOptions?: Apollo.MutationHook
 export type DeleteEmailTemplateMutationHookResult = ReturnType<typeof useDeleteEmailTemplateMutation>;
 export type DeleteEmailTemplateMutationResult = Apollo.MutationResult<DeleteEmailTemplateMutation>;
 export type DeleteEmailTemplateMutationOptions = Apollo.BaseMutationOptions<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>;
+export const GetEmailThreadsDocument = gql`
+    query GetEmailThreads($classification: String, $search: String, $limit: Int, $offset: Int) {
+  emailThreads(
+    classification: $classification
+    search: $search
+    limit: $limit
+    offset: $offset
+  ) {
+    threads {
+      contactId
+      contactName
+      contactEmail
+      contactPosition
+      companyName
+      companyKey
+      lastMessageAt
+      lastMessagePreview
+      lastMessageDirection
+      classification
+      classificationConfidence
+      totalMessages
+      hasReply
+      latestStatus
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetEmailThreadsQuery__
+ *
+ * To run a query within a React component, call `useGetEmailThreadsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEmailThreadsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEmailThreadsQuery({
+ *   variables: {
+ *      classification: // value for 'classification'
+ *      search: // value for 'search'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGetEmailThreadsQuery(baseOptions?: Apollo.QueryHookOptions<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>(GetEmailThreadsDocument, options);
+      }
+export function useGetEmailThreadsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>(GetEmailThreadsDocument, options);
+        }
+// @ts-ignore
+export function useGetEmailThreadsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>;
+export function useGetEmailThreadsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailThreadsQuery | undefined, GetEmailThreadsQueryVariables>;
+export function useGetEmailThreadsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>(GetEmailThreadsDocument, options);
+        }
+export type GetEmailThreadsQueryHookResult = ReturnType<typeof useGetEmailThreadsQuery>;
+export type GetEmailThreadsLazyQueryHookResult = ReturnType<typeof useGetEmailThreadsLazyQuery>;
+export type GetEmailThreadsSuspenseQueryHookResult = ReturnType<typeof useGetEmailThreadsSuspenseQuery>;
+export type GetEmailThreadsQueryResult = Apollo.QueryResult<GetEmailThreadsQuery, GetEmailThreadsQueryVariables>;
+export const GetEmailThreadDocument = gql`
+    query GetEmailThread($contactId: Int!) {
+  emailThread(contactId: $contactId) {
+    contactId
+    contactName
+    contactEmail
+    contactPosition
+    companyName
+    companyKey
+    classification
+    classificationConfidence
+    totalMessages
+    hasReply
+    messages {
+      id
+      direction
+      fromEmail
+      toEmails
+      subject
+      textContent
+      htmlContent
+      sentAt
+      status
+      sequenceType
+      sequenceNumber
+      classification
+      classificationConfidence
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetEmailThreadQuery__
+ *
+ * To run a query within a React component, call `useGetEmailThreadQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEmailThreadQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEmailThreadQuery({
+ *   variables: {
+ *      contactId: // value for 'contactId'
+ *   },
+ * });
+ */
+export function useGetEmailThreadQuery(baseOptions: Apollo.QueryHookOptions<GetEmailThreadQuery, GetEmailThreadQueryVariables> & ({ variables: GetEmailThreadQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetEmailThreadQuery, GetEmailThreadQueryVariables>(GetEmailThreadDocument, options);
+      }
+export function useGetEmailThreadLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEmailThreadQuery, GetEmailThreadQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetEmailThreadQuery, GetEmailThreadQueryVariables>(GetEmailThreadDocument, options);
+        }
+// @ts-ignore
+export function useGetEmailThreadSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetEmailThreadQuery, GetEmailThreadQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailThreadQuery, GetEmailThreadQueryVariables>;
+export function useGetEmailThreadSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailThreadQuery, GetEmailThreadQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailThreadQuery | undefined, GetEmailThreadQueryVariables>;
+export function useGetEmailThreadSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailThreadQuery, GetEmailThreadQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetEmailThreadQuery, GetEmailThreadQueryVariables>(GetEmailThreadDocument, options);
+        }
+export type GetEmailThreadQueryHookResult = ReturnType<typeof useGetEmailThreadQuery>;
+export type GetEmailThreadLazyQueryHookResult = ReturnType<typeof useGetEmailThreadLazyQuery>;
+export type GetEmailThreadSuspenseQueryHookResult = ReturnType<typeof useGetEmailThreadSuspenseQuery>;
+export type GetEmailThreadQueryResult = Apollo.QueryResult<GetEmailThreadQuery, GetEmailThreadQueryVariables>;
 export const GetLinkedInPostsDocument = gql`
     query GetLinkedInPosts($type: LinkedInPostType, $companyId: Int, $limit: Int, $offset: Int) {
   linkedinPosts(

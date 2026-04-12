@@ -41,6 +41,7 @@ import type { EmailSubscriber } from "./actions";
 import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
 import { ComposeFromLinkedIn } from "@/components/admin/ComposeFromLinkedIn";
 import { EditCampaignDialog } from "@/components/admin/EditCampaignDialog";
+import { ThreadInbox } from "@/components/emails/thread-inbox";
 import {
   useGetEmailCampaignsQuery,
   useCreateDraftCampaignMutation,
@@ -661,7 +662,7 @@ function EmailTemplatesList() {
 function EmailsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const tab = searchParams?.get("tab") ?? "received";
+  const tab = searchParams?.get("tab") ?? "inbox";
 
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
@@ -680,7 +681,7 @@ function EmailsPageContent() {
   };
 
   return (
-    <Container size="4" p="8" style={{ maxWidth: "1100px" }}>
+    <Container size="4" p="8">
       <Flex justify="between" align="center" mb="6">
         <Box>
           <Heading size="7">Emails</Heading>
@@ -715,9 +716,9 @@ function EmailsPageContent() {
 
       <Tabs.Root value={tab} onValueChange={handleTabChange}>
         <Tabs.List mb="4">
-          <Tabs.Trigger value="received">
+          <Tabs.Trigger value="inbox">
             <EnvelopeOpenIcon />
-            &nbsp;Received
+            &nbsp;Inbox
           </Tabs.Trigger>
           <Tabs.Trigger value="sent">
             <EnvelopeClosedIcon />
@@ -741,12 +742,12 @@ function EmailsPageContent() {
           </Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="sent">
-          <SentList />
+        <Tabs.Content value="inbox">
+          <ThreadInbox />
         </Tabs.Content>
 
-        <Tabs.Content value="received">
-          <ReceivedList />
+        <Tabs.Content value="sent">
+          <SentList />
         </Tabs.Content>
 
         <Tabs.Content value="campaigns">
