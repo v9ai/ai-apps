@@ -349,6 +349,7 @@ type ReceivedEmail {
   classificationConfidence: Float
   classifiedAt: String
   matchedContactId: Int
+  matchedContact: Contact
   matchedOutboundId: Int
   sentReplies: [SentReply!]!
   createdAt: String!

@@ -2111,6 +2111,7 @@ export type ReceivedEmail = {
   fromEmail: Maybe<Scalars['String']['output']>;
   htmlContent: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  matchedContact: Maybe<Contact>;
   matchedContactId: Maybe<Scalars['Int']['output']>;
   matchedOutboundId: Maybe<Scalars['Int']['output']>;
   messageId: Maybe<Scalars['String']['output']>;
@@ -3493,7 +3494,7 @@ export type GetReceivedEmailQueryVariables = Exact<{
 }>;
 
 
-export type GetReceivedEmailQuery = { __typename?: 'Query', receivedEmail: { __typename?: 'ReceivedEmail', id: number, resendId: string | null, fromEmail: string | null, toEmails: Array<string>, ccEmails: Array<string>, replyToEmails: Array<string>, subject: string | null, messageId: string | null, htmlContent: string | null, textContent: string | null, attachments: any | null, receivedAt: string, archivedAt: string | null, classification: string | null, classificationConfidence: number | null, classifiedAt: string | null, matchedContactId: number | null, matchedOutboundId: number | null, createdAt: string, updatedAt: string, sentReplies: Array<{ __typename?: 'SentReply', id: number, resendId: string | null, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, status: string, sentAt: string | null, createdAt: string }> } | null };
+export type GetReceivedEmailQuery = { __typename?: 'Query', receivedEmail: { __typename?: 'ReceivedEmail', id: number, resendId: string | null, fromEmail: string | null, toEmails: Array<string>, ccEmails: Array<string>, replyToEmails: Array<string>, subject: string | null, messageId: string | null, htmlContent: string | null, textContent: string | null, attachments: any | null, receivedAt: string, archivedAt: string | null, classification: string | null, classificationConfidence: number | null, classifiedAt: string | null, matchedContactId: number | null, matchedOutboundId: number | null, createdAt: string, updatedAt: string, matchedContact: { __typename?: 'Contact', id: number, firstName: string, lastName: string } | null, sentReplies: Array<{ __typename?: 'SentReply', id: number, resendId: string | null, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, status: string, sentAt: string | null, createdAt: string }> } | null };
 
 export type ArchiveEmailMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -6185,6 +6186,11 @@ export const GetReceivedEmailDocument = gql`
     classificationConfidence
     classifiedAt
     matchedContactId
+    matchedContact {
+      id
+      firstName
+      lastName
+    }
     matchedOutboundId
     sentReplies {
       id

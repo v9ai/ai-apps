@@ -2108,6 +2108,7 @@ export type ReceivedEmail = {
   fromEmail: Maybe<Scalars['String']['output']>;
   htmlContent: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  matchedContact: Maybe<Contact>;
   matchedContactId: Maybe<Scalars['Int']['output']>;
   matchedOutboundId: Maybe<Scalars['Int']['output']>;
   messageId: Maybe<Scalars['String']['output']>;

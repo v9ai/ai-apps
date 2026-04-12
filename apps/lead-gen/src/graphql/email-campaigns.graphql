@@ -155,6 +155,11 @@ query GetReceivedEmail($id: Int!) {
     classificationConfidence
     classifiedAt
     matchedContactId
+    matchedContact {
+      id
+      firstName
+      lastName
+    }
     matchedOutboundId
     sentReplies {
       id
