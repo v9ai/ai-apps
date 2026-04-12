@@ -6,16 +6,89 @@ import {
   brainHealthProtocols,
   cognitiveCheckIns,
   cognitiveBaselines,
+  researches,
 } from "@/lib/db/schema";
 import { and, avg, count, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { Badge, Box, Card, Flex, Heading, Text } from "@radix-ui/themes";
-import { BrainCircuit } from "lucide-react";
+import { BrainCircuit, BookOpen, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { css } from "styled-system/css";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 import { MemoryEntryForm } from "./memory-entry-form";
 import { BaselineForm } from "./baseline-form";
 import { deleteMemoryEntry } from "./actions";
+
+type ResearchPaper = {
+  title: string;
+  authors: string[];
+  year: number;
+  evidenceLevel: string;
+  relevanceScore: number;
+  keyFindings: string[];
+  doi: string | null;
+  url: string | null;
+};
+
+const EVIDENCE_COLORS: Record<string, "blue" | "green" | "violet" | "orange" | "amber" | "gray"> = {
+  meta_analysis: "violet",
+  systematic_review: "blue",
+  rct: "green",
+  review: "orange",
+  cohort: "amber",
+  foundational_theory: "gray",
+  case_study: "gray",
+  expert_opinion: "gray",
+};
+
+function formatAuthors(authors: string[]) {
+  if (!authors || authors.length === 0) return "";
+  if (authors.length <= 2) return authors.join(", ");
+  return `${authors[0]}, ${authors[1]} et al.`;
+}
+
+function ResearchSection({ papers, paperCount }: { papers: ResearchPaper[]; paperCount: number }) {
+  return (
+    <Flex direction="column" gap="2">
+      <Flex align="center" gap="2">
+        <BookOpen size={16} style={{ color: "var(--indigo-11)" }} />
+        <Text size="2" weight="medium">Research</Text>
+        <Badge color="indigo" variant="soft" size="1">{paperCount} papers</Badge>
+      </Flex>
+      <Flex direction="column" gap="2">
+        {papers.map((paper, i) => (
+          <Card key={i} variant="surface">
+            <Flex direction="column" gap="1">
+              <Text size="2" weight="medium">{paper.title}</Text>
+              <Flex align="center" gap="2" wrap="wrap">
+                {paper.authors.length > 0 && (
+                  <Text size="1" color="gray">{formatAuthors(paper.authors)}</Text>
+                )}
+                {paper.year > 0 && (
+                  <Badge color="gray" variant="soft" size="1">{paper.year}</Badge>
+                )}
+                {paper.evidenceLevel && (
+                  <Badge
+                    color={EVIDENCE_COLORS[paper.evidenceLevel] || "gray"}
+                    variant="outline"
+                    size="1"
+                  >
+                    {paper.evidenceLevel.replace(/_/g, " ")}
+                  </Badge>
+                )}
+                <Badge color="indigo" variant="soft" size="1">{paper.relevanceScore}% relevant</Badge>
+              </Flex>
+              {paper.keyFindings.length > 0 && (
+                <Text size="1" color="gray" style={{ lineHeight: "1.5" }}>
+                  {paper.keyFindings.join("; ")}
+                </Text>
+              )}
+            </Flex>
+          </Card>
+        ))}
+      </Flex>
+    </Flex>
+  );
+}
 
 const twoColClass = css({
   display: "grid",
@@ -78,6 +151,7 @@ export default async function BrainMemoryPage() {
     prevAvgs,
     categoryCounts,
     protocols,
+    [memoryResearchRow],
   ] = await Promise.all([
     db
       .select()
@@ -127,6 +201,13 @@ export default async function BrainMemoryPage() {
       .select({ id: brainHealthProtocols.id, name: brainHealthProtocols.name })
       .from(brainHealthProtocols)
       .where(and(eq(brainHealthProtocols.userId, userId), eq(brainHealthProtocols.status, "active"))),
+    // Memory research
+    db
+      .select()
+      .from(researches)
+      .where(and(eq(researches.userId, userId), eq(researches.type, "memory")))
+      .orderBy(desc(researches.createdAt))
+      .limit(1),
   ]);
 
   // Protocol memory scores — latest check-in memoryScore per protocol
@@ -314,6 +395,13 @@ export default async function BrainMemoryPage() {
               );
             })}
           </Flex>
+        )}
+        {/* Research */}
+        {memoryResearchRow && (memoryResearchRow.papers as ResearchPaper[]).length > 0 && (
+          <ResearchSection
+            papers={memoryResearchRow.papers as ResearchPaper[]}
+            paperCount={Number(memoryResearchRow.paperCount) || 0}
+          />
         )}
       </Flex>
 
