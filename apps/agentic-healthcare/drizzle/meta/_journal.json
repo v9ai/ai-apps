@@ -15,6 +15,13 @@
       "when": 1773904020364,
       "tag": "0001_damp_thaddeus_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776023813644,
+      "tag": "0002_brainy_azazel",
+      "breakpoints": true
     }
   ]
 }
