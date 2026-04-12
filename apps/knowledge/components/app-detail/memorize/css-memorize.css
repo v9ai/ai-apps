@@ -180,7 +180,7 @@
 .flashcard-value {
   padding: 6px 0;
   border-bottom: 1px solid var(--gray-4);
-  font-size: var(--font-size-2);
+  font-size: var(--font-size-3);
   line-height: 1.6;
 }
 
@@ -221,7 +221,7 @@
 
 .flashcard-counter {
   text-align: center;
-  font-size: var(--font-size-1);
+  font-size: var(--font-size-2);
   color: var(--gray-9);
   margin-bottom: 12px;
 }
@@ -234,7 +234,7 @@
 }
 
 .flashcard-hint {
-  font-size: var(--font-size-1);
+  font-size: var(--font-size-2);
   color: var(--violet-10);
   font-style: italic;
   margin-top: 8px;
@@ -252,7 +252,7 @@
 
 .fill-blank-code {
   font-family: var(--font-mono, monospace);
-  font-size: var(--font-size-2);
+  font-size: var(--font-size-3);
   line-height: 1.8;
   background: var(--gray-2);
   padding: 16px;
@@ -338,7 +338,7 @@
 .matcher-preview-label {
   padding: 8px 12px;
   background: var(--gray-3);
-  font-size: var(--font-size-1);
+  font-size: var(--font-size-2);
   font-weight: 600;
   color: var(--gray-11);
   border-bottom: 1px solid var(--gray-5);
@@ -364,7 +364,7 @@
   background: var(--gray-2);
   cursor: pointer;
   font-family: var(--font-mono, monospace);
-  font-size: var(--font-size-2);
+  font-size: var(--font-size-3);
   line-height: 1.6;
   transition: border-color 0.2s, background 0.2s;
   text-align: left;
@@ -397,7 +397,7 @@
   padding: 12px;
   border-radius: var(--radius-2);
   font-weight: 600;
-  font-size: var(--font-size-3);
+  font-size: var(--font-size-4);
 }
 
 .matcher-feedback--correct {
@@ -430,7 +430,7 @@
 }
 
 .drill-timer {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 700;
   font-family: var(--font-mono, monospace);
   color: var(--gray-12);
@@ -445,13 +445,13 @@
 }
 
 .drill-score {
-  font-size: var(--font-size-3);
+  font-size: var(--font-size-4);
   font-weight: 700;
   color: var(--violet-11);
 }
 
 .drill-streak {
-  font-size: var(--font-size-1);
+  font-size: var(--font-size-2);
   color: var(--orange-9);
   font-weight: 600;
 }
@@ -461,7 +461,7 @@
 }
 
 .drill-property {
-  font-size: 32px;
+  font-size: 40px;
   font-weight: 700;
   font-family: var(--font-mono, monospace);
   color: var(--violet-11);
@@ -469,7 +469,7 @@
 }
 
 .drill-prompt {
-  font-size: var(--font-size-2);
+  font-size: var(--font-size-3);
   color: var(--gray-9);
 }
 
@@ -490,7 +490,7 @@
   border-radius: var(--radius-2);
   background: var(--gray-2);
   cursor: pointer;
-  font-size: var(--font-size-3);
+  font-size: var(--font-size-4);
   font-weight: 500;
   transition: border-color 0.15s, background 0.15s;
   text-align: left;
@@ -521,14 +521,14 @@
 }
 
 .drill-results-score {
-  font-size: 48px;
+  font-size: 56px;
   font-weight: 800;
   color: var(--violet-11);
   margin-bottom: 8px;
 }
 
 .drill-results-stat {
-  font-size: var(--font-size-2);
+  font-size: var(--font-size-3);
   color: var(--gray-9);
   margin-bottom: 4px;
 }
@@ -545,7 +545,7 @@
   border: 1px solid var(--gray-6);
   border-radius: var(--radius-2);
   background: var(--gray-2);
-  font-size: var(--font-size-3);
+  font-size: var(--font-size-4);
   color: var(--gray-12);
   margin-bottom: 16px;
   outline: none;
@@ -571,7 +571,7 @@
   border: none;
   border-radius: 9999px;
   background: var(--gray-3);
-  font-size: var(--font-size-1);
+  font-size: var(--font-size-2);
   font-weight: 500;
   color: var(--gray-11);
   cursor: pointer;
@@ -623,12 +623,12 @@
 .explorer-card-property {
   font-family: var(--font-mono, monospace);
   font-weight: 600;
-  font-size: var(--font-size-3);
+  font-size: var(--font-size-4);
   color: var(--gray-12);
 }
 
 .explorer-card-desc {
-  font-size: var(--font-size-2);
+  font-size: var(--font-size-3);
   color: var(--gray-9);
   line-height: 1.6;
   margin-top: 6px;
@@ -648,7 +648,7 @@
 
 .explorer-card-value {
   padding: 4px 0;
-  font-size: var(--font-size-1);
+  font-size: var(--font-size-2);
   line-height: 1.6;
 }
 
@@ -683,7 +683,7 @@
 }
 
 .memorize-empty-icon {
-  font-size: 40px;
+  font-size: 48px;
   margin-bottom: 12px;
   display: block;
 }
@@ -697,7 +697,7 @@
   border: 1px solid var(--gray-6);
   border-radius: var(--radius-1);
   font-family: var(--font-mono, monospace);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--gray-10);
   margin-left: 4px;
 }
