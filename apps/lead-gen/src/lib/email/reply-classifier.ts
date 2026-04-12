@@ -50,6 +50,11 @@ const INTERESTED_KW = [
   "can we meet", "looking forward", "exciting",
   "count me in", "sign me up", "yes please",
   "absolutely", "definitely interested", "happy to connect",
+  "sure please", "yes sure", "please send", "send me the details",
+  "send over the details", "share the details", "please share",
+  "happy to hear more", "happy to learn more", "open to learning",
+  "sounds interesting", "i'd be open", "keep me in the loop",
+  "keep me posted", "i'm in", "sounds good",
 ];
 
 const NOT_INTERESTED_KW = [
@@ -105,6 +110,47 @@ const SIGNATURE_PATTERNS = [
 
 const GREETING_PATTERNS = ["hi ", "hey ", "hello ", "thanks ", "thank you", "dear "];
 
+// ── Quoted text stripping ──────────────────────────────────────────────────
+
+/**
+ * Strip quoted reply text from email body so feature extraction
+ * operates on the sender's own words, not the original outbound message.
+ */
+export function stripQuotedText(body: string): string {
+  const lines = body.split("\n");
+  const result: string[] = [];
+  let quoteStarted = false;
+
+  for (const line of lines) {
+    // "On [date], [name] wrote:" marker — stop here
+    if (/^on\s.+wrote:\s*$/i.test(line.trim())) {
+      quoteStarted = true;
+      continue;
+    }
+    // Outlook separator
+    if (/^_{10,}/.test(line.trim()) || /^-{10,}/.test(line.trim())) {
+      quoteStarted = true;
+      continue;
+    }
+    // "From: ... Sent: ..." (Outlook header block)
+    if (/^from:\s/i.test(line.trim()) && quoteStarted) continue;
+    // "> " quoted lines
+    if (/^\s*>/.test(line)) {
+      quoteStarted = true;
+      continue;
+    }
+    // "-------- Original Message --------"
+    if (/original message/i.test(line)) {
+      quoteStarted = true;
+      continue;
+    }
+    if (quoteStarted) continue;
+    result.push(line);
+  }
+
+  return result.join("\n").trim();
+}
+
 // ── Feature extraction ───────────────────────────────────────────────────────
 
 function kwDensity(text: string, keywords: string[], wordCount: number): number {
@@ -116,7 +162,8 @@ function kwDensity(text: string, keywords: string[], wordCount: number): number 
 }
 
 export function extractFeatures(subject: string, body: string): number[] {
-  const combined = `${subject} ${body}`.toLowerCase();
+  const stripped = stripQuotedText(body);
+  const combined = `${subject} ${stripped}`.toLowerCase();
   const words = combined.split(/\s+/).filter(Boolean);
   const wordCount = Math.max(words.length, 1);
 
@@ -246,11 +293,19 @@ function classifyByKeywords(subject: string, body: string): ClassificationResult
     }
   }
 
-  // If no keywords matched, use structural heuristics
+  // If no keywords matched, use structural heuristics on the stripped text
   if (bestScore === 0) {
-    const wordCount = Math.max(`${subject} ${body}`.split(/\s+/).length, 1);
-    if (wordCount < 20 && /^re:\s/i.test(subject || "")) {
-      best = "info_request";
+    const stripped = stripQuotedText(body);
+    const strippedLower = stripped.toLowerCase();
+    const wordCount = Math.max(stripped.split(/\s+/).filter(Boolean).length, 1);
+
+    if (/^re:\s/i.test(subject || "")) {
+      // Short affirmative reply without negative keywords → interested
+      if (wordCount < 50 && !NOT_INTERESTED_KW.some((kw) => strippedLower.includes(kw))) {
+        best = "interested";
+      } else if (wordCount < 20) {
+        best = "info_request";
+      }
     }
   }
 
