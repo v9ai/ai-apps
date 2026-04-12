@@ -76,7 +76,7 @@ export const emailThreadResolvers = {
           companies.key,
         ) as ThreadSummaryRow[];
 
-      // Get all received emails matched to contacts, sorted by date desc
+      // Get all non-archived received emails matched to contacts, sorted by date desc
       const allInbound = await context.db
         .select({
           id: receivedEmails.id,
@@ -86,8 +86,21 @@ export const emailThreadResolvers = {
           classification_confidence: receivedEmails.classification_confidence,
         })
         .from(receivedEmails)
-        .where(sql`${receivedEmails.matched_contact_id} IS NOT NULL`)
+        .where(and(
+          sql`${receivedEmails.matched_contact_id} IS NOT NULL`,
+          isNull(receivedEmails.archived_at),
+        ))
         .orderBy(desc(receivedEmails.received_at));
+
+      // Track contacts that have archived inbound (to hide fully-archived threads)
+      const archivedInbound = await context.db
+        .selectDistinct({ matched_contact_id: receivedEmails.matched_contact_id })
+        .from(receivedEmails)
+        .where(and(
+          sql`${receivedEmails.matched_contact_id} IS NOT NULL`,
+          sql`${receivedEmails.archived_at} IS NOT NULL`,
+        ));
+      const archivedContactIds = new Set(archivedInbound.map((r) => r.matched_contact_id!));
 
       // Aggregate inbound data per contact
       const inboundMap = new Map<number, InboundSummary>();
@@ -160,6 +173,12 @@ export const emailThreadResolvers = {
           latestStatus: row.latest_status,
           messages: [], // Populated only in emailThread query
         };
+      });
+
+      // Hide threads where all inbound emails have been archived
+      threads = threads.filter((t) => {
+        if (!archivedContactIds.has(t.contactId)) return true; // no archived inbound — keep
+        return inboundMap.has(t.contactId); // has archived, keep only if non-archived inbound remains
       });
 
       // Filter by classification

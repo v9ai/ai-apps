@@ -5,7 +5,7 @@ import { memo, useMemo } from "react";
 interface LiveDemoProps {
   html: string;
   css: string;
-  height?: number;
+  height?: number | string;
 }
 
 export const LiveDemo = memo(function LiveDemo({
