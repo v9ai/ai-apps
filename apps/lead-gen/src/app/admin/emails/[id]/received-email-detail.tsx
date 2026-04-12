@@ -9,6 +9,7 @@ import {
 } from "@/__generated__/hooks";
 import { button } from "@/recipes/button";
 import { EmailComposer } from "@/components/admin/EmailComposer";
+import { buildCpnFollowup } from "@/lib/email/cpn-followup";
 import {
   Badge,
   Box,

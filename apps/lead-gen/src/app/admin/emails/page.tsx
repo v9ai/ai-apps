@@ -32,6 +32,7 @@ import {
   BarChartIcon,
   UpdateIcon,
   Pencil1Icon,
+  PaperPlaneIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
@@ -42,6 +43,7 @@ import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
 import { ComposeFromLinkedIn } from "@/components/admin/ComposeFromLinkedIn";
 import { EditCampaignDialog } from "@/components/admin/EditCampaignDialog";
 import { ThreadInbox } from "@/components/emails/thread-inbox";
+import { CpnFollowupPanel } from "@/components/admin/CpnFollowupPanel";
 import {
   useGetEmailCampaignsQuery,
   useCreateDraftCampaignMutation,
@@ -630,6 +632,10 @@ function EmailsPageContent() {
             <LinkedInLogoIcon />
             &nbsp;Compose
           </Tabs.Trigger>
+          <Tabs.Trigger value="cpn">
+            <PaperPlaneIcon />
+            &nbsp;CPN
+          </Tabs.Trigger>
           <Tabs.Trigger value="stats">
             <BarChartIcon />
             &nbsp;Stats
@@ -654,6 +660,10 @@ function EmailsPageContent() {
 
         <Tabs.Content value="compose">
           <ComposeFromLinkedIn />
+        </Tabs.Content>
+
+        <Tabs.Content value="cpn">
+          <CpnFollowupPanel />
         </Tabs.Content>
 
         <Tabs.Content value="stats">
