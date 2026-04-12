@@ -1,0 +1,51 @@
+query GetEmailThreads($classification: String, $search: String, $limit: Int, $offset: Int) {
+  emailThreads(classification: $classification, search: $search, limit: $limit, offset: $offset) {
+    threads {
+      contactId
+      contactName
+      contactEmail
+      contactPosition
+      companyName
+      companyKey
+      lastMessageAt
+      lastMessagePreview
+      lastMessageDirection
+      classification
+      classificationConfidence
+      totalMessages
+      hasReply
+      latestStatus
+    }
+    totalCount
+  }
+}
+
+query GetEmailThread($contactId: Int!) {
+  emailThread(contactId: $contactId) {
+    contactId
+    contactName
+    contactEmail
+    contactPosition
+    companyName
+    companyKey
+    classification
+    classificationConfidence
+    totalMessages
+    hasReply
+    messages {
+      id
+      direction
+      fromEmail
+      toEmails
+      subject
+      textContent
+      htmlContent
+      sentAt
+      status
+      sequenceType
+      sequenceNumber
+      classification
+      classificationConfidence
+    }
+  }
+}

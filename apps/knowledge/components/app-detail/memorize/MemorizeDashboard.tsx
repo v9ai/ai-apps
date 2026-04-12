@@ -103,12 +103,17 @@ export function MemorizeDashboard({
   // Render active mode
   if (mode === "flashcards") {
     return (
-      <div>
-        <ModeHeader
-          title="Flashcards"
-          subtitle={activeCategory ?? "All categories"}
-          onBack={handleBack}
-        />
+      <div className="flashcard-fullscreen">
+        <div className="flashcard-fullscreen-header">
+          <Button size="2" variant="ghost" color="gray" onClick={handleBack}>
+            &larr; Back
+          </Button>
+          <Text size="2" color="gray">
+            {activeCategory
+              ? categories.find((c) => c.id === activeCategory)?.name
+              : "All categories"}
+          </Text>
+        </div>
         <FlashcardDeck
           properties={activeCategory ? filteredProps : smartProps}
           categories={categories}
