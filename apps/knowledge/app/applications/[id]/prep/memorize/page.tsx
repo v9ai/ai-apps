@@ -106,7 +106,7 @@ function MemorizePageInner() {
 
   if (loading) {
     return (
-      <Box px={{ initial: "3", md: "5" }} py="5" style={{ minHeight: "100vh" }}>
+      <Box px={{ initial: "2", md: "3" }} py="4" style={{ minHeight: "100vh" }}>
         <Skeleton height="32px" mb="6" style={{ maxWidth: 300 }} />
         <Skeleton height="400px" />
       </Box>
@@ -115,7 +115,7 @@ function MemorizePageInner() {
 
   if (error || !app) {
     return (
-      <Box px={{ initial: "3", md: "5" }} py="5" style={{ minHeight: "100vh" }}>
+      <Box px={{ initial: "2", md: "3" }} py="4" style={{ minHeight: "100vh" }}>
         <Heading size="5" mb="3">
           {error ? "Error" : "Not Found"}
         </Heading>
@@ -127,7 +127,7 @@ function MemorizePageInner() {
   }
 
   return (
-    <Box px={{ initial: "3", md: "5" }} py={{ initial: "3", md: "5" }} style={{ minHeight: "100vh" }}>
+    <Box px={{ initial: "2", md: "3" }} py={{ initial: "2", md: "3" }} style={{ minHeight: "100vh" }}>
       {/* Navigation */}
       <Flex align="center" gap="3" mb="5">
         <Link
@@ -141,12 +141,12 @@ function MemorizePageInner() {
           }}
         >
           <ArrowLeftIcon />
-          <Text size="3">Study Plan</Text>
+          <Text size="4">Study Plan</Text>
         </Link>
-        <Text size="3" color="gray">
+        <Text size="4" color="gray">
           /
         </Text>
-        <Text size="3" weight="medium">
+        <Text size="4" weight="medium">
           Memorize CSS
         </Text>
       </Flex>
@@ -154,23 +154,23 @@ function MemorizePageInner() {
       {/* Page header */}
       <Flex justify="between" align="start" mb="6" wrap="wrap" gap="3">
         <Box>
-          <Heading size="8" mb="2">
+          <Heading size="9" mb="2">
             Memorize CSS
           </Heading>
           <Flex align="center" gap="2">
             <Badge color="violet" variant="soft" size="3">
               Active Recall
             </Badge>
-            <Text size="3" color="gray">
+            <Text size="4" color="gray">
               {app.company} &middot; {app.position}
             </Text>
           </Flex>
         </Box>
         <Flex gap="2">
-          <Button size="3" variant="soft" color="gray" asChild>
+          <Button size="4" variant="soft" color="gray" asChild>
             <Link href={`/applications/${app.slug}/prep`}>Study Plan</Link>
           </Button>
-          <Button size="3" variant="soft" color="gray" asChild>
+          <Button size="4" variant="soft" color="gray" asChild>
             <Link href={`/applications/${app.slug}/notes`}>Notes</Link>
           </Button>
         </Flex>
@@ -191,7 +191,7 @@ export default function MemorizePage() {
   return (
     <Suspense
       fallback={
-        <Box px={{ initial: "3", md: "5" }} py="5" style={{ minHeight: "100vh" }}>
+        <Box px={{ initial: "2", md: "3" }} py="4" style={{ minHeight: "100vh" }}>
           <Skeleton height="32px" mb="6" style={{ maxWidth: 300 }} />
           <Skeleton height="400px" />
         </Box>
