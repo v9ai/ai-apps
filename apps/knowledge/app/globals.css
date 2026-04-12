@@ -1432,7 +1432,7 @@ body {
 .live-preview-wrapper iframe {
   flex: 1;
   min-height: 200px;
-  background: #111113;
+  background: var(--gray-1);
   border: none;
 }
 .code-block-wrapper {
@@ -1451,9 +1451,9 @@ body {
 }
 .code-block-dots { display: flex; gap: 6px; }
 .code-block-dots span { width: 10px; height: 10px; border-radius: 50%; }
-.code-block-dots span:nth-child(1) { background: #ef4444; }
-.code-block-dots span:nth-child(2) { background: #f59e0b; }
-.code-block-dots span:nth-child(3) { background: #22c55e; }
+.code-block-dots span:nth-child(1) { background: var(--red-9); }
+.code-block-dots span:nth-child(2) { background: var(--amber-9); }
+.code-block-dots span:nth-child(3) { background: var(--green-9); }
 .code-playground-textarea {
   display: block;
   width: 100%;
