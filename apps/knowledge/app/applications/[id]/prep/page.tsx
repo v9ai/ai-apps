@@ -205,18 +205,14 @@ const CodePanel = memo(function CodePanel({ lang, code }: { lang: string; code: 
   );
 });
 
-import { darkify } from "@/lib/darkify";
-
 const LivePreviewPanel = memo(function LivePreviewPanel({ html, css }: { html: string; css: string }) {
-  const srcdoc = useMemo(() => {
-    const darkCss = darkify(css);
-    const darkHtml = darkify(html);
-    return `<!DOCTYPE html>
+  const srcdoc = useMemo(() =>
+    `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111113;color:#eeeef0;padding:16px}
-${darkCss}</style></head><body>${darkHtml}</body></html>`;
-  }, [html, css]);
+${css}</style></head><body>${html}</body></html>`,
+  [html, css]);
 
   return (
     <div className="code-block-wrapper live-preview-wrapper">
