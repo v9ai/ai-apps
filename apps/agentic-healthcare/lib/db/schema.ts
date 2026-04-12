@@ -515,3 +515,51 @@ export const cognitiveCheckIns = pgTable(
     index("cci_recorded_idx").on(table.recordedAt),
   ],
 );
+
+// ── Brain / Memory Tracking ──────────────────────────────────────
+
+export const memoryEntries = pgTable(
+  "memory_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    overallScore: real("overall_score"),
+    shortTermScore: real("short_term_score"),
+    longTermScore: real("long_term_score"),
+    workingMemoryScore: real("working_memory_score"),
+    recallSpeed: real("recall_speed"),
+    category: text("category").notNull().default("observation"),
+    description: text("description"),
+    context: text("context"),
+    protocolId: uuid("protocol_id").references(() => brainHealthProtocols.id, {
+      onDelete: "set null",
+    }),
+    loggedAt: timestamp("logged_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("me_user_idx").on(table.userId),
+    index("me_logged_idx").on(table.loggedAt),
+    index("me_category_idx").on(table.category),
+  ],
+);
+
+export const memoryBaseline = pgTable(
+  "memory_baseline",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" })
+      .unique(),
+    overallScore: real("overall_score"),
+    shortTermScore: real("short_term_score"),
+    longTermScore: real("long_term_score"),
+    workingMemoryScore: real("working_memory_score"),
+    recallSpeed: real("recall_speed"),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("mb_user_idx").on(table.userId)],
+);

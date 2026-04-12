@@ -31,6 +31,23 @@ function parseJsonField(value: unknown): string[] {
   }
 }
 
+function resolveAge(member: { ageYears?: number | null; dateOfBirth?: string | null }): number | null {
+  if (member.ageYears) return member.ageYears;
+  if (!member.dateOfBirth) return null;
+  const birth = new Date(member.dateOfBirth);
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function memberLabel(member: { firstName: string; name?: string | null; ageYears?: number | null; dateOfBirth?: string | null; relationship?: string | null }): string {
+  const age = resolveAge(member);
+  return `${member.firstName}${member.name ? ` ${member.name}` : ""}${age ? `, age ${age}` : ""}${member.relationship ? ` (${member.relationship})` : ""}`;
+}
+
 function buildSiblingIssuesSection(
   allIssues: Array<{ id: number; title: string; category: string; severity: string; description: string }>,
   primaryIssueId?: number,
@@ -227,10 +244,10 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       issue.recommendations ? `Recommendations: ${issue.recommendations}` : "",
       ``,
       primaryMember
-        ? `Primary person: ${primaryMember.firstName}${primaryMember.name ? ` ${primaryMember.name}` : ""}${primaryMember.ageYears ? `, age ${primaryMember.ageYears}` : ""}${primaryMember.relationship ? ` (${primaryMember.relationship})` : ""}`
+        ? `Primary person: ${memberLabel(primaryMember)}`
         : "",
       relatedMember
-        ? `Also involves: ${relatedMember.firstName}${relatedMember.name ? ` ${relatedMember.name}` : ""}${relatedMember.ageYears ? `, age ${relatedMember.ageYears}` : ""}${relatedMember.relationship ? ` (${relatedMember.relationship})` : ""}`
+        ? `Also involves: ${memberLabel(relatedMember)}`
         : "",
       issueSiblingSection,
       ``,
@@ -251,7 +268,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       try {
         const fm = await db.getFamilyMember(entry.familyMemberId);
         if (fm) {
-          memberContext = `Person: ${fm.firstName}${fm.name ? ` ${fm.name}` : ""}${fm.ageYears ? `, age ${fm.ageYears}` : ""}${fm.relationship ? ` (${fm.relationship})` : ""}`;
+          memberContext = `Person: ${memberLabel(fm)}`;
         }
       } catch { /* non-fatal */ }
     }
@@ -285,7 +302,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       try {
         const fm = await db.getFamilyMember(goal.familyMemberId);
         if (fm) {
-          memberContext = `Patient: ${fm.firstName}${fm.name ? ` ${fm.name}` : ""}${fm.ageYears ? `, age ${fm.ageYears}` : ""}${fm.relationship ? ` (${fm.relationship})` : ""}`;
+          memberContext = `Patient: ${memberLabel(fm)}`;
         }
       } catch { /* non-fatal */ }
     }
