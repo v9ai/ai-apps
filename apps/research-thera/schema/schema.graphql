@@ -254,6 +254,10 @@ type Mutation {
   generateJournalAnalysis(journalEntryId: Int!): GenerateJournalAnalysisResult!
   deleteJournalAnalysis(journalEntryId: Int!): DeleteJournalAnalysisResult!
 
+  # Discussion Guide
+  generateDiscussionGuide(journalEntryId: Int!): GenerateDiscussionGuideResult!
+  deleteDiscussionGuide(journalEntryId: Int!): DeleteDiscussionGuideResult!
+
   # Conversations
   createConversation(issueId: Int!, message: String!): Conversation!
   sendConversationMessage(conversationId: Int!, message: String!): Conversation!
@@ -980,6 +984,7 @@ type JournalEntry {
   createdAt: String!
   updatedAt: String!
   analysis: JournalAnalysis
+  discussionGuide: DiscussionGuide
 }
 
 input CreateJournalEntryInput {
@@ -1567,6 +1572,79 @@ type GenerateJournalAnalysisResult {
 }
 
 type DeleteJournalAnalysisResult {
+  success: Boolean!
+  message: String
+}
+
+# ============================================
+# Discussion Guide
+# ============================================
+
+type DiscussionGuide {
+  id: Int!
+  journalEntryId: Int!
+  childAge: Int
+  behaviorSummary: String!
+  developmentalContext: DevelopmentalContext!
+  conversationStarters: [ConversationStarter!]!
+  talkingPoints: [TalkingPoint!]!
+  languageGuide: LanguageGuide!
+  anticipatedReactions: [AnticipatedReaction!]!
+  followUpPlan: [FollowUpStep!]!
+  model: String!
+  createdAt: String!
+}
+
+type DevelopmentalContext {
+  stage: String!
+  explanation: String!
+  normalizedBehavior: String!
+  researchBasis: String
+}
+
+type ConversationStarter {
+  opener: String!
+  context: String!
+  ageAppropriateNote: String
+}
+
+type TalkingPoint {
+  point: String!
+  explanation: String!
+  researchBacking: String
+  relatedResearchIds: [Int!]
+}
+
+type LanguageGuide {
+  whatToSay: [LanguageExample!]!
+  whatNotToSay: [LanguageExample!]!
+}
+
+type LanguageExample {
+  phrase: String!
+  reason: String!
+  alternative: String
+}
+
+type AnticipatedReaction {
+  reaction: String!
+  likelihood: String!
+  howToRespond: String!
+}
+
+type FollowUpStep {
+  action: String!
+  timing: String!
+  description: String!
+}
+
+type GenerateDiscussionGuideResult {
+  success: Boolean!
+  message: String
+  guide: DiscussionGuide
+}
+
+type DeleteDiscussionGuideResult {
   success: Boolean!
   message: String
 }

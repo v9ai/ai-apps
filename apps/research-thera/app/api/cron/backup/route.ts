@@ -30,10 +30,10 @@ export async function GET(request: Request) {
   const sql = neon(process.env.NEON_DATABASE_URL!);
   const r2 = new S3Client({
     region: "auto",
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    endpoint: `https://${process.env.R2_ACCOUNT_ID!.trim()}.r2.cloudflarestorage.com`,
     credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!.trim(),
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!.trim(),
     },
   });
 
@@ -67,10 +67,9 @@ export async function GET(request: Request) {
         await upload(r2, `${prefix}/schema/${tableName}.json`, schemaJson);
 
         // Dynamic table name from information_schema — safe to interpolate
-        const exportSql = neon(process.env.NEON_DATABASE_URL!);
         const queryParts = [`SELECT * FROM "${tableName}"`] as string[] & { raw: string[] };
         queryParts.raw = [...queryParts];
-        const rows = await exportSql(queryParts as TemplateStringsArray);
+        const rows = await sql(queryParts as TemplateStringsArray);
         const jsonl = rows.map((row: Record<string, unknown>) => JSON.stringify(row)).join("\n");
         let sizeBytes = 0;
         if (jsonl.length > 0) {

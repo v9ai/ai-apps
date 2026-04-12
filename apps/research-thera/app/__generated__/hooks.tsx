@@ -46,6 +46,13 @@ export enum AffirmationCategory {
   Strength = 'STRENGTH'
 }
 
+export type AnticipatedReaction = {
+  __typename?: 'AnticipatedReaction';
+  howToRespond: Scalars['String']['output'];
+  likelihood: Scalars['String']['output'];
+  reaction: Scalars['String']['output'];
+};
+
 export type AudioAsset = {
   __typename?: 'AudioAsset';
   createdAt: Scalars['String']['output'];
@@ -251,6 +258,13 @@ export type ConversationMessage = {
   role: Scalars['String']['output'];
 };
 
+export type ConversationStarter = {
+  __typename?: 'ConversationStarter';
+  ageAppropriateNote?: Maybe<Scalars['String']['output']>;
+  context: Scalars['String']['output'];
+  opener: Scalars['String']['output'];
+};
+
 export type ConvertJournalEntryToIssueInput = {
   category: Scalars['String']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
@@ -446,6 +460,12 @@ export type DeleteDeepAnalysisResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteDiscussionGuideResult = {
+  __typename?: 'DeleteDiscussionGuideResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteFamilyMemberResult = {
   __typename?: 'DeleteFamilyMemberResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -525,6 +545,14 @@ export type DeleteTeacherFeedbackResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DevelopmentalContext = {
+  __typename?: 'DevelopmentalContext';
+  explanation: Scalars['String']['output'];
+  normalizedBehavior: Scalars['String']['output'];
+  researchBasis?: Maybe<Scalars['String']['output']>;
+  stage: Scalars['String']['output'];
+};
+
 export enum DevelopmentalTier {
   Adult = 'ADULT',
   EarlyAdolescence = 'EARLY_ADOLESCENCE',
@@ -532,6 +560,22 @@ export enum DevelopmentalTier {
   LateAdolescence = 'LATE_ADOLESCENCE',
   MiddleChildhood = 'MIDDLE_CHILDHOOD'
 }
+
+export type DiscussionGuide = {
+  __typename?: 'DiscussionGuide';
+  anticipatedReactions: Array<AnticipatedReaction>;
+  behaviorSummary: Scalars['String']['output'];
+  childAge?: Maybe<Scalars['Int']['output']>;
+  conversationStarters: Array<ConversationStarter>;
+  createdAt: Scalars['String']['output'];
+  developmentalContext: DevelopmentalContext;
+  followUpPlan: Array<FollowUpStep>;
+  id: Scalars['Int']['output'];
+  journalEntryId: Scalars['Int']['output'];
+  languageGuide: LanguageGuide;
+  model: Scalars['String']['output'];
+  talkingPoints: Array<TalkingPoint>;
+};
 
 export type EmotionalLandscape = {
   __typename?: 'EmotionalLandscape';
@@ -638,6 +682,13 @@ export enum FeedbackSource {
   Report = 'REPORT'
 }
 
+export type FollowUpStep = {
+  __typename?: 'FollowUpStep';
+  action: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  timing: Scalars['String']['output'];
+};
+
 export type GenerateAudioResult = {
   __typename?: 'GenerateAudioResult';
   audioUrl?: Maybe<Scalars['String']['output']>;
@@ -649,6 +700,13 @@ export type GenerateAudioResult = {
 export type GenerateDeepAnalysisResult = {
   __typename?: 'GenerateDeepAnalysisResult';
   jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type GenerateDiscussionGuideResult = {
+  __typename?: 'GenerateDiscussionGuideResult';
+  guide?: Maybe<DiscussionGuide>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -919,6 +977,7 @@ export type JournalEntry = {
   content: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
   createdBy: Scalars['String']['output'];
+  discussionGuide?: Maybe<DiscussionGuide>;
   entryDate: Scalars['String']['output'];
   familyMember?: Maybe<FamilyMember>;
   familyMemberId?: Maybe<Scalars['Int']['output']>;
@@ -932,6 +991,19 @@ export type JournalEntry = {
   tags?: Maybe<Array<Scalars['String']['output']>>;
   title?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type LanguageExample = {
+  __typename?: 'LanguageExample';
+  alternative?: Maybe<Scalars['String']['output']>;
+  phrase: Scalars['String']['output'];
+  reason: Scalars['String']['output'];
+};
+
+export type LanguageGuide = {
+  __typename?: 'LanguageGuide';
+  whatNotToSay: Array<LanguageExample>;
+  whatToSay: Array<LanguageExample>;
 };
 
 export type Mutation = {
@@ -962,6 +1034,7 @@ export type Mutation = {
   deleteContactFeedback: DeleteContactFeedbackResult;
   deleteConversation: DeleteConversationResult;
   deleteDeepIssueAnalysis: DeleteDeepAnalysisResult;
+  deleteDiscussionGuide: DeleteDiscussionGuideResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
   deleteGoal: DeleteGoalResult;
   deleteHabit: DeleteHabitResult;
@@ -979,6 +1052,7 @@ export type Mutation = {
   extractContactFeedbackIssues: ContactFeedback;
   generateAudio: GenerateAudioResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
+  generateDiscussionGuide: GenerateDiscussionGuideResult;
   generateHabitsForFamilyMember: GenerateHabitsResult;
   generateHabitsFromIssue: GenerateHabitsResult;
   generateJournalAnalysis: GenerateJournalAnalysisResult;
@@ -1154,6 +1228,11 @@ export type MutationDeleteDeepIssueAnalysisArgs = {
 };
 
 
+export type MutationDeleteDiscussionGuideArgs = {
+  journalEntryId: Scalars['Int']['input'];
+};
+
+
 export type MutationDeleteFamilyMemberArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1243,6 +1322,11 @@ export type MutationGenerateAudioArgs = {
 export type MutationGenerateDeepIssueAnalysisArgs = {
   familyMemberId: Scalars['Int']['input'];
   triggerIssueId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationGenerateDiscussionGuideArgs = {
+  journalEntryId: Scalars['Int']['input'];
 };
 
 
@@ -1980,6 +2064,14 @@ export type SubscriptionResearchJobStatusArgs = {
   jobId: Scalars['String']['input'];
 };
 
+export type TalkingPoint = {
+  __typename?: 'TalkingPoint';
+  explanation: Scalars['String']['output'];
+  point: Scalars['String']['output'];
+  relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
+  researchBacking?: Maybe<Scalars['String']['output']>;
+};
+
 export type TeacherFeedback = {
   __typename?: 'TeacherFeedback';
   content: Scalars['String']['output'];
@@ -2385,6 +2477,13 @@ export type DeleteDeepIssueAnalysisMutationVariables = Exact<{
 
 export type DeleteDeepIssueAnalysisMutation = { __typename?: 'Mutation', deleteDeepIssueAnalysis: { __typename?: 'DeleteDeepAnalysisResult', success: boolean, message?: string | null } };
 
+export type DeleteDiscussionGuideMutationVariables = Exact<{
+  journalEntryId: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteDiscussionGuideMutation = { __typename?: 'Mutation', deleteDiscussionGuide: { __typename?: 'DeleteDiscussionGuideResult', success: boolean, message?: string | null } };
+
 export type DeleteFamilyMemberMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -2510,6 +2609,13 @@ export type GenerateDeepIssueAnalysisMutationVariables = Exact<{
 
 
 export type GenerateDeepIssueAnalysisMutation = { __typename?: 'Mutation', generateDeepIssueAnalysis: { __typename?: 'GenerateDeepAnalysisResult', success: boolean, message?: string | null, jobId?: string | null } };
+
+export type GenerateDiscussionGuideMutationVariables = Exact<{
+  journalEntryId: Scalars['Int']['input'];
+}>;
+
+
+export type GenerateDiscussionGuideMutation = { __typename?: 'Mutation', generateDiscussionGuide: { __typename?: 'GenerateDiscussionGuideResult', success: boolean, message?: string | null, guide?: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } | null } };
 
 export type GenerateHabitsForFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -2779,7 +2885,7 @@ export type GetJournalEntryQueryVariables = Exact<{
 }>;
 
 
-export type GetJournalEntryQuery = { __typename?: 'Query', journalEntry?: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null } | null, issue?: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, analysis?: { __typename?: 'JournalAnalysis', id: number, journalEntryId: number, summary: string, reflectionPrompts: Array<string>, model: string, createdAt: string, emotionalLandscape: { __typename?: 'EmotionalLandscape', primaryEmotions: Array<string>, underlyingEmotions: Array<string>, emotionalRegulation: string, attachmentPatterns?: string | null }, therapeuticInsights: Array<{ __typename?: 'TherapeuticInsight', title: string, observation: string, clinicalRelevance: string, relatedResearchIds?: Array<number> | null }>, actionableRecommendations: Array<{ __typename?: 'ActionableRecommendation', title: string, description: string, priority: string, concreteSteps: Array<string>, relatedResearchIds?: Array<number> | null }> } | null } | null };
+export type GetJournalEntryQuery = { __typename?: 'Query', journalEntry?: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null } | null, issue?: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, analysis?: { __typename?: 'JournalAnalysis', id: number, journalEntryId: number, summary: string, reflectionPrompts: Array<string>, model: string, createdAt: string, emotionalLandscape: { __typename?: 'EmotionalLandscape', primaryEmotions: Array<string>, underlyingEmotions: Array<string>, emotionalRegulation: string, attachmentPatterns?: string | null }, therapeuticInsights: Array<{ __typename?: 'TherapeuticInsight', title: string, observation: string, clinicalRelevance: string, relatedResearchIds?: Array<number> | null }>, actionableRecommendations: Array<{ __typename?: 'ActionableRecommendation', title: string, description: string, priority: string, concreteSteps: Array<string>, relatedResearchIds?: Array<number> | null }> } | null, discussionGuide?: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } | null } | null };
 
 export type GetMySharedFamilyMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4375,6 +4481,40 @@ export function useDeleteDeepIssueAnalysisMutation(baseOptions?: Apollo.Mutation
 export type DeleteDeepIssueAnalysisMutationHookResult = ReturnType<typeof useDeleteDeepIssueAnalysisMutation>;
 export type DeleteDeepIssueAnalysisMutationResult = Apollo.MutationResult<DeleteDeepIssueAnalysisMutation>;
 export type DeleteDeepIssueAnalysisMutationOptions = Apollo.BaseMutationOptions<DeleteDeepIssueAnalysisMutation, DeleteDeepIssueAnalysisMutationVariables>;
+export const DeleteDiscussionGuideDocument = gql`
+    mutation DeleteDiscussionGuide($journalEntryId: Int!) {
+  deleteDiscussionGuide(journalEntryId: $journalEntryId) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteDiscussionGuideMutationFn = Apollo.MutationFunction<DeleteDiscussionGuideMutation, DeleteDiscussionGuideMutationVariables>;
+
+/**
+ * __useDeleteDiscussionGuideMutation__
+ *
+ * To run a mutation, you first call `useDeleteDiscussionGuideMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDiscussionGuideMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteDiscussionGuideMutation, { data, loading, error }] = useDeleteDiscussionGuideMutation({
+ *   variables: {
+ *      journalEntryId: // value for 'journalEntryId'
+ *   },
+ * });
+ */
+export function useDeleteDiscussionGuideMutation(baseOptions?: Apollo.MutationHookOptions<DeleteDiscussionGuideMutation, DeleteDiscussionGuideMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteDiscussionGuideMutation, DeleteDiscussionGuideMutationVariables>(DeleteDiscussionGuideDocument, options);
+      }
+export type DeleteDiscussionGuideMutationHookResult = ReturnType<typeof useDeleteDiscussionGuideMutation>;
+export type DeleteDiscussionGuideMutationResult = Apollo.MutationResult<DeleteDiscussionGuideMutation>;
+export type DeleteDiscussionGuideMutationOptions = Apollo.BaseMutationOptions<DeleteDiscussionGuideMutation, DeleteDiscussionGuideMutationVariables>;
 export const DeleteFamilyMemberDocument = gql`
     mutation DeleteFamilyMember($id: Int!) {
   deleteFamilyMember(id: $id) {
@@ -4981,6 +5121,87 @@ export function useGenerateDeepIssueAnalysisMutation(baseOptions?: Apollo.Mutati
 export type GenerateDeepIssueAnalysisMutationHookResult = ReturnType<typeof useGenerateDeepIssueAnalysisMutation>;
 export type GenerateDeepIssueAnalysisMutationResult = Apollo.MutationResult<GenerateDeepIssueAnalysisMutation>;
 export type GenerateDeepIssueAnalysisMutationOptions = Apollo.BaseMutationOptions<GenerateDeepIssueAnalysisMutation, GenerateDeepIssueAnalysisMutationVariables>;
+export const GenerateDiscussionGuideDocument = gql`
+    mutation GenerateDiscussionGuide($journalEntryId: Int!) {
+  generateDiscussionGuide(journalEntryId: $journalEntryId) {
+    success
+    message
+    guide {
+      id
+      journalEntryId
+      childAge
+      behaviorSummary
+      developmentalContext {
+        stage
+        explanation
+        normalizedBehavior
+        researchBasis
+      }
+      conversationStarters {
+        opener
+        context
+        ageAppropriateNote
+      }
+      talkingPoints {
+        point
+        explanation
+        researchBacking
+        relatedResearchIds
+      }
+      languageGuide {
+        whatToSay {
+          phrase
+          reason
+          alternative
+        }
+        whatNotToSay {
+          phrase
+          reason
+          alternative
+        }
+      }
+      anticipatedReactions {
+        reaction
+        likelihood
+        howToRespond
+      }
+      followUpPlan {
+        action
+        timing
+        description
+      }
+      model
+      createdAt
+    }
+  }
+}
+    `;
+export type GenerateDiscussionGuideMutationFn = Apollo.MutationFunction<GenerateDiscussionGuideMutation, GenerateDiscussionGuideMutationVariables>;
+
+/**
+ * __useGenerateDiscussionGuideMutation__
+ *
+ * To run a mutation, you first call `useGenerateDiscussionGuideMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateDiscussionGuideMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateDiscussionGuideMutation, { data, loading, error }] = useGenerateDiscussionGuideMutation({
+ *   variables: {
+ *      journalEntryId: // value for 'journalEntryId'
+ *   },
+ * });
+ */
+export function useGenerateDiscussionGuideMutation(baseOptions?: Apollo.MutationHookOptions<GenerateDiscussionGuideMutation, GenerateDiscussionGuideMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateDiscussionGuideMutation, GenerateDiscussionGuideMutationVariables>(GenerateDiscussionGuideDocument, options);
+      }
+export type GenerateDiscussionGuideMutationHookResult = ReturnType<typeof useGenerateDiscussionGuideMutation>;
+export type GenerateDiscussionGuideMutationResult = Apollo.MutationResult<GenerateDiscussionGuideMutation>;
+export type GenerateDiscussionGuideMutationOptions = Apollo.BaseMutationOptions<GenerateDiscussionGuideMutation, GenerateDiscussionGuideMutationVariables>;
 export const GenerateHabitsForFamilyMemberDocument = gql`
     mutation GenerateHabitsForFamilyMember($familyMemberId: Int!, $count: Int) {
   generateHabitsForFamilyMember(familyMemberId: $familyMemberId, count: $count) {
@@ -7322,6 +7543,53 @@ export const GetJournalEntryDocument = gql`
         relatedResearchIds
       }
       reflectionPrompts
+      model
+      createdAt
+    }
+    discussionGuide {
+      id
+      journalEntryId
+      childAge
+      behaviorSummary
+      developmentalContext {
+        stage
+        explanation
+        normalizedBehavior
+        researchBasis
+      }
+      conversationStarters {
+        opener
+        context
+        ageAppropriateNote
+      }
+      talkingPoints {
+        point
+        explanation
+        researchBacking
+        relatedResearchIds
+      }
+      languageGuide {
+        whatToSay {
+          phrase
+          reason
+          alternative
+        }
+        whatNotToSay {
+          phrase
+          reason
+          alternative
+        }
+      }
+      anticipatedReactions {
+        reaction
+        likelihood
+        howToRespond
+      }
+      followUpPlan {
+        action
+        timing
+        description
+      }
       model
       createdAt
     }

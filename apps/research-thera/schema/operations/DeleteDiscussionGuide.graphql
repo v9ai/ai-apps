@@ -1,0 +1,6 @@
+mutation DeleteDiscussionGuide($journalEntryId: Int!) {
+  deleteDiscussionGuide(journalEntryId: $journalEntryId) {
+    success
+    message
+  }
+}

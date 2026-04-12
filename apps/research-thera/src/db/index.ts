@@ -2884,6 +2884,56 @@ export async function deleteJournalAnalysis(journalEntryId: number, userId: stri
 }
 
 // ============================================
+// Discussion Guides
+// ============================================
+
+export async function getDiscussionGuide(journalEntryId: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM discussion_guides WHERE journal_entry_id = ${journalEntryId} AND user_id = ${userId} ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id as number,
+    journalEntryId: r.journal_entry_id as number,
+    userId: r.user_id as string,
+    childAge: (r.child_age as number) || null,
+    behaviorSummary: r.behavior_summary as string,
+    developmentalContext: safeJsonParse(r.developmental_context as string, {}),
+    conversationStarters: safeJsonParse(r.conversation_starters as string, []),
+    talkingPoints: safeJsonParse(r.talking_points as string, []),
+    languageGuide: safeJsonParse(r.language_guide as string, { whatToSay: [], whatNotToSay: [] }),
+    anticipatedReactions: safeJsonParse(r.anticipated_reactions as string, []),
+    followUpPlan: safeJsonParse(r.follow_up_plan as string, []),
+    model: r.model as string,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+export async function createDiscussionGuide(data: {
+  journalEntryId: number;
+  userId: string;
+  childAge?: number | null;
+  behaviorSummary: string;
+  developmentalContext: unknown;
+  conversationStarters: unknown;
+  talkingPoints: unknown;
+  languageGuide: unknown;
+  anticipatedReactions: unknown;
+  followUpPlan: unknown;
+  model?: string;
+}) {
+  const rows = await neonSql`
+    INSERT INTO discussion_guides (journal_entry_id, user_id, child_age, behavior_summary, developmental_context, conversation_starters, talking_points, language_guide, anticipated_reactions, follow_up_plan, model)
+    VALUES (${data.journalEntryId}, ${data.userId}, ${data.childAge ?? null}, ${data.behaviorSummary}, ${JSON.stringify(data.developmentalContext)}, ${JSON.stringify(data.conversationStarters)}, ${JSON.stringify(data.talkingPoints)}, ${JSON.stringify(data.languageGuide)}, ${JSON.stringify(data.anticipatedReactions)}, ${JSON.stringify(data.followUpPlan)}, ${data.model ?? "deepseek-chat"})
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
+export async function deleteDiscussionGuide(journalEntryId: number, userId: string): Promise<void> {
+  await neonSql`DELETE FROM discussion_guides WHERE journal_entry_id = ${journalEntryId} AND user_id = ${userId}`;
+}
+
+// ============================================
 // Conversations
 // ============================================
 
@@ -3206,6 +3256,10 @@ export const db = {
   getJournalAnalysisPublic,
   createJournalAnalysis,
   deleteJournalAnalysis,
+  // Discussion Guides
+  getDiscussionGuide,
+  createDiscussionGuide,
+  deleteDiscussionGuide,
   // Conversations
   createConversation,
   getConversation,

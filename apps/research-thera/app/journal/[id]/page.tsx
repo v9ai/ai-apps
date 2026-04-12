@@ -35,6 +35,8 @@ import {
   useGenerateLongFormTextMutation,
   useGenerateJournalAnalysisMutation,
   useDeleteJournalAnalysisMutation,
+  useGenerateDiscussionGuideMutation,
+  useDeleteDiscussionGuideMutation,
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
@@ -288,6 +290,45 @@ function JournalEntryContent() {
   const handleDeleteAnalysis = async () => {
     if (!entry) return;
     await deleteAnalysis({ variables: { journalEntryId: entry.id } });
+  };
+
+  // Discussion Guide state
+  const discussionGuide = entry?.discussionGuide ?? null;
+  const [guideMessage, setGuideMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [activeGuideTab, setActiveGuideTab] = useState<
+    "context" | "starters" | "talking" | "language" | "reactions" | "followup"
+  >("context");
+
+  const [generateGuide, { loading: generatingGuide }] = useGenerateDiscussionGuideMutation({
+    onCompleted: (data) => {
+      if (data.generateDiscussionGuide.success) {
+        setGuideMessage({ text: data.generateDiscussionGuide.message || "Guide generated.", type: "success" });
+        refetchEntry();
+      } else {
+        setGuideMessage({ text: data.generateDiscussionGuide.message || "Failed.", type: "error" });
+      }
+    },
+    onError: (err) => {
+      setGuideMessage({ text: err.message, type: "error" });
+    },
+  });
+
+  const [deleteGuide, { loading: deletingGuide }] = useDeleteDiscussionGuideMutation({
+    onCompleted: () => {
+      setGuideMessage(null);
+      refetchEntry();
+    },
+  });
+
+  const handleGenerateGuide = async () => {
+    if (!entry) return;
+    setGuideMessage(null);
+    await generateGuide({ variables: { journalEntryId: entry.id } });
+  };
+
+  const handleDeleteGuide = async () => {
+    if (!entry) return;
+    await deleteGuide({ variables: { journalEntryId: entry.id } });
   };
 
   if (loading) {
@@ -705,6 +746,265 @@ function JournalEntryContent() {
                       <Box p="3">
                         <Text size="2" style={{ lineHeight: "1.6" }}>{prompt}</Text>
                       </Box>
+                    </Card>
+                  ))}
+                </Flex>
+              )}
+            </>
+          )}
+        </Flex>
+      </Card>
+
+      {/* Discussion Guide */}
+      <Card>
+        <Flex direction="column" gap="4" p="4">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
+            <Box>
+              <Heading size="3" mb="1">Discussion Guide</Heading>
+              <Text size="2" color="gray">
+                Research-grounded guide for discussing this with your child.
+              </Text>
+            </Box>
+            <Flex gap="2">
+              {discussionGuide && (
+                <Button
+                  variant="soft"
+                  color="red"
+                  size="2"
+                  onClick={handleDeleteGuide}
+                  disabled={deletingGuide || generatingGuide}
+                >
+                  {deletingGuide ? "Deleting..." : "Delete"}
+                </Button>
+              )}
+              <Button
+                size="2"
+                onClick={handleGenerateGuide}
+                disabled={generatingGuide}
+              >
+                {generatingGuide && <Spinner />}
+                {generatingGuide ? "Generating..." : discussionGuide ? "Regenerate" : "Generate Guide"}
+              </Button>
+            </Flex>
+          </Flex>
+
+          {generatingGuide && (
+            <Flex direction="column" gap="2">
+              <Text size="2" color="gray">Preparing discussion guide...</Text>
+              <Box style={{ height: 6, borderRadius: 3, background: "var(--gray-4)", overflow: "hidden" }}>
+                <Box style={{ height: "100%", width: "40%", background: "var(--teal-9)", borderRadius: 3, animation: "researchSweep 1.4s ease-in-out infinite" }} />
+              </Box>
+            </Flex>
+          )}
+
+          {guideMessage && (
+            <Text size="2" color={guideMessage.type === "success" ? "green" : "red"}>
+              {guideMessage.text}
+            </Text>
+          )}
+
+          {discussionGuide && (
+            <>
+              <Separator size="4" />
+
+              {/* Behavior Summary */}
+              <Box>
+                <Text size="2" style={{ whiteSpace: "pre-wrap", lineHeight: "1.7" }}>
+                  {discussionGuide.behaviorSummary}
+                </Text>
+                {discussionGuide.childAge && (
+                  <Flex gap="2" mt="2" wrap="wrap">
+                    <Badge variant="outline" color="teal" size="1">
+                      Age {discussionGuide.childAge}
+                    </Badge>
+                    <Badge variant="outline" color="gray" size="1">
+                      {discussionGuide.model}
+                    </Badge>
+                    <Badge variant="outline" color="gray" size="1">
+                      {new Date(discussionGuide.createdAt).toLocaleDateString()}
+                    </Badge>
+                  </Flex>
+                )}
+              </Box>
+
+              {/* Tabs */}
+              <Flex gap="2" wrap="wrap">
+                {([
+                  ["context", "Context"],
+                  ["starters", `Starters (${discussionGuide.conversationStarters.length})`],
+                  ["talking", `Talking Points (${discussionGuide.talkingPoints.length})`],
+                  ["language", "Language"],
+                  ["reactions", `Reactions (${discussionGuide.anticipatedReactions.length})`],
+                  ["followup", `Follow-Up (${discussionGuide.followUpPlan.length})`],
+                ] as const).map(([tab, label]) => (
+                  <Button
+                    key={tab}
+                    variant={activeGuideTab === tab ? "solid" : "soft"}
+                    color="teal"
+                    size="1"
+                    onClick={() => setActiveGuideTab(tab)}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </Flex>
+
+              {/* Context Tab */}
+              {activeGuideTab === "context" && (
+                <Flex direction="column" gap="3">
+                  <Box>
+                    <Text size="2" weight="bold" mb="1" as="div">Developmental Stage</Text>
+                    <Badge variant="soft" color="teal" size="2">{discussionGuide.developmentalContext.stage}</Badge>
+                  </Box>
+                  <Box>
+                    <Text size="2" weight="bold" mb="1" as="div">Why This Happens</Text>
+                    <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                      {discussionGuide.developmentalContext.explanation}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text size="2" weight="bold" mb="1" as="div">What's Age-Typical</Text>
+                    <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                      {discussionGuide.developmentalContext.normalizedBehavior}
+                    </Text>
+                  </Box>
+                  {discussionGuide.developmentalContext.researchBasis && (
+                    <Box>
+                      <Text size="2" weight="bold" mb="1" as="div">Research Basis</Text>
+                      <Text size="1" color="teal" style={{ lineHeight: "1.6" }}>
+                        {discussionGuide.developmentalContext.researchBasis}
+                      </Text>
+                    </Box>
+                  )}
+                </Flex>
+              )}
+
+              {/* Starters Tab */}
+              {activeGuideTab === "starters" && (
+                <Flex direction="column" gap="3">
+                  {discussionGuide.conversationStarters.map((starter, i) => (
+                    <Card key={i} variant="surface">
+                      <Flex direction="column" gap="2" p="3">
+                        <Text size="2" weight="bold" style={{ fontStyle: "italic" }}>
+                          &ldquo;{starter.opener}&rdquo;
+                        </Text>
+                        <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                          {starter.context}
+                        </Text>
+                        {starter.ageAppropriateNote && (
+                          <Text size="1" color="teal" style={{ lineHeight: "1.6" }}>
+                            {starter.ageAppropriateNote}
+                          </Text>
+                        )}
+                      </Flex>
+                    </Card>
+                  ))}
+                </Flex>
+              )}
+
+              {/* Talking Points Tab */}
+              {activeGuideTab === "talking" && (
+                <Flex direction="column" gap="3">
+                  {discussionGuide.talkingPoints.map((tp, i) => (
+                    <Card key={i} variant="surface">
+                      <Flex direction="column" gap="2" p="3">
+                        <Text size="2" weight="bold">{tp.point}</Text>
+                        <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                          {tp.explanation}
+                        </Text>
+                        {tp.researchBacking && (
+                          <Text size="1" color="teal" style={{ lineHeight: "1.6" }}>
+                            {tp.researchBacking}
+                          </Text>
+                        )}
+                      </Flex>
+                    </Card>
+                  ))}
+                </Flex>
+              )}
+
+              {/* Language Tab */}
+              {activeGuideTab === "language" && (
+                <Flex direction="column" gap="4">
+                  <Box>
+                    <Text size="2" weight="bold" mb="2" as="div" color="green">What To Say</Text>
+                    <Flex direction="column" gap="2">
+                      {discussionGuide.languageGuide.whatToSay.map((item, i) => (
+                        <Card key={i} variant="surface">
+                          <Flex direction="column" gap="1" p="3">
+                            <Text size="2" weight="bold" color="green" style={{ fontStyle: "italic" }}>
+                              &ldquo;{item.phrase}&rdquo;
+                            </Text>
+                            <Text size="1" color="gray">{item.reason}</Text>
+                          </Flex>
+                        </Card>
+                      ))}
+                    </Flex>
+                  </Box>
+                  <Box>
+                    <Text size="2" weight="bold" mb="2" as="div" color="red">What Not To Say</Text>
+                    <Flex direction="column" gap="2">
+                      {discussionGuide.languageGuide.whatNotToSay.map((item, i) => (
+                        <Card key={i} variant="surface">
+                          <Flex direction="column" gap="1" p="3">
+                            <Text size="2" weight="bold" color="red" style={{ fontStyle: "italic", textDecoration: "line-through" }}>
+                              &ldquo;{item.phrase}&rdquo;
+                            </Text>
+                            <Text size="1" color="gray">{item.reason}</Text>
+                            {item.alternative && (
+                              <Text size="1" color="green">
+                                Instead: &ldquo;{item.alternative}&rdquo;
+                              </Text>
+                            )}
+                          </Flex>
+                        </Card>
+                      ))}
+                    </Flex>
+                  </Box>
+                </Flex>
+              )}
+
+              {/* Reactions Tab */}
+              {activeGuideTab === "reactions" && (
+                <Flex direction="column" gap="3">
+                  {discussionGuide.anticipatedReactions.map((reaction, i) => (
+                    <Card key={i} variant="surface">
+                      <Flex direction="column" gap="2" p="3">
+                        <Flex justify="between" align="center">
+                          <Text size="2" weight="bold">{reaction.reaction}</Text>
+                          <Badge
+                            variant="soft"
+                            size="1"
+                            color={reaction.likelihood === "high" ? "red" : reaction.likelihood === "medium" ? "orange" : "green"}
+                          >
+                            {reaction.likelihood}
+                          </Badge>
+                        </Flex>
+                        <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                          {reaction.howToRespond}
+                        </Text>
+                      </Flex>
+                    </Card>
+                  ))}
+                </Flex>
+              )}
+
+              {/* Follow-Up Tab */}
+              {activeGuideTab === "followup" && (
+                <Flex direction="column" gap="3">
+                  {discussionGuide.followUpPlan.map((step, i) => (
+                    <Card key={i} variant="surface">
+                      <Flex direction="column" gap="2" p="3">
+                        <Flex justify="between" align="center">
+                          <Text size="2" weight="bold">{step.action}</Text>
+                          <Badge variant="soft" color="teal" size="1">
+                            {step.timing}
+                          </Badge>
+                        </Flex>
+                        <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                          {step.description}
+                        </Text>
+                      </Flex>
                     </Card>
                   ))}
                 </Flex>
