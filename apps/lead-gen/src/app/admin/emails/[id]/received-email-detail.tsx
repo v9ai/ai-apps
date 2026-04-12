@@ -91,10 +91,11 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
   const handleToggleArchive = async () => {
     if (isArchived) {
       await unarchiveEmail({ variables: { id: emailId } });
+      refetch();
     } else {
       await archiveEmail({ variables: { id: emailId } });
+      router.push("/admin/emails");
     }
-    refetch();
   };
 
   return (
