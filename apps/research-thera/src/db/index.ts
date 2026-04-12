@@ -2909,6 +2909,36 @@ export async function getDiscussionGuide(journalEntryId: number, userId: string)
   };
 }
 
+export async function getDiscussionGuidePublic(journalEntryId: number) {
+  const rows = await neonSql`SELECT * FROM discussion_guides WHERE journal_entry_id = ${journalEntryId} ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id as number,
+    journalEntryId: r.journal_entry_id as number,
+    childAge: (r.child_age as number) || null,
+    behaviorSummary: r.behavior_summary as string,
+    developmentalContext: safeJsonParse(r.developmental_context as string, {}),
+    conversationStarters: safeJsonParse(r.conversation_starters as string, []),
+    talkingPoints: safeJsonParse(r.talking_points as string, []),
+    languageGuide: safeJsonParse(r.language_guide as string, { whatToSay: [], whatNotToSay: [] }),
+    anticipatedReactions: safeJsonParse(r.anticipated_reactions as string, []),
+    followUpPlan: safeJsonParse(r.follow_up_plan as string, []),
+    model: r.model as string,
+    createdAt: r.created_at as string,
+  };
+}
+
+export async function getJournalEntryPublic(id: number) {
+  const rows = await neonSql`SELECT je.title, fm.first_name, fm.name FROM journal_entries je LEFT JOIN family_members fm ON je.family_member_id = fm.id WHERE je.id = ${id}`;
+  if (rows.length === 0) return null;
+  return {
+    title: (rows[0].title as string) || null,
+    familyMemberFirstName: (rows[0].first_name as string) || null,
+    familyMemberName: (rows[0].name as string) || null,
+  };
+}
+
 export async function createDiscussionGuide(data: {
   journalEntryId: number;
   userId: string;
@@ -3258,6 +3288,8 @@ export const db = {
   deleteJournalAnalysis,
   // Discussion Guides
   getDiscussionGuide,
+  getDiscussionGuidePublic,
+  getJournalEntryPublic,
   createDiscussionGuide,
   deleteDiscussionGuide,
   // Conversations

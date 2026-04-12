@@ -1705,6 +1705,13 @@ export type PriorityRecommendation = {
   urgency: Scalars['String']['output'];
 };
 
+export type PublicDiscussionGuideResult = {
+  __typename?: 'PublicDiscussionGuideResult';
+  entryTitle?: Maybe<Scalars['String']['output']>;
+  familyMemberName?: Maybe<Scalars['String']['output']>;
+  guide: DiscussionGuide;
+};
+
 export type Query = {
   __typename?: 'Query';
   affirmation?: Maybe<Affirmation>;
@@ -1742,6 +1749,7 @@ export type Query = {
   mySharedNotes: Array<Note>;
   note?: Maybe<Note>;
   notes: Array<Note>;
+  publicDiscussionGuide?: Maybe<PublicDiscussionGuideResult>;
   relationship?: Maybe<Relationship>;
   relationships: Array<Relationship>;
   research: Array<Research>;
@@ -1903,6 +1911,11 @@ export type QueryNoteArgs = {
 export type QueryNotesArgs = {
   entityId: Scalars['Int']['input'];
   entityType: Scalars['String']['input'];
+};
+
+
+export type QueryPublicDiscussionGuideArgs = {
+  journalEntryId: Scalars['Int']['input'];
 };
 
 
@@ -2907,6 +2920,13 @@ export type GetNotesQueryVariables = Exact<{
 
 
 export type GetNotesQuery = { __typename?: 'Query', notes: Array<{ __typename?: 'Note', id: number, entityId: number, entityType: string, createdBy: string, noteType?: string | null, slug?: string | null, title?: string | null, content: string, tags?: Array<string> | null, createdAt: string, updatedAt: string, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null, status: string } | null }> };
+
+export type GetPublicDiscussionGuideQueryVariables = Exact<{
+  journalEntryId: Scalars['Int']['input'];
+}>;
+
+
+export type GetPublicDiscussionGuideQuery = { __typename?: 'Query', publicDiscussionGuide?: { __typename?: 'PublicDiscussionGuideResult', entryTitle?: string | null, familyMemberName?: string | null, guide: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } } | null };
 
 export type GetRelationshipQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -7859,6 +7879,97 @@ export type GetNotesQueryHookResult = ReturnType<typeof useGetNotesQuery>;
 export type GetNotesLazyQueryHookResult = ReturnType<typeof useGetNotesLazyQuery>;
 export type GetNotesSuspenseQueryHookResult = ReturnType<typeof useGetNotesSuspenseQuery>;
 export type GetNotesQueryResult = Apollo.QueryResult<GetNotesQuery, GetNotesQueryVariables>;
+export const GetPublicDiscussionGuideDocument = gql`
+    query GetPublicDiscussionGuide($journalEntryId: Int!) {
+  publicDiscussionGuide(journalEntryId: $journalEntryId) {
+    entryTitle
+    familyMemberName
+    guide {
+      id
+      journalEntryId
+      childAge
+      behaviorSummary
+      developmentalContext {
+        stage
+        explanation
+        normalizedBehavior
+        researchBasis
+      }
+      conversationStarters {
+        opener
+        context
+        ageAppropriateNote
+      }
+      talkingPoints {
+        point
+        explanation
+        researchBacking
+        relatedResearchIds
+      }
+      languageGuide {
+        whatToSay {
+          phrase
+          reason
+          alternative
+        }
+        whatNotToSay {
+          phrase
+          reason
+          alternative
+        }
+      }
+      anticipatedReactions {
+        reaction
+        likelihood
+        howToRespond
+      }
+      followUpPlan {
+        action
+        timing
+        description
+      }
+      model
+      createdAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetPublicDiscussionGuideQuery__
+ *
+ * To run a query within a React component, call `useGetPublicDiscussionGuideQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPublicDiscussionGuideQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPublicDiscussionGuideQuery({
+ *   variables: {
+ *      journalEntryId: // value for 'journalEntryId'
+ *   },
+ * });
+ */
+export function useGetPublicDiscussionGuideQuery(baseOptions: Apollo.QueryHookOptions<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables> & ({ variables: GetPublicDiscussionGuideQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>(GetPublicDiscussionGuideDocument, options);
+      }
+export function useGetPublicDiscussionGuideLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>(GetPublicDiscussionGuideDocument, options);
+        }
+// @ts-ignore
+export function useGetPublicDiscussionGuideSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>): Apollo.UseSuspenseQueryResult<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>;
+export function useGetPublicDiscussionGuideSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>): Apollo.UseSuspenseQueryResult<GetPublicDiscussionGuideQuery | undefined, GetPublicDiscussionGuideQueryVariables>;
+export function useGetPublicDiscussionGuideSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>(GetPublicDiscussionGuideDocument, options);
+        }
+export type GetPublicDiscussionGuideQueryHookResult = ReturnType<typeof useGetPublicDiscussionGuideQuery>;
+export type GetPublicDiscussionGuideLazyQueryHookResult = ReturnType<typeof useGetPublicDiscussionGuideLazyQuery>;
+export type GetPublicDiscussionGuideSuspenseQueryHookResult = ReturnType<typeof useGetPublicDiscussionGuideSuspenseQuery>;
+export type GetPublicDiscussionGuideQueryResult = Apollo.QueryResult<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>;
 export const GetRelationshipDocument = gql`
     query GetRelationship($id: Int!) {
   relationship(id: $id) {

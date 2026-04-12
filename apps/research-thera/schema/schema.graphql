@@ -147,6 +147,9 @@ type Query {
   # Affirmations
   affirmations(familyMemberId: Int!): [Affirmation!]!
   affirmation(id: Int!): Affirmation
+
+  # Public (no auth required)
+  publicDiscussionGuide(journalEntryId: Int!): PublicDiscussionGuideResult
 }
 
 type Mutation {
@@ -1593,6 +1596,12 @@ type DiscussionGuide {
   followUpPlan: [FollowUpStep!]!
   model: String!
   createdAt: String!
+}
+
+type PublicDiscussionGuideResult {
+  entryTitle: String
+  familyMemberName: String
+  guide: DiscussionGuide!
 }
 
 type DevelopmentalContext {

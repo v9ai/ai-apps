@@ -1134,6 +1134,12 @@ type PriorityRecommendation {
   urgency: String!
 }
 
+type PublicDiscussionGuideResult {
+  entryTitle: String
+  familyMemberName: String
+  guide: DiscussionGuide!
+}
+
 type Query {
   affirmation(id: Int!): Affirmation
   affirmations(familyMemberId: Int!): [Affirmation!]!
@@ -1170,6 +1176,7 @@ type Query {
   mySharedNotes: [Note!]!
   note(id: Int, slug: String): Note
   notes(entityId: Int!, entityType: String!): [Note!]!
+  publicDiscussionGuide(journalEntryId: Int!): PublicDiscussionGuideResult
   relationship(id: Int!): Relationship
   relationships(subjectId: Int!, subjectType: PersonType!): [Relationship!]!
   research(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): [Research!]!

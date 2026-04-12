@@ -1688,6 +1688,13 @@ export type PriorityRecommendation = {
   urgency: Scalars['String']['output'];
 };
 
+export type PublicDiscussionGuideResult = {
+  __typename?: 'PublicDiscussionGuideResult';
+  entryTitle?: Maybe<Scalars['String']['output']>;
+  familyMemberName?: Maybe<Scalars['String']['output']>;
+  guide: DiscussionGuide;
+};
+
 export type Query = {
   __typename?: 'Query';
   affirmation?: Maybe<Affirmation>;
@@ -1725,6 +1732,7 @@ export type Query = {
   mySharedNotes: Array<Note>;
   note?: Maybe<Note>;
   notes: Array<Note>;
+  publicDiscussionGuide?: Maybe<PublicDiscussionGuideResult>;
   relationship?: Maybe<Relationship>;
   relationships: Array<Relationship>;
   research: Array<Research>;
@@ -1886,6 +1894,11 @@ export type QuerynoteArgs = {
 export type QuerynotesArgs = {
   entityId: Scalars['Int']['input'];
   entityType: Scalars['String']['input'];
+};
+
+
+export type QuerypublicDiscussionGuideArgs = {
+  journalEntryId: Scalars['Int']['input'];
 };
 
 
@@ -2452,6 +2465,7 @@ export type ResolversTypes = {
   PersonType: ResolverTypeWrapper<'FAMILY_MEMBER' | 'CONTACT'>;
   PipelineDiagnostics: ResolverTypeWrapper<PipelineDiagnostics>;
   PriorityRecommendation: ResolverTypeWrapper<PriorityRecommendation>;
+  PublicDiscussionGuideResult: ResolverTypeWrapper<PublicDiscussionGuideResult>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Relationship: ResolverTypeWrapper<Omit<Relationship, 'related' | 'relatedType' | 'status' | 'subject' | 'subjectType'> & { related?: Maybe<ResolversTypes['RelationshipPerson']>, relatedType: ResolversTypes['PersonType'], status: ResolversTypes['RelationshipStatus'], subject?: Maybe<ResolversTypes['RelationshipPerson']>, subjectType: ResolversTypes['PersonType'] }>;
   RelationshipPerson: ResolverTypeWrapper<Omit<RelationshipPerson, 'type'> & { type: ResolversTypes['PersonType'] }>;
@@ -2594,6 +2608,7 @@ export type ResolversParentTypes = {
   PatternCluster: PatternCluster;
   PipelineDiagnostics: PipelineDiagnostics;
   PriorityRecommendation: PriorityRecommendation;
+  PublicDiscussionGuideResult: PublicDiscussionGuideResult;
   Query: Record<PropertyKey, never>;
   Relationship: Omit<Relationship, 'related' | 'subject'> & { related?: Maybe<ResolversParentTypes['RelationshipPerson']>, subject?: Maybe<ResolversParentTypes['RelationshipPerson']> };
   RelationshipPerson: RelationshipPerson;
@@ -3510,6 +3525,12 @@ export type PriorityRecommendationResolvers<ContextType = GraphQLContext, Parent
   urgency?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type PublicDiscussionGuideResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PublicDiscussionGuideResult'] = ResolversParentTypes['PublicDiscussionGuideResult']> = {
+  entryTitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  familyMemberName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  guide?: Resolver<ResolversTypes['DiscussionGuide'], ParentType, ContextType>;
+};
+
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   affirmation?: Resolver<Maybe<ResolversTypes['Affirmation']>, ParentType, ContextType, RequireFields<QueryaffirmationArgs, 'id'>>;
   affirmations?: Resolver<Array<ResolversTypes['Affirmation']>, ParentType, ContextType, RequireFields<QueryaffirmationsArgs, 'familyMemberId'>>;
@@ -3546,6 +3567,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   mySharedNotes?: Resolver<Array<ResolversTypes['Note']>, ParentType, ContextType>;
   note?: Resolver<Maybe<ResolversTypes['Note']>, ParentType, ContextType, Partial<QuerynoteArgs>>;
   notes?: Resolver<Array<ResolversTypes['Note']>, ParentType, ContextType, RequireFields<QuerynotesArgs, 'entityId' | 'entityType'>>;
+  publicDiscussionGuide?: Resolver<Maybe<ResolversTypes['PublicDiscussionGuideResult']>, ParentType, ContextType, RequireFields<QuerypublicDiscussionGuideArgs, 'journalEntryId'>>;
   relationship?: Resolver<Maybe<ResolversTypes['Relationship']>, ParentType, ContextType, RequireFields<QueryrelationshipArgs, 'id'>>;
   relationships?: Resolver<Array<ResolversTypes['Relationship']>, ParentType, ContextType, RequireFields<QueryrelationshipsArgs, 'subjectId' | 'subjectType'>>;
   research?: Resolver<Array<ResolversTypes['Research']>, ParentType, ContextType, Partial<QueryresearchArgs>>;
@@ -3829,6 +3851,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PersonType?: PersonTypeResolvers;
   PipelineDiagnostics?: PipelineDiagnosticsResolvers<ContextType>;
   PriorityRecommendation?: PriorityRecommendationResolvers<ContextType>;
+  PublicDiscussionGuideResult?: PublicDiscussionGuideResultResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Relationship?: RelationshipResolvers<ContextType>;
   RelationshipPerson?: RelationshipPersonResolvers<ContextType>;

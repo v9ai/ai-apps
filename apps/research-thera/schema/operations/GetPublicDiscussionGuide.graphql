@@ -1,0 +1,53 @@
+query GetPublicDiscussionGuide($journalEntryId: Int!) {
+  publicDiscussionGuide(journalEntryId: $journalEntryId) {
+    entryTitle
+    familyMemberName
+    guide {
+      id
+      journalEntryId
+      childAge
+      behaviorSummary
+      developmentalContext {
+        stage
+        explanation
+        normalizedBehavior
+        researchBasis
+      }
+      conversationStarters {
+        opener
+        context
+        ageAppropriateNote
+      }
+      talkingPoints {
+        point
+        explanation
+        researchBacking
+        relatedResearchIds
+      }
+      languageGuide {
+        whatToSay {
+          phrase
+          reason
+          alternative
+        }
+        whatNotToSay {
+          phrase
+          reason
+          alternative
+        }
+      }
+      anticipatedReactions {
+        reaction
+        likelihood
+        howToRespond
+      }
+      followUpPlan {
+        action
+        timing
+        description
+      }
+      model
+      createdAt
+    }
+  }
+}
