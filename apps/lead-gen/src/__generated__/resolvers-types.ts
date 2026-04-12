@@ -765,6 +765,31 @@ export type EmailTemplatesResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type EmailThread = {
+  __typename?: 'EmailThread';
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  contactEmail: Maybe<Scalars['String']['output']>;
+  contactId: Scalars['Int']['output'];
+  contactName: Scalars['String']['output'];
+  contactPosition: Maybe<Scalars['String']['output']>;
+  hasReply: Scalars['Boolean']['output'];
+  lastMessageAt: Scalars['String']['output'];
+  lastMessageDirection: Scalars['String']['output'];
+  lastMessagePreview: Maybe<Scalars['String']['output']>;
+  latestStatus: Maybe<Scalars['String']['output']>;
+  messages: Array<ThreadMessage>;
+  totalMessages: Scalars['Int']['output'];
+};
+
+export type EmailThreadsResult = {
+  __typename?: 'EmailThreadsResult';
+  threads: Array<EmailThread>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type EmergingRole = {
   __typename?: 'EmergingRole';
   avgSalaryMidpoint: Maybe<Scalars['Float']['output']>;
@@ -1668,6 +1693,8 @@ export type Query = {
   emailStats: EmailStats;
   emailTemplate: Maybe<EmailTemplate>;
   emailTemplates: EmailTemplatesResult;
+  emailThread: Maybe<EmailThread>;
+  emailThreads: EmailThreadsResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
   findCompany: FindCompanyResult;
   intentDashboard: IntentDashboard;
@@ -1845,6 +1872,19 @@ export type QueryEmailTemplatesArgs = {
   category?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryEmailThreadArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryEmailThreadsArgs = {
+  classification?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2706,6 +2746,23 @@ export type SyncVoyagerJobsResult = {
   upserted: Scalars['Int']['output'];
 };
 
+export type ThreadMessage = {
+  __typename?: 'ThreadMessage';
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  direction: Scalars['String']['output'];
+  fromEmail: Scalars['String']['output'];
+  htmlContent: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  sentAt: Maybe<Scalars['String']['output']>;
+  sequenceNumber: Maybe<Scalars['String']['output']>;
+  sequenceType: Maybe<Scalars['String']['output']>;
+  status: Maybe<Scalars['String']['output']>;
+  subject: Scalars['String']['output'];
+  textContent: Maybe<Scalars['String']['output']>;
+  toEmails: Array<Scalars['String']['output']>;
+};
+
 export type TimeToFillEstimate = {
   __typename?: 'TimeToFillEstimate';
   avgDays: Scalars['Float']['output'];
@@ -3137,6 +3194,8 @@ export type ResolversTypes = {
   EmailStats: ResolverTypeWrapper<Partial<EmailStats>>;
   EmailTemplate: ResolverTypeWrapper<Partial<EmailTemplate>>;
   EmailTemplatesResult: ResolverTypeWrapper<Partial<EmailTemplatesResult>>;
+  EmailThread: ResolverTypeWrapper<Partial<EmailThread>>;
+  EmailThreadsResult: ResolverTypeWrapper<Partial<EmailThreadsResult>>;
   EmergingRole: ResolverTypeWrapper<Partial<EmergingRole>>;
   EmergingRolesReport: ResolverTypeWrapper<Partial<EmergingRolesReport>>;
   EnhanceAllContactsResult: ResolverTypeWrapper<Partial<EnhanceAllContactsResult>>;
@@ -3255,6 +3314,7 @@ export type ResolversTypes = {
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
   SyncVoyagerJobsInput: ResolverTypeWrapper<Partial<SyncVoyagerJobsInput>>;
   SyncVoyagerJobsResult: ResolverTypeWrapper<Partial<SyncVoyagerJobsResult>>;
+  ThreadMessage: ResolverTypeWrapper<Partial<ThreadMessage>>;
   TimeToFillEstimate: ResolverTypeWrapper<Partial<TimeToFillEstimate>>;
   TimeToFillIndustry: ResolverTypeWrapper<Partial<TimeToFillIndustry>>;
   TimeToFillRemoteComparison: ResolverTypeWrapper<Partial<TimeToFillRemoteComparison>>;
@@ -3349,6 +3409,8 @@ export type ResolversParentTypes = {
   EmailStats: Partial<EmailStats>;
   EmailTemplate: Partial<EmailTemplate>;
   EmailTemplatesResult: Partial<EmailTemplatesResult>;
+  EmailThread: Partial<EmailThread>;
+  EmailThreadsResult: Partial<EmailThreadsResult>;
   EmergingRole: Partial<EmergingRole>;
   EmergingRolesReport: Partial<EmergingRolesReport>;
   EnhanceAllContactsResult: Partial<EnhanceAllContactsResult>;
@@ -3462,6 +3524,7 @@ export type ResolversParentTypes = {
   SyncResendResult: Partial<SyncResendResult>;
   SyncVoyagerJobsInput: Partial<SyncVoyagerJobsInput>;
   SyncVoyagerJobsResult: Partial<SyncVoyagerJobsResult>;
+  ThreadMessage: Partial<ThreadMessage>;
   TimeToFillEstimate: Partial<TimeToFillEstimate>;
   TimeToFillIndustry: Partial<TimeToFillIndustry>;
   TimeToFillRemoteComparison: Partial<TimeToFillRemoteComparison>;
@@ -4040,6 +4103,29 @@ export type EmailTemplatesResultResolvers<ContextType = GraphQLContext, ParentTy
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
+export type EmailThreadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmailThread'] = ResolversParentTypes['EmailThread']> = {
+  classification?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  classificationConfidence?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  companyName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  contactEmail?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  contactName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  contactPosition?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  hasReply?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  lastMessageAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastMessageDirection?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastMessagePreview?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  latestStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  messages?: Resolver<Array<ResolversTypes['ThreadMessage']>, ParentType, ContextType>;
+  totalMessages?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type EmailThreadsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmailThreadsResult'] = ResolversParentTypes['EmailThreadsResult']> = {
+  threads?: Resolver<Array<ResolversTypes['EmailThread']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type EmergingRoleResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmergingRole'] = ResolversParentTypes['EmergingRole']> = {
   avgSalaryMidpoint?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -4430,6 +4516,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   emailStats?: Resolver<ResolversTypes['EmailStats'], ParentType, ContextType>;
   emailTemplate?: Resolver<Maybe<ResolversTypes['EmailTemplate']>, ParentType, ContextType, RequireFields<QueryEmailTemplateArgs, 'id'>>;
   emailTemplates?: Resolver<ResolversTypes['EmailTemplatesResult'], ParentType, ContextType, Partial<QueryEmailTemplatesArgs>>;
+  emailThread?: Resolver<Maybe<ResolversTypes['EmailThread']>, ParentType, ContextType, RequireFields<QueryEmailThreadArgs, 'contactId'>>;
+  emailThreads?: Resolver<ResolversTypes['EmailThreadsResult'], ParentType, ContextType, Partial<QueryEmailThreadsArgs>>;
   emailsNeedingFollowUp?: Resolver<ResolversTypes['FollowUpEmailsResult'], ParentType, ContextType, Partial<QueryEmailsNeedingFollowUpArgs>>;
   findCompany?: Resolver<ResolversTypes['FindCompanyResult'], ParentType, ContextType, Partial<QueryFindCompanyArgs>>;
   intentDashboard?: Resolver<ResolversTypes['IntentDashboard'], ParentType, ContextType>;
@@ -4996,6 +5084,22 @@ export type SyncVoyagerJobsResultResolvers<ContextType = GraphQLContext, ParentT
   upserted?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
+export type ThreadMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ThreadMessage'] = ResolversParentTypes['ThreadMessage']> = {
+  classification?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  classificationConfidence?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  direction?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  fromEmail?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  htmlContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  sentAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sequenceNumber?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sequenceType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
 export type TimeToFillEstimateResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillEstimate'] = ResolversParentTypes['TimeToFillEstimate']> = {
   avgDays?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   medianDays?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
@@ -5193,6 +5297,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   EmailStats?: EmailStatsResolvers<ContextType>;
   EmailTemplate?: EmailTemplateResolvers<ContextType>;
   EmailTemplatesResult?: EmailTemplatesResultResolvers<ContextType>;
+  EmailThread?: EmailThreadResolvers<ContextType>;
+  EmailThreadsResult?: EmailThreadsResultResolvers<ContextType>;
   EmergingRole?: EmergingRoleResolvers<ContextType>;
   EmergingRolesReport?: EmergingRolesReportResolvers<ContextType>;
   EnhanceAllContactsResult?: EnhanceAllContactsResultResolvers<ContextType>;
@@ -5292,6 +5398,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SkillsDemandReport?: SkillsDemandReportResolvers<ContextType>;
   SyncResendResult?: SyncResendResultResolvers<ContextType>;
   SyncVoyagerJobsResult?: SyncVoyagerJobsResultResolvers<ContextType>;
+  ThreadMessage?: ThreadMessageResolvers<ContextType>;
   TimeToFillEstimate?: TimeToFillEstimateResolvers<ContextType>;
   TimeToFillIndustry?: TimeToFillIndustryResolvers<ContextType>;
   TimeToFillRemoteComparison?: TimeToFillRemoteComparisonResolvers<ContextType>;

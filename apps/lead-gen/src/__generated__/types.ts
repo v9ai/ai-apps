@@ -762,6 +762,31 @@ export type EmailTemplatesResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type EmailThread = {
+  __typename: 'EmailThread';
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  contactEmail: Maybe<Scalars['String']['output']>;
+  contactId: Scalars['Int']['output'];
+  contactName: Scalars['String']['output'];
+  contactPosition: Maybe<Scalars['String']['output']>;
+  hasReply: Scalars['Boolean']['output'];
+  lastMessageAt: Scalars['String']['output'];
+  lastMessageDirection: Scalars['String']['output'];
+  lastMessagePreview: Maybe<Scalars['String']['output']>;
+  latestStatus: Maybe<Scalars['String']['output']>;
+  messages: Array<ThreadMessage>;
+  totalMessages: Scalars['Int']['output'];
+};
+
+export type EmailThreadsResult = {
+  __typename: 'EmailThreadsResult';
+  threads: Array<EmailThread>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type EmergingRole = {
   __typename: 'EmergingRole';
   avgSalaryMidpoint: Maybe<Scalars['Float']['output']>;
@@ -1665,6 +1690,8 @@ export type Query = {
   emailStats: EmailStats;
   emailTemplate: Maybe<EmailTemplate>;
   emailTemplates: EmailTemplatesResult;
+  emailThread: Maybe<EmailThread>;
+  emailThreads: EmailThreadsResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
   findCompany: FindCompanyResult;
   intentDashboard: IntentDashboard;
@@ -1842,6 +1869,19 @@ export type QueryEmailTemplatesArgs = {
   category?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryEmailThreadArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryEmailThreadsArgs = {
+  classification?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2701,6 +2741,23 @@ export type SyncVoyagerJobsResult = {
   success: Scalars['Boolean']['output'];
   /** Jobs upserted into linkedin_posts */
   upserted: Scalars['Int']['output'];
+};
+
+export type ThreadMessage = {
+  __typename: 'ThreadMessage';
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  direction: Scalars['String']['output'];
+  fromEmail: Scalars['String']['output'];
+  htmlContent: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  sentAt: Maybe<Scalars['String']['output']>;
+  sequenceNumber: Maybe<Scalars['String']['output']>;
+  sequenceType: Maybe<Scalars['String']['output']>;
+  status: Maybe<Scalars['String']['output']>;
+  subject: Scalars['String']['output'];
+  textContent: Maybe<Scalars['String']['output']>;
+  toEmails: Array<Scalars['String']['output']>;
 };
 
 export type TimeToFillEstimate = {

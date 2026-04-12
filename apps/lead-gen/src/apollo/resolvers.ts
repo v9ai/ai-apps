@@ -7,6 +7,7 @@ import { emailCampaignResolvers } from "./resolvers/email-campaigns";
 import { emailTemplateResolvers } from "./resolvers/email-templates";
 
 import { receivedEmailResolvers } from "./resolvers/received-emails";
+import { emailThreadResolvers } from "./resolvers/email-threads";
 import { linkedinPostResolvers } from "./resolvers/linkedin-posts";
 import { intentSignalResolvers } from "./resolvers/intent-signals";
 import { mlResolvers } from "./resolvers/ml";
@@ -24,6 +25,7 @@ export const resolvers = merge(
   emailTemplateResolvers,
 
   receivedEmailResolvers,
+  emailThreadResolvers,
   linkedinPostResolvers,
   intentSignalResolvers,
   mlResolvers,
