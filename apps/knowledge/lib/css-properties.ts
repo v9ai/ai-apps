@@ -50,7 +50,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex containers",
     demo: {
       html: `<div class="container">\n  <div class="box a">A</div>\n  <div class="box b">B</div>\n  <div class="box c">C</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; border-radius: 6px; font-weight: 600; color: #fff; }\n.a { background: #3b82f6; }\n.b { background: #8b5cf6; }\n.c { background: #ec4899; }`,
+      css: `.container {\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; border-radius: 6px; font-weight: 600; color: #fff; }\n.a { background: #3b82f6; }\n.b { background: #8b5cf6; }\n.c { background: #ec4899; }`,
       highlightProp: "flex-direction",
     },
     relatedProps: ["justify-content", "align-items"],
@@ -73,7 +73,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex containers",
     demo: {
       html: `<div class="container">\n  <div class="box">A</div>\n  <div class="box">B</div>\n  <div class="box">C</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  height: 80px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.container {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  height: 80px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "justify-content",
     },
     relatedProps: ["align-items", "flex-direction", "align-content"],
@@ -95,7 +95,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex containers",
     demo: {
       html: `<div class="container">\n  <div class="box tall">Tall</div>\n  <div class="box">Mid</div>\n  <div class="box short">Short</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  align-items: center;\n  height: 120px;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; }\n.tall { padding: 24px 20px; }\n.short { padding: 6px 20px; }`,
+      css: `.container {\n  display: flex;\n  align-items: center;\n  height: 120px;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; }\n.tall { padding: 24px 20px; }\n.short { padding: 6px 20px; }`,
       highlightProp: "align-items",
     },
     relatedProps: ["justify-content", "align-self", "flex-direction"],
@@ -115,7 +115,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex containers",
     demo: {
       html: `<div class="container">\n  <div class="box">1</div>\n  <div class="box">2</div>\n  <div class="box">3</div>\n  <div class="box">4</div>\n  <div class="box">5</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 8px;\n  padding: 12px;\n  width: 200px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; background: #06b6d4; color: #fff; border-radius: 6px; font-weight: 600; min-width: 60px; }`,
+      css: `.container {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 8px;\n  padding: 12px;\n  width: 200px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; background: #06b6d4; color: #fff; border-radius: 6px; font-weight: 600; min-width: 60px; }`,
       highlightProp: "flex-wrap",
     },
     relatedProps: ["align-content", "flex-direction"],
@@ -134,7 +134,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex items",
     demo: {
       html: `<div class="container">\n  <div class="sidebar">Sidebar</div>\n  <div class="main">Main (flex-grow: 1)</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.sidebar { padding: 16px; background: #6366f1; color: #fff; border-radius: 6px; font-weight: 600; width: 100px; }\n.main { flex-grow: 1; padding: 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.container {\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.sidebar { padding: 16px; background: #6366f1; color: #fff; border-radius: 6px; font-weight: 600; width: 100px; }\n.main { flex-grow: 1; padding: 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "flex-grow",
     },
     relatedProps: ["flex-shrink", "flex-basis"],
@@ -154,7 +154,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex items",
     demo: {
       html: `<div class="container">\n  <div class="fixed">Fixed (shrink: 0)</div>\n  <div class="flexible">Flexible</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  width: 250px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.fixed { flex-shrink: 0; width: 150px; padding: 16px; background: #ef4444; color: #fff; border-radius: 6px; font-weight: 600; }\n.flexible { padding: 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.container {\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  width: 250px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.fixed { flex-shrink: 0; width: 150px; padding: 16px; background: #ef4444; color: #fff; border-radius: 6px; font-weight: 600; }\n.flexible { padding: 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "flex-shrink",
     },
     relatedProps: ["flex-grow", "flex-basis"],
@@ -174,7 +174,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex items",
     demo: {
       html: `<div class="container">\n  <div class="item a">basis: 200px</div>\n  <div class="item b">basis: 100px</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.item { padding: 16px; color: #fff; border-radius: 6px; font-weight: 600; }\n.a { flex-basis: 200px; background: #8b5cf6; }\n.b { flex-basis: 100px; background: #06b6d4; }`,
+      css: `.container {\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.item { padding: 16px; color: #fff; border-radius: 6px; font-weight: 600; }\n.a { flex-basis: 200px; background: #8b5cf6; }\n.b { flex-basis: 100px; background: #06b6d4; }`,
       highlightProp: "flex-basis",
     },
     relatedProps: ["flex-grow", "flex-shrink"],
@@ -192,7 +192,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex and grid containers",
     demo: {
       html: `<div class="container">\n  <div class="box">A</div>\n  <div class="box">B</div>\n  <div class="box">C</div>\n  <div class="box">D</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 16px;\n  padding: 12px;\n  width: 180px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; background: #f59e0b; color: #fff; border-radius: 6px; font-weight: 600; min-width: 60px; }`,
+      css: `.container {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 16px;\n  padding: 12px;\n  width: 180px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { padding: 12px 20px; background: #f59e0b; color: #fff; border-radius: 6px; font-weight: 600; min-width: 60px; }`,
       highlightProp: "gap",
     },
     relatedProps: ["row-gap", "column-gap"],
@@ -215,7 +215,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex items",
     demo: {
       html: `<div class="container">\n  <div class="box">Normal</div>\n  <div class="box special">align-self: flex-end</div>\n  <div class="box">Normal</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  align-items: flex-start;\n  height: 120px;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { padding: 12px 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; }\n.special { align-self: flex-end; background: #ec4899; }`,
+      css: `.container {\n  display: flex;\n  align-items: flex-start;\n  height: 120px;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { padding: 12px 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; }\n.special { align-self: flex-end; background: #ec4899; }`,
       highlightProp: "align-self",
     },
     relatedProps: ["align-items"],
@@ -233,7 +233,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "flex items",
     demo: {
       html: `<div class="container">\n  <div class="box a">1st in HTML</div>\n  <div class="box b">2nd (order: -1)</div>\n  <div class="box c">3rd in HTML</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { padding: 12px 16px; color: #fff; border-radius: 6px; font-weight: 600; }\n.a { background: #3b82f6; }\n.b { background: #ec4899; order: -1; }\n.c { background: #06b6d4; }`,
+      css: `.container {\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { padding: 12px 16px; color: #fff; border-radius: 6px; font-weight: 600; }\n.a { background: #3b82f6; }\n.b { background: #ec4899; order: -1; }\n.c { background: #06b6d4; }`,
       highlightProp: "order",
     },
     relatedProps: ["flex-direction"],
@@ -255,7 +255,7 @@ const flexboxProperties: CssProperty[] = [
     appliesTo: "multi-line flex containers",
     demo: {
       html: `<div class="container">\n  <div class="box">1</div><div class="box">2</div><div class="box">3</div>\n  <div class="box">4</div><div class="box">5</div><div class="box">6</div>\n</div>`,
-      css: `.container {\n  display: flex;\n  flex-wrap: wrap;\n  align-content: space-between;\n  height: 150px;\n  width: 200px;\n  gap: 6px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { padding: 8px 16px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.container {\n  display: flex;\n  flex-wrap: wrap;\n  align-content: space-between;\n  height: 150px;\n  width: 200px;\n  gap: 6px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { padding: 8px 16px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "align-content",
     },
     relatedProps: ["flex-wrap", "align-items"],
@@ -282,7 +282,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid containers",
     demo: {
       html: `<div class="grid">\n  <div class="cell">1</div>\n  <div class="cell">2</div>\n  <div class="cell">3</div>\n</div>`,
-      css: `.grid {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.cell { padding: 16px; background: #06b6d4; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; }`,
+      css: `.grid {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 16px; background: #06b6d4; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; }`,
       highlightProp: "grid-template-columns",
     },
     relatedProps: ["grid-template-rows", "gap"],
@@ -302,7 +302,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid containers",
     demo: {
       html: `<div class="grid">\n  <div class="cell header">Header</div>\n  <div class="cell main">Main</div>\n  <div class="cell footer">Footer</div>\n</div>`,
-      css: `.grid {\n  display: grid;\n  grid-template-rows: 50px 1fr 40px;\n  height: 200px;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.cell { padding: 8px 16px; color: #fff; border-radius: 6px; font-weight: 600; }\n.header { background: #6366f1; }\n.main { background: #3b82f6; }\n.footer { background: #8b5cf6; }`,
+      css: `.grid {\n  display: grid;\n  grid-template-rows: 50px 1fr 40px;\n  height: 200px;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 8px 16px; color: #fff; border-radius: 6px; font-weight: 600; }\n.header { background: #6366f1; }\n.main { background: #3b82f6; }\n.footer { background: #8b5cf6; }`,
       highlightProp: "grid-template-rows",
     },
     relatedProps: ["grid-template-columns"],
@@ -320,7 +320,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid containers",
     demo: {
       html: `<div class="layout">\n  <header class="hd">Header</header>\n  <nav class="nav">Nav</nav>\n  <main class="main">Main</main>\n  <footer class="ft">Footer</footer>\n</div>`,
-      css: `.layout {\n  display: grid;\n  grid-template-areas:\n    "hd hd"\n    "nav main"\n    "ft ft";\n  grid-template-columns: 100px 1fr;\n  grid-template-rows: auto 1fr auto;\n  gap: 6px;\n  height: 180px;\n  padding: 8px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.hd { grid-area: hd; background: #6366f1; }\n.nav { grid-area: nav; background: #8b5cf6; }\n.main { grid-area: main; background: #3b82f6; }\n.ft { grid-area: ft; background: #06b6d4; }\n.layout > * { padding: 8px; color: #fff; border-radius: 4px; font-weight: 600; }`,
+      css: `.layout {\n  display: grid;\n  grid-template-areas:\n    "hd hd"\n    "nav main"\n    "ft ft";\n  grid-template-columns: 100px 1fr;\n  grid-template-rows: auto 1fr auto;\n  gap: 6px;\n  height: 180px;\n  padding: 8px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.hd { grid-area: hd; background: #6366f1; }\n.nav { grid-area: nav; background: #8b5cf6; }\n.main { grid-area: main; background: #3b82f6; }\n.ft { grid-area: ft; background: #06b6d4; }\n.layout > * { padding: 8px; color: #fff; border-radius: 4px; font-weight: 600; }`,
       highlightProp: "grid-template-areas",
     },
     relatedProps: ["grid-area", "grid-template-columns", "grid-template-rows"],
@@ -340,7 +340,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid items",
     demo: {
       html: `<div class="grid">\n  <div class="cell wide">Spans 2 cols</div>\n  <div class="cell">Normal</div>\n  <div class="cell">Normal</div>\n  <div class="cell">Normal</div>\n</div>`,
-      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.cell { padding: 16px; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; background: #3b82f6; }\n.wide { grid-column: 1 / 3; background: #ec4899; }`,
+      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 16px; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; background: #3b82f6; }\n.wide { grid-column: 1 / 3; background: #ec4899; }`,
       highlightProp: "grid-column",
     },
     relatedProps: ["grid-row", "grid-area"],
@@ -359,7 +359,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid items",
     demo: {
       html: `<div class="grid">\n  <div class="cell tall">Spans 2 rows</div>\n  <div class="cell">B</div>\n  <div class="cell">C</div>\n  <div class="cell">D</div>\n</div>`,
-      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  grid-template-rows: repeat(2, 60px);\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.cell { padding: 12px; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; background: #06b6d4; }\n.tall { grid-row: 1 / 3; background: #8b5cf6; }`,
+      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  grid-template-rows: repeat(2, 60px);\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 12px; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; background: #06b6d4; }\n.tall { grid-row: 1 / 3; background: #8b5cf6; }`,
       highlightProp: "grid-row",
     },
     relatedProps: ["grid-column", "grid-area"],
@@ -377,7 +377,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid items",
     demo: {
       html: `<div class="layout">\n  <div class="hd">Header</div>\n  <div class="content">Content</div>\n  <div class="side">Side</div>\n</div>`,
-      css: `.layout {\n  display: grid;\n  grid-template-areas:\n    "header header"\n    "content sidebar";\n  grid-template-columns: 1fr 120px;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.hd { grid-area: header; background: #6366f1; }\n.content { grid-area: content; background: #3b82f6; }\n.side { grid-area: sidebar; background: #f59e0b; }\n.layout > * { padding: 12px; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.layout {\n  display: grid;\n  grid-template-areas:\n    "header header"\n    "content sidebar";\n  grid-template-columns: 1fr 120px;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.hd { grid-area: header; background: #6366f1; }\n.content { grid-area: content; background: #3b82f6; }\n.side { grid-area: sidebar; background: #f59e0b; }\n.layout > * { padding: 12px; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "grid-area",
     },
     relatedProps: ["grid-template-areas"],
@@ -396,7 +396,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid containers",
     demo: {
       html: `<div class="grid">\n  <div class="cell">1</div>\n  <div class="cell wide">2 (wide)</div>\n  <div class="cell">3</div>\n  <div class="cell">4</div>\n  <div class="cell">5</div>\n</div>`,
-      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  grid-auto-flow: dense;\n  gap: 6px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.cell { padding: 12px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; }\n.wide { grid-column: span 2; background: #ec4899; }`,
+      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  grid-auto-flow: dense;\n  gap: 6px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 12px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; }\n.wide { grid-column: span 2; background: #ec4899; }`,
       highlightProp: "grid-auto-flow",
     },
     relatedProps: ["grid-template-columns", "grid-template-rows"],
@@ -415,7 +415,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid containers",
     demo: {
       html: `<div class="grid">\n  <div class="cell">1</div>\n  <div class="cell">2</div>\n  <div class="cell">3</div>\n  <div class="cell">4</div>\n</div>`,
-      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  grid-auto-rows: minmax(50px, auto);\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.cell { padding: 12px; background: #06b6d4; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; }`,
+      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  grid-auto-rows: minmax(50px, auto);\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 12px; background: #06b6d4; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; }`,
       highlightProp: "grid-auto-rows",
     },
     relatedProps: ["grid-auto-columns", "grid-auto-flow"],
@@ -435,7 +435,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid containers",
     demo: {
       html: `<div class="grid">\n  <div class="cell">A</div>\n  <div class="cell">B</div>\n  <div class="cell">C</div>\n  <div class="cell">D</div>\n</div>`,
-      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  justify-items: center;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.cell { padding: 12px 24px; background: #f59e0b; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.grid {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  justify-items: center;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 12px 24px; background: #f59e0b; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "justify-items",
     },
     relatedProps: ["align-items", "justify-self"],
@@ -453,7 +453,7 @@ const gridProperties: CssProperty[] = [
     appliesTo: "grid containers",
     demo: {
       html: `<div class="grid">\n  <div class="cell">Centered</div>\n  <div class="cell">In cell</div>\n</div>`,
-      css: `.grid {\n  display: grid;\n  grid-template-columns: 1fr 1fr;\n  place-items: center;\n  height: 120px;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.cell { padding: 12px 20px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.grid {\n  display: grid;\n  grid-template-columns: 1fr 1fr;\n  place-items: center;\n  height: 120px;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 12px 20px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "place-items",
     },
     relatedProps: ["align-items", "justify-items"],
@@ -480,7 +480,7 @@ const positioningProperties: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="parent">\n  <div class="box">Static</div>\n  <div class="box abs">Absolute</div>\n  <div class="box">Static</div>\n</div>`,
-      css: `.parent {\n  position: relative;\n  padding: 24px;\n  height: 120px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { padding: 8px 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; margin-bottom: 4px; display: inline-block; }\n.abs { position: absolute; top: 8px; right: 8px; background: #ec4899; }`,
+      css: `.parent {\n  position: relative;\n  padding: 24px;\n  height: 120px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { padding: 8px 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; margin-bottom: 4px; display: inline-block; }\n.abs { position: absolute; top: 8px; right: 8px; background: #ec4899; }`,
       highlightProp: "position",
     },
     relatedProps: ["z-index", "top", "right", "bottom", "left"],
@@ -499,7 +499,7 @@ const positioningProperties: CssProperty[] = [
     appliesTo: "positioned elements (not static)",
     demo: {
       html: `<div class="stack">\n  <div class="box a">z: 1</div>\n  <div class="box b">z: 3</div>\n  <div class="box c">z: 2</div>\n</div>`,
-      css: `.stack {\n  position: relative;\n  height: 100px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.box { position: absolute; padding: 12px 20px; color: #fff; border-radius: 6px; font-weight: 600; }\n.a { z-index: 1; top: 10px; left: 10px; background: #3b82f6; }\n.b { z-index: 3; top: 20px; left: 30px; background: #ec4899; }\n.c { z-index: 2; top: 30px; left: 50px; background: #8b5cf6; }`,
+      css: `.stack {\n  position: relative;\n  height: 100px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.box { position: absolute; padding: 12px 20px; color: #fff; border-radius: 6px; font-weight: 600; }\n.a { z-index: 1; top: 10px; left: 10px; background: #3b82f6; }\n.b { z-index: 3; top: 20px; left: 30px; background: #ec4899; }\n.c { z-index: 2; top: 30px; left: 50px; background: #8b5cf6; }`,
       highlightProp: "z-index",
     },
     relatedProps: ["position"],
@@ -519,7 +519,7 @@ const positioningProperties: CssProperty[] = [
     appliesTo: "positioned elements",
     demo: {
       html: `<div class="parent">\n  <div class="child">top: 20px</div>\n</div>`,
-      css: `.parent {\n  position: relative;\n  height: 100px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.child { position: absolute; top: 20px; left: 12px; padding: 8px 16px; background: #6366f1; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.parent {\n  position: relative;\n  height: 100px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.child { position: absolute; top: 20px; left: 12px; padding: 8px 16px; background: #6366f1; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "top",
     },
     relatedProps: ["bottom", "left", "right", "position"],
@@ -538,7 +538,7 @@ const positioningProperties: CssProperty[] = [
     appliesTo: "positioned elements",
     demo: {
       html: `<div class="parent">\n  <div class="child">right: 12px</div>\n</div>`,
-      css: `.parent {\n  position: relative;\n  height: 80px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.child { position: absolute; top: 12px; right: 12px; padding: 8px 16px; background: #f59e0b; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.parent {\n  position: relative;\n  height: 80px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.child { position: absolute; top: 12px; right: 12px; padding: 8px 16px; background: #f59e0b; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "right",
     },
     relatedProps: ["left", "top", "bottom", "position"],
@@ -557,7 +557,7 @@ const positioningProperties: CssProperty[] = [
     appliesTo: "positioned elements",
     demo: {
       html: `<div class="parent">\n  <div class="child">bottom: 8px</div>\n</div>`,
-      css: `.parent {\n  position: relative;\n  height: 100px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.child { position: absolute; bottom: 8px; left: 12px; padding: 8px 16px; background: #06b6d4; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.parent {\n  position: relative;\n  height: 100px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.child { position: absolute; bottom: 8px; left: 12px; padding: 8px 16px; background: #06b6d4; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "bottom",
     },
     relatedProps: ["top", "left", "right", "position"],
@@ -576,7 +576,7 @@ const positioningProperties: CssProperty[] = [
     appliesTo: "positioned elements",
     demo: {
       html: `<div class="parent">\n  <div class="child">left: 30px</div>\n</div>`,
-      css: `.parent {\n  position: relative;\n  height: 80px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.child { position: absolute; top: 12px; left: 30px; padding: 8px 16px; background: #ef4444; color: #fff; border-radius: 6px; font-weight: 600; }`,
+      css: `.parent {\n  position: relative;\n  height: 80px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.child { position: absolute; top: 12px; left: 30px; padding: 8px 16px; background: #ef4444; color: #fff; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "left",
     },
     relatedProps: ["right", "top", "bottom", "position"],
@@ -619,7 +619,7 @@ const boxModelProperties: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="outer">\n  <div class="box">margin: 20px auto</div>\n</div>`,
-      css: `.outer {\n  background: #f3f4f6;\n  padding: 8px;\n  border-radius: 8px;\n}\n.box {\n  margin: 20px auto;\n  width: 200px;\n  padding: 16px;\n  background: #3b82f6;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n  text-align: center;\n}`,
+      css: `.outer {\n  background: #1e1e21;\n  padding: 8px;\n  border-radius: 8px;\n}\n.box {\n  margin: 20px auto;\n  width: 200px;\n  padding: 16px;\n  background: #3b82f6;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n  text-align: center;\n}`,
       highlightProp: "margin",
     },
     relatedProps: ["padding"],
@@ -701,7 +701,7 @@ const boxModelProperties: CssProperty[] = [
     appliesTo: "block containers",
     demo: {
       html: `<div class="box">This box has overflow: auto. When the content is too tall it gets a scrollbar. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.</div>`,
-      css: `.box {\n  overflow: auto;\n  height: 60px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n  font-size: 14px;\n  line-height: 1.6;\n}`,
+      css: `.box {\n  overflow: auto;\n  height: 60px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n  font-size: 14px;\n  line-height: 1.6;\n}`,
       highlightProp: "overflow",
     },
     relatedProps: ["overflow-x", "overflow-y"],
@@ -739,7 +739,7 @@ const boxModelProperties: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="container">\n  <div class="item">min-width: 150px</div>\n</div>`,
-      css: `.container {\n  width: 100px;\n  background: #f3f4f6;\n  padding: 8px;\n  border-radius: 8px;\n}\n.item {\n  min-width: 150px;\n  padding: 12px;\n  background: #f59e0b;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n}`,
+      css: `.container {\n  width: 100px;\n  background: #1e1e21;\n  padding: 8px;\n  border-radius: 8px;\n}\n.item {\n  min-width: 150px;\n  padding: 12px;\n  background: #f59e0b;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n}`,
       highlightProp: "min-width",
     },
     relatedProps: ["max-width", "width"],
@@ -823,7 +823,7 @@ const visualProperties: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="card">Elevated card</div>`,
-      css: `.card {\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);\n  padding: 24px;\n  border-radius: 12px;\n  background: #fff;\n  font-weight: 600;\n}`,
+      css: `.card {\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);\n  padding: 24px;\n  border-radius: 12px;\n  background: #1e1e21;\n  font-weight: 600;\n}`,
       highlightProp: "box-shadow",
     },
     relatedProps: ["border-radius", "filter"],
@@ -923,7 +923,7 @@ const visualProperties: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<button class="btn">Focus me (tab)</button>`,
-      css: `.btn {\n  padding: 12px 24px;\n  border: 2px solid #3b82f6;\n  border-radius: 8px;\n  background: #fff;\n  font-weight: 600;\n  font-size: 14px;\n  cursor: pointer;\n}\n.btn:focus-visible {\n  outline: 3px solid #8b5cf6;\n  outline-offset: 2px;\n}`,
+      css: `.btn {\n  padding: 12px 24px;\n  border: 2px solid #3b82f6;\n  border-radius: 8px;\n  background: #1e1e21;\n  font-weight: 600;\n  font-size: 14px;\n  cursor: pointer;\n}\n.btn:focus-visible {\n  outline: 3px solid #8b5cf6;\n  outline-offset: 2px;\n}`,
       highlightProp: "outline",
     },
     relatedProps: ["border", "outline-offset"],
@@ -1029,7 +1029,7 @@ const typographyProperties: CssProperty[] = [
     appliesTo: "block containers",
     demo: {
       html: `<p class="left">Left aligned</p>\n<p class="center">Center aligned</p>\n<p class="right">Right aligned</p>`,
-      css: `.left { text-align: left; padding: 8px; background: #f3f4f6; border-radius: 4px; margin-bottom: 4px; }\n.center { text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px; margin-bottom: 4px; }\n.right { text-align: right; padding: 8px; background: #f3f4f6; border-radius: 4px; }`,
+      css: `.left { text-align: left; padding: 8px; background: #1e1e21; border-radius: 4px; margin-bottom: 4px; }\n.center { text-align: center; padding: 8px; background: #1e1e21; border-radius: 4px; margin-bottom: 4px; }\n.right { text-align: right; padding: 8px; background: #1e1e21; border-radius: 4px; }`,
       highlightProp: "text-align",
     },
     relatedProps: ["justify-content"],
@@ -1109,7 +1109,7 @@ const typographyProperties: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="box">white-space: nowrap truncates long text that would otherwise wrap to the next line</div>`,
-      css: `.box {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  width: 250px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}`,
+      css: `.box {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  width: 250px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}`,
       highlightProp: "white-space",
     },
     relatedProps: ["overflow", "text-overflow"],
@@ -1305,7 +1305,7 @@ const displayProperties: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="container">\n  <div class="floated">Float</div>\n  <p>Text wraps around the floated element. This is the original CSS layout technique before flexbox.</p>\n</div>`,
-      css: `.container { padding: 12px; background: #f3f4f6; border-radius: 8px; font-size: 13px; line-height: 1.6; }\n.floated {\n  float: left;\n  width: 80px;\n  height: 60px;\n  margin: 0 12px 8px 0;\n  background: #ec4899;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}`,
+      css: `.container { padding: 12px; background: #1e1e21; border-radius: 8px; font-size: 13px; line-height: 1.6; }\n.floated {\n  float: left;\n  width: 80px;\n  height: 60px;\n  margin: 0 12px 8px 0;\n  background: #ec4899;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}`,
       highlightProp: "float",
     },
     relatedProps: ["clear", "display"],
@@ -1326,7 +1326,7 @@ const displayProperties: CssProperty[] = [
     appliesTo: "block-level elements",
     demo: {
       html: `<div class="wrap">\n  <div class="floated">Floated</div>\n  <div class="cleared">clear: both</div>\n</div>`,
-      css: `.wrap { padding: 12px; background: #f3f4f6; border-radius: 8px; }\n.floated { float: left; padding: 12px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; margin-right: 8px; }\n.cleared {\n  clear: both;\n  padding: 12px;\n  background: #06b6d4;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n  margin-top: 8px;\n}`,
+      css: `.wrap { padding: 12px; background: #1e1e21; border-radius: 8px; }\n.floated { float: left; padding: 12px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; margin-right: 8px; }\n.cleared {\n  clear: both;\n  padding: 12px;\n  background: #06b6d4;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n  margin-top: 8px;\n}`,
       highlightProp: "clear",
     },
     relatedProps: ["float"],
@@ -1443,7 +1443,7 @@ const displayProperties: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="parent">\n  <div class="isolated">\n    <div class="child">z-index: 999 (isolated)</div>\n  </div>\n  <div class="sibling">Sibling (z-index: 1)</div>\n</div>`,
-      css: `.parent { position: relative; height: 80px; background: #f3f4f6; border-radius: 8px; }\n.isolated {\n  isolation: isolate;\n  position: relative;\n}\n.child { position: absolute; z-index: 999; padding: 8px 16px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; font-size: 12px; top: 8px; left: 8px; }\n.sibling { position: absolute; z-index: 1; padding: 8px 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; font-size: 12px; top: 28px; left: 28px; }`,
+      css: `.parent { position: relative; height: 80px; background: #1e1e21; border-radius: 8px; }\n.isolated {\n  isolation: isolate;\n  position: relative;\n}\n.child { position: absolute; z-index: 999; padding: 8px 16px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; font-size: 12px; top: 8px; left: 8px; }\n.sibling { position: absolute; z-index: 1; padding: 8px 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; font-size: 12px; top: 28px; left: 28px; }`,
       highlightProp: "isolation",
     },
     relatedProps: ["z-index", "position"],
@@ -1505,7 +1505,7 @@ const boxModelExtensions: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="box">This box has max-height: 60px with overflow: auto. When content is taller it scrolls. Extra text here to demonstrate.</div>`,
-      css: `.box {\n  max-height: 60px;\n  overflow: auto;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n  line-height: 1.6;\n  font-size: 13px;\n}`,
+      css: `.box {\n  max-height: 60px;\n  overflow: auto;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n  line-height: 1.6;\n  font-size: 13px;\n}`,
       highlightProp: "max-height",
     },
     relatedProps: ["min-height", "height", "overflow"],
@@ -1523,7 +1523,7 @@ const boxModelExtensions: CssProperty[] = [
     appliesTo: "block containers",
     demo: {
       html: `<div class="truncate">This is a very long text that will be truncated with an ellipsis when it overflows the container width</div>`,
-      css: `.truncate {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n  width: 250px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n  font-weight: 500;\n}`,
+      css: `.truncate {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n  width: 250px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n  font-weight: 500;\n}`,
       highlightProp: "text-overflow",
     },
     relatedProps: ["overflow", "white-space"],
@@ -1544,7 +1544,7 @@ const boxModelExtensions: CssProperty[] = [
     appliesTo: "elements with overflow != visible",
     demo: {
       html: `<div class="resizable">Drag the corner to resize me</div>`,
-      css: `.resizable {\n  resize: both;\n  overflow: auto;\n  width: 200px;\n  height: 80px;\n  padding: 12px;\n  background: #f3f4f6;\n  border: 2px dashed #94a3b8;\n  border-radius: 8px;\n  font-size: 13px;\n}`,
+      css: `.resizable {\n  resize: both;\n  overflow: auto;\n  width: 200px;\n  height: 80px;\n  padding: 12px;\n  background: #1e1e21;\n  border: 2px dashed #94a3b8;\n  border-radius: 8px;\n  font-size: 13px;\n}`,
       highlightProp: "resize",
     },
     relatedProps: ["overflow"],
@@ -1694,7 +1694,7 @@ const typographyExtensions: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="box">Thisisaverylongwordthatwillbreakwithbreak-all</div>`,
-      css: `.box {\n  word-break: break-all;\n  width: 180px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n  font-size: 13px;\n  line-height: 1.6;\n}`,
+      css: `.box {\n  word-break: break-all;\n  width: 180px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n  font-size: 13px;\n  line-height: 1.6;\n}`,
       highlightProp: "word-break",
     },
     relatedProps: ["overflow-wrap", "white-space"],
@@ -1714,7 +1714,7 @@ const typographyExtensions: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="box">https://example.com/very/long/url/that/would/overflow</div>`,
-      css: `.box {\n  overflow-wrap: break-word;\n  width: 200px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n  font-size: 13px;\n  line-height: 1.6;\n}`,
+      css: `.box {\n  overflow-wrap: break-word;\n  width: 200px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n  font-size: 13px;\n  line-height: 1.6;\n}`,
       highlightProp: "overflow-wrap",
     },
     relatedProps: ["word-break", "white-space"],
@@ -1736,7 +1736,7 @@ const typographyExtensions: CssProperty[] = [
     appliesTo: "inline and table-cell elements",
     demo: {
       html: `<div class="line">\n  <span class="big">Big</span>\n  <span class="small mid">middle</span>\n  <span class="small top">top</span>\n</div>`,
-      css: `.line { padding: 12px; background: #f3f4f6; border-radius: 8px; }\n.big { font-size: 28px; font-weight: 700; }\n.small { font-size: 12px; font-weight: 600; background: #8b5cf6; color: #fff; padding: 2px 8px; border-radius: 4px; }\n.mid { vertical-align: middle; }\n.top { vertical-align: top; }`,
+      css: `.line { padding: 12px; background: #1e1e21; border-radius: 8px; }\n.big { font-size: 28px; font-weight: 700; }\n.small { font-size: 12px; font-weight: 600; background: #8b5cf6; color: #fff; padding: 2px 8px; border-radius: 4px; }\n.mid { vertical-align: middle; }\n.top { vertical-align: top; }`,
       highlightProp: "vertical-align",
     },
     relatedProps: ["align-items", "line-height"],
@@ -1763,7 +1763,7 @@ const conceptProperties: CssProperty[] = [
     appliesTo: "::before and ::after pseudo-elements",
     demo: {
       html: `<div class="labeled" data-label="NEW">Feature card with badge</div>`,
-      css: `.labeled {\n  position: relative;\n  padding: 20px;\n  background: #f3f4f6;\n  border-radius: 8px;\n  font-weight: 600;\n}\n.labeled::before {\n  content: attr(data-label);\n  position: absolute;\n  top: -8px;\n  right: 12px;\n  background: #ec4899;\n  color: #fff;\n  padding: 2px 10px;\n  border-radius: 4px;\n  font-size: 11px;\n  font-weight: 700;\n}`,
+      css: `.labeled {\n  position: relative;\n  padding: 20px;\n  background: #1e1e21;\n  border-radius: 8px;\n  font-weight: 600;\n}\n.labeled::before {\n  content: attr(data-label);\n  position: absolute;\n  top: -8px;\n  right: 12px;\n  background: #ec4899;\n  color: #fff;\n  padding: 2px 10px;\n  border-radius: 4px;\n  font-size: 11px;\n  font-weight: 700;\n}`,
       highlightProp: "content",
     },
     relatedProps: ["display", "position"],
@@ -1783,7 +1783,7 @@ const conceptProperties: CssProperty[] = [
     appliesTo: "all elements (inherited by default)",
     demo: {
       html: `<div class="card">\n  <div class="primary">Primary</div>\n  <div class="accent">Accent</div>\n</div>`,
-      css: `.card {\n  --brand: #6366f1;\n  --accent: #ec4899;\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n}\n.primary { background: var(--brand); color: #fff; padding: 12px 20px; border-radius: 6px; font-weight: 600; }\n.accent { background: var(--accent); color: #fff; padding: 12px 20px; border-radius: 6px; font-weight: 600; }`,
+      css: `.card {\n  --brand: #6366f1;\n  --accent: #ec4899;\n  display: flex;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.primary { background: var(--brand); color: #fff; padding: 12px 20px; border-radius: 6px; font-weight: 600; }\n.accent { background: var(--accent); color: #fff; padding: 12px 20px; border-radius: 6px; font-weight: 600; }`,
       highlightProp: "--brand",
     },
     relatedProps: [],
@@ -1846,7 +1846,7 @@ const conceptProperties: CssProperty[] = [
     appliesTo: "block containers",
     demo: {
       html: `<div class="bfc">\n  <div class="floated">Floated</div>\n  <p>Parent contains the float thanks to display: flow-root (BFC).</p>\n</div>`,
-      css: `.bfc {\n  display: flow-root;\n  padding: 12px;\n  background: #f3f4f6;\n  border-radius: 8px;\n  font-size: 13px;\n  line-height: 1.6;\n}\n.floated { float: left; padding: 12px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; margin: 0 12px 8px 0; }`,
+      css: `.bfc {\n  display: flow-root;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n  font-size: 13px;\n  line-height: 1.6;\n}\n.floated { float: left; padding: 12px; background: #8b5cf6; color: #fff; border-radius: 6px; font-weight: 600; margin: 0 12px 8px 0; }`,
       highlightProp: "display",
     },
     relatedProps: ["overflow", "display", "float"],
