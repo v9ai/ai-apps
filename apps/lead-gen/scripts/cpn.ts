@@ -19,7 +19,7 @@ import { resolve } from "path";
 import Papa from "papaparse";
 import { neon } from "@neondatabase/serverless";
 import { Resend } from "resend";
-import { classifyReply } from "@/lib/email/reply-classifier";
+import { classifyReply, stripQuotedText } from "@/lib/email/reply-classifier";
 
 // ── Shared ─────────────────────────────────────────────────────
 
@@ -455,6 +455,34 @@ async function cmdSync() {
 
 // ── followup ───────────────────────────────────────────────────
 
+const DECLINE_PATTERNS = [
+  "not interested", "no thanks", "pass on this", "not a fit",
+  "i'll pass", "pass for now", "not for us", "we'll pass",
+  "please don't contact", "stop emailing", "unsubscribe",
+  "remove me", "opt out", "not a good fit",
+];
+
+interface ThreadReply {
+  text: string;
+  subject: string;
+  received_at: string;
+  classification: string;
+  resend_id: string;
+}
+
+interface ContactThread {
+  contact_id: number;
+  first_name: string;
+  last_name: string | null;
+  email: string;
+  company: string | null;
+  github_handle: string | null;
+  replies: ThreadReply[];
+  outbound_ids: number[];
+  has_followup: boolean;
+  status: "ready" | "declined" | "has_questions" | "already_replied_to_followup";
+}
+
 async function cmdFollowup() {
   const dryRun = flag("dry-run");
   const autoSend = flag("auto");
@@ -462,22 +490,116 @@ async function cmdFollowup() {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q: string) => new Promise<string>((resolve) => rl.question(q, resolve));
 
-  const rows = await sql`
-    SELECT
-      ce.id as email_id, ce.to_emails,
-      c.id as contact_id, c.first_name, c.last_name, c.email, c.company, c.github_handle,
-      re.resend_id as reply_resend_id, re.text_content as reply_text, re.html_content as reply_html, re.subject as reply_subject
+  // 1. Get unique contacts with needs_response
+  const contacts = await sql`
+    SELECT DISTINCT ON (c.email)
+      c.id as contact_id, c.first_name, c.last_name, c.email, c.company, c.github_handle
     FROM contact_emails ce
     JOIN contacts c ON c.id = ce.contact_id
-    LEFT JOIN received_emails re ON re.matched_outbound_id = ce.id
     WHERE ce.tags LIKE '%needs_response%' AND ce.tags LIKE '%cpn-outreach%'
-    ORDER BY c.first_name
+    ORDER BY c.email, c.first_name
   `;
 
-  console.log(`\n  CPN Follow-up: ${rows.length} contacts need response`);
+  // 2. Build threaded view per contact
+  const threads: ContactThread[] = [];
+  let alreadyHandled = 0;
+
+  for (const c of contacts) {
+    // All outbound CPN emails to this contact
+    const outbounds = await sql`
+      SELECT id, tags, sent_at FROM contact_emails
+      WHERE contact_id = ${c.contact_id} AND tags LIKE '%cpn-outreach%'
+      ORDER BY id
+    `;
+
+    // Check if follow-up already sent
+    const followups = await sql`
+      SELECT id, sent_at FROM contact_emails
+      WHERE contact_id = ${c.contact_id} AND tags LIKE '%cpn-followup%' AND status = 'sent'
+      ORDER BY sent_at DESC LIMIT 1
+    `;
+    const hasFollowup = followups.length > 0;
+
+    // All replies from this contact
+    const rawReplies = await sql`
+      SELECT text_content, html_content, subject, received_at, classification, resend_id
+      FROM received_emails
+      WHERE matched_contact_id = ${c.contact_id}
+      ORDER BY received_at ASC
+    `;
+
+    // Fetch missing reply text from Resend if needed
+    const replies: ThreadReply[] = [];
+    for (const r of rawReplies) {
+      let text = r.text_content || r.html_content?.replace(/<[^>]+>/g, "") || "";
+      if (!text && r.resend_id) {
+        try {
+          const { data: full } = await resend.emails.receiving.get(r.resend_id);
+          text = full?.text || full?.html?.replace(/<[^>]+>/g, "") || "";
+          if (full?.text || full?.html) {
+            await sql`UPDATE received_emails SET text_content = ${full.text ?? null}, html_content = ${full.html ?? null} WHERE resend_id = ${r.resend_id}`;
+          }
+        } catch { /* ignore */ }
+      }
+      replies.push({
+        text,
+        subject: r.subject || "",
+        received_at: r.received_at,
+        classification: r.classification || "unknown",
+        resend_id: r.resend_id,
+      });
+    }
+
+    // Skip if follow-up sent and no new replies after it
+    if (hasFollowup && replies.length > 0) {
+      const followupTime = new Date(followups[0].sent_at).getTime();
+      const latestReplyTime = new Date(replies[replies.length - 1].received_at).getTime();
+      if (latestReplyTime < followupTime) {
+        alreadyHandled++;
+        continue;
+      }
+    }
+
+    // Determine thread status
+    const latestReplyText = replies.length > 0
+      ? stripQuotedText(replies[replies.length - 1].text).toLowerCase()
+      : "";
+
+    let status: ContactThread["status"] = "ready";
+    if (DECLINE_PATTERNS.some(p => latestReplyText.includes(p))) {
+      status = "declined";
+    } else if (hasFollowup) {
+      status = "already_replied_to_followup";
+    } else if ((latestReplyText.match(/\?/g) || []).length >= 2) {
+      status = "has_questions";
+    }
+
+    threads.push({
+      contact_id: c.contact_id,
+      first_name: c.first_name,
+      last_name: c.last_name,
+      email: c.email,
+      company: c.company,
+      github_handle: c.github_handle,
+      replies,
+      outbound_ids: outbounds.map((o: any) => o.id),
+      has_followup: hasFollowup,
+      status,
+    });
+  }
+
+  // Sort: ready first, then questions, then replied-to-followup, then declined
+  const statusOrder = { ready: 0, has_questions: 1, already_replied_to_followup: 2, declined: 3 };
+  threads.sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.first_name.localeCompare(b.first_name));
+
+  const statusCounts = { ready: 0, has_questions: 0, already_replied_to_followup: 0, declined: 0 };
+  for (const t of threads) statusCounts[t.status]++;
+
+  console.log(`\n  CPN Follow-up: ${threads.length} contacts (${alreadyHandled} already handled, filtered out)`);
+  console.log(`  Breakdown: ${statusCounts.ready} ready, ${statusCounts.has_questions} have questions, ${statusCounts.already_replied_to_followup} replied to followup, ${statusCounts.declined} declined`);
   console.log(`  Mode: ${dryRun ? "DRY RUN" : autoSend ? "AUTO SEND" : "INTERACTIVE"}\n`);
 
-  if (rows.length === 0) {
+  if (threads.length === 0) {
     console.log("  No contacts to follow up.\n");
     rl.close();
     return;
@@ -485,34 +607,40 @@ async function cmdFollowup() {
 
   let sent = 0, skipped = 0;
 
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const name = `${row.first_name} ${row.last_name ?? ""}`.trim();
-    const { subject, text } = buildFollowup(row.first_name);
+  for (let i = 0; i < threads.length; i++) {
+    const thread = threads[i];
+    const name = `${thread.first_name} ${thread.last_name ?? ""}`.trim();
+    const { subject, text } = buildFollowup(thread.first_name);
 
-    let replyText = row.reply_text || row.reply_html || null;
-    if (!replyText && row.reply_resend_id) {
-      try {
-        const { data: full } = await resend.emails.receiving.get(row.reply_resend_id);
-        replyText = full?.text || full?.html || null;
-        if (replyText) {
-          await sql`UPDATE received_emails SET text_content = ${full?.text ?? null}, html_content = ${full?.html ?? null} WHERE resend_id = ${row.reply_resend_id}`;
+    const statusLabel = {
+      ready: "",
+      declined: " ⛔ DECLINED",
+      has_questions: " ❓ HAS QUESTIONS",
+      already_replied_to_followup: " ↩️  REPLIED TO FOLLOWUP",
+    }[thread.status];
+
+    console.log(`── [${i + 1}/${threads.length}] ──────────────────────────────`);
+    console.log(`  Name:    ${name}${statusLabel}`);
+    console.log(`  Email:   ${thread.email}`);
+    if (thread.company) console.log(`  Company: ${thread.company}`);
+    if (thread.github_handle) console.log(`  GitHub:  ${thread.github_handle}`);
+    console.log(`  Replies: ${thread.replies.length}${thread.has_followup ? "  (follow-up already sent)" : ""}`);
+
+    // Show all replies, stripped of quoted text
+    for (let j = 0; j < thread.replies.length; j++) {
+      const reply = thread.replies[j];
+      const stripped = stripQuotedText(reply.text).trim();
+      const lines = stripped.split("\n").slice(0, 8);
+      const date = new Date(reply.received_at).toLocaleDateString();
+      console.log(`\n  ── Reply ${j + 1}/${thread.replies.length} (${date}, ${reply.classification}) ──`);
+      if (stripped) {
+        console.log(lines.map((l: string) => `  │ ${l}`).join("\n"));
+        if (stripped.split("\n").length > 8) {
+          console.log(`  │ ... (${stripped.split("\n").length - 8} more lines)`);
         }
-      } catch { /* ignore */ }
-    }
-
-    console.log(`── [${i + 1}/${rows.length}] ──────────────────────────────`);
-    console.log(`  Name:    ${name}`);
-    console.log(`  Email:   ${row.email}`);
-    if (row.company) console.log(`  Company: ${row.company}`);
-    if (row.github_handle) console.log(`  GitHub:  ${row.github_handle}`);
-
-    console.log(`\n  ── Their reply ──`);
-    if (replyText) {
-      const lines = replyText.replace(/<[^>]+>/g, "").trim().split("\n").slice(0, 10);
-      console.log(lines.map((l: string) => `  │ ${l}`).join("\n"));
-    } else {
-      console.log(`  │ (no reply text captured)`);
+      } else {
+        console.log(`  │ (no reply text captured)`);
+      }
     }
 
     console.log(`\n  ── Follow-up ──`);
@@ -524,14 +652,28 @@ async function cmdFollowup() {
 
     let action = "s";
     if (!autoSend) {
-      const answer = await ask("  [S]end / s[K]ip / [Q]uit? ");
+      const answer = await ask("  [S]end / s[K]ip / [D]one (mark handled, no send) / [Q]uit? ");
       action = answer.trim().toLowerCase() || "s";
     }
 
     if (action === "q") { console.log("\n  Quitting early.\n"); break; }
+
     if (action === "k") { skipped++; console.log("  → Skipped\n"); continue; }
 
-    const to = row.email;
+    if (action === "d") {
+      // Mark as handled without sending
+      for (const oid of thread.outbound_ids) {
+        await sql`
+          UPDATE contact_emails SET tags = ${CPN_TAG}, followup_status = 'completed', updated_at = now()::text
+          WHERE id = ${oid}
+        `;
+      }
+      skipped++;
+      console.log("  → Marked as handled (no email sent)\n");
+      continue;
+    }
+
+    const to = thread.email;
     const result = await resend.emails.send({ from: FROM, to, subject, text });
 
     if (result.error) {
@@ -541,13 +683,16 @@ async function cmdFollowup() {
 
     await sql`
       INSERT INTO contact_emails (contact_id, resend_id, from_email, to_emails, subject, text_content, status, sent_at, tags, recipient_name, parent_email_id, sequence_type, sequence_number, created_at, updated_at)
-      VALUES (${row.contact_id}, ${result.data?.id ?? ""}, 'contact@vadim.blog', ${JSON.stringify([to])}, ${subject}, ${text}, 'sent', now()::text, '["cpn-outreach","cpn-followup-1"]', ${name}, ${row.email_id}, 'followup_1', '1', now()::text, now()::text)
+      VALUES (${thread.contact_id}, ${result.data?.id ?? ""}, 'contact@vadim.blog', ${JSON.stringify([to])}, ${subject}, ${text}, 'sent', now()::text, '["cpn-outreach","cpn-followup-1"]', ${name}, ${thread.outbound_ids[0]}, 'followup_1', '1', now()::text, now()::text)
     `;
 
-    await sql`
-      UPDATE contact_emails SET tags = ${CPN_TAG}, followup_status = 'completed', updated_at = now()::text
-      WHERE id = ${row.email_id}
-    `;
+    // Mark ALL outbound emails for this contact as handled
+    for (const oid of thread.outbound_ids) {
+      await sql`
+        UPDATE contact_emails SET tags = ${CPN_TAG}, followup_status = 'completed', updated_at = now()::text
+        WHERE id = ${oid}
+      `;
+    }
 
     sent++;
     console.log(`  ✓ Sent\n`);
@@ -556,7 +701,7 @@ async function cmdFollowup() {
   console.log(`\n── Summary ──`);
   console.log(`  Sent:      ${sent}`);
   console.log(`  Skipped:   ${skipped}`);
-  console.log(`  Remaining: ${rows.length - sent - skipped}`);
+  console.log(`  Remaining: ${threads.length - sent - skipped}`);
   console.log();
   rl.close();
 }
