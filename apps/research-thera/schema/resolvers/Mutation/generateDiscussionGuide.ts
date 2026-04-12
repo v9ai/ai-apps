@@ -20,29 +20,29 @@ const discussionGuideSchema = z.object({
     stage: z.string(),
     explanation: z.string(),
     normalizedBehavior: z.string(),
-    researchBasis: z.string().optional(),
+    researchBasis: z.string().nullish(),
   }),
   conversationStarters: z.array(z.object({
     opener: z.string(),
     context: z.string(),
-    ageAppropriateNote: z.string().optional(),
+    ageAppropriateNote: z.string().nullish(),
   })),
   talkingPoints: z.array(z.object({
     point: z.string(),
     explanation: z.string(),
-    researchBacking: z.string().optional(),
-    relatedResearchIds: z.array(z.number()).optional(),
+    researchBacking: z.string().nullish(),
+    relatedResearchIds: z.array(z.number()).nullish(),
   })),
   languageGuide: z.object({
     whatToSay: z.array(z.object({
       phrase: z.string(),
       reason: z.string(),
-      alternative: z.string().optional(),
+      alternative: z.string().nullish(),
     })),
     whatNotToSay: z.array(z.object({
       phrase: z.string(),
       reason: z.string(),
-      alternative: z.string(),
+      alternative: z.string().nullish(),
     })),
   }),
   anticipatedReactions: z.array(z.object({
