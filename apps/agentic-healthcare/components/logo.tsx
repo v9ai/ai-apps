@@ -7,45 +7,31 @@ export function Logo({ size = 24, className }: LogoProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 100 50"
-      width={size * 4}
-      height={size * 2}
+      viewBox="0 0 32 32"
+      width={size}
+      height={size}
+      fill="none"
       className={className}
       aria-label="Agentic Healthcare"
       role="img"
     >
       <defs>
-        <linearGradient id="ahc-text-grad" x1="0" y1="0" x2="100" y2="50" gradientUnits="userSpaceOnUse">
+        <linearGradient id="ahc-grad" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#6366f1" />
           <stop offset="100%" stopColor="#22d3ee" />
         </linearGradient>
       </defs>
-      <text
-        x="50"
-        y="20"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill="url(#ahc-text-grad)"
-        fontFamily="system-ui, -apple-system, sans-serif"
-        fontWeight="700"
-        fontSize="16"
-        letterSpacing="-0.5"
-      >
-        Agentic
-      </text>
-      <text
-        x="50"
-        y="40"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill="url(#ahc-text-grad)"
-        fontFamily="system-ui, -apple-system, sans-serif"
-        fontWeight="700"
-        fontSize="16"
-        letterSpacing="-0.5"
-      >
-        Healthcare
-      </text>
+      {/* Rounded cross */}
+      <rect x="12" y="4" width="8" height="24" rx="3" fill="url(#ahc-grad)" />
+      <rect x="4" y="12" width="24" height="8" rx="3" fill="url(#ahc-grad)" />
+      {/* Pulse notch cut into the horizontal bar */}
+      <path
+        d="M7 16 L11 16 L13 12 L16 20 L19 12 L21 16 L25 16"
+        stroke="var(--color-background, #111)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
