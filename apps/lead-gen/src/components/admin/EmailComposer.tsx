@@ -35,6 +35,8 @@ export interface EmailComposerProps {
   name?: string;
   companyName?: string;
   subject?: string;
+  /** Pre-filled body text — sets the body when the dialog opens */
+  initialBody?: string;
   /** Original email text for reply context — passed to AI generation */
   replyContext?: string;
   /** ID of the received email being replied to — links the outbound reply in DB */
@@ -58,6 +60,7 @@ export function EmailComposer({
   name: nameProp = "",
   companyName = "",
   subject: subjectProp = "",
+  initialBody: initialBodyProp = "",
   replyContext,
   receivedEmailId,
   onSuccess,
@@ -97,8 +100,9 @@ export function EmailComposer({
       setTo(toProp);
       setName(nameProp);
       setSubject(subjectProp);
+      setBody(initialBodyProp);
     }
-  }, [open, toProp, nameProp, subjectProp]);
+  }, [open, toProp, nameProp, subjectProp, initialBodyProp]);
 
   // Apply generated content to editable fields when streaming completes
   useEffect(() => {

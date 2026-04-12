@@ -423,3 +423,49 @@ type SendOutreachEmailResult {
   subject: String
   error: String
 }
+
+# --- Email Threads (Gmail-like grouped conversations) ---
+
+extend type Query {
+  emailThreads(classification: String, search: String, limit: Int, offset: Int): EmailThreadsResult!
+  emailThread(contactId: Int!): EmailThread
+}
+
+type EmailThread {
+  contactId: Int!
+  contactName: String!
+  contactEmail: String
+  contactPosition: String
+  companyName: String
+  companyKey: String
+  lastMessageAt: String!
+  lastMessagePreview: String
+  lastMessageDirection: String!
+  classification: String
+  classificationConfidence: Float
+  totalMessages: Int!
+  hasReply: Boolean!
+  latestStatus: String
+  messages: [ThreadMessage!]!
+}
+
+type ThreadMessage {
+  id: Int!
+  direction: String!
+  fromEmail: String!
+  toEmails: [String!]!
+  subject: String!
+  textContent: String
+  htmlContent: String
+  sentAt: String
+  status: String
+  sequenceType: String
+  sequenceNumber: String
+  classification: String
+  classificationConfidence: Float
+}
+
+type EmailThreadsResult {
+  threads: [EmailThread!]!
+  totalCount: Int!
+}

@@ -35,9 +35,29 @@ const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "orange" | "blue" 
   unsubscribe: "purple",
 };
 
+function buildCpnFollowup(firstNameStr: string) {
+  const subject = `Re: Claude Partner Network — ${firstNameStr}`;
+  const text = `Hi ${firstNameStr},
+
+Here's what I have from Karl Kadon (Head of Partner Experience, Anthropic):
+
+The Claude Partner Network training path opens next week. The first step is getting a cohort through it together — that's what I'm putting together now.
+
+Karl's advice for anyone joining:
+1. List your active Claude/Anthropic work — client projects, internal tools, anything you're building with Claude
+2. Registration opens in the coming weeks — I'll forward the link the moment it's live
+
+You're on my list. I'll loop you in as soon as the next steps land.
+
+Vadim Nicolai
+vadim.blog`;
+  return { subject, text };
+}
+
 export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
   const router = useRouter();
   const [replyOpen, setReplyOpen] = useState(false);
+  const [cpnFollowupOpen, setCpnFollowupOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string } | null>(null);
 
   const handleSendSuccess = useCallback((toEmail: string) => {
@@ -110,6 +130,12 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
             <ArrowLeftIcon /> Back to Emails
           </button>
           <Flex gap="2">
+            <button
+              className={button({ variant: "solid", size: "sm" })}
+              onClick={() => setCpnFollowupOpen(true)}
+            >
+              CPN Followup
+            </button>
             <button
               className={button({ variant: "solid", size: "sm" })}
               onClick={() => setReplyOpen(true)}
@@ -278,6 +304,28 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
           refetch();
         }}
       />
+
+      {/* CPN Followup dialog */}
+      {(() => {
+        const senderName = email.fromEmail?.split("@")[0] || "";
+        const cpn = buildCpnFollowup(senderName);
+        return (
+          <EmailComposer
+            open={cpnFollowupOpen}
+            onOpenChange={setCpnFollowupOpen}
+            contactId={email.matchedContactId ?? undefined}
+            receivedEmailId={emailId}
+            to={email.replyToEmails?.[0] || email.fromEmail || ""}
+            name={senderName}
+            subject={cpn.subject}
+            initialBody={cpn.text}
+            onSuccess={(toEmail) => {
+              handleSendSuccess(toEmail);
+              refetch();
+            }}
+          />
+        );
+      })()}
 
       {/* Success toast */}
       {toast && (
