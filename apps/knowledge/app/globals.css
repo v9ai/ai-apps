@@ -1,7 +1,7 @@
 :root {
   --yc-topbar-height: 48px;
-  --cat-from: var(--teal-9, #0d9488);
-  --cat-to: var(--teal-11, #2dd4bf);
+  --cat-from: var(--teal-9);
+  --cat-to: var(--teal-11);
 
   /* Type scale */
   --text-2xs: 9px;
@@ -105,7 +105,7 @@ body {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, var(--accent-7), #06b6d4, var(--accent-7), #06b6d4, var(--accent-7));
+  background: linear-gradient(90deg, var(--accent-7), var(--cyan-9), var(--accent-7), var(--cyan-9), var(--accent-7));
   background-size: 200% 100%;
   animation: shimmer 6s linear infinite;
 }
@@ -195,7 +195,7 @@ body {
   width: 100%;
   height: 2px;
   transform-origin: left;
-  background: linear-gradient(90deg, var(--accent-9), #06b6d4);
+  background: linear-gradient(90deg, var(--accent-9), var(--cyan-9));
   z-index: 1;
   pointer-events: none;
 }
@@ -236,14 +236,14 @@ body {
 .hero::before {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, #0d9488, transparent 70%);
+  background: radial-gradient(circle, var(--teal-9), transparent 70%);
   top: -200px;
   left: -100px;
 }
 .hero::after {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, #06b6d4, transparent 70%);
+  background: radial-gradient(circle, var(--cyan-9), transparent 70%);
   bottom: -200px;
   right: -100px;
   animation-delay: -10s;
@@ -313,7 +313,7 @@ body {
   background: color-mix(in srgb, var(--accent-9) 8%, transparent);
 }
 .hero-title-accent {
-  background: linear-gradient(135deg, var(--accent-9), #06b6d4);
+  background: linear-gradient(135deg, var(--accent-9), var(--cyan-9));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -366,8 +366,8 @@ body {
   margin-top: 32px;
   padding: 10px 24px;
   border-radius: 99px;
-  background: linear-gradient(135deg, var(--accent-9), #06b6d4);
-  color: #fff;
+  background: linear-gradient(135deg, var(--accent-9), var(--cyan-9));
+  color: var(--gray-1);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -571,7 +571,7 @@ body {
   left: 16px;
   right: 16px;
   height: 2px;
-  background: linear-gradient(90deg, #7c3aed, #2563eb, #0891b2, #059669, #d97706, #e11d48, #6366f1, #64748b, #0284c7);
+  background: linear-gradient(90deg, var(--violet-9), var(--blue-9), var(--cyan-9), var(--jade-9), var(--amber-9), var(--crimson-9), var(--indigo-9), var(--slate-9), var(--sky-9));
   opacity: 0.25;
   border-radius: 1px;
   z-index: 0;
@@ -609,7 +609,7 @@ body {
   height: 20px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--cat-from), var(--cat-to));
-  color: #fff;
+  color: var(--gray-1);
   font-size: 10px;
   font-weight: 700;
   display: flex;
@@ -847,9 +847,9 @@ body {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.15);
 }
-.difficulty-filter-btn--beginner.difficulty-filter-btn--active { border-color: rgba(52, 211, 153, 0.4); color: #34d399; }
-.difficulty-filter-btn--intermediate.difficulty-filter-btn--active { border-color: rgba(251, 191, 36, 0.4); color: #fbbf24; }
-.difficulty-filter-btn--advanced.difficulty-filter-btn--active { border-color: rgba(251, 113, 133, 0.4); color: #fb7185; }
+.difficulty-filter-btn--beginner.difficulty-filter-btn--active { border-color: var(--jade-a6); color: var(--jade-11); }
+.difficulty-filter-btn--intermediate.difficulty-filter-btn--active { border-color: var(--amber-a6); color: var(--amber-11); }
+.difficulty-filter-btn--advanced.difficulty-filter-btn--active { border-color: var(--crimson-a6); color: var(--crimson-11); }
 .difficulty-filter-count {
   font-size: 10px;
   font-variant-numeric: tabular-nums;
@@ -1126,16 +1126,16 @@ body {
   flex-shrink: 0;
 }
 .article-card-level--beginner {
-  color: #34d399;
-  background: rgba(52, 211, 153, 0.1);
+  color: var(--jade-11);
+  background: var(--jade-a3);
 }
 .article-card-level--intermediate {
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.1);
+  color: var(--amber-11);
+  background: var(--amber-a3);
 }
 .article-card-level--advanced {
-  color: #fb7185;
-  background: rgba(251, 113, 133, 0.1);
+  color: var(--crimson-11);
+  background: var(--crimson-a3);
 }
 
 /* article card time badge */
@@ -1175,17 +1175,17 @@ body {
 /* ================================================================
    CATEGORY CSS VARS (identity colors)
    ================================================================ */
-.cat-foundations-architecture { --cat-from: #7c3aed; --cat-to: #a78bfa; }
-.cat-prompting-icl { --cat-from: #2563eb; --cat-to: #60a5fa; }
-.cat-rag-retrieval { --cat-from: #0891b2; --cat-to: #22d3ee; }
-.cat-fine-tuning { --cat-from: #059669; --cat-to: #34d399; }
-.cat-agents-tools { --cat-from: #d97706; --cat-to: #fbbf24; }
-.cat-evals-testing { --cat-from: #e11d48; --cat-to: #fb7185; }
-.cat-infra-deployment { --cat-from: #6366f1; --cat-to: #818cf8; }
-.cat-safety-alignment { --cat-from: #ea580c; --cat-to: #fb923c; }
-.cat-multimodal-ai { --cat-from: #8b5cf6; --cat-to: #c4b5fd; }
-.cat-applied-production { --cat-from: #64748b; --cat-to: #94a3b8; }
-.cat-cloud-devops { --cat-from: #0284c7; --cat-to: #38bdf8; }
+.cat-foundations-architecture { --cat-from: var(--violet-9); --cat-to: var(--violet-11); }
+.cat-prompting-icl { --cat-from: var(--blue-9); --cat-to: var(--blue-11); }
+.cat-rag-retrieval { --cat-from: var(--cyan-9); --cat-to: var(--cyan-11); }
+.cat-fine-tuning { --cat-from: var(--jade-9); --cat-to: var(--jade-11); }
+.cat-agents-tools { --cat-from: var(--amber-9); --cat-to: var(--amber-11); }
+.cat-evals-testing { --cat-from: var(--crimson-9); --cat-to: var(--crimson-11); }
+.cat-infra-deployment { --cat-from: var(--indigo-9); --cat-to: var(--indigo-11); }
+.cat-safety-alignment { --cat-from: var(--orange-9); --cat-to: var(--orange-11); }
+.cat-multimodal-ai { --cat-from: var(--purple-9); --cat-to: var(--purple-11); }
+.cat-applied-production { --cat-from: var(--slate-9); --cat-to: var(--slate-11); }
+.cat-cloud-devops { --cat-from: var(--sky-9); --cat-to: var(--sky-11); }
 
 /* ================================================================
    ARTICLE PAGE — BANNER
@@ -1268,7 +1268,7 @@ body {
 }
 .badge-pill--category {
   background: linear-gradient(135deg, var(--cat-from), var(--cat-to));
-  color: #fff;
+  color: var(--gray-1);
 }
 .badge-pill--difficulty {
   font-size: 10px;
@@ -1277,19 +1277,19 @@ body {
   letter-spacing: 0.05em;
 }
 .badge-pill--beginner {
-  background: rgba(52, 211, 153, 0.12);
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  color: #34d399;
+  background: var(--jade-a3);
+  border: 1px solid var(--jade-a4);
+  color: var(--jade-11);
 }
 .badge-pill--intermediate {
-  background: rgba(251, 191, 36, 0.12);
-  border: 1px solid rgba(251, 191, 36, 0.2);
-  color: #fbbf24;
+  background: var(--amber-a3);
+  border: 1px solid var(--amber-a4);
+  color: var(--amber-11);
 }
 .badge-pill--advanced {
-  background: rgba(251, 113, 133, 0.12);
-  border: 1px solid rgba(251, 113, 133, 0.2);
-  color: #fb7185;
+  background: var(--crimson-a3);
+  border: 1px solid var(--crimson-a4);
+  color: var(--crimson-11);
 }
 .badge-pill--glass {
   background: rgba(255, 255, 255, 0.06);
@@ -1542,20 +1542,20 @@ body {
 }
 .markdown-prose blockquote.callout::before { display: none; }
 .markdown-prose blockquote.callout--takeaway {
-  border-left-color: #34d399;
-  background: rgba(52, 211, 153, 0.06);
+  border-left-color: var(--jade-9);
+  background: var(--jade-a2);
 }
 .markdown-prose blockquote.callout--note {
-  border-left-color: #60a5fa;
-  background: rgba(96, 165, 250, 0.06);
+  border-left-color: var(--blue-9);
+  background: var(--blue-a2);
 }
 .markdown-prose blockquote.callout--warning {
-  border-left-color: #fbbf24;
-  background: rgba(251, 191, 36, 0.06);
+  border-left-color: var(--amber-9);
+  background: var(--amber-a2);
 }
 .markdown-prose blockquote.callout--tip {
-  border-left-color: #a78bfa;
-  background: rgba(167, 139, 250, 0.06);
+  border-left-color: var(--violet-9);
+  background: var(--violet-a2);
 }
 
 /* gradient hr */
@@ -2223,12 +2223,12 @@ body {
 .audio-btn--play {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, var(--accent-9), #06b6d4);
-  color: #fff;
+  background: linear-gradient(135deg, var(--accent-9), var(--cyan-9));
+  color: var(--gray-1);
 }
 .audio-btn--play:hover {
-  background: linear-gradient(135deg, var(--accent-10), #0891b2);
-  color: #fff;
+  background: linear-gradient(135deg, var(--accent-10), var(--cyan-10));
+  color: var(--gray-1);
   transform: scale(1.05);
 }
 .audio-btn--speed {
@@ -2586,7 +2586,7 @@ body {
 .not-found-code {
   font-size: 72px;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--accent-9), #06b6d4);
+  background: linear-gradient(135deg, var(--accent-9), var(--cyan-9));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -2803,8 +2803,8 @@ body {
   gap: 1px;
 }
 .course-star { font-size: 10px; }
-.course-star--full { color: #f59e0b; }
-.course-star--half { color: #f59e0b; opacity: 0.6; }
+.course-star--full { color: var(--amber-9); }
+.course-star--half { color: var(--amber-9); opacity: 0.6; }
 .course-star--empty { color: var(--gray-6); }
 .course-rating-num {
   font-size: 11px;
@@ -2822,17 +2822,17 @@ body {
   flex-wrap: wrap;
 }
 .badge-pill--free {
-  background: color-mix(in srgb, #059669 15%, transparent);
-  color: #34d399;
-  border: 1px solid color-mix(in srgb, #059669 30%, transparent);
+  background: var(--jade-a3);
+  color: var(--jade-11);
+  border: 1px solid var(--jade-a5);
 }
 .badge-pill--level {
   background: color-mix(in srgb, var(--gray-5) 60%, transparent);
   color: var(--gray-10);
 }
-.badge-pill--beginner { color: #34d399; background: color-mix(in srgb, #059669 12%, transparent); }
-.badge-pill--intermediate { color: #60a5fa; background: color-mix(in srgb, #2563eb 12%, transparent); }
-.badge-pill--advanced { color: #f87171; background: color-mix(in srgb, #dc2626 12%, transparent); }
+.badge-pill--beginner { color: var(--jade-11); background: var(--jade-a3); }
+.badge-pill--intermediate { color: var(--blue-11); background: var(--blue-a3); }
+.badge-pill--advanced { color: var(--red-11); background: var(--red-a3); }
 .courses-footer {
   margin-top: 12px;
   text-align: right;
@@ -3025,7 +3025,7 @@ body {
   font-size: 11px;
   font-weight: 700;
   color: var(--gray-1);
-  background: #b31b1b;
+  background: var(--red-9);
   padding: 2px 6px;
   border-radius: 4px;
   text-decoration: none;
@@ -3056,7 +3056,7 @@ body {
 .se-source-badge {
   font-size: 10px;
   font-weight: 700;
-  color: #fff;
+  color: var(--gray-1);
   padding: 1px 6px;
   border-radius: 4px;
   letter-spacing: 0.02em;
