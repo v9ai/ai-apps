@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Button, Flex, Text, Badge } from "@radix-ui/themes";
+import { Button, Text, Badge } from "@radix-ui/themes";
 import type { CssProperty, CssCategory } from "@/lib/css-properties";
 import { LiveDemo } from "./LiveDemo";
 
@@ -17,19 +17,19 @@ export function FlashcardDeck({
   onRate,
 }: FlashcardDeckProps) {
   const [index, setIndex] = useState(0);
-  const [flipped, setFlipped] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   const prop = properties[index];
   const cat = categories.find((c) => c.id === prop?.category);
   const total = properties.length;
 
-  const flip = useCallback(() => setFlipped((f) => !f), []);
+  const toggle = useCallback(() => setRevealed((r) => !r), []);
 
   const rate = useCallback(
     (isCorrect: boolean) => {
       if (!prop) return;
       onRate(prop.id, isCorrect);
-      setFlipped(false);
+      setRevealed(false);
       setIndex((i) => (i + 1 < total ? i + 1 : 0));
     },
     [prop, onRate, total],
@@ -37,7 +37,7 @@ export function FlashcardDeck({
 
   const navigate = useCallback(
     (dir: -1 | 1) => {
-      setFlipped(false);
+      setRevealed(false);
       setIndex((i) => {
         const next = i + dir;
         if (next < 0) return total - 1;
@@ -52,7 +52,7 @@ export function FlashcardDeck({
     function onKey(e: KeyboardEvent) {
       if (e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
-        flip();
+        toggle();
       } else if (e.key === "ArrowRight") {
         navigate(1);
       } else if (e.key === "ArrowLeft") {
@@ -65,7 +65,7 @@ export function FlashcardDeck({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [flip, rate, navigate]);
+  }, [toggle, rate, navigate]);
 
   if (!prop) {
     return (
@@ -77,43 +77,33 @@ export function FlashcardDeck({
   }
 
   return (
-    <div>
-      <div className="flashcard-counter">
-        <Text size="1" color="gray">
-          {index + 1} / {total}
-        </Text>
-      </div>
+    <div className="flashcard-split-wrapper">
+      {/* Left: test / quiz */}
+      <div className="flashcard-left" onClick={toggle}>
+        <div className="flashcard-counter">
+          <Text size="1" color="gray">
+            {index + 1} / {total}
+          </Text>
+        </div>
 
-      <div className="flashcard-container" onClick={flip}>
-        <div className={`flashcard ${flipped ? "flashcard--flipped" : ""}`}>
-          {/* Front */}
-          <div className="flashcard-face flashcard-front">
-            {cat && (
-              <Badge
-                size="1"
-                color={cat.color as "violet"}
-                variant="soft"
-                style={{ marginBottom: 16 }}
-              >
-                {cat.icon} {cat.name}
-              </Badge>
-            )}
-            <div className="flashcard-property">{prop.property}</div>
-            <div className="flashcard-prompt">
-              What does this property do? What values can it take?
-            </div>
-            <Text
-              size="1"
-              color="gray"
-              style={{ marginTop: "auto", paddingTop: 16 }}
-            >
-              Click or press <span className="memorize-kbd">Space</span> to
-              reveal
-            </Text>
-          </div>
+        {cat && (
+          <Badge
+            size="1"
+            color={cat.color as "violet"}
+            variant="soft"
+            style={{ marginBottom: 16 }}
+          >
+            {cat.icon} {cat.name}
+          </Badge>
+        )}
 
-          {/* Back */}
-          <div className="flashcard-face flashcard-back">
+        <div className="flashcard-property">{prop.property}</div>
+        <div className="flashcard-prompt">
+          What does this property do? What values can it take?
+        </div>
+
+        {revealed ? (
+          <div className="flashcard-answer">
             <div className="flashcard-description">
               {prop.shortDescription}
             </div>
@@ -141,54 +131,64 @@ export function FlashcardDeck({
             {prop.mnemonicHint && (
               <div className="flashcard-hint">{prop.mnemonicHint}</div>
             )}
-
-            <div className="flashcard-demo-wrapper">
-              <LiveDemo
-                html={prop.demo.html}
-                css={prop.demo.css}
-                height={120}
-              />
-            </div>
           </div>
-        </div>
+        ) : (
+          <Text
+            size="1"
+            color="gray"
+            style={{ marginTop: "auto", paddingTop: 16 }}
+          >
+            Click or press <span className="memorize-kbd">Space</span> to
+            reveal
+          </Text>
+        )}
       </div>
 
-      {/* Rating buttons — only show when flipped */}
-      {flipped && (
-        <div className="flashcard-rating">
-          <Button
-            size="2"
-            variant="soft"
-            color="grass"
-            onClick={(e) => {
-              e.stopPropagation();
-              rate(true);
-            }}
-          >
-            Knew it <span className="memorize-kbd">1</span>
+      {/* Right: rendered demo */}
+      <div className="flashcard-right">
+        <LiveDemo
+          html={prop.demo.html}
+          css={prop.demo.css}
+          height="100%"
+        />
+      </div>
+
+      {/* Bottom controls */}
+      <div className="flashcard-controls">
+        {revealed && (
+          <div className="flashcard-rating">
+            <Button
+              size="2"
+              variant="soft"
+              color="grass"
+              onClick={(e) => {
+                e.stopPropagation();
+                rate(true);
+              }}
+            >
+              Knew it <span className="memorize-kbd">1</span>
+            </Button>
+            <Button
+              size="2"
+              variant="soft"
+              color="red"
+              onClick={(e) => {
+                e.stopPropagation();
+                rate(false);
+              }}
+            >
+              Didn&apos;t know <span className="memorize-kbd">2</span>
+            </Button>
+          </div>
+        )}
+        <div className="flashcard-nav">
+          <Button size="1" variant="ghost" color="gray" onClick={() => navigate(-1)}>
+            &larr; Prev
           </Button>
-          <Button
-            size="2"
-            variant="soft"
-            color="red"
-            onClick={(e) => {
-              e.stopPropagation();
-              rate(false);
-            }}
-          >
-            Didn&apos;t know <span className="memorize-kbd">2</span>
+          <Button size="1" variant="ghost" color="gray" onClick={() => navigate(1)}>
+            Next &rarr;
           </Button>
         </div>
-      )}
-
-      {/* Navigation */}
-      <div className="flashcard-nav">
-        <Button size="1" variant="ghost" color="gray" onClick={() => navigate(-1)}>
-          &larr; Prev
-        </Button>
-        <Button size="1" variant="ghost" color="gray" onClick={() => navigate(1)}>
-          Next &rarr;
-        </Button>
       </div>
     </div>
   );

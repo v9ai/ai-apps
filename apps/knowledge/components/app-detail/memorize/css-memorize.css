@@ -125,50 +125,64 @@
   min-height: 0;
 }
 
-.flashcard-container {
-  perspective: 1000px;
-  margin: 0 auto 24px;
+.flashcard-split-wrapper {
   flex: 1;
-  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 16px;
   min-height: 0;
 }
 
-.flashcard {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 320px;
-  cursor: pointer;
-  transform-style: preserve-3d;
-  transition: transform 0.5s ease;
-}
-
-.flashcard--flipped {
-  transform: rotateY(180deg);
-}
-
-.flashcard-face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  border-radius: var(--radius-3);
-  border: 1px solid var(--gray-5);
-  padding: 24px;
+.flashcard-left {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
-}
-
-.flashcard-front {
-  background: var(--gray-2);
   align-items: center;
   justify-content: center;
   text-align: center;
+  padding: 24px;
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-5);
+  background: var(--gray-2);
+  cursor: pointer;
+  overflow-y: auto;
+  min-height: 0;
 }
 
-.flashcard-back {
-  background: var(--gray-1);
-  transform: rotateY(180deg);
-  overflow-y: auto;
+.flashcard-answer {
+  text-align: left;
+  width: 100%;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gray-5);
+}
+
+.flashcard-right {
+  grid-column: 2;
+  grid-row: 1;
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-5);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.flashcard-right iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
+}
+
+.flashcard-controls {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .flashcard-property {
@@ -232,13 +246,6 @@
   border-radius: var(--radius-2);
   overflow: hidden;
   border: 1px solid var(--gray-4);
-}
-
-.flashcard-demo-wrapper iframe {
-  width: 100%;
-  height: 120px;
-  border: none;
-  background: #fff;
 }
 
 .flashcard-rating {
