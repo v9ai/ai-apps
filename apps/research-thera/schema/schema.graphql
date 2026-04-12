@@ -77,6 +77,7 @@ type Query {
   allTags: [String!]!
   research(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int): [Research!]!
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
+  recommendedBooks(goalId: Int!): [RecommendedBook!]!
   notes(entityId: Int!, entityType: String!): [Note!]!
   allNotes: [Note!]!
   note(id: Int, slug: String): Note
@@ -166,6 +167,8 @@ type Mutation {
   deleteResearch(goalId: Int!): DeleteResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
+  generateRecommendedBooks(goalId: Int!): GenerateRecommendedBooksResult!
+  deleteRecommendedBooks(goalId: Int!): DeleteRecommendedBooksResult!
   generateLongFormText(
     goalId: Int
     issueId: Int
@@ -358,6 +361,23 @@ type Goal {
   parentAdviceLanguage: String
   parentAdviceGeneratedAt: String
   storyLanguage: String
+  recommendedBooks: [RecommendedBook!]!
+}
+
+type RecommendedBook {
+  id: Int!
+  goalId: Int
+  title: String!
+  authors: [String!]!
+  year: Int
+  isbn: String
+  description: String!
+  whyRecommended: String!
+  category: String!
+  amazonUrl: String
+  generatedAt: String!
+  createdAt: String!
+  updatedAt: String!
 }
 
 type Story {
@@ -636,6 +656,18 @@ type DeleteGoalResult {
 }
 
 type DeleteQuestionsResult {
+  success: Boolean!
+  message: String
+  deletedCount: Int!
+}
+
+type GenerateRecommendedBooksResult {
+  success: Boolean!
+  message: String
+  books: [RecommendedBook!]!
+}
+
+type DeleteRecommendedBooksResult {
   success: Boolean!
   message: String
   deletedCount: Int!

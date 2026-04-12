@@ -1,8 +1,8 @@
 import { Badge, Callout, Card, Flex, Heading, Text } from "@radix-ui/themes";
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { conditionResearches } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { researches } from "@/lib/db/schema";
+import { and, eq } from "drizzle-orm";
 import { BookOpen, ExternalLink } from "lucide-react";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { ResearchButton } from "./research-button";
@@ -29,8 +29,8 @@ async function getConditionResearch(conditionId: string) {
 
   const [data] = await db
     .select()
-    .from(conditionResearches)
-    .where(eq(conditionResearches.conditionId, conditionId));
+    .from(researches)
+    .where(and(eq(researches.type, "condition"), eq(researches.entityId, conditionId)));
 
   if (!data) return null;
 

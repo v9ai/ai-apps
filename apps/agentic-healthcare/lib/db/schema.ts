@@ -373,58 +373,32 @@ export const healthStateEmbeddings = pgTable(
   (table) => [index("health_state_emb_user_idx").on(table.userId)],
 );
 
-// ── Research ───────────────────────────────────────────────────────
+// ── Research (unified) ─────────────────────────────────────────────
 
-export const conditionResearches = pgTable(
-  "condition_researches",
+export const researches = pgTable(
+  "researches",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    conditionId: uuid("condition_id")
-      .notNull()
-      .references(() => conditions.id, { onDelete: "cascade" })
-      .unique(),
     userId: text("user_id").notNull(),
+    type: text("type").notNull(), // "condition" | "protocol" | "memory"
+    entityId: uuid("entity_id"), // conditionId or protocolId; null for memory
     papers: jsonb("papers").notNull().default([]),
     synthesis: text("synthesis"),
     paperCount: text("paper_count"),
     searchQuery: text("search_query"),
+    supplementFindings: jsonb("supplement_findings").notNull().default([]),
+    supplementCount: text("supplement_count"),
+    status: text("status").notNull().default("completed"),
+    errorMessage: text("error_message"),
+    durationMs: text("duration_ms"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("condition_researches_condition_idx").on(table.conditionId),
-  ],
-);
-
-// ── Protocol Research ─────────────────────────────────────────────
-
-export const protocolResearches = pgTable(
-  "protocol_researches",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    protocolId: uuid("protocol_id")
-      .notNull()
-      .references(() => brainHealthProtocols.id, { onDelete: "cascade" }),
-    userId: text("user_id").notNull(),
-    supplementFindings: jsonb("supplement_findings").notNull().default([]),
-    papers: jsonb("papers").notNull().default([]),
-    synthesis: text("synthesis"),
-    paperCount: text("paper_count"),
-    supplementCount: text("supplement_count"),
-    status: text("status").notNull().default("pending"),
-    errorMessage: text("error_message"),
-    durationMs: text("duration_ms"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    index("pr_protocol_idx").on(table.protocolId),
-    index("pr_user_idx").on(table.userId),
-    index("pr_status_idx").on(table.status),
+    index("res_user_idx").on(table.userId),
+    index("res_type_idx").on(table.type),
+    index("res_entity_idx").on(table.entityId),
+    index("res_status_idx").on(table.status),
   ],
 );
 
@@ -564,18 +538,3 @@ export const memoryBaseline = pgTable(
   (table) => [uniqueIndex("mb_user_idx").on(table.userId)],
 );
 
-export const memoryResearch = pgTable(
-  "memory_research",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" })
-      .unique(),
-    papers: jsonb("papers").notNull().default([]),
-    paperCount: text("paper_count"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (table) => [uniqueIndex("mr_user_idx").on(table.userId)],
-);

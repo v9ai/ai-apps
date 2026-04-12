@@ -2,8 +2,8 @@
 
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { conditions, conditionResearches } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { conditions, researches } from "@/lib/db/schema";
+import { and, eq, sql } from "drizzle-orm";
 import { qwen } from "@/lib/embeddings";
 import {
   searchAllApis,
@@ -133,27 +133,34 @@ export async function runConditionResearch(conditionId: string) {
   const synthesis =
     synthResp.choices[0]?.message.content ?? "Synthesis generation failed.";
 
-  // Upsert to condition_researches
-  await db
-    .insert(conditionResearches)
-    .values({
-      conditionId: condition.id,
-      userId,
-      papers: enriched,
-      synthesis,
-      paperCount: String(enriched.length),
-      searchQuery,
-    })
-    .onConflictDoUpdate({
-      target: conditionResearches.conditionId,
-      set: {
+  // Check for existing condition research
+  const [existing] = await db
+    .select({ id: researches.id })
+    .from(researches)
+    .where(and(eq(researches.type, "condition"), eq(researches.entityId, condition.id)));
+
+  if (existing) {
+    await db
+      .update(researches)
+      .set({
         papers: enriched,
         synthesis,
         paperCount: String(enriched.length),
         searchQuery,
         updatedAt: sql`now()`,
-      },
+      })
+      .where(eq(researches.id, existing.id));
+  } else {
+    await db.insert(researches).values({
+      userId,
+      type: "condition",
+      entityId: condition.id,
+      papers: enriched,
+      synthesis,
+      paperCount: String(enriched.length),
+      searchQuery,
     });
+  }
 
   revalidatePath(`/conditions/${conditionId}`);
 }

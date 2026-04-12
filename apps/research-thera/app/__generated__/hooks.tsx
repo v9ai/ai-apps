@@ -520,6 +520,13 @@ export type DeleteQuestionsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteRecommendedBooksResult = {
+  __typename?: 'DeleteRecommendedBooksResult';
+  deletedCount: Scalars['Int']['output'];
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteRelationshipResult = {
   __typename?: 'DeleteRelationshipResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -778,6 +785,13 @@ export type GenerateQuestionsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GenerateRecommendedBooksResult = {
+  __typename?: 'GenerateRecommendedBooksResult';
+  books: Array<RecommendedBook>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateResearchResult = {
   __typename?: 'GenerateResearchResult';
   count?: Maybe<Scalars['Int']['output']>;
@@ -817,6 +831,7 @@ export type Goal = {
   parentGoalId?: Maybe<Scalars['Int']['output']>;
   priority: Scalars['String']['output'];
   questions: Array<TherapeuticQuestion>;
+  recommendedBooks: Array<RecommendedBook>;
   research: Array<Research>;
   slug?: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
@@ -1044,6 +1059,7 @@ export type Mutation = {
   deleteJournalAnalysis: DeleteJournalAnalysisResult;
   deleteJournalEntry: DeleteJournalEntryResult;
   deleteNote: DeleteNoteResult;
+  deleteRecommendedBooks: DeleteRecommendedBooksResult;
   deleteRelationship: DeleteRelationshipResult;
   deleteResearch: DeleteResearchResult;
   deleteStory: DeleteStoryResult;
@@ -1059,6 +1075,7 @@ export type Mutation = {
   generateLongFormText: GenerateLongFormTextResult;
   generateOpenAIAudio: GenerateOpenAiAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
+  generateRecommendedBooks: GenerateRecommendedBooksResult;
   generateResearch: GenerateResearchResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
   linkContactToIssue: IssueContactLink;
@@ -1278,6 +1295,11 @@ export type MutationDeleteNoteArgs = {
 };
 
 
+export type MutationDeleteRecommendedBooksArgs = {
+  goalId: Scalars['Int']['input'];
+};
+
+
 export type MutationDeleteRelationshipArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1367,6 +1389,11 @@ export type MutationGenerateOpenAiAudioArgs = {
 export type MutationGenerateParentAdviceArgs = {
   goalId: Scalars['Int']['input'];
   language?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationGenerateRecommendedBooksArgs = {
+  goalId: Scalars['Int']['input'];
 };
 
 
@@ -1750,6 +1777,7 @@ export type Query = {
   note?: Maybe<Note>;
   notes: Array<Note>;
   publicDiscussionGuide?: Maybe<PublicDiscussionGuideResult>;
+  recommendedBooks: Array<RecommendedBook>;
   relationship?: Maybe<Relationship>;
   relationships: Array<Relationship>;
   research: Array<Research>;
@@ -1919,6 +1947,11 @@ export type QueryPublicDiscussionGuideArgs = {
 };
 
 
+export type QueryRecommendedBooksArgs = {
+  goalId: Scalars['Int']['input'];
+};
+
+
 export type QueryRelationshipArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1962,6 +1995,23 @@ export type QueryTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type RecommendedBook = {
+  __typename?: 'RecommendedBook';
+  amazonUrl?: Maybe<Scalars['String']['output']>;
+  authors: Array<Scalars['String']['output']>;
+  category: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  generatedAt: Scalars['String']['output'];
+  goalId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  isbn?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  whyRecommended: Scalars['String']['output'];
+  year?: Maybe<Scalars['Int']['output']>;
 };
 
 export type Relationship = {
@@ -2560,6 +2610,13 @@ export type DeleteNoteMutationVariables = Exact<{
 
 export type DeleteNoteMutation = { __typename?: 'Mutation', deleteNote: { __typename?: 'DeleteNoteResult', success: boolean, message?: string | null } };
 
+export type DeleteRecommendedBooksMutationVariables = Exact<{
+  goalId: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteRecommendedBooksMutation = { __typename?: 'Mutation', deleteRecommendedBooks: { __typename?: 'DeleteRecommendedBooksResult', success: boolean, message?: string | null, deletedCount: number } };
+
 export type DeleteRelationshipMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -2688,6 +2745,13 @@ export type GenerateParentAdviceMutationVariables = Exact<{
 
 
 export type GenerateParentAdviceMutation = { __typename?: 'Mutation', generateParentAdvice: { __typename?: 'GenerateParentAdviceResult', success: boolean, message?: string | null, parentAdvice?: string | null } };
+
+export type GenerateRecommendedBooksMutationVariables = Exact<{
+  goalId: Scalars['Int']['input'];
+}>;
+
+
+export type GenerateRecommendedBooksMutation = { __typename?: 'Mutation', generateRecommendedBooks: { __typename?: 'GenerateRecommendedBooksResult', success: boolean, message?: string | null, books: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string }> } };
 
 export type GenerateResearchMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -2840,7 +2904,7 @@ export type GetGoalQueryVariables = Exact<{
 }>;
 
 
-export type GetGoalQuery = { __typename?: 'Query', goal?: { __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, priority: string, targetDate?: string | null, tags?: Array<string> | null, familyMemberId?: number | null, createdBy: string, parentGoalId?: number | null, therapeuticText?: string | null, therapeuticTextLanguage?: string | null, therapeuticTextGeneratedAt?: string | null, parentAdvice?: string | null, parentAdviceLanguage?: string | null, parentAdviceGeneratedAt?: string | null, storyLanguage?: string | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null } | null, parentGoal?: { __typename?: 'Goal', id: number, slug?: string | null, title: string, status: string } | null, subGoals: Array<{ __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, createdAt: string, updatedAt: string }>, notes: Array<{ __typename?: 'Note', id: number, slug?: string | null, content: string, noteType?: string | null, tags?: Array<string> | null, createdAt: string, updatedAt: string }>, questions: Array<{ __typename?: 'TherapeuticQuestion', id: number, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string }>, research: Array<{ __typename?: 'Research', id: number, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractionConfidence: number }>, stories: Array<{ __typename?: 'Story', id: number, goalId?: number | null, issueId?: number | null, feedbackId?: number | null, createdBy?: string | null, content: string, language?: string | null, minutes?: number | null, audioKey?: string | null, audioUrl?: string | null, audioGeneratedAt?: string | null, createdAt: string, updatedAt: string }> } | null };
+export type GetGoalQuery = { __typename?: 'Query', goal?: { __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, priority: string, targetDate?: string | null, tags?: Array<string> | null, familyMemberId?: number | null, createdBy: string, parentGoalId?: number | null, therapeuticText?: string | null, therapeuticTextLanguage?: string | null, therapeuticTextGeneratedAt?: string | null, parentAdvice?: string | null, parentAdviceLanguage?: string | null, parentAdviceGeneratedAt?: string | null, storyLanguage?: string | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null } | null, parentGoal?: { __typename?: 'Goal', id: number, slug?: string | null, title: string, status: string } | null, subGoals: Array<{ __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, createdAt: string, updatedAt: string }>, notes: Array<{ __typename?: 'Note', id: number, slug?: string | null, content: string, noteType?: string | null, tags?: Array<string> | null, createdAt: string, updatedAt: string }>, questions: Array<{ __typename?: 'TherapeuticQuestion', id: number, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string }>, research: Array<{ __typename?: 'Research', id: number, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractionConfidence: number }>, recommendedBooks: Array<{ __typename?: 'RecommendedBook', id: number, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string }>, stories: Array<{ __typename?: 'Story', id: number, goalId?: number | null, issueId?: number | null, feedbackId?: number | null, createdBy?: string | null, content: string, language?: string | null, minutes?: number | null, audioKey?: string | null, audioUrl?: string | null, audioGeneratedAt?: string | null, createdAt: string, updatedAt: string }> } | null };
 
 export type GetGoalsQueryVariables = Exact<{
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
@@ -2927,6 +2991,13 @@ export type GetPublicDiscussionGuideQueryVariables = Exact<{
 
 
 export type GetPublicDiscussionGuideQuery = { __typename?: 'Query', publicDiscussionGuide?: { __typename?: 'PublicDiscussionGuideResult', entryTitle?: string | null, familyMemberName?: string | null, guide: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } } | null };
+
+export type GetRecommendedBooksQueryVariables = Exact<{
+  goalId: Scalars['Int']['input'];
+}>;
+
+
+export type GetRecommendedBooksQuery = { __typename?: 'Query', recommendedBooks: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string, createdAt: string, updatedAt: string }> };
 
 export type GetRelationshipQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -4837,6 +4908,41 @@ export function useDeleteNoteMutation(baseOptions?: Apollo.MutationHookOptions<D
 export type DeleteNoteMutationHookResult = ReturnType<typeof useDeleteNoteMutation>;
 export type DeleteNoteMutationResult = Apollo.MutationResult<DeleteNoteMutation>;
 export type DeleteNoteMutationOptions = Apollo.BaseMutationOptions<DeleteNoteMutation, DeleteNoteMutationVariables>;
+export const DeleteRecommendedBooksDocument = gql`
+    mutation DeleteRecommendedBooks($goalId: Int!) {
+  deleteRecommendedBooks(goalId: $goalId) {
+    success
+    message
+    deletedCount
+  }
+}
+    `;
+export type DeleteRecommendedBooksMutationFn = Apollo.MutationFunction<DeleteRecommendedBooksMutation, DeleteRecommendedBooksMutationVariables>;
+
+/**
+ * __useDeleteRecommendedBooksMutation__
+ *
+ * To run a mutation, you first call `useDeleteRecommendedBooksMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteRecommendedBooksMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteRecommendedBooksMutation, { data, loading, error }] = useDeleteRecommendedBooksMutation({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *   },
+ * });
+ */
+export function useDeleteRecommendedBooksMutation(baseOptions?: Apollo.MutationHookOptions<DeleteRecommendedBooksMutation, DeleteRecommendedBooksMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteRecommendedBooksMutation, DeleteRecommendedBooksMutationVariables>(DeleteRecommendedBooksDocument, options);
+      }
+export type DeleteRecommendedBooksMutationHookResult = ReturnType<typeof useDeleteRecommendedBooksMutation>;
+export type DeleteRecommendedBooksMutationResult = Apollo.MutationResult<DeleteRecommendedBooksMutation>;
+export type DeleteRecommendedBooksMutationOptions = Apollo.BaseMutationOptions<DeleteRecommendedBooksMutation, DeleteRecommendedBooksMutationVariables>;
 export const DeleteRelationshipDocument = gql`
     mutation DeleteRelationship($id: Int!) {
   deleteRelationship(id: $id) {
@@ -5544,6 +5650,53 @@ export function useGenerateParentAdviceMutation(baseOptions?: Apollo.MutationHoo
 export type GenerateParentAdviceMutationHookResult = ReturnType<typeof useGenerateParentAdviceMutation>;
 export type GenerateParentAdviceMutationResult = Apollo.MutationResult<GenerateParentAdviceMutation>;
 export type GenerateParentAdviceMutationOptions = Apollo.BaseMutationOptions<GenerateParentAdviceMutation, GenerateParentAdviceMutationVariables>;
+export const GenerateRecommendedBooksDocument = gql`
+    mutation GenerateRecommendedBooks($goalId: Int!) {
+  generateRecommendedBooks(goalId: $goalId) {
+    success
+    message
+    books {
+      id
+      goalId
+      title
+      authors
+      year
+      isbn
+      description
+      whyRecommended
+      category
+      amazonUrl
+      generatedAt
+    }
+  }
+}
+    `;
+export type GenerateRecommendedBooksMutationFn = Apollo.MutationFunction<GenerateRecommendedBooksMutation, GenerateRecommendedBooksMutationVariables>;
+
+/**
+ * __useGenerateRecommendedBooksMutation__
+ *
+ * To run a mutation, you first call `useGenerateRecommendedBooksMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateRecommendedBooksMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateRecommendedBooksMutation, { data, loading, error }] = useGenerateRecommendedBooksMutation({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *   },
+ * });
+ */
+export function useGenerateRecommendedBooksMutation(baseOptions?: Apollo.MutationHookOptions<GenerateRecommendedBooksMutation, GenerateRecommendedBooksMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateRecommendedBooksMutation, GenerateRecommendedBooksMutationVariables>(GenerateRecommendedBooksDocument, options);
+      }
+export type GenerateRecommendedBooksMutationHookResult = ReturnType<typeof useGenerateRecommendedBooksMutation>;
+export type GenerateRecommendedBooksMutationResult = Apollo.MutationResult<GenerateRecommendedBooksMutation>;
+export type GenerateRecommendedBooksMutationOptions = Apollo.BaseMutationOptions<GenerateRecommendedBooksMutation, GenerateRecommendedBooksMutationVariables>;
 export const GenerateResearchDocument = gql`
     mutation GenerateResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int) {
   generateResearch(
@@ -6986,6 +7139,18 @@ export const GetGoalDocument = gql`
       relevanceScore
       extractionConfidence
     }
+    recommendedBooks {
+      id
+      title
+      authors
+      year
+      isbn
+      description
+      whyRecommended
+      category
+      amazonUrl
+      generatedAt
+    }
     stories {
       id
       goalId
@@ -7970,6 +8135,61 @@ export type GetPublicDiscussionGuideQueryHookResult = ReturnType<typeof useGetPu
 export type GetPublicDiscussionGuideLazyQueryHookResult = ReturnType<typeof useGetPublicDiscussionGuideLazyQuery>;
 export type GetPublicDiscussionGuideSuspenseQueryHookResult = ReturnType<typeof useGetPublicDiscussionGuideSuspenseQuery>;
 export type GetPublicDiscussionGuideQueryResult = Apollo.QueryResult<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>;
+export const GetRecommendedBooksDocument = gql`
+    query GetRecommendedBooks($goalId: Int!) {
+  recommendedBooks(goalId: $goalId) {
+    id
+    goalId
+    title
+    authors
+    year
+    isbn
+    description
+    whyRecommended
+    category
+    amazonUrl
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetRecommendedBooksQuery__
+ *
+ * To run a query within a React component, call `useGetRecommendedBooksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetRecommendedBooksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetRecommendedBooksQuery({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *   },
+ * });
+ */
+export function useGetRecommendedBooksQuery(baseOptions: Apollo.QueryHookOptions<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables> & ({ variables: GetRecommendedBooksQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables>(GetRecommendedBooksDocument, options);
+      }
+export function useGetRecommendedBooksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables>(GetRecommendedBooksDocument, options);
+        }
+// @ts-ignore
+export function useGetRecommendedBooksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables>): Apollo.UseSuspenseQueryResult<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables>;
+export function useGetRecommendedBooksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables>): Apollo.UseSuspenseQueryResult<GetRecommendedBooksQuery | undefined, GetRecommendedBooksQueryVariables>;
+export function useGetRecommendedBooksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables>(GetRecommendedBooksDocument, options);
+        }
+export type GetRecommendedBooksQueryHookResult = ReturnType<typeof useGetRecommendedBooksQuery>;
+export type GetRecommendedBooksLazyQueryHookResult = ReturnType<typeof useGetRecommendedBooksLazyQuery>;
+export type GetRecommendedBooksSuspenseQueryHookResult = ReturnType<typeof useGetRecommendedBooksSuspenseQuery>;
+export type GetRecommendedBooksQueryResult = Apollo.QueryResult<GetRecommendedBooksQuery, GetRecommendedBooksQueryVariables>;
 export const GetRelationshipDocument = gql`
     query GetRelationship($id: Int!) {
   relationship(id: $id) {

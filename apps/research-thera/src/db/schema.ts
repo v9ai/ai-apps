@@ -108,6 +108,26 @@ export const therapeuticQuestions = pgTable("therapeutic_questions", {
     .default(sql`NOW()`),
 });
 
+export const recommendedBooks = pgTable("recommended_books", {
+  id: serial("id").primaryKey(),
+  goalId: integer("goal_id"),
+  title: text("title").notNull(),
+  authors: text("authors").notNull(), // JSON array
+  year: integer("year"),
+  isbn: text("isbn"),
+  description: text("description").notNull(),
+  whyRecommended: text("why_recommended").notNull(),
+  category: text("category").notNull(),
+  amazonUrl: text("amazon_url"),
+  generatedAt: text("generated_at").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const notes = pgTable("notes", {
   id: serial("id").primaryKey(),
   entityId: integer("entity_id").notNull(),

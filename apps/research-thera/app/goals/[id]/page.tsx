@@ -24,6 +24,7 @@ import NotesSection from "./_components/NotesSection";
 import StoriesSection from "./_components/StoriesSection";
 import ResearchSection from "./_components/ResearchSection";
 import QuestionsSection from "./_components/QuestionsSection";
+import RecommendedBooksSection from "./_components/RecommendedBooksSection";
 import RelatedIssuesSection from "./_components/RelatedIssuesSection";
 import JournalEntriesSection from "./_components/JournalEntriesSection";
 import ParentAdviceSection from "./_components/ParentAdviceSection";
@@ -158,6 +159,10 @@ function GoalPageContent() {
       <StoriesSection goal={goal} />
       <ResearchSection goal={goal} />
       <QuestionsSection
+        goalId={goal.id}
+        hasResearch={!!goal.research && goal.research.length > 0}
+      />
+      <RecommendedBooksSection
         goalId={goal.id}
         hasResearch={!!goal.research && goal.research.length > 0}
       />

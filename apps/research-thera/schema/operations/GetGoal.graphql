@@ -73,6 +73,18 @@ query GetGoal($id: Int, $slug: String) {
       relevanceScore
       extractionConfidence
     }
+    recommendedBooks {
+      id
+      title
+      authors
+      year
+      isbn
+      description
+      whyRecommended
+      category
+      amazonUrl
+      generatedAt
+    }
     stories {
       id
       goalId
