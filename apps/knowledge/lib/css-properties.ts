@@ -1367,7 +1367,7 @@ const displayProperties: CssProperty[] = [
     appliesTo: "replaced elements (img, video, etc.)",
     demo: {
       html: `<div class="row">\n  <div class="img-box"><div class="fake-img cover">cover</div></div>\n  <div class="img-box"><div class="fake-img contain">contain</div></div>\n</div>`,
-      css: `.row { display: flex; gap: 12px; }\n.img-box { width: 120px; height: 80px; border: 2px dashed #94a3b8; border-radius: 6px; overflow: hidden; }\n.fake-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff; font-size: 12px; }\n.cover { background: #ec4899; object-fit: cover; }\n.contain { background: #06b6d4; object-fit: contain; }`,
+      css: `.row { display: flex; gap: 12px; }\n.img-box { width: 120px; height: 80px; border: 2px dashed #706f78; border-radius: 6px; overflow: hidden; }\n.fake-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff; font-size: 12px; }\n.cover { background: #ec4899; object-fit: cover; }\n.contain { background: #06b6d4; object-fit: contain; }`,
       highlightProp: "object-fit",
     },
     relatedProps: ["object-position", "aspect-ratio"],
@@ -1386,7 +1386,7 @@ const displayProperties: CssProperty[] = [
     appliesTo: "replaced elements",
     demo: {
       html: `<div class="img-box"><div class="fake-img">top left</div></div>`,
-      css: `.img-box { width: 150px; height: 80px; border: 2px dashed #94a3b8; border-radius: 6px; overflow: hidden; }\n.fake-img {\n  width: 200px;\n  height: 120px;\n  object-fit: cover;\n  object-position: top left;\n  background: linear-gradient(135deg, #6366f1, #ec4899);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  font-weight: 600;\n  color: #fff;\n  font-size: 12px;\n}`,
+      css: `.img-box { width: 150px; height: 80px; border: 2px dashed #706f78; border-radius: 6px; overflow: hidden; }\n.fake-img {\n  width: 200px;\n  height: 120px;\n  object-fit: cover;\n  object-position: top left;\n  background: linear-gradient(135deg, #6366f1, #ec4899);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  font-weight: 600;\n  color: #fff;\n  font-size: 12px;\n}`,
       highlightProp: "object-position",
     },
     relatedProps: ["object-fit"],
@@ -1425,7 +1425,7 @@ const displayProperties: CssProperty[] = [
     appliesTo: "all elements",
     demo: {
       html: `<div class="no-select">Cannot select this text</div>\n<div class="can-select">Can select this text</div>`,
-      css: `.no-select {\n  user-select: none;\n  padding: 12px;\n  background: #fef2f2;\n  border-radius: 6px;\n  font-weight: 600;\n  margin-bottom: 8px;\n  cursor: default;\n}\n.can-select {\n  user-select: text;\n  padding: 12px;\n  background: #f0fdf4;\n  border-radius: 6px;\n  font-weight: 600;\n}`,
+      css: `.no-select {\n  user-select: none;\n  padding: 12px;\n  background: #2a1215;\n  border-radius: 6px;\n  font-weight: 600;\n  margin-bottom: 8px;\n  cursor: default;\n}\n.can-select {\n  user-select: text;\n  padding: 12px;\n  background: #122a18;\n  border-radius: 6px;\n  font-weight: 600;\n}`,
       highlightProp: "user-select",
     },
     relatedProps: ["pointer-events", "cursor"],
@@ -1544,7 +1544,7 @@ const boxModelExtensions: CssProperty[] = [
     appliesTo: "elements with overflow != visible",
     demo: {
       html: `<div class="resizable">Drag the corner to resize me</div>`,
-      css: `.resizable {\n  resize: both;\n  overflow: auto;\n  width: 200px;\n  height: 80px;\n  padding: 12px;\n  background: #1e1e21;\n  border: 2px dashed #94a3b8;\n  border-radius: 8px;\n  font-size: 13px;\n}`,
+      css: `.resizable {\n  resize: both;\n  overflow: auto;\n  width: 200px;\n  height: 80px;\n  padding: 12px;\n  background: #1e1e21;\n  border: 2px dashed #706f78;\n  border-radius: 8px;\n  font-size: 13px;\n}`,
       highlightProp: "resize",
     },
     relatedProps: ["overflow"],
@@ -1825,7 +1825,7 @@ const conceptProperties: CssProperty[] = [
     appliesTo: "selector resolution",
     demo: {
       html: `<div id="box" class="blue">\n  ID wins over class\n</div>`,
-      css: `/* Specificity: 0,0,1,0 */\n.blue {\n  color: blue;\n  padding: 16px;\n  font-weight: 600;\n}\n/* Specificity: 0,1,0,0 — wins! */\n#box {\n  color: #ec4899;\n  background: #fdf2f8;\n  border-radius: 8px;\n}`,
+      css: `/* Specificity: 0,0,1,0 */\n.blue {\n  color: blue;\n  padding: 16px;\n  font-weight: 600;\n}\n/* Specificity: 0,1,0,0 — wins! */\n#box {\n  color: #ec4899;\n  background: #2a1225;\n  border-radius: 8px;\n}`,
       highlightProp: "color",
     },
     relatedProps: [],
@@ -1927,7 +1927,7 @@ const conceptProperties: CssProperty[] = [
     appliesTo: "table elements",
     demo: {
       html: `<table class="tbl">\n  <tr><td>A</td><td>B</td></tr>\n  <tr><td>C</td><td>D</td></tr>\n</table>`,
-      css: `.tbl {\n  border-collapse: collapse;\n  width: 100%;\n}\n.tbl td {\n  border: 1px solid #94a3b8;\n  padding: 12px;\n  text-align: center;\n  font-weight: 600;\n}`,
+      css: `.tbl {\n  border-collapse: collapse;\n  width: 100%;\n}\n.tbl td {\n  border: 1px solid #706f78;\n  padding: 12px;\n  text-align: center;\n  font-weight: 600;\n}`,
       highlightProp: "border-collapse",
     },
     relatedProps: ["border"],
@@ -1949,7 +1949,7 @@ const conceptProperties: CssProperty[] = [
     appliesTo: "list items",
     demo: {
       html: `<ul class="clean">\n  <li>No bullets</li>\n  <li>Clean list</li>\n  <li>For navs</li>\n</ul>`,
-      css: `.clean {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n}\n.clean li {\n  padding: 8px 12px;\n  border-bottom: 1px solid #e2e8f0;\n  font-weight: 500;\n}`,
+      css: `.clean {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n}\n.clean li {\n  padding: 8px 12px;\n  border-bottom: 1px solid #2c2c30;\n  font-weight: 500;\n}`,
       highlightProp: "list-style",
     },
     relatedProps: [],
