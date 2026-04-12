@@ -20,13 +20,15 @@ const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "orange" | "blue" 
 
 interface ThreadDetailProps {
   contactId: number;
+  onArchive?: () => void;
 }
 
-export function ThreadDetail({ contactId }: ThreadDetailProps) {
+export function ThreadDetail({ contactId, onArchive }: ThreadDetailProps) {
   const { data, loading, error, refetch } = useGetEmailThreadQuery({
     variables: { contactId },
     fetchPolicy: "cache-and-network",
   });
+  const [archiveEmail, { loading: archiving }] = useArchiveEmailMutation();
   const [replyOpen, setReplyOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -61,6 +63,16 @@ export function ThreadDetail({ contactId }: ThreadDetailProps) {
 
   const thread = data.emailThread;
   const messages = thread.messages;
+
+  const handleArchive = async () => {
+    // Archive all inbound messages in this thread
+    const inboundMessages = messages.filter((m) => m.direction === "inbound");
+    for (const msg of inboundMessages) {
+      await archiveEmail({ variables: { id: msg.id } });
+    }
+    setToast("Conversation archived");
+    onArchive?.();
+  };
 
   // Find the latest inbound email for reply context
   const latestInbound = [...messages].reverse().find((m) => m.direction === "inbound");
@@ -113,6 +125,14 @@ export function ThreadDetail({ contactId }: ThreadDetailProps) {
               onClick={() => setReplyOpen(true)}
             >
               <PaperPlaneIcon /> Reply
+            </button>
+            <button
+              className={button({ variant: "ghost", size: "sm" })}
+              onClick={handleArchive}
+              disabled={archiving}
+              title="Archive conversation"
+            >
+              <ArchiveIcon /> {archiving ? "Archiving..." : "Archive"}
             </button>
           </Flex>
         </Flex>
