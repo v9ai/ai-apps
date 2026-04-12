@@ -9,6 +9,7 @@ import {
   Dialog,
   Flex,
   Heading,
+  Select,
   Separator,
   Spinner,
   Text,
@@ -24,6 +25,23 @@ import {
   PaperPlaneIcon,
 } from "@radix-ui/react-icons";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
+import { buildCpnFollowup } from "@/lib/email/cpn-followup";
+
+// ─── Templates ───────────────────────────────────────────────────────────────
+
+interface EmailTemplate {
+  value: string;
+  label: string;
+  build: (firstName: string) => { subject: string; text: string };
+}
+
+const EMAIL_TEMPLATES: EmailTemplate[] = [
+  {
+    value: "cpn_followup",
+    label: "CPN Followup",
+    build: (firstName) => buildCpnFollowup(firstName),
+  },
+];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -129,6 +147,15 @@ export function EmailComposer({
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) resetForm();
     onOpenChange(nextOpen);
+  }
+
+  function handleTemplate(templateValue: string) {
+    const tmpl = EMAIL_TEMPLATES.find((t) => t.value === templateValue);
+    if (!tmpl) return;
+    const firstName = name.trim().split(/\s+/)[0] || "there";
+    const { subject: tmplSubject, text: tmplBody } = tmpl.build(firstName);
+    setSubject(tmplSubject);
+    setBody(tmplBody);
   }
 
   async function handleGenerate() {
@@ -253,8 +280,19 @@ export function EmailComposer({
             />
           </Box>
 
-          {/* AI Generate row */}
-          <Flex gap="2" align="center">
+          {/* Template selector + AI Generate row */}
+          <Flex gap="2" align="center" wrap="wrap">
+            <Select.Root onValueChange={handleTemplate}>
+              <Select.Trigger placeholder="Template" variant="ghost" />
+              <Select.Content>
+                {EMAIL_TEMPLATES.map((tmpl) => (
+                  <Select.Item key={tmpl.value} value={tmpl.value}>
+                    {tmpl.label}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
+
             <button
               className={button({ variant: "ghost" })}
               onClick={() => void handleGenerate()}
