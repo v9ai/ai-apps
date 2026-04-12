@@ -52,9 +52,6 @@ import {
   useUpdateEmailTemplateMutation,
   useGetEmailStatsQuery,
   useSyncResendEmailsMutation,
-  useGetReceivedEmailsQuery,
-  useArchiveEmailMutation,
-  useUnarchiveEmailMutation,
   useImportResendEmailsMutation,
 } from "@/__generated__/hooks";
 
@@ -375,101 +372,6 @@ function SentList() {
           </Flex>
         </Card>
       ))}
-    </Flex>
-  );
-}
-
-function ReceivedList() {
-  const [showArchived, setShowArchived] = useState(false);
-  const { data, loading, error, refetch } = useGetReceivedEmailsQuery({
-    variables: { limit: 100, archived: showArchived },
-    fetchPolicy: "cache-and-network",
-  });
-  const [archiveEmail] = useArchiveEmailMutation();
-  const [unarchiveEmail] = useUnarchiveEmailMutation();
-
-  const emails = data?.receivedEmails?.emails ?? [];
-  const totalCount = data?.receivedEmails?.totalCount ?? 0;
-
-  const handleArchive = async (id: number) => {
-    await archiveEmail({ variables: { id } });
-    refetch();
-  };
-
-  const handleUnarchive = async (id: number) => {
-    await unarchiveEmail({ variables: { id } });
-    refetch();
-  };
-
-  if (loading && !data) {
-    return <Text color="gray" size="2">Loading…</Text>;
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <Flex gap="2" align="center">
-          <ExclamationTriangleIcon color="red" />
-          <Text color="red" size="2">{error.message}</Text>
-        </Flex>
-      </Card>
-    );
-  }
-
-  return (
-    <Flex direction="column" gap="2">
-      <Flex justify="between" align="center" mb="2">
-        <Flex gap="2" align="center">
-          <Badge color="gray" size="2" variant="soft">{totalCount} emails</Badge>
-          <button
-            className={button({ variant: showArchived ? "solid" : "ghost", size: "sm" })}
-            onClick={() => setShowArchived(!showArchived)}
-          >
-            {showArchived ? "Show Inbox" : "Show Archived"}
-          </button>
-        </Flex>
-        <button className={button({ variant: "ghost", size: "sm" })} onClick={() => refetch()}>
-          <ReloadIcon /> Refresh
-        </button>
-      </Flex>
-      {emails.length === 0 ? (
-        <Card>
-          <Text color="gray" size="2">
-            {showArchived ? "No archived emails." : "No received emails found."}
-          </Text>
-        </Card>
-      ) : (
-        emails.map((email) => (
-          <Link key={email.id} href={`/admin/emails/${email.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-            <Card style={{ cursor: "pointer" }} className="rt-hover-card">
-              <Flex justify="between" align="start" gap="4">
-                <Box style={{ minWidth: 0, flex: 1 }}>
-                  <Flex gap="2" align="center" mb="1">
-                    <EnvelopeOpenIcon />
-                    <Text size="2" weight="bold" style={{ flex: 1 }}>
-                      {email.subject || "(no subject)"}
-                    </Text>
-                  </Flex>
-                  <Text size="1" color="gray">From: {email.fromEmail}</Text>
-                  <Text size="1" color="gray" as="div">
-                    {new Date(email.receivedAt).toLocaleString()}
-                  </Text>
-                </Box>
-                <button
-                  className={button({ variant: "ghost", size: "sm" })}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    showArchived ? handleUnarchive(email.id) : handleArchive(email.id);
-                  }}
-                >
-                  {showArchived ? "Unarchive" : "Archive"}
-                </button>
-              </Flex>
-            </Card>
-          </Link>
-        ))
-      )}
     </Flex>
   );
 }
