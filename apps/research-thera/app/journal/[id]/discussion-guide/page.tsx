@@ -15,10 +15,11 @@ import {
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import { useParams, useRouter } from "next/navigation";
 import {
-  useGetJournalEntryQuery,
+  useGetPublicDiscussionGuideQuery,
   useGenerateDiscussionGuideMutation,
   useDeleteDiscussionGuideMutation,
 } from "@/app/__generated__/hooks";
+import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 
 type GuideTab = "context" | "starters" | "talking" | "language" | "reactions" | "followup";
@@ -28,16 +29,21 @@ export default function DiscussionGuidePage() {
   const router = useRouter();
   const id = parseInt(params.id as string, 10);
 
+  const { data: session } = authClient.useSession();
+  const isOwner = !!session?.user;
+
   const [activeTab, setActiveTab] = useState<GuideTab>("context");
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  const { data, loading, refetch } = useGetJournalEntryQuery({
-    variables: { id },
+  const { data, loading, refetch } = useGetPublicDiscussionGuideQuery({
+    variables: { journalEntryId: id },
     skip: isNaN(id),
   });
 
-  const entry = data?.journalEntry;
-  const guide = entry?.discussionGuide ?? null;
+  const result = data?.publicDiscussionGuide;
+  const guide = result?.guide ?? null;
+  const entryTitle = result?.entryTitle;
+  const familyName = result?.familyMemberName;
 
   const [generateGuide, { loading: generating }] = useGenerateDiscussionGuideMutation({
     onCompleted: (d) => {
@@ -66,7 +72,7 @@ export default function DiscussionGuidePage() {
     );
   }
 
-  if (!entry) {
+  if (!result) {
     return (
       <Flex direction="column" gap="4" py="4">
         <Button variant="ghost" size="2" onClick={() => router.back()}>
@@ -74,21 +80,19 @@ export default function DiscussionGuidePage() {
         </Button>
         <Card>
           <Box p="4">
-            <Text color="red">Journal entry not found.</Text>
+            <Text color="red">Discussion guide not found.</Text>
           </Box>
         </Card>
       </Flex>
     );
   }
 
-  const familyName = entry.familyMember?.firstName || entry.familyMember?.name;
-
   return (
     <Flex direction="column" gap="5" py="4">
       <Breadcrumbs
         crumbs={[
           { label: "Journal", href: "/journal" },
-          { label: entry.title || `Entry ${id}`, href: `/journal/${id}` },
+          { label: entryTitle || `Entry ${id}`, href: `/journal/${id}` },
           { label: "Discussion Guide" },
         ]}
       />
@@ -101,30 +105,32 @@ export default function DiscussionGuidePage() {
             Research-grounded guide for discussing this with {familyName || "your child"}.
           </Text>
         </Box>
-        <Flex gap="2">
-          {guide && (
+        {isOwner && (
+          <Flex gap="2">
+            {guide && (
+              <Button
+                variant="soft"
+                color="red"
+                size="2"
+                onClick={() => deleteGuide({ variables: { journalEntryId: id } })}
+                disabled={deleting || generating}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </Button>
+            )}
             <Button
-              variant="soft"
-              color="red"
               size="2"
-              onClick={() => deleteGuide({ variables: { journalEntryId: id } })}
-              disabled={deleting || generating}
+              onClick={() => {
+                setMessage(null);
+                generateGuide({ variables: { journalEntryId: id } });
+              }}
+              disabled={generating}
             >
-              {deleting ? "Deleting..." : "Delete"}
+              {generating && <Spinner />}
+              {generating ? "Generating..." : guide ? "Regenerate" : "Generate Guide"}
             </Button>
-          )}
-          <Button
-            size="2"
-            onClick={() => {
-              setMessage(null);
-              generateGuide({ variables: { journalEntryId: id } });
-            }}
-            disabled={generating}
-          >
-            {generating && <Spinner />}
-            {generating ? "Generating..." : guide ? "Regenerate" : "Generate Guide"}
-          </Button>
-        </Flex>
+          </Flex>
+        )}
       </Flex>
 
       {/* Loading bar */}
@@ -152,8 +158,8 @@ export default function DiscussionGuidePage() {
           <Flex direction="column" align="center" gap="3" p="6">
             <Text size="5">&#128172;</Text>
             <Text size="2" color="gray" align="center" style={{ maxWidth: 400 }}>
-              No discussion guide yet. Generate one to get research-backed conversation starters,
-              talking points, and language guidance tailored to {familyName || "your child"}.
+              No discussion guide yet.{isOwner && ` Generate one to get research-backed conversation starters,
+              talking points, and language guidance tailored to ${familyName || "your child"}.`}
             </Text>
           </Flex>
         </Card>
