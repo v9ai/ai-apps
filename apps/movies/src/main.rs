@@ -147,22 +147,30 @@ async fn search_platform(
 }
 
 async fn embed_texts(texts: Vec<String>) -> Result<Vec<Vec<f32>>> {
-    let client = reqwest::Client::new();
-    let resp: EmbedResponse = client
-        .post(EMBED_URL)
-        .json(&EmbedRequest { input: texts })
-        .send()
-        .await
-        .context("embed server request")?
-        .error_for_status()
-        .context("embed server error")?
-        .json()
-        .await
-        .context("embed server parse")?;
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(120))
+        .build()?;
+    let mut all_embeddings: Vec<Vec<f32>> = Vec::with_capacity(texts.len());
+    const BATCH: usize = 8;
 
-    let mut items = resp.data;
-    items.sort_by_key(|e| e.index);
-    Ok(items.into_iter().map(|e| e.embedding).collect())
+    for chunk in texts.chunks(BATCH) {
+        let resp: EmbedResponse = client
+            .post(EMBED_URL)
+            .json(&EmbedRequest { input: chunk.to_vec() })
+            .send()
+            .await
+            .context("embed server request")?
+            .error_for_status()
+            .context("embed server error")?
+            .json()
+            .await
+            .context("embed server parse")?;
+
+        let mut items = resp.data;
+        items.sort_by_key(|e| e.index);
+        all_embeddings.extend(items.into_iter().map(|e| e.embedding));
+    }
+    Ok(all_embeddings)
 }
 
 fn cosine_sim(a: &[f32], b: &[f32]) -> f64 {

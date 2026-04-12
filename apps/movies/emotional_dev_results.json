@@ -1,0 +1,1033 @@
+{
+  "child_age": 7,
+  "child_name": "Bogdan",
+  "focus": "emotional development",
+  "generated_at": "2026-04-12T18:00:01.107729+00:00",
+  "results": [
+    {
+      "age_rating": "PG",
+      "director": "Nora Twomey",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 6.7,
+      "platform": "Netflix",
+      "rank": 1,
+      "similarity_score": 0.7257084250450134,
+      "title": "My Father's Dragon",
+      "why_similar": "A 7-year-old will learn how patience and non-judgmental friendship can help overcome fear and heal broken relationships.",
+      "year": 2022
+    },
+    {
+      "age_rating": "G",
+      "director": "John Lasseter",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 8.3,
+      "platform": "Disney+",
+      "rank": 2,
+      "similarity_score": 0.7216187119483948,
+      "title": "Toy Story",
+      "why_similar": "A 7-year-old will learn that friendship and shared purpose are more important than status or jealousy.",
+      "year": 1995
+    },
+    {
+      "age_rating": "PG",
+      "director": "Pete Docter",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 8.1,
+      "platform": "Disney+",
+      "rank": 3,
+      "similarity_score": 0.7124573588371277,
+      "title": "Inside Out",
+      "why_similar": "A 7-year-old will learn that all feelings, including sadness, have a purpose and are key to empathy and self-understanding.",
+      "year": 2015
+    },
+    {
+      "age_rating": "TV-Y7",
+      "director": "N/A",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure"
+      ],
+      "imdb_rating": 8.3,
+      "platform": "Netflix",
+      "rank": 4,
+      "similarity_score": 0.7030147314071655,
+      "title": "The Dragon Prince",
+      "why_similar": "A 7-year-old will practice perspective-taking, challenge prejudices, and learn to solve conflicts through dialogue and cooperation.",
+      "year": 2018
+    },
+    {
+      "age_rating": "PG",
+      "director": "Brad Bird",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure"
+      ],
+      "imdb_rating": 8.0,
+      "platform": "Netflix",
+      "rank": 5,
+      "similarity_score": 0.6979668736457825,
+      "title": "The Incredibles",
+      "why_similar": "A 7-year-old will learn how a family navigates frustration and insecurity by working together and balancing independence with support.",
+      "year": 2004
+    },
+    {
+      "age_rating": "G",
+      "director": "Clyde Geronimi, Wilfred Jackson, Hamilton Luske",
+      "genre": [
+        "Animation",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 7.3,
+      "platform": "Disney+",
+      "rank": 6,
+      "similarity_score": 0.6976475119590759,
+      "title": "Cinderella",
+      "why_similar": "A 7-year-old will learn resilience and the power of maintaining kindness and hope in the face of cruelty and disappointment.",
+      "year": 1950
+    },
+    {
+      "age_rating": "G",
+      "director": "James Frawley",
+      "genre": [
+        "Adventure",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 7.6,
+      "platform": "Disney+",
+      "rank": 7,
+      "similarity_score": 0.6972635984420776,
+      "title": "The Muppet Movie",
+      "why_similar": "A 7-year-old will learn about believing in dreams, the power of friendship, and using kindness, cooperation, and humor to solve problems.",
+      "year": 1979
+    },
+    {
+      "age_rating": "PG",
+      "director": "Mark Osborne",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Drama"
+      ],
+      "imdb_rating": 7.7,
+      "platform": "Netflix",
+      "rank": 8,
+      "similarity_score": 0.6949878931045532,
+      "title": "The Little Prince",
+      "why_similar": "A 7-year-old will learn about wonder, connection, and gently coping with loss and the importance of emotional bonds.",
+      "year": 2016
+    },
+    {
+      "age_rating": "TV-Y",
+      "director": "N/A",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.3,
+      "platform": "Netflix",
+      "rank": 9,
+      "similarity_score": 0.6949306726455688,
+      "title": "Pete the Cat",
+      "why_similar": "A 7-year-old will learn to name feelings, use calming strategies, and model flexibility, resilience, and self-assurance through change.",
+      "year": 2017
+    },
+    {
+      "age_rating": "PG",
+      "director": "Pete Docter",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 8.3,
+      "platform": "Disney+",
+      "rank": 10,
+      "similarity_score": 0.6946317553520203,
+      "title": "Up",
+      "why_similar": "A 7-year-old will learn about adapting to change, finding new purpose, and the bravery of forming new friendships after loss.",
+      "year": 2009
+    },
+    {
+      "age_rating": "PG",
+      "director": "Ron Clements, John Musker",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.6,
+      "platform": "Disney+",
+      "rank": 11,
+      "similarity_score": 0.6907808184623718,
+      "title": "Moana",
+      "why_similar": "A 7-year-old will learn immense courage and resilience in the face of self-doubt and empathy by seeking to understand others.",
+      "year": 2016
+    },
+    {
+      "age_rating": "PG",
+      "director": "Chris Williams",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Netflix",
+      "rank": 12,
+      "similarity_score": 0.6898835897445679,
+      "title": "The Sea Beast",
+      "why_similar": "A 7-year-old will learn to challenge fear and prejudice by seeing the world from another's perspective, championing curiosity.",
+      "year": 2022
+    },
+    {
+      "age_rating": "PG",
+      "director": "Joel Crawford",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.9,
+      "platform": "Netflix",
+      "rank": 13,
+      "similarity_score": 0.6880431771278381,
+      "title": "Puss in Boots: The Last Wish",
+      "why_similar": "A 7-year-old will learn about humility, gratitude, and valuing friendship and life itself over fame and glory.",
+      "year": 2022
+    },
+    {
+      "age_rating": "PG",
+      "director": "Enrico Casarosa",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.4,
+      "platform": "Netflix",
+      "rank": 14,
+      "similarity_score": 0.6864858865737915,
+      "title": "Luca",
+      "why_similar": "It helps a child develop skills in friendship, self-acceptance, and courage when facing new social situations.",
+      "year": 2021
+    },
+    {
+      "age_rating": "G",
+      "director": "Lee Unkrich",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 8.3,
+      "platform": "Disney+",
+      "rank": 15,
+      "similarity_score": 0.6839311718940735,
+      "title": "Toy Story 3",
+      "why_similar": "It teaches a child about emotional resilience, loyalty, and how to healthily cope with change and letting go.",
+      "year": 2010
+    },
+    {
+      "age_rating": "PG",
+      "director": "Matthew Warchus",
+      "genre": [
+        "Comedy",
+        "Drama",
+        "Family"
+      ],
+      "imdb_rating": 6.9,
+      "platform": "Netflix",
+      "rank": 16,
+      "similarity_score": 0.6837514638900757,
+      "title": "Matilda the Musical",
+      "why_similar": "It encourages self-advocacy, intelligence, and finding strength in kindness to overcome bullying and adversity.",
+      "year": 2022
+    },
+    {
+      "age_rating": "PG",
+      "director": "Mike Rianda",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.6,
+      "platform": "Netflix",
+      "rank": 17,
+      "similarity_score": 0.6818599104881287,
+      "title": "The Mitchells vs. The Machines",
+      "why_similar": "It fosters empathy and teaches that understanding and appreciating family differences is more important than fitting in.",
+      "year": 2021
+    },
+    {
+      "age_rating": "PG",
+      "director": "Tim Burton",
+      "genre": [
+        "Animation",
+        "Comedy",
+        "Drama"
+      ],
+      "imdb_rating": 6.9,
+      "platform": "Disney+",
+      "rank": 18,
+      "similarity_score": 0.6805965304374695,
+      "title": "Frankenweenie",
+      "why_similar": "It gently introduces the concepts of processing grief, love for a pet, and the importance of letting go.",
+      "year": 2012
+    },
+    {
+      "age_rating": "PG",
+      "director": "Brad Bird",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure"
+      ],
+      "imdb_rating": 8.1,
+      "platform": "Disney+",
+      "rank": 19,
+      "similarity_score": 0.6804666519165039,
+      "title": "The Iron Giant",
+      "why_similar": "It teaches a child about personal choice, non-violence, and the power of friendship to overcome fear and prejudice.",
+      "year": 1999
+    },
+    {
+      "age_rating": "PG",
+      "director": "Mark Andrews, Brenda Chapman",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.1,
+      "platform": "Disney+",
+      "rank": 20,
+      "similarity_score": 0.6773121356964111,
+      "title": "Brave",
+      "why_similar": "It demonstrates the bravery needed to repair relationships through admitting fault, apologizing, and understanding another's perspective.",
+      "year": 2012
+    },
+    {
+      "age_rating": "PG",
+      "director": "Mamoru Hosoda",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Drama"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Netflix",
+      "rank": 21,
+      "similarity_score": 0.6767602562904358,
+      "title": "Mirai",
+      "why_similar": "It directly teaches empathy and how to handle jealousy and change by understanding family members' perspectives.",
+      "year": 2018
+    },
+    {
+      "age_rating": "G",
+      "director": "Jean-Jacques Annaud",
+      "genre": [
+        "Adventure",
+        "Drama",
+        "Family"
+      ],
+      "imdb_rating": 7.6,
+      "platform": "Disney+",
+      "rank": 22,
+      "similarity_score": 0.6750736236572266,
+      "title": "The Bear",
+      "why_similar": "It teaches profound lessons about courage, perseverance, and maintaining hope through fear and hardship.",
+      "year": 1989
+    },
+    {
+      "age_rating": "G",
+      "director": "Pete Docter",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 8.1,
+      "platform": "Disney+",
+      "rank": 23,
+      "similarity_score": 0.6733903884887695,
+      "title": "Monsters, Inc.",
+      "why_similar": "It challenges prejudices with empathy and teaches that laughter and caring for the vulnerable are more powerful than fear.",
+      "year": 2001
+    },
+    {
+      "age_rating": "G",
+      "director": "Jun Falkenstein",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 6.6,
+      "platform": "Disney+",
+      "rank": 24,
+      "similarity_score": 0.6714911460876465,
+      "title": "The Tigger Movie",
+      "why_similar": "It teaches a child about dealing with feelings of loneliness and finding acceptance and love in their chosen family.",
+      "year": 2000
+    },
+    {
+      "age_rating": "TV-Y",
+      "director": "Rajiv Chilaka",
+      "genre": [
+        "Animation",
+        "Family",
+        "Comedy"
+      ],
+      "imdb_rating": 7.5,
+      "platform": "Netflix",
+      "rank": 25,
+      "similarity_score": 0.6708264350891113,
+      "title": "Mighty Little Bheem",
+      "why_similar": "It helps a child recognize emotions and social cues through non-verbal expressions and actions, promoting helpfulness and problem-solving.",
+      "year": 2019
+    },
+    {
+      "age_rating": "PG",
+      "director": "Paul King",
+      "genre": [
+        "Adventure",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 7.7,
+      "platform": "Netflix",
+      "rank": 26,
+      "similarity_score": 0.6669549345970154,
+      "title": "Paddington",
+      "why_similar": "It models unwavering kindness, politeness, and optimism, showing how these traits can positively influence others and build community.",
+      "year": 2014
+    },
+    {
+      "age_rating": "PG",
+      "director": "Paul King",
+      "genre": [
+        "Adventure",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 7.8,
+      "platform": "Netflix",
+      "rank": 27,
+      "similarity_score": 0.6669549345970154,
+      "title": "Paddington 2",
+      "why_similar": "It reinforces lessons on kindness, seeing the good in everyone, and how a positive attitude can build strong, supportive friendships.",
+      "year": 2017
+    },
+    {
+      "age_rating": "PG",
+      "director": "Chris Williams, Byron Howard",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 6.8,
+      "platform": "Disney+",
+      "rank": 28,
+      "similarity_score": 0.6656742691993713,
+      "title": "Bolt",
+      "why_similar": "It shows a child that true courage and strength come from friendship, loyalty, and discovering your real self, not from pretending to be something you're not.",
+      "year": 2008
+    },
+    {
+      "age_rating": "PG",
+      "director": "Nick Bruno, Troy Quane",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure"
+      ],
+      "imdb_rating": 7.6,
+      "platform": "Netflix",
+      "rank": 29,
+      "similarity_score": 0.6616132855415344,
+      "title": "Nimona",
+      "why_similar": "It teaches a child to question unfair labels, stand up for misunderstood friends, and find self-acceptance even when they feel different from others.",
+      "year": 2023
+    },
+    {
+      "age_rating": "PG",
+      "director": "Jared Bush, Byron Howard, Charise Castro Smith",
+      "genre": [
+        "Animation",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 7.2,
+      "platform": "Disney+",
+      "rank": 30,
+      "similarity_score": 0.6614159941673279,
+      "title": "Encanto",
+      "why_similar": "It helps a child understand that their worth is unconditional and not based on performance, and that every family member has unique strengths and struggles.",
+      "year": 2021
+    },
+    {
+      "age_rating": "G",
+      "director": "Andrew Stanton",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 8.2,
+      "platform": "Disney+",
+      "rank": 31,
+      "similarity_score": 0.6603769659996033,
+      "title": "Finding Nemo",
+      "why_similar": "It models parental love and perseverance, while also showing a child that they can be brave and capable despite perceived limitations or fears.",
+      "year": 2003
+    },
+    {
+      "age_rating": "G",
+      "director": "Andrew Stanton",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Family"
+      ],
+      "imdb_rating": 8.4,
+      "platform": "Disney+",
+      "rank": 32,
+      "similarity_score": 0.6584662199020386,
+      "title": "WALL-E",
+      "why_similar": "It demonstrates that curiosity, kindness, and taking care of others and your environment are profound acts of bravery that can inspire positive change.",
+      "year": 2008
+    },
+    {
+      "age_rating": "G",
+      "director": "Ron Clements, Burny Mattinson, David Michener",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Family"
+      ],
+      "imdb_rating": 7.2,
+      "platform": "Disney+",
+      "rank": 33,
+      "similarity_score": 0.6583935618400574,
+      "title": "The Great Mouse Detective",
+      "why_similar": "It shows a child how to be brave and resourceful in the face of fear, and to trust in their own abilities and in the help of good-hearted allies.",
+      "year": 1986
+    },
+    {
+      "age_rating": "PG",
+      "director": "Peter Sohn",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Disney+",
+      "rank": 34,
+      "similarity_score": 0.6558051109313965,
+      "title": "Elemental",
+      "why_similar": "It tackles themes of prejudice and cultural differences, teaching a child about cross-cultural friendship, empathy, and honoring family while following your own path.",
+      "year": 2023
+    },
+    {
+      "age_rating": "TV-Y",
+      "director": "N/A",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Family"
+      ],
+      "imdb_rating": 6.9,
+      "platform": "Netflix",
+      "rank": 35,
+      "similarity_score": 0.6552048325538635,
+      "title": "True and the Rainbow Kingdom",
+      "why_similar": "It consistently models using empathy to identify others' problems and then applying creative, non-violent problem-solving to help them.",
+      "year": 2017
+    },
+    {
+      "age_rating": "G",
+      "director": "Steve Loter",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Family"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Disney+",
+      "rank": 36,
+      "similarity_score": 0.6550674438476562,
+      "title": "Tinker Bell and the Legend of the NeverBeast",
+      "why_similar": "A 7-year-old will learn empathy and courage by seeing Fawn challenge her community's fear to protect a misunderstood creature.",
+      "year": 2015
+    },
+    {
+      "age_rating": "PG",
+      "director": "Pete Docter",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 8.0,
+      "platform": "Disney+",
+      "rank": 37,
+      "similarity_score": 0.6532267332077026,
+      "title": "Soul",
+      "why_similar": "A 7-year-old will learn to appreciate life's simple, everyday joys and understand that their 'spark' is about living, not just a single purpose.",
+      "year": 2020
+    },
+    {
+      "age_rating": "PG",
+      "director": "Chris Sanders, Dean DeBlois",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Family"
+      ],
+      "imdb_rating": 7.6,
+      "platform": "Disney+",
+      "rank": 38,
+      "similarity_score": 0.652894139289856,
+      "title": "Lilo & Stitch",
+      "why_similar": "A 7-year-old will learn about the power of chosen family ('ohana'), compassion, and persistence in turning a difficult situation into a loving friendship.",
+      "year": 2002
+    },
+    {
+      "age_rating": "PG",
+      "director": "Tim Johnson",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 6.6,
+      "platform": "Netflix",
+      "rank": 39,
+      "similarity_score": 0.6517617106437683,
+      "title": "Home",
+      "why_similar": "A 7-year-old will learn about building trust, forming friendships across differences, and seeing beyond initial appearances and cultural misunderstandings.",
+      "year": 2015
+    },
+    {
+      "age_rating": "G",
+      "director": "John Lasseter, Andrew Stanton",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.2,
+      "platform": "Disney+",
+      "rank": 40,
+      "similarity_score": 0.6517270803451538,
+      "title": "A Bug's Life",
+      "why_similar": "A 7-year-old will learn the courage to stand up to bullies, the value of teamwork among diverse individuals, and that true strength is not about intimidation.",
+      "year": 1998
+    },
+    {
+      "age_rating": "PG",
+      "director": "Ron Clements, John Musker",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Family"
+      ],
+      "imdb_rating": 7.2,
+      "platform": "Disney+",
+      "rank": 41,
+      "similarity_score": 0.6503309607505798,
+      "title": "Treasure Planet",
+      "why_similar": "A 7-year-old will learn to navigate complex feelings of trust, disappointment, and betrayal while finding the courage to define their own path with integrity.",
+      "year": 2002
+    },
+    {
+      "age_rating": "TV-Y7",
+      "director": "Doug Langdale",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.4,
+      "platform": "Netflix",
+      "rank": 42,
+      "similarity_score": 0.6496293544769287,
+      "title": "The Adventures of Puss in Boots",
+      "why_similar": "A 7-year-old will learn that being a hero involves responsibility, protecting a community, and using one's skills for more than just personal glory.",
+      "year": 2015
+    },
+    {
+      "age_rating": "G",
+      "director": "Erica Milsom",
+      "genre": [
+        "Animation",
+        "Short",
+        "Family"
+      ],
+      "imdb_rating": 7.5,
+      "platform": "Disney+",
+      "rank": 43,
+      "similarity_score": 0.6492190361022949,
+      "title": "Loop",
+      "why_similar": "A 7-year-old will learn patience, non-verbal communication, and how to find a shared rhythm with someone who experiences the world differently.",
+      "year": 2020
+    },
+    {
+      "age_rating": "G",
+      "director": "Ted Berman, Richard Rich, Art Stevens",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Drama"
+      ],
+      "imdb_rating": 7.3,
+      "platform": "Disney+",
+      "rank": 44,
+      "similarity_score": 0.6488737463951111,
+      "title": "The Fox and the Hound",
+      "why_similar": "A 7-year-old will learn about the challenges of friendship when faced with societal expectations and the complex emotions of growing apart.",
+      "year": 1981
+    },
+    {
+      "age_rating": "PG",
+      "director": "Domee Shi",
+      "genre": [
+        "Animation",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Disney+",
+      "rank": 45,
+      "similarity_score": 0.6476536989212036,
+      "title": "Turning Red",
+      "why_similar": "A 7-year-old will learn to understand and accept big, confusing emotions and that honesty with friends and family is the path to self-acceptance.",
+      "year": 2022
+    },
+    {
+      "age_rating": "TV-Y7",
+      "director": "N/A",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Family"
+      ],
+      "imdb_rating": 7.7,
+      "platform": "Netflix",
+      "rank": 46,
+      "similarity_score": 0.6450572609901428,
+      "title": "A Tale Dark & Grimm",
+      "why_similar": "A 7-year-old will learn about the unbreakable bond of sibling loyalty, trusting each other through challenges, and mending relationships with understanding.",
+      "year": 2021
+    },
+    {
+      "age_rating": "G",
+      "director": "John Lounsbery, Wolfgang Reitherman",
+      "genre": [
+        "Animation",
+        "Family",
+        "Musical"
+      ],
+      "imdb_rating": 7.6,
+      "platform": "Disney+",
+      "rank": 47,
+      "similarity_score": 0.6443799734115601,
+      "title": "The Many Adventures of Winn the Pooh",
+      "why_similar": "A 7-year-old will learn to name and recognize different feelings while seeing how friends offer patient, practical support to one another.",
+      "year": 1977
+    },
+    {
+      "age_rating": "PG",
+      "director": "Sarah Smith, Jean-Philippe Vine, Octavio E. Rodriguez",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Netflix",
+      "rank": 48,
+      "similarity_score": 0.6440243124961853,
+      "title": "Ron's Gone Wrong",
+      "why_similar": "A 7-year-old will learn about authentic friendship, social resilience, and the importance of loyalty and protecting friends in a digital world.",
+      "year": 2021
+    },
+    {
+      "age_rating": "G",
+      "director": "John Lasseter",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.9,
+      "platform": "Disney+",
+      "rank": 49,
+      "similarity_score": 0.6435405015945435,
+      "title": "Toy Story 2",
+      "why_similar": "A 7-year-old will learn about complex feelings of purpose, belonging, and the difficult but loving choice between adventure and a secure home.",
+      "year": 1999
+    },
+    {
+      "age_rating": "PG",
+      "director": "Kirk DeMicco",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Musical"
+      ],
+      "imdb_rating": 6.7,
+      "platform": "Netflix",
+      "rank": 50,
+      "similarity_score": 0.6425315141677856,
+      "title": "Vivo",
+      "why_similar": "A 7-year-old will learn about honoring promises, coping with loss, and how music and connection can help heal hearts.",
+      "year": 2021
+    },
+    {
+      "age_rating": "PG",
+      "director": "Sergio Pablos",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 8.2,
+      "platform": "Netflix",
+      "rank": 51,
+      "similarity_score": 0.6402032375335693,
+      "title": "Klaus",
+      "why_similar": "A 7-year-old will learn how repeated acts of kindness and empathy can transform a person and build a strong, generous community.",
+      "year": 2019
+    },
+    {
+      "age_rating": "TV-Y7",
+      "director": "Jorge R. Gutiérrez",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 8.3,
+      "platform": "Netflix",
+      "rank": 52,
+      "similarity_score": 0.6400625109672546,
+      "title": "Maya and the Three",
+      "why_similar": "A 7-year-old will learn that true strength comes from unity, sacrifice, and understanding people from different cultures and backgrounds.",
+      "year": 2021
+    },
+    {
+      "age_rating": "G",
+      "director": "Stephen J. Anderson, Don Hall",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Musical"
+      ],
+      "imdb_rating": 7.2,
+      "platform": "Disney+",
+      "rank": 53,
+      "similarity_score": 0.6393979787826538,
+      "title": "Winnie the Pooh",
+      "why_similar": "A 7-year-old will learn creative problem-solving, teamwork, and the importance of not jumping to fearful conclusions.",
+      "year": 2011
+    },
+    {
+      "age_rating": "G",
+      "director": "Hendel Butoy, Mike Gabriel",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 6.9,
+      "platform": "Disney+",
+      "rank": 54,
+      "similarity_score": 0.6368210315704346,
+      "title": "The Rescuers Down Under",
+      "why_similar": "A 7-year-old will learn about courage in the face of danger and the power of asking for and relying on loyal friends for help.",
+      "year": 1990
+    },
+    {
+      "age_rating": "PG",
+      "director": "Andrew Stanton, Angus MacLane",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 7.3,
+      "platform": "Disney+",
+      "rank": 55,
+      "similarity_score": 0.6365814208984375,
+      "title": "Finding Dory",
+      "why_similar": "A 7-year-old will learn about resilience, resourcefulness, and how kindness and friendship help everyone, including those with differences, succeed.",
+      "year": 2016
+    },
+    {
+      "age_rating": "PG",
+      "director": "Bobby Rubio",
+      "genre": [
+        "Animation",
+        "Short",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 7.1,
+      "platform": "Disney+",
+      "rank": 56,
+      "similarity_score": 0.6353899836540222,
+      "title": "Float",
+      "why_similar": "A 7-year-old will learn a powerful metaphor about accepting and celebrating unique differences in themselves and others instead of forcing conformity.",
+      "year": 2019
+    },
+    {
+      "age_rating": "PG",
+      "director": "Jun'ichi Satô, Tomotaka Shibayama",
+      "genre": [
+        "Animation",
+        "Drama",
+        "Family",
+        "Fantasy",
+        "Romance"
+      ],
+      "imdb_rating": 6.7,
+      "platform": "Netflix",
+      "rank": 57,
+      "similarity_score": 0.6342772841453552,
+      "title": "A Whisker Away",
+      "why_similar": "A 7-year-old will learn about the importance of facing problems authentically instead of masking true feelings to escape difficult emotions.",
+      "year": 2020
+    },
+    {
+      "age_rating": "PG",
+      "director": "Gil Kenan",
+      "genre": [
+        "Adventure",
+        "Drama",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 6.7,
+      "platform": "Netflix",
+      "rank": 58,
+      "similarity_score": 0.6324751377105713,
+      "title": "A Boy Called Christmas",
+      "why_similar": "A 7-year-old will learn how to hold onto hope and find kindness and wonder, even when dealing with grief and hardship.",
+      "year": 2021
+    },
+    {
+      "age_rating": "G",
+      "director": "Wolfgang Reitherman",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Fantasy",
+        "Musical"
+      ],
+      "imdb_rating": 7.2,
+      "platform": "Disney+",
+      "rank": 59,
+      "similarity_score": 0.6316041350364685,
+      "title": "The Sword in the Stone",
+      "why_similar": "A 7-year-old will learn that true strength and wisdom come from empathy, knowledge, and experience, not just physical power.",
+      "year": 1963
+    },
+    {
+      "age_rating": "G",
+      "director": "Jerry Rees",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.3,
+      "platform": "Disney+",
+      "rank": 60,
+      "similarity_score": 0.6305253505706787,
+      "title": "The Brave Little Toaster",
+      "why_similar": "A 7-year-old will learn about loyalty, perseverance, and how to bravely confront fears to help someone they care about.",
+      "year": 1987
+    },
+    {
+      "age_rating": "G",
+      "director": "Mark Dindal",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.3,
+      "platform": "Disney+",
+      "rank": 61,
+      "similarity_score": 0.6268459558486938,
+      "title": "The Emperor's New Groove",
+      "why_similar": "A 7-year-old will learn about humility, cooperation, and the value of genuine friendship through a humorous story of transformation.",
+      "year": 2000
+    },
+    {
+      "age_rating": "PG",
+      "director": "Lee Unkrich",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 8.4,
+      "platform": "Disney+",
+      "rank": 62,
+      "similarity_score": 0.6264289617538452,
+      "title": "Coco",
+      "why_similar": "A 7-year-old will learn about family legacy, forgiveness, and how remembering loved ones keeps them alive in our hearts.",
+      "year": 2017
+    },
+    {
+      "age_rating": "G",
+      "director": "Jack Kinney, Clyde Geronimi, James Algar",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Disney+",
+      "rank": 63,
+      "similarity_score": 0.6253860592842102,
+      "title": "The Adventures of Ichabod and Mr. Toad",
+      "why_similar": "A 7-year-old will learn about the importance of friendship, loyalty, and helping a friend understand the consequences of reckless behavior.",
+      "year": 1949
+    }
+  ],
+  "total_results": 63
+}

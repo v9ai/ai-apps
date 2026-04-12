@@ -47,29 +47,55 @@ impl EmbeddingModel {
     }
 
     pub fn embed(&self, texts: &[&str]) -> Result<Tensor> {
-        let encodings = self
-            .tokenizer
+        let mut tokenizer = self.tokenizer.clone();
+        let pad_id = tokenizer.token_to_id("[PAD]").unwrap_or(0);
+        tokenizer.with_padding(Some(tokenizers::PaddingParams {
+            pad_id,
+            pad_token: "[PAD]".to_string(),
+            ..Default::default()
+        }));
+
+        let encodings = tokenizer
             .encode_batch(texts.to_vec(), true)
             .map_err(|e| Error::Tokenizer(e.to_string()))?;
+
+        let max_len = encodings.iter().map(|e| e.get_ids().len()).max().unwrap_or(0);
 
         let token_ids: Vec<Tensor> = encodings
             .iter()
             .map(|enc| {
                 let ids: Vec<u32> = enc.get_ids().to_vec();
+                debug_assert_eq!(ids.len(), max_len);
                 Tensor::new(ids.as_slice(), &self.device)
             })
             .collect::<std::result::Result<Vec<_>, _>>()?;
 
+        let attention_masks: Vec<Tensor> = encodings
+            .iter()
+            .map(|enc| {
+                let mask: Vec<f32> = enc
+                    .get_attention_mask()
+                    .iter()
+                    .map(|&v| v as f32)
+                    .collect();
+                Tensor::new(mask.as_slice(), &self.device)
+            })
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+
         let token_ids = Tensor::stack(&token_ids, 0)?;
+        let attention_mask = Tensor::stack(&attention_masks, 0)?;
 
         let token_type_ids = token_ids.zeros_like()?;
         let embeddings = self.model.forward(&token_ids, &token_type_ids, None)?;
 
-        // Mean pooling over sequence length
-        let (_batch, seq_len, _hidden) = embeddings.dims3()?;
-        let mean = (embeddings.sum(1)? / (seq_len as f64))?;
+        // Masked mean pooling — only average over real tokens, not padding
+        let mask_expanded = attention_mask.unsqueeze(2)?.broadcast_as(embeddings.shape())?;
+        let masked = (embeddings * mask_expanded)?;
+        let summed = masked.sum(1)?;
+        let counts = attention_mask.sum(1)?.unsqueeze(1)?.clamp(1e-12, f64::MAX)?;
+        let mean = summed.broadcast_div(&counts)?;
 
-        // L2 normalization — cosine similarity on normalized vectors = dot product
+        // L2 normalization
         let norm = mean.sqr()?.sum_keepdim(D::Minus1)?.sqrt()?;
         let normalized = mean.broadcast_div(&norm.clamp(1e-12, f64::MAX)?)?;
 
