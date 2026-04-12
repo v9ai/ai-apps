@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Heading, Text, Flex, Button, Badge, Box } from "@radix-ui/themes";
 import type { CssProperty, CssCategory } from "@/lib/css-properties";
 import { ProgressBar } from "./ProgressBar";
@@ -58,6 +58,13 @@ export function MemorizeDashboard({
 }: MemorizeDashboardProps) {
   const [mode, setMode] = useState<Mode>("dashboard");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (mode === "flashcards") {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [mode]);
 
   const allProps = useMemo(
     () => categories.flatMap((c) => c.properties),
