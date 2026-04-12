@@ -8,6 +8,11 @@ function parseJsonArray(val: string | null | undefined): string[] {
   try { return JSON.parse(val); } catch { return []; }
 }
 
+function toMs(dateStr: string | null | undefined): number {
+  if (!dateStr) return 0;
+  return new Date(dateStr).getTime() || 0;
+}
+
 interface ThreadSummaryRow {
   contact_id: number;
   first_name: string;
@@ -150,7 +155,7 @@ export const emailThreadResolvers = {
         const inbound = inboundMap.get(row.contact_id);
         const outboundAt = row.latest_outbound_at || "";
         const inboundAt = inbound?.latest_inbound_at || "";
-        const lastMessageAt = inboundAt > outboundAt ? inboundAt : outboundAt;
+        const lastMessageAt = toMs(inboundAt) > toMs(outboundAt) ? inboundAt : outboundAt;
         const lastMessageDirection = inboundAt > outboundAt ? "inbound" : "outbound";
 
         const preview = previewMap.get(row.contact_id);
@@ -198,7 +203,7 @@ export const emailThreadResolvers = {
       }
 
       // Sort by most recent activity
-      threads.sort((a, b) => (b.lastMessageAt || "").localeCompare(a.lastMessageAt || ""));
+      threads.sort((a, b) => toMs(b.lastMessageAt) - toMs(a.lastMessageAt));
 
       const totalCount = threads.length;
       const paged = threads.slice(offset, offset + limit);
@@ -302,7 +307,7 @@ export const emailThreadResolvers = {
       }
 
       // Sort chronologically (oldest first)
-      messages.sort((a, b) => (a.sentAt || "").localeCompare(b.sentAt || ""));
+      messages.sort((a, b) => toMs(a.sentAt) - toMs(b.sentAt));
 
       // Get latest inbound classification
       const latestInbound = inbound[0];
