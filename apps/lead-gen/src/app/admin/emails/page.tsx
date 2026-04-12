@@ -36,7 +36,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { getSentEmails, getReceivedEmails, getEmailSubscribers } from "./actions";
+import { getSentEmails, getEmailSubscribers } from "./actions";
 import type { EmailSubscriber } from "./actions";
 import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
 import { ComposeFromLinkedIn } from "@/components/admin/ComposeFromLinkedIn";
