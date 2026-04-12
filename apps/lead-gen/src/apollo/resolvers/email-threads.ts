@@ -76,35 +76,34 @@ export const emailThreadResolvers = {
           companies.key,
         ) as ThreadSummaryRow[];
 
-      // Get inbound summary per matched contact
-      const inboundByContact = await context.db
+      // Get all received emails matched to contacts, sorted by date desc
+      const allInbound = await context.db
         .select({
+          id: receivedEmails.id,
           matched_contact_id: receivedEmails.matched_contact_id,
-          inbound_count: count(receivedEmails.id),
-          latest_inbound_at: sql<string>`max(${receivedEmails.received_at})`,
-          latest_classification: sql<string>`(
-            SELECT re2.classification FROM received_emails re2
-            WHERE re2.matched_contact_id = ${receivedEmails.matched_contact_id}
-            AND re2.classification IS NOT NULL
-            ORDER BY re2.received_at DESC
-            LIMIT 1
-          )`,
-          latest_confidence: sql<number>`(
-            SELECT re2.classification_confidence FROM received_emails re2
-            WHERE re2.matched_contact_id = ${receivedEmails.matched_contact_id}
-            AND re2.classification IS NOT NULL
-            ORDER BY re2.received_at DESC
-            LIMIT 1
-          )`,
+          received_at: receivedEmails.received_at,
+          classification: receivedEmails.classification,
+          classification_confidence: receivedEmails.classification_confidence,
         })
         .from(receivedEmails)
         .where(sql`${receivedEmails.matched_contact_id} IS NOT NULL`)
-        .groupBy(receivedEmails.matched_contact_id) as InboundSummary[];
+        .orderBy(desc(receivedEmails.received_at));
 
+      // Aggregate inbound data per contact
       const inboundMap = new Map<number, InboundSummary>();
-      for (const row of inboundByContact) {
-        if (row.matched_contact_id) {
-          inboundMap.set(row.matched_contact_id, row);
+      for (const row of allInbound) {
+        const cid = row.matched_contact_id!;
+        const existing = inboundMap.get(cid);
+        if (!existing) {
+          inboundMap.set(cid, {
+            matched_contact_id: cid,
+            inbound_count: 1,
+            latest_inbound_at: row.received_at,
+            latest_classification: row.classification,
+            latest_confidence: row.classification_confidence,
+          });
+        } else {
+          existing.inbound_count++;
         }
       }
 

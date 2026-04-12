@@ -5,7 +5,7 @@ import { Badge, Box, Flex, Heading, Separator, Spinner, Text } from "@radix-ui/t
 import { PaperPlaneIcon, ArchiveIcon, CheckCircledIcon } from "@radix-ui/react-icons";
 import { button } from "@/recipes/button";
 import Link from "next/link";
-import { useGetEmailThreadQuery } from "@/__generated__/hooks";
+import { useGetEmailThreadQuery, useArchiveEmailMutation } from "@/__generated__/hooks";
 import { EmailComposer } from "@/components/admin/EmailComposer";
 import { ThreadMessage } from "./thread-message";
 
