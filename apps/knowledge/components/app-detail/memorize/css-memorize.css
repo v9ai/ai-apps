@@ -165,7 +165,7 @@
   width: 100%;
   height: 100%;
   border: none;
-  background: #111113;
+  background: var(--gray-1);
 }
 
 .flashcard-controls {
@@ -334,7 +334,7 @@
   height: 140px;
   border: 1px solid var(--gray-4);
   border-radius: var(--radius-2);
-  background: #111113;
+  background: var(--gray-1);
 }
 
 .fill-blank-controls {
@@ -380,7 +380,7 @@
   width: 100%;
   height: 180px;
   border: none;
-  background: #111113;
+  background: var(--gray-1);
 }
 
 .matcher-options {
@@ -615,7 +615,7 @@
 
 .explorer-tab--active {
   background: var(--violet-9);
-  color: #fff;
+  color: var(--gray-1);
 }
 
 .explorer-grid {
@@ -702,7 +702,7 @@
   width: 100%;
   height: 140px;
   border: none;
-  background: #111113;
+  background: var(--gray-1);
 }
 
 /* ── Empty / loading states ─────────────────────────────────────── */
