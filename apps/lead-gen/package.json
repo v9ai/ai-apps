@@ -23,6 +23,7 @@
     "campaign:dry": "npx tsx scripts/send-cpn-campaign.ts --dry-run --limit 5",
     "cpn:sync-replies": "npx tsx scripts/sync-cpn-replies.ts",
     "cpn:followup": "npx tsx scripts/send-cpn-followup.ts",
+    "process-emails": "npx tsx scripts/process-received-emails.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
