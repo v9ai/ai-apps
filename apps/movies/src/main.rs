@@ -10,7 +10,10 @@ use serde_json::json;
 use std::collections::HashSet;
 use std::sync::Arc;
 
-const MOVIE: &str = "The Little Mermaid";
+const CHILD_NAME: &str = "Bogdan";
+const CHILD_AGE: u8 = 7;
+const FOCUS: &str = "emotional development";
+
 const EMBED_URL: &str = "http://localhost:9999/embed";
 const MIN_IMDB: f64 = 6.5;
 const TOP_K: usize = 80;
@@ -23,24 +26,27 @@ struct SearchAngle {
 
 const SEARCH_ANGLES: &[SearchAngle] = &[
     SearchAngle {
-        label: "animated-family",
-        focus: "animated films, family movies, musical films, fairy-tale adaptations, \
-                and Disney/Pixar-style animation. Prioritize movies with animal/creature \
-                protagonists, underwater or magical settings, and coming-of-age journeys",
-        count: 35,
-    },
-    SearchAngle {
-        label: "romance-drama",
-        focus: "romantic films, forbidden love stories, drama with parent-child conflict, \
-                stories about sacrifice for love, belonging vs. identity, and films where \
-                characters cross between two worlds (social classes, cultures, realms)",
+        label: "empathy-friendship",
+        focus: "movies about empathy, understanding others' feelings, making and keeping \
+                friends, dealing with differences, kindness, cooperation, and seeing the \
+                world through someone else's perspective. Include films where characters \
+                learn to care for others or resolve conflicts peacefully",
         count: 30,
     },
     SearchAngle {
-        label: "adventure-fantasy",
-        focus: "fantasy adventure films, hero's journey narratives, magical transformation \
-                stories, quest narratives, films with mythological or supernatural elements, \
-                and adventure stories with strong emotional cores",
+        label: "resilience-courage",
+        focus: "movies about overcoming fears, bouncing back from failure, perseverance, \
+                bravery in the face of challenges, dealing with loss or change, and \
+                building inner strength. Films where characters grow through adversity \
+                and learn they are stronger than they thought",
+        count: 30,
+    },
+    SearchAngle {
+        label: "self-awareness-feelings",
+        focus: "movies about understanding and naming emotions, managing anger or sadness, \
+                learning self-control, expressing feelings in healthy ways, building \
+                confidence and self-worth. Films that model emotional vocabulary and \
+                show characters processing complex feelings like jealousy, grief, or anxiety",
         count: 30,
     },
 ];
@@ -88,16 +94,21 @@ struct MovieResult {
 
 // ── Pipeline stages ───────────────────────────────────────────────────────────
 
-async fn analyze_movie(client: &DeepSeekClient<ReqwestClient>, movie: &str) -> Result<String> {
+async fn build_profile(client: &DeepSeekClient<ReqwestClient>) -> Result<String> {
     let req = build_request(
         &DeepSeekModel::Chat,
         vec![deepseek::types::user_msg(&format!(
-            "Analyze the movie \"{movie}\" and produce a detailed profile including:\n\
-             - Genre(s)\n\
-             - Key themes (adventure, transformation, belonging, love, family conflict, magic)\n\
-             - Emotional tone and target audience\n\
-             - Narrative patterns (hero's journey, coming-of-age, forbidden romance)\n\
-             Return a structured text profile for similarity matching."
+            "Create a detailed profile of ideal movies for a {CHILD_AGE}-year-old child \
+             named {CHILD_NAME} focused on {FOCUS}.\n\n\
+             Include:\n\
+             - Key emotional skills for this age: empathy, emotional regulation, \
+               resilience, friendship, self-awareness, dealing with fear/anger/sadness\n\
+             - Appropriate narrative complexity for age {CHILD_AGE}\n\
+             - Themes that resonate: belonging, courage, kindness, family bonds, \
+               handling change, understanding feelings\n\
+             - What makes a movie emotionally developmental vs. just entertaining\n\
+             - Age-appropriate content guidelines (G, PG, TV-Y7, TV-G ratings)\n\n\
+             Return a structured text profile for similarity matching against movie descriptions."
         ))],
         None,
         &EffortLevel::Low,
@@ -110,7 +121,6 @@ async fn analyze_movie(client: &DeepSeekClient<ReqwestClient>, movie: &str) -> R
 async fn search_platform(
     client: Arc<DeepSeekClient<ReqwestClient>>,
     platform: String,
-    movie: String,
     profile: String,
     focus: String,
     count: usize,
@@ -118,12 +128,14 @@ async fn search_platform(
     let req = build_request(
         &DeepSeekModel::Chat,
         vec![deepseek::types::user_msg(&format!(
-            "Based on this movie profile for \"{movie}\":\n{profile}\n\n\
-             List {count} movies currently available on {platform} that are similar.\n\
+            "Based on this profile of ideal movies for a {CHILD_AGE}-year-old:\n{profile}\n\n\
+             List {count} movies currently available on {platform} that are excellent \
+             for a {CHILD_AGE}-year-old's {FOCUS}.\n\
              Focus specifically on: {focus}.\n\
-             Do NOT include \"{movie}\" itself.\n\
-             Include hidden gems alongside popular titles.\n\n\
-             For each: Title (Year) - brief thematic description (1-2 sentences).\n\
+             Only include movies rated G, PG, TV-Y7, or TV-G.\n\
+             Include hidden gems alongside popular titles — not just the obvious picks.\n\n\
+             For each: Title (Year) - brief description of the emotional lessons and \
+             themes the child will absorb (1-2 sentences).\n\
              Format as numbered list. Be exhaustive."
         ))],
         None,
@@ -166,7 +178,6 @@ fn cosine_sim(a: &[f32], b: &[f32]) -> f64 {
 async fn refine_batch(
     client: &DeepSeekClient<ReqwestClient>,
     batch: &[(&str, &str, f64)],
-    movie: &str,
 ) -> Result<Vec<MovieResult>> {
     let items: Vec<serde_json::Value> = batch
         .iter()
@@ -182,7 +193,8 @@ async fn refine_batch(
     let req = build_request(
         &DeepSeekModel::Chat,
         vec![deepseek::types::user_msg(&format!(
-            "Extract structured movie info from these candidates. Return a JSON array.\n\n\
+            "Extract structured movie info from these candidates. These are movies being \
+             evaluated for a {CHILD_AGE}-year-old's {FOCUS}. Return a JSON array.\n\n\
              {}\n\n\
              For EACH entry return:\n\
              - \"title\": movie title (string)\n\
@@ -190,13 +202,15 @@ async fn refine_batch(
              - \"platform\": keep from data\n\
              - \"similarity_score\": keep from data (float)\n\
              - \"imdb_rating\": real IMDB rating as float (e.g. 7.8)\n\
-             - \"age_rating\": US content rating (\"G\", \"PG\", \"PG-13\")\n\
+             - \"age_rating\": US content rating (\"G\", \"PG\", \"PG-13\", \"TV-Y7\", \"TV-G\")\n\
              - \"genre\": list of genre strings\n\
              - \"director\": director name\n\
-             - \"why_similar\": one English sentence about thematic connection to \"{}\"\n\n\
+             - \"why_similar\": one English sentence about what emotional skills or \
+               lessons a {CHILD_AGE}-year-old will develop from this movie\n\n\
+             IMPORTANT: Only include movies appropriate for age {CHILD_AGE} (rated G, PG, TV-Y7, TV-G).\n\
+             Exclude anything rated PG-13 or higher.\n\n\
              Return ONLY the JSON array. No markdown fences.",
             serde_json::to_string_pretty(&items)?,
-            movie
         ))],
         None,
         &EffortLevel::High,

@@ -88,7 +88,7 @@ export default function DiscussionGuidePage() {
   }
 
   return (
-    <Flex direction="column" gap="5" py="4">
+    <Flex direction="column" gap={{ initial: "3", sm: "5" }} py={{ initial: "2", sm: "4" }}>
       <Breadcrumbs
         crumbs={[
           { label: "Journal", href: "/journal" },
@@ -99,19 +99,19 @@ export default function DiscussionGuidePage() {
 
       {/* Header */}
       <Flex justify="between" align="start" wrap="wrap" gap="3">
-        <Box>
-          <Heading size="6" mb="1">Discussion Guide</Heading>
+        <Box style={{ flex: "1 1 0", minWidth: 0 }}>
+          <Heading size={{ initial: "5", md: "7" }} mb="1">Discussion Guide</Heading>
           <Text size="2" color="gray">
             Research-grounded guide for discussing this with {familyName || "your child"}.
           </Text>
         </Box>
         {isOwner && (
-          <Flex gap="2">
+          <Flex gap="2" style={{ flexShrink: 0 }}>
             {guide && (
               <Button
                 variant="soft"
                 color="red"
-                size="2"
+                size={{ initial: "1", sm: "2" }}
                 onClick={() => deleteGuide({ variables: { journalEntryId: id } })}
                 disabled={deleting || generating}
               >
@@ -119,7 +119,7 @@ export default function DiscussionGuidePage() {
               </Button>
             )}
             <Button
-              size="2"
+              size={{ initial: "1", sm: "2" }}
               onClick={() => {
                 setMessage(null);
                 generateGuide({ variables: { journalEntryId: id } });
@@ -155,7 +155,7 @@ export default function DiscussionGuidePage() {
       {/* Empty state */}
       {!guide && !generating && (
         <Card>
-          <Flex direction="column" align="center" gap="3" p="6">
+          <Flex direction="column" align="center" gap="3" p={{ initial: "4", sm: "6" }}>
             <Text size="5">&#128172;</Text>
             <Text size="2" color="gray" align="center" style={{ maxWidth: 400 }}>
               No discussion guide yet.{isOwner && ` Generate one to get research-backed conversation starters,
@@ -169,7 +169,7 @@ export default function DiscussionGuidePage() {
         <>
           {/* Summary card */}
           <Card>
-            <Flex direction="column" gap="3" p="4">
+            <Flex direction="column" gap="3" p={{ initial: "3", sm: "4" }}>
               <Text size="2" style={{ whiteSpace: "pre-wrap", lineHeight: "1.7" }}>
                 {guide.behaviorSummary}
               </Text>
@@ -186,14 +186,14 @@ export default function DiscussionGuidePage() {
           </Card>
 
           {/* Tabs */}
-          <Flex gap="2" wrap="wrap">
+          <Flex gap="1" wrap="wrap">
             {([
-              ["context", "Developmental Context"],
-              ["starters", `Conversation Starters (${guide.conversationStarters.length})`],
-              ["talking", `Talking Points (${guide.talkingPoints.length})`],
-              ["language", "Language Guide"],
-              ["reactions", `Anticipated Reactions (${guide.anticipatedReactions.length})`],
-              ["followup", `Follow-Up Plan (${guide.followUpPlan.length})`],
+              ["context", "Context"],
+              ["starters", `Starters (${guide.conversationStarters.length})`],
+              ["talking", `Points (${guide.talkingPoints.length})`],
+              ["language", "Language"],
+              ["reactions", `Reactions (${guide.anticipatedReactions.length})`],
+              ["followup", `Follow-Up (${guide.followUpPlan.length})`],
             ] as const).map(([tab, label]) => (
               <Button
                 key={tab}
@@ -210,7 +210,7 @@ export default function DiscussionGuidePage() {
           {/* Developmental Context */}
           {activeTab === "context" && (
             <Card>
-              <Flex direction="column" gap="4" p="4">
+              <Flex direction="column" gap="4" p={{ initial: "3", sm: "4" }}>
                 <Box>
                   <Text size="2" weight="bold" mb="1" as="div">Developmental Stage</Text>
                   <Badge variant="soft" color="teal" size="2">{guide.developmentalContext.stage}</Badge>
@@ -223,7 +223,7 @@ export default function DiscussionGuidePage() {
                   </Text>
                 </Box>
                 <Box>
-                  <Text size="2" weight="bold" mb="1" as="div">What's Age-Typical</Text>
+                  <Text size="2" weight="bold" mb="1" as="div">{"What's Age-Typical"}</Text>
                   <Text size="2" color="gray" style={{ lineHeight: "1.7" }}>
                     {guide.developmentalContext.normalizedBehavior}
                   </Text>
@@ -242,11 +242,11 @@ export default function DiscussionGuidePage() {
 
           {/* Conversation Starters */}
           {activeTab === "starters" && (
-            <Flex direction="column" gap="3">
+            <Flex direction="column" gap={{ initial: "2", sm: "3" }}>
               {guide.conversationStarters.map((starter, i) => (
                 <Card key={i} variant="surface">
-                  <Flex direction="column" gap="2" p="4">
-                    <Text size="3" weight="bold" style={{ fontStyle: "italic" }}>
+                  <Flex direction="column" gap="2" p={{ initial: "3", sm: "4" }}>
+                    <Text size={{ initial: "2", sm: "3" }} weight="bold" style={{ fontStyle: "italic" }}>
                       &ldquo;{starter.opener}&rdquo;
                     </Text>
                     <Text size="2" color="gray" style={{ lineHeight: "1.7" }}>
@@ -265,11 +265,11 @@ export default function DiscussionGuidePage() {
 
           {/* Talking Points */}
           {activeTab === "talking" && (
-            <Flex direction="column" gap="3">
+            <Flex direction="column" gap={{ initial: "2", sm: "3" }}>
               {guide.talkingPoints.map((tp, i) => (
                 <Card key={i} variant="surface">
-                  <Flex direction="column" gap="2" p="4">
-                    <Text size="3" weight="bold">{tp.point}</Text>
+                  <Flex direction="column" gap="2" p={{ initial: "3", sm: "4" }}>
+                    <Text size={{ initial: "2", sm: "3" }} weight="bold">{tp.point}</Text>
                     <Text size="2" color="gray" style={{ lineHeight: "1.7" }}>
                       {tp.explanation}
                     </Text>
@@ -286,14 +286,14 @@ export default function DiscussionGuidePage() {
 
           {/* Language Guide */}
           {activeTab === "language" && (
-            <Flex direction="column" gap="4">
+            <Flex direction="column" gap={{ initial: "3", sm: "4" }}>
               <Card>
-                <Flex direction="column" gap="3" p="4">
-                  <Text size="3" weight="bold" color="green">What To Say</Text>
+                <Flex direction="column" gap="3" p={{ initial: "3", sm: "4" }}>
+                  <Text size={{ initial: "2", sm: "3" }} weight="bold" color="green">What To Say</Text>
                   <Flex direction="column" gap="2">
                     {guide.languageGuide.whatToSay.map((item, i) => (
                       <Card key={i} variant="surface">
-                        <Flex direction="column" gap="1" p="3">
+                        <Flex direction="column" gap="1" p={{ initial: "2", sm: "3" }}>
                           <Text size="2" weight="bold" color="green" style={{ fontStyle: "italic" }}>
                             &ldquo;{item.phrase}&rdquo;
                           </Text>
@@ -305,12 +305,12 @@ export default function DiscussionGuidePage() {
                 </Flex>
               </Card>
               <Card>
-                <Flex direction="column" gap="3" p="4">
-                  <Text size="3" weight="bold" color="red">What Not To Say</Text>
+                <Flex direction="column" gap="3" p={{ initial: "3", sm: "4" }}>
+                  <Text size={{ initial: "2", sm: "3" }} weight="bold" color="red">What Not To Say</Text>
                   <Flex direction="column" gap="2">
                     {guide.languageGuide.whatNotToSay.map((item, i) => (
                       <Card key={i} variant="surface">
-                        <Flex direction="column" gap="1" p="3">
+                        <Flex direction="column" gap="1" p={{ initial: "2", sm: "3" }}>
                           <Text size="2" weight="bold" color="red" style={{ fontStyle: "italic", textDecoration: "line-through" }}>
                             &ldquo;{item.phrase}&rdquo;
                           </Text>
@@ -331,16 +331,17 @@ export default function DiscussionGuidePage() {
 
           {/* Anticipated Reactions */}
           {activeTab === "reactions" && (
-            <Flex direction="column" gap="3">
+            <Flex direction="column" gap={{ initial: "2", sm: "3" }}>
               {guide.anticipatedReactions.map((reaction, i) => (
                 <Card key={i} variant="surface">
-                  <Flex direction="column" gap="2" p="4">
-                    <Flex justify="between" align="center">
-                      <Text size="3" weight="bold">{reaction.reaction}</Text>
+                  <Flex direction="column" gap="2" p={{ initial: "3", sm: "4" }}>
+                    <Flex justify="between" align="start" gap="2" wrap="wrap">
+                      <Text size={{ initial: "2", sm: "3" }} weight="bold" style={{ flex: "1 1 0", minWidth: 0 }}>{reaction.reaction}</Text>
                       <Badge
                         variant="soft"
                         size="1"
                         color={reaction.likelihood === "high" ? "red" : reaction.likelihood === "medium" ? "orange" : "green"}
+                        style={{ flexShrink: 0 }}
                       >
                         {reaction.likelihood}
                       </Badge>
@@ -356,13 +357,13 @@ export default function DiscussionGuidePage() {
 
           {/* Follow-Up Plan */}
           {activeTab === "followup" && (
-            <Flex direction="column" gap="3">
+            <Flex direction="column" gap={{ initial: "2", sm: "3" }}>
               {guide.followUpPlan.map((step, i) => (
                 <Card key={i} variant="surface">
-                  <Flex direction="column" gap="2" p="4">
-                    <Flex justify="between" align="center">
-                      <Text size="3" weight="bold">{step.action}</Text>
-                      <Badge variant="soft" color="teal" size="1">{step.timing}</Badge>
+                  <Flex direction="column" gap="2" p={{ initial: "3", sm: "4" }}>
+                    <Flex justify="between" align="start" gap="2" wrap="wrap">
+                      <Text size={{ initial: "2", sm: "3" }} weight="bold" style={{ flex: "1 1 0", minWidth: 0 }}>{step.action}</Text>
+                      <Badge variant="soft" color="teal" size="1" style={{ flexShrink: 0 }}>{step.timing}</Badge>
                     </Flex>
                     <Text size="2" color="gray" style={{ lineHeight: "1.7" }}>
                       {step.description}
