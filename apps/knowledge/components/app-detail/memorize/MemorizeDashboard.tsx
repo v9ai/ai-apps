@@ -178,8 +178,8 @@ export function MemorizeDashboard({
       {/* Overall progress */}
       <div className="memorize-overall">
         <Flex justify="between" align="baseline">
-          <Heading size="4">CSS Properties</Heading>
-          <Text size="2" color="gray">
+          <Heading size="5">CSS Properties</Heading>
+          <Text size="3" color="gray">
             {masteredCount} / {totalProps} mastered
           </Text>
         </Flex>
@@ -225,10 +225,10 @@ export function MemorizeDashboard({
       {/* Active category filter indicator */}
       {activeCategory && (
         <Flex align="center" gap="2" mb="3">
-          <Text size="2" color="gray">
+          <Text size="3" color="gray">
             Filtered to:
           </Text>
-          <Badge color="violet" variant="soft">
+          <Badge color="violet" variant="soft" size="2">
             {categories.find((c) => c.id === activeCategory)?.name}
           </Badge>
           <Button
@@ -243,12 +243,12 @@ export function MemorizeDashboard({
       )}
 
       {/* Mode buttons */}
-      <Heading size="3" mb="3">
+      <Heading size="4" mb="3">
         Practice Modes
       </Heading>
       <div className="memorize-modes">
         <Button
-          size="3"
+          size="4"
           variant="solid"
           color="violet"
           onClick={() => setMode("flashcards")}
@@ -256,7 +256,7 @@ export function MemorizeDashboard({
           Flashcards
         </Button>
         <Button
-          size="3"
+          size="4"
           variant="soft"
           color="cyan"
           onClick={() => setMode("fill")}
@@ -264,7 +264,7 @@ export function MemorizeDashboard({
           Fill in the Blank
         </Button>
         <Button
-          size="3"
+          size="4"
           variant="soft"
           color="orange"
           onClick={() => setMode("matcher")}
@@ -272,7 +272,7 @@ export function MemorizeDashboard({
           Visual Matcher
         </Button>
         <Button
-          size="3"
+          size="4"
           variant="soft"
           color="crimson"
           onClick={() => setMode("drill")}
@@ -280,7 +280,7 @@ export function MemorizeDashboard({
           Timed Drill
         </Button>
         <Button
-          size="3"
+          size="4"
           variant="outline"
           color="gray"
           onClick={() => setMode("explorer")}
@@ -293,15 +293,15 @@ export function MemorizeDashboard({
       <Box mt="5" p="4" style={{ background: "var(--violet-2)", borderRadius: "var(--radius-3)", borderLeft: "3px solid var(--violet-8)" }}>
         <Flex justify="between" align="center" wrap="wrap" gap="3">
           <div>
-            <Text size="2" weight="bold" style={{ display: "block" }}>
+            <Text size="3" weight="bold" style={{ display: "block" }}>
               Smart Practice
             </Text>
-            <Text size="1" color="gray">
+            <Text size="2" color="gray">
               Focus on your weakest properties first, sorted by lowest mastery.
             </Text>
           </div>
           <Button
-            size="2"
+            size="3"
             variant="solid"
             color="violet"
             onClick={() => {
@@ -332,8 +332,8 @@ function ModeHeader({
       <Button size="1" variant="ghost" color="gray" onClick={onBack}>
         &larr; Back
       </Button>
-      <Heading size="4">{title}</Heading>
-      <Text size="2" color="gray">
+      <Heading size="5">{title}</Heading>
+      <Text size="3" color="gray">
         {subtitle}
       </Text>
     </Flex>

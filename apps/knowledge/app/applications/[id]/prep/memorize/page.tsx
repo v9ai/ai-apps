@@ -141,12 +141,12 @@ function MemorizePageInner() {
           }}
         >
           <ArrowLeftIcon />
-          <Text size="2">Study Plan</Text>
+          <Text size="3">Study Plan</Text>
         </Link>
-        <Text size="2" color="gray">
+        <Text size="3" color="gray">
           /
         </Text>
-        <Text size="2" weight="medium">
+        <Text size="3" weight="medium">
           Memorize CSS
         </Text>
       </Flex>
@@ -154,23 +154,23 @@ function MemorizePageInner() {
       {/* Page header */}
       <Flex justify="between" align="start" mb="6" wrap="wrap" gap="3">
         <Box>
-          <Heading size="7" mb="2">
+          <Heading size="8" mb="2">
             Memorize CSS
           </Heading>
           <Flex align="center" gap="2">
-            <Badge color="violet" variant="soft" size="2">
+            <Badge color="violet" variant="soft" size="3">
               Active Recall
             </Badge>
-            <Text size="2" color="gray">
+            <Text size="3" color="gray">
               {app.company} &middot; {app.position}
             </Text>
           </Flex>
         </Box>
         <Flex gap="2">
-          <Button size="2" variant="soft" color="gray" asChild>
+          <Button size="3" variant="soft" color="gray" asChild>
             <Link href={`/applications/${app.slug}/prep`}>Study Plan</Link>
           </Button>
-          <Button size="2" variant="soft" color="gray" asChild>
+          <Button size="3" variant="soft" color="gray" asChild>
             <Link href={`/applications/${app.slug}/notes`}>Notes</Link>
           </Button>
         </Flex>
