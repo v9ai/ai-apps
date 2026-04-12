@@ -25,6 +25,12 @@ enum AffirmationCategory {
   STRENGTH
 }
 
+type AnticipatedReaction {
+  howToRespond: String!
+  likelihood: String!
+  reaction: String!
+}
+
 type AudioAsset {
   createdAt: String!
   createdBy: String!
@@ -215,6 +221,12 @@ type ConversationMessage {
   role: String!
 }
 
+type ConversationStarter {
+  ageAppropriateNote: String
+  context: String!
+  opener: String!
+}
+
 input ConvertJournalEntryToIssueInput {
   category: String!
   description: String
@@ -402,6 +414,11 @@ type DeleteDeepAnalysisResult {
   success: Boolean!
 }
 
+type DeleteDiscussionGuideResult {
+  message: String
+  success: Boolean!
+}
+
 type DeleteFamilyMemberResult {
   message: String
   success: Boolean!
@@ -468,12 +485,34 @@ type DeleteTeacherFeedbackResult {
   success: Boolean!
 }
 
+type DevelopmentalContext {
+  explanation: String!
+  normalizedBehavior: String!
+  researchBasis: String
+  stage: String!
+}
+
 enum DevelopmentalTier {
   ADULT
   EARLY_ADOLESCENCE
   EARLY_CHILDHOOD
   LATE_ADOLESCENCE
   MIDDLE_CHILDHOOD
+}
+
+type DiscussionGuide {
+  anticipatedReactions: [AnticipatedReaction!]!
+  behaviorSummary: String!
+  childAge: Int
+  conversationStarters: [ConversationStarter!]!
+  createdAt: String!
+  developmentalContext: DevelopmentalContext!
+  followUpPlan: [FollowUpStep!]!
+  id: Int!
+  journalEntryId: Int!
+  languageGuide: LanguageGuide!
+  model: String!
+  talkingPoints: [TalkingPoint!]!
 }
 
 type EmotionalLandscape {
@@ -569,6 +608,12 @@ enum FeedbackSource {
   REPORT
 }
 
+type FollowUpStep {
+  action: String!
+  description: String!
+  timing: String!
+}
+
 type GenerateAudioResult {
   audioUrl: String
   jobId: String!
@@ -578,6 +623,12 @@ type GenerateAudioResult {
 
 type GenerateDeepAnalysisResult {
   jobId: String
+  message: String
+  success: Boolean!
+}
+
+type GenerateDiscussionGuideResult {
+  guide: DiscussionGuide
   message: String
   success: Boolean!
 }
@@ -829,6 +880,7 @@ type JournalEntry {
   content: String!
   createdAt: String!
   createdBy: String!
+  discussionGuide: DiscussionGuide
   entryDate: String!
   familyMember: FamilyMember
   familyMemberId: Int
@@ -842,6 +894,17 @@ type JournalEntry {
   tags: [String!]
   title: String
   updatedAt: String!
+}
+
+type LanguageExample {
+  alternative: String
+  phrase: String!
+  reason: String!
+}
+
+type LanguageGuide {
+  whatNotToSay: [LanguageExample!]!
+  whatToSay: [LanguageExample!]!
 }
 
 type Mutation {
@@ -871,6 +934,7 @@ type Mutation {
   deleteContactFeedback(id: Int!): DeleteContactFeedbackResult!
   deleteConversation(id: Int!): DeleteConversationResult!
   deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
+  deleteDiscussionGuide(journalEntryId: Int!): DeleteDiscussionGuideResult!
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
   deleteGoal(id: Int!): DeleteGoalResult!
   deleteHabit(id: Int!): DeleteHabitResult!
@@ -888,6 +952,7 @@ type Mutation {
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
+  generateDiscussionGuide(journalEntryId: Int!): GenerateDiscussionGuideResult!
   generateHabitsForFamilyMember(count: Int, familyMemberId: Int!): GenerateHabitsResult!
   generateHabitsFromIssue(count: Int, issueId: Int!): GenerateHabitsResult!
   generateJournalAnalysis(journalEntryId: Int!): GenerateJournalAnalysisResult!
@@ -1211,6 +1276,13 @@ type Story {
 type Subscription {
   audioJobStatus(jobId: String!): GenerationJob!
   researchJobStatus(jobId: String!): GenerationJob!
+}
+
+type TalkingPoint {
+  explanation: String!
+  point: String!
+  relatedResearchIds: [Int!]
+  researchBacking: String
 }
 
 type TeacherFeedback {

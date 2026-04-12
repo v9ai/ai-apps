@@ -572,6 +572,27 @@ export const journalAnalyses = pgTable("journal_analyses", {
     .default(sql`NOW()`),
 });
 
+export const discussionGuides = pgTable("discussion_guides", {
+  id: serial("id").primaryKey(),
+  journalEntryId: integer("journal_entry_id").notNull(),
+  userId: text("user_id").notNull(),
+  childAge: integer("child_age"),
+  behaviorSummary: text("behavior_summary").notNull(),
+  developmentalContext: text("developmental_context").notNull(), // JSON
+  conversationStarters: text("conversation_starters").notNull(), // JSON array
+  talkingPoints: text("talking_points").notNull(), // JSON array
+  languageGuide: text("language_guide").notNull(), // JSON {whatToSay, whatNotToSay}
+  anticipatedReactions: text("anticipated_reactions").notNull(), // JSON array
+  followUpPlan: text("follow_up_plan").notNull(), // JSON array
+  model: text("model").notNull().default("deepseek-chat"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const affirmations = pgTable("affirmations", {
   id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id").notNull(),
