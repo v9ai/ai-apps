@@ -31,7 +31,7 @@ export default async function HomePage() {
           <section className="research-collections">
             <h2 className="research-collections-title">RESEARCH COLLECTIONS</h2>
             <div className="research-collections-grid">
-              <Link href="/kv-quant" className="cat-card" style={{ "--cat-from": "#f59e0b", "--cat-to": "#ef4444" } as React.CSSProperties}>
+              <Link href="/kv-quant" className="cat-card" style={{ "--cat-from": "var(--amber-9)", "--cat-to": "var(--red-9)" } as React.CSSProperties}>
                 <div className="cat-card-header">
                   <span className="cat-card-icon">🗜️</span>
                   <span className="cat-card-name">KV-Cache Quantization</span>

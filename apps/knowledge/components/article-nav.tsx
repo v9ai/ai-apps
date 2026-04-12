@@ -9,7 +9,7 @@ interface Props {
   nextMeta?: CategoryMeta | null;
 }
 
-const FALLBACK_META: CategoryMeta = { slug: "other", icon: "\u{1F4C4}", description: "", gradient: ["#6366f1", "#818cf8"] };
+const FALLBACK_META: CategoryMeta = { slug: "other", icon: "\u{1F4C4}", description: "", gradient: ["var(--indigo-9)", "var(--indigo-11)"] };
 
 export function ArticleNav({ prev, next, currentCategory, prevMeta, nextMeta }: Props) {
   if (!prev && !next) return null;

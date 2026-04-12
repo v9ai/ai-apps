@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: var(--color-background, #1a1a2e);
+  background: var(--color-background);
 }
 
 .resume-pdf-toolbar {
@@ -10,8 +10,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  background: var(--gray-1, #111);
-  border-bottom: 1px solid var(--gray-5, #333);
+  background: var(--gray-1);
+  border-bottom: 1px solid var(--gray-5);
   flex-shrink: 0;
 }
 
@@ -19,20 +19,20 @@
   font-size: 18px;
   font-weight: 600;
   margin: 0;
-  color: var(--gray-12, #fff);
+  color: var(--gray-12);
 }
 
 .resume-pdf-title span {
   font-size: 13px;
-  color: var(--gray-9, #999);
+  color: var(--gray-9);
 }
 
 .resume-pdf-download {
   display: inline-flex;
   align-items: center;
   padding: 8px 16px;
-  background: var(--accent-9, #2563eb);
-  color: #fff;
+  background: var(--accent-9);
+  color: var(--gray-1);
   border-radius: 6px;
   text-decoration: none;
   font-size: 13px;
@@ -41,7 +41,7 @@
 }
 
 .resume-pdf-download:hover {
-  background: var(--accent-10, #1d4ed8);
+  background: var(--accent-10);
 }
 
 .resume-pdf-viewer {

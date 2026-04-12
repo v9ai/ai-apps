@@ -4,12 +4,12 @@ import { useState } from "react";
 import type { ResearchPaper } from "@/lib/research-papers";
 
 const SOURCE_COLORS: Record<string, string> = {
-  arXiv: "#b31b1b",
-  OpenAlex: "#3b82f6",
-  Crossref: "#16a34a",
-  "Semantic Scholar": "#7c3aed",
-  CORE: "#ea580c",
-  Zenodo: "#0891b2",
+  arXiv: "var(--red-9)",
+  OpenAlex: "var(--blue-9)",
+  Crossref: "var(--jade-9)",
+  "Semantic Scholar": "var(--violet-9)",
+  CORE: "var(--orange-9)",
+  Zenodo: "var(--cyan-9)",
 };
 
 export function PaperCard({ paper }: { paper: ResearchPaper }) {
@@ -57,7 +57,7 @@ export function PaperCard({ paper }: { paper: ResearchPaper }) {
         )}
         <span
           className="se-source-badge"
-          style={{ backgroundColor: SOURCE_COLORS[paper.source] || "#666" }}
+          style={{ backgroundColor: SOURCE_COLORS[paper.source] || "var(--gray-8)" }}
         >
           {paper.source}
         </span>
