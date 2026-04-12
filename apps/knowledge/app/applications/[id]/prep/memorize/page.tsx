@@ -106,7 +106,7 @@ function MemorizePageInner() {
 
   if (loading) {
     return (
-      <Box px={{ initial: "4", md: "8" }} py="8">
+      <Box px={{ initial: "3", md: "5" }} py="5" style={{ minHeight: "100vh" }}>
         <Skeleton height="32px" mb="6" style={{ maxWidth: 300 }} />
         <Skeleton height="400px" />
       </Box>
@@ -115,7 +115,7 @@ function MemorizePageInner() {
 
   if (error || !app) {
     return (
-      <Box px={{ initial: "4", md: "8" }} py="8">
+      <Box px={{ initial: "3", md: "5" }} py="5" style={{ minHeight: "100vh" }}>
         <Heading size="5" mb="3">
           {error ? "Error" : "Not Found"}
         </Heading>
@@ -191,7 +191,7 @@ export default function MemorizePage() {
   return (
     <Suspense
       fallback={
-        <Box px={{ initial: "4", md: "8" }} py="8">
+        <Box px={{ initial: "3", md: "5" }} py="5" style={{ minHeight: "100vh" }}>
           <Skeleton height="32px" mb="6" style={{ maxWidth: 300 }} />
           <Skeleton height="400px" />
         </Box>
