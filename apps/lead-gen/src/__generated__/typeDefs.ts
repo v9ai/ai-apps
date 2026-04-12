@@ -1307,6 +1307,7 @@ type ReceivedEmail {
   fromEmail: String
   htmlContent: String
   id: Int!
+  matchedContact: Contact
   matchedContactId: Int
   matchedOutboundId: Int
   messageId: String

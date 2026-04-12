@@ -34,6 +34,15 @@ export const receivedEmailResolvers = {
     classificationConfidence: (parent: DbReceivedEmail) => parent.classification_confidence ?? null,
     classifiedAt: (parent: DbReceivedEmail) => parent.classified_at ?? null,
     matchedContactId: (parent: DbReceivedEmail) => parent.matched_contact_id ?? null,
+    async matchedContact(parent: DbReceivedEmail, _args: unknown, context: GraphQLContext) {
+      if (!parent.matched_contact_id) return null;
+      const [contact] = await context.db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.id, parent.matched_contact_id))
+        .limit(1);
+      return contact ?? null;
+    },
     matchedOutboundId: (parent: DbReceivedEmail) => parent.matched_outbound_id ?? null,
     async sentReplies(parent: DbReceivedEmail, _args: unknown, context: GraphQLContext) {
       const explicit = await context.db

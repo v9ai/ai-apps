@@ -2111,6 +2111,7 @@ export type ReceivedEmail = {
   fromEmail: Maybe<Scalars['String']['output']>;
   htmlContent: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  matchedContact: Maybe<Contact>;
   matchedContactId: Maybe<Scalars['Int']['output']>;
   matchedOutboundId: Maybe<Scalars['Int']['output']>;
   messageId: Maybe<Scalars['String']['output']>;
@@ -4578,6 +4579,7 @@ export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType exte
   fromEmail?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   htmlContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  matchedContact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType>;
   matchedContactId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   matchedOutboundId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   messageId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

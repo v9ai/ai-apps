@@ -289,7 +289,7 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
         contactId={email.matchedContactId ?? undefined}
         receivedEmailId={emailId}
         to={email.replyToEmails?.[0] || email.fromEmail || ""}
-        name={email.fromEmail?.split("@")[0] || ""}
+        name={email.matchedContact?.firstName || email.fromEmail?.split("@")[0] || ""}
         subject={
           email.subject?.startsWith("Re:")
             ? email.subject
@@ -307,8 +307,8 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
 
       {/* CPN Followup dialog */}
       {(() => {
-        const senderName = email.fromEmail?.split("@")[0] || "";
-        const cpn = buildCpnFollowup(senderName);
+        const contactName = email.matchedContact?.firstName || email.fromEmail?.split("@")[0] || "";
+        const cpn = buildCpnFollowup(contactName);
         return (
           <EmailComposer
             open={cpnFollowupOpen}
@@ -316,7 +316,7 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
             contactId={email.matchedContactId ?? undefined}
             receivedEmailId={emailId}
             to={email.replyToEmails?.[0] || email.fromEmail || ""}
-            name={senderName}
+            name={contactName}
             subject={cpn.subject}
             initialBody={cpn.text}
             onSuccess={(toEmail) => {
