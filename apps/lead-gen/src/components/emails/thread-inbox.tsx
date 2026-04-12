@@ -126,7 +126,16 @@ export function ThreadInbox() {
       {/* Right panel: thread detail */}
       <Box style={{ flex: 1, overflow: "hidden" }}>
         {selectedThread ? (
-          <ThreadDetail contactId={selectedThread} />
+          <ThreadDetail
+            contactId={selectedThread}
+            onArchive={() => {
+              // Deselect thread and refetch list
+              const params = new URLSearchParams(searchParams?.toString() || "");
+              params.delete("thread");
+              router.push(`/admin/emails?${params.toString()}`);
+              refetch();
+            }}
+          />
         ) : (
           <Flex justify="center" align="center" style={{ height: "100%" }}>
             <Flex direction="column" align="center" gap="2">
