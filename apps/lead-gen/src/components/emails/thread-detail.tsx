@@ -151,12 +151,11 @@ export function ThreadDetail({ contactId, onArchive }: ThreadDetailProps) {
             {messages.length} message{messages.length !== 1 ? "s" : ""} in this conversation
           </Text>
 
-          {messages.map((msg, idx) => (
+          {messages.map((msg) => (
             <ThreadMessage
               key={`${msg.direction}-${msg.id}`}
               message={msg}
               contactName={thread.contactName}
-              defaultExpanded={idx === messages.length - 1}
             />
           ))}
         </Flex>

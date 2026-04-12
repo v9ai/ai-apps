@@ -168,7 +168,7 @@
 .flashcard-back {
   background: var(--gray-1);
   transform: rotateY(180deg);
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .flashcard-property {

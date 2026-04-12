@@ -1,14 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Badge, Box, Card, Flex, Separator, Text } from "@radix-ui/themes";
 import {
-  ChevronDownIcon,
-  ChevronUpIcon,
   PaperPlaneIcon,
   EnvelopeOpenIcon,
 } from "@radix-ui/react-icons";
-import { button } from "@/recipes/button";
 
 const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "orange" | "blue" | "gray" | "purple"> = {
   interested: "green",
@@ -48,7 +44,6 @@ export interface ThreadMessageData {
 interface ThreadMessageProps {
   message: ThreadMessageData;
   contactName: string;
-  defaultExpanded?: boolean;
 }
 
 function formatDate(dateStr: string | null | undefined): string {
@@ -70,8 +65,7 @@ function sequenceLabel(type: string | null | undefined): string | null {
   return type;
 }
 
-export function ThreadMessage({ message, contactName, defaultExpanded = false }: ThreadMessageProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+export function ThreadMessage({ message, contactName }: ThreadMessageProps) {
   const isOutbound = message.direction === "outbound";
   const seq = sequenceLabel(message.sequenceType);
 
@@ -83,7 +77,7 @@ export function ThreadMessage({ message, contactName, defaultExpanded = false }:
     >
       <Flex direction="column" gap="2">
         {/* Header */}
-        <Flex justify="between" align="center" style={{ cursor: "pointer" }} onClick={() => setExpanded(!expanded)}>
+        <Flex justify="between" align="center">
           <Flex gap="2" align="center" wrap="wrap">
             {isOutbound ? (
               <PaperPlaneIcon width={14} height={14} style={{ color: "var(--accent-11)" }} />
@@ -122,60 +116,48 @@ export function ThreadMessage({ message, contactName, defaultExpanded = false }:
             )}
           </Flex>
 
-          <Flex gap="2" align="center">
-            <Text size="1" color="gray">
-              {formatDate(message.sentAt)}
-            </Text>
-            {expanded ? (
-              <ChevronUpIcon width={14} height={14} color="var(--gray-9)" />
-            ) : (
-              <ChevronDownIcon width={14} height={14} color="var(--gray-9)" />
-            )}
-          </Flex>
+          <Text size="1" color="gray">
+            {formatDate(message.sentAt)}
+          </Text>
         </Flex>
 
-        {/* Subject line (always visible) */}
+        {/* Subject */}
         <Text size="2" color="gray">{message.subject}</Text>
 
-        {/* Expanded content */}
-        {expanded && (
-          <>
-            <Separator size="4" />
-            <Flex direction="column" gap="1" mb="1">
-              <Text size="1" color="gray">
-                From: {message.fromEmail}
-              </Text>
-              <Text size="1" color="gray">
-                To: {message.toEmails?.join(", ")}
-              </Text>
-            </Flex>
-            {message.htmlContent ? (
-              <Box
-                style={{
-                  maxHeight: "400px",
-                  overflow: "auto",
-                  fontSize: "var(--font-size-2)",
-                  lineHeight: "var(--line-height-2)",
-                }}
-                dangerouslySetInnerHTML={{ __html: message.htmlContent }}
-              />
-            ) : message.textContent ? (
-              <Box
-                style={{
-                  whiteSpace: "pre-wrap",
-                  fontFamily: "var(--default-font-family)",
-                  fontSize: "var(--font-size-2)",
-                  lineHeight: "var(--line-height-2)",
-                  maxHeight: "400px",
-                  overflow: "auto",
-                }}
-              >
-                {message.textContent}
-              </Box>
-            ) : (
-              <Text size="2" color="gray">(no content)</Text>
-            )}
-          </>
+        <Separator size="4" />
+
+        {/* From/To */}
+        <Flex direction="column" gap="1" mb="1">
+          <Text size="1" color="gray">
+            From: {message.fromEmail}
+          </Text>
+          <Text size="1" color="gray">
+            To: {message.toEmails?.join(", ")}
+          </Text>
+        </Flex>
+
+        {/* Body */}
+        {message.htmlContent ? (
+          <Box
+            style={{
+              fontSize: "var(--font-size-2)",
+              lineHeight: "var(--line-height-2)",
+            }}
+            dangerouslySetInnerHTML={{ __html: message.htmlContent }}
+          />
+        ) : message.textContent ? (
+          <Box
+            style={{
+              whiteSpace: "pre-wrap",
+              fontFamily: "var(--default-font-family)",
+              fontSize: "var(--font-size-2)",
+              lineHeight: "var(--line-height-2)",
+            }}
+          >
+            {message.textContent}
+          </Box>
+        ) : (
+          <Text size="2" color="gray">(no content)</Text>
         )}
       </Flex>
     </Card>
