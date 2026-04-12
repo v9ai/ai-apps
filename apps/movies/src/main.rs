@@ -288,29 +288,29 @@ fn normalize_title(s: &str) -> String {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenvy::from_filename("../../.env").ok();
     dotenvy::dotenv().ok();
 
     let client = Arc::new(client_from_env().context("DEEPSEEK_API_KEY required")?);
 
-    // 1. Analyze
-    println!("▸ Analyzing: {MOVIE}");
-    let profile = analyze_movie(&client, MOVIE).await?;
+    // 1. Build emotional development profile
+    println!("▸ Building {FOCUS} profile for {CHILD_NAME} (age {CHILD_AGE})");
+    let profile = build_profile(&client).await?;
     println!("  Profile: {:.120}…", profile.replace('\n', " "));
 
-    // 2. Search Netflix + Disney+ across multiple angles in parallel
+    // 2. Search Netflix + Disney+ across emotional development angles in parallel
     println!("▸ Searching candidates across {} angles…", SEARCH_ANGLES.len());
     let mut search_futures = Vec::new();
     for angle in SEARCH_ANGLES {
         for platform in &["Netflix", "Disney+"] {
             let c = Arc::clone(&client);
             let p = platform.to_string();
-            let m = MOVIE.to_string();
             let pr = profile.clone();
             let f = angle.focus.to_string();
             let cnt = angle.count;
             let lbl = angle.label;
             search_futures.push(async move {
-                let results = search_platform(c, p.clone(), m, pr, f, cnt).await?;
+                let results = search_platform(c, p.clone(), pr, f, cnt).await?;
                 Ok::<_, anyhow::Error>((p, lbl.to_string(), results))
             });
         }
@@ -368,7 +368,7 @@ async fn main() -> Result<()> {
 
     let mut all_results: Vec<MovieResult> = Vec::new();
     for (idx, chunk) in batch_data.chunks(15).enumerate() {
-        match refine_batch(&client, chunk, MOVIE).await {
+        match refine_batch(&client, chunk).await {
             Ok(mut batch) => {
                 println!("  Batch {}: {} → {} structured", idx + 1, chunk.len(), batch.len());
                 all_results.append(&mut batch);
@@ -377,26 +377,30 @@ async fn main() -> Result<()> {
         }
     }
 
-    // 6. Deduplicate + filter
-    let query_key = normalize_title(MOVIE);
+    // 6. Deduplicate + filter (G, PG, TV-Y7, TV-G only for age 7)
+    let allowed_ratings: HashSet<&str> = ["g", "pg", "tv-y7", "tv-g", "tv-y"].into_iter().collect();
     let mut seen: HashSet<String> = HashSet::new();
-    all_results.retain(|m| {
-        let key = normalize_title(&m.title);
-        key != query_key && seen.insert(key)
-    });
+    all_results.retain(|m| seen.insert(normalize_title(&m.title)));
     all_results.retain(|m| m.imdb_rating >= MIN_IMDB);
+    all_results.retain(|m| {
+        let rating = m.age_rating.to_lowercase();
+        allowed_ratings.contains(rating.as_str()) || rating.is_empty()
+    });
     all_results.sort_by(|a, b| b.similarity_score.partial_cmp(&a.similarity_score).unwrap());
     for (i, m) in all_results.iter_mut().enumerate() {
         m.rank = i + 1;
     }
 
     // 7. Print results
-    println!("\n{}", "─".repeat(90));
-    println!(" Movies similar to: {MOVIE}");
-    println!("{}", "─".repeat(90));
+    let header = format!(
+        " Top movies for {CHILD_NAME} (age {CHILD_AGE}) — {FOCUS}"
+    );
+    println!("\n{}", "─".repeat(94));
+    println!("{header}");
+    println!("{}", "─".repeat(94));
     println!("{:>3}  {:<42} {:>4}  {:<9}  {:>4}  {:<6}  {:.4}",
         "#", "Title", "Year", "Platform", "IMDb", "Rating", "Score");
-    println!("{}", "─".repeat(90));
+    println!("{}", "─".repeat(94));
     for m in &all_results {
         println!("{:>3}. {:<42} {:>4}  {:<9}  {:>4.1}  {:<6}  {:.4}",
             m.rank, m.title, m.year, m.platform, m.imdb_rating, m.age_rating, m.similarity_score);
@@ -404,22 +408,24 @@ async fn main() -> Result<()> {
             println!("     └ {}", m.why_similar);
         }
     }
-    println!("{}", "─".repeat(90));
+    println!("{}", "─".repeat(94));
 
     // 8. Save JSON
     let output = json!({
-        "query_movie": MOVIE,
+        "child_name": CHILD_NAME,
+        "child_age": CHILD_AGE,
+        "focus": FOCUS,
         "generated_at": chrono::Utc::now().to_rfc3339(),
         "total_results": all_results.len(),
         "results": all_results,
     });
-    let json_path = concat!(env!("CARGO_MANIFEST_DIR"), "/similar_movies_results.json");
+    let json_path = concat!(env!("CARGO_MANIFEST_DIR"), "/emotional_dev_results.json");
     std::fs::write(json_path, serde_json::to_string_pretty(&output)?)?;
 
     // 9. Save Markdown with URLs
-    let md_path = concat!(env!("CARGO_MANIFEST_DIR"), "/similar_movies.md");
-    std::fs::write(md_path, build_markdown(MOVIE, &all_results))?;
-    println!("\n✓ {} results → similar_movies_results.json + similar_movies.md", all_results.len());
+    let md_path = concat!(env!("CARGO_MANIFEST_DIR"), "/emotional_dev_movies.md");
+    std::fs::write(md_path, build_markdown(&all_results))?;
+    println!("\n✓ {} results → emotional_dev_results.json + emotional_dev_movies.md", all_results.len());
 
     Ok(())
 }
@@ -434,17 +440,20 @@ fn imdb_url(title: &str, year: u32) -> String {
     format!("https://www.imdb.com/find/?q={q}+{year}")
 }
 
-fn build_markdown(query: &str, results: &[MovieResult]) -> String {
+fn build_markdown(results: &[MovieResult]) -> String {
     let mut md = String::new();
-    md.push_str(&format!("# Movies similar to: {query}\n\n"));
-    md.push_str("| # | Title | Year | Platform | IMDb | JustWatch | IMDB |\n");
-    md.push_str("|---|-------|------|----------|------|-----------|------|\n");
+    md.push_str(&format!(
+        "# Top movies for {CHILD_NAME} (age {CHILD_AGE}) — {FOCUS}\n\n"
+    ));
+    md.push_str("| # | Title | Year | Platform | IMDb | Rating | Emotional lesson | JustWatch | IMDB |\n");
+    md.push_str("|---|-------|------|----------|------|--------|------------------|-----------|------|\n");
     for m in results {
         let jw = justwatch_url(&m.title, m.year);
         let imdb = imdb_url(&m.title, m.year);
+        let lesson = m.why_similar.replace('|', "/");
         md.push_str(&format!(
-            "| {} | {} | {} | {} | {:.1} | [Watch]({}) | [IMDb]({}) |\n",
-            m.rank, m.title, m.year, m.platform, m.imdb_rating, jw, imdb,
+            "| {} | {} | {} | {} | {:.1} | {} | {} | [Watch]({}) | [IMDb]({}) |\n",
+            m.rank, m.title, m.year, m.platform, m.imdb_rating, m.age_rating, lesson, jw, imdb,
         ));
     }
     md
