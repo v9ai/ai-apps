@@ -1,0 +1,57 @@
+/**
+ * Shared CPN (Claude Partner Network) followup utilities.
+ * Used by both the email detail page and the bulk followup API route.
+ */
+
+export type CpnFollowupStatus =
+  | "ready"
+  | "declined"
+  | "has_questions"
+  | "already_replied_to_followup";
+
+export const DECLINE_PATTERNS = [
+  "not interested",
+  "no thanks",
+  "pass on this",
+  "not a fit",
+  "i'll pass",
+  "pass for now",
+  "not for us",
+  "we'll pass",
+  "please don't contact",
+  "stop emailing",
+  "unsubscribe",
+  "remove me",
+  "opt out",
+  "not a good fit",
+];
+
+export const CPN_TAG = '["cpn-outreach"]';
+export const CPN_FOLLOWUP_TAGS = '["cpn-outreach","cpn-followup-1"]';
+export const FROM = "Vadim Nicolai <contact@vadim.blog>";
+
+export function buildCpnFollowup(firstNameStr: string) {
+  const subject = `Re: Claude Partner Network — ${firstNameStr}`;
+  const text = `Hi ${firstNameStr},
+
+Here's what I have from Karl Kadon (Head of Partner Experience, Anthropic):
+
+The Claude Partner Network training path opens next week. The first step is getting a cohort through it together — that's what I'm putting together now.
+
+Karl's advice for anyone joining:
+1. List your active Claude/Anthropic work — client projects, internal tools, anything you're building with Claude
+2. Registration opens in the coming weeks — I'll forward the link the moment it's live
+
+You're on my list. I'll loop you in as soon as the next steps land.
+
+Vadim Nicolai
+vadim.blog`;
+  return { subject, text };
+}
+
+export const STATUS_ORDER: Record<CpnFollowupStatus, number> = {
+  ready: 0,
+  has_questions: 1,
+  already_replied_to_followup: 2,
+  declined: 3,
+};
