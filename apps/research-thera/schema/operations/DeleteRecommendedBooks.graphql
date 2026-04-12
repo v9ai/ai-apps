@@ -1,0 +1,7 @@
+mutation DeleteRecommendedBooks($goalId: Int!) {
+  deleteRecommendedBooks(goalId: $goalId) {
+    success
+    message
+    deletedCount
+  }
+}

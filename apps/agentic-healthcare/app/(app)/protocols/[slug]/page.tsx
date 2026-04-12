@@ -5,9 +5,9 @@ import {
   protocolSupplements,
   cognitiveBaselines,
   cognitiveCheckIns,
-  protocolResearches,
+  researches,
 } from "@/lib/db/schema";
-import { eq, asc, desc } from "drizzle-orm";
+import { and, eq, asc, desc } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { Box, Badge, Card, Callout, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
@@ -115,9 +115,9 @@ async function ProtocolDetail({ slug }: { slug: string }) {
 
   const [research] = await db
     .select()
-    .from(protocolResearches)
-    .where(eq(protocolResearches.protocolId, id))
-    .orderBy(desc(protocolResearches.createdAt))
+    .from(researches)
+    .where(and(eq(researches.type, "protocol"), eq(researches.entityId, id)))
+    .orderBy(desc(researches.createdAt))
     .limit(1);
 
   const targetAreas = (protocol.targetAreas as string[]) || [];

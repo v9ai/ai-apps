@@ -1279,6 +1279,76 @@ export async function deleteTherapeuticQuestions(goalId?: number, issueId?: numb
   return 0;
 }
 
+// ============================================
+// Recommended Books
+// ============================================
+
+export async function listRecommendedBooks(goalId: number) {
+  const rows = await neonSql`
+    SELECT * FROM recommended_books WHERE goal_id = ${goalId} ORDER BY created_at DESC
+  `;
+  return rows.map((row) => ({
+    id: row.id as number,
+    goalId: (row.goal_id as number) || null,
+    title: row.title as string,
+    authors: JSON.parse((row.authors as string) || "[]") as string[],
+    year: (row.year as number) || null,
+    isbn: (row.isbn as string) || null,
+    description: row.description as string,
+    whyRecommended: row.why_recommended as string,
+    category: row.category as string,
+    amazonUrl: (row.amazon_url as string) || null,
+    generatedAt: row.generated_at as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }));
+}
+
+export async function insertRecommendedBooks(
+  books: Array<{
+    goalId?: number;
+    title: string;
+    authors: string[];
+    year?: number;
+    isbn?: string;
+    description: string;
+    whyRecommended: string;
+    category: string;
+    amazonUrl?: string;
+  }>,
+) {
+  const now = new Date().toISOString();
+  const inserted = [];
+  for (const b of books) {
+    const authorsJson = JSON.stringify(b.authors);
+    const rows = await neonSql`
+      INSERT INTO recommended_books (goal_id, title, authors, year, isbn, description, why_recommended, category, amazon_url, generated_at, created_at, updated_at)
+      VALUES (${b.goalId ?? null}, ${b.title}, ${authorsJson}, ${b.year ?? null}, ${b.isbn ?? null}, ${b.description}, ${b.whyRecommended}, ${b.category}, ${b.amazonUrl ?? null}, ${now}, ${now}, ${now})
+      RETURNING *
+    `;
+    if (rows[0]) inserted.push(rows[0]);
+  }
+  return inserted.map((row) => ({
+    id: row.id as number,
+    goalId: (row.goal_id as number) || null,
+    title: row.title as string,
+    authors: JSON.parse((row.authors as string) || "[]") as string[],
+    year: (row.year as number) || null,
+    isbn: (row.isbn as string) || null,
+    description: row.description as string,
+    whyRecommended: row.why_recommended as string,
+    category: row.category as string,
+    amazonUrl: (row.amazon_url as string) || null,
+    generatedAt: row.generated_at as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }));
+}
+
+export async function deleteRecommendedBooks(goalId: number) {
+  const rows = await neonSql`DELETE FROM recommended_books WHERE goal_id = ${goalId} RETURNING id`;
+  return rows.length;
+}
 
 export async function getTextSegmentsForStory(storyId: number) {
   const rows = await neonSql`SELECT * FROM text_segments WHERE story_id = ${storyId} ORDER BY idx ASC`;
@@ -2534,6 +2604,7 @@ export async function deleteGoal(goalId: number, userEmail: string): Promise<voi
   await neonSql`DELETE FROM notes_research WHERE note_id IN (SELECT id FROM notes WHERE entity_id = ${goalId} AND entity_type = 'Goal')`;
   await neonSql`DELETE FROM notes WHERE entity_id = ${goalId} AND entity_type = 'Goal' AND user_id = ${userEmail}`;
   await neonSql`DELETE FROM therapeutic_questions WHERE goal_id = ${goalId}`;
+  await neonSql`DELETE FROM recommended_books WHERE goal_id = ${goalId}`;
   await neonSql`DELETE FROM therapy_research WHERE goal_id = ${goalId}`;
   await neonSql`DELETE FROM text_segments WHERE goal_id = ${goalId}`;
   await neonSql`DELETE FROM audio_assets WHERE goal_id = ${goalId}`;

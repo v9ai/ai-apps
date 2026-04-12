@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Sparkles, AlertTriangle, Clock, Pill, FlaskConical, Shield, BookOpen, FileText, ExternalLink } from "lucide-react";
 import { css } from "styled-system/css";
 import { db } from "@/lib/db";
-import { protocolResearches } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { researches } from "@/lib/db/schema";
+import { and, eq, desc } from "drizzle-orm";
 import { MarkdownProse } from "@/components/markdown-prose";
 import {
   NUTRITIONAL_MARKERS,
@@ -142,9 +142,9 @@ function MarkerCard({ marker, color }: { marker: BloodMarker; color: "green" | "
 async function ResearchSection() {
   const [research] = await db
     .select()
-    .from(protocolResearches)
-    .where(eq(protocolResearches.protocolId, HAIR_CARE_PROTOCOL_ID))
-    .orderBy(desc(protocolResearches.createdAt))
+    .from(researches)
+    .where(and(eq(researches.type, "protocol"), eq(researches.entityId, HAIR_CARE_PROTOCOL_ID)))
+    .orderBy(desc(researches.createdAt))
     .limit(1);
 
   if (!research || research.status !== "completed") return null;
@@ -232,9 +232,9 @@ const paperRowClass = css({
 async function PapersSection() {
   const [research] = await db
     .select()
-    .from(protocolResearches)
-    .where(eq(protocolResearches.protocolId, HAIR_CARE_PROTOCOL_ID))
-    .orderBy(desc(protocolResearches.createdAt))
+    .from(researches)
+    .where(and(eq(researches.type, "protocol"), eq(researches.entityId, HAIR_CARE_PROTOCOL_ID)))
+    .orderBy(desc(researches.createdAt))
     .limit(1);
 
   if (!research) return null;

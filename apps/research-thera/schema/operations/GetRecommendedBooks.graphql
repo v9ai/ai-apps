@@ -1,0 +1,17 @@
+query GetRecommendedBooks($goalId: Int!) {
+  recommendedBooks(goalId: $goalId) {
+    id
+    goalId
+    title
+    authors
+    year
+    isbn
+    description
+    whyRecommended
+    category
+    amazonUrl
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}

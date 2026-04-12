@@ -1,0 +1,19 @@
+mutation GenerateRecommendedBooks($goalId: Int!) {
+  generateRecommendedBooks(goalId: $goalId) {
+    success
+    message
+    books {
+      id
+      goalId
+      title
+      authors
+      year
+      isbn
+      description
+      whyRecommended
+      category
+      amazonUrl
+      generatedAt
+    }
+  }
+}

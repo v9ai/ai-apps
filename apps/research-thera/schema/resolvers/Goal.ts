@@ -1,5 +1,5 @@
 import type { GoalResolvers } from "./../types.generated";
-import { getFamilyMember, listTherapyResearch, listNotesForEntity, listTherapeuticQuestions, listStories, listGoals, getGoal } from "@/src/db";
+import { getFamilyMember, listTherapyResearch, listNotesForEntity, listTherapeuticQuestions, listRecommendedBooks, listStories, listGoals, getGoal } from "@/src/db";
 
 export const Goal: GoalResolvers = {
   familyMember: async (parent, _args, _ctx) => {
@@ -28,6 +28,11 @@ export const Goal: GoalResolvers = {
     return questions;
   },
 
+  recommendedBooks: async (parent, _args, _ctx) => {
+    const books = await listRecommendedBooks(parent.id);
+    return books;
+  },
+
   stories: async (parent, _args, _ctx) => {
     const stories = await listStories(parent.id);
     return stories.map((story) => ({
@@ -49,6 +54,7 @@ export const Goal: GoalResolvers = {
         ...g,
         research: [],
         questions: [],
+        recommendedBooks: [],
         stories: [],
         notes: [],
         subGoals: [],
@@ -67,6 +73,7 @@ export const Goal: GoalResolvers = {
         ...goal,
         research: [],
         questions: [],
+        recommendedBooks: [],
         stories: [],
         notes: [],
         subGoals: [],

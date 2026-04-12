@@ -464,6 +464,12 @@ type DeleteQuestionsResult {
   success: Boolean!
 }
 
+type DeleteRecommendedBooksResult {
+  deletedCount: Int!
+  message: String
+  success: Boolean!
+}
+
 type DeleteRelationshipResult {
   message: String
   success: Boolean!
@@ -694,6 +700,12 @@ type GenerateQuestionsResult {
   success: Boolean!
 }
 
+type GenerateRecommendedBooksResult {
+  books: [RecommendedBook!]!
+  message: String
+  success: Boolean!
+}
+
 type GenerateResearchResult {
   count: Int
   jobId: String
@@ -730,6 +742,7 @@ type Goal {
   parentGoalId: Int
   priority: String!
   questions: [TherapeuticQuestion!]!
+  recommendedBooks: [RecommendedBook!]!
   research: [Research!]!
   slug: String
   status: String!
@@ -944,6 +957,7 @@ type Mutation {
   deleteJournalAnalysis(journalEntryId: Int!): DeleteJournalAnalysisResult!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
+  deleteRecommendedBooks(goalId: Int!): DeleteRecommendedBooksResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   deleteStory(id: Int!): DeleteStoryResult!
@@ -959,6 +973,7 @@ type Mutation {
   generateLongFormText(familyMemberId: Int, feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int, language: String, minutes: Int, userContext: String): GenerateLongFormTextResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
+  generateRecommendedBooks(goalId: Int!): GenerateRecommendedBooksResult!
   generateResearch(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): GenerateResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   linkContactToIssue(contactId: Int!, issueId: Int!): IssueContactLink!
@@ -1177,6 +1192,7 @@ type Query {
   note(id: Int, slug: String): Note
   notes(entityId: Int!, entityType: String!): [Note!]!
   publicDiscussionGuide(journalEntryId: Int!): PublicDiscussionGuideResult
+  recommendedBooks(goalId: Int!): [RecommendedBook!]!
   relationship(id: Int!): Relationship
   relationships(subjectId: Int!, subjectType: PersonType!): [Relationship!]!
   research(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): [Research!]!
@@ -1186,6 +1202,22 @@ type Query {
   teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
   userSettings: UserSettings!
+}
+
+type RecommendedBook {
+  amazonUrl: String
+  authors: [String!]!
+  category: String!
+  createdAt: String!
+  description: String!
+  generatedAt: String!
+  goalId: Int
+  id: Int!
+  isbn: String
+  title: String!
+  updatedAt: String!
+  whyRecommended: String!
+  year: Int
 }
 
 type Relationship {
