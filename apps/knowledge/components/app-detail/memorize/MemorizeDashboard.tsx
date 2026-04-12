@@ -178,8 +178,8 @@ export function MemorizeDashboard({
       {/* Overall progress */}
       <div className="memorize-overall">
         <Flex justify="between" align="baseline">
-          <Heading size="5">CSS Properties</Heading>
-          <Text size="3" color="gray">
+          <Heading size="6">CSS Properties</Heading>
+          <Text size="4" color="gray">
             {masteredCount} / {totalProps} mastered
           </Text>
         </Flex>
@@ -225,14 +225,14 @@ export function MemorizeDashboard({
       {/* Active category filter indicator */}
       {activeCategory && (
         <Flex align="center" gap="2" mb="3">
-          <Text size="3" color="gray">
+          <Text size="4" color="gray">
             Filtered to:
           </Text>
-          <Badge color="violet" variant="soft" size="2">
+          <Badge color="violet" variant="soft" size="3">
             {categories.find((c) => c.id === activeCategory)?.name}
           </Badge>
           <Button
-            size="1"
+            size="2"
             variant="ghost"
             color="gray"
             onClick={() => setActiveCategory(null)}
@@ -243,7 +243,7 @@ export function MemorizeDashboard({
       )}
 
       {/* Mode buttons */}
-      <Heading size="4" mb="3">
+      <Heading size="5" mb="3">
         Practice Modes
       </Heading>
       <div className="memorize-modes">
@@ -293,15 +293,15 @@ export function MemorizeDashboard({
       <Box mt="5" p="4" style={{ background: "var(--violet-2)", borderRadius: "var(--radius-3)", borderLeft: "3px solid var(--violet-8)" }}>
         <Flex justify="between" align="center" wrap="wrap" gap="3">
           <div>
-            <Text size="3" weight="bold" style={{ display: "block" }}>
+            <Text size="4" weight="bold" style={{ display: "block" }}>
               Smart Practice
             </Text>
-            <Text size="2" color="gray">
+            <Text size="3" color="gray">
               Focus on your weakest properties first, sorted by lowest mastery.
             </Text>
           </div>
           <Button
-            size="3"
+            size="4"
             variant="solid"
             color="violet"
             onClick={() => {
@@ -329,11 +329,11 @@ function ModeHeader({
 }) {
   return (
     <Flex align="center" gap="3" mb="5">
-      <Button size="1" variant="ghost" color="gray" onClick={onBack}>
+      <Button size="2" variant="ghost" color="gray" onClick={onBack}>
         &larr; Back
       </Button>
-      <Heading size="5">{title}</Heading>
-      <Text size="3" color="gray">
+      <Heading size="6">{title}</Heading>
+      <Text size="4" color="gray">
         {subtitle}
       </Text>
     </Flex>
