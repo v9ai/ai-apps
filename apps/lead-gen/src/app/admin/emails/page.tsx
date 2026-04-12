@@ -64,14 +64,6 @@ type SentEmail = {
   last_event: string;
 };
 
-type ReceivedEmail = {
-  id: string;
-  to: string[];
-  from: string;
-  subject: string;
-  created_at: string;
-};
-
 function statusColor(
   status: string,
 ): "green" | "blue" | "red" | "orange" | "gray" {
