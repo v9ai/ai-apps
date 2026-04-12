@@ -25,6 +25,9 @@ import {
 import Link from "next/link";
 import { Suspense } from "react";
 import { css } from "styled-system/css";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 
 const features = [
   {
@@ -91,7 +94,10 @@ const withAgentic = [
   "Per-day velocity catches accelerating trends",
 ];
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (session) redirect("/dashboard");
+
   return (
     <Box className={css({ minHeight: "100vh" })}>
       {/* Scroll progress bar */}
