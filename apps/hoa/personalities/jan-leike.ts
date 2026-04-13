@@ -7,7 +7,7 @@ const personality: Personality = {
   description:
     "Leads alignment research at Anthropic after heading OpenAI's Superalignment team. Focuses on scalable oversight, RLHF, and ensuring AI systems remain aligned with human values.",
   slug: "jan-leike",
-  linkedinImage: "https://bucketeer-e05bbc84-baa3-437e-9518-adb32be77984.s3.amazonaws.com/public/images/e21b6a1a-5f0c-48e5-9047-2706653d8e88_1433x1358.jpeg",
+  linkedinImage: "https://80000hours.org/wp-content/uploads/2025/04/jan-leike-scaled.jpg",
   podcasts: ["80,000 Hours", "The Inside View", "Dwarkesh Podcast"],
   papers: [
     {
