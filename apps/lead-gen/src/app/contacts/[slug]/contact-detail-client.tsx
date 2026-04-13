@@ -634,15 +634,10 @@ type ContactEmailRow = {
 };
 
 function EmailCard({ email }: { email: ContactEmailRow }) {
-  const [expanded, setExpanded] = useState(false);
-
   return (
-    <Card
-      style={{ cursor: "pointer" }}
-      onClick={() => setExpanded((v) => !v)}
-    >
+    <Card>
       <Box p="3">
-        <Flex justify="between" align="start" gap="2" wrap="wrap">
+        <Flex justify="between" align="start" gap="2" wrap="wrap" mb={email.textContent ? "2" : undefined}>
           <Box style={{ flex: 1, minWidth: 0 }}>
             <Text size="2" weight="medium" as="p" style={{ wordBreak: "break-word" }}>
               {email.subject}
@@ -673,24 +668,19 @@ function EmailCard({ email }: { email: ContactEmailRow }) {
           </Flex>
         </Flex>
 
-        {expanded && (
+        {email.textContent && (
           <Box
-            mt="3"
             style={{
               background: "var(--gray-2)",
               borderRadius: 6,
               padding: "var(--space-3)",
               whiteSpace: "pre-wrap",
               lineHeight: "1.6",
-              maxHeight: 400,
+              maxHeight: 300,
               overflow: "auto",
             }}
           >
-            {email.textContent ? (
-              <Text size="2">{email.textContent}</Text>
-            ) : (
-              <Text size="2" color="gray">No body content.</Text>
-            )}
+            <Text size="2">{email.textContent}</Text>
           </Box>
         )}
       </Box>

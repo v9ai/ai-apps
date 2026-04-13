@@ -70,6 +70,7 @@ RESEARCH_DIR = PROJECT_ROOT / "src" / "lib" / "research"
 
 _HTTP_TIMEOUT = 15.0
 _MAX_REACT_ITERS = 12
+_AGENT_TIMEOUT = 180  # seconds — kill agent if it takes longer
 
 
 # ═══════════════════════════════════════════════════════════════════════════
