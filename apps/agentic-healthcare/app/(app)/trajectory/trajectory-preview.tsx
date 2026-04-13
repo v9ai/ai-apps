@@ -102,7 +102,7 @@ export async function TrajectoryPreview() {
                         key={key}
                         content={
                           ref
-                            ? `${ref.description}. Ref: ${ref.reference}`
+                            ? `${ref.significance}. Ref: ${ref.reference}`
                             : key
                         }
                       >

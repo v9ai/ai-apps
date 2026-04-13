@@ -4473,7 +4473,6 @@ combined_score = (
         <Flex
           direction="column"
           gap="3"
-          style={{ maxWidth: 760, margin: "0 auto" }}
           mb="5"
         >
           {guardRulesDetailed.map((gr, i) => (
@@ -4524,7 +4523,7 @@ combined_score = (
         </Flex>
 
         <ScrollReveal delay={280}>
-          <pre className="pg-code-block" style={{ maxWidth: 800, margin: "0 auto" }}>
+          <pre className="pg-code-block">
             <code>{`# graph.py — guard node (fail-safe)
 raw = _llm_call(GUARD_SYSTEM, audit_prompt)
 cleaned = re.sub(r"\`\`\`json\\s*|\\s*\`\`\`", "", raw).strip()
@@ -4604,7 +4603,6 @@ if not passed:
         <Flex
           direction="column"
           gap="3"
-          style={{ maxWidth: 720, margin: "0 auto" }}
           mb="5"
         >
           {cascadeDeleteChains.map((chain, i) => (
@@ -4663,7 +4661,7 @@ if not passed:
         </Flex>
 
         <ScrollReveal delay={400}>
-          <pre className="pg-code-block" style={{ maxWidth: 700, margin: "0 auto" }}>
+          <pre className="pg-code-block">
             <code>{`-- schema.ts — cascade delete chain (Drizzle ORM)
 export const bloodTests = pgTable("blood_tests", {
   userId: text("user_id").notNull()
@@ -4744,7 +4742,6 @@ export const bloodMarkers = pgTable("blood_markers", {
         <Flex
           direction="column"
           gap="3"
-          style={{ maxWidth: 800, margin: "0 auto" }}
           mb="5"
         >
           {hipaaAlignment.map((h, i) => (
@@ -4839,7 +4836,6 @@ export const bloodMarkers = pgTable("blood_markers", {
         <Flex
           direction="column"
           gap="3"
-          style={{ maxWidth: 800, margin: "0 auto" }}
           mb="5"
         >
           {gdprAlignment.map((g, i) => (
@@ -4880,7 +4876,7 @@ export const bloodMarkers = pgTable("blood_markers", {
         </Flex>
 
         <ScrollReveal delay={340}>
-          <pre className="pg-code-block" style={{ maxWidth: 700, margin: "0 auto" }}>
+          <pre className="pg-code-block">
             <code>{`// lib/auth-helpers.ts — withAuth() guard
 // Every server action that touches health data runs this first:
 

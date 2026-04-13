@@ -100,7 +100,7 @@ export async function getTrajectoryInsights() {
   const referenceContext = Object.entries(METRIC_REFERENCES)
     .map(
       ([, ref]) =>
-        `- ${ref.label}: optimal ${ref.optimal[0]}–${ref.optimal[1] === Infinity ? "∞" : ref.optimal[1]}, borderline ${ref.borderline[0]}–${ref.borderline[1]}. ${ref.description}. Ref: ${ref.reference}`
+        `- ${ref.label}: optimal ${ref.optimal[0]}–${ref.optimal[1] === Infinity ? "∞" : ref.optimal[1]}, borderline ${ref.borderline[0]}–${ref.borderline[1]}. ${ref.significance}. Ref: ${ref.reference}`
     )
     .join("\n");
 

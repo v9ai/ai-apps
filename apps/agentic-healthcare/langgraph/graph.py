@@ -54,7 +54,7 @@ class GraphState(BaseModel):
     chat_history: list[dict[str, str]] = Field(default_factory=list)
 
     # Triage
-    intent: str = ""  # markers | trajectory | conditions | medications | symptoms | appointments | general_health | safety_refusal
+    intent: str = ""  # markers | derived_ratios | trajectory | conditions | medications | symptoms | appointments | general_health | safety_refusal
     intent_confidence: float = 0.0
     entities: list[str] = Field(default_factory=list)  # extracted marker/condition names
 
@@ -251,6 +251,12 @@ def retrieve(state: GraphState) -> dict[str, Any]:
             sources.append("blood_marker_embeddings")
             scores.append(r["combined_score"])
 
+        hs_results = search_health_states(embedding, user_id, limit=3)
+        for r in hs_results:
+            chunks.append(r["content"])
+            sources.append("health_state_embeddings")
+            scores.append(r["similarity"])
+
         cond_results = search_conditions(embedding, user_id, limit=3)
         for r in cond_results:
             chunks.append(r["content"])
@@ -293,19 +299,38 @@ def retrieve(state: GraphState) -> dict[str, Any]:
 
 SYNTHESIS_SYSTEM = """You are a clinical blood marker intelligence assistant.
 
-You help users understand their blood test results, derived ratios (TG/HDL, NLR,
-De Ritis, BUN/Creatinine, TyG, TC/HDL, HDL/LDL), trajectory trends, medication
-effects, and health conditions.
+You help users understand their blood test results, derived clinical ratios,
+trajectory trends, medication effects, and health conditions.
+
+DERIVED RATIOS ENGINE — 7 peer-reviewed ratios stored per blood test:
+┌─────────────────┬───────────────────────────┬──────────┬───────────┬──────────┬────────────────────┐
+│ Ratio           │ Formula                   │ Optimal  │ Borderline│ Elevated │ Reference          │
+├─────────────────┼───────────────────────────┼──────────┼───────────┼──────────┼────────────────────┤
+│ TG/HDL Ratio    │ Triglycerides / HDL       │ < 2.0    │ 2.0 – 3.5│ > 3.5   │ McLaughlin et al.  │
+│ TC/HDL Ratio    │ Total Cholesterol / HDL   │ < 4.0    │ 4.0 – 5.0│ > 5.0   │ Castelli et al.    │
+│ HDL/LDL Ratio   │ HDL / LDL                │ > 0.4    │ 0.3 – 0.4│ < 0.3   │ Millán et al.      │
+│ NLR             │ Neutrophils / Lymphocytes │ 1.0 – 3.0│ 3.0 – 5.0│ > 5.0   │ Fest et al.        │
+│ De Ritis Ratio  │ AST / ALT                │ 0.8 – 1.5│ 1.5 – 2.0│ > 2.0   │ De Ritis et al.    │
+│ BUN/Creatinine  │ BUN / Creatinine         │ 10 – 20  │ 20 – 25  │ > 25    │ Hosten et al.      │
+│ TyG Index       │ ln(TG × Glucose × 0.5)   │ < 8.5    │ 8.5 – 9.0│ > 9.0   │ Simental-Mendía    │
+└─────────────────┴───────────────────────────┴──────────┴───────────┴──────────┴────────────────────┘
 
 RULES:
 1. Answer ONLY based on the provided context. If the context doesn't contain relevant
    information, say so clearly.
 2. Cite specific marker values and reference ranges when available.
-3. For derived ratios, cite the peer-reviewed threshold and source paper.
-4. NEVER diagnose conditions — describe what the data shows and note associations.
-5. NEVER prescribe treatments or specific medication dosages.
-6. ALWAYS remind the user to consult their physician for medical decisions.
-7. For trajectory questions, describe the direction (improving/stable/deteriorating)
+3. For derived ratios, cite the exact peer-reviewed threshold and source paper from
+   the table above. Classify each ratio as optimal/borderline/elevated.
+4. When multiple ratios are elevated, identify the affected organ systems:
+   - Elevated TG/HDL or TyG → metabolic (insulin resistance)
+   - Elevated TC/HDL or low HDL/LDL → cardiovascular (atherogenic risk)
+   - Elevated NLR → inflammatory (infection, stress, malignancy)
+   - Elevated BUN/Creatinine → renal (pre-renal vs intrinsic)
+   - Elevated De Ritis → hepatic (alcoholic/cardiac origin)
+5. NEVER diagnose conditions — describe what the data shows and note associations.
+6. NEVER prescribe treatments or specific medication dosages.
+7. ALWAYS remind the user to consult their physician for medical decisions.
+8. For trajectory questions, describe the direction (improving/stable/deteriorating)
    using clinical semantics (e.g., rising HDL = improving, rising TG/HDL = deteriorating).
 
 When no context is available (empty context), explain that no matching health data was

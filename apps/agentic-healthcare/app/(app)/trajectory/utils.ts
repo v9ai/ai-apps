@@ -50,7 +50,7 @@ export function classifyStateMetrics(
         value: v,
         risk: classifyMetricRisk(key, v),
         reference: ref?.reference ?? "",
-        description: ref?.description ?? "",
+        description: ref?.significance ?? "",
       };
     });
 }
