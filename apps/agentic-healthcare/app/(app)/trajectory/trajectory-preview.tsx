@@ -1,10 +1,8 @@
-import { withAuth } from "@/lib/auth-helpers";
-import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
 import { Badge, Card, Flex, Text, Tooltip } from "@radix-ui/themes";
 import Link from "next/link";
 import { METRIC_REFERENCES, classifyMetricRisk } from "@/lib/embeddings";
-import type { TrajectoryState, MetricRisk } from "./utils";
+import { getHealthTrajectory } from "./actions";
+import type { MetricRisk } from "./utils";
 
 function similarityColor(sim: number): "green" | "yellow" | "orange" | "red" {
   if (sim >= 0.95) return "green";
@@ -33,30 +31,7 @@ const METRIC_LABELS: Record<string, string> = {
 };
 
 export async function TrajectoryPreview() {
-  const { userId } = await withAuth();
-
-  const data = await db.execute(sql`
-    WITH latest AS (
-      SELECT embedding
-      FROM health_state_embeddings
-      WHERE user_id = ${userId}
-      ORDER BY created_at DESC
-      LIMIT 1
-    )
-    SELECT
-      e.id, e.test_id, e.content, e.derived_metrics, e.created_at,
-      t.file_name, t.test_date,
-      CASE WHEN (SELECT embedding FROM latest) IS NOT NULL
-        THEN 1 - (e.embedding <=> (SELECT embedding FROM latest))
-        ELSE NULL
-      END as similarity_to_latest
-    FROM health_state_embeddings e
-    JOIN blood_tests t ON t.id = e.test_id
-    WHERE e.user_id = ${userId}
-    ORDER BY COALESCE(t.test_date::timestamptz, e.created_at) ASC
-  `);
-
-  const trajectory = data.rows as TrajectoryState[];
+  const trajectory = await getHealthTrajectory();
 
   if (trajectory.length === 0) {
     return (

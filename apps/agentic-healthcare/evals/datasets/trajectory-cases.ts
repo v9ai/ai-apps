@@ -17,7 +17,7 @@ export type TrajectoryCase = {
  * 15 trajectory test cases covering diverse metabolic profiles,
  * edge cases, and clinical scenarios.
  *
- * Cases 1-10 port themes from existing promptfoo trajectory tests.
+ * Cases 1-10 cover core metabolic trajectory scenarios.
  * Cases 11-15 cover special scenarios (all-low, mixed renal+metabolic,
  * velocity acceleration, identical states, boundary thresholds).
  */

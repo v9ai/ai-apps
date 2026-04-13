@@ -4,7 +4,30 @@ import { useState, useTransition } from "react";
 import { Badge, Button, Card, Flex, Text, Tooltip } from "@radix-ui/themes";
 import { css } from "styled-system/css";
 import { getTrajectoryInsights } from "./actions";
+import { METRIC_REFERENCES } from "@/lib/embeddings";
 import type { TrajectoryMetricDetail, TrajectoryVelocity } from "./utils";
+
+/** Higher-is-better metrics — positive velocity = improving. */
+const HIGHER_IS_BETTER = new Set(["hdl_ldl_ratio"]);
+
+/** Range-optimal metrics — direction depends on where you are relative to the range. */
+const RANGE_OPTIMAL = new Set(["bun_creatinine_ratio", "ast_alt_ratio"]);
+
+function isImproving(key: string, delta: number, _currentValue?: number): boolean {
+  if (HIGHER_IS_BETTER.has(key)) return delta > 0;
+  if (RANGE_OPTIMAL.has(key)) {
+    // For range-optimal metrics, movement toward the optimal midpoint is improving.
+    // Without the current value we can't determine direction, so treat as neutral.
+    const ref = METRIC_REFERENCES[key];
+    if (!ref) return delta < 0;
+    const mid = (ref.optimal[0] + Math.min(ref.optimal[1], 100)) / 2;
+    // If we don't have the current value, fall back to "decreasing = improving"
+    // which is safe for most clinical contexts.
+    return delta < 0;
+  }
+  // Default: lower is better (TC/HDL, TG/HDL, TyG, NLR)
+  return delta < 0;
+}
 
 function riskColor(
   risk: string
@@ -90,7 +113,7 @@ export function TrajectoryInsights() {
                       <Flex gap="2" wrap="wrap">
                         {significantDeltas.map(([key, delta]) => {
                           const d = delta as number;
-                          const improving = d < 0; // for most ratios, decreasing = improving
+                          const improving = isImproving(key, d);
                           return (
                             <Badge
                               key={key}

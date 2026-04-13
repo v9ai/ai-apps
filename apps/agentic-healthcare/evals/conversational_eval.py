@@ -37,7 +37,7 @@ from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
 from conftest import DeepSeekEvalLLM, make_geval, skip_no_judge, HAS_JUDGE
 
-from ragas_eval import build_rag_pipeline
+from deepeval_rag import build_rag_pipeline
 
 
 # ---------------------------------------------------------------------------

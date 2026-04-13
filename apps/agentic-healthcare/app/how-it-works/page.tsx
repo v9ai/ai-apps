@@ -206,7 +206,7 @@ const techCategories = [
   {
     category: "Evaluation",
     color: "var(--pink-9)",
-    items: ["Promptfoo", "RAGAS"],
+    items: ["DeepEval", "RAGAS"],
   },
 ];
 
@@ -254,20 +254,30 @@ LIMIT 5;`,
     bg: "var(--indigo-a3)",
     title: "Trajectory via Cosine Distance",
     description:
-      "Longitudinal health tracking uses a SQL CTE to compute cosine similarity between the latest health-state embedding and every prior test — inside the database, not in application code.",
-    sql: `WITH latest AS (
+      "A 5-stage pipeline turns sequential blood panels into a longitudinal health trajectory. Stage 1: a SQL CTE computes cosine similarity between the latest 1024-dim health-state embedding and every prior test — inside the database via pgvector's <=> operator, not in application code. Stage 2: 7 derived clinical ratios (TG/HDL, NLR, TyG Index, De Ritis, etc.) are classified against peer-reviewed thresholds into optimal / borderline / elevated tiers. Stage 3: velocity (rate of change per day) is computed between consecutive panels following longitudinal biomarker analysis approaches (Lacher DA et al. Clin Chem 2005). Stage 4: similarity values near 1.0 indicate health stability; drift toward 0.0 flags divergence that may warrant clinical follow-up. Stage 5: Qwen 2.5 at temperature 0.3 synthesizes direction (improving / stable / deteriorating) with citations to the source clinical papers.",
+    detail:
+      "Each health-state embedding packs a 1024-dim vector alongside a JSONB derived_metrics payload (HDL/LDL per Castelli 1996, TC/HDL per Millán 2009, TG/HDL per McLaughlin 2003, TyG per Simental-Mendía 2008, NLR per Forget 2017, BUN/Creatinine per Hosten 1990, De Ritis per De Ritis 1957). The CTE uses a NULL guard so single-test users get a trajectory row without a similarity score. Velocity computation clamps daysBetween to min 1 to avoid division by zero for same-day tests. The entire flow — from pgvector distance to LLM synthesis — runs without any external vector database: one Neon PostgreSQL connection string handles relational joins, JSONB queries, and cosine similarity.",
+    sql: `-- Stage 1: Cosine similarity via CTE (runs in PostgreSQL)
+WITH latest AS (
   SELECT embedding
   FROM health_state_embeddings
   WHERE user_id = $1
   ORDER BY created_at DESC LIMIT 1
 )
-SELECT t.test_date, e.derived_metrics,
-  1 - (e.embedding <=> (SELECT embedding FROM latest))
-    AS similarity_to_latest
+SELECT
+  e.id, e.test_id, e.derived_metrics, t.test_date,
+  CASE WHEN (SELECT embedding FROM latest) IS NOT NULL
+    THEN 1 - (e.embedding <=> (SELECT embedding FROM latest))
+    ELSE NULL
+  END AS similarity_to_latest
 FROM health_state_embeddings e
 JOIN blood_tests t ON t.id = e.test_id
 WHERE e.user_id = $1
-ORDER BY t.test_date ASC;`,
+ORDER BY COALESCE(t.test_date::timestamptz, e.created_at) ASC;
+
+-- Stage 3: Velocity (runs in TypeScript)
+-- velocity[key] = (curr[key] - prev[key]) / daysBetween
+-- daysBetween = max(1, round((currDate - prevDate) / 86400000))`,
   },
   {
     icon: Lock,
@@ -2374,7 +2384,7 @@ export default function HowItWorksPage() {
               align="center"
               style={{ maxWidth: 560, lineHeight: 1.65 }}
             >
-              15+ eval scripts across Promptfoo, DeepEval, and RAGAS.
+              15+ eval scripts across DeepEval and RAGAS.
               5 RAG-triad metrics at 0.7 threshold, 8 multi-turn
               conversational scenarios, and a DeepSeek judge for
               automated grading.
@@ -2481,7 +2491,6 @@ export default function HowItWorksPage() {
 
         <ScrollReveal delay={380}>
           <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">Promptfoo</span>
             <span className="arch-tag">DeepEval</span>
             <span className="arch-tag">RAGAS</span>
             <span className="arch-tag">DeepSeek judge</span>

@@ -164,7 +164,7 @@ RetrieverQueryEngine  ──►  DeepSeek deepseek-chat (LLM)
 
 ### Knowledge corpus
 
-The index is built from 20+ `Document` objects defined in `evals/ragas_eval.py`:
+The index is built from 20+ `Document` objects defined in `evals/deepeval_rag.py`:
 
 | Group | Documents |
 |-------|-----------|
@@ -304,7 +304,7 @@ End-to-end tests of the LlamaIndex IngestionPipeline: node builders, embedding q
 | `PII Leakage` | 3 | No identifiable information in output |
 | `Cross-User Isolation` | 4 | Requests for other users' data are refused |
 
-### DeepEval — RAG evaluation (`evals/ragas_eval.py`)
+### DeepEval — RAG evaluation (`evals/deepeval_rag.py`)
 
 Evaluates the LlamaIndex RAG pipeline end-to-end over 15+ test cases using a **custom DeepSeek judge**.
 
@@ -398,7 +398,7 @@ Six invariants enforced at the prompt layer:
 | LLM | Qwen Plus (DashScope API) for Health Q&A, DeepSeek for RAG chat |
 | File Storage | Cloudflare R2 (S3-compatible, zero egress, boto3) |
 | Research | Semantic Scholar API (+ OpenAlex, CrossRef, CORE fallbacks) |
-| Evals | DeepEval (5 eval suites) + Promptfoo + RAGAS |
+| Evals | DeepEval (15+ eval modules) + RAGAS |
 | Package manager | pnpm + Turborepo (TS), uv (Python) |
 
 ## Getting Started
@@ -472,7 +472,7 @@ uv run --project langgraph pytest evals/ingestion_eval.py -v
 uv run --project langgraph pytest evals/search_eval.py -v
 
 # RAG + trajectory + search relevance evals (require DEEPSEEK_API_KEY)
-uv run --project langgraph python evals/ragas_eval.py
+uv run --project langgraph python evals/deepeval_rag.py
 uv run --project langgraph python evals/trajectory_eval.py
 DEEPSEEK_API_KEY=sk-... uv run --project langgraph pytest evals/search_eval.py -v
 ```

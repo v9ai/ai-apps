@@ -1,7 +1,7 @@
 """
 Synthetic golden generation + RAG evaluation via DeepEval Synthesizer.
 
-Uses the clinical knowledge corpus from ragas_eval.py to generate synthetic
+Uses the clinical knowledge corpus from deepeval_rag.py to generate synthetic
 test cases with evolution-based complexity scaling, then evaluates them
 through the RAG pipeline with the full RAG triad.
 
@@ -31,7 +31,7 @@ from deepeval.test_case import LLMTestCase
 
 from conftest import DeepSeekEvalLLM, skip_no_judge, HAS_JUDGE
 
-from ragas_eval import DOCUMENTS, build_rag_pipeline
+from deepeval_rag import DOCUMENTS, build_rag_pipeline
 
 
 # ---------------------------------------------------------------------------
@@ -302,7 +302,7 @@ def test_synthetic_full_evaluation(synthetic_test_cases, synth_judge):
 
 
 if __name__ == "__main__":
-    from ragas_eval import DeepSeekEvalLLM as StandaloneJudge
+    from deepeval_rag import DeepSeekEvalLLM as StandaloneJudge
 
     judge = StandaloneJudge(model="deepseek-chat")
 

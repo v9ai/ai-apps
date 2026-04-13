@@ -41,8 +41,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# promptfoo
-promptfoo-output/
+# deepeval
+.deepeval/
 
 ## Panda
 styled-system

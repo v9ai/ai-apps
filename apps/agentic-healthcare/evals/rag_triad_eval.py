@@ -6,7 +6,7 @@ Evaluates the clinical knowledge RAG pipeline with:
   - Retrieval metrics: ContextualPrecision, ContextualRecall
   - Full 5-metric end-to-end evaluation
 
-Imports DOCUMENTS, EVAL_INPUTS, and build_rag_pipeline from ragas_eval.
+Imports DOCUMENTS, EVAL_INPUTS, and build_rag_pipeline from deepeval_rag.
 
 Run:
   cd apps/agentic-healthcare
@@ -30,7 +30,7 @@ from deepeval.test_case import LLMTestCase
 
 from conftest import DeepSeekEvalLLM, skip_no_judge, HAS_JUDGE
 
-from ragas_eval import EVAL_INPUTS, build_rag_pipeline
+from deepeval_rag import EVAL_INPUTS, build_rag_pipeline
 
 
 # ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ def test_full_rag_evaluation(rag_test_cases, rag_judge):
     """
     Run all 5 RAG metrics across all EVAL_INPUTS in batch.
 
-    This mirrors the standalone ragas_eval.py pipeline but as a pytest test.
+    This mirrors the standalone deepeval_rag.py pipeline but as a pytest test.
     Uses deepeval.evaluate() for batch scoring.
     """
     from deepeval import evaluate

@@ -253,7 +253,7 @@ class TestContextChatEngine:
     @pytest.fixture(scope="class")
     def clinical_index(self, embed_model):
         """Build an in-memory index from clinical knowledge documents."""
-        from ragas_eval import DOCUMENTS
+        from deepeval_rag import DOCUMENTS
         Settings.embed_model = embed_model
         return VectorStoreIndex(DOCUMENTS)
 
@@ -482,7 +482,7 @@ class TestContextChatEngineQuality:
 
     @pytest.fixture(scope="class")
     def chat_engine(self, embed_model):
-        from ragas_eval import DOCUMENTS
+        from deepeval_rag import DOCUMENTS
         Settings.embed_model = embed_model
         index = VectorStoreIndex(DOCUMENTS)
         llm = _make_llm()

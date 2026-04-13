@@ -31,7 +31,7 @@ from conftest import make_geval, skip_no_judge
 def _get_rag_response(question: str) -> str:
     """Query the RAG pipeline and return the response text."""
     try:
-        from ragas_eval import build_rag_pipeline
+        from deepeval_rag import build_rag_pipeline
         rag = build_rag_pipeline("deepseek-chat")
         response = rag.query(question)
         return str(response)

@@ -130,17 +130,17 @@ export const papers: Paper[] = [
     categoryColor: "var(--blue-9)",
   },
   {
-    slug: "promptfoo",
+    slug: "deepeval",
     number: 10,
-    title: "Promptfoo",
+    title: "DeepEval",
     category: "Evaluation",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Promptfoo",
+    authors: "Confident AI",
     year: 2024,
-    finding: "Framework for evaluating LLM prompts and outputs with scenario-based testing",
-    relevance: "Evaluates LLM responses in the ChatInterface component and trajectory analysis prompts",
-    url: "https://www.promptfoo.dev/docs",
+    finding: "Python evaluation framework for LLMs with built-in RAG metrics, GEval custom criteria, and synthetic test generation",
+    relevance: "Powers the full evaluation suite in evals/ with 15+ test modules covering RAG triad, safety, trajectory, conversational, and graph pipeline quality",
+    url: "https://docs.confident-ai.com",
     categoryColor: "var(--pink-9)",
   },
   {
@@ -178,9 +178,9 @@ export const researchStats: Stat[] = [
     source: "7 paired pgvector tables with vector(1024) + BTREE user_id index",
   },
   {
-    number: "3",
-    label: "Evaluation frameworks (Promptfoo, DeepEval, RAGAS)",
-    source: "Package.json scripts and evaluation file references",
+    number: "2",
+    label: "Evaluation frameworks (DeepEval, RAGAS)",
+    source: "evals/ directory with 15+ pytest modules using DeepEval metrics and RAGAS triad",
   },
   {
     number: "O(log n)",
@@ -239,9 +239,9 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Evaluation and Quality Assurance",
-    description: "Comprehensive evaluation is performed using Promptfoo for LLM prompt evaluation, and DeepEval with RAGAS for RAG quality metrics (faithfulness, relevancy). Evaluation scripts cover critical paths like blood test processing, chat Q&A, and trajectory analysis, ensuring medical accuracy and system reliability through scenario-based testing.",
-    researchBasis: "Multi-framework evaluation suite for AI systems",
-    codeSnippet: "// Package.json scripts for evaluation\n\"scripts\": {\n  \"eval:rag\": \"promptfoo eval\"\n}",
+    description: "Comprehensive evaluation is performed using DeepEval with RAGAS for RAG quality metrics (faithfulness, relevancy, contextual precision/recall), GEval custom criteria with DeepSeek as judge, and synthetic test generation. 15+ pytest modules cover critical paths: RAG triad, safety guardrails, trajectory analysis, conversational multi-turn, graph pipeline, ingestion, extraction, and embedding quality.",
+    researchBasis: "DeepEval + RAGAS evaluation suite with custom DeepSeek judge model",
+    codeSnippet: "# evals/conftest.py — shared DeepSeek judge\nclass DeepSeekEvalLLM(DeepEvalBaseLLM):\n    ...\ndef make_geval(name, criteria, params):\n    return GEval(name=name, criteria=criteria, ...)",
     dataFlow: "Test scenarios \u2192 evaluation frameworks \u2192 metrics (precision, recall) \u2192 quality reports",
   },
 ];
@@ -272,11 +272,11 @@ export const extraSections: ExtraSection[] = [
   },
   {
     heading: "Deployment & Infrastructure",
-    content: "The frontend is built with Next.js 15 and deployed on Vercel, using Turbopack for fast development builds. The Python backend (FastAPI) runs the LangGraph pipeline and embedding API. PostgreSQL is hosted on Neon for serverless scaling with pgvector extension, and Cloudflare R2 handles file storage via AWS SDK v3. Embeddings use OpenAI\u2019s text-embedding-3-large API. Evaluation infrastructure includes Promptfoo, DeepEval, and RAGAS for RAG-triad metrics.",
+    content: "The frontend is built with Next.js 15 and deployed on Vercel, using Turbopack for fast development builds. The Python backend (FastAPI) runs the LangGraph pipeline and embedding API. PostgreSQL is hosted on Neon for serverless scaling with pgvector extension, and Cloudflare R2 handles file storage via AWS SDK v3. Embeddings use OpenAI\u2019s text-embedding-3-large API. Evaluation infrastructure uses DeepEval and RAGAS for RAG-triad metrics.",
   },
   {
     heading: "Evaluation Framework",
-    content: "A comprehensive evaluation suite ensures medical accuracy and system reliability. Promptfoo evaluates LLM prompts and trajectory testing, DeepEval assesses RAG quality metrics (faithfulness, relevancy), and RAGAS provides specialized retrieval metrics. Evaluation scripts cover critical paths like blood test processing, chat Q&A, and multi-turn conversations, with scenario-based testing to validate performance across diverse health queries.",
+    content: "A comprehensive evaluation suite ensures medical accuracy and system reliability. DeepEval provides RAG quality metrics (faithfulness, relevancy, contextual precision/recall), GEval custom criteria with a DeepSeek judge model, and synthetic test generation via the Synthesizer. RAGAS provides specialized retrieval metrics. 15+ pytest modules cover critical paths: RAG triad, safety guardrails, trajectory analysis, conversational multi-turn, graph pipeline, ingestion, extraction, and embedding quality.",
   },
   {
     heading: "Unique Technical Patterns",
@@ -360,6 +360,6 @@ export const technicalDetails: TechnicalDetail[] = [
     type: "diagram",
     heading: "System Architecture Overview",
     description: "End-to-end flow from upload to insights",
-    code: "User \u2192 [Next.js Frontend] \u2192 UploadForm \u2192 Cloudflare R2 (PDFs)\n                     \u2193\n        [FastAPI :8001] \u2190 LlamaParse \u2190 BloodTestNodeParser\n                     \u2193\n     [text-embedding-3-large] \u2192 1024-dim \u2192 7 pgvector tables\n                     \u2193\n  [LangGraph: triage \u2192 retrieve \u2192 synthesize \u2192 guard]\n                     \u2193\n           [ChatInterface] \u2192 answer + metadata \u2192 User\n                     \u2193\n        [Evaluation] \u2190 Promptfoo/DeepEval/RAGAS",
+    code: "User \u2192 [Next.js Frontend] \u2192 UploadForm \u2192 Cloudflare R2 (PDFs)\n                     \u2193\n        [FastAPI :8001] \u2190 LlamaParse \u2190 BloodTestNodeParser\n                     \u2193\n     [text-embedding-3-large] \u2192 1024-dim \u2192 7 pgvector tables\n                     \u2193\n  [LangGraph: triage \u2192 retrieve \u2192 synthesize \u2192 guard]\n                     \u2193\n           [ChatInterface] \u2192 answer + metadata \u2192 User\n                     \u2193\n        [Evaluation] \u2190 DeepEval/RAGAS",
   },
 ];

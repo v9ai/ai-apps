@@ -19,7 +19,7 @@ Environment variables:
 
 Run:
   pip install -r evals/requirements.txt
-  DEEPSEEK_API_KEY=sk-... python evals/ragas_eval.py
+  DEEPSEEK_API_KEY=sk-... python evals/deepeval_rag.py
 """
 
 from __future__ import annotations

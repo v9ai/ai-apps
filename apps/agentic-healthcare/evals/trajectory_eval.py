@@ -60,7 +60,7 @@ if _MISSING_KEYS and "pytest" not in sys.modules:
 
 
 # ---------------------------------------------------------------------------
-# DeepSeek judge (same pattern as ragas_eval.py)
+# DeepSeek judge (same pattern as deepeval_rag.py)
 # ---------------------------------------------------------------------------
 
 

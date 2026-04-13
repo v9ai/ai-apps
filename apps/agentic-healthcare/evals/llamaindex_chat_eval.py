@@ -143,7 +143,7 @@ def embed_model():
 @pytest.fixture(scope="module")
 def clinical_index(embed_model):
     """Build index from the full clinical knowledge corpus."""
-    from ragas_eval import DOCUMENTS
+    from deepeval_rag import DOCUMENTS
     Settings.embed_model = embed_model
     return VectorStoreIndex(DOCUMENTS)
 
