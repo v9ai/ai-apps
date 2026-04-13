@@ -128,49 +128,36 @@ function MemorizePageInner() {
 
   return (
     <Box px={{ initial: "2", md: "3" }} py={{ initial: "2", md: "3" }} style={{ height: "100vh", display: "flex", flexDirection: "column", overflow: "auto" }}>
-      {/* Navigation */}
-      <Flex align="center" gap="3" mb="5">
-        <Link
-          href={`/applications/${app.slug}/prep`}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-            color: "var(--gray-11)",
-            textDecoration: "none",
-          }}
-        >
-          <ArrowLeftIcon />
-          <Text size="4">Study Plan</Text>
-        </Link>
-        <Text size="4" color="gray">
-          /
-        </Text>
-        <Text size="4" weight="medium">
-          Memorize CSS
-        </Text>
-      </Flex>
-
-      {/* Page header */}
-      <Flex justify="between" align="start" mb="6" wrap="wrap" gap="3">
-        <Box>
-          <Heading size="9" mb="2">
-            Memorize CSS
-          </Heading>
-          <Flex align="center" gap="2">
-            <Badge color="violet" variant="soft" size="3">
-              Active Recall
-            </Badge>
-            <Text size="4" color="gray">
-              {app.company} &middot; {app.position}
-            </Text>
-          </Flex>
-        </Box>
+      {/* Compact header */}
+      <Flex justify="between" align="center" mb="3" wrap="wrap" gap="2">
+        <Flex align="center" gap="2">
+          <Link
+            href={`/applications/${app.slug}/prep`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              color: "var(--gray-11)",
+              textDecoration: "none",
+            }}
+          >
+            <ArrowLeftIcon />
+            <Text size="2">Study Plan</Text>
+          </Link>
+          <Text size="2" color="gray">/</Text>
+          <Heading size="4">Memorize CSS</Heading>
+          <Badge color="violet" variant="soft" size="1">
+            Active Recall
+          </Badge>
+          <Text size="2" color="gray">
+            {app.company} &middot; {app.position}
+          </Text>
+        </Flex>
         <Flex gap="2">
-          <Button size="4" variant="soft" color="gray" asChild>
+          <Button size="2" variant="soft" color="gray" asChild>
             <Link href={`/applications/${app.slug}/prep`}>Study Plan</Link>
           </Button>
-          <Button size="4" variant="soft" color="gray" asChild>
+          <Button size="2" variant="soft" color="gray" asChild>
             <Link href={`/applications/${app.slug}/notes`}>Notes</Link>
           </Button>
         </Flex>

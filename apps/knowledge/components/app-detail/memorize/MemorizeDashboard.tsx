@@ -481,12 +481,12 @@ function ModeHeader({
   onBack: () => void;
 }) {
   return (
-    <Flex align="center" gap="3" mb="5">
+    <Flex align="center" gap="3" mb="3">
       <Button size="2" variant="ghost" color="gray" onClick={onBack}>
         &larr; Back
       </Button>
-      <Heading size="6">{title}</Heading>
-      <Text size="4" color="gray">
+      <Heading size="5">{title}</Heading>
+      <Text size="3" color="gray">
         {subtitle}
       </Text>
     </Flex>
