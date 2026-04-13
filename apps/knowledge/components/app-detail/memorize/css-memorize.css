@@ -748,3 +748,290 @@
   color: var(--gray-10);
   margin-left: 4px;
 }
+
+/* ── Mode Tip ──────────────────────────────────────────────────── */
+
+.mode-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--indigo-2);
+  border-left: 3px solid var(--indigo-7);
+  border-radius: var(--radius-2);
+  margin-bottom: 12px;
+}
+
+.mode-tip-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--gray-8);
+  padding: 0 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.mode-tip-dismiss:hover {
+  color: var(--gray-11);
+}
+
+/* ── Due for Review ────────────────────────────────────────────── */
+
+.due-review-card {
+  padding: 16px;
+  border-radius: var(--radius-3);
+  border: 1px solid var(--crimson-5);
+  background: var(--crimson-2);
+  margin-bottom: 24px;
+}
+
+.due-review-card--clear {
+  border-color: var(--green-5);
+  background: var(--green-2);
+}
+
+.due-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.due-review-item {
+  padding: 8px 12px;
+  border-radius: var(--radius-2);
+  background: var(--gray-1);
+  border: 1px solid var(--gray-4);
+}
+
+.due-review-prop {
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  font-size: var(--font-size-3);
+  color: var(--gray-12);
+}
+
+/* ── Learning Science Sidebar ──────────────────────────────────── */
+
+.science-sidebar {
+  margin-bottom: 24px;
+  border: 1px solid var(--gray-5);
+  border-radius: var(--radius-3);
+  overflow: hidden;
+}
+
+.science-sidebar-toggle {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--gray-2);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.science-sidebar-toggle:hover {
+  background: var(--gray-3);
+}
+
+.science-sidebar-icon {
+  font-size: 18px;
+}
+
+.science-sidebar-chevron {
+  font-size: 10px;
+  color: var(--gray-8);
+  transition: transform 0.2s;
+  margin-left: auto;
+}
+
+.science-sidebar-chevron--open {
+  transform: rotate(180deg);
+}
+
+.science-sidebar-content {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--gray-4);
+}
+
+.science-sidebar-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.science-group-card {
+  overflow: hidden;
+}
+
+.science-group-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.science-group-tip {
+  padding: 8px 12px;
+  background: var(--violet-2);
+  border-left: 3px solid var(--violet-7);
+  border-radius: var(--radius-2);
+}
+
+.science-paper {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-3);
+}
+
+.science-paper:last-child {
+  border-bottom: none;
+}
+
+/* ── Session Check-in ──────────────────────────────────────────── */
+
+.session-checkin-overlay,
+.session-summary-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.session-checkin-card,
+.session-summary-card {
+  background: var(--color-background);
+  border-radius: var(--radius-4);
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.session-checkin-emoji {
+  font-size: 28px;
+  padding: 8px;
+  border: 2px solid var(--gray-5);
+  border-radius: var(--radius-2);
+  background: var(--gray-2);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  flex: 1;
+  min-width: 48px;
+}
+
+.session-checkin-emoji:hover {
+  border-color: var(--violet-7);
+  background: var(--violet-2);
+  transform: scale(1.05);
+}
+
+.session-checkin-emoji--active {
+  border-color: var(--violet-8);
+  background: var(--violet-3);
+  transform: scale(1.1);
+}
+
+/* ── Session Summary ───────────────────────────────────────────── */
+
+.session-summary-stats {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.session-summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.session-summary-pill {
+  padding: 6px 12px;
+  border: 1px solid var(--gray-5);
+  border-radius: 9999px;
+  background: var(--gray-2);
+  font-size: var(--font-size-2);
+  color: var(--gray-11);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.session-summary-pill:hover {
+  border-color: var(--violet-7);
+  background: var(--violet-2);
+}
+
+.session-summary-pill--active {
+  border-color: var(--violet-8);
+  background: var(--violet-3);
+  color: var(--violet-11);
+  font-weight: 600;
+}
+
+/* ── Learning Insights ─────────────────────────────────────────── */
+
+.insights-section {
+  margin-top: 24px;
+  border: 1px solid var(--gray-5);
+  border-radius: var(--radius-3);
+  overflow: hidden;
+}
+
+.insights-toggle {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--gray-2);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.insights-toggle:hover {
+  background: var(--gray-3);
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.insights-card {
+  padding: 16px;
+  border: 1px solid var(--gray-4);
+  border-radius: var(--radius-2);
+  background: var(--gray-1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.insights-card--wide {
+  grid-column: span 2;
+  text-align: left;
+  align-items: stretch;
+}
+
+.insights-bar {
+  width: 100%;
+  flex: 1;
+  border-radius: 2px;
+  min-width: 8px;
+  transition: height 0.3s ease;
+}

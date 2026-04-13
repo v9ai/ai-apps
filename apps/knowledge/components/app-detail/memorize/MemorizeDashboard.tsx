@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Heading, Text, Flex, Button, Badge, Box } from "@radix-ui/themes";
 import type { CssProperty, CssCategory } from "@/lib/css-properties";
 import { ProgressBar } from "./ProgressBar";
@@ -9,6 +9,19 @@ import { FillInTheBlank } from "./FillInTheBlank";
 import { VisualMatcher } from "./VisualMatcher";
 import { TimedDrill } from "./TimedDrill";
 import { PropertyExplorer } from "./PropertyExplorer";
+import { DueForReview } from "./DueForReview";
+import { LearningScienceSidebar } from "./LearningScienceSidebar";
+import { ModeTip } from "./ModeTip";
+import { PreSessionCheckIn } from "./PreSessionCheckIn";
+import { PostSessionSummary } from "./PostSessionSummary";
+import { LearningInsights } from "./LearningInsights";
+import {
+  createSession,
+  endSession,
+  type PreSessionState,
+  type PostSessionState,
+  type PracticeMode,
+} from "@/lib/session-tracking";
 
 export type MasteryMap = Record<
   string,
@@ -42,7 +55,6 @@ function getSmartPracticeProps(
   allProps: CssProperty[],
   mastery: MasteryMap,
 ): CssProperty[] {
-  // Sort by lowest mastery first, unseen properties first
   return [...allProps].sort((a, b) => {
     const ma = mastery[a.id]?.pMastery ?? 0;
     const mb = mastery[b.id]?.pMastery ?? 0;
@@ -58,6 +70,14 @@ export function MemorizeDashboard({
 }: MemorizeDashboardProps) {
   const [mode, setMode] = useState<Mode>("dashboard");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  // Session tracking state
+  const [showCheckIn, setShowCheckIn] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [pendingMode, setPendingMode] = useState<Mode | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const sessionStartRef = useRef<number>(0);
+  const sessionStatsRef = useRef({ reviewed: new Set<string>(), correct: 0, total: 0 });
 
   useEffect(() => {
     if (mode === "flashcards") {
@@ -92,22 +112,118 @@ export function MemorizeDashboard({
         totalProps
       : 0;
 
+  // ── Session flow ────────────────────────────────────────────────
+
+  const startModeWithCheckIn = useCallback((targetMode: Mode) => {
+    if (targetMode === "dashboard" || targetMode === "explorer") {
+      setMode(targetMode);
+      return;
+    }
+    setPendingMode(targetMode);
+    setShowCheckIn(true);
+  }, []);
+
+  const handleCheckInDone = useCallback((preSession: PreSessionState | null) => {
+    setShowCheckIn(false);
+    const targetMode = pendingMode ?? "flashcards";
+    const practiceMode = targetMode as PracticeMode;
+    const session = createSession(appSlug, practiceMode, preSession);
+    sessionIdRef.current = session.id;
+    sessionStartRef.current = Date.now();
+    sessionStatsRef.current = { reviewed: new Set(), correct: 0, total: 0 };
+    setMode(targetMode);
+    setPendingMode(null);
+  }, [appSlug, pendingMode]);
+
+  const handleBack = useCallback(() => {
+    // If we have an active session, show summary
+    if (sessionIdRef.current && mode !== "dashboard") {
+      const stats = sessionStatsRef.current;
+      const durationSec = Math.round((Date.now() - sessionStartRef.current) / 1000);
+      // Store stats for summary display
+      sessionStatsRef.current = { ...stats, reviewed: stats.reviewed };
+      setShowSummary(true);
+      setMode("dashboard");
+      return;
+    }
+    setMode("dashboard");
+  }, [mode]);
+
+  const handleSummaryDone = useCallback((postSession: PostSessionState | null) => {
+    if (sessionIdRef.current) {
+      const stats = sessionStatsRef.current;
+      endSession(appSlug, sessionIdRef.current, {
+        propertiesReviewed: stats.reviewed.size,
+        correctCount: stats.correct,
+        totalCount: stats.total,
+      }, postSession);
+      sessionIdRef.current = null;
+    }
+    setShowSummary(false);
+  }, [appSlug]);
+
+  // Wrap onRate to track session stats
+  const handleRate = useCallback((propertyId: string, isCorrect: boolean) => {
+    onRate(propertyId, isCorrect);
+    if (sessionIdRef.current) {
+      sessionStatsRef.current.reviewed.add(propertyId);
+      sessionStatsRef.current.total++;
+      if (isCorrect) sessionStatsRef.current.correct++;
+    }
+  }, [onRate]);
+
   const handlePractice = useCallback(
     (propertyId: string) => {
       const cat = categories.find((c) =>
         c.properties.some((p) => p.id === propertyId),
       );
       if (cat) setActiveCategory(cat.id);
-      setMode("flashcards");
+      startModeWithCheckIn("flashcards");
     },
-    [categories],
+    [categories, startModeWithCheckIn],
   );
 
-  const handleBack = useCallback(() => {
-    setMode("dashboard");
-  }, []);
+  const handleReviewProperty = useCallback(
+    (propertyId: string) => {
+      const cat = categories.find((c) =>
+        c.properties.some((p) => p.id === propertyId),
+      );
+      if (cat) setActiveCategory(cat.id);
+      startModeWithCheckIn("flashcards");
+    },
+    [categories, startModeWithCheckIn],
+  );
 
-  // Render active mode
+  const handleStartDueReview = useCallback(() => {
+    setActiveCategory(null);
+    startModeWithCheckIn("flashcards");
+  }, [startModeWithCheckIn]);
+
+  // ── Overlays ────────────────────────────────────────────────────
+
+  if (showCheckIn) {
+    return <PreSessionCheckIn onStart={handleCheckInDone} />;
+  }
+
+  if (showSummary) {
+    const stats = sessionStatsRef.current;
+    const durationSec = Math.round((Date.now() - sessionStartRef.current) / 1000);
+    return (
+      <PostSessionSummary
+        stats={{
+          propertiesReviewed: stats.reviewed.size,
+          correctCount: stats.correct,
+          totalCount: stats.total,
+          mode: mode,
+          durationSec,
+        }}
+        onDone={handleSummaryDone}
+      />
+    );
+  }
+
+  // ── Active practice modes ───────────────────────────────────────
+
   if (mode === "flashcards") {
     return (
       <div className="flashcard-fullscreen">
@@ -121,10 +237,11 @@ export function MemorizeDashboard({
               : "All categories"}
           </Text>
         </div>
+        <ModeTip mode="flashcards" />
         <FlashcardDeck
           properties={activeCategory ? filteredProps : smartProps}
           categories={categories}
-          onRate={onRate}
+          onRate={handleRate}
         />
       </div>
     );
@@ -138,9 +255,10 @@ export function MemorizeDashboard({
           subtitle={activeCategory ?? "All categories"}
           onBack={handleBack}
         />
+        <ModeTip mode="fill" />
         <FillInTheBlank
           properties={activeCategory ? filteredProps : smartProps}
-          onRate={onRate}
+          onRate={handleRate}
         />
       </div>
     );
@@ -154,9 +272,10 @@ export function MemorizeDashboard({
           subtitle={activeCategory ?? "All categories"}
           onBack={handleBack}
         />
+        <ModeTip mode="matcher" />
         <VisualMatcher
           properties={activeCategory ? filteredProps : smartProps}
-          onRate={onRate}
+          onRate={handleRate}
         />
       </div>
     );
@@ -166,7 +285,8 @@ export function MemorizeDashboard({
     return (
       <div>
         <ModeHeader title="Timed Drill" subtitle="60 seconds" onBack={handleBack} />
-        <TimedDrill properties={allProps} onRate={onRate} />
+        <ModeTip mode="drill" />
+        <TimedDrill properties={allProps} onRate={handleRate} />
       </div>
     );
   }
@@ -175,6 +295,7 @@ export function MemorizeDashboard({
     return (
       <div>
         <ModeHeader title="Property Explorer" subtitle="Browse & study" onBack={handleBack} />
+        <ModeTip mode="explorer" />
         <PropertyExplorer
           categories={categories}
           mastery={mastery}
@@ -184,7 +305,7 @@ export function MemorizeDashboard({
     );
   }
 
-  // Dashboard view
+  // ── Dashboard view ──────────────────────────────────────────────
   return (
     <div className="memorize-dashboard">
       {/* Overall progress */}
@@ -202,6 +323,14 @@ export function MemorizeDashboard({
           />
         </div>
       </div>
+
+      {/* Due for review */}
+      <DueForReview
+        categories={categories}
+        mastery={mastery}
+        onReviewProperty={handleReviewProperty}
+        onStartDueReview={handleStartDueReview}
+      />
 
       {/* Category cards */}
       <div className="memorize-categories">
@@ -263,7 +392,7 @@ export function MemorizeDashboard({
           size="4"
           variant="solid"
           color="violet"
-          onClick={() => setMode("flashcards")}
+          onClick={() => startModeWithCheckIn("flashcards")}
         >
           Flashcards
         </Button>
@@ -271,7 +400,7 @@ export function MemorizeDashboard({
           size="4"
           variant="soft"
           color="cyan"
-          onClick={() => setMode("fill")}
+          onClick={() => startModeWithCheckIn("fill")}
         >
           Fill in the Blank
         </Button>
@@ -279,7 +408,7 @@ export function MemorizeDashboard({
           size="4"
           variant="soft"
           color="orange"
-          onClick={() => setMode("matcher")}
+          onClick={() => startModeWithCheckIn("matcher")}
         >
           Visual Matcher
         </Button>
@@ -287,7 +416,7 @@ export function MemorizeDashboard({
           size="4"
           variant="soft"
           color="crimson"
-          onClick={() => setMode("drill")}
+          onClick={() => startModeWithCheckIn("drill")}
         >
           Timed Drill
         </Button>
@@ -318,12 +447,20 @@ export function MemorizeDashboard({
             color="violet"
             onClick={() => {
               setActiveCategory(null);
-              setMode("flashcards");
+              startModeWithCheckIn("flashcards");
             }}
           >
             Start
           </Button>
         </Flex>
+      </Box>
+
+      {/* Learning insights */}
+      <LearningInsights appSlug={appSlug} />
+
+      {/* Learning science research */}
+      <Box mt="5">
+        <LearningScienceSidebar />
       </Box>
     </div>
   );
