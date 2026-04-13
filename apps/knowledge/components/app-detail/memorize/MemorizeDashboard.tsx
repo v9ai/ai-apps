@@ -272,7 +272,6 @@ export function MemorizeDashboard({
           subtitle={activeCategory ?? "All categories"}
           onBack={handleBack}
         />
-        <ModeTip mode="matcher" />
         <VisualMatcher
           properties={activeCategory ? filteredProps : smartProps}
           onRate={handleRate}
