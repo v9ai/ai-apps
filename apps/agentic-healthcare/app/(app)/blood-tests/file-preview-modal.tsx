@@ -1,7 +1,6 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { IconButton } from "@radix-ui/themes";
 import { Eye, X } from "lucide-react";
 import { css } from "styled-system/css";
 
@@ -58,6 +57,41 @@ const bodyClass = css({
   justifyContent: "center",
 });
 
+const triggerBtnClass = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "32px",
+  height: "32px",
+  borderRadius: "var(--radius-2)",
+  border: "none",
+  background: "transparent",
+  color: "var(--gray-11)",
+  cursor: "pointer",
+  transition: "background 100ms, color 100ms",
+  _hover: {
+    background: "var(--indigo-a3)",
+    color: "var(--indigo-11)",
+  },
+});
+
+const closeBtnClass = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "28px",
+  height: "28px",
+  borderRadius: "var(--radius-2)",
+  border: "none",
+  background: "transparent",
+  color: "var(--gray-11)",
+  cursor: "pointer",
+  flexShrink: 0,
+  _hover: {
+    background: "var(--gray-a4)",
+  },
+});
+
 function isPdf(name: string) {
   return /\.pdf$/i.test(name);
 }
@@ -75,9 +109,9 @@ export function FilePreviewModal({
     <Dialog.Root>
       <span onClick={(e) => e.stopPropagation()}>
         <Dialog.Trigger asChild>
-          <IconButton variant="ghost" color="gray" size="1" aria-label="Preview file">
-            <Eye size={14} />
-          </IconButton>
+          <button className={triggerBtnClass} aria-label="Preview file">
+            <Eye size={18} />
+          </button>
         </Dialog.Trigger>
       </span>
 
@@ -87,9 +121,9 @@ export function FilePreviewModal({
           <div className={headerClass}>
             <Dialog.Title className={titleClass}>{fileName}</Dialog.Title>
             <Dialog.Close asChild>
-              <IconButton variant="ghost" color="gray" size="1" aria-label="Close">
-                <X size={14} />
-              </IconButton>
+              <button className={closeBtnClass} aria-label="Close">
+                <X size={16} />
+              </button>
             </Dialog.Close>
           </div>
 

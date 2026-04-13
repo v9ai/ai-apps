@@ -445,8 +445,59 @@
       }
     ],
     "totalStars": 381858,
-    "languages": []
+    "languages": [
+      {
+        "name": "TypeScript",
+        "count": 11,
+        "color": "#3178c6"
+      },
+      {
+        "name": "Go",
+        "count": 13,
+        "color": "#00ADD8"
+      },
+      {
+        "name": "Swift",
+        "count": 3,
+        "color": "#F05138"
+      },
+      {
+        "name": "Shell",
+        "count": 2,
+        "color": "#89e051"
+      },
+      {
+        "name": "Nix",
+        "count": 1,
+        "color": "#7e7eff"
+      },
+      {
+        "name": "Python",
+        "count": 1,
+        "color": "#3572A5"
+      },
+      {
+        "name": "C#",
+        "count": 1,
+        "color": "#178600"
+      },
+      {
+        "name": "JavaScript",
+        "count": 1,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "HTML",
+        "count": 1,
+        "color": "#e34c26"
+      },
+      {
+        "name": "MDX",
+        "count": 1,
+        "color": "#8b8b8b"
+      }
+    ]
   },
   "huggingface": null,
-  "imageUrl": null
+  "imageUrl": "https://www.trendingtopics.eu/wp-content/uploads/2026/01/OpenClaw.png"
 }
