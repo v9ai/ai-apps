@@ -134,8 +134,12 @@ export function classifyMetricRisk(
   const ref = METRIC_REFERENCES[metricKey];
   if (!ref) return "optimal";
   const [optLo, optHi] = ref.optimal;
-  const [, bordHi] = ref.borderline;
-  if (value < optLo) return "low";
+  const [bordLo, bordHi] = ref.borderline;
+  if (value < optLo) {
+    // Check if value falls in the borderline range below optimal
+    if (value >= bordLo) return "borderline";
+    return "low";
+  }
   if (value <= optHi) return "optimal";
   if (value <= bordHi) return "borderline";
   return "elevated";

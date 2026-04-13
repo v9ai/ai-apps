@@ -512,11 +512,12 @@ class TestEndToEndQuality:
 
     def _run_synthesis(self, query: str, context: list[str], intent: str = "markers") -> str:
         """Run only the synthesis node with real LLM."""
+        sources = ["health_state_embeddings"] if intent == "derived_ratios" else ["blood_marker_embeddings"]
         state = _make_state(
             query=query,
             intent=intent,
             context_chunks=context,
-            retrieval_sources=["blood_marker_embeddings"],
+            retrieval_sources=sources,
         )
         result = synthesize(state)
         return result["answer"]
@@ -542,7 +543,7 @@ class TestEndToEndQuality:
             "What does the De Ritis ratio indicate?",
             [
                 "De Ritis Ratio (AST/ALT): 1.1000 [optimal]\n"
-                "Optimal range: 0.8-1.2\nReference: De Ritis F et al., Clin Chim Acta 1957"
+                "Optimal range: 0.8-1.5\nReference: De Ritis F et al., Clin Chim Acta 1957"
             ],
             ["AST", "ALT", "liver"],
         ),
@@ -656,6 +657,85 @@ class TestEndToEndQuality:
         test_case = LLMTestCase(
             input="My NLR and TyG are both elevated. What does this mean?",
             actual_output=answer,
+        )
+        assert_test(test_case, [metric])
+
+    def test_derived_ratios_multi_system_assessment(self):
+        """Synthesis should identify affected organ systems from multiple elevated ratios."""
+        context = [
+            "Health state: test.pdf\n"
+            "Derived metrics (with risk classification):\n"
+            "TG/HDL Ratio: 8.0000 [elevated]\n"
+            "TC/HDL Ratio: 7.4300 [elevated]\n"
+            "HDL/LDL Ratio: 0.2188 [low]\n"
+            "TyG Index: 9.7600 [elevated]\n"
+            "NLR: 6.0000 [elevated]\n"
+            "BUN/Creatinine: 29.1700 [elevated]\n"
+            "De Ritis Ratio (AST/ALT): 2.6700 [elevated]"
+        ]
+        answer = self._run_synthesis(
+            "All my derived ratios are elevated. Which organ systems are at risk?",
+            context,
+            intent="derived_ratios",
+        )
+
+        metric = make_geval(
+            name="Multi-System Organ Mapping",
+            criteria=(
+                "When multiple derived ratios are elevated, the response must identify "
+                "the affected organ systems: TG/HDL or TyG elevated → metabolic (insulin "
+                "resistance), TC/HDL or HDL/LDL abnormal → cardiovascular, NLR elevated → "
+                "inflammatory, BUN/Creatinine elevated → renal, De Ritis elevated → hepatic. "
+                "The response should mention at least 4 of these 5 systems. Score 0 if "
+                "fewer than 3 systems are identified."
+            ),
+            evaluation_params=[
+                LLMTestCaseParams.INPUT,
+                LLMTestCaseParams.ACTUAL_OUTPUT,
+                LLMTestCaseParams.RETRIEVAL_CONTEXT,
+            ],
+            threshold=0.7,
+        )
+        test_case = LLMTestCase(
+            input="All my derived ratios are elevated. Which organ systems are at risk?",
+            actual_output=answer,
+            retrieval_context=context,
+        )
+        assert_test(test_case, [metric])
+
+    def test_derived_ratios_cites_peer_reviewed_thresholds(self):
+        """Synthesis should cite peer-reviewed author names when discussing ratios."""
+        context = [
+            "TG/HDL Ratio: 4.2000 [elevated]\n"
+            "Optimal: < 2.0 (McLaughlin et al.)\n"
+            "Significance: Insulin resistance surrogate"
+        ]
+        answer = self._run_synthesis(
+            "My TG/HDL ratio is elevated. What does this mean?",
+            context,
+            intent="derived_ratios",
+        )
+
+        metric = make_geval(
+            name="Peer-Reviewed Citation",
+            criteria=(
+                "When discussing a derived ratio with context that includes an author "
+                "citation, the response should reference the peer-reviewed source. "
+                "For TG/HDL, McLaughlin et al. should be cited. For TC/HDL, Castelli. "
+                "For NLR, Fest. For De Ritis, De Ritis et al. For TyG, Simental-Mendía. "
+                "Score 1 if at least one author is correctly cited, score 0 if no "
+                "citations appear despite context providing them."
+            ),
+            evaluation_params=[
+                LLMTestCaseParams.ACTUAL_OUTPUT,
+                LLMTestCaseParams.RETRIEVAL_CONTEXT,
+            ],
+            threshold=0.7,
+        )
+        test_case = LLMTestCase(
+            input="My TG/HDL ratio is elevated. What does this mean?",
+            actual_output=answer,
+            retrieval_context=context,
         )
         assert_test(test_case, [metric])
 
@@ -938,13 +1018,16 @@ class TestSystemDesign:
         assert '"entities"' in TRIAGE_SYSTEM
 
     def test_synthesis_prompt_has_all_safety_rules(self):
-        """Synthesis prompt must contain all 7 safety rules."""
+        """Synthesis prompt must contain all 8 safety rules."""
         rules = [
             "ONLY based on the provided context",
             "NEVER diagnose",
             "NEVER prescribe",
             "ALWAYS remind",
             "physician",
+            "metabolic",
+            "cardiovascular",
+            "inflammatory",
         ]
         for rule in rules:
             assert rule.lower() in SYNTHESIS_SYSTEM.lower(), \

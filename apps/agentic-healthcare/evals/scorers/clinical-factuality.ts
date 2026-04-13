@@ -36,22 +36,22 @@ const THRESHOLD_PATTERNS: Array<{
       return val >= 0.3 && val <= 0.5; // Close to the 0.4 threshold
     },
   },
-  // --- TC/HDL Ratio ---
+  // --- TC/HDL Ratio --- (Castelli et al.)
   {
-    label: "TC/HDL optimal < 4.5",
+    label: "TC/HDL optimal < 4.0",
     pattern: /tc[\/\s]*hdl[^.]*(?:optimal|ideal|low risk)[^.]*(?:<|<=|below|under)\s*([\d.]+)/i,
     validate: (m) => {
       const val = parseFloat(m[1]);
-      return val >= 4.0 && val <= 5.0;
+      return val >= 3.5 && val <= 4.5;
     },
   },
   {
-    label: "TC/HDL borderline 4.5-5.5",
+    label: "TC/HDL borderline 4.0-5.0",
     pattern: /tc[\/\s]*hdl[^.]*(?:borderline|moderate)[^.]*(\d+\.?\d*)\s*[-–to]+\s*(\d+\.?\d*)/i,
     validate: (m) => {
       const lo = parseFloat(m[1]);
       const hi = parseFloat(m[2]);
-      return lo >= 4.0 && lo <= 5.0 && hi >= 5.0 && hi <= 6.0;
+      return lo >= 3.5 && lo <= 4.5 && hi >= 4.5 && hi <= 5.5;
     },
   },
   // --- TG/HDL Ratio ---
@@ -134,12 +134,12 @@ const THRESHOLD_PATTERNS: Array<{
     },
   },
   {
-    label: "De Ritis optimal 0.8-1.2",
+    label: "De Ritis optimal 0.8-1.5",
     pattern: /(?:de\s*ritis|ast[\/\s]*alt)[^.]*(?:optimal|normal)[^.]*(\d+\.?\d*)\s*[-–to]+\s*(\d+\.?\d*)/i,
     validate: (m) => {
       const lo = parseFloat(m[1]);
       const hi = parseFloat(m[2]);
-      return lo >= 0.6 && lo <= 1.0 && hi >= 1.0 && hi <= 1.5;
+      return lo >= 0.6 && lo <= 1.0 && hi >= 1.2 && hi <= 1.8;
     },
   },
   // --- Researcher citation checks ---
@@ -159,8 +159,18 @@ const THRESHOLD_PATTERNS: Array<{
     validate: () => true,
   },
   {
-    label: "Castelli citation for HDL/LDL",
-    pattern: /Castelli[^.]*(?:hdl|ldl|lipid|cholesterol)/i,
+    label: "Castelli citation for TC/HDL",
+    pattern: /Castelli[^.]*(?:tc|hdl|ldl|lipid|cholesterol|cardiovascular)/i,
+    validate: () => true,
+  },
+  {
+    label: "Millán citation for HDL/LDL",
+    pattern: /Mill[áa]n[^.]*(?:hdl|ldl|atherogenic|plaque)/i,
+    validate: () => true,
+  },
+  {
+    label: "Fest citation for NLR",
+    pattern: /Fest[^.]*(?:nlr|neutrophil|inflammation)/i,
     validate: () => true,
   },
   {
