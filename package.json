@@ -29,7 +29,8 @@
     "dev:p": "turbo run dev --filter=humans-of-ai",
     "dev:br": "turbo run dev --filter=bricks",
     "dev:tr": "turbo run dev --filter=travel",
-"deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:re && pnpm deploy:blog && pnpm deploy:p"
+    "deploy:tr": "VERCEL_PROJECT_ID=prj_kVmaliWhzFSMh15zVdV6qfLlZYsA VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod --cwd apps/travel",
+    "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:re && pnpm deploy:blog && pnpm deploy:p && pnpm deploy:tr"
   },
   "devDependencies": {
     "napi-postinstall": "^0.2.4",

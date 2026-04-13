@@ -16,6 +16,7 @@ Use this mapping to find the correct deploy script:
 | todo | `pnpm deploy:t` |
 | podcasts | `pnpm deploy:p` |
 | bricks | `pnpm deploy:br` |
+| travel | `pnpm deploy:tr` |
 
 If `$ARGUMENTS` is provided (e.g., `/deploy knowledge`), use that as the app name instead of CWD.
 
