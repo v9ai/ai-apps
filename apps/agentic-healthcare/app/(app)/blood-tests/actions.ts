@@ -17,6 +17,20 @@ export async function uploadBloodTest(formData: FormData) {
   redirect(`/blood-tests/${result.test_id}`);
 }
 
+/** Upload a single file without redirecting — used by batch/directory upload. */
+export async function uploadBloodTestNoRedirect(formData: FormData) {
+  const { userId } = await withAuth();
+
+  const file = formData.get("file") as File;
+  if (!file) throw new Error("No file provided");
+
+  const testDate = (formData.get("test_date") as string) || null;
+
+  const result = await uploadToPython(file, testDate, userId);
+
+  return { test_id: result.test_id, fileName: file.name, status: result.status };
+}
+
 export async function deleteBloodTest(id: string) {
   const { userId } = await withAuth();
   await deletePython(id, userId);

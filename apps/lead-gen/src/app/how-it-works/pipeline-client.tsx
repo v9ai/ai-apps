@@ -33,8 +33,9 @@ import {
   RefreshCw,
   Webhook,
 } from "lucide-react";
-import { Badge, Flex, Heading, Text, Card, Code } from "@radix-ui/themes";
+import { Badge, Flex, Heading, Text, Card, Code, Separator } from "@radix-ui/themes";
 import { LayersIcon } from "@radix-ui/react-icons";
+import { papers, researchStats, extraSections, technicalDetails } from "./data";
 
 // ── Custom Node Components ───────────────────────────────────────────────────
 
@@ -813,6 +814,205 @@ function EmptyDetailPanel() {
   );
 }
 
+// ── Key Metrics ─────────────────────────────────────────────────────────────
+
+function KeyMetrics() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <BarChart3 size={16} style={{ color: "var(--cyan-9)" }} />
+        <Heading size="5">Key Metrics</Heading>
+      </Flex>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
+        {researchStats.map((stat) => (
+          <Card key={stat.label} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+            <Text size="6" weight="bold" style={{ fontFamily: "var(--code-font-family, monospace)", color: "var(--cyan-9)", display: "block" }}>
+              {stat.number}
+            </Text>
+            <Text size="2" color="gray" as="p" style={{ lineHeight: 1.5, marginTop: 4 }}>{stat.label}</Text>
+            <Text size="1" color="gray" style={{ opacity: 0.6 }}>{stat.source}</Text>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Deep-Dive Sections ──────────────────────────────────────────────────────
+
+const sectionColors = ["violet", "green", "purple", "red", "amber", "blue", "cyan", "teal"] as const;
+
+function DeepDiveSections() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <Brain size={16} style={{ color: "var(--violet-9)" }} />
+        <Heading size="5">Deep Dive</Heading>
+      </Flex>
+      <Flex direction="column" gap="3">
+        {extraSections.map((section, i) => (
+          <Card key={section.heading} style={{ background: "var(--gray-2)", borderLeft: `3px solid var(--${sectionColors[i % sectionColors.length]}-9)` }}>
+            <Heading size="3" mb="2">{section.heading}</Heading>
+            <Text size="2" color="gray" as="p" style={{ lineHeight: 1.7 }}>{section.content}</Text>
+            {section.codeBlock && (
+              <pre style={{
+                marginTop: 12, padding: 12, borderRadius: 6,
+                background: "var(--gray-1)", border: "1px solid var(--gray-a4)",
+                fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
+                color: "var(--gray-11)", overflow: "auto",
+              }}>
+                {section.codeBlock}
+              </pre>
+            )}
+          </Card>
+        ))}
+      </Flex>
+    </div>
+  );
+}
+
+// ── Technical Details ────────────────────────────────────────────────────────
+
+function TechnicalDetailSection() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <Zap size={16} style={{ color: "var(--amber-9)" }} />
+        <Heading size="5">Technical Details</Heading>
+      </Flex>
+      <Flex direction="column" gap="4">
+        {technicalDetails.map((detail) => {
+          if (detail.type === "table" && detail.items) {
+            return (
+              <Card key={detail.heading} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+                <Heading size="3" mb="1">{detail.heading}</Heading>
+                <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: "left", padding: "6px 10px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontWeight: 500, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>Name</th>
+                        <th style={{ textAlign: "left", padding: "6px 10px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontWeight: 500, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>Description</th>
+                        <th style={{ textAlign: "left", padding: "6px 10px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontWeight: 500, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detail.items.map((item) => (
+                        <tr key={item.label}>
+                          <td style={{ padding: "8px 10px", borderBottom: "1px solid var(--gray-a3)", fontFamily: "var(--code-font-family, monospace)", color: "var(--green-9)", fontWeight: 500 }}>{item.label}</td>
+                          <td style={{ padding: "8px 10px", borderBottom: "1px solid var(--gray-a3)", color: "var(--gray-11)" }}>{item.value}</td>
+                          <td style={{ padding: "8px 10px", borderBottom: "1px solid var(--gray-a3)" }}>
+                            {item.metadata && (
+                              <Flex gap="1" wrap="wrap">
+                                {Object.entries(item.metadata).map(([k, v]) => (
+                                  <Badge key={k} variant="outline" size="1"><Code size="1">{String(v)}</Code></Badge>
+                                ))}
+                              </Flex>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            );
+          }
+
+          if (detail.type === "code" && detail.code) {
+            return (
+              <Card key={detail.heading} style={{ background: "var(--gray-2)", borderLeft: "3px solid var(--green-9)" }}>
+                <Heading size="3" mb="1">{detail.heading}</Heading>
+                <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
+                <pre style={{
+                  padding: 14, borderRadius: 6,
+                  background: "var(--gray-1)", border: "1px solid var(--gray-a4)",
+                  fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
+                  color: "var(--gray-11)", overflow: "auto", lineHeight: 1.6,
+                }}>
+                  {detail.code}
+                </pre>
+              </Card>
+            );
+          }
+
+          if (detail.type === "diagram" && detail.code) {
+            return (
+              <Card key={detail.heading} style={{ background: "var(--gray-2)", borderLeft: "3px solid var(--indigo-9)" }}>
+                <Heading size="3" mb="1">{detail.heading}</Heading>
+                <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
+                <pre style={{
+                  padding: 14, borderRadius: 6,
+                  background: "var(--gray-1)", border: "1px solid var(--indigo-a4)",
+                  fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
+                  color: "var(--indigo-11)", overflow: "auto", lineHeight: 1.6,
+                }}>
+                  {detail.code}
+                </pre>
+              </Card>
+            );
+          }
+
+          if (detail.type === "card-grid" && detail.items) {
+            return (
+              <Card key={detail.heading} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+                <Heading size="3" mb="1">{detail.heading}</Heading>
+                <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
+                  {detail.items.map((item) => (
+                    <Card key={item.label} style={{ background: "var(--gray-1)", border: "1px solid var(--gray-a4)" }}>
+                      <Text size="2" weight="medium" style={{ color: "var(--amber-9)" }}>{item.label}</Text>
+                      <Text size="2" color="gray" as="p" mt="1">{item.value}</Text>
+                      {item.metadata && (
+                        <Flex gap="1" wrap="wrap" mt="2">
+                          {Object.entries(item.metadata).map(([k, v]) => (
+                            <Code key={k} size="1" style={{ fontSize: 10 }}>{String(v)}</Code>
+                          ))}
+                        </Flex>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+            );
+          }
+
+          return null;
+        })}
+      </Flex>
+    </div>
+  );
+}
+
+// ── Technical Foundations ────────────────────────────────────────────────────
+
+function TechFoundations() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <Globe size={16} style={{ color: "var(--blue-9)" }} />
+        <Heading size="5">Technical Foundations</Heading>
+      </Flex>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+        {papers.map((paper) => (
+          <Card key={paper.slug} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+            <Flex align="center" gap="2" mb="2">
+              <Badge variant="soft" size="1" style={{ background: `color-mix(in srgb, ${paper.categoryColor} 20%, transparent)`, color: paper.categoryColor }}>
+                {paper.category}
+              </Badge>
+              <Text size="1" color="gray">{paper.year}</Text>
+            </Flex>
+            <Heading size="3" mb="1">{paper.title}</Heading>
+            <Text size="1" color="gray" mb="2" style={{ display: "block" }}>{paper.authors}</Text>
+            <Text size="2" as="p" style={{ lineHeight: 1.6, color: "var(--gray-11)" }}>{paper.finding}</Text>
+            <Text size="1" color="gray" as="p" mt="2" style={{ lineHeight: 1.5, fontStyle: "italic" }}>{paper.relevance}</Text>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Export ────────────────────────────────────────────────────────────────────
 
 export function PipelineClient() {
@@ -875,6 +1075,18 @@ export function PipelineClient() {
       </Flex>
 
       {selectedNode ? <NodeDetailPanel nodeId={selectedNode} /> : <EmptyDetailPanel />}
+
+      <Separator size="4" my="7" />
+      <KeyMetrics />
+
+      <Separator size="4" my="7" />
+      <DeepDiveSections />
+
+      <Separator size="4" my="7" />
+      <TechnicalDetailSection />
+
+      <Separator size="4" my="7" />
+      <TechFoundations />
     </div>
   );
 }

@@ -24,6 +24,14 @@ import {
   Server,
   BarChart3,
   Combine,
+  TrendingUp,
+  Heart,
+  Pill,
+  Calendar,
+  Activity,
+  Eye,
+  AlertTriangle,
+  FlaskConical,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ScrollReveal } from "@/components/scroll-reveal";
