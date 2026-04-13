@@ -54,6 +54,9 @@ import {
   Network,
   ScanSearch,
   Sparkles,
+  Shield,
+  Trash2,
+  Scale,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ScrollReveal } from "@/components/scroll-reveal";
