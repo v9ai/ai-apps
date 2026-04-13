@@ -3,6 +3,7 @@ extend type Query {
   contact(id: Int, slug: String): Contact
   contactByEmail(email: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
+  contactReceivedEmails(contactId: Int!): [ReceivedEmail!]!
   contactMessages(contactId: Int!): [ContactMessage!]!
   companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
   resendEmail(resendId: String!): ResendEmailDetail
