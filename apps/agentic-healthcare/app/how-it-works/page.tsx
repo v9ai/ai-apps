@@ -3668,6 +3668,600 @@ combined_score = (
         </ScrollReveal>
       </Box>
 
+      {/* ── Compliance & Safety ── */}
+      <Box
+        id="compliance"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--crimson-9)",
+                fontSize: "11px",
+              }}
+            >
+              Compliance &amp; Safety
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              10-Layer Compliance Architecture
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
+            >
+              Healthcare data demands defense in depth. Every layer — from
+              authentication to schema constraints — is enforced at the
+              infrastructure level, not by convention. No single point of
+              failure can expose patient data.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", md: "2" }}
+          gap="4"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+          mb="7"
+        >
+          {complianceLayers.map((cl, i) => (
+            <ScrollReveal key={cl.title} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <div
+                  className="deep-dive-icon"
+                  style={{
+                    background: `color-mix(in srgb, ${cl.color} 18%, transparent)`,
+                    color: cl.color,
+                  }}
+                >
+                  <cl.icon size={18} />
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {cl.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {cl.description}
+                  </Text>
+                  <Text
+                    size="1"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                      color: cl.color,
+                      opacity: 0.85,
+                      marginTop: 2,
+                    }}
+                  >
+                    {cl.code}
+                  </Text>
+                  <Text
+                    size="1"
+                    color="gray"
+                    style={{ fontSize: "10px", opacity: 0.6 }}
+                  >
+                    {cl.source}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={500}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">10 compliance layers</span>
+            <span className="arch-tag">22 user-scoped tables</span>
+            <span className="arch-tag">5 guard rules</span>
+            <span className="arch-tag">fail-safe defaults</span>
+            <span className="arch-tag">zero wildcard CORS</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Safety Guard Rules (detailed) ── */}
+      <Box
+        id="guard-rules"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--crimson-9)",
+                fontSize: "11px",
+              }}
+            >
+              Post-Generation Audit
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              5-Rule Safety Guard
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
+            >
+              Every synthesized response is audited by a separate DeepSeek
+              LLM call before delivery. The guard node operates on a
+              fail-safe principle: if JSON parsing fails, the response is
+              treated as failed and disclaimers are injected.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          style={{ maxWidth: 760, margin: "0 auto" }}
+          mb="5"
+        >
+          {guardRules.map((gr, i) => (
+            <ScrollReveal key={gr.rule} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <div
+                  className="synthesis-rule-num"
+                  style={{ color: gr.color, borderColor: gr.color }}
+                >
+                  {gr.id}
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Flex gap="2" align="center">
+                    <Text
+                      size="2"
+                      weight="bold"
+                      style={{
+                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                        color: gr.color,
+                      }}
+                    >
+                      {gr.rule}
+                    </Text>
+                  </Flex>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {gr.description}
+                  </Text>
+                  <Text
+                    size="1"
+                    style={{
+                      fontSize: "11px",
+                      color: gr.color,
+                      opacity: 0.8,
+                      marginTop: 2,
+                    }}
+                  >
+                    {gr.action}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={280}>
+          <pre className="pg-code-block" style={{ maxWidth: 800, margin: "0 auto" }}>
+            <code>{`# graph.py — guard node (fail-safe)
+raw = _llm_call(GUARD_SYSTEM, audit_prompt)
+cleaned = re.sub(r"\`\`\`json\\s*|\\s*\`\`\`", "", raw).strip()
+
+try:
+    parsed = json.loads(cleaned)
+except json.JSONDecodeError:
+    # Fail-safe: treat parse failure as guard failure
+    parsed = {"passed": False, "issues": ["PARSE_FAILURE"]}
+
+passed = parsed.get("passed", False)  # defaults to False, not True
+
+if not passed:
+    # Append context-specific disclaimers
+    if "DIAGNOSIS" in issues:
+        answer += "\\n\\n⚠️ For educational purposes only..."
+    if "PRESCRIPTION" in issues:
+        answer += "\\n\\n⚠️ Cannot recommend medications..."
+    if "PHYSICIAN_REFERRAL" in issues:
+        answer += "\\n\\n⚠️ Consult your physician..."`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={320}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">DeepSeek auditor</span>
+            <span className="arch-tag">fail-safe = passed:false</span>
+            <span className="arch-tag">JSON parse guard</span>
+            <span className="arch-tag">disclaimer injection</span>
+            <span className="arch-tag">safety_refusal bypass</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── CASCADE Delete Visualization ── */}
+      <Box
+        id="cascade-delete"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--orange-9)",
+                fontSize: "11px",
+              }}
+            >
+              Right to Deletion
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              CASCADE Delete — Full Chain
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
+            >
+              One DELETE statement on the user table triggers a full cascade
+              across every related table. No orphaned embeddings, no stale
+              vectors, no background cleanup jobs. PostgreSQL enforces the
+              chain in a single transaction.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          style={{ maxWidth: 720, margin: "0 auto" }}
+          mb="5"
+        >
+          {cascadeDeleteChains.map((chain, i) => (
+            <ScrollReveal key={chain.to} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="3"
+                className="deep-dive-card"
+                align="center"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "12px",
+                    color: chain.color,
+                    minWidth: 50,
+                  }}
+                >
+                  {chain.from}
+                </Text>
+                <Text
+                  size="1"
+                  style={{ color: chain.color, fontSize: "14px" }}
+                >
+                  →
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "12px",
+                    color: "var(--gray-11)",
+                    flex: 1,
+                  }}
+                >
+                  {chain.to}
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                    background: `color-mix(in srgb, ${chain.color} 14%, transparent)`,
+                    color: chain.color,
+                    fontSize: "10px",
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                  }}
+                >
+                  CASCADE
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={400}>
+          <pre className="pg-code-block" style={{ maxWidth: 700, margin: "0 auto" }}>
+            <code>{`-- schema.ts — cascade delete chain (Drizzle ORM)
+export const bloodTests = pgTable("blood_tests", {
+  userId: text("user_id").notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // ...
+});
+
+export const bloodMarkers = pgTable("blood_markers", {
+  testId: uuid("test_id").notNull()
+    .references(() => bloodTests.id, { onDelete: "cascade" }),
+  // ...
+});
+
+-- DELETE FROM "user" WHERE id = $1;
+-- PostgreSQL cascades through ALL 22 tables automatically:
+--   user → blood_tests → blood_markers → blood_marker_embeddings
+--   user → blood_tests → blood_test_embeddings
+--   user → blood_tests → health_state_embeddings
+--   user → conditions → condition_embeddings
+--   user → medications → medication_embeddings
+--   user → symptoms → symptom_embeddings
+--   user → appointments → appointment_embeddings
+--   user → doctors, family_members, medical_letters`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={440}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">onDelete: cascade</span>
+            <span className="arch-tag">single transaction</span>
+            <span className="arch-tag">zero orphaned vectors</span>
+            <span className="arch-tag">22 tables covered</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── HIPAA Alignment ── */}
+      <Box
+        id="hipaa"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Regulatory Alignment
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              HIPAA Technical Safeguards
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
+            >
+              The HIPAA Security Rule (45 CFR §164.312) defines technical
+              safeguards for electronic protected health information (ePHI).
+              This is how the current implementation maps to each requirement.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          style={{ maxWidth: 800, margin: "0 auto" }}
+          mb="5"
+        >
+          {hipaaAlignment.map((h, i) => (
+            <ScrollReveal key={h.rule} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: `color-mix(in srgb, ${h.color} 16%, transparent)`,
+                    color: h.color,
+                    fontSize: "10px",
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                >
+                  {h.status === "implemented" ? "IMPLEMENTED" : "PARTIAL"}
+                </Text>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {h.rule}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {h.detail}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={340}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">5/6 implemented</span>
+            <span className="arch-tag">1/6 partial (audit trail)</span>
+            <span className="arch-tag">§164.312 Technical Safeguards</span>
+            <span className="arch-tag">§164.502 Minimum Necessary</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── GDPR Alignment ── */}
+      <Box
+        id="gdpr"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--blue-9)",
+                fontSize: "11px",
+              }}
+            >
+              EU Data Protection
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              GDPR Alignment
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
+            >
+              The General Data Protection Regulation defines rights for EU
+              data subjects. Health data qualifies as special category data
+              under Article 9, requiring explicit consent and enhanced
+              protection. This is the current implementation status.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          style={{ maxWidth: 800, margin: "0 auto" }}
+          mb="5"
+        >
+          {gdprAlignment.map((g, i) => (
+            <ScrollReveal key={g.right} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: `color-mix(in srgb, ${g.color} 16%, transparent)`,
+                    color: g.color,
+                    fontSize: "10px",
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                >
+                  {g.status === "implemented" ? "IMPLEMENTED" : "PARTIAL"}
+                </Text>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {g.right}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {g.detail}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={340}>
+          <pre className="pg-code-block" style={{ maxWidth: 700, margin: "0 auto" }}>
+            <code>{`// lib/auth-helpers.ts — withAuth() guard
+// Every server action that touches health data runs this first:
+
+export const withAuth = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) redirect("/auth/login");
+  return { userId: session.user.id, user: session.user };
+};
+
+// Usage in actions.ts:
+export async function sendChatMessage(messages) {
+  const { userId } = await withAuth();
+  // userId scopes all queries — no cross-user leakage
+  const res = await fetch(\`\${CHAT_API}/chat\`, {
+    body: JSON.stringify({ messages, user_id: userId }),
+  });
+}`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={380}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">4/6 implemented</span>
+            <span className="arch-tag">2/6 partial</span>
+            <span className="arch-tag">Art. 9 special category</span>
+            <span className="arch-tag">explicit consent</span>
+            <span className="arch-tag">CASCADE erasure</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
       {/* ── Detailed Sections ── */}
       <HowItWorksClient />
 
