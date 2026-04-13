@@ -147,7 +147,6 @@ export function VisualMatcher({
           <LiveDemo
             html={question.prop.demo.html}
             css={question.prop.demo.css}
-            height={180}
           />
         </div>
 

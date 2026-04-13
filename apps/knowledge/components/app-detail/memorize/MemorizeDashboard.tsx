@@ -148,7 +148,7 @@ export function MemorizeDashboard({
 
   if (mode === "matcher") {
     return (
-      <div>
+      <div className="matcher-mode">
         <ModeHeader
           title="Visual Matcher"
           subtitle={activeCategory ?? "All categories"}

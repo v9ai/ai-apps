@@ -127,7 +127,7 @@ function MemorizePageInner() {
   }
 
   return (
-    <Box px={{ initial: "2", md: "3" }} py={{ initial: "2", md: "3" }} style={{ minHeight: "100vh" }}>
+    <Box px={{ initial: "2", md: "3" }} py={{ initial: "2", md: "3" }} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Navigation */}
       <Flex align="center" gap="3" mb="5">
         <Link
