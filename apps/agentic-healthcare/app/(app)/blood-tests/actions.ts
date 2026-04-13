@@ -25,13 +25,16 @@ export async function uploadBloodTestNoRedirect(formData: FormData) {
   const { userId } = await withAuth();
 
   const file = formData.get("file") as File;
-  if (!file) throw new Error("No file provided");
+  if (!file) return { ok: false as const, error: "No file provided" };
 
   const testDate = (formData.get("test_date") as string) || null;
 
-  const result = await uploadToPython(file, testDate, userId);
-
-  return { test_id: result.test_id, fileName: file.name, status: result.status };
+  try {
+    const result = await uploadToPython(file, testDate, userId);
+    return { ok: true as const, test_id: result.test_id, fileName: file.name, status: result.status };
+  } catch (e: any) {
+    return { ok: false as const, error: e?.message ?? "Upload failed" };
+  }
 }
 
 /** Return file names already uploaded by this user — used for duplicate detection. */

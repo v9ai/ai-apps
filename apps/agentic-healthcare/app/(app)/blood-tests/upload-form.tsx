@@ -137,14 +137,14 @@ export function UploadForm() {
         results: [...results],
       });
 
-      try {
-        const fd = new FormData();
-        fd.append("file", file);
-        if (testDate) fd.append("test_date", testDate);
-        await uploadBloodTestNoRedirect(fd);
+      const fd = new FormData();
+      fd.append("file", file);
+      if (testDate) fd.append("test_date", testDate);
+      const res = await uploadBloodTestNoRedirect(fd);
+      if (res.ok) {
         results.push({ fileName: file.name, ok: true });
-      } catch (e: any) {
-        results.push({ fileName: file.name, ok: false, error: e?.message ?? "Failed" });
+      } else {
+        results.push({ fileName: file.name, ok: false, error: res.error });
       }
     }
 
