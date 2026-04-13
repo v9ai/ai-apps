@@ -1,0 +1,29 @@
+{
+  "slug": "peter-steinberger",
+  "name": "Peter Steinberger",
+  "generated_at": "2026-04-13T15:31:19+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 8,
+      "reasoning": "The biography is detailed and provides a clear overview of Peter Steinberger's career and contributions. It includes specific details about his projects, such as OpenClaw, and mentions his role in the open-source community. However, it could benefit from more specific dates and achievements, such as the exact dates of key milestones and more concrete examples of his impact. Additionally, it would be helpful to include more details about his education and early career before founding PSPDFKit."
+    },
+    "source_coverage": {
+      "score": 7,
+      "reasoning": "The sources are diverse and include various types of content such as research papers, news articles, and interviews. However, the coverage could be improved by including more direct quotes, official statements, and peer-reviewed publications. Additionally, the sources are not always clearly cited, which can make it harder to verify the information. It would be beneficial to include more direct links to the sources for better transparency."
+    },
+    "timeline_completeness": {
+      "score": 6,
+      "reasoning": "The timeline is generally complete, covering key career events and milestones. However, it lacks specific dates for some events, such as the creation of OpenClaw. Additionally, the timeline could be more detailed by including more specific achievements and impacts of each event. For example, it would be helpful to know the exact number of GitHub stars OpenClaw gained and the specific features that led to its rapid adoption."
+    },
+    "contributions_depth": {
+      "score": 9,
+      "reasoning": "The contributions are well-documented and include specific projects like OpenClaw. The descriptions are detailed and provide context about the impact of these contributions. However, it would be beneficial to include more quantitative data, such as the number of users, downloads, or specific features that have been implemented. Additionally, it would be helpful to include more details about the technical aspects of OpenClaw and how it has evolved over time."
+    },
+    "name_disambiguation": {
+      "score": 10,
+      "reasoning": "The profile is clearly focused on Peter Steinberger, and there are no ambiguities or confusion with other individuals. The biography and timeline are consistent and do not reference any other person by the same name. The social profiles and contributions are all attributed to the correct individual."
+    },
+    "overall_score": 8,
+    "summary": "The profile is comprehensive and well-structured, with a clear focus on Peter Steinberger. It provides a good overview of his career, contributions, and impact. However, it could be improved by including more specific dates, quantitative data, and direct links to sources for better verification and transparency. The name disambiguation is excellent, and the contributions are detailed and impactful."
+  }
+}

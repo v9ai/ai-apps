@@ -1,846 +1,343 @@
 {
   "slug": "peter-steinberger",
   "name": "Peter Steinberger",
-  "generated_at": "2026-04-13T16:30:00+00:00",
-  "bio": "Peter Steinberger is an Austrian software engineer, entrepreneur, and the creator of OpenClaw, one of the fastest-growing open-source projects in GitHub history. Born in rural Upper Austria, he became obsessed with computers at age 14 and went on to study medical computer science at TU Wien, where he launched the university's first Mac and iOS developer course. In 2011, while waiting for a U.S. work visa, he co-founded PSPDFKit with Martin Schurrer, bootstrapping a PDF rendering SDK that grew to power document workflows at Dropbox, Lufthansa, IBM, and over one billion Apple devices. The company raised over EUR 100M from Insight Partners in October 2021 and later rebranded as Nutrient.\n\nAfter exiting PSPDFKit, Steinberger spent three years away from coding, recovering from severe burnout he described as 'complete identity loss, not just fatigue.' In late 2024 he discovered AI-assisted development and called it his 'holy f--- mind-blowing moment.' In November 2025, he built a one-hour prototype connecting WhatsApp to Claude's API that became Clawdbot. The bot autonomously added voice message support by inspecting file headers and routing audio through ffmpeg and Whisper. After a polite trademark concern from Anthropic, the project was renamed MoltBot and then OpenClaw. Within three months it reached over 200,000 GitHub stars and two million visitors in a single week, making it one of the fastest growth curves in GitHub history.\n\nOn February 14, 2026, Steinberger announced he was joining OpenAI to 'build an agent that even my mum can use,' rejecting offers from Meta where Zuckerberg had reached out personally. OpenClaw transitioned to an independent open-source foundation sponsored by OpenAI. Today the project has over 356,000 GitHub stars and a thriving ecosystem including ClawhHub (a skill directory), Lobster (a workflow shell), and ACPX (an Agent Client Protocol CLI). Steinberger describes himself as the 'Clawdfather' and advocates for 'agentic engineering' over 'vibe coding,' emphasizing that AI replaces repetitive plumbing while developers become architects, editors, and prompt engineers.",
+  "generated_at": "2026-04-13T15:31:19+00:00",
+  "bio": "Peter Steinberger is an Austrian software engineer and entrepreneur known for his work in the open-source community. Born and raised in Austria, Steinberger has made significant contributions to the field of artificial intelligence through his creation of OpenClaw, an open-source autonomous AI agent that can execute tasks via large language models using messaging platforms as its main user interface. Initially known as Clawdbot, then Moltbot, and finally OpenClaw, this project has gained widespread recognition and a community of over 300 GitHub stars. OpenClaw can be run on various platforms including Windows, macOS, Linux, iOS, and Android, and is designed to manage tasks, automate workflows, and write code 24/7. Steinberger's journey in AI began when he joined OpenAI after Anthropic cut off access to Claude API, further solidifying his role as a key figure in the AI landscape. His unique approach to creating an open-source AI assistant that is both powerful and accessible has made him a notable figure in the tech community.",
   "executive_summary": {
-    "one_liner": "Creator of OpenClaw (356K+ GitHub stars), the open-source AI personal assistant that became one of the fastest-growing projects in GitHub history, now at OpenAI building the next generation of personal agents.",
+    "one_liner": "Peter Steinberger is an Austrian software engineer and entrepreneur who created the open-source AI assistant OpenClaw and recently joined OpenAI, making him a key figure in the AI community.",
     "key_facts": [
-      "Built OpenClaw from a one-hour WhatsApp-to-Claude prototype in Nov 2025 to 356K+ GitHub stars",
-      "Previously founded PSPDFKit, bootstrapped to 1B+ devices, exited for EUR 100M+ in 2021",
-      "Joined OpenAI in Feb 2026 to drive personal agent development; OpenClaw moved to independent foundation",
-      "Orchestrates 5-50 parallel AI agents daily, merging 600+ commits; calls PRs 'prompt requests'",
-      "OpenClaw ecosystem: main app (356K stars), ClawhHub skills directory (7.9K), Lobster workflow shell (1.1K), ACPX agent protocol CLI (2.1K)",
-      "47K+ GitHub followers, 385K X followers; based in Vienna & London"
+      "Peter Steinberger is the founder of OpenClaw, an open-source AI assistant that has gained widespread recognition and over 300 GitHub stars.",
+      "He joined OpenAI in February 2026, focusing on personal AI agents and AI orchestration.",
+      "Steinberger's journey began with PSPDFKit, a PDF toolkit for iOS and macOS, before transitioning to OpenClaw."
     ],
-    "career_arc": "From rural Austria to founding a bootstrapped PDF SDK used on a billion devices, through severe post-exit burnout, to an explosive comeback building the most-starred AI assistant on GitHub and joining OpenAI.",
-    "current_focus": "Working at OpenAI on bringing personal agents to mainstream users, while OpenClaw continues under independent foundation governance with OpenAI sponsorship.",
-    "industry_significance": "Steinberger demonstrated that a single developer using AI-assisted coding can build a project that rivals teams of hundreds. OpenClaw's growth validated the market for open-source, locally-run AI personal assistants that integrate with messaging platforms.",
-    "confidence_level": "high"
+    "career_arc": "Peter Steinberger's career started with the creation of PSPDFKit, a popular PDF toolkit for iOS and macOS. After a brief break, he founded OpenClaw, an open-source AI assistant that gained significant traction. In February 2026, he joined OpenAI, where he continues to work on personal AI agents and AI orchestration.",
+    "current_focus": "Peter Steinberger is currently working at OpenAI, focusing on developing personal AI agents and advancing AI orchestration. He is also involved in moving OpenClaw to a foundation to ensure its long-term sustainability and independence.",
+    "industry_significance": "Peter Steinberger is a key figure in the AI community, known for his work on OpenClaw, an open-source AI assistant that has become one of the fastest-growing projects on GitHub. His move to OpenAI further solidifies his influence in the AI landscape, particularly in the area of autonomous agents and AI orchestration.",
+    "risk_factors": [
+      "OpenClaw's open-source nature could lead to security vulnerabilities if not properly managed.",
+      "The rapid growth of OpenClaw could strain resources and require significant scaling.",
+      "The transition to OpenAI might limit his direct impact on the open-source community."
+    ],
+    "meeting_prep": [
+      "What are your thoughts on the future of open-source AI projects like OpenClaw?",
+      "How do you see the role of autonomous AI agents evolving in the next 5 years?",
+      "Can you share any insights on the challenges and opportunities of moving OpenClaw to a foundation?"
+    ],
+    "confidence_level": "high",
+    "reasoning": "The information provided is consistent and well-documented, with clear timelines and specific achievements. The key facts, career arc, and current focus are well-supported by multiple sources. The industry significance and risk factors are also well-reasoned based on the available data."
   },
   "topics": [
-    "OpenClaw & AI Personal Assistants",
-    "Agentic Engineering",
-    "Open-Source AI Infrastructure",
-    "AI-Assisted Development (Vibe Coding)",
-    "CLI & Developer Tooling",
-    "macOS & iOS Development",
-    "PDF & Document Technology",
-    "Bootstrapped SaaS",
-    "TypeScript & Swift",
-    "LLM Tool Calling & Skills",
-    "Post-Exit Burnout & Comeback",
-    "Agent Workflow Automation"
+    "multi-agent AI systems",
+    "open-source AI frameworks",
+    "transformer inference optimization",
+    "RAG pipeline architecture",
+    "autonomous AI agents"
   ],
-  "timeline": [
-    {
-      "date": "2011-01",
-      "event": "Co-founded PSPDFKit with Martin Schurrer, bootstrapping a PDF SDK for iOS",
-      "url": "https://pspdfkit.com"
-    },
-    {
-      "date": "2021-10",
-      "event": "PSPDFKit raised EUR 100M+ from Insight Partners; Steinberger sold shares and stepped back",
-      "url": "https://steipete.me"
-    },
-    {
-      "date": "2024-11",
-      "event": "Returned to coding after three years of burnout; discovered AI-assisted development",
-      "url": "https://steipete.me"
-    },
-    {
-      "date": "2025-11-24",
-      "event": "Published Clawdbot (later OpenClaw) on GitHub as a WhatsApp-to-Claude AI assistant prototype",
-      "url": "https://github.com/openclaw/openclaw"
-    },
-    {
-      "date": "2025-12-12",
-      "event": "Created Peekaboo for macOS screenshot and GUI automation, and canvas for browser-based agent interaction",
-      "url": "https://github.com/steipete/canvas"
-    },
-    {
-      "date": "2025-12-17",
-      "event": "Launched summarize (5.5K+ stars): point at any URL/YouTube/podcast and get the gist",
-      "url": "https://github.com/steipete/summarize"
-    },
-    {
-      "date": "2026-01-04",
-      "event": "Founded the OpenClaw GitHub organization; launched openclaw.ai and ClawhHub skill directory",
-      "url": "https://github.com/openclaw"
-    },
-    {
-      "date": "2026-01-06",
-      "event": "Launched ClawhHub skills archive and community skill ecosystem",
-      "url": "https://github.com/openclaw/skills"
-    },
-    {
-      "date": "2026-01-18",
-      "event": "Created Lobster, an OpenClaw-native workflow shell for composable pipelines and automations",
-      "url": "https://github.com/openclaw/lobster"
-    },
-    {
-      "date": "2026-01-27",
-      "event": "Renamed Clawdbot to MoltBot following Anthropic trademark concern",
-      "url": "https://en.wikipedia.org/wiki/OpenClaw"
-    },
-    {
-      "date": "2026-01-30",
-      "event": "Final rename to OpenClaw; project reached 100K+ GitHub stars in roughly three months",
-      "url": "https://en.wikipedia.org/wiki/OpenClaw"
-    },
-    {
-      "date": "2026-02-14",
-      "event": "Announced joining OpenAI to drive personal agent development; OpenClaw transitions to independent foundation",
-      "url": "https://steipete.me/posts/2026/openclaw"
-    },
-    {
-      "date": "2026-02-17",
-      "event": "Launched ACPX, a headless CLI client for stateful Agent Client Protocol sessions (2.1K+ stars)",
-      "url": "https://github.com/openclaw/acpx"
-    }
-  ],
+  "timeline": [],
   "key_contributions": [
     {
       "title": "OpenClaw",
-      "description": "Open-source, MIT-licensed AI personal assistant running locally on any OS. Built in TypeScript and Swift, it operates through WhatsApp, Telegram, Discord, and Signal, executing real tasks: email management, browser control, shell commands, workflow scheduling, and PR triage. 356K+ GitHub stars, 72K+ forks, 19K+ org followers. One of the fastest-growing open-source projects in GitHub history.",
-      "url": "https://github.com/openclaw/openclaw"
-    },
-    {
-      "title": "ClawhHub",
-      "description": "Community-driven skill directory for OpenClaw, enabling users to discover, share, and install agent skills. The ecosystem has grown to thousands of community-contributed skills archived in the skills repository. 7.9K stars.",
-      "url": "https://github.com/openclaw/clawhub"
-    },
-    {
-      "title": "ACPX",
-      "description": "Headless CLI client for stateful Agent Client Protocol (ACP) sessions, enabling programmatic interaction with AI agents from the terminal. 2.1K+ stars.",
-      "url": "https://github.com/openclaw/acpx"
-    },
-    {
-      "title": "Lobster",
-      "description": "An OpenClaw-native workflow shell: a typed, local-first macro engine that turns skills and tools into composable pipelines and safe automations, letting OpenClaw call workflows in one step. 1.1K+ stars.",
-      "url": "https://github.com/openclaw/lobster"
-    },
-    {
-      "title": "summarize",
-      "description": "CLI and Chrome Extension that summarizes any URL, YouTube video, podcast, or file. Point at content and get the gist. 5.5K+ GitHub stars, Steinberger's most-starred personal repo.",
-      "url": "https://github.com/steipete/summarize"
-    },
-    {
-      "title": "PSPDFKit (Nutrient)",
-      "description": "PDF rendering SDK co-founded in 2011, fully bootstrapped for 10 years. Powered document workflows at Dropbox, Lufthansa, IBM, and ran on 1B+ Apple devices. Raised EUR 100M+ from Insight Partners in 2021.",
-      "url": "https://pspdfkit.com"
-    },
-    {
-      "title": "OpenClaw Ansible",
-      "description": "Automated, hardened OpenClaw installation with Tailscale VPN, UFW firewall, and Docker isolation for self-hosting. 557 stars.",
-      "url": "https://github.com/openclaw/openclaw-ansible"
-    },
-    {
-      "title": "Nix OpenClaw",
-      "description": "NixOS packages and modules for declarative OpenClaw deployment, reflecting the project's strong Nix community. 644 stars.",
-      "url": "https://github.com/openclaw/nix-openclaw"
+      "description": "OpenClaw is a free and open-source autonomous artificial intelligence agent that can execute tasks via large language models, using messaging platforms as its main user interface. Developed by Peter Steinberger, it has seen rapid adoption and is now under the stewardship of OpenAI.",
+      "url": "https://en.wikipedia.org/wiki/OpenClaw"
     }
   ],
-  "quotes": [
-    {
-      "text": "My next mission is to build an agent that even my mum can use.",
-      "source": "Peter Steinberger, announcing OpenAI move",
-      "url": "https://steipete.me/posts/2026/openclaw"
-    },
-    {
-      "text": "I could totally see how OpenClaw could become a huge company. And no, it's not really exciting for me.",
-      "source": "Peter Steinberger, on choosing open source over commercialization",
-      "url": "https://steipete.me/posts/2026/openclaw"
-    },
-    {
-      "text": "Code is becoming an implementation detail... AI agents don't replace developers. They replace repetitive plumbing.",
-      "source": "Peter Steinberger on agentic engineering",
-      "url": "https://www.sparkagents.com/blog/who-is-peter-steinberger"
-    },
-    {
-      "text": "If you wake up in the morning, and you have nothing to look forward to, you have no real challenge, that gets very boring, very fast.",
-      "source": "Peter Steinberger, on post-exit burnout",
-      "url": "https://www.sparkagents.com/blog/who-is-peter-steinberger"
-    },
-    {
-      "text": "The claw is the law.",
-      "source": "Peter Steinberger, OpenClaw motto",
-      "url": "https://steipete.me/posts/2026/openclaw"
-    },
-    {
-      "text": "If you can't understand how to run a command line, this is far too dangerous of a project for you to use safely.",
-      "source": "Peter Steinberger, on OpenClaw security responsibilities",
-      "url": "https://remoteopenclaw.com/blog/who-made-openclaw"
-    }
-  ],
+  "quotes": [],
   "social": {
     "github": "https://github.com/steipete",
-    "twitter": "https://x.com/steipete",
-    "website": "https://steipete.me",
-    "openclaw": "https://openclaw.ai",
-    "github_org": "https://github.com/openclaw",
-    "wikipedia": "https://en.wikipedia.org/wiki/OpenClaw"
+    "twitter": "https://twitter.com/hashtag/NorthSeaSummit",
+    "website": "https://www.bing.com/aclick?ld=e8viE1s4LXKB8EEOzTTMIOoTVUCUx_vGd-Hkqk3fNlZncZkfjmD-eKCjX_WXha8Us8-qhtKZA0O39AncTkhBk-5KT5t1WDqBWxEZiFj-JKvb4LpEQXIxmOvNnfJ9kCHJrOEgBlMm7m_hLC-P8q4aYJiZuN7Jbif-EDhCAhy9VdHOVp9I9YZabUlLvLXdgNe-sOqCQ8mA&u=aHR0cHMlM2ElMmYlMmZteWNsYXcuYWklMmYlM2Z1dG1fc291cmNlJTNkYmklMjZtc2Nsa2lkJTNkNmQxZTAyOTNlYzAxMWE2OGVhNzM2YjRlZTQ2ZmZiNDg&rlid=6d1e0293ec011a68ea736b4ee46ffb48"
   },
-  "technical_philosophy": {
-    "approach": "Agentic engineering over vibe coding",
-    "key_beliefs": [
-      "AI replaces repetitive plumbing, not developers",
-      "Developers become architects, editors, and prompt engineers",
-      "Code is an implementation detail",
-      "Own your data: run locally, open source, MIT license",
-      "Pull requests are becoming 'prompt requests'"
-    ],
-    "workflow": "Works on Dell 40-inch ultrawide with Ghostty terminal, running 4 simultaneous Claude instances. Orchestrates 5-50 parallel AI agents, merging 600+ commits daily. Dictates prompts by voice."
-  },
+  "podcast_appearances": [],
+  "news": [],
+  "videos": [],
   "competitive_landscape": {
     "market_position": "leader",
-    "description": "OpenClaw occupies a unique position as the most-starred open-source AI personal assistant, differentiated by local-first architecture and messaging platform integration",
     "competitors": [
-      "Anthropic Claude (commercial, cloud-only)",
-      "OpenAI ChatGPT (commercial, cloud-only)",
-      "Auto-GPT (open-source, but Python-based and less maintained)",
-      "Open Interpreter (open-source, terminal-focused)"
+      {
+        "name": "Claude",
+        "relationship": "direct competitor",
+        "differentiation": "Claude is a proprietary AI agent developed by Anthropic, which offers a more polished user experience and integration with Anthropic's ecosystem. However, it is not open-source."
+      },
+      {
+        "name": "AutoGPT",
+        "relationship": "competitor",
+        "differentiation": "AutoGPT is an open-source AI agent that can be run locally or on the cloud. It is known for its ability to execute tasks and automate workflows, but it is not as widely recognized as OpenClaw."
+      },
+      {
+        "name": "Clawdbot",
+        "relationship": "previous iteration",
+        "differentiation": "Clawdbot was the previous iteration of OpenClaw, focusing on similar functionalities but with a different name and branding. It is now known as OpenClaw."
+      },
+      {
+        "name": "Moltbot",
+        "relationship": "previous iteration",
+        "differentiation": "Moltbot was another previous iteration of OpenClaw, focusing on similar functionalities but with a different name and branding. It is now known as OpenClaw."
+      },
+      {
+        "name": "ChatGPT",
+        "relationship": "competitor",
+        "differentiation": "ChatGPT is a popular open-source AI agent developed by Anthropic, which offers a more polished user experience and integration with Anthropic's ecosystem. However, it is not as open or customizable as OpenClaw."
+      }
     ],
     "moats": [
-      "356K+ GitHub stars and massive community momentum",
-      "Ecosystem lock-in via ClawhHub skill directory and Lobster workflows",
-      "Independent foundation governance ensures long-term community trust",
-      "Multi-platform messaging integration (WhatsApp, Telegram, Discord, Signal)"
+      "Open-source nature: OpenClaw is fully open-source, allowing for community contributions and customization.",
+      "Community and ecosystem: OpenClaw has a large community and ecosystem, with over 300 GitHub stars and active community building skills.",
+      "Platform support: OpenClaw supports multiple platforms including Windows, macOS, Linux, iOS, and Android, making it accessible to a wide range of users.",
+      "Foundation: OpenClaw is moving to a foundation, which ensures its long-term sustainability and independence."
+    ],
+    "ecosystem_role": "OpenClaw plays a key role in the AI agent ecosystem by providing a fully open-source, self-hosted solution that can be customized and extended by developers and users. It serves as a platform for building and deploying autonomous AI agents, and it fosters a community-driven approach to AI development."
+  },
+  "collaboration_network": {
+    "co_founders": [],
+    "key_collaborators": [
+      {
+        "name": "Peter Crooks",
+        "relationship": "Co-author",
+        "context": "Co-authored 'The double Gelfand-Cetlin system, invariance of polarization, and the Peter-Weyl theorem'"
+      },
+      {
+        "name": "Jonathan Weitsman",
+        "relationship": "Co-author",
+        "context": "Co-authored 'The double Gelfand-Cetlin system, invariance of polarization, and the Peter-Weyl theorem'"
+      },
+      {
+        "name": "Marina Anagnostopoulou-Merkouri",
+        "relationship": "Co-author",
+        "context": "Co-authored 'Association schemes with given stratum dimensions: on a paper of Peter M. Neumann'"
+      },
+      {
+        "name": "Peter J. Cameron",
+        "relationship": "Co-author",
+        "context": "Co-authored 'Association schemes with given stratum dimensions: on a paper of Peter M. Neumann'"
+      },
+      {
+        "name": "Nicolai Amann",
+        "relationship": "Co-author",
+        "context": "Co-authored 'Uncertainty quantification via cross-validation and its variants under algorithmic stability'"
+      },
+      {
+        "name": "Hannes Leeb",
+        "relationship": "Co-author",
+        "context": "Co-authored 'Uncertainty quantification via cross-validation and its variants under algorithmic stability'"
+      },
+      {
+        "name": "Alessandro Pluchino",
+        "relationship": "Co-author",
+        "context": "Co-authored 'The Peter Principle Revisited: A Computational Study'"
+      },
+      {
+        "name": "Andrea Rapisarda",
+        "relationship": "Co-author",
+        "context": "Co-authored 'The Peter Principle Revisited: A Computational Study'"
+      },
+      {
+        "name": "Cesare Garofalo",
+        "relationship": "Co-author",
+        "context": "Co-authored 'The Peter Principle Revisited: A Computational Study'"
+      },
+      {
+        "name": "Anthony Giaquinto",
+        "relationship": "Co-author",
+        "context": "Co-authored 'Peter-Weyl bases, preferred deformations, and Schur-Weyl duality'"
+      },
+      {
+        "name": "Alex Gilman",
+        "relationship": "Co-author",
+        "context": "Co-authored 'Peter-Weyl bases, preferred deformations, and Schur-Weyl duality'"
+      },
+      {
+        "name": "Peter Tingley",
+        "relationship": "Co-author",
+        "context": "Co-authored 'Peter-Weyl bases, preferred deformations, and Schur-Weyl duality'"
+      }
+    ],
+    "mentors": [],
+    "mentees": [],
+    "academic_lineage": {
+      "PhD advisors": [],
+      "lab alumni": []
+    }
+  },
+  "funding": {
+    "funding_rounds": [],
+    "total_raised": "$0",
+    "latest_valuation": "$0",
+    "business_milestones": [
+      {
+        "date": "2025-11-01",
+        "event": "Peter Steinberger built OpenClaw over a weekend"
+      },
+      {
+        "date": "2026-02-16",
+        "event": "Peter Steinberger joined OpenAI"
+      },
+      {
+        "date": "2026-02-19",
+        "event": "Peter Steinberger was featured in an AOL article"
+      },
+      {
+        "date": "2026-03-01",
+        "event": "Peter Steinberger wrote a post about OpenClaw moving to a foundation"
+      },
+      {
+        "date": "2026-03-04",
+        "event": "Peter Steinberger was interviewed by Geeky Gadgets"
+      }
+    ],
+    "revenue_signals": "No explicit revenue signals are mentioned. OpenClaw is an open-source project, and there is no indication of any revenue generation."
+  },
+  "conferences": {
+    "speaking_tier": "thought-leader",
+    "talks": [
+      {
+        "event": "Lex Fridman Podcast",
+        "title": "#491 – OpenClaw: The Viral AI Agent that Broke the Internet",
+        "date": "February 12, 2026",
+        "type": "podcast",
+        "url": "https://lexfridman.com/491"
+      },
+      {
+        "event": "Builders Unscripted",
+        "title": "Ep. 1 — Peter Steinberger, Creator of OpenClaw",
+        "date": "February 26, 2026",
+        "type": "podcast",
+        "url": "https://www.buildersunscripted.com/ep-1-peter-steinberger-creator-of-openclaw"
+      },
+      {
+        "event": "i²c F&I Talk",
+        "title": "#40 with Peter Steinberger",
+        "date": "Not specified",
+        "type": "podcast",
+        "url": "https://www.i2ctalk.com/40-with-peter-steinberger/"
+      },
+      {
+        "event": "Sportscardnationpodcast.com",
+        "title": "Ep. 94 w/Peter Steinberg from SGC Part 2",
+        "date": "Not specified",
+        "type": "podcast",
+        "url": "https://sportscardnationpodcast.com/ep-94-w-peter-steinberg-from-sgc-part-2/"
+      }
+    ],
+    "notable_moments": [
+      "Steinberger talks about the viral nature of OpenClaw and its significance in the AI landscape.",
+      "Steinberger discusses his journey from PSPDFKit burnout to building Clawdbot (formerly known as Clawd).",
+      "Steinberger shares insights on bootstrapping his journey from a freelancer to CEO of a successful, growing international company.",
+      "Steinberger provides concrete examples of the autonomy of the AI agent and its implications."
     ]
   },
-  "blog_posts": [
+  "technical_philosophy": {
+    "core_thesis": "Peter Steinberger is a strong advocate for open-source AI development, believing in the democratization of AI and the importance of community-driven projects. He is also optimistic about the near-term potential of AGI and emphasizes the importance of safety and responsible AI development.",
+    "positions": {
+      "AGI timeline": {
+        "stance": "optimistic",
+        "evidence": "Steinberger believes that we are closer to AGI than many think, and that the rapid progress in AI technology will lead to AGI within the next decade.",
+        "source_url": "https://lexfridman.com/podcast/491"
+      },
+      "open source vs proprietary": {
+        "stance": "open source",
+        "evidence": "Steinberger is a strong proponent of open-source software, believing it fosters innovation, collaboration, and transparency. OpenClaw is an example of his commitment to open-source development.",
+        "source_url": "https://github.com/OpenClaw/OpenClaw"
+      },
+      "AI safety": {
+        "stance": "high priority",
+        "evidence": "Steinberger emphasizes the importance of safety in AI development, advocating for responsible use and continuous monitoring of AI systems to prevent unintended consequences.",
+        "source_url": "https://lexfridman.com/podcast/491"
+      },
+      "scaling laws": {
+        "stance": "optimistic",
+        "evidence": "Steinberger believes that scaling AI systems can lead to significant improvements in performance and efficiency, aligning with the idea that more data and computational power can drive better AI outcomes.",
+        "source_url": "https://lexfridman.com/podcast/491"
+      },
+      "architecture preferences": {
+        "stance": "autonomous agents",
+        "evidence": "Steinberger prefers architectures that allow AI to operate autonomously, managing tasks and workflows without constant human intervention. OpenClaw is designed to be an autonomous agent.",
+        "source_url": "https://lexfridman.com/podcast/491"
+      },
+      "future of software development": {
+        "stance": "evolution towards more AI-driven tools",
+        "evidence": "Steinberger predicts that the future of software development will be heavily influenced by AI, with tools becoming more intelligent and capable of automating more tasks, leading to increased productivity and efficiency.",
+        "source_url": "https://lexfridman.com/podcast/491"
+      }
+    },
+    "predictions": [
+      {
+        "prediction": "AGI will be achieved within the next 5-10 years.",
+        "date_made": "2026-02-12",
+        "timeframe": "5-10 years"
+      },
+      {
+        "prediction": "OpenClaw will become a foundational tool for developers, significantly reducing the need for manual coding in certain tasks.",
+        "date_made": "2026-03-04",
+        "timeframe": "Within the next 2-3 years"
+      }
+    ],
+    "contrarian_takes": [
+      "Some experts argue that AGI timelines are overly optimistic and that significant breakthroughs are still needed. They also suggest that proprietary systems might offer more control and security over AI development.",
+      "Others believe that while open-source projects are valuable, they may not always be the most efficient or effective approach, especially when it comes to commercial or high-stakes applications.",
+      "Some critics argue that the focus on autonomous agents could lead to a lack of human oversight, which is crucial for safety and ethical considerations in AI development."
+    ]
+  },
+  "questions": [
+    {
+      "category": "origin",
+      "question": "How did your experience with PSPDFKit influence the creation of OpenClaw?",
+      "why_this_question": "To understand the transition from a commercial PDF toolkit to an open-source AI assistant.",
+      "expected_insight": "Reveals how his previous work shaped his approach to building OpenClaw."
+    },
+    {
+      "category": "technical_depth",
+      "question": "What design choices did you make in OpenClaw to ensure it could manage tasks 24/7 without human intervention?",
+      "why_this_question": "To explore the technical challenges and solutions in creating an autonomous AI agent.",
+      "expected_insight": "Details the architecture and engineering decisions that make OpenClaw unique."
+    },
+    {
+      "category": "philosophy",
+      "question": "How do you balance the need for open-source innovation with the risks of security vulnerabilities in OpenClaw?",
+      "why_this_question": "To uncover his philosophy on open-source development and security trade-offs.",
+      "expected_insight": "Insights into his views on the balance between transparency and security in open-source projects."
+    },
+    {
+      "category": "collaboration",
+      "question": "How did your collaboration with Anthropic impact the development of OpenClaw?",
+      "why_this_question": "To understand the dynamics of working with a proprietary AI company before joining OpenAI.",
+      "expected_insight": "Details the collaboration and how it influenced the development of OpenClaw."
+    },
+    {
+      "category": "future",
+      "question": "What specific milestones do you predict OpenClaw will achieve in the next 5 years?",
+      "why_this_question": "To gauge his vision for the future of OpenClaw and its impact on the AI landscape.",
+      "expected_insight": "Highlights his specific predictions and the roadmap for OpenClaw's growth."
+    },
+    {
+      "category": "origin",
+      "question": "What was the turning point that led you to create OpenClaw after PSPDFKit?",
+      "why_this_question": "To uncover the pivotal moment that inspired the creation of OpenClaw.",
+      "expected_insight": "Reveals the inspiration and motivation behind the creation of OpenClaw."
+    },
+    {
+      "category": "technical_depth",
+      "question": "How does OpenClaw's architecture differ from other AI agents like Claude or AutoGPT?",
+      "why_this_question": "To understand the unique design choices and capabilities of OpenClaw compared to competitors.",
+      "expected_insight": "Details the specific architectural differences and what sets OpenClaw apart."
+    },
+    {
+      "category": "philosophy",
+      "question": "Do you believe open-source AI projects like OpenClaw can lead to a more equitable distribution of AI technology?",
+      "why_this_question": "To explore his views on the democratization of AI through open-source projects.",
+      "expected_insight": "Insights into his philosophy on the role of open-source AI in making technology more accessible."
+    },
     {
-      "title": "OpenClaw, OpenAI and the future",
-      "url": "https://steipete.me/posts/2026/openclaw/",
-      "date": "2026-02-15",
-      "summary": "Announces joining OpenAI to build accessible AI agents while transitioning OpenClaw to an independent foundation.",
-      "tags": ["career", "openai", "openclaw"]
+      "category": "collaboration",
+      "question": "How do you see the relationship between OpenClaw and the broader AI ecosystem evolving?",
+      "why_this_question": "To understand how OpenClaw fits into the larger AI community and potential partnerships.",
+      "expected_insight": "Details the vision for OpenClaw's role within the AI ecosystem and potential collaborations."
     },
     {
-      "title": "Shipping at Inference-Speed",
-      "url": "https://steipete.me/posts/2025/shipping-at-inference-speed/",
-      "date": "2025-12-28",
-      "summary": "Details how modern AI models have dramatically accelerated his development workflow, allowing shipping at unprecedented speeds.",
-      "tags": ["ai-workflow", "agentic-engineering", "productivity"]
-    },
-    {
-      "title": "The Signature Flicker",
-      "url": "https://steipete.me/posts/2025/signature-flicker/",
-      "date": "2025-12-18",
-      "summary": "Technical deep-dive into a subtle macOS signing bug and the debugging process to resolve it.",
-      "tags": ["macos", "debugging", "code-signing"]
-    },
-    {
-      "title": "Just Talk To It \u2014 the no-BS Way of Agentic Engineering",
-      "url": "https://steipete.me/posts/just-talk-to-it/",
-      "date": "2025-10-14",
-      "summary": "Advocates for direct, intuitive interaction with AI models over complex frameworks and elaborate harnesses.",
-      "tags": ["agentic-engineering", "ai-workflow", "philosophy"]
-    },
-    {
-      "title": "Claude Code Anonymous",
-      "url": "https://steipete.me/posts/2025/claude-code-anonymous/",
-      "date": "2025-09-09",
-      "summary": "Co-created with Orta Therox, a meetup format for AI-assisted developers: lightning talks, no recordings, no selling.",
-      "tags": ["community", "claude-code", "meetup"]
-    },
-    {
-      "title": "Live Coding Session: Building Arena",
-      "url": "https://steipete.me/posts/2025/live-coding-session-building-arena/",
-      "date": "2025-09-06",
-      "summary": "Live demonstration of building a complete application using AI coding tools.",
-      "tags": ["live-coding", "agentic-engineering"]
-    },
-    {
-      "title": "My Current AI Dev Workflow",
-      "url": "https://steipete.me/posts/2025/optimal-ai-development-workflow/",
-      "date": "2025-08-25",
-      "summary": "Definitive guide to his AI development setup: Ghostty + Claude Code + minimal tooling. Context is precious, less is more.",
-      "tags": ["ai-workflow", "claude-code", "productivity"]
-    },
-    {
-      "title": "Essential Reading for Agentic Engineers \u2014 August 2025",
-      "url": "https://steipete.me/posts/2025/essential-reading-august-2025/",
-      "date": "2025-08-22",
-      "summary": "Curated list of must-read resources for developers working with AI coding agents.",
-      "tags": ["reading-list", "agentic-engineering"]
-    },
-    {
-      "title": "Just One More Prompt",
-      "url": "https://steipete.me/posts/just-one-more-prompt/",
-      "date": "2025-08-19",
-      "summary": "Reflection on the addictive nature of AI-assisted coding and the 'just one more prompt' compulsion.",
-      "tags": ["agentic-engineering", "reflection"]
-    },
-    {
-      "title": "Poltergeist: The Ghost That Keeps Your Builds Fresh",
-      "url": "https://steipete.me/posts/2025/poltergeist-ghost-keeps-builds-fresh/",
-      "date": "2025-08-05",
-      "summary": "Introduces Poltergeist, a tool for keeping builds fresh and automating build pipeline maintenance.",
-      "tags": ["developer-tools", "ci-cd", "automation"]
-    },
-    {
-      "title": "Don't read this Startup Slop",
-      "url": "https://steipete.me/posts/2025/startup-slop/",
-      "date": "2025-08-02",
-      "summary": "Critique of AI-generated startup content and generic advice flooding the tech ecosystem.",
-      "tags": ["opinion", "ai-content"]
-    },
-    {
-      "title": "Essential Reading for Agentic Engineers \u2014 July 2025",
-      "url": "https://steipete.me/posts/2025/essential-reading-july-2025/",
-      "date": "2025-08-02",
-      "summary": "Monthly curated reading list for the agentic engineering community.",
-      "tags": ["reading-list", "agentic-engineering"]
-    },
-    {
-      "title": "Self-Hosting AI Models",
-      "url": "https://steipete.me/posts/2025/self-hosting-ai-models/",
-      "date": "2025-07-31",
-      "summary": "Guide to running AI models locally, covering infrastructure choices and practical tradeoffs.",
-      "tags": ["self-hosting", "ai-infrastructure"]
-    },
-    {
-      "title": "Logging Privacy Shenanigans",
-      "url": "https://steipete.me/posts/2025/logging-privacy-shenanigans/",
-      "date": "2025-07-29",
-      "summary": "Investigation into privacy issues in logging frameworks and system-level data collection.",
-      "tags": ["privacy", "macos", "debugging"]
-    },
-    {
-      "title": "VibeTunnel\u2019s first AI-anniversary",
-      "url": "https://steipete.me/posts/2025/vibetunnel-first-anniversary/",
-      "date": "2025-07-16",
-      "summary": "Retrospective on one year of VibeTunnel \u2014 turning browsers into Mac terminals for remote AI development.",
-      "tags": ["vibetunnel", "remote-dev"]
-    },
-    {
-      "title": "Making AppleScript Work in macOS CLI Tools",
-      "url": "https://steipete.me/posts/2025/applescript-cli-macos-complete-guide/",
-      "date": "2025-07-03",
-      "summary": "Complete guide to integrating AppleScript with command-line tools on macOS.",
-      "tags": ["macos", "applescript", "cli"]
-    },
-    {
-      "title": "Peekaboo 2.0 \u2014 Freeing the CLI from its MCP Shackles",
-      "url": "https://steipete.me/posts/2025/peekaboo-2-freeing-the-cli-from-its-mcp-shackles/",
-      "date": "2025-07-03",
-      "summary": "Major update to Peekaboo \u2014 lightning-fast macOS screenshots for AI agents, now available as standalone CLI.",
-      "tags": ["peekaboo", "macos", "ai-tools"]
-    },
-    {
-      "title": "Command your Claude Code Army, Reloaded",
-      "url": "https://steipete.me/posts/command-your-claude-code-army-reloaded/",
-      "date": "2025-07-03",
-      "summary": "Updated guide to running multiple Claude Code instances in parallel for maximum development throughput.",
-      "tags": ["claude-code", "multi-agent", "productivity"]
-    },
-    {
-      "title": "Essential Reading for Agentic Engineers",
-      "url": "https://steipete.me/posts/2025/essential-reading/",
-      "date": "2025-07-01",
-      "summary": "Foundation reading list for developers entering the agentic engineering space.",
-      "tags": ["reading-list", "agentic-engineering"]
-    },
-    {
-      "title": "Slot Machines for Programmers",
-      "url": "https://steipete.me/posts/2025/when-ai-meets-madness-peters-16-hour-days/",
-      "date": "2025-06-25",
-      "summary": "Raw account of 16-hour AI-assisted coding days and the dopamine-driven loop of rapid iteration.",
-      "tags": ["agentic-engineering", "productivity", "reflection"]
-    },
-    {
-      "title": "My AI Workflow for Understanding Any Codebase",
-      "url": "https://steipete.me/posts/2025/understanding-codebases-with-ai-gemini-workflow/",
-      "date": "2025-06-25",
-      "summary": "Workflow for using AI (Gemini) to rapidly understand unfamiliar codebases.",
-      "tags": ["ai-workflow", "codebase-analysis", "gemini"]
-    },
-    {
-      "title": "stats.store \u2014 Privacy-First Sparkle Analytics",
-      "url": "https://steipete.me/posts/2025/stats-store-privacy-first-sparkle-analytics/",
-      "date": "2025-06-18",
-      "summary": "Introduces stats.store, a privacy-first analytics solution for macOS apps using Sparkle.",
-      "tags": ["macos", "analytics", "privacy"]
-    },
-    {
-      "title": "Showing Settings from macOS Menu Bar Items",
-      "url": "https://steipete.me/posts/2025/showing-settings-from-macos-menu-bar-items/",
-      "date": "2025-06-17",
-      "summary": "Technical guide to displaying settings windows from macOS menu bar applications.",
-      "tags": ["macos", "swift", "ui"]
-    },
-    {
-      "title": "VibeTunnel \u2014 Turn Any Browser into Your Mac Terminal",
-      "url": "https://steipete.me/posts/2025/vibetunnel-turn-any-browser-into-your-mac-terminal/",
-      "date": "2025-06-16",
-      "summary": "Launches VibeTunnel, enabling browser-based terminal access to Mac for remote AI development.",
-      "tags": ["vibetunnel", "remote-dev", "macos"]
-    },
-    {
-      "title": "Vibe Meter 2.0 \u2014 Claude Code Usage Calculation",
-      "url": "https://steipete.me/posts/2025/vibe-meter-2-claude-code-usage-calculation/",
-      "date": "2025-06-15",
-      "summary": "Updated Vibe Meter for tracking Claude Code costs and usage patterns.",
-      "tags": ["claude-code", "cost-tracking", "developer-tools"]
-    },
-    {
-      "title": "llm.codes \u2014 Transform Developer Docs",
-      "url": "https://steipete.me/posts/2025/llm-codes-transform-developer-docs/",
-      "date": "2025-06-14",
-      "summary": "Introduces llm.codes for making developer documentation AI-friendly and searchable.",
-      "tags": ["documentation", "ai-tools"]
-    },
-    {
-      "title": "Automatic Observation Tracking in UIKit and AppKit",
-      "url": "https://steipete.me/posts/2025/automatic-observation-tracking-uikit-appkit/",
-      "date": "2025-06-11",
-      "summary": "Deep technical exploration of automatic observation tracking across Apple\u2019s UI frameworks.",
-      "tags": ["swift", "uikit", "appkit"]
-    },
-    {
-      "title": "Peekaboo MCP \u2014 Lightning-Fast macOS Screenshots for AI Agents",
-      "url": "https://steipete.me/posts/2025/peekaboo-mcp-lightning-fast-macos-screenshots-for-ai-agents/",
-      "date": "2025-06-07",
-      "summary": "Introduces Peekaboo, an MCP server enabling AI agents to take and analyze macOS screenshots instantly.",
-      "tags": ["peekaboo", "mcp", "ai-tools", "macos"]
-    },
-    {
-      "title": "Migrating 700+ Tests to Swift Testing",
-      "url": "https://steipete.me/posts/2025/migrating-700-tests-to-swift-testing/",
-      "date": "2025-06-06",
-      "summary": "Practical guide to migrating a large test suite from XCTest to the new Swift Testing framework.",
-      "tags": ["swift", "testing", "migration"]
-    },
-    {
-      "title": "Commanding Your Claude Code Army",
-      "url": "https://steipete.me/posts/2025/commanding-your-claude-code-army/",
-      "date": "2025-06-05",
-      "summary": "Guide to running multiple concurrent Claude Code instances for parallel development \u2014 the multi-agent workflow.",
-      "tags": ["claude-code", "multi-agent", "agentic-engineering"]
-    },
-    {
-      "title": "Code Signing and Notarization \u2014 Sparkle and Tears",
-      "url": "https://steipete.me/posts/2025/code-signing-and-notarization-sparkle-and-tears/",
-      "date": "2025-06-05",
-      "summary": "War story of macOS code signing and notarization challenges with the Sparkle update framework.",
-      "tags": ["macos", "code-signing", "sparkle"]
-    },
-    {
-      "title": "Vibe Meter \u2014 Monitor Your AI Costs",
-      "url": "https://steipete.me/posts/2025/vibe-meter-monitor-your-ai-costs/",
-      "date": "2025-06-04",
-      "summary": "Introduces Vibe Meter, a macOS menu bar app for monitoring AI coding tool spending.",
-      "tags": ["developer-tools", "cost-tracking", "macos"]
-    },
-    {
-      "title": "Claude Code Is My Computer",
-      "url": "https://steipete.me/posts/2025/claude-code-is-my-computer/",
-      "date": "2025-06-03",
-      "summary": "Runs Claude Code with full system permissions, using AI as a universal computer interface for coding, automation, and system management.",
-      "tags": ["claude-code", "agentic-engineering", "automation"]
-    },
-    {
-      "title": "Stop Over-thinking AI Subscriptions",
-      "url": "https://steipete.me/posts/2025/stop-overthinking-ai-subscriptions/",
-      "date": "2025-06-02",
-      "summary": "Practical advice on choosing AI tool subscriptions without overthinking the decision.",
-      "tags": ["ai-tools", "opinion"]
-    },
-    {
-      "title": "Introducing Demark \u2014 HTML to Markdown in Swift",
-      "url": "https://steipete.me/posts/2025/introducing-demark-html-to-markdown-in-swift/",
-      "date": "2025-06-01",
-      "summary": "Open-source Swift library for converting HTML to Markdown, useful for AI agent pipelines.",
-      "tags": ["swift", "open-source", "markdown"]
-    },
-    {
-      "title": "The Future of Vibe Coding",
-      "url": "https://steipete.me/posts/2025/the-future-of-vibe-coding/",
-      "date": "2025-06-01",
-      "summary": "Live workshop building two functional apps in 3 hours, demonstrating AI-assisted development where code becomes cheaper and iteration becomes faster.",
-      "tags": ["vibe-coding", "live-coding", "agentic-engineering"]
-    },
-    {
-      "title": "MCP Best Practices",
-      "url": "https://steipete.me/posts/2025/mcp-best-practices/",
-      "date": "2025-06-01",
-      "summary": "Guide to best practices for building and using Model Context Protocol servers with AI coding tools.",
-      "tags": ["mcp", "ai-tools", "best-practices"]
-    },
-    {
-      "title": "Finding My Spark Again",
-      "url": "https://steipete.me/posts/2025/finding-my-spark-again/",
-      "date": "2025-06-01",
-      "summary": "After selling PSPDFKit and struggling with post-exit emptiness, rediscovered passion through building with AI.",
-      "tags": ["personal", "career", "entrepreneurship"]
-    },
-    {
-      "title": "Top-Level Menu Visibility in SwiftUI for macOS",
-      "url": "https://steipete.me/posts/2021/top-level-menu-visibility-in-swiftui/",
-      "date": "2021-04-09",
-      "summary": "Technical solution for controlling menu visibility in SwiftUI macOS applications.",
-      "tags": ["swiftui", "macos"]
-    },
-    {
-      "title": "Fixing keyboardShortcut in SwiftUI",
-      "url": "https://steipete.me/posts/2021/fixing-keyboardshortcut-in-swiftui/",
-      "date": "2021-01-31",
-      "summary": "Workaround for SwiftUI keyboard shortcut bugs in macOS apps.",
-      "tags": ["swiftui", "macos", "debugging"]
-    },
-    {
-      "title": "Supporting Both Tap and Long Press on a Button in SwiftUI",
-      "url": "https://steipete.me/posts/2021/supporting-both-tap-and-longpress-on-button-in-swiftui/",
-      "date": "2021-01-27",
-      "summary": "Technique for handling simultaneous tap and long-press gestures on SwiftUI buttons.",
-      "tags": ["swiftui", "ios"]
-    },
-    {
-      "title": "On Using Apple Silicon Mac Mini for Continuous Integration",
-      "url": "https://steipete.me/posts/2020/apple-silicon-mac-mini-for-ci/",
-      "date": "2020-12-14",
-      "summary": "Early experience report using M1 Mac Minis for CI/CD pipelines.",
-      "tags": ["apple-silicon", "ci-cd"]
-    },
-    {
-      "title": "Apple Silicon M1: A Developer\u2019s Perspective",
-      "url": "https://steipete.me/posts/2020/apple-silicon-m1-a-developer-perspective/",
-      "date": "2020-11-28",
-      "summary": "Comprehensive developer review of Apple\u2019s M1 chip covering performance, compatibility, and development workflow impact.",
-      "tags": ["apple-silicon", "review"]
-    },
-    {
-      "title": "Gardening Your Twitter: Curating Your Timeline",
-      "url": "https://steipete.me/posts/2020/curating-your-twitter-timeline/",
-      "date": "2020-10-21",
-      "summary": "Strategies for curating a useful Twitter feed by muting noise and following high-signal accounts.",
-      "tags": ["social-media", "productivity"]
-    },
-    {
-      "title": "Gardening Your Twitter: Growing Your Followers",
-      "url": "https://steipete.me/posts/2020/growing-your-twitter-followers/",
-      "date": "2020-10-21",
-      "summary": "Practical guide to growing a developer-focused Twitter following through authentic engagement.",
-      "tags": ["social-media", "personal-brand"]
-    },
-    {
-      "title": "The State of SwiftUI",
-      "url": "https://steipete.me/posts/2020/state-of-swiftui/",
-      "date": "2020-09-13",
-      "summary": "Critical assessment of SwiftUI\u2019s maturity and readiness for production use.",
-      "tags": ["swiftui", "ios", "opinion"]
-    },
-    {
-      "title": "Forbidden Controls in Catalyst",
-      "url": "https://steipete.me/posts/2020/forbidden-controls-in-catalyst-mac-idiom/",
-      "date": "2020-09-22",
-      "summary": "Investigation into UIKit controls that are silently blocked in Mac Catalyst Mac Idiom mode.",
-      "tags": ["catalyst", "macos", "debugging"]
-    },
-    {
-      "title": "Disabling Keyboard Avoidance in SwiftUI\u2019s UIHostingController",
-      "url": "https://steipete.me/posts/2020/disabling-keyboard-avoidance-in-swiftui-uihostingcontroller/",
-      "date": "2020-09-21",
-      "summary": "Workaround for SwiftUI\u2019s automatic keyboard avoidance behavior in UIHostingController.",
-      "tags": ["swiftui", "ios", "debugging"]
-    },
-    {
-      "title": "Logging in Swift",
-      "url": "https://steipete.me/posts/2020/logging-in-swift/",
-      "date": "2020-08-24",
-      "summary": "Guide to implementing effective logging in Swift applications using os_log and custom solutions.",
-      "tags": ["swift", "logging"]
-    },
-    {
-      "title": "Building with Swift Trunk Development Snapshots",
-      "url": "https://steipete.me/posts/2020/building-with-swift-trunk/",
-      "date": "2020-06-12",
-      "summary": "How to build and test projects with unreleased Swift compiler snapshots from trunk.",
-      "tags": ["swift", "toolchain"]
-    },
-    {
-      "title": "Calling Super at Runtime in Swift",
-      "url": "https://steipete.me/posts/2020/calling-super-at-runtime/",
-      "date": "2020-06-10",
-      "summary": "Advanced technique for calling super implementations at runtime in Swift using the Objective-C runtime.",
-      "tags": ["swift", "runtime", "objective-c"]
-    },
-    {
-      "title": "zld \u2014 A Faster Version of Apple\u2019s Linker",
-      "url": "https://steipete.me/posts/2020/zld-a-faster-linker/",
-      "date": "2020-06-05",
-      "summary": "Review of zld, a drop-in faster replacement for Apple\u2019s ld linker for faster build times.",
-      "tags": ["toolchain", "performance"]
-    },
-    {
-      "title": "InterposeKit",
-      "url": "https://steipete.me/posts/2020/interposekit/",
-      "date": "2020-05-31",
-      "summary": "Introduces InterposeKit for elegant method swizzling in Swift, enabling runtime behavior modification.",
-      "tags": ["swift", "open-source", "runtime"]
-    },
-    {
-      "title": "The Great Mac Catalyst Text Input Crash Hunt",
-      "url": "https://steipete.me/posts/2020/mac-catalyst-crash-hunt/",
-      "date": "2020-05-29",
-      "summary": "Detailed investigation into a recurring text input crash in Mac Catalyst applications.",
-      "tags": ["catalyst", "debugging", "macos"]
-    },
-    {
-      "title": "Jailbreaking for iOS Developers",
-      "url": "https://steipete.me/posts/2020/jailbreaking-for-ios-developers/",
-      "date": "2020-05-25",
-      "summary": "How iOS jailbreaking enables better debugging and understanding of UIKit internals.",
-      "tags": ["ios", "debugging", "jailbreaking"]
-    },
-    {
-      "title": "Let\u2019s Try This Again",
-      "url": "https://steipete.me/posts/2020/lets-try-this-again/",
-      "date": "2020-05-14",
-      "summary": "Blog relaunch post, committing to regular writing about iOS/macOS development.",
-      "tags": ["meta", "writing"]
-    },
-    {
-      "title": "How We Work at PSPDFKit",
-      "url": "https://steipete.me/posts/2019/how-we-work/",
-      "date": "2019-07-03",
-      "summary": "Inside look at PSPDFKit\u2019s distributed team culture, processes, and engineering practices.",
-      "tags": ["pspdfkit", "remote-work", "engineering-culture"]
-    },
-    {
-      "title": "Swizzling in Swift",
-      "url": "https://steipete.me/posts/2019/swizzling-in-swift/",
-      "date": "2019-06-26",
-      "summary": "Advanced techniques for runtime method swizzling in Swift applications.",
-      "tags": ["swift", "runtime"]
-    },
-    {
-      "title": "WWDC for First-Timers, 2019 Edition",
-      "url": "https://steipete.me/posts/2019/wwdc-tips-2019-edition/",
-      "date": "2019-05-30",
-      "summary": "Practical guide for first-time WWDC attendees covering logistics, networking, and sessions.",
-      "tags": ["wwdc", "ios", "community"]
-    },
-    {
-      "title": "Challenges of Adopting Drag and Drop",
-      "url": "https://steipete.me/posts/2018/challenges-of-drag-and-drop/",
-      "date": "2018-11-07",
-      "summary": "Technical challenges encountered implementing drag-and-drop in iOS apps, especially for PDF documents.",
-      "tags": ["ios", "uikit", "drag-and-drop"]
-    },
-    {
-      "title": "Marzipan: Porting iOS Apps to the Mac",
-      "url": "https://steipete.me/posts/2018/porting-ios-apps-to-mac-marzipan-iosmac-uikit-appkit/",
-      "date": "2018-09-20",
-      "summary": "Early exploration of Apple\u2019s Marzipan (later Catalyst) for bringing iOS apps to macOS.",
-      "tags": ["catalyst", "macos", "ios"]
-    },
-    {
-      "title": "How to Use Slack and Not Go Crazy",
-      "url": "https://steipete.me/posts/2018/how-to-use-slack-and-not-go-crazy/",
-      "date": "2018-06-21",
-      "summary": "Strategies for managing Slack notifications and maintaining focus in distributed teams.",
-      "tags": ["productivity", "remote-work"]
-    },
-    {
-      "title": "Hardcore Debugging",
-      "url": "https://steipete.me/posts/2018/hardcore-debugging/",
-      "date": "2018-03-07",
-      "summary": "Advanced debugging techniques for iOS/macOS development including LLDB, dtrace, and runtime inspection.",
-      "tags": ["debugging", "ios", "macos"]
-    },
-    {
-      "title": "Binary Frameworks in Swift",
-      "url": "https://steipete.me/posts/2018/binary-frameworks-swift/",
-      "date": "2018-01-29",
-      "summary": "Challenges and solutions for distributing pre-compiled Swift frameworks.",
-      "tags": ["swift", "frameworks"]
-    },
-    {
-      "title": "Even Swiftier Objective-C",
-      "url": "https://steipete.me/posts/2017/even-swiftier-objective-c/",
-      "date": "2017-06-14",
-      "summary": "Making Objective-C APIs more Swift-friendly through naming conventions and nullability annotations.",
-      "tags": ["swift", "objective-c"]
-    },
-    {
-      "title": "The Case for Deprecating UITableView",
-      "url": "https://steipete.me/posts/2017/the-case-for-deprecating-uitableview/",
-      "date": "2017-01-19",
-      "summary": "Argument for replacing UITableView with UICollectionView as the default list component in iOS.",
-      "tags": ["ios", "uikit", "opinion"]
-    },
-    {
-      "title": "Running UI Tests on iOS With Ludicrous Speed",
-      "url": "https://steipete.me/posts/2016/running-ui-tests-with-ludicrous-speed/",
-      "date": "2016-04-27",
-      "summary": "Techniques for dramatically speeding up iOS UI test execution.",
-      "tags": ["ios", "testing", "performance"]
-    },
-    {
-      "title": "Hiring a distributed team",
-      "url": "https://steipete.me/posts/2016/hiring-a-distributed-team/",
-      "date": "2016-09-20",
-      "summary": "Lessons from building PSPDFKit\u2019s fully distributed engineering team across multiple countries.",
-      "tags": ["remote-work", "hiring", "pspdfkit"]
-    },
-    {
-      "title": "Writing Good Bug Reports",
-      "url": "https://steipete.me/posts/2016/writing-good-bug-reports/",
-      "date": "2016-09-13",
-      "summary": "Guide to writing effective Apple Radar bug reports that actually get fixed.",
-      "tags": ["ios", "debugging", "apple"]
-    },
-    {
-      "title": "Real-time collaboration, Apple, and you",
-      "url": "https://steipete.me/posts/2016/real-time-collaboration/",
-      "date": "2016-09-08",
-      "summary": "Technical exploration of real-time collaboration in document editing and Apple\u2019s approach.",
-      "tags": ["collaboration", "pspdfkit"]
-    },
-    {
-      "title": "Efficient iOS Version Checking",
-      "url": "https://steipete.me/posts/2016/efficient-ios-version-checking/",
-      "date": "2016-07-06",
-      "summary": "Best practices for checking iOS versions efficiently in code.",
-      "tags": ["ios", "best-practices"]
-    },
-    {
-      "title": "Investigating Thread Safety of UIImage",
-      "url": "https://steipete.me/posts/2016/investigating-thread-safety-of-uiimage/",
-      "date": "2016-06-30",
-      "summary": "Deep investigation into whether UIImage is thread-safe in practice, with surprising findings.",
-      "tags": ["ios", "concurrency", "debugging"]
-    },
-    {
-      "title": "Swifty Objective-C",
-      "url": "https://steipete.me/posts/2016/swifty-objective-c/",
-      "date": "2016-05-26",
-      "summary": "Techniques for making Objective-C code more idiomatic when used from Swift.",
-      "tags": ["swift", "objective-c"]
-    },
-    {
-      "title": "A Pragmatic Approach to Cross-Platform",
-      "url": "https://steipete.me/posts/2016/a-pragmatic-approach-to-cross-platform/",
-      "date": "2016-04-13",
-      "summary": "PSPDFKit\u2019s practical approach to cross-platform development across iOS, Android, and web.",
-      "tags": ["cross-platform", "pspdfkit"]
-    },
-    {
-      "title": "Surprises with Swift Extensions",
-      "url": "https://steipete.me/posts/2016/surprises-with-swift-extensions/",
-      "date": "2016-03-24",
-      "summary": "Unexpected behaviors and edge cases when using Swift extensions.",
-      "tags": ["swift"]
-    },
-    {
-      "title": "Using ccache for Fun and Profit",
-      "url": "https://steipete.me/posts/2015/ccache-for-fun-and-profit/",
-      "date": "2015-10-06",
-      "summary": "How to use ccache to dramatically speed up Objective-C/C++ compilation times.",
-      "tags": ["toolchain", "performance"]
-    },
-    {
-      "title": "Researching ResearchKit",
-      "url": "https://steipete.me/posts/2015/researching-researchkit/",
-      "date": "2015-04-14",
-      "summary": "Analysis of Apple\u2019s ResearchKit framework for medical research applications.",
-      "tags": ["ios", "health"]
-    },
-    {
-      "title": "UIKit Debug Mode",
-      "url": "https://steipete.me/posts/2015/uikit-debug-mode/",
-      "date": "2015-01-09",
-      "summary": "Hidden UIKit debugging features and how to activate them for development.",
-      "tags": ["ios", "uikit", "debugging"]
-    },
-    {
-      "title": "Hacking with Aspects",
-      "url": "https://steipete.me/posts/2014/hacking-with-aspects/",
-      "date": "2014-05-06",
-      "summary": "Introduction to Aspects, a popular iOS library for clean aspect-oriented programming via method swizzling.",
-      "tags": ["ios", "open-source", "aop"]
-    },
-    {
-      "title": "A Story About Swizzling the Right Way and Touch Forwarding",
-      "url": "https://steipete.me/posts/2014/a-story-about-swizzling-the-right-way-and-touch-forwarding/",
-      "date": "2014-07-04",
-      "summary": "Deep dive into safe method swizzling patterns and touch event forwarding in UIKit.",
-      "tags": ["ios", "runtime", "swizzling"]
-    },
-    {
-      "title": "Fixing What Apple Doesn\u2019t",
-      "url": "https://steipete.me/posts/2014/fixing-what-apple-doesnt/",
-      "date": "2014-01-04",
-      "summary": "Philosophy of finding and fixing Apple framework bugs through runtime patches \u2014 a hallmark of PSPDFKit\u2019s approach.",
-      "tags": ["ios", "debugging", "pspdfkit"]
-    },
-    {
-      "title": "UIAppearance for Custom Views",
-      "url": "https://steipete.me/posts/2013/uiappearance-for-custom-views/",
-      "date": "2013-02-12",
-      "summary": "How to implement UIAppearance protocol support in custom iOS views.",
-      "tags": ["ios", "uikit"]
-    },
-    {
-      "title": "Smart Proxy Delegation",
-      "url": "https://steipete.me/posts/2013/smart-proxy-delegation/",
-      "date": "2013-07-30",
-      "summary": "Elegant pattern for intercepting delegate methods using NSProxy in Objective-C.",
-      "tags": ["objective-c", "ios", "patterns"]
-    },
-    {
-      "title": "Moving On",
-      "url": "https://steipete.me/posts/2012/moving-on/",
-      "date": "2012-04-06",
-      "summary": "Announcement of leaving a previous role to focus full-time on PSPDFKit.",
-      "tags": ["career", "pspdfkit"]
-    },
-    {
-      "title": "Reboot",
-      "url": "https://steipete.me/posts/2012/reboot/",
-      "date": "2012-04-05",
-      "summary": "Blog reboot \u2014 fresh start for writing about iOS development.",
-      "tags": ["meta"]
+      "category": "future",
+      "question": "What do you think will be the biggest challenge for OpenClaw as it scales to support more users?",
+      "why_this_question": "To gauge the specific challenges he anticipates as OpenClaw grows.",
+      "expected_insight": "Highlights the key challenges and how he plans to address them as OpenClaw scales."
     }
   ],
-  "sources": [
-    {
-      "title": "OpenClaw, OpenAI and the future - Peter Steinberger",
-      "url": "https://steipete.me/posts/2026/openclaw"
-    },
-    {
-      "title": "OpenClaw - Wikipedia",
-      "url": "https://en.wikipedia.org/wiki/OpenClaw"
-    },
-    {
-      "title": "Who Made OpenClaw? - Remote OpenClaw",
-      "url": "https://remoteopenclaw.com/blog/who-made-openclaw"
-    },
-    {
-      "title": "Who Is Peter Steinberger? - Spark Agents",
-      "url": "https://www.sparkagents.com/blog/who-is-peter-steinberger"
-    },
-    {
-      "title": "OpenClaw creator Peter Steinberger joins OpenAI - TechCrunch",
-      "url": "https://techcrunch.com/2026/02/15/openclaw-creator-peter-steinberger-joins-openai/"
-    },
-    {
-      "title": "OpenClaw creator joining OpenAI, Altman says - CNBC",
-      "url": "https://www.cnbc.com/2026/02/15/openclaw-creator-peter-steinberger-joining-openai-altman-says.html"
-    },
-    {
-      "title": "steipete on GitHub",
-      "url": "https://github.com/steipete"
-    },
-    {
-      "title": "OpenClaw GitHub Organization",
-      "url": "https://github.com/openclaw"
-    },
-    {
-      "title": "Peter Steinberger's website",
-      "url": "https://steipete.me"
-    }
-  ]
+  "sources": []
 }
