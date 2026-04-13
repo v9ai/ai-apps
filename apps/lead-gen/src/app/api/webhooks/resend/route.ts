@@ -448,6 +448,15 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
           .where(eq(contactEmails.id, contactMatch.outboundEmailId));
       }
 
+      // Advance conversation state machine
+      import("@/lib/email/conversation-state")
+        .then(({ advanceConversationState }) =>
+          advanceConversationState(contactMatch.contactId!, result.label),
+        )
+        .catch((err) => {
+          console.error(`[RESEND_WEBHOOK] conversation state update failed:`, err);
+        });
+
       // Auto-draft reply for interested/info_request contacts (fire-and-forget)
       if (
         (result.label === "interested" || result.label === "info_request") &&

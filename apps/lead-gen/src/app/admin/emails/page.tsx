@@ -44,6 +44,7 @@ import { ComposeFromLinkedIn } from "@/components/admin/ComposeFromLinkedIn";
 import { EditCampaignDialog } from "@/components/admin/EditCampaignDialog";
 import { ThreadInbox } from "@/components/emails/thread-inbox";
 import { CpnFollowupPanel } from "@/components/admin/CpnFollowupPanel";
+import { DraftReviewPanel } from "@/components/emails/draft-review-panel";
 import {
   useGetEmailCampaignsQuery,
   useCreateDraftCampaignMutation,
@@ -632,6 +633,10 @@ function EmailsPageContent() {
             <LinkedInLogoIcon />
             &nbsp;Compose
           </Tabs.Trigger>
+          <Tabs.Trigger value="drafts">
+            <Pencil1Icon />
+            &nbsp;Drafts
+          </Tabs.Trigger>
           <Tabs.Trigger value="cpn">
             <PaperPlaneIcon />
             &nbsp;CPN
@@ -660,6 +665,10 @@ function EmailsPageContent() {
 
         <Tabs.Content value="compose">
           <ComposeFromLinkedIn />
+        </Tabs.Content>
+
+        <Tabs.Content value="drafts">
+          <DraftReviewPanel />
         </Tabs.Content>
 
         <Tabs.Content value="cpn">

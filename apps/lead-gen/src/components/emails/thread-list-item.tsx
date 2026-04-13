@@ -27,6 +27,10 @@ export interface ThreadSummary {
   totalMessages: number;
   hasReply: boolean;
   latestStatus?: string | null;
+  priorityScore?: number | null;
+  hasPendingDraft?: boolean | null;
+  draftId?: number | null;
+  conversationStage?: string | null;
 }
 
 interface ThreadListItemProps {
@@ -112,6 +116,12 @@ export function ThreadListItem({ thread, selected, onClick }: ThreadListItemProp
           <Text size="1" color="gray">
             {relativeTime(thread.lastMessageAt)}
           </Text>
+
+          {thread.hasPendingDraft && (
+            <Badge color="green" size="1" variant="solid">
+              Draft ready
+            </Badge>
+          )}
 
           {thread.classification && (
             <Badge

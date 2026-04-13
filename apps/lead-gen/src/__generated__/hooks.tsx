@@ -90,6 +90,12 @@ export type BatchDetectIntentResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type BatchDismissResult = {
+  __typename?: 'BatchDismissResult';
+  dismissed: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type BatchOperationResult = {
   __typename?: 'BatchOperationResult';
   affected: Scalars['Int']['output'];
@@ -104,6 +110,14 @@ export type BatchRecipientInput = {
   name: Scalars['String']['input'];
 };
 
+export type BatchSendDraftResult = {
+  __typename?: 'BatchSendDraftResult';
+  errors: Array<Scalars['String']['output']>;
+  failed: Scalars['Int']['output'];
+  sent: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type CancelCompanyEmailsResult = {
   __typename?: 'CancelCompanyEmailsResult';
   cancelledCount: Scalars['Int']['output'];
@@ -116,6 +130,12 @@ export type CancelEmailResult = {
   __typename?: 'CancelEmailResult';
   error: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type ClassificationCount = {
+  __typename?: 'ClassificationCount';
+  classification: Scalars['String']['output'];
+  count: Scalars['Int']['output'];
 };
 
 export type ClassifyBatchResult = {
@@ -684,6 +704,20 @@ export type DetectIntentResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DismissDraftResult = {
+  __typename?: 'DismissDraftResult';
+  success: Scalars['Boolean']['output'];
+};
+
+export type DraftSummary = {
+  __typename?: 'DraftSummary';
+  approved: Scalars['Int']['output'];
+  byClassification: Array<ClassificationCount>;
+  dismissed: Scalars['Int']['output'];
+  pending: Scalars['Int']['output'];
+  sent: Scalars['Int']['output'];
+};
+
 export type EmailCampaign = {
   __typename?: 'EmailCampaign';
   addAntiThreadHeader: Scalars['Boolean']['output'];
@@ -775,12 +809,16 @@ export type EmailThread = {
   contactId: Scalars['Int']['output'];
   contactName: Scalars['String']['output'];
   contactPosition: Maybe<Scalars['String']['output']>;
+  conversationStage: Maybe<Scalars['String']['output']>;
+  draftId: Maybe<Scalars['Int']['output']>;
+  hasPendingDraft: Maybe<Scalars['Boolean']['output']>;
   hasReply: Scalars['Boolean']['output'];
   lastMessageAt: Scalars['String']['output'];
   lastMessageDirection: Scalars['String']['output'];
   lastMessagePreview: Maybe<Scalars['String']['output']>;
   latestStatus: Maybe<Scalars['String']['output']>;
   messages: Array<ThreadMessage>;
+  priorityScore: Maybe<Scalars['Float']['output']>;
   totalMessages: Scalars['Int']['output'];
 };
 
@@ -943,6 +981,15 @@ export type FollowUpEmailsResult = {
   __typename?: 'FollowUpEmailsResult';
   emails: Array<FollowUpEmail>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type GenerateDraftsBatchResult = {
+  __typename?: 'GenerateDraftsBatchResult';
+  failed: Scalars['Int']['output'];
+  generated: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  skipped: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
 };
 
 export type GenerateEmailInput = {
@@ -1183,6 +1230,8 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   analyzeLinkedInPosts: AnalyzePostsResult;
   applyEmailPattern: ApplyEmailPatternResult;
+  approveAllDrafts: BatchSendDraftResult;
+  approveAndSendDraft: SendDraftResult;
   archiveEmail: ArchiveEmailResult;
   batchDetectIntent: BatchDetectIntentResult;
   blockCompany: Company;
@@ -1210,6 +1259,8 @@ export type Mutation = {
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteLinkedInPost: Scalars['Boolean']['output'];
   detectIntentSignals: DetectIntentResult;
+  dismissAllDrafts: BatchDismissResult;
+  dismissDraft: DismissDraftResult;
   dismissReminder: ContactReminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
@@ -1220,7 +1271,9 @@ export type Mutation = {
   flagContactsForDeletion: BatchOperationResult;
   /** Generate and store embeddings for companies missing them. Admin only. */
   generateCompanyEmbeddings: GenerateEmbeddingsResult;
+  generateDraftsForPending: GenerateDraftsBatchResult;
   generateEmail: GenerateEmailResult;
+  generateFollowUpDrafts: GenerateDraftsBatchResult;
   generateReply: GenerateReplyResult;
   importCompanies: ImportCompaniesResult;
   importCompanyWithContacts: ImportCompanyResult;
@@ -1235,6 +1288,7 @@ export type Mutation = {
   previewEmail: EmailPreview;
   purgeDeletedContacts: BatchOperationResult;
   refreshIntentScores: RefreshIntentResult;
+  regenerateDraft: ReplyDraft;
   salescueAnalyze: SalescueAnalyzeResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
@@ -1290,6 +1344,18 @@ export type MutationAnalyzeLinkedInPostsArgs = {
 
 export type MutationApplyEmailPatternArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationApproveAllDraftsArgs = {
+  draftIds: Array<Scalars['Int']['input']>;
+};
+
+
+export type MutationApproveAndSendDraftArgs = {
+  draftId: Scalars['Int']['input'];
+  editedBody?: InputMaybe<Scalars['String']['input']>;
+  editedSubject?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1398,6 +1464,16 @@ export type MutationDetectIntentSignalsArgs = {
 };
 
 
+export type MutationDismissAllDraftsArgs = {
+  draftIds: Array<Scalars['Int']['input']>;
+};
+
+
+export type MutationDismissDraftArgs = {
+  draftId: Scalars['Int']['input'];
+};
+
+
 export type MutationDismissReminderArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1442,6 +1518,13 @@ export type MutationGenerateCompanyEmbeddingsArgs = {
 
 export type MutationGenerateEmailArgs = {
   input: GenerateEmailInput;
+};
+
+
+export type MutationGenerateFollowUpDraftsArgs = {
+  daysAfterFollowUp1?: InputMaybe<Scalars['Int']['input']>;
+  daysAfterFollowUp2?: InputMaybe<Scalars['Int']['input']>;
+  daysAfterInitial?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1519,6 +1602,12 @@ export type MutationPreviewEmailArgs = {
 
 export type MutationPurgeDeletedContactsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationRegenerateDraftArgs = {
+  draftId: Scalars['Int']['input'];
+  instructions?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1687,6 +1776,7 @@ export type Query = {
   contactMessages: Array<ContactMessage>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
+  draftSummary: DraftSummary;
   dueReminders: Array<ContactReminderWithContact>;
   emailCampaign: Maybe<EmailCampaign>;
   emailCampaigns: EmailCampaignsResult;
@@ -1709,6 +1799,7 @@ export type Query = {
   recommendedCompanies: Array<RecommendedCompany>;
   /** Best contacts to reach within a company */
   recommendedContacts: Array<RankedContact>;
+  replyDrafts: ReplyDraftsResult;
   resendEmail: Maybe<ResendEmailDetail>;
   salescueEntities: SalescueEntitiesResult;
   salescueHealth: SalescueHealth;
@@ -1885,6 +1976,7 @@ export type QueryEmailThreadsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  sortBy?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1943,6 +2035,14 @@ export type QueryRecommendedCompaniesArgs = {
 export type QueryRecommendedContactsArgs = {
   companyId: Scalars['Int']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryReplyDraftsArgs = {
+  draftType?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2151,6 +2251,34 @@ export type RegionGrowth = {
   location: Scalars['String']['output'];
   previousCount: Scalars['Int']['output'];
   remoteCount: Scalars['Int']['output'];
+};
+
+export type ReplyDraft = {
+  __typename?: 'ReplyDraft';
+  approvedAt: Maybe<Scalars['String']['output']>;
+  bodyHtml: Maybe<Scalars['String']['output']>;
+  bodyText: Scalars['String']['output'];
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  contactEmail: Maybe<Scalars['String']['output']>;
+  contactId: Scalars['Int']['output'];
+  contactName: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  draftType: Scalars['String']['output'];
+  generationModel: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  receivedEmailId: Scalars['Int']['output'];
+  sentAt: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ReplyDraftsResult = {
+  __typename?: 'ReplyDraftsResult';
+  drafts: Array<ReplyDraft>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type RepostReport = {
@@ -2603,6 +2731,13 @@ export type ScoreContactsMlResult = {
   decisionMakersFound: Scalars['Int']['output'];
   message: Scalars['String']['output'];
   results: Array<ContactMlScore>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type SendDraftResult = {
+  __typename?: 'SendDraftResult';
+  error: Maybe<Scalars['String']['output']>;
+  resendId: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -3573,12 +3708,13 @@ export type DeleteEmailTemplateMutation = { __typename?: 'Mutation', deleteEmail
 export type GetEmailThreadsQueryVariables = Exact<{
   classification?: InputMaybe<Scalars['String']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  sortBy?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type GetEmailThreadsQuery = { __typename?: 'Query', emailThreads: { __typename?: 'EmailThreadsResult', totalCount: number, threads: Array<{ __typename?: 'EmailThread', contactId: number, contactName: string, contactEmail: string | null, contactPosition: string | null, companyName: string | null, companyKey: string | null, lastMessageAt: string, lastMessagePreview: string | null, lastMessageDirection: string, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, latestStatus: string | null }> } };
+export type GetEmailThreadsQuery = { __typename?: 'Query', emailThreads: { __typename?: 'EmailThreadsResult', totalCount: number, threads: Array<{ __typename?: 'EmailThread', contactId: number, contactName: string, contactEmail: string | null, contactPosition: string | null, companyName: string | null, companyKey: string | null, lastMessageAt: string, lastMessagePreview: string | null, lastMessageDirection: string, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, latestStatus: string | null, priorityScore: number | null, hasPendingDraft: boolean | null, draftId: number | null, conversationStage: string | null }> } };
 
 export type GetEmailThreadQueryVariables = Exact<{
   contactId: Scalars['Int']['input'];
@@ -3669,6 +3805,73 @@ export type ScoreContactsMlMutationVariables = Exact<{
 
 
 export type ScoreContactsMlMutation = { __typename?: 'Mutation', scoreContactsML: { __typename?: 'ScoreContactsMLResult', success: boolean, message: string, contactsScored: number, decisionMakersFound: number, results: Array<{ __typename?: 'ContactMLScore', contactId: number, seniority: string, department: string, authorityScore: number, isDecisionMaker: boolean, dmReasons: Array<string> }> } };
+
+export type GetReplyDraftsQueryVariables = Exact<{
+  status?: InputMaybe<Scalars['String']['input']>;
+  draftType?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetReplyDraftsQuery = { __typename?: 'Query', replyDrafts: { __typename?: 'ReplyDraftsResult', totalCount: number, drafts: Array<{ __typename?: 'ReplyDraft', id: number, receivedEmailId: number, contactId: number, status: string, draftType: string, subject: string, bodyText: string, bodyHtml: string | null, generationModel: string | null, contactName: string | null, contactEmail: string | null, companyName: string | null, classification: string | null, classificationConfidence: number | null, approvedAt: string | null, sentAt: string | null, createdAt: string, updatedAt: string }> } };
+
+export type GetDraftSummaryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetDraftSummaryQuery = { __typename?: 'Query', draftSummary: { __typename?: 'DraftSummary', pending: number, approved: number, sent: number, dismissed: number, byClassification: Array<{ __typename?: 'ClassificationCount', classification: string, count: number }> } };
+
+export type ApproveAndSendDraftMutationVariables = Exact<{
+  draftId: Scalars['Int']['input'];
+  editedSubject?: InputMaybe<Scalars['String']['input']>;
+  editedBody?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type ApproveAndSendDraftMutation = { __typename?: 'Mutation', approveAndSendDraft: { __typename?: 'SendDraftResult', success: boolean, resendId: string | null, error: string | null } };
+
+export type DismissDraftMutationVariables = Exact<{
+  draftId: Scalars['Int']['input'];
+}>;
+
+
+export type DismissDraftMutation = { __typename?: 'Mutation', dismissDraft: { __typename?: 'DismissDraftResult', success: boolean } };
+
+export type RegenerateDraftMutationVariables = Exact<{
+  draftId: Scalars['Int']['input'];
+  instructions?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type RegenerateDraftMutation = { __typename?: 'Mutation', regenerateDraft: { __typename?: 'ReplyDraft', id: number, subject: string, bodyText: string, status: string, createdAt: string } };
+
+export type GenerateDraftsForPendingMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GenerateDraftsForPendingMutation = { __typename?: 'Mutation', generateDraftsForPending: { __typename?: 'GenerateDraftsBatchResult', success: boolean, generated: number, skipped: number, failed: number, message: string } };
+
+export type GenerateFollowUpDraftsMutationVariables = Exact<{
+  daysAfterInitial?: InputMaybe<Scalars['Int']['input']>;
+  daysAfterFollowUp1?: InputMaybe<Scalars['Int']['input']>;
+  daysAfterFollowUp2?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GenerateFollowUpDraftsMutation = { __typename?: 'Mutation', generateFollowUpDrafts: { __typename?: 'GenerateDraftsBatchResult', success: boolean, generated: number, skipped: number, failed: number, message: string } };
+
+export type ApproveAllDraftsMutationVariables = Exact<{
+  draftIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
+}>;
+
+
+export type ApproveAllDraftsMutation = { __typename?: 'Mutation', approveAllDrafts: { __typename?: 'BatchSendDraftResult', success: boolean, sent: number, failed: number, errors: Array<string> } };
+
+export type DismissAllDraftsMutationVariables = Exact<{
+  draftIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
+}>;
+
+
+export type DismissAllDraftsMutation = { __typename?: 'Mutation', dismissAllDrafts: { __typename?: 'BatchDismissResult', success: boolean, dismissed: number } };
 
 export const EvidenceFieldsFragmentDoc = gql`
     fragment EvidenceFields on Evidence {
@@ -6663,10 +6866,11 @@ export type DeleteEmailTemplateMutationHookResult = ReturnType<typeof useDeleteE
 export type DeleteEmailTemplateMutationResult = Apollo.MutationResult<DeleteEmailTemplateMutation>;
 export type DeleteEmailTemplateMutationOptions = Apollo.BaseMutationOptions<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>;
 export const GetEmailThreadsDocument = gql`
-    query GetEmailThreads($classification: String, $search: String, $limit: Int, $offset: Int) {
+    query GetEmailThreads($classification: String, $search: String, $sortBy: String, $limit: Int, $offset: Int) {
   emailThreads(
     classification: $classification
     search: $search
+    sortBy: $sortBy
     limit: $limit
     offset: $offset
   ) {
@@ -6685,6 +6889,10 @@ export const GetEmailThreadsDocument = gql`
       totalMessages
       hasReply
       latestStatus
+      priorityScore
+      hasPendingDraft
+      draftId
+      conversationStage
     }
     totalCount
   }
@@ -6705,6 +6913,7 @@ export const GetEmailThreadsDocument = gql`
  *   variables: {
  *      classification: // value for 'classification'
  *      search: // value for 'search'
+ *      sortBy: // value for 'sortBy'
  *      limit: // value for 'limit'
  *      offset: // value for 'offset'
  *   },
@@ -7314,3 +7523,384 @@ export function useScoreContactsMlMutation(baseOptions?: Apollo.MutationHookOpti
 export type ScoreContactsMlMutationHookResult = ReturnType<typeof useScoreContactsMlMutation>;
 export type ScoreContactsMlMutationResult = Apollo.MutationResult<ScoreContactsMlMutation>;
 export type ScoreContactsMlMutationOptions = Apollo.BaseMutationOptions<ScoreContactsMlMutation, ScoreContactsMlMutationVariables>;
+export const GetReplyDraftsDocument = gql`
+    query GetReplyDrafts($status: String, $draftType: String, $limit: Int, $offset: Int) {
+  replyDrafts(
+    status: $status
+    draftType: $draftType
+    limit: $limit
+    offset: $offset
+  ) {
+    drafts {
+      id
+      receivedEmailId
+      contactId
+      status
+      draftType
+      subject
+      bodyText
+      bodyHtml
+      generationModel
+      contactName
+      contactEmail
+      companyName
+      classification
+      classificationConfidence
+      approvedAt
+      sentAt
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetReplyDraftsQuery__
+ *
+ * To run a query within a React component, call `useGetReplyDraftsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetReplyDraftsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetReplyDraftsQuery({
+ *   variables: {
+ *      status: // value for 'status'
+ *      draftType: // value for 'draftType'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGetReplyDraftsQuery(baseOptions?: Apollo.QueryHookOptions<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>(GetReplyDraftsDocument, options);
+      }
+export function useGetReplyDraftsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>(GetReplyDraftsDocument, options);
+        }
+// @ts-ignore
+export function useGetReplyDraftsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>): Apollo.UseSuspenseQueryResult<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>;
+export function useGetReplyDraftsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>): Apollo.UseSuspenseQueryResult<GetReplyDraftsQuery | undefined, GetReplyDraftsQueryVariables>;
+export function useGetReplyDraftsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>(GetReplyDraftsDocument, options);
+        }
+export type GetReplyDraftsQueryHookResult = ReturnType<typeof useGetReplyDraftsQuery>;
+export type GetReplyDraftsLazyQueryHookResult = ReturnType<typeof useGetReplyDraftsLazyQuery>;
+export type GetReplyDraftsSuspenseQueryHookResult = ReturnType<typeof useGetReplyDraftsSuspenseQuery>;
+export type GetReplyDraftsQueryResult = Apollo.QueryResult<GetReplyDraftsQuery, GetReplyDraftsQueryVariables>;
+export const GetDraftSummaryDocument = gql`
+    query GetDraftSummary {
+  draftSummary {
+    pending
+    approved
+    sent
+    dismissed
+    byClassification {
+      classification
+      count
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetDraftSummaryQuery__
+ *
+ * To run a query within a React component, call `useGetDraftSummaryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDraftSummaryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDraftSummaryQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetDraftSummaryQuery(baseOptions?: Apollo.QueryHookOptions<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>(GetDraftSummaryDocument, options);
+      }
+export function useGetDraftSummaryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>(GetDraftSummaryDocument, options);
+        }
+// @ts-ignore
+export function useGetDraftSummarySuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>): Apollo.UseSuspenseQueryResult<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>;
+export function useGetDraftSummarySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>): Apollo.UseSuspenseQueryResult<GetDraftSummaryQuery | undefined, GetDraftSummaryQueryVariables>;
+export function useGetDraftSummarySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>(GetDraftSummaryDocument, options);
+        }
+export type GetDraftSummaryQueryHookResult = ReturnType<typeof useGetDraftSummaryQuery>;
+export type GetDraftSummaryLazyQueryHookResult = ReturnType<typeof useGetDraftSummaryLazyQuery>;
+export type GetDraftSummarySuspenseQueryHookResult = ReturnType<typeof useGetDraftSummarySuspenseQuery>;
+export type GetDraftSummaryQueryResult = Apollo.QueryResult<GetDraftSummaryQuery, GetDraftSummaryQueryVariables>;
+export const ApproveAndSendDraftDocument = gql`
+    mutation ApproveAndSendDraft($draftId: Int!, $editedSubject: String, $editedBody: String) {
+  approveAndSendDraft(
+    draftId: $draftId
+    editedSubject: $editedSubject
+    editedBody: $editedBody
+  ) {
+    success
+    resendId
+    error
+  }
+}
+    `;
+export type ApproveAndSendDraftMutationFn = Apollo.MutationFunction<ApproveAndSendDraftMutation, ApproveAndSendDraftMutationVariables>;
+
+/**
+ * __useApproveAndSendDraftMutation__
+ *
+ * To run a mutation, you first call `useApproveAndSendDraftMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useApproveAndSendDraftMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [approveAndSendDraftMutation, { data, loading, error }] = useApproveAndSendDraftMutation({
+ *   variables: {
+ *      draftId: // value for 'draftId'
+ *      editedSubject: // value for 'editedSubject'
+ *      editedBody: // value for 'editedBody'
+ *   },
+ * });
+ */
+export function useApproveAndSendDraftMutation(baseOptions?: Apollo.MutationHookOptions<ApproveAndSendDraftMutation, ApproveAndSendDraftMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ApproveAndSendDraftMutation, ApproveAndSendDraftMutationVariables>(ApproveAndSendDraftDocument, options);
+      }
+export type ApproveAndSendDraftMutationHookResult = ReturnType<typeof useApproveAndSendDraftMutation>;
+export type ApproveAndSendDraftMutationResult = Apollo.MutationResult<ApproveAndSendDraftMutation>;
+export type ApproveAndSendDraftMutationOptions = Apollo.BaseMutationOptions<ApproveAndSendDraftMutation, ApproveAndSendDraftMutationVariables>;
+export const DismissDraftDocument = gql`
+    mutation DismissDraft($draftId: Int!) {
+  dismissDraft(draftId: $draftId) {
+    success
+  }
+}
+    `;
+export type DismissDraftMutationFn = Apollo.MutationFunction<DismissDraftMutation, DismissDraftMutationVariables>;
+
+/**
+ * __useDismissDraftMutation__
+ *
+ * To run a mutation, you first call `useDismissDraftMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDismissDraftMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [dismissDraftMutation, { data, loading, error }] = useDismissDraftMutation({
+ *   variables: {
+ *      draftId: // value for 'draftId'
+ *   },
+ * });
+ */
+export function useDismissDraftMutation(baseOptions?: Apollo.MutationHookOptions<DismissDraftMutation, DismissDraftMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DismissDraftMutation, DismissDraftMutationVariables>(DismissDraftDocument, options);
+      }
+export type DismissDraftMutationHookResult = ReturnType<typeof useDismissDraftMutation>;
+export type DismissDraftMutationResult = Apollo.MutationResult<DismissDraftMutation>;
+export type DismissDraftMutationOptions = Apollo.BaseMutationOptions<DismissDraftMutation, DismissDraftMutationVariables>;
+export const RegenerateDraftDocument = gql`
+    mutation RegenerateDraft($draftId: Int!, $instructions: String) {
+  regenerateDraft(draftId: $draftId, instructions: $instructions) {
+    id
+    subject
+    bodyText
+    status
+    createdAt
+  }
+}
+    `;
+export type RegenerateDraftMutationFn = Apollo.MutationFunction<RegenerateDraftMutation, RegenerateDraftMutationVariables>;
+
+/**
+ * __useRegenerateDraftMutation__
+ *
+ * To run a mutation, you first call `useRegenerateDraftMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRegenerateDraftMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [regenerateDraftMutation, { data, loading, error }] = useRegenerateDraftMutation({
+ *   variables: {
+ *      draftId: // value for 'draftId'
+ *      instructions: // value for 'instructions'
+ *   },
+ * });
+ */
+export function useRegenerateDraftMutation(baseOptions?: Apollo.MutationHookOptions<RegenerateDraftMutation, RegenerateDraftMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RegenerateDraftMutation, RegenerateDraftMutationVariables>(RegenerateDraftDocument, options);
+      }
+export type RegenerateDraftMutationHookResult = ReturnType<typeof useRegenerateDraftMutation>;
+export type RegenerateDraftMutationResult = Apollo.MutationResult<RegenerateDraftMutation>;
+export type RegenerateDraftMutationOptions = Apollo.BaseMutationOptions<RegenerateDraftMutation, RegenerateDraftMutationVariables>;
+export const GenerateDraftsForPendingDocument = gql`
+    mutation GenerateDraftsForPending {
+  generateDraftsForPending {
+    success
+    generated
+    skipped
+    failed
+    message
+  }
+}
+    `;
+export type GenerateDraftsForPendingMutationFn = Apollo.MutationFunction<GenerateDraftsForPendingMutation, GenerateDraftsForPendingMutationVariables>;
+
+/**
+ * __useGenerateDraftsForPendingMutation__
+ *
+ * To run a mutation, you first call `useGenerateDraftsForPendingMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateDraftsForPendingMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateDraftsForPendingMutation, { data, loading, error }] = useGenerateDraftsForPendingMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGenerateDraftsForPendingMutation(baseOptions?: Apollo.MutationHookOptions<GenerateDraftsForPendingMutation, GenerateDraftsForPendingMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateDraftsForPendingMutation, GenerateDraftsForPendingMutationVariables>(GenerateDraftsForPendingDocument, options);
+      }
+export type GenerateDraftsForPendingMutationHookResult = ReturnType<typeof useGenerateDraftsForPendingMutation>;
+export type GenerateDraftsForPendingMutationResult = Apollo.MutationResult<GenerateDraftsForPendingMutation>;
+export type GenerateDraftsForPendingMutationOptions = Apollo.BaseMutationOptions<GenerateDraftsForPendingMutation, GenerateDraftsForPendingMutationVariables>;
+export const GenerateFollowUpDraftsDocument = gql`
+    mutation GenerateFollowUpDrafts($daysAfterInitial: Int, $daysAfterFollowUp1: Int, $daysAfterFollowUp2: Int) {
+  generateFollowUpDrafts(
+    daysAfterInitial: $daysAfterInitial
+    daysAfterFollowUp1: $daysAfterFollowUp1
+    daysAfterFollowUp2: $daysAfterFollowUp2
+  ) {
+    success
+    generated
+    skipped
+    failed
+    message
+  }
+}
+    `;
+export type GenerateFollowUpDraftsMutationFn = Apollo.MutationFunction<GenerateFollowUpDraftsMutation, GenerateFollowUpDraftsMutationVariables>;
+
+/**
+ * __useGenerateFollowUpDraftsMutation__
+ *
+ * To run a mutation, you first call `useGenerateFollowUpDraftsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateFollowUpDraftsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateFollowUpDraftsMutation, { data, loading, error }] = useGenerateFollowUpDraftsMutation({
+ *   variables: {
+ *      daysAfterInitial: // value for 'daysAfterInitial'
+ *      daysAfterFollowUp1: // value for 'daysAfterFollowUp1'
+ *      daysAfterFollowUp2: // value for 'daysAfterFollowUp2'
+ *   },
+ * });
+ */
+export function useGenerateFollowUpDraftsMutation(baseOptions?: Apollo.MutationHookOptions<GenerateFollowUpDraftsMutation, GenerateFollowUpDraftsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateFollowUpDraftsMutation, GenerateFollowUpDraftsMutationVariables>(GenerateFollowUpDraftsDocument, options);
+      }
+export type GenerateFollowUpDraftsMutationHookResult = ReturnType<typeof useGenerateFollowUpDraftsMutation>;
+export type GenerateFollowUpDraftsMutationResult = Apollo.MutationResult<GenerateFollowUpDraftsMutation>;
+export type GenerateFollowUpDraftsMutationOptions = Apollo.BaseMutationOptions<GenerateFollowUpDraftsMutation, GenerateFollowUpDraftsMutationVariables>;
+export const ApproveAllDraftsDocument = gql`
+    mutation ApproveAllDrafts($draftIds: [Int!]!) {
+  approveAllDrafts(draftIds: $draftIds) {
+    success
+    sent
+    failed
+    errors
+  }
+}
+    `;
+export type ApproveAllDraftsMutationFn = Apollo.MutationFunction<ApproveAllDraftsMutation, ApproveAllDraftsMutationVariables>;
+
+/**
+ * __useApproveAllDraftsMutation__
+ *
+ * To run a mutation, you first call `useApproveAllDraftsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useApproveAllDraftsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [approveAllDraftsMutation, { data, loading, error }] = useApproveAllDraftsMutation({
+ *   variables: {
+ *      draftIds: // value for 'draftIds'
+ *   },
+ * });
+ */
+export function useApproveAllDraftsMutation(baseOptions?: Apollo.MutationHookOptions<ApproveAllDraftsMutation, ApproveAllDraftsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ApproveAllDraftsMutation, ApproveAllDraftsMutationVariables>(ApproveAllDraftsDocument, options);
+      }
+export type ApproveAllDraftsMutationHookResult = ReturnType<typeof useApproveAllDraftsMutation>;
+export type ApproveAllDraftsMutationResult = Apollo.MutationResult<ApproveAllDraftsMutation>;
+export type ApproveAllDraftsMutationOptions = Apollo.BaseMutationOptions<ApproveAllDraftsMutation, ApproveAllDraftsMutationVariables>;
+export const DismissAllDraftsDocument = gql`
+    mutation DismissAllDrafts($draftIds: [Int!]!) {
+  dismissAllDrafts(draftIds: $draftIds) {
+    success
+    dismissed
+  }
+}
+    `;
+export type DismissAllDraftsMutationFn = Apollo.MutationFunction<DismissAllDraftsMutation, DismissAllDraftsMutationVariables>;
+
+/**
+ * __useDismissAllDraftsMutation__
+ *
+ * To run a mutation, you first call `useDismissAllDraftsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDismissAllDraftsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [dismissAllDraftsMutation, { data, loading, error }] = useDismissAllDraftsMutation({
+ *   variables: {
+ *      draftIds: // value for 'draftIds'
+ *   },
+ * });
+ */
+export function useDismissAllDraftsMutation(baseOptions?: Apollo.MutationHookOptions<DismissAllDraftsMutation, DismissAllDraftsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DismissAllDraftsMutation, DismissAllDraftsMutationVariables>(DismissAllDraftsDocument, options);
+      }
+export type DismissAllDraftsMutationHookResult = ReturnType<typeof useDismissAllDraftsMutation>;
+export type DismissAllDraftsMutationResult = Apollo.MutationResult<DismissAllDraftsMutation>;
+export type DismissAllDraftsMutationOptions = Apollo.BaseMutationOptions<DismissAllDraftsMutation, DismissAllDraftsMutationVariables>;

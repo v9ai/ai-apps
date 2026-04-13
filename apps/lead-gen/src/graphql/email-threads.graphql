@@ -1,5 +1,5 @@
-query GetEmailThreads($classification: String, $search: String, $limit: Int, $offset: Int) {
-  emailThreads(classification: $classification, search: $search, limit: $limit, offset: $offset) {
+query GetEmailThreads($classification: String, $search: String, $sortBy: String, $limit: Int, $offset: Int) {
+  emailThreads(classification: $classification, search: $search, sortBy: $sortBy, limit: $limit, offset: $offset) {
     threads {
       contactId
       contactName
@@ -15,6 +15,10 @@ query GetEmailThreads($classification: String, $search: String, $limit: Int, $of
       totalMessages
       hasReply
       latestStatus
+      priorityScore
+      hasPendingDraft
+      draftId
+      conversationStage
     }
     totalCount
   }

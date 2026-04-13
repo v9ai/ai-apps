@@ -1,4 +1,4 @@
-import { contactEmails, receivedEmails, contacts, companies } from "@/db/schema";
+import { contactEmails, receivedEmails, contacts, companies, replyDrafts } from "@/db/schema";
 import { eq, and, or, count, desc, sql, like, isNull } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -38,7 +38,7 @@ export const emailThreadResolvers = {
   Query: {
     async emailThreads(
       _parent: unknown,
-      args: { classification?: string; search?: string; limit?: number; offset?: number },
+      args: { classification?: string; search?: string; sortBy?: string; limit?: number; offset?: number },
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
@@ -150,6 +150,50 @@ export const emailThreadResolvers = {
         });
       }
 
+      // Fetch pending drafts per contact
+      const pendingDrafts = await context.db
+        .select({
+          contact_id: replyDrafts.contact_id,
+          draft_id: replyDrafts.id,
+        })
+        .from(replyDrafts)
+        .where(eq(replyDrafts.status, "pending"));
+
+      const draftMap = new Map<number, number>();
+      for (const d of pendingDrafts) {
+        draftMap.set(d.contact_id, d.draft_id);
+      }
+
+      // Fetch authority scores and conversation stages for contacts
+      const contactIds = outboundThreads.map((r) => r.contact_id);
+      const contactExtras = contactIds.length > 0
+        ? await context.db
+            .select({
+              id: contacts.id,
+              authority_score: contacts.authority_score,
+              conversation_stage: contacts.conversation_stage,
+            })
+            .from(contacts)
+            .where(sql`${contacts.id} IN (${sql.join(contactIds.map(id => sql`${id}`), sql`, `)})`)
+        : [];
+
+      const authorityMap = new Map<number, number>();
+      const stageMap = new Map<number, string | null>();
+      for (const c of contactExtras) {
+        authorityMap.set(c.id, c.authority_score ?? 0);
+        stageMap.set(c.id, c.conversation_stage);
+      }
+
+      // Classification priority weights
+      const classWeight: Record<string, number> = {
+        interested: 100,
+        info_request: 80,
+        auto_reply: 20,
+        not_interested: 10,
+        bounced: 0,
+        unsubscribe: 0,
+      };
+
       // Merge outbound + inbound into threads
       let threads = outboundThreads.map((row) => {
         const inbound = inboundMap.get(row.contact_id);
@@ -160,6 +204,22 @@ export const emailThreadResolvers = {
 
         const preview = previewMap.get(row.contact_id);
         const totalMessages = (row.outbound_count || 0) + (inbound?.inbound_count || 0);
+        const hasPendingDraft = draftMap.has(row.contact_id);
+        const draftId = draftMap.get(row.contact_id) ?? null;
+
+        // Compute priority score
+        const classification = inbound?.latest_classification || null;
+        const confidence = inbound?.latest_confidence || 0;
+        const cWeight = classWeight[classification || ""] ?? 0;
+        const authority = authorityMap.get(row.contact_id) ?? 0;
+
+        // Recency bonus: inbound within last 24h = +50, 48h = +30, 72h = +10
+        const inboundMs = toMs(inboundAt);
+        const hoursSinceInbound = inboundMs > 0 ? (Date.now() - inboundMs) / 3600000 : Infinity;
+        const recencyBonus = hoursSinceInbound < 24 ? 50 : hoursSinceInbound < 48 ? 30 : hoursSinceInbound < 72 ? 10 : 0;
+
+        const draftBonus = hasPendingDraft ? 20 : 0;
+        const priorityScore = (cWeight * confidence) + (authority * 20) + recencyBonus + draftBonus;
 
         return {
           contactId: row.contact_id,
@@ -171,11 +231,15 @@ export const emailThreadResolvers = {
           lastMessageAt,
           lastMessagePreview: preview?.text?.slice(0, 120) || preview?.subject || null,
           lastMessageDirection,
-          classification: inbound?.latest_classification || null,
+          classification,
           classificationConfidence: inbound?.latest_confidence || null,
           totalMessages,
           hasReply: !!inbound,
           latestStatus: row.latest_status,
+          priorityScore,
+          hasPendingDraft,
+          draftId,
+          conversationStage: stageMap.get(row.contact_id) || null,
           messages: [], // Populated only in emailThread query
         };
       });
@@ -202,8 +266,12 @@ export const emailThreadResolvers = {
         );
       }
 
-      // Sort by most recent activity
-      threads.sort((a, b) => toMs(b.lastMessageAt) - toMs(a.lastMessageAt));
+      // Sort by priority or recency
+      if (args.sortBy === "priority") {
+        threads.sort((a, b) => (b.priorityScore ?? 0) - (a.priorityScore ?? 0));
+      } else {
+        threads.sort((a, b) => toMs(b.lastMessageAt) - toMs(a.lastMessageAt));
+      }
 
       const totalCount = threads.length;
       const paged = threads.slice(offset, offset + limit);

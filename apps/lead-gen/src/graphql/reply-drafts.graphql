@@ -1,0 +1,98 @@
+query GetReplyDrafts($status: String, $draftType: String, $limit: Int, $offset: Int) {
+  replyDrafts(status: $status, draftType: $draftType, limit: $limit, offset: $offset) {
+    drafts {
+      id
+      receivedEmailId
+      contactId
+      status
+      draftType
+      subject
+      bodyText
+      bodyHtml
+      generationModel
+      contactName
+      contactEmail
+      companyName
+      classification
+      classificationConfidence
+      approvedAt
+      sentAt
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+
+query GetDraftSummary {
+  draftSummary {
+    pending
+    approved
+    sent
+    dismissed
+    byClassification {
+      classification
+      count
+    }
+  }
+}
+
+mutation ApproveAndSendDraft($draftId: Int!, $editedSubject: String, $editedBody: String) {
+  approveAndSendDraft(draftId: $draftId, editedSubject: $editedSubject, editedBody: $editedBody) {
+    success
+    resendId
+    error
+  }
+}
+
+mutation DismissDraft($draftId: Int!) {
+  dismissDraft(draftId: $draftId) {
+    success
+  }
+}
+
+mutation RegenerateDraft($draftId: Int!, $instructions: String) {
+  regenerateDraft(draftId: $draftId, instructions: $instructions) {
+    id
+    subject
+    bodyText
+    status
+    createdAt
+  }
+}
+
+mutation GenerateDraftsForPending {
+  generateDraftsForPending {
+    success
+    generated
+    skipped
+    failed
+    message
+  }
+}
+
+mutation GenerateFollowUpDrafts($daysAfterInitial: Int, $daysAfterFollowUp1: Int, $daysAfterFollowUp2: Int) {
+  generateFollowUpDrafts(daysAfterInitial: $daysAfterInitial, daysAfterFollowUp1: $daysAfterFollowUp1, daysAfterFollowUp2: $daysAfterFollowUp2) {
+    success
+    generated
+    skipped
+    failed
+    message
+  }
+}
+
+mutation ApproveAllDrafts($draftIds: [Int!]!) {
+  approveAllDrafts(draftIds: $draftIds) {
+    success
+    sent
+    failed
+    errors
+  }
+}
+
+mutation DismissAllDrafts($draftIds: [Int!]!) {
+  dismissAllDrafts(draftIds: $draftIds) {
+    success
+    dismissed
+  }
+}

@@ -27,11 +27,13 @@ export function ThreadInbox() {
 
   const [classification, setClassification] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"priority" | "recent">("priority");
 
   const { data, loading, error, refetch } = useGetEmailThreadsQuery({
     variables: {
       classification: classification || undefined,
       search: search || undefined,
+      sortBy,
       limit: 100,
     },
     fetchPolicy: "cache-and-network",
@@ -89,11 +91,32 @@ export function ThreadInbox() {
           ))}
         </Flex>
 
-        {/* Count */}
-        <Flex px="3" py="2" align="center" style={{ borderBottom: "1px solid var(--gray-4)" }}>
+        {/* Count + Sort toggle */}
+        <Flex px="3" py="2" align="center" justify="between" style={{ borderBottom: "1px solid var(--gray-4)" }}>
           <Text size="1" color="gray">
             {totalCount} conversation{totalCount !== 1 ? "s" : ""}
+            {threads.filter((t) => t.hasPendingDraft).length > 0 && (
+              <Badge size="1" color="green" ml="2">
+                {threads.filter((t) => t.hasPendingDraft).length} drafts
+              </Badge>
+            )}
           </Text>
+          <Flex gap="1">
+            <button
+              className={button({ variant: sortBy === "priority" ? "solid" : "ghost", size: "sm" })}
+              onClick={() => setSortBy("priority")}
+              style={{ fontSize: "var(--font-size-1)" }}
+            >
+              Priority
+            </button>
+            <button
+              className={button({ variant: sortBy === "recent" ? "solid" : "ghost", size: "sm" })}
+              onClick={() => setSortBy("recent")}
+              style={{ fontSize: "var(--font-size-1)" }}
+            >
+              Recent
+            </button>
+          </Flex>
         </Flex>
 
         {/* Thread list */}

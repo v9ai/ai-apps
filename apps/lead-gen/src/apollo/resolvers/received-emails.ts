@@ -4,7 +4,7 @@ import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import { textToHtml } from "@/lib/email";
 import { resend } from "@/lib/resend";
-import { classifyReply } from "@/lib/email/reply-classifier";
+import { classifyReply, classifyReplyHybrid } from "@/lib/email/reply-classifier";
 import { matchContact } from "@/lib/email/contact-matcher";
 
 function parseJsonArray(val: string | null | undefined): string[] {
@@ -206,10 +206,24 @@ export const receivedEmailResolvers = {
         return { success: false, classification: null, confidence: null, matchedContactId: null };
       }
 
-      const result = classifyReply(email.subject || "", email.text_content || "");
+      // Build thread context from matched outbound email for better classification
       const contactMatch = email.from_email
         ? await matchContact(email.from_email)
         : null;
+
+      let threadContext: string | undefined;
+      if (contactMatch?.outboundEmailId) {
+        const [outbound] = await context.db
+          .select({ subject: contactEmails.subject, text_content: contactEmails.text_content })
+          .from(contactEmails)
+          .where(eq(contactEmails.id, contactMatch.outboundEmailId))
+          .limit(1);
+        if (outbound) {
+          threadContext = `Subject: ${outbound.subject}\n${outbound.text_content || ""}`;
+        }
+      }
+
+      const result = await classifyReplyHybrid(email.subject || "", email.text_content || "", threadContext);
 
       await context.db
         .update(receivedEmails)
@@ -244,6 +258,14 @@ export const receivedEmailResolvers = {
           .where(eq(contactEmails.id, contactMatch.outboundEmailId));
       }
 
+      // Advance conversation state
+      if (contactMatch?.contactId) {
+        try {
+          const { advanceConversationState } = await import("@/lib/email/conversation-state");
+          await advanceConversationState(contactMatch.contactId, result.label);
+        } catch { /* non-critical */ }
+      }
+
       return {
         success: true,
         classification: result.label,
@@ -267,50 +289,78 @@ export const receivedEmailResolvers = {
         .where(isNull(receivedEmails.classification));
 
       let classified = 0;
-      for (const email of pending) {
-        const result = classifyReply(email.subject || "", email.text_content || "");
-        const contactMatch = email.from_email
-          ? await matchContact(email.from_email)
-          : null;
 
-        await context.db
-          .update(receivedEmails)
-          .set({
-            classification: result.label,
-            classification_confidence: result.confidence,
-            classified_at: new Date().toISOString(),
-            ...(contactMatch?.contactId ? { matched_contact_id: contactMatch.contactId } : {}),
-            ...(contactMatch?.outboundEmailId ? { matched_outbound_id: contactMatch.outboundEmailId } : {}),
-            updated_at: new Date().toISOString(),
-          })
-          .where(eq(receivedEmails.id, email.id));
+      // Process in batches of 5 concurrent for LLM calls
+      for (let i = 0; i < pending.length; i += 5) {
+        const batch = pending.slice(i, i + 5);
+        await Promise.all(
+          batch.map(async (email) => {
+            const contactMatch = email.from_email
+              ? await matchContact(email.from_email)
+              : null;
 
-        if (result.label === "unsubscribe" && contactMatch?.contactId) {
-          await context.db
-            .update(contacts)
-            .set({ do_not_contact: true, updated_at: new Date().toISOString() })
-            .where(eq(contacts.id, contactMatch.contactId));
-        }
+            let threadContext: string | undefined;
+            if (contactMatch?.outboundEmailId) {
+              const [outbound] = await context.db
+                .select({ subject: contactEmails.subject, text_content: contactEmails.text_content })
+                .from(contactEmails)
+                .where(eq(contactEmails.id, contactMatch.outboundEmailId))
+                .limit(1);
+              if (outbound) {
+                threadContext = `Subject: ${outbound.subject}\n${outbound.text_content || ""}`;
+              }
+            }
 
-        if (contactMatch?.outboundEmailId) {
-          await context.db
-            .update(contactEmails)
-            .set({
-              reply_received: true,
-              reply_received_at: new Date().toISOString(),
-              reply_classification: result.label,
-              updated_at: new Date().toISOString(),
-            })
-            .where(eq(contactEmails.id, contactMatch.outboundEmailId));
-        }
+            const result = await classifyReplyHybrid(email.subject || "", email.text_content || "", threadContext);
 
-        classified++;
+            await context.db
+              .update(receivedEmails)
+              .set({
+                classification: result.label,
+                classification_confidence: result.confidence,
+                classified_at: new Date().toISOString(),
+                ...(contactMatch?.contactId ? { matched_contact_id: contactMatch.contactId } : {}),
+                ...(contactMatch?.outboundEmailId ? { matched_outbound_id: contactMatch.outboundEmailId } : {}),
+                updated_at: new Date().toISOString(),
+              })
+              .where(eq(receivedEmails.id, email.id));
+
+            if (result.label === "unsubscribe" && contactMatch?.contactId) {
+              await context.db
+                .update(contacts)
+                .set({ do_not_contact: true, updated_at: new Date().toISOString() })
+                .where(eq(contacts.id, contactMatch.contactId));
+            }
+
+            if (contactMatch?.outboundEmailId) {
+              await context.db
+                .update(contactEmails)
+                .set({
+                  reply_received: true,
+                  reply_received_at: new Date().toISOString(),
+                  reply_classification: result.label,
+                  updated_at: new Date().toISOString(),
+                })
+                .where(eq(contactEmails.id, contactMatch.outboundEmailId));
+            }
+
+            // Advance conversation state
+            if (contactMatch?.contactId) {
+              try {
+                const { advanceConversationState } = await import("@/lib/email/conversation-state");
+                await advanceConversationState(contactMatch.contactId, result.label);
+              } catch { /* non-critical */ }
+            }
+
+            classified++;
+          }),
+        );
       }
 
       return {
         success: true,
         classified,
-        message: `Classified ${classified} email(s)`,
+        message: `Classified ${classified} email(s) with LLM hybrid classifier`,
       };
     },
 

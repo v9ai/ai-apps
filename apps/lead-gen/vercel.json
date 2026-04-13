@@ -18,6 +18,10 @@
     {
       "path": "/api/cron/cpn-campaign",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/followup-scheduler",
+      "schedule": "0 7 * * *"
     }
   ]
 }

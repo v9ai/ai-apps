@@ -12,6 +12,7 @@ import { linkedinPostResolvers } from "./resolvers/linkedin-posts";
 import { intentSignalResolvers } from "./resolvers/intent-signals";
 import { mlResolvers } from "./resolvers/ml";
 import { salescueResolvers } from "./resolvers/salescue";
+import { replyDraftResolvers } from "./resolvers/reply-drafts";
 import { merge } from "lodash";
 
 export const resolvers = merge(
@@ -30,4 +31,5 @@ export const resolvers = merge(
   intentSignalResolvers,
   mlResolvers,
   salescueResolvers,
+  replyDraftResolvers,
 );

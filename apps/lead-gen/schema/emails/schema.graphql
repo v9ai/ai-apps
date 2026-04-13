@@ -425,10 +425,96 @@ type SendOutreachEmailResult {
   error: String
 }
 
+# --- Reply Drafts (auto-generated replies for user approval) ---
+
+extend type Query {
+  replyDrafts(status: String, draftType: String, limit: Int, offset: Int): ReplyDraftsResult!
+  draftSummary: DraftSummary!
+}
+
+extend type Mutation {
+  approveAndSendDraft(draftId: Int!, editedSubject: String, editedBody: String): SendDraftResult!
+  dismissDraft(draftId: Int!): DismissDraftResult!
+  regenerateDraft(draftId: Int!, instructions: String): ReplyDraft!
+  generateDraftsForPending: GenerateDraftsBatchResult!
+  generateFollowUpDrafts(daysAfterInitial: Int, daysAfterFollowUp1: Int, daysAfterFollowUp2: Int): GenerateDraftsBatchResult!
+  approveAllDrafts(draftIds: [Int!]!): BatchSendDraftResult!
+  dismissAllDrafts(draftIds: [Int!]!): BatchDismissResult!
+}
+
+type ReplyDraft {
+  id: Int!
+  receivedEmailId: Int!
+  contactId: Int!
+  status: String!
+  draftType: String!
+  subject: String!
+  bodyText: String!
+  bodyHtml: String
+  generationModel: String
+  contactName: String
+  contactEmail: String
+  companyName: String
+  classification: String
+  classificationConfidence: Float
+  approvedAt: String
+  sentAt: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ReplyDraftsResult {
+  drafts: [ReplyDraft!]!
+  totalCount: Int!
+}
+
+type DraftSummary {
+  pending: Int!
+  approved: Int!
+  sent: Int!
+  dismissed: Int!
+  byClassification: [ClassificationCount!]!
+}
+
+type ClassificationCount {
+  classification: String!
+  count: Int!
+}
+
+type SendDraftResult {
+  success: Boolean!
+  resendId: String
+  error: String
+}
+
+type DismissDraftResult {
+  success: Boolean!
+}
+
+type GenerateDraftsBatchResult {
+  success: Boolean!
+  generated: Int!
+  skipped: Int!
+  failed: Int!
+  message: String!
+}
+
+type BatchSendDraftResult {
+  success: Boolean!
+  sent: Int!
+  failed: Int!
+  errors: [String!]!
+}
+
+type BatchDismissResult {
+  success: Boolean!
+  dismissed: Int!
+}
+
 # --- Email Threads (Gmail-like grouped conversations) ---
 
 extend type Query {
-  emailThreads(classification: String, search: String, limit: Int, offset: Int): EmailThreadsResult!
+  emailThreads(classification: String, search: String, sortBy: String, limit: Int, offset: Int): EmailThreadsResult!
   emailThread(contactId: Int!): EmailThread
 }
 
@@ -447,6 +533,10 @@ type EmailThread {
   totalMessages: Int!
   hasReply: Boolean!
   latestStatus: String
+  priorityScore: Float
+  hasPendingDraft: Boolean
+  draftId: Int
+  conversationStage: String
   messages: [ThreadMessage!]!
 }
 

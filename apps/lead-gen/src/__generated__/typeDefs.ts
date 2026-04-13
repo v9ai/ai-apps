@@ -67,6 +67,11 @@ type BatchDetectIntentResult {
   success: Boolean!
 }
 
+type BatchDismissResult {
+  dismissed: Int!
+  success: Boolean!
+}
+
 type BatchOperationResult {
   affected: Int!
   message: String
@@ -80,6 +85,13 @@ input BatchRecipientInput {
   name: String!
 }
 
+type BatchSendDraftResult {
+  errors: [String!]!
+  failed: Int!
+  sent: Int!
+  success: Boolean!
+}
+
 type CancelCompanyEmailsResult {
   cancelledCount: Int!
   failedCount: Int!
@@ -90,6 +102,11 @@ type CancelCompanyEmailsResult {
 type CancelEmailResult {
   error: String
   success: Boolean!
+}
+
+type ClassificationCount {
+  classification: String!
+  count: Int!
 }
 
 type ClassifyBatchResult {
@@ -618,6 +635,18 @@ type DetectIntentResult {
   success: Boolean!
 }
 
+type DismissDraftResult {
+  success: Boolean!
+}
+
+type DraftSummary {
+  approved: Int!
+  byClassification: [ClassificationCount!]!
+  dismissed: Int!
+  pending: Int!
+  sent: Int!
+}
+
 scalar EmailAddress
 
 type EmailCampaign {
@@ -704,12 +733,16 @@ type EmailThread {
   contactId: Int!
   contactName: String!
   contactPosition: String
+  conversationStage: String
+  draftId: Int
+  hasPendingDraft: Boolean
   hasReply: Boolean!
   lastMessageAt: String!
   lastMessageDirection: String!
   lastMessagePreview: String
   latestStatus: String
   messages: [ThreadMessage!]!
+  priorityScore: Float
   totalMessages: Int!
 }
 
@@ -859,6 +892,14 @@ type FollowUpEmail {
 type FollowUpEmailsResult {
   emails: [FollowUpEmail!]!
   totalCount: Int!
+}
+
+type GenerateDraftsBatchResult {
+  failed: Int!
+  generated: Int!
+  message: String!
+  skipped: Int!
+  success: Boolean!
 }
 
 input GenerateEmailInput {
@@ -1083,6 +1124,8 @@ type Mutation {
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   analyzeLinkedInPosts(limit: Int, postIds: [Int!]): AnalyzePostsResult!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
+  approveAllDrafts(draftIds: [Int!]!): BatchSendDraftResult!
+  approveAndSendDraft(draftId: Int!, editedBody: String, editedSubject: String): SendDraftResult!
   archiveEmail(id: Int!): ArchiveEmailResult!
   batchDetectIntent(companyIds: [Int!]!): BatchDetectIntentResult!
   blockCompany(id: Int!): Company!
@@ -1110,6 +1153,8 @@ type Mutation {
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
   deleteLinkedInPost(id: Int!): Boolean!
   detectIntentSignals(companyId: Int!): DetectIntentResult!
+  dismissAllDrafts(draftIds: [Int!]!): BatchDismissResult!
+  dismissDraft(draftId: Int!): DismissDraftResult!
   dismissReminder(id: Int!): ContactReminder!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
@@ -1120,7 +1165,9 @@ type Mutation {
   flagContactsForDeletion(threshold: Float): BatchOperationResult!
   """Generate and store embeddings for companies missing them. Admin only."""
   generateCompanyEmbeddings(batchSize: Int, companyIds: [Int!]): GenerateEmbeddingsResult!
+  generateDraftsForPending: GenerateDraftsBatchResult!
   generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
+  generateFollowUpDrafts(daysAfterFollowUp1: Int, daysAfterFollowUp2: Int, daysAfterInitial: Int): GenerateDraftsBatchResult!
   generateReply(input: GenerateReplyInput!): GenerateReplyResult!
   importCompanies(companies: [CompanyImportInput!]!): ImportCompaniesResult!
   importCompanyWithContacts(input: ImportCompanyWithContactsInput!): ImportCompanyResult!
@@ -1135,6 +1182,7 @@ type Mutation {
   previewEmail(input: PreviewEmailInput!): EmailPreview!
   purgeDeletedContacts(companyId: Int): BatchOperationResult!
   refreshIntentScores: RefreshIntentResult!
+  regenerateDraft(draftId: Int!, instructions: String): ReplyDraft!
   salescueAnalyze(modules: [SalescueModule!], text: String!): SalescueAnalyzeResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
@@ -1203,6 +1251,7 @@ type Query {
   contactMessages(contactId: Int!): [ContactMessage!]!
   contactReminders(contactId: Int!): [ContactReminder!]!
   contacts(companyId: Int, limit: Int, offset: Int, search: String): ContactsResult!
+  draftSummary: DraftSummary!
   dueReminders: [ContactReminderWithContact!]!
   emailCampaign(id: String!): EmailCampaign
   emailCampaigns(limit: Int, offset: Int, status: String): EmailCampaignsResult!
@@ -1210,7 +1259,7 @@ type Query {
   emailTemplate(id: Int!): EmailTemplate
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
   emailThread(contactId: Int!): EmailThread
-  emailThreads(classification: String, limit: Int, offset: Int, search: String): EmailThreadsResult!
+  emailThreads(classification: String, limit: Int, offset: Int, search: String, sortBy: String): EmailThreadsResult!
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
   findCompany(name: String, website: String): FindCompanyResult!
   intentDashboard: IntentDashboard!
@@ -1225,6 +1274,7 @@ type Query {
   recommendedCompanies(limit: Int, minScore: Float): [RecommendedCompany!]!
   """Best contacts to reach within a company"""
   recommendedContacts(companyId: Int!, limit: Int): [RankedContact!]!
+  replyDrafts(draftType: String, limit: Int, offset: Int, status: String): ReplyDraftsResult!
   resendEmail(resendId: String!): ResendEmailDetail
   salescueEntities(text: String!): SalescueEntitiesResult!
   salescueHealth: SalescueHealth!
@@ -1343,6 +1393,32 @@ type RegionGrowth {
   location: String!
   previousCount: Int!
   remoteCount: Int!
+}
+
+type ReplyDraft {
+  approvedAt: String
+  bodyHtml: String
+  bodyText: String!
+  classification: String
+  classificationConfidence: Float
+  companyName: String
+  contactEmail: String
+  contactId: Int!
+  contactName: String
+  createdAt: String!
+  draftType: String!
+  generationModel: String
+  id: Int!
+  receivedEmailId: Int!
+  sentAt: String
+  status: String!
+  subject: String!
+  updatedAt: String!
+}
+
+type ReplyDraftsResult {
+  drafts: [ReplyDraft!]!
+  totalCount: Int!
 }
 
 type RepostReport {
@@ -1751,6 +1827,12 @@ type ScoreContactsMLResult {
   decisionMakersFound: Int!
   message: String!
   results: [ContactMLScore!]!
+  success: Boolean!
+}
+
+type SendDraftResult {
+  error: String
+  resendId: String
   success: Boolean!
 }
 
