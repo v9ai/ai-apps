@@ -183,7 +183,7 @@ export function UploadForm() {
           <button
             type="button"
             className={`${toggleBtnClass} ${mode === "file" ? toggleBtnActiveClass : ""}`}
-            onClick={() => { setMode("file"); setBatchProgress(null); setDirFiles([]); }}
+            onClick={() => { setMode("file"); setBatchProgress(null); setDirFiles([]); setSkippedCount(0); }}
           >
             Single file
           </button>
@@ -248,6 +248,7 @@ export function UploadForm() {
 function DirectoryUpload({
   dirInputRef,
   dirFiles,
+  skippedCount,
   onDirChange,
   onBatchUpload,
   isBatchUploading,
@@ -258,6 +259,7 @@ function DirectoryUpload({
 }: {
   dirInputRef: React.RefObject<HTMLInputElement | null>;
   dirFiles: File[];
+  skippedCount: number;
   onDirChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBatchUpload: (testDate: string) => void;
   isBatchUploading: boolean;
@@ -297,10 +299,11 @@ function DirectoryUpload({
         </Flex>
       </div>
 
-      {dirFiles.length > 0 && !isBatchUploading && (
-        <Callout.Root color="blue">
+      {(dirFiles.length > 0 || skippedCount > 0) && !isBatchUploading && !done && (
+        <Callout.Root color={dirFiles.length > 0 ? "blue" : "gray"}>
           <Callout.Text>
-            Found <strong>{dirFiles.length}</strong> file{dirFiles.length !== 1 && "s"} (PDF, JPG, PNG)
+            <strong>{dirFiles.length}</strong> new file{dirFiles.length !== 1 && "s"} to upload
+            {skippedCount > 0 && <> — {skippedCount} already uploaded, skipped</>}
           </Callout.Text>
         </Callout.Root>
       )}
