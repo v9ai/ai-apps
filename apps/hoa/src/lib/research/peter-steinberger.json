@@ -279,9 +279,9 @@
     },
     {
       "category": "philosophy",
-      "question": "You describe yourself as 'polyagentmorous' — using multiple AI models simultaneously. Most developers are loyal to one model. What's your actual model-selection process for a given task, and when does multi-model create more noise than signal?",
-      "why_this_question": "His GitHub profile term 'polyagentmorous' deserves unpacking — it's a real workflow choice",
-      "expected_insight": "Practical multi-model strategy beyond the meme, including when it fails"
+      "question": "In 'Stop Over-thinking AI Subscriptions | Peter Steinberger' you push back against common developer anxieties. As someone who bootstrapped a company to millions in ARR the old way — do you genuinely believe the old way of building software is dying, or just changing?",
+      "why_this_question": "Creates productive tension between his bootstrapping past and AI-native present",
+      "expected_insight": "Whether he sees continuity or rupture between traditional and AI-native engineering"
     },
     {
       "category": "collaboration",
@@ -291,13 +291,13 @@
     },
     {
       "category": "collaboration",
-      "question": "In 'Hiring a distributed team | Peter Steinberger' you wrote about building a distributed team across time zones. Now you're a solo developer with AI agents as your team. What do you miss about human collaborators that no AI can replace?",
+      "question": "In 'How We Work at PSPDFKit | Peter Steinberger' you wrote about building a distributed team across time zones. Now you're a solo developer with AI agents as your team. What do you miss about human collaborators that no AI can replace?",
       "why_this_question": "Probes the human cost of the solo-with-AI model he champions",
       "expected_insight": "Honest reflection on what's lost when you replace a team with agents"
     },
     {
       "category": "future",
-      "question": "In 'OpenClaw, OpenAI and the future | Peter Steinberger' you explore where AI development is heading. You joined OpenAI to 'build an agent even my mum can use.' What specific interaction pattern are you betting on — and what current approaches are dead ends?",
+      "question": "In 'Essential Reading for Agentic Engineers | Peter Steinberger' you explore where AI development is heading. You joined OpenAI to 'build an agent even my mum can use.' What specific interaction pattern are you betting on — and what current approaches are dead ends?",
       "why_this_question": "References his stated mission at OpenAI — forces specificity about the product vision",
       "expected_insight": "Concrete UX predictions for personal agents, not vague 'AI will change everything'"
     },
@@ -321,13 +321,13 @@
     },
     {
       "category": "swift_runtime",
-      "question": "You wrote 'InterposeKit — Elegant Swizzling in Swift | Peter Steinberger' and built InterposeKit for elegant method swizzling. That's deep Objective-C runtime work. Does any of that low-level runtime knowledge matter when AI writes most of the code — or is it actually more important?",
+      "question": "You wrote 'Swizzling in Swift | Peter Steinberger' and built InterposeKit for elegant method swizzling. That's deep Objective-C runtime work. Does any of that low-level runtime knowledge matter when AI writes most of the code — or is it actually more important?",
       "why_this_question": "Tests whether deep platform expertise is becoming more or less valuable with AI",
       "expected_insight": "The value of runtime-level understanding when AI handles implementation but not architecture"
     },
     {
       "category": "swift_runtime",
-      "question": "'Swifty Objective-C | Peter Steinberger' explores bridging Objective-C and Swift idiomatically. You've lived through every Swift migration pain point. What's the AI-era equivalent of the ObjC-to-Swift transition?",
+      "question": "'Surprises with Swift Extensions | Peter Steinberger' explores bridging Objective-C and Swift idiomatically. You've lived through every Swift migration pain point. What's the AI-era equivalent of the ObjC-to-Swift transition?",
       "why_this_question": "Draws a parallel between past language transitions and the current AI-coding shift",
       "expected_insight": "Which historical pattern best predicts how AI-assisted development evolves"
     },
@@ -357,7 +357,7 @@
     },
     {
       "category": "apple_platform",
-      "question": "In 'Updating macOS on a Hackintosh | Peter Steinberger' you explored pushing Apple hardware and software to its limits. You've jailbroken iPhones, built Hackintoshes, and fought kernel_task. That hacker mentality — does it show up in how you approach AI agents?",
+      "question": "In 'Apple Silicon M1: A Developer&#39;s Perspective | Peter Steinberger' you explored pushing Apple hardware and software to its limits. You've jailbroken iPhones, built Hackintoshes, and fought kernel_task. That hacker mentality — does it show up in how you approach AI agents?",
       "why_this_question": "Connects his hardware-hacking roots to his current agent-orchestration work",
       "expected_insight": "Whether the 'break it to understand it' mindset applies to AI development"
     },

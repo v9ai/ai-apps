@@ -28,7 +28,11 @@ from graph import run_graph
 app = FastAPI(title="Blood Marker Intelligence Chat")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://agentic-healthcare.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -60,7 +64,17 @@ class GraphChatResponse(BaseModel):
 @app.post("/chat")
 async def chat(req: ChatRequest) -> GraphChatResponse:
     """Run the full LangGraph clinical intelligence pipeline."""
-    last_message = req.messages[-1]["content"] if req.messages else ""
+    if not req.messages:
+        return GraphChatResponse(
+            answer="Please provide a message to get started.",
+            intent="",
+            intent_confidence=0.0,
+            retrieval_sources=[],
+            guard_passed=True,
+            guard_issues=[],
+            citations=[],
+        )
+    last_message = req.messages[-1].get("content", "")
     history = req.messages[:-1] if len(req.messages) > 1 else []
 
     result = await run_graph(

@@ -1,8 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSessionCookie } from "@ai-apps/auth";
+
+const COOKIE_NAME = "better-auth.session_token";
+const SECURE_COOKIE_NAME = `__Secure-${COOKIE_NAME}`;
 
 export function proxy(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
+  const sessionCookie =
+    request.cookies.get(SECURE_COOKIE_NAME)?.value ??
+    request.cookies.get(COOKIE_NAME)?.value ??
+    null;
 
   if (
     !sessionCookie &&

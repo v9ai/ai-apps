@@ -13,6 +13,10 @@ export async function sendChatMessage(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages, user_id: userId }),
   });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "Unknown error");
+    throw new Error(`Chat API failed (${res.status}): ${detail}`);
+  }
   const data = await res.json();
-  return data.answer as string;
+  return (data.answer ?? "") as string;
 }

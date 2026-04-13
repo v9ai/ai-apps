@@ -8,27 +8,35 @@ from datetime import datetime, timezone
 from typing import Any, Generator
 
 import psycopg
+from psycopg_pool import ConnectionPool
 from pgvector.psycopg import register_vector
 from config import settings
 
 
-def _connect() -> psycopg.Connection:
-    conn = psycopg.connect(settings.database_url, autocommit=False)
+def _configure_conn(conn: psycopg.Connection) -> None:
+    """Register pgvector types on a fresh connection."""
     register_vector(conn)
-    return conn
+
+
+# Connection pool — reuses connections instead of opening/closing per query.
+# min_size=1 keeps one warm connection; max_size=10 caps concurrent usage.
+_pool = ConnectionPool(
+    conninfo=settings.database_url,
+    min_size=1,
+    max_size=10,
+    configure=_configure_conn,
+)
 
 
 @contextmanager
 def get_conn() -> Generator[psycopg.Connection, None, None]:
-    conn = _connect()
-    try:
-        yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
+    with _pool.connection() as conn:
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
 
 
 # ── blood_tests ───────────────────────────────────────────────────────
@@ -370,18 +378,31 @@ def search_markers_hybrid(
     with get_conn() as conn:
         rows = conn.execute(
             """
+            WITH scored AS (
+                SELECT marker_id, test_id, marker_name, content,
+                       ts_rank(to_tsvector('english', content), plainto_tsquery('english', %s)) as raw_fts,
+                       1 - (embedding <=> %s) as vector_similarity
+                FROM blood_marker_embeddings
+                WHERE user_id = %s
+                  AND 1 - (embedding <=> %s) > %s
+            ),
+            normalized AS (
+                SELECT *,
+                       CASE WHEN max(raw_fts) OVER () > 0
+                            THEN raw_fts / max(raw_fts) OVER ()
+                            ELSE 0
+                       END as fts_norm
+                FROM scored
+            )
             SELECT marker_id, test_id, marker_name, content,
-                   ts_rank(to_tsvector('english', content), plainto_tsquery('english', %s)) as fts_rank,
-                   1 - (embedding <=> %s) as vector_similarity,
-                   (0.3 * ts_rank(to_tsvector('english', content), plainto_tsquery('english', %s))
-                    + 0.7 * (1 - (embedding <=> %s))) as combined_score
-            FROM blood_marker_embeddings
-            WHERE user_id = %s
-              AND 1 - (embedding <=> %s) > %s
+                   raw_fts as fts_rank,
+                   vector_similarity,
+                   (0.3 * fts_norm + 0.7 * vector_similarity) as combined_score
+            FROM normalized
             ORDER BY combined_score DESC
             LIMIT %s
             """,
-            (query_text, vec, query_text, vec, user_id, vec, threshold, limit),
+            (query_text, vec, user_id, vec, threshold, limit),
         ).fetchall()
     return [
         {
