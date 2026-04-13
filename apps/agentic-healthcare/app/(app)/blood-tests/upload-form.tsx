@@ -4,7 +4,7 @@ import { uploadBloodTest, uploadBloodTestNoRedirect, getExistingFileNames } from
 import { Box, Button, Callout, Flex, Text, Progress } from "@radix-ui/themes";
 import { UploadIcon } from "@radix-ui/react-icons";
 import { useFormStatus } from "react-dom";
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { uniqBy } from "lodash-es";
 import { css } from "styled-system/css";
@@ -90,7 +90,7 @@ export function UploadForm() {
     currentFile: string;
     results: { fileName: string; ok: boolean; error?: string }[];
   } | null>(null);
-  const [isBatchUploading, startBatch] = useTransition();
+  const [isBatchUploading, setIsBatchUploading] = useState(false);
   const dirInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSingleAction(formData: FormData) {
@@ -121,44 +121,44 @@ export function UploadForm() {
     setDirFiles(newFiles);
   }
 
-  function handleBatchUpload(testDate: string) {
+  async function handleBatchUpload(testDate: string) {
     if (dirFiles.length === 0) return;
     setError(null);
 
-    startBatch(async () => {
-      const results: { fileName: string; ok: boolean; error?: string }[] = [];
+    setIsBatchUploading(true);
+    const results: { fileName: string; ok: boolean; error?: string }[] = [];
 
-      for (let i = 0; i < dirFiles.length; i++) {
-        const file = dirFiles[i];
-        setBatchProgress({
-          current: i + 1,
-          total: dirFiles.length,
-          currentFile: file.name,
-          results: [...results],
-        });
-
-        try {
-          const fd = new FormData();
-          fd.append("file", file);
-          if (testDate) fd.append("test_date", testDate);
-          await uploadBloodTestNoRedirect(fd);
-          results.push({ fileName: file.name, ok: true });
-        } catch (e: any) {
-          results.push({ fileName: file.name, ok: false, error: e?.message ?? "Failed" });
-        }
-      }
-
+    for (let i = 0; i < dirFiles.length; i++) {
+      const file = dirFiles[i];
       setBatchProgress({
-        current: dirFiles.length,
+        current: i + 1,
         total: dirFiles.length,
-        currentFile: "",
-        results,
+        currentFile: file.name,
+        results: [...results],
       });
 
-      setDirFiles([]);
-      if (dirInputRef.current) dirInputRef.current.value = "";
-      if (results.some((r) => r.ok)) router.refresh();
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        if (testDate) fd.append("test_date", testDate);
+        await uploadBloodTestNoRedirect(fd);
+        results.push({ fileName: file.name, ok: true });
+      } catch (e: any) {
+        results.push({ fileName: file.name, ok: false, error: e?.message ?? "Failed" });
+      }
+    }
+
+    setBatchProgress({
+      current: dirFiles.length,
+      total: dirFiles.length,
+      currentFile: "",
+      results,
     });
+
+    setDirFiles([]);
+    if (dirInputRef.current) dirInputRef.current.value = "";
+    setIsBatchUploading(false);
+    if (results.some((r) => r.ok)) router.refresh();
   }
 
   const done = batchProgress && batchProgress.current === batchProgress.total && !batchProgress.currentFile;
