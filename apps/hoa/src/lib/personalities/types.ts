@@ -42,6 +42,14 @@ export type Video = {
   description: string;
 };
 
+export type BlogPost = {
+  title: string;
+  url: string;
+  date: string;
+  summary: string;
+  tags?: string[];
+};
+
 export type PersonResearch = {
   slug: string;
   name: string;
@@ -54,6 +62,7 @@ export type PersonResearch = {
   social: Record<string, string>;
   sources: { title: string; url: string }[];
   videos?: Video[];
+  blog_posts?: BlogPost[];
   executive_summary?: {
     one_liner: string;
     key_facts: string[];
@@ -86,6 +95,7 @@ export type Personality = {
   linkedinImage?: string;
   papers?: Paper[];
   knownFor?: string;
+  blogUrl?: string;
 };
 
 export type Category = {

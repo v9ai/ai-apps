@@ -9,6 +9,94 @@
     },
     "repos": [
       {
+        "name": "openclaw",
+        "description": "Your own personal AI assistant. Any OS. Any Platform. The lobster way.",
+        "url": "https://github.com/openclaw/openclaw",
+        "stars": 356229,
+        "forks": 72186,
+        "language": "TypeScript",
+        "topics": ["ai", "assistant", "openclaw", "personal", "own-your-data"],
+        "updatedAt": "2026-04-13T13:34:24Z",
+        "createdAt": "2025-11-24T10:16:47Z"
+      },
+      {
+        "name": "clawhub",
+        "description": "Skill Directory for OpenClaw",
+        "url": "https://github.com/openclaw/clawhub",
+        "stars": 7934,
+        "forks": 1215,
+        "language": "TypeScript",
+        "topics": ["directory", "skill", "openclaw"],
+        "updatedAt": "2026-04-13T13:04:33Z",
+        "createdAt": "2026-01-03T13:49:41Z"
+      },
+      {
+        "name": "skills",
+        "description": "All versions of all skills on clawhub.com archived",
+        "url": "https://github.com/openclaw/skills",
+        "stars": 4064,
+        "forks": 1111,
+        "language": "Python",
+        "topics": ["archive", "clawhub", "openclaw", "skill"],
+        "updatedAt": "2026-04-13T13:34:50Z",
+        "createdAt": "2026-01-06T03:39:15Z"
+      },
+      {
+        "name": "acpx",
+        "description": "Headless CLI client for stateful Agent Client Protocol (ACP) sessions",
+        "url": "https://github.com/openclaw/acpx",
+        "stars": 2109,
+        "forks": 192,
+        "language": "TypeScript",
+        "topics": ["agentclientprotocol"],
+        "updatedAt": "2026-04-13T12:28:04Z",
+        "createdAt": "2026-02-17T19:06:45Z"
+      },
+      {
+        "name": "lobster",
+        "description": "OpenClaw-native workflow shell: composable pipelines and safe automations",
+        "url": "https://github.com/openclaw/lobster",
+        "stars": 1116,
+        "forks": 253,
+        "language": "TypeScript",
+        "topics": ["workflow", "shell", "openclaw"],
+        "updatedAt": "2026-04-13T11:11:57Z",
+        "createdAt": "2026-01-18T02:13:48Z"
+      },
+      {
+        "name": "nix-openclaw",
+        "description": "Packages OpenClaw for nix.",
+        "url": "https://github.com/openclaw/nix-openclaw",
+        "stars": 644,
+        "forks": 210,
+        "language": "Nix",
+        "topics": ["nix", "openclaw"],
+        "updatedAt": "2026-04-12T01:05:11Z",
+        "createdAt": "2026-01-02T13:24:00Z"
+      },
+      {
+        "name": "openclaw-ansible",
+        "description": "Automated, hardened OpenClaw installation with Tailscale VPN, UFW firewall, and Docker isolation",
+        "url": "https://github.com/openclaw/openclaw-ansible",
+        "stars": 557,
+        "forks": 243,
+        "language": "Shell",
+        "topics": ["ansible", "openclaw", "self-hosting"],
+        "updatedAt": "2026-04-12T21:28:05Z",
+        "createdAt": "2026-01-08T16:44:56Z"
+      },
+      {
+        "name": "openclaw-windows-node",
+        "description": "Windows companion suite for OpenClaw - System Tray app, Shared library, Node, and PowerToys extension",
+        "url": "https://github.com/openclaw/openclaw-windows-node",
+        "stars": 441,
+        "forks": 63,
+        "language": "C#",
+        "topics": ["windows", "openclaw"],
+        "updatedAt": "2026-04-13T06:08:36Z",
+        "createdAt": "2026-01-29T01:34:54Z"
+      },
+      {
         "name": "summarize",
         "description": "Point at any URL/YouTube/Podcast or file. Get the gist. CLI and Chrome Extension.",
         "url": "https://github.com/steipete/summarize",

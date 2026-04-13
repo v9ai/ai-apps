@@ -1,0 +1,249 @@
+{
+  "slug": "peter-steinberger",
+  "name": "Peter Steinberger",
+  "generated_at": "2026-04-13T16:30:00+00:00",
+  "bio": "Peter Steinberger is an Austrian software engineer, entrepreneur, and the creator of OpenClaw, one of the fastest-growing open-source projects in GitHub history. Born in rural Upper Austria, he became obsessed with computers at age 14 and went on to study medical computer science at TU Wien, where he launched the university's first Mac and iOS developer course. In 2011, while waiting for a U.S. work visa, he co-founded PSPDFKit with Martin Schurrer, bootstrapping a PDF rendering SDK that grew to power document workflows at Dropbox, Lufthansa, IBM, and over one billion Apple devices. The company raised over EUR 100M from Insight Partners in October 2021 and later rebranded as Nutrient.\n\nAfter exiting PSPDFKit, Steinberger spent three years away from coding, recovering from severe burnout he described as 'complete identity loss, not just fatigue.' In late 2024 he discovered AI-assisted development and called it his 'holy f--- mind-blowing moment.' In November 2025, he built a one-hour prototype connecting WhatsApp to Claude's API that became Clawdbot. The bot autonomously added voice message support by inspecting file headers and routing audio through ffmpeg and Whisper. After a polite trademark concern from Anthropic, the project was renamed MoltBot and then OpenClaw. Within three months it reached over 200,000 GitHub stars and two million visitors in a single week, making it one of the fastest growth curves in GitHub history.\n\nOn February 14, 2026, Steinberger announced he was joining OpenAI to 'build an agent that even my mum can use,' rejecting offers from Meta where Zuckerberg had reached out personally. OpenClaw transitioned to an independent open-source foundation sponsored by OpenAI. Today the project has over 356,000 GitHub stars and a thriving ecosystem including ClawhHub (a skill directory), Lobster (a workflow shell), and ACPX (an Agent Client Protocol CLI). Steinberger describes himself as the 'Clawdfather' and advocates for 'agentic engineering' over 'vibe coding,' emphasizing that AI replaces repetitive plumbing while developers become architects, editors, and prompt engineers.",
+  "executive_summary": {
+    "one_liner": "Creator of OpenClaw (356K+ GitHub stars), the open-source AI personal assistant that became one of the fastest-growing projects in GitHub history, now at OpenAI building the next generation of personal agents.",
+    "key_facts": [
+      "Built OpenClaw from a one-hour WhatsApp-to-Claude prototype in Nov 2025 to 356K+ GitHub stars",
+      "Previously founded PSPDFKit, bootstrapped to 1B+ devices, exited for EUR 100M+ in 2021",
+      "Joined OpenAI in Feb 2026 to drive personal agent development; OpenClaw moved to independent foundation",
+      "Orchestrates 5-50 parallel AI agents daily, merging 600+ commits; calls PRs 'prompt requests'",
+      "OpenClaw ecosystem: main app (356K stars), ClawhHub skills directory (7.9K), Lobster workflow shell (1.1K), ACPX agent protocol CLI (2.1K)",
+      "47K+ GitHub followers, 385K X followers; based in Vienna & London"
+    ],
+    "career_arc": "From rural Austria to founding a bootstrapped PDF SDK used on a billion devices, through severe post-exit burnout, to an explosive comeback building the most-starred AI assistant on GitHub and joining OpenAI.",
+    "current_focus": "Working at OpenAI on bringing personal agents to mainstream users, while OpenClaw continues under independent foundation governance with OpenAI sponsorship.",
+    "industry_significance": "Steinberger demonstrated that a single developer using AI-assisted coding can build a project that rivals teams of hundreds. OpenClaw's growth validated the market for open-source, locally-run AI personal assistants that integrate with messaging platforms.",
+    "confidence_level": "high"
+  },
+  "topics": [
+    "OpenClaw & AI Personal Assistants",
+    "Agentic Engineering",
+    "Open-Source AI Infrastructure",
+    "AI-Assisted Development (Vibe Coding)",
+    "CLI & Developer Tooling",
+    "macOS & iOS Development",
+    "PDF & Document Technology",
+    "Bootstrapped SaaS",
+    "TypeScript & Swift",
+    "LLM Tool Calling & Skills",
+    "Post-Exit Burnout & Comeback",
+    "Agent Workflow Automation"
+  ],
+  "timeline": [
+    {
+      "date": "2011-01",
+      "event": "Co-founded PSPDFKit with Martin Schurrer, bootstrapping a PDF SDK for iOS",
+      "url": "https://pspdfkit.com"
+    },
+    {
+      "date": "2021-10",
+      "event": "PSPDFKit raised EUR 100M+ from Insight Partners; Steinberger sold shares and stepped back",
+      "url": "https://steipete.me"
+    },
+    {
+      "date": "2024-11",
+      "event": "Returned to coding after three years of burnout; discovered AI-assisted development",
+      "url": "https://steipete.me"
+    },
+    {
+      "date": "2025-11-24",
+      "event": "Published Clawdbot (later OpenClaw) on GitHub as a WhatsApp-to-Claude AI assistant prototype",
+      "url": "https://github.com/openclaw/openclaw"
+    },
+    {
+      "date": "2025-12-12",
+      "event": "Created Peekaboo for macOS screenshot and GUI automation, and canvas for browser-based agent interaction",
+      "url": "https://github.com/steipete/canvas"
+    },
+    {
+      "date": "2025-12-17",
+      "event": "Launched summarize (5.5K+ stars): point at any URL/YouTube/podcast and get the gist",
+      "url": "https://github.com/steipete/summarize"
+    },
+    {
+      "date": "2026-01-04",
+      "event": "Founded the OpenClaw GitHub organization; launched openclaw.ai and ClawhHub skill directory",
+      "url": "https://github.com/openclaw"
+    },
+    {
+      "date": "2026-01-06",
+      "event": "Launched ClawhHub skills archive and community skill ecosystem",
+      "url": "https://github.com/openclaw/skills"
+    },
+    {
+      "date": "2026-01-18",
+      "event": "Created Lobster, an OpenClaw-native workflow shell for composable pipelines and automations",
+      "url": "https://github.com/openclaw/lobster"
+    },
+    {
+      "date": "2026-01-27",
+      "event": "Renamed Clawdbot to MoltBot following Anthropic trademark concern",
+      "url": "https://en.wikipedia.org/wiki/OpenClaw"
+    },
+    {
+      "date": "2026-01-30",
+      "event": "Final rename to OpenClaw; project reached 100K+ GitHub stars in roughly three months",
+      "url": "https://en.wikipedia.org/wiki/OpenClaw"
+    },
+    {
+      "date": "2026-02-14",
+      "event": "Announced joining OpenAI to drive personal agent development; OpenClaw transitions to independent foundation",
+      "url": "https://steipete.me/posts/2026/openclaw"
+    },
+    {
+      "date": "2026-02-17",
+      "event": "Launched ACPX, a headless CLI client for stateful Agent Client Protocol sessions (2.1K+ stars)",
+      "url": "https://github.com/openclaw/acpx"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "OpenClaw",
+      "description": "Open-source, MIT-licensed AI personal assistant running locally on any OS. Built in TypeScript and Swift, it operates through WhatsApp, Telegram, Discord, and Signal, executing real tasks: email management, browser control, shell commands, workflow scheduling, and PR triage. 356K+ GitHub stars, 72K+ forks, 19K+ org followers. One of the fastest-growing open-source projects in GitHub history.",
+      "url": "https://github.com/openclaw/openclaw"
+    },
+    {
+      "title": "ClawhHub",
+      "description": "Community-driven skill directory for OpenClaw, enabling users to discover, share, and install agent skills. The ecosystem has grown to thousands of community-contributed skills archived in the skills repository. 7.9K stars.",
+      "url": "https://github.com/openclaw/clawhub"
+    },
+    {
+      "title": "ACPX",
+      "description": "Headless CLI client for stateful Agent Client Protocol (ACP) sessions, enabling programmatic interaction with AI agents from the terminal. 2.1K+ stars.",
+      "url": "https://github.com/openclaw/acpx"
+    },
+    {
+      "title": "Lobster",
+      "description": "An OpenClaw-native workflow shell: a typed, local-first macro engine that turns skills and tools into composable pipelines and safe automations, letting OpenClaw call workflows in one step. 1.1K+ stars.",
+      "url": "https://github.com/openclaw/lobster"
+    },
+    {
+      "title": "summarize",
+      "description": "CLI and Chrome Extension that summarizes any URL, YouTube video, podcast, or file. Point at content and get the gist. 5.5K+ GitHub stars, Steinberger's most-starred personal repo.",
+      "url": "https://github.com/steipete/summarize"
+    },
+    {
+      "title": "PSPDFKit (Nutrient)",
+      "description": "PDF rendering SDK co-founded in 2011, fully bootstrapped for 10 years. Powered document workflows at Dropbox, Lufthansa, IBM, and ran on 1B+ Apple devices. Raised EUR 100M+ from Insight Partners in 2021.",
+      "url": "https://pspdfkit.com"
+    },
+    {
+      "title": "OpenClaw Ansible",
+      "description": "Automated, hardened OpenClaw installation with Tailscale VPN, UFW firewall, and Docker isolation for self-hosting. 557 stars.",
+      "url": "https://github.com/openclaw/openclaw-ansible"
+    },
+    {
+      "title": "Nix OpenClaw",
+      "description": "NixOS packages and modules for declarative OpenClaw deployment, reflecting the project's strong Nix community. 644 stars.",
+      "url": "https://github.com/openclaw/nix-openclaw"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "My next mission is to build an agent that even my mum can use.",
+      "source": "Peter Steinberger, announcing OpenAI move",
+      "url": "https://steipete.me/posts/2026/openclaw"
+    },
+    {
+      "text": "I could totally see how OpenClaw could become a huge company. And no, it's not really exciting for me.",
+      "source": "Peter Steinberger, on choosing open source over commercialization",
+      "url": "https://steipete.me/posts/2026/openclaw"
+    },
+    {
+      "text": "Code is becoming an implementation detail... AI agents don't replace developers. They replace repetitive plumbing.",
+      "source": "Peter Steinberger on agentic engineering",
+      "url": "https://www.sparkagents.com/blog/who-is-peter-steinberger"
+    },
+    {
+      "text": "If you wake up in the morning, and you have nothing to look forward to, you have no real challenge, that gets very boring, very fast.",
+      "source": "Peter Steinberger, on post-exit burnout",
+      "url": "https://www.sparkagents.com/blog/who-is-peter-steinberger"
+    },
+    {
+      "text": "The claw is the law.",
+      "source": "Peter Steinberger, OpenClaw motto",
+      "url": "https://steipete.me/posts/2026/openclaw"
+    },
+    {
+      "text": "If you can't understand how to run a command line, this is far too dangerous of a project for you to use safely.",
+      "source": "Peter Steinberger, on OpenClaw security responsibilities",
+      "url": "https://remoteopenclaw.com/blog/who-made-openclaw"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/steipete",
+    "twitter": "https://x.com/steipete",
+    "website": "https://steipete.me",
+    "openclaw": "https://openclaw.ai",
+    "github_org": "https://github.com/openclaw",
+    "wikipedia": "https://en.wikipedia.org/wiki/OpenClaw"
+  },
+  "technical_philosophy": {
+    "approach": "Agentic engineering over vibe coding",
+    "key_beliefs": [
+      "AI replaces repetitive plumbing, not developers",
+      "Developers become architects, editors, and prompt engineers",
+      "Code is an implementation detail",
+      "Own your data: run locally, open source, MIT license",
+      "Pull requests are becoming 'prompt requests'"
+    ],
+    "workflow": "Works on Dell 40-inch ultrawide with Ghostty terminal, running 4 simultaneous Claude instances. Orchestrates 5-50 parallel AI agents, merging 600+ commits daily. Dictates prompts by voice."
+  },
+  "competitive_landscape": {
+    "market_position": "leader",
+    "description": "OpenClaw occupies a unique position as the most-starred open-source AI personal assistant, differentiated by local-first architecture and messaging platform integration",
+    "competitors": [
+      "Anthropic Claude (commercial, cloud-only)",
+      "OpenAI ChatGPT (commercial, cloud-only)",
+      "Auto-GPT (open-source, but Python-based and less maintained)",
+      "Open Interpreter (open-source, terminal-focused)"
+    ],
+    "moats": [
+      "356K+ GitHub stars and massive community momentum",
+      "Ecosystem lock-in via ClawhHub skill directory and Lobster workflows",
+      "Independent foundation governance ensures long-term community trust",
+      "Multi-platform messaging integration (WhatsApp, Telegram, Discord, Signal)"
+    ]
+  },
+  "sources": [
+    {
+      "title": "OpenClaw, OpenAI and the future - Peter Steinberger",
+      "url": "https://steipete.me/posts/2026/openclaw"
+    },
+    {
+      "title": "OpenClaw - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/OpenClaw"
+    },
+    {
+      "title": "Who Made OpenClaw? - Remote OpenClaw",
+      "url": "https://remoteopenclaw.com/blog/who-made-openclaw"
+    },
+    {
+      "title": "Who Is Peter Steinberger? - Spark Agents",
+      "url": "https://www.sparkagents.com/blog/who-is-peter-steinberger"
+    },
+    {
+      "title": "OpenClaw creator Peter Steinberger joins OpenAI - TechCrunch",
+      "url": "https://techcrunch.com/2026/02/15/openclaw-creator-peter-steinberger-joins-openai/"
+    },
+    {
+      "title": "OpenClaw creator joining OpenAI, Altman says - CNBC",
+      "url": "https://www.cnbc.com/2026/02/15/openclaw-creator-peter-steinberger-joining-openai-altman-says.html"
+    },
+    {
+      "title": "steipete on GitHub",
+      "url": "https://github.com/steipete"
+    },
+    {
+      "title": "OpenClaw GitHub Organization",
+      "url": "https://github.com/openclaw"
+    },
+    {
+      "title": "Peter Steinberger's website",
+      "url": "https://steipete.me"
+    }
+  ]
+}

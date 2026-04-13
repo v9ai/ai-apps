@@ -169,6 +169,99 @@ def fetch_url_content(url: str) -> str:
         return f"Fetch failed: {e}"
 
 
+def fetch_blog_rss(url: str) -> str:
+    """Fetch and parse an RSS/Atom feed from a blog URL. Returns post titles, dates, URLs, and descriptions."""
+    import xml.etree.ElementTree as ET
+
+    # Try common feed paths
+    feed_urls = []
+    base = url.rstrip("/")
+    if url.endswith(".xml") or url.endswith("/feed") or url.endswith("/rss"):
+        feed_urls.append(url)
+    else:
+        feed_urls.extend([
+            f"{base}/rss.xml",
+            f"{base}/feed.xml",
+            f"{base}/atom.xml",
+            f"{base}/feed",
+            f"{base}/rss",
+            f"{base}/index.xml",
+        ])
+
+    for feed_url in feed_urls:
+        try:
+            with httpx.Client(timeout=15, follow_redirects=True) as client:
+                resp = client.get(feed_url, headers={"User-Agent": "Mozilla/5.0 (compatible; ResearchBot/1.0)"})
+                if resp.status_code != 200:
+                    continue
+                root = ET.fromstring(resp.text)
+                posts = []
+                # RSS 2.0
+                for item in root.iter("item"):
+                    title = (item.findtext("title") or "").strip()
+                    link = (item.findtext("link") or "").strip()
+                    pub_date = (item.findtext("pubDate") or "").strip()
+                    desc = (item.findtext("description") or "").strip()
+                    desc = re.sub(r"<[^>]+>", " ", desc)
+                    desc = re.sub(r"\s+", " ", desc).strip()[:300]
+                    if title and link:
+                        posts.append(f"- [{pub_date}] {title}\n  URL: {link}\n  {desc}")
+                # Atom
+                if not posts:
+                    ns = {"atom": "http://www.w3.org/2005/Atom"}
+                    for entry in root.findall(".//atom:entry", ns):
+                        title = (entry.findtext("atom:title", namespaces=ns) or "").strip()
+                        link_el = entry.find("atom:link[@rel='alternate']", ns)
+                        if link_el is None:
+                            link_el = entry.find("atom:link", ns)
+                        link = link_el.get("href", "") if link_el is not None else ""
+                        pub_date = (entry.findtext("atom:published", namespaces=ns) or
+                                    entry.findtext("atom:updated", namespaces=ns) or "").strip()
+                        summary = (entry.findtext("atom:summary", namespaces=ns) or "").strip()[:300]
+                        if title and link:
+                            posts.append(f"- [{pub_date}] {title}\n  URL: {link}\n  {summary}")
+                if posts:
+                    return f"Found {len(posts)} blog posts from {feed_url}:\n\n" + "\n\n".join(posts)
+        except Exception:
+            continue
+
+    # Fallback: fetch the archive/posts page and extract links
+    for path in ["", "/posts", "/blog", "/archive"]:
+        try:
+            page_url = f"{base}{path}"
+            content = fetch_url_content(page_url)
+            if content and not content.startswith("("):
+                return f"Blog page content from {page_url}:\n{content[:10000]}"
+        except Exception:
+            continue
+
+    return "(no blog feed found)"
+
+
+def fetch_blog_post_content(url: str) -> str:
+    """Fetch a single blog post and extract its main text content."""
+    try:
+        with httpx.Client(timeout=12, follow_redirects=True) as client:
+            resp = client.get(url, headers={"User-Agent": "Mozilla/5.0 (compatible; ResearchBot/1.0)"})
+            if resp.status_code != 200:
+                return f"(HTTP {resp.status_code})"
+            text = resp.text
+            # Try to extract article/main content
+            article_match = re.search(r"<article[^>]*>(.*?)</article>", text, re.S | re.I)
+            if article_match:
+                text = article_match.group(1)
+            else:
+                main_match = re.search(r"<main[^>]*>(.*?)</main>", text, re.S | re.I)
+                if main_match:
+                    text = main_match.group(1)
+            text = re.sub(r"<script[^>]*>.*?</script>", " ", text, flags=re.S | re.I)
+            text = re.sub(r"<style[^>]*>.*?</style>", " ", text, flags=re.S | re.I)
+            text = re.sub(r"<[^>]+>", " ", text)
+            return re.sub(r"\s+", " ", text).strip()[:8000]
+    except Exception as e:
+        return f"Fetch failed: {e}"
+
+
 def fetch_github_profile(username: str) -> str:
     """Fetch GitHub profile metadata and top repositories for a username."""
     if not username or username.strip() in ("", "unknown"):
@@ -583,6 +676,8 @@ _TOOL_FNS: dict[str, Any] = {
     "search_openalex": search_openalex,
     "check_social_url": check_social_url,
     "fetch_github_repos_extended": fetch_github_repos_extended,
+    "fetch_blog_rss": fetch_blog_rss,
+    "fetch_blog_post_content": fetch_blog_post_content,
 }
 
 def _tool_def(name: str, description: str, params: dict) -> FunctionTool:
@@ -606,12 +701,15 @@ TOOL_WIKIPEDIA = _tool_def("fetch_wikipedia_summary", "Fetch Wikipedia summary a
 TOOL_OPENALEX = _tool_def("search_openalex", "Search OpenAlex for academic works and author profiles.", _SINGLE_STR)
 TOOL_CHECK_URL = _tool_def("check_social_url", "Check if a URL exists (HTTP HEAD). Returns status code and final URL.", _SINGLE_URL)
 TOOL_GITHUB_EXT = _tool_def("fetch_github_repos_extended", "Fetch all significant repos with creation dates and topics.", _SINGLE_USERNAME)
+TOOL_BLOG_RSS = _tool_def("fetch_blog_rss", "Fetch and parse an RSS/Atom feed from a blog URL. Returns post titles, dates, and descriptions.", _SINGLE_URL)
+TOOL_BLOG_POST = _tool_def("fetch_blog_post_content", "Fetch a single blog post and extract its main text content.", _SINGLE_URL)
 
 # Convenience groups matching original tool lists
 TOOLS_SEARCH = [TOOL_WEB_SEARCH, TOOL_FETCH_URL]
 TOOLS_NEWS = [TOOL_WEB_NEWS, TOOL_WEB_SEARCH, TOOL_FETCH_URL]
 TOOLS_ACADEMIC = [TOOL_ARXIV, TOOL_SEMANTIC, TOOL_OPENALEX]
 TOOLS_VIDEO = [TOOL_VIDEO, TOOL_WEB_SEARCH, TOOL_FETCH_URL]
+TOOLS_BLOG = [TOOL_BLOG_RSS, TOOL_BLOG_POST, TOOL_WEB_SEARCH, TOOL_FETCH_URL]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -621,7 +719,7 @@ TOOLS_VIDEO = [TOOL_VIDEO, TOOL_WEB_SEARCH, TOOL_FETCH_URL]
 def _parse_ts(path: Path) -> dict[str, str]:
     text = path.read_text()
     fields: dict[str, str] = {"slug": path.stem}
-    for key in ("name", "role", "org", "github", "orcid"):
+    for key in ("name", "role", "org", "github", "orcid", "blogUrl"):
         m = re.search(rf'{key}:\s*"([^"]+)"', text)
         if m:
             fields[key] = m.group(1)
