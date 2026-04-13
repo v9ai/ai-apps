@@ -968,7 +968,13 @@ async def phase1(state: ResearchState) -> dict:
     results: dict[str, str] = {}
     for key, sys_prompt, task_prompt, agent_tools in specs:
         try:
-            result = await _run_agent(client, sys_prompt, task_prompt, agent_tools)
+            result = await asyncio.wait_for(
+                _run_agent(client, sys_prompt, task_prompt, agent_tools),
+                timeout=_AGENT_TIMEOUT,
+            )
+        except asyncio.TimeoutError:
+            result = f"(agent timed out after {_AGENT_TIMEOUT}s)"
+            console.print(f"  [yellow]⏱[/] {key} timed out after {_AGENT_TIMEOUT}s")
         except Exception as e:
             result = f"(agent error: {e})"
         results[key] = result
@@ -1304,7 +1310,13 @@ async def phase2(state: ResearchState) -> dict:
     results: dict[str, str] = {}
     for key, sys_prompt, task_prompt, agent_tools in specs:
         try:
-            result = await _run_agent(client, sys_prompt, task_prompt, agent_tools)
+            result = await asyncio.wait_for(
+                _run_agent(client, sys_prompt, task_prompt, agent_tools),
+                timeout=_AGENT_TIMEOUT,
+            )
+        except asyncio.TimeoutError:
+            result = f"(agent timed out after {_AGENT_TIMEOUT}s)"
+            console.print(f"  [yellow]⏱[/] {key} timed out after {_AGENT_TIMEOUT}s")
         except Exception as e:
             result = f"(agent error: {e})"
         results[key] = result
