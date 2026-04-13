@@ -448,7 +448,7 @@ def _gather_blog_context(slug: str) -> dict[str, list[dict]]:
         results: list[dict] = []
         seen_titles: set[str] = set()
         for query in spec["queries"]:
-            for r in search_blog_results(slug, query, top_k=5):
+            for r in search_blog_results(slug, query, top_k=10):
                 if r["title"] not in seen_titles:
                     results.append(r)
                     seen_titles.add(r["title"])
