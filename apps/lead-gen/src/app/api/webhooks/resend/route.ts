@@ -3,7 +3,7 @@ import { createHmac } from "crypto";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { contactEmails, contacts, receivedEmails } from "@/db/schema";
-import { classifyReply } from "@/lib/email/reply-classifier";
+import { classifyReply, classifyReplyHybrid } from "@/lib/email/reply-classifier";
 import { matchContact } from "@/lib/email/contact-matcher";
 import { resend } from "@/lib/resend";
 
@@ -384,14 +384,27 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
     }
     const emailSubject = subject || "";
 
-    // Classify the reply
-    const result = classifyReply(emailSubject, textBody);
-
-    // Match to a contact
+    // Match to a contact first (needed for thread context)
     const contactMatch = await matchContact(
       from || "",
       (event.data as any).in_reply_to ?? null,
     );
+
+    // Build thread context from matched outbound email
+    let threadContext: string | undefined;
+    if (contactMatch?.outboundEmailId) {
+      const [outbound] = await db
+        .select({ subject: contactEmails.subject, text_content: contactEmails.text_content })
+        .from(contactEmails)
+        .where(eq(contactEmails.id, contactMatch.outboundEmailId))
+        .limit(1);
+      if (outbound) {
+        threadContext = `Subject: ${outbound.subject}\n${outbound.text_content || ""}`;
+      }
+    }
+
+    // Classify the reply with LLM-first hybrid classifier
+    const result = await classifyReplyHybrid(emailSubject, textBody, threadContext);
 
     // Update the received email with classification + contact match
     await db
@@ -433,6 +446,30 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
             updated_at: new Date().toISOString(),
           })
           .where(eq(contactEmails.id, contactMatch.outboundEmailId));
+      }
+
+      // Auto-draft reply for interested/info_request contacts (fire-and-forget)
+      if (
+        (result.label === "interested" || result.label === "info_request") &&
+        result.confidence > 0.5
+      ) {
+        // Look up the received email ID we just persisted
+        const [receivedRow] = await db
+          .select({ id: receivedEmails.id })
+          .from(receivedEmails)
+          .where(eq(receivedEmails.resend_id, emailId))
+          .limit(1);
+
+        if (receivedRow) {
+          import("@/lib/email/auto-draft")
+            .then(({ generateReplyDraft }) =>
+              generateReplyDraft(receivedRow.id, result.label, contactMatch!.contactId!),
+            )
+            .catch((err) => {
+              const msg = err instanceof Error ? err.message : String(err);
+              console.error(`[RESEND_WEBHOOK] auto-draft failed: ${msg}`);
+            });
+        }
       }
     }
   });

@@ -256,6 +256,8 @@ export const contacts = pgTable(
     deletion_score: real("deletion_score"),
     deletion_reasons: text("deletion_reasons"), // JSON array of reason strings
     deletion_flagged_at: text("deletion_flagged_at"),
+    // Conversation lifecycle state (updated by webhook handler on reply classification)
+    conversation_stage: text("conversation_stage"), // initial_sent | follow_up_1 | follow_up_2 | follow_up_3 | replied_interested | replied_info_request | replied_not_interested | meeting_scheduled | converted | closed
     // Fake account detection (populated by verifyContactAuthenticity mutation)
     authenticity_score: real("authenticity_score"),
     authenticity_verdict: text("authenticity_verdict"),
@@ -795,6 +797,59 @@ export const voyagerJobCountsRelations = relations(voyagerJobCounts, ({ one }) =
 }));
 
 export const voyagerSnapshotsRelations = relations(voyagerSnapshots, () => ({}));
+
+// Reply Drafts (auto-generated reply drafts for user approval)
+export const replyDrafts = pgTable(
+  "reply_drafts",
+  {
+    id: serial("id").primaryKey(),
+    received_email_id: integer("received_email_id")
+      .notNull()
+      .references(() => receivedEmails.id, { onDelete: "cascade" }),
+    contact_id: integer("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    status: text("status", {
+      enum: ["pending", "approved", "sent", "dismissed"],
+    }).notNull().default("pending"),
+    draft_type: text("draft_type", {
+      enum: ["reply", "follow_up"],
+    }).notNull().default("reply"),
+    subject: text("subject").notNull(),
+    body_text: text("body_text").notNull(),
+    body_html: text("body_html"),
+    generation_model: text("generation_model"),
+    thread_context: text("thread_context"), // JSON of the conversation thread used for generation
+    approved_at: text("approved_at"),
+    sent_at: text("sent_at"),
+    sent_resend_id: text("sent_resend_id"),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+    updated_at: text("updated_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => ({
+    receivedEmailIdIdx: index("idx_reply_drafts_received_email_id").on(table.received_email_id),
+    contactIdIdx: index("idx_reply_drafts_contact_id").on(table.contact_id),
+    statusIdx: index("idx_reply_drafts_status").on(table.status),
+  }),
+);
+
+export type ReplyDraft = typeof replyDrafts.$inferSelect;
+export type NewReplyDraft = typeof replyDrafts.$inferInsert;
+
+export const replyDraftsRelations = relations(replyDrafts, ({ one }) => ({
+  receivedEmail: one(receivedEmails, {
+    fields: [replyDrafts.received_email_id],
+    references: [receivedEmails.id],
+  }),
+  contact: one(contacts, {
+    fields: [replyDrafts.contact_id],
+    references: [contacts.id],
+  }),
+}));
 
 // Messages (LinkedIn DMs, other non-email touchpoints)
 export const messages = pgTable(

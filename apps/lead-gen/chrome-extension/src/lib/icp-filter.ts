@@ -33,9 +33,6 @@ export function parseLinkedInSize(size: string): number {
   return Infinity; // unknown — don't flag
 }
 
-const RECRUITMENT_RE =
-  /staffing|recruit|talent|headhunt|placement|hiring platform/i;
-
 // Compound phrases that signal region-locked business models.
 // Single region words alone (e.g. "Africa") don't trigger — only when
 // paired with staffing/sourcing language indicating regional exclusivity.
@@ -64,7 +61,7 @@ function isIrrelevantGeo(text: string): boolean {
 export function isICPTarget(data: CompanyData): ICPResult {
   const text = [data.industry, data.description, data.name, data.location].join(" ");
 
-  if (!RECRUITMENT_RE.test(text)) {
+  if (data.industry.trim().toLowerCase() !== "staffing and recruiting") {
     return { target: false, reason: "not-recruitment" };
   }
 

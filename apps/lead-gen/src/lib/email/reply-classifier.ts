@@ -346,3 +346,38 @@ export function reloadWeights(): void {
   loadedWeights = null;
   loadWeights();
 }
+
+// ── Hybrid classifier (LLM-first with logistic regression fallback) ─────────
+
+/**
+ * Classify a reply using DeepSeek LLM first, falling back to the fast
+ * keyword/logistic-regression classifier on error or timeout.
+ *
+ * @param subject - Email subject line
+ * @param body - Raw email body text
+ * @param threadContext - Optional original outbound email for context
+ */
+export async function classifyReplyHybrid(
+  subject: string,
+  body: string,
+  threadContext?: string,
+): Promise<ClassificationResult> {
+  try {
+    // Dynamic import to avoid loading OpenAI SDK when not needed
+    const { classifyReplyWithLLM } = await import("./llm-classifier");
+
+    // Race the LLM call against a 15-second timeout
+    const result = await Promise.race([
+      classifyReplyWithLLM(subject, body, threadContext),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("LLM classifier timeout")), 15_000),
+      ),
+    ]);
+
+    return result;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[REPLY_CLASSIFIER] LLM classification failed, falling back to keyword: ${msg}`);
+    return classifyReply(subject, body);
+  }
+}
