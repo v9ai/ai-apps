@@ -527,6 +527,8 @@ const guardRules = [
     bg: "var(--crimson-a3)",
     check: 'Does the response say "you have X" or diagnose a condition?',
     action: 'Appends: "This information is for educational purposes only and is not a medical diagnosis."',
+    detail: "The auditor scans for declarative diagnostic language — phrases like \"you have\", \"this confirms\", \"consistent with a diagnosis of\". Pattern-matching alone is insufficient; the LLM evaluates semantic intent to catch indirect diagnoses like \"your levels indicate condition X\".",
+    severity: "critical" as const,
   },
   {
     rule: "PRESCRIPTION",
@@ -535,6 +537,8 @@ const guardRules = [
     bg: "var(--orange-a3)",
     check: "Does the response prescribe specific medications or dosages?",
     action: 'Appends: "I cannot recommend specific medications or dosages. Consult your physician."',
+    detail: "Detects medication names, dosage quantities, and treatment protocols. The auditor distinguishes between informational context (\"Vitamin D is commonly supplemented\") and prescriptive language (\"you should take 2000 IU daily\"). Supplement and OTC recommendations are also flagged.",
+    severity: "critical" as const,
   },
   {
     rule: "PHYSICIAN_REFERRAL",
@@ -543,6 +547,8 @@ const guardRules = [
     bg: "var(--green-a3)",
     check: "Does the response include a healthcare professional reminder?",
     action: 'Appends: "Please consult your physician before making medical decisions."',
+    detail: "Inverted check — fires when the referral is MISSING. Every synthesized response must contain an explicit reminder to consult a healthcare professional. The synthesis prompt enforces this, but the guard catches any response where the LLM omitted it.",
+    severity: "warning" as const,
   },
   {
     rule: "PII_LEAKAGE",
@@ -551,6 +557,8 @@ const guardRules = [
     bg: "var(--violet-a3)",
     check: "Does the response contain personally identifiable information?",
     action: "Flags response for PII redaction before delivery.",
+    detail: "Scans the synthesized response for names, dates of birth, addresses, phone numbers, and any identifiers that may have leaked from the retrieval context. The system stores only clinical values (marker name, value, unit, flag) — but the guard ensures nothing personally identifiable surfaces in the output.",
+    severity: "critical" as const,
   },
   {
     rule: "HALLUCINATION",
@@ -559,6 +567,39 @@ const guardRules = [
     bg: "var(--amber-a3)",
     check: "Does the response claim facts NOT present in the retrieved context?",
     action: "Flags unsupported claims and strips ungrounded statements.",
+    detail: "The auditor receives both the retrieval context and the synthesized answer. It cross-references every factual claim — lab values, reference ranges, clinical thresholds — against the provided sources. Claims without grounding in the context are flagged as hallucinations.",
+    severity: "critical" as const,
+  },
+];
+
+const guardMechanics = [
+  {
+    title: "Post-Generation Audit",
+    icon: ScanSearch,
+    color: "var(--blue-9)",
+    bg: "var(--blue-a3)",
+    description: "Guard runs AFTER synthesis, not during. The full synthesized response, original query, and retrieval context are all passed to the auditor — complete visibility into what was asked, what was found, and what was generated.",
+  },
+  {
+    title: "Deterministic Evaluation",
+    icon: Gauge,
+    color: "var(--cyan-9)",
+    bg: "var(--cyan-a3)",
+    description: "The auditor runs at temperature=0.0 for maximum consistency. The same response evaluated twice produces the same pass/fail result. No randomness in the safety layer — every audit is reproducible.",
+  },
+  {
+    title: "Fail-Safe Default",
+    icon: Shield,
+    color: "var(--crimson-9)",
+    bg: "var(--crimson-a3)",
+    description: "If the guard's JSON response fails to parse, the system defaults to passed=false with a PARSE_FAILURE issue. The guard never silently passes — an unparseable audit result is treated as a failure, and disclaimers are appended.",
+  },
+  {
+    title: "Safety Refusal Auto-Pass",
+    icon: CheckCircle2,
+    color: "var(--green-9)",
+    bg: "var(--green-a3)",
+    description: "When triage classifies a query as safety_refusal, the guard auto-passes. These responses are hardcoded clinical disclaimers — no LLM generation, no retrieval, no risk of hallucination. Auditing them would waste compute.",
   },
 ];
 
