@@ -418,7 +418,10 @@ class TestRetrievalRouting:
         for intent in SINGLE_INTENTS:
             state = _make_state(intent=intent)
             node = _route_to_retriever(state)
-            assert node == f"retrieve_{intent}"
+            if intent == "safety_refusal":
+                assert node == "refuse", f"safety_refusal should route to refuse, got {node}"
+            else:
+                assert node == f"retrieve_{intent}", f"{intent} should route to retrieve_{intent}, got {node}"
 
         state = _make_state(intent="multi_intent")
         assert _route_to_retriever(state) == "retrieve_multi_intent"
@@ -436,8 +439,9 @@ class TestSynthesis:
     """Test the synthesis node generates appropriate responses."""
 
     def test_safety_refusal_returns_canned_response(self):
+        """Safety refusal is handled by refuse() node, not synthesize()."""
         state = _make_state(intent="safety_refusal")
-        result = synthesize(state)
+        result = refuse(state)
         assert result["answer"] == SAFETY_REFUSAL_RESPONSE
         assert "physician" in result["answer"].lower()
 
@@ -556,11 +560,10 @@ class TestSafetyGuard:
         assert "consult" in result["final_answer"].lower() or "physician" in result["final_answer"].lower()
 
     def test_guard_skips_for_safety_refusal(self):
-        state = _make_state(
-            intent="safety_refusal",
-            answer=SAFETY_REFUSAL_RESPONSE,
-        )
-        result = guard(state)
+        """Safety refusal now goes through refuse() -> END, bypassing guard entirely.
+        Verify refuse() sets guard_passed=True."""
+        state = _make_state(intent="safety_refusal")
+        result = refuse(state)
         assert result["guard_passed"] is True
         assert result["final_answer"] == SAFETY_REFUSAL_RESPONSE
 

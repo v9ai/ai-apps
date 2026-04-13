@@ -393,11 +393,11 @@ const T = {
     ] as Tier[],
     valueAnalysis: {
       title: "Analiză Valoare Termală",
-      subtitle: "De ce nivelul mediu este punctul ideal",
+      subtitle: "De ce bugetul termal este alegerea inteligentă",
       points: [
         {
           label: "Buget termal (€100–150/noapte)",
-          detail: "Apă vulcanică autentică dar varietate limitată. Veți vrea bilete la parcuri termale (€25–38/buc) separat — adaugă €100–150 la săptămână. Cost total săptămânal: €800–1.200.",
+          detail: "Apă vulcanică autentică, demi sau pensiune completă inclusă, și aceeași sursă vulcanică ca hotelurile de €250. Combină cu 1–2 vizite la parcuri termale (€25–38) pentru varietate. Cost total săptămânal: €800–1.200 — cel mai bun raport calitate-preț de pe insulă.",
         },
         {
           label: "Mediu termal (€150–195/noapte)",
@@ -408,8 +408,8 @@ const T = {
           detail: "Stațiunea ESTE parcul termal — 4–7 piscine acoperă totul. Săriți parcurile cu plată, economisiți €150+. Premiul e plătit în avans. Cost total: €1.400–1.960.",
         },
         {
-          label: "Alegerea noastră: Hotel Don Pepe (€155/noapte PC)",
-          detail: "Pensiune completă 4 stele cu 4 piscine termale la trei temperaturi, piscină copii, ciclu gratuit nămol la 7 nopți, și prețul unui hotel buget. Câștigătorul calitate-preț de pe toată insula.",
+          label: "Alegerea noastră: Hotel Terme La Pergola (€100/noapte DP)",
+          detail: "Demi-pensiune 3 stele cu 3 piscine termale (interioară + exterioară), tratament gratuit cu nămol pentru șederi de 5+ nopți, copil sub 3 gratuit. La €100/noapte ai apă vulcanică sulfat-bicarbonat autentică — cel mai ieftin hotel termal real de pe insulă și câștigătorul calitate-preț.",
         },
       ] as ValuePoint[],
     },
