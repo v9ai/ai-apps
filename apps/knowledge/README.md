@@ -10,7 +10,7 @@ AI engineering educational platform — 88 lessons across 14 categories with sea
 - **UI**: Radix UI Themes
 - **AI**: OpenAI, DeepSeek
 - **Content Generation**: LangGraph (Python backend)
-- **File Storage**: Vercel Blob
+- **File Storage**: Cloudflare R2
 - **Deployment**: Vercel
 
 ## Architecture
@@ -389,7 +389,7 @@ apps/knowledge/
 │   ├── api/course-review/[id]/  # GET fetch review · POST upsert AI review
 │   ├── api/learners/       # CRUD for managed learners
 │   ├── api/coursework/     # GET list coursework files
-│   └── api/coursework/upload/  # Vercel Blob client-upload handler
+│   └── api/coursework/upload/  # FormData upload to Cloudflare R2
 ├── components/             # React components
 │   ├── search.tsx          # Cmd+K full-text search
 │   ├── audio-player.tsx    # TTS audio playback
@@ -404,6 +404,7 @@ apps/knowledge/
 │   │                       # exports AWS_DEEP_DIVE_SLUGS and getUrlPath()
 │   ├── data.ts             # DB/filesystem adapter — re-exports AWS_DEEP_DIVE_SLUGS, getUrlPath
 │   ├── db/queries.ts       # DB query layer
+│   ├── r2.ts               # Cloudflare R2 upload/delete helpers
 │   └── actions/            # Server actions
 ├── backend/                # LangGraph content generation (Python)
 │   ├── graph/              # research → outline → draft → review → quality_check [→ revise] → save
@@ -453,5 +454,8 @@ DEEPSEEK_API_KEY=
 NEXT_PUBLIC_R2_DOMAIN=  # audio CDN domain
 WORKER_URL=             # Cloudflare Worker endpoint
 NEXT_PUBLIC_DATA_SOURCE= # "db" | "fs"
-BLOB_READ_WRITE_TOKEN=   # Vercel Blob storage
+R2_ACCOUNT_ID=           # Cloudflare R2
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=          # defaults to "knowledge"
 ```

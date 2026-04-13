@@ -170,24 +170,24 @@ function buildQuestion(
   const correctValue = match ? match[2].trim() : "";
   const correctOption = `${hl}: ${correctValue};`;
 
-  // Generate wrong options from the same property's other values
-  const variations = generateVariations(prop);
+  // Generate wrong options from the same item's other values
+  const variations = generateVariations(item);
   const wrongFromSame = variations
     .slice(0, 2)
     .map((v) => `${hl}: ${v};`);
 
-  // One wrong option from a different property in the same category
-  const siblings = allProps.filter(
-    (p) => p.category === prop.category && p.id !== prop.id,
+  // One wrong option from a different item
+  const siblings = allItems.filter(
+    (p) => p.id !== item.id,
   );
   const wrongFromSibling =
     siblings.length > 0
       ? (() => {
           const sib = siblings[Math.floor(Math.random() * siblings.length)];
           const sibVal =
-            sib.values.find((v) => !v.value.startsWith("<"))?.value ??
-            sib.defaultValue;
-          return `${sib.property}: ${sibVal};`;
+            sib.details.find((d) => !d.label.startsWith("<"))?.label ??
+            "inherit";
+          return `${sib.term}: ${sibVal};`;
         })()
       : null;
 
@@ -205,23 +205,29 @@ function buildQuestion(
     () => Math.random() - 0.5,
   );
 
-  return { prop, correctOption, options, cssContext: buildCssContext(prop) };
+  return { item, correctOption, options, cssContext: buildCssContext(item) };
 }
 
 export function VisualMatcher({
-  properties,
+  items,
   onRate,
 }: VisualMatcherProps) {
+  // Filter to only items with demos
+  const demoItems = useMemo(
+    () => items.filter((i): i is DemoItem => !!i.demo),
+    [items],
+  );
+
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answered, setAnswered] = useState(false);
 
   const question = useMemo(
     () =>
-      properties[index]
-        ? buildQuestion(properties[index], properties)
+      demoItems[index]
+        ? buildQuestion(demoItems[index], demoItems)
         : null,
-    [properties, index],
+    [demoItems, index],
   );
 
   const handleSelect = useCallback(
@@ -230,7 +236,7 @@ export function VisualMatcher({
       setSelected(opt);
       setAnswered(true);
       const correct = opt === question.correctOption;
-      onRate(question.prop.id, correct);
+      onRate(question.item.id, correct);
     },
     [answered, question, onRate],
   );
@@ -238,14 +244,14 @@ export function VisualMatcher({
   const handleNext = useCallback(() => {
     setSelected(null);
     setAnswered(false);
-    setIndex((i) => (i + 1 < properties.length ? i + 1 : 0));
-  }, [properties.length]);
+    setIndex((i) => (i + 1 < demoItems.length ? i + 1 : 0));
+  }, [demoItems.length]);
 
   if (!question) {
     return (
       <div className="memorize-empty">
         <span className="memorize-empty-icon">&#x1F50D;</span>
-        <Text size="2">No properties to match.</Text>
+        <Text size="2">No visual items to match.</Text>
       </div>
     );
   }
@@ -254,7 +260,7 @@ export function VisualMatcher({
     <div className="matcher-container">
       <Flex justify="center" mb="3">
         <Text size="1" color="gray">
-          {index + 1} / {properties.length} &mdash; Which CSS declaration
+          {index + 1} / {demoItems.length} &mdash; Which CSS declaration
           produces this output?
         </Text>
       </Flex>
@@ -264,8 +270,8 @@ export function VisualMatcher({
           <div className="matcher-preview">
             <div className="matcher-preview-label">Target Output</div>
             <LiveDemo
-              html={question.prop.demo.html}
-              css={question.prop.demo.css}
+              html={question.item.demo.html}
+              css={question.item.demo.css}
             />
           </div>
 

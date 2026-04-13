@@ -11,9 +11,9 @@ const TIME_LABELS: Record<string, string> = {
   night: "Night",
 };
 
-export function LearningInsights({ appSlug }: { appSlug: string }) {
+export function LearningInsights({ namespaceKey }: { namespaceKey: string }) {
   const [open, setOpen] = useState(false);
-  const insights = useMemo(() => computeInsights(appSlug), [appSlug]);
+  const insights = useMemo(() => computeInsights(namespaceKey), [namespaceKey]);
 
   if (insights.totalSessions === 0) return null;
 

@@ -659,6 +659,113 @@ const synthesisRules = [
   },
 ];
 
+const bridgeEndpoints = [
+  {
+    method: "POST",
+    path: "/upload",
+    description: "PDF → R2 storage → LlamaParse → marker extraction → embeddings",
+    input: "FormData: file, user_id, test_date",
+    output: "{test_id, markers_count, status}",
+    color: "var(--orange-9)",
+  },
+  {
+    method: "POST",
+    path: "/search/markers",
+    description: "Hybrid search: 0.7 cosine + 0.3 FTS on blood_marker_embeddings",
+    input: "{query, user_id}",
+    output: "{marker_name, combined_score, fts_rank, vector_similarity}[]",
+    color: "var(--blue-9)",
+  },
+  {
+    method: "POST",
+    path: "/search/multi",
+    description: "Fan-out across all 6 entity tables, returns combined results",
+    input: "{query, user_id}",
+    output: "{tests[], markers[], conditions[], medications[], symptoms[], appointments[]}",
+    color: "var(--indigo-9)",
+  },
+  {
+    method: "POST",
+    path: "/search/trend",
+    description: "All historical values for a specific marker — joins markers → tests for dates",
+    input: "{query, user_id, marker_name?}",
+    output: "{value, unit, flag, test_date, file_name, similarity}[]",
+    color: "var(--green-9)",
+  },
+  {
+    method: "POST",
+    path: "/chat",
+    description: "Full LangGraph pipeline: triage → retrieve → synthesize → guard",
+    input: "{messages[], user_id}",
+    output: "{answer, intent, guard_passed, guard_issues, citations, retrieval_sources}",
+    color: "var(--crimson-9)",
+  },
+  {
+    method: "DELETE",
+    path: "/blood-tests/{id}",
+    description: "Cascade delete: test + markers + all embedding rows",
+    input: "query: user_id",
+    output: "{deleted: bool}",
+    color: "var(--gray-9)",
+  },
+];
+
+const contextSteps = [
+  {
+    step: "1",
+    title: "Chunk Collection",
+    description: "Retrieve node appends content strings from each search result to context_chunks[], tracking source table names in retrieval_sources[] and similarity scores in retrieval_scores[].",
+    color: "var(--blue-9)",
+  },
+  {
+    step: "2",
+    title: "Context Block",
+    description: 'Chunks are joined with "\\n\\n---\\n\\n" separators. Header line shows chunk count and unique source tables.',
+    code: 'RETRIEVED CONTEXT (7 chunks from blood_marker_embeddings, blood_test_embeddings):\n\n{chunk_1}\n\n---\n\n{chunk_2}\n\n---\n\n...',
+    color: "var(--indigo-9)",
+  },
+  {
+    step: "3",
+    title: "History Window",
+    description: "Chat history is sliced to the last 6 items (3 user + assistant turn pairs) to keep the context window manageable.",
+    code: "CONVERSATION HISTORY:\nuser: What is my TG/HDL ratio?\nassistant: Your TG/HDL ratio is 2.8...\nuser: Is that improving?",
+    color: "var(--green-9)",
+  },
+  {
+    step: "4",
+    title: "Prompt Assembly",
+    description: "Context + history + query are joined with double newlines and sent to DeepSeek with temperature 0.1.",
+    code: "[RETRIEVED CONTEXT]\n\n[CONVERSATION HISTORY]\n\nQUERY: Is my iron improving?",
+    color: "var(--amber-9)",
+  },
+  {
+    step: "5",
+    title: "Citation Extraction",
+    description: "After generation, a regex scans the answer for 12 clinical author names, extracting full citation sentences.",
+    code: "/(Castelli|Millán|McLaughlin|Simental-Mendía|Forget|Hosten|De Ritis|Giannini|Fest|Botros|Inker|Gonzalez-Chavez)[^.]*/",
+    color: "var(--violet-9)",
+  },
+];
+
+const evalMetrics = [
+  { name: "Answer Relevancy", threshold: "0.7", description: "Is the answer relevant to the question asked?", icon: CheckCircle2, color: "var(--green-9)" },
+  { name: "Faithfulness", threshold: "0.7", description: "Are all claims grounded in the retrieved context?", icon: ShieldCheck, color: "var(--blue-9)" },
+  { name: "Contextual Precision", threshold: "0.7", description: "Are the most relevant chunks ranked highest?", icon: Gauge, color: "var(--amber-9)" },
+  { name: "Contextual Recall", threshold: "0.7", description: "Are all necessary facts retrieved from the store?", icon: Search, color: "var(--indigo-9)" },
+  { name: "Contextual Relevancy", threshold: "0.7", description: "Is every retrieved chunk actually useful to the answer?", icon: FlaskConical, color: "var(--violet-9)" },
+];
+
+const evalScenarios = [
+  { name: "lipid-drilldown", turns: 3, description: "TG/HDL → TyG → metabolic syndrome follow-up" },
+  { name: "cross-domain-lipid-nlr", turns: 3, description: "Lipid (TC/HDL) → inflammatory (NLR)" },
+  { name: "renal-to-hepatic", turns: 3, description: "BUN/Creatinine → De Ritis (liver)" },
+  { name: "trajectory-followup", turns: 3, description: "Velocity calculation and interpretation" },
+  { name: "medication-interaction", turns: 3, description: "Statins → De Ritis → corticosteroids" },
+  { name: "safety-persistence", turns: 3, description: "Repeated diagnosis/prescription requests — must refuse all" },
+  { name: "boundary-values", turns: 3, description: "Edge cases: TG/HDL = 2.0, NLR = 3.0 exactly" },
+  { name: "lifestyle-factors", turns: 3, description: "Fasting status, exercise effects on markers" },
+];
+
 /* ── Page ──────────────────────────────────────────────────────────── */
 
 export default function HowItWorksPage() {
@@ -1729,6 +1836,361 @@ export default function HowItWorksPage() {
             <span className="arch-tag">chat_history[-6:]</span>
             <span className="arch-tag">context joined by ---</span>
             <span className="arch-tag">12 citation authors</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Dual-Runtime Bridge ── */}
+      <Box
+        id="runtime-bridge"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--cyan-9)",
+                fontSize: "11px",
+              }}
+            >
+              System Architecture
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Dual-Runtime Bridge
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 580, lineHeight: 1.65 }}
+            >
+              TypeScript (Next.js) handles entity CRUD and UI. Python
+              (FastAPI on :8001) handles PDF ingestion, LangGraph pipeline,
+              and vector search. They communicate via internal API with a
+              shared x-api-key header.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="3" style={{ maxWidth: 860, margin: "0 auto" }}>
+          {bridgeEndpoints.map((ep, i) => (
+            <ScrollReveal key={ep.path} delay={i * 50}>
+              <Flex
+                className="deep-dive-card"
+                gap="4"
+                p="4"
+                align="start"
+                direction={{ initial: "column", sm: "row" }}
+              >
+                <Flex align="center" gap="2" style={{ flexShrink: 0, minWidth: 180 }}>
+                  <span
+                    className="bridge-method"
+                    style={{
+                      background: ep.method === "DELETE"
+                        ? "var(--crimson-a3)"
+                        : "var(--green-a3)",
+                      color: ep.method === "DELETE"
+                        ? "var(--crimson-11)"
+                        : "var(--green-11)",
+                    }}
+                  >
+                    {ep.method}
+                  </span>
+                  <Text
+                    size="2"
+                    weight="bold"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      color: ep.color,
+                      fontSize: "13px",
+                    }}
+                  >
+                    {ep.path}
+                  </Text>
+                </Flex>
+
+                <Flex direction="column" gap="2" style={{ flex: 1 }}>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {ep.description}
+                  </Text>
+                  <Flex gap="4" wrap="wrap">
+                    <Flex gap="1" align="baseline">
+                      <Text size="1" weight="bold" style={{ fontSize: "10px", color: "var(--gray-8)" }}>
+                        IN
+                      </Text>
+                      <Text
+                        size="1"
+                        style={{
+                          fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                          fontSize: "11px",
+                          color: "var(--gray-10)",
+                        }}
+                      >
+                        {ep.input}
+                      </Text>
+                    </Flex>
+                    <Flex gap="1" align="baseline">
+                      <Text size="1" weight="bold" style={{ fontSize: "10px", color: "var(--gray-8)" }}>
+                        OUT
+                      </Text>
+                      <Text
+                        size="1"
+                        style={{
+                          fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                          fontSize: "11px",
+                          color: "var(--gray-10)",
+                        }}
+                      >
+                        {ep.output}
+                      </Text>
+                    </Flex>
+                  </Flex>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={350}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">FastAPI :8001</span>
+            <span className="arch-tag">x-api-key header</span>
+            <span className="arch-tag">Python: blood data</span>
+            <span className="arch-tag">TypeScript: entity CRUD</span>
+            <span className="arch-tag">Shared BGE 1024-dim</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Context Assembly Pipeline ── */}
+      <Box
+        id="context-assembly"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Retrieve → Synthesize
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Context Assembly Pipeline
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              How retrieved chunks become a synthesis prompt. 5 steps from
+              raw search results to a temperature-0.1 LLM call with
+              citation extraction.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="4" style={{ maxWidth: 800, margin: "0 auto" }}>
+          {contextSteps.map((cs, i) => (
+            <ScrollReveal key={cs.step} delay={i * 60}>
+              <Flex
+                className="deep-dive-card"
+                gap="3"
+                p="4"
+                align="start"
+              >
+                <div className="synthesis-rule-num" style={{ color: cs.color, borderColor: cs.color }}>
+                  {cs.step}
+                </div>
+                <Flex direction="column" gap="2" style={{ flex: 1 }}>
+                  <Text size="3" weight="bold">
+                    {cs.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
+                    {cs.description}
+                  </Text>
+                  {cs.code && (
+                    <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem" }}>
+                      <code>{cs.code}</code>
+                    </pre>
+                  )}
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+      </Box>
+
+      {/* ── Evaluation Framework ── */}
+      <Box
+        id="evaluation"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--pink-9)",
+                fontSize: "11px",
+              }}
+            >
+              Quality Assurance
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Evaluation Framework
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              15+ eval scripts across Promptfoo, DeepEval, and RAGAS.
+              5 RAG-triad metrics at 0.7 threshold, 8 multi-turn
+              conversational scenarios, and a DeepSeek judge for
+              automated grading.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        {/* RAG Triad Metrics */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4">
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              RAG Triad Metrics
+            </Heading>
+            <Text size="1" color="gray">
+              Every metric must pass at ≥ 70% across all test cases
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "5" }}
+          gap="3"
+          mb="7"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+        >
+          {evalMetrics.map((m, i) => (
+            <ScrollReveal key={m.name} delay={i * 50}>
+              <Flex
+                direction="column"
+                align="center"
+                gap="2"
+                p="4"
+                className="deep-dive-card"
+                style={{ textAlign: "center" }}
+              >
+                <div
+                  className="deep-dive-icon"
+                  style={{
+                    background: `color-mix(in srgb, ${m.color} 18%, transparent)`,
+                    color: m.color,
+                  }}
+                >
+                  <m.icon size={18} />
+                </div>
+                <Text size="2" weight="bold" style={{ fontSize: "13px" }}>
+                  {m.name}
+                </Text>
+                <Text size="1" color="gray" style={{ lineHeight: 1.45, fontSize: "11px" }}>
+                  {m.description}
+                </Text>
+                <span className="threshold-pill threshold-optimal">
+                  ≥ {m.threshold}
+                </span>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        {/* Conversational Scenarios */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4" mt="6">
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              Multi-Turn Conversational Scenarios
+            </Heading>
+            <Text size="1" color="gray">
+              8 scenarios testing cross-turn consistency, safety persistence, and domain transitions
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "4" }}
+          gap="3"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+        >
+          {evalScenarios.map((s, i) => (
+            <ScrollReveal key={s.name} delay={i * 40}>
+              <Flex
+                direction="column"
+                gap="2"
+                p="3"
+                className="deep-dive-card"
+              >
+                <Text
+                  size="2"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "12px",
+                  }}
+                >
+                  {s.name}
+                </Text>
+                <Text size="1" color="gray" style={{ lineHeight: 1.45, fontSize: "11px" }}>
+                  {s.description}
+                </Text>
+                <span className="arch-tag" style={{ alignSelf: "flex-start", fontSize: "10px" }}>
+                  {s.turns} turns
+                </span>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={380}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">Promptfoo</span>
+            <span className="arch-tag">DeepEval</span>
+            <span className="arch-tag">RAGAS</span>
+            <span className="arch-tag">DeepSeek judge</span>
+            <span className="arch-tag">pytest</span>
+            <span className="arch-tag">safety ≥ 80%</span>
+            <span className="arch-tag">15+ eval scripts</span>
           </Flex>
         </ScrollReveal>
       </Box>

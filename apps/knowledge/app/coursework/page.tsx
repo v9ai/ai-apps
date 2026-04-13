@@ -320,21 +320,19 @@ export default function CourseworkPage() {
     if (!uploadFile || !activeLearner) return;
     setUploading(true);
     try {
-      await upload(uploadFile.name, uploadFile, {
-        access: "public",
-        handleUploadUrl: "/api/coursework/upload",
-        clientPayload: JSON.stringify({
-          learnerId: activeLearner,
-          title: uploadTitle.trim() || uploadFile.name,
-          subject: uploadSubject.trim() || null,
-          fileSize: uploadFile.size,
-          mimeType: uploadFile.type,
-        }),
-      });
+      const formData = new FormData();
+      formData.append("file", uploadFile);
+      formData.append("learnerId", activeLearner);
+      formData.append("title", uploadTitle.trim() || uploadFile.name);
+      if (uploadSubject.trim()) formData.append("subject", uploadSubject.trim());
 
-      // Refetch to get the DB row with all fields
-      const cw = await fetch("/api/coursework").then((r) => r.json());
-      setFiles(Array.isArray(cw) ? cw : []);
+      const res = await fetch("/api/coursework/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const row = await res.json();
+      setFiles((prev) => [row, ...prev]);
 
       setUploadTitle("");
       setUploadSubject("");
