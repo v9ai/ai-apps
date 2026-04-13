@@ -11,10 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "test": "vitest run",
     "test:watch": "vitest",
-    "eval": "promptfoo eval && promptfoo eval -c promptfoo.trajectory.yaml",
-    "eval:qa": "promptfoo eval",
-    "eval:trajectory": "promptfoo eval -c promptfoo.trajectory.yaml",
-    "eval:deepeval": "python evals/trajectory_eval.py",
+    "eval:trajectory": "uv run --project langgraph pytest evals/trajectory_eval.py -v",
     "eval:rag": "python evals/ragas_eval.py",
     "eval:rag:triad": "uv run --project langgraph pytest evals/rag_triad_eval.py -v",
     "eval:rag:synth": "uv run --project langgraph pytest evals/synthesize_eval.py -v",
@@ -28,7 +25,7 @@
     "eval:graph:e2e": "uv run --project langgraph pytest evals/graph_eval.py -v -k EndToEnd",
     "eval:graph:design": "uv run --project langgraph pytest evals/graph_eval.py -v -k SystemDesign",
     "eval:all": "uv run --project langgraph pytest evals/ -v",
-    "eval:view": "promptfoo view"
+    "eval:view": "uv run --project langgraph deepeval login && echo 'View results at https://app.confident-ai.com'"
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",

@@ -1,6 +1,7 @@
 import rawData from "@/data/places.json";
 import rawHotels2026 from "@/data/hotels_2026.json";
 import rawNapoliData from "@/data/napoli_places.json";
+import rawIschiaData from "@/data/ischia_places.json";
 import rawLongStay from "@/data/long_stay_2026.json";
 import rawScrapedReviews from "../../data/scraped_reviews.json";
 import type { PlacesData, Place, HotelSearchResult, LongStayResult, KatowiceHotel } from "./types";
@@ -9,6 +10,7 @@ import { type Category } from "./categories";
 export const data = rawData as PlacesData;
 export const hotels2026 = rawHotels2026 as HotelSearchResult[];
 export const napoliData = rawNapoliData as PlacesData;
+export const ischiaData = rawIschiaData as PlacesData;
 export const longStay2026 = rawLongStay as LongStayResult[];
 export const scrapedReviews = rawScrapedReviews as Record<string, { review_rating: number; review_count: number; review_texts: string[]; gallery: string[]; sources: string[] }>;
 

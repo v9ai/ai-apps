@@ -275,9 +275,21 @@ ORDER BY t.test_date ASC;`,
     bg: "var(--crimson-a3)",
     title: "Row-Level User Isolation",
     description:
-      "Every table and every embedding table has a user_id column with B-tree indexes. Vector searches are always scoped to the authenticated user — the query planner prunes the search space before touching any vectors.",
+      "All 22 tables — 10 domain tables, 7 embedding tables, and 5 supporting tables — carry a user_id column with a dedicated B-tree index. Every query, including vector similarity searches, is scoped to the authenticated user via WHERE user_id = $1 so the query planner prunes the search space before scanning a single vector. No row from one user can ever leak into another user's results, and the B-tree filter runs before the expensive pgvector distance calculation.",
     detail:
-      "CASCADE DELETE on foreign keys means deleting a blood test automatically removes its marker embeddings and health-state embeddings. No orphaned vectors, no cleanup jobs.",
+      "CASCADE DELETE on foreign keys creates automatic cleanup chains: deleting a user removes all their blood tests, which cascades to blood_markers, blood_marker_embeddings, blood_test_embeddings, and health_state_embeddings. The same applies to conditions → condition_embeddings → condition_researches, medications → medication_embeddings, symptoms → symptom_embeddings, and appointments → appointment_embeddings. No orphaned vectors, no background cleanup jobs, no stale embeddings from deleted records. Junction tables like family_member_doctors also cascade from both sides — deleting either the family member or the doctor removes the link row.",
+    sql: `-- Isolation: every vector search is user-scoped
+SELECT content, 1 - (embedding <=> $2) AS score
+FROM blood_marker_embeddings
+WHERE user_id = $1          -- B-tree index prunes first
+ORDER BY embedding <=> $2
+LIMIT 5;
+
+-- Cascade chain: DELETE user → blood_tests
+--   → blood_markers → blood_marker_embeddings
+--   → blood_test_embeddings
+--   → health_state_embeddings
+-- All removed in a single transaction.`,
   },
   {
     icon: GitMerge,
