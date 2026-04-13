@@ -10,10 +10,17 @@ interface VisualMatcherProps {
   onRate: (propertyId: string, isCorrect: boolean) => void;
 }
 
+interface CssContext {
+  blankedCss: string;
+  revealedCss: string;
+  highlightLine: number;
+}
+
 interface MatchQuestion {
   prop: CssProperty;
   correctOption: string;
   options: string[];
+  cssContext: CssContext;
 }
 
 /** Build an explanation for why the correct answer is right and the wrong pick is wrong */
@@ -67,6 +74,28 @@ function buildExplanation(
   }
 
   return lines.join("\n");
+}
+
+/** Build CSS context with the tested property blanked out */
+function buildCssContext(prop: CssProperty): CssContext {
+  const lines = prop.demo.css.split("\n");
+  const re = new RegExp(`(${prop.demo.highlightProp}\\s*:\\s*)([^;]+)(;?)`);
+  let highlightLine = -1;
+
+  const blankedLines = lines.map((line, i) => {
+    const match = line.match(re);
+    if (match && highlightLine === -1) {
+      highlightLine = i;
+      return line.replace(re, `$1______$3`);
+    }
+    return line;
+  });
+
+  return {
+    blankedCss: blankedLines.join("\n"),
+    revealedCss: prop.demo.css,
+    highlightLine,
+  };
 }
 
 /** Pick a value variation for a property to create wrong answers */
@@ -140,7 +169,7 @@ function buildQuestion(
     () => Math.random() - 0.5,
   );
 
-  return { prop, correctOption, options };
+  return { prop, correctOption, options, cssContext: buildCssContext(prop) };
 }
 
 export function VisualMatcher({
@@ -195,12 +224,38 @@ export function VisualMatcher({
       </Flex>
 
       <div className="matcher-grid">
-        <div className="matcher-preview">
-          <div className="matcher-preview-label">Target Output</div>
-          <LiveDemo
-            html={question.prop.demo.html}
-            css={question.prop.demo.css}
-          />
+        <div className="matcher-left">
+          <div className="matcher-preview">
+            <div className="matcher-preview-label">Target Output</div>
+            <LiveDemo
+              html={question.prop.demo.html}
+              css={question.prop.demo.css}
+            />
+          </div>
+
+          <div className="matcher-css-context">
+            <div className="matcher-css-label">Stylesheet</div>
+            <pre className="matcher-css-code">
+              {(answered ? question.cssContext.revealedCss : question.cssContext.blankedCss)
+                .split("\n")
+                .map((line, i) => (
+                  <div
+                    key={i}
+                    className={
+                      i === question.cssContext.highlightLine
+                        ? answered
+                          ? selected === question.correctOption
+                            ? "matcher-css-line matcher-css-line--correct"
+                            : "matcher-css-line matcher-css-line--revealed"
+                          : "matcher-css-line matcher-css-line--blank"
+                        : "matcher-css-line"
+                    }
+                  >
+                    {line || "\u00A0"}
+                  </div>
+                ))}
+            </pre>
+          </div>
         </div>
 
         <div className="matcher-options">

@@ -282,11 +282,15 @@ export function MemorizeDashboard({
   }
 
   if (mode === "drill") {
+    const drillProps = activeCategory ? filteredProps : smartProps;
+    const drillSubtitle = activeCategory
+      ? categories.find((c) => c.id === activeCategory)?.name ?? "60 seconds"
+      : "All categories";
     return (
       <div>
-        <ModeHeader title="Timed Drill" subtitle="60 seconds" onBack={handleBack} />
+        <ModeHeader title="Timed Drill" subtitle={drillSubtitle} onBack={handleBack} />
         <ModeTip mode="drill" />
-        <TimedDrill properties={allProps} onRate={handleRate} />
+        <TimedDrill properties={drillProps} onRate={handleRate} />
       </div>
     );
   }

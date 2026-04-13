@@ -439,6 +439,66 @@
   background: var(--red-3);
 }
 
+.matcher-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.matcher-css-context {
+  border: 1px solid var(--gray-5);
+  border-radius: var(--radius-3);
+  overflow: hidden;
+}
+
+.matcher-css-label {
+  padding: 8px 12px;
+  background: var(--gray-3);
+  font-size: var(--font-size-3);
+  font-weight: 600;
+  color: var(--gray-11);
+  border-bottom: 1px solid var(--gray-5);
+}
+
+.matcher-css-code {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-2);
+  line-height: 1.6;
+  padding: 12px;
+  margin: 0;
+  background: var(--gray-2);
+  overflow-x: auto;
+  white-space: pre;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.matcher-css-line {
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.matcher-css-line--blank {
+  background: var(--violet-3);
+  border-left: 3px solid var(--violet-8);
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+.matcher-css-line--correct {
+  background: var(--grass-3);
+  border-left: 3px solid var(--grass-8);
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+.matcher-css-line--revealed {
+  background: var(--orange-3);
+  border-left: 3px solid var(--orange-8);
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
 .matcher-feedback {
   grid-column: 1 / -1;
   text-align: center;
