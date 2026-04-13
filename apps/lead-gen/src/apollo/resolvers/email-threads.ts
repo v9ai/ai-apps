@@ -250,6 +250,9 @@ export const emailThreadResolvers = {
         return inboundMap.has(t.contactId); // has archived, keep only if non-archived inbound remains
       });
 
+      // Only show threads with inbound replies in the inbox
+      threads = threads.filter((t) => t.hasReply);
+
       // Filter by classification
       if (args.classification) {
         threads = threads.filter((t) => t.classification === args.classification);
