@@ -17,6 +17,7 @@ import type { Metadata } from "next";
 import { css, cx } from "styled-system/css";
 
 /* ─── Extracted components ────────────────────────────── */
+import NavHeader from "@/app/_components/nav-header";
 import { ExternalLinkIcon, MicrophoneIcon, GitHubIcon, PencilIcon } from "./_components/icons";
 import { GitHubSection } from "./_components/github-section";
 import { HuggingFaceSection } from "./_components/huggingface-section";
@@ -102,10 +103,15 @@ export default async function PersonPage({ params }: Props) {
     (enriched.huggingface && enriched.huggingface.totalDownloads > 0) ||
     (enriched.github?.profile && enriched.github.profile.followers > 0);
 
+  const allPersonalities = getAllPersonalities();
+  const totalPersonalities = allPersonalities.length;
+  const totalPodcasts = allPersonalities.reduce((acc, p) => acc + p.podcasts.length, 0);
+
   const editUrl = `https://github.com/v9ai/ai-apps/blob/main/apps/podcasts/personalities/${slug}.ts`;
 
   return (
     <main className={css({ minH: 'screen', bg: '#0B0B0F' })}>
+      <NavHeader totalPersonalities={totalPersonalities} totalPodcasts={totalPodcasts} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -156,7 +162,7 @@ export default async function PersonPage({ params }: Props) {
       <div className={css({ pos: 'relative', overflow: 'hidden' })}>
         <div className={css({ pos: 'relative', zIndex: 10, maxW: '7xl', mx: 'auto', px: { base: '5', sm: '6', lg: '8' } })}>
           {/* Back nav + Edit btn */}
-          <div className={cx("animate-fade-in", css({ pt: { base: '6', md: '8' }, pb: { base: '5', md: '6' }, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }))} style={{ animationDelay: "0.1s" }}>
+          <div className={cx("animate-fade-in", css({ pt: { base: '22', md: '24' }, pb: { base: '5', md: '6' }, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }))} style={{ animationDelay: "0.1s" }}>
             <Link
               href="/"
               className={cx("group", css({ display: 'inline-flex', alignItems: 'center', gap: '1.5', fontSize: 'sm', color: '#7B7B86', transition: 'colors', transitionDuration: '200ms', _hover: { color: '#C4C4CC' } }))}
