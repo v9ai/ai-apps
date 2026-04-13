@@ -22,8 +22,8 @@ graph TD
     end
 
     subgraph Next.js["Next.js App (Port 3006)"]
-        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses"]
-        API["API Routes\n/api/chat\n/api/research\n/api/course-review/[id]"]
+        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses\n/coursework"]
+        API["API Routes\n/api/chat\n/api/research\n/api/course-review/[id]\n/api/learners\n/api/coursework"]
         SA["Server Actions\nsearch · analytics"]
         MW["Middleware\nURL redirects"]
     end
@@ -69,6 +69,7 @@ erDiagram
     user_profiles ||--o{ chat_messages : sends
     lessons ||--o{ knowledge_states : subject_of
     lessons ||--o{ user_lesson_interactions : interacted_in
+    learners ||--o{ coursework : has
 
     categories {
         uuid id PK
