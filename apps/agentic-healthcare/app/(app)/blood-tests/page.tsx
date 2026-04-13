@@ -7,6 +7,7 @@ import { Badge, Box, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/
 import { Suspense } from "react";
 import { Droplet } from "lucide-react";
 import { UploadForm } from "./upload-form";
+import { FilePreviewModal } from "./file-preview-modal";
 import { css } from "styled-system/css";
 
 const statusColor: Record<string, "green" | "red" | "yellow" | "gray"> = {
@@ -94,6 +95,9 @@ async function TestsList() {
                 <Badge color={statusColor[test.status] ?? "gray"} variant="soft">
                   {test.status}
                 </Badge>
+                {test.status === "done" && (
+                  <FilePreviewModal testId={test.id} fileName={test.fileName} />
+                )}
               </Flex>
             </Link>
           </div>
