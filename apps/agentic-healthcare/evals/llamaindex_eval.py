@@ -111,8 +111,18 @@ _RENAL_PANEL_ELEMENTS = [
 
 def _make_llm() -> OpenAILike:
     """Create a LlamaIndex LLM for chat engine tests."""
-    from llm_backend import get_llama_index_llm
-    return get_llama_index_llm()
+    from config import settings
+    base = settings.llm_base_url.rstrip("/")
+    if not base.endswith("/v1"):
+        base += "/v1"
+    return OpenAILike(
+        model=settings.llm_model,
+        api_base=base,
+        api_key=settings.llm_api_key,
+        is_chat_model=True,
+        temperature=0.0,
+        max_tokens=1024,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════

@@ -35,8 +35,10 @@ from llama_index.core import Settings, VectorStoreIndex
 from llama_index.core.chat_engine import ContextChatEngine
 from llama_index.core.schema import MetadataMode
 
+from llama_index.llms.openai_like import OpenAILike
+
+from config import settings
 from embeddings import get_embed_model
-from llm_backend import get_llama_index_llm
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -151,7 +153,14 @@ def clinical_index(embed_model):
 @pytest.fixture(scope="module")
 def chat_engine(clinical_index):
     """ContextChatEngine backed by clinical knowledge index."""
-    llm = get_llama_index_llm()
+    llm = OpenAILike(
+        model=settings.llm_model,
+        api_base=settings.llm_base_url.rstrip("/") + "/v1" if not settings.llm_base_url.rstrip("/").endswith("/v1") else settings.llm_base_url.rstrip("/"),
+        api_key=settings.llm_api_key,
+        is_chat_model=True,
+        temperature=0.0,
+        max_tokens=1024,
+    )
     engine = ContextChatEngine.from_defaults(
         retriever=clinical_index.as_retriever(similarity_top_k=5),
         system_prompt=(

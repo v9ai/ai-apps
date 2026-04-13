@@ -1,7 +1,7 @@
-"""Embedding generation + text formatters via OpenAI-compatible API.
+"""Embedding generation + text formatters via local FastEmbed.
 
-Uses httpx to call an OpenAI-compatible /v1/embeddings endpoint.
-Provides a LlamaIndex-compatible BaseEmbedding subclass so the
+Uses BAAI/bge-large-en-v1.5 (1024-dim) running locally via ONNX Runtime.
+Provides a LlamaIndex-compatible FastEmbedEmbedding so the
 IngestionPipeline can use it as a transformation.
 """
 
@@ -9,136 +9,55 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Any, List
+from typing import Any
 
-import httpx
-from llama_index.core.base.embeddings.base import BaseEmbedding, Embedding
+from fastembed import TextEmbedding
 from llama_index.core.schema import Document, MetadataMode, TextNode
+from llama_index.embeddings.fastembed import FastEmbedEmbedding
 
-from config import settings as app_settings
 from parsers import Marker
 
 logger = logging.getLogger(__name__)
 
-# ── httpx clients (lazy singletons) ────────────────────────────────────
+# ── Local embedding model (ONNX, 1024-dim) ────────────────────────────
 
-_sync_client: httpx.Client | None = None
-_async_client: httpx.AsyncClient | None = None
+_LOCAL_MODEL = "BAAI/bge-large-en-v1.5"
 
-
-def _embed_url() -> str:
-    url = app_settings.embed_api_url.rstrip("/")
-    if not url.endswith("/v1"):
-        url += "/v1"
-    return url
+_text_embed: TextEmbedding | None = None
 
 
-def _embed_headers() -> dict[str, str]:
-    return {
-        "Authorization": f"Bearer {app_settings.embed_api_key}",
-        "Content-Type": "application/json",
-    }
-
-
-def _get_sync_client() -> httpx.Client:
-    global _sync_client
-    if _sync_client is None:
-        _sync_client = httpx.Client(
-            base_url=_embed_url(),
-            headers=_embed_headers(),
-            timeout=httpx.Timeout(connect=5.0, read=30.0, write=10.0, pool=5.0),
-        )
-    return _sync_client
-
-
-def _get_async_client() -> httpx.AsyncClient:
-    global _async_client
-    if _async_client is None:
-        _async_client = httpx.AsyncClient(
-            base_url=_embed_url(),
-            headers=_embed_headers(),
-            timeout=httpx.Timeout(connect=5.0, read=30.0, write=10.0, pool=5.0),
-        )
-    return _async_client
-
-
-# ── Raw embedding calls ────────────────────────────────────────────────
-
-
-def _call_embed_api(texts: list[str]) -> list[list[float]]:
-    payload: dict[str, Any] = {
-        "model": app_settings.embed_api_model,
-        "input": texts,
-    }
-    if app_settings.embed_dimensions:
-        payload["dimensions"] = app_settings.embed_dimensions
-    resp = _get_sync_client().post("/embeddings", json=payload)
-    resp.raise_for_status()
-    data = resp.json()["data"]
-    data.sort(key=lambda x: x["index"])
-    return [d["embedding"] for d in data]
-
-
-async def _acall_embed_api(texts: list[str]) -> list[list[float]]:
-    payload: dict[str, Any] = {
-        "model": app_settings.embed_api_model,
-        "input": texts,
-    }
-    if app_settings.embed_dimensions:
-        payload["dimensions"] = app_settings.embed_dimensions
-    resp = await _get_async_client().post("/embeddings", json=payload)
-    resp.raise_for_status()
-    data = resp.json()["data"]
-    data.sort(key=lambda x: x["index"])
-    return [d["embedding"] for d in data]
+def _get_local_model() -> TextEmbedding:
+    """Lazy-init the local FastEmbed model (downloads on first use)."""
+    global _text_embed
+    if _text_embed is None:
+        _text_embed = TextEmbedding(model_name=_LOCAL_MODEL)
+        logger.info("FastEmbed model loaded: %s", _LOCAL_MODEL)
+    return _text_embed
 
 
 # ── Public helpers (used by graph.py, routes, etc.) ────────────────────
 
 
 def generate_embedding(text: str) -> list[float]:
-    return _call_embed_api([text])[0]
+    model = _get_local_model()
+    return [float(x) for x in next(model.embed([text]))]
 
 
 async def agenerate_embedding(text: str) -> list[float]:
-    return (await _acall_embed_api([text]))[0]
+    return generate_embedding(text)
 
 
 # ── LlamaIndex-compatible embed model ─────────────────────────────────
 
-
-class APIEmbedding(BaseEmbedding):
-    """LlamaIndex BaseEmbedding backed by an OpenAI-compatible API."""
-
-    model_name: str = app_settings.embed_api_model
-
-    def _get_query_embedding(self, query: str) -> Embedding:
-        return generate_embedding(query)
-
-    async def _aget_query_embedding(self, query: str) -> Embedding:
-        return await agenerate_embedding(query)
-
-    def _get_text_embedding(self, text: str) -> Embedding:
-        return generate_embedding(text)
-
-    async def _aget_text_embedding(self, text: str) -> Embedding:
-        return await agenerate_embedding(text)
-
-    def _get_text_embeddings(self, texts: List[str]) -> List[Embedding]:
-        return _call_embed_api(texts)
-
-    async def _aget_text_embeddings(self, texts: List[str]) -> List[Embedding]:
-        return await _acall_embed_api(texts)
+_li_embed: FastEmbedEmbedding | None = None
 
 
-_embed_model: APIEmbedding | None = None
-
-
-def get_embed_model() -> APIEmbedding:
-    global _embed_model
-    if _embed_model is None:
-        _embed_model = APIEmbedding()
-    return _embed_model
+def get_embed_model() -> FastEmbedEmbedding:
+    """Return a LlamaIndex-compatible FastEmbedEmbedding singleton."""
+    global _li_embed
+    if _li_embed is None:
+        _li_embed = FastEmbedEmbedding(model_name=_LOCAL_MODEL)
+    return _li_embed
 
 
 # ── Document / Node builders ────────────────────────────────────────

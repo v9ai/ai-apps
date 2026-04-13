@@ -2740,7 +2740,7 @@ EVAL_INPUTS = [
 # Helper: build RAG pipeline for a given LlamaIndex LLM model name
 # ---------------------------------------------------------------------------
 
-def build_rag_pipeline(model: str) -> RetrieverQueryEngine:
+def build_rag_pipeline(model: str, use_production_embeddings: bool = True) -> RetrieverQueryEngine:
     # Step 2 — Build the RAG pipeline (mirrors the blog exactly)
     Settings.llm = OpenAILike(
         model=model,
@@ -2750,7 +2750,11 @@ def build_rag_pipeline(model: str) -> RetrieverQueryEngine:
         temperature=0.0,
         max_tokens=1024,
     )
-    Settings.embed_model = FastEmbedEmbedding(model_name="BAAI/bge-small-en-v1.5")
+    if use_production_embeddings:
+        from embeddings import get_embed_model
+        Settings.embed_model = get_embed_model()
+    else:
+        Settings.embed_model = FastEmbedEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
     index = VectorStoreIndex.from_documents(DOCUMENTS)
 

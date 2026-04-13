@@ -1,7 +1,7 @@
 """
 LangGraph clinical intelligence pipeline evaluation.
 
-Tests the full agentic graph: triage → retrieve → synthesize → guard
+Tests the full agentic graph: triage → retrieve → rerank → synthesize → guard
 
 Eval categories:
   A. Triage accuracy — correct intent classification for diverse query types
@@ -35,18 +35,56 @@ from conftest import HAS_JUDGE, make_geval, skip_no_judge
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "langgraph"))
 
 from graph import (
+    CONFIDENCE_THRESHOLD,
+    GUARD_SYSTEM,
+    RERANK_SYSTEM,
+    RETRIEVER_NODE_NAMES,
+    SAFETY_REFUSAL_RESPONSE,
+    SINGLE_INTENTS,
+    SYNTHESIS_SYSTEM,
+    TRIAGE_SYSTEM,
     GraphState,
+    _dynamic_k,
+    _route_to_retriever,
     build_graph,
     compiled_graph,
     guard,
-    retrieve,
+    refuse,
+    rerank,
+    resynthesize,
+    retrieve_appointments,
+    retrieve_conditions,
+    retrieve_derived_ratios,
+    retrieve_general_health,
+    retrieve_markers,
+    retrieve_medications,
+    retrieve_multi_intent,
+    retrieve_symptoms,
+    retrieve_trajectory,
+    route_after_guard,
+    route_after_triage,
+    route_after_re_triage,
     synthesize,
     triage,
-    SAFETY_REFUSAL_RESPONSE,
-    TRIAGE_SYSTEM,
-    SYNTHESIS_SYSTEM,
-    GUARD_SYSTEM,
 )
+
+# Map intent to its retriever function (for routing tests)
+_INTENT_RETRIEVER = {
+    "markers": retrieve_markers,
+    "derived_ratios": retrieve_derived_ratios,
+    "trajectory": retrieve_trajectory,
+    "conditions": retrieve_conditions,
+    "medications": retrieve_medications,
+    "symptoms": retrieve_symptoms,
+    "appointments": retrieve_appointments,
+    "general_health": retrieve_general_health,
+}
+
+
+def _retrieve_for_intent(state: GraphState) -> dict:
+    """Dispatch to the correct per-intent retriever based on state.intent."""
+    fn = _INTENT_RETRIEVER.get(state.intent, retrieve_general_health)
+    return fn(state)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -81,6 +119,7 @@ def mock_search_all():
         "graph.search_symptoms",
         "graph.search_appointments",
         "graph.search_marker_trend",
+        "graph.search_health_states",
     ]
     entered = []
     for fn_path in search_fns:
@@ -231,52 +270,52 @@ class TestRetrievalRouting:
 
     def test_markers_queries_marker_and_test_tables(self, mock_embedding, mock_search_all):
         state = _make_state(intent="markers")
-        retrieve(state)
+        _retrieve_for_intent(state)
         mock_search_all["search_markers_hybrid"].assert_called_once()
         mock_search_all["search_blood_tests"].assert_called_once()
         mock_search_all["search_conditions"].assert_not_called()
 
     def test_trajectory_queries_markers_and_trend(self, mock_embedding, mock_search_all):
         state = _make_state(intent="trajectory", entities=["HDL"])
-        retrieve(state)
+        _retrieve_for_intent(state)
         mock_search_all["search_markers_hybrid"].assert_called_once()
         mock_search_all["search_blood_tests"].assert_called_once()
         mock_search_all["search_marker_trend"].assert_called_once()
 
     def test_trajectory_without_entities_skips_trend(self, mock_embedding, mock_search_all):
         state = _make_state(intent="trajectory", entities=[])
-        retrieve(state)
+        _retrieve_for_intent(state)
         mock_search_all["search_markers_hybrid"].assert_called_once()
         mock_search_all["search_marker_trend"].assert_not_called()
 
     def test_conditions_queries_conditions_and_markers(self, mock_embedding, mock_search_all):
         state = _make_state(intent="conditions")
-        retrieve(state)
+        _retrieve_for_intent(state)
         mock_search_all["search_conditions"].assert_called_once()
         mock_search_all["search_markers_hybrid"].assert_called_once()
         mock_search_all["search_appointments"].assert_not_called()
 
     def test_medications_queries_medications_and_markers(self, mock_embedding, mock_search_all):
         state = _make_state(intent="medications")
-        retrieve(state)
+        _retrieve_for_intent(state)
         mock_search_all["search_medications"].assert_called_once()
         mock_search_all["search_markers_hybrid"].assert_called_once()
 
     def test_symptoms_queries_symptoms_and_markers(self, mock_embedding, mock_search_all):
         state = _make_state(intent="symptoms")
-        retrieve(state)
+        _retrieve_for_intent(state)
         mock_search_all["search_symptoms"].assert_called_once()
         mock_search_all["search_markers_hybrid"].assert_called_once()
 
     def test_appointments_queries_only_appointments(self, mock_embedding, mock_search_all):
         state = _make_state(intent="appointments")
-        retrieve(state)
+        _retrieve_for_intent(state)
         mock_search_all["search_appointments"].assert_called_once()
         mock_search_all["search_markers_hybrid"].assert_not_called()
 
     def test_general_health_fans_out_to_all_tables(self, mock_embedding, mock_search_all):
         state = _make_state(intent="general_health")
-        retrieve(state)
+        _retrieve_for_intent(state)
         mock_search_all["search_blood_tests"].assert_called_once()
         mock_search_all["search_markers_hybrid"].assert_called_once()
         mock_search_all["search_conditions"].assert_called_once()
@@ -285,7 +324,7 @@ class TestRetrievalRouting:
 
     def test_safety_refusal_skips_retrieval(self, mock_embedding, mock_search_all):
         state = _make_state(intent="safety_refusal")
-        result = retrieve(state)
+        result = refuse(state)
         assert result["context_chunks"] == []
         mock_search_all["search_blood_tests"].assert_not_called()
         mock_embedding.assert_not_called()
@@ -300,7 +339,7 @@ class TestRetrievalRouting:
             {"content": "Blood test: feb-2025.pdf", "similarity": 0.72},
         ]
         state = _make_state(intent="markers")
-        result = retrieve(state)
+        result = _retrieve_for_intent(state)
         assert len(result["context_chunks"]) == 3
         assert "blood_marker_embeddings" in result["retrieval_sources"]
         assert "blood_test_embeddings" in result["retrieval_sources"]
@@ -316,7 +355,7 @@ class TestSynthesis:
 
     def test_safety_refusal_returns_canned_response(self):
         state = _make_state(intent="safety_refusal")
-        result = synthesize(state)
+        result = refuse(state)
         assert result["answer"] == SAFETY_REFUSAL_RESPONSE
         assert "physician" in result["answer"].lower()
 
@@ -434,12 +473,10 @@ class TestSafetyGuard:
         # The guard should append a disclaimer
         assert "consult" in result["final_answer"].lower() or "physician" in result["final_answer"].lower()
 
-    def test_guard_skips_for_safety_refusal(self):
-        state = _make_state(
-            intent="safety_refusal",
-            answer=SAFETY_REFUSAL_RESPONSE,
-        )
-        result = guard(state)
+    def test_refuse_sets_guard_passed(self):
+        """Refuse node sets guard_passed=True so safety_refusal never reaches guard."""
+        state = _make_state(intent="safety_refusal")
+        result = refuse(state)
         assert result["guard_passed"] is True
         assert result["final_answer"] == SAFETY_REFUSAL_RESPONSE
 
@@ -696,7 +733,7 @@ class TestEdgeCases:
             intent="trajectory",
             entities=["HDL", "LDL", "TG/HDL", "NLR", "TyG"],
         )
-        retrieve(state)
+        _retrieve_for_intent(state)
         # Should cap at 3 entities
         assert mock_search_all["search_marker_trend"].call_count == 3
 
@@ -711,7 +748,7 @@ class TestEdgeCases:
                 {"content": "Blood test: 2025-01.pdf\nSummary: 1 abnormal", "similarity": 0.75},
             ]
             state = _make_state(intent="markers")
-            result = retrieve(state)
+            result = _retrieve_for_intent(state)
 
             assert len(result["context_chunks"]) == 2
             assert result["retrieval_scores"][0] == 0.92
@@ -734,12 +771,15 @@ class TestSystemDesign:
 
     # ── G.1 Graph topology ──────────────────────────────────────────
 
-    def test_graph_has_exactly_four_nodes(self):
-        """The graph must have exactly 4 nodes: triage, retrieve, synthesize, guard."""
+    def test_graph_has_all_required_nodes(self):
+        """The graph must have triage, re_triage, refuse, per-intent retrievers, rerank, synthesize, guard, resynthesize."""
         graph = build_graph()
         node_names = set(graph.nodes.keys())
-        assert node_names == {"triage", "retrieve", "synthesize", "guard"}, \
-            f"Expected 4 nodes, got: {node_names}"
+        expected = {
+            "triage", "re_triage", "refuse", "rerank", "synthesize", "guard", "resynthesize",
+        } | set(RETRIEVER_NODE_NAMES)
+        assert node_names == expected, \
+            f"Expected {len(expected)} nodes, got {len(node_names)}: {node_names - expected} extra, {expected - node_names} missing"
 
     def test_graph_entry_point_is_triage(self):
         """Triage must be the entry point — every query starts with classification."""
@@ -750,14 +790,21 @@ class TestSystemDesign:
         assert "triage" in start_targets, \
             f"Entry point should be triage, got: {start_targets}"
 
-    def test_graph_edges_form_linear_pipeline(self):
-        """Edges must form: triage → retrieve → synthesize → guard → END."""
+    def test_graph_edges_form_pipeline(self):
+        """Verify key edges: retrievers → rerank → synthesize → guard, refuse → END."""
         graph = build_graph()
         edges = set(graph.edges)
-        assert ("triage", "retrieve") in edges
-        assert ("retrieve", "synthesize") in edges
+        # All retrievers converge to rerank
+        for retriever_name in RETRIEVER_NODE_NAMES:
+            assert (retriever_name, "rerank") in edges, \
+                f"Missing edge: {retriever_name} → rerank"
+        # Core pipeline
+        assert ("rerank", "synthesize") in edges
         assert ("synthesize", "guard") in edges
-        assert ("guard", "__end__") in edges
+        # Refuse goes directly to END
+        assert ("refuse", "__end__") in edges
+        # Resynthesize loops back to guard
+        assert ("resynthesize", "guard") in edges
 
     def test_no_cycles_in_graph(self):
         """The graph must be acyclic — no node should be reachable from itself."""
@@ -798,9 +845,12 @@ class TestSystemDesign:
         required = {
             "query", "user_id", "chat_history",
             "intent", "intent_confidence", "entities",
+            "triage_attempts", "triage_max_attempts",
+            "sub_intents", "sub_queries", "is_multi_intent",
             "context_chunks", "retrieval_sources", "retrieval_scores",
+            "rerank_scores", "rerank_rationales",
             "answer", "citations",
-            "guard_passed", "guard_issues", "final_answer",
+            "guard_passed", "guard_issues", "guard_retries", "final_answer",
         }
         missing = required - fields
         assert not missing, f"GraphState missing fields: {missing}"
@@ -860,8 +910,8 @@ class TestSystemDesign:
         assert isinstance(result["entities"], list)
 
     def test_retrieve_output_schema(self, mock_embedding, mock_search_all):
-        """Retrieve must return: context_chunks, retrieval_sources, retrieval_scores."""
-        result = retrieve(_make_state(intent="safety_refusal"))
+        """Per-intent retriever must return: context_chunks, retrieval_sources, retrieval_scores."""
+        result = retrieve_markers(_make_state(intent="markers"))
         assert set(result.keys()) == {"context_chunks", "retrieval_sources", "retrieval_scores"}
         assert isinstance(result["context_chunks"], list)
         assert isinstance(result["retrieval_sources"], list)
@@ -875,6 +925,21 @@ class TestSystemDesign:
         assert set(result.keys()) == {"answer", "citations"}
         assert isinstance(result["answer"], str)
         assert isinstance(result["citations"], list)
+
+    def test_rerank_output_schema(self, mock_llm):
+        """Rerank must return: context_chunks, retrieval_sources, retrieval_scores, rerank_scores, rerank_rationales."""
+        mock_llm.return_value = json.dumps({"score": 0.8, "rationale": "relevant"})
+        state = _make_state(
+            intent="markers",
+            context_chunks=["HDL: 55"],
+            retrieval_sources=["blood_marker_embeddings"],
+            retrieval_scores=[0.9],
+        )
+        result = rerank(state)
+        expected_keys = {"context_chunks", "retrieval_sources", "retrieval_scores", "rerank_scores", "rerank_rationales"}
+        assert set(result.keys()) == expected_keys
+        assert isinstance(result["rerank_scores"], list)
+        assert isinstance(result["rerank_rationales"], list)
 
     def test_guard_output_schema(self, mock_llm):
         """Guard must return: guard_passed, guard_issues, final_answer."""
@@ -931,23 +996,30 @@ class TestSystemDesign:
         assert '"passed"' in GUARD_SYSTEM
         assert '"issues"' in GUARD_SYSTEM
 
+    def test_rerank_prompt_requires_json_output(self):
+        """Rerank prompt must instruct JSON output with score and rationale."""
+        assert "JSON" in RERANK_SYSTEM
+        assert '"score"' in RERANK_SYSTEM
+        assert '"rationale"' in RERANK_SYSTEM
+
     # ── G.5 Composition rules ───────────────────────────────────────
 
     def test_safety_refusal_bypasses_all_downstream(self, mock_llm, mock_embedding, mock_search_all):
-        """When triage returns safety_refusal, retrieve and synthesize produce canned output."""
-        # Retrieve should skip
+        """When triage returns safety_refusal, refuse() produces canned output and skips all other nodes."""
         state = _make_state(intent="safety_refusal")
-        retrieve_result = retrieve(state)
-        assert retrieve_result["context_chunks"] == []
+        # Refuse produces canned response and sets guard_passed=True
+        result = refuse(state)
+        assert result["context_chunks"] == []
+        assert result["answer"] == SAFETY_REFUSAL_RESPONSE
+        assert result["guard_passed"] is True
+        assert result["final_answer"] == SAFETY_REFUSAL_RESPONSE
+        # No LLM calls needed
+        mock_llm.assert_not_called()
+        mock_embedding.assert_not_called()
 
-        # Synthesize should return canned response
-        synth_result = synthesize(state)
-        assert synth_result["answer"] == SAFETY_REFUSAL_RESPONSE
-
-        # Guard should auto-pass
-        guard_state = _make_state(intent="safety_refusal", answer=SAFETY_REFUSAL_RESPONSE)
-        guard_result = guard(guard_state)
-        assert guard_result["guard_passed"] is True
+        # Rerank also short-circuits for safety_refusal
+        rerank_result = rerank(state)
+        assert rerank_result["rerank_scores"] == []
 
     def test_retrieval_sources_align_with_context_chunks(self, mock_embedding, mock_search_all):
         """Number of retrieval_sources must match number of context_chunks."""
@@ -959,7 +1031,7 @@ class TestSystemDesign:
             {"content": "C", "similarity": 0.7},
         ]
         state = _make_state(intent="markers")
-        result = retrieve(state)
+        result = _retrieve_for_intent(state)
         assert len(result["context_chunks"]) == len(result["retrieval_sources"])
         assert len(result["context_chunks"]) == len(result["retrieval_scores"])
 
@@ -992,7 +1064,7 @@ class TestSystemDesign:
             for fn in mock_search_all.values():
                 fn.reset_mock()
             state = _make_state(intent=intent)
-            result = retrieve(state)
+            result = _retrieve_for_intent(state)
             total_calls = sum(fn.call_count for fn in mock_search_all.values())
             assert total_calls > 0, f"Intent '{intent}' triggered no search functions"
 
@@ -1008,6 +1080,6 @@ class TestSystemDesign:
             for fn in mock_search_all.values():
                 fn.reset_mock()
             state = _make_state(intent=intent)
-            retrieve(state)
+            _retrieve_for_intent(state)
             assert mock_search_all[primary_fn].call_count > 0, \
                 f"Intent '{intent}' should query {primary_fn}"

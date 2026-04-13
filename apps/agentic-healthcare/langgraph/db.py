@@ -550,6 +550,45 @@ def search_appointments(
     ]
 
 
+def search_health_states(
+    embedding: list[float],
+    user_id: str,
+    threshold: float = 0.3,
+    limit: int = 5,
+) -> list[dict]:
+    """Search health_state_embeddings — returns content + JSONB derived_metrics."""
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT h.id, h.test_id, h.content, h.derived_metrics,
+                   1 - (h.embedding <=> %s) as similarity,
+                   t.file_name, t.test_date
+            FROM health_state_embeddings h
+            JOIN blood_tests t ON t.id = h.test_id
+            WHERE h.user_id = %s
+              AND 1 - (h.embedding <=> %s) > %s
+            ORDER BY h.embedding <=> %s
+            LIMIT %s
+            """,
+            (vec, user_id, vec, threshold, vec, limit),
+        ).fetchall()
+    return [
+        {
+            "id": str(r[0]),
+            "test_id": str(r[1]),
+            "content": r[2],
+            "derived_metrics": r[3] if isinstance(r[3], dict) else {},
+            "similarity": float(r[4]),
+            "file_name": r[5],
+            "test_date": str(r[6]) if r[6] else None,
+        }
+        for r in rows
+    ]
+
+
 def search_marker_trend(
     embedding: list[float],
     user_id: str,

@@ -53,6 +53,7 @@ class GraphChatResponse(BaseModel):
     intent: str
     intent_confidence: float
     retrieval_sources: list[str]
+    rerank_scores: list[float] = []
     guard_passed: bool
     guard_issues: list[str]
     citations: list[str]
@@ -88,6 +89,7 @@ async def chat(req: ChatRequest) -> GraphChatResponse:
         intent=result.get("intent", ""),
         intent_confidence=result.get("intent_confidence", 0.0),
         retrieval_sources=list(set(result.get("retrieval_sources", []))),
+        rerank_scores=result.get("rerank_scores", []),
         guard_passed=result.get("guard_passed", True),
         guard_issues=result.get("guard_issues", []),
         citations=result.get("citations", []),

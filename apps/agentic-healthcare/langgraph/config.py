@@ -21,14 +21,13 @@ class Settings(BaseSettings):
     llm_model: str = "mlx-community/Qwen2.5-7B-Instruct-4bit"
     llm_api_key: str = "unused"
 
-    # Embedding API (OpenAI-compatible — must produce vectors matching pgvector schema)
-    embed_api_url: str = "https://api.openai.com/v1"
-    embed_api_key: str = ""
-    embed_api_model: str = "text-embedding-3-large"
-    embed_dimensions: int = 1024
-
     # Internal API key (shared secret between Next.js ↔ Python)
     internal_api_key: str = ""
+
+    # Reranking
+    rerank_top_k: int = 8
+    rerank_min_score: float = 0.3
+    rerank_enabled: bool = True
 
     # LlamaParse API key
     llama_cloud_api_key: str = ""
