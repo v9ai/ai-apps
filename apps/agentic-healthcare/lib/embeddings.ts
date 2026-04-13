@@ -32,80 +32,98 @@ export const METRIC_REFERENCES: Record<
   string,
   {
     label: string;
+    formula: string;
     unit: string;
     optimal: [number, number];
     borderline: [number, number];
-    description: string;
+    significance: string;
+    author: string;
     reference: string;
   }
 > = {
-  hdl_ldl_ratio: {
-    label: "HDL/LDL Ratio",
-    unit: "ratio",
-    optimal: [0.4, Infinity],
-    borderline: [0.3, 0.4],
-    description: "Higher values indicate better cardiovascular lipid balance",
-    reference:
-      "Castelli WP. Atherosclerosis. 1996;124 Suppl:S1-9. doi:10.1016/0021-9150(96)05851-0",
-  },
-  total_cholesterol_hdl_ratio: {
-    label: "TC/HDL Ratio",
-    unit: "ratio",
-    optimal: [0, 4.5],
-    borderline: [4.5, 5.5],
-    description: "Atherogenic index; lower is better for cardiovascular risk",
-    reference:
-      "Millán J et al. Vasc Health Risk Manag. 2009;5:757-765. doi:10.2147/vhrm.s6269",
-  },
   triglyceride_hdl_ratio: {
     label: "TG/HDL Ratio",
+    formula: "Triglycerides / HDL",
     unit: "ratio",
     optimal: [0, 2.0],
     borderline: [2.0, 3.5],
-    description:
-      "Surrogate marker for insulin resistance and small dense LDL particles",
+    significance:
+      "Insulin resistance surrogate — correlates with small dense LDL particle count",
+    author: "McLaughlin et al.",
     reference:
       "McLaughlin T et al. Ann Intern Med. 2003;139(10):802-809. doi:10.7326/0003-4819-139-10-200311180-00007",
   },
-  glucose_triglyceride_index: {
-    label: "TyG Index",
-    unit: "index",
-    optimal: [0, 8.5],
-    borderline: [8.5, 9.0],
-    description:
-      "Triglyceride-glucose index; surrogate for insulin resistance",
+  total_cholesterol_hdl_ratio: {
+    label: "TC/HDL Ratio",
+    formula: "Total Cholesterol / HDL",
+    unit: "ratio",
+    optimal: [0, 4.0],
+    borderline: [4.0, 5.0],
+    significance:
+      "Cardiovascular risk index — better predictor than LDL alone",
+    author: "Castelli et al.",
     reference:
-      "Simental-Mendía LE et al. Metab Syndr Relat Disord. 2008;6(4):299-304. doi:10.1089/met.2008.0034",
+      "Castelli WP. Atherosclerosis. 1996;124 Suppl:S1-9. doi:10.1016/0021-9150(96)05851-0",
+  },
+  hdl_ldl_ratio: {
+    label: "HDL/LDL Ratio",
+    formula: "HDL / LDL",
+    unit: "ratio",
+    optimal: [0.4, Infinity],
+    borderline: [0.3, 0.4],
+    significance:
+      "Atherogenic risk — inversely tracks plaque progression",
+    author: "Millán et al.",
+    reference:
+      "Millán J et al. Vasc Health Risk Manag. 2009;5:757-765. doi:10.2147/vhrm.s6269",
   },
   neutrophil_lymphocyte_ratio: {
     label: "NLR",
+    formula: "Neutrophils / Lymphocytes",
     unit: "ratio",
     optimal: [1.0, 3.0],
     borderline: [3.0, 5.0],
-    description:
-      "Systemic inflammation marker; elevated values associated with poorer outcomes",
+    significance:
+      "Systemic inflammation index — elevated in infection, stress, malignancy",
+    author: "Fest et al.",
     reference:
       "Forget P et al. BMC Res Notes. 2017;10:12. doi:10.1186/s13104-016-2335-5",
   },
+  ast_alt_ratio: {
+    label: "De Ritis Ratio (AST/ALT)",
+    formula: "AST / ALT",
+    unit: "ratio",
+    optimal: [0.8, 1.5],
+    borderline: [1.5, 2.0],
+    significance:
+      "Liver damage differentiation — high values suggest alcoholic or cardiac origin",
+    author: "De Ritis et al.",
+    reference:
+      "De Ritis F et al. Clin Chim Acta. 1957;2(1):70-74. doi:10.1016/0009-8981(57)90027-X; Botros M, Sikaris KA. Clin Biochem Rev. 2013;34(3):117-130. PMID:24353357",
+  },
   bun_creatinine_ratio: {
     label: "BUN/Creatinine",
+    formula: "BUN / Creatinine",
     unit: "ratio",
     optimal: [10, 20],
     borderline: [20, 25],
-    description:
-      "Renal function discriminator; helps distinguish pre-renal from intrinsic causes",
+    significance:
+      "Renal function — distinguishes pre-renal from intrinsic kidney injury",
+    author: "Hosten et al.",
     reference:
       "Hosten AO. Clinical Methods. 3rd ed. Butterworths; 1990. Ch. 193. PMID:21250147",
   },
-  ast_alt_ratio: {
-    label: "De Ritis Ratio (AST/ALT)",
-    unit: "ratio",
-    optimal: [0.8, 1.2],
-    borderline: [1.2, 2.0],
-    description:
-      "Hepatocellular injury pattern; >2.0 suggests alcoholic liver disease",
+  glucose_triglyceride_index: {
+    label: "TyG Index",
+    formula: "ln(TG × Glucose × 0.5)",
+    unit: "index",
+    optimal: [0, 8.5],
+    borderline: [8.5, 9.0],
+    significance:
+      "Metabolic syndrome predictor — validated against HOMA-IR gold standard",
+    author: "Simental-Mendía et al.",
     reference:
-      "De Ritis F et al. Clin Chim Acta. 1957;2(1):70-74. doi:10.1016/0009-8981(57)90027-X; Botros M, Sikaris KA. Clin Biochem Rev. 2013;34(3):117-130. PMID:24353357",
+      "Simental-Mendía LE et al. Metab Syndr Relat Disord. 2008;6(4):299-304. doi:10.1089/met.2008.0034",
   },
 };
 
@@ -189,7 +207,7 @@ export function computeDerivedMetrics(
   const gluc = resolve("glucose");
   const gti =
     trig != null && gluc != null && trig > 0 && gluc > 0
-      ? Math.log(trig * gluc * 0.5) / Math.LN10
+      ? Math.log(trig * gluc * 0.5)
       : null;
 
   return {

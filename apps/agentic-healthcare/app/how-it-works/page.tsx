@@ -707,6 +707,109 @@ const embeddingFormats = [
   },
 ];
 
+const embeddingPipelineSteps = [
+  {
+    step: "1",
+    title: "Source Data",
+    color: "var(--blue-9)",
+    description: "Blood test PDF (via LlamaParse) or user-entered entity (condition, medication, symptom, appointment) via CRUD form. Each source type maps to exactly one format function.",
+    code: "7 entity types × 1 format_*_for_embedding() each",
+  },
+  {
+    step: "2",
+    title: "Text Formatting",
+    color: "var(--amber-9)",
+    description: "format_*_for_embedding() converts structured fields into a deterministic, newline-delimited clinical text string. Key-value ordering is fixed so identical data always produces identical tokens.",
+    code: "format_marker_for_embedding(marker, meta) → 'Marker: HDL\\nValue: 55 mg/dL\\nFlag: normal\\n...'",
+  },
+  {
+    step: "3",
+    title: "Vector Encoding",
+    color: "var(--green-9)",
+    description: "Text string sent to OpenAI text-embedding-3-large via /v1/embeddings. The dimensions parameter truncates from native 3072 to 1024 via Matryoshka representation learning — preserving retrieval quality at 1/3 storage cost.",
+    code: "POST /v1/embeddings { model: 'text-embedding-3-large', dimensions: 1024 }",
+  },
+  {
+    step: "4",
+    title: "Upsert to pgvector",
+    color: "var(--violet-9)",
+    description: "ON CONFLICT DO UPDATE on the unique entityId column. Idempotent — re-uploading a PDF or editing an entity overwrites the existing vector without creating duplicates.",
+    code: ".onConflictDoUpdate({ target: table.entityId, set: { content, embedding } })",
+  },
+  {
+    step: "5",
+    title: "Index & Scope",
+    color: "var(--crimson-9)",
+    description: "BTREE index on user_id enables scoped sequential scan. At per-user scale (hundreds of vectors, not millions), exact cosine distance outperforms approximate HNSW/IVFFlat with zero index tuning.",
+    code: "WHERE user_id = $1 ORDER BY embedding <=> $2 LIMIT $3",
+  },
+];
+
+const nodeTypeBreakdown = [
+  {
+    nodeType: "blood_test",
+    icon: Upload,
+    color: "var(--orange-9)",
+    bg: "var(--orange-a3)",
+    description: "Summary of the entire test — file name, upload date, abnormal count, and all marker lines concatenated.",
+    table: "blood_test_embeddings",
+    cardinality: "1 per PDF upload",
+  },
+  {
+    nodeType: "blood_marker",
+    icon: FlaskConical,
+    color: "var(--crimson-9)",
+    bg: "var(--crimson-a3)",
+    description: "Individual marker with value, unit, reference range, flag, and test provenance. Powers hybrid search with FTS.",
+    table: "blood_marker_embeddings",
+    cardinality: "N per PDF (one per marker)",
+  },
+  {
+    nodeType: "health_state",
+    icon: Activity,
+    color: "var(--green-9)",
+    bg: "var(--green-a3)",
+    description: "Holistic snapshot with 7 derived ratios (each risk-classified), summary, and all markers. Used for trajectory cosine similarity.",
+    table: "health_state_embeddings",
+    cardinality: "1 per PDF upload",
+  },
+];
+
+const ingestionPaths = [
+  {
+    runtime: "Python",
+    icon: FlaskConical,
+    color: "var(--orange-9)",
+    bg: "var(--orange-a3)",
+    title: "LlamaIndex Pipeline",
+    entities: ["Blood Test", "Blood Marker", "Health State"],
+    trigger: "POST /upload (PDF ingestion)",
+    steps: [
+      "LlamaParse extracts raw elements from PDF",
+      "BloodTestNodeParser fans out to 3 node types",
+      "IngestionPipeline applies APIEmbedding transform",
+      "Upserts into 3 embedding tables",
+    ],
+    code: "IngestionPipeline(transformations=[BloodTestNodeParser(), APIEmbedding()])",
+  },
+  {
+    runtime: "TypeScript",
+    icon: Zap,
+    color: "var(--cyan-9)",
+    bg: "var(--cyan-a3)",
+    title: "Direct Embed + Upsert",
+    entities: ["Condition", "Medication", "Symptom", "Appointment"],
+    trigger: "Entity CRUD actions (create / update)",
+    steps: [
+      "formatForEmbedding() builds deterministic text",
+      "generateEmbedding() calls text-embedding-3-large",
+      "Drizzle upsert with ON CONFLICT on entityId",
+      "Single table per entity type",
+    ],
+    code: "embedCondition(conditionId, userId, name, notes)",
+  },
+];
+
 const synthesisRules = [
   {
     num: "1",
@@ -1948,49 +2051,196 @@ export default function HowItWorksPage() {
               size="2"
               color="gray"
               align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
+              style={{ maxWidth: 680, lineHeight: 1.65 }}
             >
               Every synthesised response passes through a DeepSeek auditor
-              that checks 5 rules. Failed responses get disclaimers
-              appended — they are never silently dropped.
+              that checks 5 rules at temperature=0.0 (deterministic). Failed
+              responses get context-specific disclaimers appended — they are
+              never silently dropped. If the audit JSON itself fails to parse,
+              the system defaults to <strong>passed=false</strong> (fail-safe).
             </Text>
           </Flex>
         </ScrollReveal>
 
-        <Flex direction="column" gap="4" style={{ maxWidth: 800, margin: "0 auto" }}>
-          {guardRules.map((g, i) => (
-            <ScrollReveal key={g.rule} delay={i * 60}>
+        {/* ── Guard Pipeline Flow ── */}
+        <ScrollReveal delay={60}>
+          <Flex
+            align="center"
+            justify="center"
+            gap="2"
+            wrap="wrap"
+            mb="7"
+            style={{ fontFamily: "var(--font-mono, 'SF Mono', monospace)", fontSize: "12px" }}
+          >
+            {["triage()", "retrieve()", "synthesize()", "guard()"].map(
+              (step, i) => (
+                <Fragment key={step}>
+                  {i > 0 && (
+                    <Text size="1" style={{ color: "var(--gray-8)" }}>
+                      &rarr;
+                    </Text>
+                  )}
+                  <span
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      background:
+                        step === "guard()"
+                          ? "var(--crimson-a3)"
+                          : "var(--gray-a3)",
+                      color:
+                        step === "guard()"
+                          ? "var(--crimson-9)"
+                          : "var(--gray-11)",
+                      fontWeight: step === "guard()" ? 700 : 500,
+                      border:
+                        step === "guard()"
+                          ? "1px solid var(--crimson-a6)"
+                          : "1px solid var(--gray-a4)",
+                    }}
+                  >
+                    {step}
+                  </span>
+                </Fragment>
+              ),
+            )}
+            <Text size="1" style={{ color: "var(--gray-8)" }}>
+              &rarr;
+            </Text>
+            <span
+              style={{
+                padding: "4px 10px",
+                borderRadius: "6px",
+                background: "var(--green-a3)",
+                color: "var(--green-9)",
+                fontWeight: 500,
+                border: "1px solid var(--green-a6)",
+              }}
+            >
+              final_answer
+            </span>
+          </Flex>
+        </ScrollReveal>
+
+        {/* ── Audit Mechanics ── */}
+        <Grid
+          columns={{ initial: "1", sm: "2", lg: "4" }}
+          gap="4"
+          mb="7"
+        >
+          {guardMechanics.map((m, i) => (
+            <ScrollReveal key={m.title} delay={i * 60}>
               <Flex
                 direction="column"
                 gap="3"
                 p="4"
                 className="deep-dive-card"
+                style={{ height: "100%" }}
               >
                 <Flex align="center" gap="3">
                   <div
                     className="deep-dive-icon"
-                    style={{ background: g.bg, color: g.color }}
+                    style={{ background: m.bg, color: m.color }}
                   >
-                    <g.icon size={18} />
+                    <m.icon size={18} />
                   </div>
-                  <Text
-                    size="3"
-                    weight="bold"
+                  <Text size="2" weight="bold" style={{ color: m.color }}>
+                    {m.title}
+                  </Text>
+                </Flex>
+                <Text
+                  size="2"
+                  color="gray"
+                  style={{ lineHeight: 1.6 }}
+                >
+                  {m.description}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        {/* ── 5 Rules ── */}
+        <ScrollReveal delay={100}>
+          <Flex direction="column" align="center" gap="1" mb="5">
+            <Heading size="5" style={{ letterSpacing: "-0.02em" }}>
+              5-Rule Audit
+            </Heading>
+            <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
+              Each rule is evaluated independently — multiple rules can fail on a single response
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", md: "2" }}
+          gap="4"
+          mb="7"
+        >
+          {guardRules.map((g, i) => (
+            <ScrollReveal key={g.rule} delay={i * 60}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="5"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <Flex align="center" justify="between">
+                  <Flex align="center" gap="3">
+                    <div
+                      className="deep-dive-icon"
+                      style={{ background: g.bg, color: g.color }}
+                    >
+                      <g.icon size={18} />
+                    </div>
+                    <Text
+                      size="3"
+                      weight="bold"
+                      style={{
+                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                        color: g.color,
+                      }}
+                    >
+                      {g.rule}
+                    </Text>
+                  </Flex>
+                  <span
                     style={{
-                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                      color: g.color,
+                      fontSize: "10px",
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      background:
+                        g.severity === "critical"
+                          ? "var(--crimson-a3)"
+                          : "var(--amber-a3)",
+                      color:
+                        g.severity === "critical"
+                          ? "var(--crimson-9)"
+                          : "var(--amber-9)",
                     }}
                   >
-                    {g.rule}
-                  </Text>
+                    {g.severity}
+                  </span>
                 </Flex>
 
                 <Text
                   size="2"
-                  color="gray"
-                  style={{ lineHeight: 1.55 }}
+                  weight="medium"
+                  style={{ lineHeight: 1.55, color: "var(--gray-12)" }}
                 >
                   {g.check}
+                </Text>
+
+                <Text
+                  size="2"
+                  color="gray"
+                  style={{ lineHeight: 1.6 }}
+                >
+                  {g.detail}
                 </Text>
 
                 <Text
@@ -2000,6 +2250,7 @@ export default function HowItWorksPage() {
                     lineHeight: 1.55,
                     paddingLeft: "1rem",
                     borderLeft: `2px solid ${g.color}`,
+                    fontStyle: "italic",
                   }}
                 >
                   {g.action}
@@ -2007,19 +2258,50 @@ export default function HowItWorksPage() {
               </Flex>
             </ScrollReveal>
           ))}
-        </Flex>
+        </Grid>
 
-        <ScrollReveal delay={350}>
-          <pre className="pg-code-block" style={{ maxWidth: 800, margin: "2rem auto 0" }}>
-            <code>{`// Guard audit output schema
+        {/* ── Audit Prompt & Output Schema ── */}
+        <Grid
+          columns={{ initial: "1", md: "2" }}
+          gap="4"
+        >
+          <ScrollReveal delay={300}>
+            <pre className="pg-code-block" style={{ height: "100%", margin: 0 }}>
+              <code>{`// Guard audit prompt (sent to DeepSeek)
+system: GUARD_SYSTEM  // 5 rules defined
+user: """
+  Original query: {query}
+  Context sources: {retrieval_context}
+  Assistant response: {synthesized_answer}
+
+  Evaluate the assistant response against
+  all 5 rules. Return JSON:
+  {"passed": bool, "issues": [...]}
+"""
+
+// temperature=0.0, deterministic audit
+// max_tokens=1024, structured JSON output`}</code>
+            </pre>
+          </ScrollReveal>
+          <ScrollReveal delay={350}>
+            <pre className="pg-code-block" style={{ height: "100%", margin: 0 }}>
+              <code>{`// Guard node output → GraphState
 {
-  "passed": false,
-  "issues": ["DIAGNOSIS", "PHYSICIAN_REFERRAL"]
+  "guard_passed": false,
+  "guard_issues": ["DIAGNOSIS", "PHYSICIAN_REFERRAL"],
+  "final_answer": "...original answer...\\n\\n` +
+                `⚠️ This information is for educational ` +
+                `purposes only and is not a medical ` +
+                `diagnosis. Please consult your physician ` +
+                `before making medical decisions."
 }
-// → disclaimer appended for each failed rule
-// → safety_refusal intents auto-pass (no retrieval)`}</code>
-          </pre>
-        </ScrollReveal>
+
+// API response includes guard metadata:
+// → guard_passed, guard_issues, intent,
+//   retrieval_sources, citations`}</code>
+            </pre>
+          </ScrollReveal>
+        </Grid>
       </Box>
 
       {/* ── 3-Tier Marker Extraction ── */}
