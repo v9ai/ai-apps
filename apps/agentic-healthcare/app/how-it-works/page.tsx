@@ -247,9 +247,19 @@ LIMIT 5;`,
     bg: "var(--amber-a3)",
     title: "JSONB for Derived Metrics",
     description:
-      "7 clinical ratios (TG/HDL, NLR, De Ritis, eGFR, etc.) are stored as structured JSONB in health_state_embeddings.derived_metrics. Queryable, indexable, and extensible without schema migrations.",
+      "7 clinical ratios — HDL/LDL, TC/HDL, TG/HDL, TyG Index, NLR, BUN/Creatinine, De Ritis — are computed per blood test and stored as structured JSONB in health_state_embeddings.derived_metrics, alongside a 1024-dim pgvector embedding in the same row. One row serves two query paradigms: the vector column enables semantic similarity search via <=>, while the JSONB column enables exact filtering, GIN-indexed lookups, and per-key extraction via ->> — no ETL pipeline between them.",
     detail:
-      "Each blood test gets a health-state embedding with both a 1024-dim vector and a JSONB payload containing all computed ratios with risk classifications (optimal / borderline / elevated).",
+      "Adding a new ratio (e.g., ApoB/ApoA1 or Calcium/Albumin) requires only a Python dict entry in METRIC_REFERENCES and a line in compute_derived_metrics — no ALTER TABLE, no migration, no reindex. The JSONB column absorbs new keys transparently, and downstream consumers (trajectory velocity, risk classification, LLM context) pick them up automatically because they iterate over all keys in the payload.",
+    sql: `-- Filter tests with elevated triglyceride/HDL ratio
+-- JSONB ->> extracts the value; no application-side parsing
+SELECT t.test_date,
+  (e.derived_metrics ->> 'triglyceride_hdl_ratio')::float AS tg_hdl,
+  (e.derived_metrics ->> 'ast_alt_ratio')::float          AS de_ritis
+FROM health_state_embeddings e
+JOIN blood_tests t ON t.id = e.test_id
+WHERE e.user_id = $1
+  AND (e.derived_metrics ->> 'triglyceride_hdl_ratio')::float > 3.5
+ORDER BY t.test_date DESC;`,
   },
   {
     icon: Zap,
