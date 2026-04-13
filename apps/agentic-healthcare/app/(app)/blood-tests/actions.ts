@@ -1,6 +1,9 @@
 "use server";
 
 import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { bloodTests } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { uploadToPython, deletePython } from "@/lib/python-api";
 import { redirect } from "next/navigation";
 
@@ -29,6 +32,16 @@ export async function uploadBloodTestNoRedirect(formData: FormData) {
   const result = await uploadToPython(file, testDate, userId);
 
   return { test_id: result.test_id, fileName: file.name, status: result.status };
+}
+
+/** Return file names already uploaded by this user — used for duplicate detection. */
+export async function getExistingFileNames(): Promise<string[]> {
+  const { userId } = await withAuth();
+  const rows = await db
+    .select({ fileName: bloodTests.fileName })
+    .from(bloodTests)
+    .where(eq(bloodTests.userId, userId));
+  return rows.map((r) => r.fileName);
 }
 
 export async function deleteBloodTest(id: string) {

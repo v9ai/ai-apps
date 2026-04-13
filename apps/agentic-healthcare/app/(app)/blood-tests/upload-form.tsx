@@ -1,6 +1,6 @@
 "use client";
 
-import { uploadBloodTest, uploadBloodTestNoRedirect } from "./actions";
+import { uploadBloodTest, uploadBloodTestNoRedirect, getExistingFileNames } from "./actions";
 import { Box, Button, Callout, Flex, Text, Progress } from "@radix-ui/themes";
 import { UploadIcon } from "@radix-ui/react-icons";
 import { useFormStatus } from "react-dom";
@@ -82,6 +82,7 @@ export function UploadForm() {
   const [mode, setMode] = useState<"file" | "directory">("file");
   const [error, setError] = useState<string | null>(null);
   const [dirFiles, setDirFiles] = useState<File[]>([]);
+  const [skippedCount, setSkippedCount] = useState(0);
   const [batchProgress, setBatchProgress] = useState<{
     current: number;
     total: number;
@@ -101,14 +102,18 @@ export function UploadForm() {
     }
   }
 
-  function handleDirChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleDirChange(e: React.ChangeEvent<HTMLInputElement>) {
     const all = Array.from(e.target.files ?? []);
     const valid = all.filter(
       (f) => ACCEPTED.has(f.type) || ACCEPTED_EXT.test(f.name),
     );
-    setDirFiles(valid);
     setError(null);
     setBatchProgress(null);
+
+    const existing = new Set(await getExistingFileNames());
+    const newFiles = valid.filter((f) => !existing.has(f.name));
+    setSkippedCount(valid.length - newFiles.length);
+    setDirFiles(newFiles);
   }
 
   function handleBatchUpload(testDate: string) {
@@ -226,6 +231,7 @@ export function UploadForm() {
         <DirectoryUpload
           dirInputRef={dirInputRef}
           dirFiles={dirFiles}
+          skippedCount={skippedCount}
           onDirChange={handleDirChange}
           onBatchUpload={handleBatchUpload}
           isBatchUploading={isBatchUploading}

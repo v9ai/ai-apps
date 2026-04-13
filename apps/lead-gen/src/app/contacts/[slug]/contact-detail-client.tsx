@@ -7,7 +7,6 @@ import {
   useGetContactQuery,
   useGetContactEmailsQuery,
   useGetContactMessagesQuery,
-  useGetResendEmailQuery,
   useFindContactEmailMutation,
   useUpdateContactMutation,
   useDeleteContactMutation,
@@ -619,7 +618,7 @@ function DeleteContactDialog({
   );
 }
 
-// ─── Email Detail Dialog ─────────────────────────────────────────────────────
+// ─── Email Card (inline, expandable) ─────────────────────────────────────────
 
 type ContactEmailRow = {
   id: number;
@@ -627,138 +626,75 @@ type ContactEmailRow = {
   subject: string;
   fromEmail: string;
   toEmails: string[];
+  textContent?: string | null;
   status: string;
   sentAt?: string | null;
+  replyReceived?: boolean;
   createdAt: string;
 };
 
-function EmailDetailDialog({ email }: { email: ContactEmailRow }) {
-  const [open, setOpen] = useState(false);
-
-  const { data, loading } = useGetResendEmailQuery({
-    variables: { resendId: email.resendId },
-    skip: !open,
-  });
-
-  const detail = data?.resendEmail;
+function EmailCard({ email }: { email: ContactEmailRow }) {
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger>
-        <Card style={{ cursor: "pointer" }}>
-          <Box p="3">
-            <Flex justify="between" align="start" gap="2" wrap="wrap">
-              <Box style={{ flex: 1, minWidth: 0 }}>
-                <Text size="2" weight="medium" as="p" style={{ wordBreak: "break-word" }}>
-                  {email.subject}
-                </Text>
-                <Text size="1" color="gray" as="p" mt="1">
-                  {email.sentAt
-                    ? new Date(email.sentAt).toLocaleString()
-                    : new Date(email.createdAt).toLocaleString()}
-                </Text>
-              </Box>
-              <Badge
-                color={
-                  email.status === "delivered"
-                    ? "green"
-                    : email.status === "bounced"
-                      ? "red"
-                      : "blue"
-                }
-                variant="soft"
-                size="1"
-              >
-                {email.status}
-              </Badge>
-            </Flex>
+    <Card
+      style={{ cursor: "pointer" }}
+      onClick={() => setExpanded((v) => !v)}
+    >
+      <Box p="3">
+        <Flex justify="between" align="start" gap="2" wrap="wrap">
+          <Box style={{ flex: 1, minWidth: 0 }}>
+            <Text size="2" weight="medium" as="p" style={{ wordBreak: "break-word" }}>
+              {email.subject}
+            </Text>
+            <Text size="1" color="gray" as="p" mt="1">
+              {email.fromEmail} → {email.toEmails.join(", ")} · {email.sentAt
+                ? new Date(email.sentAt).toLocaleString()
+                : new Date(email.createdAt).toLocaleString()}
+            </Text>
           </Box>
-        </Card>
-      </Dialog.Trigger>
-
-      <Dialog.Content maxWidth="580px">
-        <Dialog.Title>{email.subject}</Dialog.Title>
-
-        {loading ? (
-          <Flex justify="center" py="6">
-            <Spinner size="3" />
+          <Flex gap="1">
+            {email.replyReceived && (
+              <Badge color="purple" variant="soft" size="1">replied</Badge>
+            )}
+            <Badge
+              color={
+                email.status === "delivered"
+                  ? "green"
+                  : email.status === "bounced"
+                    ? "red"
+                    : "blue"
+              }
+              variant="soft"
+              size="1"
+            >
+              {email.status}
+            </Badge>
           </Flex>
-        ) : detail ? (
-          <Flex direction="column" gap="3">
-            {/* Meta */}
-            <Flex direction="column" gap="1">
-              <Text size="1" color="gray">
-                <Text weight="medium">From:</Text> {detail.from}
-              </Text>
-              <Text size="1" color="gray">
-                <Text weight="medium">To:</Text> {detail.to.join(", ")}
-              </Text>
-              {detail.cc && detail.cc.length > 0 && (
-                <Text size="1" color="gray">
-                  <Text weight="medium">CC:</Text> {detail.cc.join(", ")}
-                </Text>
-              )}
-              <Text size="1" color="gray">
-                <Text weight="medium">Sent:</Text>{" "}
-                {new Date(detail.createdAt).toLocaleString()}
-              </Text>
-              {detail.lastEvent && (
-                <Flex align="center" gap="2">
-                  <Text size="1" color="gray" weight="medium">Status:</Text>
-                  <Badge
-                    color={
-                      detail.lastEvent === "delivered"
-                        ? "green"
-                        : detail.lastEvent === "bounced"
-                          ? "red"
-                          : detail.lastEvent === "opened"
-                            ? "teal"
-                            : "blue"
-                    }
-                    variant="soft"
-                    size="1"
-                  >
-                    {detail.lastEvent}
-                  </Badge>
-                </Flex>
-              )}
-            </Flex>
+        </Flex>
 
-            <Separator size="4" />
-
-            {/* Body */}
-            {detail.text ? (
-              <Box
-                style={{
-                  background: "var(--gray-2)",
-                  borderRadius: 6,
-                  padding: "var(--space-4)",
-                  whiteSpace: "pre-wrap",
-                  lineHeight: "1.6",
-                  maxHeight: 400,
-                  overflow: "auto",
-                }}
-              >
-                <Text size="2">{detail.text}</Text>
-              </Box>
+        {expanded && (
+          <Box
+            mt="3"
+            style={{
+              background: "var(--gray-2)",
+              borderRadius: 6,
+              padding: "var(--space-3)",
+              whiteSpace: "pre-wrap",
+              lineHeight: "1.6",
+              maxHeight: 400,
+              overflow: "auto",
+            }}
+          >
+            {email.textContent ? (
+              <Text size="2">{email.textContent}</Text>
             ) : (
               <Text size="2" color="gray">No body content.</Text>
             )}
-          </Flex>
-        ) : (
-          <Callout.Root color="red" size="1">
-            <Callout.Icon><ExclamationTriangleIcon /></Callout.Icon>
-            <Callout.Text>Failed to load email from Resend.</Callout.Text>
-          </Callout.Root>
+          </Box>
         )}
-
-        <Flex justify="end" mt="4">
-          <Dialog.Close>
-            <button className={button({ variant: "ghost" })}>Close</button>
-          </Dialog.Close>
-        </Flex>
-      </Dialog.Content>
-    </Dialog.Root>
+      </Box>
+    </Card>
   );
 }
 
@@ -1357,7 +1293,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                 .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                 .map((item) =>
                   item.type === "sent" ? (
-                    <EmailDetailDialog key={`sent-${item.email.id}`} email={item.email} />
+                    <EmailCard key={`sent-${item.email.id}`} email={item.email} />
                   ) : (
                     <Card key={`re-${item.received.id}`} style={{ borderLeft: "3px solid var(--purple-9)" }}>
                       <Box p="3">
