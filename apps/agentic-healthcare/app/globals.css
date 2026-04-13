@@ -644,3 +644,353 @@
 .hiw-stat-card:nth-child(8) { animation-delay: 280ms; }
 .hiw-stat-card:nth-child(9) { animation-delay: 320ms; }
 .hiw-stat-card:nth-child(10) { animation-delay: 360ms; }
+
+/* ═════════════════════════════════════════════════════════════════════
+   Enhanced How It Works — v2
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* ── Floating Table of Contents ── */
+
+.toc-nav {
+  position: fixed;
+  top: 50%;
+  left: max(1rem, calc((100vw - 1024px) / 2 - 190px));
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 8;
+  padding: 14px;
+  border-radius: var(--radius-3);
+  background: color-mix(in srgb, var(--color-background) 80%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--gray-a3);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.toc-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gray-8);
+  padding: 4px 8px;
+  margin-bottom: 4px;
+}
+
+.toc-link {
+  font-size: 12px;
+  color: var(--gray-9);
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: var(--radius-1);
+  transition: color 150ms ease, background-color 150ms ease,
+    border-color 150ms ease;
+  border-left: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.toc-link:hover {
+  color: var(--gray-12);
+  background: var(--gray-a3);
+}
+
+.toc-active {
+  color: var(--indigo-11) !important;
+  border-left-color: var(--indigo-9);
+  background: var(--indigo-a2);
+}
+
+@media (max-width: 1440px) {
+  .toc-nav {
+    display: none;
+  }
+}
+
+/* ── Architecture Section Cards ── */
+
+.arch-section {
+  position: relative;
+  padding: 1.75rem 2rem 1.5rem;
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-a3);
+  background: var(--color-surface);
+  transition: border-color 300ms ease, box-shadow 300ms ease;
+  scroll-margin-top: 72px;
+}
+
+.arch-section:hover {
+  border-color: var(--indigo-a4);
+  box-shadow: 0 0 40px var(--indigo-a2), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.arch-number {
+  position: absolute;
+  top: -11px;
+  right: 24px;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-mono, "SF Mono", monospace);
+  color: var(--indigo-9);
+  background: var(--color-background);
+  padding: 2px 12px;
+  border-radius: var(--radius-2);
+  border: 1px solid var(--indigo-a4);
+  letter-spacing: 0.05em;
+}
+
+.arch-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.arch-section:hover .arch-icon {
+  transform: scale(1.08);
+  box-shadow: 0 0 16px currentColor;
+}
+
+.arch-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: var(--radius-2);
+  border: 1px solid var(--gray-a3);
+  background: var(--gray-a2);
+  color: var(--gray-11);
+  font-family: var(--font-mono, "SF Mono", monospace);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.arch-tag:hover {
+  background: var(--indigo-a2);
+  border-color: var(--indigo-a4);
+}
+
+/* ── Enhanced Hero Nodes ── */
+
+.hiw-hero-nodes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.hiw-hero-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-a4);
+  background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  min-width: 120px;
+  transition: transform 250ms ease, box-shadow 250ms ease,
+    border-color 250ms ease;
+}
+
+.hiw-hero-node:hover {
+  transform: translateY(-5px);
+  border-color: var(--node-color, var(--indigo-a6));
+  box-shadow: 0 0 32px
+      color-mix(in srgb, var(--node-color, var(--indigo-9)) 20%, transparent),
+    0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.hiw-hero-node-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 200ms ease;
+}
+
+.hiw-hero-node:hover .hiw-hero-node-icon {
+  transform: scale(1.1);
+}
+
+.hiw-hero-node-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-12);
+  letter-spacing: -0.01em;
+}
+
+.hiw-hero-node-sub {
+  font-size: 11px;
+  color: var(--gray-9);
+  font-family: var(--font-mono, monospace);
+}
+
+/* ── Hero Connectors ── */
+
+.hiw-hero-connector {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.hiw-hero-connector-line {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--gray-a4),
+    var(--indigo-a6),
+    var(--gray-a4)
+  );
+  position: relative;
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.hiw-hero-connector-line::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -8px;
+  width: 8px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--indigo-9);
+  box-shadow: 0 0 8px var(--indigo-9);
+  animation: connector-flow 2.5s ease-in-out infinite;
+}
+
+@keyframes connector-flow {
+  0% {
+    left: -8px;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* Stagger connector animations */
+.hiw-hero-connector:nth-child(4) .hiw-hero-connector-line::after {
+  animation-delay: 0.4s;
+}
+.hiw-hero-connector:nth-child(6) .hiw-hero-connector-line::after {
+  animation-delay: 0.8s;
+}
+
+/* ── Hero Orb Glow ── */
+
+.hiw-hero-orb {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    var(--indigo-a3) 0%,
+    color-mix(in srgb, var(--indigo-a2) 50%, transparent) 40%,
+    transparent 70%
+  );
+  animation: hero-orb-pulse 5s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes hero-orb-pulse {
+  from {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+/* ── Scroll Indicator ── */
+
+.scroll-indicator {
+  animation: scroll-bounce 2s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+@keyframes scroll-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(6px);
+    opacity: 0.4;
+  }
+}
+
+/* ── Tech Stack Cards ── */
+
+.tech-stack-card {
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-a3);
+  background: var(--color-surface);
+  transition: transform 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease;
+  min-height: 120px;
+}
+
+.tech-stack-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--indigo-a5);
+  box-shadow: 0 0 20px var(--indigo-a3), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Scroll margin for TOC targets ── */
+
+#tech-stack,
+#hiw-metrics,
+#hiw-foundations,
+#hiw-pipeline {
+  scroll-margin-top: 72px;
+}
+
+/* ── Responsive hero nodes ── */
+
+@media (max-width: 640px) {
+  .hiw-hero-connector {
+    display: none;
+  }
+  .hiw-hero-nodes {
+    gap: 12px;
+  }
+  .hiw-hero-node {
+    min-width: 140px;
+    padding: 14px 18px;
+  }
+
+  .arch-section {
+    padding: 1.25rem 1.25rem 1rem;
+  }
+  .arch-number {
+    right: 12px;
+    font-size: 10px;
+  }
+}

@@ -264,7 +264,7 @@ export default function HowItWorksPage() {
       {/* ── Hero ── */}
       <Box className="hiw-hero" py="9">
         <div className="hiw-hero-orb" />
-        <Container size="2" style={{ position: "relative", zIndex: 1 }}>
+        <Container size="3" style={{ position: "relative", zIndex: 1 }}>
           <Flex direction="column" align="center" gap="5" py="7">
             <Text
               size="1"
