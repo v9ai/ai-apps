@@ -7,6 +7,7 @@ const personality: Personality = {
   description:
     "Former CTO of OpenAI who led the launches of ChatGPT, DALL-E, and GPT-4. Founded Thinking Machines Lab in 2025 to build AI that reasons and creates.",
   slug: "mira-murati",
+  linkedinImage: "https://indiacsr.in/wp-content/uploads/2023/11/Mira-Murati-appointed-interim-CEO_Indiacsr.jpg",
   podcasts: ["The Daily Show", "TED", "Dartmouth Engineering"],
   knownFor: "Led ChatGPT & GPT-4 launches",
 };

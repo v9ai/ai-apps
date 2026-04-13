@@ -7,6 +7,7 @@ const personality: Personality = {
   description:
     "Co-author of the Transformer paper 'Attention Is All You Need' and co-founded Cohere to bring LLMs to enterprise. Pioneered retrieval-augmented generation for business applications.",
   slug: "aidan-gomez",
+  linkedinImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Aidan_Gomez_at_%22ALL_IN%22_2025_06.jpg/500px-Aidan_Gomez_at_%22ALL_IN%22_2025_06.jpg",
   podcasts: ["No Priors", "Gradient Dissent", "The AI Breakdown", "Latent Space"],
   papers: [
     {

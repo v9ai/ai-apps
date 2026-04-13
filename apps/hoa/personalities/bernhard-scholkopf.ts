@@ -7,6 +7,7 @@ const personality: Personality = {
   description:
     "Pioneer of kernel methods and causal inference in ML. Co-founded ELLIS, leads causal representation learning research, and contributed to exoplanet discovery.",
   slug: "bernhard-scholkopf",
+  linkedinImage: "https://2025.ijcai.org/wp-content/invited_talks/bernhard_scholkopf.jpg",
   podcasts: ["Causal Bandits Podcast", "Lex Fridman"],
   papers: [
     {

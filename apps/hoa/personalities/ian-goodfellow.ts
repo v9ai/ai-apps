@@ -7,6 +7,7 @@ const personality: Personality = {
   description:
     "Invented Generative Adversarial Networks (GANs), one of the most influential ideas in deep learning. Author of the widely-used 'Deep Learning' textbook with Bengio and Courville.",
   slug: "ian-goodfellow",
+  linkedinImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Ian_Goodfellow.jpg/500px-Ian_Goodfellow.jpg",
   podcasts: ["Lex Fridman", "AI Podcast"],
   papers: [
     {

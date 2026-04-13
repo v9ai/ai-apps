@@ -7,6 +7,7 @@ const personality: Personality = {
   description:
     "Co-founded Mistral AI after leading research at Meta FAIR. Expert in unsupervised machine translation and large language models. Drove Mistral's technical architecture.",
   slug: "guillaume-lample",
+  linkedinImage: "https://media.lesechos.com/api/v1/images/view/677ff29fff5844248761e30c/1280x720/01302243111837-web-tete.jpg",
   podcasts: ["Latent Space", "MLST"],
   papers: [
     {

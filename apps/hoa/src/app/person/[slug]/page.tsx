@@ -28,6 +28,7 @@ import { ResearchBio } from "./_components/research-bio";
 import { EnrichedTimelineSection, ResearchTimeline } from "./_components/research-timeline";
 import { ResearchContributions } from "./_components/research-contributions";
 import { ResearchQuotes } from "./_components/research-quotes";
+import { ResearchQuestions } from "./_components/research-questions";
 import { ResearchSocial } from "./_components/research-social";
 import { ResearchSources } from "./_components/research-sources";
 import { VideosSection } from "./_components/videos-section";
@@ -364,6 +365,7 @@ export default async function PersonPage({ params }: Props) {
             )}
             <ResearchContributions research={research} />
             <ResearchQuotes research={research} />
+            <ResearchQuestions research={research} />
             <ResearchSources research={research} />
           </>
         )}

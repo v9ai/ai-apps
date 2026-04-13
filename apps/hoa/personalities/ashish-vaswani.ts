@@ -7,6 +7,7 @@ const personality: Personality = {
   description:
     "Lead author of 'Attention Is All You Need,' the paper that introduced the Transformer architecture powering all modern LLMs. Co-founded Essential AI to build enterprise AI agents.",
   slug: "ashish-vaswani",
+  linkedinImage: "https://images.squarespace-cdn.com/content/v1/58da330debbd1a5419611082/1555580207391-2ECHQBG0O8MSP4IU4XZ8/ashish+vaswani+headshot.jpg?format=1500w",
   podcasts: ["No Priors", "Eye on AI"],
   papers: [
     {

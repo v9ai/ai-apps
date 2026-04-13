@@ -7,6 +7,7 @@ const personality: Personality = {
   description:
     "Built DeepSeek-R1 for $5.6M, shocking Western AI. TIME 100 Most Influential in AI 2025. Leads a prolific research lab publishing on MoE architectures, code intelligence, and reasoning via RL.",
   slug: "liang-wenfeng",
+  linkedinImage: "https://www.entrepreneur.com/wp-content/uploads/sites/2/2025/02/1738692619-Liang-Wenfeng-GettyImages-2196672039.jpg",
   podcasts: ["ChinaTalk", "36Kr", "CCTV News"],
   papers: [
     {

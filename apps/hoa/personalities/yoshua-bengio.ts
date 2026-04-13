@@ -7,6 +7,7 @@ const personality: Personality = {
   description:
     "Turing Award winner (2018) alongside Hinton and LeCun. Pioneered deep learning, neural machine translation, and attention mechanisms. Leading voice on AI safety and governance.",
   slug: "yoshua-bengio",
+  linkedinImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/ICLR_2025_-_Yoshua_Bengio_02.jpg/500px-ICLR_2025_-_Yoshua_Bengio_02.jpg",
   podcasts: ["Lex Fridman", "The Robot Brains", "Eye on AI"],
   orcid: "0000-0002-0399-3498",
   papers: [
