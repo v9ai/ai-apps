@@ -172,7 +172,7 @@ export function ContactsClient() {
 function ContactCard({ contact }: { contact: Contact }) {
   return (
     <Link
-      href={`/contacts/${contact.id}`}
+      href={`/contacts/${contact.slug ?? contact.id}`}
       style={{ textDecoration: "none", color: "inherit" }}
     >
       <Card

@@ -1,13 +1,13 @@
-import { ContactDetailClient } from "./contact-detail-client";
+import { ContactDetailProvider } from "@/components/contact-detail-provider";
 import { Suspense } from "react";
 import { Container, Text } from "@radix-ui/themes";
 
 export default async function ContactDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
   return (
     <Suspense
       fallback={
@@ -16,7 +16,7 @@ export default async function ContactDetailPage({
         </Container>
       }
     >
-      <ContactDetailClient contactId={parseInt(id)} />
+      <ContactDetailProvider contactSlug={slug} />
     </Suspense>
   );
 }

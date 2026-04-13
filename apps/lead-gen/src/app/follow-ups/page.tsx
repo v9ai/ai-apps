@@ -202,7 +202,7 @@ export default function FollowUpsPage() {
                   return (
                     <Table.Row key={reminder.id}>
                       <Table.Cell>
-                        <Link href={`/contacts/${contact.id}`} style={{ textDecoration: "none" }}>
+                        <Link href={`/contacts/${contact.slug ?? contact.id}`} style={{ textDecoration: "none" }}>
                           <Text size="2" weight="medium" color="blue">
                             {contact.firstName} {contact.lastName}
                           </Text>

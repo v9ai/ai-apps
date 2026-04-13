@@ -175,7 +175,7 @@ export default function AdminContactsPage() {
               <Box p="3">
                 <Flex align="start" justify="between" gap="3">
                   <Link
-                    href={`/contacts/${contact.id}`}
+                    href={`/contacts/${contact.slug ?? contact.id}`}
                     style={{ textDecoration: "none", color: "inherit", flex: 1 }}
                   >
                     <Flex align="center" gap="2" wrap="wrap">

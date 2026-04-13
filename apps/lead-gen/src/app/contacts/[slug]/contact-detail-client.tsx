@@ -764,33 +764,34 @@ function EmailDetailDialog({ email }: { email: ContactEmailRow }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function ContactDetailClient({ contactId }: { contactId: number }) {
+export function ContactDetailClient({ contactId, contactSlug }: { contactId?: number; contactSlug?: string }) {
   const router = useRouter();
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const { data, loading, refetch } = useGetContactQuery({
-    variables: { id: contactId },
-    skip: !contactId || isNaN(contactId) || !isAdmin,
+    variables: contactId ? { id: contactId } : { slug: contactSlug },
+    skip: (!contactId && !contactSlug) || !isAdmin,
   });
 
   const contact = data?.contact;
+  const resolvedId = contact?.id;
 
   const {
     data: emailsData,
     loading: emailsLoading,
     refetch: refetchEmails,
   } = useGetContactEmailsQuery({
-    variables: { contactId },
-    skip: !contactId || isNaN(contactId) || !isAdmin,
+    variables: { contactId: resolvedId! },
+    skip: !resolvedId || !isAdmin,
   });
 
   const {
     data: messagesData,
     loading: messagesLoading,
   } = useGetContactMessagesQuery({
-    variables: { contactId },
-    skip: !contactId || isNaN(contactId) || !isAdmin,
+    variables: { contactId: resolvedId! },
+    skip: !resolvedId || !isAdmin,
   });
 
   const [findEmail, { loading: finding }] = useFindContactEmailMutation();

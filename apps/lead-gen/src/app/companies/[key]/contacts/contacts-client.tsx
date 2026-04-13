@@ -1203,7 +1203,7 @@ export function CompanyContactsClient({
               <Card
                 key={contact.id}
                 style={{ cursor: "pointer" }}
-                onClick={() => router.push(`/contacts/${contact.id}`)}
+                onClick={() => router.push(`/contacts/${contact.slug ?? contact.id}`)}
               >
                 <Box p="3">
                   <Flex align="start" justify="between" gap="3" wrap="wrap">
