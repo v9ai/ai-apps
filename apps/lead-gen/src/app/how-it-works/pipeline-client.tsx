@@ -1013,6 +1013,50 @@ function TechFoundations() {
   );
 }
 
+// ── Table of Contents ────────────────────────────────────────────────────────
+
+const tocSections = [
+  { id: "pipeline", label: "Pipeline Diagrams", icon: "1–5" },
+  { id: "metrics", label: "Key Metrics", icon: "7" },
+  { id: "deep-dive", label: "Deep Dive", icon: `${extraSections.length}` },
+  { id: "technical", label: "Technical Details", icon: `${technicalDetails.length}` },
+  { id: "foundations", label: "Foundations", icon: `${papers.length}` },
+];
+
+function TableOfContents() {
+  return (
+    <Card mb="5" style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+      <Flex align="center" gap="2" mb="3">
+        <LayersIcon width={13} height={13} style={{ color: "var(--gray-9)" }} />
+        <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.07em" }}>
+          On This Page
+        </Text>
+      </Flex>
+      <Flex gap="2" wrap="wrap">
+        {tocSections.map((section) => (
+          <a
+            key={section.id}
+            href={`#${section.id}`}
+            style={{ textDecoration: "none" }}
+          >
+            <Badge
+              variant="soft"
+              color="gray"
+              size="2"
+              style={{ cursor: "pointer", transition: "background 0.15s" }}
+            >
+              <Text size="1" weight="medium" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {section.icon}
+              </Text>
+              <Text size="1">{section.label}</Text>
+            </Badge>
+          </a>
+        ))}
+      </Flex>
+    </Card>
+  );
+}
+
 // ── Export ────────────────────────────────────────────────────────────────────
 
 export function PipelineClient() {
@@ -1031,10 +1075,12 @@ export function PipelineClient() {
       <Flex align="center" gap="3" mb="4">
         <Text color="gray" size="2">
           5-stage B2B lead generation pipeline — from company discovery through AI-personalized outreach.
+          Click any node for implementation details. Scroll down for deep dives.
         </Text>
       </Flex>
 
       <PipelineStatsBar />
+      <TableOfContents />
 
       <Flex align="center" gap="2" mb="4">
         <Badge color="blue" variant="soft" size="1">Interactive</Badge>
@@ -1043,50 +1089,60 @@ export function PipelineClient() {
 
       <NodeTypeLegend />
 
-      <Flex direction="column" gap="0">
-        {stages.map((stage, i) => (
-          <div key={stage.title}>
-            <div>
-              <Flex align="baseline" gap="3" mb="2">
-                <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
-                  {i + 1}
-                </Badge>
-                <Heading size="4" style={{ fontFamily: "var(--code-font-family, monospace)" }}>
-                  {stage.graphName}
-                </Heading>
-                <Badge variant="soft" color="violet" size="1">{stage.pattern}</Badge>
-              </Flex>
-              <Text size="2" color="gray" mb="3" as="p">{stage.description}</Text>
-              <StageFlow
-                nodes={stage.nodes}
-                edges={stage.edges}
-                height={stage.height}
-                onNodeClick={onNodeClick}
-              />
+      <section id="pipeline">
+        <Flex direction="column" gap="0">
+          {stages.map((stage, i) => (
+            <div key={stage.title} id={`stage-${stage.graphName}`}>
+              <div>
+                <Flex align="baseline" gap="3" mb="2">
+                  <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {i + 1}
+                  </Badge>
+                  <Heading size="4" style={{ fontFamily: "var(--code-font-family, monospace)" }}>
+                    {stage.graphName}
+                  </Heading>
+                  <Badge variant="soft" color="violet" size="1">{stage.pattern}</Badge>
+                </Flex>
+                <Text size="2" color="gray" mb="3" as="p">{stage.description}</Text>
+                <StageFlow
+                  nodes={stage.nodes}
+                  edges={stage.edges}
+                  height={stage.height}
+                  onNodeClick={onNodeClick}
+                />
+              </div>
+              {i < stageConnectors.length && (
+                <StageConnector
+                  fromStage={stageConnectors[i].fromStage}
+                  toStage={stageConnectors[i].toStage}
+                />
+              )}
             </div>
-            {i < stageConnectors.length && (
-              <StageConnector
-                fromStage={stageConnectors[i].fromStage}
-                toStage={stageConnectors[i].toStage}
-              />
-            )}
-          </div>
-        ))}
-      </Flex>
+          ))}
+        </Flex>
+      </section>
 
       {selectedNode ? <NodeDetailPanel nodeId={selectedNode} /> : <EmptyDetailPanel />}
 
       <Separator size="4" my="7" />
-      <KeyMetrics />
+      <section id="metrics">
+        <KeyMetrics />
+      </section>
 
       <Separator size="4" my="7" />
-      <DeepDiveSections />
+      <section id="deep-dive">
+        <DeepDiveSections />
+      </section>
 
       <Separator size="4" my="7" />
-      <TechnicalDetailSection />
+      <section id="technical">
+        <TechnicalDetailSection />
+      </section>
 
       <Separator size="4" my="7" />
-      <TechFoundations />
+      <section id="foundations">
+        <TechFoundations />
+      </section>
     </div>
   );
 }

@@ -180,9 +180,9 @@ export function MemorizeDashboard({
   }, [onRate]);
 
   const handlePractice = useCallback(
-    (propertyId: string) => {
+    (itemId: string) => {
       const cat = categories.find((c) =>
-        c.properties.some((p) => p.id === propertyId),
+        c.items.some((p) => p.id === itemId),
       );
       if (cat) setActiveCategory(cat.id);
       startModeWithCheckIn("flashcards");
@@ -191,9 +191,9 @@ export function MemorizeDashboard({
   );
 
   const handleReviewProperty = useCallback(
-    (propertyId: string) => {
+    (itemId: string) => {
       const cat = categories.find((c) =>
-        c.properties.some((p) => p.id === propertyId),
+        c.items.some((p) => p.id === itemId),
       );
       if (cat) setActiveCategory(cat.id);
       startModeWithCheckIn("flashcards");
@@ -246,7 +246,7 @@ export function MemorizeDashboard({
         </div>
         <ModeTip mode="flashcards" />
         <FlashcardDeck
-          properties={activeCategory ? filteredProps : smartProps}
+          items={activeCategory ? filteredItems : smartItems}
           categories={categories}
           onRate={handleRate}
         />
@@ -264,7 +264,7 @@ export function MemorizeDashboard({
         />
         <ModeTip mode="fill" />
         <FillInTheBlank
-          properties={activeCategory ? filteredProps : smartProps}
+          items={activeCategory ? filteredItems : smartItems}
           onRate={handleRate}
         />
       </div>
@@ -280,7 +280,7 @@ export function MemorizeDashboard({
           onBack={handleBack}
         />
         <VisualMatcher
-          properties={activeCategory ? filteredProps : smartProps}
+          items={activeCategory ? filteredItems : smartItems}
           onRate={handleRate}
         />
       </div>
@@ -288,7 +288,7 @@ export function MemorizeDashboard({
   }
 
   if (mode === "drill") {
-    const drillProps = activeCategory ? filteredProps : smartProps;
+    const drillItems = activeCategory ? filteredItems : smartItems;
     const drillSubtitle = activeCategory
       ? categories.find((c) => c.id === activeCategory)?.name ?? "60 seconds"
       : "All categories";
@@ -296,7 +296,7 @@ export function MemorizeDashboard({
       <div>
         <ModeHeader title="Timed Drill" subtitle={drillSubtitle} onBack={handleBack} />
         <ModeTip mode="drill" />
-        <TimedDrill properties={drillProps} onRate={handleRate} />
+        <TimedDrill items={drillItems} onRate={handleRate} />
       </div>
     );
   }
@@ -304,7 +304,7 @@ export function MemorizeDashboard({
   if (mode === "explorer") {
     return (
       <div>
-        <ModeHeader title="Property Explorer" subtitle="Browse & study" onBack={handleBack} />
+        <ModeHeader title="Concept Explorer" subtitle="Browse & study" onBack={handleBack} />
         <ModeTip mode="explorer" />
         <PropertyExplorer
           categories={categories}
@@ -321,9 +321,9 @@ export function MemorizeDashboard({
       {/* Overall progress */}
       <div className="memorize-overall">
         <Flex justify="between" align="baseline">
-          <Heading size="6">CSS Properties</Heading>
+          <Heading size="6">{title}</Heading>
           <Text size="4" color="gray">
-            {masteredCount} / {totalProps} mastered
+            {masteredCount} / {totalItems} mastered
           </Text>
         </Flex>
         <div className="memorize-overall-bar">
@@ -346,11 +346,11 @@ export function MemorizeDashboard({
       <div className="memorize-categories">
         {categories.map((cat) => {
           const catMastery =
-            cat.properties.length > 0
-              ? cat.properties.reduce(
+            cat.items.length > 0
+              ? cat.items.reduce(
                   (sum, p) => sum + (mastery[p.id]?.pMastery ?? 0),
                   0,
-                ) / cat.properties.length
+                ) / cat.items.length
               : 0;
           const isActive = activeCategory === cat.id;
 
@@ -365,7 +365,7 @@ export function MemorizeDashboard({
               <span className="memorize-cat-icon">{cat.icon}</span>
               <div className="memorize-cat-name">{cat.name}</div>
               <div className="memorize-cat-count">
-                {cat.properties.length} properties
+                {cat.items.length} concepts
               </div>
               <ProgressBar pMastery={catMastery} showLabel={false} />
             </div>
@@ -414,14 +414,16 @@ export function MemorizeDashboard({
         >
           Fill in the Blank
         </Button>
-        <Button
-          size="4"
-          variant="soft"
-          color="orange"
-          onClick={() => startModeWithCheckIn("matcher")}
-        >
-          Visual Matcher
-        </Button>
+        {hasVisualDemos && (
+          <Button
+            size="4"
+            variant="soft"
+            color="orange"
+            onClick={() => startModeWithCheckIn("matcher")}
+          >
+            Visual Matcher
+          </Button>
+        )}
         <Button
           size="4"
           variant="soft"
@@ -448,7 +450,7 @@ export function MemorizeDashboard({
               Smart Practice
             </Text>
             <Text size="3" color="gray">
-              Focus on your weakest properties first, sorted by lowest mastery.
+              Focus on your weakest concepts first, sorted by lowest mastery.
             </Text>
           </div>
           <Button
@@ -466,7 +468,7 @@ export function MemorizeDashboard({
       </Box>
 
       {/* Learning insights */}
-      <LearningInsights appSlug={appSlug} />
+      <LearningInsights namespaceKey={namespaceKey} />
 
       {/* Learning science research */}
       <Box mt="5">

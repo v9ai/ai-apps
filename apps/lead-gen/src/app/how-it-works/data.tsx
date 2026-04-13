@@ -468,6 +468,168 @@ function extractICPFeatures(company, contactsCount, dmCount, factsCount) {
     new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
 }`,
   },
+  {
+    heading: "Decision-Maker Classification",
+    content: "Contact seniority and decision-maker status are computed deterministically via keyword-pattern matching against job titles — no LLM overhead for a classification that maps cleanly to a fixed taxonomy. C-level patterns, founder/president, VP, director, and manager tiers each receive a calibrated authority score (0.10–1.0). A contact is flagged as a decision-maker if authority ≥ 0.75, or ≥ 0.60 in an AI/ML department — reflecting that domain-relevant managers carry more pipeline weight than generic executives.",
+    codeBlock: `function classifyContact(position: string | null | undefined): ContactClassification {
+  const t = (position?.trim() ?? "").toLowerCase();
+  if (!t) return { seniority: "IC", authorityScore: 0.10, isDecisionMaker: false };
+
+  let seniority = "IC";
+  let authorityScore = 0.10;
+
+  const C_LEVEL = ["chief executive", "chief technology", "chief product",
+    "chief operating", "chief data", "chief ai"];
+  const isCLevel = C_LEVEL.some(p => t.includes(p))
+    || /\\bceo\\b/.test(t) || /\\bcto\\b/.test(t) || /\\bcfo\\b/.test(t);
+
+  if (isCLevel) { seniority = "C-level"; authorityScore = 1.0; }
+  else if (["founder", "co-founder", "president"].some(p => t.includes(p)))
+    { seniority = "Founder"; authorityScore = 0.95; }
+  else if (["vice president", "vp of"].some(p => t.includes(p)) || t.startsWith("vp "))
+    { seniority = "VP"; authorityScore = 0.85; }
+
+  // AI/ML department detection
+  const AI_ML = ["artificial intelligence", " ai ", "machine learning",
+    "deep learning", "nlp", "data science", "mlops", "llm"];
+  const department = AI_ML.some(p => t.includes(p)) ? "AI/ML" : "Other";
+
+  const isDecisionMaker = authorityScore >= 0.75
+    || (authorityScore >= 0.60 && department === "AI/ML");
+  return { seniority, department, authorityScore, isDecisionMaker, dmReasons: [] };
+}`,
+  },
+  {
+    heading: "Campaign State Machine",
+    content: "Email campaigns follow a strict state machine: draft → pending → running → completed/failed/stopped. The launch mutation iterates recipients × sequence steps, computing per-step delays via business-day arithmetic. Same-company staggering is enforced at creation time. Resend API calls are synchronous per-message to preserve reply-to threading — batch endpoints would merge threads. Sent/scheduled/failed counters are updated atomically after the loop completes.",
+    codeBlock: `async launchEmailCampaign(_parent, args, context) {
+  const campaign = rows[0];
+  if (campaign.status !== "draft" && campaign.status !== "pending")
+    throw new Error(\`Campaign is already \${campaign.status}\`);
+
+  const recipients = parseJsonArray(campaign.recipient_emails);
+  const sequence = JSON.parse(campaign.sequence ?? "[]");
+  const delayDays = JSON.parse(campaign.delay_days ?? "[]");
+  let sent = 0, scheduled = 0, failed = 0;
+
+  for (const recipientEmail of recipients) {
+    for (let stepIdx = 0; stepIdx < sequence.length; stepIdx++) {
+      const step = sequence[stepIdx];
+      const delay = stepIdx > 0 ? (delayDays[stepIdx - 1] ?? stepIdx) : 0;
+
+      let scheduledAt: string | undefined;
+      if (delay > 0) {
+        const sendDate = new Date();
+        sendDate.setDate(sendDate.getDate() + delay);
+        scheduledAt = sendDate.toISOString();
+      }
+
+      const result = await resend.instance.send({
+        to: recipientEmail, subject: step.subject,
+        html: step.html, from: campaign.from_email ?? undefined,
+        scheduledAt,
+      });
+      if (result.error) failed++; else if (scheduledAt) scheduled++; else sent++;
+    }
+  }
+
+  await context.db.update(emailCampaigns).set({
+    status: failed === recipients.length * sequence.length ? "failed" : "running",
+    emails_sent: sent, emails_scheduled: scheduled, emails_failed: failed,
+    start_at: new Date().toISOString(),
+  }).where(eq(emailCampaigns.id, args.id));
+}`,
+  },
+  {
+    heading: "Multi-Factor Deletion Scoring",
+    content: "Contacts accumulate a deletion score (0–1) across 6 weighted factors: invalid email/bounce history (0.25), blocked company association (0.17), staleness — 180+ days since last contact with no reply (0.15), data incompleteness — no email, LinkedIn, or GitHub (0.10), low-relevance department with low authority (0.10), and explicit do-not-contact flag (0.08). Contacts above the threshold are flagged for batch review rather than auto-deleted — the system optimizes for human confirmation at the boundary.",
+    codeBlock: `// Factor 3 — staleness (0.15)
+const daysSinceContacted = lastContactedMs
+  ? Math.floor((now - lastContactedMs) / msPerDay) : 0;
+if (lastContactedMs && daysSinceContacted > 180 && !anyReply) {
+  score += 0.15;
+  reasons.push(\`Last contacted \${daysSinceContacted} days ago with no reply\`);
+} else if (!lastContactedMs && daysSinceCreated > 365) {
+  score += 0.10;
+  reasons.push(\`Never contacted, created \${daysSinceCreated} days ago\`);
+}
+
+// Factor 4 — data incompleteness (0.10)
+if (!contact.email && !contact.linkedin_url && !contact.github_handle) {
+  score += 0.10;
+  reasons.push("No email, LinkedIn URL, or GitHub handle");
+}
+
+// Factor 5 — low relevance (0.10)
+const LOW_RELEVANCE_DEPTS = new Set(["HR/Recruiting", "Other"]);
+if (LOW_RELEVANCE_DEPTS.has(contact.department ?? "")
+    && (contact.authority_score ?? 0) < 0.30) {
+  score += 0.10;
+  reasons.push(\`Low-relevance dept with authority \${authorityScore.toFixed(2)}\`);
+}
+
+// Factor 6 — DNC flag (0.08)
+if (contact.do_not_contact) {
+  score += 0.08;
+  reasons.push("Marked do-not-contact");
+}`,
+  },
+  {
+    heading: "Discovery Pipeline Signal Detection",
+    content: "The CPN (Claude Partner Network) discovery pipeline parses CSV partner data and generates personalized outreach signals per row. A signal function cascades through three tiers: company association (strongest — 'Saw {company} is working with Claude'), archetype match ('Your {archetype} work on GitHub caught my eye'), and generic fallback. Each signal feeds directly into the email subject and opening line, ensuring every outreach email has a concrete, verifiable reason for contact.",
+    codeBlock: `const CPN_TAG = '["cpn-outreach"]';
+const FROM = "Vadim Nicolai <contact@vadim.blog>";
+
+interface PartnerRow {
+  rank: string; login: string; name: string;
+  email: string; company: string; score: string;
+  archetypes: string; github_url: string;
+}
+
+function signal(row: PartnerRow): string {
+  const company = row.company?.trim().replace(/^@/, "");
+  if (company) return \`Saw \${company} is working with Claude\`;
+
+  const archetypes = row.archetypes?.trim();
+  if (archetypes) {
+    const first = archetypes.split(",")[0].trim();
+    return \`Your \${first} work on GitHub caught my eye\`;
+  }
+
+  return "Noticed you're active in the Claude SDK ecosystem";
+}`,
+  },
+  {
+    heading: "Drizzle Schema with Indexes",
+    content: "The contacts and email_campaigns tables demonstrate Drizzle ORM's composable schema pattern: column definitions inline, index definitions in a trailing function. Contacts carry ML-derived deletion scoring fields (to_be_deleted, deletion_score, deletion_reasons) alongside conversation lifecycle state. Email campaigns use a status enum column with a dedicated index for queue-scan queries. Foreign keys cascade on delete to prevent orphaned records.",
+    codeBlock: `export const contacts = pgTable("contacts", {
+  id: serial("id").primaryKey(),
+  first_name: text("first_name").notNull(),
+  last_name: text("last_name").notNull(),
+  company_id: integer("company_id")
+    .references(() => companies.id, { onDelete: "set null" }),
+
+  // ML-derived fields
+  seniority: text("seniority"),
+  is_decision_maker: boolean("is_decision_maker").default(false),
+  authority_score: real("authority_score").default(0.0),
+  dm_reasons: text("dm_reasons"),              // JSON array
+
+  // ML deletion scoring
+  to_be_deleted: boolean("to_be_deleted").notNull().default(false),
+  deletion_score: real("deletion_score"),
+  deletion_reasons: text("deletion_reasons"),   // JSON array
+
+  // Conversation lifecycle
+  conversation_stage: text("conversation_stage"),
+  // initial_sent | follow_up_1..3 | replied_interested
+  // | meeting_scheduled | converted | closed
+}, (table) => ({
+  emailIdx: uniqueIndex("idx_contacts_email").on(table.email),
+  companyIdIdx: index("idx_contacts_company_id").on(table.company_id),
+  linkedinUrlIdx: index("idx_contacts_linkedin_url").on(table.linkedin_url),
+}));`,
+  },
 ];
 
 // ─── Technical Details ────────────────────────────────────────────
@@ -666,6 +828,118 @@ export function isAdminEmail(email: string | null | undefined): boolean {
       label: "Pre-Gate Snapshot Archive",
       value: "All enrichment payloads archived before confidence filtering — enables threshold replay without re-fetching websites",
       metadata: {"drift detection": "SHA-256 content_hash diff"},
+    },
+    ],
+  },
+  {
+    type: "code",
+    heading: "GraphQL Company Type (SDL)",
+    description: "The Company type exposes golden-record fields, AI scoring, intent signals, and related data via DataLoader-backed field resolvers",
+    code: `type Company {
+  id: Int!
+  key: String!
+  name: String!
+  website: String
+  description: String
+  industry: String
+  location: String
+  linkedin_url: String
+  job_board_url: String
+
+  # Golden record
+  category: CompanyCategory!
+  tags: [String!]!
+  services: [String!]!
+  service_taxonomy: [String!]!
+  score: Float!
+  score_reasons: [String!]!
+
+  # AI classification (3-tier taxonomy)
+  ai_tier: Int!
+  ai_classification_reason: String
+  ai_classification_confidence: Float!
+
+  # Deep analysis (Markdown narrative)
+  deep_analysis: String
+
+  # Intent scoring (weighted max-per-type)
+  intentScore: Float!
+  intentSignalsCount: Int!
+
+  # Related data (DataLoader-backed)
+  facts(limit: Int, offset: Int, field: String): [CompanyFact!]!
+  snapshots(limit: Int, offset: Int): [CompanySnapshot!]!
+  contacts: [Contact!]!
+}`,
+  },
+  {
+    type: "code",
+    heading: "Contacts Schema with ML Fields",
+    description: "Drizzle ORM schema showing ML-derived classification, deletion scoring, and conversation lifecycle columns with composite indexes",
+    code: `export const contacts = pgTable("contacts", {
+  id: serial("id").primaryKey(),
+  first_name: text("first_name").notNull(),
+  last_name: text("last_name").notNull(),
+  company_id: integer("company_id")
+    .references(() => companies.id, { onDelete: "set null" }),
+
+  // ML-derived fields (classifyContact / scoreContactsML)
+  seniority: text("seniority"),         // IC | Manager | Director | VP | C-level | Founder
+  department: text("department"),        // AI/ML | Engineering | Product | Other
+  is_decision_maker: boolean("is_decision_maker").default(false),
+  authority_score: real("authority_score").default(0.0),  // 0.10 – 1.0
+  dm_reasons: text("dm_reasons"),        // JSON array
+
+  // ML deletion scoring (multi-factor 0–1)
+  to_be_deleted: boolean("to_be_deleted").notNull().default(false),
+  deletion_score: real("deletion_score"),
+  deletion_reasons: text("deletion_reasons"),
+
+  // Conversation lifecycle state machine
+  conversation_stage: text("conversation_stage"),
+  // initial_sent → follow_up_1 → follow_up_2 → follow_up_3
+  // → replied_interested | replied_not_interested
+  // → meeting_scheduled → converted → closed
+}, (table) => ({
+  emailIdx: uniqueIndex("idx_contacts_email").on(table.email),
+  companyIdIdx: index("idx_contacts_company_id").on(table.company_id),
+  linkedinUrlIdx: index("idx_contacts_linkedin_url").on(table.linkedin_url),
+}));`,
+  },
+  {
+    type: "card-grid",
+    heading: "Conversation Stage Transitions",
+    description: "Contact lifecycle state machine — each stage tracks outreach progress and triggers follow-up scheduling or suppression",
+    items: [
+    {
+      label: "initial_sent",
+      value: "First outreach email delivered via Resend API. Starts the follow-up clock.",
+      metadata: {"next": "follow_up_1 (after delay_days[0])"},
+    },
+    {
+      label: "follow_up_1 → 3",
+      value: "Automated follow-ups with escalating personalization. Max 3 before suppression.",
+      metadata: {"gate": "reply-aware — any inbound reply cancels remaining follow-ups"},
+    },
+    {
+      label: "replied_interested",
+      value: "Inbound reply classified as interested. Triggers auto-draft reply generation.",
+      metadata: {"action": "auto-draft stored in reply_drafts, requires human approval"},
+    },
+    {
+      label: "replied_not_interested",
+      value: "Negative reply detected. Contact moved to suppression list.",
+      metadata: {"detection": "keyword matching: 'not interested', 'remove', 'unsubscribe'"},
+    },
+    {
+      label: "meeting_scheduled",
+      value: "Calendar link clicked or meeting confirmed in reply. Pipeline success metric.",
+      metadata: {"tracking": "calendar link click events via Resend webhooks"},
+    },
+    {
+      label: "converted → closed",
+      value: "Deal closed or contact marked as won/lost. Terminal states — no further automation.",
+      metadata: {"terminal": "true — no follow-ups, no auto-drafts"},
     },
     ],
   },

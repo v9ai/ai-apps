@@ -2,37 +2,37 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Button, Text, Badge } from "@radix-ui/themes";
-import type { CssProperty, CssCategory } from "@/lib/css-properties";
+import type { MemorizeItem, MemorizeCategory } from "@/lib/memorize-types";
 import { LiveDemo } from "./LiveDemo";
 
 interface FlashcardDeckProps {
-  properties: CssProperty[];
-  categories: CssCategory[];
-  onRate: (propertyId: string, isCorrect: boolean) => void;
+  items: MemorizeItem[];
+  categories: MemorizeCategory[];
+  onRate: (itemId: string, isCorrect: boolean) => void;
 }
 
 export function FlashcardDeck({
-  properties,
+  items,
   categories,
   onRate,
 }: FlashcardDeckProps) {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
 
-  const prop = properties[index];
-  const cat = categories.find((c) => c.id === prop?.category);
-  const total = properties.length;
+  const item = items[index];
+  const cat = categories.find((c) => c.items.some((i) => i.id === item?.id));
+  const total = items.length;
 
   const toggle = useCallback(() => setRevealed((r) => !r), []);
 
   const rate = useCallback(
     (isCorrect: boolean) => {
-      if (!prop) return;
-      onRate(prop.id, isCorrect);
+      if (!item) return;
+      onRate(item.id, isCorrect);
       setRevealed(false);
       setIndex((i) => (i + 1 < total ? i + 1 : 0));
     },
-    [prop, onRate, total],
+    [item, onRate, total],
   );
 
   const navigate = useCallback(
