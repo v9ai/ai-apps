@@ -43,6 +43,17 @@ import {
   Timer,
   Wifi,
   KeyRound,
+  UserCheck,
+  GitBranch,
+  Fingerprint,
+  Globe,
+  Dumbbell,
+  BrainCircuit,
+  LineChart,
+  ArrowUpDown,
+  Network,
+  ScanSearch,
+  Sparkles,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ScrollReveal } from "@/components/scroll-reveal";
@@ -911,6 +922,131 @@ const resilienceConfig = [
     icon: KeyRound,
     color: "var(--violet-9)",
   },
+];
+
+const authLayers = [
+  {
+    layer: "Session Store",
+    icon: Fingerprint,
+    color: "var(--green-9)",
+    detail: "Sessions persisted in PostgreSQL with token, expiry, IP address, and user agent. Cascade delete on user removal.",
+    tables: "user → session → account → verification",
+  },
+  {
+    layer: "OAuth Providers",
+    icon: Globe,
+    color: "var(--blue-9)",
+    detail: "Multi-provider via Better Auth account table: access_token, refresh_token, id_token, scope, and automatic token expiry tracking.",
+    tables: "account.provider_id + account.account_id",
+  },
+  {
+    layer: "Server Guard",
+    icon: UserCheck,
+    color: "var(--indigo-9)",
+    detail: "withAuth() validates session via auth.api.getSession({ headers }). Returns userId or redirects to /auth/login. Used by every server action.",
+    tables: "session.token → user.id",
+  },
+  {
+    layer: "Row Isolation",
+    icon: Lock,
+    color: "var(--crimson-9)",
+    detail: "Every table has user_id with B-tree index. All queries scoped to authenticated user. CASCADE DELETE from user → blood_tests → markers → embeddings.",
+    tables: "22 tables · 22 user_id indexes",
+  },
+];
+
+const trajectoryPipeline = [
+  {
+    step: "1",
+    title: "CTE: Latest Embedding",
+    color: "var(--indigo-9)",
+    description: "A SQL CTE fetches the most recent health_state_embedding for the user. This becomes the reference point for cosine similarity.",
+    code: "SELECT embedding FROM health_state_embeddings WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1",
+  },
+  {
+    step: "2",
+    title: "Cosine Similarity",
+    color: "var(--blue-9)",
+    description: "For every prior state, compute 1 - (embedding <=> latest) to get similarity. Values near 1.0 = stable, near 0.0 = diverged.",
+    code: "1 - (e.embedding <=> (SELECT embedding FROM latest)) AS similarity_to_latest",
+  },
+  {
+    step: "3",
+    title: "Velocity Computation",
+    color: "var(--amber-9)",
+    description: "TypeScript computes rate-of-change per day between consecutive states. Minimum 1-day gap. Null metrics filtered out.",
+    code: "(current_metric - previous_metric) / days_between",
+  },
+  {
+    step: "4",
+    title: "Risk Classification",
+    color: "var(--green-9)",
+    description: "Each derived metric at each time point classified as optimal/borderline/elevated using METRIC_REFERENCES thresholds.",
+    code: "classifyMetricRisk(key, value) → optimal | borderline | elevated | low",
+  },
+  {
+    step: "5",
+    title: "LLM Trajectory Analysis",
+    color: "var(--violet-9)",
+    description: "Qwen (temperature 0.3) analyzes direction: improving, stable, or deteriorating. Cites Castelli, McLaughlin, De Ritis by name.",
+    code: "qwen.chat({ model: 'qwen-plus', temperature: 0.3, max_completion_tokens: 1500 })",
+  },
+];
+
+const markerAliases = [
+  { base: "hdl", aliases: ["hdl", "hdl cholesterol", "hdl-c", "hdl-cholesterol"], color: "var(--blue-9)" },
+  { base: "ldl", aliases: ["ldl", "ldl cholesterol", "ldl-c", "ldl-cholesterol"], color: "var(--crimson-9)" },
+  { base: "total_cholesterol", aliases: ["total cholesterol", "cholesterol total", "cholesterol"], color: "var(--amber-9)" },
+  { base: "triglycerides", aliases: ["triglycerides", "triglyceride", "trig"], color: "var(--orange-9)" },
+  { base: "glucose", aliases: ["glucose", "fasting glucose", "blood glucose"], color: "var(--green-9)" },
+  { base: "neutrophils", aliases: ["neutrophils", "neutrophil", "neutrophil count", "neut"], color: "var(--pink-9)" },
+  { base: "lymphocytes", aliases: ["lymphocytes", "lymphocyte", "lymphocyte count", "lymph"], color: "var(--violet-9)" },
+  { base: "bun", aliases: ["bun", "blood urea nitrogen", "urea nitrogen"], color: "var(--cyan-9)" },
+  { base: "creatinine", aliases: ["creatinine", "creat"], color: "var(--indigo-9)" },
+  { base: "ast", aliases: ["ast", "aspartate aminotransferase", "sgot"], color: "var(--green-9)" },
+  { base: "alt", aliases: ["alt", "alanine aminotransferase", "sgpt"], color: "var(--amber-9)" },
+];
+
+const cognitiveTargetAreas = [
+  { area: "MEMORY", icon: BrainCircuit, color: "var(--indigo-9)", description: "Short-term, long-term, working memory capacity" },
+  { area: "FOCUS", icon: ScanSearch, color: "var(--blue-9)", description: "Sustained attention and concentration" },
+  { area: "PROCESSING_SPEED", icon: Zap, color: "var(--amber-9)", description: "Cognitive processing and reaction time" },
+  { area: "NEUROPLASTICITY", icon: Network, color: "var(--green-9)", description: "Neural pathway formation and adaptation" },
+  { area: "NEUROPROTECTION", icon: ShieldCheck, color: "var(--crimson-9)", description: "Protection against cognitive decline" },
+  { area: "MOOD_REGULATION", icon: Heart, color: "var(--pink-9)", description: "Emotional stability and stress response" },
+  { area: "SLEEP_QUALITY", icon: Activity, color: "var(--violet-9)", description: "Sleep architecture and restorative cycles" },
+];
+
+const cognitiveScoreDimensions = [
+  { dimension: "memoryScore", label: "Memory", description: "Short-term + long-term recall" },
+  { dimension: "focusScore", label: "Focus", description: "Sustained attention span" },
+  { dimension: "processingSpeedScore", label: "Processing Speed", description: "Cognitive reaction time" },
+  { dimension: "moodScore", label: "Mood", description: "Emotional regulation" },
+  { dimension: "sleepScore", label: "Sleep", description: "Sleep quality (0–10 scale)" },
+];
+
+const entityRelationships = [
+  { from: "user", to: "blood_tests", type: "1:N", cascade: "CASCADE DELETE", color: "var(--blue-9)" },
+  { from: "blood_tests", to: "blood_markers", type: "1:N", cascade: "CASCADE DELETE", color: "var(--blue-9)" },
+  { from: "blood_tests", to: "blood_test_embeddings", type: "1:1", cascade: "CASCADE + UNIQUE", color: "var(--amber-9)" },
+  { from: "blood_markers", to: "blood_marker_embeddings", type: "1:1", cascade: "CASCADE + UNIQUE", color: "var(--amber-9)" },
+  { from: "blood_tests", to: "health_state_embeddings", type: "1:1", cascade: "CASCADE + UNIQUE", color: "var(--green-9)" },
+  { from: "user", to: "conditions", type: "1:N", cascade: "CASCADE DELETE", color: "var(--crimson-9)" },
+  { from: "user", to: "medications", type: "1:N", cascade: "CASCADE DELETE", color: "var(--crimson-9)" },
+  { from: "user", to: "symptoms", type: "1:N", cascade: "CASCADE DELETE", color: "var(--crimson-9)" },
+  { from: "family_members", to: "family_member_doctors", type: "M:N", cascade: "Composite PK", color: "var(--violet-9)" },
+  { from: "appointments", to: "doctors", type: "N:1", cascade: "SET NULL", color: "var(--violet-9)" },
+  { from: "brain_health_protocols", to: "cognitive_baselines", type: "1:1", cascade: "UNIQUE INDEX", color: "var(--indigo-9)" },
+  { from: "user", to: "memory_baseline", type: "1:1", cascade: "UNIQUE INDEX", color: "var(--indigo-9)" },
+];
+
+const multiSearchFanOut = [
+  { table: "blood_test_embeddings", scoring: "Vector only", threshold: "0.3", limit: "3", color: "var(--blue-9)" },
+  { table: "blood_marker_embeddings", scoring: "Hybrid (0.7 cos + 0.3 FTS)", threshold: "0.3", limit: "5", color: "var(--amber-9)" },
+  { table: "condition_embeddings", scoring: "Vector only", threshold: "0.3", limit: "5", color: "var(--crimson-9)" },
+  { table: "medication_embeddings", scoring: "Vector only", threshold: "0.3", limit: "5", color: "var(--green-9)" },
+  { table: "symptom_embeddings", scoring: "Vector only", threshold: "0.3", limit: "5", color: "var(--violet-9)" },
+  { table: "appointment_embeddings", scoring: "Vector only", threshold: "0.3", limit: "5", color: "var(--cyan-9)" },
 ];
 
 /* ── Page ──────────────────────────────────────────────────────────── */
