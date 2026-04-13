@@ -23,7 +23,6 @@ import { ScrollReveal } from "@/components/scroll-reveal";
 import Link from "next/link";
 import { AuthButton } from "@/components/auth-button";
 import { HowItWorksClient } from "./how-it-works-client";
-import { TocNav } from "./toc-nav";
 import {
   IngestionFlow,
   PipelineFlow,
@@ -181,8 +180,6 @@ export default function HowItWorksPage() {
       {/* Scroll progress bar */}
       <Box className="scroll-progress" />
 
-      {/* Floating TOC */}
-      <TocNav />
 
       {/* ── Header ── */}
       <Box

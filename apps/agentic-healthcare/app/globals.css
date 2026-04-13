@@ -649,67 +649,6 @@
    Enhanced How It Works — v2
    ═════════════════════════════════════════════════════════════════════ */
 
-/* ── Floating Table of Contents ── */
-
-.toc-nav {
-  position: fixed;
-  top: 50%;
-  left: max(1rem, calc((100vw - 1024px) / 2 - 190px));
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 8;
-  padding: 14px;
-  border-radius: var(--radius-3);
-  background: color-mix(in srgb, var(--color-background) 80%, transparent);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--gray-a3);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.toc-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--gray-8);
-  padding: 4px 8px;
-  margin-bottom: 4px;
-}
-
-.toc-link {
-  font-size: 12px;
-  color: var(--gray-9);
-  text-decoration: none;
-  padding: 5px 10px;
-  border-radius: var(--radius-1);
-  transition: color 150ms ease, background-color 150ms ease,
-    border-color 150ms ease;
-  border-left: 2px solid transparent;
-  white-space: nowrap;
-}
-
-.toc-link:hover {
-  color: var(--gray-12);
-  background: var(--gray-a3);
-}
-
-.toc-active {
-  color: var(--indigo-11) !important;
-  border-left-color: var(--indigo-9);
-  background: var(--indigo-a2);
-}
-
-@media (max-width: 1440px) {
-  .toc-nav {
-    display: none;
-  }
-}
-
 /* ── Architecture Section Cards ── */
 
 .arch-section {
