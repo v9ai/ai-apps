@@ -29,6 +29,7 @@ from db import (
     search_appointments,
     search_blood_tests,
     search_conditions,
+    search_health_states,
     search_marker_trend,
     search_markers_hybrid,
     search_medications,
@@ -80,6 +81,7 @@ TRIAGE_SYSTEM = """You are a clinical query classifier for a blood marker intell
 
 Classify the user's query into exactly ONE intent:
 - markers: Questions about specific blood marker values, levels, reference ranges, flags
+- derived_ratios: Questions about derived clinical ratios — TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis (AST/ALT), BUN/Creatinine, TyG Index — their values, risk classification, or clinical significance
 - trajectory: Questions about trends over time, changes between tests, velocity, improving/deteriorating
 - conditions: Questions about health conditions, diseases, diagnoses (but NOT to make a diagnosis)
 - medications: Questions about medications, drugs, dosages, drug-biomarker interactions
@@ -88,7 +90,7 @@ Classify the user's query into exactly ONE intent:
 - general_health: Broad health questions spanning multiple categories (metabolic syndrome, overall health)
 - safety_refusal: Requests that ask for diagnosis, treatment prescriptions, or clearly out-of-scope topics
 
-Also extract any specific entity names (marker names, condition names, medication names) from the query.
+Also extract any specific entity names (marker names, condition names, medication names, ratio names) from the query.
 
 Respond ONLY with JSON:
 {"intent": "...", "confidence": 0.0-1.0, "entities": ["..."]}"""
@@ -108,7 +110,7 @@ def triage(state: GraphState) -> dict[str, Any]:
 
     intent = parsed.get("intent", "general_health")
     valid_intents = {
-        "markers", "trajectory", "conditions", "medications",
+        "markers", "derived_ratios", "trajectory", "conditions", "medications",
         "symptoms", "appointments", "general_health", "safety_refusal",
     }
     if intent not in valid_intents:
@@ -143,7 +145,22 @@ def retrieve(state: GraphState) -> dict[str, Any]:
 
     intent = state.intent
 
-    if intent in ("markers", "trajectory"):
+    if intent == "derived_ratios":
+        # Primary: health state embeddings with JSONB derived_metrics
+        hs_results = search_health_states(embedding, user_id, limit=5)
+        for r in hs_results:
+            chunks.append(r["content"])
+            sources.append("health_state_embeddings")
+            scores.append(r["similarity"])
+
+        # Cross-reference with individual markers for underlying values
+        marker_results = search_markers_hybrid(state.query, embedding, user_id, limit=5)
+        for r in marker_results:
+            chunks.append(r["content"])
+            sources.append("blood_marker_embeddings")
+            scores.append(r["combined_score"])
+
+    elif intent in ("markers", "trajectory"):
         # Primary: hybrid marker search
         marker_results = search_markers_hybrid(state.query, embedding, user_id, limit=10)
         for r in marker_results:
@@ -156,6 +173,13 @@ def retrieve(state: GraphState) -> dict[str, Any]:
         for r in test_results:
             chunks.append(r["content"])
             sources.append("blood_test_embeddings")
+            scores.append(r["similarity"])
+
+        # Health state context for ratio cross-reference
+        hs_results = search_health_states(embedding, user_id, limit=2)
+        for r in hs_results:
+            chunks.append(r["content"])
+            sources.append("health_state_embeddings")
             scores.append(r["similarity"])
 
         # For trajectory, also get trend data

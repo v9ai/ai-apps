@@ -18,34 +18,34 @@ type TierGroup = {
 };
 
 const bookingUrl = (name: string) =>
-  `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(name + " Ischia Italy")}&checkin=${CHECK_IN}&checkout=${CHECK_OUT}&group_adults=2&group_children=1&age=8`;
+  `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(name + " Naples Italy")}&checkin=${CHECK_IN}&checkout=${CHECK_OUT}&group_adults=2&group_children=1&age=8`;
 
 const googleUrl = (name: string) =>
-  `https://www.google.com/search?q=${encodeURIComponent(name + " Ischia hotel")}`;
+  `https://www.google.com/search?q=${encodeURIComponent(name + " Naples hotel")}`;
 
 const TIERS_EN: TierGroup[] = [
   {
     tier: "Budget",
     hotels: [
-      { name: "Agriturismo Pera di Basso", area: "Casamicciola", price: "~€130 / night", booking: bookingUrl("Agriturismo Pera di Basso"), google: googleUrl("Agriturismo Pera di Basso") },
-      { name: "Le Canne Family Resort",    area: "Forio",        price: "~€150 / night", booking: bookingUrl("Le Canne Family Resort"),    google: googleUrl("Le Canne Family Resort Ischia") },
-      { name: "Hotel Stella Maris Terme",  area: "Casamicciola", price: "~€170 / night", booking: bookingUrl("Hotel Stella Maris Terme"),  google: googleUrl("Hotel Stella Maris Terme Ischia") },
+      { name: "B&B Palazzo Ferrante",  area: "Spaccanapoli",       price: "~€65 / night",  booking: bookingUrl("B&B Palazzo Ferrante"),  google: googleUrl("B&B Palazzo Ferrante Naples") },
+      { name: "Casa Tolentino",        area: "Quartieri Spagnoli", price: "~€75 / night",  booking: bookingUrl("Casa Tolentino"),        google: googleUrl("Casa Tolentino Naples") },
+      { name: "Hotel Piazza Bellini",  area: "Centro Storico",     price: "~€85 / night",  booking: bookingUrl("Hotel Piazza Bellini"),  google: googleUrl("Hotel Piazza Bellini Naples") },
     ],
   },
   {
     tier: "Mid-Range",
     hotels: [
-      { name: "Hotel Don Pepe",            area: "Lacco Ameno",  price: "~€150 / night", booking: bookingUrl("Hotel Don Pepe Ischia"),             google: googleUrl("Hotel Don Pepe Lacco Ameno") },
-      { name: "Hotel Eden Park",           area: "Forio",        price: "~€165 / night", booking: bookingUrl("Hotel Eden Park Forio"),            google: googleUrl("Hotel Eden Park Forio Ischia") },
-      { name: "Hotel San Valentino Terme", area: "Ischia Porto", price: "~€180 / night", booking: bookingUrl("Hotel San Valentino Terme Ischia"),  google: googleUrl("Hotel San Valentino Terme Ischia") },
+      { name: "Hotel Palazzo Decumani", area: "Spaccanapoli",   price: "~€95 / night",  booking: bookingUrl("Hotel Palazzo Decumani"),  google: googleUrl("Hotel Palazzo Decumani Naples") },
+      { name: "Hotel Rex",              area: "Lungomare",      price: "~€110 / night", booking: bookingUrl("Hotel Rex Naples"),         google: googleUrl("Hotel Rex Naples Lungomare") },
+      { name: "Grand Hotel Parker's",   area: "Corso Vittorio", price: "~€130 / night", booking: bookingUrl("Grand Hotel Parker's Naples"), google: googleUrl("Grand Hotel Parker's Naples") },
     ],
   },
   {
     tier: "Comfort",
     hotels: [
-      { name: "Sorriso Thermae Resort & Spa",      area: "Forio",       price: "~€190 / night", booking: bookingUrl("Sorriso Thermae Resort Ischia"),       google: googleUrl("Sorriso Thermae Resort Ischia") },
-      { name: "Park Hotel Terme Michelangelo",      area: "Lacco Ameno", price: "~€210 / night", booking: bookingUrl("Park Hotel Terme Michelangelo Ischia"), google: googleUrl("Park Hotel Terme Michelangelo Ischia") },
-      { name: "La Reginella Resort & Thermal Spa", area: "Lacco Ameno", price: "~€240 / night", booking: bookingUrl("La Reginella Resort Ischia"),           google: googleUrl("La Reginella Ischia") },
+      { name: "Hotel Excelsior",               area: "Lungomare", price: "~€150 / night", booking: bookingUrl("Hotel Excelsior Naples"),              google: googleUrl("Hotel Excelsior Naples") },
+      { name: "Hotel San Francesco al Monte",  area: "Vomero",    price: "~€160 / night", booking: bookingUrl("Hotel San Francesco al Monte Naples"), google: googleUrl("Hotel San Francesco al Monte Naples") },
+      { name: "Grand Hotel Vesuvio",           area: "Lungomare", price: "~€190 / night", booking: bookingUrl("Grand Hotel Vesuvio Naples"),          google: googleUrl("Grand Hotel Vesuvio Naples") },
     ],
   },
 ];
@@ -54,25 +54,25 @@ const TIERS_RO: TierGroup[] = [
   {
     tier: "Buget",
     hotels: [
-      { name: "Agriturismo Pera di Basso", area: "Casamicciola", price: "~€130 / noapte", booking: bookingUrl("Agriturismo Pera di Basso"), google: googleUrl("Agriturismo Pera di Basso") },
-      { name: "Le Canne Family Resort",    area: "Forio",        price: "~€150 / noapte", booking: bookingUrl("Le Canne Family Resort"),    google: googleUrl("Le Canne Family Resort Ischia") },
-      { name: "Hotel Stella Maris Terme",  area: "Casamicciola", price: "~€170 / noapte", booking: bookingUrl("Hotel Stella Maris Terme"),  google: googleUrl("Hotel Stella Maris Terme Ischia") },
+      { name: "B&B Palazzo Ferrante",  area: "Spaccanapoli",       price: "~€65 / noapte",  booking: bookingUrl("B&B Palazzo Ferrante"),  google: googleUrl("B&B Palazzo Ferrante Naples") },
+      { name: "Casa Tolentino",        area: "Quartieri Spagnoli", price: "~€75 / noapte",  booking: bookingUrl("Casa Tolentino"),        google: googleUrl("Casa Tolentino Naples") },
+      { name: "Hotel Piazza Bellini",  area: "Centro Storico",     price: "~€85 / noapte",  booking: bookingUrl("Hotel Piazza Bellini"),  google: googleUrl("Hotel Piazza Bellini Naples") },
     ],
   },
   {
     tier: "Mediu",
     hotels: [
-      { name: "Hotel Don Pepe",            area: "Lacco Ameno",  price: "~€150 / noapte", booking: bookingUrl("Hotel Don Pepe Ischia"),             google: googleUrl("Hotel Don Pepe Lacco Ameno") },
-      { name: "Hotel Eden Park",           area: "Forio",        price: "~€165 / noapte", booking: bookingUrl("Hotel Eden Park Forio"),            google: googleUrl("Hotel Eden Park Forio Ischia") },
-      { name: "Hotel San Valentino Terme", area: "Ischia Porto", price: "~€180 / noapte", booking: bookingUrl("Hotel San Valentino Terme Ischia"),  google: googleUrl("Hotel San Valentino Terme Ischia") },
+      { name: "Hotel Palazzo Decumani", area: "Spaccanapoli",   price: "~€95 / noapte",  booking: bookingUrl("Hotel Palazzo Decumani"),  google: googleUrl("Hotel Palazzo Decumani Naples") },
+      { name: "Hotel Rex",              area: "Lungomare",      price: "~€110 / noapte", booking: bookingUrl("Hotel Rex Naples"),         google: googleUrl("Hotel Rex Naples Lungomare") },
+      { name: "Grand Hotel Parker's",   area: "Corso Vittorio", price: "~€130 / noapte", booking: bookingUrl("Grand Hotel Parker's Naples"), google: googleUrl("Grand Hotel Parker's Naples") },
     ],
   },
   {
     tier: "Confort",
     hotels: [
-      { name: "Sorriso Thermae Resort & Spa",      area: "Forio",       price: "~€190 / noapte", booking: bookingUrl("Sorriso Thermae Resort Ischia"),       google: googleUrl("Sorriso Thermae Resort Ischia") },
-      { name: "Park Hotel Terme Michelangelo",      area: "Lacco Ameno", price: "~€210 / noapte", booking: bookingUrl("Park Hotel Terme Michelangelo Ischia"), google: googleUrl("Park Hotel Terme Michelangelo Ischia") },
-      { name: "La Reginella Resort & Thermal Spa", area: "Lacco Ameno", price: "~€240 / noapte", booking: bookingUrl("La Reginella Resort Ischia"),           google: googleUrl("La Reginella Ischia") },
+      { name: "Hotel Excelsior",               area: "Lungomare", price: "~€150 / noapte", booking: bookingUrl("Hotel Excelsior Naples"),              google: googleUrl("Hotel Excelsior Naples") },
+      { name: "Hotel San Francesco al Monte",  area: "Vomero",    price: "~€160 / noapte", booking: bookingUrl("Hotel San Francesco al Monte Naples"), google: googleUrl("Hotel San Francesco al Monte Naples") },
+      { name: "Grand Hotel Vesuvio",           area: "Lungomare", price: "~€190 / noapte", booking: bookingUrl("Grand Hotel Vesuvio Naples"),          google: googleUrl("Grand Hotel Vesuvio Naples") },
     ],
   },
 ];
@@ -80,7 +80,7 @@ const TIERS_RO: TierGroup[] = [
 const T = {
   en: {
     sectionLabel: "Booking Links",
-    sectionTitle: "Find & Book Your Ischia Hotel",
+    sectionTitle: "Find & Book Your Naples Hotel",
     sectionSubtitle: "Booking.com links pre-filled for 31 May – 7 Jun 2026, 2 adults + 1 child. Prices are verified family totals per night.",
     recommended: "RECOMMENDED",
     bookingLabel: "Booking.com",
@@ -89,7 +89,7 @@ const T = {
   },
   ro: {
     sectionLabel: "Linkuri Rezervare",
-    sectionTitle: "Găsește și Rezervă Hotelul în Ischia",
+    sectionTitle: "Găsește și Rezervă Hotelul în Napoli",
     sectionSubtitle: "Linkuri Booking.com prefiltrate pentru 31 mai – 7 iun 2026, 2 adulți + 1 copil. Prețurile sunt totaluri verificate per noapte pentru familie.",
     recommended: "RECOMANDAT",
     bookingLabel: "Booking.com",

@@ -2574,6 +2574,296 @@ user: """
         </Grid>
       </Box>
 
+      {/* ── Embedding Pipeline Stages ── */}
+      <Box
+        id="embedding-pipeline"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--amber-9)",
+                fontSize: "11px",
+              }}
+            >
+              Vector Space
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Embedding Pipeline Stages
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Every entity — whether parsed from a blood test PDF or entered
+              via a CRUD form — flows through the same 5-stage pipeline to
+              become a searchable 1024-dim vector in pgvector.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          style={{ maxWidth: 720, margin: "0 auto" }}
+          mb="5"
+        >
+          {embeddingPipelineSteps.map((ps, i) => (
+            <ScrollReveal key={ps.step} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <div className="synthesis-rule-num" style={{ color: ps.color, borderColor: ps.color }}>
+                  {ps.step}
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {ps.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {ps.description}
+                  </Text>
+                  <Text
+                    size="1"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                      color: ps.color,
+                      opacity: 0.85,
+                      marginTop: 2,
+                    }}
+                  >
+                    {ps.code}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={300}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">text-embedding-3-large</span>
+            <span className="arch-tag">1024 dims (Matryoshka)</span>
+            <span className="arch-tag">ON CONFLICT upsert</span>
+            <span className="arch-tag">BTREE user_id index</span>
+            <span className="arch-tag">exact cosine scan</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Node Type Fan-Out ── */}
+      <Box
+        id="node-type-fanout"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--orange-9)",
+                fontSize: "11px",
+              }}
+            >
+              Node Types
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              BloodTestNodeParser Output
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Each uploaded PDF fans out into 3 distinct embedding node
+              types. The parser runs once; each node type gets its own
+              format function, embedding, and target table.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid columns={{ initial: "1", md: "3" }} gap="4">
+          {nodeTypeBreakdown.map((nt, i) => (
+            <ScrollReveal key={nt.nodeType} delay={i * 60}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <Flex align="center" gap="3">
+                  <div
+                    className="deep-dive-icon"
+                    style={{ background: nt.bg, color: nt.color }}
+                  >
+                    <nt.icon size={18} />
+                  </div>
+                  <Text size="3" weight="bold">
+                    {nt.nodeType}
+                  </Text>
+                </Flex>
+
+                <Text
+                  size="2"
+                  color="gray"
+                  style={{ lineHeight: 1.55 }}
+                >
+                  {nt.description}
+                </Text>
+
+                <Flex gap="2" wrap="wrap">
+                  <span className="arch-tag">{nt.table}</span>
+                  <span className="arch-tag">{nt.cardinality}</span>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* ── Dual Ingestion Paths ── */}
+      <Box
+        id="ingestion-paths"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Ingestion
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Dual Ingestion Paths
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Blood data flows through a LlamaIndex IngestionPipeline in
+              Python; user-entered entities use direct embed-and-upsert in
+              TypeScript. Both paths converge on the same pgvector tables
+              and text-embedding-3-large model.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid columns={{ initial: "1", md: "2" }} gap="4">
+          {ingestionPaths.map((ip, i) => (
+            <ScrollReveal key={ip.runtime} delay={i * 80}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <Flex align="center" justify="between">
+                  <Flex align="center" gap="3">
+                    <div
+                      className="deep-dive-icon"
+                      style={{ background: ip.bg, color: ip.color }}
+                    >
+                      <ip.icon size={18} />
+                    </div>
+                    <div>
+                      <Text size="3" weight="bold">
+                        {ip.title}
+                      </Text>
+                      <Text
+                        size="1"
+                        style={{
+                          fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                          fontSize: "11px",
+                          color: "var(--gray-9)",
+                        }}
+                      >
+                        {ip.trigger}
+                      </Text>
+                    </div>
+                  </Flex>
+                  <span className="arch-tag" style={{ fontSize: "10px" }}>
+                    {ip.runtime}
+                  </span>
+                </Flex>
+
+                <Flex direction="column" gap="1" style={{ paddingLeft: 4 }}>
+                  {ip.steps.map((step, si) => (
+                    <Flex key={si} align="start" gap="2">
+                      <Text
+                        size="1"
+                        style={{
+                          color: ip.color,
+                          fontWeight: 700,
+                          fontSize: "11px",
+                          minWidth: 14,
+                        }}
+                      >
+                        {si + 1}.
+                      </Text>
+                      <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                        {step}
+                      </Text>
+                    </Flex>
+                  ))}
+                </Flex>
+
+                <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem", lineHeight: 1.5 }}>
+                  <code>{ip.code}</code>
+                </pre>
+
+                <Flex gap="2" wrap="wrap">
+                  {ip.entities.map((e) => (
+                    <span key={e} className="arch-tag">{e}</span>
+                  ))}
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+      </Box>
+
       {/* ── Synthesis Prompt Rules ── */}
       <Box
         id="synthesis-rules"
@@ -4076,7 +4366,6 @@ combined_score = (
         <Grid
           columns={{ initial: "1", md: "2" }}
           gap="4"
-          style={{ maxWidth: 960, margin: "0 auto" }}
           mb="7"
         >
           {complianceLayers.map((cl, i) => (
