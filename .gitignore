@@ -9,12 +9,12 @@ dist-ssr
 *.local
 *.wav
 .env
+.env*
 .cache
 server/dist
 public/dist
 .vercel
 .wrangler/
-.env*.local
 __pycache__/
 *.egg-info/
 .langgraph_api/
