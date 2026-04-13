@@ -373,6 +373,31 @@ def embed_blog(slug: str) -> None:
 # ── Search ────────────────────────────────────────────────
 
 
+def search_blog_results(slug: str, query: str, top_k: int = 5) -> list[dict[str, Any]]:
+    """Semantic search returning results as a list."""
+    db = lancedb.connect(str(LANCE_DIR))
+    table_name = f"blog_{slug.replace('-', '_')}"
+
+    if table_name not in db.table_names():
+        return []
+
+    model = SentenceTransformer(EMBED_MODEL)
+    q_vec = model.encode(query).tolist()
+
+    tbl = db.open_table(table_name)
+    rows = tbl.search(q_vec).metric("cosine").limit(top_k).to_list()
+    return [
+        {
+            "title": r["title"],
+            "url": r["url"],
+            "date": r.get("date", ""),
+            "text": r["text"],
+            "score": r.get("_distance", 0),
+        }
+        for r in rows
+    ]
+
+
 def search_blog(slug: str, query: str, top_k: int = 5) -> None:
     """Semantic search across embedded blog posts."""
     db = lancedb.connect(str(LANCE_DIR))

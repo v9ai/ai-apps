@@ -52,6 +52,7 @@ export async function uploadToPython(
     method: "POST",
     body: form,
     headers: INTERNAL_API_KEY ? { "x-api-key": INTERNAL_API_KEY } : undefined,
+    signal: AbortSignal.timeout(280_000),
   });
   if (!res.ok) throw new Error(`Upload failed: ${await res.text()}`);
   return res.json();

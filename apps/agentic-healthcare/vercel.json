@@ -8,6 +8,9 @@
   "functions": {
     "app/api/cron/backup/route.ts": {
       "maxDuration": 300
+    },
+    "app/(app)/blood-tests/**": {
+      "maxDuration": 300
     }
   },
   "crons": [
