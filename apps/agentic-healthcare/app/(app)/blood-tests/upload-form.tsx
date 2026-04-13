@@ -6,6 +6,7 @@ import { UploadIcon } from "@radix-ui/react-icons";
 import { useFormStatus } from "react-dom";
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { uniqBy } from "lodash-es";
 import { css } from "styled-system/css";
 
 const ACCEPTED = new Set([
@@ -111,12 +112,7 @@ export function UploadForm() {
     setBatchProgress(null);
 
     // Deduplicate within the directory (same name from different subdirs)
-    const seen = new Set<string>();
-    const unique = valid.filter((f) => {
-      if (seen.has(f.name)) return false;
-      seen.add(f.name);
-      return true;
-    });
+    const unique = uniqBy(valid, (f) => f.name);
 
     // Filter out files already in the database
     const existing = new Set(await getExistingFileNames());
@@ -131,7 +127,6 @@ export function UploadForm() {
 
     startBatch(async () => {
       const results: { fileName: string; ok: boolean; error?: string }[] = [];
-      let consecutiveFailures = 0;
 
       for (let i = 0; i < dirFiles.length; i++) {
         const file = dirFiles[i];
@@ -148,16 +143,8 @@ export function UploadForm() {
           if (testDate) fd.append("test_date", testDate);
           await uploadBloodTestNoRedirect(fd);
           results.push({ fileName: file.name, ok: true });
-          consecutiveFailures = 0;
         } catch (e: any) {
           results.push({ fileName: file.name, ok: false, error: e?.message ?? "Failed" });
-          consecutiveFailures++;
-          if (consecutiveFailures >= 2) {
-            for (let j = i + 1; j < dirFiles.length; j++) {
-              results.push({ fileName: dirFiles[j].name, ok: false, error: "Skipped — server unreachable" });
-            }
-            break;
-          }
         }
       }
 
