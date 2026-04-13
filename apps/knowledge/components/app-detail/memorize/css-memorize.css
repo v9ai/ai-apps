@@ -350,6 +350,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .matcher-container {
@@ -358,6 +359,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-height: 0;
 }
 
 .matcher-grid {
@@ -366,6 +368,7 @@
   gap: 24px;
   align-items: stretch;
   flex: 1;
+  min-height: 0;
 }
 
 @media (max-width: 640px) {
@@ -378,6 +381,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .matcher-preview-label {
@@ -393,7 +398,7 @@
   width: 100%;
   height: auto !important;
   flex: 1;
-  min-height: 180px;
+  min-height: 100px;
   border: none;
   background: var(--gray-1);
 }
@@ -403,6 +408,8 @@
   flex-direction: column;
   gap: 8px;
   justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .matcher-option {
@@ -443,12 +450,18 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .matcher-css-context {
   border: 1px solid var(--gray-5);
   border-radius: var(--radius-3);
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .matcher-css-label {
@@ -469,7 +482,8 @@
   background: var(--gray-2);
   overflow-x: auto;
   white-space: pre;
-  max-height: 200px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
