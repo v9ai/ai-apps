@@ -245,5 +245,67 @@
       "title": "Peter Steinberger's website",
       "url": "https://steipete.me"
     }
+  ],
+  "questions": [
+    {
+      "category": "origin",
+      "question": "In 'Finding My Spark Again | Peter Steinberger' you describe rediscovering your motivation after burnout. What specifically about AI-assisted development reignited your drive compared to everything you tried before?",
+      "why_this_question": "Directly references his blog post about burnout recovery — reveals the emotional arc behind his prolific output",
+      "expected_insight": "The specific moment or tool that made coding feel new again after years of burnout"
+    },
+    {
+      "category": "origin",
+      "question": "You wrote about how waiting for a visa was 'the best thing that ever happened.' After building PSPDFKit for a decade, what made you walk away — and what brought you back to shipping at this intensity?",
+      "why_this_question": "References his own blog post about the visa-to-PSPDFKit origin story — connects past and present identity",
+      "expected_insight": "How his relationship with building software fundamentally changed between PSPDFKit and the AI era"
+    },
+    {
+      "category": "technical_depth",
+      "question": "In 'Peekaboo MCP – lightning-fast macOS screenshots for AI agents | Peter Steinberger' you detail building MCP infrastructure for AI agents. What's the hardest design tradeoff you've hit — where agent convenience conflicts with system safety?",
+      "why_this_question": "References his specific MCP work — surfaces real engineering tensions in agent-computer interaction",
+      "expected_insight": "Concrete examples of where giving agents more capability creates security or reliability risks"
+    },
+    {
+      "category": "technical_depth",
+      "question": "You ship CLI tools at extraordinary velocity — Poltergeist, Demark, Trimmy, dozens more. When you're building a new tool in a single session, what's your actual decision process for what to keep vs. cut?",
+      "why_this_question": "Probes the rapid-shipping methodology behind his prolific output",
+      "expected_insight": "The specific heuristics and shortcuts that enable shipping full tools in hours"
+    },
+    {
+      "category": "philosophy",
+      "question": "You draw a sharp line between 'vibe coding' and 'agentic engineering.' Most people conflate them. What's the specific failure mode you've seen when someone treats agent-driven development as just faster autocomplete?",
+      "why_this_question": "References his core philosophical distinction — this is his signature thesis",
+      "expected_insight": "A concrete story of agentic engineering done wrong, and what 'right' looks like"
+    },
+    {
+      "category": "philosophy",
+      "question": "You describe yourself as 'polyagentmorous' — using multiple AI models simultaneously. Most developers are loyal to one model. What's your actual model-selection process for a given task, and when does multi-model create more noise than signal?",
+      "why_this_question": "His GitHub profile term 'polyagentmorous' deserves unpacking — it's a real workflow choice",
+      "expected_insight": "Practical multi-model strategy beyond the meme, including when it fails"
+    },
+    {
+      "category": "collaboration",
+      "question": "'Hiring a distributed team | Peter Steinberger' describes orchestrating multiple Claude Code instances. You're essentially managing a team of AI agents. How does that compare to managing the human engineering team at PSPDFKit?",
+      "why_this_question": "Connects his management experience to his agent-orchestration workflow — unique perspective",
+      "expected_insight": "How managing humans vs. AI agents differs in practice — where each is harder"
+    },
+    {
+      "category": "collaboration",
+      "question": "At PSPDFKit you wrote about building a distributed team across time zones. Now you're a solo developer with AI agents as your team. What do you miss about human collaborators that no AI can replace?",
+      "why_this_question": "Probes the human cost of the solo-with-AI model he champions",
+      "expected_insight": "Honest reflection on what's lost when you replace a team with agents"
+    },
+    {
+      "category": "future",
+      "question": "In 'Essential Reading for Agentic Engineers | Peter Steinberger' you explore where AI development is heading. You joined OpenAI to 'build an agent even my mum can use.' What specific interaction pattern are you betting on — and what current approaches are dead ends?",
+      "why_this_question": "References his stated mission at OpenAI — forces specificity about the product vision",
+      "expected_insight": "Concrete UX predictions for personal agents, not vague 'AI will change everything'"
+    },
+    {
+      "category": "future",
+      "question": "You shipped 684,000 GitHub contributions in one year. At what point does AI-assisted velocity hit diminishing returns — where shipping faster stops being the bottleneck?",
+      "why_this_question": "His extreme output volume raises questions about whether speed is always the goal",
+      "expected_insight": "Where the real bottleneck shifts to — design, distribution, user research, or something else"
+    }
   ]
 }

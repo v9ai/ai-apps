@@ -1,7 +1,5 @@
 "use server";
 
-export const maxDuration = 300;
-
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { bloodTests } from "@/lib/db/schema";
