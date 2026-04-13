@@ -110,8 +110,17 @@ export function UploadForm() {
     setError(null);
     setBatchProgress(null);
 
+    // Deduplicate within the directory (same name from different subdirs)
+    const seen = new Set<string>();
+    const unique = valid.filter((f) => {
+      if (seen.has(f.name)) return false;
+      seen.add(f.name);
+      return true;
+    });
+
+    // Filter out files already in the database
     const existing = new Set(await getExistingFileNames());
-    const newFiles = valid.filter((f) => !existing.has(f.name));
+    const newFiles = unique.filter((f) => !existing.has(f.name));
     setSkippedCount(valid.length - newFiles.length);
     setDirFiles(newFiles);
   }
