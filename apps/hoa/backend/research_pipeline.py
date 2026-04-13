@@ -71,6 +71,7 @@ RESEARCH_DIR = PROJECT_ROOT / "src" / "lib" / "research"
 _HTTP_TIMEOUT = 15.0
 _MAX_REACT_ITERS = 12
 _AGENT_TIMEOUT = 300  # seconds — kill agent if it takes longer
+_SKIP_AGENTS: set[str] = set()  # populated via --skip-agents CLI flag
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -967,14 +968,12 @@ async def phase1(state: ResearchState) -> dict:
     # Sequential execution — local model handles one agent at a time
     results: dict[str, str] = {}
     for key, sys_prompt, task_prompt, agent_tools in specs:
+        if key in _SKIP_AGENTS:
+            results[key] = "(skipped)"
+            console.print(f"  [yellow]⊘[/] {key} (skipped)")
+            continue
         try:
-            result = await asyncio.wait_for(
-                _run_agent(client, sys_prompt, task_prompt, agent_tools),
-                timeout=_AGENT_TIMEOUT,
-            )
-        except asyncio.TimeoutError:
-            result = f"(agent timed out after {_AGENT_TIMEOUT}s)"
-            console.print(f"  [yellow]⏱[/] {key} timed out after {_AGENT_TIMEOUT}s")
+            result = await _run_agent(client, sys_prompt, task_prompt, agent_tools)
         except Exception as e:
             result = f"(agent error: {e})"
         results[key] = result
@@ -1309,14 +1308,12 @@ async def phase2(state: ResearchState) -> dict:
     # Sequential execution — local model handles one agent at a time
     results: dict[str, str] = {}
     for key, sys_prompt, task_prompt, agent_tools in specs:
+        if key in _SKIP_AGENTS:
+            results[key] = "(skipped)"
+            console.print(f"  [yellow]⊘[/] {key} (skipped)")
+            continue
         try:
-            result = await asyncio.wait_for(
-                _run_agent(client, sys_prompt, task_prompt, agent_tools),
-                timeout=_AGENT_TIMEOUT,
-            )
-        except asyncio.TimeoutError:
-            result = f"(agent timed out after {_AGENT_TIMEOUT}s)"
-            console.print(f"  [yellow]⏱[/] {key} timed out after {_AGENT_TIMEOUT}s")
+            result = await _run_agent(client, sys_prompt, task_prompt, agent_tools)
         except Exception as e:
             result = f"(agent error: {e})"
         results[key] = result
@@ -1919,7 +1916,11 @@ async def main():
     parser.add_argument("--github", help="GitHub username")
     parser.add_argument("--orcid", help="ORCID iD")
     parser.add_argument("--model", help="MLX model ID (default: env MLX_MODEL or Qwen2.5-7B-Instruct-4bit)")
+    parser.add_argument("--skip-agents", help="Comma-separated agent keys to skip (e.g. video_data)")
     args = parser.parse_args()
+
+    if args.skip_agents:
+        _SKIP_AGENTS.update(a.strip() for a in args.skip_agents.split(","))
 
     if args.model:
         import os
