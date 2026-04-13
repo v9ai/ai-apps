@@ -291,6 +291,219 @@ ORDER BY t.test_date ASC;`,
   },
 ];
 
+const intents = [
+  {
+    name: "markers",
+    icon: Search,
+    color: "var(--blue-9)",
+    bg: "var(--blue-a3)",
+    description: "Blood marker values, levels, reference ranges, flags",
+    strategy: "Hybrid search (0.7 cosine + 0.3 FTS) on markers → blood tests",
+    k: "10 + 3",
+    example: "What is my cholesterol level?",
+  },
+  {
+    name: "trajectory",
+    icon: TrendingUp,
+    color: "var(--green-9)",
+    bg: "var(--green-a3)",
+    description: "Trends, changes over time, velocity, improving/deteriorating",
+    strategy: "Hybrid markers → blood tests → trend search per entity",
+    k: "10 + 3 + 20/entity",
+    example: "Is my iron improving?",
+  },
+  {
+    name: "conditions",
+    icon: Heart,
+    color: "var(--amber-9)",
+    bg: "var(--amber-a3)",
+    description: "Health conditions, diseases, chronic issues",
+    strategy: "Condition embeddings → hybrid markers",
+    k: "5 + 5",
+    example: "Tell me about my thyroid condition",
+  },
+  {
+    name: "medications",
+    icon: Pill,
+    color: "var(--violet-9)",
+    bg: "var(--violet-a3)",
+    description: "Drugs, dosages, drug-biomarker interactions",
+    strategy: "Medication embeddings → hybrid markers",
+    k: "5 + 5",
+    example: "What medications interact with my markers?",
+  },
+  {
+    name: "symptoms",
+    icon: Activity,
+    color: "var(--pink-9)",
+    bg: "var(--pink-a3)",
+    description: "Symptoms and their relation to lab markers",
+    strategy: "Symptom embeddings → hybrid markers",
+    k: "5 + 5",
+    example: "Could my fatigue be related to my labs?",
+  },
+  {
+    name: "appointments",
+    icon: Calendar,
+    color: "var(--cyan-9)",
+    bg: "var(--cyan-a3)",
+    description: "Scheduling, upcoming visits, providers",
+    strategy: "Appointment embeddings only",
+    k: "5",
+    example: "When is my next blood draw?",
+  },
+  {
+    name: "general_health",
+    icon: Layers,
+    color: "var(--indigo-9)",
+    bg: "var(--indigo-a3)",
+    description: "Broad health questions spanning multiple categories",
+    strategy: "Fan-out: tests(3) + markers(5) + conditions(3) + meds(3) + symptoms(3)",
+    k: "17 total",
+    example: "Give me an overall health summary",
+  },
+  {
+    name: "safety_refusal",
+    icon: ShieldCheck,
+    color: "var(--crimson-9)",
+    bg: "var(--crimson-a3)",
+    description: "Diagnosis requests, treatment prescriptions, out-of-scope",
+    strategy: "No retrieval — returns safety disclaimer",
+    k: "0",
+    example: "Do I have diabetes?",
+  },
+];
+
+const clinicalRatios = [
+  {
+    name: "TG/HDL Ratio",
+    formula: "Triglycerides / HDL",
+    icon: Activity,
+    color: "var(--amber-9)",
+    bg: "var(--amber-a3)",
+    optimal: "< 2.0",
+    borderline: "2.0 – 3.5",
+    elevated: "> 3.5",
+    significance: "Insulin resistance surrogate — correlates with small dense LDL particle count",
+    source: "McLaughlin et al.",
+  },
+  {
+    name: "TC/HDL Ratio",
+    formula: "Total Cholesterol / HDL",
+    icon: Heart,
+    color: "var(--crimson-9)",
+    bg: "var(--crimson-a3)",
+    optimal: "< 4.0",
+    borderline: "4.0 – 5.0",
+    elevated: "> 5.0",
+    significance: "Cardiovascular risk index — better predictor than LDL alone",
+    source: "Castelli et al.",
+  },
+  {
+    name: "HDL/LDL Ratio",
+    formula: "HDL / LDL",
+    icon: BarChart3,
+    color: "var(--blue-9)",
+    bg: "var(--blue-a3)",
+    optimal: "> 0.4",
+    borderline: "0.3 – 0.4",
+    elevated: "< 0.3",
+    significance: "Atherogenic risk — inversely tracks plaque progression",
+    source: "Millán et al.",
+  },
+  {
+    name: "NLR",
+    formula: "Neutrophils / Lymphocytes",
+    icon: FlaskConical,
+    color: "var(--orange-9)",
+    bg: "var(--orange-a3)",
+    optimal: "1.0 – 3.0",
+    borderline: "3.0 – 5.0",
+    elevated: "> 5.0",
+    significance: "Systemic inflammation index — elevated in infection, stress, malignancy",
+    source: "Fest et al.",
+  },
+  {
+    name: "De Ritis Ratio",
+    formula: "AST / ALT",
+    icon: Database,
+    color: "var(--green-9)",
+    bg: "var(--green-a3)",
+    optimal: "0.8 – 1.5",
+    borderline: "1.5 – 2.0",
+    elevated: "> 2.0",
+    significance: "Liver damage differentiation — high values suggest alcoholic or cardiac origin",
+    source: "De Ritis et al.",
+  },
+  {
+    name: "BUN/Creatinine",
+    formula: "BUN / Creatinine",
+    icon: Zap,
+    color: "var(--cyan-9)",
+    bg: "var(--cyan-a3)",
+    optimal: "10 – 20",
+    borderline: "20 – 25",
+    elevated: "> 25",
+    significance: "Renal function — distinguishes pre-renal from intrinsic kidney injury",
+    source: "Hosten et al.",
+  },
+  {
+    name: "TyG Index",
+    formula: "log(TG × Glucose × 0.5)",
+    icon: Combine,
+    color: "var(--violet-9)",
+    bg: "var(--violet-a3)",
+    optimal: "< 8.5",
+    borderline: "8.5 – 9.0",
+    elevated: "> 9.0",
+    significance: "Metabolic syndrome predictor — validated against HOMA-IR gold standard",
+    source: "Simental-Mendía et al.",
+  },
+];
+
+const guardRules = [
+  {
+    rule: "DIAGNOSIS",
+    icon: Cpu,
+    color: "var(--crimson-9)",
+    bg: "var(--crimson-a3)",
+    check: 'Does the response say "you have X" or diagnose a condition?',
+    action: 'Appends: "This information is for educational purposes only and is not a medical diagnosis."',
+  },
+  {
+    rule: "PRESCRIPTION",
+    icon: Pill,
+    color: "var(--orange-9)",
+    bg: "var(--orange-a3)",
+    check: "Does the response prescribe specific medications or dosages?",
+    action: 'Appends: "I cannot recommend specific medications or dosages. Consult your physician."',
+  },
+  {
+    rule: "PHYSICIAN_REFERRAL",
+    icon: ShieldCheck,
+    color: "var(--green-9)",
+    bg: "var(--green-a3)",
+    check: "Does the response include a healthcare professional reminder?",
+    action: 'Appends: "Please consult your physician before making medical decisions."',
+  },
+  {
+    rule: "PII_LEAKAGE",
+    icon: Eye,
+    color: "var(--violet-9)",
+    bg: "var(--violet-a3)",
+    check: "Does the response contain personally identifiable information?",
+    action: "Flags response for PII redaction before delivery.",
+  },
+  {
+    rule: "HALLUCINATION",
+    icon: AlertTriangle,
+    color: "var(--amber-9)",
+    bg: "var(--amber-a3)",
+    check: "Does the response claim facts NOT present in the retrieved context?",
+    action: "Flags unsupported claims and strips ungrounded statements.",
+  },
+];
+
 /* ── Page ──────────────────────────────────────────────────────────── */
 
 export default function HowItWorksPage() {
@@ -725,6 +938,336 @@ export default function HowItWorksPage() {
             </ScrollReveal>
           ))}
         </Flex>
+      </Box>
+
+      {/* ── Intent Classification Matrix ── */}
+      <Box
+        id="intent-matrix"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--indigo-9)",
+                fontSize: "11px",
+              }}
+            >
+              Triage Node
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Intent Classification Matrix
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              DeepSeek classifies every query into one of 8 intent classes.
+              Each intent routes to a different retrieval strategy with
+              tailored top-k limits.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", lg: "4" }}
+          gap="4"
+        >
+          {intents.map((intent, i) => (
+            <ScrollReveal key={intent.name} delay={i * 50}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+              >
+                <Flex align="center" gap="3">
+                  <div
+                    className="deep-dive-icon"
+                    style={{ background: intent.bg, color: intent.color }}
+                  >
+                    <intent.icon size={18} />
+                  </div>
+                  <Text
+                    size="3"
+                    weight="bold"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      color: intent.color,
+                    }}
+                  >
+                    {intent.name}
+                  </Text>
+                </Flex>
+
+                <Text
+                  size="2"
+                  color="gray"
+                  style={{ lineHeight: 1.55 }}
+                >
+                  {intent.description}
+                </Text>
+
+                <Text
+                  size="1"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "11px",
+                    color: "var(--gray-10)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {intent.strategy}
+                </Text>
+
+                <Flex justify="between" align="center">
+                  <span className="arch-tag">k = {intent.k}</span>
+                  <Text
+                    size="1"
+                    style={{
+                      fontStyle: "italic",
+                      color: "var(--gray-9)",
+                      fontSize: "11px",
+                    }}
+                  >
+                    &ldquo;{intent.example}&rdquo;
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* ── Clinical Ratios Engine ── */}
+      <Box
+        id="clinical-ratios"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--amber-9)",
+                fontSize: "11px",
+              }}
+            >
+              Derived Metrics
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Clinical Ratios Engine
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Every blood test generates 7 derived ratios stored as JSONB
+              in health_state_embeddings.derived_metrics. Each ratio is
+              classified against peer-reviewed thresholds.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid columns={{ initial: "1", md: "2" }} gap="4">
+          {clinicalRatios.map((ratio, i) => (
+            <ScrollReveal key={ratio.name} delay={i * 60}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+              >
+                <Flex align="center" gap="3">
+                  <div
+                    className="deep-dive-icon"
+                    style={{ background: ratio.bg, color: ratio.color }}
+                  >
+                    <ratio.icon size={18} />
+                  </div>
+                  <div>
+                    <Text
+                      size="3"
+                      weight="bold"
+                      style={{ letterSpacing: "-0.01em" }}
+                    >
+                      {ratio.name}
+                    </Text>
+                    <Text
+                      size="1"
+                      style={{
+                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                        fontSize: "11px",
+                        color: "var(--gray-9)",
+                      }}
+                    >
+                      {ratio.formula}
+                    </Text>
+                  </div>
+                </Flex>
+
+                <Text
+                  size="2"
+                  color="gray"
+                  style={{ lineHeight: 1.55 }}
+                >
+                  {ratio.significance}
+                </Text>
+
+                <Flex gap="2" wrap="wrap" align="center">
+                  <span className="threshold-pill threshold-optimal">
+                    {ratio.optimal}
+                  </span>
+                  <span className="threshold-pill threshold-borderline">
+                    {ratio.borderline}
+                  </span>
+                  <span className="threshold-pill threshold-elevated">
+                    {ratio.elevated}
+                  </span>
+                </Flex>
+
+                <Text
+                  size="1"
+                  style={{
+                    color: "var(--gray-8)",
+                    fontSize: "10px",
+                    fontStyle: "italic",
+                  }}
+                >
+                  {ratio.source}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* ── Guard Safety Protocol ── */}
+      <Box
+        id="guard-protocol"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--crimson-9)",
+                fontSize: "11px",
+              }}
+            >
+              Guard Node
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Safety Guard Protocol
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Every synthesised response passes through a DeepSeek auditor
+              that checks 5 rules. Failed responses get disclaimers
+              appended — they are never silently dropped.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="4" style={{ maxWidth: 800, margin: "0 auto" }}>
+          {guardRules.map((g, i) => (
+            <ScrollReveal key={g.rule} delay={i * 60}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+              >
+                <Flex align="center" gap="3">
+                  <div
+                    className="deep-dive-icon"
+                    style={{ background: g.bg, color: g.color }}
+                  >
+                    <g.icon size={18} />
+                  </div>
+                  <Text
+                    size="3"
+                    weight="bold"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      color: g.color,
+                    }}
+                  >
+                    {g.rule}
+                  </Text>
+                </Flex>
+
+                <Text
+                  size="2"
+                  color="gray"
+                  style={{ lineHeight: 1.55 }}
+                >
+                  {g.check}
+                </Text>
+
+                <Text
+                  size="2"
+                  style={{
+                    color: "var(--gray-10)",
+                    lineHeight: 1.55,
+                    paddingLeft: "1rem",
+                    borderLeft: `2px solid ${g.color}`,
+                  }}
+                >
+                  {g.action}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={350}>
+          <pre className="pg-code-block" style={{ maxWidth: 800, margin: "2rem auto 0" }}>
+            <code>{`// Guard audit output schema
+{
+  "passed": false,
+  "issues": ["DIAGNOSIS", "PHYSICIAN_REFERRAL"]
+}
+// → disclaimer appended for each failed rule
+// → safety_refusal intents auto-pass (no retrieval)`}</code>
+          </pre>
+        </ScrollReveal>
       </Box>
 
       {/* ── Detailed Sections ── */}
