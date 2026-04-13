@@ -794,6 +794,37 @@
   flex-shrink: 0;
 }
 
+.extraction-tier-card {
+  position: relative;
+}
+
+.cascade-arrow {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  flex-shrink: 0;
+}
+.cascade-arrow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 14px;
+  height: 1px;
+  background: var(--gray-a6);
+}
+.cascade-arrow::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-top: 1px solid var(--gray-a8);
+  border-right: 1px solid var(--gray-a8);
+  transform: translateY(-50%) rotate(45deg);
+}
+
 .synthesis-rule-num {
   width: 26px;
   height: 26px;

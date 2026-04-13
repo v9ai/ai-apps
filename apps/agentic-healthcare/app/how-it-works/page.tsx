@@ -1178,7 +1178,7 @@ const complianceLayers = [
   },
 ];
 
-const guardRules = [
+const guardRulesDetailed = [
   { id: "1", rule: "DIAGNOSIS", description: "Response must not diagnose a medical condition — no \"you have X\" or \"this confirms Y\"", action: "Disclaimer: educational purposes only, not a medical diagnosis", color: "var(--crimson-9)" },
   { id: "2", rule: "PRESCRIPTION", description: "Response must not prescribe specific medications or dosages", action: "Disclaimer: cannot recommend medications or dosages", color: "var(--orange-9)" },
   { id: "3", rule: "PHYSICIAN_REFERRAL", description: "Response must include a reminder to consult a healthcare professional", action: "Disclaimer: consult your physician before making medical decisions", color: "var(--green-9)" },
@@ -2021,14 +2021,41 @@ export default function HowItWorksPage() {
           </Flex>
         </ScrollReveal>
 
-        <Flex direction="column" gap="4" style={{ maxWidth: 800, margin: "0 auto" }}>
+        {/* ── Cascading flow indicator ── */}
+        <ScrollReveal delay={40}>
+          <Flex align="center" justify="center" gap="3" mb="5">
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--gray-9)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              PDF ingested
+            </Text>
+            <div style={{ width: 32, height: 1, background: "var(--gray-a6)" }} />
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--orange-9)" }}>
+              Tier 1
+            </Text>
+            <div className="cascade-arrow" />
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--blue-9)" }}>
+              Tier 2
+            </Text>
+            <div className="cascade-arrow" />
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--crimson-9)" }}>
+              Tier 3
+            </Text>
+            <div style={{ width: 32, height: 1, background: "var(--gray-a6)" }} />
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--green-9)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Flagged markers
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        {/* ── Tier cards — full-width 3-column grid ── */}
+        <Grid columns={{ initial: "1", md: "3" }} gap="4">
           {extractionTiers.map((t, i) => (
             <ScrollReveal key={t.tier} delay={i * 80}>
               <Flex
                 direction="column"
                 gap="3"
-                p="4"
-                className="deep-dive-card"
+                p="5"
+                className="deep-dive-card extraction-tier-card"
+                style={{ height: "100%", borderTop: `2px solid ${t.color}` }}
               >
                 <Flex align="center" gap="3">
                   <div className="extraction-tier-badge" style={{ color: t.color, borderColor: t.color }}>
@@ -2040,96 +2067,109 @@ export default function HowItWorksPage() {
                   >
                     <t.icon size={18} />
                   </div>
-                  <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
-                    {t.title}
-                  </Heading>
+                  <Flex direction="column" gap="0">
+                    <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+                      {t.title}
+                    </Heading>
+                    <Text size="1" style={{ color: t.color, fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      {i === 0 ? "Primary" : i === 1 ? "Secondary" : "Last resort"}
+                    </Text>
+                  </Flex>
                 </Flex>
 
                 <Text
                   size="2"
                   color="gray"
-                  style={{ lineHeight: 1.6 }}
+                  style={{ lineHeight: 1.6, flex: 1 }}
                 >
                   {t.description}
                 </Text>
 
-                <pre className="pg-code-block" style={{ maxWidth: "100%" }}>
+                <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem" }}>
                   <code>{t.pattern}</code>
                 </pre>
 
-                <Text
-                  size="1"
-                  style={{
-                    color: "var(--gray-9)",
-                    fontSize: "11px",
-                    fontStyle: "italic",
-                  }}
-                >
-                  {t.validation}
-                </Text>
+                <Flex align="center" gap="2" style={{ padding: "6px 10px", borderRadius: 6, background: "var(--gray-a2)" }}>
+                  <ShieldCheck size={12} style={{ color: "var(--gray-9)", flexShrink: 0 }} />
+                  <Text
+                    size="1"
+                    style={{
+                      color: "var(--gray-9)",
+                      fontSize: "11px",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    {t.validation}
+                  </Text>
+                </Flex>
               </Flex>
             </ScrollReveal>
           ))}
+        </Grid>
 
-          <ScrollReveal delay={280}>
-            <Flex
-              direction="column"
-              gap="3"
-              p="4"
-              className="deep-dive-card"
-            >
-              <Flex align="center" gap="3">
-                <div
-                  className="deep-dive-icon"
-                  style={{ background: "var(--green-a3)", color: "var(--green-9)" }}
-                >
-                  <ShieldCheck size={18} />
-                </div>
+        {/* ── Flag Computation — full-width banner ── */}
+        <ScrollReveal delay={280}>
+          <Flex
+            direction={{ initial: "column", md: "row" }}
+            gap="5"
+            p="5"
+            align={{ initial: "start", md: "center" }}
+            className="deep-dive-card"
+            style={{ marginTop: "var(--space-4)", borderLeft: "3px solid var(--green-9)" }}
+          >
+            <Flex align="center" gap="3" style={{ flexShrink: 0 }}>
+              <div
+                className="deep-dive-icon"
+                style={{ background: "var(--green-a3)", color: "var(--green-9)" }}
+              >
+                <ShieldCheck size={18} />
+              </div>
+              <Flex direction="column" gap="0">
                 <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
                   Flag Computation
                 </Heading>
+                <Text size="1" color="gray" style={{ lineHeight: 1.5, maxWidth: 280 }}>
+                  Each marker&apos;s numeric value is compared against its parsed
+                  reference range.
+                </Text>
               </Flex>
+            </Flex>
 
-              <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
-                After extraction, each marker&apos;s numeric value is compared
-                against its parsed reference range to compute a flag.
-              </Text>
-
-              <Grid columns={{ initial: "1", sm: "2" }} gap="2">
-                {flagRules.map((f) => (
-                  <Flex
-                    key={f.condition}
-                    gap="2"
-                    align="baseline"
+            <Grid columns={{ initial: "1", sm: "2", md: "4" }} gap="2" style={{ flex: 1 }}>
+              {flagRules.map((f) => (
+                <Flex
+                  key={f.condition}
+                  direction="column"
+                  gap="1"
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    background: "var(--gray-a2)",
+                    border: "1px solid var(--gray-a3)",
+                  }}
+                >
+                  <Text
+                    size="1"
+                    weight="bold"
+                    style={{ fontSize: "11px", color: "var(--gray-11)", whiteSpace: "nowrap" }}
+                  >
+                    {f.condition}
+                  </Text>
+                  <Text
+                    size="1"
                     style={{
-                      padding: "6px 10px",
-                      borderRadius: 6,
-                      background: "var(--gray-a2)",
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                      color: "var(--gray-9)",
                     }}
                   >
-                    <Text
-                      size="1"
-                      weight="bold"
-                      style={{ fontSize: "11px", color: "var(--gray-11)", whiteSpace: "nowrap" }}
-                    >
-                      {f.condition}
-                    </Text>
-                    <Text
-                      size="1"
-                      style={{
-                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                        fontSize: "11px",
-                        color: "var(--gray-9)",
-                      }}
-                    >
-                      {f.logic}
-                    </Text>
-                  </Flex>
-                ))}
-              </Grid>
-            </Flex>
-          </ScrollReveal>
-        </Flex>
+                    {f.logic}
+                  </Text>
+                </Flex>
+              ))}
+            </Grid>
+          </Flex>
+        </ScrollReveal>
       </Box>
 
       {/* ── Embedding Formatters ── */}
@@ -3824,7 +3864,7 @@ combined_score = (
           style={{ maxWidth: 760, margin: "0 auto" }}
           mb="5"
         >
-          {guardRules.map((gr, i) => (
+          {guardRulesDetailed.map((gr, i) => (
             <ScrollReveal key={gr.rule} delay={i * 50}>
               <Flex
                 gap="3"
