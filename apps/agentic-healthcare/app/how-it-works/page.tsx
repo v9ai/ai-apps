@@ -86,7 +86,7 @@ const heroNodes = [
   {
     icon: Search,
     label: "Retrieve",
-    sub: "6 entity tables",
+    sub: "7 entity tables",
     color: "var(--blue-9)",
   },
   {
@@ -113,8 +113,8 @@ const archSections = [
     title: "PDF Ingestion Pipeline",
     brief: "Upload \u2192 Parse \u2192 Extract \u2192 Store",
     description:
-      "Blood test PDFs are uploaded to R2, converted to markdown by LlamaParse, parsed through a 3-tier cascade (HTML table, FormKeysValues, free-text), then embedded with BGE 1024-dim and stored in Neon PostgreSQL.",
-    tags: ["Cloudflare R2", "LlamaParse", "3-tier cascade", "BGE 1024-dim"],
+      "Blood test PDFs are uploaded to R2, converted to markdown by LlamaParse, parsed through a 3-tier cascade (HTML table, FormKeysValues, free-text), then embedded with text-embedding-3-large at 1024 dimensions and stored in Neon PostgreSQL.",
+    tags: ["Cloudflare R2", "LlamaParse", "3-tier cascade", "1024-dim vectors"],
     Flow: IngestionFlow,
   },
   {
@@ -143,7 +143,7 @@ const archSections = [
     tags: [
       "Hybrid search",
       "0.7 cosine + 0.3 FTS CTE",
-      "6 entity tables",
+      "7 entity tables",
       "k=50 trend join",
       "safety bypass",
     ],
@@ -174,10 +174,10 @@ const archSections = [
     iconColor: "var(--amber-9)",
     iconBg: "var(--amber-a3)",
     title: "Multi-Entity Embedding Strategy",
-    brief: "6 types \u2192 format \u2192 BGE \u2192 pgvector + HNSW",
+    brief: "7 types \u2192 format \u2192 embed \u2192 pgvector",
     description:
-      "Six entity types (tests, markers, health state, conditions, medications, symptoms) each have dedicated formatters. All are embedded with BGE-large-en-v1.5 at 1024 dimensions and stored in paired pgvector tables with HNSW indexes.",
-    tags: ["6 entity types", "BGE-large 1024d", "pgvector", "HNSW index"],
+      "Seven entity types (tests, markers, health state, conditions, medications, symptoms, appointments) each have a dedicated format_*_for_embedding() function that converts structured data into deterministic clinical text. Two ingestion paths feed the pipeline: blood data flows through a LlamaIndex IngestionPipeline with a custom BloodTestNodeParser that produces 3 node types per test (test-level, per-marker, health-state with 7 derived ratios), while user-entered entities hit POST /embed/* routes that format, embed, and upsert in one call. All text is embedded via OpenAI\u2019s text-embedding-3-large at 1024 dimensions (Matryoshka truncation from native 3072-dim) and stored in 7 paired pgvector tables with ON CONFLICT upsert for idempotency. Vector searches use sequential scan scoped by BTREE-indexed user_id \u2014 exact cosine distance at per-user scale, no approximate indexes needed.",
+    tags: ["7 entity types", "text-embedding-3-large 1024d", "dual ingestion paths", "ON CONFLICT upsert", "pgvector"],
     Flow: EmbeddingFlow,
   },
 ];
@@ -191,12 +191,12 @@ const techCategories = [
   {
     category: "Database",
     color: "var(--green-9)",
-    items: ["Neon PostgreSQL", "Drizzle ORM", "pgvector + HNSW"],
+    items: ["Neon PostgreSQL", "Drizzle ORM", "pgvector + BTREE"],
   },
   {
     category: "AI / ML",
     color: "var(--amber-9)",
-    items: ["DeepSeek R1", "BGE-large 1024d", "LlamaParse"],
+    items: ["DeepSeek R1", "text-embedding-3-large", "LlamaParse"],
   },
   {
     category: "Infrastructure",
@@ -696,7 +696,7 @@ const bridgeEndpoints = [
   {
     method: "POST",
     path: "/search/multi",
-    description: "Fan-out across all 6 entity tables, returns combined results",
+    description: "Fan-out across all 7 entity tables, returns combined results",
     input: "{query, user_id}",
     output: "{tests[], markers[], conditions[], medications[], symptoms[], appointments[]}",
     color: "var(--indigo-9)",
@@ -1178,7 +1178,7 @@ export default function HowItWorksPage() {
               align="center"
               style={{ maxWidth: 520, lineHeight: 1.65 }}
             >
-              A LangGraph StateGraph triages every query, retrieves from 6
+              A LangGraph StateGraph triages every query, retrieves from 7
               entity tables, synthesizes with clinical safety rules, and audits
               the response before it reaches you.
             </Text>
@@ -1224,7 +1224,7 @@ export default function HowItWorksPage() {
 
             <Flex className="floating-badges" mt="1">
               <span className="floating-badge">8 intent classes</span>
-              <span className="floating-badge">6 entity tables</span>
+              <span className="floating-badge">7 entity tables</span>
               <span className="floating-badge">5 safety rules</span>
               <span className="floating-badge">1024-dim vectors</span>
             </Flex>
@@ -2001,9 +2001,10 @@ export default function HowItWorksPage() {
               align="center"
               style={{ maxWidth: 560, lineHeight: 1.65 }}
             >
-              Each entity type has a dedicated format function that builds the
-              text string before BGE-large-en-v1.5 encodes it into 1024
-              dimensions. Python handles blood data; TypeScript handles
+              Each entity type has a dedicated format function that builds a
+              deterministic clinical text string before text-embedding-3-large
+              encodes it into 1024 dimensions (Matryoshka truncation from
+              3072-dim). Python handles blood data; TypeScript handles
               user-entered entities.
             </Text>
           </Flex>
@@ -2251,7 +2252,7 @@ export default function HowItWorksPage() {
             <span className="arch-tag">x-api-key header</span>
             <span className="arch-tag">Python: blood data</span>
             <span className="arch-tag">TypeScript: entity CRUD</span>
-            <span className="arch-tag">Shared BGE 1024-dim</span>
+            <span className="arch-tag">Shared 1024-dim vectors</span>
           </Flex>
         </ScrollReveal>
       </Box>

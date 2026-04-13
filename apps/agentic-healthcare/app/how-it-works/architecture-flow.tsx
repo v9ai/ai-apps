@@ -260,7 +260,7 @@ const ingestionNodes: Node[] = [
     id: "neon",
     type: "dataStore",
     position: { x: 790, y: 45 },
-    data: { label: "Neon PostgreSQL", sublabel: "6 entity + 6 embedding tables", icon: Database, color: "var(--green-9)" },
+    data: { label: "Neon PostgreSQL", sublabel: "7 entity + 7 embedding tables", icon: Database, color: "var(--green-9)" },
   },
 ];
 
@@ -277,7 +277,7 @@ const ingestionEdges: Edge[] = [
   },
   {
     id: "e-ext-neon", source: "extract", target: "neon",
-    ...edgeDefaults, label: "markers + BGE 1024-dim",
+    ...edgeDefaults, label: "markers + 1024-dim vectors",
     style: { ...edgeDefaults.style, stroke: "var(--crimson-8)" },
   },
 ];
@@ -392,7 +392,7 @@ const retrievalNodes: Node[] = [
     id: "fanout",
     type: "agent",
     position: { x: 460, y: 120 },
-    data: { label: "Fan-Out", sublabel: "all 6 entity tables", icon: Layers, color: "var(--amber-9)" },
+    data: { label: "Fan-Out", sublabel: "all 7 entity tables", icon: Layers, color: "var(--amber-9)" },
   },
   {
     id: "skip",
@@ -505,54 +505,82 @@ export function GuardFlow() {
  *  5. EMBEDDING STRATEGY FLOW
  *
  *  Six entity types, each with a dedicated formatter, embedded
- *  into paired pgvector tables via BGE 1024-dim.
+ *  into paired pgvector tables via text-embedding-3-large 1024-dim.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const embeddingNodes: Node[] = [
   {
-    id: "entities",
+    id: "blood-data",
     type: "dataStore",
-    position: { x: 200, y: 0 },
-    data: { label: "6 Entity Types", sublabel: "tests, markers, health state, ...", icon: Layers, color: "var(--indigo-9)" },
+    position: { x: 0, y: 10 },
+    data: { label: "Blood Data", sublabel: "tests · markers · health state", icon: FlaskConical, color: "var(--crimson-9)" },
   },
   {
-    id: "par-badge",
-    type: "parallel",
-    position: { x: 210, y: 65 },
-    data: { label: "format_*_for_embedding()", color: "var(--purple-9)" },
+    id: "user-entities",
+    type: "dataStore",
+    position: { x: 0, y: 110 },
+    data: { label: "User Entities", sublabel: "conditions · meds · symptoms · appts", icon: Layers, color: "var(--indigo-9)" },
   },
   {
-    id: "bge",
+    id: "llamaindex",
     type: "agent",
-    position: { x: 170, y: 120 },
-    data: { label: "BGE-large-en-v1.5", sublabel: "1024-dim FastEmbedEmbedding", icon: Brain, color: "var(--amber-9)" },
+    position: { x: 220, y: 0 },
+    data: { label: "LlamaIndex Pipeline", sublabel: "BloodTestNodeParser → 3 node types", icon: Activity, color: "var(--orange-9)" },
+  },
+  {
+    id: "direct-api",
+    type: "agent",
+    position: { x: 220, y: 100 },
+    data: { label: "POST /embed/*", sublabel: "format → embed → upsert", icon: Upload, color: "var(--blue-9)" },
+  },
+  {
+    id: "format-badge",
+    type: "parallel",
+    position: { x: 510, y: 0 },
+    data: { label: "7 format_*_for_embedding()", color: "var(--purple-9)" },
+  },
+  {
+    id: "embed",
+    type: "agent",
+    position: { x: 480, y: 45 },
+    data: { label: "text-embedding-3-large", sublabel: "OpenAI · 1024-dim Matryoshka", icon: Brain, color: "var(--amber-9)" },
   },
   {
     id: "pgvector",
     type: "dataStore",
-    position: { x: 170, y: 200 },
-    data: { label: "6 pgvector tables", sublabel: "vector(1024) + HNSW index", icon: Database, color: "var(--green-9)" },
+    position: { x: 760, y: 50 },
+    data: { label: "7 pgvector tables", sublabel: "vector(1024) · BTREE on user_id", icon: Database, color: "var(--green-9)" },
   },
 ];
 
 const embeddingEdges: Edge[] = [
   {
-    id: "e-ent-par", source: "entities", target: "par-badge",
-    ...edgeDefaults,
+    id: "e-blood-llama", source: "blood-data", target: "llamaindex",
+    ...edgeDefaults, label: "PDF + markers",
+    style: { ...edgeDefaults.style, stroke: "var(--crimson-8)" },
+  },
+  {
+    id: "e-user-api", source: "user-entities", target: "direct-api",
+    ...edgeDefaults, label: "entity CRUD",
     style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" },
   },
   {
-    id: "e-par-bge", source: "par-badge", target: "bge",
-    ...edgeDefaults, label: "formatted text",
-    style: { ...edgeDefaults.style, stroke: "var(--purple-8)" },
+    id: "e-llama-embed", source: "llamaindex", target: "embed",
+    ...edgeDefaults,
+    style: { ...edgeDefaults.style, stroke: "var(--orange-8)" },
   },
   {
-    id: "e-bge-pg", source: "bge", target: "pgvector",
-    ...edgeDefaults, animated: true, label: "1024-dim vectors",
+    id: "e-api-embed", source: "direct-api", target: "embed",
+    ...edgeDefaults,
+    style: { ...edgeDefaults.style, stroke: "var(--blue-8)" },
+  },
+  {
+    id: "e-embed-pg", source: "embed", target: "pgvector",
+    ...edgeDefaults, animated: true, label: "ON CONFLICT upsert",
     style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
   },
 ];
 
 export function EmbeddingFlow() {
-  return <MiniFlow nodes={embeddingNodes} edges={embeddingEdges} height={290} />;
+  return <MiniFlow nodes={embeddingNodes} edges={embeddingEdges} height={230} />;
 }
