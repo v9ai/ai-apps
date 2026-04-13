@@ -89,16 +89,19 @@ export default async function PersonPage({ params }: Props) {
   const avatar = getAvatarUrlWithEnrichment(person, enriched.imageUrl);
 
   const hasResearch = !!research;
+  const blogPosts = research?.blog_posts ?? [];
   const hasContentSections =
     episodes.length > 0 ||
     (person.papers && person.papers.length > 0) ||
     hasResearch ||
+    blogPosts.length > 0 ||
     (enriched.github && enriched.github.repos.length > 0) ||
     (enriched.huggingface && enriched.huggingface.models.length > 0);
 
   const hasStatBadges =
     person.podcasts.length > 0 ||
     episodes.length > 0 ||
+    blogPosts.length > 0 ||
     (person.papers && person.papers.length > 0) ||
     (enriched.github && enriched.github.totalStars > 0) ||
     (enriched.huggingface && enriched.huggingface.totalDownloads > 0) ||
@@ -270,6 +273,19 @@ export default async function PersonPage({ params }: Props) {
               </svg>
               <span className={css({ fontSize: 'sm', fontWeight: 'medium', color: '#E8E8ED' })}>{episodes.length}</span>
               <span className={css({ fontSize: 'xs', color: '#8B8B96' })}>episodes</span>
+            </div>
+          )}
+
+          {blogPosts.length > 0 && (
+            <div role="listitem" className={css({ display: 'flex', alignItems: 'center', gap: '2.5', px: '5', py: '2.5', rounded: 'xl', bg: '#141418', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', transition: 'all', transitionDuration: '200ms', _hover: { borderColor: 'rgba(255,255,255,0.10)', bg: '#1C1C22' } })}>
+              <svg viewBox="0 0 24 24" className={css({ w: '4', h: '4', color: '#818CF8' })} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 19l7-7 3 3-7 7-3-3z" />
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+                <path d="M2 2l7.586 7.586" />
+                <circle cx="11" cy="11" r="2" />
+              </svg>
+              <span className={css({ fontSize: 'sm', fontWeight: 'medium', color: '#E8E8ED' })}>{blogPosts.length}</span>
+              <span className={css({ fontSize: 'xs', color: '#8B8B96' })}>blog posts</span>
             </div>
           )}
 
