@@ -31,6 +31,7 @@ import { ResearchQuotes } from "./_components/research-quotes";
 import { ResearchSocial } from "./_components/research-social";
 import { ResearchSources } from "./_components/research-sources";
 import { VideosSection } from "./_components/videos-section";
+import { BlogPostsSection } from "./_components/blog-posts-section";
 
 type Props = { params: Promise<{ slug: string }> };
 
