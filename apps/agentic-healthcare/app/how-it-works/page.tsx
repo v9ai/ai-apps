@@ -17,6 +17,13 @@ import {
   Upload,
   Layers,
   ChevronDown,
+  Database,
+  GitMerge,
+  Zap,
+  Lock,
+  Server,
+  BarChart3,
+  Combine,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ScrollReveal } from "@/components/scroll-reveal";
@@ -169,6 +176,110 @@ const techCategories = [
     category: "Evaluation",
     color: "var(--pink-9)",
     items: ["Vitest", "Promptfoo", "RAGAS"],
+  },
+];
+
+const pgReasons = [
+  {
+    icon: Database,
+    color: "var(--green-9)",
+    bg: "var(--green-a3)",
+    title: "Single-Engine Architecture",
+    description:
+      "Relational data, 1024-dim vectors, and full-text search live in one database. No Pinecone, no Weaviate, no API orchestration between services — one connection string handles everything.",
+    detail:
+      "blood_tests, conditions, medications, symptoms, appointments, and 7 embedding tables all share the same Neon PostgreSQL instance with cascade deletes and foreign key integrity.",
+  },
+  {
+    icon: Combine,
+    color: "var(--blue-9)",
+    bg: "var(--blue-a3)",
+    title: "Hybrid Search in a Single Query",
+    description:
+      "30% full-text search via ts_rank() + 70% cosine similarity via pgvector's <=> operator, computed in one SQL statement. No round-trips between services.",
+    sql: `SELECT marker_name, content,
+  0.3 * ts_rank(to_tsvector('english', content),
+                 plainto_tsquery('english', $1))
++ 0.7 * (1 - (embedding <=> $2))
+  AS combined_score
+FROM blood_marker_embeddings
+WHERE user_id = $3
+ORDER BY combined_score DESC
+LIMIT 5;`,
+  },
+  {
+    icon: BarChart3,
+    color: "var(--amber-9)",
+    bg: "var(--amber-a3)",
+    title: "JSONB for Derived Metrics",
+    description:
+      "7 clinical ratios (TG/HDL, NLR, De Ritis, eGFR, etc.) are stored as structured JSONB in health_state_embeddings.derived_metrics. Queryable, indexable, and extensible without schema migrations.",
+    detail:
+      "Each blood test gets a health-state embedding with both a 1024-dim vector and a JSONB payload containing all computed ratios with risk classifications (optimal / borderline / elevated).",
+  },
+  {
+    icon: Zap,
+    color: "var(--indigo-9)",
+    bg: "var(--indigo-a3)",
+    title: "Trajectory via Cosine Distance",
+    description:
+      "Longitudinal health tracking uses a SQL CTE to compute cosine similarity between the latest health-state embedding and every prior test — inside the database, not in application code.",
+    sql: `WITH latest AS (
+  SELECT embedding
+  FROM health_state_embeddings
+  WHERE user_id = $1
+  ORDER BY created_at DESC LIMIT 1
+)
+SELECT t.test_date, e.derived_metrics,
+  1 - (e.embedding <=> (SELECT embedding FROM latest))
+    AS similarity_to_latest
+FROM health_state_embeddings e
+JOIN blood_tests t ON t.id = e.test_id
+WHERE e.user_id = $1
+ORDER BY t.test_date ASC;`,
+  },
+  {
+    icon: Lock,
+    color: "var(--crimson-9)",
+    bg: "var(--crimson-a3)",
+    title: "Row-Level User Isolation",
+    description:
+      "Every table and every embedding table has a user_id column with B-tree indexes. Vector searches are always scoped to the authenticated user — the query planner prunes the search space before touching any vectors.",
+    detail:
+      "CASCADE DELETE on foreign keys means deleting a blood test automatically removes its marker embeddings and health-state embeddings. No orphaned vectors, no cleanup jobs.",
+  },
+  {
+    icon: GitMerge,
+    color: "var(--cyan-9)",
+    bg: "var(--cyan-a3)",
+    title: "Neon Branching for Dev/Test",
+    description:
+      "Neon's copy-on-write branching lets you fork the production database in milliseconds. Test migrations, evaluate embedding changes, or run RAGAS benchmarks against real data without touching prod.",
+    detail:
+      "Serverless auto-scaling means zero cold-start overhead. The database scales to zero when idle and wakes in ~150ms on first query.",
+  },
+  {
+    icon: Server,
+    color: "var(--violet-9)",
+    bg: "var(--violet-a3)",
+    title: "Drizzle ORM Type Safety",
+    description:
+      "A custom Drizzle type maps vector(1024) to number[] in TypeScript. Schema changes generate SQL migrations, and every query is fully type-checked at compile time.",
+    sql: `const vector = customType<{
+  data: number[];
+  driverParam: string;
+}>({
+  dataType() {
+    return "vector(1024)";
+  },
+  toDriver(value: number[]) {
+    return \`[\${value.join(",")}]\`;
+  },
+  fromDriver(value: string) {
+    return value.slice(1, -1)
+      .split(",").map(Number);
+  },
+});`,
   },
 ];
 
@@ -513,6 +624,99 @@ export default function HowItWorksPage() {
             </ScrollReveal>
           ))}
         </Grid>
+      </Box>
+
+      {/* ── Why PostgreSQL? ── */}
+      <Box
+        id="why-postgres"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Database Deep Dive
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Why PostgreSQL?
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Most health AI platforms bolt a vector database onto their stack.
+              We chose to keep everything in PostgreSQL — relational data,
+              1024-dim embeddings, full-text search, and clinical metrics — in
+              one engine with one transaction model.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="5">
+          {pgReasons.map((r, i) => (
+            <ScrollReveal key={r.title} delay={i * 60}>
+              <section className="arch-section">
+                <Flex direction="column" gap="3">
+                  <Flex align="center" gap="3">
+                    <div
+                      className="arch-icon"
+                      style={{ background: r.bg, color: r.color }}
+                    >
+                      <r.icon size={18} />
+                    </div>
+                    <Heading size="5" style={{ letterSpacing: "-0.02em" }}>
+                      {r.title}
+                    </Heading>
+                  </Flex>
+
+                  <Text
+                    size="2"
+                    color="gray"
+                    style={{ maxWidth: 800, lineHeight: 1.65 }}
+                  >
+                    {r.description}
+                  </Text>
+
+                  {r.detail && (
+                    <Text
+                      size="2"
+                      style={{
+                        color: "var(--gray-10)",
+                        maxWidth: 800,
+                        lineHeight: 1.65,
+                        paddingLeft: "1rem",
+                        borderLeft: "2px solid var(--gray-a4)",
+                      }}
+                    >
+                      {r.detail}
+                    </Text>
+                  )}
+
+                  {r.sql && (
+                    <pre className="pg-code-block">
+                      <code>{r.sql}</code>
+                    </pre>
+                  )}
+                </Flex>
+              </section>
+            </ScrollReveal>
+          ))}
+        </Flex>
       </Box>
 
       {/* ── Detailed Sections ── */}

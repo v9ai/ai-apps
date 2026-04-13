@@ -713,6 +713,24 @@
   border-color: var(--indigo-a4);
 }
 
+/* ── PostgreSQL Code Blocks ── */
+
+.pg-code-block {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  background: var(--gray-a2);
+  border: 1px solid var(--gray-a3);
+  border-radius: var(--radius-2);
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.8rem;
+  line-height: 1.65;
+  overflow-x: auto;
+  max-width: 720px;
+  color: var(--gray-12);
+  white-space: pre;
+  tab-size: 2;
+}
+
 /* ── Enhanced Hero Nodes ── */
 
 .hiw-hero-nodes {
