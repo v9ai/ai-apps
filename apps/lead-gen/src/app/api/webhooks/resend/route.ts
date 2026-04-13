@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { contactEmails, contacts, receivedEmails } from "@/db/schema";
+import { contactEmails, contacts, messages, receivedEmails } from "@/db/schema";
 import { classifyReply, classifyReplyHybrid } from "@/lib/email/reply-classifier";
 import { matchContact } from "@/lib/email/contact-matcher";
 import { resend } from "@/lib/resend";
@@ -423,6 +423,22 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
       `[RESEND_WEBHOOK] classified: ${result.label} (${result.confidence.toFixed(2)})` +
         (contactMatch ? ` → contact ${contactMatch.contactId}` : ""),
     );
+
+    // Persist to messages table so it appears on the contact detail page
+    if (contactMatch?.contactId) {
+      await db.insert(messages).values({
+        channel: "email",
+        direction: "inbound",
+        contact_id: contactMatch.contactId,
+        contact_email_id: contactMatch.outboundEmailId ?? null,
+        sender_name: from || null,
+        content: textBody || null,
+        subject: emailSubject || null,
+        sent_at: new Date().toISOString(),
+        classification: result.label,
+        classification_confidence: result.confidence,
+      });
+    }
 
     // Side effects based on classification
     if (contactMatch?.contactId) {
