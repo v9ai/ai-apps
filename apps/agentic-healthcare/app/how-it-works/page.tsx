@@ -1085,6 +1085,136 @@ const multiSearchFanOut = [
   { table: "appointment_embeddings", scoring: "Vector only", threshold: "0.3", limit: "5", color: "var(--cyan-9)" },
 ];
 
+const complianceLayers = [
+  {
+    icon: ShieldCheck,
+    color: "var(--crimson-9)",
+    title: "Safety Guard Pipeline",
+    description:
+      "Every LLM response passes through a 5-rule DeepSeek auditor checking for diagnosis, prescription, missing physician referral, PII leakage, and hallucination. JSON parse failures default to passed=false (fail-safe). Failed responses get context-specific disclaimers appended automatically.",
+    code: "parsed.get('passed', False)  # fail-safe default",
+    source: "graph.py:358-417",
+  },
+  {
+    icon: Lock,
+    color: "var(--green-9)",
+    title: "Row-Level Data Isolation",
+    description:
+      "All 22 tables carry a user_id column with a dedicated B-tree index. Every query — including vector similarity searches — is scoped via WHERE user_id = $1. The B-tree filter runs before the expensive pgvector distance calculation, making cross-user data leakage structurally impossible.",
+    code: "WHERE user_id = %s  -- on every SELECT, UPDATE, DELETE",
+    source: "db.py + schema.ts",
+  },
+  {
+    icon: UserCheck,
+    color: "var(--blue-9)",
+    title: "Authentication & Access Control",
+    description:
+      "Better Auth manages OAuth providers and sessions in PostgreSQL with 4 dedicated tables. Every server action passes through withAuth() — a guard that validates the session token and returns the userId or redirects to login. Sessions track IP address and User-Agent for anomaly detection.",
+    code: "const { userId } = await withAuth();",
+    source: "auth-helpers.ts",
+  },
+  {
+    icon: Trash2,
+    color: "var(--orange-9)",
+    title: "CASCADE Delete Chain",
+    description:
+      "Deleting a user triggers a full CASCADE chain across all 22 tables: user → blood_tests → blood_markers → embeddings, conditions → condition_embeddings, medications, symptoms, appointments — all removed in a single transaction. Zero orphaned vectors, no background cleanup jobs.",
+    code: "onDelete: 'cascade'  // on every FK to user.id",
+    source: "schema.ts:34-380",
+  },
+  {
+    icon: Eye,
+    color: "var(--violet-9)",
+    title: "PII Protection",
+    description:
+      "The safety guard checks every response for personally identifiable information before delivery. The system stores only clinical data — marker values, flags, dates, units. No SSNs, insurance IDs, or billing information. Embedding content is formatted clinical text, not raw PDF content.",
+    code: "4. PII_LEAKAGE: Does the response contain PII?",
+    source: "graph.py:349",
+  },
+  {
+    icon: Globe,
+    color: "var(--cyan-9)",
+    title: "CORS & API Security",
+    description:
+      "The Python backend restricts CORS to a whitelist of 3 origins: production domain, localhost:3000, and localhost:3001. The upload/embed/search routes validate an x-api-key header — a shared secret between Next.js and Python. No open endpoints, no wildcard origins.",
+    code: "allow_origins=['agentic-healthcare.vercel.app', ...]",
+    source: "chat_server.py:29-37",
+  },
+  {
+    icon: FileCheck,
+    color: "var(--amber-9)",
+    title: "Input Validation & SQL Injection Prevention",
+    description:
+      "Pydantic BaseModel validates all request payloads with type enforcement. ChatRequest requires typed messages array + user_id. All SQL parameters use %s placeholders via psycopg3 — never string-interpolated, eliminating SQL injection by construction.",
+    code: "conn.execute(sql, (user_id, embedding, limit))",
+    source: "db.py (all queries)",
+  },
+  {
+    icon: KeyRound,
+    color: "var(--indigo-9)",
+    title: "Encryption & Transport Security",
+    description:
+      "Cloudflare R2 encrypts blood test PDFs at rest with AES-256. Neon PostgreSQL enforces TLS on all connections. The psycopg3 ConnectionPool maintains encrypted persistent connections (min=1, max=10). All inter-service communication uses HTTPS in production.",
+    code: "ConnectionPool(conninfo=database_url, min_size=1, max_size=10)",
+    source: "db.py:23-28",
+  },
+  {
+    icon: AlertTriangle,
+    color: "var(--pink-9)",
+    title: "Clinical Disclaimer System",
+    description:
+      "The synthesis prompt enforces 7 rules: answer only from context, cite values and ranges, cite peer-reviewed thresholds, never diagnose, never prescribe, always remind to consult physician, describe trajectory clinically. Safety refusals bypass the LLM entirely with a hardcoded scope-limitation response.",
+    code: "SAFETY_REFUSAL_RESPONSE = 'I understand your concern...'",
+    source: "graph.py:270-296",
+  },
+  {
+    icon: Table2,
+    color: "var(--teal-9)",
+    title: "Schema Integrity Constraints",
+    description:
+      "UNIQUE indexes prevent duplicate embeddings — one per marker, test, condition, medication, symptom, appointment. Foreign keys enforce referential integrity across all 22 tables. ON CONFLICT upsert ensures idempotent re-processing.",
+    code: ".unique()  // on testId, markerId, conditionId, ...",
+    source: "schema.ts:258-380",
+  },
+];
+
+const guardRules = [
+  { id: "1", rule: "DIAGNOSIS", description: "Response must not diagnose a medical condition — no \"you have X\" or \"this confirms Y\"", action: "Disclaimer: educational purposes only, not a medical diagnosis", color: "var(--crimson-9)" },
+  { id: "2", rule: "PRESCRIPTION", description: "Response must not prescribe specific medications or dosages", action: "Disclaimer: cannot recommend medications or dosages", color: "var(--orange-9)" },
+  { id: "3", rule: "PHYSICIAN_REFERRAL", description: "Response must include a reminder to consult a healthcare professional", action: "Disclaimer: consult your physician before making medical decisions", color: "var(--green-9)" },
+  { id: "4", rule: "PII_LEAKAGE", description: "Response must not contain personally identifiable information", action: "Response flagged and PII stripped before delivery", color: "var(--violet-9)" },
+  { id: "5", rule: "HALLUCINATION", description: "Response must not claim facts unsupported by the retrieval context", action: "Response flagged — ungrounded claims identified", color: "var(--blue-9)" },
+];
+
+const hipaaAlignment = [
+  { rule: "Access Control (§164.312(a))", status: "implemented" as const, detail: "withAuth() on every server action, session-based user_id extraction, x-api-key for inter-service calls. No anonymous access to any health data endpoint.", color: "var(--green-9)" },
+  { rule: "Audit Controls (§164.312(b))", status: "partial" as const, detail: "Session table logs IP + UserAgent + timestamps. LangGraph logs intent classification + guard results per query. No dedicated audit trail table yet.", color: "var(--amber-9)" },
+  { rule: "Integrity Controls (§164.312(c))", status: "implemented" as const, detail: "Parameterized SQL via psycopg3 prevents injection. Pydantic validates all inputs. UNIQUE constraints prevent duplicates. ON CONFLICT upsert for idempotency.", color: "var(--green-9)" },
+  { rule: "Transmission Security (§164.312(e))", status: "implemented" as const, detail: "Neon TLS on all database connections, R2 AES-256 encryption at rest, HTTPS between Next.js and Python, CORS whitelist restricts origins.", color: "var(--green-9)" },
+  { rule: "Person Authentication (§164.312(d))", status: "implemented" as const, detail: "Better Auth with OAuth providers, email/password with bcrypt, session tokens with expiry, IP and UserAgent tracking per session.", color: "var(--green-9)" },
+  { rule: "PHI Minimum Necessary (§164.502(b))", status: "implemented" as const, detail: "Only clinical values stored: marker name, value, unit, flag, reference range. No SSN, insurance, or billing. Embeddings are formatted text, not raw PDFs.", color: "var(--green-9)" },
+];
+
+const gdprAlignment = [
+  { right: "Right to Erasure (Art. 17)", status: "implemented" as const, detail: "CASCADE DELETE from user table removes all health data, embeddings, family members, doctors, appointments, and medical letters in a single PostgreSQL transaction.", color: "var(--green-9)" },
+  { right: "Data Minimization (Art. 5(1)(c))", status: "implemented" as const, detail: "Clinical data extracted as structured text — marker values, flags, units, and formatted embedding content. R2 holds originals; pipeline operates on extracted data only.", color: "var(--green-9)" },
+  { right: "Purpose Limitation (Art. 5(1)(b))", status: "implemented" as const, detail: "Data used exclusively for blood marker intelligence. No secondary processing, no analytics pipeline, no third-party data sharing, no advertising.", color: "var(--green-9)" },
+  { right: "Storage Limitation (Art. 5(1)(e))", status: "partial" as const, detail: "Data retained while user account exists. No automated retention policy or periodic purge. Users can delete account and trigger full CASCADE at any time.", color: "var(--amber-9)" },
+  { right: "Lawful Basis (Art. 6)", status: "implemented" as const, detail: "Processing based on explicit user consent — account creation, data upload, and chat interaction are all user-initiated. No pre-populated data, no passive collection.", color: "var(--green-9)" },
+  { right: "Data Portability (Art. 20)", status: "partial" as const, detail: "Original PDFs accessible in R2 storage. Structured data viewable via entity pages. No single-click full JSON/CSV export yet.", color: "var(--amber-9)" },
+];
+
+const cascadeDeleteChains = [
+  { from: "user", to: "blood_tests \u2192 blood_markers \u2192 blood_marker_embeddings", color: "var(--blue-9)" },
+  { from: "user", to: "blood_tests \u2192 blood_test_embeddings", color: "var(--cyan-9)" },
+  { from: "user", to: "blood_tests \u2192 health_state_embeddings", color: "var(--cyan-9)" },
+  { from: "user", to: "conditions \u2192 condition_embeddings \u2192 condition_researches", color: "var(--crimson-9)" },
+  { from: "user", to: "medications \u2192 medication_embeddings", color: "var(--green-9)" },
+  { from: "user", to: "symptoms \u2192 symptom_embeddings", color: "var(--violet-9)" },
+  { from: "user", to: "appointments \u2192 appointment_embeddings", color: "var(--amber-9)" },
+  { from: "user", to: "doctors, family_members, medical_letters", color: "var(--orange-9)" },
+];
+
 /* ── Page ──────────────────────────────────────────────────────────── */
 
 export default function HowItWorksPage() {

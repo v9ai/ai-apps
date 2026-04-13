@@ -127,7 +127,7 @@ const T = {
         tagline: "Cascada Termal\u0103 Ascuns\u0103",
         access: "Traseu din satul Barano (30 min excursie)",
         description:
-          "Cascad\u0103 cald\u0103 natural\u0103 ascuns\u0103 \u00eentr-o r\u00e2p\u0103 \u00emp\u0103durit\u0103 deasupra plajei Maronti. Izvorul alimenteaz\u0103 o mic\u0103 piscin\u0103 natural\u0103 \u00eeconjurat\u0103 de ferigi \u0219i maquis mediteranean. Localnicii vin aici pentru a sc\u0103pa de mul\u021bimi \u2014 adev\u0103rat\u0103 bijuterie ascuns\u0103.",
+          "Cascad\u0103 cald\u0103 natural\u0103 ascuns\u0103 \u00eentr-o r\u00e2p\u0103 \u00eemp\u0103durit\u0103 deasupra plajei Maronti. Izvorul alimenteaz\u0103 o mic\u0103 piscin\u0103 natural\u0103 \u00eenconjurat\u0103 de ferigi \u0219i maquis mediteranean. Localnicii vin aici pentru a sc\u0103pa de mul\u021bimi \u2014 adev\u0103rat\u0103 bijuterie ascuns\u0103.",
         bestTime: "Diminea\u021ba devreme pentru lini\u0219te",
         familyNote:
           "Excursia este moderat\u0103 \u2014 potrivit\u0103 pentru copii 6+. R\u00e2pa poate fi alunecos\u0103 dup\u0103 ploaie.",
