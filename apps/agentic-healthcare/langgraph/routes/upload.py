@@ -1,25 +1,19 @@
-"""Blood test upload & delete — LlamaIndex IngestionPipeline over LlamaParse → R2 + PG.
+"""Blood test upload & delete — LlamaParse → ingestion pipeline → R2 + PG.
 
-The pipeline uses LlamaIndex abstractions end-to-end:
-  1. LlamaParse → LlamaIndex Document
-  2. Custom BloodTestNodeParser → TextNode per marker + test summary + health state
-  3. FastEmbedEmbedding (via LlamaIndex Settings) for vector generation
-  4. IngestionPipeline orchestrates the transform + embed flow
-  5. Persist to Neon PG via the db module
+The pipeline:
+  1. LlamaParse extracts structured elements from PDFs
+  2. parse_blood_test_nodes → EmbeddingNode per marker + test summary + health state
+  3. Batch embedding via OpenAI-compatible API
+  4. Persist to Neon PG via the db module
 """
 
 from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
-
-from llama_index.core import Document
-from llama_index.core.ingestion import IngestionPipeline
-from llama_index.core.schema import BaseNode, MetadataMode, TextNode
 
 from config import settings
 from db import (
@@ -32,15 +26,9 @@ from db import (
     upsert_blood_test_embedding,
     upsert_health_state_embedding,
 )
-from embeddings import (
-    build_health_state_node,
-    build_marker_nodes,
-    build_test_document,
-    compute_derived_metrics,
-    get_embed_model,
-)
-from ingestion_pipeline import BloodTestNodeParser, build_ingestion_pipeline
-from parsers import Marker, parse_markers
+from ingestion_pipeline import run_ingestion
+from models import EmbeddingNode
+from parsers import parse_markers
 from storage import delete_file, upload_file
 
 logger = logging.getLogger(__name__)
@@ -71,11 +59,9 @@ class DeleteResponse(BaseModel):
 # ── Background embedding persist ────────────────────────────────────
 
 
-def _persist_nodes(nodes: list[BaseNode]) -> None:
+def _persist_nodes(nodes: list[EmbeddingNode]) -> None:
     """Write embedded nodes to the existing PG tables."""
     for node in nodes:
-        if not isinstance(node, (TextNode, Document)):
-            continue
         meta = node.metadata
         node_type = meta.get("node_type", "")
         embedding = node.embedding
@@ -87,7 +73,7 @@ def _persist_nodes(nodes: list[BaseNode]) -> None:
             upsert_blood_test_embedding(
                 test_id=meta["test_id"],
                 user_id=meta["user_id"],
-                content=node.get_content(metadata_mode=MetadataMode.NONE),
+                content=node.text,
                 embedding=embedding,
             )
         elif node_type == "blood_marker":
@@ -96,7 +82,7 @@ def _persist_nodes(nodes: list[BaseNode]) -> None:
                 test_id=meta["test_id"],
                 user_id=meta["user_id"],
                 marker_name=meta["marker_name"],
-                content=node.get_content(metadata_mode=MetadataMode.NONE),
+                content=node.text,
                 embedding=embedding,
             )
         elif node_type == "health_state":
@@ -104,7 +90,7 @@ def _persist_nodes(nodes: list[BaseNode]) -> None:
             upsert_health_state_embedding(
                 test_id=meta["test_id"],
                 user_id=meta["user_id"],
-                content=node.get_content(metadata_mode=MetadataMode.NONE),
+                content=node.text,
                 derived_metrics=derived,
                 embedding=embedding,
             )
@@ -118,32 +104,11 @@ def _run_ingestion(
     test_date: str | None,
     marker_ids: list[str],
 ) -> None:
-    """Run the LlamaIndex IngestionPipeline and persist embedded nodes."""
+    """Run the ingestion pipeline and persist embedded nodes."""
     try:
-        now_iso = datetime.now(timezone.utc).isoformat()
-        doc = Document(
-            text="",
-            metadata={
-                "_raw_elements": elements,
-                "_marker_ids": marker_ids,
-                "test_id": test_id,
-                "user_id": user_id,
-                "file_name": file_name,
-                "uploaded_at": now_iso,
-                "test_date": test_date or now_iso,
-            },
-            excluded_embed_metadata_keys=[
-                "_raw_elements", "_marker_ids", "test_id",
-                "user_id", "node_type",
-            ],
-            excluded_llm_metadata_keys=[
-                "_raw_elements", "_marker_ids", "test_id",
-                "user_id", "node_type",
-            ],
+        nodes = run_ingestion(
+            elements, test_id, user_id, file_name, test_date, marker_ids,
         )
-
-        pipeline = build_ingestion_pipeline()
-        nodes = pipeline.run(documents=[doc])
         _persist_nodes(nodes)
     except Exception:
         logger.exception("Ingestion pipeline failed for test %s (non-blocking)", test_id)

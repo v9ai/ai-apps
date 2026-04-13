@@ -460,7 +460,7 @@ export function SleepGuide() {
       {/* ── Section header ── */}
       <div
         className={css({
-          maxW: "960px",
+          maxW: "none",
           mx: "auto",
           mb: { base: "10", md: "14" },
         })}
@@ -495,7 +495,7 @@ export function SleepGuide() {
             fontSize: "body",
             color: "text.secondary",
             lineHeight: "body",
-            maxW: "700px",
+            maxW: "800px",
           })}
         >
           {t.sectionSubtitle}
@@ -505,7 +505,7 @@ export function SleepGuide() {
       {/* ── Tier cards ── */}
       <div
         className={css({
-          maxW: "960px",
+          maxW: "none",
           mx: "auto",
           display: "grid",
           gridTemplateColumns: {
@@ -823,7 +823,7 @@ export function SleepGuide() {
       {/* ── Value Analysis ── */}
       <div
         className={css({
-          maxW: "960px",
+          maxW: "none",
           mx: "auto",
           mb: { base: "12", md: "16" },
         })}
@@ -911,7 +911,7 @@ export function SleepGuide() {
       </div>
 
       {/* ── Area guide ── */}
-      <div className={css({ maxW: "960px", mx: "auto" })}>
+      <div className={css({ maxW: "none", mx: "auto" })}>
         <p
           className={css({
             fontSize: "label",
@@ -928,7 +928,7 @@ export function SleepGuide() {
         <div
           className={css({
             display: "grid",
-            gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)" },
+            gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" },
             gap: { base: "3", md: "4" },
           })}
         >

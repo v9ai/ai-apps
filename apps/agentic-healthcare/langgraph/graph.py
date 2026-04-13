@@ -1,17 +1,20 @@
 """
 LangGraph clinical intelligence graph — agentic pipeline for blood marker Q&A.
 
-StateGraph:  triage → retrieve → synthesize → guard
+StateGraph with conditional routing:
+
+  triage ──(confidence < 0.7)──> re_triage ──> retrieve_* ──> synthesize ──> guard
+       └──(confidence >= 0.7)──> retrieve_* ──┘
 
 Nodes:
-  1. triage      — Classify query intent (markers, trajectory, conditions, medications, safety_refusal)
-  2. retrieve    — Fan-out to relevant pgvector search functions based on intent
-  3. synthesize  — Generate response with DeepSeek using retrieved context + clinical prompt
-  4. guard       — Post-generation safety check (no diagnosis, physician referral, PII)
+  1. triage              — Classify query intent (9 classes + multi_intent)
+  2. re_triage           — Re-classify with disambiguation hints on low confidence
+  3. retrieve_<intent>   — Per-intent retrieval nodes with dynamic k-limits
+  4. synthesize          — Generate response with retrieved context + clinical prompt
+  5. guard               — Post-generation safety check (no diagnosis, physician referral, PII)
 
-The graph replaces the simple LlamaIndex ContextChatEngine with a proper agentic
-workflow that routes queries to specialised retrieval strategies and enforces clinical
-safety as a discrete, auditable step.
+Conditional edges route from triage to the appropriate retriever node, making
+the routing visible in LangGraph traces and the debugger.
 """
 
 from __future__ import annotations
@@ -40,6 +43,24 @@ from embeddings import generate_embedding
 logger = logging.getLogger(__name__)
 
 
+# Valid single-intent classes
+SINGLE_INTENTS = frozenset({
+    "markers", "derived_ratios", "trajectory", "conditions", "medications",
+    "symptoms", "appointments", "general_health", "safety_refusal",
+})
+
+# All retriever node names (for topology assertions in evals)
+RETRIEVER_NODE_NAMES = [
+    "retrieve_markers", "retrieve_derived_ratios", "retrieve_trajectory",
+    "retrieve_conditions", "retrieve_medications", "retrieve_symptoms",
+    "retrieve_appointments", "retrieve_general_health",
+    "retrieve_multi_intent",
+]
+
+# Confidence threshold for re-triage
+CONFIDENCE_THRESHOLD = 0.7
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # State
 # ═══════════════════════════════════════════════════════════════════════════
@@ -54,9 +75,18 @@ class GraphState(BaseModel):
     chat_history: list[dict[str, str]] = Field(default_factory=list)
 
     # Triage
-    intent: str = ""  # markers | derived_ratios | trajectory | conditions | medications | symptoms | appointments | general_health | safety_refusal
+    intent: str = ""  # markers | derived_ratios | trajectory | conditions | medications | symptoms | appointments | general_health | safety_refusal | multi_intent
     intent_confidence: float = 0.0
     entities: list[str] = Field(default_factory=list)  # extracted marker/condition names
+
+    # Re-triage support
+    triage_attempts: int = 0
+    triage_max_attempts: int = 2
+
+    # Multi-intent support
+    sub_intents: list[str] = Field(default_factory=list)
+    sub_queries: list[str] = Field(default_factory=list)
+    is_multi_intent: bool = False
 
     # Retrieval
     context_chunks: list[str] = Field(default_factory=list)
@@ -70,6 +100,7 @@ class GraphState(BaseModel):
     # Safety guard
     guard_passed: bool = False
     guard_issues: list[str] = Field(default_factory=list)
+    guard_retries: int = 0
     final_answer: str = ""
 
 
@@ -90,10 +121,16 @@ Classify the user's query into exactly ONE intent:
 - general_health: Broad health questions spanning multiple categories (metabolic syndrome, overall health)
 - safety_refusal: Requests that ask for diagnosis, treatment prescriptions, or clearly out-of-scope topics
 
-Also extract any specific entity names (marker names, condition names, medication names, ratio names) from the query.
+If the query spans TWO OR MORE categories (e.g. "Is my iron improving and what medication affects it?"
+covers trajectory AND medications), respond with multi_intent:
+{"intent": "multi_intent", "confidence": 0.0-1.0, "entities": [...],
+ "multi_intent": true, "sub_intents": ["trajectory", "medications"],
+ "sub_queries": ["Is my iron improving?", "What medication affects my iron?"]}
 
-Respond ONLY with JSON:
-{"intent": "...", "confidence": 0.0-1.0, "entities": ["..."]}"""
+If the query clearly fits ONE category, respond with:
+{"intent": "...", "confidence": 0.0-1.0, "entities": ["..."], "multi_intent": false}
+
+Also extract any specific entity names (marker names, condition names, medication names, ratio names) from the query."""
 
 
 def triage(state: GraphState) -> dict[str, Any]:
@@ -109,173 +146,112 @@ def triage(state: GraphState) -> dict[str, Any]:
         parsed = {"intent": "general_health", "confidence": 0.5, "entities": []}
 
     intent = parsed.get("intent", "general_health")
-    valid_intents = {
-        "markers", "derived_ratios", "trajectory", "conditions", "medications",
-        "symptoms", "appointments", "general_health", "safety_refusal",
-    }
-    if intent not in valid_intents:
+    confidence = float(parsed.get("confidence", 0.5))
+    entities = parsed.get("entities", [])
+    is_multi = parsed.get("multi_intent", False)
+    sub_intents = parsed.get("sub_intents", [])
+    sub_queries = parsed.get("sub_queries", [])
+
+    if is_multi and len(sub_intents) >= 2:
+        # Validate sub_intents against allowed single intents
+        sub_intents = [si for si in sub_intents if si in SINGLE_INTENTS and si != "safety_refusal"]
+        if len(sub_intents) < 2:
+            is_multi = False
+            intent = sub_intents[0] if sub_intents else "general_health"
+
+    if not is_multi and intent not in SINGLE_INTENTS:
         intent = "general_health"
 
     return {
-        "intent": intent,
-        "intent_confidence": float(parsed.get("confidence", 0.5)),
-        "entities": parsed.get("entities", []),
+        "intent": "multi_intent" if is_multi else intent,
+        "intent_confidence": confidence,
+        "entities": entities,
+        "is_multi_intent": is_multi,
+        "sub_intents": sub_intents if is_multi else [],
+        "sub_queries": sub_queries if is_multi else [],
+        "triage_attempts": state.triage_attempts + 1,
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Node 2: Retrieve
+# Node 1b: Re-Triage (low-confidence disambiguation)
+# ═══════════════════════════════════════════════════════════════════════════
+
+RE_TRIAGE_SYSTEM = """You are a clinical query classifier. The previous classification attempt
+had low confidence. Re-classify with these disambiguation hints:
+
+The 9 intent categories are:
+- markers: specific blood marker VALUES, levels, reference ranges, flags
+- derived_ratios: derived RATIO values (TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis, BUN/Creatinine, TyG)
+- trajectory: TRENDS over time, changes between tests, improving/deteriorating
+- conditions: health CONDITIONS, diseases, diagnoses
+- medications: MEDICATIONS, drugs, dosages, drug-biomarker interactions
+- symptoms: SYMPTOMS and their relation to markers
+- appointments: SCHEDULING, upcoming visits, providers
+- general_health: broad health questions spanning multiple categories
+- safety_refusal: requests for diagnosis, treatment prescriptions, out-of-scope
+
+Focus on the PRIMARY action the user wants. If asking about a value -> markers.
+If asking about a ratio value -> derived_ratios. If asking about change over time -> trajectory.
+If asking about a drug -> medications.
+
+Respond ONLY with JSON:
+{"intent": "...", "confidence": 0.0-1.0, "entities": ["..."]}"""
+
+
+def re_triage(state: GraphState) -> dict[str, Any]:
+    """Re-classify with disambiguation hints when first attempt had low confidence."""
+    context_hint = f"Previous classification: {state.intent} (confidence: {state.intent_confidence})"
+    prompt = f"{context_hint}\n\nOriginal query: {state.query}"
+
+    raw = _llm_call(RE_TRIAGE_SYSTEM, prompt)
+    cleaned = re.sub(r"```json\s*|\s*```", "", raw).strip()
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError:
+        parsed = {"intent": "general_health", "confidence": 0.5, "entities": []}
+
+    intent = parsed.get("intent", "general_health")
+    if intent not in SINGLE_INTENTS:
+        intent = "general_health"
+
+    new_confidence = float(parsed.get("confidence", 0.5))
+
+    # Use the higher-confidence result
+    if new_confidence > state.intent_confidence:
+        return {
+            "intent": intent,
+            "intent_confidence": new_confidence,
+            "entities": parsed.get("entities", []) or state.entities,
+            "triage_attempts": state.triage_attempts + 1,
+        }
+    # Keep original if re-triage didn't improve confidence
+    return {"triage_attempts": state.triage_attempts + 1}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Dynamic k-limit
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def retrieve(state: GraphState) -> dict[str, Any]:
-    """Fan-out to relevant pgvector search functions based on triage intent."""
-    if state.intent == "safety_refusal":
-        return {
-            "context_chunks": [],
-            "retrieval_sources": [],
-            "retrieval_scores": [],
-        }
+def _dynamic_k(confidence: float, base_k: int) -> int:
+    """Widen retrieval net for low-confidence classifications."""
+    if confidence >= 0.8:
+        return base_k
+    if confidence >= 0.6:
+        return int(base_k * 1.5)
+    return base_k * 2
 
-    embedding = generate_embedding(state.query)
-    user_id = state.user_id
-    chunks: list[str] = []
-    sources: list[str] = []
-    scores: list[float] = []
 
-    intent = state.intent
+# ═══════════════════════════════════════════════════════════════════════════
+# Retrieval helpers (shared between single-intent and multi-intent)
+# ═══════════════════════════════════════════════════════════════════════════
 
-    if intent == "derived_ratios":
-        # Primary: health state embeddings with JSONB derived_metrics
-        hs_results = search_health_states(embedding, user_id, limit=5)
-        for r in hs_results:
-            chunks.append(r["content"])
-            sources.append("health_state_embeddings")
-            scores.append(r["similarity"])
 
-        # Cross-reference with individual markers for underlying values
-        marker_results = search_markers_hybrid(state.query, embedding, user_id, limit=5)
-        for r in marker_results:
-            chunks.append(r["content"])
-            sources.append("blood_marker_embeddings")
-            scores.append(r["combined_score"])
-
-    elif intent in ("markers", "trajectory"):
-        # Primary: hybrid marker search
-        marker_results = search_markers_hybrid(state.query, embedding, user_id, limit=10)
-        for r in marker_results:
-            chunks.append(r["content"])
-            sources.append("blood_marker_embeddings")
-            scores.append(r["combined_score"])
-
-        # Also get test-level context
-        test_results = search_blood_tests(embedding, user_id, limit=3)
-        for r in test_results:
-            chunks.append(r["content"])
-            sources.append("blood_test_embeddings")
-            scores.append(r["similarity"])
-
-        # Health state context for ratio cross-reference
-        hs_results = search_health_states(embedding, user_id, limit=2)
-        for r in hs_results:
-            chunks.append(r["content"])
-            sources.append("health_state_embeddings")
-            scores.append(r["similarity"])
-
-        # For trajectory, also get trend data
-        if intent == "trajectory" and state.entities:
-            for entity in state.entities[:3]:
-                trend_results = search_marker_trend(embedding, user_id, marker_name=entity, limit=20)
-                for r in trend_results:
-                    chunks.append(r["content"])
-                    sources.append("marker_trend")
-                    scores.append(r["similarity"])
-
-    elif intent == "conditions":
-        cond_results = search_conditions(embedding, user_id, limit=5)
-        for r in cond_results:
-            chunks.append(r["content"])
-            sources.append("condition_embeddings")
-            scores.append(r["similarity"])
-        # Cross-reference with markers
-        marker_results = search_markers_hybrid(state.query, embedding, user_id, limit=5)
-        for r in marker_results:
-            chunks.append(r["content"])
-            sources.append("blood_marker_embeddings")
-            scores.append(r["combined_score"])
-
-    elif intent == "medications":
-        med_results = search_medications(embedding, user_id, limit=5)
-        for r in med_results:
-            chunks.append(r["content"])
-            sources.append("medication_embeddings")
-            scores.append(r["similarity"])
-        # Cross-reference with markers for drug-biomarker interactions
-        marker_results = search_markers_hybrid(state.query, embedding, user_id, limit=5)
-        for r in marker_results:
-            chunks.append(r["content"])
-            sources.append("blood_marker_embeddings")
-            scores.append(r["combined_score"])
-
-    elif intent == "symptoms":
-        sym_results = search_symptoms(embedding, user_id, limit=5)
-        for r in sym_results:
-            chunks.append(r["content"])
-            sources.append("symptom_embeddings")
-            scores.append(r["similarity"])
-        # Cross-reference with markers
-        marker_results = search_markers_hybrid(state.query, embedding, user_id, limit=5)
-        for r in marker_results:
-            chunks.append(r["content"])
-            sources.append("blood_marker_embeddings")
-            scores.append(r["combined_score"])
-
-    elif intent == "appointments":
-        appt_results = search_appointments(embedding, user_id, limit=5)
-        for r in appt_results:
-            chunks.append(r["content"])
-            sources.append("appointment_embeddings")
-            scores.append(r["similarity"])
-
-    else:
-        # general_health — fan-out to all tables
-        test_results = search_blood_tests(embedding, user_id, limit=3)
-        for r in test_results:
-            chunks.append(r["content"])
-            sources.append("blood_test_embeddings")
-            scores.append(r["similarity"])
-
-        marker_results = search_markers_hybrid(state.query, embedding, user_id, limit=5)
-        for r in marker_results:
-            chunks.append(r["content"])
-            sources.append("blood_marker_embeddings")
-            scores.append(r["combined_score"])
-
-        hs_results = search_health_states(embedding, user_id, limit=3)
-        for r in hs_results:
-            chunks.append(r["content"])
-            sources.append("health_state_embeddings")
-            scores.append(r["similarity"])
-
-        cond_results = search_conditions(embedding, user_id, limit=3)
-        for r in cond_results:
-            chunks.append(r["content"])
-            sources.append("condition_embeddings")
-            scores.append(r["similarity"])
-
-        med_results = search_medications(embedding, user_id, limit=3)
-        for r in med_results:
-            chunks.append(r["content"])
-            sources.append("medication_embeddings")
-            scores.append(r["similarity"])
-
-        sym_results = search_symptoms(embedding, user_id, limit=3)
-        for r in sym_results:
-            chunks.append(r["content"])
-            sources.append("symptom_embeddings")
-            scores.append(r["similarity"])
-
-    # De-duplicate chunks by content and re-rank by score
+def _dedup_and_sort(
+    chunks: list[str], sources: list[str], scores: list[float],
+) -> dict[str, Any]:
+    """De-duplicate chunks by content and re-rank by score descending."""
     seen: set[str] = set()
     deduped: list[tuple[str, str, float]] = []
     for chunk, source, score in zip(chunks, sources, scores):
@@ -283,14 +259,242 @@ def retrieve(state: GraphState) -> dict[str, Any]:
         if key not in seen:
             seen.add(key)
             deduped.append((chunk, source, score))
-    # Sort by score descending so best chunks appear first in context
     deduped.sort(key=lambda t: t[2], reverse=True)
-
     return {
         "context_chunks": [d[0] for d in deduped],
         "retrieval_sources": [d[1] for d in deduped],
         "retrieval_scores": [d[2] for d in deduped],
     }
+
+
+def _collect(results: list[dict], source_name: str, score_key: str = "similarity"):
+    """Unpack search results into parallel lists."""
+    chunks = [r["content"] for r in results]
+    sources = [source_name] * len(results)
+    scores = [r[score_key] for r in results]
+    return chunks, sources, scores
+
+
+def _retrieve_markers_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
+    k = int(_dynamic_k(state.intent_confidence, 10) * k_scale)
+    user_id = state.user_id
+    chunks, sources, scores = [], [], []
+
+    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_blood_tests(embedding, user_id, limit=max(1, int(3 * k_scale))), "blood_test_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_health_states(embedding, user_id, limit=max(1, int(2 * k_scale))), "health_state_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    return chunks, sources, scores
+
+
+def _retrieve_derived_ratios_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
+    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
+    user_id = state.user_id
+    chunks, sources, scores = [], [], []
+
+    c, s, sc = _collect(search_health_states(embedding, user_id, limit=k), "health_state_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
+    chunks += c; sources += s; scores += sc
+
+    return chunks, sources, scores
+
+
+def _retrieve_trajectory_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
+    k = int(_dynamic_k(state.intent_confidence, 10) * k_scale)
+    user_id = state.user_id
+    chunks, sources, scores = [], [], []
+
+    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_blood_tests(embedding, user_id, limit=max(1, int(3 * k_scale))), "blood_test_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_health_states(embedding, user_id, limit=max(1, int(2 * k_scale))), "health_state_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    if state.entities:
+        trend_limit = max(5, int(20 * k_scale))
+        for entity in state.entities[:3]:
+            c, s, sc = _collect(search_marker_trend(embedding, user_id, marker_name=entity, limit=trend_limit), "marker_trend")
+            chunks += c; sources += s; scores += sc
+
+    return chunks, sources, scores
+
+
+def _retrieve_conditions_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
+    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
+    user_id = state.user_id
+    chunks, sources, scores = [], [], []
+
+    c, s, sc = _collect(search_conditions(embedding, user_id, limit=k), "condition_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
+    chunks += c; sources += s; scores += sc
+
+    return chunks, sources, scores
+
+
+def _retrieve_medications_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
+    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
+    user_id = state.user_id
+    chunks, sources, scores = [], [], []
+
+    c, s, sc = _collect(search_medications(embedding, user_id, limit=k), "medication_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
+    chunks += c; sources += s; scores += sc
+
+    return chunks, sources, scores
+
+
+def _retrieve_symptoms_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
+    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
+    user_id = state.user_id
+    chunks, sources, scores = [], [], []
+
+    c, s, sc = _collect(search_symptoms(embedding, user_id, limit=k), "symptom_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
+    chunks += c; sources += s; scores += sc
+
+    return chunks, sources, scores
+
+
+def _retrieve_appointments_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
+    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
+    user_id = state.user_id
+
+    return _collect(search_appointments(embedding, user_id, limit=k), "appointment_embeddings")
+
+
+def _retrieve_general_health_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
+    user_id = state.user_id
+    chunks, sources, scores = [], [], []
+
+    c, s, sc = _collect(search_blood_tests(embedding, user_id, limit=max(1, int(3 * k_scale))), "blood_test_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=max(1, int(5 * k_scale))), "blood_marker_embeddings", "combined_score")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_health_states(embedding, user_id, limit=max(1, int(3 * k_scale))), "health_state_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_conditions(embedding, user_id, limit=max(1, int(3 * k_scale))), "condition_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_medications(embedding, user_id, limit=max(1, int(3 * k_scale))), "medication_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    c, s, sc = _collect(search_symptoms(embedding, user_id, limit=max(1, int(3 * k_scale))), "symptom_embeddings")
+    chunks += c; sources += s; scores += sc
+
+    return chunks, sources, scores
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Node 2: Per-intent retriever nodes
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def retrieve_markers(state: GraphState) -> dict[str, Any]:
+    """Retrieve for markers intent: hybrid markers + test context + health states."""
+    embedding = generate_embedding(state.query)
+    return _dedup_and_sort(*_retrieve_markers_core(state, embedding))
+
+
+def retrieve_derived_ratios(state: GraphState) -> dict[str, Any]:
+    """Retrieve for derived_ratios intent: health state embeddings + marker cross-ref."""
+    embedding = generate_embedding(state.query)
+    return _dedup_and_sort(*_retrieve_derived_ratios_core(state, embedding))
+
+
+def retrieve_trajectory(state: GraphState) -> dict[str, Any]:
+    """Retrieve for trajectory intent: markers + tests + per-entity trend data."""
+    embedding = generate_embedding(state.query)
+    return _dedup_and_sort(*_retrieve_trajectory_core(state, embedding))
+
+
+def retrieve_conditions(state: GraphState) -> dict[str, Any]:
+    """Retrieve for conditions intent: condition embeddings + marker cross-ref."""
+    embedding = generate_embedding(state.query)
+    return _dedup_and_sort(*_retrieve_conditions_core(state, embedding))
+
+
+def retrieve_medications(state: GraphState) -> dict[str, Any]:
+    """Retrieve for medications intent: medication embeddings + marker cross-ref."""
+    embedding = generate_embedding(state.query)
+    return _dedup_and_sort(*_retrieve_medications_core(state, embedding))
+
+
+def retrieve_symptoms(state: GraphState) -> dict[str, Any]:
+    """Retrieve for symptoms intent: symptom embeddings + marker cross-ref."""
+    embedding = generate_embedding(state.query)
+    return _dedup_and_sort(*_retrieve_symptoms_core(state, embedding))
+
+
+def retrieve_appointments(state: GraphState) -> dict[str, Any]:
+    """Retrieve for appointments intent: appointment embeddings only."""
+    embedding = generate_embedding(state.query)
+    return _dedup_and_sort(*_retrieve_appointments_core(state, embedding))
+
+
+def retrieve_general_health(state: GraphState) -> dict[str, Any]:
+    """Retrieve for general_health intent: fan-out to all tables."""
+    embedding = generate_embedding(state.query)
+    return _dedup_and_sort(*_retrieve_general_health_core(state, embedding))
+
+
+def refuse(state: GraphState) -> dict[str, Any]:
+    """Direct refusal for safety_refusal intent — skips retrieve, synthesize, and guard."""
+    return {
+        "answer": SAFETY_REFUSAL_RESPONSE,
+        "citations": [],
+        "context_chunks": [],
+        "retrieval_sources": [],
+        "retrieval_scores": [],
+        "guard_passed": True,
+        "guard_issues": [],
+        "final_answer": SAFETY_REFUSAL_RESPONSE,
+    }
+
+
+def retrieve_multi_intent(state: GraphState) -> dict[str, Any]:
+    """Fan-out retrieval for multi-intent queries — merge results from each sub-intent."""
+    embedding = generate_embedding(state.query)
+    all_chunks: list[str] = []
+    all_sources: list[str] = []
+    all_scores: list[float] = []
+
+    retriever_map = {
+        "markers": _retrieve_markers_core,
+        "derived_ratios": _retrieve_derived_ratios_core,
+        "trajectory": _retrieve_trajectory_core,
+        "conditions": _retrieve_conditions_core,
+        "medications": _retrieve_medications_core,
+        "symptoms": _retrieve_symptoms_core,
+        "appointments": _retrieve_appointments_core,
+        "general_health": _retrieve_general_health_core,
+    }
+
+    for sub_intent in state.sub_intents:
+        retriever = retriever_map.get(sub_intent)
+        if retriever:
+            c, s, sc = retriever(state, embedding, k_scale=0.6)
+            all_chunks += c; all_sources += s; all_scores += sc
+
+    return _dedup_and_sort(all_chunks, all_sources, all_scores)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -347,12 +551,6 @@ SAFETY_REFUSAL_RESPONSE = (
 
 def synthesize(state: GraphState) -> dict[str, Any]:
     """Generate response using retrieved context + clinical safety prompt."""
-    if state.intent == "safety_refusal":
-        return {
-            "answer": SAFETY_REFUSAL_RESPONSE,
-            "citations": [],
-        }
-
     # Build context block
     if state.context_chunks:
         context_block = "\n\n---\n\n".join(state.context_chunks)
@@ -406,13 +604,6 @@ If the response is a safety refusal, it automatically passes."""
 
 def guard(state: GraphState) -> dict[str, Any]:
     """Post-generation safety check."""
-    if state.intent == "safety_refusal":
-        return {
-            "guard_passed": True,
-            "guard_issues": [],
-            "final_answer": state.answer,
-        }
-
     # Build audit prompt
     context_summary = f"Context sources: {', '.join(set(state.retrieval_sources))}" if state.retrieval_sources else "No context retrieved"
     audit_prompt = f"""ORIGINAL QUERY: {state.query}
@@ -467,24 +658,172 @@ ASSISTANT RESPONSE:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Node 5: Resynthesize (guard self-correction)
+# ═══════════════════════════════════════════════════════════════════════════
+
+RESYNTHESIS_SYSTEM = """You are a clinical blood marker intelligence assistant.
+
+Your previous response was flagged by the safety auditor for these issues: {issues}
+
+Rewrite your response to fix ALL flagged issues:
+- If DIAGNOSIS was flagged: remove any diagnostic language. Describe associations, don't diagnose.
+- If PRESCRIPTION was flagged: remove any medication/dosage recommendations.
+- If PHYSICIAN_REFERRAL was flagged: add a clear reminder to consult a physician.
+- If HALLUCINATION was flagged: only state facts supported by the context.
+- If PII_LEAKAGE was flagged: remove any personally identifiable information.
+
+Keep the helpful clinical information from the original response, just fix the safety issues.
+
+RULES:
+1. Answer ONLY based on the provided context.
+2. NEVER diagnose conditions — describe what the data shows and note associations.
+3. NEVER prescribe treatments or specific medication dosages.
+4. ALWAYS remind the user to consult their physician for medical decisions."""
+
+
+def resynthesize(state: GraphState) -> dict[str, Any]:
+    """Re-generate response addressing guard issues from the previous attempt."""
+    issues_str = ", ".join(state.guard_issues)
+    system = RESYNTHESIS_SYSTEM.format(issues=issues_str)
+
+    # Build context block
+    if state.context_chunks:
+        context_block = "\n\n---\n\n".join(state.context_chunks)
+        context_section = f"RETRIEVED CONTEXT:\n\n{context_block}"
+    else:
+        context_section = "RETRIEVED CONTEXT: No matching health data found."
+
+    user_prompt = f"""{context_section}
+
+ORIGINAL QUERY: {state.query}
+
+PREVIOUS RESPONSE (flagged for {issues_str}):
+{state.answer}
+
+Rewrite the response to fix the safety issues while preserving useful clinical information."""
+
+    answer = _llm_call(system, user_prompt, temperature=0.0)
+
+    citations = re.findall(
+        r"(?:(?:Castelli|Millán|McLaughlin|Simental-Mendía|Forget|Hosten|De Ritis|Giannini|Fest|Botros|Inker|Gonzalez-Chavez)[^.]*\.)",
+        answer,
+    )
+
+    return {
+        "answer": answer,
+        "citations": citations,
+        "guard_retries": state.guard_retries + 1,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Routing functions
+# ═══════════════════════════════════════════════════════════════════════════
+
+_INTENT_TO_NODE: dict[str, str] = {
+    "markers": "retrieve_markers",
+    "derived_ratios": "retrieve_derived_ratios",
+    "trajectory": "retrieve_trajectory",
+    "conditions": "retrieve_conditions",
+    "medications": "retrieve_medications",
+    "symptoms": "retrieve_symptoms",
+    "appointments": "retrieve_appointments",
+    "general_health": "retrieve_general_health",
+    "safety_refusal": "refuse",
+    "multi_intent": "retrieve_multi_intent",
+}
+
+
+def _route_to_retriever(state: GraphState) -> str:
+    """Map intent to retriever node name."""
+    return _INTENT_TO_NODE.get(state.intent, "retrieve_general_health")
+
+
+def route_after_triage(state: GraphState) -> str:
+    """Route after triage: re-triage if low confidence, else to appropriate retriever."""
+    if (
+        state.intent_confidence < CONFIDENCE_THRESHOLD
+        and state.triage_attempts < state.triage_max_attempts
+        and state.intent != "safety_refusal"
+    ):
+        return "re_triage"
+    return _route_to_retriever(state)
+
+
+def route_after_re_triage(state: GraphState) -> str:
+    """Route after re-triage: always proceed to retriever (no infinite loops)."""
+    return _route_to_retriever(state)
+
+
+_MAX_GUARD_RETRIES = 1
+
+
+def route_after_guard(state: GraphState) -> str:
+    """Route after guard: end if passed, resynthesize if failed (up to 1 retry)."""
+    if state.guard_passed:
+        return END
+    if state.guard_retries < _MAX_GUARD_RETRIES:
+        return "resynthesize"
+    return END
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Graph assembly
 # ═══════════════════════════════════════════════════════════════════════════
 
 
 def build_graph() -> StateGraph:
-    """Build and compile the clinical intelligence LangGraph."""
+    """Build and compile the clinical intelligence LangGraph with conditional routing.
+
+    Topology:
+      triage ─┬─[safety_refusal]─> refuse ──────────────────────> END
+              ├─[low confidence]──> re_triage ─> retrieve_* ─┐
+              └─[else]────────────> retrieve_* ──────────────┤
+                                                              ├──> synthesize ──> guard ─┬─[passed]──> END
+                                                              │                          ├─[retry]───> resynthesize ─> guard
+                                                              │                          └─[exhausted]> END (with disclaimers)
+                                                              └──────────────────────────────────────────┘
+    """
     graph = StateGraph(GraphState)
 
+    # Nodes
     graph.add_node("triage", triage)
-    graph.add_node("retrieve", retrieve)
+    graph.add_node("re_triage", re_triage)
+    graph.add_node("refuse", refuse)
+    graph.add_node("retrieve_markers", retrieve_markers)
+    graph.add_node("retrieve_derived_ratios", retrieve_derived_ratios)
+    graph.add_node("retrieve_trajectory", retrieve_trajectory)
+    graph.add_node("retrieve_conditions", retrieve_conditions)
+    graph.add_node("retrieve_medications", retrieve_medications)
+    graph.add_node("retrieve_symptoms", retrieve_symptoms)
+    graph.add_node("retrieve_appointments", retrieve_appointments)
+    graph.add_node("retrieve_general_health", retrieve_general_health)
+    graph.add_node("retrieve_multi_intent", retrieve_multi_intent)
     graph.add_node("synthesize", synthesize)
     graph.add_node("guard", guard)
+    graph.add_node("resynthesize", resynthesize)
 
+    # Entry
     graph.set_entry_point("triage")
-    graph.add_edge("triage", "retrieve")
-    graph.add_edge("retrieve", "synthesize")
+
+    # Conditional: triage -> re_triage OR refuse OR retrieve_*
+    graph.add_conditional_edges("triage", route_after_triage)
+
+    # Conditional: re_triage -> retrieve_* (never loops back to re_triage)
+    graph.add_conditional_edges("re_triage", route_after_re_triage)
+
+    # Refuse goes straight to END (skips retrieve, synthesize, guard)
+    graph.add_edge("refuse", END)
+
+    # All retrievers converge to synthesize
+    for retriever_name in RETRIEVER_NODE_NAMES:
+        graph.add_edge(retriever_name, "synthesize")
+
     graph.add_edge("synthesize", "guard")
-    graph.add_edge("guard", END)
+
+    # Guard self-correction loop: passed → END, failed → resynthesize (max 1 retry)
+    graph.add_conditional_edges("guard", route_after_guard)
+    graph.add_edge("resynthesize", "guard")
 
     return graph
 

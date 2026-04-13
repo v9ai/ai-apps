@@ -181,7 +181,7 @@ export function ThermalParksGuide() {
   return (
     <section
       className={css({
-        maxW: "960px",
+        maxW: "none",
         mx: "auto",
         mb: { base: "14", md: "20" },
         animation: "fadeUp 0.6s ease-out",
@@ -219,7 +219,7 @@ export function ThermalParksGuide() {
             fontSize: "body",
             color: "text.secondary",
             lineHeight: "body",
-            maxW: "600px",
+            maxW: "800px",
           })}
         >
           {t.sectionSubtitle}
@@ -230,7 +230,7 @@ export function ThermalParksGuide() {
       <div
         className={css({
           display: "grid",
-          gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" },
+          gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(3, 1fr)" },
           gap: { base: "4", md: "6" },
         })}
       >
