@@ -208,7 +208,7 @@ class TestContextCompression:
             chunks=[f"chunk_{i}" for i in range(15)],
             scores=[0.5] * 15,
         )
-        with patch("graph.settings") as mock_settings:
+        with patch("config.settings") as mock_settings:
             mock_settings.rerank_top_k = 8
             mock_settings.rerank_min_score = 0.3
             mock_settings.rerank_enabled = True
@@ -226,7 +226,7 @@ class TestContextCompression:
             chunks=["relevant_a", "noise", "relevant_b"],
             scores=[0.7, 0.6, 0.5],
         )
-        with patch("graph.settings") as mock_settings:
+        with patch("config.settings") as mock_settings:
             mock_settings.rerank_top_k = 8
             mock_settings.rerank_min_score = 0.3
             mock_settings.rerank_enabled = True
@@ -249,7 +249,7 @@ class TestRerankFeatureFlag:
             chunks=["a", "b", "c"],
             scores=[0.8, 0.6, 0.4],
         )
-        with patch("graph.settings") as mock_settings:
+        with patch("config.settings") as mock_settings:
             mock_settings.rerank_enabled = False
             result = rerank(state)
         mock_llm.assert_not_called()
