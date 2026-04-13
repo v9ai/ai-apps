@@ -2796,6 +2796,712 @@ for attempt in range(MAX_RETRIES + 1):
         </ScrollReveal>
       </Box>
 
+      {/* ── Auth & Session Guard ── */}
+      <Box
+        id="auth-session"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Security Layer
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Authentication &amp; Session Guard
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Better Auth manages OAuth providers and sessions in PostgreSQL.
+              Every server action passes through withAuth() — a 4-line guard
+              that validates the session token and returns the userId or
+              redirects to login.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", md: "2" }}
+          gap="4"
+          style={{ maxWidth: 860, margin: "0 auto" }}
+          mb="5"
+        >
+          {authLayers.map((al, i) => (
+            <ScrollReveal key={al.layer} delay={i * 60}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <div
+                  className="deep-dive-icon"
+                  style={{
+                    background: `color-mix(in srgb, ${al.color} 18%, transparent)`,
+                    color: al.color,
+                  }}
+                >
+                  <al.icon size={18} />
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {al.layer}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {al.detail}
+                  </Text>
+                  <Text
+                    size="1"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                      color: al.color,
+                      opacity: 0.8,
+                    }}
+                  >
+                    {al.tables}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={280}>
+          <pre className="pg-code-block" style={{ maxWidth: 600, margin: "0 auto" }}>
+            <code>{`// lib/auth-helpers.ts — server action guard
+export const withAuth = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) redirect("/auth/login");
+  return { userId: session.user.id, user: session.user };
+};`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={320}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">Better Auth</span>
+            <span className="arch-tag">4 auth tables</span>
+            <span className="arch-tag">IP + UserAgent tracking</span>
+            <span className="arch-tag">CASCADE on user delete</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Health-State Trajectory ── */}
+      <Box
+        id="trajectory-pipeline"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--violet-9)",
+                fontSize: "11px",
+              }}
+            >
+              Longitudinal Analysis
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Health-State Trajectory Pipeline
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Each blood test becomes a 1024-dim health state. Cosine
+              similarity measures stability between states, velocity
+              tracks rate-of-change per day, and Qwen classifies the
+              overall direction as improving, stable, or deteriorating.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          style={{ maxWidth: 720, margin: "0 auto" }}
+          mb="5"
+        >
+          {trajectoryPipeline.map((tp, i) => (
+            <ScrollReveal key={tp.step} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <div className="synthesis-rule-num" style={{ color: tp.color, borderColor: tp.color }}>
+                  {tp.step}
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {tp.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {tp.description}
+                  </Text>
+                  <Text
+                    size="1"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                      color: tp.color,
+                      opacity: 0.85,
+                      marginTop: 2,
+                    }}
+                  >
+                    {tp.code}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={300}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">Lacher et al. NHANES method</span>
+            <span className="arch-tag">CTE + pgvector &lt;=&gt;</span>
+            <span className="arch-tag">7 derived metrics</span>
+            <span className="arch-tag">Qwen qwen-plus</span>
+            <span className="arch-tag">temperature 0.3</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Marker Alias Resolution ── */}
+      <Box
+        id="marker-aliases"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--orange-9)",
+                fontSize: "11px",
+              }}
+            >
+              Name Normalization
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Marker Alias Resolution
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Labs use different names for the same biomarker. The alias
+              map normalizes 41 variant names across 11 base markers so
+              derived ratios (TG/HDL, NLR, De Ritis, TyG) always resolve
+              regardless of which lab produced the PDF.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "3" }}
+          gap="3"
+          style={{ maxWidth: 860, margin: "0 auto" }}
+          mb="5"
+        >
+          {markerAliases.map((ma, i) => (
+            <ScrollReveal key={ma.base} delay={i * 40}>
+              <Flex
+                direction="column"
+                gap="2"
+                p="3"
+                className="deep-dive-card"
+              >
+                <Text
+                  size="2"
+                  weight="bold"
+                  style={{ color: ma.color }}
+                >
+                  {ma.base}
+                </Text>
+                <Flex gap="2" wrap="wrap">
+                  {ma.aliases.map((alias) => (
+                    <Text
+                      key={alias}
+                      size="1"
+                      style={{
+                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                        fontSize: "10px",
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                        background: `color-mix(in srgb, ${ma.color} 12%, transparent)`,
+                        color: ma.color,
+                      }}
+                    >
+                      {alias}
+                    </Text>
+                  ))}
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={280}>
+          <pre className="pg-code-block" style={{ maxWidth: 640, margin: "0 auto" }}>
+            <code>{`// lib/embeddings.ts — TyG Index computation
+const trig = resolve("triglycerides");
+const gluc = resolve("glucose");
+const gti =
+  trig != null && gluc != null && trig > 0 && gluc > 0
+    ? Math.log(trig * gluc * 0.5) / Math.LN10
+    : null;
+// resolve() walks MARKER_ALIAS_MAP until it finds a match
+// "hdl-c" → "hdl cholesterol" → "hdl" — first hit wins`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={320}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">11 base markers</span>
+            <span className="arch-tag">41 aliases</span>
+            <span className="arch-tag">case-insensitive</span>
+            <span className="arch-tag">EU comma decimals</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Cognitive Protocol Tracking ── */}
+      <Box
+        id="cognitive-protocols"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--indigo-9)",
+                fontSize: "11px",
+              }}
+            >
+              Brain Health
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Cognitive Protocol Tracking
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Health protocols track supplements with dosage, frequency,
+              and mechanism of action across 7 cognitive target areas.
+              Baselines and check-ins create a time series of 5 cognitive
+              dimensions scored 0–10 with delta computation.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Text
+          size="1"
+          weight="bold"
+          align="center"
+          mb="3"
+          style={{
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            fontSize: "10px",
+            color: "var(--gray-9)",
+            display: "block",
+          }}
+        >
+          7 Target Areas
+        </Text>
+
+        <Grid
+          columns={{ initial: "2", sm: "3", md: "4" }}
+          gap="3"
+          style={{ maxWidth: 860, margin: "0 auto" }}
+          mb="6"
+        >
+          {cognitiveTargetAreas.map((ct, i) => (
+            <ScrollReveal key={ct.area} delay={i * 40}>
+              <Flex
+                direction="column"
+                align="center"
+                gap="2"
+                p="3"
+                className="deep-dive-card"
+                style={{ textAlign: "center" }}
+              >
+                <div
+                  className="deep-dive-icon"
+                  style={{
+                    background: `color-mix(in srgb, ${ct.color} 18%, transparent)`,
+                    color: ct.color,
+                  }}
+                >
+                  <ct.icon size={18} />
+                </div>
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "11px",
+                    color: ct.color,
+                  }}
+                >
+                  {ct.area}
+                </Text>
+                <Text size="1" color="gray" style={{ fontSize: "10px", lineHeight: 1.4 }}>
+                  {ct.description}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <Text
+          size="1"
+          weight="bold"
+          align="center"
+          mb="3"
+          style={{
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            fontSize: "10px",
+            color: "var(--gray-9)",
+            display: "block",
+          }}
+        >
+          5 Score Dimensions (0–10 Scale)
+        </Text>
+
+        <Flex
+          gap="3"
+          wrap="wrap"
+          justify="center"
+          style={{ maxWidth: 700, margin: "0 auto" }}
+          mb="5"
+        >
+          {cognitiveScoreDimensions.map((cd, i) => (
+            <ScrollReveal key={cd.dimension} delay={i * 50 + 200}>
+              <Flex
+                direction="column"
+                align="center"
+                gap="1"
+                p="3"
+                className="deep-dive-card"
+                style={{ textAlign: "center", minWidth: 120 }}
+              >
+                <Text size="2" weight="bold">
+                  {cd.label}
+                </Text>
+                <Text size="1" color="gray" style={{ fontSize: "10px" }}>
+                  {cd.description}
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "10px",
+                    opacity: 0.6,
+                  }}
+                >
+                  {cd.dimension}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={350}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">6 schema tables</span>
+            <span className="arch-tag">JSONB target_areas</span>
+            <span className="arch-tag">unique baseline per protocol</span>
+            <span className="arch-tag">check-in time series</span>
+            <span className="arch-tag">30-day rolling avg</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Entity Relationship Graph ── */}
+      <Box
+        id="entity-graph"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--cyan-9)",
+                fontSize: "11px",
+              }}
+            >
+              Data Architecture
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Entity Relationship Graph
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              22 PostgreSQL tables connected by foreign keys with carefully
+              chosen delete strategies: CASCADE for owned data, SET NULL
+              for optional references, UNIQUE constraints for 1:1
+              embedding pairs, and composite primary keys for M:N junctions.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="2"
+          style={{ maxWidth: 760, margin: "0 auto" }}
+          mb="5"
+        >
+          {entityRelationships.map((er, i) => (
+            <ScrollReveal key={`${er.from}-${er.to}`} delay={i * 35}>
+              <Flex
+                gap="3"
+                p="3"
+                className="deep-dive-card"
+                align="center"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "12px",
+                    minWidth: 190,
+                    color: er.color,
+                  }}
+                >
+                  {er.from} → {er.to}
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "11px",
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: `color-mix(in srgb, ${er.color} 12%, transparent)`,
+                    color: er.color,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {er.type}
+                </Text>
+                <Text size="1" color="gray" style={{ flex: 1, fontSize: "11px" }}>
+                  {er.cascade}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={400}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">22 tables</span>
+            <span className="arch-tag">8 embedding tables</span>
+            <span className="arch-tag">vector(1024)</span>
+            <span className="arch-tag">JSONB for metrics</span>
+            <span className="arch-tag">M:N junction tables</span>
+            <span className="arch-tag">Drizzle ORM</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Multi-Search Fan-Out ── */}
+      <Box
+        id="multi-search"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--pink-9)",
+                fontSize: "11px",
+              }}
+            >
+              Retrieval Engine
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Multi-Search Fan-Out
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              A single embedding of the user query fans out to all 6
+              entity tables in parallel. Markers use hybrid scoring
+              (0.7 cosine + 0.3 FTS), all others use pure vector search
+              with a 0.3 similarity threshold. Results are deduplicated
+              and merged into a unified MultiSearchResult.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "3" }}
+          gap="3"
+          style={{ maxWidth: 860, margin: "0 auto" }}
+          mb="5"
+        >
+          {multiSearchFanOut.map((ms, i) => (
+            <ScrollReveal key={ms.table} delay={i * 50}>
+              <Flex
+                direction="column"
+                gap="2"
+                p="3"
+                className="deep-dive-card"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "11px",
+                    color: ms.color,
+                  }}
+                >
+                  {ms.table}
+                </Text>
+                <Flex gap="2" align="center">
+                  <Text
+                    size="1"
+                    style={{
+                      padding: "1px 6px",
+                      borderRadius: 4,
+                      background: `color-mix(in srgb, ${ms.color} 14%, transparent)`,
+                      color: ms.color,
+                      fontSize: "10px",
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    }}
+                  >
+                    {ms.scoring}
+                  </Text>
+                </Flex>
+                <Flex gap="4">
+                  <Text size="1" color="gray" style={{ fontSize: "10px" }}>
+                    threshold: {ms.threshold}
+                  </Text>
+                  <Text size="1" color="gray" style={{ fontSize: "10px" }}>
+                    limit: {ms.limit}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={320}>
+          <pre className="pg-code-block" style={{ maxWidth: 700, margin: "0 auto" }}>
+            <code>{`# routes/search.py — hybrid scoring (markers only)
+combined_score = (
+  0.3 * ts_rank(to_tsvector('english', content),
+                 plainto_tsquery('english', :query))
++ 0.7 * (1 - (embedding <=> :query_vec))
+)
+# All other tables: pure cosine similarity
+# 1 - (embedding <=> :query_vec) >= 0.3 threshold`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={360}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">1 embedding → 6 parallel queries</span>
+            <span className="arch-tag">hybrid for markers</span>
+            <span className="arch-tag">vector for entities</span>
+            <span className="arch-tag">MultiSearchResult</span>
+            <span className="arch-tag">x-api-key auth</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
       {/* ── Detailed Sections ── */}
       <HowItWorksClient />
 
