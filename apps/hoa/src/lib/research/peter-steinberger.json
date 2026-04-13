@@ -2,11 +2,11 @@
   "slug": "peter-steinberger",
   "name": "Peter Steinberger",
   "generated_at": "2026-04-13T15:31:19+00:00",
-  "bio": "Peter Steinberger is an Austrian software engineer and entrepreneur known for his work in the open-source community. Born and raised in Austria, Steinberger has made significant contributions to the field of artificial intelligence through his creation of OpenClaw, an open-source autonomous AI agent that can execute tasks via large language models using messaging platforms as its main user interface. Initially known as Clawdbot, then Moltbot, and finally OpenClaw, this project has gained widespread recognition and a community of over 300 GitHub stars. OpenClaw can be run on various platforms including Windows, macOS, Linux, iOS, and Android, and is designed to manage tasks, automate workflows, and write code 24/7. Steinberger's journey in AI began when he joined OpenAI after Anthropic cut off access to Claude API, further solidifying his role as a key figure in the AI landscape. His unique approach to creating an open-source AI assistant that is both powerful and accessible has made him a notable figure in the tech community.",
+  "bio": "Peter Steinberger is an Austrian software engineer and entrepreneur known for his work in the open-source community. Born and raised in Austria, Steinberger has made significant contributions to the field of artificial intelligence through his creation of OpenClaw, an open-source autonomous AI agent that can execute tasks via large language models using messaging platforms as its main user interface. Initially known as Clawdbot, then Moltbot, and finally OpenClaw, this project has gained widespread recognition and a community of over 356,000 GitHub stars. OpenClaw can be run on various platforms including Windows, macOS, Linux, iOS, and Android, and is designed to manage tasks, automate workflows, and write code 24/7. Steinberger's journey in AI began when he joined OpenAI after Anthropic cut off access to Claude API, further solidifying his role as a key figure in the AI landscape. His unique approach to creating an open-source AI assistant that is both powerful and accessible has made him a notable figure in the tech community.",
   "executive_summary": {
     "one_liner": "Peter Steinberger is an Austrian software engineer and entrepreneur who created the open-source AI assistant OpenClaw and recently joined OpenAI, making him a key figure in the AI community.",
     "key_facts": [
-      "Peter Steinberger is the founder of OpenClaw, an open-source AI assistant that has gained widespread recognition and over 300 GitHub stars.",
+      "Peter Steinberger is the founder of OpenClaw, an open-source AI assistant that has gained widespread recognition and over 356K GitHub stars.",
       "He joined OpenAI in February 2026, focusing on personal AI agents and AI orchestration.",
       "Steinberger's journey began with PSPDFKit, a PDF toolkit for iOS and macOS, before transitioning to OpenClaw."
     ],
@@ -81,7 +81,7 @@
     ],
     "moats": [
       "Open-source nature: OpenClaw is fully open-source, allowing for community contributions and customization.",
-      "Community and ecosystem: OpenClaw has a large community and ecosystem, with over 300 GitHub stars and active community building skills.",
+      "Community and ecosystem: OpenClaw has a large community and ecosystem, with over 356K GitHub stars and active community building skills.",
       "Platform support: OpenClaw supports multiple platforms including Windows, macOS, Linux, iOS, and Android, making it accessible to a wide range of users.",
       "Foundation: OpenClaw is moving to a foundation, which ensures its long-term sustainability and independence."
     ],
