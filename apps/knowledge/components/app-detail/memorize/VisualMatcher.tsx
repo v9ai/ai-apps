@@ -79,20 +79,53 @@ function buildExplanation(
 /** Build CSS context with the tested property blanked out */
 function buildCssContext(prop: CssProperty): CssContext {
   const lines = prop.demo.css.split("\n");
-  const re = new RegExp(`(${prop.demo.highlightProp}\\s*:\\s*)([^;]+)(;?)`);
-  let highlightLine = -1;
+  const hl = prop.demo.highlightProp;
+  const singleLineRe = new RegExp(`(${hl}\\s*:\\s*)([^;]+)(;)`);
 
-  const blankedLines = lines.map((line, i) => {
-    const match = line.match(re);
-    if (match && highlightLine === -1) {
+  // Try single-line match first
+  let highlightLine = -1;
+  let blankedLines: string[] | null = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(singleLineRe);
+    if (match) {
       highlightLine = i;
-      return line.replace(re, `$1______$3`);
+      blankedLines = lines.map((line, j) =>
+        j === i ? line.replace(singleLineRe, `$1______$3`) : line,
+      );
+      break;
     }
-    return line;
-  });
+  }
+
+  // Handle multi-line values (e.g. grid-template-areas spanning several lines)
+  if (highlightLine === -1) {
+    const startRe = new RegExp(`${hl}\\s*:`);
+    let startIdx = -1;
+    let endIdx = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (startIdx === -1 && startRe.test(lines[i])) {
+        startIdx = i;
+      }
+      if (startIdx !== -1 && i > startIdx && lines[i].includes(";")) {
+        endIdx = i;
+        break;
+      }
+    }
+
+    if (startIdx !== -1) {
+      highlightLine = startIdx;
+      const indent = lines[startIdx].match(/^(\s*)/)?.[1] ?? "  ";
+      blankedLines = [
+        ...lines.slice(0, startIdx),
+        `${indent}${hl}: ______;`,
+        ...lines.slice((endIdx !== -1 ? endIdx : startIdx) + 1),
+      ];
+    }
+  }
 
   return {
-    blankedCss: blankedLines.join("\n"),
+    blankedCss: blankedLines ? blankedLines.join("\n") : prop.demo.css,
     revealedCss: prop.demo.css,
     highlightLine,
   };
