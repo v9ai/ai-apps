@@ -208,6 +208,603 @@
       "Multi-platform messaging integration (WhatsApp, Telegram, Discord, Signal)"
     ]
   },
+  "blog_posts": [
+    {
+      "title": "OpenClaw, OpenAI and the future",
+      "url": "https://steipete.me/posts/2026/openclaw/",
+      "date": "2026-02-15",
+      "summary": "Announces joining OpenAI to build accessible AI agents while transitioning OpenClaw to an independent foundation.",
+      "tags": ["career", "openai", "openclaw"]
+    },
+    {
+      "title": "Shipping at Inference-Speed",
+      "url": "https://steipete.me/posts/2025/shipping-at-inference-speed/",
+      "date": "2025-12-28",
+      "summary": "Details how modern AI models have dramatically accelerated his development workflow, allowing shipping at unprecedented speeds.",
+      "tags": ["ai-workflow", "agentic-engineering", "productivity"]
+    },
+    {
+      "title": "The Signature Flicker",
+      "url": "https://steipete.me/posts/2025/signature-flicker/",
+      "date": "2025-12-18",
+      "summary": "Technical deep-dive into a subtle macOS signing bug and the debugging process to resolve it.",
+      "tags": ["macos", "debugging", "code-signing"]
+    },
+    {
+      "title": "Just Talk To It \u2014 the no-BS Way of Agentic Engineering",
+      "url": "https://steipete.me/posts/just-talk-to-it/",
+      "date": "2025-10-14",
+      "summary": "Advocates for direct, intuitive interaction with AI models over complex frameworks and elaborate harnesses.",
+      "tags": ["agentic-engineering", "ai-workflow", "philosophy"]
+    },
+    {
+      "title": "Claude Code Anonymous",
+      "url": "https://steipete.me/posts/2025/claude-code-anonymous/",
+      "date": "2025-09-09",
+      "summary": "Co-created with Orta Therox, a meetup format for AI-assisted developers: lightning talks, no recordings, no selling.",
+      "tags": ["community", "claude-code", "meetup"]
+    },
+    {
+      "title": "Live Coding Session: Building Arena",
+      "url": "https://steipete.me/posts/2025/live-coding-session-building-arena/",
+      "date": "2025-09-06",
+      "summary": "Live demonstration of building a complete application using AI coding tools.",
+      "tags": ["live-coding", "agentic-engineering"]
+    },
+    {
+      "title": "My Current AI Dev Workflow",
+      "url": "https://steipete.me/posts/2025/optimal-ai-development-workflow/",
+      "date": "2025-08-25",
+      "summary": "Definitive guide to his AI development setup: Ghostty + Claude Code + minimal tooling. Context is precious, less is more.",
+      "tags": ["ai-workflow", "claude-code", "productivity"]
+    },
+    {
+      "title": "Essential Reading for Agentic Engineers \u2014 August 2025",
+      "url": "https://steipete.me/posts/2025/essential-reading-august-2025/",
+      "date": "2025-08-22",
+      "summary": "Curated list of must-read resources for developers working with AI coding agents.",
+      "tags": ["reading-list", "agentic-engineering"]
+    },
+    {
+      "title": "Just One More Prompt",
+      "url": "https://steipete.me/posts/just-one-more-prompt/",
+      "date": "2025-08-19",
+      "summary": "Reflection on the addictive nature of AI-assisted coding and the 'just one more prompt' compulsion.",
+      "tags": ["agentic-engineering", "reflection"]
+    },
+    {
+      "title": "Poltergeist: The Ghost That Keeps Your Builds Fresh",
+      "url": "https://steipete.me/posts/2025/poltergeist-ghost-keeps-builds-fresh/",
+      "date": "2025-08-05",
+      "summary": "Introduces Poltergeist, a tool for keeping builds fresh and automating build pipeline maintenance.",
+      "tags": ["developer-tools", "ci-cd", "automation"]
+    },
+    {
+      "title": "Don't read this Startup Slop",
+      "url": "https://steipete.me/posts/2025/startup-slop/",
+      "date": "2025-08-02",
+      "summary": "Critique of AI-generated startup content and generic advice flooding the tech ecosystem.",
+      "tags": ["opinion", "ai-content"]
+    },
+    {
+      "title": "Essential Reading for Agentic Engineers \u2014 July 2025",
+      "url": "https://steipete.me/posts/2025/essential-reading-july-2025/",
+      "date": "2025-08-02",
+      "summary": "Monthly curated reading list for the agentic engineering community.",
+      "tags": ["reading-list", "agentic-engineering"]
+    },
+    {
+      "title": "Self-Hosting AI Models",
+      "url": "https://steipete.me/posts/2025/self-hosting-ai-models/",
+      "date": "2025-07-31",
+      "summary": "Guide to running AI models locally, covering infrastructure choices and practical tradeoffs.",
+      "tags": ["self-hosting", "ai-infrastructure"]
+    },
+    {
+      "title": "Logging Privacy Shenanigans",
+      "url": "https://steipete.me/posts/2025/logging-privacy-shenanigans/",
+      "date": "2025-07-29",
+      "summary": "Investigation into privacy issues in logging frameworks and system-level data collection.",
+      "tags": ["privacy", "macos", "debugging"]
+    },
+    {
+      "title": "VibeTunnel\u2019s first AI-anniversary",
+      "url": "https://steipete.me/posts/2025/vibetunnel-first-anniversary/",
+      "date": "2025-07-16",
+      "summary": "Retrospective on one year of VibeTunnel \u2014 turning browsers into Mac terminals for remote AI development.",
+      "tags": ["vibetunnel", "remote-dev"]
+    },
+    {
+      "title": "Making AppleScript Work in macOS CLI Tools",
+      "url": "https://steipete.me/posts/2025/applescript-cli-macos-complete-guide/",
+      "date": "2025-07-03",
+      "summary": "Complete guide to integrating AppleScript with command-line tools on macOS.",
+      "tags": ["macos", "applescript", "cli"]
+    },
+    {
+      "title": "Peekaboo 2.0 \u2014 Freeing the CLI from its MCP Shackles",
+      "url": "https://steipete.me/posts/2025/peekaboo-2-freeing-the-cli-from-its-mcp-shackles/",
+      "date": "2025-07-03",
+      "summary": "Major update to Peekaboo \u2014 lightning-fast macOS screenshots for AI agents, now available as standalone CLI.",
+      "tags": ["peekaboo", "macos", "ai-tools"]
+    },
+    {
+      "title": "Command your Claude Code Army, Reloaded",
+      "url": "https://steipete.me/posts/command-your-claude-code-army-reloaded/",
+      "date": "2025-07-03",
+      "summary": "Updated guide to running multiple Claude Code instances in parallel for maximum development throughput.",
+      "tags": ["claude-code", "multi-agent", "productivity"]
+    },
+    {
+      "title": "Essential Reading for Agentic Engineers",
+      "url": "https://steipete.me/posts/2025/essential-reading/",
+      "date": "2025-07-01",
+      "summary": "Foundation reading list for developers entering the agentic engineering space.",
+      "tags": ["reading-list", "agentic-engineering"]
+    },
+    {
+      "title": "Slot Machines for Programmers",
+      "url": "https://steipete.me/posts/2025/when-ai-meets-madness-peters-16-hour-days/",
+      "date": "2025-06-25",
+      "summary": "Raw account of 16-hour AI-assisted coding days and the dopamine-driven loop of rapid iteration.",
+      "tags": ["agentic-engineering", "productivity", "reflection"]
+    },
+    {
+      "title": "My AI Workflow for Understanding Any Codebase",
+      "url": "https://steipete.me/posts/2025/understanding-codebases-with-ai-gemini-workflow/",
+      "date": "2025-06-25",
+      "summary": "Workflow for using AI (Gemini) to rapidly understand unfamiliar codebases.",
+      "tags": ["ai-workflow", "codebase-analysis", "gemini"]
+    },
+    {
+      "title": "stats.store \u2014 Privacy-First Sparkle Analytics",
+      "url": "https://steipete.me/posts/2025/stats-store-privacy-first-sparkle-analytics/",
+      "date": "2025-06-18",
+      "summary": "Introduces stats.store, a privacy-first analytics solution for macOS apps using Sparkle.",
+      "tags": ["macos", "analytics", "privacy"]
+    },
+    {
+      "title": "Showing Settings from macOS Menu Bar Items",
+      "url": "https://steipete.me/posts/2025/showing-settings-from-macos-menu-bar-items/",
+      "date": "2025-06-17",
+      "summary": "Technical guide to displaying settings windows from macOS menu bar applications.",
+      "tags": ["macos", "swift", "ui"]
+    },
+    {
+      "title": "VibeTunnel \u2014 Turn Any Browser into Your Mac Terminal",
+      "url": "https://steipete.me/posts/2025/vibetunnel-turn-any-browser-into-your-mac-terminal/",
+      "date": "2025-06-16",
+      "summary": "Launches VibeTunnel, enabling browser-based terminal access to Mac for remote AI development.",
+      "tags": ["vibetunnel", "remote-dev", "macos"]
+    },
+    {
+      "title": "Vibe Meter 2.0 \u2014 Claude Code Usage Calculation",
+      "url": "https://steipete.me/posts/2025/vibe-meter-2-claude-code-usage-calculation/",
+      "date": "2025-06-15",
+      "summary": "Updated Vibe Meter for tracking Claude Code costs and usage patterns.",
+      "tags": ["claude-code", "cost-tracking", "developer-tools"]
+    },
+    {
+      "title": "llm.codes \u2014 Transform Developer Docs",
+      "url": "https://steipete.me/posts/2025/llm-codes-transform-developer-docs/",
+      "date": "2025-06-14",
+      "summary": "Introduces llm.codes for making developer documentation AI-friendly and searchable.",
+      "tags": ["documentation", "ai-tools"]
+    },
+    {
+      "title": "Automatic Observation Tracking in UIKit and AppKit",
+      "url": "https://steipete.me/posts/2025/automatic-observation-tracking-uikit-appkit/",
+      "date": "2025-06-11",
+      "summary": "Deep technical exploration of automatic observation tracking across Apple\u2019s UI frameworks.",
+      "tags": ["swift", "uikit", "appkit"]
+    },
+    {
+      "title": "Peekaboo MCP \u2014 Lightning-Fast macOS Screenshots for AI Agents",
+      "url": "https://steipete.me/posts/2025/peekaboo-mcp-lightning-fast-macos-screenshots-for-ai-agents/",
+      "date": "2025-06-07",
+      "summary": "Introduces Peekaboo, an MCP server enabling AI agents to take and analyze macOS screenshots instantly.",
+      "tags": ["peekaboo", "mcp", "ai-tools", "macos"]
+    },
+    {
+      "title": "Migrating 700+ Tests to Swift Testing",
+      "url": "https://steipete.me/posts/2025/migrating-700-tests-to-swift-testing/",
+      "date": "2025-06-06",
+      "summary": "Practical guide to migrating a large test suite from XCTest to the new Swift Testing framework.",
+      "tags": ["swift", "testing", "migration"]
+    },
+    {
+      "title": "Commanding Your Claude Code Army",
+      "url": "https://steipete.me/posts/2025/commanding-your-claude-code-army/",
+      "date": "2025-06-05",
+      "summary": "Guide to running multiple concurrent Claude Code instances for parallel development \u2014 the multi-agent workflow.",
+      "tags": ["claude-code", "multi-agent", "agentic-engineering"]
+    },
+    {
+      "title": "Code Signing and Notarization \u2014 Sparkle and Tears",
+      "url": "https://steipete.me/posts/2025/code-signing-and-notarization-sparkle-and-tears/",
+      "date": "2025-06-05",
+      "summary": "War story of macOS code signing and notarization challenges with the Sparkle update framework.",
+      "tags": ["macos", "code-signing", "sparkle"]
+    },
+    {
+      "title": "Vibe Meter \u2014 Monitor Your AI Costs",
+      "url": "https://steipete.me/posts/2025/vibe-meter-monitor-your-ai-costs/",
+      "date": "2025-06-04",
+      "summary": "Introduces Vibe Meter, a macOS menu bar app for monitoring AI coding tool spending.",
+      "tags": ["developer-tools", "cost-tracking", "macos"]
+    },
+    {
+      "title": "Claude Code Is My Computer",
+      "url": "https://steipete.me/posts/2025/claude-code-is-my-computer/",
+      "date": "2025-06-03",
+      "summary": "Runs Claude Code with full system permissions, using AI as a universal computer interface for coding, automation, and system management.",
+      "tags": ["claude-code", "agentic-engineering", "automation"]
+    },
+    {
+      "title": "Stop Over-thinking AI Subscriptions",
+      "url": "https://steipete.me/posts/2025/stop-overthinking-ai-subscriptions/",
+      "date": "2025-06-02",
+      "summary": "Practical advice on choosing AI tool subscriptions without overthinking the decision.",
+      "tags": ["ai-tools", "opinion"]
+    },
+    {
+      "title": "Introducing Demark \u2014 HTML to Markdown in Swift",
+      "url": "https://steipete.me/posts/2025/introducing-demark-html-to-markdown-in-swift/",
+      "date": "2025-06-01",
+      "summary": "Open-source Swift library for converting HTML to Markdown, useful for AI agent pipelines.",
+      "tags": ["swift", "open-source", "markdown"]
+    },
+    {
+      "title": "The Future of Vibe Coding",
+      "url": "https://steipete.me/posts/2025/the-future-of-vibe-coding/",
+      "date": "2025-06-01",
+      "summary": "Live workshop building two functional apps in 3 hours, demonstrating AI-assisted development where code becomes cheaper and iteration becomes faster.",
+      "tags": ["vibe-coding", "live-coding", "agentic-engineering"]
+    },
+    {
+      "title": "MCP Best Practices",
+      "url": "https://steipete.me/posts/2025/mcp-best-practices/",
+      "date": "2025-06-01",
+      "summary": "Guide to best practices for building and using Model Context Protocol servers with AI coding tools.",
+      "tags": ["mcp", "ai-tools", "best-practices"]
+    },
+    {
+      "title": "Finding My Spark Again",
+      "url": "https://steipete.me/posts/2025/finding-my-spark-again/",
+      "date": "2025-06-01",
+      "summary": "After selling PSPDFKit and struggling with post-exit emptiness, rediscovered passion through building with AI.",
+      "tags": ["personal", "career", "entrepreneurship"]
+    },
+    {
+      "title": "Top-Level Menu Visibility in SwiftUI for macOS",
+      "url": "https://steipete.me/posts/2021/top-level-menu-visibility-in-swiftui/",
+      "date": "2021-04-09",
+      "summary": "Technical solution for controlling menu visibility in SwiftUI macOS applications.",
+      "tags": ["swiftui", "macos"]
+    },
+    {
+      "title": "Fixing keyboardShortcut in SwiftUI",
+      "url": "https://steipete.me/posts/2021/fixing-keyboardshortcut-in-swiftui/",
+      "date": "2021-01-31",
+      "summary": "Workaround for SwiftUI keyboard shortcut bugs in macOS apps.",
+      "tags": ["swiftui", "macos", "debugging"]
+    },
+    {
+      "title": "Supporting Both Tap and Long Press on a Button in SwiftUI",
+      "url": "https://steipete.me/posts/2021/supporting-both-tap-and-longpress-on-button-in-swiftui/",
+      "date": "2021-01-27",
+      "summary": "Technique for handling simultaneous tap and long-press gestures on SwiftUI buttons.",
+      "tags": ["swiftui", "ios"]
+    },
+    {
+      "title": "On Using Apple Silicon Mac Mini for Continuous Integration",
+      "url": "https://steipete.me/posts/2020/apple-silicon-mac-mini-for-ci/",
+      "date": "2020-12-14",
+      "summary": "Early experience report using M1 Mac Minis for CI/CD pipelines.",
+      "tags": ["apple-silicon", "ci-cd"]
+    },
+    {
+      "title": "Apple Silicon M1: A Developer\u2019s Perspective",
+      "url": "https://steipete.me/posts/2020/apple-silicon-m1-a-developer-perspective/",
+      "date": "2020-11-28",
+      "summary": "Comprehensive developer review of Apple\u2019s M1 chip covering performance, compatibility, and development workflow impact.",
+      "tags": ["apple-silicon", "review"]
+    },
+    {
+      "title": "Gardening Your Twitter: Curating Your Timeline",
+      "url": "https://steipete.me/posts/2020/curating-your-twitter-timeline/",
+      "date": "2020-10-21",
+      "summary": "Strategies for curating a useful Twitter feed by muting noise and following high-signal accounts.",
+      "tags": ["social-media", "productivity"]
+    },
+    {
+      "title": "Gardening Your Twitter: Growing Your Followers",
+      "url": "https://steipete.me/posts/2020/growing-your-twitter-followers/",
+      "date": "2020-10-21",
+      "summary": "Practical guide to growing a developer-focused Twitter following through authentic engagement.",
+      "tags": ["social-media", "personal-brand"]
+    },
+    {
+      "title": "The State of SwiftUI",
+      "url": "https://steipete.me/posts/2020/state-of-swiftui/",
+      "date": "2020-09-13",
+      "summary": "Critical assessment of SwiftUI\u2019s maturity and readiness for production use.",
+      "tags": ["swiftui", "ios", "opinion"]
+    },
+    {
+      "title": "Forbidden Controls in Catalyst",
+      "url": "https://steipete.me/posts/2020/forbidden-controls-in-catalyst-mac-idiom/",
+      "date": "2020-09-22",
+      "summary": "Investigation into UIKit controls that are silently blocked in Mac Catalyst Mac Idiom mode.",
+      "tags": ["catalyst", "macos", "debugging"]
+    },
+    {
+      "title": "Disabling Keyboard Avoidance in SwiftUI\u2019s UIHostingController",
+      "url": "https://steipete.me/posts/2020/disabling-keyboard-avoidance-in-swiftui-uihostingcontroller/",
+      "date": "2020-09-21",
+      "summary": "Workaround for SwiftUI\u2019s automatic keyboard avoidance behavior in UIHostingController.",
+      "tags": ["swiftui", "ios", "debugging"]
+    },
+    {
+      "title": "Logging in Swift",
+      "url": "https://steipete.me/posts/2020/logging-in-swift/",
+      "date": "2020-08-24",
+      "summary": "Guide to implementing effective logging in Swift applications using os_log and custom solutions.",
+      "tags": ["swift", "logging"]
+    },
+    {
+      "title": "Building with Swift Trunk Development Snapshots",
+      "url": "https://steipete.me/posts/2020/building-with-swift-trunk/",
+      "date": "2020-06-12",
+      "summary": "How to build and test projects with unreleased Swift compiler snapshots from trunk.",
+      "tags": ["swift", "toolchain"]
+    },
+    {
+      "title": "Calling Super at Runtime in Swift",
+      "url": "https://steipete.me/posts/2020/calling-super-at-runtime/",
+      "date": "2020-06-10",
+      "summary": "Advanced technique for calling super implementations at runtime in Swift using the Objective-C runtime.",
+      "tags": ["swift", "runtime", "objective-c"]
+    },
+    {
+      "title": "zld \u2014 A Faster Version of Apple\u2019s Linker",
+      "url": "https://steipete.me/posts/2020/zld-a-faster-linker/",
+      "date": "2020-06-05",
+      "summary": "Review of zld, a drop-in faster replacement for Apple\u2019s ld linker for faster build times.",
+      "tags": ["toolchain", "performance"]
+    },
+    {
+      "title": "InterposeKit",
+      "url": "https://steipete.me/posts/2020/interposekit/",
+      "date": "2020-05-31",
+      "summary": "Introduces InterposeKit for elegant method swizzling in Swift, enabling runtime behavior modification.",
+      "tags": ["swift", "open-source", "runtime"]
+    },
+    {
+      "title": "The Great Mac Catalyst Text Input Crash Hunt",
+      "url": "https://steipete.me/posts/2020/mac-catalyst-crash-hunt/",
+      "date": "2020-05-29",
+      "summary": "Detailed investigation into a recurring text input crash in Mac Catalyst applications.",
+      "tags": ["catalyst", "debugging", "macos"]
+    },
+    {
+      "title": "Jailbreaking for iOS Developers",
+      "url": "https://steipete.me/posts/2020/jailbreaking-for-ios-developers/",
+      "date": "2020-05-25",
+      "summary": "How iOS jailbreaking enables better debugging and understanding of UIKit internals.",
+      "tags": ["ios", "debugging", "jailbreaking"]
+    },
+    {
+      "title": "Let\u2019s Try This Again",
+      "url": "https://steipete.me/posts/2020/lets-try-this-again/",
+      "date": "2020-05-14",
+      "summary": "Blog relaunch post, committing to regular writing about iOS/macOS development.",
+      "tags": ["meta", "writing"]
+    },
+    {
+      "title": "How We Work at PSPDFKit",
+      "url": "https://steipete.me/posts/2019/how-we-work/",
+      "date": "2019-07-03",
+      "summary": "Inside look at PSPDFKit\u2019s distributed team culture, processes, and engineering practices.",
+      "tags": ["pspdfkit", "remote-work", "engineering-culture"]
+    },
+    {
+      "title": "Swizzling in Swift",
+      "url": "https://steipete.me/posts/2019/swizzling-in-swift/",
+      "date": "2019-06-26",
+      "summary": "Advanced techniques for runtime method swizzling in Swift applications.",
+      "tags": ["swift", "runtime"]
+    },
+    {
+      "title": "WWDC for First-Timers, 2019 Edition",
+      "url": "https://steipete.me/posts/2019/wwdc-tips-2019-edition/",
+      "date": "2019-05-30",
+      "summary": "Practical guide for first-time WWDC attendees covering logistics, networking, and sessions.",
+      "tags": ["wwdc", "ios", "community"]
+    },
+    {
+      "title": "Challenges of Adopting Drag and Drop",
+      "url": "https://steipete.me/posts/2018/challenges-of-drag-and-drop/",
+      "date": "2018-11-07",
+      "summary": "Technical challenges encountered implementing drag-and-drop in iOS apps, especially for PDF documents.",
+      "tags": ["ios", "uikit", "drag-and-drop"]
+    },
+    {
+      "title": "Marzipan: Porting iOS Apps to the Mac",
+      "url": "https://steipete.me/posts/2018/porting-ios-apps-to-mac-marzipan-iosmac-uikit-appkit/",
+      "date": "2018-09-20",
+      "summary": "Early exploration of Apple\u2019s Marzipan (later Catalyst) for bringing iOS apps to macOS.",
+      "tags": ["catalyst", "macos", "ios"]
+    },
+    {
+      "title": "How to Use Slack and Not Go Crazy",
+      "url": "https://steipete.me/posts/2018/how-to-use-slack-and-not-go-crazy/",
+      "date": "2018-06-21",
+      "summary": "Strategies for managing Slack notifications and maintaining focus in distributed teams.",
+      "tags": ["productivity", "remote-work"]
+    },
+    {
+      "title": "Hardcore Debugging",
+      "url": "https://steipete.me/posts/2018/hardcore-debugging/",
+      "date": "2018-03-07",
+      "summary": "Advanced debugging techniques for iOS/macOS development including LLDB, dtrace, and runtime inspection.",
+      "tags": ["debugging", "ios", "macos"]
+    },
+    {
+      "title": "Binary Frameworks in Swift",
+      "url": "https://steipete.me/posts/2018/binary-frameworks-swift/",
+      "date": "2018-01-29",
+      "summary": "Challenges and solutions for distributing pre-compiled Swift frameworks.",
+      "tags": ["swift", "frameworks"]
+    },
+    {
+      "title": "Even Swiftier Objective-C",
+      "url": "https://steipete.me/posts/2017/even-swiftier-objective-c/",
+      "date": "2017-06-14",
+      "summary": "Making Objective-C APIs more Swift-friendly through naming conventions and nullability annotations.",
+      "tags": ["swift", "objective-c"]
+    },
+    {
+      "title": "The Case for Deprecating UITableView",
+      "url": "https://steipete.me/posts/2017/the-case-for-deprecating-uitableview/",
+      "date": "2017-01-19",
+      "summary": "Argument for replacing UITableView with UICollectionView as the default list component in iOS.",
+      "tags": ["ios", "uikit", "opinion"]
+    },
+    {
+      "title": "Running UI Tests on iOS With Ludicrous Speed",
+      "url": "https://steipete.me/posts/2016/running-ui-tests-with-ludicrous-speed/",
+      "date": "2016-04-27",
+      "summary": "Techniques for dramatically speeding up iOS UI test execution.",
+      "tags": ["ios", "testing", "performance"]
+    },
+    {
+      "title": "Hiring a distributed team",
+      "url": "https://steipete.me/posts/2016/hiring-a-distributed-team/",
+      "date": "2016-09-20",
+      "summary": "Lessons from building PSPDFKit\u2019s fully distributed engineering team across multiple countries.",
+      "tags": ["remote-work", "hiring", "pspdfkit"]
+    },
+    {
+      "title": "Writing Good Bug Reports",
+      "url": "https://steipete.me/posts/2016/writing-good-bug-reports/",
+      "date": "2016-09-13",
+      "summary": "Guide to writing effective Apple Radar bug reports that actually get fixed.",
+      "tags": ["ios", "debugging", "apple"]
+    },
+    {
+      "title": "Real-time collaboration, Apple, and you",
+      "url": "https://steipete.me/posts/2016/real-time-collaboration/",
+      "date": "2016-09-08",
+      "summary": "Technical exploration of real-time collaboration in document editing and Apple\u2019s approach.",
+      "tags": ["collaboration", "pspdfkit"]
+    },
+    {
+      "title": "Efficient iOS Version Checking",
+      "url": "https://steipete.me/posts/2016/efficient-ios-version-checking/",
+      "date": "2016-07-06",
+      "summary": "Best practices for checking iOS versions efficiently in code.",
+      "tags": ["ios", "best-practices"]
+    },
+    {
+      "title": "Investigating Thread Safety of UIImage",
+      "url": "https://steipete.me/posts/2016/investigating-thread-safety-of-uiimage/",
+      "date": "2016-06-30",
+      "summary": "Deep investigation into whether UIImage is thread-safe in practice, with surprising findings.",
+      "tags": ["ios", "concurrency", "debugging"]
+    },
+    {
+      "title": "Swifty Objective-C",
+      "url": "https://steipete.me/posts/2016/swifty-objective-c/",
+      "date": "2016-05-26",
+      "summary": "Techniques for making Objective-C code more idiomatic when used from Swift.",
+      "tags": ["swift", "objective-c"]
+    },
+    {
+      "title": "A Pragmatic Approach to Cross-Platform",
+      "url": "https://steipete.me/posts/2016/a-pragmatic-approach-to-cross-platform/",
+      "date": "2016-04-13",
+      "summary": "PSPDFKit\u2019s practical approach to cross-platform development across iOS, Android, and web.",
+      "tags": ["cross-platform", "pspdfkit"]
+    },
+    {
+      "title": "Surprises with Swift Extensions",
+      "url": "https://steipete.me/posts/2016/surprises-with-swift-extensions/",
+      "date": "2016-03-24",
+      "summary": "Unexpected behaviors and edge cases when using Swift extensions.",
+      "tags": ["swift"]
+    },
+    {
+      "title": "Using ccache for Fun and Profit",
+      "url": "https://steipete.me/posts/2015/ccache-for-fun-and-profit/",
+      "date": "2015-10-06",
+      "summary": "How to use ccache to dramatically speed up Objective-C/C++ compilation times.",
+      "tags": ["toolchain", "performance"]
+    },
+    {
+      "title": "Researching ResearchKit",
+      "url": "https://steipete.me/posts/2015/researching-researchkit/",
+      "date": "2015-04-14",
+      "summary": "Analysis of Apple\u2019s ResearchKit framework for medical research applications.",
+      "tags": ["ios", "health"]
+    },
+    {
+      "title": "UIKit Debug Mode",
+      "url": "https://steipete.me/posts/2015/uikit-debug-mode/",
+      "date": "2015-01-09",
+      "summary": "Hidden UIKit debugging features and how to activate them for development.",
+      "tags": ["ios", "uikit", "debugging"]
+    },
+    {
+      "title": "Hacking with Aspects",
+      "url": "https://steipete.me/posts/2014/hacking-with-aspects/",
+      "date": "2014-05-06",
+      "summary": "Introduction to Aspects, a popular iOS library for clean aspect-oriented programming via method swizzling.",
+      "tags": ["ios", "open-source", "aop"]
+    },
+    {
+      "title": "A Story About Swizzling the Right Way and Touch Forwarding",
+      "url": "https://steipete.me/posts/2014/a-story-about-swizzling-the-right-way-and-touch-forwarding/",
+      "date": "2014-07-04",
+      "summary": "Deep dive into safe method swizzling patterns and touch event forwarding in UIKit.",
+      "tags": ["ios", "runtime", "swizzling"]
+    },
+    {
+      "title": "Fixing What Apple Doesn\u2019t",
+      "url": "https://steipete.me/posts/2014/fixing-what-apple-doesnt/",
+      "date": "2014-01-04",
+      "summary": "Philosophy of finding and fixing Apple framework bugs through runtime patches \u2014 a hallmark of PSPDFKit\u2019s approach.",
+      "tags": ["ios", "debugging", "pspdfkit"]
+    },
+    {
+      "title": "UIAppearance for Custom Views",
+      "url": "https://steipete.me/posts/2013/uiappearance-for-custom-views/",
+      "date": "2013-02-12",
+      "summary": "How to implement UIAppearance protocol support in custom iOS views.",
+      "tags": ["ios", "uikit"]
+    },
+    {
+      "title": "Smart Proxy Delegation",
+      "url": "https://steipete.me/posts/2013/smart-proxy-delegation/",
+      "date": "2013-07-30",
+      "summary": "Elegant pattern for intercepting delegate methods using NSProxy in Objective-C.",
+      "tags": ["objective-c", "ios", "patterns"]
+    },
+    {
+      "title": "Moving On",
+      "url": "https://steipete.me/posts/2012/moving-on/",
+      "date": "2012-04-06",
+      "summary": "Announcement of leaving a previous role to focus full-time on PSPDFKit.",
+      "tags": ["career", "pspdfkit"]
+    },
+    {
+      "title": "Reboot",
+      "url": "https://steipete.me/posts/2012/reboot/",
+      "date": "2012-04-05",
+      "summary": "Blog reboot \u2014 fresh start for writing about iOS development.",
+      "tags": ["meta"]
+    }
+  ],
   "sources": [
     {
       "title": "OpenClaw, OpenAI and the future - Peter Steinberger",
