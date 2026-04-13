@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Heading, Text, Flex, Button, Badge } from "@radix-ui/themes";
-import type { CssCategory } from "@/lib/css-properties";
+import type { MemorizeCategory } from "@/lib/memorize-types";
 import type { MasteryMap } from "./MemorizeDashboard";
 import {
   getDueItems,
@@ -12,9 +12,9 @@ import {
 } from "@/lib/spaced-repetition";
 
 interface DueForReviewProps {
-  categories: CssCategory[];
+  categories: MemorizeCategory[];
   mastery: MasteryMap;
-  onReviewProperty: (propertyId: string) => void;
+  onReviewProperty: (itemId: string) => void;
   onStartDueReview: () => void;
 }
 
@@ -27,7 +27,7 @@ export function DueForReview({
   const now = useMemo(() => new Date(), []);
 
   const { dueItems, nextUpcoming } = useMemo(() => {
-    const allProps = categories.flatMap((c) => c.properties);
+    const allProps = categories.flatMap((c) => c.items);
     const reviewItems: ReviewItem[] = allProps
       .filter((p) => mastery[p.id]?.lastInteractionAt)
       .map((p) => ({
@@ -48,10 +48,10 @@ export function DueForReview({
   const hasAnyMastery = Object.keys(mastery).length > 0;
   if (!hasAnyMastery) return null;
 
-  const findPropertyName = (id: string): string => {
+  const findItemName = (id: string): string => {
     for (const cat of categories) {
-      const prop = cat.properties.find((p) => p.id === id);
-      if (prop) return prop.property;
+      const item = cat.items.find((p) => p.id === id);
+      if (item) return item.term;
     }
     return id;
   };
@@ -77,7 +77,7 @@ export function DueForReview({
             </Text>
             {nextUpcoming && (
               <Text size="2" color="gray">
-                Next review: <code>{findPropertyName(nextUpcoming.id)}</code>{" "}
+                Next review: <code>{findItemName(nextUpcoming.id)}</code>{" "}
                 {formatRelativeTime(nextUpcoming.nextReviewAt, now)}
               </Text>
             )}
@@ -113,7 +113,7 @@ export function DueForReview({
           <div key={item.id} className="due-review-item">
             <Flex justify="between" align="center" gap="2">
               <Flex align="center" gap="2" style={{ flex: 1, minWidth: 0 }}>
-                <code className="due-review-prop">{findPropertyName(item.id)}</code>
+                <code className="due-review-prop">{findItemName(item.id)}</code>
                 <Badge
                   color={getLevelColor(item.id)}
                   variant="soft"

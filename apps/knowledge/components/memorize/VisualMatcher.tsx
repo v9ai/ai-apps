@@ -2,12 +2,15 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Button, Flex, Text } from "@radix-ui/themes";
-import type { CssProperty, CssValue } from "@/lib/css-properties";
+import type { MemorizeItem } from "@/lib/memorize-types";
 import { LiveDemo } from "./LiveDemo";
 
+/** VisualMatcher only works with items that have a demo field. */
+type DemoItem = MemorizeItem & { demo: NonNullable<MemorizeItem["demo"]> };
+
 interface VisualMatcherProps {
-  properties: CssProperty[];
-  onRate: (propertyId: string, isCorrect: boolean) => void;
+  items: MemorizeItem[];
+  onRate: (itemId: string, isCorrect: boolean) => void;
 }
 
 interface CssContext {
@@ -17,7 +20,7 @@ interface CssContext {
 }
 
 interface MatchQuestion {
-  prop: CssProperty;
+  item: DemoItem;
   correctOption: string;
   options: string[];
   cssContext: CssContext;
@@ -28,8 +31,8 @@ function buildExplanation(
   question: MatchQuestion,
   selectedOption: string,
 ): string {
-  const { prop, correctOption } = question;
-  const hl = prop.demo.highlightProp;
+  const { item, correctOption } = question;
+  const hl = item.demo.highlightProp;
 
   // Parse property and value from an option string like "grid-column: 1 / 3;"
   const parseOption = (opt: string) => {
@@ -39,16 +42,16 @@ function buildExplanation(
 
   const correct = parseOption(correctOption);
   const picked = parseOption(selectedOption);
-  if (!correct || !picked) return prop.shortDescription;
+  if (!correct || !picked) return item.description;
 
   const lines: string[] = [];
 
   // Explain what the correct answer does
-  const correctValueDesc = prop.values.find(
-    (v) => correct.value === v.value || correct.value.match(new RegExp(`^${v.value.replace(/<[^>]+>/g, ".+")}$`)),
+  const correctValueDesc = item.details.find(
+    (d) => correct.value === d.label || correct.value.match(new RegExp(`^${d.label.replace(/<[^>]+>/g, ".+")}$`)),
   );
   lines.push(
-    `${correctOption} — ${correctValueDesc?.description ?? prop.shortDescription}`,
+    `${correctOption} — ${correctValueDesc?.description ?? item.description}`,
   );
 
   // Explain why the picked option is wrong
@@ -63,8 +66,8 @@ function buildExplanation(
     );
   } else {
     // Same property, different value
-    const pickedValueDesc = prop.values.find(
-      (v) => picked.value === v.value || picked.value.match(new RegExp(`^${v.value.replace(/<[^>]+>/g, ".+")}$`)),
+    const pickedValueDesc = item.details.find(
+      (d) => picked.value === d.label || picked.value.match(new RegExp(`^${d.label.replace(/<[^>]+>/g, ".+")}$`)),
     );
     if (pickedValueDesc) {
       lines.push(
@@ -77,9 +80,9 @@ function buildExplanation(
 }
 
 /** Build CSS context with the tested property blanked out */
-function buildCssContext(prop: CssProperty): CssContext {
-  const lines = prop.demo.css.split("\n");
-  const hl = prop.demo.highlightProp;
+function buildCssContext(item: DemoItem): CssContext {
+  const lines = item.demo.css.split("\n");
+  const hl = item.demo.highlightProp;
   const singleLineRe = new RegExp(`(${hl}\\s*:\\s*)([^;]+)(;)`);
 
   // Try single-line match first
@@ -125,16 +128,16 @@ function buildCssContext(prop: CssProperty): CssContext {
   }
 
   return {
-    blankedCss: blankedLines ? blankedLines.join("\n") : prop.demo.css,
-    revealedCss: prop.demo.css,
+    blankedCss: blankedLines ? blankedLines.join("\n") : item.demo.css,
+    revealedCss: item.demo.css,
     highlightLine,
   };
 }
 
-/** Pick a value variation for a property to create wrong answers */
-function generateVariations(prop: CssProperty): string[] {
-  const hl = prop.demo.highlightProp;
-  const css = prop.demo.css;
+/** Pick a value variation for an item to create wrong answers */
+function generateVariations(item: DemoItem): string[] {
+  const hl = item.demo.highlightProp;
+  const css = item.demo.css;
 
   // Extract the current value from the demo CSS
   const re = new RegExp(`${hl}\\s*:\\s*([^;]+);`);
@@ -142,8 +145,8 @@ function generateVariations(prop: CssProperty): string[] {
   if (!match) return [];
 
   const currentValue = match[1].trim();
-  const allValues = prop.values
-    .map((v) => v.value)
+  const allValues = item.details
+    .map((d) => d.label)
     .filter(
       (v) =>
         v !== currentValue &&
@@ -156,11 +159,11 @@ function generateVariations(prop: CssProperty): string[] {
 }
 
 function buildQuestion(
-  prop: CssProperty,
-  allProps: CssProperty[],
+  item: DemoItem,
+  allItems: DemoItem[],
 ): MatchQuestion {
-  const hl = prop.demo.highlightProp;
-  const css = prop.demo.css;
+  const hl = item.demo.highlightProp;
+  const css = item.demo.css;
   const re = new RegExp(`(${hl}\\s*:\\s*)([^;]+)(;)`);
   const match = css.match(re);
 

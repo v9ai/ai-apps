@@ -2,48 +2,50 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Button, Flex, Text } from "@radix-ui/themes";
-import type { CssProperty } from "@/lib/css-properties";
+import type { MemorizeItem } from "@/lib/memorize-types";
 import { LiveDemo } from "./LiveDemo";
 
 interface FillInTheBlankProps {
-  properties: CssProperty[];
-  onRate: (propertyId: string, isCorrect: boolean) => void;
+  items: MemorizeItem[];
+  onRate: (itemId: string, isCorrect: boolean) => void;
 }
 
 interface BlankChallenge {
-  prop: CssProperty;
-  blankedCss: string;
+  item: MemorizeItem;
+  blankedText: string;
   answer: string;
   blankLabel: string;
+  mode: "css" | "text";
 }
 
-function generateChallenge(prop: CssProperty): BlankChallenge {
-  const css = prop.demo.css;
-  const highlightProp = prop.demo.highlightProp;
+function generateChallenge(item: MemorizeItem): BlankChallenge {
+  // CSS mode: blank the value from demo CSS
+  if (item.demo) {
+    const css = item.demo.css;
+    const highlightProp = item.demo.highlightProp;
+    const lines = css.split("\n");
+    let answer = "";
+    const blankedLines = lines.map((line) => {
+      const re = new RegExp(`(${highlightProp}\\s*:\\s*)([^;]+)(;?)`);
+      const match = line.match(re);
+      if (match && !answer) {
+        answer = match[2].trim();
+        return line.replace(re, `$1_____$3`);
+      }
+      return line;
+    });
+    return { item, blankedText: blankedLines.join("\n"), answer, blankLabel: highlightProp, mode: "css" };
+  }
 
-  // Find the line containing the highlighted property and blank its value
-  const lines = css.split("\n");
-  let answer = "";
-  const blankedLines = lines.map((line) => {
-    const re = new RegExp(`(${highlightProp}\\s*:\\s*)([^;]+)(;?)`);
-    const match = line.match(re);
-    if (match && !answer) {
-      answer = match[2].trim();
-      return line.replace(re, `$1_____$3`);
-    }
-    return line;
-  });
-
-  return {
-    prop,
-    blankedCss: blankedLines.join("\n"),
-    answer,
-    blankLabel: highlightProp,
-  };
+  // Text mode: blank the term from the description
+  const answer = item.term;
+  const escaped = answer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const blankedText = item.description.replace(new RegExp(escaped, "gi"), "_____");
+  return { item, blankedText, answer, blankLabel: "term", mode: "text" };
 }
 
 export function FillInTheBlank({
-  properties,
+  items,
   onRate,
 }: FillInTheBlankProps) {
   const [index, setIndex] = useState(0);
@@ -51,8 +53,8 @@ export function FillInTheBlank({
   const [submitted, setSubmitted] = useState(false);
 
   const challenge = useMemo(
-    () => (properties[index] ? generateChallenge(properties[index]) : null),
-    [properties, index],
+    () => (items[index] ? generateChallenge(items[index]) : null),
+    [items, index],
   );
 
   const isCorrect = useMemo(() => {
@@ -65,14 +67,14 @@ export function FillInTheBlank({
   const handleSubmit = useCallback(() => {
     if (!challenge) return;
     setSubmitted(true);
-    onRate(challenge.prop.id, isCorrect);
+    onRate(challenge.item.id, isCorrect);
   }, [challenge, isCorrect, onRate]);
 
   const handleNext = useCallback(() => {
     setSubmitted(false);
     setUserInput("");
-    setIndex((i) => (i + 1 < properties.length ? i + 1 : 0));
-  }, [properties.length]);
+    setIndex((i) => (i + 1 < items.length ? i + 1 : 0));
+  }, [items.length]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -88,35 +90,36 @@ export function FillInTheBlank({
     return (
       <div className="memorize-empty">
         <span className="memorize-empty-icon">&#x270F;</span>
-        <Text size="2">No properties to practice.</Text>
+        <Text size="2">No concepts to practice.</Text>
       </div>
     );
   }
 
+  const isCssMode = challenge.mode === "css" && challenge.item.demo;
+
   // Build preview with user's input substituted
-  const previewCss = submitted
-    ? challenge.prop.demo.css
-    : challenge.blankedCss.replace("_____", userInput || "/* ? */");
+  const previewCss = isCssMode
+    ? submitted
+      ? challenge.item.demo!.css
+      : challenge.blankedText.replace("_____", userInput || "/* ? */")
+    : "";
 
   return (
     <div className="fill-blank-container">
       <Text size="2" color="gray" mb="3" style={{ display: "block" }}>
-        Fill in the value for{" "}
-        <code
-          style={{
-            fontFamily: "var(--font-mono)",
-            background: "var(--violet-3)",
-            padding: "1px 6px",
-            borderRadius: "var(--radius-1)",
-          }}
-        >
-          {challenge.blankLabel}
-        </code>
-        :
+        {isCssMode ? (
+          <>Fill in the value for{" "}
+            <code style={{ fontFamily: "var(--font-mono)", background: "var(--violet-3)", padding: "1px 6px", borderRadius: "var(--radius-1)" }}>
+              {challenge.blankLabel}
+            </code>:
+          </>
+        ) : (
+          "Fill in the missing term:"
+        )}
       </Text>
 
-      <div className="fill-blank-code">
-        {challenge.blankedCss.split("\n").map((line, i) => {
+      <div className={isCssMode ? "fill-blank-code" : "fill-blank-text"}>
+        {challenge.blankedText.split("\n").map((line, i) => {
           if (line.includes("_____")) {
             const [before, after] = line.split("_____");
             return (
@@ -133,7 +136,7 @@ export function FillInTheBlank({
                   value={submitted && !isCorrect ? challenge.answer : userInput}
                   onChange={(e) => !submitted && setUserInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="value"
+                  placeholder={isCssMode ? "value" : "term"}
                   disabled={submitted}
                   autoFocus
                 />
@@ -145,13 +148,15 @@ export function FillInTheBlank({
         })}
       </div>
 
-      <div className="fill-blank-preview">
-        <LiveDemo
-          html={challenge.prop.demo.html}
-          css={previewCss}
-          height={140}
-        />
-      </div>
+      {isCssMode && (
+        <div className="fill-blank-preview">
+          <LiveDemo
+            html={challenge.item.demo!.html}
+            css={previewCss}
+            height={140}
+          />
+        </div>
+      )}
 
       <div className="fill-blank-controls">
         {!submitted ? (
@@ -188,7 +193,7 @@ export function FillInTheBlank({
 
       <Flex justify="center" mt="3">
         <Text size="1" color="gray">
-          {index + 1} / {properties.length}
+          {index + 1} / {items.length}
         </Text>
       </Flex>
     </div>

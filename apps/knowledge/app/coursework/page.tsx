@@ -28,7 +28,6 @@ import {
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
-import { upload } from "@vercel/blob/client";
 import type { Learner, Coursework } from "@/src/db/schema";
 
 function formatSize(bytes: number) {

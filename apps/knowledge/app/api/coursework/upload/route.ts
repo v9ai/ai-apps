@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { auth } from "@/lib/auth";
 import { db } from "@/src/db";
 import { coursework } from "@/src/db/schema";
+import { uploadToR2, courseworkKey } from "@/lib/r2";
 
 const ALLOWED_TYPES = new Set([
   "application/pdf",
@@ -22,45 +22,44 @@ async function getSession() {
 }
 
 export async function POST(req: Request) {
-  const body = (await req.json()) as HandleUploadBody;
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  try {
-    const jsonResponse = await handleUpload({
-      body,
-      request: req,
-      onBeforeGenerateToken: async (_pathname, clientPayload) => {
-        const session = await getSession();
-        if (!session) throw new Error("Unauthorized");
+  const formData = await req.formData();
+  const file = formData.get("file") as File | null;
+  const title = (formData.get("title") as string) || "";
+  const subject = (formData.get("subject") as string) || null;
+  const learnerId = formData.get("learnerId") as string;
 
-        return {
-          allowedContentTypes: [...ALLOWED_TYPES],
-          maximumSizeInBytes: MAX_SIZE,
-          tokenPayload: JSON.stringify({
-            userId: session.user.id,
-            ...(clientPayload ? JSON.parse(clientPayload) : {}),
-          }),
-        };
-      },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
-        if (!tokenPayload) return;
-        const payload = JSON.parse(tokenPayload);
-
-        await db.insert(coursework).values({
-          learnerId: payload.learnerId,
-          userId: payload.userId,
-          title: payload.title || blob.pathname.split("/").pop() || "Untitled",
-          fileName: blob.pathname.split("/").pop() || blob.pathname,
-          fileUrl: blob.url,
-          fileSize: payload.fileSize || 0,
-          mimeType: blob.contentType || payload.mimeType || "application/octet-stream",
-          subject: payload.subject || null,
-        });
-      },
-    });
-
-    return NextResponse.json(jsonResponse);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Upload failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+  if (!file || !learnerId) {
+    return NextResponse.json({ error: "file and learnerId are required" }, { status: 400 });
   }
+
+  if (!ALLOWED_TYPES.has(file.type)) {
+    return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
+  }
+
+  if (file.size > MAX_SIZE) {
+    return NextResponse.json({ error: "File too large (max 10 MB)" }, { status: 400 });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const key = courseworkKey(session.user.id, file.name);
+  const fileUrl = await uploadToR2(key, buffer, file.type);
+
+  const [row] = await db
+    .insert(coursework)
+    .values({
+      learnerId,
+      userId: session.user.id,
+      title: title || file.name,
+      fileName: file.name,
+      fileUrl,
+      fileSize: file.size,
+      mimeType: file.type,
+      subject,
+    })
+    .returning();
+
+  return NextResponse.json(row, { status: 201 });
 }

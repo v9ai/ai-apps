@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { Badge, Flex, Heading, Text, Card, Code, Separator } from "@radix-ui/themes";
 import { LayersIcon } from "@radix-ui/react-icons";
-import { papers, researchStats, extraSections, technicalDetails } from "./data";
+import { papers, researchStats, extraSections, technicalDetails, pipelineAgents } from "./data";
 
 // ── Custom Node Components ───────────────────────────────────────────────────
 
@@ -814,6 +814,119 @@ function EmptyDetailPanel() {
   );
 }
 
+// ── Syntax Highlighting ─────────────────────────────────────────────────────
+
+type Token = { type: "keyword" | "type" | "string" | "comment" | "number" | "punctuation" | "property" | "function" | "graphql" | "plain"; text: string };
+
+const KEYWORDS = new Set(["const", "let", "var", "function", "async", "await", "return", "if", "else", "for", "of", "in", "while", "type", "interface", "export", "import", "from", "new", "throw", "class", "extends", "implements", "try", "catch", "default", "typeof", "as", "readonly", "private", "public", "static", "true", "false", "null", "undefined", "this", "enum", "some", "push", "map", "filter", "reduce", "get", "set"]);
+const TYPES = new Set(["string", "number", "boolean", "void", "any", "never", "unknown", "Promise", "Record", "Map", "Set", "Array", "Date", "Buffer", "Partial", "Required", "Readonly", "Pick", "Omit", "Float", "Int", "ID", "String", "Boolean"]);
+const GQL_KEYWORDS = new Set(["type", "query", "mutation", "input", "enum", "scalar", "schema", "extend", "fragment", "on", "subscription"]);
+
+function tokenize(code: string): Token[] {
+  const tokens: Token[] = [];
+  let i = 0;
+  while (i < code.length) {
+    // Comments
+    if (code[i] === "/" && code[i + 1] === "/") {
+      const end = code.indexOf("\n", i);
+      const commentEnd = end === -1 ? code.length : end;
+      tokens.push({ type: "comment", text: code.slice(i, commentEnd) });
+      i = commentEnd;
+      continue;
+    }
+    if (code[i] === "/" && code[i + 1] === "*") {
+      const end = code.indexOf("*/", i + 2);
+      const commentEnd = end === -1 ? code.length : end + 2;
+      tokens.push({ type: "comment", text: code.slice(i, commentEnd) });
+      i = commentEnd;
+      continue;
+    }
+    // Strings
+    if (code[i] === '"' || code[i] === "'" || code[i] === "`") {
+      const quote = code[i];
+      let j = i + 1;
+      while (j < code.length && code[j] !== quote) {
+        if (code[j] === "\\") j++;
+        j++;
+      }
+      tokens.push({ type: "string", text: code.slice(i, j + 1) });
+      i = j + 1;
+      continue;
+    }
+    // Numbers
+    if (/\d/.test(code[i]) && (i === 0 || !/\w/.test(code[i - 1]))) {
+      let j = i;
+      while (j < code.length && /[\d.]/.test(code[j])) j++;
+      tokens.push({ type: "number", text: code.slice(i, j) });
+      i = j;
+      continue;
+    }
+    // Words
+    if (/[a-zA-Z_$]/.test(code[i])) {
+      let j = i;
+      while (j < code.length && /[\w$]/.test(code[j])) j++;
+      const word = code.slice(i, j);
+      if (GQL_KEYWORDS.has(word) && (i === 0 || code[i - 1] === "\n" || code[i - 1] === " ")) {
+        tokens.push({ type: "graphql", text: word });
+      } else if (KEYWORDS.has(word)) {
+        tokens.push({ type: "keyword", text: word });
+      } else if (TYPES.has(word)) {
+        tokens.push({ type: "type", text: word });
+      } else if (code[j] === "(") {
+        tokens.push({ type: "function", text: word });
+      } else {
+        tokens.push({ type: "plain", text: word });
+      }
+      i = j;
+      continue;
+    }
+    // Punctuation
+    if (/[{}()[\];:,.=<>!&|?+\-*/%^~@#]/.test(code[i])) {
+      tokens.push({ type: "punctuation", text: code[i] });
+      i++;
+      continue;
+    }
+    // Whitespace / other
+    let j = i;
+    while (j < code.length && !/[a-zA-Z_$\d"'`/{}()[\];:,.=<>!&|?+\-*/%^~@#]/.test(code[j])) j++;
+    tokens.push({ type: "plain", text: code.slice(i, j) });
+    i = j;
+  }
+  return tokens;
+}
+
+const tokenColors: Record<Token["type"], string> = {
+  keyword: "var(--purple-11)",
+  type: "var(--cyan-11)",
+  string: "var(--green-11)",
+  comment: "var(--gray-9)",
+  number: "var(--amber-11)",
+  punctuation: "var(--gray-10)",
+  property: "var(--blue-11)",
+  function: "var(--blue-11)",
+  graphql: "var(--violet-11)",
+  plain: "var(--gray-12)",
+};
+
+function CodeBlock({ code, borderColor }: { code: string; borderColor?: string }) {
+  const tokens = tokenize(code);
+  return (
+    <pre style={{
+      padding: 14, borderRadius: 6,
+      background: "var(--gray-1)",
+      border: borderColor ? `1px solid var(--${borderColor}-a4)` : "1px solid var(--gray-a4)",
+      fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
+      overflow: "auto", lineHeight: 1.65, margin: 0,
+    }}>
+      {tokens.map((token, i) => (
+        <span key={i} style={{ color: tokenColors[token.type], fontStyle: token.type === "comment" ? "italic" : undefined }}>
+          {token.text}
+        </span>
+      ))}
+    </pre>
+  );
+}
+
 // ── Key Metrics ─────────────────────────────────────────────────────────────
 
 function KeyMetrics() {
@@ -838,34 +951,127 @@ function KeyMetrics() {
   );
 }
 
-// ── Deep-Dive Sections ──────────────────────────────────────────────────────
+// ── Pipeline Stage Narratives ───────────────────────────────────────────────
+
+const agentColors = ["red", "blue", "amber", "green", "purple"] as const;
+
+function PipelineStageNarratives() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <Zap size={16} style={{ color: "var(--red-9)" }} />
+        <Heading size="5">Pipeline Stages</Heading>
+      </Flex>
+      <Text size="2" color="gray" mb="4" as="p">End-to-end narrative of each pipeline stage — technology choices, data transformations, and how they connect.</Text>
+      <Flex direction="column" gap="3">
+        {pipelineAgents.map((agent, i) => (
+          <Card key={agent.name} style={{ background: "var(--gray-2)", borderLeft: `3px solid var(--${agentColors[i % agentColors.length]}-9)` }}>
+            <Flex align="center" gap="2" mb="2">
+              <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {i + 1}
+              </Badge>
+              <Heading size="3">{agent.name}</Heading>
+            </Flex>
+            <Text size="2" color="gray" as="p" style={{ lineHeight: 1.7 }}>{agent.description}</Text>
+            <Flex gap="4" mt="3" wrap="wrap">
+              <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 200 }}>
+                <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Technology
+                </Text>
+                <Text size="2">{agent.researchBasis}</Text>
+              </Flex>
+              <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 200 }}>
+                <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Data Flow
+                </Text>
+                <Text size="2" style={{ fontFamily: "var(--code-font-family, monospace)", fontSize: 12 }}>{agent.dataFlow}</Text>
+              </Flex>
+            </Flex>
+            {agent.codeSnippet && (
+              <div style={{ marginTop: 12 }}>
+                <CodeBlock code={agent.codeSnippet} />
+              </div>
+            )}
+          </Card>
+        ))}
+      </Flex>
+    </div>
+  );
+}
+
+// ── Deep-Dive Sections (Collapsible) ────────────────────────────────────────
 
 const sectionColors = ["violet", "green", "purple", "red", "amber", "blue", "cyan", "teal"] as const;
 
 function DeepDiveSections() {
   return (
     <div>
-      <Flex align="center" gap="2" mb="3">
+      <Flex align="center" gap="2" mb="1">
         <Brain size={16} style={{ color: "var(--violet-9)" }} />
         <Heading size="5">Deep Dive</Heading>
       </Flex>
-      <Flex direction="column" gap="3">
-        {extraSections.map((section, i) => (
-          <Card key={section.heading} style={{ background: "var(--gray-2)", borderLeft: `3px solid var(--${sectionColors[i % sectionColors.length]}-9)` }}>
-            <Heading size="3" mb="2">{section.heading}</Heading>
-            <Text size="2" color="gray" as="p" style={{ lineHeight: 1.7 }}>{section.content}</Text>
-            {section.codeBlock && (
-              <pre style={{
-                marginTop: 12, padding: 12, borderRadius: 6,
-                background: "var(--gray-1)", border: "1px solid var(--gray-a4)",
-                fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
-                color: "var(--gray-11)", overflow: "auto",
+      <Text size="2" color="gray" mb="4" as="p">
+        {extraSections.length} implementation deep-dives with real code from the codebase. Click to expand.
+      </Text>
+      <Flex direction="column" gap="2">
+        {extraSections.map((section, i) => {
+          const color = sectionColors[i % sectionColors.length];
+          return (
+            <details key={section.heading} style={{ borderRadius: 8, overflow: "hidden" }}>
+              <summary
+                style={{
+                  padding: "10px 16px",
+                  background: "var(--gray-2)",
+                  borderLeft: `3px solid var(--${color}-9)`,
+                  border: "1px solid var(--gray-a4)",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  listStyle: "none",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--gray-12)",
+                  fontFamily: "var(--default-font-family, system-ui)",
+                }}
+              >
+                <span style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  width: 22, height: 22, borderRadius: 4, flexShrink: 0,
+                  background: `color-mix(in srgb, var(--${color}-9) 18%, transparent)`,
+                  color: `var(--${color}-9)`, fontSize: 11, fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
+                }}>
+                  {i + 1}
+                </span>
+                {section.heading}
+                {section.codeBlock && (
+                  <span style={{
+                    marginLeft: "auto", fontSize: 10, fontWeight: 500,
+                    color: "var(--gray-9)", textTransform: "uppercase", letterSpacing: "0.06em",
+                  }}>
+                    code
+                  </span>
+                )}
+              </summary>
+              <div style={{
+                padding: "12px 16px 16px",
+                background: "var(--gray-2)",
+                borderLeft: `3px solid var(--${color}-9)`,
+                borderRight: "1px solid var(--gray-a4)",
+                borderBottom: "1px solid var(--gray-a4)",
+                borderRadius: "0 0 8px 8px",
+                marginTop: -1,
               }}>
-                {section.codeBlock}
-              </pre>
-            )}
-          </Card>
-        ))}
+                <Text size="2" color="gray" as="p" style={{ lineHeight: 1.7, marginBottom: section.codeBlock ? 12 : 0 }}>
+                  {section.content}
+                </Text>
+                {section.codeBlock && <CodeBlock code={section.codeBlock} />}
+              </div>
+            </details>
+          );
+        })}
       </Flex>
     </div>
   );
@@ -924,14 +1130,7 @@ function TechnicalDetailSection() {
               <Card key={detail.heading} style={{ background: "var(--gray-2)", borderLeft: "3px solid var(--green-9)" }}>
                 <Heading size="3" mb="1">{detail.heading}</Heading>
                 <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
-                <pre style={{
-                  padding: 14, borderRadius: 6,
-                  background: "var(--gray-1)", border: "1px solid var(--gray-a4)",
-                  fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
-                  color: "var(--gray-11)", overflow: "auto", lineHeight: 1.6,
-                }}>
-                  {detail.code}
-                </pre>
+                <CodeBlock code={detail.code} borderColor="green" />
               </Card>
             );
           }
@@ -1018,6 +1217,7 @@ function TechFoundations() {
 const tocSections = [
   { id: "pipeline", label: "Pipeline Diagrams", icon: "1–5" },
   { id: "metrics", label: "Key Metrics", icon: "7" },
+  { id: "stages", label: "Pipeline Stages", icon: `${pipelineAgents.length}` },
   { id: "deep-dive", label: "Deep Dive", icon: `${extraSections.length}` },
   { id: "technical", label: "Technical Details", icon: `${technicalDetails.length}` },
   { id: "foundations", label: "Foundations", icon: `${papers.length}` },
@@ -1127,6 +1327,11 @@ export function PipelineClient() {
       <Separator size="4" my="7" />
       <section id="metrics">
         <KeyMetrics />
+      </section>
+
+      <Separator size="4" my="7" />
+      <section id="stages">
+        <PipelineStageNarratives />
       </section>
 
       <Separator size="4" my="7" />

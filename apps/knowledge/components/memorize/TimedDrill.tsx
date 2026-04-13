@@ -2,16 +2,16 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Button, Flex, Text, Heading } from "@radix-ui/themes";
-import type { CssProperty } from "@/lib/css-properties";
+import type { MemorizeItem } from "@/lib/memorize-types";
 
 interface TimedDrillProps {
-  properties: CssProperty[];
+  items: MemorizeItem[];
   durationSeconds?: number;
-  onRate: (propertyId: string, isCorrect: boolean) => void;
+  onRate: (itemId: string, isCorrect: boolean) => void;
 }
 
 interface DrillQuestion {
-  prop: CssProperty;
+  item: MemorizeItem;
   correctAnswer: string;
   options: string[];
 }
@@ -26,28 +26,28 @@ function shuffled<T>(arr: T[]): T[] {
 }
 
 function buildDrillQuestion(
-  prop: CssProperty,
-  allProps: CssProperty[],
+  item: MemorizeItem,
+  allItems: MemorizeItem[],
 ): DrillQuestion {
-  const correct = prop.shortDescription;
+  const correct = item.description;
 
-  // Get 3 wrong descriptions from other properties
+  // Get 3 wrong descriptions from other items
   const others = shuffled(
-    allProps.filter((p) => p.id !== prop.id),
+    allItems.filter((p) => p.id !== item.id),
   ).slice(0, 3);
 
   const options = shuffled([
     correct,
-    ...others.map((o) => o.shortDescription),
+    ...others.map((o) => o.description),
   ]);
 
-  return { prop, correctAnswer: correct, options };
+  return { item, correctAnswer: correct, options };
 }
 
 type Phase = "ready" | "running" | "done";
 
 export function TimedDrill({
-  properties,
+  items,
   durationSeconds = 60,
   onRate,
 }: TimedDrillProps) {
@@ -59,7 +59,7 @@ export function TimedDrill({
   const [correct, setCorrect] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
 
-  const poolRef = useRef(shuffled(properties));
+  const poolRef = useRef(shuffled(items));
   const indexRef = useRef(0);
 
   const [question, setQuestion] = useState<DrillQuestion | null>(null);
@@ -69,12 +69,12 @@ export function TimedDrill({
     if (pool.length === 0) return;
     const idx = indexRef.current % pool.length;
     indexRef.current++;
-    setQuestion(buildDrillQuestion(pool[idx], properties));
+    setQuestion(buildDrillQuestion(pool[idx], items));
     setSelected(null);
-  }, [properties]);
+  }, [items]);
 
   const start = useCallback(() => {
-    poolRef.current = shuffled(properties);
+    poolRef.current = shuffled(items);
     indexRef.current = 0;
     setPhase("running");
     setTimeLeft(durationSeconds);
@@ -83,7 +83,7 @@ export function TimedDrill({
     setTotal(0);
     setCorrect(0);
     nextQuestion();
-  }, [properties, durationSeconds, nextQuestion]);
+  }, [items, durationSeconds, nextQuestion]);
 
   // Timer
   useEffect(() => {
@@ -117,7 +117,7 @@ export function TimedDrill({
         setStreak(0);
       }
 
-      onRate(question.prop.id, isCorrect);
+      onRate(question.item.id, isCorrect);
 
       // Auto-advance after brief pause
       setTimeout(() => {
@@ -148,7 +148,7 @@ export function TimedDrill({
           </Heading>
           <Text size="2" color="gray" mb="4" style={{ display: "block" }}>
             {durationSeconds} seconds. Identify the correct description for each
-            CSS property. Speed + accuracy = higher score.
+            concept. Speed + accuracy = higher score.
           </Text>
           <Button size="3" variant="solid" color="violet" onClick={start}>
             Start Drill
@@ -196,8 +196,8 @@ export function TimedDrill({
       </div>
 
       <div className="drill-question">
-        <div className="drill-property">{question.prop.property}</div>
-        <div className="drill-prompt">What does this property do?</div>
+        <div className="drill-property">{question.item.term}</div>
+        <div className="drill-prompt">What is this?</div>
       </div>
 
       <div className="drill-options">

@@ -32,6 +32,12 @@ import {
   Eye,
   AlertTriangle,
   FlaskConical,
+  ArrowLeftRight,
+  FileCheck,
+  MessageSquare,
+  TestTube,
+  Gauge,
+  CheckCircle2,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ScrollReveal } from "@/components/scroll-reveal";
