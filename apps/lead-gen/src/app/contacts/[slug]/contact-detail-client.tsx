@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -822,6 +822,12 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
       setFindResult({ type: "error", message: err instanceof Error ? err.message : "Failed to find email" });
     }
   }, [contact, findEmail, refetch]);
+
+  useEffect(() => {
+    if (contact) {
+      document.title = `${contact.firstName} ${contact.lastName}`;
+    }
+  }, [contact]);
 
   if (!isAdmin) {
     return (
