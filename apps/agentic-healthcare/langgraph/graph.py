@@ -245,10 +245,21 @@ def retrieve(state: GraphState) -> dict[str, Any]:
             sources.append("symptom_embeddings")
             scores.append(r["similarity"])
 
+    # De-duplicate chunks by content and re-rank by score
+    seen: set[str] = set()
+    deduped: list[tuple[str, str, float]] = []
+    for chunk, source, score in zip(chunks, sources, scores):
+        key = chunk.strip()
+        if key not in seen:
+            seen.add(key)
+            deduped.append((chunk, source, score))
+    # Sort by score descending so best chunks appear first in context
+    deduped.sort(key=lambda t: t[2], reverse=True)
+
     return {
-        "context_chunks": chunks,
-        "retrieval_sources": sources,
-        "retrieval_scores": scores,
+        "context_chunks": [d[0] for d in deduped],
+        "retrieval_sources": [d[1] for d in deduped],
+        "retrieval_scores": [d[2] for d in deduped],
     }
 
 
@@ -368,10 +379,10 @@ ASSISTANT RESPONSE:
     try:
         parsed = json.loads(cleaned)
     except json.JSONDecodeError:
-        logger.warning("Guard JSON parse failed, defaulting to passed: %s", raw)
-        parsed = {"passed": True, "issues": []}
+        logger.warning("Guard JSON parse failed, defaulting to FAILED (fail-safe): %s", raw)
+        parsed = {"passed": False, "issues": ["PARSE_FAILURE"]}
 
-    passed = parsed.get("passed", True)
+    passed = parsed.get("passed", False)
     issues = parsed.get("issues", [])
 
     if passed:

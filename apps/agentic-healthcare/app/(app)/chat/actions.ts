@@ -2,7 +2,7 @@
 
 import { withAuth } from "@/lib/auth-helpers";
 
-const CHAT_API = process.env.CHAT_API_URL ?? "http://localhost:8001";
+const CHAT_API = process.env.CHAT_API_URL ?? process.env.PYTHON_API_URL ?? "http://localhost:8001";
 
 export async function sendChatMessage(
   messages: { role: "user" | "assistant"; content: string }[]
