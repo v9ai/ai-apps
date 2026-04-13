@@ -255,7 +255,7 @@
     },
     {
       "category": "origin",
-      "question": "You wrote about how waiting for a visa was 'the best thing that ever happened.' After building PSPDFKit for a decade, what made you walk away — and what brought you back to shipping at this intensity?",
+      "question": "You wrote 'How We Work at PSPDFKit | Peter Steinberger' about how a visa wait became a career-defining moment. After building PSPDFKit for a decade, what made you walk away — and what brought you back to shipping at this intensity?",
       "why_this_question": "References his own blog post about the visa-to-PSPDFKit origin story — connects past and present identity",
       "expected_insight": "How his relationship with building software fundamentally changed between PSPDFKit and the AI era"
     },
@@ -285,19 +285,19 @@
     },
     {
       "category": "collaboration",
-      "question": "'Hiring a distributed team | Peter Steinberger' describes orchestrating multiple Claude Code instances. You're essentially managing a team of AI agents. How does that compare to managing the human engineering team at PSPDFKit?",
+      "question": "'Command your Claude Code Army, Reloaded | Peter Steinberger' describes orchestrating multiple Claude Code instances. You're essentially managing a team of AI agents. How does that compare to managing the human engineering team at PSPDFKit?",
       "why_this_question": "Connects his management experience to his agent-orchestration workflow — unique perspective",
       "expected_insight": "How managing humans vs. AI agents differs in practice — where each is harder"
     },
     {
       "category": "collaboration",
-      "question": "At PSPDFKit you wrote about building a distributed team across time zones. Now you're a solo developer with AI agents as your team. What do you miss about human collaborators that no AI can replace?",
+      "question": "In 'Hiring a distributed team | Peter Steinberger' you wrote about building a distributed team across time zones. Now you're a solo developer with AI agents as your team. What do you miss about human collaborators that no AI can replace?",
       "why_this_question": "Probes the human cost of the solo-with-AI model he champions",
       "expected_insight": "Honest reflection on what's lost when you replace a team with agents"
     },
     {
       "category": "future",
-      "question": "In 'Essential Reading for Agentic Engineers | Peter Steinberger' you explore where AI development is heading. You joined OpenAI to 'build an agent even my mum can use.' What specific interaction pattern are you betting on — and what current approaches are dead ends?",
+      "question": "In 'OpenClaw, OpenAI and the future | Peter Steinberger' you explore where AI development is heading. You joined OpenAI to 'build an agent even my mum can use.' What specific interaction pattern are you betting on — and what current approaches are dead ends?",
       "why_this_question": "References his stated mission at OpenAI — forces specificity about the product vision",
       "expected_insight": "Concrete UX predictions for personal agents, not vague 'AI will change everything'"
     },
@@ -306,6 +306,90 @@
       "question": "You shipped 684,000 GitHub contributions in one year. At what point does AI-assisted velocity hit diminishing returns — where shipping faster stops being the bottleneck?",
       "why_this_question": "His extreme output volume raises questions about whether speed is always the goal",
       "expected_insight": "Where the real bottleneck shifts to — design, distribution, user research, or something else"
+    },
+    {
+      "category": "ios_engineering",
+      "question": "In 'Automatic Observation Tracking in UIKit and AppKit: The Feature Apple Forgot to Mention | Peter Steinberger' you document fixing what Apple ships broken. After years of patching UIKit and SwiftUI, what's the most important lesson about working around platform constraints that still applies in the AI era?",
+      "why_this_question": "His prolific iOS bug-fixing posts reveal a philosophy about shipping despite platform limitations",
+      "expected_insight": "Whether the 'fix it yourself' iOS mindset transfers to AI-assisted development"
+    },
+    {
+      "category": "ios_engineering",
+      "question": "You wrote 'Automatic Observation Tracking in UIKit and AppKit: The Feature Apple Forgot to Mention | Peter Steinberger' about deep SwiftUI and UIKit internals. Now you build mostly with AI agents writing the code. Has that changed your relationship with framework-level debugging — do you still go as deep?",
+      "why_this_question": "Explores whether AI-assisted development changes the depth of platform knowledge needed",
+      "expected_insight": "How the shift from framework expert to AI-assisted builder changes debugging practices"
+    },
+    {
+      "category": "swift_runtime",
+      "question": "You wrote 'InterposeKit — Elegant Swizzling in Swift | Peter Steinberger' and built InterposeKit for elegant method swizzling. That's deep Objective-C runtime work. Does any of that low-level runtime knowledge matter when AI writes most of the code — or is it actually more important?",
+      "why_this_question": "Tests whether deep platform expertise is becoming more or less valuable with AI",
+      "expected_insight": "The value of runtime-level understanding when AI handles implementation but not architecture"
+    },
+    {
+      "category": "swift_runtime",
+      "question": "'Swifty Objective-C | Peter Steinberger' explores bridging Objective-C and Swift idiomatically. You've lived through every Swift migration pain point. What's the AI-era equivalent of the ObjC-to-Swift transition?",
+      "why_this_question": "Draws a parallel between past language transitions and the current AI-coding shift",
+      "expected_insight": "Which historical pattern best predicts how AI-assisted development evolves"
+    },
+    {
+      "category": "debugging",
+      "question": "'How to macOS Core Dump | Peter Steinberger' is a masterclass in low-level debugging. When you're pair-programming with an AI agent now, how do you debug together — does the agent help with the gnarly kernel-level stuff or just get in the way?",
+      "why_this_question": "His hardcore debugging expertise meets AI-assisted development — a revealing intersection",
+      "expected_insight": "Where AI helps vs. hinders in deep debugging scenarios"
+    },
+    {
+      "category": "debugging",
+      "question": "In 'Running tests with Clang Address Sanitizer | Peter Steinberger' you tackled test infrastructure at scale. You migrated 700+ tests to Swift Testing. Now you ship projects in hours. What does testing look like when your build-test-ship cycle is measured in minutes?",
+      "why_this_question": "Explores how rapid AI-assisted development changes testing philosophy",
+      "expected_insight": "Whether traditional test-driven development survives in the age of AI-speed shipping"
+    },
+    {
+      "category": "build_systems",
+      "question": "You wrote 'Using ccache for Fun and Profit | Peter Steinberger' about optimizing build infrastructure. You've spent years fighting Xcode build times with ccache and zld. Now AI generates code faster than compilers can build it. What's the new bottleneck?",
+      "why_this_question": "His deep build-system expertise creates a unique lens on AI-speed development",
+      "expected_insight": "Whether build infrastructure becomes more or less important when AI writes the code"
+    },
+    {
+      "category": "build_systems",
+      "question": "In 'Code Signing and Notarization: Sparkle and Tears | Peter Steinberger' you describe the pain of code signing and notarization. You fought Apple's distribution requirements for years. Now you ship open-source tools globally. How has your relationship with Apple's walled garden changed?",
+      "why_this_question": "His code signing struggles are legendary in the iOS community — connects to his current open-source focus",
+      "expected_insight": "Whether the move from commercial SDK to open-source AI tools is partly a reaction to platform constraints"
+    },
+    {
+      "category": "apple_platform",
+      "question": "In 'Updating macOS on a Hackintosh | Peter Steinberger' you explored pushing Apple hardware and software to its limits. You've jailbroken iPhones, built Hackintoshes, and fought kernel_task. That hacker mentality — does it show up in how you approach AI agents?",
+      "why_this_question": "Connects his hardware-hacking roots to his current agent-orchestration work",
+      "expected_insight": "Whether the 'break it to understand it' mindset applies to AI development"
+    },
+    {
+      "category": "apple_platform",
+      "question": "You wrote 'Showing Settings from macOS Menu Bar Items: A 5-Hour Journey | Peter Steinberger' about bringing iOS apps to the Mac. You lived through Catalyst, Marzipan, and SwiftUI's cross-platform promise. Now you build cross-platform with TypeScript and AI. What did Apple get wrong about cross-platform?",
+      "why_this_question": "His unique perspective spanning Apple's cross-platform attempts and modern AI-native development",
+      "expected_insight": "What Apple's cross-platform failures teach about the AI-native approach to multi-platform"
+    },
+    {
+      "category": "ai_tools",
+      "question": "In 'llm.codes: Make Apple Docs AI-Readable | Peter Steinberger' you describe your daily AI development setup. You've built Vibe Meter, VibeTunnel, llm.codes, stats.store — an entire ecosystem around AI-assisted coding. When do your own tools surprise you vs. when do they fall short?",
+      "why_this_question": "He's uniquely positioned as both a power user and tool builder in the AI dev space",
+      "expected_insight": "Where the gap is between the tools that exist and the tools AI-native developers actually need"
+    },
+    {
+      "category": "ai_tools",
+      "question": "'Live Coding Session: Building Arena | Peter Steinberger' shows you building and shipping live with AI. You've done multiple live coding sessions where you build entire apps in one sitting. What's the biggest difference between shipping solo on stream vs. shipping solo in private?",
+      "why_this_question": "His live coding sessions reveal the raw, unfiltered process — including failures",
+      "expected_insight": "How public accountability and audience feedback change the AI-assisted development process"
+    },
+    {
+      "category": "social_media",
+      "question": "You wrote 'Gardening Your Twitter: Growing Your Followers | Peter Steinberger' about strategically building your Twitter audience. You now have 385K followers. How much of your current influence comes from that deliberate social media strategy vs. just shipping impressive things?",
+      "why_this_question": "His Twitter gardening posts predate his AI fame — reveals how deliberate his brand-building has been",
+      "expected_insight": "The relationship between strategic audience-building and organic virality from shipping"
+    },
+    {
+      "category": "social_media",
+      "question": "In 'Don&#39;t Call willChangeValueForKey Unless It&#39;s Really Needed | Peter Steinberger' you captured the details that most developers skip — the deep iOS internals, the edge cases, the undocumented behaviors. Now you blog about AI. Has your writing process changed, or is it the same obsessive detail applied to a new domain?",
+      "why_this_question": "Connects his meticulous iOS blogging to his current AI-focused writing",
+      "expected_insight": "Whether the blogging craft transfers across domains or requires reinvention"
     }
   ]
 }
