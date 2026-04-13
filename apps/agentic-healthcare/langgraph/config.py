@@ -21,8 +21,11 @@ class Settings(BaseSettings):
     llm_model: str = "mlx-community/Qwen2.5-7B-Instruct-4bit"
     llm_api_key: str = "unused"
 
-    # Embedding model (must produce 1024-dim to match existing pgvector schema)
-    embed_model: str = "BAAI/bge-large-en-v1.5"
+    # Embedding API (OpenAI-compatible — must produce vectors matching pgvector schema)
+    embed_api_url: str = "https://api.openai.com/v1"
+    embed_api_key: str = ""
+    embed_api_model: str = "text-embedding-3-large"
+    embed_dimensions: int = 1024
 
     # Internal API key (shared secret between Next.js ↔ Python)
     internal_api_key: str = ""
