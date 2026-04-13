@@ -188,7 +188,7 @@ export function FreeHotSprings() {
   return (
     <section
       className={css({
-        maxW: "960px",
+        maxW: "none",
         mx: "auto",
         mb: { base: "14", md: "20" },
         animation: "fadeUp 0.6s ease-out",
@@ -226,7 +226,7 @@ export function FreeHotSprings() {
             fontSize: "body",
             color: "text.secondary",
             lineHeight: "body",
-            maxW: "600px",
+            maxW: "800px",
           })}
         >
           {t.sectionSubtitle}
