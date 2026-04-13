@@ -5,8 +5,6 @@ import { db } from "@/lib/db";
 import { appointments } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { embedAppointment } from "@/lib/embed";
-
 export async function addAppointment(formData: FormData) {
   const { userId } = await withAuth();
 
@@ -33,6 +31,7 @@ export async function addAppointment(formData: FormData) {
     .returning();
 
   try {
+    const { embedAppointment } = await import("@/lib/embed");
     await embedAppointment(appointment.id, userId, title, {
       provider,
       notes,

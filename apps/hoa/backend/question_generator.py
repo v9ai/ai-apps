@@ -201,7 +201,8 @@ CATEGORIES = {
             "smart proxy delegation pattern design forwarding",
             "UITableViewController designated initializer woes bugs",
             "subscripting Xcode 4.4 iOS modern Objective-C literals",
-            "fixing what Apple doesn't ship bugs workarounds patches",
+            "fixing what Apple doesn't ship bugs workarounds patches radar",
+            "hacking with Aspects aspect oriented programming method interception",
         ],
         "question_templates": [
             {
@@ -234,7 +235,8 @@ CATEGORIES = {
             "calling super runtime Swift Objective-C bridge",
             "binary frameworks Swift ABI stability module",
             "Swifty Objective-C interop bridging modern patterns",
-            "Even Swiftier Objective-C advanced bridging techniques",
+            "Even Swiftier Objective-C advanced bridging techniques modern",
+            "swizzling the right way touch forwarding event handling story",
             "extensions Swift surprises gotchas unexpected behavior",
         ],
         "question_templates": [
@@ -271,7 +273,7 @@ CATEGORIES = {
             "migrating tests Swift Testing XCTest conversion 700",
             "logging Swift privacy shenanigans os_log",
             "kernel panic surprise boot-args debugging macOS crash",
-            "network kernel core dump debugging low-level crash",
+            "network kernel core dump TCP IP debugging packet capture crash",
             "UI testing iOS without busy waiting async test",
         ],
         "question_templates": [
@@ -378,7 +380,8 @@ CATEGORIES = {
             "Claude Code Anonymous confessions tips community",
             "Claude Code is my computer daily driver main tool usage",
             "Commanding Your Claude Code Army orchestrating agents parallel",
-            "My Current AI Dev Workflow daily process tools setup",
+            "My Current AI Dev Workflow daily process tools setup routine",
+            "Claude Code computer daily driver primary development environment",
         ],
         "question_templates": [
             {

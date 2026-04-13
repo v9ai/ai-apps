@@ -630,6 +630,132 @@ function signal(row: PartnerRow): string {
   linkedinUrlIdx: index("idx_contacts_linkedin_url").on(table.linkedin_url),
 }));`,
   },
+  {
+    heading: "AI Contact Enrichment with Zod Validation",
+    content: "Contact enrichment uses DeepSeek with JSON response format constrained by a Zod schema — SynthesisOutputSchema defines the exact shape of enrichment output (specialization, skills, research areas, experience level, confidence score). The raw JSON is parsed and validated via safeParse; malformed responses return null rather than corrupting the contact record. Temperature 0.1 ensures reproducible classification across identical inputs.",
+    codeBlock: `const SynthesisOutputSchema = z.object({
+  specialization: z.string().nullable(),
+  skills: z.array(z.string()),
+  research_areas: z.array(z.string()),
+  experience_level: z.enum(["junior", "mid", "senior", "principal", "unknown"]),
+  synthesis_confidence: z.number().min(0).max(1),
+  synthesis_rationale: z.string().nullable(),
+});
+
+const response = await client.chat.completions.create({
+  model: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
+  messages: [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: \`Profile:\\n\${contextLines}\` },
+  ],
+  response_format: { type: "json_object" },
+  temperature: 0.1,
+  max_tokens: 512,
+});
+
+const parsed = SynthesisOutputSchema.safeParse(JSON.parse(raw));
+return parsed.success ? parsed.data : null;`,
+  },
+  {
+    heading: "Strategy Enforcer — Grounding-First",
+    content: "The strategy enforcer is a static analysis agent that scans changed files for LLM calls without schema constraints. It pattern-matches on generate()/chat() calls and checks for structuredOutput or response_format nearby. Violations are severity-tagged as BLOCKING — the enforcer won't approve a PR where an LLM call returns unstructured text that feeds into database writes. Exempt paths (test files, scripts) are skipped. This catches the #1 source of runtime type errors in AI pipelines: unvalidated LLM output.",
+    codeBlock: `function checkGroundingFirst(
+  _changedFiles: string[],
+  fileContents: Map<string, string>,
+): Violation[] {
+  const violations: Violation[] = [];
+  for (const [file, content] of fileContents) {
+    if (GROUNDING_EXEMPT_PATHS.some((p) => file.includes(p))) continue;
+    const codeContent = stripCommentLines(content);
+
+    const hasLLMCall = LLM_CALL_PATTERNS.some((p) => p.test(codeContent));
+    const hasStructuredOutput = STRUCTURED_OUTPUT_PATTERNS.some((p) =>
+      p.test(codeContent),
+    );
+
+    if (hasLLMCall && !hasStructuredOutput) {
+      violations.push({
+        rule: "Grounding-First — LLM outputs must be schema-constrained",
+        severity: "BLOCKING",
+        file,
+        message: "LLM call found without structuredOutput or response_format",
+        fix: "Add structuredOutput: { schema: yourZodSchema } to the call",
+      });
+    }
+  }
+  return violations;
+}`,
+  },
+  {
+    heading: "LinkedIn Post Analysis Pipeline",
+    content: "Post analysis orchestrates two parallel inference calls: SalesCue (DeBERTa-based) for semantic skill extraction, and the local Candle server for JobBERT-v2 embeddings. Both run concurrently via Promise.all — the skill tags feed intent classification while embeddings enable similarity search. Batch processing analyzes up to 200 un-analyzed posts per mutation call, writing embeddings and skills back to the linkedin_posts table. The dual-model approach gives both structured tags (filterable) and dense vectors (searchable).",
+    codeBlock: `interface PostAnalysis {
+  skills: ExtractedSkill[];
+  jobEmbedding: number[];
+  analyzedAt: string;
+}
+
+async function analyzePost(content: string): Promise<PostAnalysis> {
+  const [skillsResult, jobEmbedding] = await Promise.all([
+    extractSkillsHttp(content),   // SalesCue: semantic skill tags
+    candle.embedPost(content),    // JobBERT-v2: dense vector embedding
+  ]);
+  return {
+    skills: skillsResult.result.skills,
+    jobEmbedding,
+    analyzedAt: new Date().toISOString(),
+  };
+}
+
+// Batch mutation — analyze up to 200 un-analyzed posts
+async analyzeLinkedInPosts(_parent, args, context) {
+  const targetPosts = await context.db.select().from(linkedinPosts)
+    .where(isNull(linkedinPosts.analyzed_at))
+    .limit(Math.min(args.limit ?? 50, 200));
+
+  const results = await analyzePostBatch(
+    targetPosts.map((p) => ({ id: p.id, content: p.content! })),
+  );
+  // Update DB with embeddings + skills per post
+}`,
+  },
+  {
+    heading: "Auto-Draft Prompt Engineering",
+    content: "Auto-draft replies use classification-specific prompt templates injected into a multi-turn thread context. The thread is serialized as [OUTBOUND]/[INBOUND] labeled messages, limited to the last 6 exchanges to stay within token budget. Each reply classification (interested, info_request, not_interested) has tailored instructions — 'interested' replies suggest specific next actions, 'info_request' replies provide truthful answers without overselling. Generated drafts include auto-prepended greetings and are stored with generation_model and thread_context for auditability.",
+    codeBlock: `function buildDraftPrompt(
+  classification: ReplyClass,
+  thread: ThreadMessage[],
+  contactName: string,
+): string {
+  const threadText = thread
+    .map((m) => \`[\${m.direction.toUpperCase()}] \${m.subject}\\n\${m.body}\`)
+    .join("\\n\\n---\\n\\n");
+
+  const classInstructions: Record<string, string> = {
+    interested: \`Write an enthusiastic reply that:
+- Thanks them for their interest
+- Provides next concrete step
+- Keeps momentum — suggest specific action
+- Is warm but professional, 80-150 words\`,
+    info_request: \`Write a reply addressing their questions
+with specific, truthful answers...\`,
+  };
+
+  return \`You are Vadim Nicolai, writing a reply to \${contactName}...
+\${classInstructions[classification]}
+FULL CONVERSATION THREAD:
+\${threadText}
+Respond with ONLY valid JSON: {"subject": "Re: ...", "body": "..."}\`;
+}
+
+// Store draft with audit trail
+await db.insert(replyDrafts).values({
+  received_email_id: receivedEmailId,
+  status: "pending",        // requires human approval
+  generation_model: model,
+  thread_context: JSON.stringify(thread.slice(-6)),
+});`,
+  },
 ];
 
 // ─── Technical Details ────────────────────────────────────────────

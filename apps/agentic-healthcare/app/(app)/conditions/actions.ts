@@ -5,8 +5,6 @@ import { db } from "@/lib/db";
 import { conditions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { embedCondition } from "@/lib/embed";
-
 export async function addCondition(formData: FormData) {
   const { userId } = await withAuth();
 
@@ -21,6 +19,7 @@ export async function addCondition(formData: FormData) {
 
   if (condition) {
     try {
+      const { embedCondition } = await import("@/lib/embed");
       await embedCondition(condition.id, userId, name, notes);
     } catch {
       // Embedding failure is non-blocking
