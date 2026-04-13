@@ -27,8 +27,7 @@ from fastapi.testclient import TestClient
 
 from conftest import make_geval, skip_no_judge
 
-from conftest import get_embed_model
-from embeddings import generate_embedding
+from embeddings import generate_embedding, get_embed_model
 
 # ── helpers ────────────────────────────────────────────────────────────
 

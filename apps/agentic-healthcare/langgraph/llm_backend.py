@@ -221,3 +221,24 @@ async def allm_stream(
             content = delta.get("content")
             if content:
                 yield content
+
+
+# -- LlamaIndex shim -------------------------------------------------------
+
+
+def get_llama_index_llm():
+    """Return an OpenAILike instance pointing at the configured vLLM endpoint.
+
+    Used by chat_server.py for the legacy ContextChatEngine path.
+    OpenAILike requires the openai package internally (pulled in via llama-index).
+    """
+    from llama_index.llms.openai_like import OpenAILike
+
+    return OpenAILike(
+        model=settings.llm_model,
+        api_base=_base_url(),
+        api_key=settings.llm_api_key,
+        is_chat_model=True,
+        temperature=0.0,
+        max_tokens=1024,
+    )

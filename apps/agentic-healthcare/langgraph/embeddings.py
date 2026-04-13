@@ -1,18 +1,21 @@
 """Embedding generation + text formatters via OpenAI-compatible API.
 
 Uses httpx to call an OpenAI-compatible /v1/embeddings endpoint.
+Provides a LlamaIndex-compatible BaseEmbedding subclass so the
+IngestionPipeline can use it as a transformation.
 """
 
 from __future__ import annotations
 
 import logging
 import math
-from typing import Any
+from typing import Any, List
 
 import httpx
+from llama_index.core.base.embeddings.base import BaseEmbedding, Embedding
+from llama_index.core.schema import Document, MetadataMode, TextNode
 
 from config import settings as app_settings
-from models import EmbeddingNode
 from parsers import Marker
 
 logger = logging.getLogger(__name__)
@@ -101,7 +104,44 @@ async def agenerate_embedding(text: str) -> list[float]:
     return (await _acall_embed_api([text]))[0]
 
 
-# ── Node builders ────────────────────────────────────────────────────
+# ── LlamaIndex-compatible embed model ─────────────────────────────────
+
+
+class APIEmbedding(BaseEmbedding):
+    """LlamaIndex BaseEmbedding backed by an OpenAI-compatible API."""
+
+    model_name: str = app_settings.embed_api_model
+
+    def _get_query_embedding(self, query: str) -> Embedding:
+        return generate_embedding(query)
+
+    async def _aget_query_embedding(self, query: str) -> Embedding:
+        return await agenerate_embedding(query)
+
+    def _get_text_embedding(self, text: str) -> Embedding:
+        return generate_embedding(text)
+
+    async def _aget_text_embedding(self, text: str) -> Embedding:
+        return await agenerate_embedding(text)
+
+    def _get_text_embeddings(self, texts: List[str]) -> List[Embedding]:
+        return _call_embed_api(texts)
+
+    async def _aget_text_embeddings(self, texts: List[str]) -> List[Embedding]:
+        return await _acall_embed_api(texts)
+
+
+_embed_model: APIEmbedding | None = None
+
+
+def get_embed_model() -> APIEmbedding:
+    global _embed_model
+    if _embed_model is None:
+        _embed_model = APIEmbedding()
+    return _embed_model
+
+
+# ── Document / Node builders ────────────────────────────────────────
 
 
 def build_test_document(
@@ -109,11 +149,11 @@ def build_test_document(
     meta: dict[str, str],
     test_id: str,
     user_id: str,
-) -> EmbeddingNode:
-    """Build an EmbeddingNode for an entire blood test."""
+) -> Document:
+    """Build a LlamaIndex Document for an entire blood test."""
     content = format_test_for_embedding(markers, meta)
-    return EmbeddingNode(
-        id_=f"test:{test_id}",
+    return Document(
+        doc_id=f"test:{test_id}",
         text=content,
         metadata={
             "test_id": test_id,
@@ -133,12 +173,12 @@ def build_marker_nodes(
     test_id: str,
     user_id: str,
     meta: dict[str, str],
-) -> list[EmbeddingNode]:
-    """Build an EmbeddingNode per individual marker."""
-    nodes: list[EmbeddingNode] = []
+) -> list[TextNode]:
+    """Build a LlamaIndex TextNode per individual marker."""
+    nodes: list[TextNode] = []
     for marker, mid in zip(markers, marker_ids):
         content = format_marker_for_embedding(marker, meta)
-        nodes.append(EmbeddingNode(
+        nodes.append(TextNode(
             id_=f"marker:{mid}",
             text=content,
             metadata={
@@ -158,11 +198,11 @@ def build_health_state_node(
     test_id: str,
     user_id: str,
     meta: dict[str, str],
-) -> EmbeddingNode:
-    """Build an EmbeddingNode for the health-state embedding."""
+) -> TextNode:
+    """Build a LlamaIndex TextNode for the health-state embedding."""
     derived = compute_derived_metrics(markers)
     content = format_health_state_for_embedding(markers, derived, meta)
-    return EmbeddingNode(
+    return TextNode(
         id_=f"health_state:{test_id}",
         text=content,
         metadata={

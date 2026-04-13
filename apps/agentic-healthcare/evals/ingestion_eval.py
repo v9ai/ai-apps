@@ -27,11 +27,11 @@ from conftest import make_geval, skip_no_judge
 from llama_index.core import VectorStoreIndex, Settings
 from llama_index.core.schema import Document, TextNode, MetadataMode
 
-from conftest import get_embed_model
 from embeddings import (
     build_health_state_node,
     build_marker_nodes,
     build_test_document,
+    get_embed_model,
 )
 from parsers import Marker, parse_markers
 

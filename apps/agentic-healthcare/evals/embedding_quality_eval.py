@@ -25,7 +25,6 @@ import pytest
 from llama_index.core import VectorStoreIndex, Settings
 from llama_index.core.schema import TextNode, MetadataMode
 
-from conftest import get_embed_model
 from embeddings import (
     build_health_state_node,
     build_marker_nodes,
@@ -35,6 +34,7 @@ from embeddings import (
     format_symptom_for_embedding,
     format_appointment_for_embedding,
     generate_embedding,
+    get_embed_model,
 )
 from parsers import Marker, parse_markers
 
