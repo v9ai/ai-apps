@@ -218,6 +218,7 @@ export const contacts = pgTable(
   "contacts",
   {
     id: serial("id").primaryKey(),
+    slug: text("slug"),
     first_name: text("first_name").notNull(),
     last_name: text("last_name").notNull(),
     linkedin_url: text("linkedin_url"),
@@ -271,6 +272,7 @@ export const contacts = pgTable(
       .default(sql`now()::text`),
   },
   (table) => ({
+    slugIdx: uniqueIndex("idx_contacts_slug").on(table.slug),
     emailIdx: uniqueIndex("idx_contacts_email").on(table.email),
     companyIdIdx: index("idx_contacts_company_id").on(table.company_id),
     linkedinUrlIdx: index("idx_contacts_linkedin_url").on(table.linkedin_url),

@@ -1,6 +1,7 @@
-query GetContact($id: Int!) {
-  contact(id: $id) {
+query GetContact($id: Int, $slug: String) {
+  contact(id: $id, slug: $slug) {
     id
+    slug
     firstName
     lastName
     email
@@ -208,6 +209,7 @@ query GetContacts($companyId: Int, $search: String, $limit: Int, $offset: Int) {
   contacts(companyId: $companyId, search: $search, limit: $limit, offset: $offset) {
     contacts {
       id
+      slug
       firstName
       lastName
       email
@@ -294,6 +296,7 @@ mutation UnverifyCompanyContacts($companyId: Int!) {
 mutation CreateContact($input: CreateContactInput!) {
   createContact(input: $input) {
     id
+    slug
     firstName
     lastName
     email

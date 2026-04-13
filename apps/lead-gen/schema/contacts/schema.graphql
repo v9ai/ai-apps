@@ -1,6 +1,6 @@
 extend type Query {
   contacts(companyId: Int, search: String, limit: Int, offset: Int): ContactsResult!
-  contact(id: Int!): Contact
+  contact(id: Int, slug: String): Contact
   contactByEmail(email: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
   contactMessages(contactId: Int!): [ContactMessage!]!
@@ -71,6 +71,7 @@ type MergeDuplicateContactsResult {
 
 type Contact {
   id: Int!
+  slug: String
   firstName: String!
   lastName: String!
   linkedinUrl: String

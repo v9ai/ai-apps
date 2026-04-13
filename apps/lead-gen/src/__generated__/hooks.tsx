@@ -403,6 +403,7 @@ export type Contact = {
   nextTouchScore: Maybe<Scalars['Float']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
+  slug: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
   telegramHandle: Maybe<Scalars['String']['output']>;
   toBeDeleted: Scalars['Boolean']['output'];
@@ -1910,7 +1911,8 @@ export type QueryCompany_SnapshotsArgs = {
 
 
 export type QueryContactArgs = {
-  id: Scalars['Int']['input'];
+  id?: InputMaybe<Scalars['Int']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3381,11 +3383,12 @@ export type CompanyAuditQueryVariables = Exact<{
 export type CompanyAuditQuery = { __typename?: 'Query', company: { __typename?: 'Company', facts_count: number, snapshots_count: number, id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, blocked: boolean, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, facts: Array<{ __typename?: 'CompanyFact', id: number, company_id: number, field: string, value_json: any | null, value_text: string | null, normalized_value: any | null, confidence: number, created_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }>, snapshots: Array<{ __typename?: 'CompanySnapshot', id: number, company_id: number, source_url: string, crawl_id: string | null, capture_timestamp: string | null, fetched_at: string, http_status: number | null, mime: string | null, content_hash: string | null, text_sample: string | null, jsonld: any | null, extracted: any | null, created_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null };
 
 export type GetContactQueryVariables = Exact<{
-  id: Scalars['Int']['input'];
+  id?: InputMaybe<Scalars['Int']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetContactQuery = { __typename?: 'Query', contact: { __typename?: 'Contact', id: number, firstName: string, lastName: string, email: string | null, emails: Array<string>, bouncedEmails: Array<string>, linkedinUrl: string | null, company: string | null, companyId: number | null, position: string | null, emailVerified: boolean | null, doNotContact: boolean, githubHandle: string | null, telegramHandle: string | null, tags: Array<string>, nbStatus: string | null, nbResult: string | null, nbFlags: Array<string>, nbSuggestedCorrection: string | null, createdAt: string, updatedAt: string, aiProfile: { __typename?: 'ContactAIProfile', trigger: string, enrichedAt: string, linkedinHeadline: string | null, linkedinBio: string | null, specialization: string | null, skills: Array<string>, researchAreas: Array<string>, experienceLevel: string, synthesisConfidence: number, synthesisRationale: string | null, githubBio: string | null, githubTopLanguages: Array<string>, githubTotalStars: number, githubAiRepos: Array<{ __typename?: 'ContactAIGitHubRepo', name: string, description: string | null, stars: number, topics: Array<string> }>, workExperience: Array<{ __typename?: 'ContactWorkExperience', company: string, companyLogo: string | null, title: string, employmentType: string | null, startDate: string, endDate: string | null, duration: string | null, location: string | null, description: string | null, skills: Array<string> }> } | null } | null };
+export type GetContactQuery = { __typename?: 'Query', contact: { __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, emails: Array<string>, bouncedEmails: Array<string>, linkedinUrl: string | null, company: string | null, companyId: number | null, position: string | null, emailVerified: boolean | null, doNotContact: boolean, githubHandle: string | null, telegramHandle: string | null, tags: Array<string>, nbStatus: string | null, nbResult: string | null, nbFlags: Array<string>, nbSuggestedCorrection: string | null, createdAt: string, updatedAt: string, aiProfile: { __typename?: 'ContactAIProfile', trigger: string, enrichedAt: string, linkedinHeadline: string | null, linkedinBio: string | null, specialization: string | null, skills: Array<string>, researchAreas: Array<string>, experienceLevel: string, synthesisConfidence: number, synthesisRationale: string | null, githubBio: string | null, githubTopLanguages: Array<string>, githubTotalStars: number, githubAiRepos: Array<{ __typename?: 'ContactAIGitHubRepo', name: string, description: string | null, stars: number, topics: Array<string> }>, workExperience: Array<{ __typename?: 'ContactWorkExperience', company: string, companyLogo: string | null, title: string, employmentType: string | null, startDate: string, endDate: string | null, duration: string | null, location: string | null, description: string | null, skills: Array<string> }> } | null } | null };
 
 export type UpdateContactMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3473,7 +3476,7 @@ export type GetContactsQueryVariables = Exact<{
 }>;
 
 
-export type GetContactsQuery = { __typename?: 'Query', contacts: { __typename?: 'ContactsResult', totalCount: number, contacts: Array<{ __typename?: 'Contact', id: number, firstName: string, lastName: string, email: string | null, bouncedEmails: Array<string>, linkedinUrl: string | null, position: string | null, company: string | null, companyId: number | null, githubHandle: string | null, telegramHandle: string | null, emailVerified: boolean | null, doNotContact: boolean, nbResult: string | null, tags: Array<string>, createdAt: string }> } };
+export type GetContactsQuery = { __typename?: 'Query', contacts: { __typename?: 'ContactsResult', totalCount: number, contacts: Array<{ __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, bouncedEmails: Array<string>, linkedinUrl: string | null, position: string | null, company: string | null, companyId: number | null, githubHandle: string | null, telegramHandle: string | null, emailVerified: boolean | null, doNotContact: boolean, nbResult: string | null, tags: Array<string>, createdAt: string }> } };
 
 export type ImportContactsMutationVariables = Exact<{
   contacts: Array<ContactInput> | ContactInput;
@@ -3520,7 +3523,7 @@ export type CreateContactMutationVariables = Exact<{
 }>;
 
 
-export type CreateContactMutation = { __typename?: 'Mutation', createContact: { __typename?: 'Contact', id: number, firstName: string, lastName: string, email: string | null, linkedinUrl: string | null, position: string | null, companyId: number | null, githubHandle: string | null, telegramHandle: string | null, tags: Array<string> } };
+export type CreateContactMutation = { __typename?: 'Mutation', createContact: { __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, linkedinUrl: string | null, position: string | null, companyId: number | null, githubHandle: string | null, telegramHandle: string | null, tags: Array<string> } };
 
 export type MergeDuplicateContactsMutationVariables = Exact<{
   companyId: Scalars['Int']['input'];
@@ -3753,7 +3756,7 @@ export type AnalyzeLinkedInPostsMutation = { __typename?: 'Mutation', analyzeLin
 export type DueRemindersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type DueRemindersQuery = { __typename?: 'Query', dueReminders: Array<{ __typename?: 'ContactReminderWithContact', reminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }, contact: { __typename?: 'Contact', id: number, firstName: string, lastName: string, position: string | null, tags: Array<string> } }> };
+export type DueRemindersQuery = { __typename?: 'Query', dueReminders: Array<{ __typename?: 'ContactReminderWithContact', reminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }, contact: { __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, position: string | null, tags: Array<string> } }> };
 
 export type ContactRemindersQueryVariables = Exact<{
   contactId: Scalars['Int']['input'];
@@ -4870,9 +4873,10 @@ export type CompanyAuditLazyQueryHookResult = ReturnType<typeof useCompanyAuditL
 export type CompanyAuditSuspenseQueryHookResult = ReturnType<typeof useCompanyAuditSuspenseQuery>;
 export type CompanyAuditQueryResult = Apollo.QueryResult<CompanyAuditQuery, CompanyAuditQueryVariables>;
 export const GetContactDocument = gql`
-    query GetContact($id: Int!) {
-  contact(id: $id) {
+    query GetContact($id: Int, $slug: String) {
+  contact(id: $id, slug: $slug) {
     id
+    slug
     firstName
     lastName
     email
@@ -4943,10 +4947,11 @@ export const GetContactDocument = gql`
  * const { data, loading, error } = useGetContactQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      slug: // value for 'slug'
  *   },
  * });
  */
-export function useGetContactQuery(baseOptions: Apollo.QueryHookOptions<GetContactQuery, GetContactQueryVariables> & ({ variables: GetContactQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetContactQuery(baseOptions?: Apollo.QueryHookOptions<GetContactQuery, GetContactQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetContactQuery, GetContactQueryVariables>(GetContactDocument, options);
       }
@@ -5455,6 +5460,7 @@ export const GetContactsDocument = gql`
   contacts(companyId: $companyId, search: $search, limit: $limit, offset: $offset) {
     contacts {
       id
+      slug
       firstName
       lastName
       email
@@ -5742,6 +5748,7 @@ export const CreateContactDocument = gql`
     mutation CreateContact($input: CreateContactInput!) {
   createContact(input: $input) {
     id
+    slug
     firstName
     lastName
     email
@@ -7188,6 +7195,7 @@ export const DueRemindersDocument = gql`
     }
     contact {
       id
+      slug
       firstName
       lastName
       position

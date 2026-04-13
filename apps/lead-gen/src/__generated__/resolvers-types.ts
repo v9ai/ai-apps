@@ -403,6 +403,7 @@ export type Contact = {
   nextTouchScore: Maybe<Scalars['Float']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
+  slug: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
   telegramHandle: Maybe<Scalars['String']['output']>;
   toBeDeleted: Scalars['Boolean']['output'];
@@ -1910,7 +1911,8 @@ export type QueryCompany_SnapshotsArgs = {
 
 
 export type QueryContactArgs = {
-  id: Scalars['Int']['input'];
+  id?: InputMaybe<Scalars['Int']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3999,6 +4001,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   nextTouchScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seniority?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   telegramHandle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toBeDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -4706,7 +4709,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   companyContactEmails?: Resolver<Array<ResolversTypes['CompanyContactEmail']>, ParentType, ContextType, RequireFields<QueryCompanyContactEmailsArgs, 'companyId'>>;
   company_facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, RequireFields<QueryCompany_FactsArgs, 'company_id'>>;
   company_snapshots?: Resolver<Array<ResolversTypes['CompanySnapshot']>, ParentType, ContextType, RequireFields<QueryCompany_SnapshotsArgs, 'company_id'>>;
-  contact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactArgs, 'id'>>;
+  contact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, Partial<QueryContactArgs>>;
   contactByEmail?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactByEmailArgs, 'email'>>;
   contactEmails?: Resolver<Array<ResolversTypes['ContactEmail']>, ParentType, ContextType, RequireFields<QueryContactEmailsArgs, 'contactId'>>;
   contactMessages?: Resolver<Array<ResolversTypes['ContactMessage']>, ParentType, ContextType, RequireFields<QueryContactMessagesArgs, 'contactId'>>;

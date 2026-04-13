@@ -53,11 +53,13 @@ export const contactQueries = {
     };
   },
 
-  async contact(_parent: unknown, args: { id: number }, context: GraphQLContext) {
+  async contact(_parent: unknown, args: { id?: number; slug?: string }, context: GraphQLContext) {
+    if (!args.id && !args.slug) return null;
+    const condition = args.id ? eq(contacts.id, args.id) : eq(contacts.slug, args.slug!);
     const rows = await context.db
       .select()
       .from(contacts)
-      .where(eq(contacts.id, args.id))
+      .where(condition)
       .limit(1);
     return rows[0] ?? null;
   },

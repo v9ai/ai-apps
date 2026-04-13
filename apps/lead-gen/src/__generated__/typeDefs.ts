@@ -351,6 +351,7 @@ type Contact {
   nextTouchScore: Float
   position: String
   seniority: String
+  slug: String
   tags: [String!]!
   telegramHandle: String
   toBeDeleted: Boolean!
@@ -1245,7 +1246,7 @@ type Query {
   companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
   company_facts(company_id: Int!, field: String, limit: Int, offset: Int): [CompanyFact!]!
   company_snapshots(company_id: Int!, limit: Int, offset: Int): [CompanySnapshot!]!
-  contact(id: Int!): Contact
+  contact(id: Int, slug: String): Contact
   contactByEmail(email: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
   contactMessages(contactId: Int!): [ContactMessage!]!

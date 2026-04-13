@@ -13,6 +13,7 @@ query DueReminders {
     }
     contact {
       id
+      slug
       firstName
       lastName
       position

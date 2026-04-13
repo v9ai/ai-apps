@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     database_url: str
 
     # Cloudflare R2
-    r2_account_id: str
-    r2_access_key_id: str
-    r2_secret_access_key: str
+    r2_account_id: str = ""
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
     r2_bucket_name: str = "healthcare-blood-tests"
 
     # LLM — mlx_lm.server (OpenAI-compatible, runs locally on Apple Silicon)

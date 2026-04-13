@@ -28,6 +28,7 @@ import {
 import { isAIContact, gatherAIContactProfile, extractLinkedInOG, fetchGitHubProfile, searchGitHubByName } from "@/lib/ai-contact-enrichment";
 import { evaluateFakeAccount } from "@/lib/ml/fake-account-detector";
 import { classifyContact, computeDeletionScore, parseJsonArray } from "./classification";
+import { deriveContactSlug } from "@/lib/contact-slug";
 import type { PgUpdateSetSource } from "drizzle-orm/pg-core/query-builders/update";
 
 /** Typed update object for contacts table */
@@ -40,6 +41,18 @@ function stripNulls<T extends Record<string, unknown>>(obj: T): { [K in keyof T]
     if (result[key] === null) delete result[key];
   }
   return result as { [K in keyof T]: Exclude<T[K], null> };
+}
+
+/** Resolve a unique slug, appending -2, -3, etc. on collision. */
+async function resolveUniqueSlug(db: GraphQLContext["db"], baseSlug: string): Promise<string> {
+  let slug = baseSlug;
+  let attempt = 1;
+  while (true) {
+    const [existing] = await db.select({ id: contacts.id }).from(contacts).where(eq(contacts.slug, slug)).limit(1);
+    if (!existing) return slug;
+    attempt++;
+    slug = `${baseSlug}-${attempt}`;
+  }
 }
 
 /** Guard that throws a GraphQLError if the caller is not an authenticated admin. */
@@ -61,11 +74,19 @@ export const contactMutations = {
     requireAdmin(context);
     const { firstName, lastName, emails, tags, companyId, linkedinUrl, githubHandle, telegramHandle, position, email } = args.input;
     const mlClassification = classifyContact(position);
+    const baseSlug = deriveContactSlug({
+      github_handle: githubHandle,
+      linkedin_url: linkedinUrl,
+      first_name: firstName,
+      last_name: lastName ?? "",
+    });
+    const slug = await resolveUniqueSlug(context.db, baseSlug);
     const rows = await context.db
       .insert(contacts)
       .values({
         first_name: firstName,
         last_name: lastName ?? "",
+        slug,
         emails: emails ? JSON.stringify(emails) : "[]",
         tags: tags ? JSON.stringify(tags) : "[]",
         ...(companyId !== undefined && { company_id: companyId }),
@@ -143,9 +164,17 @@ export const contactMutations = {
       try {
         const { firstName, lastName, emails, tags, linkedinUrl, companyId, githubHandle, telegramHandle, position, email, company } = input;
         const mlClassification = classifyContact(position);
+        const baseSlug = deriveContactSlug({
+          github_handle: githubHandle,
+          linkedin_url: linkedinUrl,
+          first_name: firstName,
+          last_name: lastName ?? "",
+        });
+        const slug = await resolveUniqueSlug(context.db, baseSlug);
         valuesToInsert.push({
           first_name: firstName,
           last_name: lastName ?? "",
+          slug,
           emails: emails ? JSON.stringify(emails) : "[]",
           tags: tags ? JSON.stringify(tags) : "[]",
           nb_flags: "[]",

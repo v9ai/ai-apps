@@ -52,6 +52,9 @@ type DbCompanyContactEmailRow = DbContactEmail & {
 };
 
 export const Contact = {
+  slug(parent: DbContact) {
+    return parent.slug ?? null;
+  },
   emails(parent: DbContact) {
     return cachedParseArray(parent, "emails", parent.emails);
   },

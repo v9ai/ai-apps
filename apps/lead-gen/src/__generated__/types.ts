@@ -400,6 +400,7 @@ export type Contact = {
   nextTouchScore: Maybe<Scalars['Float']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
+  slug: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
   telegramHandle: Maybe<Scalars['String']['output']>;
   toBeDeleted: Scalars['Boolean']['output'];
@@ -1907,7 +1908,8 @@ export type QueryCompany_SnapshotsArgs = {
 
 
 export type QueryContactArgs = {
-  id: Scalars['Int']['input'];
+  id?: InputMaybe<Scalars['Int']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
