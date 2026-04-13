@@ -809,6 +809,16 @@
   margin-top: 2px;
 }
 
+.bridge-method {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono, "SF Mono", monospace);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
 /* ── Enhanced Hero Nodes ── */
 
 .hiw-hero-nodes {

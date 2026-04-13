@@ -14,11 +14,14 @@ import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { CSS_CATEGORIES } from "@/lib/css-properties";
+import { cssCategoriesToMemorize } from "@/lib/memorize-adapters";
 import {
   MemorizeDashboard,
   type MasteryMap,
 } from "@/components/app-detail/memorize/MemorizeDashboard";
 import "@/components/app-detail/memorize/css-memorize.css";
+
+const CSS_MEMORIZE_CATEGORIES = cssCategoriesToMemorize(CSS_CATEGORIES);
 
 interface AppData {
   slug: string;
@@ -165,9 +168,10 @@ function MemorizePageInner() {
 
       {/* Dashboard */}
       <MemorizeDashboard
-        categories={CSS_CATEGORIES}
+        categories={CSS_MEMORIZE_CATEGORIES}
         mastery={mastery}
-        appSlug={app.slug}
+        namespaceKey={app.slug}
+        title="CSS Properties"
         onRate={handleRate}
       />
     </Box>

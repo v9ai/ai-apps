@@ -32,8 +32,8 @@ export interface CognitiveSession {
 
 const MAX_SESSIONS = 100;
 
-function storageKey(appSlug: string): string {
-  return `memorize-sessions-${appSlug}`;
+function storageKey(namespaceKey: string): string {
+  return `memorize-sessions-${namespaceKey}`;
 }
 
 export function detectTimeOfDay(): TimeOfDay {
@@ -46,23 +46,23 @@ export function detectTimeOfDay(): TimeOfDay {
 
 // ── CRUD ──────────────────────────────────────────────────────────
 
-export function getSessions(appSlug: string): CognitiveSession[] {
+export function getSessions(namespaceKey: string): CognitiveSession[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(storageKey(appSlug));
+    const raw = localStorage.getItem(storageKey(namespaceKey));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
-function saveSessions(appSlug: string, sessions: CognitiveSession[]): void {
+function saveSessions(namespaceKey: string, sessions: CognitiveSession[]): void {
   const trimmed = sessions.slice(-MAX_SESSIONS);
-  localStorage.setItem(storageKey(appSlug), JSON.stringify(trimmed));
+  localStorage.setItem(storageKey(namespaceKey), JSON.stringify(trimmed));
 }
 
 export function createSession(
-  appSlug: string,
+  namespaceKey: string,
   mode: PracticeMode,
   preSession: PreSessionState | null,
 ): CognitiveSession {
@@ -77,19 +77,19 @@ export function createSession(
     totalCount: 0,
     postSession: null,
   };
-  const sessions = getSessions(appSlug);
+  const sessions = getSessions(namespaceKey);
   sessions.push(session);
-  saveSessions(appSlug, sessions);
+  saveSessions(namespaceKey, sessions);
   return session;
 }
 
 export function endSession(
-  appSlug: string,
+  namespaceKey: string,
   sessionId: string,
   stats: { propertiesReviewed: number; correctCount: number; totalCount: number },
   postSession: PostSessionState | null,
 ): CognitiveSession | null {
-  const sessions = getSessions(appSlug);
+  const sessions = getSessions(namespaceKey);
   const idx = sessions.findIndex((s) => s.id === sessionId);
   if (idx === -1) return null;
 
@@ -101,7 +101,7 @@ export function endSession(
     totalCount: stats.totalCount,
     postSession,
   };
-  saveSessions(appSlug, sessions);
+  saveSessions(namespaceKey, sessions);
   return sessions[idx];
 }
 
@@ -118,8 +118,8 @@ export interface LearningInsightsData {
   averageAccuracy: number;
 }
 
-export function computeInsights(appSlug: string): LearningInsightsData {
-  const sessions = getSessions(appSlug).filter((s) => s.endedAt !== null);
+export function computeInsights(namespaceKey: string): LearningInsightsData {
+  const sessions = getSessions(namespaceKey).filter((s) => s.endedAt !== null);
 
   const empty: LearningInsightsData = {
     totalSessions: 0,
