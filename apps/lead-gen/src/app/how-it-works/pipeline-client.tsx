@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -909,21 +909,71 @@ const tokenColors: Record<Token["type"], string> = {
 };
 
 function CodeBlock({ code, borderColor }: { code: string; borderColor?: string }) {
-  const tokens = tokenize(code);
+  const [copied, setCopied] = useState(false);
+  const lines = code.split("\n");
+  const lineCount = lines.length;
+  const gutterWidth = String(lineCount).length * 8 + 16;
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [code]);
+
+  // Tokenize each line separately for line-by-line rendering
+  const tokenizedLines = lines.map((line) => tokenize(line));
+
   return (
-    <pre style={{
-      padding: 14, borderRadius: 6,
-      background: "var(--gray-1)",
-      border: borderColor ? `1px solid var(--${borderColor}-a4)` : "1px solid var(--gray-a4)",
-      fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
-      overflow: "auto", lineHeight: 1.65, margin: 0,
-    }}>
-      {tokens.map((token, i) => (
-        <span key={i} style={{ color: tokenColors[token.type], fontStyle: token.type === "comment" ? "italic" : undefined }}>
-          {token.text}
-        </span>
-      ))}
-    </pre>
+    <div style={{ position: "relative", borderRadius: 6, overflow: "hidden" }}>
+      <button
+        type="button"
+        onClick={handleCopy}
+        style={{
+          position: "absolute", top: 6, right: 6, zIndex: 1,
+          padding: "3px 8px", borderRadius: 4,
+          background: copied ? "var(--green-a3)" : "var(--gray-a3)",
+          border: `1px solid ${copied ? "var(--green-a6)" : "var(--gray-a5)"}`,
+          color: copied ? "var(--green-11)" : "var(--gray-10)",
+          fontSize: 10, fontFamily: "var(--code-font-family, monospace)",
+          cursor: "pointer", transition: "all 0.15s",
+        }}
+      >
+        {copied ? "copied" : "copy"}
+      </button>
+      <pre style={{
+        margin: 0, padding: 0, borderRadius: 6,
+        background: "var(--gray-1)",
+        border: borderColor ? `1px solid var(--${borderColor}-a4)` : "1px solid var(--gray-a4)",
+        fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
+        overflow: "auto", lineHeight: 1.65,
+        display: "grid", gridTemplateColumns: `${gutterWidth}px 1fr`,
+      }}>
+        {/* Line numbers gutter */}
+        <div style={{
+          padding: "14px 0", textAlign: "right",
+          color: "var(--gray-8)", userSelect: "none",
+          borderRight: "1px solid var(--gray-a3)",
+          background: "var(--gray-a2)",
+        }}>
+          {lines.map((_, i) => (
+            <div key={i} style={{ paddingRight: 8, height: "1.65em" }}>{i + 1}</div>
+          ))}
+        </div>
+        {/* Code content */}
+        <code style={{ padding: "14px 12px", display: "block" }}>
+          {tokenizedLines.map((tokens, lineIdx) => (
+            <div key={lineIdx} style={{ height: "1.65em", whiteSpace: "pre" }}>
+              {tokens.map((token, i) => (
+                <span key={i} style={{ color: tokenColors[token.type], fontStyle: token.type === "comment" ? "italic" : undefined }}>
+                  {token.text}
+                </span>
+              ))}
+            </div>
+          ))}
+        </code>
+      </pre>
+    </div>
   );
 }
 
@@ -1004,16 +1054,42 @@ function PipelineStageNarratives() {
 const sectionColors = ["violet", "green", "purple", "red", "amber", "blue", "cyan", "teal"] as const;
 
 function DeepDiveSections() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [allOpen, setAllOpen] = useState(false);
+
+  const toggleAll = useCallback(() => {
+    const next = !allOpen;
+    setAllOpen(next);
+    containerRef.current?.querySelectorAll("details").forEach((d) => {
+      d.open = next;
+    });
+  }, [allOpen]);
+
   return (
     <div>
       <Flex align="center" gap="2" mb="1">
         <Brain size={16} style={{ color: "var(--violet-9)" }} />
         <Heading size="5">Deep Dive</Heading>
       </Flex>
-      <Text size="2" color="gray" mb="4" as="p">
-        {extraSections.length} implementation deep-dives with real code from the codebase. Click to expand.
-      </Text>
-      <Flex direction="column" gap="2">
+      <Flex align="center" justify="between" mb="4">
+        <Text size="2" color="gray">
+          {extraSections.length} implementation deep-dives with real code from the codebase.
+        </Text>
+        <button
+          type="button"
+          onClick={toggleAll}
+          style={{
+            padding: "4px 10px", borderRadius: 4, flexShrink: 0,
+            background: "var(--gray-a3)", border: "1px solid var(--gray-a5)",
+            color: "var(--gray-11)", fontSize: 11, cursor: "pointer",
+            fontFamily: "var(--code-font-family, monospace)",
+            transition: "background 0.15s",
+          }}
+        >
+          {allOpen ? "collapse all" : "expand all"}
+        </button>
+      </Flex>
+      <Flex direction="column" gap="2" ref={containerRef}>
         {extraSections.map((section, i) => {
           const color = sectionColors[i % sectionColors.length];
           return (
@@ -1348,6 +1424,23 @@ export function PipelineClient() {
       <section id="foundations">
         <TechFoundations />
       </section>
+
+      {/* Back to top */}
+      <Flex justify="center" mt="7" mb="4">
+        <a
+          href="#pipeline"
+          style={{
+            padding: "8px 20px", borderRadius: 6, textDecoration: "none",
+            background: "var(--gray-a3)", border: "1px solid var(--gray-a5)",
+            color: "var(--gray-11)", fontSize: 12,
+            fontFamily: "var(--code-font-family, monospace)",
+            transition: "background 0.15s",
+            display: "flex", alignItems: "center", gap: 6,
+          }}
+        >
+          <span style={{ fontSize: 14 }}>↑</span> back to top
+        </a>
+      </Flex>
     </div>
   );
 }
