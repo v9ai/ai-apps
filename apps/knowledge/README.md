@@ -386,7 +386,10 @@ apps/knowledge/
 │   ├── aws/[slug]/page.tsx # AWS deep-dive pages (/aws/lambda-serverless, etc.)
 │   ├── api/chat/           # Streaming chat endpoint
 │   ├── api/research/       # Research endpoints
-│   └── api/course-review/[id]/  # GET fetch review · POST upsert AI review
+│   ├── api/course-review/[id]/  # GET fetch review · POST upsert AI review
+│   ├── api/learners/       # CRUD for managed learners
+│   ├── api/coursework/     # GET list coursework files
+│   └── api/coursework/upload/  # Vercel Blob client-upload handler
 ├── components/             # React components
 │   ├── search.tsx          # Cmd+K full-text search
 │   ├── audio-player.tsx    # TTS audio playback
@@ -395,7 +398,7 @@ apps/knowledge/
 ├── content/                # 88 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
-│   └── schema.ts           # Drizzle schema (20 tables, incl. external_courses[+topic_group], lesson_courses, course_reviews)
+│   └── schema.ts           # Drizzle schema (22 tables, incl. learners, coursework, external_courses[+topic_group], lesson_courses, course_reviews)
 ├── lib/
 │   ├── articles.ts         # Lesson data layer — Lesson interface includes url field;
 │   │                       # exports AWS_DEEP_DIVE_SLUGS and getUrlPath()
@@ -450,4 +453,5 @@ DEEPSEEK_API_KEY=
 NEXT_PUBLIC_R2_DOMAIN=  # audio CDN domain
 WORKER_URL=             # Cloudflare Worker endpoint
 NEXT_PUBLIC_DATA_SOURCE= # "db" | "fs"
+BLOB_READ_WRITE_TOKEN=   # Vercel Blob storage
 ```

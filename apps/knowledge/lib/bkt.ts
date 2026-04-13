@@ -97,3 +97,46 @@ export async function getDueReviews(
   if (!res.ok) throw new Error(`BKT due reviews error (${res.status})`);
   return res.json();
 }
+
+// ── Inline BKT (works without the Rust server) ────────────────────────
+
+const DEFAULT_P_TRANSIT = 0.1;
+const DEFAULT_P_SLIP = 0.1;
+const DEFAULT_P_GUESS = 0.2;
+
+export function computeMasteryLevel(pMastery: number): string {
+  if (pMastery >= 0.8) return "expert";
+  if (pMastery >= 0.6) return "proficient";
+  if (pMastery >= 0.4) return "intermediate";
+  if (pMastery >= 0.2) return "beginner";
+  return "novice";
+}
+
+export function updateBktInline(
+  currentMastery: number,
+  isCorrect: boolean,
+  params?: { pTransit?: number; pSlip?: number; pGuess?: number },
+): number {
+  const pTransit = params?.pTransit ?? DEFAULT_P_TRANSIT;
+  const pSlip = params?.pSlip ?? DEFAULT_P_SLIP;
+  const pGuess = params?.pGuess ?? DEFAULT_P_GUESS;
+
+  let posterior: number;
+  if (isCorrect) {
+    const pCorrectMastered = 1 - pSlip;
+    const pCorrectUnmastered = pGuess;
+    posterior =
+      (currentMastery * pCorrectMastered) /
+      (currentMastery * pCorrectMastered +
+        (1 - currentMastery) * pCorrectUnmastered);
+  } else {
+    const pIncorrectMastered = pSlip;
+    const pIncorrectUnmastered = 1 - pGuess;
+    posterior =
+      (currentMastery * pIncorrectMastered) /
+      (currentMastery * pIncorrectMastered +
+        (1 - currentMastery) * pIncorrectUnmastered);
+  }
+
+  return posterior + (1 - posterior) * pTransit;
+}

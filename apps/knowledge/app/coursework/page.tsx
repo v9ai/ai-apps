@@ -321,13 +321,15 @@ export default function CourseworkPage() {
     if (!uploadFile || !activeLearner) return;
     setUploading(true);
     try {
-      const blob = await upload(uploadFile.name, uploadFile, {
+      await upload(uploadFile.name, uploadFile, {
         access: "public",
         handleUploadUrl: "/api/coursework/upload",
         clientPayload: JSON.stringify({
           learnerId: activeLearner,
           title: uploadTitle.trim() || uploadFile.name,
           subject: uploadSubject.trim() || null,
+          fileSize: uploadFile.size,
+          mimeType: uploadFile.type,
         }),
       });
 

@@ -117,6 +117,7 @@ export function UploadForm() {
 
     startBatch(async () => {
       const results: { fileName: string; ok: boolean; error?: string }[] = [];
+      let consecutiveFailures = 0;
 
       for (let i = 0; i < dirFiles.length; i++) {
         const file = dirFiles[i];
@@ -133,8 +134,16 @@ export function UploadForm() {
           if (testDate) fd.append("test_date", testDate);
           await uploadBloodTestNoRedirect(fd);
           results.push({ fileName: file.name, ok: true });
+          consecutiveFailures = 0;
         } catch (e: any) {
           results.push({ fileName: file.name, ok: false, error: e?.message ?? "Failed" });
+          consecutiveFailures++;
+          if (consecutiveFailures >= 2) {
+            for (let j = i + 1; j < dirFiles.length; j++) {
+              results.push({ fileName: dirFiles[j].name, ok: false, error: "Skipped — server unreachable" });
+            }
+            break;
+          }
         }
       }
 
@@ -147,7 +156,7 @@ export function UploadForm() {
 
       setDirFiles([]);
       if (dirInputRef.current) dirInputRef.current.value = "";
-      router.refresh();
+      if (results.some((r) => r.ok)) router.refresh();
     });
   }
 

@@ -51,8 +51,8 @@ export async function POST(req: Request) {
           title: payload.title || blob.pathname.split("/").pop() || "Untitled",
           fileName: blob.pathname.split("/").pop() || blob.pathname,
           fileUrl: blob.url,
-          fileSize: blob.size,
-          mimeType: blob.contentType || "application/octet-stream",
+          fileSize: payload.fileSize || 0,
+          mimeType: blob.contentType || payload.mimeType || "application/octet-stream",
           subject: payload.subject || null,
         });
       },
