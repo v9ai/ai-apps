@@ -458,6 +458,35 @@
   color: var(--red-11);
 }
 
+.matcher-feedback-title {
+  font-size: var(--font-size-5);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.matcher-feedback-explanation {
+  font-size: var(--font-size-2);
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.matcher-feedback-explanation p {
+  margin: 4px 0;
+}
+
+.matcher-feedback-explanation p:first-child {
+  color: var(--grass-11);
+  font-weight: 500;
+}
+
+.matcher-feedback-explanation p:last-child:not(:first-child) {
+  color: var(--red-11);
+  opacity: 0.85;
+}
+
 /* ── Timed Drill ────────────────────────────────────────────────── */
 
 .drill-container {

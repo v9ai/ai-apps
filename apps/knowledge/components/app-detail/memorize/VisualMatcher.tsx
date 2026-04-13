@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Button, Flex, Text } from "@radix-ui/themes";
-import type { CssProperty } from "@/lib/css-properties";
+import type { CssProperty, CssValue } from "@/lib/css-properties";
 import { LiveDemo } from "./LiveDemo";
 
 interface VisualMatcherProps {
@@ -14,6 +14,59 @@ interface MatchQuestion {
   prop: CssProperty;
   correctOption: string;
   options: string[];
+}
+
+/** Build an explanation for why the correct answer is right and the wrong pick is wrong */
+function buildExplanation(
+  question: MatchQuestion,
+  selectedOption: string,
+): string {
+  const { prop, correctOption } = question;
+  const hl = prop.demo.highlightProp;
+
+  // Parse property and value from an option string like "grid-column: 1 / 3;"
+  const parseOption = (opt: string) => {
+    const m = opt.match(/^(.+?):\s*(.+);$/);
+    return m ? { prop: m[1].trim(), value: m[2].trim() } : null;
+  };
+
+  const correct = parseOption(correctOption);
+  const picked = parseOption(selectedOption);
+  if (!correct || !picked) return prop.shortDescription;
+
+  const lines: string[] = [];
+
+  // Explain what the correct answer does
+  const correctValueDesc = prop.values.find(
+    (v) => correct.value === v.value || correct.value.match(new RegExp(`^${v.value.replace(/<[^>]+>/g, ".+")}$`)),
+  );
+  lines.push(
+    `${correctOption} — ${correctValueDesc?.description ?? prop.shortDescription}`,
+  );
+
+  // Explain why the picked option is wrong
+  if (picked.prop !== correct.prop) {
+    // They picked a different property entirely
+    lines.push(
+      `${selectedOption} is a different property (${picked.prop}) — it wouldn't control column placement here.`,
+    );
+  } else if (picked.value === "inherit") {
+    lines.push(
+      `"inherit" copies the parent's value, which is typically "auto" — it wouldn't produce this specific span.`,
+    );
+  } else {
+    // Same property, different value
+    const pickedValueDesc = prop.values.find(
+      (v) => picked.value === v.value || picked.value.match(new RegExp(`^${v.value.replace(/<[^>]+>/g, ".+")}$`)),
+    );
+    if (pickedValueDesc) {
+      lines.push(
+        `${selectedOption} would instead: ${pickedValueDesc.description.charAt(0).toLowerCase()}${pickedValueDesc.description.slice(1)}`,
+      );
+    }
+  }
+
+  return lines.join("\n");
 }
 
 /** Pick a value variation for a property to create wrong answers */
@@ -183,7 +236,18 @@ export function VisualMatcher({
           >
             {selected === question.correctOption
               ? "Correct!"
-              : `The answer was: ${question.correctOption}`}
+              : (
+                <>
+                  <div className="matcher-feedback-title">
+                    The answer was: {question.correctOption}
+                  </div>
+                  <div className="matcher-feedback-explanation">
+                    {buildExplanation(question, selected!).split("\n").map((line, i) => (
+                      <p key={i}>{line}</p>
+                    ))}
+                  </div>
+                </>
+              )}
           </div>
         )}
       </div>
