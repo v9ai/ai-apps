@@ -38,6 +38,11 @@ import {
   TestTube,
   Gauge,
   CheckCircle2,
+  Table2,
+  RefreshCw,
+  Timer,
+  Wifi,
+  KeyRound,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ScrollReveal } from "@/components/scroll-reveal";
@@ -764,6 +769,148 @@ const evalScenarios = [
   { name: "safety-persistence", turns: 3, description: "Repeated diagnosis/prescription requests — must refuse all" },
   { name: "boundary-values", turns: 3, description: "Edge cases: TG/HDL = 2.0, NLR = 3.0 exactly" },
   { name: "lifestyle-factors", turns: 3, description: "Fasting status, exercise effects on markers" },
+];
+
+const schemaCategories = [
+  {
+    category: "Authentication",
+    color: "var(--gray-9)",
+    count: 4,
+    tables: ["user", "session", "account", "verification"],
+    detail: "Better Auth with cookie sessions. user_id propagates to all domain tables.",
+  },
+  {
+    category: "Core Domain",
+    color: "var(--blue-9)",
+    count: 10,
+    tables: [
+      "bloodTests",
+      "bloodMarkers",
+      "conditions",
+      "medications",
+      "symptoms",
+      "doctors",
+      "appointments",
+      "familyMembers",
+      "familyMemberDoctors",
+      "medicalLetters",
+    ],
+    detail: "All tables have userId FK → user (CASCADE DELETE). appointments and medicalLetters use SET NULL for optional doctor/family FKs.",
+  },
+  {
+    category: "Embedding",
+    color: "var(--green-9)",
+    count: 7,
+    tables: [
+      "bloodTestEmbeddings",
+      "bloodMarkerEmbeddings",
+      "healthStateEmbeddings",
+      "conditionEmbeddings",
+      "medicationEmbeddings",
+      "symptomEmbeddings",
+      "appointmentEmbeddings",
+    ],
+    detail: "Each has vector(1024), content text, userId index. CASCADE DELETE on source entity — no orphaned vectors.",
+  },
+  {
+    category: "Research",
+    color: "var(--amber-9)",
+    count: 1,
+    tables: ["researches"],
+    detail: 'Papers as JSONB array, synthesis text, type enum ("condition" | "protocol" | "memory"). 4 indexes.',
+  },
+  {
+    category: "Brain Health",
+    color: "var(--violet-9)",
+    count: 6,
+    tables: [
+      "brainHealthProtocols",
+      "protocolSupplements",
+      "cognitiveBaselines",
+      "cognitiveCheckIns",
+      "memoryEntries",
+      "memoryBaseline",
+    ],
+    detail: "Protocol → supplements/baselines/check-ins hierarchy. memoryEntries uses SET NULL for optional protocol FK.",
+  },
+];
+
+const triageSteps = [
+  {
+    step: "1",
+    title: "LLM Classification",
+    color: "var(--indigo-9)",
+    description: "User query sent to DeepSeek with the TRIAGE_SYSTEM prompt. Model returns JSON with intent, confidence, and extracted entities.",
+  },
+  {
+    step: "2",
+    title: "Markdown Stripping",
+    color: "var(--blue-9)",
+    description: 'Response cleaned of markdown code fences (```json ... ```) via regex before JSON parsing.',
+  },
+  {
+    step: "3",
+    title: "JSON Parse + Fallback",
+    color: "var(--amber-9)",
+    description: 'On JSONDecodeError: defaults to {intent: "general_health", confidence: 0.5, entities: []}. Never crashes the pipeline.',
+  },
+  {
+    step: "4",
+    title: "Intent Validation",
+    color: "var(--green-9)",
+    description: "Parsed intent checked against the 8-value allow set. Unknown intents silently default to general_health.",
+  },
+  {
+    step: "5",
+    title: "Confidence Audit",
+    color: "var(--gray-9)",
+    description: "Confidence (0.0–1.0) stored in state for logging/audit. Not used for routing — all intents proceed to retrieve except safety_refusal.",
+  },
+];
+
+const resilienceConfig = [
+  {
+    label: "Max Retries",
+    value: "3",
+    detail: "4 total attempts (initial + 3 retries)",
+    icon: RefreshCw,
+    color: "var(--blue-9)",
+  },
+  {
+    label: "Retry Codes",
+    value: "429 · 502 · 503 · 504",
+    detail: "Rate limit, bad gateway, service unavailable, gateway timeout",
+    icon: Wifi,
+    color: "var(--crimson-9)",
+  },
+  {
+    label: "Backoff",
+    value: "2s → 4s → 8s",
+    detail: "Exponential: 2^(attempt+1) seconds",
+    icon: Timer,
+    color: "var(--amber-9)",
+  },
+  {
+    label: "Connect Timeout",
+    value: "5.0s",
+    detail: "Fail fast on unreachable host",
+    icon: Wifi,
+    color: "var(--green-9)",
+  },
+  {
+    label: "Read Timeout",
+    value: "120.0s",
+    detail: "Long reads for complex generation",
+    icon: Timer,
+    color: "var(--indigo-9)",
+  },
+  {
+    label: "Client Pattern",
+    value: "Singleton",
+    detail: "Lazy init, global reuse — sync + async variants",
+    icon: KeyRound,
+    color: "var(--violet-9)",
+  },
 ];
 
 /* ── Page ──────────────────────────────────────────────────────────── */
@@ -2191,6 +2338,324 @@ export default function HowItWorksPage() {
             <span className="arch-tag">pytest</span>
             <span className="arch-tag">safety ≥ 80%</span>
             <span className="arch-tag">15+ eval scripts</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Schema Topology ── */}
+      <Box
+        id="schema-topology"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Drizzle ORM
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Schema Topology
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              28 PostgreSQL tables across 5 categories. Every user-owned
+              entity cascades on deletion. Embedding tables cascade on
+              their source entity — no orphaned vectors, no cleanup jobs.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="4" style={{ maxWidth: 860, margin: "0 auto" }}>
+          {schemaCategories.map((cat, i) => (
+            <ScrollReveal key={cat.category} delay={i * 60}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+              >
+                <Flex align="center" justify="between">
+                  <Flex align="center" gap="3">
+                    <div
+                      className="deep-dive-icon"
+                      style={{
+                        background: `color-mix(in srgb, ${cat.color} 18%, transparent)`,
+                        color: cat.color,
+                      }}
+                    >
+                      <Table2 size={18} />
+                    </div>
+                    <div>
+                      <Text size="3" weight="bold">
+                        {cat.category}
+                      </Text>
+                      <Text
+                        size="1"
+                        style={{ color: cat.color, fontSize: "11px", fontWeight: 600 }}
+                      >
+                        {cat.count} tables
+                      </Text>
+                    </div>
+                  </Flex>
+                </Flex>
+
+                <Flex gap="2" wrap="wrap">
+                  {cat.tables.map((t) => (
+                    <span key={t} className="arch-tag" style={{ fontSize: "11px" }}>
+                      {t}
+                    </span>
+                  ))}
+                </Flex>
+
+                <Text
+                  size="2"
+                  style={{
+                    color: "var(--gray-10)",
+                    lineHeight: 1.55,
+                    paddingLeft: "1rem",
+                    borderLeft: `2px solid ${cat.color}`,
+                  }}
+                >
+                  {cat.detail}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={350}>
+          <pre className="pg-code-block" style={{ maxWidth: 860, margin: "2rem auto 0" }}>
+            <code>{`// Custom Drizzle vector type → pgvector(1024)
+const vector = customType<{ data: number[]; driverData: string }>({
+  dataType()  { return "vector(1024)"; },
+  toDriver(v) { return \`[\${v.join(",")}]\`; },
+  fromDriver(v) {
+    return v.slice(1, -1).split(",").map(Number);
+  },
+});`}</code>
+          </pre>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Triage Prompt ── */}
+      <Box
+        id="triage-prompt"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--indigo-9)",
+                fontSize: "11px",
+              }}
+            >
+              Triage Node Internals
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Triage Prompt &amp; Intent Parsing
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              The TRIAGE_SYSTEM prompt classifies every query into one of 8
+              intents. JSON output is parsed with markdown-aware cleanup
+              and a graceful fallback chain.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <pre className="pg-code-block" style={{ maxWidth: 800, margin: "0 auto 2rem" }}>
+            <code>{`// TRIAGE_SYSTEM prompt (verbatim)
+"You are a clinical query classifier for a blood marker
+intelligence system.
+
+Classify the user's query into exactly ONE intent:
+- markers:        Blood marker values, levels, ranges, flags
+- trajectory:     Trends over time, velocity, improving/deteriorating
+- conditions:     Health conditions, diseases (NOT to diagnose)
+- medications:    Drugs, dosages, drug-biomarker interactions
+- symptoms:       Symptoms and their relation to markers
+- appointments:   Scheduling, upcoming visits, providers
+- general_health: Broad questions spanning multiple categories
+- safety_refusal: Diagnosis/prescription requests, out-of-scope
+
+Also extract entity names (marker, condition, medication names).
+
+Respond ONLY with JSON:
+{\\"intent\\": \\"...\\", \\"confidence\\": 0.0-1.0, \\"entities\\": [\\"...\\"]}"
+`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="3" style={{ maxWidth: 800, margin: "0 auto" }}>
+          {triageSteps.map((ts, i) => (
+            <ScrollReveal key={ts.step} delay={i * 50}>
+              <Flex
+                className="deep-dive-card"
+                gap="3"
+                p="3"
+                align="start"
+              >
+                <div className="synthesis-rule-num" style={{ color: ts.color, borderColor: ts.color }}>
+                  {ts.step}
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {ts.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {ts.description}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+      </Box>
+
+      {/* ── LLM Resilience ── */}
+      <Box
+        id="llm-resilience"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--amber-9)",
+                fontSize: "11px",
+              }}
+            >
+              Production Hardening
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              LLM Resilience &amp; Configuration
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              The llm_backend module wraps an OpenAI-compatible endpoint
+              with exponential backoff, singleton httpx clients, and
+              separate sync/async/streaming code paths.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "2", sm: "3", md: "6" }}
+          gap="3"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+          mb="5"
+        >
+          {resilienceConfig.map((rc, i) => (
+            <ScrollReveal key={rc.label} delay={i * 40}>
+              <Flex
+                direction="column"
+                align="center"
+                gap="2"
+                p="3"
+                className="deep-dive-card"
+                style={{ textAlign: "center" }}
+              >
+                <div
+                  className="deep-dive-icon"
+                  style={{
+                    background: `color-mix(in srgb, ${rc.color} 18%, transparent)`,
+                    color: rc.color,
+                    width: 32,
+                    height: 32,
+                  }}
+                >
+                  <rc.icon size={16} />
+                </div>
+                <Text
+                  size="2"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "14px",
+                    color: rc.color,
+                  }}
+                >
+                  {rc.value}
+                </Text>
+                <Text size="1" weight="bold" style={{ fontSize: "11px" }}>
+                  {rc.label}
+                </Text>
+                <Text size="1" color="gray" style={{ fontSize: "10px", lineHeight: 1.4 }}>
+                  {rc.detail}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={280}>
+          <pre className="pg-code-block" style={{ maxWidth: 800, margin: "0 auto" }}>
+            <code>{`# llm_backend.py — retry loop (simplified)
+for attempt in range(MAX_RETRIES + 1):
+    try:
+        resp = client.post("/chat/completions", json=payload)
+        resp.raise_for_status()
+        break
+    except HTTPStatusError as exc:
+        if exc.response.status_code in {429, 502, 503, 504}:
+            time.sleep(2 ** (attempt + 1))  # 2s → 4s → 8s
+            continue
+        raise`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={320}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">OpenAI /v1/chat/completions</span>
+            <span className="arch-tag">httpx singleton</span>
+            <span className="arch-tag">sync + async + stream</span>
+            <span className="arch-tag">SSE [DONE] protocol</span>
           </Flex>
         </ScrollReveal>
       </Box>
