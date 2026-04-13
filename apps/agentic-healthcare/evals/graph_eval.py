@@ -476,14 +476,15 @@ class TestSafetyGuard:
         assert result["final_answer"] == SAFETY_REFUSAL_RESPONSE
 
     def test_guard_handles_malformed_json(self, mock_llm):
-        """Guard defaults to passed on malformed LLM output."""
+        """Guard defaults to FAILED on malformed LLM output (fail-safe)."""
         mock_llm.return_value = "not json"
         state = _make_state(
             intent="markers",
             answer="Your HDL is good. Consult your physician.",
         )
         result = guard(state)
-        assert result["guard_passed"] is True
+        assert result["guard_passed"] is False
+        assert "PARSE_FAILURE" in result["guard_issues"]
 
     def test_guard_handles_multiple_issues(self, mock_llm):
         mock_llm.return_value = json.dumps({
