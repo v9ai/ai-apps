@@ -67,17 +67,17 @@ export function FlashcardDeck({
     return () => window.removeEventListener("keydown", onKey);
   }, [toggle, rate, navigate]);
 
-  if (!prop) {
+  if (!item) {
     return (
       <div className="memorize-empty">
         <span className="memorize-empty-icon">&#x1F4DA;</span>
-        <Text size="2">No properties to review.</Text>
+        <Text size="2">No concepts to review.</Text>
       </div>
     );
   }
 
   return (
-    <div className="flashcard-split-wrapper">
+    <div className="flashcard-split-wrapper" style={!item.demo ? { gridTemplateColumns: "1fr" } : undefined}>
       {/* Left: test / quiz */}
       <div className="flashcard-left" onClick={toggle}>
         <div className="flashcard-counter">
@@ -97,39 +97,46 @@ export function FlashcardDeck({
           </Badge>
         )}
 
-        <div className="flashcard-property">{prop.property}</div>
+        <div className="flashcard-property">{item.term}</div>
         <div className="flashcard-prompt">
-          What does this property do? What values can it take?
+          {item.demo
+            ? "What does this property do? What values can it take?"
+            : "What is this concept? What are its key aspects?"}
         </div>
 
         {revealed ? (
           <div className="flashcard-answer">
             <div className="flashcard-description">
-              {prop.shortDescription}
+              {item.description}
             </div>
 
-            <Text size="1" weight="bold" color="gray" mb="1">
-              Values:
-            </Text>
-            <ul className="flashcard-values">
-              {prop.values.map((v) => (
-                <li key={v.value} className="flashcard-value">
-                  <code>{v.value}</code>
-                  <span className="flashcard-value-desc">
-                    {" "}
-                    &mdash; {v.description}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {item.details.length > 0 && (
+              <>
+                <Text size="1" weight="bold" color="gray" mb="1">
+                  {item.demo ? "Values:" : "Key details:"}
+                </Text>
+                <ul className="flashcard-values">
+                  {item.details.map((d) => (
+                    <li key={d.label} className="flashcard-value">
+                      <code>{d.label}</code>
+                      <span className="flashcard-value-desc">
+                        {" "}
+                        &mdash; {d.description}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
-            <Text size="1" color="gray" mb="1">
-              Default: <code>{prop.defaultValue}</code> &middot; Applies to:{" "}
-              {prop.appliesTo}
-            </Text>
+            {item.context && (
+              <Text size="1" color="gray" mb="1">
+                {item.context}
+              </Text>
+            )}
 
-            {prop.mnemonicHint && (
-              <div className="flashcard-hint">{prop.mnemonicHint}</div>
+            {item.mnemonicHint && (
+              <div className="flashcard-hint">{item.mnemonicHint}</div>
             )}
           </div>
         ) : (
@@ -144,14 +151,16 @@ export function FlashcardDeck({
         )}
       </div>
 
-      {/* Right: rendered demo */}
-      <div className="flashcard-right">
-        <LiveDemo
-          html={prop.demo.html}
-          css={prop.demo.css}
-          height="100%"
-        />
-      </div>
+      {/* Right: rendered demo (only for items with visual demos) */}
+      {item.demo && (
+        <div className="flashcard-right">
+          <LiveDemo
+            html={item.demo.html}
+            css={item.demo.css}
+            height="100%"
+          />
+        </div>
+      )}
 
       {/* Bottom controls */}
       <div className="flashcard-controls">
