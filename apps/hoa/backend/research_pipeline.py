@@ -19,6 +19,7 @@ Phase 1 — Intelligence Gathering (parallel):
     5.  Podcast & Media Analyst       — podcast appearances, media coverage
     6.  News & Press Analyst          — recent news, press releases
     7.  HuggingFace & Model Registry Analyst — models, datasets, spaces
+    7b. Blog & Writing Analyst        — personal blog posts via RSS (if blogUrl set)
 
 Phase 2 — Deep Analysis (depends on Phase 1):
     8.  Biography Writer              — synthesizes career narrative
@@ -764,6 +765,7 @@ class ResearchState(TypedDict, total=False):
     news_data: str
     hf_data: str
     video_data: str
+    blog_data: str
     # Phase 1.5
     wikipedia_data: str
     deep_fetched_urls: str
@@ -1063,6 +1065,34 @@ async def phase1(state: ResearchState) -> dict:
         ),
     ]
 
+    # Blog agent — only if personality has a blog URL
+    blog_url = person.get("blogUrl", "")
+    if blog_url:
+        specs.append((
+            "blog_data",
+            (
+                "You are a technical blog analyst who reads developer blogs systematically. "
+                "You identify key themes, technical opinions, project announcements, and "
+                "career milestones from blog post archives. You extract structured metadata "
+                "from each post: title, date, URL, and a one-sentence summary. You can "
+                "also deep-read the most important posts to extract quotes and insights."
+            ),
+            (
+                f"Analyze the personal blog of {ctx} at {blog_url}.\n"
+                f"Step 1: Fetch the blog's RSS feed using fetch_blog_rss with URL '{blog_url}'.\n"
+                f"Step 2: From the feed, identify ALL blog posts. For each post extract:\n"
+                f"  - title, date (YYYY-MM-DD), URL, and a 1-sentence summary from the description.\n"
+                f"Step 3: Deep-read the 5-8 most significant/recent posts using fetch_blog_post_content "
+                f"to extract richer summaries, key quotes, and technical opinions.\n"
+                f"Step 4: Tag each post with 1-3 topic tags (e.g. 'ai-tools', 'swift', 'agentic-engineering').\n\n"
+                f"Output a JSON object with two fields:\n"
+                f'  "posts": [{{"title": "...", "url": "https://...", "date": "YYYY-MM-DD", '
+                f'"summary": "one sentence", "tags": ["tag1", "tag2"]}}]\n'
+                f'  "themes": ["recurring theme 1", "recurring theme 2", ...]'
+            ),
+            TOOLS_BLOG,
+        ))
+
     # Sequential execution — local model handles one agent at a time
     results: dict[str, str] = {}
     for key, sys_prompt, task_prompt, agent_tools in specs:
@@ -1150,28 +1180,29 @@ async def phase2(state: ResearchState) -> dict:
         + _ctx_block("News & Press", state.get("news_data", ""))
         + _ctx_block("HuggingFace", state.get("hf_data", ""))
         + _ctx_block("Video Content", state.get("video_data", ""))
+        + _ctx_block("Blog Posts", state.get("blog_data", ""))
     )
 
     # Selective context for specific agents
     bio_ctx = _build_context(state,
-        primary=[("Web Research", "web_research"), ("Wikipedia", "wikipedia_data"), ("Deep-Fetched URLs", "deep_fetched_urls")],
+        primary=[("Web Research", "web_research"), ("Wikipedia", "wikipedia_data"), ("Deep-Fetched URLs", "deep_fetched_urls"), ("Blog Posts", "blog_data")],
         secondary=[("GitHub Profile", "github_data"), ("News & Press", "news_data"), ("arXiv & Semantic Scholar", "arxiv_data")],
     )
     timeline_ctx = _build_context(state,
-        primary=[("Web Research", "web_research"), ("Wikipedia", "wikipedia_data"), ("News & Press", "news_data")],
+        primary=[("Web Research", "web_research"), ("Wikipedia", "wikipedia_data"), ("News & Press", "news_data"), ("Blog Posts", "blog_data")],
         secondary=[("GitHub Profile", "github_data"), ("arXiv & Semantic Scholar", "arxiv_data"), ("Deep-Fetched URLs", "deep_fetched_urls")],
     )
     quote_ctx = _build_context(state,
-        primary=[("Deep-Fetched URLs", "deep_fetched_urls"), ("Podcast & Media", "podcast_data"), ("Web Research", "web_research")],
+        primary=[("Deep-Fetched URLs", "deep_fetched_urls"), ("Blog Posts", "blog_data"), ("Podcast & Media", "podcast_data"), ("Web Research", "web_research")],
         secondary=[("News & Press", "news_data"), ("Wikipedia", "wikipedia_data")],
     )
     social_ctx = _build_context(state,
         primary=[("Web Research", "web_research"), ("GitHub Profile", "github_data")],
-        secondary=[("HuggingFace", "hf_data"), ("Wikipedia", "wikipedia_data")],
+        secondary=[("HuggingFace", "hf_data"), ("Wikipedia", "wikipedia_data"), ("Blog Posts", "blog_data")],
     )
     contrib_ctx = _build_context(state,
         primary=[("Web Research", "web_research"), ("GitHub Profile", "github_data"), ("arXiv & Semantic Scholar", "arxiv_data")],
-        secondary=[("HuggingFace", "hf_data"), ("Deep-Fetched URLs", "deep_fetched_urls")],
+        secondary=[("HuggingFace", "hf_data"), ("Deep-Fetched URLs", "deep_fetched_urls"), ("Blog Posts", "blog_data")],
     )
 
     tools_search = TOOLS_SEARCH
@@ -1390,6 +1421,7 @@ async def phase2(state: ResearchState) -> dict:
             (
                 f"Analyze the technical philosophy and vision of {ctx}. Based on:\n"
                 f"{_ctx_block('Web Research', state.get('web_research', ''))}"
+                f"{_ctx_block('Blog Posts', state.get('blog_data', ''))}"
                 f"{_ctx_block('Podcast & Media', state.get('podcast_data', ''))}"
                 f"{_ctx_block('News & Press', state.get('news_data', ''))}\n"
                 f"Extract positions on: AGI timeline, open source vs proprietary, AI safety, "
@@ -1499,6 +1531,7 @@ async def phase3_exec(state: ResearchState) -> dict:
         + _ctx_block("News & Press", state.get("news_data", ""))
         + _ctx_block("arXiv & Semantic Scholar", state.get("arxiv_data", ""))
         + _ctx_block("Video Content", state.get("video_data", ""))
+        + _ctx_block("Blog Posts", state.get("blog_data", ""))
     )
 
     result = await _run_agent(
@@ -1876,6 +1909,15 @@ def export_results(state: ResearchState) -> None:
     if not isinstance(videos, list):
         videos = []
 
+    blog_raw = _extract_json(state.get("blog_data", "")) or {}
+    blog_posts = []
+    if isinstance(blog_raw, dict):
+        blog_posts = blog_raw.get("posts", [])
+    elif isinstance(blog_raw, list):
+        blog_posts = blog_raw
+    if not isinstance(blog_posts, list):
+        blog_posts = []
+
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     research = {
@@ -1917,6 +1959,16 @@ def export_results(state: ResearchState) -> None:
                 "description": v.get("description", ""),
             }
             for v in videos if isinstance(v, dict) and v.get("url")
+        ],
+        "blog_posts": [
+            {
+                "title": b.get("title", ""),
+                "url": b.get("url", ""),
+                "date": b.get("date", ""),
+                "summary": b.get("summary", ""),
+                "tags": b.get("tags", []),
+            }
+            for b in blog_posts if isinstance(b, dict) and b.get("title")
         ],
         "competitive_landscape": competitive,
         "collaboration_network": collaboration,

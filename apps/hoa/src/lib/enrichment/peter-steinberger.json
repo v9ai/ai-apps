@@ -444,17 +444,17 @@
         "createdAt": "2026-01-03T23:12:18Z"
       }
     ],
-    "totalStars": 8764,
+    "totalStars": 381858,
     "languages": [
+      {
+        "name": "TypeScript",
+        "count": 11,
+        "color": "#3178c6"
+      },
       {
         "name": "Go",
         "count": 13,
         "color": "#00ADD8"
-      },
-      {
-        "name": "TypeScript",
-        "count": 6,
-        "color": "#3178c6"
       },
       {
         "name": "Swift",
@@ -462,14 +462,29 @@
         "color": "#F05138"
       },
       {
+        "name": "Shell",
+        "count": 2,
+        "color": "#89e051"
+      },
+      {
+        "name": "Nix",
+        "count": 1,
+        "color": "#7e7eff"
+      },
+      {
+        "name": "Python",
+        "count": 1,
+        "color": "#3572A5"
+      },
+      {
+        "name": "C#",
+        "count": 1,
+        "color": "#178600"
+      },
+      {
         "name": "JavaScript",
         "count": 1,
         "color": "#f1e05a"
-      },
-      {
-        "name": "Shell",
-        "count": 1,
-        "color": "#89e051"
       },
       {
         "name": "HTML",

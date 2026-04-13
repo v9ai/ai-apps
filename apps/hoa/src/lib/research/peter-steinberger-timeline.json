@@ -21,6 +21,60 @@
       "source": "github"
     },
     {
+      "date": "2026-02-17",
+      "event": "Launched ACPX: headless CLI client for Agent Client Protocol sessions (2.1K+ stars)",
+      "url": "https://github.com/openclaw/acpx",
+      "source": "github"
+    },
+    {
+      "date": "2026-02-14",
+      "event": "Announced joining OpenAI; OpenClaw transitions to independent open-source foundation",
+      "url": "https://steipete.me/posts/2026/openclaw",
+      "source": "web"
+    },
+    {
+      "date": "2026-01-30",
+      "event": "Final rename to OpenClaw; project reaches 100K+ GitHub stars in roughly three months",
+      "url": "https://en.wikipedia.org/wiki/OpenClaw",
+      "source": "web"
+    },
+    {
+      "date": "2026-01-27",
+      "event": "Renamed Clawdbot to MoltBot following Anthropic trademark concern",
+      "url": "https://en.wikipedia.org/wiki/OpenClaw",
+      "source": "web"
+    },
+    {
+      "date": "2026-01-18",
+      "event": "Created Lobster: OpenClaw-native workflow shell for composable pipelines (1.1K+ stars)",
+      "url": "https://github.com/openclaw/lobster",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-08",
+      "event": "Created openclaw-ansible: hardened self-hosting with Tailscale VPN and Docker isolation",
+      "url": "https://github.com/openclaw/openclaw-ansible",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-06",
+      "event": "Launched ClawhHub skills archive and community skill ecosystem (4K+ stars)",
+      "url": "https://github.com/openclaw/skills",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-05",
+      "event": "Launched openclaw.ai website",
+      "url": "https://github.com/openclaw/openclaw.ai",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-04",
+      "event": "Founded OpenClaw GitHub organization; launched ClawhHub skill directory (7.9K+ stars)",
+      "url": "https://github.com/openclaw/clawhub",
+      "source": "github"
+    },
+    {
       "date": "2026-02-03",
       "event": "Created metcli: cli to get your data out of Meta. very WIP",
       "url": "https://github.com/steipete/metcli",
@@ -145,6 +199,24 @@
       "event": "Created wacli: WhatsApp CLI",
       "url": "https://github.com/steipete/wacli",
       "source": "github"
+    },
+    {
+      "date": "2025-11-24",
+      "event": "Published Clawdbot (later OpenClaw) on GitHub: one-hour WhatsApp-to-Claude prototype becomes the fastest-growing open-source project in history",
+      "url": "https://github.com/openclaw/openclaw",
+      "source": "github"
+    },
+    {
+      "date": "2021-10",
+      "event": "PSPDFKit raised EUR 100M+ from Insight Partners; Steinberger sold shares and stepped back as CEO",
+      "url": "https://steipete.me",
+      "source": "web"
+    },
+    {
+      "date": "2011-01",
+      "event": "Co-founded PSPDFKit with Martin Schurrer, bootstrapping a PDF SDK that grew to 1B+ devices",
+      "url": "https://pspdfkit.com",
+      "source": "web"
     }
   ]
 }
