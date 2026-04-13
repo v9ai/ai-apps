@@ -130,22 +130,8 @@ export const papers: Paper[] = [
     categoryColor: "var(--blue-9)",
   },
   {
-    slug: "vitest",
-    number: 10,
-    title: "Vitest",
-    category: "Evaluation",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Vitest Team",
-    year: 2024,
-    finding: "Fast unit testing framework with Vite integration",
-    relevance: "Used for unit testing TypeScript code, including functions in lib/embed.ts and components",
-    url: "https://vitest.dev/guide",
-    categoryColor: "var(--pink-9)",
-  },
-  {
     slug: "promptfoo",
-    number: 11,
+    number: 10,
     title: "Promptfoo",
     category: "Evaluation",
     wordCount: 0,
@@ -159,7 +145,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "turbopack",
-    number: 12,
+    number: 11,
     title: "Turbopack",
     category: "Build Tool",
     wordCount: 0,
@@ -192,8 +178,8 @@ export const researchStats: Stat[] = [
     source: "Multi-source RAG across tables referenced in lib/embed.ts",
   },
   {
-    number: "4",
-    label: "Evaluation frameworks (Vitest, Promptfoo, DeepEval, RAGAS)",
+    number: "3",
+    label: "Evaluation frameworks (Promptfoo, DeepEval, RAGAS)",
     source: "Package.json scripts and evaluation file references",
   },
   {
@@ -253,9 +239,9 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Evaluation and Quality Assurance",
-    description: "Comprehensive evaluation is performed using Vitest for unit tests, Promptfoo for LLM prompt evaluation, and DeepEval with RAGAS for RAG quality metrics (faithfulness, relevancy). Evaluation scripts cover critical paths like blood test processing, chat Q&A, and trajectory analysis, ensuring medical accuracy and system reliability through scenario-based testing.",
+    description: "Comprehensive evaluation is performed using Promptfoo for LLM prompt evaluation, and DeepEval with RAGAS for RAG quality metrics (faithfulness, relevancy). Evaluation scripts cover critical paths like blood test processing, chat Q&A, and trajectory analysis, ensuring medical accuracy and system reliability through scenario-based testing.",
     researchBasis: "Multi-framework evaluation suite for AI systems",
-    codeSnippet: "// Package.json scripts for evaluation\n\"scripts\": {\n  \"test\": \"vitest\",\n  \"eval:rag\": \"promptfoo eval\"\n}",
+    codeSnippet: "// Package.json scripts for evaluation\n\"scripts\": {\n  \"eval:rag\": \"promptfoo eval\"\n}",
     dataFlow: "Test scenarios \u2192 evaluation frameworks \u2192 metrics (precision, recall) \u2192 quality reports",
   },
 ];
@@ -286,11 +272,11 @@ export const extraSections: ExtraSection[] = [
   },
   {
     heading: "Deployment & Infrastructure",
-    content: "The frontend is built with Next.js 15 and deployed on Vercel, using Turbopack for fast development builds. PostgreSQL is hosted on Neon for serverless scaling, with Cloudflare R2 for file storage via AWS SDK v3. Local LLM inference runs on Apple Silicon via mlx_lm.server, while embedding generation uses Hugging Face Transformers in Node.js. Evaluation infrastructure includes Vitest, Promptfoo, DeepEval, and RAGAS, with UV as the Python package manager for testing scripts.",
+    content: "The frontend is built with Next.js 15 and deployed on Vercel, using Turbopack for fast development builds. PostgreSQL is hosted on Neon for serverless scaling, with Cloudflare R2 for file storage via AWS SDK v3. Local LLM inference runs on Apple Silicon via mlx_lm.server, while embedding generation uses Hugging Face Transformers in Node.js. Evaluation infrastructure includes Promptfoo, DeepEval, and RAGAS, with UV as the Python package manager for testing scripts.",
   },
   {
     heading: "Evaluation Framework",
-    content: "A comprehensive evaluation suite ensures medical accuracy and system reliability. Vitest handles unit tests for TypeScript code, Promptfoo evaluates LLM prompts and trajectory testing, DeepEval assesses RAG quality metrics (faithfulness, relevancy), and RAGAS provides specialized retrieval metrics. Evaluation scripts cover critical paths like blood test processing, chat Q&A, and multi-turn conversations, with scenario-based testing to validate performance across diverse health queries.",
+    content: "A comprehensive evaluation suite ensures medical accuracy and system reliability. Promptfoo evaluates LLM prompts and trajectory testing, DeepEval assesses RAG quality metrics (faithfulness, relevancy), and RAGAS provides specialized retrieval metrics. Evaluation scripts cover critical paths like blood test processing, chat Q&A, and multi-turn conversations, with scenario-based testing to validate performance across diverse health queries.",
   },
   {
     heading: "Unique Technical Patterns",
@@ -374,6 +360,6 @@ export const technicalDetails: TechnicalDetail[] = [
     type: "diagram",
     heading: "System Architecture Overview",
     description: "End-to-end flow from upload to insights",
-    code: "User \u2192 [Next.js Frontend] \u2192 UploadForm \u2192 Cloudflare R2 (PDFs)\n                     \u2193\n              [PostgreSQL] \u2190 Drizzle ORM \u2190 Embeddings (lib/embed.ts)\n                     \u2193\n        [Qwen 2.5 LLM] \u2190 RAG Retrieval \u2190 Cosine Similarity\n                     \u2193\n           [ChatInterface] \u2192 Streaming Response \u2192 User\n                     \u2193\n    [Trajectory Analysis] \u2192 Velocity Calculation \u2192 Alerts\n                     \u2193\n        [Evaluation] \u2190 Vitest/Promptfoo/DeepEval/RAGAS",
+    code: "User \u2192 [Next.js Frontend] \u2192 UploadForm \u2192 Cloudflare R2 (PDFs)\n                     \u2193\n              [PostgreSQL] \u2190 Drizzle ORM \u2190 Embeddings (lib/embed.ts)\n                     \u2193\n        [Qwen 2.5 LLM] \u2190 RAG Retrieval \u2190 Cosine Similarity\n                     \u2193\n           [ChatInterface] \u2192 Streaming Response \u2192 User\n                     \u2193\n    [Trajectory Analysis] \u2192 Velocity Calculation \u2192 Alerts\n                     \u2193\n        [Evaluation] \u2190 Promptfoo/DeepEval/RAGAS",
   },
 ];

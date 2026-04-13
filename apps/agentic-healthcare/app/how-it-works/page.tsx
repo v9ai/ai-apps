@@ -175,7 +175,7 @@ const techCategories = [
   {
     category: "Evaluation",
     color: "var(--pink-9)",
-    items: ["Vitest", "Promptfoo", "RAGAS"],
+    items: ["Promptfoo", "RAGAS"],
   },
 ];
 
