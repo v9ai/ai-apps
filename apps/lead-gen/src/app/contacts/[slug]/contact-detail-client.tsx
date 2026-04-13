@@ -788,6 +788,13 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
   });
 
   const {
+    data: receivedData,
+  } = useGetContactReceivedEmailsQuery({
+    variables: { contactId: resolvedId! },
+    skip: !resolvedId || !isAdmin,
+  });
+
+  const {
     data: messagesData,
     loading: messagesLoading,
   } = useGetContactMessagesQuery({
@@ -1285,13 +1292,13 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
           <GenerateEmailDialog contact={contact} onSent={() => refetchEmails()} />
         </Flex>
 
-        {/* Email History */}
+        {/* Email History (outbound + inbound merged) */}
         <Box>
           <Flex align="center" justify="between" mb="3">
             <Heading size="4">Email history</Heading>
-            {emailsData?.contactEmails && emailsData.contactEmails.length > 0 && (
+            {((emailsData?.contactEmails?.length ?? 0) + (receivedData?.contactReceivedEmails?.length ?? 0)) > 0 && (
               <Badge color="blue" variant="soft">
-                {emailsData.contactEmails.length}
+                {(emailsData?.contactEmails?.length ?? 0) + (receivedData?.contactReceivedEmails?.length ?? 0)}
               </Badge>
             )}
           </Flex>
@@ -1301,12 +1308,98 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
               <Spinner size="2" />
             </Flex>
           ) : !emailsData?.contactEmails || emailsData.contactEmails.length === 0 ? (
-            <Text size="2" color="gray">No emails sent yet.</Text>
+            receivedData?.contactReceivedEmails && receivedData.contactReceivedEmails.length > 0 ? (
+              <Flex direction="column" gap="2">
+                {receivedData.contactReceivedEmails.map((re) => (
+                  <Card key={`re-${re.id}`} style={{ borderLeft: "3px solid var(--purple-9)" }}>
+                    <Box p="3">
+                      <Flex justify="between" align="start" gap="2" wrap="wrap">
+                        <Box style={{ flex: 1, minWidth: 0 }}>
+                          <Flex align="center" gap="2" mb="1">
+                            <Badge color="purple" variant="soft" size="1">reply</Badge>
+                            {re.classification && (
+                              <Badge
+                                color={re.classification === "interested" ? "green" : re.classification === "not_interested" ? "red" : "gray"}
+                                variant="soft"
+                                size="1"
+                              >
+                                {re.classification}
+                              </Badge>
+                            )}
+                          </Flex>
+                          <Text size="2" weight="medium" as="p" style={{ wordBreak: "break-word" }}>
+                            {re.subject ?? "(no subject)"}
+                          </Text>
+                          <Text size="1" color="gray" as="p" mt="1">
+                            From {re.fromEmail} · {new Date(re.receivedAt).toLocaleString()}
+                          </Text>
+                          {re.textContent && (
+                            <Box mt="2" style={{ background: "var(--purple-2)", borderRadius: 4, padding: "var(--space-2)" }}>
+                              <Text size="2" style={{ whiteSpace: "pre-wrap" }}>{re.textContent}</Text>
+                            </Box>
+                          )}
+                        </Box>
+                      </Flex>
+                    </Box>
+                  </Card>
+                ))}
+              </Flex>
+            ) : (
+              <Text size="2" color="gray">No emails yet.</Text>
+            )
           ) : (
             <Flex direction="column" gap="2">
-              {emailsData.contactEmails.map((email) => (
-                <EmailDetailDialog key={email.id} email={email} />
-              ))}
+              {/* Build a merged timeline: outbound emails + received replies, sorted by date */}
+              {[
+                ...emailsData.contactEmails.map((email) => ({
+                  type: "sent" as const,
+                  date: email.sentAt ?? email.createdAt,
+                  email,
+                })),
+                ...(receivedData?.contactReceivedEmails ?? []).map((re) => ({
+                  type: "received" as const,
+                  date: re.receivedAt,
+                  received: re,
+                })),
+              ]
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .map((item) =>
+                  item.type === "sent" ? (
+                    <EmailDetailDialog key={`sent-${item.email.id}`} email={item.email} />
+                  ) : (
+                    <Card key={`re-${item.received.id}`} style={{ borderLeft: "3px solid var(--purple-9)" }}>
+                      <Box p="3">
+                        <Flex justify="between" align="start" gap="2" wrap="wrap">
+                          <Box style={{ flex: 1, minWidth: 0 }}>
+                            <Flex align="center" gap="2" mb="1">
+                              <Badge color="purple" variant="soft" size="1">reply</Badge>
+                              {item.received.classification && (
+                                <Badge
+                                  color={item.received.classification === "interested" ? "green" : item.received.classification === "not_interested" ? "red" : "gray"}
+                                  variant="soft"
+                                  size="1"
+                                >
+                                  {item.received.classification}
+                                </Badge>
+                              )}
+                            </Flex>
+                            <Text size="2" weight="medium" as="p" style={{ wordBreak: "break-word" }}>
+                              {item.received.subject ?? "(no subject)"}
+                            </Text>
+                            <Text size="1" color="gray" as="p" mt="1">
+                              From {item.received.fromEmail} · {new Date(item.received.receivedAt).toLocaleString()}
+                            </Text>
+                            {item.received.textContent && (
+                              <Box mt="2" style={{ background: "var(--purple-2)", borderRadius: 4, padding: "var(--space-2)" }}>
+                                <Text size="2" style={{ whiteSpace: "pre-wrap" }}>{item.received.textContent}</Text>
+                              </Box>
+                            )}
+                          </Box>
+                        </Flex>
+                      </Box>
+                    </Card>
+                  ),
+                )}
             </Flex>
           )}
         </Box>
