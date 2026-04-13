@@ -365,6 +365,7 @@ export default async function PersonPage({ params }: Props) {
         {research?.videos && research.videos.length > 0 && (
           <VideosSection videos={research.videos} />
         )}
+        <BlogPostsSection posts={blogPosts} blogUrl={person.blogUrl} />
         {person.papers && person.papers.length > 0 && (
           <PapersSection papers={person.papers} />
         )}
