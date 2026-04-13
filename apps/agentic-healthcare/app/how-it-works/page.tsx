@@ -3507,14 +3507,50 @@ user: """
               size="2"
               color="gray"
               align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
             >
-              15+ eval scripts across DeepEval and RAGAS.
-              5 RAG-triad metrics at 0.7 threshold, 8 multi-turn
-              conversational scenarios, and a DeepSeek judge for
-              automated grading.
+              {evalSuiteOverview.totalFiles} eval files, {evalSuiteOverview.totalTests} test
+              cases across {evalSuiteOverview.categories} categories. DeepEval metrics with
+              DeepSeek Reasoner as LLM judge, 3 custom clinical scorers, and full
+              pytest integration. Every node in the pipeline is independently evaluated.
             </Text>
           </Flex>
+        </ScrollReveal>
+
+        {/* Suite Stats */}
+        <ScrollReveal>
+          <Grid
+            columns={{ initial: "2", sm: "3", md: "6" }}
+            gap="3"
+            mb="7"
+            style={{ maxWidth: 840, margin: "0 auto" }}
+          >
+            {[
+              { label: "Test Cases", value: String(evalSuiteOverview.totalTests), color: "var(--blue-9)" },
+              { label: "Passed", value: String(evalSuiteOverview.passed), color: "var(--green-9)" },
+              { label: "Judge-Gated", value: String(evalSuiteOverview.skipped), color: "var(--amber-9)" },
+              { label: "Eval Files", value: String(evalSuiteOverview.totalFiles), color: "var(--indigo-9)" },
+              { label: "Custom Metrics", value: String(evalSuiteOverview.customMetrics), color: "var(--crimson-9)" },
+              { label: "Categories", value: String(evalSuiteOverview.categories), color: "var(--violet-9)" },
+            ].map((s) => (
+              <Flex
+                key={s.label}
+                direction="column"
+                align="center"
+                gap="1"
+                p="3"
+                className="deep-dive-card"
+                style={{ textAlign: "center" }}
+              >
+                <Text size="6" weight="bold" style={{ color: s.color, letterSpacing: "-0.03em" }}>
+                  {s.value}
+                </Text>
+                <Text size="1" color="gray" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  {s.label}
+                </Text>
+              </Flex>
+            ))}
+          </Grid>
         </ScrollReveal>
 
         {/* RAG Triad Metrics */}
@@ -3524,7 +3560,7 @@ user: """
               RAG Triad Metrics
             </Heading>
             <Text size="1" color="gray">
-              Every metric must pass at ≥ 70% across all test cases
+              Every metric must pass at &ge; 70% across all test cases
             </Text>
           </Flex>
         </ScrollReveal>
@@ -3561,14 +3597,281 @@ user: """
                   {m.description}
                 </Text>
                 <span className="threshold-pill threshold-optimal">
-                  ≥ {m.threshold}
+                  &ge; {m.threshold}
                 </span>
               </Flex>
             </ScrollReveal>
           ))}
         </Grid>
 
-        {/* Conversational Scenarios */}
+        {/* ── 12 Eval Category Deep-Dive ── */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4" mt="6">
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              Evaluation Categories
+            </Heading>
+            <Text size="1" color="gray" style={{ maxWidth: 520, textAlign: "center", lineHeight: 1.5 }}>
+              Each pipeline component has a dedicated eval file with targeted test groups, DeepEval metrics, and threshold enforcement
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="4" style={{ maxWidth: 960, margin: "0 auto" }} mb="7">
+          {evalCategories.map((cat, ci) => (
+            <ScrollReveal key={cat.id} delay={ci * 40}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="5"
+                className="deep-dive-card"
+              >
+                {/* Category header */}
+                <Flex align="center" gap="3">
+                  <div
+                    className="deep-dive-icon"
+                    style={{
+                      background: cat.bg,
+                      color: cat.color,
+                    }}
+                  >
+                    <cat.icon size={18} />
+                  </div>
+                  <Flex direction="column" gap="0">
+                    <Flex align="center" gap="2">
+                      <Text size="3" weight="bold" style={{ letterSpacing: "-0.01em" }}>
+                        {cat.title}
+                      </Text>
+                      <span className="threshold-pill threshold-optimal" style={{ fontSize: "10px" }}>
+                        {cat.passed}/{cat.tests} passed
+                      </span>
+                    </Flex>
+                    <Text
+                      size="1"
+                      color="gray"
+                      style={{
+                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                        fontSize: "10px",
+                      }}
+                    >
+                      {cat.file}
+                    </Text>
+                  </Flex>
+                </Flex>
+
+                {/* Description */}
+                <Text size="1" color="gray" style={{ lineHeight: 1.55, fontSize: "12px" }}>
+                  {cat.description}
+                </Text>
+
+                {/* Test groups */}
+                <Grid columns={{ initial: "1", sm: "2", md: "3" }} gap="2">
+                  {cat.groups.map((g) => (
+                    <Flex
+                      key={g.name}
+                      direction="column"
+                      gap="1"
+                      p="3"
+                      style={{
+                        background: "var(--gray-a2)",
+                        borderRadius: "var(--radius-2)",
+                        border: "1px solid var(--gray-a3)",
+                      }}
+                    >
+                      <Flex align="center" gap="2">
+                        <Text size="1" weight="bold" style={{ fontSize: "11px" }}>
+                          {g.name}
+                        </Text>
+                        <Text
+                          size="1"
+                          style={{
+                            fontSize: "10px",
+                            color: cat.color,
+                            fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                          }}
+                        >
+                          {g.count}
+                        </Text>
+                      </Flex>
+                      <Text size="1" color="gray" style={{ fontSize: "10px", lineHeight: 1.4 }}>
+                        {g.detail}
+                      </Text>
+                    </Flex>
+                  ))}
+                </Grid>
+
+                {/* Metrics + thresholds */}
+                <Flex gap="2" wrap="wrap">
+                  {cat.metrics.map((m) => (
+                    <span key={m} className="arch-tag" style={{ fontSize: "10px" }}>
+                      {m}
+                    </span>
+                  ))}
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        {/* ── Custom Clinical Scorers ── */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4" mt="6">
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              Custom Clinical Scorers
+            </Heading>
+            <Text size="1" color="gray" style={{ maxWidth: 480, textAlign: "center", lineHeight: 1.5 }}>
+              3 TypeScript scorers for domain-specific evaluation that DeepEval&apos;s built-in metrics cannot capture
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", md: "3" }}
+          gap="3"
+          mb="7"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+        >
+          {customScorerDetails.map((s, i) => (
+            <ScrollReveal key={s.name} delay={i * 60}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <Flex align="center" gap="2">
+                  <div
+                    className="deep-dive-icon"
+                    style={{ background: s.bg, color: s.color }}
+                  >
+                    <s.icon size={18} />
+                  </div>
+                  <Text size="2" weight="bold" style={{ fontSize: "13px" }}>
+                    {s.name}
+                  </Text>
+                </Flex>
+                <Text size="1" color="gray" style={{ lineHeight: 1.5, fontSize: "11px", flex: 1 }}>
+                  {s.description}
+                </Text>
+                <pre
+                  className="sql-block"
+                  style={{ fontSize: "10px", padding: "8px 10px", margin: 0 }}
+                >
+                  score = {s.score}
+                </pre>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        {/* ── Trajectory Test Cases ── */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4" mt="6">
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              15 Trajectory Scenarios
+            </Heading>
+            <Text size="1" color="gray" style={{ maxWidth: 480, textAlign: "center", lineHeight: 1.5 }}>
+              Longitudinal blood panel trajectories spanning 0&ndash;200 days, testing velocity computation, direction classification, and risk tier transitions
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "3" }}
+          gap="2"
+          mb="7"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+        >
+          {trajectoryTestCases.map((tc, i) => (
+            <ScrollReveal key={tc.name} delay={i * 30}>
+              <Flex
+                direction="column"
+                gap="1"
+                p="3"
+                className="deep-dive-card"
+              >
+                <Flex align="center" gap="2">
+                  <Text
+                    size="1"
+                    weight="bold"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                    }}
+                  >
+                    {tc.name}
+                  </Text>
+                  <span
+                    className={`threshold-pill ${tc.direction === "improving" ? "threshold-optimal" : tc.direction === "deteriorating" ? "threshold-elevated" : tc.direction === "stable" ? "threshold-borderline" : ""}`}
+                    style={{ fontSize: "9px" }}
+                  >
+                    {tc.direction}
+                  </span>
+                </Flex>
+                <Text size="1" color="gray" style={{ fontSize: "10px", lineHeight: 1.4 }}>
+                  {tc.detail}
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    fontSize: "10px",
+                    color: "var(--gray-9)",
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                  }}
+                >
+                  {tc.days > 0 ? `${tc.days} days` : "single snapshot"}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        {/* ── Safety Test Examples ── */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4" mt="6">
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              Safety Guardrail Test Examples
+            </Heading>
+            <Text size="1" color="gray" style={{ maxWidth: 480, textAlign: "center", lineHeight: 1.5 }}>
+              34 adversarial inputs across 7 safety categories &mdash; every response must refuse, deflect, or escalate
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "3" }}
+          gap="2"
+          mb="7"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+        >
+          {safetyTestExamples.map((ex, i) => (
+            <ScrollReveal key={ex.category} delay={i * 40}>
+              <Flex
+                direction="column"
+                gap="2"
+                p="3"
+                className="deep-dive-card"
+              >
+                <Text size="1" weight="bold" style={{ color: ex.color, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {ex.category}
+                </Text>
+                <Text
+                  size="1"
+                  color="gray"
+                  style={{
+                    fontSize: "11px",
+                    lineHeight: 1.45,
+                    fontStyle: "italic",
+                  }}
+                >
+                  &ldquo;{ex.input}&rdquo;
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        {/* ── Multi-Turn Conversational Scenarios ── */}
         <ScrollReveal>
           <Flex direction="column" align="center" gap="2" mb="4" mt="6">
             <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
@@ -3614,14 +3917,95 @@ user: """
           ))}
         </Grid>
 
+        {/* ── Judge Architecture ── */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4" mt="7">
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              Judge Architecture
+            </Heading>
+            <Text size="1" color="gray" style={{ maxWidth: 520, textAlign: "center", lineHeight: 1.5 }}>
+              DeepSeek Reasoner as LLM judge via OpenAI-compatible API. Session-scoped fixtures, auto-skip when no judge available, and DashScope (Qwen) fallback for task LLM.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "4" }}
+          gap="3"
+          mb="5"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+        >
+          {[
+            { icon: BrainCircuit, title: "DeepSeekEvalLLM", detail: "Custom DeepEvalBaseLLM subclass wrapping any OpenAI-compatible endpoint. Supports both local (:19836) and remote (api.deepseek.com) judge.", color: "var(--indigo-9)", bg: "var(--indigo-a3)" },
+            { icon: Gauge, title: "GEval Factory", detail: "make_geval() creates metrics backed by DeepSeek instead of OpenAI. Configurable name, criteria, evaluation params, and threshold.", color: "var(--green-9)", bg: "var(--green-a3)" },
+            { icon: RefreshCw, title: "Auto-Skip Guard", detail: "skip_no_judge / skip_no_dashscope markers. Tests that require LLM judge are skipped when no API key or local instance is available.", color: "var(--amber-9)", bg: "var(--amber-a3)" },
+            { icon: Scale, title: "Temperature 0.0", detail: "Judge runs at temperature 0.0 for deterministic evaluation. Same response evaluated twice produces the same score.", color: "var(--crimson-9)", bg: "var(--crimson-a3)" },
+          ].map((j, i) => (
+            <ScrollReveal key={j.title} delay={i * 50}>
+              <Flex direction="column" gap="2" p="4" className="deep-dive-card" style={{ height: "100%" }}>
+                <div className="deep-dive-icon" style={{ background: j.bg, color: j.color }}>
+                  <j.icon size={18} />
+                </div>
+                <Text size="2" weight="bold" style={{ fontSize: "13px" }}>
+                  {j.title}
+                </Text>
+                <Text size="1" color="gray" style={{ lineHeight: 1.45, fontSize: "11px" }}>
+                  {j.detail}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        {/* ── Run commands ── */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4" mt="6">
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              Eval Commands
+            </Heading>
+            <Text size="1" color="gray">
+              pytest + uv run for isolated Python execution
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <pre
+            className="sql-block"
+            style={{
+              maxWidth: 720,
+              margin: "0 auto",
+              fontSize: "11px",
+              lineHeight: 1.7,
+              padding: "16px 20px",
+            }}
+          >
+{`# Individual categories
+pnpm eval:graph              # LangGraph pipeline (65 tests)
+pnpm eval:graph:triage       # Triage classification only
+pnpm eval:graph:guard        # Safety guard only
+pnpm eval:graph:e2e          # End-to-end quality
+pnpm eval:trajectory         # Trajectory analysis (46 tests)
+pnpm eval:rag:triad          # RAG Triad 5-metric (36 tests)
+pnpm eval:conv               # Multi-turn conversations (42 tests)
+pnpm eval:rag:synth          # Synthetic golden generation (7 tests)
+
+# Full suite
+pnpm eval:all                # All 541 tests across 15 files`}
+          </pre>
+        </ScrollReveal>
+
         <ScrollReveal delay={380}>
           <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">DeepEval</span>
-            <span className="arch-tag">RAGAS</span>
-            <span className="arch-tag">DeepSeek judge</span>
+            <span className="arch-tag">DeepEval 3.9</span>
+            <span className="arch-tag">DeepSeek Reasoner judge</span>
+            <span className="arch-tag">3 custom scorers</span>
             <span className="arch-tag">pytest</span>
-            <span className="arch-tag">safety ≥ 80%</span>
-            <span className="arch-tag">15+ eval scripts</span>
+            <span className="arch-tag">541 test cases</span>
+            <span className="arch-tag">15 eval files</span>
+            <span className="arch-tag">10 categories</span>
+            <span className="arch-tag">safety &ge; 80%</span>
+            <span className="arch-tag">RAG triad &ge; 70%</span>
           </Flex>
         </ScrollReveal>
       </Box>
