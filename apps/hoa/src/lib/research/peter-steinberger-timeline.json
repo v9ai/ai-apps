@@ -1,0 +1,150 @@
+{
+  "slug": "peter-steinberger",
+  "generated_at": "2026-04-13T12:33:55.305176Z",
+  "events": [
+    {
+      "date": "2026-03-09",
+      "event": "Created triage",
+      "url": "https://github.com/steipete/triage",
+      "source": "github"
+    },
+    {
+      "date": "2026-03-08",
+      "event": "Created birdclaw: Stores all your tweets nicely claw-able for agents.",
+      "url": "https://github.com/steipete/birdclaw",
+      "source": "github"
+    },
+    {
+      "date": "2026-03-07",
+      "event": "Created discrawl: cli for discord with sqlite backend",
+      "url": "https://github.com/steipete/discrawl",
+      "source": "github"
+    },
+    {
+      "date": "2026-02-03",
+      "event": "Created metcli: cli to get your data out of Meta. very WIP",
+      "url": "https://github.com/steipete/metcli",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-28",
+      "event": "Created lobsterbot",
+      "url": "https://github.com/steipete/lobsterbot",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-04",
+      "event": "Created clawdbot.com: clawdbot.com website",
+      "url": "https://github.com/steipete/clawdbot.com",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-03",
+      "event": "Created remindctl: cli for Apple Reminders app",
+      "url": "https://github.com/steipete/remindctl",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-02",
+      "event": "Created sweetcookie: Cookies for any browser, any OS, in go",
+      "url": "https://github.com/steipete/sweetcookie",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-02",
+      "event": "Created spogo: \ud83c\udfa7 Spotify, but make it terminal. Power CLI using web cookies.",
+      "url": "https://github.com/steipete/spogo",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-02",
+      "event": "Created goplaces: Modern Google Places CLI in Go",
+      "url": "https://github.com/steipete/goplaces",
+      "source": "github"
+    },
+    {
+      "date": "2026-01-02",
+      "event": "Created songsee: \ud83c\udf0a FFT so pretty, your ears will be jealous. See your sound\u2014spectrograms, mel, ch",
+      "url": "https://github.com/steipete/songsee",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-30",
+      "event": "Created gifgrep: Grep the GIF. Stick the landing.",
+      "url": "https://github.com/steipete/gifgrep",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-30",
+      "event": "Created ElevenLabsKit: Swift SDK to stream ElevenLabs Voices",
+      "url": "https://github.com/steipete/ElevenLabsKit",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-27",
+      "event": "Created SweetCookieKit: Extract browser cookies from macOS in Swift",
+      "url": "https://github.com/steipete/SweetCookieKit",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-27",
+      "event": "Created sweet-cookie: Extract cookies out of your browser. TypeScript. Any OS.",
+      "url": "https://github.com/steipete/sweet-cookie",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-19",
+      "event": "Created ordercli: CLI for Foodora and Deliveroo",
+      "url": "https://github.com/steipete/ordercli",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-19",
+      "event": "Created osc-progress: Tiny lib for OSC 9;4 terminal progress.",
+      "url": "https://github.com/steipete/osc-progress",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-19",
+      "event": "Created tokentally: One tiny lib for LLM token + cost math",
+      "url": "https://github.com/steipete/tokentally",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-17",
+      "event": "Created blucli: Go-based cli for blueOS",
+      "url": "https://github.com/steipete/blucli",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-17",
+      "event": "Created summarize: Point at any URL/YouTube/Podcast or file. Get the gist. CLI and Chrome Extension",
+      "url": "https://github.com/steipete/summarize",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-13",
+      "event": "Created vox: Let's your agent run phone calls",
+      "url": "https://github.com/steipete/vox",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-13",
+      "event": "Created sonoscli: Control SONOS speakers from your terminal.",
+      "url": "https://github.com/steipete/sonoscli",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-12",
+      "event": "Created canvas: A browser canvas for your agents.",
+      "url": "https://github.com/steipete/canvas",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-12",
+      "event": "Created wacli: WhatsApp CLI",
+      "url": "https://github.com/steipete/wacli",
+      "source": "github"
+    }
+  ]
+}

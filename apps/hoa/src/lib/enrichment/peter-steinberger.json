@@ -1,0 +1,400 @@
+{
+  "github": {
+    "profile": {
+      "bio": "Came back from retirement to mess with AI. Clawdfather @OpenClaw\r\n\r\nPreviously: Founder of @PSPDFKit.",
+      "publicRepos": 173,
+      "followers": 47315,
+      "location": "Vienna & London",
+      "createdAt": "2009-02-27T08:34:22Z"
+    },
+    "repos": [
+      {
+        "name": "summarize",
+        "description": "Point at any URL/YouTube/Podcast or file. Get the gist. CLI and Chrome Extension.",
+        "url": "https://github.com/steipete/summarize",
+        "stars": 5572,
+        "forks": 349,
+        "language": "TypeScript",
+        "topics": [
+          "ai",
+          "cli",
+          "summarize",
+          "typescript"
+        ],
+        "updatedAt": "2026-04-13T12:20:48Z",
+        "createdAt": "2025-12-17T12:19:51Z"
+      },
+      {
+        "name": "wacli",
+        "description": "WhatsApp CLI",
+        "url": "https://github.com/steipete/wacli",
+        "stars": 918,
+        "forks": 166,
+        "language": "Go",
+        "topics": [
+          "cli",
+          "go",
+          "whatsapp"
+        ],
+        "updatedAt": "2026-04-13T12:15:27Z",
+        "createdAt": "2025-12-12T12:43:35Z"
+      },
+      {
+        "name": "discrawl",
+        "description": "cli for discord with sqlite backend",
+        "url": "https://github.com/steipete/discrawl",
+        "stars": 618,
+        "forks": 54,
+        "language": "Go",
+        "topics": [],
+        "updatedAt": "2026-04-12T14:45:14Z",
+        "createdAt": "2026-03-07T12:13:48Z"
+      },
+      {
+        "name": "goplaces",
+        "description": "Modern Google Places CLI in Go",
+        "url": "https://github.com/steipete/goplaces",
+        "stars": 205,
+        "forks": 26,
+        "language": "Go",
+        "topics": [
+          "cli",
+          "go",
+          "google",
+          "locations",
+          "places",
+          "reviews"
+        ],
+        "updatedAt": "2026-04-10T20:16:46Z",
+        "createdAt": "2026-01-02T15:49:22Z"
+      },
+      {
+        "name": "remindctl",
+        "description": "cli for Apple Reminders app",
+        "url": "https://github.com/steipete/remindctl",
+        "stars": 190,
+        "forks": 58,
+        "language": "Swift",
+        "topics": [],
+        "updatedAt": "2026-04-10T20:17:23Z",
+        "createdAt": "2026-01-03T06:14:05Z"
+      },
+      {
+        "name": "spogo",
+        "description": "\ud83c\udfa7 Spotify, but make it terminal. Power CLI using web cookies.",
+        "url": "https://github.com/steipete/spogo",
+        "stars": 177,
+        "forks": 22,
+        "language": "Go",
+        "topics": [],
+        "updatedAt": "2026-04-12T07:18:46Z",
+        "createdAt": "2026-01-02T16:17:37Z"
+      },
+      {
+        "name": "birdclaw",
+        "description": "Stores all your tweets nicely claw-able for agents.",
+        "url": "https://github.com/steipete/birdclaw",
+        "stars": 161,
+        "forks": 6,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-04-12T16:11:45Z",
+        "createdAt": "2026-03-08T19:43:00Z"
+      },
+      {
+        "name": "sweet-cookie",
+        "description": "Extract cookies out of your browser. TypeScript. Any OS.",
+        "url": "https://github.com/steipete/sweet-cookie",
+        "stars": 147,
+        "forks": 37,
+        "language": "TypeScript",
+        "topics": [
+          "browser",
+          "cookies",
+          "typescript"
+        ],
+        "updatedAt": "2026-04-10T20:18:57Z",
+        "createdAt": "2025-12-27T10:26:49Z"
+      },
+      {
+        "name": "sonoscli",
+        "description": "Control SONOS speakers from your terminal.",
+        "url": "https://github.com/steipete/sonoscli",
+        "stars": 115,
+        "forks": 19,
+        "language": "Go",
+        "topics": [
+          "cli",
+          "go",
+          "sonos"
+        ],
+        "updatedAt": "2026-04-11T18:22:42Z",
+        "createdAt": "2025-12-13T00:37:32Z"
+      },
+      {
+        "name": "gifgrep",
+        "description": "Grep the GIF. Stick the landing.",
+        "url": "https://github.com/steipete/gifgrep",
+        "stars": 114,
+        "forks": 14,
+        "language": "Go",
+        "topics": [
+          "gif",
+          "go",
+          "tui"
+        ],
+        "updatedAt": "2026-04-10T20:20:06Z",
+        "createdAt": "2025-12-30T17:17:45Z"
+      },
+      {
+        "name": "ElevenLabsKit",
+        "description": "Swift SDK to stream ElevenLabs Voices",
+        "url": "https://github.com/steipete/ElevenLabsKit",
+        "stars": 94,
+        "forks": 21,
+        "language": "Swift",
+        "topics": [],
+        "updatedAt": "2026-04-12T16:14:30Z",
+        "createdAt": "2025-12-30T11:43:32Z"
+      },
+      {
+        "name": "SweetCookieKit",
+        "description": "Extract browser cookies from macOS in Swift",
+        "url": "https://github.com/steipete/SweetCookieKit",
+        "stars": 71,
+        "forks": 18,
+        "language": "Swift",
+        "topics": [
+          "browser",
+          "cookie",
+          "swift"
+        ],
+        "updatedAt": "2026-04-12T13:24:38Z",
+        "createdAt": "2025-12-27T18:39:49Z"
+      },
+      {
+        "name": "ordercli",
+        "description": "CLI for Foodora and Deliveroo",
+        "url": "https://github.com/steipete/ordercli",
+        "stars": 62,
+        "forks": 12,
+        "language": "Go",
+        "topics": [
+          "cli",
+          "deliveroo",
+          "foodora"
+        ],
+        "updatedAt": "2026-04-10T13:44:26Z",
+        "createdAt": "2025-12-19T21:00:43Z"
+      },
+      {
+        "name": "tokentally",
+        "description": "One tiny lib for LLM token + cost math",
+        "url": "https://github.com/steipete/tokentally",
+        "stars": 58,
+        "forks": 11,
+        "language": "TypeScript",
+        "topics": [
+          "cost",
+          "token",
+          "typescript"
+        ],
+        "updatedAt": "2026-04-10T20:23:05Z",
+        "createdAt": "2025-12-19T11:43:00Z"
+      },
+      {
+        "name": "songsee",
+        "description": "\ud83c\udf0a FFT so pretty, your ears will be jealous. See your sound\u2014spectrograms, mel, chroma, and more.",
+        "url": "https://github.com/steipete/songsee",
+        "stars": 50,
+        "forks": 3,
+        "language": "Go",
+        "topics": [
+          "agents",
+          "music",
+          "visualization"
+        ],
+        "updatedAt": "2026-04-11T12:34:32Z",
+        "createdAt": "2026-01-02T10:54:18Z"
+      },
+      {
+        "name": "lobsterbot",
+        "description": null,
+        "url": "https://github.com/steipete/lobsterbot",
+        "stars": 30,
+        "forks": 1,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2026-04-10T20:26:00Z",
+        "createdAt": "2026-01-28T17:10:48Z"
+      },
+      {
+        "name": "blucli",
+        "description": "Go-based cli for blueOS",
+        "url": "https://github.com/steipete/blucli",
+        "stars": 29,
+        "forks": 5,
+        "language": "Go",
+        "topics": [
+          "bluos",
+          "cli",
+          "go"
+        ],
+        "updatedAt": "2026-04-03T00:16:15Z",
+        "createdAt": "2025-12-17T15:56:42Z"
+      },
+      {
+        "name": "metcli",
+        "description": "cli to get your data out of Meta. very WIP",
+        "url": "https://github.com/steipete/metcli",
+        "stars": 28,
+        "forks": 5,
+        "language": "Go",
+        "topics": [],
+        "updatedAt": "2026-04-06T06:14:55Z",
+        "createdAt": "2026-02-03T00:27:59Z"
+      },
+      {
+        "name": "vox",
+        "description": "Let's your agent run phone calls",
+        "url": "https://github.com/steipete/vox",
+        "stars": 28,
+        "forks": 10,
+        "language": "TypeScript",
+        "topics": [
+          "call",
+          "cli",
+          "typescript"
+        ],
+        "updatedAt": "2026-04-06T06:14:58Z",
+        "createdAt": "2025-12-13T03:32:27Z"
+      },
+      {
+        "name": "canvas",
+        "description": "A browser canvas for your agents.",
+        "url": "https://github.com/steipete/canvas",
+        "stars": 23,
+        "forks": 5,
+        "language": "Go",
+        "topics": [],
+        "updatedAt": "2026-04-13T08:30:41Z",
+        "createdAt": "2025-12-12T14:24:47Z"
+      },
+      {
+        "name": "triage",
+        "description": null,
+        "url": "https://github.com/steipete/triage",
+        "stars": 21,
+        "forks": 0,
+        "language": "Shell",
+        "topics": [],
+        "updatedAt": "2026-03-25T12:56:08Z",
+        "createdAt": "2026-03-09T00:04:23Z"
+      },
+      {
+        "name": "clawdbot.com",
+        "description": "clawdbot.com website",
+        "url": "https://github.com/steipete/clawdbot.com",
+        "stars": 18,
+        "forks": 4,
+        "language": "HTML",
+        "topics": [],
+        "updatedAt": "2026-04-10T20:28:13Z",
+        "createdAt": "2026-01-04T15:12:30Z"
+      },
+      {
+        "name": "osc-progress",
+        "description": "Tiny lib for OSC 9;4 terminal progress.",
+        "url": "https://github.com/steipete/osc-progress",
+        "stars": 18,
+        "forks": 4,
+        "language": "TypeScript",
+        "topics": [
+          "osc",
+          "progress",
+          "progress-bar",
+          "typescipt"
+        ],
+        "updatedAt": "2026-03-15T13:43:36Z",
+        "createdAt": "2025-12-19T11:44:50Z"
+      },
+      {
+        "name": "sweetcookie",
+        "description": "Cookies for any browser, any OS, in go",
+        "url": "https://github.com/steipete/sweetcookie",
+        "stars": 14,
+        "forks": 2,
+        "language": "Go",
+        "topics": [],
+        "updatedAt": "2026-04-05T19:34:23Z",
+        "createdAt": "2026-01-02T18:27:57Z"
+      },
+      {
+        "name": "delicli",
+        "description": "Check on your Deliveroo orders from the terminal.",
+        "url": "https://github.com/steipete/delicli",
+        "stars": 2,
+        "forks": 1,
+        "language": "Go",
+        "topics": [
+          "cli",
+          "deliveroo",
+          "go"
+        ],
+        "updatedAt": "2026-02-20T01:38:51Z",
+        "createdAt": "2025-12-13T14:56:19Z"
+      },
+      {
+        "name": "mintlify-docs",
+        "description": null,
+        "url": "https://github.com/steipete/mintlify-docs",
+        "stars": 1,
+        "forks": 0,
+        "language": "MDX",
+        "topics": [],
+        "updatedAt": "2026-03-10T06:45:44Z",
+        "createdAt": "2026-01-03T23:12:18Z"
+      }
+    ],
+    "totalStars": 8764,
+    "languages": [
+      {
+        "name": "Go",
+        "count": 13,
+        "color": "#00ADD8"
+      },
+      {
+        "name": "TypeScript",
+        "count": 6,
+        "color": "#3178c6"
+      },
+      {
+        "name": "Swift",
+        "count": 3,
+        "color": "#F05138"
+      },
+      {
+        "name": "JavaScript",
+        "count": 1,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "Shell",
+        "count": 1,
+        "color": "#89e051"
+      },
+      {
+        "name": "HTML",
+        "count": 1,
+        "color": "#e34c26"
+      },
+      {
+        "name": "MDX",
+        "count": 1,
+        "color": "#8b8b8b"
+      }
+    ]
+  },
+  "huggingface": null,
+  "imageUrl": "https://www.trendingtopics.eu/wp-content/uploads/2026/01/OpenClaw.png"
+}
