@@ -39,7 +39,7 @@ export function IschiaPageContent() {
           position: "relative",
           zIndex: 1,
           mx: "auto",
-          px: { base: "4", sm: "6", md: "10", lg: "16", xl: "20" },
+          px: { base: "4", sm: "6", md: "8", lg: "10", xl: "12" },
           pt: { base: "10", sm: "16", md: "24" },
           pb: { base: "12", md: "20" },
         })}
@@ -48,7 +48,7 @@ export function IschiaPageContent() {
         <header
           className={css({
             textAlign: "center",
-            maxW: "3xl",
+            maxW: "4xl",
             mx: "auto",
             mb: { base: "10", sm: "16", md: "20" },
             animation: "fadeUp 0.6s ease-out",

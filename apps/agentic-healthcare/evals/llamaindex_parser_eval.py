@@ -30,16 +30,15 @@ from conftest import make_geval, skip_no_judge
 from llama_index.core import Document, VectorStoreIndex, Settings
 from llama_index.core.schema import MetadataMode, TextNode
 
+from conftest import get_embed_model, make_blood_test_node_parser
 from embeddings import (
     build_health_state_node,
     build_marker_nodes,
     build_test_document,
-    get_embed_model,
     compute_derived_metrics,
     classify_metric_risk,
 )
 from parsers import Marker, parse_markers
-from ingestion_pipeline import BloodTestNodeParser
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -145,13 +144,13 @@ class TestTransformContract:
     """Verify BloodTestNodeParser satisfies the LlamaIndex TransformComponent contract."""
 
     def test_is_transform_component(self):
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         # Should be callable (TransformComponent.__call__)
         assert callable(parser)
 
     def test_transform_returns_list_of_nodes(self):
         doc = _make_document(_COMPREHENSIVE_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
         assert isinstance(nodes, list)
         assert all(isinstance(n, (TextNode, Document)) for n in nodes)
@@ -159,7 +158,7 @@ class TestTransformContract:
     def test_transform_non_document_nodes_passthrough(self):
         """Non-Document nodes should pass through unchanged."""
         text_node = TextNode(text="some random text")
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         result = parser([text_node])
         assert len(result) == 1
         assert result[0] is text_node
@@ -178,7 +177,7 @@ class TestTransformContract:
                 "test_date": "2024-01-01",
             },
         )
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
         # Should return the original document when no markers found
         assert len(nodes) >= 1
@@ -195,7 +194,7 @@ class TestNodeTypeProduction:
     @pytest.fixture
     def nodes(self):
         doc = _make_document(_COMPREHENSIVE_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         return parser([doc])
 
     def test_produces_blood_test_node(self, nodes):
@@ -229,7 +228,7 @@ class TestMetadataFidelity:
     @pytest.fixture
     def nodes(self):
         doc = _make_document(_COMPREHENSIVE_PANEL, test_id="test-xyz", user_id="user-abc", file_name="comprehensive.pdf")
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         return parser([doc])
 
     def test_blood_test_metadata(self, nodes):
@@ -312,7 +311,7 @@ class TestDerivedMetricsAtTransform:
         markers = parse_markers(_COMPREHENSIVE_PANEL)
         ids = [f"m-{i}" for i in range(len(markers))]
         doc = _make_document(_COMPREHENSIVE_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
 
         hs_node = next(n for n in nodes if n.metadata.get("node_type") == "health_state")
@@ -334,7 +333,7 @@ class TestDerivedMetricsAtTransform:
     def test_all_normal_panel_metrics(self):
         markers = parse_markers(_ALL_NORMAL_PANEL)
         doc = _make_document(_ALL_NORMAL_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
 
         hs_node = next(n for n in nodes if n.metadata.get("node_type") == "health_state")
@@ -347,7 +346,7 @@ class TestDerivedMetricsAtTransform:
     def test_abnormal_count_in_test_node(self):
         markers = parse_markers(_COMPREHENSIVE_PANEL)
         doc = _make_document(_COMPREHENSIVE_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
 
         bt_node = next(n for n in nodes if n.metadata.get("node_type") == "blood_test")
@@ -356,7 +355,7 @@ class TestDerivedMetricsAtTransform:
     def test_zero_abnormal_count_for_normal_panel(self):
         markers = parse_markers(_ALL_NORMAL_PANEL)
         doc = _make_document(_ALL_NORMAL_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
 
         bt_node = next(n for n in nodes if n.metadata.get("node_type") == "blood_test")
@@ -374,7 +373,7 @@ class TestEdgeCases:
     def test_romanian_fkv_format(self):
         """Romanian FormKeysValues format should produce marker nodes."""
         doc = _make_document(_ROMANIAN_FKV_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
         marker_nodes = [n for n in nodes if n.metadata.get("node_type") == "blood_marker"]
         assert len(marker_nodes) > 0
@@ -385,7 +384,7 @@ class TestEdgeCases:
     def test_comma_decimal_values(self):
         """European comma decimals should be correctly parsed."""
         doc = _make_document(_COMMA_DECIMAL_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
         marker_nodes = [n for n in nodes if n.metadata.get("node_type") == "blood_marker"]
         assert len(marker_nodes) > 0
@@ -398,7 +397,7 @@ class TestEdgeCases:
         """Transform should handle multiple Documents in the input list."""
         doc1 = _make_document(_COMPREHENSIVE_PANEL, test_id="test-1")
         doc2 = _make_document(_ALL_NORMAL_PANEL, test_id="test-2")
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc1, doc2])
         # Should produce nodes for both tests
         test_ids = {n.metadata.get("test_id") for n in nodes}
@@ -416,14 +415,14 @@ class TestTransformIdempotency:
 
     def test_same_input_same_node_count(self):
         doc = _make_document(_COMPREHENSIVE_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes1 = parser([doc])
         nodes2 = parser([_make_document(_COMPREHENSIVE_PANEL)])
         assert len(nodes1) == len(nodes2)
 
     def test_same_input_same_node_types(self):
         doc = _make_document(_COMPREHENSIVE_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes1 = parser([doc])
         nodes2 = parser([_make_document(_COMPREHENSIVE_PANEL)])
         types1 = sorted(n.metadata.get("node_type") for n in nodes1)
@@ -432,7 +431,7 @@ class TestTransformIdempotency:
 
     def test_same_input_same_derived_metrics(self):
         doc = _make_document(_COMPREHENSIVE_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes1 = parser([doc])
         nodes2 = parser([_make_document(_COMPREHENSIVE_PANEL)])
         hs1 = next(n for n in nodes1 if n.metadata.get("node_type") == "health_state")
@@ -457,7 +456,7 @@ class TestEmbeddingIntegration:
         """Transform a document and return nodes with embeddings."""
         Settings.embed_model = embed_model
         doc = _make_document(_COMPREHENSIVE_PANEL)
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
 
         # Generate embeddings for all nodes

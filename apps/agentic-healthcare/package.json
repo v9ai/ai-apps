@@ -23,6 +23,12 @@
     "eval:graph:guard": "uv run --project langgraph pytest evals/graph_eval.py -v -k guard",
     "eval:graph:e2e": "uv run --project langgraph pytest evals/graph_eval.py -v -k EndToEnd",
     "eval:graph:design": "uv run --project langgraph pytest evals/graph_eval.py -v -k SystemDesign",
+    "eval:graph:retriage": "uv run --project langgraph pytest evals/graph_eval.py -v -k ReTriageLoop",
+    "eval:graph:dynamic-k": "uv run --project langgraph pytest evals/graph_eval.py -v -k DynamicKLimit",
+    "eval:intent": "uv run --project langgraph pytest evals/intent_eval.py -v",
+    "eval:intent:matrix": "uv run --project langgraph pytest evals/intent_eval.py -v -k confusion",
+    "eval:intent:calibration": "uv run --project langgraph pytest evals/intent_eval.py -v -k calibration",
+    "eval:intent:multi": "uv run --project langgraph pytest evals/intent_eval.py -v -k multi",
     "eval:all": "uv run --project langgraph pytest evals/ -v",
     "eval:view": "uv run --project langgraph deepeval login && echo 'View results at https://app.confident-ai.com'"
   },

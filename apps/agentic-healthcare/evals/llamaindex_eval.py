@@ -45,14 +45,13 @@ from llama_index.core.schema import MetadataMode, TextNode
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
 from llama_index.llms.openai_like import OpenAILike
 
+from conftest import get_embed_model, build_ingestion_pipeline, make_blood_test_node_parser
 from embeddings import (
     build_health_state_node,
     build_marker_nodes,
     build_test_document,
-    get_embed_model,
 )
 from parsers import Marker, parse_markers
-from ingestion_pipeline import BloodTestNodeParser, build_ingestion_pipeline
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -111,7 +110,7 @@ _RENAL_PANEL_ELEMENTS = [
 
 def _make_llm() -> OpenAILike:
     """Create a LlamaIndex LLM for chat engine tests."""
-    from llm_backend import get_llama_index_llm
+    from conftest import get_llama_index_llm
     return get_llama_index_llm()
 
 
@@ -577,7 +576,7 @@ class TestNodeParserComparison:
                 "test_date": "2024-01-01",
             },
         )
-        parser = BloodTestNodeParser()
+        parser = make_blood_test_node_parser()
         nodes = parser([doc])
         # Should produce structured nodes with correct types
         node_types = [n.metadata.get("node_type") for n in nodes]

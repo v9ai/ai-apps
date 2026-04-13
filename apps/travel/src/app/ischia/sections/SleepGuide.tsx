@@ -191,11 +191,11 @@ const T = {
     ] as Tier[],
     valueAnalysis: {
       title: "Thermal Value Analysis",
-      subtitle: "Why the mid-range tier is the sweet spot",
+      subtitle: "Why budget thermal is the smart choice",
       points: [
         {
           label: "Budget thermal (€100–150/night)",
-          detail: "Genuine volcanic water but limited pool variety. You'll want thermal park day tickets (€25–38 each) separately — adds €100–150 to your week. Total weekly cost: €800–1,200.",
+          detail: "Genuine volcanic water, half or full board included, and the same volcanic source as €250 hotels. Pair with 1–2 thermal park visits (€25–38) for variety. Total weekly cost: €800–1,200 — the best value on the island.",
         },
         {
           label: "Mid-range thermal (€150–195/night)",
@@ -206,8 +206,8 @@ const T = {
           detail: "The resort IS the thermal park — 4–7 pools covers everything. Skip paid parks entirely and save €150+. But the premium is paid upfront. Total weekly: €1,400–1,960.",
         },
         {
-          label: "Our pick: Hotel Don Pepe (€155/night FB)",
-          detail: "Full board 4-star with 4 thermal pools at three temperatures, children's pool, free mud cycle with 7-night stay, and the price of a budget hotel. The quality-to-price winner on the entire island.",
+          label: "Our pick: Hotel Terme La Pergola (€100/night HB)",
+          detail: "Half board 3-star with 3 thermal pools (indoor + outdoor), free mud treatment for 5+ night stays, child under 3 free. At €100/night you get genuine sulphate-bicarbonate volcanic water — the cheapest real thermal hotel on the island, and the quality-to-price winner.",
         },
       ] as ValuePoint[],
     },
@@ -454,7 +454,7 @@ export function SleepGuide() {
       className={css({
         bg: "steel.dark",
         py: { base: "14", md: "20" },
-        px: { base: "5", md: "8" },
+        px: { base: "4", sm: "6", md: "8", lg: "10", xl: "12" },
       })}
     >
       {/* ── Section header ── */}

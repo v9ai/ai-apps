@@ -15,4 +15,4 @@ export const DATE_RANGE_LABEL = {
 } as const;
 
 /** ── Recommended tier ─────────────────────────────────────────────── */
-export const RECOMMENDED_TIER = 1;  // 0 = budget, 1 = mid-range, 2 = comfort
+export const RECOMMENDED_TIER = 0;  // 0 = budget, 1 = mid-range, 2 = comfort

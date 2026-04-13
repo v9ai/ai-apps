@@ -35,8 +35,7 @@ from llama_index.core import Settings, VectorStoreIndex
 from llama_index.core.chat_engine import ContextChatEngine
 from llama_index.core.schema import MetadataMode
 
-from embeddings import get_embed_model
-from llm_backend import get_llama_index_llm
+from conftest import get_embed_model, get_llama_index_llm
 
 
 # ═══════════════════════════════════════════════════════════════════════
