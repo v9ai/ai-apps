@@ -10,6 +10,7 @@ AI engineering educational platform — 88 lessons across 14 categories with sea
 - **UI**: Radix UI Themes
 - **AI**: OpenAI, DeepSeek
 - **Content Generation**: LangGraph (Python backend)
+- **File Storage**: Vercel Blob
 - **Deployment**: Vercel
 
 ## Architecture

@@ -262,36 +262,211 @@ export const story =
 
 export const extraSections: ExtraSection[] = [
   {
-    heading: "System Architecture",
-    content: "The application uses a monorepo with Next.js 15 as the main framework, Rust crates for performance-critical tasks (crawling, embeddings), and shared workspace packages like @ai-apps/auth. Server components handle data fetching (e.g., src/app/admin/contacts/page.tsx), while client components manage interactivity (e.g., CompanyContactsClient). The architecture emphasizes local-first AI with Candle embeddings, GraphQL for API communication, and Inngest for background job orchestration. Key decisions include Rust for web crawling to improve speed and reduce cloud dependencies.",
+    heading: "Aho-Corasick Company Classification",
+    content: "Company AI-tier classification uses a production-grade Aho-Corasick automaton for single-pass multi-pattern matching — O(n + m + z) vs O(n × k) naive regex. The automaton processes all pattern dictionaries against full company descriptions in milliseconds, replacing LLM calls for deterministic classification. Failure links are computed via BFS after all patterns are inserted, enabling the automaton to backtrack efficiently when a partial match fails.",
+    codeBlock: `class AhoCorasickAutomaton {
+  private root: TrieNode = new TrieNode();
+
+  addPattern(pattern: string, label: string): void {
+    let node = this.root;
+    for (const ch of pattern) {
+      let child = node.children.get(ch);
+      if (!child) { child = new TrieNode(); node.children.set(ch, child); }
+      node = child;
+    }
+    node.output.push({ label, patternId: this.nextPatternId++ });
+  }
+
+  build(): void {
+    // BFS to compute failure links for all trie nodes
+    const queue: TrieNode[] = [];
+    for (const child of this.root.children.values()) {
+      child.fail = this.root;
+      queue.push(child);
+    }
+    // ... failure link computation via parent fail pointers
+  }
+}`,
   },
   {
-    heading: "Database Design",
-    content: "PostgreSQL (via Neon) stores all lead data with a schema defined in src/db/schema.ts. Core tables include companies (with columns like key, score, ai_tier) and contacts (with ai_profile JSONB). Relationships are 1:N from companies to contacts, linkedin_posts, and email_campaigns. Indexes on companies(key) and companies(score) optimize lookups and sorting. The design supports golden record resolution via canonical_domain to deduplicate companies and a blocklist via companies.blocked to exclude irrelevant entries from the pipeline.",
+    heading: "Weighted Intent Scoring",
+    content: "Intent scoring uses a weighted max-per-type aggregation model. Six signal types (hiring_intent, tech_adoption, growth_signal, budget_cycle, leadership_change, product_launch) are weighted by pipeline impact. For each type, only the strongest active signal is used — its confidence is multiplied by a freshness decay factor that degrades over time. This prevents stale signals from inflating scores while still recognizing companies with multiple active intent indicators.",
+    codeBlock: `const INTENT_WEIGHTS: Record<string, number> = {
+  hiring_intent: 30,      // Hiring job posts (heaviest)
+  tech_adoption: 20,      // Using your stack
+  growth_signal: 25,      // Revenue/headcount growth
+  budget_cycle: 15,       // Financial activity
+  leadership_change: 5,   // New CTOs, VPs
+  product_launch: 5,      // New product launches
+};
+
+// For each signal type, find strongest active signal
+for (const [signalType, weight] of Object.entries(INTENT_WEIGHTS)) {
+  const best = signals
+    .filter((s) => s.signal_type === signalType)
+    .reduce((max, s) => {
+      const f = computeFreshness(s.detected_at, s.decay_days);
+      return Math.max(max, s.confidence * f);
+    }, 0);
+  weightedSum += best * weight;
+  totalWeight += weight;
+}
+const score = (weightedSum / totalWeight) * 100; // [0, 100]`,
   },
   {
-    heading: "Security & Auth",
-    content: "Authentication is handled by Better Auth (@ai-apps/auth) with email/password, using server-side session validation via auth.api.getSession(). Admin routes are protected by checkIsAdmin() in src/lib/admin.ts, which checks against ADMIN_EMAIL. Environment variables (e.g., BETTER_AUTH_SECRET, API keys) are stored in .env.local. Webhook endpoints validate secrets (e.g., Resend webhook secret), and rate limiting is inferred for external APIs. The system includes a dev bypass via NEXT_PUBLIC_ADMIN_EMAIL for easier testing.",
+    heading: "Two-Pass Email Composition",
+    content: "Email drafts go through a two-pass pipeline: Phase 1 generates content at temperature 0.7 for natural variation, with explicit instructions to include one specific technical observation about the target company. Phase 2 runs a targeted refine pass that strips AI-marker phrases ('I hope this finds you well'), enforces a 3-sentence opening max, and tightens subject lines under 50 characters. The refine pass outperforms simply lowering temperature, which would also reduce the technical specificity of the body.",
+    codeBlock: `function buildBatchPrompt(input: GenerateBatchEmailRequest): string {
+  const parts: string[] = [];
+
+  // PRIMARY GOAL — instructions drive everything
+  if (input.instructions) {
+    parts.push(
+      "PRIMARY GOAL (most important):",
+      input.instructions, "",
+      "INTERPRETATION GUIDE:",
+      "- 'applied', 'no response', 'follow up' → FOLLOW-UP email",
+      "- Cold outreach → introduction email.", "",
+    );
+  }
+
+  // ANTI-PATTERN RULES (violations will be rejected)
+  parts.push(
+    "ANTI-PATTERN RULES:",
+    "- NEVER echo raw text from instructions verbatim — interpret and rephrase.",
+    "- NEVER list skills that don't match job requirements.",
+    "- NEVER fabricate recipient details or experience.", "",
+  );
+  return parts.join("\\n");
+}`,
   },
   {
-    heading: "Deployment & Infrastructure",
-    content: "The app is deployed on Vercel (implied by Next.js), with PostgreSQL hosted on Neon for serverless scaling. Background jobs use Inngest for event-driven processing, likely with scheduled crons for data ingestion. Rust services (crates/) are built with Cargo and integrated via npm scripts (e.g., pnpm linkedin:people). The local Candle embedding server runs on port 9998, possibly containerized for production. Environment configuration includes keys for OpenAI, DeepSeek, Resend, and other external services, managed through Vercel environment variables.",
+    heading: "DataLoader Batch Scheduling",
+    content: "GraphQL field resolvers use DataLoaders with a custom 2ms batch scheduler instead of the default process.nextTick. This trades imperceptible latency for 5–10x fewer DB round-trips on list views — when 50 companies each resolve facts + snapshots, the 2ms delay collects all 50 IDs into a single IN query rather than firing 50 individual queries. Batch sizes are tuned per entity: 250 for companies, 100 for contacts, 10 for users.",
+    codeBlock: `const BATCH_COMPANY = 250;
+const BATCH_PER_COMPANY = 100;
+const BATCH_CONTACT = 100;
+
+// 2ms delay collects more keys per batch when parallel
+// field resolvers execute — fewer DB round-trips on list pages
+const batchSchedule = (cb: () => void) => setTimeout(cb, 2);
+
+export function createLoaders(db: DbInstance) {
+  return {
+    company: new DataLoader<number, Company | null>(
+      async (companyIds) => {
+        const rows = await db.select().from(companies)
+          .where(inArray(companies.id, [...companyIds]));
+        const byId = new Map(rows.map((r) => [r.id, r]));
+        return companyIds.map((id) => byId.get(id) ?? null);
+      },
+      { maxBatchSize: BATCH_COMPANY, batchScheduleFn: batchSchedule },
+    ),
+    // ... 10+ loaders for contacts, facts, snapshots
+  };
+}`,
   },
   {
-    heading: "AI Integration",
-    content: "AI is integrated via multiple providers: OpenAI GPT for contact enrichment and intent detection, DeepSeek as a fallback LLM, and local JobBERT-v2 embeddings via Candle. The system uses regex and topic-based detection in src/lib/ai-contact-enrichment.ts to identify AI contacts. Embeddings enable semantic search through useGetSimilarPostsLazyQuery for lead similarity. LangChain and LlamaIndex packages are included for potential RAG workflows, though primary retrieval uses vector search with hybrid keyword filtering. Ensemble scoring combines AI signals into a final lead score.",
+    heading: "Webhook Signature Verification",
+    content: "Resend webhooks use HMAC-SHA256 signature verification with constant-time comparison to prevent timing attacks. The handler checks timestamp freshness (5-minute window) before verifying the signature, and correlates inbound replies via In-Reply-To headers rather than From addresses — contacts often reply from a different address, so From-based matching produces ~15% false negatives. Failed DB writes retry with exponential backoff (base 1s, max 30s, 3 retries).",
+    codeBlock: `function verifySignature(
+  payload: string, signature: string,
+  secret: string, timestamp: string, webhookId: string,
+): boolean {
+  // Check timestamp freshness (5 minutes)
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp, 10)) > 300) return false;
+
+  // HMAC-SHA256 signature
+  const secretBytes = Buffer.from(secret.replace("whsec_", ""), "base64");
+  const hmac = createHmac("sha256", secretBytes);
+  hmac.update(\`\${webhookId}.\${timestamp}.\${payload}\`);
+  const expected = \`v1,\${hmac.digest("base64")}\`;
+
+  // Constant-time comparison — prevents timing attacks
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) result |= a[i] ^ b[i];
+  return result === 0;
+}`,
   },
   {
-    heading: "Pipeline Orchestration",
-    content: "The lead generation pipeline is orchestrated through a combination of scheduled scripts and background jobs. Rust crates (agentic-search, linkedin-posts) handle discovery and scraping, outputting to JSON files. TypeScript scripts (e.g., scripts/scrape-linkedin-people.ts) process and enrich data, triggered by Inngest events or manual runs. The Candle server batches embedding generation, and scores are computed server-side. Email campaigns are scheduled via business-day logic in src/lib/business-days.ts, with Resend handling delivery and tracking. The LandingPipeline component visualizes this 7-step flow for monitoring.",
+    heading: "ICP Feature Extraction",
+    content: "Lead scoring extracts 18 numeric features per company into a fixed-dimension vector. Dimensions include AI tier (ordinal 0–2), tech stack overlap with ICP target (Jaccard coefficient), GitHub AI adoption score, HuggingFace Hub presence, intent score, and decision-maker contact count. All continuous features are z-score normalized within-batch rather than globally — this prevents distribution shift from stale reference statistics when the ICP evolves.",
+    codeBlock: `interface ICPFeatures {
+  hasDescription: number;
+  descriptionLengthNorm: number;
+  hasWebsite: number;
+  hasLinkedin: number;
+  emailCount: number;
+  tagCount: number;
+  serviceCount: number;
+  aiTier: number;            // 0..2 (not_ai, ai_first, ai_native)
+  isConsultancy: number;
+  factsCount: number;
+  githubAiScore: number;     // 0..1 adoption
+  hfPresenceScore: number;   // 0..100
+  intentScore: number;       // 0..100
+  dmContactsCount: number;   // decision-maker contacts
+}
+
+function extractICPFeatures(company, contactsCount, dmCount, factsCount) {
+  return {
+    aiTier: company.ai_tier ?? 0,
+    githubAiScore: company.github_ai_score ?? 0,
+    intentScore: (company.intent_score ?? 0) / 100,
+    dmContactsCount: dmCount,
+    // ... 14 more features, all normalized to [0, 1]
+  };
+}`,
   },
   {
-    heading: "Frontend Patterns",
-    content: "The frontend uses React 18+ with Server Components for data fetching and Client Components for interactivity. Radix UI provides unstyled primitives for modals and dialogs (e.g., BatchEmailModal), styled with Vanilla Extract and Panda CSS. State management leverages React hooks and providers (CompaniesProvider). Key patterns include search debouncing in admin tables (300ms delay), pagination with PAGE_SIZE=50, and real-time updates via GraphQL cache-and-network policy. The UI is designed for admin efficiency with bulk operations and detailed lead views.",
+    heading: "Business-Day Scheduling",
+    content: "Email sends are scheduled with business-day awareness — weekends are skipped, sends default to 8am UTC, and offset calculations use addBusinessDays for deterministic scheduling. The follow-up scheduler queries only contacts where next_send_at <= NOW() via a Drizzle partial index scan, and enforces same-company staggering (minimum 48h between touches to different contacts at the same company).",
+    codeBlock: `function getNextBusinessDay(
+  offset: number,
+  options: GetNextBusinessDayOptions = {},
+): Date {
+  const { fromDate, setTime = true, hour = 8 } = options;
+  if (offset === 0 && fromDate) return fromDate;
+
+  const startDate = fromDate || new Date();
+  let scheduledDate = fromDate ? startDate : addDays(startDate, 1);
+
+  // Skip weekends
+  while (scheduledDate.getUTCDay() === 0 || scheduledDate.getUTCDay() === 6) {
+    scheduledDate = addDays(scheduledDate, 1);
+  }
+  if (offset > 0) scheduledDate = addBusinessDays(scheduledDate, offset);
+  if (setTime) scheduledDate.setUTCHours(hour, 0, 0, 0);
+
+  return scheduledDate;
+}`,
   },
   {
-    heading: "Performance Optimizations",
-    content: "Performance is optimized through Rust for CPU-intensive tasks (crawling, embeddings), local AI inference to avoid cloud latency, and efficient database queries with Drizzle ORM and indexes. The frontend uses Suspense boundaries for lazy loading, debounced search to reduce GraphQL calls, and pagination to limit data transfer. The embedding server leverages Metal acceleration on macOS. Background jobs via Inngest ensure non-blocking operations, and business-day scheduling reduces email send failures. The hybrid stack balances speed (Rust) with developer productivity (TypeScript).",
+    heading: "Auto-Draft Reply Generation",
+    content: "When an inbound email is classified as 'interested' or 'info_request', the system auto-generates a contextual reply draft by first retrieving the full conversation thread — both outbound sends and inbound replies, sorted chronologically. Quoted text is stripped from inbound bodies to prevent recursive context bloat. Drafts are stored in reply_drafts and require human approval before sending, closing the loop between automation and human judgment.",
+    codeBlock: `async function getThreadContext(contactId: number): Promise<ThreadMessage[]> {
+  const [outbound, inbound] = await Promise.all([
+    db.select().from(contactEmails)
+      .where(eq(contactEmails.contact_id, contactId)),
+    db.select().from(receivedEmails)
+      .where(eq(receivedEmails.matched_contact_id, contactId)),
+  ]);
+
+  const messages: ThreadMessage[] = [];
+  for (const e of outbound)
+    messages.push({ direction: "outbound", subject: e.subject,
+      body: e.text_content || "", sentAt: e.sent_at || "" });
+  for (const e of inbound)
+    messages.push({ direction: "inbound", subject: e.subject || "",
+      body: stripQuotedText(e.text_content || ""), sentAt: e.received_at || "" });
+
+  return messages.sort((a, b) =>
+    new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+}`,
   },
 ];
 
@@ -301,61 +476,196 @@ export const technicalDetails: TechnicalDetail[] = [
   {
     type: "table",
     heading: "Core Database Tables",
-    description: "Key PostgreSQL tables managed by Drizzle ORM in src/db/schema.ts",
+    description: "Neon PostgreSQL schema via Drizzle ORM — key columns driving pipeline logic",
     items: [
     {
       label: "companies",
-      value: "Stores company data with scores and AI tiers",
-      metadata: {"columns": "id, key, name, canonical_domain, category, score, ai_tier, blocked"},
+      value: "Golden record with AI tier, intent scoring, and GitHub/HF signals",
+      metadata: {"key columns": "ai_tier, ai_classification_confidence, intent_score, github_ai_score, hf_presence_score"},
     },
     {
       label: "contacts",
-      value: "Stores contact details with AI profile JSON",
-      metadata: {"columns": "id, company_id, email, linkedin_url, department, tags, ai_profile"},
+      value: "Decision-maker tracking with ML-derived authority scoring",
+      metadata: {"key columns": "seniority, is_decision_maker, authority_score, next_touch_score, conversation_stage"},
     },
     {
-      label: "linkedin_posts",
-      value: "Stores scraped LinkedIn content for intent analysis",
-      metadata: {"inferred": "Referenced by useGetLinkedInPostsQuery"},
+      label: "intent_signals",
+      value: "Time-decaying intent signals with per-type confidence",
+      metadata: {"types": "hiring_intent, tech_adoption, growth_signal, budget_cycle, leadership_change, product_launch"},
+    },
+    {
+      label: "contact_emails",
+      value: "1:N per-address deliverability state with NeverBounce status",
+      metadata: {"key columns": "email, status (valid|invalid|catch_all), is_primary, verified_at, bounce_count"},
     },
     {
       label: "email_campaigns",
-      value: "Manages email outreach campaigns",
-      metadata: {"inferred": "Referenced by useCreateDraftCampaignMutation"},
+      value: "Campaign lifecycle with sequence tracking and follow-up state",
+      metadata: {"states": "draft → approved → sending → sent → replied → converted → closed"},
+    },
+    {
+      label: "received_emails",
+      value: "Inbound replies correlated via In-Reply-To header threading",
+      metadata: {"key columns": "matched_contact_id, in_reply_to_message_id, classification, auto_draft_id"},
     },
     ],
   },
   {
+    type: "code",
+    heading: "Companies Drizzle Schema",
+    description: "Actual schema definition showing AI scoring, intent, and GitHub signal columns",
+    code: `export const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+
+  category: text("category", {
+    enum: ["CONSULTANCY", "STAFFING", "AGENCY", "PRODUCT", "UNKNOWN"],
+  }).notNull().default("UNKNOWN"),
+
+  // AI classification — 3-tier taxonomy
+  ai_tier: integer("ai_tier").notNull().default(0),
+  ai_classification_confidence: real("ai_classification_confidence").default(0.5),
+
+  // Intent scoring — weighted max-per-type aggregation
+  intent_score: real("intent_score").notNull().default(0),     // 0..100
+  intent_signals_count: integer("intent_signals_count").notNull().default(0),
+  intent_top_signal: text("intent_top_signal"),                // JSON
+
+  // GitHub pattern analysis (Rust crate: github-patterns)
+  github_ai_score: real("github_ai_score"),      // 0..1
+  github_hiring_score: real("github_hiring_score"),
+
+  // HuggingFace Hub presence
+  hf_presence_score: real("hf_presence_score").default(0),     // 0..100
+});`,
+  },
+  {
     type: "diagram",
-    heading: "System Architecture Diagram",
-    description: "High-level flow of data through the hybrid Rust/TypeScript pipeline",
-    code: "Input Sources \u2192 Rust Crawlers (agentic-search, linkedin-posts) \u2192 TypeScript Scripts (scrape-linkedin-people.ts) \u2192 Candle Embedding Server \u2192 PostgreSQL Database \u2192 GraphQL API \u2192 Next.js Frontend \u2192 Resend Emails",
+    heading: "System Architecture",
+    description: "Data flow through the hybrid Rust/TypeScript pipeline with ML scoring layers",
+    code: `┌─────────────────────────────────────────────────────────────────┐
+│  DISCOVERY                                                      │
+│  Common Crawl CDX ─┐                                            │
+│  Live Web Search ──┼─→ Domain Dedup ─→ Neon PostgreSQL          │
+│  Bulk CSV Import ──┘                                            │
+├─────────────────────────────────────────────────────────────────┤
+│  ENRICHMENT                                                     │
+│  Fetch Site ─→ DeepSeek Extract ─→ Zod Gate ─→ AI Classify     │
+│                                           └─→ Deep Analysis     │
+│  ─→ Confidence Gate (≥0.72) ─→ Neon (enriched_at set)          │
+│                          └─→ Snapshot Archive (drift detection) │
+├─────────────────────────────────────────────────────────────────┤
+│  SCORING                                                        │
+│  18-Feature Vector ─→ ICP Cosine Sim ─→ Composite Rank         │
+│  (z-score norm)       (vs centroid)     (0.65×icp + 0.20×rec   │
+│                                          + 0.15×completeness)   │
+│  ─→ Percentile Filter (p60) ─→ Qualified Leads                 │
+├─────────────────────────────────────────────────────────────────┤
+│  CONTACTS                                                       │
+│  LinkedIn Profile ─┐                                            │
+│  Email Discovery ──┼─→ NeverBounce Verify ─→ contacts + emails  │
+│  (pattern prior)   │   (catch-all detect)                       │
+├─────────────────────────────────────────────────────────────────┤
+│  OUTREACH                                                       │
+│  Draft (t=0.7) ─→ Refine (t=0.3) ─→ Batch Campaign            │
+│  ─→ Resend API (10 req/s) ─→ Webhooks ─→ Reply-Aware Followup  │
+│                               └─→ Auto-Draft (approval gate)   │
+└─────────────────────────────────────────────────────────────────┘`,
   },
   {
     type: "code",
     heading: "Admin Gate Pattern",
-    description: "Server-side function to protect admin routes using Better Auth",
-    code: "export async function checkIsAdmin(): Promise<{\n  isAdmin: boolean;\n  userId: string | null;\n  userEmail: string | null;\n}> {\n  const session = await auth.api.getSession({ headers: await headers() });\n  return {\n    isAdmin: session?.user.email === ADMIN_EMAIL,\n    userId: session?.user.id,\n    userEmail: session?.user.email,\n  };\n}",
+    description: "Session-based authorization using Better Auth with constant-time email comparison",
+    code: `export async function checkIsAdmin(): Promise<{
+  isAdmin: boolean;
+  userId: string | null;
+  userEmail: string | null;
+}> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return { isAdmin: false, userId: null, userEmail: null };
+
+    return {
+      isAdmin: session.user.email === ADMIN_EMAIL,
+      userId: session.user.id,
+      userEmail: session.user.email,
+    };
+  } catch (error) {
+    console.error("Error checking admin status:", error);
+    return { isAdmin: false, userId: null, userEmail: null };
+  }
+}
+
+export function isAdminEmail(email: string | null | undefined): boolean {
+  return email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+}`,
   },
   {
     type: "card-grid",
     heading: "AI Detection Strategies",
-    description: "Methods used to identify AI-related contacts and companies",
+    description: "Multi-layer approach to identifying AI-related companies — deterministic first, ML second",
     items: [
     {
-      label: "Regex Pattern",
-      value: "AI_TAG_RE for contact tags and departments",
-      metadata: {"pattern": "/\\b(ai|ml|llm|nlp|deep[- ]?learning|machine[- ]?learning|data[- ]?science)\\b/i"},
+      label: "Aho-Corasick Automaton",
+      value: "Single-pass O(n+m+z) multi-pattern matching against company descriptions — replaces LLM calls for deterministic classification",
+      metadata: {"complexity": "O(n + m + z) vs O(n × k) naive"},
     },
     {
-      label: "GitHub Topics",
-      value: "Set of 20+ AI-related topics (e.g., machine-learning, llm)",
-      metadata: {"example": "AI_GITHUB_TOPICS = new Set([\"machine-learning\", \"deep-learning\"])"},
+      label: "GitHub Topic Analysis",
+      value: "Rust crate scans repo topics for 20+ AI indicators, computes github_ai_score (0–1) and github_hiring_score",
+      metadata: {"crate": "github-patterns"},
+    },
+    {
+      label: "HuggingFace Hub Presence",
+      value: "Checks for org/user presence on HF Hub — model publishers score higher than consumers",
+      metadata: {"score": "hf_presence_score 0..100"},
+    },
+    {
+      label: "Intent Signal Decay",
+      value: "Six signal types with time-weighted confidence — freshness decay prevents stale signals from inflating scores",
+      metadata: {"heaviest": "hiring_intent: 30, growth_signal: 25"},
     },
     {
       label: "Embedding Similarity",
-      value: "JobBERT-v2 embeddings for semantic company matching",
-      metadata: {"use": "useGetSimilarPostsLazyQuery"},
+      value: "JobBERT-v2 embeddings via local Candle server (Metal-accelerated, 4618 emb/sec) for semantic ICP matching",
+      metadata: {"port": "9998, cosine distance"},
+    },
+    ],
+  },
+  {
+    type: "card-grid",
+    heading: "Engineering Decisions",
+    description: "Key tradeoffs and design choices across the pipeline",
+    items: [
+    {
+      label: "Exact Dedup over Fuzzy",
+      value: "Normalized-slug exact match for company dedup — fuzzy (edit distance) produced too many false merges on subsidiary/parent pairs",
+      metadata: {"tradeoff": "precision over recall"},
+    },
+    {
+      label: "Per-Tier Confidence Thresholds",
+      value: "not-AI ≥ 0.65, AI-first ≥ 0.72, AI-native ≥ 0.80 — asymmetric error costs require asymmetric gates",
+      metadata: {"rationale": "false AI-native wastes outreach budget"},
+    },
+    {
+      label: "Percentile Ranking over Absolute",
+      value: "Score filter uses within-batch percentile rank — 'keep top 40%' stays stable even as ICP centroid shifts",
+      metadata: {"formula": "0.65×icp + 0.20×recency + 0.15×completeness"},
+    },
+    {
+      label: "2ms DataLoader Delay",
+      value: "Custom batch scheduler collects more keys per batch — 5-10x fewer DB round-trips on list views for imperceptible latency cost",
+      metadata: {"batch sizes": "companies: 250, contacts: 100"},
+    },
+    {
+      label: "In-Reply-To over From Address",
+      value: "Reply correlation via message threading headers — From-based matching has ~15% false negative rate when contacts reply from alternate addresses",
+      metadata: {"correlation": "In-Reply-To → original message_id"},
+    },
+    {
+      label: "Pre-Gate Snapshot Archive",
+      value: "All enrichment payloads archived before confidence filtering — enables threshold replay without re-fetching websites",
+      metadata: {"drift detection": "SHA-256 content_hash diff"},
     },
     ],
   },

@@ -581,6 +581,55 @@ export const applicationNotes = pgTable(
 export type ApplicationNote = typeof applicationNotes.$inferSelect;
 export type NewApplicationNote = typeof applicationNotes.$inferInsert;
 
+// ── Coursework ───────────────────────────────────────────────────
+
+export const learners = pgTable(
+  "learners",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    age: integer("age").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("learners_user_idx").on(table.userId)],
+);
+
+export type Learner = typeof learners.$inferSelect;
+export type NewLearner = typeof learners.$inferInsert;
+
+export const coursework = pgTable(
+  "coursework",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    learnerId: uuid("learner_id")
+      .references(() => learners.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: text("user_id").notNull(),
+    title: text("title").notNull(),
+    fileName: text("file_name").notNull(),
+    fileUrl: text("file_url").notNull(),
+    fileSize: integer("file_size").notNull(),
+    mimeType: text("mime_type").notNull(),
+    subject: text("subject"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("coursework_learner_idx").on(table.learnerId),
+    index("coursework_user_idx").on(table.userId),
+  ],
+);
+
+export type Coursework = typeof coursework.$inferSelect;
+export type NewCoursework = typeof coursework.$inferInsert;
+
 // ── Relations ──────────────────────────────────────────────────────
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -653,5 +702,16 @@ export const applicationNotesRelations = relations(applicationNotes, ({ one }) =
   application: one(applications, {
     fields: [applicationNotes.applicationId],
     references: [applications.id],
+  }),
+}));
+
+export const learnersRelations = relations(learners, ({ many }) => ({
+  coursework: many(coursework),
+}));
+
+export const courseworkRelations = relations(coursework, ({ one }) => ({
+  learner: one(learners, {
+    fields: [coursework.learnerId],
+    references: [learners.id],
   }),
 }));
