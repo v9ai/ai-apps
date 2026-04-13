@@ -3430,14 +3430,7 @@ export type GetContactEmailsQueryVariables = Exact<{
 }>;
 
 
-export type GetContactEmailsQuery = { __typename?: 'Query', contactEmails: Array<{ __typename?: 'ContactEmail', id: number, resendId: string, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, status: string, sentAt: string | null, recipientName: string | null, replyReceived: boolean, createdAt: string, updatedAt: string }> };
-
-export type GetContactReceivedEmailsQueryVariables = Exact<{
-  contactId: Scalars['Int']['input'];
-}>;
-
-
-export type GetContactReceivedEmailsQuery = { __typename?: 'Query', contactReceivedEmails: Array<{ __typename?: 'ReceivedEmail', id: number, fromEmail: string | null, subject: string | null, textContent: string | null, classification: string | null, classificationConfidence: number | null, receivedAt: string, createdAt: string }> };
+export type GetContactEmailsQuery = { __typename?: 'Query', contactEmails: Array<{ __typename?: 'ContactEmail', id: number, resendId: string, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, status: string, sentAt: string | null, recipientName: string | null, replyReceived: boolean, createdAt: string, updatedAt: string }>, contactReceivedEmails: Array<{ __typename?: 'ReceivedEmail', id: number, fromEmail: string | null, subject: string | null, textContent: string | null, classification: string | null, classificationConfidence: number | null, receivedAt: string, createdAt: string }> };
 
 export type GetCompanyContactEmailsQueryVariables = Exact<{
   companyId: Scalars['Int']['input'];
@@ -5185,6 +5178,16 @@ export const GetContactEmailsDocument = gql`
     createdAt
     updatedAt
   }
+  contactReceivedEmails(contactId: $contactId) {
+    id
+    fromEmail
+    subject
+    textContent
+    classification
+    classificationConfidence
+    receivedAt
+    createdAt
+  }
 }
     `;
 
@@ -5223,56 +5226,6 @@ export type GetContactEmailsQueryHookResult = ReturnType<typeof useGetContactEma
 export type GetContactEmailsLazyQueryHookResult = ReturnType<typeof useGetContactEmailsLazyQuery>;
 export type GetContactEmailsSuspenseQueryHookResult = ReturnType<typeof useGetContactEmailsSuspenseQuery>;
 export type GetContactEmailsQueryResult = Apollo.QueryResult<GetContactEmailsQuery, GetContactEmailsQueryVariables>;
-export const GetContactReceivedEmailsDocument = gql`
-    query GetContactReceivedEmails($contactId: Int!) {
-  contactReceivedEmails(contactId: $contactId) {
-    id
-    fromEmail
-    subject
-    textContent
-    classification
-    classificationConfidence
-    receivedAt
-    createdAt
-  }
-}
-    `;
-
-/**
- * __useGetContactReceivedEmailsQuery__
- *
- * To run a query within a React component, call `useGetContactReceivedEmailsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetContactReceivedEmailsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetContactReceivedEmailsQuery({
- *   variables: {
- *      contactId: // value for 'contactId'
- *   },
- * });
- */
-export function useGetContactReceivedEmailsQuery(baseOptions: Apollo.QueryHookOptions<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables> & ({ variables: GetContactReceivedEmailsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables>(GetContactReceivedEmailsDocument, options);
-      }
-export function useGetContactReceivedEmailsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables>(GetContactReceivedEmailsDocument, options);
-        }
-// @ts-ignore
-export function useGetContactReceivedEmailsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables>;
-export function useGetContactReceivedEmailsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactReceivedEmailsQuery | undefined, GetContactReceivedEmailsQueryVariables>;
-export function useGetContactReceivedEmailsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables>(GetContactReceivedEmailsDocument, options);
-        }
-export type GetContactReceivedEmailsQueryHookResult = ReturnType<typeof useGetContactReceivedEmailsQuery>;
-export type GetContactReceivedEmailsLazyQueryHookResult = ReturnType<typeof useGetContactReceivedEmailsLazyQuery>;
-export type GetContactReceivedEmailsSuspenseQueryHookResult = ReturnType<typeof useGetContactReceivedEmailsSuspenseQuery>;
-export type GetContactReceivedEmailsQueryResult = Apollo.QueryResult<GetContactReceivedEmailsQuery, GetContactReceivedEmailsQueryVariables>;
 export const GetCompanyContactEmailsDocument = gql`
     query GetCompanyContactEmails($companyId: Int!) {
   companyContactEmails(companyId: $companyId) {

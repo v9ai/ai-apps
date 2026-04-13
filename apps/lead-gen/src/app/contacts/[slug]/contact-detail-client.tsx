@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   useGetContactQuery,
   useGetContactEmailsQuery,
-  useGetContactReceivedEmailsQuery,
   useGetContactMessagesQuery,
   useGetResendEmailQuery,
   useFindContactEmailMutation,
@@ -788,13 +787,6 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
   });
 
   const {
-    data: receivedData,
-  } = useGetContactReceivedEmailsQuery({
-    variables: { contactId: resolvedId! },
-    skip: !resolvedId || !isAdmin,
-  });
-
-  const {
     data: messagesData,
     loading: messagesLoading,
   } = useGetContactMessagesQuery({
@@ -1296,9 +1288,9 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
         <Box>
           <Flex align="center" justify="between" mb="3">
             <Heading size="4">Email history</Heading>
-            {((emailsData?.contactEmails?.length ?? 0) + (receivedData?.contactReceivedEmails?.length ?? 0)) > 0 && (
+            {((emailsData?.contactEmails?.length ?? 0) + (emailsData?.contactReceivedEmails?.length ?? 0)) > 0 && (
               <Badge color="blue" variant="soft">
-                {(emailsData?.contactEmails?.length ?? 0) + (receivedData?.contactReceivedEmails?.length ?? 0)}
+                {(emailsData?.contactEmails?.length ?? 0) + (emailsData?.contactReceivedEmails?.length ?? 0)}
               </Badge>
             )}
           </Flex>
@@ -1308,7 +1300,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
               <Spinner size="2" />
             </Flex>
           ) : !emailsData?.contactEmails || emailsData.contactEmails.length === 0 ? (
-            receivedData?.contactReceivedEmails && receivedData.contactReceivedEmails.length > 0 ? (
+            emailsData?.contactReceivedEmails && receivedData.contactReceivedEmails.length > 0 ? (
               <Flex direction="column" gap="2">
                 {receivedData.contactReceivedEmails.map((re) => (
                   <Card key={`re-${re.id}`} style={{ borderLeft: "3px solid var(--purple-9)" }}>
@@ -1356,7 +1348,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                   date: email.sentAt ?? email.createdAt,
                   email,
                 })),
-                ...(receivedData?.contactReceivedEmails ?? []).map((re) => ({
+                ...(emailsData?.contactReceivedEmails ?? []).map((re) => ({
                   type: "received" as const,
                   date: re.receivedAt,
                   received: re,

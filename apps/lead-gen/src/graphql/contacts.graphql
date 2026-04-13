@@ -130,9 +130,6 @@ query GetContactEmails($contactId: Int!) {
     createdAt
     updatedAt
   }
-}
-
-query GetContactReceivedEmails($contactId: Int!) {
   contactReceivedEmails(contactId: $contactId) {
     id
     fromEmail
