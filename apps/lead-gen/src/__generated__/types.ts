@@ -1772,6 +1772,7 @@ export type Query = {
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
   contactMessages: Array<ContactMessage>;
+  contactReceivedEmails: Array<ReceivedEmail>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
   draftSummary: DraftSummary;
@@ -1924,6 +1925,11 @@ export type QueryContactEmailsArgs = {
 
 
 export type QueryContactMessagesArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactReceivedEmailsArgs = {
   contactId: Scalars['Int']['input'];
 };
 

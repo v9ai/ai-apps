@@ -1250,6 +1250,7 @@ type Query {
   contactByEmail(email: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
   contactMessages(contactId: Int!): [ContactMessage!]!
+  contactReceivedEmails(contactId: Int!): [ReceivedEmail!]!
   contactReminders(contactId: Int!): [ContactReminder!]!
   contacts(companyId: Int, limit: Int, offset: Int, search: String): ContactsResult!
   draftSummary: DraftSummary!

@@ -1775,6 +1775,7 @@ export type Query = {
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
   contactMessages: Array<ContactMessage>;
+  contactReceivedEmails: Array<ReceivedEmail>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
   draftSummary: DraftSummary;
@@ -1927,6 +1928,11 @@ export type QueryContactEmailsArgs = {
 
 
 export type QueryContactMessagesArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactReceivedEmailsArgs = {
   contactId: Scalars['Int']['input'];
 };
 
@@ -4713,6 +4719,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contactByEmail?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactByEmailArgs, 'email'>>;
   contactEmails?: Resolver<Array<ResolversTypes['ContactEmail']>, ParentType, ContextType, RequireFields<QueryContactEmailsArgs, 'contactId'>>;
   contactMessages?: Resolver<Array<ResolversTypes['ContactMessage']>, ParentType, ContextType, RequireFields<QueryContactMessagesArgs, 'contactId'>>;
+  contactReceivedEmails?: Resolver<Array<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryContactReceivedEmailsArgs, 'contactId'>>;
   contactReminders?: Resolver<Array<ResolversTypes['ContactReminder']>, ParentType, ContextType, RequireFields<QueryContactRemindersArgs, 'contactId'>>;
   contacts?: Resolver<ResolversTypes['ContactsResult'], ParentType, ContextType, Partial<QueryContactsArgs>>;
   draftSummary?: Resolver<ResolversTypes['DraftSummary'], ParentType, ContextType>;
