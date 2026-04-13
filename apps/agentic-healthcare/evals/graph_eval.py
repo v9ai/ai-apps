@@ -77,6 +77,7 @@ def mock_search_all():
         "graph.search_blood_tests",
         "graph.search_markers_hybrid",
         "graph.search_conditions",
+        "graph.search_health_states",
         "graph.search_medications",
         "graph.search_symptoms",
         "graph.search_appointments",
@@ -111,9 +112,25 @@ class TestTriageClassification:
         ("What is my HDL level?", "markers"),
         ("Show me my cholesterol values", "markers"),
         ("What does my NLR flag mean?", "markers"),
-        ("Is my De Ritis ratio normal?", "markers"),
     ])
     def test_marker_queries(self, mock_llm, query, expected_intent):
+        mock_llm.return_value = json.dumps({
+            "intent": expected_intent, "confidence": 0.95, "entities": []
+        })
+        state = _make_state(query=query)
+        result = triage(state)
+        assert result["intent"] == expected_intent
+
+    @pytest.mark.parametrize("query,expected_intent", [
+        ("Is my De Ritis ratio normal?", "derived_ratios"),
+        ("What is my TG/HDL ratio and risk level?", "derived_ratios"),
+        ("Explain my derived ratios from the last test", "derived_ratios"),
+        ("Are any of my clinical ratios elevated?", "derived_ratios"),
+        ("What does my TyG index mean for insulin resistance?", "derived_ratios"),
+        ("How does my NLR relate to inflammation?", "derived_ratios"),
+        ("My TC/HDL is 5.2 — is that concerning?", "derived_ratios"),
+    ])
+    def test_derived_ratio_queries(self, mock_llm, query, expected_intent):
         mock_llm.return_value = json.dumps({
             "intent": expected_intent, "confidence": 0.95, "entities": []
         })
@@ -229,12 +246,26 @@ class TestTriageClassification:
 class TestRetrievalRouting:
     """Test that retrieve calls the correct search functions per intent."""
 
+    def test_derived_ratios_queries_health_states_and_markers(self, mock_embedding, mock_search_all):
+        state = _make_state(intent="derived_ratios")
+        retrieve(state)
+        mock_search_all["search_health_states"].assert_called_once()
+        mock_search_all["search_markers_hybrid"].assert_called_once()
+        mock_search_all["search_conditions"].assert_not_called()
+        mock_search_all["search_appointments"].assert_not_called()
+
     def test_markers_queries_marker_and_test_tables(self, mock_embedding, mock_search_all):
         state = _make_state(intent="markers")
         retrieve(state)
         mock_search_all["search_markers_hybrid"].assert_called_once()
         mock_search_all["search_blood_tests"].assert_called_once()
         mock_search_all["search_conditions"].assert_not_called()
+
+    def test_markers_also_queries_health_states(self, mock_embedding, mock_search_all):
+        """Markers intent should also pull health state context for ratio cross-reference."""
+        state = _make_state(intent="markers")
+        retrieve(state)
+        mock_search_all["search_health_states"].assert_called_once()
 
     def test_trajectory_queries_markers_and_trend(self, mock_embedding, mock_search_all):
         state = _make_state(intent="trajectory", entities=["HDL"])
@@ -279,6 +310,7 @@ class TestRetrievalRouting:
         retrieve(state)
         mock_search_all["search_blood_tests"].assert_called_once()
         mock_search_all["search_markers_hybrid"].assert_called_once()
+        mock_search_all["search_health_states"].assert_called_once()
         mock_search_all["search_conditions"].assert_called_once()
         mock_search_all["search_medications"].assert_called_once()
         mock_search_all["search_symptoms"].assert_called_once()
@@ -836,9 +868,9 @@ class TestSystemDesign:
     # ── G.3 Node contracts ──────────────────────────────────────────
 
     def test_triage_returns_only_valid_intents(self, mock_llm):
-        """Triage must only return one of the 8 valid intents."""
+        """Triage must only return one of the 9 valid intents."""
         valid_intents = {
-            "markers", "trajectory", "conditions", "medications",
+            "markers", "derived_ratios", "trajectory", "conditions", "medications",
             "symptoms", "appointments", "general_health", "safety_refusal",
         }
         for intent in valid_intents:
@@ -889,9 +921,9 @@ class TestSystemDesign:
     # ── G.4 Prompt contracts ────────────────────────────────────────
 
     def test_triage_prompt_declares_all_intents(self):
-        """Triage system prompt must mention all 8 intent categories."""
+        """Triage system prompt must mention all 9 intent categories."""
         expected_intents = [
-            "markers", "trajectory", "conditions", "medications",
+            "markers", "derived_ratios", "trajectory", "conditions", "medications",
             "symptoms", "appointments", "general_health", "safety_refusal",
         ]
         for intent in expected_intents:
@@ -984,7 +1016,7 @@ class TestSystemDesign:
     def test_every_intent_has_retrieval_path(self, mock_embedding, mock_search_all):
         """Every non-refusal intent must trigger at least one search function."""
         intents_with_retrieval = [
-            "markers", "trajectory", "conditions", "medications",
+            "markers", "derived_ratios", "trajectory", "conditions", "medications",
             "symptoms", "appointments", "general_health",
         ]
         for intent in intents_with_retrieval:
