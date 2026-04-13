@@ -504,6 +504,155 @@ const guardRules = [
   },
 ];
 
+const extractionTiers = [
+  {
+    tier: "1",
+    title: "HTML Tables",
+    icon: Server,
+    color: "var(--orange-9)",
+    bg: "var(--orange-a3)",
+    description:
+      "LlamaParse converts PDF tables into HTML. Regex extracts rows via <tr>/<td> patterns, yielding structured [name, value, unit, reference_range] tuples.",
+    pattern: String.raw`<tr[^>]*>([\s\S]*?)</tr>  →  <t[dh][^>]*>([\s\S]*?)</t[dh]>`,
+    validation: "Value must contain a digit; name must not start with a digit.",
+  },
+  {
+    tier: "2",
+    title: "FormKeysValues",
+    icon: Database,
+    color: "var(--blue-9)",
+    bg: "var(--blue-a3)",
+    description:
+      'Handles Romanian/EU lab formats where a "Title" element is followed by key-value pairs. Extracts value+unit via numeric regex, reference range from the last parenthesized substring.',
+    pattern: String.raw`([\d.,]+)\s*([\w/µ%µgLdlUIuimlog]+)  →  \(([^)]+)\)`,
+    validation:
+      "Skips administrative rows (RECOLTAT, LUCRAT, CNP, ADRESA, etc.)",
+  },
+  {
+    tier: "3",
+    title: "Free-Text Fallback",
+    icon: Search,
+    color: "var(--crimson-9)",
+    bg: "var(--crimson-a3)",
+    description:
+      "When no tables or key-value pairs exist, a 4-group multiline regex captures name, value, unit, and reference range from whitespace-separated columns in plain text.",
+    pattern: String.raw`^([A-Za-z\u00C0-\u00FF...]+?)\s{2,}([\d.,]+)\s+(unit)\s+(range)`,
+    validation:
+      "Deduplication by marker name keeps first occurrence; flags computed from parsed ranges.",
+  },
+];
+
+const flagRules = [
+  { condition: "Range (lo – hi)", logic: "num < lo → low · num > hi → high · else → normal" },
+  { condition: "Less-than (< X)", logic: "num ≥ X → high · else → normal" },
+  { condition: "Greater-than (> X)", logic: "num ≤ X → low · else → normal" },
+  { condition: "Undetectable", logic: "num > 0 → high · else → normal" },
+];
+
+const embeddingFormats = [
+  {
+    entity: "Blood Marker",
+    icon: FlaskConical,
+    color: "var(--crimson-9)",
+    bg: "var(--crimson-a3)",
+    runtime: "Python",
+    template: "Marker: {name}\\nValue: {value} {unit}\\nReference range: {range}\\nFlag: {flag}\\nTest: {fileName}\\nDate: {testDate}",
+  },
+  {
+    entity: "Health State",
+    icon: Activity,
+    color: "var(--green-9)",
+    bg: "var(--green-a3)",
+    runtime: "Python",
+    template: "Health state: {fileName}\\nDate: {uploadedAt}\\nTotal markers: {count}\\nSummary: {summary}\\n\\nDerived metrics (with risk):\\n{metrics}\\n\\nAll markers:\\n{markers}",
+  },
+  {
+    entity: "Blood Test",
+    icon: Upload,
+    color: "var(--orange-9)",
+    bg: "var(--orange-a3)",
+    runtime: "Python",
+    template: "Blood test: {fileName}\\nDate: {uploadedAt}\\nSummary: {summary}\\n\\n{marker_lines}",
+  },
+  {
+    entity: "Condition",
+    icon: Heart,
+    color: "var(--amber-9)",
+    bg: "var(--amber-a3)",
+    runtime: "TypeScript",
+    template: "Health condition: {name}\\nNotes: {notes}",
+  },
+  {
+    entity: "Medication",
+    icon: Pill,
+    color: "var(--violet-9)",
+    bg: "var(--violet-a3)",
+    runtime: "TypeScript",
+    template: "Medication: {name}\\nDosage: {dosage}\\nFrequency: {frequency}\\nNotes: {notes}",
+  },
+  {
+    entity: "Symptom",
+    icon: Activity,
+    color: "var(--pink-9)",
+    bg: "var(--pink-a3)",
+    runtime: "TypeScript",
+    template: "Symptom: {description}\\nSeverity: {severity}\\nDate: {loggedAt}",
+  },
+  {
+    entity: "Appointment",
+    icon: Calendar,
+    color: "var(--cyan-9)",
+    bg: "var(--cyan-a3)",
+    runtime: "TypeScript",
+    template: "Appointment: {title}\\nProvider: {provider}\\nDate: {date}\\nNotes: {notes}",
+  },
+];
+
+const synthesisRules = [
+  {
+    num: "1",
+    rule: "Answer ONLY from context",
+    detail: "If the retrieved chunks don't contain relevant information, say so clearly instead of guessing.",
+    color: "var(--blue-9)",
+  },
+  {
+    num: "2",
+    rule: "Cite marker values and ranges",
+    detail: "Always reference the specific numeric value and its reference range when discussing a biomarker.",
+    color: "var(--green-9)",
+  },
+  {
+    num: "3",
+    rule: "Cite peer-reviewed thresholds",
+    detail: "For derived ratios, include the paper author and threshold (e.g., McLaughlin: TG/HDL > 3.5 = elevated).",
+    color: "var(--amber-9)",
+  },
+  {
+    num: "4",
+    rule: "NEVER diagnose",
+    detail: 'Describe what the data shows and note associations — never say "you have X."',
+    color: "var(--crimson-9)",
+  },
+  {
+    num: "5",
+    rule: "NEVER prescribe",
+    detail: "Do not recommend specific medications, dosages, or treatment protocols.",
+    color: "var(--crimson-9)",
+  },
+  {
+    num: "6",
+    rule: "ALWAYS remind to consult physician",
+    detail: "Every answer must include a physician-consultation reminder for medical decisions.",
+    color: "var(--indigo-9)",
+  },
+  {
+    num: "7",
+    rule: "Trajectory uses clinical semantics",
+    detail: "Rising HDL = improving. Rising TG/HDL = deteriorating. Describe direction, not just numbers.",
+    color: "var(--violet-9)",
+  },
+];
+
 /* ── Page ──────────────────────────────────────────────────────────── */
 
 export default function HowItWorksPage() {
@@ -1267,6 +1416,314 @@ export default function HowItWorksPage() {
 // → disclaimer appended for each failed rule
 // → safety_refusal intents auto-pass (no retrieval)`}</code>
           </pre>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── 3-Tier Marker Extraction ── */}
+      <Box
+        id="marker-extraction"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--orange-9)",
+                fontSize: "11px",
+              }}
+            >
+              Ingestion Node
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              3-Tier Marker Extraction
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              BloodTestNodeParser runs a cascading extraction strategy: if
+              Tier 1 finds markers, Tiers 2–3 are skipped. Results are
+              deduplicated by marker name (first occurrence wins).
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="4" style={{ maxWidth: 800, margin: "0 auto" }}>
+          {extractionTiers.map((t, i) => (
+            <ScrollReveal key={t.tier} delay={i * 80}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+              >
+                <Flex align="center" gap="3">
+                  <div className="extraction-tier-badge" style={{ color: t.color, borderColor: t.color }}>
+                    {t.tier}
+                  </div>
+                  <div
+                    className="deep-dive-icon"
+                    style={{ background: t.bg, color: t.color }}
+                  >
+                    <t.icon size={18} />
+                  </div>
+                  <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+                    {t.title}
+                  </Heading>
+                </Flex>
+
+                <Text
+                  size="2"
+                  color="gray"
+                  style={{ lineHeight: 1.6 }}
+                >
+                  {t.description}
+                </Text>
+
+                <pre className="pg-code-block" style={{ maxWidth: "100%" }}>
+                  <code>{t.pattern}</code>
+                </pre>
+
+                <Text
+                  size="1"
+                  style={{
+                    color: "var(--gray-9)",
+                    fontSize: "11px",
+                    fontStyle: "italic",
+                  }}
+                >
+                  {t.validation}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+
+          <ScrollReveal delay={280}>
+            <Flex
+              direction="column"
+              gap="3"
+              p="4"
+              className="deep-dive-card"
+            >
+              <Flex align="center" gap="3">
+                <div
+                  className="deep-dive-icon"
+                  style={{ background: "var(--green-a3)", color: "var(--green-9)" }}
+                >
+                  <ShieldCheck size={18} />
+                </div>
+                <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+                  Flag Computation
+                </Heading>
+              </Flex>
+
+              <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
+                After extraction, each marker&apos;s numeric value is compared
+                against its parsed reference range to compute a flag.
+              </Text>
+
+              <Grid columns={{ initial: "1", sm: "2" }} gap="2">
+                {flagRules.map((f) => (
+                  <Flex
+                    key={f.condition}
+                    gap="2"
+                    align="baseline"
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 6,
+                      background: "var(--gray-a2)",
+                    }}
+                  >
+                    <Text
+                      size="1"
+                      weight="bold"
+                      style={{ fontSize: "11px", color: "var(--gray-11)", whiteSpace: "nowrap" }}
+                    >
+                      {f.condition}
+                    </Text>
+                    <Text
+                      size="1"
+                      style={{
+                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                        fontSize: "11px",
+                        color: "var(--gray-9)",
+                      }}
+                    >
+                      {f.logic}
+                    </Text>
+                  </Flex>
+                ))}
+              </Grid>
+            </Flex>
+          </ScrollReveal>
+        </Flex>
+      </Box>
+
+      {/* ── Embedding Formatters ── */}
+      <Box
+        id="embedding-formatters"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--violet-9)",
+                fontSize: "11px",
+              }}
+            >
+              Vector Space
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Embedding Formatters
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Each entity type has a dedicated format function that builds the
+              text string before BGE-large-en-v1.5 encodes it into 1024
+              dimensions. Python handles blood data; TypeScript handles
+              user-entered entities.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid columns={{ initial: "1", sm: "2", lg: "3" }} gap="4">
+          {embeddingFormats.map((ef, i) => (
+            <ScrollReveal key={ef.entity} delay={i * 50}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <Flex align="center" justify="between">
+                  <Flex align="center" gap="3">
+                    <div
+                      className="deep-dive-icon"
+                      style={{ background: ef.bg, color: ef.color }}
+                    >
+                      <ef.icon size={18} />
+                    </div>
+                    <Text size="3" weight="bold">
+                      {ef.entity}
+                    </Text>
+                  </Flex>
+                  <span className="arch-tag" style={{ fontSize: "10px" }}>
+                    {ef.runtime}
+                  </span>
+                </Flex>
+
+                <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem", lineHeight: 1.5 }}>
+                  <code>{ef.template.replace(/\\n/g, "\n")}</code>
+                </pre>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* ── Synthesis Prompt Rules ── */}
+      <Box
+        id="synthesis-rules"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--blue-9)",
+                fontSize: "11px",
+              }}
+            >
+              Synthesize Node
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Synthesis Prompt Rules
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              The SYNTHESIS_SYSTEM prompt enforces 7 clinical rules at
+              generation time. Temperature is set to 0.1 for clinical
+              consistency. Chat history is limited to 6 items (3 turns).
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="3" style={{ maxWidth: 800, margin: "0 auto" }}>
+          {synthesisRules.map((sr, i) => (
+            <ScrollReveal key={sr.num} delay={i * 50}>
+              <Flex
+                align="start"
+                gap="3"
+                p="3"
+                className="deep-dive-card"
+              >
+                <div className="synthesis-rule-num" style={{ color: sr.color, borderColor: sr.color }}>
+                  {sr.num}
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {sr.rule}
+                  </Text>
+                  <Text
+                    size="2"
+                    color="gray"
+                    style={{ lineHeight: 1.55 }}
+                  >
+                    {sr.detail}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={400}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">temperature = 0.1</span>
+            <span className="arch-tag">chat_history[-6:]</span>
+            <span className="arch-tag">context joined by ---</span>
+            <span className="arch-tag">12 citation authors</span>
+          </Flex>
         </ScrollReveal>
       </Box>
 

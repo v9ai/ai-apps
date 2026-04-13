@@ -780,6 +780,35 @@
   border: 1px solid color-mix(in srgb, var(--crimson-9) 30%, transparent);
 }
 
+.extraction-tier-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-mono, "SF Mono", monospace);
+  flex-shrink: 0;
+}
+
+.synthesis-rule-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono, "SF Mono", monospace);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 /* ── Enhanced Hero Nodes ── */
 
 .hiw-hero-nodes {
