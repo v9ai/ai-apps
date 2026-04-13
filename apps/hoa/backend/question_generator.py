@@ -66,6 +66,7 @@ CATEGORIES = {
             "code signing notarization build system hot reload Poltergeist",
             "Demark HTML markdown conversion CLI fast tool",
             "llm.codes Apple documentation AI readable developer",
+            "Signature Flicker animation detail polish macOS app",
         ],
         "question_templates": [
             {
@@ -192,6 +193,15 @@ CATEGORIES = {
             "fixing Apple iOS 7 search display controller text view scroll",
             "UIKit debug mode view hierarchy inspection third party apps",
             "observation tracking UIKit AppKit Swift automatic reactive",
+            "UIScrollView center content layout positioning iOS",
+            "UITableView deprecating collection view replacement modern",
+            "UIImage thread safety investigation concurrency",
+            "recursiveDescription debugging view hierarchy pimping",
+            "containsString retrofitting iOS 7 backwards compatibility",
+            "smart proxy delegation pattern design forwarding",
+            "UITableViewController designated initializer woes bugs",
+            "subscripting Xcode 4.4 iOS modern Objective-C literals",
+            "fixing what Apple doesn't ship bugs workarounds patches",
         ],
         "question_templates": [
             {
@@ -220,10 +230,11 @@ CATEGORIES = {
         "queries": [
             "swizzling Swift Objective-C method runtime hook intercept",
             "InterposeKit elegant swizzling Swift modern API",
-            "Aspects aspect-oriented programming iOS hooks callbacks",
+            "Aspects aspect-oriented programming iOS hooks callbacks hacking",
             "calling super runtime Swift Objective-C bridge",
             "binary frameworks Swift ABI stability module",
             "Swifty Objective-C interop bridging modern patterns",
+            "Even Swiftier Objective-C advanced bridging techniques",
             "extensions Swift surprises gotchas unexpected behavior",
         ],
         "question_templates": [
@@ -259,6 +270,9 @@ CATEGORIES = {
             "hardcore debugging heavy weapons hard bugs techniques",
             "migrating tests Swift Testing XCTest conversion 700",
             "logging Swift privacy shenanigans os_log",
+            "kernel panic surprise boot-args debugging macOS crash",
+            "network kernel core dump debugging low-level crash",
+            "UI testing iOS without busy waiting async test",
         ],
         "question_templates": [
             {
@@ -362,6 +376,9 @@ CATEGORIES = {
             "My Current AI Dev Workflow understanding codebase",
             "Signature Flicker animation UI detail polish",
             "Claude Code Anonymous confessions tips community",
+            "Claude Code is my computer daily driver main tool usage",
+            "Commanding Your Claude Code Army orchestrating agents parallel",
+            "My Current AI Dev Workflow daily process tools setup",
         ],
         "question_templates": [
             {
@@ -432,9 +449,9 @@ def _gather_blog_context(slug: str) -> dict[str, list[dict]]:
                 if r["title"] not in seen_titles:
                     results.append(r)
                     seen_titles.add(r["title"])
-        # Deduplicate and keep top 8 by score
+        # Deduplicate and keep top 15 by score
         results.sort(key=lambda r: r["score"])
-        context[cat] = results[:8]
+        context[cat] = results[:15]
     return context
 
 
