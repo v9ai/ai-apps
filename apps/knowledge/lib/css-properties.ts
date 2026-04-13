@@ -461,6 +461,53 @@ const gridProperties: CssProperty[] = [
   },
 ];
 
+// ── Grid Extensions ──────────────────────────────────────────────────
+
+const gridExtensions: CssProperty[] = [
+  {
+    id: "grid-auto-columns",
+    property: "grid-auto-columns",
+    category: "grid",
+    shortDescription: "Sets the size of implicitly-created grid columns.",
+    values: [
+      { value: "auto", description: "Size based on content (default)." },
+      { value: "1fr", description: "Equal fraction of remaining space." },
+      { value: "minmax(80px, 1fr)", description: "Clamp between a minimum and maximum." },
+      { value: "200px", description: "Fixed 200px width." },
+    ],
+    defaultValue: "auto",
+    appliesTo: "grid containers",
+    demo: {
+      html: `<div class="grid">\n  <div class="cell">A</div>\n  <div class="cell">B</div>\n  <div class="cell">C</div>\n</div>`,
+      css: `.grid {\n  display: grid;\n  grid-auto-flow: column;\n  grid-auto-columns: minmax(80px, 1fr);\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 16px; background: #f59e0b; color: #fff; border-radius: 6px; font-weight: 600; text-align: center; }`,
+      highlightProp: "grid-auto-columns",
+    },
+    relatedProps: ["grid-auto-rows", "grid-auto-flow"],
+    mnemonicHint: "grid-auto-columns sizes columns that weren't explicitly defined by grid-template-columns.",
+  },
+  {
+    id: "justify-self",
+    property: "justify-self",
+    category: "grid",
+    shortDescription: "Overrides justify-items for a single grid item on the inline axis.",
+    values: [
+      { value: "stretch", description: "Stretches to fill the cell (default)." },
+      { value: "start", description: "Aligns to the start of the cell." },
+      { value: "end", description: "Aligns to the end of the cell." },
+      { value: "center", description: "Centers in the cell." },
+    ],
+    defaultValue: "stretch",
+    appliesTo: "grid items",
+    demo: {
+      html: `<div class="grid">\n  <div class="cell">Normal</div>\n  <div class="cell special">justify-self: end</div>\n  <div class="cell">Normal</div>\n</div>`,
+      css: `.grid {\n  display: grid;\n  grid-template-columns: 1fr 1fr 1fr;\n  gap: 8px;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.cell { padding: 12px 16px; background: #3b82f6; color: #fff; border-radius: 6px; font-weight: 600; }\n.special { justify-self: end; background: #ec4899; }`,
+      highlightProp: "justify-self",
+    },
+    relatedProps: ["justify-items", "align-self"],
+    mnemonicHint: "justify-self is to justify-items what align-self is to align-items — a per-item override.",
+  },
+];
+
 // ── Positioning ───────────────────────────────────────────────────────
 
 const positioningProperties: CssProperty[] = [
@@ -1516,6 +1563,54 @@ const displayProperties: CssProperty[] = [
   },
 ];
 
+// ── Display Extensions ───────────────────────────────────────────────
+
+const displayExtensions: CssProperty[] = [
+  {
+    id: "transform-origin",
+    property: "transform-origin",
+    category: "display",
+    shortDescription: "Sets the pivot point for CSS transforms like rotate and scale.",
+    values: [
+      { value: "center", description: "Pivot at the center (default)." },
+      { value: "top left", description: "Pivot at the top-left corner." },
+      { value: "top right", description: "Pivot at the top-right corner." },
+      { value: "bottom left", description: "Pivot at the bottom-left corner." },
+      { value: "bottom right", description: "Pivot at the bottom-right corner." },
+    ],
+    defaultValue: "center",
+    appliesTo: "transformable elements",
+    demo: {
+      html: `<div class="wrapper">\n  <div class="box">Rotated from top-left</div>\n</div>`,
+      css: `.wrapper { padding: 24px 24px 48px; }\n.box {\n  transform: rotate(15deg);\n  transform-origin: top left;\n  padding: 16px 20px;\n  background: #8b5cf6;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n  display: inline-block;\n}`,
+      highlightProp: "transform-origin",
+    },
+    relatedProps: ["transform"],
+    mnemonicHint: "transform-origin changes where the rotation/scale pivots. Default is center — door hinges use left.",
+  },
+  {
+    id: "perspective",
+    property: "perspective",
+    category: "display",
+    shortDescription: "Sets the distance between the viewer and the 3D plane — creates depth.",
+    values: [
+      { value: "none", description: "No perspective — flat transforms (default)." },
+      { value: "200px", description: "Strong perspective — dramatic 3D effect." },
+      { value: "500px", description: "Moderate perspective." },
+      { value: "1000px", description: "Subtle perspective — gentle 3D." },
+    ],
+    defaultValue: "none",
+    appliesTo: "transformable elements (set on parent)",
+    demo: {
+      html: `<div class="scene">\n  <div class="card">3D</div>\n</div>`,
+      css: `.scene {\n  perspective: 500px;\n  padding: 24px;\n  display: flex;\n  justify-content: center;\n}\n.card {\n  transform: rotateY(35deg);\n  padding: 24px 40px;\n  background: linear-gradient(135deg, #6366f1, #3b82f6);\n  color: #fff;\n  font-size: 28px;\n  font-weight: 800;\n  border-radius: 8px;\n}`,
+      highlightProp: "perspective",
+    },
+    relatedProps: ["transform", "transform-origin"],
+    mnemonicHint: "Lower perspective = more dramatic 3D. Set on the parent, not the child being transformed.",
+  },
+];
+
 // ── Box Model Extensions ──────────────────────────────────────────────
 
 const boxModelExtensions: CssProperty[] = [
@@ -2252,6 +2347,52 @@ const conceptProperties: CssProperty[] = [
   },
 ];
 
+// ── Concept Extensions ───────────────────────────────────────────────
+
+const conceptExtensions: CssProperty[] = [
+  {
+    id: "container-queries",
+    property: "container queries",
+    category: "concepts",
+    shortDescription: "Style elements based on their container's size, not the viewport.",
+    values: [
+      { value: "container-type: inline-size", description: "Enable container queries based on width." },
+      { value: "container-type: size", description: "Enable queries based on both width and height." },
+      { value: "@container (min-width: N)", description: "Apply styles when container is at least N wide." },
+    ],
+    defaultValue: "container-type: normal",
+    appliesTo: "any element as a container",
+    demo: {
+      html: `<div class="container">\n  <div class="card">\n    <div class="title">Responsive Card</div>\n    <div class="body">Adapts to container width</div>\n  </div>\n</div>`,
+      css: `.container {\n  container-type: inline-size;\n  padding: 12px;\n  background: #1e1e21;\n  border-radius: 8px;\n}\n.card { padding: 16px; background: #2c2c30; border-radius: 6px; }\n.title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }\n.body { font-size: 12px; color: #a1a1aa; }\n@container (min-width: 250px) {\n  .card { display: flex; align-items: center; gap: 16px; }\n  .title { margin-bottom: 0; }\n}`,
+      highlightProp: "container-type",
+    },
+    relatedProps: ["media-queries"],
+    mnemonicHint: "Container queries = component-level responsiveness. Media queries = viewport-level. Container queries make truly reusable components.",
+  },
+  {
+    id: "logical-properties",
+    property: "logical properties",
+    category: "concepts",
+    shortDescription: "Direction-aware alternatives to physical properties (top/right/bottom/left).",
+    values: [
+      { value: "margin-inline: auto", description: "Horizontal centering that respects writing direction." },
+      { value: "padding-block: 16px", description: "Vertical padding that adapts to writing mode." },
+      { value: "inset-inline-start: 0", description: "Start edge in the inline direction." },
+      { value: "border-block-end: 1px solid", description: "Bottom border in horizontal, right border in vertical-rl." },
+    ],
+    defaultValue: "n/a",
+    appliesTo: "all elements",
+    demo: {
+      html: `<div class="centered">margin-inline: auto</div>\n<div class="padded">padding-block: 12px</div>`,
+      css: `.centered {\n  margin-inline: auto;\n  width: 200px;\n  padding: 12px;\n  background: #3b82f6;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n  text-align: center;\n  margin-bottom: 8px;\n}\n.padded {\n  padding-block: 12px;\n  padding-inline: 16px;\n  background: #8b5cf6;\n  color: #fff;\n  border-radius: 6px;\n  font-weight: 600;\n}`,
+      highlightProp: "margin-inline",
+    },
+    relatedProps: ["margin", "padding", "writing-mode"],
+    mnemonicHint: "inline = text flow direction (horizontal in LTR). block = perpendicular (vertical in LTR). Logical properties make RTL/vertical layouts free.",
+  },
+];
+
 // ── Build Categories ──────────────────────────────────────────────────
 
 export const CSS_CATEGORIES: CssCategory[] = [
@@ -2267,7 +2408,7 @@ export const CSS_CATEGORIES: CssCategory[] = [
     name: "Grid",
     icon: "\u25A6",
     color: "cyan",
-    properties: gridProperties,
+    properties: [...gridProperties, ...gridExtensions],
   },
   {
     id: "positioning",
@@ -2281,7 +2422,7 @@ export const CSS_CATEGORIES: CssCategory[] = [
     name: "Display & Layout",
     icon: "\u229E",
     color: "teal",
-    properties: displayProperties,
+    properties: [...displayProperties, ...displayExtensions],
   },
   {
     id: "box-model",
@@ -2316,7 +2457,7 @@ export const CSS_CATEGORIES: CssCategory[] = [
     name: "CSS Concepts",
     icon: "\u2736",
     color: "purple",
-    properties: conceptProperties,
+    properties: [...conceptProperties, ...conceptExtensions],
   },
 ];
 
