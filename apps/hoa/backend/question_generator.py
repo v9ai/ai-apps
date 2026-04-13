@@ -201,7 +201,8 @@ CATEGORIES = {
             "smart proxy delegation pattern design forwarding",
             "UITableViewController designated initializer woes bugs",
             "subscripting Xcode 4.4 iOS modern Objective-C literals",
-            "fixing what Apple doesn't ship bugs workarounds patches radar",
+            "fixing what Apple doesn't ship bugs workarounds patches radar iOS 7",
+            "Apple sloppiness iOS 7 hacking patching attention to detail annoyances",
             "hacking with Aspects aspect oriented programming method interception",
         ],
         "question_templates": [
