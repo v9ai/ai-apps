@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Fragment, Suspense } from "react";
 import {
   Box,
-  Container,
   Flex,
   Heading,
   Text,
@@ -200,71 +199,77 @@ export default function HowItWorksPage() {
         }}
       >
         <header>
-          <Container size="3">
-            <Flex justify="between" align="center" py="3" px="4">
-              <Flex align="center" gap="2">
-                <Logo size={20} />
-                <Heading
-                  size="4"
-                  asChild
-                  style={{ letterSpacing: "-0.02em" }}
+          <Flex
+            justify="between"
+            align="center"
+            py="3"
+            px={{ initial: "4", md: "6", lg: "9" }}
+          >
+            <Flex align="center" gap="2">
+              <Logo size={20} />
+              <Heading
+                size="4"
+                asChild
+                style={{ letterSpacing: "-0.02em" }}
+              >
+                <Link
+                  href="/"
+                  style={{ textDecoration: "none", color: "inherit" }}
                 >
+                  Agentic Healthcare
+                </Link>
+              </Heading>
+            </Flex>
+            <Flex align="center" gap="5">
+              <Flex gap="5" display={{ initial: "none", sm: "flex" }}>
+                <Text asChild size="2" color="gray" weight="medium">
                   <Link
-                    href="/"
+                    href="/how-it-works"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
-                    Agentic Healthcare
+                    How It Works
                   </Link>
-                </Heading>
+                </Text>
+                <Text asChild size="2" color="gray" weight="medium">
+                  <Link
+                    href="/#features"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    Features
+                  </Link>
+                </Text>
+                <Text asChild size="2" color="gray" weight="medium">
+                  <Link
+                    href="/#research"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    Research
+                  </Link>
+                </Text>
               </Flex>
-              <Flex align="center" gap="5">
-                <Flex gap="5" display={{ initial: "none", sm: "flex" }}>
-                  <Text asChild size="2" color="gray" weight="medium">
-                    <Link
-                      href="/how-it-works"
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
-                      How It Works
-                    </Link>
-                  </Text>
-                  <Text asChild size="2" color="gray" weight="medium">
-                    <Link
-                      href="/#features"
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
-                      Features
-                    </Link>
-                  </Text>
-                  <Text asChild size="2" color="gray" weight="medium">
-                    <Link
-                      href="/#research"
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
-                      Research
-                    </Link>
-                  </Text>
-                </Flex>
-                <a
-                  href="https://github.com/v9ai/ai-apps"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "var(--gray-a11)", display: "flex" }}
-                >
-                  <Github size={20} />
-                </a>
-                <Suspense>
-                  <AuthButton />
-                </Suspense>
-              </Flex>
+              <a
+                href="https://github.com/v9ai/ai-apps"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "var(--gray-a11)", display: "flex" }}
+              >
+                <Github size={20} />
+              </a>
+              <Suspense>
+                <AuthButton />
+              </Suspense>
             </Flex>
-          </Container>
+          </Flex>
         </header>
       </Box>
 
       {/* ── Hero ── */}
       <Box className="hiw-hero" py="9">
         <div className="hiw-hero-orb" />
-        <Container size="3" style={{ position: "relative", zIndex: 1 }}>
+        <Box
+          px={{ initial: "4", md: "6", lg: "9" }}
+          style={{ position: "relative", zIndex: 1 }}
+        >
           <Flex direction="column" align="center" gap="5" py="7">
             <Text
               size="1"
@@ -372,275 +377,269 @@ export default function HowItWorksPage() {
               />
             </Flex>
           </Flex>
-        </Container>
+        </Box>
       </Box>
 
       {/* ── Architecture Diagrams ── */}
-      <Box py="8">
-        <Container size="3" px="4">
-          <ScrollReveal>
-            <Flex direction="column" align="center" gap="2" mb="7">
-              <Heading
-                size="7"
-                align="center"
-                style={{ letterSpacing: "-0.03em" }}
-              >
-                Architecture
-              </Heading>
-              <Text
-                size="2"
-                color="gray"
-                align="center"
-                style={{ maxWidth: 480 }}
-              >
-                5 interactive views of the data pipeline. Drag nodes to
-                rearrange, scroll to zoom.
-              </Text>
-            </Flex>
-          </ScrollReveal>
+      <Box py="8" px={{ initial: "4", md: "6", lg: "9" }}>
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Architecture
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 480 }}
+            >
+              5 interactive views of the data pipeline. Drag nodes to
+              rearrange, scroll to zoom.
+            </Text>
+          </Flex>
+        </ScrollReveal>
 
-          <Flex direction="column" gap="6">
-            {archSections.map((s, i) => (
-              <ScrollReveal key={s.id} delay={i * 60}>
-                <section id={s.id} className="arch-section">
-                  <span className="arch-number">{s.num}</span>
-                  <Flex direction="column" gap="3">
-                    <Flex align="center" gap="3">
-                      <div
-                        className="arch-icon"
+        <Flex direction="column" gap="6">
+          {archSections.map((s, i) => (
+            <ScrollReveal key={s.id} delay={i * 60}>
+              <section id={s.id} className="arch-section">
+                <span className="arch-number">{s.num}</span>
+                <Flex direction="column" gap="3">
+                  <Flex align="center" gap="3">
+                    <div
+                      className="arch-icon"
+                      style={{
+                        background: s.iconBg,
+                        color: s.iconColor,
+                      }}
+                    >
+                      <s.icon size={18} />
+                    </div>
+                    <div>
+                      <Heading
+                        size="5"
+                        style={{ letterSpacing: "-0.02em" }}
+                      >
+                        {s.title}
+                      </Heading>
+                      <Text
+                        size="1"
                         style={{
-                          background: s.iconBg,
-                          color: s.iconColor,
+                          color: "var(--gray-9)",
+                          fontFamily:
+                            "var(--font-mono, 'SF Mono', monospace)",
+                          fontSize: "11px",
                         }}
                       >
-                        <s.icon size={18} />
-                      </div>
-                      <div>
-                        <Heading
-                          size="5"
-                          style={{ letterSpacing: "-0.02em" }}
-                        >
-                          {s.title}
-                        </Heading>
-                        <Text
-                          size="1"
-                          style={{
-                            color: "var(--gray-9)",
-                            fontFamily:
-                              "var(--font-mono, 'SF Mono', monospace)",
-                            fontSize: "11px",
-                          }}
-                        >
-                          {s.brief}
-                        </Text>
-                      </div>
-                    </Flex>
-
-                    <Text
-                      size="2"
-                      color="gray"
-                      style={{ maxWidth: 640, lineHeight: 1.65 }}
-                    >
-                      {s.description}
-                    </Text>
-
-                    <Flex gap="2" wrap="wrap">
-                      {s.tags.map((tag) => (
-                        <span key={tag} className="arch-tag">
-                          {tag}
-                        </span>
-                      ))}
-                    </Flex>
-
-                    <s.Flow />
+                        {s.brief}
+                      </Text>
+                    </div>
                   </Flex>
-                </section>
-              </ScrollReveal>
-            ))}
-          </Flex>
-        </Container>
+
+                  <Text
+                    size="2"
+                    color="gray"
+                    style={{ maxWidth: 800, lineHeight: 1.65 }}
+                  >
+                    {s.description}
+                  </Text>
+
+                  <Flex gap="2" wrap="wrap">
+                    {s.tags.map((tag) => (
+                      <span key={tag} className="arch-tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </Flex>
+
+                  <s.Flow />
+                </Flex>
+              </section>
+            </ScrollReveal>
+          ))}
+        </Flex>
       </Box>
 
       {/* ── Tech Stack at a Glance ── */}
       <Box
         id="tech-stack"
         py="8"
+        px={{ initial: "4", md: "6", lg: "9" }}
         style={{ background: "var(--gray-a2)" }}
       >
-        <Container size="3" px="4">
-          <ScrollReveal>
-            <Flex direction="column" align="center" gap="2" mb="6">
-              <Heading
-                size="7"
-                align="center"
-                style={{ letterSpacing: "-0.03em" }}
-              >
-                Tech Stack at a Glance
-              </Heading>
-              <Text size="2" color="gray" align="center">
-                15 technologies from upload to insight
-              </Text>
-            </Flex>
-          </ScrollReveal>
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="6">
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Tech Stack at a Glance
+            </Heading>
+            <Text size="2" color="gray" align="center">
+              15 technologies from upload to insight
+            </Text>
+          </Flex>
+        </ScrollReveal>
 
-          <Grid
-            columns={{ initial: "2", sm: "3", md: "5" }}
-            gap="4"
-          >
-            {techCategories.map((cat, i) => (
-              <ScrollReveal key={cat.category} delay={i * 80}>
-                <Flex
-                  direction="column"
-                  gap="2"
-                  p="4"
-                  className="tech-stack-card"
+        <Grid columns={{ initial: "2", sm: "3", md: "5" }} gap="4">
+          {techCategories.map((cat, i) => (
+            <ScrollReveal key={cat.category} delay={i * 80}>
+              <Flex
+                direction="column"
+                gap="2"
+                p="4"
+                className="tech-stack-card"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    color: cat.color,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    fontSize: "11px",
+                  }}
                 >
-                  <Text
-                    size="1"
-                    weight="bold"
-                    style={{
-                      color: cat.color,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                      fontSize: "11px",
-                    }}
-                  >
-                    {cat.category}
+                  {cat.category}
+                </Text>
+                {cat.items.map((item) => (
+                  <Text key={item} size="2" color="gray">
+                    {item}
                   </Text>
-                  {cat.items.map((item) => (
-                    <Text key={item} size="2" color="gray">
-                      {item}
-                    </Text>
-                  ))}
-                </Flex>
-              </ScrollReveal>
-            ))}
-          </Grid>
-        </Container>
+                ))}
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
       </Box>
 
       {/* ── Detailed Sections ── */}
       <HowItWorksClient />
 
       {/* ── CTA ── */}
-      <Box className="cta-banner" py="9">
-        <Container size="2">
-          <Flex direction="column" align="center" gap="5">
-            <ScrollReveal>
-              <Heading
-                size="7"
-                align="center"
-                style={{ letterSpacing: "-0.03em" }}
-              >
-                Ready to upload your first panel?
-              </Heading>
-            </ScrollReveal>
-            <Text size="3" color="gray" align="center">
-              Free to use. No credit card required.
-            </Text>
-            <Flex gap="3" wrap="wrap" justify="center">
-              <Button size="3" asChild className="cta-button">
-                <Link href="/auth/sign-up">Start Tracking — Free</Link>
-              </Button>
-              <Button
-                size="3"
-                variant="outline"
-                asChild
-                className="cta-button"
-              >
-                <Link href="/auth/sign-in">Sign In</Link>
-              </Button>
-            </Flex>
+      <Box
+        className="cta-banner"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+      >
+        <Flex direction="column" align="center" gap="5">
+          <ScrollReveal>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Ready to upload your first panel?
+            </Heading>
+          </ScrollReveal>
+          <Text size="3" color="gray" align="center">
+            Free to use. No credit card required.
+          </Text>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <Button size="3" asChild className="cta-button">
+              <Link href="/auth/sign-up">Start Tracking — Free</Link>
+            </Button>
+            <Button
+              size="3"
+              variant="outline"
+              asChild
+              className="cta-button"
+            >
+              <Link href="/auth/sign-in">Sign In</Link>
+            </Button>
           </Flex>
-        </Container>
+        </Flex>
       </Box>
 
       {/* ── Footer ── */}
       <Box asChild style={{ borderTop: "1px solid var(--gray-a3)" }}>
         <footer>
-          <Container size="3">
-            <Grid
-              columns={{ initial: "1", sm: "3" }}
-              gap="6"
-              py="8"
-              px="4"
-            >
-              <Flex direction="column" gap="2">
-                <Flex align="center" gap="2">
-                  <Logo size={16} />
-                  <Text size="3" weight="bold">
-                    Agentic Healthcare
-                  </Text>
-                </Flex>
-                <Text size="2" color="gray">
-                  Longitudinal blood test intelligence. Turn snapshots into
-                  trajectories.
+          <Grid
+            columns={{ initial: "1", sm: "3" }}
+            gap="6"
+            py="8"
+            px={{ initial: "4", md: "6", lg: "9" }}
+          >
+            <Flex direction="column" gap="2">
+              <Flex align="center" gap="2">
+                <Logo size={16} />
+                <Text size="3" weight="bold">
+                  Agentic Healthcare
                 </Text>
               </Flex>
-
-              <Flex direction="column" gap="2">
-                <Text size="2" weight="bold">
-                  Product
-                </Text>
-                <Text asChild size="2" color="gray">
-                  <Link
-                    href="/how-it-works"
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    How It Works
-                  </Link>
-                </Text>
-                <Text asChild size="2" color="gray">
-                  <Link
-                    href="/#features"
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    Features
-                  </Link>
-                </Text>
-                <Text asChild size="2" color="gray">
-                  <Link
-                    href="/auth/sign-up"
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    Get Started
-                  </Link>
-                </Text>
-              </Flex>
-
-              <Flex direction="column" gap="2">
-                <Text size="2" weight="bold">
-                  Clinical
-                </Text>
-                <Text size="2" color="gray">
-                  7 ratios · 8 peer-reviewed papers
-                </Text>
-                <Text
-                  size="1"
-                  color="gray"
-                  style={{ opacity: 0.6 }}
-                >
-                  Not medical advice. Consult your physician for clinical
-                  decisions.
-                </Text>
-              </Flex>
-            </Grid>
-
-            <Flex
-              justify="between"
-              align="center"
-              py="4"
-              px="4"
-              style={{ borderTop: "1px solid var(--gray-a3)" }}
-            >
-              <Text size="1" color="gray">
-                © 2026 Agentic Healthcare
-              </Text>
-              <Text size="1" color="gray">
-                Powered by AI
+              <Text size="2" color="gray">
+                Longitudinal blood test intelligence. Turn snapshots into
+                trajectories.
               </Text>
             </Flex>
-          </Container>
+
+            <Flex direction="column" gap="2">
+              <Text size="2" weight="bold">
+                Product
+              </Text>
+              <Text asChild size="2" color="gray">
+                <Link
+                  href="/how-it-works"
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  How It Works
+                </Link>
+              </Text>
+              <Text asChild size="2" color="gray">
+                <Link
+                  href="/#features"
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  Features
+                </Link>
+              </Text>
+              <Text asChild size="2" color="gray">
+                <Link
+                  href="/auth/sign-up"
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  Get Started
+                </Link>
+              </Text>
+            </Flex>
+
+            <Flex direction="column" gap="2">
+              <Text size="2" weight="bold">
+                Clinical
+              </Text>
+              <Text size="2" color="gray">
+                7 ratios · 8 peer-reviewed papers
+              </Text>
+              <Text
+                size="1"
+                color="gray"
+                style={{ opacity: 0.6 }}
+              >
+                Not medical advice. Consult your physician for clinical
+                decisions.
+              </Text>
+            </Flex>
+          </Grid>
+
+          <Flex
+            justify="between"
+            align="center"
+            py="4"
+            px={{ initial: "4", md: "6", lg: "9" }}
+            style={{ borderTop: "1px solid var(--gray-a3)" }}
+          >
+            <Text size="1" color="gray">
+              © 2026 Agentic Healthcare
+            </Text>
+            <Text size="1" color="gray">
+              Powered by AI
+            </Text>
+          </Flex>
         </footer>
       </Box>
     </Box>
