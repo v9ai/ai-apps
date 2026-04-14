@@ -522,7 +522,7 @@
     },
     {
       "category": "ios_engineering",
-      "question": "You wrote 'Automatic Observation Tracking in UIKit and AppKit: The Feature Apple Forgot to Mention | Peter Steinberger' about deep SwiftUI and UIKit internals. Now you build mostly with AI agents writing the code. Has that changed your relationship with framework-level debugging — do you still go as deep?",
+      "question": "In 'UIKit Debug Mode | Peter Steinberger' you built tools to expose UIKit's hidden internals. Now you build mostly with AI agents writing the code. Has that changed your relationship with framework-level debugging — do you still go as deep, or do you let the agent fumble through it?",
       "why_this_question": "Explores whether AI-assisted development changes the depth of platform knowledge needed",
       "expected_insight": "How the shift from framework expert to AI-assisted builder changes debugging practices"
     },
