@@ -6,6 +6,7 @@ import {
   CubeIcon,
   LayersIcon,
   BellIcon,
+  RocketIcon,
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon,
 } from "@radix-ui/react-icons";
@@ -22,6 +23,7 @@ const SIDEBAR_COLLAPSED_WIDTH = 56;
 
 const NAV_ITEMS = [
   { href: "/companies", label: "companies", icon: <CubeIcon width={15} height={15} /> },
+  { href: "/opportunities", label: "opportunities", icon: <RocketIcon width={15} height={15} /> },
   { href: "/follow-ups", label: "follow-ups", icon: <BellIcon width={15} height={15} /> },
 ];
 
