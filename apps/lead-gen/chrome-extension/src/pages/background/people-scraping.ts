@@ -3,6 +3,8 @@
 import { gqlRequest, GRAPHQL_URL } from "../../services/graphql";
 import { randomDelay, waitForTabLoad, isTabAlive, safeTabUpdate, safeSendMessage } from "./tab-utils";
 
+const SCROLL_TIMEOUT_MS = 15_000;
+
 let peopleCancelled = false;
 
 export function setPeopleCancelled(value: boolean) {
@@ -64,7 +66,7 @@ export function extractPeopleCards(tabId: number): Promise<PersonCard[]> {
 }
 
 export function scrollPeoplePage(tabId: number): Promise<void> {
-  return chrome.scripting
+  const scrollPromise = chrome.scripting
     .executeScript({
       target: { tabId },
       world: "MAIN",
@@ -98,8 +100,19 @@ export function scrollPeoplePage(tabId: number): Promise<void> {
         });
       },
     })
-    .then(() => undefined)
-    .catch(() => undefined);
+    .then(() => undefined);
+
+  // Race against a timeout — if the injected script never resolves
+  // (tab navigated, LinkedIn unresponsive, CAPTCHA), unblock the loop.
+  return Promise.race([
+    scrollPromise,
+    new Promise<void>((resolve) => {
+      setTimeout(() => {
+        console.warn(`[scrollPeoplePage] Timeout after ${SCROLL_TIMEOUT_MS}ms for tab ${tabId}`);
+        resolve();
+      }, SCROLL_TIMEOUT_MS);
+    }),
+  ]).catch(() => undefined);
 }
 
 export function clickShowMorePeople(tabId: number): Promise<boolean> {
@@ -139,6 +152,47 @@ export function clickShowMorePeople(tabId: number): Promise<boolean> {
     .catch(() => false);
 }
 
+/**
+ * Detect if LinkedIn is blocking the people page (auth wall, CAPTCHA, redirect).
+ * Returns a human-readable reason string, or null if the page looks normal.
+ */
+export function detectPeoplePageBlocker(tabId: number): Promise<string | null> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const url = window.location.href;
+
+        if (url.includes("/login") || url.includes("/authwall") || url.includes("/checkpoint")) {
+          return "LinkedIn login wall detected";
+        }
+
+        if (url.includes("/checkpoint/challenge") || document.querySelector("#captcha-internal")) {
+          return "LinkedIn CAPTCHA challenge detected";
+        }
+
+        const bodyText = document.body.innerText || "";
+        if (
+          bodyText.includes("Sign in to view") ||
+          bodyText.includes("Join now to see") ||
+          bodyText.includes("Sign in to LinkedIn")
+        ) {
+          const cards = document.querySelectorAll(
+            ".org-people-profile-card, .artdeco-entity-lockup"
+          );
+          if (cards.length === 0) {
+            return "LinkedIn requires sign-in to view this page";
+          }
+        }
+
+        return null;
+      },
+    })
+    .then((res) => (res?.[0]?.result as string | null) ?? null)
+    .catch(() => null);
+}
+
 async function notifyWebApp(action: string, data: Record<string, unknown>) {
   try {
     // Derive the app origin from GRAPHQL_URL so this works in any environment
@@ -167,9 +221,21 @@ export async function browsePeople(tabId: number, companyId: number) {
   // Extra wait for LinkedIn SPA to hydrate
   await randomDelay(3000);
 
+  // Check for auth wall before starting
+  const blocker = await detectPeoplePageBlocker(tabId);
+  if (blocker) {
+    console.warn(`[BrowsePeople] ${blocker}`);
+    chrome.tabs.remove(tabId).catch(() => {});
+    await notifyWebApp("peopleScrapeError", {
+      error: `${blocker}. Make sure you are logged in to LinkedIn.`,
+    });
+    return;
+  }
+
   const allCards: PersonCard[] = [];
   const seen = new Set<string>();
   const MAX_ROUNDS = 15;
+  let consecutiveEmptyRounds = 0;
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
     await scrollPeoplePage(tabId);
@@ -195,9 +261,20 @@ export async function browsePeople(tabId: number, companyId: number) {
     const clickedMore = await clickShowMorePeople(tabId);
     if (clickedMore) {
       await randomDelay(2000);
+      if (newCount === 0) {
+        consecutiveEmptyRounds++;
+        if (consecutiveEmptyRounds >= 3) {
+          console.log(`[BrowsePeople] 3 consecutive empty rounds despite "show more" — stopping`);
+          break;
+        }
+      } else {
+        consecutiveEmptyRounds = 0;
+      }
     } else if (newCount === 0) {
       // No new cards and no "show more" — we're done
       break;
+    } else {
+      consecutiveEmptyRounds = 0;
     }
   }
 
@@ -284,6 +361,16 @@ export async function importPeopleFromCurrentPage(
       await randomDelay(4000);
     } else {
       await randomDelay(2500);
+    }
+
+    const blocker2 = await detectPeoplePageBlocker(tabId);
+    if (blocker2) {
+      console.warn(`[ImportPeople] ${blocker2}`);
+      await safeSendMessage(tabId, {
+        action: "importPeopleError",
+        error: `${blocker2}. Make sure you are logged in.`,
+      });
+      return;
     }
 
     peopleCancelled = false;

@@ -3,7 +3,7 @@
 // Phase functions are exported so find-related BFS crawl can call them per-company.
 
 import { extractCompanyData, saveCompanyBatch, resolveNumericIdViaVoyager } from "./company-browsing";
-import { extractPeopleCards, scrollPeoplePage, clickShowMorePeople, type PersonCard } from "./people-scraping";
+import { extractPeopleCards, scrollPeoplePage, clickShowMorePeople, detectPeoplePageBlocker, type PersonCard } from "./people-scraping";
 import { randomDelay, waitForTabLoad, isTabAlive, safeTabUpdate, safeSendMessage } from "./tab-utils";
 import { gqlRequest } from "../../services/graphql";
 import { searchJobs, getJobPostingDetail, type VoyagerJobCard } from "../../services/voyager-jobs";
@@ -347,6 +347,12 @@ export async function scrapePeople(
     await randomDelay(3000);
 
     if (cancelled || !(await isTabAlive(tabId))) return { saved: 0, total: 0 };
+
+    const blocker = await detectPeoplePageBlocker(tabId);
+    if (blocker) {
+      log(blocker);
+      return { saved: 0, total: 0, error: blocker };
+    }
 
     const allCards: PersonCard[] = [];
     const seen = new Set<string>();

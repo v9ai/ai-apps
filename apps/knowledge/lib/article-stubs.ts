@@ -150,12 +150,23 @@ export const ARTICLE_STUBS: LessonStub[] = LESSON_SLUGS.map((slug, i) => {
 
 /** Words that appear in headings or categories but carry no matching signal */
 const STOPWORDS = new Set([
-  "deep", "dive", "dives", "advanced", "introduction", "overview", "mastery",
-  "questions", "reference", "cheat", "sheet", "quick", "live", "coding",
-  "exercises", "strategies", "patterns", "behavioral", "leadership",
+  "deep", "dive", "dives", "advanced", "introduction", "overview",
+  "question", "reference", "cheat", "sheet", "quick", "live",
+  "exercise", "behavioral", "leadership", "strategy", "pattern",
+  "mastery", "coding", "topic",
   "and", "the", "for", "with", "from", "into", "how", "what", "why",
-  "js", "css", "ai", "ml", "an", "to", "of", "in", "on", "is", "it",
+  "an", "to", "of", "in", "on", "is", "it", "js",
 ]);
+
+/** Crude stemming: normalize common suffixes so "database"≈"databases" */
+function stem(word: string): string {
+  if (word.length > 5 && word.endsWith("ies")) return word.slice(0, -3) + "y";
+  // Only strip "es" after sibilants (matches→match, caches→cach) not "databases"→"databas"
+  if (word.length > 4 && /(?:sh|ch|ss|x|z)es$/.test(word)) return word.slice(0, -2);
+  if (word.length > 3 && word.endsWith("s") && !word.endsWith("ss")) return word.slice(0, -1);
+  if (word.length > 5 && word.endsWith("ing")) return word.slice(0, -3);
+  return word;
+}
 
 function tokenize(text: string): string[] {
   return text
@@ -163,6 +174,7 @@ function tokenize(text: string): string[] {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(/\s+/)
+    .map(stem)
     .filter((t) => t.length >= 2 && !STOPWORDS.has(t));
 }
 
@@ -235,10 +247,10 @@ export function matchArticles(
     }
   }
 
-  // Collect, filter, sort, return top N (threshold = 4 for at least one slug match)
+  // Collect, filter, sort, return top N (threshold = 3)
   const results: { stub: LessonStub; score: number }[] = [];
   for (let i = 0; i < scores.length; i++) {
-    if (scores[i] >= 4) results.push({ stub: ARTICLE_STUBS[i], score: scores[i] });
+    if (scores[i] >= 3) results.push({ stub: ARTICLE_STUBS[i], score: scores[i] });
   }
   results.sort((a, b) => b.score - a.score);
   return results.slice(0, maxResults).map((r) => r.stub);
