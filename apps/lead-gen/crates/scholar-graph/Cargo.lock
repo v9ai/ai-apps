@@ -4321,25 +4321,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "paper-graph"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "research",
- "rustls",
- "serde",
- "serde_json",
- "tokio",
- "tokio-postgres",
- "tokio-postgres-rustls",
- "tracing",
- "tracing-subscriber",
- "unicode-normalization",
- "webpki-roots 1.0.6",
-]
-
-[[package]]
 name = "parking"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5250,6 +5231,25 @@ dependencies = [
  "ref-cast",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "scholar-graph"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "research",
+ "rustls",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-postgres",
+ "tokio-postgres-rustls",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-normalization",
+ "webpki-roots 1.0.6",
 ]
 
 [[package]]
