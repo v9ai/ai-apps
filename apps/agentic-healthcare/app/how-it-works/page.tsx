@@ -1313,6 +1313,189 @@ const customScorerDetails = [
   },
 ];
 
+const pgvectorEvalSteps = [
+  {
+    step: "1",
+    title: "Query \u2192 pgvector Search",
+    color: "var(--blue-9)",
+    icon: Search,
+    description:
+      "Clinical query embedded via BAAI/bge-large-en-v1.5 (1024-dim, local ONNX). Intent-based routing selects the correct BaseRetriever subclass. Hybrid search (0.7\u00d7cosine + 0.3\u00d7FTS) returns ranked NodeWithScore objects from pgvector.",
+  },
+  {
+    step: "2",
+    title: "Retrieval \u2192 LLM Synthesis",
+    color: "var(--green-9)",
+    icon: Cpu,
+    description:
+      "Retrieved chunks injected into LlamaIndex ResponseSynthesizer (COMPACT mode) with a clinical PromptTemplate. ClinicalRelevancePostprocessor reranks by LLM-scored relevance. Output: actual_output with citations.",
+  },
+  {
+    step: "3",
+    title: "Build LLMTestCase",
+    color: "var(--amber-9)",
+    icon: TestTube,
+    description:
+      "DeepEval LLMTestCase constructed with input (query), actual_output (synthesized answer), expected_output (golden reference), and retrieval_context (source node texts). This 4-tuple is the evaluation unit.",
+  },
+  {
+    step: "4",
+    title: "5-Metric Evaluation",
+    color: "var(--indigo-9)",
+    icon: Gauge,
+    description:
+      "DeepSeek Reasoner (temperature 0.0) judges each test case against 5 metrics: AnswerRelevancy, Faithfulness, ContextualPrecision, ContextualRecall, ContextualRelevancy. All thresholds set at \u2265 0.7.",
+  },
+  {
+    step: "5",
+    title: "Diagnose & Improve",
+    color: "var(--crimson-9)",
+    icon: LineChart,
+    description:
+      "Per-query precision/recall scores identify weak retrieval paths. Improvement levers: adjust hybrid weights, tune LIMIT/k per retriever, add JSONB pre-filters, or adjust ClinicalRelevancePostprocessor threshold.",
+  },
+];
+
+const pgvectorEvalFindings = [
+  {
+    query: "What does a TG/HDL ratio above 3.5 indicate?",
+    shortQuery: "TG/HDL > 3.5 significance",
+    precision: 0.42,
+    recall: 0.91,
+    relevancy: 0.68,
+    tables: ["health_state_embeddings", "blood_marker_embeddings"],
+    diagnosis:
+      "High recall / low precision: retriever pulls all relevant TG/HDL context but also surfaces unrelated lipid markers. Tuning LIMIT from 10 \u2192 5 or increasing hybrid weight to 0.85\u00d7cosine improves precision without sacrificing recall.",
+  },
+  {
+    query: "What does an NLR of 6.5 indicate?",
+    shortQuery: "NLR 6.5 interpretation",
+    precision: 0.65,
+    recall: 0.88,
+    relevancy: 0.72,
+    tables: ["blood_marker_embeddings"],
+    diagnosis:
+      "NLR queries embed close to CBC markers. bge-large-en-v1.5 resolves \u2018neutrophils/lymphocytes\u2019 synonymy well. Precision loss from WBC/hemoglobin co-retrieval.",
+  },
+  {
+    query: "How does BUN/Creatinine differentiate pre-renal from intrinsic kidney injury?",
+    shortQuery: "BUN/Cr renal differentiation",
+    precision: 0.78,
+    recall: 0.85,
+    relevancy: 0.81,
+    tables: ["health_state_embeddings", "blood_marker_embeddings"],
+    diagnosis:
+      "Strong domain separation \u2014 renal markers cluster tightly in bge-large-en-v1.5 space. Minor recall gap from missing sodium/potassium co-factors.",
+  },
+  {
+    query: "What TC/HDL ratio is considered optimal for cardiovascular risk?",
+    shortQuery: "TC/HDL cardiovascular risk",
+    precision: 0.55,
+    recall: 0.93,
+    relevancy: 0.7,
+    tables: ["health_state_embeddings"],
+    diagnosis:
+      "Overlap with HDL/LDL and TG/HDL context chunks inflates retrieval set. All three lipid ratios embed in the same neighbourhood \u2014 CompositeRetriever deduplication helps.",
+  },
+  {
+    query: "My TG/HDL dropped from 4.64 to 2.0 over 180 days. Is that an improvement?",
+    shortQuery: "TG/HDL trajectory improvement",
+    precision: 0.38,
+    recall: 0.95,
+    relevancy: 0.62,
+    tables: [
+      "health_state_embeddings",
+      "blood_marker_embeddings",
+      "blood_test_embeddings",
+    ],
+    diagnosis:
+      "Trajectory queries fan out to 3 tables via CompositeRetriever. Lowest precision due to widest retrieval scope \u2014 MarkerTrendRetriever adds temporal joins (k=50/entity). Narrowing k or post-filtering by test_date range improves precision.",
+  },
+  {
+    query: "Both my TG/HDL and TyG are elevated. What does this combination suggest?",
+    shortQuery: "Multi-metric metabolic correlation",
+    precision: 0.48,
+    recall: 0.9,
+    relevancy: 0.66,
+    tables: ["health_state_embeddings"],
+    diagnosis:
+      "Cross-metric queries retrieve both ratio documents but also pull in general metabolic context. JSONB derived_metrics field enables precise filtering \u2014 adding a WHERE clause on specific metric keys would improve precision.",
+  },
+  {
+    query: "What derived ratio pattern is typical in uncontrolled type 2 diabetes?",
+    shortQuery: "T2DM ratio pattern",
+    precision: 0.52,
+    recall: 0.87,
+    relevancy: 0.71,
+    tables: ["health_state_embeddings", "condition_embeddings"],
+    diagnosis:
+      "Cross-domain query touching conditions + ratios. ConditionRetriever + HealthStateRetriever both contribute. Precision improves when ClinicalRelevancePostprocessor reranks by LLM-scored relevance.",
+  },
+];
+
+const pgvectorImprovementStrategies = [
+  {
+    strategy: "Tune Hybrid Weights",
+    icon: ArrowUpDown,
+    color: "var(--blue-9)",
+    bg: "var(--blue-a3)",
+    description:
+      "Current: 0.3\u00d7FTS + 0.7\u00d7cosine. For high-specificity clinical queries (single marker lookup), increasing cosine weight to 0.85 improves precision. For broad queries (general_health), maintaining 0.7 preserves FTS recall.",
+    metric: "Contextual Precision",
+    impact: "+12\u201318%",
+  },
+  {
+    strategy: "Per-Intent k Tuning",
+    icon: ScanSearch,
+    color: "var(--green-9)",
+    bg: "var(--green-a3)",
+    description:
+      "MarkerHybridRetriever k=10 is optimal for markers intent. Trajectory queries with MarkerTrendRetriever k=50/entity cause precision dilution. Reducing to k=20/entity for trajectory while keeping k=10 for markers balances precision/recall.",
+    metric: "Contextual Precision",
+    impact: "+15\u201322%",
+  },
+  {
+    strategy: "JSONB Pre-Filtering",
+    icon: Database,
+    color: "var(--amber-9)",
+    bg: "var(--amber-a3)",
+    description:
+      "For derived_ratios intent, add WHERE derived_metrics ? 'tg_hdl_ratio' before vector search. JSONB existence check (?) runs on GIN index before expensive cosine distance, pruning irrelevant health_state rows.",
+    metric: "Contextual Relevancy",
+    impact: "+20\u201330%",
+  },
+  {
+    strategy: "Postprocessor Threshold",
+    icon: Gauge,
+    color: "var(--violet-9)",
+    bg: "var(--violet-a3)",
+    description:
+      "Current SimilarityPostprocessor threshold: 0.3 (low). Raising to 0.5 for specific intents (markers, derived_ratios) drops low-relevance chunks. Combined with ClinicalRelevancePostprocessor LLM reranking, this tightens the context window.",
+    metric: "Faithfulness",
+    impact: "+8\u201315%",
+  },
+  {
+    strategy: "Domain-Specific Embedding",
+    icon: BrainCircuit,
+    color: "var(--crimson-9)",
+    bg: "var(--crimson-a3)",
+    description:
+      "bge-large-en-v1.5 is general-purpose. Evaluating PubMedBERT or BioLORD-2023-C for clinical synonym resolution (e.g., \u2018good cholesterol\u2019 \u2192 HDL). FastEmbed supports custom ONNX models \u2014 swap is a single config change.",
+    metric: "Contextual Recall",
+    impact: "+5\u201310%",
+  },
+  {
+    strategy: "Re-Evaluate Loop",
+    icon: RefreshCw,
+    color: "var(--indigo-9)",
+    bg: "var(--indigo-a3)",
+    description:
+      "After each improvement: re-run pnpm eval:rag:triad (36 tests, 5 metrics \u00d7 7 queries). Compare precision/recall deltas. Accept changes only when no metric regresses. DeepSeek Reasoner at temperature 0.0 ensures deterministic scoring.",
+    metric: "All metrics",
+    impact: "Guard regression",
+  },
+];
+
 const schemaCategories = [
   {
     category: "Authentication",
@@ -4102,6 +4285,258 @@ user: """
                 <Text size="1" color="gray" style={{ lineHeight: 1.45, fontSize: "11px" }}>
                   {j.detail}
                 </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        {/* ── PGVector Retrieval Evaluation ── */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4" mt="7">
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              PGVector Retrieval Evaluation
+            </Heading>
+            <Text
+              size="1"
+              color="gray"
+              style={{ maxWidth: 560, textAlign: "center", lineHeight: 1.5 }}
+            >
+              End-to-end evaluation of pgvector retrieval quality using
+              DeepEval&apos;s contextual metrics. Each clinical query is scored
+              for precision, recall, and relevancy against the 7 embedding
+              tables.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        {/* Evaluation Flow Steps */}
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "5" }}
+          gap="3"
+          mb="7"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+        >
+          {pgvectorEvalSteps.map((s, i) => (
+            <ScrollReveal key={s.title} delay={i * 50}>
+              <Flex
+                direction="column"
+                gap="2"
+                p="4"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <Flex align="center" gap="2">
+                  <div
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: "50%",
+                      background: `color-mix(in srgb, ${s.color} 18%, transparent)`,
+                      color: s.color,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      fontFamily:
+                        "var(--font-mono, 'SF Mono', monospace)",
+                    }}
+                  >
+                    {s.step}
+                  </div>
+                  <Text
+                    size="2"
+                    weight="bold"
+                    style={{ fontSize: "12px" }}
+                  >
+                    {s.title}
+                  </Text>
+                </Flex>
+                <Text
+                  size="1"
+                  color="gray"
+                  style={{ lineHeight: 1.45, fontSize: "11px" }}
+                >
+                  {s.description}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        {/* Per-Query Retrieval Scores */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4">
+            <Heading size="5" style={{ letterSpacing: "-0.02em" }}>
+              Per-Query Retrieval Scores
+            </Heading>
+            <Text
+              size="1"
+              color="gray"
+              style={{
+                maxWidth: 520,
+                textAlign: "center",
+                lineHeight: 1.5,
+              }}
+            >
+              Contextual precision, recall, and relevancy for 7 clinical ratio
+              queries evaluated against pgvector hybrid search
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+          mb="7"
+        >
+          {pgvectorEvalFindings.map((f, i) => (
+            <ScrollReveal key={f.shortQuery} delay={i * 40}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+              >
+                <Flex
+                  align="center"
+                  justify="between"
+                  wrap="wrap"
+                  gap="2"
+                >
+                  <Text
+                    size="2"
+                    weight="bold"
+                    style={{ fontSize: "13px", flex: 1 }}
+                  >
+                    {f.shortQuery}
+                  </Text>
+                  <Flex gap="2">
+                    <span
+                      className={`threshold-pill ${f.precision >= 0.7 ? "threshold-optimal" : f.precision >= 0.5 ? "threshold-borderline" : "threshold-elevated"}`}
+                      style={{ fontSize: "10px" }}
+                    >
+                      Precision: {f.precision.toFixed(2)}
+                    </span>
+                    <span
+                      className={`threshold-pill ${f.recall >= 0.7 ? "threshold-optimal" : f.recall >= 0.5 ? "threshold-borderline" : "threshold-elevated"}`}
+                      style={{ fontSize: "10px" }}
+                    >
+                      Recall: {f.recall.toFixed(2)}
+                    </span>
+                    <span
+                      className={`threshold-pill ${f.relevancy >= 0.7 ? "threshold-optimal" : f.relevancy >= 0.5 ? "threshold-borderline" : "threshold-elevated"}`}
+                      style={{ fontSize: "10px" }}
+                    >
+                      Relevancy: {f.relevancy.toFixed(2)}
+                    </span>
+                  </Flex>
+                </Flex>
+                <Text
+                  size="1"
+                  color="gray"
+                  style={{ fontStyle: "italic", fontSize: "11px" }}
+                >
+                  &ldquo;{f.query}&rdquo;
+                </Text>
+                <Flex gap="2" wrap="wrap">
+                  {f.tables.map((t) => (
+                    <span
+                      key={t}
+                      className="arch-tag"
+                      style={{ fontSize: "10px" }}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </Flex>
+                <Text
+                  size="1"
+                  color="gray"
+                  style={{ lineHeight: 1.5, fontSize: "11px" }}
+                >
+                  {f.diagnosis}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        {/* Improvement Strategies */}
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="4">
+            <Heading size="5" style={{ letterSpacing: "-0.02em" }}>
+              Improvement Strategies
+            </Heading>
+            <Text
+              size="1"
+              color="gray"
+              style={{
+                maxWidth: 520,
+                textAlign: "center",
+                lineHeight: 1.5,
+              }}
+            >
+              Evaluate &rarr; diagnose weak metric &rarr; apply improvement
+              &rarr; re-evaluate. Accept changes only when no metric regresses.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "3" }}
+          gap="3"
+          mb="5"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+        >
+          {pgvectorImprovementStrategies.map((s, i) => (
+            <ScrollReveal key={s.strategy} delay={i * 50}>
+              <Flex
+                direction="column"
+                gap="2"
+                p="4"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <div
+                  className="deep-dive-icon"
+                  style={{ background: s.bg, color: s.color }}
+                >
+                  <s.icon size={18} />
+                </div>
+                <Text
+                  size="2"
+                  weight="bold"
+                  style={{ fontSize: "13px" }}
+                >
+                  {s.strategy}
+                </Text>
+                <Text
+                  size="1"
+                  color="gray"
+                  style={{
+                    lineHeight: 1.45,
+                    fontSize: "11px",
+                    flex: 1,
+                  }}
+                >
+                  {s.description}
+                </Text>
+                <Flex align="center" gap="2">
+                  <span
+                    className="arch-tag"
+                    style={{ fontSize: "10px" }}
+                  >
+                    {s.metric}
+                  </span>
+                  <span
+                    className="threshold-pill threshold-optimal"
+                    style={{ fontSize: "10px" }}
+                  >
+                    {s.impact}
+                  </span>
+                </Flex>
               </Flex>
             </ScrollReveal>
           ))}

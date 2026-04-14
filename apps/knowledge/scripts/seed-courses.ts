@@ -5,8 +5,8 @@
  * Each entry has a `classcentralUrl` that links to a Class Central search
  * pre-filtered to that course title + provider (always resolves correctly).
  */
-import { db } from "@/src/db";
-import { externalCourses, lessonCourses } from "@/src/db/schema";
+import { contentDb as db } from "@/src/db/content";
+import { externalCourses, lessonCourses } from "@/src/db/content-schema";
 import { eq, and } from "drizzle-orm";
 
 interface CourseEntry {
@@ -259,7 +259,7 @@ const CATALOG: CourseEntry[] = [
     reviewCount: 14500,
     durationHours: 3,
     url: "https://www.classcentral.com/search?q=AI+agents+in+langgraph+deeplearning.ai",
-    slugs: ["agent-architectures", "multi-agent-systems", "agent-memory", "agent-orchestration", "agent-harnesses"],
+    slugs: ["agent-architectures", "multi-agent-systems", "agent-memory", "agent-orchestration", "agent-harnesses", "langgraph", "langgraph-red-teaming"],
   },
   {
     title: "Functions, Tools and Agents with LangChain",
@@ -299,6 +299,86 @@ const CATALOG: CourseEntry[] = [
     durationHours: 2,
     url: "https://www.classcentral.com/search?q=AI+agentic+design+patterns+autogen+deeplearning.ai",
     slugs: ["agent-architectures", "agent-debugging", "code-agents", "multi-agent-systems"],
+  },
+
+  // ── LangGraph (Udemy) ───────────────────────────────────────────────────
+  {
+    title: "LangGraph — Develop LLM-Powered AI Agents with LangGraph",
+    provider: "Udemy",
+    description:
+      "Build sophisticated LLM-powered agentic applications with LangGraph. Covers advanced agent patterns (multi-agent, reflection, reflexion), corrective/adaptive/self-RAG, parallel execution, human-in-the-loop, and the LangGraph ecosystem.",
+    level: "Advanced",
+    isFree: false,
+    rating: 4.54,
+    reviewCount: 3336,
+    durationHours: 7.7,
+    url: "https://www.udemy.com/course/langgraph/",
+    slugs: ["langgraph", "langgraph-red-teaming"],
+  },
+  {
+    title: "LangChain — Agentic AI Engineering with LangChain & LangGraph",
+    provider: "Udemy",
+    description:
+      "Build AI agents with LangChain and LangGraph — RAG, tools, MCP, and production-ready agentic AI systems. Re-recorded for 2026, supports LangChain 1.2+.",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.6,
+    reviewCount: 48018,
+    durationHours: 18,
+    url: "https://www.udemy.com/course/langchain/",
+    slugs: ["langgraph", "langgraph-red-teaming", "agent-architectures"],
+  },
+  {
+    title: "Complete Agentic AI Bootcamp With LangGraph and LangChain",
+    provider: "Udemy",
+    description:
+      "Build real-world AI agents, multi-agent workflows, and autonomous apps. Covers foundational agentic AI principles through production deployment of multi-agent systems (38.5h).",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.54,
+    reviewCount: 4947,
+    durationHours: 38.5,
+    url: "https://www.udemy.com/course/complete-agentic-ai-bootcamp-with-langgraph-and-langchain/",
+    slugs: ["langgraph", "langgraph-red-teaming", "multi-agent-systems"],
+  },
+  {
+    title: "LangGraph in Action: Develop Advanced AI Agents with LLMs",
+    provider: "Udemy",
+    description:
+      "Production-focused LangGraph course — state-based design, memory management, human-in-the-loop, parallel execution, subgraphs, FastAPI deployment, and unit testing.",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.45,
+    reviewCount: 685,
+    durationHours: 3.5,
+    url: "https://www.udemy.com/course/langgraph-in-action-develop-advanced-ai-agents-with-llms/",
+    slugs: ["langgraph"],
+  },
+  {
+    title: "LangGraph for Beginners: Agentic Workflows in Simple Steps",
+    provider: "Udemy",
+    description:
+      "Beginner-friendly LangGraph course — state machines, Pydantic validation, conditional routing, checkpointers, tool calling, agentic RAG, and real-world use cases.",
+    level: "Beginner",
+    isFree: false,
+    rating: 4.49,
+    reviewCount: 318,
+    durationHours: 3.1,
+    url: "https://www.udemy.com/course/langgraph-for-beginners/",
+    slugs: ["langgraph"],
+  },
+  {
+    title: "Agentic AI — Private Agentic RAG with LangGraph and Ollama",
+    provider: "Udemy",
+    description:
+      "Build private, production-ready RAG systems running 100% locally with LangGraph v1, Ollama, ChromaDB, and Docling. Covers corrective RAG, reflexion, self-RAG, and adaptive RAG.",
+    level: "Advanced",
+    isFree: false,
+    rating: 4.61,
+    reviewCount: 248,
+    durationHours: 16.5,
+    url: "https://www.udemy.com/course/agentic-ai-private-agentic-rag-with-langgraph-and-ollama/",
+    slugs: ["langgraph", "langgraph-red-teaming"],
   },
 
   // ── Evals & Testing ─────────────────────────────────────────────────────
