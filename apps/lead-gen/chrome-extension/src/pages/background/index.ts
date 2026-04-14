@@ -6,6 +6,7 @@ import { browseProfiles, setBrowseCancelled } from "./profile-browsing";
 import { browseCompanies, setCompanyCancelled } from "./company-browsing";
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
+import { scrapeCompanyFull, setCompanyScraperCancelled } from "./company-scraper";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -364,6 +365,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // ── Stop People Scraping (browsePeople / importPeopleFromCurrentPage) ──
   if (message.action === "stopPeopleScraping") {
     setPeopleCancelled(true);
+    sendResponse({ success: true });
+    return true;
+  }
+
+  // ── Scrape Full Company Profile (About + Posts + Jobs + People) ──
+  if (message.action === "scrapeCompanyFull") {
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+    startKeepAlive();
+    scrapeCompanyFull(tabId).finally(stopKeepAlive);
+    return true;
+  }
+
+  // ── Stop Full Company Scrape ──
+  if (message.action === "stopCompanyScraper") {
+    setCompanyScraperCancelled(true);
     sendResponse({ success: true });
     return true;
   }

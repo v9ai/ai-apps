@@ -258,6 +258,28 @@
   "competitive_landscape": {
     "market_position": "leader",
     "description": "OpenClaw is the most-starred open-source AI personal assistant, differentiated by local-first architecture, multi-platform messaging integration, and a composable skill ecosystem. Its growth trajectory (0 to 356K stars in under 6 months) is unprecedented in open-source history.",
+    "architecture": {
+      "overview": "OpenClaw began as a WhatsApp-to-Claude API bridge built in one hour. It evolved into a modular personal AI assistant that runs locally, connects to any LLM backend, and operates through messaging platforms (WhatsApp, Telegram, Discord, Signal) or CLI.",
+      "core_design": [
+        "TypeScript core with Swift components for macOS integration",
+        "CLI-first architecture — agents call CLIs directly and verify output, closing the feedback loop",
+        "Local-first: runs on user hardware with Docker, NixOS, or direct install; no cloud dependency",
+        "Skill-based extensibility via ClawhHub — a community skill directory (7.9K stars) with versioned skill archive",
+        "Lobster workflow shell (1.1K stars) for composable pipelines and safe automations",
+        "ACPX (2.1K stars) — headless CLI client implementing the Agent Client Protocol for stateful sessions",
+        "Self-hosting stack: openclaw-ansible provides Tailscale VPN + UFW firewall + Docker isolation"
+      ],
+      "ecosystem_repos": [
+        "openclaw (356K stars) — the personal AI assistant runtime",
+        "clawhub (7.9K stars) — skill directory and marketplace",
+        "lobster (1.1K stars) — workflow shell for pipelines",
+        "acpx (2.1K stars) — Agent Client Protocol CLI",
+        "nix-openclaw (644 stars) — NixOS packages",
+        "openclaw-ansible (557 stars) — automated hardened deployment",
+        "openclaw-windows-node (441 stars) — Windows companion suite"
+      ],
+      "how_it_is_used": "Steinberger uses OpenClaw to manage his entire life: checking into flights, controlling home automation (lights, temperature, cameras, music), managing emails, and running parallel coding agents. His personal agent 'Clawdis' has its own voice, can see and control his screen, posts to social media via CLI, and makes snarky remarks. He runs 3-8 concurrent projects with 5-50 parallel agents daily, committing directly to main. The system processed 6,600+ commits in January 2026 alone."
+    },
     "competitors": [
       {
         "name": "Anthropic Claude (Claude Code, Claude Desktop)",
@@ -337,6 +359,98 @@
     {
       "title": "MCP Best Practices - Peter Steinberger",
       "url": "https://steipete.me"
+    }
+  ],
+  "videos": [
+    {
+      "title": "OpenClaw: The Viral AI Agent that Broke the Internet - Peter Steinberger | Lex Fridman Podcast #491",
+      "url": "https://www.youtube.com/watch?v=YFjfBk8HI5o",
+      "platform": "YouTube",
+      "date": "2026-02-11",
+      "duration": "3:15:00",
+      "channel": "Lex Fridman",
+      "description": "Peter Steinberger sits down with Lex Fridman for a deep conversation covering the OpenClaw origin story, how a one-hour WhatsApp prototype became the fastest-growing project in GitHub history, the name-change drama with Anthropic, security concerns around self-modifying AI agents, his approach to coding with AI, and why he chose OpenAI over Meta and VC funding."
+    },
+    {
+      "title": "The creator of Clawd: 'I ship code I don't read' - Peter Steinberger | The Pragmatic Engineer",
+      "url": "https://www.youtube.com/watch?v=8lF7HmQ_RgY",
+      "platform": "YouTube",
+      "date": "2026-01-28",
+      "duration": "1:54:04",
+      "channel": "The Pragmatic Engineer",
+      "description": "Peter Steinberger explains how he builds and ships like a full engineering team by centering his workflow around AI agents. Covers his 6,600+ commits in a single month, why he doesn't review pull requests anymore (calling them 'prompt requests'), running 5-10 parallel agents, and the distinction between agentic engineering and vibe coding."
+    },
+    {
+      "title": "How OpenClaw's Creator Uses AI to Run His Life (Full Demo) | Peter Steinberger",
+      "url": "https://www.youtube.com/watch?v=AcwK1Uuwc0U",
+      "platform": "YouTube",
+      "date": "2026-02-01",
+      "duration": "36:56",
+      "channel": "Creator Economy (Peter Yang)",
+      "description": "Peter Steinberger demonstrates how he uses OpenClaw to manage his entire life — from checking into flights and controlling home automation to running parallel coding agents. Includes hot takes on why he avoids plan mode, MCPs, and subagents, and why he didn't build OpenClaw sooner because he assumed big labs would do it."
+    },
+    {
+      "title": "Builders Unscripted Ep. 1: Peter Steinberger, Creator of OpenClaw",
+      "url": "https://www.youtube.com/watch?v=9jgcT0Fqt7U",
+      "platform": "YouTube",
+      "date": "2026-02-24",
+      "duration": "45:00",
+      "channel": "OpenAI",
+      "description": "The inaugural episode of OpenAI's Builders Unscripted series. Peter Steinberger talks with Romain Huet about OpenClaw's journey from hobby project to 180K+ stars, his open-source philosophy, how he builds with Codex, and his vision for making AI agents accessible to everyone."
+    },
+    {
+      "title": "Swift Connection 2025 - Peter Steinberger",
+      "url": "https://www.youtube.com/watch?v=z2IDQbNOS5s",
+      "platform": "YouTube",
+      "date": "2025-10-06",
+      "duration": "",
+      "channel": "Swift Connection",
+      "description": "Peter Steinberger presents at Swift Connection in Paris on agentic engineering and how AI tools are fundamentally changing how software is built, drawing on his experience with PSPDFKit and his transition to AI-first development."
+    },
+    {
+      "title": "iOS Conf SG 2024 Keynote - Peter Steinberger",
+      "url": "https://www.youtube.com/watch?v=9Yiqa8u3DaY",
+      "platform": "YouTube",
+      "date": "2024-01-18",
+      "duration": "",
+      "channel": "iOS Conf SG",
+      "description": "An intensely personal keynote where Steinberger opens up about selling PSPDFKit after 13 years, the severe burnout that followed ('complete identity loss, not just fatigue'), and his journey to rediscovering purpose through code. Originally written for Deep Dish Swift 2023."
+    },
+    {
+      "title": "The State of SwiftUI - App Builders 2020",
+      "url": "https://www.youtube.com/watch?v=LpHah3oQeyg",
+      "platform": "YouTube",
+      "date": "2020-05-11",
+      "duration": "",
+      "channel": "App Builders Switzerland",
+      "description": "Peter Steinberger shares PSPDFKit's deep experience with SwiftUI, covering the framework's strengths, its rough edges, and practical strategies for adopting it in production apps."
+    },
+    {
+      "title": "Even Swiftier Objective-C - FrenchKit 2019",
+      "url": "https://www.youtube.com/watch?v=Xo3zGlyxXcI",
+      "platform": "YouTube",
+      "date": "2019-10-08",
+      "duration": "",
+      "channel": "FrenchKit",
+      "description": "A deep dive into bridging Objective-C and Swift idiomatically, covering the runtime internals and practical patterns Steinberger developed while maintaining PSPDFKit across both languages."
+    },
+    {
+      "title": "Binary Frameworks in Swift - try! Swift NYC 2018",
+      "url": "https://www.youtube.com/watch?v=2OuQarA0a7I",
+      "platform": "YouTube",
+      "date": "2018-09-04",
+      "duration": "",
+      "channel": "try! Swift",
+      "description": "Steinberger discusses the challenges and solutions for distributing binary Swift frameworks, a problem PSPDFKit faced as one of the largest commercial Swift SDKs in the ecosystem."
+    },
+    {
+      "title": "The Case for Deprecating UITableView - UIKonf 2018",
+      "url": "https://www.youtube.com/watch?v=0c6izSzP-KQ",
+      "platform": "YouTube",
+      "date": "2018-05-13",
+      "duration": "",
+      "channel": "UIKonf",
+      "description": "A provocative talk arguing that UITableView's architecture is fundamentally broken and proposing UICollectionView as the universal replacement — years before Apple made this shift official with compositional layouts."
     }
   ],
   "questions": [
