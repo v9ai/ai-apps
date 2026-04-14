@@ -13,6 +13,7 @@ import {
 import {
   extractCompanyData,
   countRemoteJobsVoyagerFirst,
+  resolveNumericIdViaVoyager,
   saveCompanyBatch,
   type RemoteJobsResult,
 } from "./company-browsing";
@@ -693,6 +694,19 @@ export async function findRelatedCompanies(tabId: number) {
           // Check remote jobs via Voyager API first (no tab navigation needed)
           let remoteJobCount = -1;
           let jobStatus: RemoteJobsResult["status"] = "ok";
+          // Strategy 4: Voyager API lookup by slug when DOM extraction fails
+          if (!data.linkedinNumericId) {
+            const slug = data.linkedinUrl?.match(/\/company\/([^/]+)/)?.[1];
+            if (slug) {
+              log(`[FindRelated] ${data.name} — DOM extraction failed, trying Voyager lookup for slug "${slug}"…`);
+              const resolved = await resolveNumericIdViaVoyager(slug);
+              if (resolved) {
+                data.linkedinNumericId = resolved;
+                log(`[FindRelated] ${data.name} — ✅ Voyager resolved numeric ID: ${resolved}`);
+              }
+            }
+          }
+
           if (data.linkedinNumericId) {
             log(`[FindRelated] Checking remote jobs for ${data.name} (ID: ${data.linkedinNumericId})...`);
             await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `Voyager API → checking remote jobs…`, phase: "saving", logText: crawlLog.join("\n") });
@@ -710,7 +724,7 @@ export async function findRelatedCompanies(tabId: number) {
               log(`[FindRelated] ${data.name} — 🎯⚠️ UNCONFIRMED — no active remote jobs, needs recruiter post check`);
             }
           } else {
-            log(`[FindRelated] ⚠️⚠️ No numeric ID for ${data.name} — ALL 3 extraction strategies failed, SKIPPING remote job check`);
+            log(`[FindRelated] ⚠️⚠️ No numeric ID for ${data.name} — ALL 4 extraction strategies failed, SKIPPING remote job check`);
           }
 
           // Build company object and add to batch

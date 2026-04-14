@@ -397,6 +397,58 @@ async function getLinkedInCsrfToken(): Promise<string> {
 }
 
 /**
+ * Resolve a LinkedIn company slug (universalName) to a numeric ID via Voyager API.
+ * Used as Strategy 4 when all DOM-based extraction strategies fail.
+ */
+export async function resolveNumericIdViaVoyager(slug: string): Promise<string | null> {
+  try {
+    const csrfToken = await getLinkedInCsrfToken();
+
+    const url = new URL("https://www.linkedin.com/voyager/api/voyagerOrganizationDashCompanies");
+    url.searchParams.set("decorationId", "com.linkedin.voyager.dash.deco.organization.MiniCompany-10");
+    url.searchParams.set("q", "universalName");
+    url.searchParams.set("universalName", slug);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+    const res = await fetch(url.toString(), {
+      headers: {
+        "csrf-token": csrfToken,
+        "x-restli-protocol-version": "2.0.0",
+        Accept: "application/vnd.linkedin.normalized+json+2.1",
+      },
+      credentials: "include",
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    // entityUrn format: "urn:li:fsd_company:12345"
+    const entityUrn: string | undefined =
+      data?.data?.elements?.[0]?.entityUrn ??
+      data?.elements?.[0]?.entityUrn;
+    if (entityUrn) {
+      const m = entityUrn.match(/(\d+)$/);
+      if (m) return m[1];
+    }
+
+    // Also check included[] for company entities
+    for (const inc of data?.included ?? []) {
+      const urn: string = inc?.entityUrn ?? inc?.$id ?? "";
+      const m = urn.match(/urn:li:(?:fsd_)?company:(\d+)/);
+      if (m) return m[1];
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Voyager API fallback for counting remote jobs.
  * Uses LinkedIn's internal API which is stable across DOM changes.
  */

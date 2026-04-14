@@ -2,7 +2,7 @@
 // Orchestrates scraping all LinkedIn company tabs: About → Posts → Jobs → People
 // Phase functions are exported so find-related BFS crawl can call them per-company.
 
-import { extractCompanyData, saveCompanyBatch } from "./company-browsing";
+import { extractCompanyData, saveCompanyBatch, resolveNumericIdViaVoyager } from "./company-browsing";
 import { extractPeopleCards, scrollPeoplePage, clickShowMorePeople, type PersonCard } from "./people-scraping";
 import { randomDelay, waitForTabLoad, isTabAlive, safeTabUpdate, safeSendMessage } from "./tab-utils";
 import { gqlRequest } from "../../services/graphql";
@@ -193,6 +193,15 @@ export async function scrapeJobs(
       await randomDelay(2000);
       numericId = await extractNumericId(tabId);
       if (numericId) log(`Numeric ID from company home: ${numericId}`);
+    }
+
+    // Strategy 4: Voyager API lookup by slug
+    if (!numericId) {
+      const slug = baseUrl.match(/\/company\/([^/]+)/)?.[1];
+      if (slug) {
+        numericId = await resolveNumericIdViaVoyager(slug);
+        if (numericId) log(`Numeric ID from Voyager lookup (slug "${slug}"): ${numericId}`);
+      }
     }
 
     if (!numericId) {
