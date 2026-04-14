@@ -83,19 +83,25 @@ const heroNodes = [
   {
     icon: Brain,
     label: "Triage",
-    sub: "8 intent classes",
+    sub: "9 intent classes",
     color: "var(--indigo-9)",
   },
   {
     icon: Search,
     label: "Retrieve",
-    sub: "7 entity tables",
+    sub: "LlamaIndex retrievers",
     color: "var(--blue-9)",
+  },
+  {
+    icon: ArrowUpDown,
+    label: "Rerank",
+    sub: "LLM postprocessor",
+    color: "var(--violet-9)",
   },
   {
     icon: Cpu,
     label: "Synthesize",
-    sub: "Clinical safety",
+    sub: "ResponseSynthesizer",
     color: "var(--amber-9)",
   },
   {
@@ -103,6 +109,12 @@ const heroNodes = [
     label: "Guard",
     sub: "5 safety rules",
     color: "var(--green-9)",
+  },
+  {
+    icon: RefreshCw,
+    label: "Resynthesize",
+    sub: "Self-correction",
+    color: "var(--orange-9)",
   },
 ];
 
@@ -114,10 +126,10 @@ const archSections = [
     iconColor: "var(--orange-9)",
     iconBg: "var(--orange-a3)",
     title: "PDF Ingestion Pipeline",
-    brief: "Upload \u2192 Parse \u2192 Extract \u2192 Store",
+    brief: "Upload \u2192 LlamaParse \u2192 LlamaIndex Pipeline \u2192 pgvector",
     description:
-      "Blood test PDFs are uploaded to R2, converted to markdown by LlamaParse, parsed through a 3-tier cascade (HTML table, FormKeysValues, free-text), then embedded locally with BAAI/bge-large-en-v1.5 at 1024 dimensions via FastEmbed (ONNX Runtime) and stored in Neon PostgreSQL.",
-    tags: ["Cloudflare R2", "LlamaParse", "3-tier cascade", "1024-dim vectors"],
+      "Blood test PDFs are uploaded to R2, then LlamaParse converts them to structured markdown using domain-specific parsing instructions (content_guideline_instruction for biomarker extraction, complemental_formatting_instruction for tabular formatting, auto_mode for smart layout detection, continuous_mode for multi-page tables). The LlamaIndex IngestionPipeline with a custom BloodTestNodeParser produces 3 node types per test (test-level, per-marker, health-state with 7 derived ratios), embeds them locally via FastEmbedEmbedding (BAAI/bge-large-en-v1.5, 1024-dim, ONNX Runtime), and persists to Neon PostgreSQL.",
+    tags: ["LlamaParse auto_mode", "LlamaIndex IngestionPipeline", "3 node types", "1024-dim FastEmbed"],
     Flow: IngestionFlow,
   },
   {
@@ -127,10 +139,10 @@ const archSections = [
     iconColor: "var(--indigo-9)",
     iconBg: "var(--indigo-a3)",
     title: "LangGraph StateGraph Pipeline",
-    brief: "Triage \u2192 Retrieve \u2192 Synthesize \u2192 Guard",
+    brief: "Triage \u2192 Retrieve \u2192 Rerank \u2192 Synthesize \u2192 Guard",
     description:
-      "Every chat query flows through 4 typed nodes: triage classifies intent into 8 categories, retrieve routes to the right pgvector tables, synthesize generates a clinical answer, and guard audits for safety.",
-    tags: ["LangGraph", "DeepSeek R1", "4-node graph", "typed state"],
+      "Every chat query flows through a 15-node conditional graph: triage classifies intent into 9 categories (including derived_ratios), low-confidence triage triggers re_triage with disambiguation hints, 9 per-intent LlamaIndex BaseRetriever nodes fan out to the right pgvector tables, a ClinicalRelevancePostprocessor reranks chunks by LLM-scored relevance, LlamaIndex ResponseSynthesizer (COMPACT mode) generates a clinical answer with a PromptTemplate, and the safety guard audits for 5 rules with a self-correction loop (resynthesize up to 1 retry). Safety refusals route directly to a refuse node that skips retrieval entirely.",
+    tags: ["LangGraph", "15 nodes", "conditional routing", "self-correction loop", "LlamaIndex pipeline"],
     Flow: PipelineFlow,
   },
   {
@@ -139,16 +151,16 @@ const archSections = [
     icon: Search,
     iconColor: "var(--blue-9)",
     iconBg: "var(--blue-a3)",
-    title: "Intent-Based Retrieval Routing",
-    brief: "8 intents \u2192 strategy routing \u2192 pgvector search",
+    title: "Intent-Based Retrieval via LlamaIndex",
+    brief: "9 intents \u2192 BaseRetriever composition \u2192 NodeWithScore",
     description:
-      "The retrieve node dispatches to different pgvector search strategies based on triage intent. Marker and trajectory queries run hybrid search \u2014 a CTE that computes both ts_rank on a tsvector index and cosine similarity via pgvector\u2019s <=> operator, then combines them as 0.7 \u00d7 vector + 0.3 \u00d7 normalized FTS into a single ranked score (k=10 markers + k=3 test-level context). Trajectory queries extend this by joining blood_marker_embeddings \u2192 blood_markers \u2192 blood_tests to pull the raw value, unit, flag, and test_date for each extracted entity (up to k=50 per marker name), giving the synthesizer a time-ordered series for velocity analysis. Conditions, medications, and symptoms each search their own embedding table first (k=5), then cross-reference with hybrid marker search (k=5) to surface drug\u2013biomarker interactions or symptom\u2013lab correlations. Appointments query only appointment_embeddings (k=5). General-health fans out to all 5 sources simultaneously \u2014 tests(3) + markers(5) + conditions(3) + medications(3) + symptoms(3) = 17 chunks \u2014 assembling a broad context window. Safety-refusal skips retrieval entirely, returning empty context so the synthesizer emits a hardcoded clinical disclaimer instead of calling the LLM.",
+      "Each of the 9 intent classes has a dedicated LlamaIndex BaseRetriever subclass wrapping the corresponding pgvector search function. A build_retriever_for_intent() factory composes them: MarkerHybridRetriever runs a CTE combining ts_rank (30%) + cosine similarity (70%) into a single ranked score. BloodTestRetriever and HealthStateRetriever add test-level context and derived metrics. MarkerTrendRetriever joins blood_marker_embeddings \u2192 blood_markers \u2192 blood_tests to pull value, unit, flag, and test_date for trajectory analysis (up to k=50 per entity). CompositeRetriever merges and deduplicates results from multiple sub-retrievers for general_health and multi_intent fan-out. All retrievers return standard NodeWithScore objects, enabling LlamaIndex postprocessors (SimilarityPostprocessor for threshold pre-filtering, ClinicalRelevancePostprocessor for per-chunk LLM scoring) and ResponseSynthesizer downstream. A _dynamic_k() function widens retrieval limits at low confidence (\u22650.8: base_k, \u22650.6: 1.5\u00d7, else 2\u00d7).",
     tags: [
-      "Hybrid search",
-      "0.7 cosine + 0.3 FTS CTE",
-      "7 entity tables",
-      "k=50 trend join",
-      "safety bypass",
+      "LlamaIndex BaseRetriever",
+      "CompositeRetriever",
+      "NodeWithScore",
+      "8 retriever classes",
+      "dynamic k-scaling",
     ],
     Flow: RetrievalFlow,
   },
@@ -158,15 +170,15 @@ const archSections = [
     icon: ShieldCheck,
     iconColor: "var(--crimson-9)",
     iconBg: "var(--crimson-a3)",
-    title: "Safety Guard Audit",
-    brief: "5 rules \u2192 audit \u2192 pass / disclaimer",
+    title: "Safety Guard with Self-Correction",
+    brief: "5 rules \u2192 audit \u2192 resynthesize \u2192 re-audit",
     description:
-      "Every synthesised response passes through a DeepSeek auditor checking 5 rules: no diagnosis, no prescription, physician referral required, no PII leakage, no hallucination. Failed responses get disclaimers appended.",
+      "Every synthesised response passes through a safety auditor checking 5 rules: no diagnosis, no prescription, physician referral required, no PII leakage, no hallucination. Failed responses enter a self-correction loop: the resynthesize node re-prompts the LLM with the specific guard issues (e.g. \"DIAGNOSIS was flagged: remove diagnostic language\") and the original context, then re-runs the guard. Up to 1 retry before falling back to disclaimer injection. This produces clinically safe answers without sacrificing the helpful content from the original response.",
     tags: [
-      "DeepSeek auditor",
       "5 safety rules",
-      "PII check",
-      "disclaimer injection",
+      "self-correction loop",
+      "resynthesize node",
+      "max 1 retry",
     ],
     Flow: GuardFlow,
   },
@@ -4650,6 +4662,88 @@ export const withAuth = async () => {
             </ScrollReveal>
           ))}
         </Flex>
+
+        {/* ── Cosine Similarity Explainer ── */}
+        <ScrollReveal delay={280}>
+          <Box
+            mt="6"
+            mb="6"
+            p="5"
+            className="deep-dive-card"
+            style={{ maxWidth: 720, margin: "24px auto" }}
+          >
+            <Flex direction="column" gap="3">
+              <Heading size="4" style={{ letterSpacing: "-0.02em" }}>
+                What Is Cosine Similarity?
+              </Heading>
+              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
+                Cosine similarity measures how similar two vectors are by
+                looking at the angle between them, ignoring their length. The
+                result ranges from &minus;1 to 1, where 1 means identical
+                direction, 0 means unrelated, and &minus;1 means opposite.
+              </Text>
+              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
+                In this project, every piece of clinical text — a blood marker,
+                a condition, a symptom — gets converted into a 1024-number array
+                (a vector) by{" "}
+                <code style={{ fontSize: "12px", color: "var(--indigo-9)" }}>
+                  bge-large-en-v1.5
+                </code>
+                . When a user asks &ldquo;What is my cholesterol?&rdquo;, that
+                question also becomes a 1024-number array. Cosine similarity
+                then compares the question&rsquo;s vector against every stored
+                vector to find which ones point in the most similar direction —
+                meaning they&rsquo;re semantically related.
+              </Text>
+              <Text
+                size="2"
+                style={{
+                  color: "var(--gray-10)",
+                  lineHeight: 1.7,
+                  paddingLeft: "1rem",
+                  borderLeft: "2px solid var(--indigo-a4)",
+                }}
+              >
+                pgvector&rsquo;s{" "}
+                <code style={{ fontSize: "12px", color: "var(--indigo-9)" }}>
+                  &lt;=&gt;
+                </code>{" "}
+                operator computes <strong>cosine distance</strong> (which is{" "}
+                <code style={{ fontSize: "12px" }}>1 &minus; similarity</code>
+                ), so the code does{" "}
+                <code style={{ fontSize: "12px", color: "var(--indigo-9)" }}>
+                  1 - (embedding &lt;=&gt; query_vec)
+                </code>{" "}
+                to flip it back to similarity. A score near 1.0 means the stored
+                text is highly relevant to the query; anything below 0.3 is
+                filtered out.
+              </Text>
+              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
+                <strong style={{ color: "var(--gray-12)" }}>
+                  Concrete example:
+                </strong>{" "}
+                if a user asks &ldquo;How is my kidney function?&rdquo;, the
+                query vector will land close to vectors for BUN, creatinine, and
+                BUN/Creatinine ratio entries — because the embedding model
+                learned that these concepts are semantically related — even
+                though the word &ldquo;kidney&rdquo; doesn&rsquo;t appear in the
+                stored text{" "}
+                <code style={{ fontSize: "11px", color: "var(--gray-9)" }}>
+                  &quot;Marker: BUN\nValue: 18 mg/dL\nFlag: normal&quot;
+                </code>
+                .
+              </Text>
+              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
+                The hybrid search weights it at{" "}
+                <strong style={{ color: "var(--blue-9)" }}>
+                  70% cosine similarity + 30% full-text search
+                </strong>
+                , so semantic meaning dominates but exact keyword matches still
+                boost relevance.
+              </Text>
+            </Flex>
+          </Box>
+        </ScrollReveal>
 
         <ScrollReveal delay={300}>
           <Flex gap="3" wrap="wrap" justify="center">
