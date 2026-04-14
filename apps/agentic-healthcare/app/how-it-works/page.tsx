@@ -952,7 +952,7 @@ const contextSteps = [
   {
     step: "4",
     title: "Prompt Assembly",
-    description: "Context + history + query are joined with double newlines and sent to DeepSeek with temperature 0.1.",
+    description: "Context + history + query are joined with double newlines and sent to the local LLM (Qwen 2.5 via mlx_lm.server) with temperature 0.1.",
     code: "[RETRIEVED CONTEXT]\n\n[CONVERSATION HISTORY]\n\nQUERY: Is my iron improving?",
     color: "var(--amber-9)",
   },
@@ -1004,13 +1004,13 @@ const evalCategories = [
     bg: "var(--indigo-a3)",
     tests: 65,
     passed: 52,
-    description: "Full agentic graph: triage \u2192 retrieve \u2192 synthesize \u2192 guard. Tests intent classification for 8 categories, retrieval routing per intent, synthesis quality, safety guard catch/pass logic, system design contracts, and edge cases.",
+    description: "Full agentic graph: triage \u2192 retrieve \u2192 rerank \u2192 synthesize \u2192 guard \u2192 resynthesize. Tests intent classification for 9 categories, LlamaIndex retriever routing per intent, synthesis quality via ResponseSynthesizer, safety guard with self-correction loop, system design contracts, and edge cases.",
     groups: [
       { name: "Triage Classification", count: 22, detail: "Classifies markers, trajectory, conditions, medications, symptoms, safety_refusal; handles malformed JSON, invalid intents, markdown wrapping" },
       { name: "Retrieval Routing", count: 10, detail: "Validates correct search functions per intent; fan-out for general_health; no retrieval for safety_refusal" },
       { name: "Synthesis Quality", count: 5, detail: "Context-grounded answers, citation extraction, chat history inclusion, safety refusal bypass" },
       { name: "Safety Guard", count: 7, detail: "Catches diagnosis, prescription, missing physician referral; handles malformed auditor JSON; skip logic for safety_refusal" },
-      { name: "System Design", count: 24, detail: "Graph topology (4 nodes, linear edges, no cycles), state schema fields, prompt declarations, intent-to-table mappings" },
+      { name: "System Design", count: 24, detail: "Graph topology (15 nodes, conditional routing, self-correction loop), state schema fields, prompt declarations, intent-to-retriever mappings" },
       { name: "Edge Cases", count: 7, detail: "Empty query, very long query, non-English, prompt injection, state immutability, multi-entity trajectory" },
     ],
     metrics: ["GEval (Faithfulness)", "GEval (Answer Relevancy)", "GEval (No Diagnosis)"],
@@ -1200,7 +1200,7 @@ const evalCategories = [
     bg: "var(--teal-a3)",
     tests: 75,
     passed: 26,
-    description: "LlamaIndex IngestionPipeline, BloodTestNodeParser, ContextChatEngine, and A/B comparison. Tests node production (3 types per PDF), metadata fidelity, transform idempotency, derived metrics at transform time, and retrieval round-trips.",
+    description: "Full LlamaIndex pipeline: IngestionPipeline, BloodTestNodeParser, BaseRetriever subclasses, ClinicalRelevancePostprocessor, ResponseSynthesizer, and ContextChatEngine. Tests node production (3 types per PDF), metadata fidelity, transform idempotency, derived metrics, retriever routing, reranking quality, and synthesis round-trips.",
     groups: [
       { name: "Transform Contract", count: 4, detail: "Is TransformComponent, returns node list, passthrough non-documents, empty document" },
       { name: "Node Type Production", count: 4, detail: "blood_test (1 per doc), blood_marker (N per doc), health_state (1 per doc), total count" },
@@ -1382,7 +1382,7 @@ const triageSteps = [
     step: "1",
     title: "LLM Classification",
     color: "var(--indigo-9)",
-    description: "User query sent to DeepSeek with the TRIAGE_SYSTEM prompt. Model returns JSON with intent, confidence, and extracted entities.",
+    description: "User query sent to the local LLM (Qwen 2.5 via mlx_lm.server) with the TRIAGE_SYSTEM prompt. Model returns JSON with intent, confidence, and extracted entities.",
   },
   {
     step: "2",
@@ -1586,7 +1586,7 @@ const complianceLayers = [
     color: "var(--crimson-9)",
     title: "Safety Guard Pipeline",
     description:
-      "Every LLM response passes through a 5-rule DeepSeek auditor checking for diagnosis, prescription, missing physician referral, PII leakage, and hallucination. JSON parse failures default to passed=false (fail-safe). Failed responses get context-specific disclaimers appended automatically.",
+      "Every LLM response passes through a 5-rule local Qwen 2.5 auditor checking for diagnosis, prescription, missing physician referral, PII leakage, and hallucination. JSON parse failures default to passed=false (fail-safe). Failed responses get context-specific disclaimers appended automatically.",
     code: "parsed.get('passed', False)  # fail-safe default",
     source: "graph.py:358-417",
   },
@@ -1829,7 +1829,7 @@ export default function HowItWorksPage() {
               }}
             >
               From PDF to{" "}
-              <span className="gradient-text">guarded insight</span> in 4 nodes
+              <span className="gradient-text">guarded insight</span> in 15 nodes
             </Heading>
 
             <Text
@@ -1838,9 +1838,10 @@ export default function HowItWorksPage() {
               align="center"
               style={{ maxWidth: 520, lineHeight: 1.65 }}
             >
-              A LangGraph StateGraph triages every query, retrieves from 7
-              entity tables, synthesizes with clinical safety rules, and audits
-              the response before it reaches you.
+              A 15-node LangGraph StateGraph triages every query through
+              LlamaIndex retrievers, reranks with a clinical postprocessor,
+              synthesizes via ResponseSynthesizer, and self-corrects through a
+              guard loop before the response reaches you.
             </Text>
 
             {/* Enhanced node flow with icons */}
@@ -1883,7 +1884,7 @@ export default function HowItWorksPage() {
             <Box className="trajectory-line" mt="3" />
 
             <Flex className="floating-badges" mt="1">
-              <span className="floating-badge">8 intent classes</span>
+              <span className="floating-badge">9 intent classes</span>
               <span className="floating-badge">7 entity tables</span>
               <span className="floating-badge">5 safety rules</span>
               <span className="floating-badge">1024-dim vectors</span>
@@ -2179,9 +2180,9 @@ export default function HowItWorksPage() {
               align="center"
               style={{ maxWidth: 560, lineHeight: 1.65 }}
             >
-              DeepSeek classifies every query into one of 8 intent classes.
-              Each intent routes to a different retrieval strategy with
-              tailored top-k limits.
+              Qwen 2.5 (local, via mlx_lm.server) classifies every query into one of 9 intent classes.
+              Each intent routes to a LlamaIndex BaseRetriever subclass with
+              confidence-scaled top-k limits via build_retriever_for_intent.
             </Text>
           </Flex>
         </ScrollReveal>
@@ -2403,7 +2404,7 @@ export default function HowItWorksPage() {
               align="center"
               style={{ maxWidth: 680, lineHeight: 1.65 }}
             >
-              Every synthesised response passes through a DeepSeek auditor
+              Every synthesised response passes through a local Qwen 2.5 auditor
               that checks 5 rules at temperature=0.0 (deterministic). Failed
               responses get context-specific disclaimers appended — they are
               never silently dropped. If the audit JSON itself fails to parse,
@@ -2617,7 +2618,7 @@ export default function HowItWorksPage() {
         >
           <ScrollReveal delay={300}>
             <pre className="pg-code-block" style={{ height: "100%", margin: 0 }}>
-              <code>{`// Guard audit prompt (sent to DeepSeek)
+              <code>{`// Guard audit prompt (sent to local Qwen 2.5)
 system: GUARD_SYSTEM  // 5 rules defined
 user: """
   Original query: {query}
@@ -5406,7 +5407,7 @@ combined_score = (
               align="center"
               style={{ maxWidth: 620, lineHeight: 1.65 }}
             >
-              Every synthesized response is audited by a separate DeepSeek
+              Every synthesized response is audited by a separate local Qwen 2.5
               LLM call before delivery. The guard node operates on a
               fail-safe principle: if JSON parsing fails, the response is
               treated as failed and disclaimers are injected.

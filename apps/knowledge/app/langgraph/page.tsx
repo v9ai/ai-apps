@@ -1,6 +1,6 @@
 import { Topbar } from "@/components/topbar";
 import { Footer } from "@/components/footer";
-import { concepts, steps, courses } from "@/lib/langgraph-data";
+import { concepts, steps, courses, getCourseStats } from "@/lib/langgraph-data";
 import type { LangGraphCourse } from "@/lib/langgraph-data";
 
 export const metadata = {
@@ -32,25 +32,53 @@ function CourseCard({ course }: { course: LangGraphCourse }) {
       href={course.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="course-card"
+      className="lg-course-card"
     >
-      <div className="course-card-header">
-        <span className="course-provider-icon">📚</span>
-        <span className="course-provider-name">Udemy</span>
+      <div className="lg-course-top">
+        <div className="course-card-header">
+          <span className="course-provider-icon">📚</span>
+          <span className="course-provider-name">Udemy</span>
+          {course.tags.map((t) => (
+            <span key={t} className="lg-tag">{t}</span>
+          ))}
+        </div>
+
+        <div className="course-card-title">{course.title}</div>
+
+        <p className="course-card-desc">{course.headline}</p>
+
+        <div className="lg-course-instructor">
+          {course.instructor}
+          <span className="lg-course-instructor-title">
+            {course.instructorTitle}
+          </span>
+        </div>
       </div>
 
-      <div className="course-card-title">{course.title}</div>
+      <div className="lg-course-learn">
+        <span className="lg-course-learn-heading">What you'll learn</span>
+        <ul className="lg-course-learn-list">
+          {course.whatYouLearn.slice(0, 4).map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+      </div>
 
-      <p className="course-card-desc">{course.headline}</p>
-
-      <div className="course-card-footer">
-        <span className="course-rating">
-          <StarRating rating={course.rating} />
-          <span className="course-rating-num">{course.rating.toFixed(1)}</span>
-          <span className="course-review-count">
-            ({course.reviewCount.toLocaleString()})
+      <div className="lg-course-bottom">
+        <div className="lg-course-metrics">
+          <span className="course-rating">
+            <StarRating rating={course.rating} />
+            <span className="course-rating-num">
+              {course.rating.toFixed(1)}
+            </span>
+            <span className="course-review-count">
+              ({course.reviewCount.toLocaleString()})
+            </span>
           </span>
-        </span>
+          <span className="lg-course-students">
+            {course.numStudents.toLocaleString()} students
+          </span>
+        </div>
         <div className="course-card-badges">
           <span
             className={`badge-pill badge-pill--level badge-pill--${course.level.toLowerCase().replace(/\s+/g, "-")}`}
@@ -58,9 +86,15 @@ function CourseCard({ course }: { course: LangGraphCourse }) {
             {course.level}
           </span>
           <span className="badge-pill badge-pill--glass">
+            {course.numLectures} lectures
+          </span>
+          <span className="badge-pill badge-pill--glass">
             ~{course.durationHours < 10
               ? `${course.durationHours}h`
               : `${Math.round(course.durationHours)}h`}
+          </span>
+          <span className="badge-pill badge-pill--glass">
+            Updated {course.lastUpdated}
           </span>
         </div>
       </div>
@@ -69,6 +103,8 @@ function CourseCard({ course }: { course: LangGraphCourse }) {
 }
 
 export default function LangGraphPage() {
+  const stats = getCourseStats();
+
   return (
     <>
       <Topbar />
@@ -81,8 +117,12 @@ export default function LangGraphPage() {
           </p>
           <div className="se-stats">
             <span className="se-stat">{concepts.length} Core Concepts</span>
-            <span className="se-stat">{courses.length} Courses</span>
-            <span className="se-stat">By LangChain</span>
+            <span className="se-stat">{stats.courseCount} Courses</span>
+            <span className="se-stat">
+              {(stats.totalStudents / 1000).toFixed(0)}K+ Students
+            </span>
+            <span className="se-stat">{stats.totalHours}h+ Content</span>
+            <span className="se-stat">{stats.avgRating} Avg Rating</span>
           </div>
         </div>
 
@@ -158,8 +198,17 @@ export default function LangGraphPage() {
           <section className="lg-section">
             <div className="lg-section-header">
               <h2 className="lg-section-title">Recommended Udemy Courses</h2>
-              <span className="se-topic-count">{courses.length} courses</span>
+              <span className="se-topic-count">
+                {stats.courseCount} courses
+              </span>
             </div>
+            <p className="lg-prose" style={{ marginBottom: 20 }}>
+              {(stats.totalStudents / 1000).toFixed(0)}K+ students enrolled
+              across {stats.courseCount} courses, averaging{" "}
+              {stats.avgRating} stars from{" "}
+              {(stats.totalReviews / 1000).toFixed(0)}K+ reviews. Sorted by
+              enrollment and rating.
+            </p>
             <div className="lg-courses-grid">
               {courses.map((c) => (
                 <CourseCard key={c.id} course={c} />
