@@ -92,8 +92,8 @@ export interface CompanyContext {
   website?: string;
 }
 
-export interface PhasePostsResult { saved: number; total: number; error?: string }
-export interface PhaseJobsResult { jobsSaved: number; hiringContactsSaved: number; error?: string }
+export interface PhasePostsResult { saved: number; updated: number; total: number; error?: string }
+export interface PhaseJobsResult { jobsSaved: number; jobsUpdated: number; hiringContactsSaved: number; error?: string }
 export interface PhasePeopleResult { saved: number; total: number; error?: string }
 
 interface ExtractedPost {
@@ -123,7 +123,7 @@ export async function scrapePosts(
     await waitForTabLoad(tabId);
     await randomDelay(3000);
 
-    if (cancelled || !(await isTabAlive(tabId))) return { saved: 0, total: 0 };
+    if (cancelled || !(await isTabAlive(tabId))) return { saved: 0, updated: 0, total: 0 };
 
     const posts = await scrapeCompanyPosts(tabId);
     log(`Extracted ${posts.length} posts from ${baseUrl}`);
@@ -150,6 +150,7 @@ export async function scrapePosts(
       }));
 
     let saved = 0;
+    let updated = 0;
     if (inputs.length > 0) {
       const res = await gqlRequest(
         `mutation UpsertCompanyPosts($inputs: [UpsertLinkedInPostInput!]!) {
@@ -158,13 +159,14 @@ export async function scrapePosts(
         { inputs },
       );
       saved = res.data?.upsertLinkedInPosts?.inserted ?? 0;
+      updated = res.data?.upsertLinkedInPosts?.updated ?? 0;
     }
 
-    return { saved, total: posts.length };
+    return { saved, updated, total: posts.length };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log(`Posts error: ${msg}`);
-    return { saved: 0, total: 0, error: msg };
+    return { saved: 0, updated: 0, total: 0, error: msg };
   }
 }
 
@@ -198,7 +200,7 @@ export async function scrapeJobs(
       return { jobsSaved: 0, hiringContactsSaved: 0, error: "no numeric ID" };
     }
 
-    if (cancelled) return { jobsSaved: 0, hiringContactsSaved: 0 };
+    if (cancelled) return { jobsSaved: 0, jobsUpdated: 0, hiringContactsSaved: 0 };
 
     // Fetch job cards via Voyager API (up to 50)
     const page1 = await searchJobs({ company: [numericId] }, { count: 25, start: 0 });
@@ -227,6 +229,7 @@ export async function scrapeJobs(
 
     // Save jobs
     let jobsSaved = 0;
+    let jobsUpdated = 0;
     const jobInputs = allJobs.map((job) => ({
       url: `https://www.linkedin.com/jobs/view/${job.jobPostingId}/`,
       type: "job" as const,
@@ -254,6 +257,7 @@ export async function scrapeJobs(
         { inputs: jobInputs },
       );
       jobsSaved = res.data?.upsertLinkedInPosts?.inserted ?? 0;
+      jobsUpdated = res.data?.upsertLinkedInPosts?.updated ?? 0;
     }
 
     // Discover hiring contacts
@@ -304,11 +308,11 @@ export async function scrapeJobs(
       }
     }
 
-    return { jobsSaved, hiringContactsSaved };
+    return { jobsSaved, jobsUpdated, hiringContactsSaved };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log(`Jobs error: ${msg}`);
-    return { jobsSaved: 0, hiringContactsSaved: 0, error: msg };
+    return { jobsSaved: 0, jobsUpdated: 0, hiringContactsSaved: 0, error: msg };
   }
 }
 

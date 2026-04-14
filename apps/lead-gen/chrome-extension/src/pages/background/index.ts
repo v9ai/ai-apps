@@ -358,6 +358,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // ── Stop Find Related crawl ──
   if (message.action === "stopFindRelated") {
     setFindRelatedCancelled(true);
+    setCompanyScraperCancelled(true); // Also stop any running deep scrape phase
     sendResponse({ success: true });
     return true;
   }

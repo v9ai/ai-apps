@@ -12,12 +12,12 @@ import {
 } from "./tab-utils";
 import {
   extractCompanyData,
-  countRemoteJobs,
   countRemoteJobsVoyagerFirst,
   saveCompanyBatch,
   type RemoteJobsResult,
 } from "./company-browsing";
-import { scrapePosts, scrapeJobs, scrapePeople, type CompanyContext } from "./company-scraper";
+import { scrapePosts, scrapeJobs, scrapePeople, setCompanyScraperCancelled, type CompanyContext } from "./company-scraper";
+import { gqlRequest } from "../../services/graphql";
 
 const MAX_COMPANIES = 150;
 const SAVE_BATCH_SIZE = 10;
@@ -448,6 +448,7 @@ const INDUSTRY_FILTER = "staffing and recruiting";
 
 export async function findRelatedCompanies(tabId: number) {
   findRelatedCancelled = false;
+  setCompanyScraperCancelled(false);
   const crawlLog: string[] = [];
   const crawlT0 = Date.now();
   let crawlSlug = "unknown";
@@ -586,10 +587,10 @@ export async function findRelatedCompanies(tabId: number) {
       await randomDelay(500);
 
       const data = await extractCompanyData(tabId);
-      if (data && data.name) {
-        const icp = isICPTarget(data);
+      const icp = data?.name ? isICPTarget(data) : null;
 
-        if (!icp.target) {
+      if (data && data.name) {
+        if (!icp?.target) {
           // Not recruitment — skip saving but still discover related companies below
           filtered++;
           log(`[FindRelated] SKIP ${data.name} — ${icp.reason} (industry: ${data.industry}) (queued: ${queue.length})`);
@@ -703,32 +704,53 @@ export async function findRelatedCompanies(tabId: number) {
 
       // e) Deep scrape: Posts, Jobs, People for ICP-matching companies
       //    Runs AFTER discovery since it navigates away from /about/
-      if (data && data.name && isICPTarget(data).target && !findRelatedCancelled && (await isTabAlive(tabId))) {
-        const companyBaseUrl = url.replace(/\/$/, "");
-        const ctx: CompanyContext = {
-          name: data.name,
-          linkedinUrl: data.linkedinUrl,
-          linkedinNumericId: data.linkedinNumericId,
-          website: data.website,
-        };
+      if (data && data.name && icp?.target && !findRelatedCancelled && (await isTabAlive(tabId))) {
+        try {
+          const companyBaseUrl = url.replace(/\/$/, "");
+          const ctx: CompanyContext = {
+            name: data.name,
+            linkedinUrl: data.linkedinUrl,
+            linkedinNumericId: data.linkedinNumericId,
+            website: data.website,
+          };
 
-        // Posts
-        await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `📝 ${data.name} posts`, phase: "saving", logText: crawlLog.join("\n") });
-        const postsResult = await scrapePosts(tabId, companyBaseUrl, null);
-        log(`[FindRelated] ${data.name} — posts: ${postsResult.saved}/${postsResult.total}${postsResult.error ? ` (${postsResult.error})` : ""}`);
+          // Resolve DB company ID so posts/jobs link to the right company
+          let companyId: number | null = null;
+          try {
+            const res = await gqlRequest(
+              `query FindCompanyByName($name: String) {
+                findCompany(name: $name) { found company { id } }
+              }`,
+              { name: data.name },
+            );
+            companyId = res.data?.findCompany?.company?.id ?? null;
+          } catch { /* non-critical — posts/jobs still save, just unlinked */ }
 
-        if (!findRelatedCancelled && (await isTabAlive(tabId))) {
-          // Jobs (Voyager API — may navigate to company home for numeric ID)
-          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `💼 ${data.name} jobs`, phase: "saving", logText: crawlLog.join("\n") });
-          const jobsResult = await scrapeJobs(tabId, companyBaseUrl, ctx, null);
-          log(`[FindRelated] ${data.name} — jobs: ${jobsResult.jobsSaved}, hiring: ${jobsResult.hiringContactsSaved}${jobsResult.error ? ` (${jobsResult.error})` : ""}`);
-        }
+          // Sync cancellation flag so phase functions respect BFS cancel
+          setCompanyScraperCancelled(findRelatedCancelled);
 
-        if (!findRelatedCancelled && (await isTabAlive(tabId))) {
-          // People
-          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `👥 ${data.name} people`, phase: "saving", logText: crawlLog.join("\n") });
-          const peopleResult = await scrapePeople(tabId, companyBaseUrl, ctx);
-          log(`[FindRelated] ${data.name} — people: ${peopleResult.saved}/${peopleResult.total}${peopleResult.error ? ` (${peopleResult.error})` : ""}`);
+          // Posts
+          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `📝 ${data.name} posts`, phase: "saving", logText: crawlLog.join("\n") });
+          const postsResult = await scrapePosts(tabId, companyBaseUrl, companyId);
+          log(`[FindRelated] ${data.name} — posts: ${postsResult.saved} new, ${postsResult.updated} updated / ${postsResult.total} total${postsResult.error ? ` (${postsResult.error})` : ""}`);
+
+          if (!findRelatedCancelled && (await isTabAlive(tabId))) {
+            setCompanyScraperCancelled(false);
+            // Jobs (Voyager API — may navigate to company home for numeric ID)
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `💼 ${data.name} jobs`, phase: "saving", logText: crawlLog.join("\n") });
+            const jobsResult = await scrapeJobs(tabId, companyBaseUrl, ctx, companyId);
+            log(`[FindRelated] ${data.name} — jobs: ${jobsResult.jobsSaved} new, ${jobsResult.jobsUpdated} updated, hiring: ${jobsResult.hiringContactsSaved}${jobsResult.error ? ` (${jobsResult.error})` : ""}`);
+          }
+
+          if (!findRelatedCancelled && (await isTabAlive(tabId))) {
+            setCompanyScraperCancelled(false);
+            // People
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `👥 ${data.name} people`, phase: "saving", logText: crawlLog.join("\n") });
+            const peopleResult = await scrapePeople(tabId, companyBaseUrl, ctx);
+            log(`[FindRelated] ${data.name} — people: ${peopleResult.saved}/${peopleResult.total}${peopleResult.error ? ` (${peopleResult.error})` : ""}`);
+          }
+        } catch (deepErr) {
+          logError(`[FindRelated] Deep scrape failed for ${data.name}: ${deepErr instanceof Error ? deepErr.message : String(deepErr)}`);
         }
       }
 
