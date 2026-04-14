@@ -547,6 +547,49 @@ export const linkedinPosts = pgTable(
 export type LinkedInPost = typeof linkedinPosts.$inferSelect;
 export type NewLinkedInPost = typeof linkedinPosts.$inferInsert;
 
+// Opportunities (job listings / contracts tracked for application pipeline)
+export const opportunities = pgTable(
+  "opportunities",
+  {
+    id: text("id").primaryKey(), // opp_<timestamp>_<random>
+    title: text("title").notNull(),
+    url: text("url"),
+    source: text("source"), // linkedin | website | referral | etc.
+    status: text("status").notNull().default("open"), // open | applied | interviewing | offer | rejected | closed
+    reward_usd: real("reward_usd"),
+    reward_text: text("reward_text"), // human-readable comp (e.g. "€130k + bonus")
+    start_date: text("start_date"),
+    end_date: text("end_date"),
+    deadline: text("deadline"),
+    first_seen: text("first_seen"),
+    last_seen: text("last_seen"),
+    score: integer("score"), // 0-100 fit score
+    raw_context: text("raw_context"), // full job description text
+    metadata: text("metadata"), // JSON blob for extra structured data
+    applied: boolean("applied").notNull().default(false),
+    applied_at: text("applied_at"),
+    application_status: text("application_status"),
+    application_notes: text("application_notes"),
+    tags: text("tags"), // JSON array
+    company_id: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+    contact_id: integer("contact_id").references(() => contacts.id, { onDelete: "set null" }),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+    updated_at: text("updated_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => ({
+    companyIdIdx: index("idx_opportunities_company_id").on(table.company_id),
+    contactIdIdx: index("idx_opportunities_contact_id").on(table.contact_id),
+    statusIdx: index("idx_opportunities_status").on(table.status),
+  }),
+);
+
+export type Opportunity = typeof opportunities.$inferSelect;
+export type NewOpportunity = typeof opportunities.$inferInsert;
+
 // Intent Signals (company-level buying/hiring signals detected by finetuned Qwen)
 export const intentSignals = pgTable(
   "intent_signals",
