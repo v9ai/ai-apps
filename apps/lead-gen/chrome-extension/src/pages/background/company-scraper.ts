@@ -6,6 +6,7 @@ import { extractCompanyData, saveCompanyBatch, resolveNumericIdViaVoyager } from
 import { extractPeopleCards, scrollPeoplePage, clickShowMorePeople, detectPeoplePageBlocker, type PersonCard } from "./people-scraping";
 import { randomDelay, waitForTabLoad, isTabAlive, safeTabUpdate, safeSendMessage } from "./tab-utils";
 import { gqlRequest } from "../../services/graphql";
+import { summarizePostSignals, type PostSignalSummary } from "../../lib/post-signal-scorer";
 import { searchJobs, getJobPostingDetail, type VoyagerJobCard } from "../../services/voyager-jobs";
 import { discoverHiringContacts } from "../../services/voyager-hiring";
 
@@ -100,7 +101,7 @@ export interface CompanyContext {
   website?: string;
 }
 
-export interface PhasePostsResult { saved: number; updated: number; total: number; error?: string }
+export interface PhasePostsResult { saved: number; updated: number; total: number; error?: string; signals?: PostSignalSummary }
 export interface PhaseJobsResult { jobsSaved: number; jobsUpdated: number; hiringContactsSaved: number; error?: string }
 export interface PhasePeopleResult { saved: number; total: number; error?: string }
 
@@ -136,6 +137,12 @@ export async function scrapePosts(
     const posts = await scrapeCompanyPosts(tabId);
     log(`Extracted ${posts.length} posts from ${baseUrl}`);
 
+    // Analyze post signals (cheap regex -- no DOM/network)
+    const signals = summarizePostSignals(posts.map((p) => ({ postText: p.postText })));
+    if (signals.jobPosts > 0) {
+      log(`Post signals: ${signals.jobPosts}/${signals.totalPosts} job, ${signals.remoteEuropePosts} remote-EU, ${signals.techContractPosts} tech-contract, top=${signals.topScore}${signals.hasIdealSignal ? " IDEAL" : ""}`);
+    }
+
     const inputs = posts
       .filter((p) => p.postUrl)
       .map((p) => ({
@@ -170,7 +177,7 @@ export async function scrapePosts(
       updated = res.data?.upsertLinkedInPosts?.updated ?? 0;
     }
 
-    return { saved, updated, total: posts.length };
+    return { saved, updated, total: posts.length, signals };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log(`Posts error: ${msg}`);

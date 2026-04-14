@@ -18,6 +18,7 @@ import {
   type RemoteJobsResult,
 } from "./company-browsing";
 import { scrapePosts, scrapeJobs, scrapePeople, setCompanyScraperCancelled, setExternalLog, type CompanyContext } from "./company-scraper";
+import { formatSignalSummary } from "../../lib/post-signal-scorer";
 import { gqlRequest } from "../../services/graphql";
 
 const MAX_COMPANIES = 150;
@@ -596,6 +597,8 @@ export async function findRelatedCompanies(tabId: number) {
     let filtered = 0;
     let targets = 0;
     let totalRemoteJobs = 0;
+    let totalPostSignalCompanies = 0;
+    let totalIdealSignalCompanies = 0;
 
     // Batch accumulator
     const pendingBatch: Array<{
@@ -832,9 +835,11 @@ export async function findRelatedCompanies(tabId: number) {
 
       // e) Deep scrape: Posts, Jobs, People for ICP-matching companies
       //    Runs AFTER discovery since it navigates away from /about/
+      //    OPTIMIZATION: Skip jobs+people for companies with 0 confirmed remote jobs
+      const hasRemoteJobs = remoteJobCount > 0;
       if (data && data.name && icp?.target && !findRelatedCancelled && (await isTabAlive(tabId))) {
         const deepT0 = Date.now();
-        const DEEP_SCRAPE_TIMEOUT = 120_000; // 2 min per company
+        const DEEP_SCRAPE_TIMEOUT = hasRemoteJobs ? 120_000 : 30_000; // 2 min full, 30s posts-only
         try {
           const companyBaseUrl = url.replace(/\/$/, "");
           const ctx: CompanyContext = {
@@ -844,7 +849,7 @@ export async function findRelatedCompanies(tabId: number) {
             website: data.website,
           };
 
-          // Resolve DB company ID so posts/jobs link to the right company
+          // Resolve DB company ID so posts/jobs link to the right company (10s timeout — non-critical lookup)
           let companyId: number | null = null;
           try {
             const res = await gqlRequest(
@@ -852,6 +857,7 @@ export async function findRelatedCompanies(tabId: number) {
                 findCompany(name: $name, linkedinUrl: $linkedinUrl) { found company { id } }
               }`,
               { name: data.name, linkedinUrl: data.linkedinUrl },
+              10_000,
             );
             companyId = res.data?.findCompany?.company?.id ?? null;
             log(`[FindRelated] ${data.name} — DB companyId=${companyId ?? "not found"}`);

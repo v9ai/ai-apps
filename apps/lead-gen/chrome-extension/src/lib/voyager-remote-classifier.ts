@@ -240,7 +240,7 @@ export interface VoyagerJobSearchPaging {
  * LinkedIn appends "(Remote)" or "Remote" to the location field when
  * the job is tagged as remote in structured data.
  */
-const FULL_REMOTE_LOCATION_RE =
+export const FULL_REMOTE_LOCATION_RE =
   /\(remote\)$|\bfully remote\b|\bremote[\s-]*first\b|\b100% remote\b|\bwork from anywhere\b|\banywhere\b/i;
 
 /**
@@ -248,13 +248,13 @@ const FULL_REMOTE_LOCATION_RE =
  * "Remote in United States" or "United States (Remote)" are
  * different from bare "(Remote)".
  */
-const COUNTRY_REMOTE_RE =
+export const COUNTRY_REMOTE_RE =
   /\bremote\s+in\s+(?:the\s+)?(?:united states|usa|us|uk|canada|germany|france|netherlands|india|australia|ireland|switzerland)\b/i;
 
 /**
  * Patterns indicating region-scoped remote (EU, EMEA, APAC).
  */
-const REGION_REMOTE_RE =
+export const REGION_REMOTE_RE =
   /\bremote\s+(?:in\s+)?(?:eu|europe|emea|apac|latam|eea)\b|\b(?:eu|europe|emea|apac|latam|eea)\s+remote\b/i;
 
 /**
