@@ -290,6 +290,7 @@ function injectCrawlOverlay(
     targets: number;
     filtered?: number;
     name: string;
+    step?: string;
     phase: "saving" | "discovering" | "error";
     logText?: string;
   },
@@ -298,63 +299,109 @@ function injectCrawlOverlay(
     .executeScript({
       target: { tabId },
       world: "MAIN",
-      func: (s: { saved: number; skipped: number; queued: number; targets: number; filtered?: number; name: string; phase: string; logText?: string }) => {
+      func: (s: { saved: number; skipped: number; queued: number; targets: number; filtered?: number; name: string; step?: string; phase: string; logText?: string }) => {
         const ATTR = "data-lg-crawl-overlay";
-        const COPY_ATTR = "data-lg-crawl-copy";
-        const LOG_ATTR = "data-lg-crawl-log";
+        const LOG_PANEL_ATTR = "data-lg-crawl-log-panel";
+        const TOGGLE_ATTR = "data-lg-crawl-toggle";
         let el = document.querySelector(`[${ATTR}]`) as HTMLDivElement | null;
         if (!el) {
           el = document.createElement("div");
           el.setAttribute(ATTR, "true");
           el.style.cssText = `
             position:fixed; bottom:20px; right:20px; z-index:999999;
-            background:rgba(15,23,42,0.9); color:#fff; padding:10px 14px;
-            border-radius:8px; font:13px/1.4 -apple-system,sans-serif;
-            max-width:400px; box-shadow:0 4px 12px rgba(0,0,0,0.3);
-            display:flex; align-items:center; gap:8px;
-            user-select:text;
+            background:rgba(15,23,42,0.95); color:#fff; padding:0;
+            border-radius:10px; font:12px/1.4 'SF Mono',Menlo,monospace;
+            width:420px; box-shadow:0 4px 20px rgba(0,0,0,0.4);
+            user-select:text; overflow:hidden;
           `;
           document.body.appendChild(el);
         }
         const dotColor = s.phase === "saving" ? "#22c55e"
           : s.phase === "discovering" ? "#eab308" : "#ef4444";
+
+        // --- Header bar ---
         const targetPart = s.targets > 0 ? ` (${s.targets} \u{1F3AF})` : "";
-        const filteredPart = s.filtered ? `, ${s.filtered} skipped` : "";
-        const statusText = `${s.saved} saved${targetPart}, ${s.skipped} dupes${filteredPart} (${s.queued} queued) \u2014 ${s.name}`;
-        const copyText = `FindRelated: ${s.saved} saved (${s.targets} targets), ${s.skipped} dupes, ${s.filtered ?? 0} skipped, ${s.queued} queued \u2014 ${s.name} [${s.phase}]`;
-        el.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;flex-shrink:0;animation:lgpulse 1.2s ease-in-out infinite"></span><span style="user-select:text">${statusText}</span>`;
+        const filteredPart = s.filtered ? ` ${s.filtered} skip` : "";
+        const counters = `${s.saved} saved${targetPart} ${s.skipped} dup${filteredPart} \u2502 Q:${s.queued}`;
 
-        const btnStyle = "background:none;border:none;cursor:pointer;opacity:0.6;font-size:14px;padding:0;flex-shrink:0;line-height:1;";
-        function makeBtn(attr: string, icon: string, title: string, dataAttr: string): HTMLButtonElement {
-          let btn = el!.querySelector(`[${attr}]`) as HTMLButtonElement | null;
-          if (!btn) {
-            btn = document.createElement("button");
-            btn.setAttribute(attr, "true");
-            btn.style.cssText = btnStyle + "margin-left:4px;";
-            btn.textContent = icon;
-            btn.title = title;
-            btn.addEventListener("mouseenter", () => { btn!.style.opacity = "1"; });
-            btn.addEventListener("mouseleave", () => { btn!.style.opacity = "0.6"; });
-            btn.addEventListener("click", () => {
-              const text = btn!.getAttribute(dataAttr) || "";
-              navigator.clipboard.writeText(text).then(() => {
-                const orig = btn!.textContent;
-                btn!.textContent = "\u2713";
-                setTimeout(() => { btn!.textContent = orig; }, 1000);
-              });
-            });
-            el!.appendChild(btn);
-          }
-          return btn;
+        // --- Step indicator ---
+        const stepLine = s.step || s.name;
+
+        // --- Log lines (last 20 for display) ---
+        const logLines = s.logText ? s.logText.split("\n").slice(-20) : [];
+        // Strip ISO timestamps for compact display: [2026-...] msg → msg
+        const shortLines = logLines.map((l: string) => l.replace(/^\[\d{4}-[^\]]+\]\s*/, ""));
+
+        const logPanel = el.querySelector(`[${LOG_PANEL_ATTR}]`) as HTMLDivElement | null;
+        const isExpanded = logPanel ? logPanel.style.display !== "none" : true;
+
+        el.innerHTML = "";
+
+        // Header
+        const header = document.createElement("div");
+        header.style.cssText = "padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.1);";
+        header.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0;animation:lgpulse 1.2s ease-in-out infinite"></span><span style="flex:1;color:#94a3b8;font-size:11px">${counters}</span>`;
+
+        // Toggle button
+        const toggleBtn = document.createElement("button");
+        toggleBtn.setAttribute(TOGGLE_ATTR, "true");
+        toggleBtn.style.cssText = "background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;padding:0 2px;line-height:1;";
+        toggleBtn.textContent = isExpanded ? "\u25BC" : "\u25B6";
+        toggleBtn.title = "Toggle log";
+        header.appendChild(toggleBtn);
+
+        // Copy button
+        const copyBtn = document.createElement("button");
+        copyBtn.style.cssText = "background:none;border:none;color:#64748b;cursor:pointer;font-size:13px;padding:0 2px;line-height:1;";
+        copyBtn.textContent = "\u{1F4CB}";
+        copyBtn.title = "Copy full log";
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(s.logText || "").then(() => {
+            copyBtn.textContent = "\u2713";
+            setTimeout(() => { copyBtn.textContent = "\u{1F4CB}"; }, 1000);
+          });
+        });
+        header.appendChild(copyBtn);
+        el.appendChild(header);
+
+        // Step indicator
+        const stepEl = document.createElement("div");
+        stepEl.style.cssText = "padding:4px 12px 6px;color:#e2e8f0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+        stepEl.textContent = stepLine;
+        el.appendChild(stepEl);
+
+        // Log panel
+        const panel = document.createElement("div");
+        panel.setAttribute(LOG_PANEL_ATTR, "true");
+        panel.style.cssText = `
+          max-height:240px;overflow-y:auto;padding:4px 12px 8px;
+          display:${isExpanded ? "block" : "none"};
+          border-top:1px solid rgba(255,255,255,0.06);
+          scrollbar-width:thin;scrollbar-color:#334155 transparent;
+        `;
+        for (const line of shortLines) {
+          const lineEl = document.createElement("div");
+          lineEl.style.cssText = "color:#94a3b8;font-size:11px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+          // Colorize: errors red, warnings amber, targets green
+          if (/ERROR|failed|error/i.test(line)) lineEl.style.color = "#f87171";
+          else if (/WARN|SKIP|⊘|⚠️|⛔/i.test(line)) lineEl.style.color = "#fbbf24";
+          else if (/🎯|✅|CONFIRMED|saved/i.test(line)) lineEl.style.color = "#4ade80";
+          lineEl.textContent = line;
+          panel.appendChild(lineEl);
         }
+        el.appendChild(panel);
 
-        // Status copy button
-        const copyBtn = makeBtn(COPY_ATTR, "\u{1F4CB}", "Copy status", "data-copy-text");
-        copyBtn.setAttribute("data-copy-text", copyText);
+        // Toggle handler
+        toggleBtn.addEventListener("click", () => {
+          const p = el!.querySelector(`[${LOG_PANEL_ATTR}]`) as HTMLDivElement | null;
+          if (p) {
+            p.style.display = p.style.display === "none" ? "block" : "none";
+            toggleBtn.textContent = p.style.display === "none" ? "\u25B6" : "\u25BC";
+          }
+        });
 
-        // Full log copy button
-        const logBtn = makeBtn(LOG_ATTR, "\u{1F4DC}", "Copy full crawl log", "data-log-text");
-        logBtn.setAttribute("data-log-text", s.logText || "");
+        // Auto-scroll log to bottom
+        panel.scrollTop = panel.scrollHeight;
 
         if (!document.getElementById("lg-crawl-pulse-style")) {
           const style = document.createElement("style");
@@ -581,10 +628,11 @@ export async function findRelatedCompanies(tabId: number) {
       // a) Navigate to /about/ — scrape company data AND discover related companies
       const aboutUrl = url.replace(/\/$/, "") + "/about/";
       const urlSlug = url.match(/\/company\/([^/]+)/)?.[1] || "loading...";
+      await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: urlSlug, step: `Navigating → ${urlSlug}/about/`, phase: "saving", logText: crawlLog.join("\n") });
       await safeTabUpdate(tabId, { url: aboutUrl });
       await waitForTabLoad(tabId);
       await randomDelay(2000);
-      await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: urlSlug, phase: "saving", logText: crawlLog.join("\n") });
+      await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: urlSlug, step: `Extracting company data…`, phase: "saving", logText: crawlLog.join("\n") });
 
       await clickSeeMore(tabId);
       await randomDelay(500);
@@ -597,13 +645,14 @@ export async function findRelatedCompanies(tabId: number) {
           // Not recruitment — skip saving but still discover related companies below
           filtered++;
           log(`[FindRelated] SKIP ${data.name} — ${icp.reason} (industry: ${data.industry}) (queued: ${queue.length})`);
-          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name} [${icp.reason}]`, phase: "saving", logText: crawlLog.join("\n") });
+          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name}`, step: `Skipped: ${icp.reason}`, phase: "saving", logText: crawlLog.join("\n") });
         } else {
           // Check remote jobs via Voyager API first (no tab navigation needed)
           let remoteJobCount = -1;
           let jobStatus: RemoteJobsResult["status"] = "ok";
           if (data.linkedinNumericId) {
             log(`[FindRelated] Checking remote jobs for ${data.name} (ID: ${data.linkedinNumericId})...`);
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `Voyager API → checking remote jobs…`, phase: "saving", logText: crawlLog.join("\n") });
             const jobResult = await countRemoteJobsVoyagerFirst(tabId, data.linkedinNumericId);
             remoteJobCount = jobResult.count;
             jobStatus = jobResult.status;
@@ -644,10 +693,10 @@ export async function findRelatedCompanies(tabId: number) {
             skipped += newSkipped;
             targets += SAVE_BATCH_SIZE;
             log(`[FindRelated] Batch flushed: ${newSaved} saved, ${newSkipped} dupes (total: ${saved}/${MAX_COMPANIES})`);
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: overlayName("✓"), phase: "saving", logText: crawlLog.join("\n") });
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: overlayName("✓"), step: `Batch flushed — ${saved} total saved`, phase: "saving", logText: crawlLog.join("\n") });
           } else {
             // Optimistic display — show as pending
-            await injectCrawlOverlay(tabId, { saved, skipped, targets: targets + 1, filtered, queued: queue.length, name: overlayName("…"), phase: "saving", logText: crawlLog.join("\n") });
+            await injectCrawlOverlay(tabId, { saved, skipped, targets: targets + 1, filtered, queued: queue.length, name: overlayName("…"), step: `Queued in batch (${pendingBatch.length}/${SAVE_BATCH_SIZE})`, phase: "saving", logText: crawlLog.join("\n") });
           }
 
         }
@@ -668,7 +717,7 @@ export async function findRelatedCompanies(tabId: number) {
       // d) Discover new related companies FIRST (while still on /about/ page)
       //    Must happen before deep scrape which navigates away to /posts/, /people/
       if ((saved + skipped + pendingBatch.length) < MAX_COMPANIES && (await isTabAlive(tabId)) && !findRelatedCancelled) {
-        await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data?.name || urlSlug, phase: "discovering", logText: crawlLog.join("\n") });
+        await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data?.name || urlSlug, step: `Discovering similar companies…`, phase: "discovering", logText: crawlLog.join("\n") });
 
         // Scroll to load lazy content on /about/ page
         await scrollToBottom(tabId, 2, 2000);
@@ -733,14 +782,14 @@ export async function findRelatedCompanies(tabId: number) {
           setCompanyScraperCancelled(findRelatedCancelled);
 
           // Posts
-          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `📝 ${data.name} posts`, phase: "saving", logText: crawlLog.join("\n") });
+          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `📝 Deep scrape → posts`, phase: "saving", logText: crawlLog.join("\n") });
           const postsResult = await scrapePosts(tabId, companyBaseUrl, companyId);
           log(`[FindRelated] ${data.name} — posts: ${postsResult.saved} new, ${postsResult.updated} updated / ${postsResult.total} total${postsResult.error ? ` (${postsResult.error})` : ""}`);
 
           if (!findRelatedCancelled && (await isTabAlive(tabId))) {
             setCompanyScraperCancelled(false);
             // Jobs (Voyager API — may navigate to company home for numeric ID)
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `💼 ${data.name} jobs`, phase: "saving", logText: crawlLog.join("\n") });
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `💼 Deep scrape → jobs + hiring contacts`, phase: "saving", logText: crawlLog.join("\n") });
             const jobsResult = await scrapeJobs(tabId, companyBaseUrl, ctx, companyId);
             log(`[FindRelated] ${data.name} — jobs: ${jobsResult.jobsSaved} new, ${jobsResult.jobsUpdated} updated, hiring: ${jobsResult.hiringContactsSaved}${jobsResult.error ? ` (${jobsResult.error})` : ""}`);
           }
@@ -748,7 +797,7 @@ export async function findRelatedCompanies(tabId: number) {
           if (!findRelatedCancelled && (await isTabAlive(tabId))) {
             setCompanyScraperCancelled(false);
             // People
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `👥 ${data.name} people`, phase: "saving", logText: crawlLog.join("\n") });
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `👥 Deep scrape → people`, phase: "saving", logText: crawlLog.join("\n") });
             const peopleResult = await scrapePeople(tabId, companyBaseUrl, ctx, companyId);
             log(`[FindRelated] ${data.name} — people: ${peopleResult.saved}/${peopleResult.total}${peopleResult.error ? ` (${peopleResult.error})` : ""}`);
           }
@@ -816,7 +865,7 @@ export async function findRelatedCompanies(tabId: number) {
     });
 
     if (await isTabAlive(tabId)) {
-      await injectCrawlOverlay(tabId, { saved: 0, skipped: 0, targets: 0, filtered: 0, queued: 0, name: errMsg.slice(0, 40), phase: "error", logText: crawlLog.join("\n") });
+      await injectCrawlOverlay(tabId, { saved: 0, skipped: 0, targets: 0, filtered: 0, queued: 0, name: "Error", step: errMsg.slice(0, 80), phase: "error", logText: crawlLog.join("\n") });
     }
     await safeSendMessage(tabId, {
       action: "findRelatedError",
