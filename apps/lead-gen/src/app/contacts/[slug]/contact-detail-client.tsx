@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
+import { useStreamingReply } from "@/hooks/useStreamingReply";
 import { button } from "@/recipes/button";
 import {
   Badge,
@@ -316,6 +317,274 @@ function GenerateEmailDialog({
                     No email address
                   </button>
                 )}
+              </Flex>
+            </Flex>
+          </Flex>
+        )}
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
+
+// ─── Reply Email Dialog ─────────────────────────────────────────────────────
+
+type ReplyStep = "compose" | "edit";
+
+function ReplyEmailDialog({
+  contact,
+  receivedEmail,
+  onSent,
+}: {
+  contact: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email?: string | null;
+    position?: string | null;
+    company?: string | null;
+  };
+  receivedEmail: {
+    id: number;
+    fromEmail: string;
+    subject: string | null;
+    textContent: string | null;
+  };
+  onSent?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<ReplyStep>("compose");
+  const [instructions, setInstructions] = useState("");
+  const [editSubject, setEditSubject] = useState("");
+  const [editBody, setEditBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const { content, partialContent, isStreaming, error, generate, stop, reset } =
+    useStreamingReply();
+
+  const recipientName = `${contact.firstName} ${contact.lastName}`.trim();
+  const replySubject = receivedEmail.subject?.startsWith("Re:")
+    ? receivedEmail.subject
+    : `Re: ${receivedEmail.subject ?? ""}`;
+
+  const handleOpen = (val: boolean) => {
+    setOpen(val);
+    if (!val) {
+      reset();
+      setInstructions("");
+      setStep("compose");
+      setEditSubject("");
+      setEditBody("");
+      setSendResult(null);
+      setCopied(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    await generate({
+      contactId: contact.id,
+      contactName: recipientName,
+      receivedEmailId: receivedEmail.id,
+      instructions: instructions || undefined,
+    });
+  };
+
+  const handleProceedToEdit = () => {
+    if (!content) return;
+    setEditSubject(content.subject);
+    setEditBody(content.body);
+    setSendResult(null);
+    setStep("edit");
+  };
+
+  const handleWriteManually = () => {
+    setEditSubject(replySubject);
+    setEditBody("");
+    setSendResult(null);
+    setStep("edit");
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`Subject: ${editSubject}\n\n${editBody}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSend = async () => {
+    const to = receivedEmail.fromEmail;
+    if (!to) return;
+    setSending(true);
+    setSendResult(null);
+    try {
+      const res = await fetch("/api/emails/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactId: contact.id,
+          to,
+          name: recipientName,
+          subject: editSubject,
+          body: editBody,
+          receivedEmailId: receivedEmail.id,
+        }),
+      });
+      const json = (await res.json()) as { success: boolean; error?: string };
+      if (json.success) {
+        setSendResult({ type: "success", message: `Reply sent to ${to}` });
+        onSent?.();
+      } else {
+        setSendResult({ type: "error", message: json.error ?? "Send failed" });
+      }
+    } catch (err: unknown) {
+      setSendResult({ type: "error", message: err instanceof Error ? err.message : "Send failed" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpen}>
+      <Dialog.Trigger>
+        <button className={button({ variant: "ghost", size: "sm" })} style={{ marginTop: 8 }}>
+          <ChatBubbleIcon />
+          Reply
+        </button>
+      </Dialog.Trigger>
+
+      <Dialog.Content maxWidth="540px">
+        <Dialog.Title>Reply to {recipientName}</Dialog.Title>
+        <Dialog.Description size="2" color="gray" mb="4">
+          Replying to: {receivedEmail.fromEmail}
+        </Dialog.Description>
+
+        {/* Their message */}
+        {receivedEmail.textContent && (
+          <Box mb="4" style={{ background: "var(--purple-2)", borderRadius: 6, padding: "var(--space-2)" }}>
+            <Text size="1" color="gray" weight="medium" as="p" mb="1">Their message:</Text>
+            <Text size="2" style={{ whiteSpace: "pre-wrap" }}>
+              {stripQuotedReply(receivedEmail.textContent)}
+            </Text>
+          </Box>
+        )}
+
+        {/* ── Compose step ── */}
+        {step === "compose" && (
+          <Flex direction="column" gap="3">
+            <TextArea
+              placeholder="Instructions for AI reply (optional) — e.g. wish them well, ask about their project…"
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              rows={3}
+              disabled={isStreaming}
+            />
+
+            <Flex gap="2" wrap="wrap">
+              <button className={button({ variant: "ghost" })} onClick={handleGenerate} disabled={isStreaming}>
+                <MagicWandIcon />
+                {isStreaming ? "Generating…" : "AI Generate"}
+              </button>
+              {isStreaming && (
+                <button className={button({ variant: "ghost" })} onClick={stop}>
+                  Stop
+                </button>
+              )}
+              {content && !isStreaming && (
+                <button className={button({ variant: "ghost" })} onClick={() => { reset(); setInstructions(""); }}>
+                  Regenerate
+                </button>
+              )}
+              <button className={button({ variant: "ghost" })} onClick={handleWriteManually}>
+                <Pencil1Icon />
+                Write manually
+              </button>
+            </Flex>
+
+            {error && (
+              <Callout.Root color="red" size="1">
+                <Callout.Icon><ExclamationTriangleIcon /></Callout.Icon>
+                <Callout.Text>{error}</Callout.Text>
+              </Callout.Root>
+            )}
+
+            {isStreaming && partialContent && (
+              <Box>
+                <Text size="1" color="gray" mb="1" as="p">Streaming…</Text>
+                <Code size="1" style={{ display: "block", whiteSpace: "pre-wrap", maxHeight: 200, overflow: "auto" }}>
+                  {partialContent}
+                </Code>
+              </Box>
+            )}
+
+            {content && !isStreaming && (
+              <Box style={{ background: "var(--green-2)", borderRadius: 8, padding: "var(--space-3)" }}>
+                <Flex justify="between" align="center" mb="2">
+                  <Badge color="green" size="1"><CheckIcon /> Generated</Badge>
+                </Flex>
+                <Text size="1" color="gray" weight="bold" as="p" mb="1">SUBJECT</Text>
+                <Text size="2" weight="medium" as="p" mb="3">{content.subject}</Text>
+                <Text size="1" color="gray" weight="bold" as="p" mb="1">BODY</Text>
+                <Text size="2" as="p" style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}>{content.body}</Text>
+              </Box>
+            )}
+
+            <Flex justify="between" mt="2">
+              <Dialog.Close>
+                <button className={button({ variant: "ghost" })}>Close</button>
+              </Dialog.Close>
+              {content && !isStreaming && (
+                <button className={button({ variant: "ghost" })} onClick={handleProceedToEdit}>
+                  Edit & Send →
+                </button>
+              )}
+            </Flex>
+          </Flex>
+        )}
+
+        {/* ── Edit & Send step ── */}
+        {step === "edit" && (
+          <Flex direction="column" gap="3">
+            <Box>
+              <Text size="1" color="gray" weight="medium" mb="1" as="p">Subject</Text>
+              <TextField.Root
+                value={editSubject}
+                onChange={(e) => setEditSubject(e.target.value)}
+              />
+            </Box>
+
+            <Box>
+              <Text size="1" color="gray" weight="medium" mb="1" as="p">Body</Text>
+              <TextArea
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value)}
+                rows={10}
+              />
+            </Box>
+
+            {sendResult && (
+              <Callout.Root color={sendResult.type === "success" ? "green" : "red"} size="1">
+                <Callout.Icon><InfoCircledIcon /></Callout.Icon>
+                <Callout.Text>{sendResult.message}</Callout.Text>
+              </Callout.Root>
+            )}
+
+            <Flex justify="between" gap="2" wrap="wrap">
+              <button className={button({ variant: "ghost" })} onClick={() => setStep("compose")}>
+                ← Back
+              </button>
+              <Flex gap="2">
+                <button className={button({ variant: "ghost" })} onClick={handleCopy}>
+                  <CopyIcon />
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+                <button
+                  className={button({ variant: "solidGreen" })}
+                  onClick={handleSend}
+                  disabled={sending || !editSubject || !editBody}
+                >
+                  <PaperPlaneIcon />
+                  {sending ? "Sending…" : "Send reply"}
+                </button>
               </Flex>
             </Flex>
           </Flex>
@@ -1223,9 +1492,9 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
               <Spinner size="2" />
             </Flex>
           ) : !emailsData?.contactEmails || emailsData.contactEmails.length === 0 ? (
-            emailsData?.contactReceivedEmails && receivedData.contactReceivedEmails.length > 0 ? (
+            emailsData?.contactReceivedEmails && emailsData.contactReceivedEmails.length > 0 ? (
               <Flex direction="column" gap="2">
-                {receivedData.contactReceivedEmails.map((re) => (
+                {emailsData.contactReceivedEmails.map((re) => (
                   <Card key={`re-${re.id}`} style={{ borderLeft: "3px solid var(--purple-9)" }}>
                     <Box p="3">
                       <Flex justify="between" align="start" gap="2" wrap="wrap">
@@ -1253,6 +1522,11 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                               <Text size="2" style={{ whiteSpace: "pre-wrap" }}>{stripQuotedReply(re.textContent)}</Text>
                             </Box>
                           )}
+                          <ReplyEmailDialog
+                            contact={contact}
+                            receivedEmail={{ id: re.id, fromEmail: re.fromEmail, subject: re.subject ?? null, textContent: re.textContent ?? null }}
+                            onSent={() => refetchEmails()}
+                          />
                         </Box>
                       </Flex>
                     </Box>
@@ -1309,6 +1583,11 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                                 <Text size="2" style={{ whiteSpace: "pre-wrap" }}>{stripQuotedReply(item.received.textContent)}</Text>
                               </Box>
                             )}
+                            <ReplyEmailDialog
+                              contact={contact}
+                              receivedEmail={{ id: item.received.id, fromEmail: item.received.fromEmail, subject: item.received.subject ?? null, textContent: item.received.textContent ?? null }}
+                              onSent={() => refetchEmails()}
+                            />
                           </Box>
                         </Flex>
                       </Box>
