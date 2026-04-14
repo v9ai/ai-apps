@@ -9,13 +9,13 @@ export function setPeopleCancelled(value: boolean) {
   peopleCancelled = value;
 }
 
-interface PersonCard {
+export interface PersonCard {
   name: string;
   headline: string;
   linkedinUrl: string;
 }
 
-function extractPeopleCards(tabId: number): Promise<PersonCard[]> {
+export function extractPeopleCards(tabId: number): Promise<PersonCard[]> {
   return chrome.scripting
     .executeScript({
       target: { tabId },
@@ -63,7 +63,7 @@ function extractPeopleCards(tabId: number): Promise<PersonCard[]> {
     .catch(() => []);
 }
 
-function scrollPeoplePage(tabId: number): Promise<void> {
+export function scrollPeoplePage(tabId: number): Promise<void> {
   return chrome.scripting
     .executeScript({
       target: { tabId },
@@ -95,7 +95,7 @@ function scrollPeoplePage(tabId: number): Promise<void> {
     .catch(() => undefined);
 }
 
-function clickShowMorePeople(tabId: number): Promise<boolean> {
+export function clickShowMorePeople(tabId: number): Promise<boolean> {
   return chrome.scripting
     .executeScript({
       target: { tabId },

@@ -7,6 +7,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   philosophy: "#A78BFA",
   collaboration: "#34D399",
   future: "#F472B6",
+  architecture: "#F59E0B",
+  ios_engineering: "#06B6D4",
+  swift_runtime: "#FB923C",
+  debugging: "#EF4444",
+  build_systems: "#8B5CF6",
+  apple_platform: "#64748B",
+  ai_tools: "#10B981",
+  social_media: "#EC4899",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -15,6 +23,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   philosophy: "Philosophy & Beliefs",
   collaboration: "Collaboration & Community",
   future: "Future & Predictions",
+  architecture: "Architecture & Design",
+  ios_engineering: "iOS Engineering",
+  swift_runtime: "Swift Runtime",
+  debugging: "Debugging",
+  build_systems: "Build Systems",
+  apple_platform: "Apple Platform",
+  ai_tools: "AI Tools",
+  social_media: "Social Media & Writing",
 };
 
 export function ResearchQuestions({ research }: { research: PersonResearch }) {

@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { Badge, Flex, Heading, Text, Card, Code, Separator } from "@radix-ui/themes";
 import { LayersIcon } from "@radix-ui/react-icons";
-import { papers, researchStats, extraSections, technicalDetails, pipelineAgents } from "./data";
+import { papers, extraSections, technicalDetails } from "./data";
 
 // ── Custom Node Components ───────────────────────────────────────────────────
 
@@ -679,64 +679,6 @@ function PipelineStatsBar() {
   );
 }
 
-// ── Node Type Legend ─────────────────────────────────────────────────────────
-
-function NodeTypeLegend() {
-  return (
-    <Card mb="5" style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
-      <Flex align="center" gap="2" mb="2">
-        <BarChart3 size={13} style={{ color: "var(--gray-9)" }} />
-        <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.07em" }}>
-          Node Types
-        </Text>
-      </Flex>
-      <Flex gap="4" wrap="wrap">
-        <Flex align="center" gap="2">
-          <div style={{
-            width: 28, height: 20, borderRadius: 4,
-            background: "color-mix(in srgb, var(--violet-9) 14%, var(--color-background))",
-            border: "1.5px solid color-mix(in srgb, var(--violet-9) 45%, transparent)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <Brain size={10} style={{ color: "var(--violet-9)" }} />
-          </div>
-          <Flex direction="column" gap="0">
-            <Text size="1" weight="medium">agent</Text>
-            <Text size="1" color="gray">processing step</Text>
-          </Flex>
-        </Flex>
-        <Flex align="center" gap="2">
-          <div style={{
-            width: 28, height: 20, borderRadius: 4,
-            background: "color-mix(in srgb, var(--green-9) 10%, var(--color-background))",
-            border: "1.5px solid color-mix(in srgb, var(--green-9) 35%, transparent)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <Database size={10} style={{ color: "var(--green-9)" }} />
-          </div>
-          <Flex direction="column" gap="0">
-            <Text size="1" weight="medium">dataStore</Text>
-            <Text size="1" color="gray">persistence</Text>
-          </Flex>
-        </Flex>
-        <Flex align="center" gap="2">
-          <div style={{
-            width: 28, height: 20, borderRadius: 4,
-            background: "color-mix(in srgb, var(--orange-9) 16%, var(--color-background))",
-            border: "1.5px solid color-mix(in srgb, var(--orange-9) 40%, transparent)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <Filter size={10} style={{ color: "var(--orange-9)" }} />
-          </div>
-          <Flex direction="column" gap="0">
-            <Text size="1" weight="medium">condition</Text>
-            <Text size="1" color="gray">routing / filter</Text>
-          </Flex>
-        </Flex>
-      </Flex>
-    </Card>
-  );
-}
 
 // ── Stage Connector ──────────────────────────────────────────────────────────
 
@@ -977,77 +919,7 @@ function CodeBlock({ code, borderColor }: { code: string; borderColor?: string }
   );
 }
 
-// ── Key Metrics ─────────────────────────────────────────────────────────────
 
-function KeyMetrics() {
-  return (
-    <div>
-      <Flex align="center" gap="2" mb="3">
-        <BarChart3 size={16} style={{ color: "var(--cyan-9)" }} />
-        <Heading size="5">Key Metrics</Heading>
-      </Flex>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
-        {researchStats.map((stat) => (
-          <Card key={stat.label} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
-            <Text size="6" weight="bold" style={{ fontFamily: "var(--code-font-family, monospace)", color: "var(--cyan-9)", display: "block" }}>
-              {stat.number}
-            </Text>
-            <Text size="2" color="gray" as="p" style={{ lineHeight: 1.5, marginTop: 4 }}>{stat.label}</Text>
-            <Text size="1" color="gray" style={{ opacity: 0.6 }}>{stat.source}</Text>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Pipeline Stage Narratives ───────────────────────────────────────────────
-
-const agentColors = ["red", "blue", "amber", "green", "purple"] as const;
-
-function PipelineStageNarratives() {
-  return (
-    <div>
-      <Flex align="center" gap="2" mb="3">
-        <Zap size={16} style={{ color: "var(--red-9)" }} />
-        <Heading size="5">Pipeline Stages</Heading>
-      </Flex>
-      <Text size="2" color="gray" mb="4" as="p">End-to-end narrative of each pipeline stage — technology choices, data transformations, and how they connect.</Text>
-      <Flex direction="column" gap="3">
-        {pipelineAgents.map((agent, i) => (
-          <Card key={agent.name} style={{ background: "var(--gray-2)", borderLeft: `3px solid var(--${agentColors[i % agentColors.length]}-9)` }}>
-            <Flex align="center" gap="2" mb="2">
-              <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
-                {i + 1}
-              </Badge>
-              <Heading size="3">{agent.name}</Heading>
-            </Flex>
-            <Text size="2" color="gray" as="p" style={{ lineHeight: 1.7 }}>{agent.description}</Text>
-            <Flex gap="4" mt="3" wrap="wrap">
-              <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 200 }}>
-                <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Technology
-                </Text>
-                <Text size="2">{agent.researchBasis}</Text>
-              </Flex>
-              <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 200 }}>
-                <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Data Flow
-                </Text>
-                <Text size="2" style={{ fontFamily: "var(--code-font-family, monospace)", fontSize: 12 }}>{agent.dataFlow}</Text>
-              </Flex>
-            </Flex>
-            {agent.codeSnippet && (
-              <div style={{ marginTop: 12 }}>
-                <CodeBlock code={agent.codeSnippet} />
-              </div>
-            )}
-          </Card>
-        ))}
-      </Flex>
-    </div>
-  );
-}
 
 // ── Deep-Dive Sections (Collapsible) ────────────────────────────────────────
 
@@ -1292,8 +1164,6 @@ function TechFoundations() {
 
 const tocSections = [
   { id: "pipeline", label: "Pipeline Diagrams", icon: "1–5" },
-  { id: "metrics", label: "Key Metrics", icon: "7" },
-  { id: "stages", label: "Pipeline Stages", icon: `${pipelineAgents.length}` },
   { id: "deep-dive", label: "Deep Dive", icon: `${extraSections.length}` },
   { id: "technical", label: "Technical Details", icon: `${technicalDetails.length}` },
   { id: "foundations", label: "Foundations", icon: `${papers.length}` },
@@ -1348,22 +1218,43 @@ export function PipelineClient() {
         <LayersIcon width={22} height={22} style={{ color: "var(--violet-9)" }} />
         <Heading size="7">How It Works</Heading>
       </Flex>
-      <Flex align="center" gap="3" mb="4">
-        <Text color="gray" size="2">
-          5-stage B2B lead generation pipeline — from company discovery through AI-personalized outreach.
-          Click any node for implementation details. Scroll down for deep dives.
-        </Text>
-      </Flex>
+      <Text size="3" color="gray" as="p" mb="4" style={{ maxWidth: 720, lineHeight: 1.7 }}>
+        Every lead flows through five stages: companies are discovered from web crawls, CSV imports, and live search,
+        enriched with AI classification, scored against your ideal customer profile, matched with verified decision-maker
+        contacts, and engaged with personalized outreach. Validation gates at each stage — schema constraints, confidence
+        thresholds, and human approval — ensure data quality compounds through the pipeline.
+      </Text>
 
       <PipelineStatsBar />
       <TableOfContents />
 
-      <Flex align="center" gap="2" mb="4">
-        <Badge color="blue" variant="soft" size="1">Interactive</Badge>
-        <Text size="1" color="gray">Click a node for details. Drag to rearrange. Scroll to zoom.</Text>
+      <Flex align="center" gap="4" wrap="wrap" mb="4" py="2" px="3"
+        style={{ borderRadius: 6, background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+        <Flex align="center" gap="2">
+          <Badge color="blue" variant="soft" size="1">Interactive</Badge>
+          <Text size="1" color="gray">Click nodes for details. Drag to rearrange.</Text>
+        </Flex>
+        <Flex align="center" gap="3" style={{ borderLeft: "1px solid var(--gray-a5)", paddingLeft: 12 }}>
+          <Flex align="center" gap="1">
+            <div style={{ width: 18, height: 14, borderRadius: 3, background: "color-mix(in srgb, var(--violet-9) 14%, var(--color-background))", border: "1px solid color-mix(in srgb, var(--violet-9) 45%, transparent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Brain size={8} style={{ color: "var(--violet-9)" }} />
+            </div>
+            <Text size="1" color="gray">agent</Text>
+          </Flex>
+          <Flex align="center" gap="1">
+            <div style={{ width: 18, height: 14, borderRadius: 3, background: "color-mix(in srgb, var(--green-9) 10%, var(--color-background))", border: "1px solid color-mix(in srgb, var(--green-9) 35%, transparent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Database size={8} style={{ color: "var(--green-9)" }} />
+            </div>
+            <Text size="1" color="gray">store</Text>
+          </Flex>
+          <Flex align="center" gap="1">
+            <div style={{ width: 18, height: 14, borderRadius: 3, background: "color-mix(in srgb, var(--orange-9) 16%, var(--color-background))", border: "1px solid color-mix(in srgb, var(--orange-9) 40%, transparent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Filter size={8} style={{ color: "var(--orange-9)" }} />
+            </div>
+            <Text size="1" color="gray">gate</Text>
+          </Flex>
+        </Flex>
       </Flex>
-
-      <NodeTypeLegend />
 
       <section id="pipeline">
         <Flex direction="column" gap="0">
@@ -1399,16 +1290,6 @@ export function PipelineClient() {
       </section>
 
       {selectedNode ? <NodeDetailPanel nodeId={selectedNode} /> : <EmptyDetailPanel />}
-
-      <Separator size="4" my="7" />
-      <section id="metrics">
-        <KeyMetrics />
-      </section>
-
-      <Separator size="4" my="7" />
-      <section id="stages">
-        <PipelineStageNarratives />
-      </section>
 
       <Separator size="4" my="7" />
       <section id="deep-dive">
