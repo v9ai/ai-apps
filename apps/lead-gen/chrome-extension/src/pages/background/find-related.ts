@@ -17,6 +17,7 @@ import {
   saveCompanyBatch,
   type RemoteJobsResult,
 } from "./company-browsing";
+import { scrapePosts, scrapeJobs, scrapePeople, type CompanyContext } from "./company-scraper";
 
 const MAX_COMPANIES = 150;
 const SAVE_BATCH_SIZE = 10;
@@ -644,6 +645,7 @@ export async function findRelatedCompanies(tabId: number) {
             // Optimistic display — show as pending
             await injectCrawlOverlay(tabId, { saved, skipped, targets: targets + 1, filtered, queued: queue.length, name: overlayName("…"), phase: "saving", logText: crawlLog.join("\n") });
           }
+
         }
 
         // Send progress (will only reach content script if on same origin)
@@ -659,8 +661,8 @@ export async function findRelatedCompanies(tabId: number) {
         }).catch(() => {});
       }
 
-      // d) Discover new related companies from THIS page (the /about/ page)
-      //    Try sidebar/modal extraction here first to avoid navigating to main page
+      // d) Discover new related companies FIRST (while still on /about/ page)
+      //    Must happen before deep scrape which navigates away to /posts/, /people/
       if ((saved + skipped + pendingBatch.length) < MAX_COMPANIES && (await isTabAlive(tabId)) && !findRelatedCancelled) {
         await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data?.name || urlSlug, phase: "discovering", logText: crawlLog.join("\n") });
 
@@ -696,6 +698,37 @@ export async function findRelatedCompanies(tabId: number) {
         }
         if (newCount > 0 || newFiltered > 0) {
           log(`[FindRelated] ${data?.name || url} yielded ${newCount} new companies, ${newFiltered} skipped by industry (queue: ${queue.length}, visited: ${visited.size})`);
+        }
+      }
+
+      // e) Deep scrape: Posts, Jobs, People for ICP-matching companies
+      //    Runs AFTER discovery since it navigates away from /about/
+      if (data && data.name && isICPTarget(data).target && !findRelatedCancelled && (await isTabAlive(tabId))) {
+        const companyBaseUrl = url.replace(/\/$/, "");
+        const ctx: CompanyContext = {
+          name: data.name,
+          linkedinUrl: data.linkedinUrl,
+          linkedinNumericId: data.linkedinNumericId,
+          website: data.website,
+        };
+
+        // Posts
+        await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `📝 ${data.name} posts`, phase: "saving", logText: crawlLog.join("\n") });
+        const postsResult = await scrapePosts(tabId, companyBaseUrl, null);
+        log(`[FindRelated] ${data.name} — posts: ${postsResult.saved}/${postsResult.total}${postsResult.error ? ` (${postsResult.error})` : ""}`);
+
+        if (!findRelatedCancelled && (await isTabAlive(tabId))) {
+          // Jobs (Voyager API — may navigate to company home for numeric ID)
+          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `💼 ${data.name} jobs`, phase: "saving", logText: crawlLog.join("\n") });
+          const jobsResult = await scrapeJobs(tabId, companyBaseUrl, ctx, null);
+          log(`[FindRelated] ${data.name} — jobs: ${jobsResult.jobsSaved}, hiring: ${jobsResult.hiringContactsSaved}${jobsResult.error ? ` (${jobsResult.error})` : ""}`);
+        }
+
+        if (!findRelatedCancelled && (await isTabAlive(tabId))) {
+          // People
+          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `👥 ${data.name} people`, phase: "saving", logText: crawlLog.join("\n") });
+          const peopleResult = await scrapePeople(tabId, companyBaseUrl, ctx);
+          log(`[FindRelated] ${data.name} — people: ${peopleResult.saved}/${peopleResult.total}${peopleResult.error ? ` (${peopleResult.error})` : ""}`);
         }
       }
 

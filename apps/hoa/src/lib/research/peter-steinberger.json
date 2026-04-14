@@ -468,15 +468,15 @@
     },
     {
       "category": "technical_depth",
-      "question": "In 'Peekaboo MCP – lightning-fast macOS screenshots for AI agents | Peter Steinberger' you detail building MCP infrastructure for AI agents. What's the hardest design tradeoff you've hit — where agent convenience conflicts with system safety?",
-      "why_this_question": "References his specific MCP work — surfaces real engineering tensions in agent-computer interaction",
-      "expected_insight": "Concrete examples of where giving agents more capability creates security or reliability risks"
+      "question": "In 'Peekaboo MCP – lightning-fast macOS screenshots for AI agents | Peter Steinberger' you built a tool that gives AI agents eyes on your screen. That means the agent can see your passwords, private messages, financial data — everything you see. How do you reconcile giving agents maximum visual context with the reality that they're seeing things no tool should have access to?",
+      "why_this_question": "References your specific MCP work — but instead of a generic 'hardest tradeoff,' names the most uncomfortable one: screen capture sees everything, including what you'd never share with a stranger",
+      "expected_insight": "Whether he's built guardrails for sensitive visual data, or whether the 'trust the agent' philosophy extends to letting it see everything"
     },
     {
       "category": "technical_depth",
-      "question": "You ship CLI tools at extraordinary velocity — Poltergeist, Demark, Trimmy, dozens more. When you're building a new tool in a single session, what's your actual decision process for what to keep vs. cut?",
-      "why_this_question": "Probes the rapid-shipping methodology behind his prolific output",
-      "expected_insight": "The specific heuristics and shortcuts that enable shipping full tools in hours"
+      "question": "You ship CLI tools at extraordinary velocity — Poltergeist, Demark, Trimmy, dozens more. Summarize shipped with 5.5K stars and seems fully-featured. But most of these tools are single-session builds. What's the decision that turns a one-session prototype into summarize vs. what stays a quick hack you never touch again?",
+      "why_this_question": "Probes the rapid-shipping methodology behind your prolific output — grounded in the contrast between summarize (breakout hit) and the dozens of tools that stayed small",
+      "expected_insight": "The specific heuristics that separate 'ship and forget' from 'ship and invest' — whether it's user traction, personal need, or something else"
     },
     {
       "category": "philosophy",
@@ -486,9 +486,9 @@
     },
     {
       "category": "philosophy",
-      "question": "In 'Stop Over-thinking AI Subscriptions | Peter Steinberger' you push back against common developer anxieties. As someone who bootstrapped a company to millions in ARR the old way — do you genuinely believe the old way of building software is dying, or just changing?",
-      "why_this_question": "Creates productive tension between his bootstrapping past and AI-native present",
-      "expected_insight": "Whether he sees continuity or rupture between traditional and AI-native engineering"
+      "question": "In 'Stop Over-thinking AI Subscriptions | Peter Steinberger' you push back against developer anxieties about AI. But you bootstrapped PSPDFKit to millions in ARR over ten years with no AI. If you had to build PSPDFKit from scratch today without any AI tools — just you and a team — could you even do it? Or has AI fundamentally changed not just how you work, but what you're capable of?",
+      "why_this_question": "Creates productive tension between your bootstrapping past and AI-native present — but pushes past the 'dying or changing?' binary into whether you've lost the ability to work the old way",
+      "expected_insight": "Whether AI-assisted development is an enhancement he could walk away from, or a dependency that's rewired how he thinks about building software"
     },
     {
       "category": "collaboration",
@@ -498,9 +498,9 @@
     },
     {
       "category": "collaboration",
-      "question": "In 'How We Work at PSPDFKit | Peter Steinberger' you wrote about building a distributed team across time zones. Now you're a solo developer with AI agents as your team. What do you miss about human collaborators that no AI can replace?",
-      "why_this_question": "Probes the human cost of the solo-with-AI model he champions",
-      "expected_insight": "Honest reflection on what's lost when you replace a team with agents"
+      "question": "In 'How We Work at PSPDFKit | Peter Steinberger' you described building a culture where distributed teams made decisions asynchronously across time zones — code review, design critique, the back-and-forth that shapes judgment. Now your collaborators are AI agents that never push back unless prompted. What specific practice from the PSPDFKit era do you find yourself missing — the thing no agent can replicate?",
+      "why_this_question": "Probes the human cost of the solo-with-AI model you champion — grounded in the specific collaborative practices you documented at PSPDFKit, not abstract 'human connection'",
+      "expected_insight": "Whether there's a specific feedback loop from human collaboration (code review, design debate, being told 'no') that AI agents structurally can't provide"
     },
     {
       "category": "future",
@@ -516,45 +516,45 @@
     },
     {
       "category": "ios_engineering",
-      "question": "In 'Automatic Observation Tracking in UIKit and AppKit: The Feature Apple Forgot to Mention | Peter Steinberger' you document fixing what Apple ships broken. After years of patching UIKit and SwiftUI, what's the most important lesson about working around platform constraints that still applies in the AI era?",
-      "why_this_question": "His prolific iOS bug-fixing posts reveal a philosophy about shipping despite platform limitations",
-      "expected_insight": "Whether the 'fix it yourself' iOS mindset transfers to AI-assisted development"
+      "question": "In 'Automatic Observation Tracking in UIKit and AppKit: The Feature Apple Forgot to Mention | Peter Steinberger' you reverse-engineered an undocumented Apple feature by reading disassembled frameworks and tracing private API calls. Could an AI agent have found that? Because if it can't — if that kind of deep platform intuition is exactly what AI misses — then your 'code is an implementation detail' thesis has a major blind spot.",
+      "why_this_question": "Your prolific iOS bug-fixing required intuition that came from years of reverse-engineering Apple frameworks. This directly challenges whether AI can replicate that, or whether your thesis about code being an implementation detail breaks down at the platform edge",
+      "expected_insight": "Whether deep platform expertise is the irreducible human skill that AI-assisted development can't replace, or whether agents have surprised him with this kind of discovery"
     },
     {
       "category": "ios_engineering",
-      "question": "In 'UIKit Debug Mode | Peter Steinberger' you built tools to expose UIKit's hidden internals. Now you build mostly with AI agents writing the code. Has that changed your relationship with framework-level debugging — do you still go as deep, or do you let the agent fumble through it?",
-      "why_this_question": "Explores whether AI-assisted development changes the depth of platform knowledge needed",
-      "expected_insight": "How the shift from framework expert to AI-assisted builder changes debugging practices"
+      "question": "In 'UIKit Debug Mode | Peter Steinberger' you built custom debugging tools because Apple's built-in ones weren't enough — you needed to see UIKit's hidden state to ship PSPDFKit. When your AI agents hit a framework-level bug in OpenClaw's Swift modules, do they reach for that same depth? Or do they pattern-match to Stack Overflow solutions while the real bug hides three layers down?",
+      "why_this_question": "You built debugging tools because surface-level answers weren't enough. This tests whether AI agents reproduce your diagnostic depth or just automate the shallow layer — and whether you've caught them missing bugs you would have found",
+      "expected_insight": "A specific example where an agent either matched or failed to match his framework-level debugging instincts"
     },
     {
       "category": "swift_runtime",
-      "question": "You wrote 'Swizzling in Swift | Peter Steinberger' and built InterposeKit for elegant method swizzling. That's deep Objective-C runtime work. Does any of that low-level runtime knowledge matter when AI writes most of the code — or is it actually more important?",
-      "why_this_question": "Tests whether deep platform expertise is becoming more or less valuable with AI",
-      "expected_insight": "The value of runtime-level understanding when AI handles implementation but not architecture"
+      "question": "You wrote 'Swizzling in Swift | Peter Steinberger' and built InterposeKit — tools that manipulate the Objective-C runtime at a level most developers never touch. Has an AI agent ever tried to swizzle something in your codebase and gotten it catastrophically wrong because it didn't understand the runtime implications? Or conversely — has an agent ever done something with the runtime that surprised you, that you wouldn't have thought to try?",
+      "why_this_question": "Your runtime expertise is rare and hard-won. Instead of the generic 'is deep knowledge still relevant?' question everyone asks, this forces a specific war story — either the agent failed because it lacked runtime intuition, or it succeeded in a way that challenges your expertise",
+      "expected_insight": "A concrete example that reveals whether AI agents treat runtime manipulation as pattern-matching (dangerous) or whether they can reason about side effects (surprising)"
     },
     {
       "category": "swift_runtime",
-      "question": "'Surprises with Swift Extensions | Peter Steinberger' explores bridging Objective-C and Swift idiomatically. You've lived through every Swift migration pain point. What's the AI-era equivalent of the ObjC-to-Swift transition?",
-      "why_this_question": "Draws a parallel between past language transitions and the current AI-coding shift",
-      "expected_insight": "Which historical pattern best predicts how AI-assisted development evolves"
+      "question": "'Surprises with Swift Extensions | Peter Steinberger' documents the pain of bridging two language worlds that don't quite fit together. You migrated PSPDFKit through every Swift version, including the ABI-breaking ones. What specific pain from those migrations do you see repeating in the transition to AI-assisted development — is there a moment where the old way and the new way are both broken simultaneously?",
+      "why_this_question": "Draws a parallel between past language transitions and the current AI-coding shift — but forces a specific analogy rather than a vague 'what's the equivalent?'",
+      "expected_insight": "A specific migration pain point that maps onto the AI transition — the moment where neither the old approach nor the new one fully works"
     },
     {
       "category": "debugging",
-      "question": "'How to macOS Core Dump | Peter Steinberger' is a masterclass in low-level debugging. When you're pair-programming with an AI agent now, how do you debug together — does the agent help with the gnarly kernel-level stuff or just get in the way?",
-      "why_this_question": "His hardcore debugging expertise meets AI-assisted development — a revealing intersection",
-      "expected_insight": "Where AI helps vs. hinders in deep debugging scenarios"
+      "question": "'How to macOS Core Dump | Peter Steinberger' walks through extracting and analyzing kernel-level crash data — the kind of debugging where you're reading memory addresses and decoding register state. Walk me through the last time you hit a bug that deep in OpenClaw's Swift modules. Did you debug it yourself, hand it to an agent, or work together? And at what point in the stack does the agent become useless?",
+      "why_this_question": "Your hardcore debugging expertise meets AI-assisted development — but instead of a binary 'help or hindrance' question, this asks you to walk through a specific incident and identify exactly where in the stack the agent stops being useful",
+      "expected_insight": "The specific depth in the debugging stack where AI agents lose effectiveness — and whether that boundary is moving"
     },
     {
       "category": "debugging",
-      "question": "In 'Running tests with Clang Address Sanitizer | Peter Steinberger' you tackled test infrastructure at scale. You migrated 700+ tests to Swift Testing. Now you ship projects in hours. What does testing look like when your build-test-ship cycle is measured in minutes?",
-      "why_this_question": "Explores how rapid AI-assisted development changes testing philosophy",
-      "expected_insight": "Whether traditional test-driven development survives in the age of AI-speed shipping"
+      "question": "In 'Running tests with Clang Address Sanitizer | Peter Steinberger' you invested heavily in test infrastructure — Address Sanitizer, Thread Sanitizer, 700+ tests migrated to Swift Testing. That's years of careful engineering. Now you ship entire projects in single sessions. Was that 700-test migration the last time traditional testing philosophy made sense to you — or do you still write that many tests and just do it faster?",
+      "why_this_question": "Creates direct tension between your past investment in rigorous testing infrastructure and your current velocity-first approach. Forces you to confront whether you've abandoned a practice you once championed, or adapted it",
+      "expected_insight": "Whether AI-speed shipping has genuinely changed his testing philosophy, or whether he tests just as rigorously but faster — and which answer is more honest"
     },
     {
       "category": "build_systems",
-      "question": "You wrote 'Using ccache for Fun and Profit | Peter Steinberger' about optimizing build infrastructure. You've spent years fighting Xcode build times with ccache and zld. Now AI generates code faster than compilers can build it. What's the new bottleneck?",
-      "why_this_question": "His deep build-system expertise creates a unique lens on AI-speed development",
-      "expected_insight": "Whether build infrastructure becomes more or less important when AI writes the code"
+      "question": "You wrote 'Using ccache for Fun and Profit | Peter Steinberger' — years of fighting Xcode build times with ccache and zld. Now AI generates code faster than compilers can build it. The obvious new bottleneck candidates are context windows, token costs, and model reasoning speed. But you've actually lived through this transition. What's the bottleneck nobody talks about — the thing that slows you down that isn't in any AI development blog post?",
+      "why_this_question": "Your deep build-system expertise gives you a unique lens on where development actually bottlenecks. Instead of an open-ended 'what's the new bottleneck?', this names the obvious answers and asks you to go deeper",
+      "expected_insight": "A non-obvious bottleneck in AI-assisted development that only someone shipping at his velocity would encounter — not context windows or token costs, but something structural"
     },
     {
       "category": "build_systems",
@@ -588,9 +588,9 @@
     },
     {
       "category": "social_media",
-      "question": "You wrote 'Gardening Your Twitter: Growing Your Followers | Peter Steinberger' about strategically building your Twitter audience. You now have 385K followers. How much of your current influence comes from that deliberate social media strategy vs. just shipping impressive things?",
-      "why_this_question": "His Twitter gardening posts predate his AI fame — reveals how deliberate his brand-building has been",
-      "expected_insight": "The relationship between strategic audience-building and organic virality from shipping"
+      "question": "You wrote 'Gardening Your Twitter: Growing Your Followers | Peter Steinberger' about strategically building your audience. You now have 385K followers — but your follower growth spiked when OpenClaw went viral, not from any gardening strategy. Looking back, does that old advice still hold? Or did OpenClaw prove that one viral project does more for your reach than years of deliberate audience-building?",
+      "why_this_question": "Your Twitter gardening posts predate your AI fame by years. The real question isn't 'strategy vs. luck' — it's whether your own evidence proves that strategic audience-building is obsolete when you can just ship something that goes viral",
+      "expected_insight": "Whether he believes his old social media strategy still matters, or whether OpenClaw's virality made the whole 'gardening' approach irrelevant"
     },
     {
       "category": "social_media",
@@ -600,9 +600,9 @@
     },
     {
       "category": "architecture",
-      "question": "OpenClaw routes messages from WhatsApp, Telegram, Discord, and Signal through a central orchestrator. Each platform has wildly different API constraints — rate limits, media handling, message formatting. What's the hardest platform integration problem you solved, and did you solve it or did the agent?",
-      "why_this_question": "Forces specificity about the multi-platform architecture that is OpenClaw's core differentiator",
-      "expected_insight": "Concrete engineering challenges in cross-platform agent integration, and where AI-assisted development hits its limits"
+      "question": "OpenClaw routes messages from WhatsApp, Telegram, Discord, and Signal through a central orchestrator — each with wildly different API constraints. When you hit the hardest integration problem across these platforms, did you solve it yourself or hand it to an agent? And if the agent solved it, did it find the same solution you would have — or something better that you wouldn't have considered?",
+      "why_this_question": "Forces specificity about the multi-platform architecture that is OpenClaw's core differentiator — but leads with the agent question, testing whether AI-assisted development actually produces different solutions than your own expertise",
+      "expected_insight": "Whether AI agents find different solutions to platform integration problems than an experienced engineer would, and whether 'different' means 'better' or 'worse'"
     },
     {
       "category": "architecture",
