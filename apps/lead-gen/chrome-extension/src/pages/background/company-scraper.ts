@@ -547,11 +547,33 @@ async function scrapeCompanyPosts(tabId: number): Promise<ExtractedPost[]> {
   }).catch(() => {});
   await sleep(800);
 
-  // Scroll to load posts
+  // Scroll to load posts — stop early if bottom posts are older than 1 year
   let prevHeight = 0;
   let stale = 0;
   while (stale < 3) {
     if (cancelled) break;
+
+    // Check if last visible posts are older than 1 year — stop scrolling
+    const hitOldPosts = await chrome.scripting.executeScript({
+      target: { tabId }, world: "MAIN",
+      func: () => {
+        const posts = document.querySelectorAll(".feed-shared-update-v2, .occludable-update");
+        if (posts.length === 0) return false;
+        // Check the last few posts for age
+        const last = Array.from(posts).slice(-3);
+        for (const el of last) {
+          const subDesc = el.querySelector(".update-components-actor__sub-description")?.textContent?.trim() || "";
+          const m = subDesc.match(/(\d+)(yr|y)\b/i);
+          if (m && parseInt(m[1]) >= 1) return true;
+        }
+        return false;
+      },
+    }).then((r) => r?.[0]?.result ?? false).catch(() => false);
+
+    if (hitOldPosts) {
+      break;
+    }
+
     const h = await chrome.scripting.executeScript({
       target: { tabId }, world: "MAIN",
       func: () => { window.scrollTo(0, document.body.scrollHeight); return document.body.scrollHeight; },
@@ -572,10 +594,27 @@ async function scrapeCompanyPosts(tabId: number): Promise<ExtractedPost[]> {
     await sleep(300);
   }
 
-  // Extract
+  // Extract — skip posts older than 1 year
   const results = await chrome.scripting.executeScript({
     target: { tabId }, world: "MAIN",
     func: () => {
+      // Parse LinkedIn relative dates ("5mo", "1yr", "3w", "2d", "5h") into approximate months
+      function parseRelativeAgeMonths(text: string): number | null {
+        if (!text) return null;
+        const m = text.match(/(\d+)\s*(yr|y|mo|w|d|h|m)\b/i);
+        if (!m) return null;
+        const n = parseInt(m[1]);
+        const unit = m[2].toLowerCase();
+        if (unit === "yr" || unit === "y") return n * 12;
+        if (unit === "mo") return n;
+        if (unit === "w") return n / 4.3;
+        if (unit === "d") return n / 30;
+        if (unit === "h" || unit === "m") return 0;
+        return null;
+      }
+
+      const MAX_AGE_MONTHS = 12;
+
       const posts: Array<{
         postUrl: string | null; postText: string; postedDate: string | null;
         reactionsCount: number; commentsCount: number; repostsCount: number;
@@ -587,12 +626,28 @@ async function scrapeCompanyPosts(tabId: number): Promise<ExtractedPost[]> {
         if (el.querySelector(".feed-shared-update-v2__ad-badge")) return;
         if (el.querySelector('[data-test-id="feed-shared-update-v2__sponsored"]')) return;
 
+        // Check post age — skip if older than 1 year
+        const subDescText = el.querySelector(".update-components-actor__sub-description")?.textContent?.trim() || "";
+        const ageMonths = parseRelativeAgeMonths(subDescText);
+        if (ageMonths !== null && ageMonths > MAX_AGE_MONTHS) return;
+
+        // Also check <time datetime="..."> if present
+        const timeEl = el.querySelector("time");
+        if (timeEl) {
+          const dt = timeEl.getAttribute("datetime");
+          if (dt) {
+            const postDate = new Date(dt);
+            const oneYearAgo = new Date();
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            if (postDate < oneYearAgo) return;
+          }
+        }
+
         const postText = el.querySelector(
           ".feed-shared-update-v2__description, .update-components-text, .feed-shared-text__text-view, .feed-shared-inline-show-more-text",
         )?.textContent?.trim() || "";
 
-        const postedDate = el.querySelector("time")?.getAttribute("datetime") ||
-          el.querySelector(".update-components-actor__sub-description")?.textContent?.trim() || null;
+        const postedDate = timeEl?.getAttribute("datetime") || subDescText || null;
 
         const parseBtn = (kw: RegExp) => {
           const b = Array.from(el.querySelectorAll("button, a")).find(
