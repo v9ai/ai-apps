@@ -577,6 +577,26 @@ export type CountRemoteVoyagerJobsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type CrawlLog = {
+  __typename?: 'CrawlLog';
+  companySlug: Scalars['String']['output'];
+  completedAt: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  durationMs: Scalars['Int']['output'];
+  entries: Maybe<Scalars['JSON']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  filtered: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
+  saved: Scalars['Int']['output'];
+  seedUrl: Scalars['String']['output'];
+  skipped: Scalars['Int']['output'];
+  startedAt: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  targets: Scalars['Int']['output'];
+  totalRemoteJobs: Scalars['Int']['output'];
+  visited: Scalars['Int']['output'];
+};
+
 export type CreateCampaignInput = {
   addAntiThreadHeader?: InputMaybe<Scalars['Boolean']['input']>;
   addUnsubscribeHeaders?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1293,6 +1313,7 @@ export type Mutation = {
   refreshIntentScores: RefreshIntentResult;
   regenerateDraft: ReplyDraft;
   salescueAnalyze: SalescueAnalyzeResult;
+  saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   scoreContactsML: ScoreContactsMlResult;
@@ -1620,6 +1641,11 @@ export type MutationSalescueAnalyzeArgs = {
 };
 
 
+export type MutationSaveCrawlLogArgs = {
+  input: SaveCrawlLogInput;
+};
+
+
 export type MutationScheduleBatchEmailsArgs = {
   input: ScheduleBatchEmailsInput;
 };
@@ -1780,6 +1806,8 @@ export type Query = {
   contactReceivedEmails: Array<ReceivedEmail>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
+  crawlLog: Maybe<CrawlLog>;
+  crawlLogs: Array<CrawlLog>;
   draftSummary: DraftSummary;
   dueReminders: Array<ContactReminderWithContact>;
   emailCampaign: Maybe<EmailCampaign>;
@@ -1949,6 +1977,17 @@ export type QueryContactsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryCrawlLogArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryCrawlLogsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2716,6 +2755,30 @@ export type SalescueTurningPoint = {
   uncertainty: Scalars['Float']['output'];
 };
 
+export type SaveCrawlLogInput = {
+  companySlug: Scalars['String']['input'];
+  completedAt?: InputMaybe<Scalars['String']['input']>;
+  durationMs: Scalars['Int']['input'];
+  entries: Array<Scalars['String']['input']>;
+  error?: InputMaybe<Scalars['String']['input']>;
+  filtered: Scalars['Int']['input'];
+  saved: Scalars['Int']['input'];
+  seedUrl: Scalars['String']['input'];
+  skipped: Scalars['Int']['input'];
+  startedAt: Scalars['String']['input'];
+  status: Scalars['String']['input'];
+  targets: Scalars['Int']['input'];
+  totalRemoteJobs?: InputMaybe<Scalars['Int']['input']>;
+  visited: Scalars['Int']['input'];
+};
+
+export type SaveCrawlLogResult = {
+  __typename?: 'SaveCrawlLogResult';
+  crawlLogId: Maybe<Scalars['Int']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type ScheduleBatchEmailsInput = {
   body: Scalars['String']['input'];
   /** Recipients with name and email */
@@ -3323,6 +3386,7 @@ export type ResolversTypes = {
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
   CountRemoteVoyagerJobsInput: ResolverTypeWrapper<Partial<CountRemoteVoyagerJobsInput>>;
   CountRemoteVoyagerJobsResult: ResolverTypeWrapper<Partial<CountRemoteVoyagerJobsResult>>;
+  CrawlLog: ResolverTypeWrapper<Partial<CrawlLog>>;
   CreateCampaignInput: ResolverTypeWrapper<Partial<CreateCampaignInput>>;
   CreateCompanyInput: ResolverTypeWrapper<Partial<CreateCompanyInput>>;
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
@@ -3449,6 +3513,8 @@ export type ResolversTypes = {
   SalescueTriggerTemporalFeatures: ResolverTypeWrapper<Partial<SalescueTriggerTemporalFeatures>>;
   SalescueTriggersResult: ResolverTypeWrapper<Partial<SalescueTriggersResult>>;
   SalescueTurningPoint: ResolverTypeWrapper<Partial<SalescueTurningPoint>>;
+  SaveCrawlLogInput: ResolverTypeWrapper<Partial<SaveCrawlLogInput>>;
+  SaveCrawlLogResult: ResolverTypeWrapper<Partial<SaveCrawlLogResult>>;
   ScheduleBatchEmailsInput: ResolverTypeWrapper<Partial<ScheduleBatchEmailsInput>>;
   ScheduleBatchResult: ResolverTypeWrapper<Partial<ScheduleBatchResult>>;
   ScoreContactsMLResult: ResolverTypeWrapper<Partial<ScoreContactsMlResult>>;
@@ -3547,6 +3613,7 @@ export type ResolversParentTypes = {
   ContactsResult: Partial<ContactsResult>;
   CountRemoteVoyagerJobsInput: Partial<CountRemoteVoyagerJobsInput>;
   CountRemoteVoyagerJobsResult: Partial<CountRemoteVoyagerJobsResult>;
+  CrawlLog: Partial<CrawlLog>;
   CreateCampaignInput: Partial<CreateCampaignInput>;
   CreateCompanyInput: Partial<CreateCompanyInput>;
   CreateContactInput: Partial<CreateContactInput>;
@@ -3669,6 +3736,8 @@ export type ResolversParentTypes = {
   SalescueTriggerTemporalFeatures: Partial<SalescueTriggerTemporalFeatures>;
   SalescueTriggersResult: Partial<SalescueTriggersResult>;
   SalescueTurningPoint: Partial<SalescueTurningPoint>;
+  SaveCrawlLogInput: Partial<SaveCrawlLogInput>;
+  SaveCrawlLogResult: Partial<SaveCrawlLogResult>;
   ScheduleBatchEmailsInput: Partial<ScheduleBatchEmailsInput>;
   ScheduleBatchResult: Partial<ScheduleBatchResult>;
   ScoreContactsMLResult: Partial<ScoreContactsMlResult>;
@@ -4151,6 +4220,25 @@ export type CountRemoteVoyagerJobsResultResolvers<ContextType = GraphQLContext, 
   counts?: Resolver<Array<ResolversTypes['VoyagerCompanyJobCount']>, ParentType, ContextType>;
   errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type CrawlLogResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CrawlLog'] = ResolversParentTypes['CrawlLog']> = {
+  companySlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  completedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  durationMs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  entries?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  filtered?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  saved?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  seedUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  skipped?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  startedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  targets?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalRemoteJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  visited?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type DailyJobCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DailyJobCount'] = ResolversParentTypes['DailyJobCount']> = {
@@ -4677,6 +4765,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   refreshIntentScores?: Resolver<ResolversTypes['RefreshIntentResult'], ParentType, ContextType>;
   regenerateDraft?: Resolver<ResolversTypes['ReplyDraft'], ParentType, ContextType, RequireFields<MutationRegenerateDraftArgs, 'draftId'>>;
   salescueAnalyze?: Resolver<ResolversTypes['SalescueAnalyzeResult'], ParentType, ContextType, RequireFields<MutationSalescueAnalyzeArgs, 'text'>>;
+  saveCrawlLog?: Resolver<ResolversTypes['SaveCrawlLogResult'], ParentType, ContextType, RequireFields<MutationSaveCrawlLogArgs, 'input'>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
   scheduleFollowUpBatch?: Resolver<ResolversTypes['FollowUpBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleFollowUpBatchArgs, 'input'>>;
   scoreContactsML?: Resolver<ResolversTypes['ScoreContactsMLResult'], ParentType, ContextType, RequireFields<MutationScoreContactsMlArgs, 'companyId'>>;
@@ -4726,6 +4815,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contactReceivedEmails?: Resolver<Array<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryContactReceivedEmailsArgs, 'contactId'>>;
   contactReminders?: Resolver<Array<ResolversTypes['ContactReminder']>, ParentType, ContextType, RequireFields<QueryContactRemindersArgs, 'contactId'>>;
   contacts?: Resolver<ResolversTypes['ContactsResult'], ParentType, ContextType, Partial<QueryContactsArgs>>;
+  crawlLog?: Resolver<Maybe<ResolversTypes['CrawlLog']>, ParentType, ContextType, RequireFields<QueryCrawlLogArgs, 'id'>>;
+  crawlLogs?: Resolver<Array<ResolversTypes['CrawlLog']>, ParentType, ContextType, Partial<QueryCrawlLogsArgs>>;
   draftSummary?: Resolver<ResolversTypes['DraftSummary'], ParentType, ContextType>;
   dueReminders?: Resolver<Array<ResolversTypes['ContactReminderWithContact']>, ParentType, ContextType>;
   emailCampaign?: Resolver<Maybe<ResolversTypes['EmailCampaign']>, ParentType, ContextType, RequireFields<QueryEmailCampaignArgs, 'id'>>;
@@ -5223,6 +5314,12 @@ export type SalescueTurningPointResolvers<ContextType = GraphQLContext, ParentTy
   uncertainty?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
+export type SaveCrawlLogResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SaveCrawlLogResult'] = ResolversParentTypes['SaveCrawlLogResult']> = {
+  crawlLogId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type ScheduleBatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScheduleBatchResult'] = ResolversParentTypes['ScheduleBatchResult']> = {
   failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   firstSendDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5535,6 +5632,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactWorkExperience?: ContactWorkExperienceResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
   CountRemoteVoyagerJobsResult?: CountRemoteVoyagerJobsResultResolvers<ContextType>;
+  CrawlLog?: CrawlLogResolvers<ContextType>;
   DailyJobCount?: DailyJobCountResolvers<ContextType>;
   DataQualityScore?: DataQualityScoreResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
@@ -5643,6 +5741,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SalescueTriggerTemporalFeatures?: SalescueTriggerTemporalFeaturesResolvers<ContextType>;
   SalescueTriggersResult?: SalescueTriggersResultResolvers<ContextType>;
   SalescueTurningPoint?: SalescueTurningPointResolvers<ContextType>;
+  SaveCrawlLogResult?: SaveCrawlLogResultResolvers<ContextType>;
   ScheduleBatchResult?: ScheduleBatchResultResolvers<ContextType>;
   ScoreContactsMLResult?: ScoreContactsMlResultResolvers<ContextType>;
   SendDraftResult?: SendDraftResultResolvers<ContextType>;

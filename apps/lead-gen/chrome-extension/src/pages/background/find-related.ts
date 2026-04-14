@@ -436,6 +436,49 @@ function normalizeCompanyUrl(url: string): string {
   return url.split("?")[0].replace(/\/$/, "").toLowerCase();
 }
 
+async function saveCrawlLogToDb(data: {
+  seedUrl: string;
+  companySlug: string;
+  status: "completed" | "cancelled" | "error";
+  stats: { saved: number; skipped: number; targets: number; filtered: number; visited: number; duration_ms: number; totalRemoteJobs?: number };
+  entries: string[];
+  error?: string;
+}) {
+  try {
+    const result = await gqlRequest(
+      `mutation SaveCrawlLog($input: SaveCrawlLogInput!) {
+        saveCrawlLog(input: $input) { success crawlLogId error }
+      }`,
+      {
+        input: {
+          seedUrl: data.seedUrl,
+          companySlug: data.companySlug,
+          status: data.status,
+          saved: data.stats.saved,
+          skipped: data.stats.skipped,
+          filtered: data.stats.filtered,
+          targets: data.stats.targets,
+          visited: data.stats.visited,
+          totalRemoteJobs: data.stats.totalRemoteJobs ?? 0,
+          durationMs: data.stats.duration_ms,
+          entries: data.entries,
+          error: data.error ?? null,
+          startedAt: new Date(Date.now() - data.stats.duration_ms).toISOString(),
+          completedAt: new Date().toISOString(),
+        },
+      },
+    );
+    const res = result.data?.saveCrawlLog;
+    if (res?.success) {
+      console.log(`[FindRelated] Crawl log saved to DB, id=${res.crawlLogId}`);
+    } else {
+      console.warn("[FindRelated] Failed to save crawl log:", res?.error);
+    }
+  } catch (err) {
+    console.error("[FindRelated] Failed to save crawl log to DB:", err);
+  }
+}
+
 function downloadCrawlLog(data: {
   seedUrl: string;
   companySlug: string;
@@ -823,11 +866,19 @@ export async function findRelatedCompanies(tabId: number) {
     const wasCancelled = findRelatedCancelled;
     log(`[FindRelated] Crawl ${wasCancelled ? "cancelled" : "complete"}. saved=${saved}, skipped=${skipped}, filtered=${filtered}, visited=${visited.size}, queue_remaining=${queue.length}`);
 
-    // Download crawl log
+    // Save crawl log to DB + download as file
+    const crawlStats = { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0, totalRemoteJobs };
+    await saveCrawlLogToDb({
+      seedUrl: crawlSeedUrl,
+      companySlug: crawlSlug,
+      status: wasCancelled ? "cancelled" : "completed",
+      stats: crawlStats,
+      entries: crawlLogFull,
+    });
     downloadCrawlLog({
       seedUrl: crawlSeedUrl,
       companySlug: crawlSlug,
-      stats: { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0, totalRemoteJobs, cancelled: wasCancelled },
+      stats: { ...crawlStats, cancelled: wasCancelled },
       entries: crawlLogFull,
     });
 
@@ -856,11 +907,20 @@ export async function findRelatedCompanies(tabId: number) {
     const errMsg = err instanceof Error ? err.message : String(err);
     logError(`[FindRelated] Unexpected error: ${errMsg}`);
 
-    // Download crawl log even on error
+    // Save crawl log to DB + download even on error
+    const errorStats = { saved: 0, skipped: 0, targets: 0, filtered: 0, visited: 0, duration_ms: Date.now() - crawlT0 };
+    await saveCrawlLogToDb({
+      seedUrl: crawlSeedUrl,
+      companySlug: crawlSlug,
+      status: "error",
+      stats: errorStats,
+      entries: crawlLogFull,
+      error: errMsg,
+    });
     downloadCrawlLog({
       seedUrl: crawlSeedUrl,
       companySlug: crawlSlug,
-      stats: { saved: 0, skipped: 0, targets: 0, filtered: 0, visited: 0, duration_ms: Date.now() - crawlT0 },
+      stats: errorStats,
       entries: crawlLogFull,
     });
 

@@ -907,3 +907,35 @@ export const messagesRelations = relations(messages, ({ one }) => ({
     references: [contactEmails.id],
   }),
 }));
+
+// ── Crawl Logs (persisted BFS crawl traces from Chrome extension) ──
+
+export const crawlLogs = pgTable("crawl_logs", {
+  id: serial("id").primaryKey(),
+  seed_url: text("seed_url").notNull(),
+  company_slug: text("company_slug").notNull(),
+  status: text("status", {
+    enum: ["running", "completed", "cancelled", "error"],
+  }).notNull().default("running"),
+  saved: integer("saved").notNull().default(0),
+  skipped: integer("skipped").notNull().default(0),
+  filtered: integer("filtered").notNull().default(0),
+  targets: integer("targets").notNull().default(0),
+  visited: integer("visited").notNull().default(0),
+  total_remote_jobs: integer("total_remote_jobs").notNull().default(0),
+  duration_ms: integer("duration_ms").notNull().default(0),
+  entries: text("entries"),             // JSON stringified string[]
+  error: text("error"),
+  started_at: text("started_at").notNull(),
+  completed_at: text("completed_at"),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`now()::text`),
+}, (table) => [
+  index("idx_crawl_logs_seed_url").on(table.seed_url),
+  index("idx_crawl_logs_started_at").on(table.started_at),
+  index("idx_crawl_logs_status").on(table.status),
+]);
+
+export type CrawlLog = typeof crawlLogs.$inferSelect;
+export type NewCrawlLog = typeof crawlLogs.$inferInsert;

@@ -577,6 +577,26 @@ export type CountRemoteVoyagerJobsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type CrawlLog = {
+  __typename?: 'CrawlLog';
+  companySlug: Scalars['String']['output'];
+  completedAt: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  durationMs: Scalars['Int']['output'];
+  entries: Maybe<Scalars['JSON']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  filtered: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
+  saved: Scalars['Int']['output'];
+  seedUrl: Scalars['String']['output'];
+  skipped: Scalars['Int']['output'];
+  startedAt: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  targets: Scalars['Int']['output'];
+  totalRemoteJobs: Scalars['Int']['output'];
+  visited: Scalars['Int']['output'];
+};
+
 export type CreateCampaignInput = {
   addAntiThreadHeader?: InputMaybe<Scalars['Boolean']['input']>;
   addUnsubscribeHeaders?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1293,6 +1313,7 @@ export type Mutation = {
   refreshIntentScores: RefreshIntentResult;
   regenerateDraft: ReplyDraft;
   salescueAnalyze: SalescueAnalyzeResult;
+  saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   scoreContactsML: ScoreContactsMlResult;
@@ -1620,6 +1641,11 @@ export type MutationSalescueAnalyzeArgs = {
 };
 
 
+export type MutationSaveCrawlLogArgs = {
+  input: SaveCrawlLogInput;
+};
+
+
 export type MutationScheduleBatchEmailsArgs = {
   input: ScheduleBatchEmailsInput;
 };
@@ -1780,6 +1806,8 @@ export type Query = {
   contactReceivedEmails: Array<ReceivedEmail>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
+  crawlLog: Maybe<CrawlLog>;
+  crawlLogs: Array<CrawlLog>;
   draftSummary: DraftSummary;
   dueReminders: Array<ContactReminderWithContact>;
   emailCampaign: Maybe<EmailCampaign>;
@@ -1949,6 +1977,17 @@ export type QueryContactsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryCrawlLogArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryCrawlLogsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2714,6 +2753,30 @@ export type SalescueTurningPoint = {
   speaker: Scalars['String']['output'];
   turn: Scalars['Int']['output'];
   uncertainty: Scalars['Float']['output'];
+};
+
+export type SaveCrawlLogInput = {
+  companySlug: Scalars['String']['input'];
+  completedAt?: InputMaybe<Scalars['String']['input']>;
+  durationMs: Scalars['Int']['input'];
+  entries: Array<Scalars['String']['input']>;
+  error?: InputMaybe<Scalars['String']['input']>;
+  filtered: Scalars['Int']['input'];
+  saved: Scalars['Int']['input'];
+  seedUrl: Scalars['String']['input'];
+  skipped: Scalars['Int']['input'];
+  startedAt: Scalars['String']['input'];
+  status: Scalars['String']['input'];
+  targets: Scalars['Int']['input'];
+  totalRemoteJobs?: InputMaybe<Scalars['Int']['input']>;
+  visited: Scalars['Int']['input'];
+};
+
+export type SaveCrawlLogResult = {
+  __typename?: 'SaveCrawlLogResult';
+  crawlLogId: Maybe<Scalars['Int']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
 };
 
 export type ScheduleBatchEmailsInput = {

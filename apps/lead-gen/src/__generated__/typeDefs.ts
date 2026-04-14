@@ -514,6 +514,25 @@ type CountRemoteVoyagerJobsResult {
   success: Boolean!
 }
 
+type CrawlLog {
+  companySlug: String!
+  completedAt: String
+  createdAt: String!
+  durationMs: Int!
+  entries: JSON
+  error: String
+  filtered: Int!
+  id: Int!
+  saved: Int!
+  seedUrl: String!
+  skipped: Int!
+  startedAt: String!
+  status: String!
+  targets: Int!
+  totalRemoteJobs: Int!
+  visited: Int!
+}
+
 input CreateCampaignInput {
   addAntiThreadHeader: Boolean
   addUnsubscribeHeaders: Boolean
@@ -1187,6 +1206,7 @@ type Mutation {
   refreshIntentScores: RefreshIntentResult!
   regenerateDraft(draftId: Int!, instructions: String): ReplyDraft!
   salescueAnalyze(modules: [SalescueModule!], text: String!): SalescueAnalyzeResult!
+  saveCrawlLog(input: SaveCrawlLogInput!): SaveCrawlLogResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
   scoreContactsML(companyId: Int!): ScoreContactsMLResult!
@@ -1255,6 +1275,8 @@ type Query {
   contactReceivedEmails(contactId: Int!): [ReceivedEmail!]!
   contactReminders(contactId: Int!): [ContactReminder!]!
   contacts(companyId: Int, limit: Int, offset: Int, search: String): ContactsResult!
+  crawlLog(id: Int!): CrawlLog
+  crawlLogs(limit: Int, offset: Int): [CrawlLog!]!
   draftSummary: DraftSummary!
   dueReminders: [ContactReminderWithContact!]!
   emailCampaign(id: String!): EmailCampaign
@@ -1805,6 +1827,29 @@ type SalescueTurningPoint {
   speaker: String!
   turn: Int!
   uncertainty: Float!
+}
+
+input SaveCrawlLogInput {
+  companySlug: String!
+  completedAt: String
+  durationMs: Int!
+  entries: [String!]!
+  error: String
+  filtered: Int!
+  saved: Int!
+  seedUrl: String!
+  skipped: Int!
+  startedAt: String!
+  status: String!
+  targets: Int!
+  totalRemoteJobs: Int
+  visited: Int!
+}
+
+type SaveCrawlLogResult {
+  crawlLogId: Int
+  error: String
+  success: Boolean!
 }
 
 input ScheduleBatchEmailsInput {
