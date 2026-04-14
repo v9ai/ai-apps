@@ -19,6 +19,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { AppData } from "@/components/app-detail/types";
 import { StudyRoadmap } from "@/components/app-detail/StudyRoadmap";
+import { ArchitectureDiagram } from "@/components/app-detail/ArchitectureDiagram";
 
 const remarkPlugins = [remarkGfm];
 
@@ -654,6 +655,9 @@ function PrepPageInner() {
 
       {/* Roadmap */}
       {content && <StudyRoadmap markdown={content} techTags={techTags} />}
+
+      {/* Architecture diagram */}
+      <ArchitectureDiagram />
 
       {/* Content */}
       {processed ? (
