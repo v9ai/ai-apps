@@ -4,8 +4,9 @@ import { join } from "path";
 import { auth } from "@/lib/auth/server";
 import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { contactEmails } from "@/db/schema";
+import { contactEmails, receivedEmails } from "@/db/schema";
 import { RESUME_PDF_PACKAGE_PATH } from "@ai-apps/resume";
 
 export const runtime = "nodejs";
@@ -81,6 +82,24 @@ export async function POST(request: NextRequest) {
     attachments.push({ filename: "Vadim_Nicolai_CV.pdf", content });
   }
 
+  // Build threading headers for replies (In-Reply-To + References)
+  const threadHeaders: Record<string, string> = {};
+  if (receivedEmailId) {
+    try {
+      const [received] = await db
+        .select({ message_id: receivedEmails.message_id })
+        .from(receivedEmails)
+        .where(eq(receivedEmails.id, receivedEmailId))
+        .limit(1);
+      if (received?.message_id) {
+        threadHeaders["In-Reply-To"] = received.message_id;
+        threadHeaders["References"] = received.message_id;
+      }
+    } catch {
+      // Non-critical — email will still send, just won't thread
+    }
+  }
+
   let result: Awaited<ReturnType<typeof resend.instance.send>>;
   try {
     result = await resend.instance.send({
@@ -91,6 +110,7 @@ export async function POST(request: NextRequest) {
       text: personalized,
       ...(attachments.length > 0 && { attachments }),
       ...(scheduledAt && { scheduledAt }),
+      ...(Object.keys(threadHeaders).length > 0 && { headers: threadHeaders }),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to send email";

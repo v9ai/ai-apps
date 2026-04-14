@@ -22,6 +22,8 @@ export interface SendEmailParams {
    * @see https://resend.com/docs/api-reference/emails/send-email#body-parameters
    */
   attachments?: Attachment[];
+  /** Custom email headers (e.g. In-Reply-To, References for threading) */
+  headers?: Record<string, string>;
 }
 
 /**
@@ -57,7 +59,7 @@ export class ResendEmailAdapter {
    * Send an email
    */
   async send(params: SendEmailParams): Promise<SendEmailResult> {
-    const { to, subject, html, text, replyTo, scheduledAt, from, attachments } =
+    const { to, subject, html, text, replyTo, scheduledAt, from, attachments, headers } =
       params;
 
     try {
@@ -85,6 +87,7 @@ export class ResendEmailAdapter {
         ...(replyTo && { replyTo }),
         ...(scheduledAt && { scheduledAt }),
         ...(attachments && { attachments }),
+        ...(headers && { headers }),
       };
 
       console.log(`[ResendAdapter] Sending email to ${to}:`, {
