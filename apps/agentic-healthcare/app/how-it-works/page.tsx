@@ -2274,11 +2274,227 @@ export default function HowItWorksPage() {
         </Grid>
       </Box>
 
+      {/* ── Schema Topology ── */}
+      <Box
+        id="schema-topology"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Drizzle ORM
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Schema Topology
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              28 PostgreSQL tables across 5 categories. Every user-owned
+              entity cascades on deletion. Embedding tables cascade on
+              their source entity — no orphaned vectors, no cleanup jobs.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="4" style={{ maxWidth: 860, margin: "0 auto" }}>
+          {schemaCategories.map((cat, i) => (
+            <ScrollReveal key={cat.category} delay={i * 60}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+              >
+                <Flex align="center" justify="between">
+                  <Flex align="center" gap="3">
+                    <div
+                      className="deep-dive-icon"
+                      style={{
+                        background: `color-mix(in srgb, ${cat.color} 18%, transparent)`,
+                        color: cat.color,
+                      }}
+                    >
+                      <Table2 size={18} />
+                    </div>
+                    <div>
+                      <Text size="3" weight="bold">
+                        {cat.category}
+                      </Text>
+                      <Text
+                        size="1"
+                        style={{ color: cat.color, fontSize: "11px", fontWeight: 600 }}
+                      >
+                        {cat.count} tables
+                      </Text>
+                    </div>
+                  </Flex>
+                </Flex>
+
+                <Flex gap="2" wrap="wrap">
+                  {cat.tables.map((t) => (
+                    <span key={t} className="arch-tag" style={{ fontSize: "11px" }}>
+                      {t}
+                    </span>
+                  ))}
+                </Flex>
+
+                <Text
+                  size="2"
+                  style={{
+                    color: "var(--gray-10)",
+                    lineHeight: 1.55,
+                    paddingLeft: "1rem",
+                    borderLeft: `2px solid ${cat.color}`,
+                  }}
+                >
+                  {cat.detail}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={350}>
+          <pre className="pg-code-block" style={{ maxWidth: 860, margin: "2rem auto 0" }}>
+            <code>{`// Custom Drizzle vector type → pgvector(1024)
+const vector = customType<{ data: number[]; driverData: string }>({
+  dataType()  { return "vector(1024)"; },
+  toDriver(v) { return \`[\${v.join(",")}]\`; },
+  fromDriver(v) {
+    return v.slice(1, -1).split(",").map(Number);
+  },
+});`}</code>
+          </pre>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Entity Relationship Graph ── */}
+      <Box
+        id="entity-graph"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--cyan-9)",
+                fontSize: "11px",
+              }}
+            >
+              Data Architecture
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Entity Relationship Graph
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              22 PostgreSQL tables connected by foreign keys with carefully
+              chosen delete strategies: CASCADE for owned data, SET NULL
+              for optional references, UNIQUE constraints for 1:1
+              embedding pairs, and composite primary keys for M:N junctions.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="2"
+          style={{ maxWidth: 760, margin: "0 auto" }}
+          mb="5"
+        >
+          {entityRelationships.map((er, i) => (
+            <ScrollReveal key={`${er.from}-${er.to}`} delay={i * 35}>
+              <Flex
+                gap="3"
+                p="3"
+                className="deep-dive-card"
+                align="center"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "12px",
+                    minWidth: 190,
+                    color: er.color,
+                  }}
+                >
+                  {er.from} → {er.to}
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "11px",
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: `color-mix(in srgb, ${er.color} 12%, transparent)`,
+                    color: er.color,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {er.type}
+                </Text>
+                <Text size="1" color="gray" style={{ flex: 1, fontSize: "11px" }}>
+                  {er.cascade}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={400}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">22 tables</span>
+            <span className="arch-tag">8 embedding tables</span>
+            <span className="arch-tag">vector(1024)</span>
+            <span className="arch-tag">JSONB for metrics</span>
+            <span className="arch-tag">M:N junction tables</span>
+            <span className="arch-tag">Drizzle ORM</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
       {/* ── Why PostgreSQL? ── */}
       <Box
         id="why-postgres"
         py="9"
         px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
       >
         <ScrollReveal>
           <Flex direction="column" align="center" gap="2" mb="7">
@@ -2400,9 +2616,9 @@ export default function HowItWorksPage() {
         </Flex>
       </Box>
 
-      {/* ── Intent Classification Matrix ── */}
+      {/* ── CASCADE Delete Visualization ── */}
       <Box
-        id="intent-matrix"
+        id="cascade-delete"
         py="9"
         px={{ initial: "4", md: "6", lg: "9" }}
         style={{ background: "var(--gray-a2)" }}
@@ -2415,18 +2631,158 @@ export default function HowItWorksPage() {
               style={{
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
-                color: "var(--indigo-9)",
+                color: "var(--orange-9)",
                 fontSize: "11px",
               }}
             >
-              Triage Node
+              Right to Deletion
             </Text>
             <Heading
               size="7"
               align="center"
               style={{ letterSpacing: "-0.03em" }}
             >
-              Intent Classification Matrix
+              CASCADE Delete — Full Chain
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
+            >
+              One DELETE statement on the user table triggers a full cascade
+              across every related table. No orphaned embeddings, no stale
+              vectors, no background cleanup jobs. PostgreSQL enforces the
+              chain in a single transaction.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          mb="5"
+        >
+          {cascadeDeleteChains.map((chain, i) => (
+            <ScrollReveal key={chain.to} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="3"
+                className="deep-dive-card"
+                align="center"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "12px",
+                    color: chain.color,
+                    minWidth: 50,
+                  }}
+                >
+                  {chain.from}
+                </Text>
+                <Text
+                  size="1"
+                  style={{ color: chain.color, fontSize: "14px" }}
+                >
+                  →
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "12px",
+                    color: "var(--gray-11)",
+                    flex: 1,
+                  }}
+                >
+                  {chain.to}
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                    background: `color-mix(in srgb, ${chain.color} 14%, transparent)`,
+                    color: chain.color,
+                    fontSize: "10px",
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                  }}
+                >
+                  CASCADE
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={400}>
+          <pre className="pg-code-block">
+            <code>{`-- schema.ts — cascade delete chain (Drizzle ORM)
+export const bloodTests = pgTable("blood_tests", {
+  userId: text("user_id").notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // ...
+});
+
+export const bloodMarkers = pgTable("blood_markers", {
+  testId: uuid("test_id").notNull()
+    .references(() => bloodTests.id, { onDelete: "cascade" }),
+  // ...
+});
+
+-- DELETE FROM "user" WHERE id = $1;
+-- PostgreSQL cascades through ALL 22 tables automatically:
+--   user → blood_tests → blood_markers → blood_marker_embeddings
+--   user → blood_tests → blood_test_embeddings
+--   user → blood_tests → health_state_embeddings
+--   user → conditions → condition_embeddings
+--   user → medications → medication_embeddings
+--   user → symptoms → symptom_embeddings
+--   user → appointments → appointment_embeddings
+--   user → doctors, family_members, medical_letters`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={440}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">onDelete: cascade</span>
+            <span className="arch-tag">single transaction</span>
+            <span className="arch-tag">zero orphaned vectors</span>
+            <span className="arch-tag">22 tables covered</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── 3-Tier Marker Extraction ── */}
+      <Box
+        id="marker-extraction"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--orange-9)",
+                fontSize: "11px",
+              }}
+            >
+              Ingestion Node
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              3-Tier Marker Extraction
             </Heading>
             <Text
               size="2"
@@ -2434,41 +2790,334 @@ export default function HowItWorksPage() {
               align="center"
               style={{ maxWidth: 560, lineHeight: 1.65 }}
             >
-              Qwen 2.5 (local, via mlx_lm.server) classifies every query into one of 9 intent classes.
-              Each intent routes to a LlamaIndex BaseRetriever subclass with
-              confidence-scaled top-k limits via build_retriever_for_intent.
+              BloodTestNodeParser runs a cascading extraction strategy: if
+              Tier 1 finds markers, Tiers 2–3 are skipped. Results are
+              deduplicated by marker name (first occurrence wins).
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        {/* ── Cascading flow indicator ── */}
+        <ScrollReveal delay={40}>
+          <Flex align="center" justify="center" gap="3" mb="5">
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--gray-9)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              PDF ingested
+            </Text>
+            <div style={{ width: 32, height: 1, background: "var(--gray-a6)" }} />
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--orange-9)" }}>
+              Tier 1
+            </Text>
+            <div className="cascade-arrow" />
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--blue-9)" }}>
+              Tier 2
+            </Text>
+            <div className="cascade-arrow" />
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--crimson-9)" }}>
+              Tier 3
+            </Text>
+            <div style={{ width: 32, height: 1, background: "var(--gray-a6)" }} />
+            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--green-9)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Flagged markers
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        {/* ── Tier cards — full-width 3-column grid ── */}
+        <Grid columns={{ initial: "1", md: "3" }} gap="4">
+          {extractionTiers.map((t, i) => (
+            <ScrollReveal key={t.tier} delay={i * 80}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="5"
+                className="deep-dive-card extraction-tier-card"
+                style={{ height: "100%", borderTop: `2px solid ${t.color}` }}
+              >
+                <Flex align="center" gap="3">
+                  <div className="extraction-tier-badge" style={{ color: t.color, borderColor: t.color }}>
+                    {t.tier}
+                  </div>
+                  <div
+                    className="deep-dive-icon"
+                    style={{ background: t.bg, color: t.color }}
+                  >
+                    <t.icon size={18} />
+                  </div>
+                  <Flex direction="column" gap="0">
+                    <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+                      {t.title}
+                    </Heading>
+                    <Text size="1" style={{ color: t.color, fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      {i === 0 ? "Primary" : i === 1 ? "Secondary" : "Last resort"}
+                    </Text>
+                  </Flex>
+                </Flex>
+
+                <Text
+                  size="2"
+                  color="gray"
+                  style={{ lineHeight: 1.6, flex: 1 }}
+                >
+                  {t.description}
+                </Text>
+
+                <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem" }}>
+                  <code>{t.pattern}</code>
+                </pre>
+
+                <Flex align="center" gap="2" style={{ padding: "6px 10px", borderRadius: 6, background: "var(--gray-a2)" }}>
+                  <ShieldCheck size={12} style={{ color: "var(--gray-9)", flexShrink: 0 }} />
+                  <Text
+                    size="1"
+                    style={{
+                      color: "var(--gray-9)",
+                      fontSize: "11px",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    {t.validation}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        {/* ── Flag Computation — full-width banner ── */}
+        <ScrollReveal delay={280}>
+          <Flex
+            direction={{ initial: "column", md: "row" }}
+            gap="5"
+            p="5"
+            align={{ initial: "start", md: "center" }}
+            className="deep-dive-card"
+            style={{ marginTop: "var(--space-4)", borderLeft: "3px solid var(--green-9)" }}
+          >
+            <Flex align="center" gap="3" style={{ flexShrink: 0 }}>
+              <div
+                className="deep-dive-icon"
+                style={{ background: "var(--green-a3)", color: "var(--green-9)" }}
+              >
+                <ShieldCheck size={18} />
+              </div>
+              <Flex direction="column" gap="0">
+                <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+                  Flag Computation
+                </Heading>
+                <Text size="1" color="gray" style={{ lineHeight: 1.5, maxWidth: 280 }}>
+                  Each marker&apos;s numeric value is compared against its parsed
+                  reference range.
+                </Text>
+              </Flex>
+            </Flex>
+
+            <Grid columns={{ initial: "1", sm: "2", md: "4" }} gap="2" style={{ flex: 1 }}>
+              {flagRules.map((f) => (
+                <Flex
+                  key={f.condition}
+                  direction="column"
+                  gap="1"
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    background: "var(--gray-a2)",
+                    border: "1px solid var(--gray-a3)",
+                  }}
+                >
+                  <Text
+                    size="1"
+                    weight="bold"
+                    style={{ fontSize: "11px", color: "var(--gray-11)", whiteSpace: "nowrap" }}
+                  >
+                    {f.condition}
+                  </Text>
+                  <Text
+                    size="1"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                      color: "var(--gray-9)",
+                    }}
+                  >
+                    {f.logic}
+                  </Text>
+                </Flex>
+              ))}
+            </Grid>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Marker Alias Resolution ── */}
+      <Box
+        id="marker-aliases"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--orange-9)",
+                fontSize: "11px",
+              }}
+            >
+              Name Normalization
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Marker Alias Resolution
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Labs use different names for the same biomarker. The alias
+              map normalizes 41 variant names across 11 base markers so
+              derived ratios (TG/HDL, NLR, De Ritis, TyG) always resolve
+              regardless of which lab produced the PDF.
             </Text>
           </Flex>
         </ScrollReveal>
 
         <Grid
-          columns={{ initial: "1", sm: "2", lg: "4" }}
-          gap="4"
+          columns={{ initial: "1", sm: "2", md: "3" }}
+          gap="3"
+          style={{ maxWidth: 860, margin: "0 auto" }}
+          mb="5"
         >
-          {intents.map((intent, i) => (
-            <ScrollReveal key={intent.name} delay={i * 50}>
+          {markerAliases.map((ma, i) => (
+            <ScrollReveal key={ma.base} delay={i * 40}>
+              <Flex
+                direction="column"
+                gap="2"
+                p="3"
+                className="deep-dive-card"
+              >
+                <Text
+                  size="2"
+                  weight="bold"
+                  style={{ color: ma.color }}
+                >
+                  {ma.base}
+                </Text>
+                <Flex gap="2" wrap="wrap">
+                  {ma.aliases.map((alias) => (
+                    <Text
+                      key={alias}
+                      size="1"
+                      style={{
+                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                        fontSize: "10px",
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                        background: `color-mix(in srgb, ${ma.color} 12%, transparent)`,
+                        color: ma.color,
+                      }}
+                    >
+                      {alias}
+                    </Text>
+                  ))}
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={280}>
+          <pre className="pg-code-block" style={{ maxWidth: 640, margin: "0 auto" }}>
+            <code>{`// lib/embeddings.ts — TyG Index computation
+const trig = resolve("triglycerides");
+const gluc = resolve("glucose");
+const gti =
+  trig != null && gluc != null && trig > 0 && gluc > 0
+    ? Math.log(trig * gluc * 0.5) / Math.LN10
+    : null;
+// resolve() walks MARKER_ALIAS_MAP until it finds a match
+// "hdl-c" → "hdl cholesterol" → "hdl" — first hit wins`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={320}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">11 base markers</span>
+            <span className="arch-tag">41 aliases</span>
+            <span className="arch-tag">case-insensitive</span>
+            <span className="arch-tag">EU comma decimals</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Node Type Fan-Out ── */}
+      <Box
+        id="node-type-fanout"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--orange-9)",
+                fontSize: "11px",
+              }}
+            >
+              Node Types
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              BloodTestNodeParser Output
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Each uploaded PDF fans out into 3 distinct embedding node
+              types. The parser runs once; each node type gets its own
+              format function, embedding, and target table.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid columns={{ initial: "1", md: "3" }} gap="4">
+          {nodeTypeBreakdown.map((nt, i) => (
+            <ScrollReveal key={nt.nodeType} delay={i * 60}>
               <Flex
                 direction="column"
                 gap="3"
                 p="4"
                 className="deep-dive-card"
+                style={{ height: "100%" }}
               >
                 <Flex align="center" gap="3">
                   <div
                     className="deep-dive-icon"
-                    style={{ background: intent.bg, color: intent.color }}
+                    style={{ background: nt.bg, color: nt.color }}
                   >
-                    <intent.icon size={18} />
+                    <nt.icon size={18} />
                   </div>
-                  <Text
-                    size="3"
-                    weight="bold"
-                    style={{
-                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                      color: intent.color,
-                    }}
-                  >
-                    {intent.name}
+                  <Text size="3" weight="bold">
+                    {nt.nodeType}
                   </Text>
                 </Flex>
 
@@ -2477,33 +3126,302 @@ export default function HowItWorksPage() {
                   color="gray"
                   style={{ lineHeight: 1.55 }}
                 >
-                  {intent.description}
+                  {nt.description}
                 </Text>
 
-                <Text
-                  size="1"
-                  style={{
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    fontSize: "11px",
-                    color: "var(--gray-10)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {intent.strategy}
-                </Text>
+                <Flex gap="2" wrap="wrap">
+                  <span className="arch-tag">{nt.table}</span>
+                  <span className="arch-tag">{nt.cardinality}</span>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+      </Box>
 
-                <Flex justify="between" align="center">
-                  <span className="arch-tag">k = {intent.k}</span>
+      {/* ── Embedding Formatters ── */}
+      <Box
+        id="embedding-formatters"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--violet-9)",
+                fontSize: "11px",
+              }}
+            >
+              Vector Space
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Embedding Formatters
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Each entity type has a dedicated format function that builds a
+              deterministic clinical text string before BAAI/bge-large-en-v1.5
+              encodes it into 1024 dimensions locally via FastEmbed (ONNX
+              Runtime, zero API cost). Python handles blood data; TypeScript
+              handles user-entered entities.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid columns={{ initial: "1", sm: "2", lg: "3" }} gap="4">
+          {embeddingFormats.map((ef, i) => (
+            <ScrollReveal key={ef.entity} delay={i * 50}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <Flex align="center" justify="between">
+                  <Flex align="center" gap="3">
+                    <div
+                      className="deep-dive-icon"
+                      style={{ background: ef.bg, color: ef.color }}
+                    >
+                      <ef.icon size={18} />
+                    </div>
+                    <Text size="3" weight="bold">
+                      {ef.entity}
+                    </Text>
+                  </Flex>
+                  <span className="arch-tag" style={{ fontSize: "10px" }}>
+                    {ef.runtime}
+                  </span>
+                </Flex>
+
+                <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem", lineHeight: 1.5 }}>
+                  <code>{ef.template.replace(/\\n/g, "\n")}</code>
+                </pre>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* ── Embedding Pipeline Stages ── */}
+      <Box
+        id="embedding-pipeline"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--amber-9)",
+                fontSize: "11px",
+              }}
+            >
+              Vector Space
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Embedding Pipeline Stages
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Every entity — whether parsed from a blood test PDF or entered
+              via a CRUD form — flows through the same 5-stage pipeline to
+              become a searchable 1024-dim vector in pgvector.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          style={{ margin: "0 auto" }}
+          mb="5"
+        >
+          {embeddingPipelineSteps.map((ps, i) => (
+            <ScrollReveal key={ps.step} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <div className="synthesis-rule-num" style={{ color: ps.color, borderColor: ps.color }}>
+                  {ps.step}
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {ps.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {ps.description}
+                  </Text>
                   <Text
                     size="1"
                     style={{
-                      fontStyle: "italic",
-                      color: "var(--gray-9)",
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
                       fontSize: "11px",
+                      color: ps.color,
+                      opacity: 0.85,
+                      marginTop: 2,
                     }}
                   >
-                    &ldquo;{intent.example}&rdquo;
+                    {ps.code}
                   </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={300}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">BAAI/bge-large-en-v1.5</span>
+            <span className="arch-tag">1024 dims (local ONNX)</span>
+            <span className="arch-tag">ON CONFLICT upsert</span>
+            <span className="arch-tag">BTREE user_id index</span>
+            <span className="arch-tag">exact cosine scan</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Dual Ingestion Paths ── */}
+      <Box
+        id="ingestion-paths"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Ingestion
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Dual Ingestion Paths
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Blood data flows through a LlamaIndex IngestionPipeline in
+              Python; user-entered entities use direct embed-and-upsert in
+              TypeScript. Both paths converge on the same pgvector tables
+              and BAAI/bge-large-en-v1.5 model (local ONNX).
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid columns={{ initial: "1", md: "2" }} gap="4">
+          {ingestionPaths.map((ip, i) => (
+            <ScrollReveal key={ip.runtime} delay={i * 80}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <Flex align="center" justify="between">
+                  <Flex align="center" gap="3">
+                    <div
+                      className="deep-dive-icon"
+                      style={{ background: ip.bg, color: ip.color }}
+                    >
+                      <ip.icon size={18} />
+                    </div>
+                    <div>
+                      <Text size="3" weight="bold">
+                        {ip.title}
+                      </Text>
+                      <Text
+                        size="1"
+                        style={{
+                          fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                          fontSize: "11px",
+                          color: "var(--gray-9)",
+                        }}
+                      >
+                        {ip.trigger}
+                      </Text>
+                    </div>
+                  </Flex>
+                  <span className="arch-tag" style={{ fontSize: "10px" }}>
+                    {ip.runtime}
+                  </span>
+                </Flex>
+
+                <Flex direction="column" gap="1" style={{ paddingLeft: 4 }}>
+                  {ip.steps.map((step, si) => (
+                    <Flex key={si} align="start" gap="2">
+                      <Text
+                        size="1"
+                        style={{
+                          color: ip.color,
+                          fontWeight: 700,
+                          fontSize: "11px",
+                          minWidth: 14,
+                        }}
+                      >
+                        {si + 1}.
+                      </Text>
+                      <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                        {step}
+                      </Text>
+                    </Flex>
+                  ))}
+                </Flex>
+
+                <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem", lineHeight: 1.5 }}>
+                  <code>{ip.code}</code>
+                </pre>
+
+                <Flex gap="2" wrap="wrap">
+                  {ip.entities.map((e) => (
+                    <span key={e} className="arch-tag">{e}</span>
+                  ))}
                 </Flex>
               </Flex>
             </ScrollReveal>
@@ -2516,6 +3434,7 @@ export default function HowItWorksPage() {
         id="clinical-ratios"
         py="9"
         px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
       >
         <ScrollReveal>
           <Flex direction="column" align="center" gap="2" mb="7">
@@ -2622,6 +3541,785 @@ export default function HowItWorksPage() {
             </ScrollReveal>
           ))}
         </Grid>
+      </Box>
+
+      {/* ── Health-State Trajectory ── */}
+      <Box
+        id="trajectory-pipeline"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--violet-9)",
+                fontSize: "11px",
+              }}
+            >
+              Longitudinal Analysis
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Health-State Trajectory Pipeline
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Each blood test becomes a 1024-dim health state. Cosine
+              similarity measures stability between states, velocity
+              tracks rate-of-change per day, and Qwen classifies the
+              overall direction as improving, stable, or deteriorating.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          style={{ maxWidth: 720, margin: "0 auto" }}
+          mb="5"
+        >
+          {trajectoryPipeline.map((tp, i) => (
+            <ScrollReveal key={tp.step} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <div className="synthesis-rule-num" style={{ color: tp.color, borderColor: tp.color }}>
+                  {tp.step}
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {tp.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {tp.description}
+                  </Text>
+                  <Text
+                    size="1"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                      color: tp.color,
+                      opacity: 0.85,
+                      marginTop: 2,
+                    }}
+                  >
+                    {tp.code}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        {/* ── Cosine Similarity Explainer ── */}
+        <ScrollReveal delay={280}>
+          <Box
+            mt="6"
+            mb="6"
+            p="5"
+            className="deep-dive-card"
+            style={{ maxWidth: 720, margin: "24px auto" }}
+          >
+            <Flex direction="column" gap="3">
+              <Heading size="4" style={{ letterSpacing: "-0.02em" }}>
+                What Is Cosine Similarity?
+              </Heading>
+              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
+                Cosine similarity measures how similar two vectors are by
+                looking at the angle between them, ignoring their length. The
+                result ranges from &minus;1 to 1, where 1 means identical
+                direction, 0 means unrelated, and &minus;1 means opposite.
+              </Text>
+              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
+                In this project, every piece of clinical text — a blood marker,
+                a condition, a symptom — gets converted into a 1024-number array
+                (a vector) by{" "}
+                <code style={{ fontSize: "12px", color: "var(--indigo-9)" }}>
+                  bge-large-en-v1.5
+                </code>
+                . When a user asks &ldquo;What is my cholesterol?&rdquo;, that
+                question also becomes a 1024-number array. Cosine similarity
+                then compares the question&rsquo;s vector against every stored
+                vector to find which ones point in the most similar direction —
+                meaning they&rsquo;re semantically related.
+              </Text>
+              <Text
+                size="2"
+                style={{
+                  color: "var(--gray-10)",
+                  lineHeight: 1.7,
+                  paddingLeft: "1rem",
+                  borderLeft: "2px solid var(--indigo-a4)",
+                }}
+              >
+                pgvector&rsquo;s{" "}
+                <code style={{ fontSize: "12px", color: "var(--indigo-9)" }}>
+                  &lt;=&gt;
+                </code>{" "}
+                operator computes <strong>cosine distance</strong> (which is{" "}
+                <code style={{ fontSize: "12px" }}>1 &minus; similarity</code>
+                ), so the code does{" "}
+                <code style={{ fontSize: "12px", color: "var(--indigo-9)" }}>
+                  1 - (embedding &lt;=&gt; query_vec)
+                </code>{" "}
+                to flip it back to similarity. A score near 1.0 means the stored
+                text is highly relevant to the query; anything below 0.3 is
+                filtered out.
+              </Text>
+              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
+                <strong style={{ color: "var(--gray-12)" }}>
+                  Concrete example:
+                </strong>{" "}
+                if a user asks &ldquo;How is my kidney function?&rdquo;, the
+                query vector will land close to vectors for BUN, creatinine, and
+                BUN/Creatinine ratio entries — because the embedding model
+                learned that these concepts are semantically related — even
+                though the word &ldquo;kidney&rdquo; doesn&rsquo;t appear in the
+                stored text{" "}
+                <code style={{ fontSize: "11px", color: "var(--gray-9)" }}>
+                  &quot;Marker: BUN\nValue: 18 mg/dL\nFlag: normal&quot;
+                </code>
+                .
+              </Text>
+              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
+                The hybrid search weights it at{" "}
+                <strong style={{ color: "var(--blue-9)" }}>
+                  70% cosine similarity + 30% full-text search
+                </strong>
+                , so semantic meaning dominates but exact keyword matches still
+                boost relevance.
+              </Text>
+            </Flex>
+          </Box>
+        </ScrollReveal>
+
+        <ScrollReveal delay={300}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">Lacher et al. NHANES method</span>
+            <span className="arch-tag">CTE + pgvector &lt;=&gt;</span>
+            <span className="arch-tag">7 derived metrics</span>
+            <span className="arch-tag">Qwen qwen-plus</span>
+            <span className="arch-tag">temperature 0.3</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Intent Classification Matrix ── */}
+      <Box
+        id="intent-matrix"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--indigo-9)",
+                fontSize: "11px",
+              }}
+            >
+              Triage Node
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Intent Classification Matrix
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              Qwen 2.5 (local, via mlx_lm.server) classifies every query into one of 9 intent classes.
+              Each intent routes to a LlamaIndex BaseRetriever subclass with
+              confidence-scaled top-k limits via build_retriever_for_intent.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", lg: "4" }}
+          gap="4"
+        >
+          {intents.map((intent, i) => (
+            <ScrollReveal key={intent.name} delay={i * 50}>
+              <Flex
+                direction="column"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+              >
+                <Flex align="center" gap="3">
+                  <div
+                    className="deep-dive-icon"
+                    style={{ background: intent.bg, color: intent.color }}
+                  >
+                    <intent.icon size={18} />
+                  </div>
+                  <Text
+                    size="3"
+                    weight="bold"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      color: intent.color,
+                    }}
+                  >
+                    {intent.name}
+                  </Text>
+                </Flex>
+
+                <Text
+                  size="2"
+                  color="gray"
+                  style={{ lineHeight: 1.55 }}
+                >
+                  {intent.description}
+                </Text>
+
+                <Text
+                  size="1"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "11px",
+                    color: "var(--gray-10)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {intent.strategy}
+                </Text>
+
+                <Flex justify="between" align="center">
+                  <span className="arch-tag">k = {intent.k}</span>
+                  <Text
+                    size="1"
+                    style={{
+                      fontStyle: "italic",
+                      color: "var(--gray-9)",
+                      fontSize: "11px",
+                    }}
+                  >
+                    &ldquo;{intent.example}&rdquo;
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* ── Triage Prompt ── */}
+      <Box
+        id="triage-prompt"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--indigo-9)",
+                fontSize: "11px",
+              }}
+            >
+              Triage Node Internals
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Triage Prompt &amp; Intent Parsing
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              The TRIAGE_SYSTEM prompt classifies every query into one of 8
+              intents. JSON output is parsed with markdown-aware cleanup
+              and a graceful fallback chain.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <pre className="pg-code-block" style={{ margin: "0 auto 2rem" }}>
+            <code>{`// TRIAGE_SYSTEM prompt (verbatim)
+"You are a clinical query classifier for a blood marker
+intelligence system.
+
+Classify the user's query into exactly ONE intent:
+- markers:        Blood marker values, levels, ranges, flags
+- trajectory:     Trends over time, velocity, improving/deteriorating
+- conditions:     Health conditions, diseases (NOT to diagnose)
+- medications:    Drugs, dosages, drug-biomarker interactions
+- symptoms:       Symptoms and their relation to markers
+- appointments:   Scheduling, upcoming visits, providers
+- general_health: Broad questions spanning multiple categories
+- safety_refusal: Diagnosis/prescription requests, out-of-scope
+
+Also extract entity names (marker, condition, medication names).
+
+Respond ONLY with JSON:
+{\\"intent\\": \\"...\\", \\"confidence\\": 0.0-1.0, \\"entities\\": [\\"...\\"]}"
+`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="3" style={{ margin: "0 auto" }}>
+          {triageSteps.map((ts, i) => (
+            <ScrollReveal key={ts.step} delay={i * 50}>
+              <Flex
+                className="deep-dive-card"
+                gap="3"
+                p="3"
+                align="start"
+              >
+                <div className="synthesis-rule-num" style={{ color: ts.color, borderColor: ts.color }}>
+                  {ts.step}
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {ts.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {ts.description}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+      </Box>
+
+      {/* ── Multi-Search Fan-Out ── */}
+      <Box
+        id="multi-search"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--pink-9)",
+                fontSize: "11px",
+              }}
+            >
+              Retrieval Engine
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Multi-Search Fan-Out
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              A single embedding of the user query fans out to all 6
+              entity tables in parallel. Markers use hybrid scoring
+              (0.7 cosine + 0.3 FTS), all others use pure vector search
+              with a 0.3 similarity threshold. Results are deduplicated
+              and merged into a unified MultiSearchResult.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", sm: "2", md: "3" }}
+          gap="3"
+          style={{ maxWidth: 860, margin: "0 auto" }}
+          mb="5"
+        >
+          {multiSearchFanOut.map((ms, i) => (
+            <ScrollReveal key={ms.table} delay={i * 50}>
+              <Flex
+                direction="column"
+                gap="2"
+                p="3"
+                className="deep-dive-card"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "11px",
+                    color: ms.color,
+                  }}
+                >
+                  {ms.table}
+                </Text>
+                <Flex gap="2" align="center">
+                  <Text
+                    size="1"
+                    style={{
+                      padding: "1px 6px",
+                      borderRadius: 4,
+                      background: `color-mix(in srgb, ${ms.color} 14%, transparent)`,
+                      color: ms.color,
+                      fontSize: "10px",
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    }}
+                  >
+                    {ms.scoring}
+                  </Text>
+                </Flex>
+                <Flex gap="4">
+                  <Text size="1" color="gray" style={{ fontSize: "10px" }}>
+                    threshold: {ms.threshold}
+                  </Text>
+                  <Text size="1" color="gray" style={{ fontSize: "10px" }}>
+                    limit: {ms.limit}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={320}>
+          <pre className="pg-code-block" style={{ maxWidth: 700, margin: "0 auto" }}>
+            <code>{`# routes/search.py — hybrid scoring (markers only)
+combined_score = (
+  0.3 * ts_rank(to_tsvector('english', content),
+                 plainto_tsquery('english', :query))
++ 0.7 * (1 - (embedding <=> :query_vec))
+)
+# All other tables: pure cosine similarity
+# 1 - (embedding <=> :query_vec) >= 0.3 threshold`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={360}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">1 embedding → 6 parallel queries</span>
+            <span className="arch-tag">hybrid for markers</span>
+            <span className="arch-tag">vector for entities</span>
+            <span className="arch-tag">MultiSearchResult</span>
+            <span className="arch-tag">x-api-key auth</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Context Assembly Pipeline ── */}
+      <Box
+        id="context-assembly"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Retrieve → Synthesize
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Context Assembly Pipeline
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              How retrieved chunks become a synthesis prompt. 5 steps from
+              raw search results to a temperature-0.1 LLM call with
+              citation extraction.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex direction="column" gap="4" style={{ margin: "0 auto" }}>
+          {contextSteps.map((cs, i) => (
+            <ScrollReveal key={cs.step} delay={i * 60}>
+              <Flex
+                className="deep-dive-card"
+                gap="3"
+                p="4"
+                align="start"
+              >
+                <div className="synthesis-rule-num" style={{ color: cs.color, borderColor: cs.color }}>
+                  {cs.step}
+                </div>
+                <Flex direction="column" gap="2" style={{ flex: 1 }}>
+                  <Text size="3" weight="bold">
+                    {cs.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
+                    {cs.description}
+                  </Text>
+                  {cs.code && (
+                    <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem" }}>
+                      <code>{cs.code}</code>
+                    </pre>
+                  )}
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+      </Box>
+
+      {/* ── Synthesis Prompt Rules ── */}
+      <Box
+        id="synthesis-rules"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--blue-9)",
+                fontSize: "11px",
+              }}
+            >
+              Synthesize Node
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Synthesis Prompt Rules
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 660, lineHeight: 1.65 }}
+            >
+              The SYNTHESIS_SYSTEM prompt enforces 7 clinical rules at
+              generation time. Temperature is set to 0.1 for clinical
+              consistency. Chat history is limited to 6 items (3 turns).
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        {/* ── Derived Ratios Engine ── */}
+        <ScrollReveal delay={80}>
+          <Flex direction="column" gap="3" mb="7">
+            <Flex align="center" gap="2" mb="2">
+              <div
+                className="deep-dive-icon"
+                style={{ background: "color-mix(in srgb, var(--blue-9) 18%, transparent)", color: "var(--blue-9)" }}
+              >
+                <BarChart3 size={18} />
+              </div>
+              <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+                Derived Ratios Engine
+              </Heading>
+              <Text size="1" color="gray" ml="2">
+                7 peer-reviewed ratios computed per blood test
+              </Text>
+            </Flex>
+
+            <Box className="deep-dive-card" p="0" style={{ overflow: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "var(--font-mono, 'SF Mono', monospace)" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--gray-a4)" }}>
+                    {["Ratio", "Formula", "Optimal", "Borderline", "Elevated", "Reference"].map((h) => (
+                      <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--gray-9)", fontWeight: 600 }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { ratio: "TG/HDL Ratio", formula: "Triglycerides / HDL", optimal: "< 2.0", borderline: "2.0 – 3.5", elevated: "> 3.5", ref: "McLaughlin et al." },
+                    { ratio: "TC/HDL Ratio", formula: "Total Cholesterol / HDL", optimal: "< 4.0", borderline: "4.0 – 5.0", elevated: "> 5.0", ref: "Castelli et al." },
+                    { ratio: "HDL/LDL Ratio", formula: "HDL / LDL", optimal: "> 0.4", borderline: "0.3 – 0.4", elevated: "< 0.3", ref: "Millán et al." },
+                    { ratio: "NLR", formula: "Neutrophils / Lymphocytes", optimal: "1.0 – 3.0", borderline: "3.0 – 5.0", elevated: "> 5.0", ref: "Fest et al." },
+                    { ratio: "De Ritis Ratio", formula: "AST / ALT", optimal: "0.8 – 1.5", borderline: "1.5 – 2.0", elevated: "> 2.0", ref: "De Ritis et al." },
+                    { ratio: "BUN/Creatinine", formula: "BUN / Creatinine", optimal: "10 – 20", borderline: "20 – 25", elevated: "> 25", ref: "Hosten et al." },
+                    { ratio: "TyG Index", formula: "ln(TG × Glucose × 0.5)", optimal: "< 8.5", borderline: "8.5 – 9.0", elevated: "> 9.0", ref: "Simental-Mendía" },
+                  ].map((r, i) => (
+                    <tr key={r.ratio} style={{ borderBottom: i < 6 ? "1px solid var(--gray-a3)" : "none" }}>
+                      <td style={{ padding: "9px 14px", fontWeight: 600, color: "var(--gray-12)" }}>{r.ratio}</td>
+                      <td style={{ padding: "9px 14px", color: "var(--gray-10)" }}>{r.formula}</td>
+                      <td style={{ padding: "9px 14px" }}><span className="threshold-pill threshold-optimal">{r.optimal}</span></td>
+                      <td style={{ padding: "9px 14px" }}><span className="threshold-pill threshold-borderline">{r.borderline}</span></td>
+                      <td style={{ padding: "9px 14px" }}><span className="threshold-pill threshold-elevated">{r.elevated}</span></td>
+                      <td style={{ padding: "9px 14px", color: "var(--gray-9)", fontSize: "11px" }}>{r.ref}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Box>
+          </Flex>
+        </ScrollReveal>
+
+        {/* ── Organ System Mapping ── */}
+        <ScrollReveal delay={160}>
+          <Flex direction="column" gap="3" mb="7">
+            <Flex align="center" gap="2" mb="2">
+              <div
+                className="deep-dive-icon"
+                style={{ background: "color-mix(in srgb, var(--crimson-9) 18%, transparent)", color: "var(--crimson-9)" }}
+              >
+                <Activity size={18} />
+              </div>
+              <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+                Organ System Mapping
+              </Heading>
+              <Text size="1" color="gray" ml="2">
+                Elevated ratios map to affected organ systems
+              </Text>
+            </Flex>
+
+            <Grid columns={{ initial: "1", sm: "2", md: "5" }} gap="3">
+              {[
+                { system: "Metabolic", trigger: "TG/HDL or TyG elevated", signal: "Insulin resistance", color: "var(--amber-9)", icon: Zap },
+                { system: "Cardiovascular", trigger: "TC/HDL or low HDL/LDL", signal: "Atherogenic risk", color: "var(--crimson-9)", icon: Heart },
+                { system: "Inflammatory", trigger: "NLR elevated", signal: "Infection / stress / malignancy", color: "var(--orange-9)", icon: AlertTriangle },
+                { system: "Renal", trigger: "BUN/Creatinine elevated", signal: "Pre-renal vs intrinsic", color: "var(--green-9)", icon: FlaskConical },
+                { system: "Hepatic", trigger: "De Ritis elevated", signal: "Alcoholic / cardiac origin", color: "var(--violet-9)", icon: Activity },
+              ].map((os, i) => (
+                <ScrollReveal key={os.system} delay={160 + i * 50}>
+                  <Flex
+                    direction="column"
+                    gap="2"
+                    p="4"
+                    className="deep-dive-card"
+                    style={{ height: "100%" }}
+                  >
+                    <div
+                      className="deep-dive-icon"
+                      style={{
+                        background: `color-mix(in srgb, ${os.color} 18%, transparent)`,
+                        color: os.color,
+                      }}
+                    >
+                      <os.icon size={18} />
+                    </div>
+                    <Text size="2" weight="bold">{os.system}</Text>
+                    <Text size="1" style={{ fontFamily: "var(--font-mono, 'SF Mono', monospace)", fontSize: "11px", color: os.color }}>
+                      {os.trigger}
+                    </Text>
+                    <Text size="1" color="gray" style={{ lineHeight: 1.45 }}>
+                      {os.signal}
+                    </Text>
+                  </Flex>
+                </ScrollReveal>
+              ))}
+            </Grid>
+          </Flex>
+        </ScrollReveal>
+
+        {/* ── Clinical Rules ── */}
+        <ScrollReveal delay={240}>
+          <Flex align="center" gap="2" mb="3">
+            <div
+              className="deep-dive-icon"
+              style={{ background: "color-mix(in srgb, var(--indigo-9) 18%, transparent)", color: "var(--indigo-9)" }}
+            >
+              <ShieldCheck size={18} />
+            </div>
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              Clinical Rules
+            </Heading>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid columns={{ initial: "1", md: "2" }} gap="3" mb="5">
+          {synthesisRules.map((sr, i) => (
+            <ScrollReveal key={sr.num} delay={260 + i * 50}>
+              <Flex
+                align="start"
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                style={{ height: "100%" }}
+              >
+                <div className="synthesis-rule-num" style={{ color: sr.color, borderColor: sr.color }}>
+                  {sr.num}
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {sr.rule}
+                  </Text>
+                  <Text
+                    size="2"
+                    color="gray"
+                    style={{ lineHeight: 1.55 }}
+                  >
+                    {sr.detail}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={600}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="3">
+            <span className="arch-tag">temperature = 0.1</span>
+            <span className="arch-tag">chat_history[-6:]</span>
+            <span className="arch-tag">context joined by ---</span>
+            <span className="arch-tag">12 citation authors</span>
+            <span className="arch-tag">SAFETY_REFUSAL_RESPONSE fallback</span>
+          </Flex>
+        </ScrollReveal>
       </Box>
 
       {/* ── Guard Safety Protocol ── */}
@@ -2909,11 +4607,12 @@ user: """
         </Grid>
       </Box>
 
-      {/* ── 3-Tier Marker Extraction ── */}
+      {/* ── Safety Guard Rules (detailed) ── */}
       <Box
-        id="marker-extraction"
+        id="guard-rules"
         py="9"
         px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
       >
         <ScrollReveal>
           <Flex direction="column" align="center" gap="2" mb="7">
@@ -2923,298 +4622,29 @@ user: """
               style={{
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
-                color: "var(--orange-9)",
+                color: "var(--crimson-9)",
                 fontSize: "11px",
               }}
             >
-              Ingestion Node
+              Post-Generation Audit
             </Text>
             <Heading
               size="7"
               align="center"
               style={{ letterSpacing: "-0.03em" }}
             >
-              3-Tier Marker Extraction
+              5-Rule Safety Guard
             </Heading>
             <Text
               size="2"
               color="gray"
               align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
             >
-              BloodTestNodeParser runs a cascading extraction strategy: if
-              Tier 1 finds markers, Tiers 2–3 are skipped. Results are
-              deduplicated by marker name (first occurrence wins).
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        {/* ── Cascading flow indicator ── */}
-        <ScrollReveal delay={40}>
-          <Flex align="center" justify="center" gap="3" mb="5">
-            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--gray-9)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              PDF ingested
-            </Text>
-            <div style={{ width: 32, height: 1, background: "var(--gray-a6)" }} />
-            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--orange-9)" }}>
-              Tier 1
-            </Text>
-            <div className="cascade-arrow" />
-            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--blue-9)" }}>
-              Tier 2
-            </Text>
-            <div className="cascade-arrow" />
-            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--crimson-9)" }}>
-              Tier 3
-            </Text>
-            <div style={{ width: 32, height: 1, background: "var(--gray-a6)" }} />
-            <Text size="1" weight="bold" style={{ fontSize: "11px", color: "var(--green-9)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              Flagged markers
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        {/* ── Tier cards — full-width 3-column grid ── */}
-        <Grid columns={{ initial: "1", md: "3" }} gap="4">
-          {extractionTiers.map((t, i) => (
-            <ScrollReveal key={t.tier} delay={i * 80}>
-              <Flex
-                direction="column"
-                gap="3"
-                p="5"
-                className="deep-dive-card extraction-tier-card"
-                style={{ height: "100%", borderTop: `2px solid ${t.color}` }}
-              >
-                <Flex align="center" gap="3">
-                  <div className="extraction-tier-badge" style={{ color: t.color, borderColor: t.color }}>
-                    {t.tier}
-                  </div>
-                  <div
-                    className="deep-dive-icon"
-                    style={{ background: t.bg, color: t.color }}
-                  >
-                    <t.icon size={18} />
-                  </div>
-                  <Flex direction="column" gap="0">
-                    <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
-                      {t.title}
-                    </Heading>
-                    <Text size="1" style={{ color: t.color, fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      {i === 0 ? "Primary" : i === 1 ? "Secondary" : "Last resort"}
-                    </Text>
-                  </Flex>
-                </Flex>
-
-                <Text
-                  size="2"
-                  color="gray"
-                  style={{ lineHeight: 1.6, flex: 1 }}
-                >
-                  {t.description}
-                </Text>
-
-                <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem" }}>
-                  <code>{t.pattern}</code>
-                </pre>
-
-                <Flex align="center" gap="2" style={{ padding: "6px 10px", borderRadius: 6, background: "var(--gray-a2)" }}>
-                  <ShieldCheck size={12} style={{ color: "var(--gray-9)", flexShrink: 0 }} />
-                  <Text
-                    size="1"
-                    style={{
-                      color: "var(--gray-9)",
-                      fontSize: "11px",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    {t.validation}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Grid>
-
-        {/* ── Flag Computation — full-width banner ── */}
-        <ScrollReveal delay={280}>
-          <Flex
-            direction={{ initial: "column", md: "row" }}
-            gap="5"
-            p="5"
-            align={{ initial: "start", md: "center" }}
-            className="deep-dive-card"
-            style={{ marginTop: "var(--space-4)", borderLeft: "3px solid var(--green-9)" }}
-          >
-            <Flex align="center" gap="3" style={{ flexShrink: 0 }}>
-              <div
-                className="deep-dive-icon"
-                style={{ background: "var(--green-a3)", color: "var(--green-9)" }}
-              >
-                <ShieldCheck size={18} />
-              </div>
-              <Flex direction="column" gap="0">
-                <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
-                  Flag Computation
-                </Heading>
-                <Text size="1" color="gray" style={{ lineHeight: 1.5, maxWidth: 280 }}>
-                  Each marker&apos;s numeric value is compared against its parsed
-                  reference range.
-                </Text>
-              </Flex>
-            </Flex>
-
-            <Grid columns={{ initial: "1", sm: "2", md: "4" }} gap="2" style={{ flex: 1 }}>
-              {flagRules.map((f) => (
-                <Flex
-                  key={f.condition}
-                  direction="column"
-                  gap="1"
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    background: "var(--gray-a2)",
-                    border: "1px solid var(--gray-a3)",
-                  }}
-                >
-                  <Text
-                    size="1"
-                    weight="bold"
-                    style={{ fontSize: "11px", color: "var(--gray-11)", whiteSpace: "nowrap" }}
-                  >
-                    {f.condition}
-                  </Text>
-                  <Text
-                    size="1"
-                    style={{
-                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                      fontSize: "11px",
-                      color: "var(--gray-9)",
-                    }}
-                  >
-                    {f.logic}
-                  </Text>
-                </Flex>
-              ))}
-            </Grid>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Embedding Formatters ── */}
-      <Box
-        id="embedding-formatters"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ background: "var(--gray-a2)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--violet-9)",
-                fontSize: "11px",
-              }}
-            >
-              Vector Space
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Embedding Formatters
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              Each entity type has a dedicated format function that builds a
-              deterministic clinical text string before BAAI/bge-large-en-v1.5
-              encodes it into 1024 dimensions locally via FastEmbed (ONNX
-              Runtime, zero API cost). Python handles blood data; TypeScript
-              handles user-entered entities.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Grid columns={{ initial: "1", sm: "2", lg: "3" }} gap="4">
-          {embeddingFormats.map((ef, i) => (
-            <ScrollReveal key={ef.entity} delay={i * 50}>
-              <Flex
-                direction="column"
-                gap="3"
-                p="4"
-                className="deep-dive-card"
-                style={{ height: "100%" }}
-              >
-                <Flex align="center" justify="between">
-                  <Flex align="center" gap="3">
-                    <div
-                      className="deep-dive-icon"
-                      style={{ background: ef.bg, color: ef.color }}
-                    >
-                      <ef.icon size={18} />
-                    </div>
-                    <Text size="3" weight="bold">
-                      {ef.entity}
-                    </Text>
-                  </Flex>
-                  <span className="arch-tag" style={{ fontSize: "10px" }}>
-                    {ef.runtime}
-                  </span>
-                </Flex>
-
-                <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem", lineHeight: 1.5 }}>
-                  <code>{ef.template.replace(/\\n/g, "\n")}</code>
-                </pre>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Grid>
-      </Box>
-
-      {/* ── Embedding Pipeline Stages ── */}
-      <Box
-        id="embedding-pipeline"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--amber-9)",
-                fontSize: "11px",
-              }}
-            >
-              Vector Space
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Embedding Pipeline Stages
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              Every entity — whether parsed from a blood test PDF or entered
-              via a CRUD form — flows through the same 5-stage pipeline to
-              become a searchable 1024-dim vector in pgvector.
+              Every synthesized response is audited by a separate local Qwen 2.5
+              LLM call before delivery. The guard node operates on a
+              fail-safe principle: if JSON parsing fails, the response is
+              treated as failed and disclaimers are injected.
             </Text>
           </Flex>
         </ScrollReveal>
@@ -3222,38 +4652,48 @@ user: """
         <Flex
           direction="column"
           gap="3"
-          style={{ margin: "0 auto" }}
           mb="5"
         >
-          {embeddingPipelineSteps.map((ps, i) => (
-            <ScrollReveal key={ps.step} delay={i * 50}>
+          {guardRulesDetailed.map((gr, i) => (
+            <ScrollReveal key={gr.rule} delay={i * 50}>
               <Flex
                 gap="3"
                 p="4"
                 className="deep-dive-card"
                 align="start"
               >
-                <div className="synthesis-rule-num" style={{ color: ps.color, borderColor: ps.color }}>
-                  {ps.step}
+                <div
+                  className="synthesis-rule-num"
+                  style={{ color: gr.color, borderColor: gr.color }}
+                >
+                  {gr.id}
                 </div>
                 <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                  <Text size="2" weight="bold">
-                    {ps.title}
-                  </Text>
+                  <Flex gap="2" align="center">
+                    <Text
+                      size="2"
+                      weight="bold"
+                      style={{
+                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                        color: gr.color,
+                      }}
+                    >
+                      {gr.rule}
+                    </Text>
+                  </Flex>
                   <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
-                    {ps.description}
+                    {gr.description}
                   </Text>
                   <Text
                     size="1"
                     style={{
-                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
                       fontSize: "11px",
-                      color: ps.color,
-                      opacity: 0.85,
+                      color: gr.color,
+                      opacity: 0.8,
                       marginTop: 2,
                     }}
                   >
-                    {ps.code}
+                    {gr.action}
                   </Text>
                 </Flex>
               </Flex>
@@ -3261,20 +4701,45 @@ user: """
           ))}
         </Flex>
 
-        <ScrollReveal delay={300}>
-          <Flex gap="3" wrap="wrap" justify="center">
-            <span className="arch-tag">BAAI/bge-large-en-v1.5</span>
-            <span className="arch-tag">1024 dims (local ONNX)</span>
-            <span className="arch-tag">ON CONFLICT upsert</span>
-            <span className="arch-tag">BTREE user_id index</span>
-            <span className="arch-tag">exact cosine scan</span>
+        <ScrollReveal delay={280}>
+          <pre className="pg-code-block">
+            <code>{`# graph.py — guard node (fail-safe)
+raw = _llm_call(GUARD_SYSTEM, audit_prompt)
+cleaned = re.sub(r"\`\`\`json\\s*|\\s*\`\`\`", "", raw).strip()
+
+try:
+    parsed = json.loads(cleaned)
+except json.JSONDecodeError:
+    # Fail-safe: treat parse failure as guard failure
+    parsed = {"passed": False, "issues": ["PARSE_FAILURE"]}
+
+passed = parsed.get("passed", False)  # defaults to False, not True
+
+if not passed:
+    # Append context-specific disclaimers
+    if "DIAGNOSIS" in issues:
+        answer += "\\n\\n⚠️ For educational purposes only..."
+    if "PRESCRIPTION" in issues:
+        answer += "\\n\\n⚠️ Cannot recommend medications..."
+    if "PHYSICIAN_REFERRAL" in issues:
+        answer += "\\n\\n⚠️ Consult your physician..."`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={320}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">local Qwen 2.5 auditor</span>
+            <span className="arch-tag">fail-safe = passed:false</span>
+            <span className="arch-tag">JSON parse guard</span>
+            <span className="arch-tag">disclaimer injection</span>
+            <span className="arch-tag">safety_refusal bypass</span>
           </Flex>
         </ScrollReveal>
       </Box>
 
-      {/* ── Node Type Fan-Out ── */}
+      {/* ── Cognitive Protocol Tracking ── */}
       <Box
-        id="node-type-fanout"
+        id="cognitive-protocols"
         py="9"
         px={{ initial: "4", md: "6", lg: "9" }}
         style={{ background: "var(--gray-a2)" }}
@@ -3287,18 +4752,18 @@ user: """
               style={{
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
-                color: "var(--orange-9)",
+                color: "var(--indigo-9)",
                 fontSize: "11px",
               }}
             >
-              Node Types
+              Brain Health
             </Text>
             <Heading
               size="7"
               align="center"
               style={{ letterSpacing: "-0.03em" }}
             >
-              BloodTestNodeParser Output
+              Cognitive Protocol Tracking
             </Heading>
             <Text
               size="2"
@@ -3306,372 +4771,135 @@ user: """
               align="center"
               style={{ maxWidth: 560, lineHeight: 1.65 }}
             >
-              Each uploaded PDF fans out into 3 distinct embedding node
-              types. The parser runs once; each node type gets its own
-              format function, embedding, and target table.
+              Health protocols track supplements with dosage, frequency,
+              and mechanism of action across 7 cognitive target areas.
+              Baselines and check-ins create a time series of 5 cognitive
+              dimensions scored 0–10 with delta computation.
             </Text>
           </Flex>
         </ScrollReveal>
 
-        <Grid columns={{ initial: "1", md: "3" }} gap="4">
-          {nodeTypeBreakdown.map((nt, i) => (
-            <ScrollReveal key={nt.nodeType} delay={i * 60}>
+        <Text
+          size="1"
+          weight="bold"
+          align="center"
+          mb="3"
+          style={{
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            fontSize: "10px",
+            color: "var(--gray-9)",
+            display: "block",
+          }}
+        >
+          7 Target Areas
+        </Text>
+
+        <Grid
+          columns={{ initial: "2", sm: "3", md: "4" }}
+          gap="3"
+          style={{ maxWidth: 860, margin: "0 auto" }}
+          mb="6"
+        >
+          {cognitiveTargetAreas.map((ct, i) => (
+            <ScrollReveal key={ct.area} delay={i * 40}>
               <Flex
                 direction="column"
-                gap="3"
-                p="4"
+                align="center"
+                gap="2"
+                p="3"
                 className="deep-dive-card"
-                style={{ height: "100%" }}
+                style={{ textAlign: "center" }}
               >
-                <Flex align="center" gap="3">
-                  <div
-                    className="deep-dive-icon"
-                    style={{ background: nt.bg, color: nt.color }}
-                  >
-                    <nt.icon size={18} />
-                  </div>
-                  <Text size="3" weight="bold">
-                    {nt.nodeType}
-                  </Text>
-                </Flex>
-
-                <Text
-                  size="2"
-                  color="gray"
-                  style={{ lineHeight: 1.55 }}
+                <div
+                  className="deep-dive-icon"
+                  style={{
+                    background: `color-mix(in srgb, ${ct.color} 18%, transparent)`,
+                    color: ct.color,
+                  }}
                 >
-                  {nt.description}
+                  <ct.icon size={18} />
+                </div>
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "11px",
+                    color: ct.color,
+                  }}
+                >
+                  {ct.area}
                 </Text>
-
-                <Flex gap="2" wrap="wrap">
-                  <span className="arch-tag">{nt.table}</span>
-                  <span className="arch-tag">{nt.cardinality}</span>
-                </Flex>
+                <Text size="1" color="gray" style={{ fontSize: "10px", lineHeight: 1.4 }}>
+                  {ct.description}
+                </Text>
               </Flex>
             </ScrollReveal>
           ))}
         </Grid>
-      </Box>
 
-      {/* ── Dual Ingestion Paths ── */}
-      <Box
-        id="ingestion-paths"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--green-9)",
-                fontSize: "11px",
-              }}
-            >
-              Ingestion
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Dual Ingestion Paths
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              Blood data flows through a LlamaIndex IngestionPipeline in
-              Python; user-entered entities use direct embed-and-upsert in
-              TypeScript. Both paths converge on the same pgvector tables
-              and BAAI/bge-large-en-v1.5 model (local ONNX).
-            </Text>
-          </Flex>
-        </ScrollReveal>
+        <Text
+          size="1"
+          weight="bold"
+          align="center"
+          mb="3"
+          style={{
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            fontSize: "10px",
+            color: "var(--gray-9)",
+            display: "block",
+          }}
+        >
+          5 Score Dimensions (0–10 Scale)
+        </Text>
 
-        <Grid columns={{ initial: "1", md: "2" }} gap="4">
-          {ingestionPaths.map((ip, i) => (
-            <ScrollReveal key={ip.runtime} delay={i * 80}>
+        <Flex
+          gap="3"
+          wrap="wrap"
+          justify="center"
+          style={{ maxWidth: 700, margin: "0 auto" }}
+          mb="5"
+        >
+          {cognitiveScoreDimensions.map((cd, i) => (
+            <ScrollReveal key={cd.dimension} delay={i * 50 + 200}>
               <Flex
                 direction="column"
-                gap="3"
-                p="4"
+                align="center"
+                gap="1"
+                p="3"
                 className="deep-dive-card"
-                style={{ height: "100%" }}
+                style={{ textAlign: "center", minWidth: 120 }}
               >
-                <Flex align="center" justify="between">
-                  <Flex align="center" gap="3">
-                    <div
-                      className="deep-dive-icon"
-                      style={{ background: ip.bg, color: ip.color }}
-                    >
-                      <ip.icon size={18} />
-                    </div>
-                    <div>
-                      <Text size="3" weight="bold">
-                        {ip.title}
-                      </Text>
-                      <Text
-                        size="1"
-                        style={{
-                          fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                          fontSize: "11px",
-                          color: "var(--gray-9)",
-                        }}
-                      >
-                        {ip.trigger}
-                      </Text>
-                    </div>
-                  </Flex>
-                  <span className="arch-tag" style={{ fontSize: "10px" }}>
-                    {ip.runtime}
-                  </span>
-                </Flex>
-
-                <Flex direction="column" gap="1" style={{ paddingLeft: 4 }}>
-                  {ip.steps.map((step, si) => (
-                    <Flex key={si} align="start" gap="2">
-                      <Text
-                        size="1"
-                        style={{
-                          color: ip.color,
-                          fontWeight: 700,
-                          fontSize: "11px",
-                          minWidth: 14,
-                        }}
-                      >
-                        {si + 1}.
-                      </Text>
-                      <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
-                        {step}
-                      </Text>
-                    </Flex>
-                  ))}
-                </Flex>
-
-                <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem", lineHeight: 1.5 }}>
-                  <code>{ip.code}</code>
-                </pre>
-
-                <Flex gap="2" wrap="wrap">
-                  {ip.entities.map((e) => (
-                    <span key={e} className="arch-tag">{e}</span>
-                  ))}
-                </Flex>
+                <Text size="2" weight="bold">
+                  {cd.label}
+                </Text>
+                <Text size="1" color="gray" style={{ fontSize: "10px" }}>
+                  {cd.description}
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "10px",
+                    opacity: 0.6,
+                  }}
+                >
+                  {cd.dimension}
+                </Text>
               </Flex>
             </ScrollReveal>
           ))}
-        </Grid>
-      </Box>
+        </Flex>
 
-      {/* ── Synthesis Prompt Rules ── */}
-      <Box
-        id="synthesis-rules"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--blue-9)",
-                fontSize: "11px",
-              }}
-            >
-              Synthesize Node
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Synthesis Prompt Rules
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 660, lineHeight: 1.65 }}
-            >
-              The SYNTHESIS_SYSTEM prompt enforces 7 clinical rules at
-              generation time. Temperature is set to 0.1 for clinical
-              consistency. Chat history is limited to 6 items (3 turns).
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        {/* ── Derived Ratios Engine ── */}
-        <ScrollReveal delay={80}>
-          <Flex direction="column" gap="3" mb="7">
-            <Flex align="center" gap="2" mb="2">
-              <div
-                className="deep-dive-icon"
-                style={{ background: "color-mix(in srgb, var(--blue-9) 18%, transparent)", color: "var(--blue-9)" }}
-              >
-                <BarChart3 size={18} />
-              </div>
-              <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
-                Derived Ratios Engine
-              </Heading>
-              <Text size="1" color="gray" ml="2">
-                7 peer-reviewed ratios computed per blood test
-              </Text>
-            </Flex>
-
-            <Box className="deep-dive-card" p="0" style={{ overflow: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "var(--font-mono, 'SF Mono', monospace)" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--gray-a4)" }}>
-                    {["Ratio", "Formula", "Optimal", "Borderline", "Elevated", "Reference"].map((h) => (
-                      <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--gray-9)", fontWeight: 600 }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { ratio: "TG/HDL Ratio", formula: "Triglycerides / HDL", optimal: "< 2.0", borderline: "2.0 – 3.5", elevated: "> 3.5", ref: "McLaughlin et al." },
-                    { ratio: "TC/HDL Ratio", formula: "Total Cholesterol / HDL", optimal: "< 4.0", borderline: "4.0 – 5.0", elevated: "> 5.0", ref: "Castelli et al." },
-                    { ratio: "HDL/LDL Ratio", formula: "HDL / LDL", optimal: "> 0.4", borderline: "0.3 – 0.4", elevated: "< 0.3", ref: "Millán et al." },
-                    { ratio: "NLR", formula: "Neutrophils / Lymphocytes", optimal: "1.0 – 3.0", borderline: "3.0 – 5.0", elevated: "> 5.0", ref: "Fest et al." },
-                    { ratio: "De Ritis Ratio", formula: "AST / ALT", optimal: "0.8 – 1.5", borderline: "1.5 – 2.0", elevated: "> 2.0", ref: "De Ritis et al." },
-                    { ratio: "BUN/Creatinine", formula: "BUN / Creatinine", optimal: "10 – 20", borderline: "20 – 25", elevated: "> 25", ref: "Hosten et al." },
-                    { ratio: "TyG Index", formula: "ln(TG × Glucose × 0.5)", optimal: "< 8.5", borderline: "8.5 – 9.0", elevated: "> 9.0", ref: "Simental-Mendía" },
-                  ].map((r, i) => (
-                    <tr key={r.ratio} style={{ borderBottom: i < 6 ? "1px solid var(--gray-a3)" : "none" }}>
-                      <td style={{ padding: "9px 14px", fontWeight: 600, color: "var(--gray-12)" }}>{r.ratio}</td>
-                      <td style={{ padding: "9px 14px", color: "var(--gray-10)" }}>{r.formula}</td>
-                      <td style={{ padding: "9px 14px" }}><span className="threshold-pill threshold-optimal">{r.optimal}</span></td>
-                      <td style={{ padding: "9px 14px" }}><span className="threshold-pill threshold-borderline">{r.borderline}</span></td>
-                      <td style={{ padding: "9px 14px" }}><span className="threshold-pill threshold-elevated">{r.elevated}</span></td>
-                      <td style={{ padding: "9px 14px", color: "var(--gray-9)", fontSize: "11px" }}>{r.ref}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Box>
-          </Flex>
-        </ScrollReveal>
-
-        {/* ── Organ System Mapping ── */}
-        <ScrollReveal delay={160}>
-          <Flex direction="column" gap="3" mb="7">
-            <Flex align="center" gap="2" mb="2">
-              <div
-                className="deep-dive-icon"
-                style={{ background: "color-mix(in srgb, var(--crimson-9) 18%, transparent)", color: "var(--crimson-9)" }}
-              >
-                <Activity size={18} />
-              </div>
-              <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
-                Organ System Mapping
-              </Heading>
-              <Text size="1" color="gray" ml="2">
-                Elevated ratios map to affected organ systems
-              </Text>
-            </Flex>
-
-            <Grid columns={{ initial: "1", sm: "2", md: "5" }} gap="3">
-              {[
-                { system: "Metabolic", trigger: "TG/HDL or TyG elevated", signal: "Insulin resistance", color: "var(--amber-9)", icon: Zap },
-                { system: "Cardiovascular", trigger: "TC/HDL or low HDL/LDL", signal: "Atherogenic risk", color: "var(--crimson-9)", icon: Heart },
-                { system: "Inflammatory", trigger: "NLR elevated", signal: "Infection / stress / malignancy", color: "var(--orange-9)", icon: AlertTriangle },
-                { system: "Renal", trigger: "BUN/Creatinine elevated", signal: "Pre-renal vs intrinsic", color: "var(--green-9)", icon: FlaskConical },
-                { system: "Hepatic", trigger: "De Ritis elevated", signal: "Alcoholic / cardiac origin", color: "var(--violet-9)", icon: Activity },
-              ].map((os, i) => (
-                <ScrollReveal key={os.system} delay={160 + i * 50}>
-                  <Flex
-                    direction="column"
-                    gap="2"
-                    p="4"
-                    className="deep-dive-card"
-                    style={{ height: "100%" }}
-                  >
-                    <div
-                      className="deep-dive-icon"
-                      style={{
-                        background: `color-mix(in srgb, ${os.color} 18%, transparent)`,
-                        color: os.color,
-                      }}
-                    >
-                      <os.icon size={18} />
-                    </div>
-                    <Text size="2" weight="bold">{os.system}</Text>
-                    <Text size="1" style={{ fontFamily: "var(--font-mono, 'SF Mono', monospace)", fontSize: "11px", color: os.color }}>
-                      {os.trigger}
-                    </Text>
-                    <Text size="1" color="gray" style={{ lineHeight: 1.45 }}>
-                      {os.signal}
-                    </Text>
-                  </Flex>
-                </ScrollReveal>
-              ))}
-            </Grid>
-          </Flex>
-        </ScrollReveal>
-
-        {/* ── Clinical Rules ── */}
-        <ScrollReveal delay={240}>
-          <Flex align="center" gap="2" mb="3">
-            <div
-              className="deep-dive-icon"
-              style={{ background: "color-mix(in srgb, var(--indigo-9) 18%, transparent)", color: "var(--indigo-9)" }}
-            >
-              <ShieldCheck size={18} />
-            </div>
-            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
-              Clinical Rules
-            </Heading>
-          </Flex>
-        </ScrollReveal>
-
-        <Grid columns={{ initial: "1", md: "2" }} gap="3" mb="5">
-          {synthesisRules.map((sr, i) => (
-            <ScrollReveal key={sr.num} delay={260 + i * 50}>
-              <Flex
-                align="start"
-                gap="3"
-                p="4"
-                className="deep-dive-card"
-                style={{ height: "100%" }}
-              >
-                <div className="synthesis-rule-num" style={{ color: sr.color, borderColor: sr.color }}>
-                  {sr.num}
-                </div>
-                <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                  <Text size="2" weight="bold">
-                    {sr.rule}
-                  </Text>
-                  <Text
-                    size="2"
-                    color="gray"
-                    style={{ lineHeight: 1.55 }}
-                  >
-                    {sr.detail}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Grid>
-
-        <ScrollReveal delay={600}>
-          <Flex gap="3" wrap="wrap" justify="center" mt="3">
-            <span className="arch-tag">temperature = 0.1</span>
-            <span className="arch-tag">chat_history[-6:]</span>
-            <span className="arch-tag">context joined by ---</span>
-            <span className="arch-tag">12 citation authors</span>
-            <span className="arch-tag">SAFETY_REFUSAL_RESPONSE fallback</span>
+        <ScrollReveal delay={350}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">6 schema tables</span>
+            <span className="arch-tag">JSONB target_areas</span>
+            <span className="arch-tag">unique baseline per protocol</span>
+            <span className="arch-tag">check-in time series</span>
+            <span className="arch-tag">30-day rolling avg</span>
           </Flex>
         </ScrollReveal>
       </Box>
@@ -3681,7 +4909,7 @@ user: """
         id="runtime-bridge"
         py="9"
         px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ background: "var(--gray-a2)" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
       >
         <ScrollReveal>
           <Flex direction="column" align="center" gap="2" mb="7">
@@ -3808,11 +5036,128 @@ user: """
         </ScrollReveal>
       </Box>
 
-      {/* ── Context Assembly Pipeline ── */}
+      {/* ── LLM Resilience ── */}
       <Box
-        id="context-assembly"
+        id="llm-resilience"
         py="9"
         px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--amber-9)",
+                fontSize: "11px",
+              }}
+            >
+              Production Hardening
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              LLM Resilience &amp; Configuration
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 560, lineHeight: 1.65 }}
+            >
+              The llm_backend module wraps an OpenAI-compatible endpoint
+              with exponential backoff, singleton httpx clients, and
+              separate sync/async/streaming code paths.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "2", sm: "3", md: "6" }}
+          gap="3"
+          style={{ maxWidth: 960, margin: "0 auto" }}
+          mb="5"
+        >
+          {resilienceConfig.map((rc, i) => (
+            <ScrollReveal key={rc.label} delay={i * 40}>
+              <Flex
+                direction="column"
+                align="center"
+                gap="2"
+                p="3"
+                className="deep-dive-card"
+                style={{ textAlign: "center" }}
+              >
+                <div
+                  className="deep-dive-icon"
+                  style={{
+                    background: `color-mix(in srgb, ${rc.color} 18%, transparent)`,
+                    color: rc.color,
+                    width: 32,
+                    height: 32,
+                  }}
+                >
+                  <rc.icon size={16} />
+                </div>
+                <Text
+                  size="2"
+                  weight="bold"
+                  style={{
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    fontSize: "14px",
+                    color: rc.color,
+                  }}
+                >
+                  {rc.value}
+                </Text>
+                <Text size="1" weight="bold" style={{ fontSize: "11px" }}>
+                  {rc.label}
+                </Text>
+                <Text size="1" color="gray" style={{ fontSize: "10px", lineHeight: 1.4 }}>
+                  {rc.detail}
+                </Text>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={280}>
+          <pre className="pg-code-block" style={{ margin: "0 auto" }}>
+            <code>{`# llm_backend.py — retry loop (simplified)
+for attempt in range(MAX_RETRIES + 1):
+    try:
+        resp = client.post("/chat/completions", json=payload)
+        resp.raise_for_status()
+        break
+    except HTTPStatusError as exc:
+        if exc.response.status_code in {429, 502, 503, 504}:
+            time.sleep(2 ** (attempt + 1))  # 2s → 4s → 8s
+            continue
+        raise`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={320}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">OpenAI /v1/chat/completions</span>
+            <span className="arch-tag">httpx singleton</span>
+            <span className="arch-tag">sync + async + stream</span>
+            <span className="arch-tag">SSE [DONE] protocol</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Auth & Session Guard ── */}
+      <Box
+        id="auth-session"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
       >
         <ScrollReveal>
           <Flex direction="column" align="center" gap="2" mb="7">
@@ -3826,14 +5171,14 @@ user: """
                 fontSize: "11px",
               }}
             >
-              Retrieve → Synthesize
+              Security Layer
             </Text>
             <Heading
               size="7"
               align="center"
               style={{ letterSpacing: "-0.03em" }}
             >
-              Context Assembly Pipeline
+              Authentication &amp; Session Guard
             </Heading>
             <Text
               size="2"
@@ -3841,42 +5186,401 @@ user: """
               align="center"
               style={{ maxWidth: 560, lineHeight: 1.65 }}
             >
-              How retrieved chunks become a synthesis prompt. 5 steps from
-              raw search results to a temperature-0.1 LLM call with
-              citation extraction.
+              Better Auth manages OAuth providers and sessions in PostgreSQL.
+              Every server action passes through withAuth() — a 4-line guard
+              that validates the session token and returns the userId or
+              redirects to login.
             </Text>
           </Flex>
         </ScrollReveal>
 
-        <Flex direction="column" gap="4" style={{ margin: "0 auto" }}>
-          {contextSteps.map((cs, i) => (
-            <ScrollReveal key={cs.step} delay={i * 60}>
+        <Grid
+          columns={{ initial: "1", md: "2" }}
+          gap="4"
+          style={{ maxWidth: 860, margin: "0 auto" }}
+          mb="5"
+        >
+          {authLayers.map((al, i) => (
+            <ScrollReveal key={al.layer} delay={i * 60}>
               <Flex
-                className="deep-dive-card"
                 gap="3"
                 p="4"
+                className="deep-dive-card"
                 align="start"
               >
-                <div className="synthesis-rule-num" style={{ color: cs.color, borderColor: cs.color }}>
-                  {cs.step}
+                <div
+                  className="deep-dive-icon"
+                  style={{
+                    background: `color-mix(in srgb, ${al.color} 18%, transparent)`,
+                    color: al.color,
+                  }}
+                >
+                  <al.icon size={18} />
                 </div>
-                <Flex direction="column" gap="2" style={{ flex: 1 }}>
-                  <Text size="3" weight="bold">
-                    {cs.title}
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {al.layer}
                   </Text>
-                  <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
-                    {cs.description}
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {al.detail}
                   </Text>
-                  {cs.code && (
-                    <pre className="pg-code-block" style={{ maxWidth: "100%", fontSize: "0.72rem" }}>
-                      <code>{cs.code}</code>
-                    </pre>
-                  )}
+                  <Text
+                    size="1"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                      color: al.color,
+                      opacity: 0.8,
+                    }}
+                  >
+                    {al.tables}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={280}>
+          <pre className="pg-code-block" style={{ maxWidth: 600, margin: "0 auto" }}>
+            <code>{`// lib/auth-helpers.ts — server action guard
+export const withAuth = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) redirect("/auth/login");
+  return { userId: session.user.id, user: session.user };
+};`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={320}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">Better Auth</span>
+            <span className="arch-tag">4 auth tables</span>
+            <span className="arch-tag">IP + UserAgent tracking</span>
+            <span className="arch-tag">CASCADE on user delete</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── Compliance & Safety ── */}
+      <Box
+        id="compliance"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--crimson-9)",
+                fontSize: "11px",
+              }}
+            >
+              Compliance &amp; Safety
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              10-Layer Compliance Architecture
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
+            >
+              Healthcare data demands defense in depth. Every layer — from
+              authentication to schema constraints — is enforced at the
+              infrastructure level, not by convention. No single point of
+              failure can expose patient data.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid
+          columns={{ initial: "1", md: "2" }}
+          gap="4"
+          mb="7"
+        >
+          {complianceLayers.map((cl, i) => (
+            <ScrollReveal key={cl.title} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <div
+                  className="deep-dive-icon"
+                  style={{
+                    background: `color-mix(in srgb, ${cl.color} 18%, transparent)`,
+                    color: cl.color,
+                  }}
+                >
+                  <cl.icon size={18} />
+                </div>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {cl.title}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {cl.description}
+                  </Text>
+                  <Text
+                    size="1"
+                    style={{
+                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                      fontSize: "11px",
+                      color: cl.color,
+                      opacity: 0.85,
+                      marginTop: 2,
+                    }}
+                  >
+                    {cl.code}
+                  </Text>
+                  <Text
+                    size="1"
+                    color="gray"
+                    style={{ fontSize: "10px", opacity: 0.6 }}
+                  >
+                    {cl.source}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Grid>
+
+        <ScrollReveal delay={500}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">10 compliance layers</span>
+            <span className="arch-tag">22 user-scoped tables</span>
+            <span className="arch-tag">5 guard rules</span>
+            <span className="arch-tag">fail-safe defaults</span>
+            <span className="arch-tag">zero wildcard CORS</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── HIPAA Alignment ── */}
+      <Box
+        id="hipaa"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--green-9)",
+                fontSize: "11px",
+              }}
+            >
+              Regulatory Alignment
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              HIPAA Technical Safeguards
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
+            >
+              The HIPAA Security Rule (45 CFR §164.312) defines technical
+              safeguards for electronic protected health information (ePHI).
+              This is how the current implementation maps to each requirement.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          mb="5"
+        >
+          {hipaaAlignment.map((h, i) => (
+            <ScrollReveal key={h.rule} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: `color-mix(in srgb, ${h.color} 16%, transparent)`,
+                    color: h.color,
+                    fontSize: "10px",
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                >
+                  {h.status === "implemented" ? "IMPLEMENTED" : "PARTIAL"}
+                </Text>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {h.rule}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {h.detail}
+                  </Text>
                 </Flex>
               </Flex>
             </ScrollReveal>
           ))}
         </Flex>
+
+        <ScrollReveal delay={340}>
+          <Flex gap="3" wrap="wrap" justify="center">
+            <span className="arch-tag">5/6 implemented</span>
+            <span className="arch-tag">1/6 partial (audit trail)</span>
+            <span className="arch-tag">§164.312 Technical Safeguards</span>
+            <span className="arch-tag">§164.502 Minimum Necessary</span>
+          </Flex>
+        </ScrollReveal>
+      </Box>
+
+      {/* ── GDPR Alignment ── */}
+      <Box
+        id="gdpr"
+        py="9"
+        px={{ initial: "4", md: "6", lg: "9" }}
+        style={{ background: "var(--gray-a2)" }}
+      >
+        <ScrollReveal>
+          <Flex direction="column" align="center" gap="2" mb="7">
+            <Text
+              size="1"
+              weight="bold"
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--blue-9)",
+                fontSize: "11px",
+              }}
+            >
+              EU Data Protection
+            </Text>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              GDPR Alignment
+            </Heading>
+            <Text
+              size="2"
+              color="gray"
+              align="center"
+              style={{ maxWidth: 620, lineHeight: 1.65 }}
+            >
+              The General Data Protection Regulation defines rights for EU
+              data subjects. Health data qualifies as special category data
+              under Article 9, requiring explicit consent and enhanced
+              protection. This is the current implementation status.
+            </Text>
+          </Flex>
+        </ScrollReveal>
+
+        <Flex
+          direction="column"
+          gap="3"
+          mb="5"
+        >
+          {gdprAlignment.map((g, i) => (
+            <ScrollReveal key={g.right} delay={i * 50}>
+              <Flex
+                gap="3"
+                p="4"
+                className="deep-dive-card"
+                align="start"
+              >
+                <Text
+                  size="1"
+                  weight="bold"
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: `color-mix(in srgb, ${g.color} 16%, transparent)`,
+                    color: g.color,
+                    fontSize: "10px",
+                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                >
+                  {g.status === "implemented" ? "IMPLEMENTED" : "PARTIAL"}
+                </Text>
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text size="2" weight="bold">
+                    {g.right}
+                  </Text>
+                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
+                    {g.detail}
+                  </Text>
+                </Flex>
+              </Flex>
+            </ScrollReveal>
+          ))}
+        </Flex>
+
+        <ScrollReveal delay={340}>
+          <pre className="pg-code-block">
+            <code>{`// lib/auth-helpers.ts — withAuth() guard
+// Every server action that touches health data runs this first:
+
+export const withAuth = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) redirect("/auth/login");
+  return { userId: session.user.id, user: session.user };
+};
+
+// Usage in actions.ts:
+export async function sendChatMessage(messages) {
+  const { userId } = await withAuth();
+  // userId scopes all queries — no cross-user leakage
+  const res = await fetch(\`\${CHAT_API}/chat\`, {
+    body: JSON.stringify({ messages, user_id: userId }),
+  });
+}`}</code>
+          </pre>
+        </ScrollReveal>
+
+        <ScrollReveal delay={380}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+            <span className="arch-tag">4/6 implemented</span>
+            <span className="arch-tag">2/6 partial</span>
+            <span className="arch-tag">Art. 9 special category</span>
+            <span className="arch-tag">explicit consent</span>
+            <span className="arch-tag">CASCADE erasure</span>
+          </Flex>
+        </ScrollReveal>
       </Box>
 
       {/* ── Evaluation Framework ── */}
@@ -3884,7 +5588,7 @@ user: """
         id="evaluation"
         py="9"
         px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ background: "var(--gray-a2)" }}
+        style={{ borderTop: "1px solid var(--gray-a3)" }}
       >
         <ScrollReveal>
           <Flex direction="column" align="center" gap="2" mb="7">
@@ -4662,1701 +6366,6 @@ pnpm eval:all                # All 541 tests across 15 files`}
             <span className="arch-tag">10 categories</span>
             <span className="arch-tag">safety &ge; 80%</span>
             <span className="arch-tag">RAG triad &ge; 70%</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Schema Topology ── */}
-      <Box
-        id="schema-topology"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--green-9)",
-                fontSize: "11px",
-              }}
-            >
-              Drizzle ORM
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Schema Topology
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              28 PostgreSQL tables across 5 categories. Every user-owned
-              entity cascades on deletion. Embedding tables cascade on
-              their source entity — no orphaned vectors, no cleanup jobs.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Flex direction="column" gap="4" style={{ maxWidth: 860, margin: "0 auto" }}>
-          {schemaCategories.map((cat, i) => (
-            <ScrollReveal key={cat.category} delay={i * 60}>
-              <Flex
-                direction="column"
-                gap="3"
-                p="4"
-                className="deep-dive-card"
-              >
-                <Flex align="center" justify="between">
-                  <Flex align="center" gap="3">
-                    <div
-                      className="deep-dive-icon"
-                      style={{
-                        background: `color-mix(in srgb, ${cat.color} 18%, transparent)`,
-                        color: cat.color,
-                      }}
-                    >
-                      <Table2 size={18} />
-                    </div>
-                    <div>
-                      <Text size="3" weight="bold">
-                        {cat.category}
-                      </Text>
-                      <Text
-                        size="1"
-                        style={{ color: cat.color, fontSize: "11px", fontWeight: 600 }}
-                      >
-                        {cat.count} tables
-                      </Text>
-                    </div>
-                  </Flex>
-                </Flex>
-
-                <Flex gap="2" wrap="wrap">
-                  {cat.tables.map((t) => (
-                    <span key={t} className="arch-tag" style={{ fontSize: "11px" }}>
-                      {t}
-                    </span>
-                  ))}
-                </Flex>
-
-                <Text
-                  size="2"
-                  style={{
-                    color: "var(--gray-10)",
-                    lineHeight: 1.55,
-                    paddingLeft: "1rem",
-                    borderLeft: `2px solid ${cat.color}`,
-                  }}
-                >
-                  {cat.detail}
-                </Text>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Flex>
-
-        <ScrollReveal delay={350}>
-          <pre className="pg-code-block" style={{ maxWidth: 860, margin: "2rem auto 0" }}>
-            <code>{`// Custom Drizzle vector type → pgvector(1024)
-const vector = customType<{ data: number[]; driverData: string }>({
-  dataType()  { return "vector(1024)"; },
-  toDriver(v) { return \`[\${v.join(",")}]\`; },
-  fromDriver(v) {
-    return v.slice(1, -1).split(",").map(Number);
-  },
-});`}</code>
-          </pre>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Triage Prompt ── */}
-      <Box
-        id="triage-prompt"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ background: "var(--gray-a2)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--indigo-9)",
-                fontSize: "11px",
-              }}
-            >
-              Triage Node Internals
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Triage Prompt &amp; Intent Parsing
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              The TRIAGE_SYSTEM prompt classifies every query into one of 8
-              intents. JSON output is parsed with markdown-aware cleanup
-              and a graceful fallback chain.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <ScrollReveal>
-          <pre className="pg-code-block" style={{ margin: "0 auto 2rem" }}>
-            <code>{`// TRIAGE_SYSTEM prompt (verbatim)
-"You are a clinical query classifier for a blood marker
-intelligence system.
-
-Classify the user's query into exactly ONE intent:
-- markers:        Blood marker values, levels, ranges, flags
-- trajectory:     Trends over time, velocity, improving/deteriorating
-- conditions:     Health conditions, diseases (NOT to diagnose)
-- medications:    Drugs, dosages, drug-biomarker interactions
-- symptoms:       Symptoms and their relation to markers
-- appointments:   Scheduling, upcoming visits, providers
-- general_health: Broad questions spanning multiple categories
-- safety_refusal: Diagnosis/prescription requests, out-of-scope
-
-Also extract entity names (marker, condition, medication names).
-
-Respond ONLY with JSON:
-{\\"intent\\": \\"...\\", \\"confidence\\": 0.0-1.0, \\"entities\\": [\\"...\\"]}"
-`}</code>
-          </pre>
-        </ScrollReveal>
-
-        <Flex direction="column" gap="3" style={{ margin: "0 auto" }}>
-          {triageSteps.map((ts, i) => (
-            <ScrollReveal key={ts.step} delay={i * 50}>
-              <Flex
-                className="deep-dive-card"
-                gap="3"
-                p="3"
-                align="start"
-              >
-                <div className="synthesis-rule-num" style={{ color: ts.color, borderColor: ts.color }}>
-                  {ts.step}
-                </div>
-                <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                  <Text size="2" weight="bold">
-                    {ts.title}
-                  </Text>
-                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
-                    {ts.description}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Flex>
-      </Box>
-
-      {/* ── LLM Resilience ── */}
-      <Box
-        id="llm-resilience"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--amber-9)",
-                fontSize: "11px",
-              }}
-            >
-              Production Hardening
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              LLM Resilience &amp; Configuration
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              The llm_backend module wraps an OpenAI-compatible endpoint
-              with exponential backoff, singleton httpx clients, and
-              separate sync/async/streaming code paths.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Grid
-          columns={{ initial: "2", sm: "3", md: "6" }}
-          gap="3"
-          style={{ maxWidth: 960, margin: "0 auto" }}
-          mb="5"
-        >
-          {resilienceConfig.map((rc, i) => (
-            <ScrollReveal key={rc.label} delay={i * 40}>
-              <Flex
-                direction="column"
-                align="center"
-                gap="2"
-                p="3"
-                className="deep-dive-card"
-                style={{ textAlign: "center" }}
-              >
-                <div
-                  className="deep-dive-icon"
-                  style={{
-                    background: `color-mix(in srgb, ${rc.color} 18%, transparent)`,
-                    color: rc.color,
-                    width: 32,
-                    height: 32,
-                  }}
-                >
-                  <rc.icon size={16} />
-                </div>
-                <Text
-                  size="2"
-                  weight="bold"
-                  style={{
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    fontSize: "14px",
-                    color: rc.color,
-                  }}
-                >
-                  {rc.value}
-                </Text>
-                <Text size="1" weight="bold" style={{ fontSize: "11px" }}>
-                  {rc.label}
-                </Text>
-                <Text size="1" color="gray" style={{ fontSize: "10px", lineHeight: 1.4 }}>
-                  {rc.detail}
-                </Text>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Grid>
-
-        <ScrollReveal delay={280}>
-          <pre className="pg-code-block" style={{ margin: "0 auto" }}>
-            <code>{`# llm_backend.py — retry loop (simplified)
-for attempt in range(MAX_RETRIES + 1):
-    try:
-        resp = client.post("/chat/completions", json=payload)
-        resp.raise_for_status()
-        break
-    except HTTPStatusError as exc:
-        if exc.response.status_code in {429, 502, 503, 504}:
-            time.sleep(2 ** (attempt + 1))  # 2s → 4s → 8s
-            continue
-        raise`}</code>
-          </pre>
-        </ScrollReveal>
-
-        <ScrollReveal delay={320}>
-          <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">OpenAI /v1/chat/completions</span>
-            <span className="arch-tag">httpx singleton</span>
-            <span className="arch-tag">sync + async + stream</span>
-            <span className="arch-tag">SSE [DONE] protocol</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Auth & Session Guard ── */}
-      <Box
-        id="auth-session"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--green-9)",
-                fontSize: "11px",
-              }}
-            >
-              Security Layer
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Authentication &amp; Session Guard
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              Better Auth manages OAuth providers and sessions in PostgreSQL.
-              Every server action passes through withAuth() — a 4-line guard
-              that validates the session token and returns the userId or
-              redirects to login.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Grid
-          columns={{ initial: "1", md: "2" }}
-          gap="4"
-          style={{ maxWidth: 860, margin: "0 auto" }}
-          mb="5"
-        >
-          {authLayers.map((al, i) => (
-            <ScrollReveal key={al.layer} delay={i * 60}>
-              <Flex
-                gap="3"
-                p="4"
-                className="deep-dive-card"
-                align="start"
-              >
-                <div
-                  className="deep-dive-icon"
-                  style={{
-                    background: `color-mix(in srgb, ${al.color} 18%, transparent)`,
-                    color: al.color,
-                  }}
-                >
-                  <al.icon size={18} />
-                </div>
-                <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                  <Text size="2" weight="bold">
-                    {al.layer}
-                  </Text>
-                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
-                    {al.detail}
-                  </Text>
-                  <Text
-                    size="1"
-                    style={{
-                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                      fontSize: "11px",
-                      color: al.color,
-                      opacity: 0.8,
-                    }}
-                  >
-                    {al.tables}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Grid>
-
-        <ScrollReveal delay={280}>
-          <pre className="pg-code-block" style={{ maxWidth: 600, margin: "0 auto" }}>
-            <code>{`// lib/auth-helpers.ts — server action guard
-export const withAuth = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  if (!session) redirect("/auth/login");
-  return { userId: session.user.id, user: session.user };
-};`}</code>
-          </pre>
-        </ScrollReveal>
-
-        <ScrollReveal delay={320}>
-          <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">Better Auth</span>
-            <span className="arch-tag">4 auth tables</span>
-            <span className="arch-tag">IP + UserAgent tracking</span>
-            <span className="arch-tag">CASCADE on user delete</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Health-State Trajectory ── */}
-      <Box
-        id="trajectory-pipeline"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--violet-9)",
-                fontSize: "11px",
-              }}
-            >
-              Longitudinal Analysis
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Health-State Trajectory Pipeline
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              Each blood test becomes a 1024-dim health state. Cosine
-              similarity measures stability between states, velocity
-              tracks rate-of-change per day, and Qwen classifies the
-              overall direction as improving, stable, or deteriorating.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Flex
-          direction="column"
-          gap="3"
-          style={{ maxWidth: 720, margin: "0 auto" }}
-          mb="5"
-        >
-          {trajectoryPipeline.map((tp, i) => (
-            <ScrollReveal key={tp.step} delay={i * 50}>
-              <Flex
-                gap="3"
-                p="4"
-                className="deep-dive-card"
-                align="start"
-              >
-                <div className="synthesis-rule-num" style={{ color: tp.color, borderColor: tp.color }}>
-                  {tp.step}
-                </div>
-                <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                  <Text size="2" weight="bold">
-                    {tp.title}
-                  </Text>
-                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
-                    {tp.description}
-                  </Text>
-                  <Text
-                    size="1"
-                    style={{
-                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                      fontSize: "11px",
-                      color: tp.color,
-                      opacity: 0.85,
-                      marginTop: 2,
-                    }}
-                  >
-                    {tp.code}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Flex>
-
-        {/* ── Cosine Similarity Explainer ── */}
-        <ScrollReveal delay={280}>
-          <Box
-            mt="6"
-            mb="6"
-            p="5"
-            className="deep-dive-card"
-            style={{ maxWidth: 720, margin: "24px auto" }}
-          >
-            <Flex direction="column" gap="3">
-              <Heading size="4" style={{ letterSpacing: "-0.02em" }}>
-                What Is Cosine Similarity?
-              </Heading>
-              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
-                Cosine similarity measures how similar two vectors are by
-                looking at the angle between them, ignoring their length. The
-                result ranges from &minus;1 to 1, where 1 means identical
-                direction, 0 means unrelated, and &minus;1 means opposite.
-              </Text>
-              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
-                In this project, every piece of clinical text — a blood marker,
-                a condition, a symptom — gets converted into a 1024-number array
-                (a vector) by{" "}
-                <code style={{ fontSize: "12px", color: "var(--indigo-9)" }}>
-                  bge-large-en-v1.5
-                </code>
-                . When a user asks &ldquo;What is my cholesterol?&rdquo;, that
-                question also becomes a 1024-number array. Cosine similarity
-                then compares the question&rsquo;s vector against every stored
-                vector to find which ones point in the most similar direction —
-                meaning they&rsquo;re semantically related.
-              </Text>
-              <Text
-                size="2"
-                style={{
-                  color: "var(--gray-10)",
-                  lineHeight: 1.7,
-                  paddingLeft: "1rem",
-                  borderLeft: "2px solid var(--indigo-a4)",
-                }}
-              >
-                pgvector&rsquo;s{" "}
-                <code style={{ fontSize: "12px", color: "var(--indigo-9)" }}>
-                  &lt;=&gt;
-                </code>{" "}
-                operator computes <strong>cosine distance</strong> (which is{" "}
-                <code style={{ fontSize: "12px" }}>1 &minus; similarity</code>
-                ), so the code does{" "}
-                <code style={{ fontSize: "12px", color: "var(--indigo-9)" }}>
-                  1 - (embedding &lt;=&gt; query_vec)
-                </code>{" "}
-                to flip it back to similarity. A score near 1.0 means the stored
-                text is highly relevant to the query; anything below 0.3 is
-                filtered out.
-              </Text>
-              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
-                <strong style={{ color: "var(--gray-12)" }}>
-                  Concrete example:
-                </strong>{" "}
-                if a user asks &ldquo;How is my kidney function?&rdquo;, the
-                query vector will land close to vectors for BUN, creatinine, and
-                BUN/Creatinine ratio entries — because the embedding model
-                learned that these concepts are semantically related — even
-                though the word &ldquo;kidney&rdquo; doesn&rsquo;t appear in the
-                stored text{" "}
-                <code style={{ fontSize: "11px", color: "var(--gray-9)" }}>
-                  &quot;Marker: BUN\nValue: 18 mg/dL\nFlag: normal&quot;
-                </code>
-                .
-              </Text>
-              <Text size="2" color="gray" style={{ lineHeight: 1.7 }}>
-                The hybrid search weights it at{" "}
-                <strong style={{ color: "var(--blue-9)" }}>
-                  70% cosine similarity + 30% full-text search
-                </strong>
-                , so semantic meaning dominates but exact keyword matches still
-                boost relevance.
-              </Text>
-            </Flex>
-          </Box>
-        </ScrollReveal>
-
-        <ScrollReveal delay={300}>
-          <Flex gap="3" wrap="wrap" justify="center">
-            <span className="arch-tag">Lacher et al. NHANES method</span>
-            <span className="arch-tag">CTE + pgvector &lt;=&gt;</span>
-            <span className="arch-tag">7 derived metrics</span>
-            <span className="arch-tag">Qwen qwen-plus</span>
-            <span className="arch-tag">temperature 0.3</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Marker Alias Resolution ── */}
-      <Box
-        id="marker-aliases"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--orange-9)",
-                fontSize: "11px",
-              }}
-            >
-              Name Normalization
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Marker Alias Resolution
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              Labs use different names for the same biomarker. The alias
-              map normalizes 41 variant names across 11 base markers so
-              derived ratios (TG/HDL, NLR, De Ritis, TyG) always resolve
-              regardless of which lab produced the PDF.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Grid
-          columns={{ initial: "1", sm: "2", md: "3" }}
-          gap="3"
-          style={{ maxWidth: 860, margin: "0 auto" }}
-          mb="5"
-        >
-          {markerAliases.map((ma, i) => (
-            <ScrollReveal key={ma.base} delay={i * 40}>
-              <Flex
-                direction="column"
-                gap="2"
-                p="3"
-                className="deep-dive-card"
-              >
-                <Text
-                  size="2"
-                  weight="bold"
-                  style={{ color: ma.color }}
-                >
-                  {ma.base}
-                </Text>
-                <Flex gap="2" wrap="wrap">
-                  {ma.aliases.map((alias) => (
-                    <Text
-                      key={alias}
-                      size="1"
-                      style={{
-                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                        fontSize: "10px",
-                        padding: "2px 6px",
-                        borderRadius: 4,
-                        background: `color-mix(in srgb, ${ma.color} 12%, transparent)`,
-                        color: ma.color,
-                      }}
-                    >
-                      {alias}
-                    </Text>
-                  ))}
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Grid>
-
-        <ScrollReveal delay={280}>
-          <pre className="pg-code-block" style={{ maxWidth: 640, margin: "0 auto" }}>
-            <code>{`// lib/embeddings.ts — TyG Index computation
-const trig = resolve("triglycerides");
-const gluc = resolve("glucose");
-const gti =
-  trig != null && gluc != null && trig > 0 && gluc > 0
-    ? Math.log(trig * gluc * 0.5) / Math.LN10
-    : null;
-// resolve() walks MARKER_ALIAS_MAP until it finds a match
-// "hdl-c" → "hdl cholesterol" → "hdl" — first hit wins`}</code>
-          </pre>
-        </ScrollReveal>
-
-        <ScrollReveal delay={320}>
-          <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">11 base markers</span>
-            <span className="arch-tag">41 aliases</span>
-            <span className="arch-tag">case-insensitive</span>
-            <span className="arch-tag">EU comma decimals</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Cognitive Protocol Tracking ── */}
-      <Box
-        id="cognitive-protocols"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--indigo-9)",
-                fontSize: "11px",
-              }}
-            >
-              Brain Health
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Cognitive Protocol Tracking
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              Health protocols track supplements with dosage, frequency,
-              and mechanism of action across 7 cognitive target areas.
-              Baselines and check-ins create a time series of 5 cognitive
-              dimensions scored 0–10 with delta computation.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Text
-          size="1"
-          weight="bold"
-          align="center"
-          mb="3"
-          style={{
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            fontSize: "10px",
-            color: "var(--gray-9)",
-            display: "block",
-          }}
-        >
-          7 Target Areas
-        </Text>
-
-        <Grid
-          columns={{ initial: "2", sm: "3", md: "4" }}
-          gap="3"
-          style={{ maxWidth: 860, margin: "0 auto" }}
-          mb="6"
-        >
-          {cognitiveTargetAreas.map((ct, i) => (
-            <ScrollReveal key={ct.area} delay={i * 40}>
-              <Flex
-                direction="column"
-                align="center"
-                gap="2"
-                p="3"
-                className="deep-dive-card"
-                style={{ textAlign: "center" }}
-              >
-                <div
-                  className="deep-dive-icon"
-                  style={{
-                    background: `color-mix(in srgb, ${ct.color} 18%, transparent)`,
-                    color: ct.color,
-                  }}
-                >
-                  <ct.icon size={18} />
-                </div>
-                <Text
-                  size="1"
-                  weight="bold"
-                  style={{
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    fontSize: "11px",
-                    color: ct.color,
-                  }}
-                >
-                  {ct.area}
-                </Text>
-                <Text size="1" color="gray" style={{ fontSize: "10px", lineHeight: 1.4 }}>
-                  {ct.description}
-                </Text>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Grid>
-
-        <Text
-          size="1"
-          weight="bold"
-          align="center"
-          mb="3"
-          style={{
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            fontSize: "10px",
-            color: "var(--gray-9)",
-            display: "block",
-          }}
-        >
-          5 Score Dimensions (0–10 Scale)
-        </Text>
-
-        <Flex
-          gap="3"
-          wrap="wrap"
-          justify="center"
-          style={{ maxWidth: 700, margin: "0 auto" }}
-          mb="5"
-        >
-          {cognitiveScoreDimensions.map((cd, i) => (
-            <ScrollReveal key={cd.dimension} delay={i * 50 + 200}>
-              <Flex
-                direction="column"
-                align="center"
-                gap="1"
-                p="3"
-                className="deep-dive-card"
-                style={{ textAlign: "center", minWidth: 120 }}
-              >
-                <Text size="2" weight="bold">
-                  {cd.label}
-                </Text>
-                <Text size="1" color="gray" style={{ fontSize: "10px" }}>
-                  {cd.description}
-                </Text>
-                <Text
-                  size="1"
-                  style={{
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    fontSize: "10px",
-                    opacity: 0.6,
-                  }}
-                >
-                  {cd.dimension}
-                </Text>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Flex>
-
-        <ScrollReveal delay={350}>
-          <Flex gap="3" wrap="wrap" justify="center">
-            <span className="arch-tag">6 schema tables</span>
-            <span className="arch-tag">JSONB target_areas</span>
-            <span className="arch-tag">unique baseline per protocol</span>
-            <span className="arch-tag">check-in time series</span>
-            <span className="arch-tag">30-day rolling avg</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Entity Relationship Graph ── */}
-      <Box
-        id="entity-graph"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--cyan-9)",
-                fontSize: "11px",
-              }}
-            >
-              Data Architecture
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Entity Relationship Graph
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              22 PostgreSQL tables connected by foreign keys with carefully
-              chosen delete strategies: CASCADE for owned data, SET NULL
-              for optional references, UNIQUE constraints for 1:1
-              embedding pairs, and composite primary keys for M:N junctions.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Flex
-          direction="column"
-          gap="2"
-          style={{ maxWidth: 760, margin: "0 auto" }}
-          mb="5"
-        >
-          {entityRelationships.map((er, i) => (
-            <ScrollReveal key={`${er.from}-${er.to}`} delay={i * 35}>
-              <Flex
-                gap="3"
-                p="3"
-                className="deep-dive-card"
-                align="center"
-              >
-                <Text
-                  size="1"
-                  weight="bold"
-                  style={{
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    fontSize: "12px",
-                    minWidth: 190,
-                    color: er.color,
-                  }}
-                >
-                  {er.from} → {er.to}
-                </Text>
-                <Text
-                  size="1"
-                  style={{
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    fontSize: "11px",
-                    padding: "2px 8px",
-                    borderRadius: 4,
-                    background: `color-mix(in srgb, ${er.color} 12%, transparent)`,
-                    color: er.color,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {er.type}
-                </Text>
-                <Text size="1" color="gray" style={{ flex: 1, fontSize: "11px" }}>
-                  {er.cascade}
-                </Text>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Flex>
-
-        <ScrollReveal delay={400}>
-          <Flex gap="3" wrap="wrap" justify="center">
-            <span className="arch-tag">22 tables</span>
-            <span className="arch-tag">8 embedding tables</span>
-            <span className="arch-tag">vector(1024)</span>
-            <span className="arch-tag">JSONB for metrics</span>
-            <span className="arch-tag">M:N junction tables</span>
-            <span className="arch-tag">Drizzle ORM</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Multi-Search Fan-Out ── */}
-      <Box
-        id="multi-search"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--pink-9)",
-                fontSize: "11px",
-              }}
-            >
-              Retrieval Engine
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Multi-Search Fan-Out
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
-            >
-              A single embedding of the user query fans out to all 6
-              entity tables in parallel. Markers use hybrid scoring
-              (0.7 cosine + 0.3 FTS), all others use pure vector search
-              with a 0.3 similarity threshold. Results are deduplicated
-              and merged into a unified MultiSearchResult.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Grid
-          columns={{ initial: "1", sm: "2", md: "3" }}
-          gap="3"
-          style={{ maxWidth: 860, margin: "0 auto" }}
-          mb="5"
-        >
-          {multiSearchFanOut.map((ms, i) => (
-            <ScrollReveal key={ms.table} delay={i * 50}>
-              <Flex
-                direction="column"
-                gap="2"
-                p="3"
-                className="deep-dive-card"
-              >
-                <Text
-                  size="1"
-                  weight="bold"
-                  style={{
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    fontSize: "11px",
-                    color: ms.color,
-                  }}
-                >
-                  {ms.table}
-                </Text>
-                <Flex gap="2" align="center">
-                  <Text
-                    size="1"
-                    style={{
-                      padding: "1px 6px",
-                      borderRadius: 4,
-                      background: `color-mix(in srgb, ${ms.color} 14%, transparent)`,
-                      color: ms.color,
-                      fontSize: "10px",
-                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    }}
-                  >
-                    {ms.scoring}
-                  </Text>
-                </Flex>
-                <Flex gap="4">
-                  <Text size="1" color="gray" style={{ fontSize: "10px" }}>
-                    threshold: {ms.threshold}
-                  </Text>
-                  <Text size="1" color="gray" style={{ fontSize: "10px" }}>
-                    limit: {ms.limit}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Grid>
-
-        <ScrollReveal delay={320}>
-          <pre className="pg-code-block" style={{ maxWidth: 700, margin: "0 auto" }}>
-            <code>{`# routes/search.py — hybrid scoring (markers only)
-combined_score = (
-  0.3 * ts_rank(to_tsvector('english', content),
-                 plainto_tsquery('english', :query))
-+ 0.7 * (1 - (embedding <=> :query_vec))
-)
-# All other tables: pure cosine similarity
-# 1 - (embedding <=> :query_vec) >= 0.3 threshold`}</code>
-          </pre>
-        </ScrollReveal>
-
-        <ScrollReveal delay={360}>
-          <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">1 embedding → 6 parallel queries</span>
-            <span className="arch-tag">hybrid for markers</span>
-            <span className="arch-tag">vector for entities</span>
-            <span className="arch-tag">MultiSearchResult</span>
-            <span className="arch-tag">x-api-key auth</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Compliance & Safety ── */}
-      <Box
-        id="compliance"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--crimson-9)",
-                fontSize: "11px",
-              }}
-            >
-              Compliance &amp; Safety
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              10-Layer Compliance Architecture
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 620, lineHeight: 1.65 }}
-            >
-              Healthcare data demands defense in depth. Every layer — from
-              authentication to schema constraints — is enforced at the
-              infrastructure level, not by convention. No single point of
-              failure can expose patient data.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Grid
-          columns={{ initial: "1", md: "2" }}
-          gap="4"
-          mb="7"
-        >
-          {complianceLayers.map((cl, i) => (
-            <ScrollReveal key={cl.title} delay={i * 50}>
-              <Flex
-                gap="3"
-                p="4"
-                className="deep-dive-card"
-                align="start"
-              >
-                <div
-                  className="deep-dive-icon"
-                  style={{
-                    background: `color-mix(in srgb, ${cl.color} 18%, transparent)`,
-                    color: cl.color,
-                  }}
-                >
-                  <cl.icon size={18} />
-                </div>
-                <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                  <Text size="2" weight="bold">
-                    {cl.title}
-                  </Text>
-                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
-                    {cl.description}
-                  </Text>
-                  <Text
-                    size="1"
-                    style={{
-                      fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                      fontSize: "11px",
-                      color: cl.color,
-                      opacity: 0.85,
-                      marginTop: 2,
-                    }}
-                  >
-                    {cl.code}
-                  </Text>
-                  <Text
-                    size="1"
-                    color="gray"
-                    style={{ fontSize: "10px", opacity: 0.6 }}
-                  >
-                    {cl.source}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Grid>
-
-        <ScrollReveal delay={500}>
-          <Flex gap="3" wrap="wrap" justify="center">
-            <span className="arch-tag">10 compliance layers</span>
-            <span className="arch-tag">22 user-scoped tables</span>
-            <span className="arch-tag">5 guard rules</span>
-            <span className="arch-tag">fail-safe defaults</span>
-            <span className="arch-tag">zero wildcard CORS</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── Safety Guard Rules (detailed) ── */}
-      <Box
-        id="guard-rules"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--crimson-9)",
-                fontSize: "11px",
-              }}
-            >
-              Post-Generation Audit
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              5-Rule Safety Guard
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 620, lineHeight: 1.65 }}
-            >
-              Every synthesized response is audited by a separate local Qwen 2.5
-              LLM call before delivery. The guard node operates on a
-              fail-safe principle: if JSON parsing fails, the response is
-              treated as failed and disclaimers are injected.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Flex
-          direction="column"
-          gap="3"
-          mb="5"
-        >
-          {guardRulesDetailed.map((gr, i) => (
-            <ScrollReveal key={gr.rule} delay={i * 50}>
-              <Flex
-                gap="3"
-                p="4"
-                className="deep-dive-card"
-                align="start"
-              >
-                <div
-                  className="synthesis-rule-num"
-                  style={{ color: gr.color, borderColor: gr.color }}
-                >
-                  {gr.id}
-                </div>
-                <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                  <Flex gap="2" align="center">
-                    <Text
-                      size="2"
-                      weight="bold"
-                      style={{
-                        fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                        color: gr.color,
-                      }}
-                    >
-                      {gr.rule}
-                    </Text>
-                  </Flex>
-                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
-                    {gr.description}
-                  </Text>
-                  <Text
-                    size="1"
-                    style={{
-                      fontSize: "11px",
-                      color: gr.color,
-                      opacity: 0.8,
-                      marginTop: 2,
-                    }}
-                  >
-                    {gr.action}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Flex>
-
-        <ScrollReveal delay={280}>
-          <pre className="pg-code-block">
-            <code>{`# graph.py — guard node (fail-safe)
-raw = _llm_call(GUARD_SYSTEM, audit_prompt)
-cleaned = re.sub(r"\`\`\`json\\s*|\\s*\`\`\`", "", raw).strip()
-
-try:
-    parsed = json.loads(cleaned)
-except json.JSONDecodeError:
-    # Fail-safe: treat parse failure as guard failure
-    parsed = {"passed": False, "issues": ["PARSE_FAILURE"]}
-
-passed = parsed.get("passed", False)  # defaults to False, not True
-
-if not passed:
-    # Append context-specific disclaimers
-    if "DIAGNOSIS" in issues:
-        answer += "\\n\\n⚠️ For educational purposes only..."
-    if "PRESCRIPTION" in issues:
-        answer += "\\n\\n⚠️ Cannot recommend medications..."
-    if "PHYSICIAN_REFERRAL" in issues:
-        answer += "\\n\\n⚠️ Consult your physician..."`}</code>
-          </pre>
-        </ScrollReveal>
-
-        <ScrollReveal delay={320}>
-          <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">local Qwen 2.5 auditor</span>
-            <span className="arch-tag">fail-safe = passed:false</span>
-            <span className="arch-tag">JSON parse guard</span>
-            <span className="arch-tag">disclaimer injection</span>
-            <span className="arch-tag">safety_refusal bypass</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── CASCADE Delete Visualization ── */}
-      <Box
-        id="cascade-delete"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--orange-9)",
-                fontSize: "11px",
-              }}
-            >
-              Right to Deletion
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              CASCADE Delete — Full Chain
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 620, lineHeight: 1.65 }}
-            >
-              One DELETE statement on the user table triggers a full cascade
-              across every related table. No orphaned embeddings, no stale
-              vectors, no background cleanup jobs. PostgreSQL enforces the
-              chain in a single transaction.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Flex
-          direction="column"
-          gap="3"
-          mb="5"
-        >
-          {cascadeDeleteChains.map((chain, i) => (
-            <ScrollReveal key={chain.to} delay={i * 50}>
-              <Flex
-                gap="3"
-                p="3"
-                className="deep-dive-card"
-                align="center"
-              >
-                <Text
-                  size="1"
-                  weight="bold"
-                  style={{
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    fontSize: "12px",
-                    color: chain.color,
-                    minWidth: 50,
-                  }}
-                >
-                  {chain.from}
-                </Text>
-                <Text
-                  size="1"
-                  style={{ color: chain.color, fontSize: "14px" }}
-                >
-                  →
-                </Text>
-                <Text
-                  size="1"
-                  style={{
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    fontSize: "12px",
-                    color: "var(--gray-11)",
-                    flex: 1,
-                  }}
-                >
-                  {chain.to}
-                </Text>
-                <Text
-                  size="1"
-                  style={{
-                    padding: "1px 6px",
-                    borderRadius: 4,
-                    background: `color-mix(in srgb, ${chain.color} 14%, transparent)`,
-                    color: chain.color,
-                    fontSize: "10px",
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                  }}
-                >
-                  CASCADE
-                </Text>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Flex>
-
-        <ScrollReveal delay={400}>
-          <pre className="pg-code-block">
-            <code>{`-- schema.ts — cascade delete chain (Drizzle ORM)
-export const bloodTests = pgTable("blood_tests", {
-  userId: text("user_id").notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  // ...
-});
-
-export const bloodMarkers = pgTable("blood_markers", {
-  testId: uuid("test_id").notNull()
-    .references(() => bloodTests.id, { onDelete: "cascade" }),
-  // ...
-});
-
--- DELETE FROM "user" WHERE id = $1;
--- PostgreSQL cascades through ALL 22 tables automatically:
---   user → blood_tests → blood_markers → blood_marker_embeddings
---   user → blood_tests → blood_test_embeddings
---   user → blood_tests → health_state_embeddings
---   user → conditions → condition_embeddings
---   user → medications → medication_embeddings
---   user → symptoms → symptom_embeddings
---   user → appointments → appointment_embeddings
---   user → doctors, family_members, medical_letters`}</code>
-          </pre>
-        </ScrollReveal>
-
-        <ScrollReveal delay={440}>
-          <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">onDelete: cascade</span>
-            <span className="arch-tag">single transaction</span>
-            <span className="arch-tag">zero orphaned vectors</span>
-            <span className="arch-tag">22 tables covered</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── HIPAA Alignment ── */}
-      <Box
-        id="hipaa"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--green-9)",
-                fontSize: "11px",
-              }}
-            >
-              Regulatory Alignment
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              HIPAA Technical Safeguards
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 620, lineHeight: 1.65 }}
-            >
-              The HIPAA Security Rule (45 CFR §164.312) defines technical
-              safeguards for electronic protected health information (ePHI).
-              This is how the current implementation maps to each requirement.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Flex
-          direction="column"
-          gap="3"
-          mb="5"
-        >
-          {hipaaAlignment.map((h, i) => (
-            <ScrollReveal key={h.rule} delay={i * 50}>
-              <Flex
-                gap="3"
-                p="4"
-                className="deep-dive-card"
-                align="start"
-              >
-                <Text
-                  size="1"
-                  weight="bold"
-                  style={{
-                    padding: "2px 8px",
-                    borderRadius: 4,
-                    background: `color-mix(in srgb, ${h.color} 16%, transparent)`,
-                    color: h.color,
-                    fontSize: "10px",
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
-                >
-                  {h.status === "implemented" ? "IMPLEMENTED" : "PARTIAL"}
-                </Text>
-                <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                  <Text size="2" weight="bold">
-                    {h.rule}
-                  </Text>
-                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
-                    {h.detail}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Flex>
-
-        <ScrollReveal delay={340}>
-          <Flex gap="3" wrap="wrap" justify="center">
-            <span className="arch-tag">5/6 implemented</span>
-            <span className="arch-tag">1/6 partial (audit trail)</span>
-            <span className="arch-tag">§164.312 Technical Safeguards</span>
-            <span className="arch-tag">§164.502 Minimum Necessary</span>
-          </Flex>
-        </ScrollReveal>
-      </Box>
-
-      {/* ── GDPR Alignment ── */}
-      <Box
-        id="gdpr"
-        py="9"
-        px={{ initial: "4", md: "6", lg: "9" }}
-        style={{ borderTop: "1px solid var(--gray-a3)" }}
-      >
-        <ScrollReveal>
-          <Flex direction="column" align="center" gap="2" mb="7">
-            <Text
-              size="1"
-              weight="bold"
-              style={{
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "var(--blue-9)",
-                fontSize: "11px",
-              }}
-            >
-              EU Data Protection
-            </Text>
-            <Heading
-              size="7"
-              align="center"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              GDPR Alignment
-            </Heading>
-            <Text
-              size="2"
-              color="gray"
-              align="center"
-              style={{ maxWidth: 620, lineHeight: 1.65 }}
-            >
-              The General Data Protection Regulation defines rights for EU
-              data subjects. Health data qualifies as special category data
-              under Article 9, requiring explicit consent and enhanced
-              protection. This is the current implementation status.
-            </Text>
-          </Flex>
-        </ScrollReveal>
-
-        <Flex
-          direction="column"
-          gap="3"
-          mb="5"
-        >
-          {gdprAlignment.map((g, i) => (
-            <ScrollReveal key={g.right} delay={i * 50}>
-              <Flex
-                gap="3"
-                p="4"
-                className="deep-dive-card"
-                align="start"
-              >
-                <Text
-                  size="1"
-                  weight="bold"
-                  style={{
-                    padding: "2px 8px",
-                    borderRadius: 4,
-                    background: `color-mix(in srgb, ${g.color} 16%, transparent)`,
-                    color: g.color,
-                    fontSize: "10px",
-                    fontFamily: "var(--font-mono, 'SF Mono', monospace)",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
-                >
-                  {g.status === "implemented" ? "IMPLEMENTED" : "PARTIAL"}
-                </Text>
-                <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                  <Text size="2" weight="bold">
-                    {g.right}
-                  </Text>
-                  <Text size="2" color="gray" style={{ lineHeight: 1.55 }}>
-                    {g.detail}
-                  </Text>
-                </Flex>
-              </Flex>
-            </ScrollReveal>
-          ))}
-        </Flex>
-
-        <ScrollReveal delay={340}>
-          <pre className="pg-code-block">
-            <code>{`// lib/auth-helpers.ts — withAuth() guard
-// Every server action that touches health data runs this first:
-
-export const withAuth = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  if (!session) redirect("/auth/login");
-  return { userId: session.user.id, user: session.user };
-};
-
-// Usage in actions.ts:
-export async function sendChatMessage(messages) {
-  const { userId } = await withAuth();
-  // userId scopes all queries — no cross-user leakage
-  const res = await fetch(\`\${CHAT_API}/chat\`, {
-    body: JSON.stringify({ messages, user_id: userId }),
-  });
-}`}</code>
-          </pre>
-        </ScrollReveal>
-
-        <ScrollReveal delay={380}>
-          <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">4/6 implemented</span>
-            <span className="arch-tag">2/6 partial</span>
-            <span className="arch-tag">Art. 9 special category</span>
-            <span className="arch-tag">explicit consent</span>
-            <span className="arch-tag">CASCADE erasure</span>
           </Flex>
         </ScrollReveal>
       </Box>
