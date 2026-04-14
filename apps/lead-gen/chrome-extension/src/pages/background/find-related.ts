@@ -80,8 +80,13 @@ function clickShowAllSimilar(tabId: number): Promise<boolean> {
     });
 }
 
-// Check if a modal/dialog is open and scrape company links from it, then close it.
-function scrapeModalCompanyUrls(tabId: number): Promise<string[]> {
+interface CompanyLink {
+  url: string;
+  industry: string;
+}
+
+// Check if a modal/dialog is open and scrape company links + industry from it, then close it.
+function scrapeModalCompanyUrls(tabId: number): Promise<CompanyLink[]> {
   return chrome.scripting
     .executeScript({
       target: { tabId },
@@ -104,17 +109,31 @@ function scrapeModalCompanyUrls(tabId: number): Promise<string[]> {
         }
         el.scrollTop = el.scrollHeight;
 
-        const links: string[] = [];
-        modal.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
+        // Extract company cards with industry labels
+        const results: { url: string; industry: string }[] = [];
+        const seen = new Set<string>();
+        const cards = modal.querySelectorAll(".org-view-entity-card__container");
+
+        for (const card of cards) {
+          // Extract company URL
+          const anchor = card.querySelector<HTMLAnchorElement>('a[href*="/company/"]');
+          if (!anchor) continue;
           try {
-            const href = a.href.split("?")[0].replace(/\/$/, "");
+            const href = anchor.href.split("?")[0].replace(/\/$/, "");
             const parsed = new URL(href);
             const match = parsed.pathname.match(/^\/company\/([^/]+)$/);
-            if (match && !links.includes(href)) links.push(href);
-          } catch { /* skip malformed URLs */ }
-        });
+            if (!match || seen.has(href)) continue;
+            seen.add(href);
 
-        console.log(`[FindRelated] Modal: found ${links.length} company links`);
+            // Extract industry from subtitle
+            const subtitleEl = card.querySelector(".org-view-entity-card__subtitle");
+            const industry = subtitleEl?.textContent?.trim() || "";
+
+            results.push({ url: href, industry });
+          } catch { /* skip malformed URLs */ }
+        }
+
+        console.log(`[FindRelated] Modal: found ${results.length} company cards`);
 
         // Close modal
         const dismiss =
@@ -128,18 +147,18 @@ function scrapeModalCompanyUrls(tabId: number): Promise<string[]> {
           console.warn("[FindRelated] No dismiss button found on modal");
         }
 
-        return links;
+        return results;
       },
     })
-    .then((res) => (res?.[0]?.result as string[]) ?? [])
+    .then((res) => (res?.[0]?.result as CompanyLink[]) ?? [])
     .catch((err) => {
       console.error("[FindRelated] scrapeModalCompanyUrls error:", err);
       return [];
     });
 }
 
-// Extract company URLs from the "Pages people also viewed" sidebar (fallback).
-function extractSidebarCompanyUrls(tabId: number): Promise<string[]> {
+// Extract company URLs + industry from the "Pages people also viewed" sidebar (fallback).
+function extractSidebarCompanyUrls(tabId: number): Promise<CompanyLink[]> {
   return chrome.scripting
     .executeScript({
       target: { tabId },
@@ -174,20 +193,47 @@ function extractSidebarCompanyUrls(tabId: number): Promise<string[]> {
         }
         console.log(`[FindRelated] Sidebar container: <${container.tagName}> class="${container.className?.toString().slice(0, 80)}"`);
 
-        const links: string[] = [];
-        container.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
+        // Try card-based extraction first (has industry labels)
+        const results: { url: string; industry: string }[] = [];
+        const seen = new Set<string>();
+        const cards = container.querySelectorAll(".org-view-entity-card__container, [class*='entity-card']");
+
+        for (const card of cards) {
+          const anchor = card.querySelector<HTMLAnchorElement>('a[href*="/company/"]');
+          if (!anchor) continue;
           try {
-            const href = a.href.split("?")[0].replace(/\/$/, "");
+            const href = anchor.href.split("?")[0].replace(/\/$/, "");
             const parsed = new URL(href);
             const match = parsed.pathname.match(/^\/company\/([^/]+)$/);
-            if (match && !links.includes(href)) links.push(href);
+            if (!match || seen.has(href)) continue;
+            seen.add(href);
+
+            const subtitleEl = card.querySelector(".org-view-entity-card__subtitle, [class*='subtitle']");
+            const industry = subtitleEl?.textContent?.trim() || "";
+            results.push({ url: href, industry });
           } catch { /* skip malformed URLs */ }
-        });
-        console.log(`[FindRelated] Sidebar: found ${links.length} company links`);
-        return links;
+        }
+
+        // Fallback: plain link extraction (no industry info available)
+        if (results.length === 0) {
+          container.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
+            try {
+              const href = a.href.split("?")[0].replace(/\/$/, "");
+              const parsed = new URL(href);
+              const match = parsed.pathname.match(/^\/company\/([^/]+)$/);
+              if (match && !seen.has(href)) {
+                seen.add(href);
+                results.push({ url: href, industry: "" });
+              }
+            } catch { /* skip malformed URLs */ }
+          });
+        }
+
+        console.log(`[FindRelated] Sidebar: found ${results.length} company links`);
+        return results;
       },
     })
-    .then((res) => (res?.[0]?.result as string[]) ?? [])
+    .then((res) => (res?.[0]?.result as CompanyLink[]) ?? [])
     .catch((err) => {
       console.error("[FindRelated] extractSidebarCompanyUrls error:", err);
       return [];
@@ -195,7 +241,7 @@ function extractSidebarCompanyUrls(tabId: number): Promise<string[]> {
 }
 
 // Orchestrate: try modal first (click "Show all" → wait → scrape), fall back to sidebar.
-async function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
+async function extractSimilarCompanyUrls(tabId: number): Promise<CompanyLink[]> {
   const clicked = await clickShowAllSimilar(tabId);
 
   if (clicked) {
@@ -380,6 +426,9 @@ function buildCompanyPayload(data: {
   };
 }
 
+/** Filter constant — only queue companies matching this industry from modal/sidebar cards. */
+const INDUSTRY_FILTER = "staffing and recruiting";
+
 export async function findRelatedCompanies(tabId: number) {
   findRelatedCancelled = false;
   const crawlLog: string[] = [];
@@ -462,15 +511,20 @@ export async function findRelatedCompanies(tabId: number) {
     // Scroll to load lazy content
     await scrollToBottom(tabId, 3, 2500);
 
-    const seedUrls = await extractSimilarCompanyUrls(tabId);
-    for (const url of seedUrls) {
-      const norm = normalizeCompanyUrl(url);
-      if (!visited.has(norm)) {
-        visited.add(norm);
-        queue.push(url);
+    const seedLinks = await extractSimilarCompanyUrls(tabId);
+    let seedFiltered = 0;
+    for (const link of seedLinks) {
+      const norm = normalizeCompanyUrl(link.url);
+      if (visited.has(norm)) continue;
+      visited.add(norm);
+      // Pre-filter by industry when available from card metadata
+      if (link.industry && link.industry.toLowerCase() !== INDUSTRY_FILTER) {
+        seedFiltered++;
+        continue;
       }
+      queue.push(link.url);
     }
-    log(`[FindRelated] Seeded queue with ${queue.length} companies from starting page`);
+    log(`[FindRelated] Seeded queue with ${queue.length} companies from starting page (${seedFiltered} skipped by industry filter)`);
 
     if (queue.length === 0) {
       await safeSendMessage(tabId, {
@@ -596,29 +650,35 @@ export async function findRelatedCompanies(tabId: number) {
         // Scroll to load lazy content on /about/ page
         await scrollToBottom(tabId, 2, 2000);
 
-        let newUrls = await extractSimilarCompanyUrls(tabId);
+        let newLinks = await extractSimilarCompanyUrls(tabId);
 
         // If /about/ page had no related companies, try main page as fallback
-        if (newUrls.length === 0) {
+        if (newLinks.length === 0) {
           const mainUrl = url.replace(/\/$/, "") + "/";
           await safeTabUpdate(tabId, { url: mainUrl });
           await waitForTabLoad(tabId);
           await randomDelay(2000);
           await scrollToBottom(tabId, 3, 2500);
-          newUrls = await extractSimilarCompanyUrls(tabId);
+          newLinks = await extractSimilarCompanyUrls(tabId);
         }
 
         let newCount = 0;
-        for (const newUrl of newUrls) {
-          const norm = normalizeCompanyUrl(newUrl);
-          if (!visited.has(norm)) {
-            visited.add(norm);
-            queue.push(newUrl);
-            newCount++;
+        let newFiltered = 0;
+        for (const link of newLinks) {
+          const norm = normalizeCompanyUrl(link.url);
+          if (visited.has(norm)) continue;
+          visited.add(norm);
+          // Pre-filter by industry when available from card metadata
+          if (link.industry && link.industry.toLowerCase() !== INDUSTRY_FILTER) {
+            newFiltered++;
+            filtered++;
+            continue;
           }
+          queue.push(link.url);
+          newCount++;
         }
-        if (newCount > 0) {
-          log(`[FindRelated] ${data?.name || url} yielded ${newCount} new companies (queue: ${queue.length}, visited: ${visited.size})`);
+        if (newCount > 0 || newFiltered > 0) {
+          log(`[FindRelated] ${data?.name || url} yielded ${newCount} new companies, ${newFiltered} skipped by industry (queue: ${queue.length}, visited: ${visited.size})`);
         }
       }
 

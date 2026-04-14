@@ -28,7 +28,6 @@ import { ResearchBio } from "./_components/research-bio";
 import { EnrichedTimelineSection, ResearchTimeline } from "./_components/research-timeline";
 import { ResearchContributions } from "./_components/research-contributions";
 import { ResearchQuotes } from "./_components/research-quotes";
-import { ResearchQuestions } from "./_components/research-questions";
 import { ResearchSocial } from "./_components/research-social";
 import { ResearchSources } from "./_components/research-sources";
 import { VideosSection } from "./_components/videos-section";
@@ -365,7 +364,31 @@ export default async function PersonPage({ params }: Props) {
             )}
             <ResearchContributions research={research} />
             <ResearchQuotes research={research} />
-            <ResearchQuestions research={research} />
+            {research.questions && research.questions.length > 0 && (
+              <div className={css({ mt: '14', borderTopWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', pt: { base: '8', md: '10' } })}>
+                <Link
+                  href={`/person/${slug}/questions`}
+                  className={cx("group", css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4', px: { base: '5', md: '7' }, py: { base: '5', md: '6' }, rounded: 'xl', bg: '#141418', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', transition: 'all', transitionDuration: '200ms', _hover: { borderColor: 'rgba(255,255,255,0.12)', bg: '#1C1C22' } }))}
+                >
+                  <div className={css({ display: 'flex', alignItems: 'center', gap: '3.5' })}>
+                    <div className={css({ w: '10', h: '10', rounded: 'full', bg: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.08)', flexShrink: '0' })}>
+                      <svg viewBox="0 0 24 24" className={css({ w: '5', h: '5', color: '#7B7B86' })} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className={css({ fontSize: 'base', fontWeight: 'bold', color: '#E8E8ED' })}>Interview Questions</h2>
+                      <p className={css({ fontSize: 'xs', color: '#7B7B86', mt: '0.5' })}>{research.questions.length} questions across {new Set(research.questions.map((q: { category: string }) => q.category)).size} categories</p>
+                    </div>
+                  </div>
+                  <svg viewBox="0 0 16 16" className={css({ w: '4', h: '4', color: '#7B7B86', flexShrink: '0', transition: 'all', transitionDuration: '200ms', _groupHover: { color: '#C4C4CC', transform: 'translateX(0.25rem)' } })} fill="currentColor">
+                    <path d="M4.97 3.97a.75.75 0 0 1 1.06 0l4 4a.75.75 0 0 1 0 1.06l-4 4a.75.75 0 0 1-1.06-1.06L8.44 8.5 4.97 5.03a.75.75 0 0 1 0-1.06z" />
+                  </svg>
+                </Link>
+              </div>
+            )}
             <ResearchSources research={research} />
           </>
         )}
