@@ -520,6 +520,7 @@ extend type Query {
 
 type EmailThread {
   contactId: Int!
+  contactSlug: String
   contactName: String!
   contactEmail: String
   contactPosition: String

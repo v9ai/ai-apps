@@ -15,6 +15,7 @@ function toMs(dateStr: string | null | undefined): number {
 
 interface ThreadSummaryRow {
   contact_id: number;
+  slug: string | null;
   first_name: string;
   last_name: string;
   email: string | null;
@@ -52,6 +53,7 @@ export const emailThreadResolvers = {
       const outboundThreads = await context.db
         .select({
           contact_id: contactEmails.contact_id,
+          slug: contacts.slug,
           first_name: contacts.first_name,
           last_name: contacts.last_name,
           email: contacts.email,
@@ -73,6 +75,7 @@ export const emailThreadResolvers = {
         .groupBy(
           contactEmails.contact_id,
           contacts.id,
+          contacts.slug,
           contacts.first_name,
           contacts.last_name,
           contacts.email,
@@ -223,6 +226,7 @@ export const emailThreadResolvers = {
 
         return {
           contactId: row.contact_id,
+          contactSlug: row.slug,
           contactName: `${row.first_name} ${row.last_name}`.trim(),
           contactEmail: row.email,
           contactPosition: row.position,
@@ -295,6 +299,7 @@ export const emailThreadResolvers = {
       const contactRows = await context.db
         .select({
           id: contacts.id,
+          slug: contacts.slug,
           first_name: contacts.first_name,
           last_name: contacts.last_name,
           email: contacts.email,
@@ -385,6 +390,7 @@ export const emailThreadResolvers = {
 
       return {
         contactId: contact.id,
+        contactSlug: contact.slug,
         contactName: `${contact.first_name} ${contact.last_name}`.trim(),
         contactEmail: contact.email,
         contactPosition: contact.position,

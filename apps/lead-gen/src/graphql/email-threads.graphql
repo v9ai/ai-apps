@@ -2,6 +2,7 @@ query GetEmailThreads($classification: String, $search: String, $sortBy: String,
   emailThreads(classification: $classification, search: $search, sortBy: $sortBy, limit: $limit, offset: $offset) {
     threads {
       contactId
+      contactSlug
       contactName
       contactEmail
       contactPosition
@@ -27,6 +28,7 @@ query GetEmailThreads($classification: String, $search: String, $sortBy: String,
 query GetEmailThread($contactId: Int!) {
   emailThread(contactId: $contactId) {
     contactId
+    contactSlug
     contactName
     contactEmail
     contactPosition

@@ -807,6 +807,7 @@ export type EmailThread = {
   contactId: Scalars['Int']['output'];
   contactName: Scalars['String']['output'];
   contactPosition: Maybe<Scalars['String']['output']>;
+  contactSlug: Maybe<Scalars['String']['output']>;
   conversationStage: Maybe<Scalars['String']['output']>;
   draftId: Maybe<Scalars['Int']['output']>;
   hasPendingDraft: Maybe<Scalars['Boolean']['output']>;

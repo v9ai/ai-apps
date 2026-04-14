@@ -810,6 +810,7 @@ export type EmailThread = {
   contactId: Scalars['Int']['output'];
   contactName: Scalars['String']['output'];
   contactPosition: Maybe<Scalars['String']['output']>;
+  contactSlug: Maybe<Scalars['String']['output']>;
   conversationStage: Maybe<Scalars['String']['output']>;
   draftId: Maybe<Scalars['Int']['output']>;
   hasPendingDraft: Maybe<Scalars['Boolean']['output']>;
@@ -3723,14 +3724,14 @@ export type GetEmailThreadsQueryVariables = Exact<{
 }>;
 
 
-export type GetEmailThreadsQuery = { __typename?: 'Query', emailThreads: { __typename?: 'EmailThreadsResult', totalCount: number, threads: Array<{ __typename?: 'EmailThread', contactId: number, contactName: string, contactEmail: string | null, contactPosition: string | null, companyName: string | null, companyKey: string | null, lastMessageAt: string, lastMessagePreview: string | null, lastMessageDirection: string, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, latestStatus: string | null, priorityScore: number | null, hasPendingDraft: boolean | null, draftId: number | null, conversationStage: string | null }> } };
+export type GetEmailThreadsQuery = { __typename?: 'Query', emailThreads: { __typename?: 'EmailThreadsResult', totalCount: number, threads: Array<{ __typename?: 'EmailThread', contactId: number, contactSlug: string | null, contactName: string, contactEmail: string | null, contactPosition: string | null, companyName: string | null, companyKey: string | null, lastMessageAt: string, lastMessagePreview: string | null, lastMessageDirection: string, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, latestStatus: string | null, priorityScore: number | null, hasPendingDraft: boolean | null, draftId: number | null, conversationStage: string | null }> } };
 
 export type GetEmailThreadQueryVariables = Exact<{
   contactId: Scalars['Int']['input'];
 }>;
 
 
-export type GetEmailThreadQuery = { __typename?: 'Query', emailThread: { __typename?: 'EmailThread', contactId: number, contactName: string, contactEmail: string | null, contactPosition: string | null, companyName: string | null, companyKey: string | null, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, messages: Array<{ __typename?: 'ThreadMessage', id: number, direction: string, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, htmlContent: string | null, sentAt: string | null, status: string | null, sequenceType: string | null, sequenceNumber: string | null, classification: string | null, classificationConfidence: number | null }> } | null };
+export type GetEmailThreadQuery = { __typename?: 'Query', emailThread: { __typename?: 'EmailThread', contactId: number, contactSlug: string | null, contactName: string, contactEmail: string | null, contactPosition: string | null, companyName: string | null, companyKey: string | null, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, messages: Array<{ __typename?: 'ThreadMessage', id: number, direction: string, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, htmlContent: string | null, sentAt: string | null, status: string | null, sequenceType: string | null, sequenceNumber: string | null, classification: string | null, classificationConfidence: number | null }> } | null };
 
 export type GetLinkedInPostsQueryVariables = Exact<{
   type?: InputMaybe<LinkedInPostType>;
@@ -6900,6 +6901,7 @@ export const GetEmailThreadsDocument = gql`
   ) {
     threads {
       contactId
+      contactSlug
       contactName
       contactEmail
       contactPosition
@@ -6966,6 +6968,7 @@ export const GetEmailThreadDocument = gql`
     query GetEmailThread($contactId: Int!) {
   emailThread(contactId: $contactId) {
     contactId
+    contactSlug
     contactName
     contactEmail
     contactPosition

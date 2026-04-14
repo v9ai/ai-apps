@@ -71,21 +71,18 @@ function extractText(chunk: string, className: string): string {
   const idx = chunk.indexOf(className);
   if (idx === -1) return "";
 
-  // Find the next > after the class, then grab text until next <
+  // Find the next > after the class (closing the opening tag)
   const afterClass = chunk.slice(idx);
   const closeTag = afterClass.indexOf(">");
   if (closeTag === -1) return "";
 
   const afterTag = afterClass.slice(closeTag + 1);
-  // For nested spans, look for actual text content (skip comment nodes)
-  const textContent = afterTag
+  // Scope to the first </div> boundary to avoid leaking into sibling elements
+  const scoped = afterTag.split("</div>")[0];
+
+  const cleaned = scoped
     .replace(/<!--.*?-->/g, "")
     .replace(/<[^>]+>/g, " ")
-    .split("<")[0] || afterTag.replace(/<!--.*?-->/g, "").replace(/<[^>]+>/g, " ");
-
-  // Clean up: take first meaningful text block
-  const cleaned = textContent
-    .replace(/<!--.*?-->/g, "")
     .replace(/\s+/g, " ")
     .trim();
 

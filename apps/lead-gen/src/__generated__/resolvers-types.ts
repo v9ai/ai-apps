@@ -810,6 +810,7 @@ export type EmailThread = {
   contactId: Scalars['Int']['output'];
   contactName: Scalars['String']['output'];
   contactPosition: Maybe<Scalars['String']['output']>;
+  contactSlug: Maybe<Scalars['String']['output']>;
   conversationStage: Maybe<Scalars['String']['output']>;
   draftId: Maybe<Scalars['Int']['output']>;
   hasPendingDraft: Maybe<Scalars['Boolean']['output']>;
@@ -4304,6 +4305,7 @@ export type EmailThreadResolvers<ContextType = GraphQLContext, ParentType extend
   contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   contactName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   contactPosition?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  contactSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   conversationStage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   draftId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   hasPendingDraft?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;

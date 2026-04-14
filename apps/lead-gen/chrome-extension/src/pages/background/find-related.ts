@@ -133,7 +133,23 @@ function scrapeModalCompanyUrls(tabId: number): Promise<CompanyLink[]> {
           } catch { /* skip malformed URLs */ }
         }
 
-        console.log(`[FindRelated] Modal: found ${results.length} company cards`);
+        // Fallback: if no card containers found, extract plain links (no industry info)
+        if (results.length === 0) {
+          modal.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
+            try {
+              const href = a.href.split("?")[0].replace(/\/$/, "");
+              const parsed = new URL(href);
+              const match = parsed.pathname.match(/^\/company\/([^/]+)$/);
+              if (match && !seen.has(href)) {
+                seen.add(href);
+                results.push({ url: href, industry: "" });
+              }
+            } catch { /* skip malformed URLs */ }
+          });
+          console.log(`[FindRelated] Modal: card selector missed, fallback found ${results.length} company links`);
+        } else {
+          console.log(`[FindRelated] Modal: found ${results.length} company cards`);
+        }
 
         // Close modal
         const dismiss =

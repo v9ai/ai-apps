@@ -85,7 +85,9 @@ export function ThreadDetail({ contactId, onArchive }: ThreadDetailProps) {
         <Flex justify="between" align="start">
           <Flex direction="column" gap="1">
             <Flex gap="2" align="center">
-              <Heading size="4">{thread.contactName}</Heading>
+              <Link href={`/contacts/${thread.contactSlug ?? contactId}`} style={{ textDecoration: "none" }}>
+                <Heading size="4" color="blue">{thread.contactName}</Heading>
+              </Link>
               {thread.classification && (
                 <Badge
                   color={CLASSIFICATION_COLORS[thread.classification] ?? "gray"}

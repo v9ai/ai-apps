@@ -734,6 +734,7 @@ type EmailThread {
   contactId: Int!
   contactName: String!
   contactPosition: String
+  contactSlug: String
   conversationStage: String
   draftId: Int
   hasPendingDraft: Boolean

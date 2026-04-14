@@ -2,6 +2,7 @@
 
 import { Badge, Box, Flex, Text } from "@radix-ui/themes";
 import { css } from "styled-system/css";
+import Link from "next/link";
 
 const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "orange" | "blue" | "gray" | "purple"> = {
   interested: "green",
@@ -14,6 +15,7 @@ const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "orange" | "blue" 
 
 export interface ThreadSummary {
   contactId: number;
+  contactSlug?: string | null;
   contactName: string;
   contactEmail?: string | null;
   contactPosition?: string | null;
@@ -71,17 +73,24 @@ export function ThreadListItem({ thread, selected, onClick }: ThreadListItemProp
       <Flex justify="between" align="start" gap="2">
         <Box style={{ minWidth: 0, flex: 1 }}>
           <Flex gap="2" align="center" mb="1">
-            <Text
-              size="2"
-              weight={thread.hasReply ? "bold" : "medium"}
-              style={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+            <Link
+              href={`/contacts/${thread.contactSlug ?? thread.contactId}`}
+              onClick={(e) => e.stopPropagation()}
+              style={{ textDecoration: "none" }}
             >
-              {thread.contactName}
-            </Text>
+              <Text
+                size="2"
+                weight={thread.hasReply ? "bold" : "medium"}
+                color="blue"
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {thread.contactName}
+              </Text>
+            </Link>
             {thread.totalMessages > 1 && (
               <Badge color="gray" size="1" variant="surface">
                 {thread.totalMessages}
