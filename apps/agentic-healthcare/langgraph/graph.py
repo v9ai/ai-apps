@@ -231,230 +231,62 @@ def re_triage(state: GraphState) -> dict[str, Any]:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Dynamic k-limit
+# Node 2: Per-intent retriever nodes (LlamaIndex BaseRetriever)
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def _dynamic_k(confidence: float, base_k: int) -> int:
-    """Widen retrieval net for low-confidence classifications."""
-    if confidence >= 0.8:
-        return base_k
-    if confidence >= 0.6:
-        return int(base_k * 1.5)
-    return base_k * 2
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Retrieval helpers (shared between single-intent and multi-intent)
-# ═══════════════════════════════════════════════════════════════════════════
-
-
-def _dedup_and_sort(
-    chunks: list[str], sources: list[str], scores: list[float],
-) -> dict[str, Any]:
-    """De-duplicate chunks by content and re-rank by score descending."""
-    seen: set[str] = set()
-    deduped: list[tuple[str, str, float]] = []
-    for chunk, source, score in zip(chunks, sources, scores):
-        key = chunk.strip()
-        if key not in seen:
-            seen.add(key)
-            deduped.append((chunk, source, score))
-    deduped.sort(key=lambda t: t[2], reverse=True)
-    return {
-        "context_chunks": [d[0] for d in deduped],
-        "retrieval_sources": [d[1] for d in deduped],
-        "retrieval_scores": [d[2] for d in deduped],
-    }
-
-
-def _collect(results: list[dict], source_name: str, score_key: str = "similarity"):
-    """Unpack search results into parallel lists."""
-    chunks = [r["content"] for r in results]
-    sources = [source_name] * len(results)
-    scores = [r[score_key] for r in results]
-    return chunks, sources, scores
-
-
-def _retrieve_markers_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
-    k = int(_dynamic_k(state.intent_confidence, 10) * k_scale)
-    user_id = state.user_id
-    chunks, sources, scores = [], [], []
-
-    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_blood_tests(embedding, user_id, limit=max(1, int(3 * k_scale))), "blood_test_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_health_states(embedding, user_id, limit=max(1, int(2 * k_scale))), "health_state_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    return chunks, sources, scores
-
-
-def _retrieve_derived_ratios_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
-    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
-    user_id = state.user_id
-    chunks, sources, scores = [], [], []
-
-    c, s, sc = _collect(search_health_states(embedding, user_id, limit=k), "health_state_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
-    chunks += c; sources += s; scores += sc
-
-    return chunks, sources, scores
-
-
-def _retrieve_trajectory_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
-    k = int(_dynamic_k(state.intent_confidence, 10) * k_scale)
-    user_id = state.user_id
-    chunks, sources, scores = [], [], []
-
-    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_blood_tests(embedding, user_id, limit=max(1, int(3 * k_scale))), "blood_test_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_health_states(embedding, user_id, limit=max(1, int(2 * k_scale))), "health_state_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    if state.entities:
-        trend_limit = max(5, int(20 * k_scale))
-        for entity in state.entities[:3]:
-            c, s, sc = _collect(search_marker_trend(embedding, user_id, marker_name=entity, limit=trend_limit), "marker_trend")
-            chunks += c; sources += s; scores += sc
-
-    return chunks, sources, scores
-
-
-def _retrieve_conditions_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
-    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
-    user_id = state.user_id
-    chunks, sources, scores = [], [], []
-
-    c, s, sc = _collect(search_conditions(embedding, user_id, limit=k), "condition_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
-    chunks += c; sources += s; scores += sc
-
-    return chunks, sources, scores
-
-
-def _retrieve_medications_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
-    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
-    user_id = state.user_id
-    chunks, sources, scores = [], [], []
-
-    c, s, sc = _collect(search_medications(embedding, user_id, limit=k), "medication_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
-    chunks += c; sources += s; scores += sc
-
-    return chunks, sources, scores
-
-
-def _retrieve_symptoms_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
-    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
-    user_id = state.user_id
-    chunks, sources, scores = [], [], []
-
-    c, s, sc = _collect(search_symptoms(embedding, user_id, limit=k), "symptom_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=k), "blood_marker_embeddings", "combined_score")
-    chunks += c; sources += s; scores += sc
-
-    return chunks, sources, scores
-
-
-def _retrieve_appointments_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
-    k = int(_dynamic_k(state.intent_confidence, 5) * k_scale)
-    user_id = state.user_id
-
-    return _collect(search_appointments(embedding, user_id, limit=k), "appointment_embeddings")
-
-
-def _retrieve_general_health_core(state: GraphState, embedding: list[float], k_scale: float = 1.0):
-    user_id = state.user_id
-    chunks, sources, scores = [], [], []
-
-    c, s, sc = _collect(search_blood_tests(embedding, user_id, limit=max(1, int(3 * k_scale))), "blood_test_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_markers_hybrid(state.query, embedding, user_id, limit=max(1, int(5 * k_scale))), "blood_marker_embeddings", "combined_score")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_health_states(embedding, user_id, limit=max(1, int(3 * k_scale))), "health_state_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_conditions(embedding, user_id, limit=max(1, int(3 * k_scale))), "condition_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_medications(embedding, user_id, limit=max(1, int(3 * k_scale))), "medication_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    c, s, sc = _collect(search_symptoms(embedding, user_id, limit=max(1, int(3 * k_scale))), "symptom_embeddings")
-    chunks += c; sources += s; scores += sc
-
-    return chunks, sources, scores
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Node 2: Per-intent retriever nodes
-# ═══════════════════════════════════════════════════════════════════════════
+def _retrieve_for_intent(state: GraphState, intent: str | None = None, k_scale: float = 1.0) -> dict[str, Any]:
+    """Shared retrieval via LlamaIndex BaseRetriever composition."""
+    retriever = build_retriever_for_intent(
+        intent=intent or state.intent,
+        user_id=state.user_id,
+        confidence=state.intent_confidence,
+        query=state.query,
+        entities=state.entities,
+        k_scale=k_scale,
+    )
+    nodes = retriever.retrieve(state.query)
+    return nodes_to_state(nodes)
 
 
 def retrieve_markers(state: GraphState) -> dict[str, Any]:
     """Retrieve for markers intent: hybrid markers + test context + health states."""
-    embedding = generate_embedding(state.query)
-    return _dedup_and_sort(*_retrieve_markers_core(state, embedding))
+    return _retrieve_for_intent(state, "markers")
 
 
 def retrieve_derived_ratios(state: GraphState) -> dict[str, Any]:
     """Retrieve for derived_ratios intent: health state embeddings + marker cross-ref."""
-    embedding = generate_embedding(state.query)
-    return _dedup_and_sort(*_retrieve_derived_ratios_core(state, embedding))
+    return _retrieve_for_intent(state, "derived_ratios")
 
 
 def retrieve_trajectory(state: GraphState) -> dict[str, Any]:
     """Retrieve for trajectory intent: markers + tests + per-entity trend data."""
-    embedding = generate_embedding(state.query)
-    return _dedup_and_sort(*_retrieve_trajectory_core(state, embedding))
+    return _retrieve_for_intent(state, "trajectory")
 
 
 def retrieve_conditions(state: GraphState) -> dict[str, Any]:
     """Retrieve for conditions intent: condition embeddings + marker cross-ref."""
-    embedding = generate_embedding(state.query)
-    return _dedup_and_sort(*_retrieve_conditions_core(state, embedding))
+    return _retrieve_for_intent(state, "conditions")
 
 
 def retrieve_medications(state: GraphState) -> dict[str, Any]:
     """Retrieve for medications intent: medication embeddings + marker cross-ref."""
-    embedding = generate_embedding(state.query)
-    return _dedup_and_sort(*_retrieve_medications_core(state, embedding))
+    return _retrieve_for_intent(state, "medications")
 
 
 def retrieve_symptoms(state: GraphState) -> dict[str, Any]:
     """Retrieve for symptoms intent: symptom embeddings + marker cross-ref."""
-    embedding = generate_embedding(state.query)
-    return _dedup_and_sort(*_retrieve_symptoms_core(state, embedding))
+    return _retrieve_for_intent(state, "symptoms")
 
 
 def retrieve_appointments(state: GraphState) -> dict[str, Any]:
     """Retrieve for appointments intent: appointment embeddings only."""
-    embedding = generate_embedding(state.query)
-    return _dedup_and_sort(*_retrieve_appointments_core(state, embedding))
+    return _retrieve_for_intent(state, "appointments")
 
 
 def retrieve_general_health(state: GraphState) -> dict[str, Any]:
     """Retrieve for general_health intent: fan-out to all tables."""
-    embedding = generate_embedding(state.query)
-    return _dedup_and_sort(*_retrieve_general_health_core(state, embedding))
+    return _retrieve_for_intent(state, "general_health")
 
 
 def refuse(state: GraphState) -> dict[str, Any]:
@@ -473,29 +305,23 @@ def refuse(state: GraphState) -> dict[str, Any]:
 
 def retrieve_multi_intent(state: GraphState) -> dict[str, Any]:
     """Fan-out retrieval for multi-intent queries — merge results from each sub-intent."""
-    embedding = generate_embedding(state.query)
-    all_chunks: list[str] = []
-    all_sources: list[str] = []
-    all_scores: list[float] = []
+    from retrievers import CompositeRetriever
 
-    retriever_map = {
-        "markers": _retrieve_markers_core,
-        "derived_ratios": _retrieve_derived_ratios_core,
-        "trajectory": _retrieve_trajectory_core,
-        "conditions": _retrieve_conditions_core,
-        "medications": _retrieve_medications_core,
-        "symptoms": _retrieve_symptoms_core,
-        "appointments": _retrieve_appointments_core,
-        "general_health": _retrieve_general_health_core,
-    }
-
+    sub_retrievers = []
     for sub_intent in state.sub_intents:
-        retriever = retriever_map.get(sub_intent)
-        if retriever:
-            c, s, sc = retriever(state, embedding, k_scale=0.6)
-            all_chunks += c; all_sources += s; all_scores += sc
+        if sub_intent in SINGLE_INTENTS and sub_intent != "safety_refusal":
+            r = build_retriever_for_intent(
+                sub_intent, state.user_id, state.intent_confidence,
+                state.query, state.entities, k_scale=0.6,
+            )
+            sub_retrievers.append(r)
 
-    return _dedup_and_sort(all_chunks, all_sources, all_scores)
+    if not sub_retrievers:
+        return _retrieve_for_intent(state, "general_health")
+
+    composite = CompositeRetriever(sub_retrievers)
+    nodes = composite.retrieve(state.query)
+    return nodes_to_state(nodes)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
