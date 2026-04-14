@@ -9,24 +9,24 @@ import {
   Box,
   Badge,
   Skeleton,
+  Spinner,
+  Card,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, RocketIcon } from "@radix-ui/react-icons";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { CSS_CATEGORIES } from "@/lib/css-properties";
-import { cssCategoriesToMemorize } from "@/lib/memorize-adapters";
 import {
   MemorizeDashboard,
   type MasteryMap,
-} from "@/components/app-detail/memorize/MemorizeDashboard";
+} from "@/components/memorize/MemorizeDashboard";
+import type { MemorizeCategory } from "@/lib/memorize-types";
 import "@/components/app-detail/memorize/css-memorize.css";
-
-const CSS_MEMORIZE_CATEGORIES = cssCategoriesToMemorize(CSS_CATEGORIES);
 
 interface AppData {
   slug: string;
   company: string;
   position: string;
+  aiTechStack: string | null;
 }
 
 function MemorizePageInner() {
@@ -34,11 +34,14 @@ function MemorizePageInner() {
   const router = useRouter();
 
   const [app, setApp] = useState<AppData | null>(null);
+  const [categories, setCategories] = useState<MemorizeCategory[]>([]);
   const [mastery, setMastery] = useState<MasteryMap>({});
+  const [generated, setGenerated] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch app data and mastery in parallel
+  // Fetch app data and memorize state in parallel
   useEffect(() => {
     if (!params.id) return;
 
@@ -52,22 +55,45 @@ function MemorizePageInner() {
         return r.json();
       }),
       fetch(`/api/applications/${params.id}/memorize`)
-        .then((r) => (r.ok ? r.json() : { mastery: {} }))
-        .catch(() => ({ mastery: {} })),
+        .then((r) => (r.ok ? r.json() : { mastery: {}, categories: [], generated: false }))
+        .catch(() => ({ mastery: {}, categories: [], generated: false })),
     ])
-      .then(([appData, masteryData]) => {
+      .then(([appData, memorizeData]) => {
         if (appData) setApp(appData);
-        setMastery(masteryData.mastery || {});
+        setMastery(memorizeData.mastery || {});
+        setCategories(memorizeData.categories || []);
+        setGenerated(memorizeData.generated || false);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [params.id, router]);
 
+  const handleGenerate = useCallback(async () => {
+    if (!params.id) return;
+    setGenerating(true);
+    try {
+      const res = await fetch(`/api/applications/${params.id}/memorize/generate`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Generation failed");
+      }
+      const data = await res.json();
+      setCategories(data.categories || []);
+      setGenerated(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  }, [params.id]);
+
   const handleRate = useCallback(
-    (propertyId: string, isCorrect: boolean) => {
+    (itemId: string, isCorrect: boolean) => {
       // Optimistic local update
       setMastery((prev) => {
-        const current = prev[propertyId];
+        const current = prev[itemId];
         const pMastery = current?.pMastery ?? 0.1;
         const newMastery = isCorrect
           ? Math.min(1, pMastery + 0.1)
@@ -84,7 +110,7 @@ function MemorizePageInner() {
                   : "novice";
         return {
           ...prev,
-          [propertyId]: {
+          [itemId]: {
             pMastery: newMastery,
             masteryLevel: level,
             totalInteractions: (current?.totalInteractions ?? 0) + 1,
@@ -99,10 +125,8 @@ function MemorizePageInner() {
       fetch(`/api/applications/${params.id}/memorize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ propertyId, isCorrect }),
-      }).catch(() => {
-        // Silent fail — local state is already updated
-      });
+        body: JSON.stringify({ propertyId: itemId, isCorrect }),
+      }).catch(() => {});
     },
     [params.id],
   );
@@ -129,6 +153,58 @@ function MemorizePageInner() {
     );
   }
 
+  // Not generated yet — show generation prompt
+  if (!generated) {
+    return (
+      <Box px={{ initial: "2", md: "3" }} py={{ initial: "2", md: "3" }} style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+        <Flex align="center" gap="2" mb="5">
+          <Link
+            href={`/applications/${app.slug}/prep`}
+            style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--gray-11)", textDecoration: "none" }}
+          >
+            <ArrowLeftIcon />
+            <Text size="2">Study Plan</Text>
+          </Link>
+          <Text size="2" color="gray">/</Text>
+          <Heading size="4">Memorize</Heading>
+        </Flex>
+
+        <Flex direction="column" align="center" justify="center" style={{ flex: 1 }}>
+          <Card style={{ maxWidth: 480, width: "100%", padding: 32 }}>
+            <Flex direction="column" align="center" gap="4">
+              <RocketIcon width={32} height={32} style={{ color: "var(--violet-9)" }} />
+              <Heading size="5" align="center">Generate Flashcards</Heading>
+              <Text size="2" color="gray" align="center">
+                Create spaced-repetition flashcards from the tech stack in your {app.position} application at {app.company}.
+              </Text>
+              {!app.aiTechStack && (
+                <Text size="2" color="red" align="center">
+                  Generate a study plan first to populate the tech stack.
+                </Text>
+              )}
+              <Button
+                size="3"
+                color="violet"
+                disabled={generating || !app.aiTechStack}
+                onClick={handleGenerate}
+                style={{ width: "100%" }}
+              >
+                {generating ? (
+                  <Flex align="center" gap="2">
+                    <Spinner size="1" />
+                    Generating...
+                  </Flex>
+                ) : (
+                  "Generate Flashcards"
+                )}
+              </Button>
+            </Flex>
+          </Card>
+        </Flex>
+      </Box>
+    );
+  }
+
   return (
     <Box px={{ initial: "2", md: "3" }} py={{ initial: "2", md: "3" }} style={{ height: "100vh", display: "flex", flexDirection: "column", overflow: "auto" }}>
       {/* Compact header */}
@@ -148,7 +224,7 @@ function MemorizePageInner() {
             <Text size="2">Study Plan</Text>
           </Link>
           <Text size="2" color="gray">/</Text>
-          <Heading size="4">Memorize CSS</Heading>
+          <Heading size="4">Memorize</Heading>
           <Badge color="violet" variant="soft" size="1">
             Active Recall
           </Badge>
@@ -168,10 +244,10 @@ function MemorizePageInner() {
 
       {/* Dashboard */}
       <MemorizeDashboard
-        categories={CSS_MEMORIZE_CATEGORIES}
+        categories={categories}
         mastery={mastery}
         namespaceKey={app.slug}
-        title="CSS Properties"
+        title="Key Concepts"
         onRate={handleRate}
       />
     </Box>

@@ -628,7 +628,7 @@ function PrepPageInner() {
         </Box>
         <Flex gap="2">
           <Button size="2" variant="solid" color="violet" asChild>
-            <Link href={`/applications/${app.slug}/prep/memorize`}>Memorize CSS</Link>
+            <Link href={`/applications/${app.slug}/prep/memorize`}>Memorize</Link>
           </Button>
           <Button size="2" variant="soft" color="gray" asChild>
             <Link href={`/applications/${app.slug}/notes`}>Notes</Link>

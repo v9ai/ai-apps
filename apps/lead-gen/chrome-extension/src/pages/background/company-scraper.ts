@@ -19,8 +19,16 @@ export function setCompanyScraperCancelled(value: boolean) {
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
+// External log callback — when set, phase function logs go into the BFS crawl log
+let externalLog: ((msg: string) => void) | null = null;
+
+export function setExternalLog(fn: ((msg: string) => void) | null) {
+  externalLog = fn;
+}
+
 function log(msg: string) {
   console.log(`[CompanyScraper] ${msg}`);
+  if (externalLog) externalLog(`[Scraper] ${msg}`);
 }
 
 async function reportProgress(tabId: number, message: string) {
@@ -571,6 +579,7 @@ async function scrapeCompanyPosts(tabId: number): Promise<ExtractedPost[]> {
     }).then((r) => r?.[0]?.result ?? false).catch(() => false);
 
     if (hitOldPosts) {
+      log("Posts scroll stopped — hit posts older than 1 year");
       break;
     }
 
@@ -614,6 +623,8 @@ async function scrapeCompanyPosts(tabId: number): Promise<ExtractedPost[]> {
       }
 
       const MAX_AGE_MONTHS = 12;
+      let totalOnPage = 0;
+      let filteredByAge = 0;
 
       const posts: Array<{
         postUrl: string | null; postText: string; postedDate: string | null;
@@ -625,11 +636,12 @@ async function scrapeCompanyPosts(tabId: number): Promise<ExtractedPost[]> {
       document.querySelectorAll(".feed-shared-update-v2, .occludable-update").forEach((el) => {
         if (el.querySelector(".feed-shared-update-v2__ad-badge")) return;
         if (el.querySelector('[data-test-id="feed-shared-update-v2__sponsored"]')) return;
+        totalOnPage++;
 
         // Check post age — skip if older than 1 year
         const subDescText = el.querySelector(".update-components-actor__sub-description")?.textContent?.trim() || "";
         const ageMonths = parseRelativeAgeMonths(subDescText);
-        if (ageMonths !== null && ageMonths > MAX_AGE_MONTHS) return;
+        if (ageMonths !== null && ageMonths > MAX_AGE_MONTHS) { filteredByAge++; return; }
 
         // Also check <time datetime="..."> if present
         const timeEl = el.querySelector("time");
@@ -639,7 +651,7 @@ async function scrapeCompanyPosts(tabId: number): Promise<ExtractedPost[]> {
             const postDate = new Date(dt);
             const oneYearAgo = new Date();
             oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-            if (postDate < oneYearAgo) return;
+            if (postDate < oneYearAgo) { filteredByAge++; return; }
           }
         }
 
@@ -688,9 +700,13 @@ async function scrapeCompanyPosts(tabId: number): Promise<ExtractedPost[]> {
           mediaType, isRepost, originalAuthor, authorName, authorUrl, authorSubtitle,
         });
       });
-      return posts;
+      return { posts, totalOnPage, filteredByAge };
     },
   });
 
-  return (results?.[0]?.result ?? []) as ExtractedPost[];
+  const raw = results?.[0]?.result as { posts: ExtractedPost[]; totalOnPage: number; filteredByAge: number } | undefined;
+  if (raw && raw.filteredByAge > 0) {
+    log(`Posts: ${raw.totalOnPage} on page, ${raw.filteredByAge} filtered (>1yr), ${raw.posts.length} kept`);
+  }
+  return raw?.posts ?? [];
 }

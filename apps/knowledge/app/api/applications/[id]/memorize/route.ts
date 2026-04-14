@@ -2,8 +2,8 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/src/db";
-import { concepts, knowledgeStates } from "@/src/db/schema";
-import { eq, and, like, sql } from "drizzle-orm";
+import { applications, concepts, knowledgeStates } from "@/src/db/schema";
+import { eq, and, like } from "drizzle-orm";
 
 async function getSession() {
   return auth.api.getSession({ headers: await headers() });
@@ -11,16 +11,33 @@ async function getSession() {
 
 /**
  * GET /api/applications/[id]/memorize
- * Returns the user's mastery states for all css:* concepts.
+ * Returns the user's mastery states for all app-scoped concepts,
+ * plus the generated category catalog.
  */
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const [session] = await Promise.all([getSession(), params]);
+  const [session, { id: appId }] = await Promise.all([getSession(), params]);
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Load categories from application row
+  const [app] = await db
+    .select({ aiMemorizeCategories: applications.aiMemorizeCategories })
+    .from(applications)
+    .where(
+      and(eq(applications.id, appId), eq(applications.userId, session.user.id)),
+    );
+
+  if (!app)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const generated = !!app.aiMemorizeCategories;
+  const categories = generated ? JSON.parse(app.aiMemorizeCategories!) : [];
+
+  // Query mastery for app-scoped concepts
+  const prefix = `app:${appId}:%`;
   const rows = await db
     .select({
       conceptName: concepts.name,
@@ -35,7 +52,7 @@ export async function GET(
     .where(
       and(
         eq(knowledgeStates.userId, session.user.id),
-        like(concepts.name, "css:%"),
+        like(concepts.name, prefix),
       ),
     );
 
@@ -50,10 +67,11 @@ export async function GET(
     }
   > = {};
 
+  // Strip "app:{appId}:" prefix to get itemId
+  const stripPrefix = `app:${appId}:`;
   for (const row of rows) {
-    // Strip "css:" prefix to get property id
-    const propId = row.conceptName.replace(/^css:/, "");
-    mastery[propId] = {
+    const key = row.conceptName.replace(stripPrefix, "");
+    mastery[key] = {
       pMastery: row.pMastery,
       masteryLevel: row.masteryLevel,
       totalInteractions: row.totalInteractions,
@@ -62,19 +80,20 @@ export async function GET(
     };
   }
 
-  return NextResponse.json({ mastery });
+  return NextResponse.json({ mastery, categories, generated });
 }
 
 /**
  * POST /api/applications/[id]/memorize
- * Record an interaction for a CSS property concept.
- * Body: { propertyId: string, isCorrect: boolean, mode: string }
+ * Record an interaction for an app-scoped concept.
+ * Body: { propertyId: string, isCorrect: boolean }
+ * propertyId format: "{categoryId}:{itemId}"
  */
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const [session] = await Promise.all([getSession(), params]);
+  const [session, { id: appId }] = await Promise.all([getSession(), params]);
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -91,19 +110,30 @@ export async function POST(
     );
   }
 
-  const conceptName = `css:${propertyId}`;
+  const conceptName = `app:${appId}:${propertyId}`;
 
-  // Find the concept
-  const [concept] = await db
+  // Find or create the concept
+  let [concept] = await db
     .select({ id: concepts.id })
     .from(concepts)
     .where(eq(concepts.name, conceptName));
 
   if (!concept) {
-    return NextResponse.json(
-      { error: `Concept ${conceptName} not found` },
-      { status: 404 },
-    );
+    // Auto-create if missing (generation saved the catalog but concept row may not exist)
+    const [inserted] = await db
+      .insert(concepts)
+      .values({
+        name: conceptName,
+        description: propertyId,
+        conceptType: "skill",
+        metadata: {},
+      })
+      .onConflictDoUpdate({
+        target: concepts.name,
+        set: { description: propertyId },
+      })
+      .returning({ id: concepts.id });
+    concept = inserted;
   }
 
   // Read current state
@@ -122,7 +152,7 @@ export async function POST(
     (existing?.correctInteractions ?? 0) + (isCorrect ? 1 : 0);
   const currentMastery = existing?.pMastery ?? 0.1;
 
-  // Simple BKT-inspired update (works without the Rust server running)
+  // BKT update
   const pTransit = 0.1;
   const pSlip = 0.1;
   const pGuess = 0.2;
