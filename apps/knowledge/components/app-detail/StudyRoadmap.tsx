@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import {
   ReactFlow,
   type Node,
@@ -12,6 +12,8 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import Link from "next/link";
+import { matchArticles, type LessonStub } from "@/lib/article-stubs";
 
 /* ── Heading parser ─────────────────────────────────────────────── */
 
@@ -34,7 +36,6 @@ function parseSections(md: string): Section[] {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    // Count ### children until next ##
     let childCount = 0;
     for (let j = i + 1; j < lines.length; j++) {
       if (/^##\s/.test(lines[j])) break;
@@ -54,6 +55,7 @@ type RoadmapNodeData = {
   headingId: string;
   childCount: number;
   index: number;
+  articles: LessonStub[];
 };
 
 function SectionNode({ data }: NodeProps<Node<RoadmapNodeData>>) {
@@ -64,9 +66,14 @@ function SectionNode({ data }: NodeProps<Node<RoadmapNodeData>>) {
       <div className="roadmap-node__inner">
         <span className="roadmap-node__index">{data.index}</span>
         <span className="roadmap-node__label">{data.label}</span>
-        {data.childCount > 0 && (
-          <span className="roadmap-node__count">{data.childCount} topics</span>
-        )}
+        <div className="roadmap-node__badges">
+          {data.childCount > 0 && (
+            <span className="roadmap-node__count">{data.childCount} topics</span>
+          )}
+          {data.articles.length > 0 && (
+            <span className="roadmap-node__articles">{data.articles.length} articles</span>
+          )}
+        </div>
       </div>
       <Handle type="source" position={Position.Right} className="roadmap-handle" />
       <Handle type="source" position={Position.Bottom} className="roadmap-handle" id="bottom" />
@@ -84,7 +91,10 @@ const X_GAP = 60;
 const Y_GAP = 100;
 const COLS = 5;
 
-function buildGraph(sections: Section[]): { nodes: Node<RoadmapNodeData>[]; edges: Edge[] } {
+function buildGraph(
+  sections: Section[],
+  techTags?: string[],
+): { nodes: Node<RoadmapNodeData>[]; edges: Edge[] } {
   const nodes: Node<RoadmapNodeData>[] = [];
   const edges: Edge[] = [];
 
@@ -94,23 +104,23 @@ function buildGraph(sections: Section[]): { nodes: Node<RoadmapNodeData>[]; edge
     const s = sections[i];
     const row = Math.floor(i / COLS);
     const colInRow = i % COLS;
-    // Reverse direction on odd rows for S-curve
     const col = row % 2 === 0 ? colInRow : COLS - 1 - colInRow;
     const x = col * (NODE_W + X_GAP);
     const y = row * (NODE_H + Y_GAP);
+
+    const articles = matchArticles(s.text, techTags);
 
     nodes.push({
       id: s.id,
       type: "section",
       position: { x, y },
-      data: { label: s.text, headingId: s.id, childCount: s.childCount, index: i + 1 },
+      data: { label: s.text, headingId: s.id, childCount: s.childCount, index: i + 1, articles },
       style: { width: NODE_W },
     });
 
     if (i > 0) {
       const prevRow = Math.floor((i - 1) / COLS);
-      const currRow = row;
-      const isRowChange = currRow !== prevRow;
+      const isRowChange = row !== prevRow;
 
       edges.push({
         id: `e-${i}`,
@@ -120,7 +130,6 @@ function buildGraph(sections: Section[]): { nodes: Node<RoadmapNodeData>[]; edge
         sourceHandle: isRowChange ? "bottom" : undefined,
         targetHandle: isRowChange ? "top" : undefined,
         style: { stroke: "var(--violet-7)", strokeWidth: 2 },
-        animated: false,
       });
     }
   }
@@ -128,31 +137,92 @@ function buildGraph(sections: Section[]): { nodes: Node<RoadmapNodeData>[]; edge
   return { nodes, edges };
 }
 
+/* ── Detail panel ───────────────────────────────────────────────── */
+
+function DetailPanel({
+  node,
+  onClose,
+}: {
+  node: Node<RoadmapNodeData>;
+  onClose: () => void;
+}) {
+  const { label, headingId, articles } = node.data;
+
+  const scrollToSection = useCallback(() => {
+    const headings = document.querySelectorAll(
+      ".interview-prep-md h1, .interview-prep-md h2, .interview-prep-md h3, .interview-prep-md h4, .interview-prep-md [class*='rt-Heading']",
+    );
+    for (const el of headings) {
+      const elId = (el.textContent || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      if (elId === headingId) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.classList.add("roadmap-highlight");
+        setTimeout(() => el.classList.remove("roadmap-highlight"), 1500);
+        return;
+      }
+    }
+  }, [headingId]);
+
+  return (
+    <div className="roadmap-detail">
+      <div className="roadmap-detail__header">
+        <div className="roadmap-detail__title-row">
+          <span className="roadmap-detail__title">{label}</span>
+          <button className="roadmap-detail__jump" onClick={scrollToSection}>
+            Jump to section ↓
+          </button>
+        </div>
+        <button className="roadmap-detail__close" onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+      </div>
+      {articles.length > 0 ? (
+        <div className="roadmap-article-grid">
+          {articles.map((a) => (
+            <Link key={a.slug} href={a.url} className="roadmap-article-card">
+              <span className="roadmap-article-card__icon">{a.icon}</span>
+              <div className="roadmap-article-card__body">
+                <span className="roadmap-article-card__title">{a.title}</span>
+                <span className="roadmap-article-card__meta">
+                  #{a.number} · {a.category}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <span className="roadmap-detail__empty">No matching articles in the knowledge base</span>
+      )}
+    </div>
+  );
+}
+
 /* ── Flow wrapper ───────────────────────────────────────────────── */
 
-function FlowInner({ nodes, edges }: { nodes: Node<RoadmapNodeData>[]; edges: Edge[] }) {
+function FlowInner({
+  nodes,
+  edges,
+  selectedNode,
+  onSelectNode,
+}: {
+  nodes: Node<RoadmapNodeData>[];
+  edges: Edge[];
+  selectedNode: Node<RoadmapNodeData> | null;
+  onSelectNode: (node: Node<RoadmapNodeData> | null) => void;
+}) {
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node<RoadmapNodeData>) => {
-      const id = node.data.headingId;
-      // Match headings by slugified text content
-      const headings = document.querySelectorAll(
-        ".interview-prep-md h1, .interview-prep-md h2, .interview-prep-md h3, .interview-prep-md h4, .interview-prep-md [class*='rt-Heading']",
-      );
-      for (const el of headings) {
-        const elId = (el.textContent || "")
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "");
-        if (elId === id) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-          el.classList.add("roadmap-highlight");
-          setTimeout(() => el.classList.remove("roadmap-highlight"), 1500);
-          return;
-        }
-      }
+      onSelectNode(selectedNode?.id === node.id ? null : node);
     },
-    [],
+    [onSelectNode, selectedNode],
   );
+
+  const onPaneClick = useCallback(() => {
+    onSelectNode(null);
+  }, [onSelectNode]);
 
   return (
     <ReactFlow
@@ -160,6 +230,7 @@ function FlowInner({ nodes, edges }: { nodes: Node<RoadmapNodeData>[]; edges: Ed
       edges={edges}
       nodeTypes={nodeTypes}
       onNodeClick={onNodeClick}
+      onPaneClick={onPaneClick}
       fitView
       fitViewOptions={{ padding: 0.15 }}
       minZoom={0.4}
@@ -178,9 +249,19 @@ function FlowInner({ nodes, edges }: { nodes: Node<RoadmapNodeData>[]; edges: Ed
 
 /* ── Exported component ─────────────────────────────────────────── */
 
-export function StudyRoadmap({ markdown }: { markdown: string }) {
+export function StudyRoadmap({
+  markdown,
+  techTags,
+}: {
+  markdown: string;
+  techTags?: string[];
+}) {
   const sections = useMemo(() => parseSections(markdown), [markdown]);
-  const { nodes, edges } = useMemo(() => buildGraph(sections), [sections]);
+  const { nodes, edges } = useMemo(
+    () => buildGraph(sections, techTags),
+    [sections, techTags],
+  );
+  const [selectedNode, setSelectedNode] = useState<Node<RoadmapNodeData> | null>(null);
 
   if (nodes.length < 2) return null;
 
@@ -188,10 +269,20 @@ export function StudyRoadmap({ markdown }: { markdown: string }) {
   const height = Math.min(rows * (NODE_H + Y_GAP) + 60, 500);
 
   return (
-    <div className="roadmap-container" style={{ height }}>
-      <ReactFlowProvider>
-        <FlowInner nodes={nodes} edges={edges} />
-      </ReactFlowProvider>
+    <div className="roadmap-container">
+      <div style={{ height }}>
+        <ReactFlowProvider>
+          <FlowInner
+            nodes={nodes}
+            edges={edges}
+            selectedNode={selectedNode}
+            onSelectNode={setSelectedNode}
+          />
+        </ReactFlowProvider>
+      </div>
+      {selectedNode && (
+        <DetailPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
+      )}
     </div>
   );
 }

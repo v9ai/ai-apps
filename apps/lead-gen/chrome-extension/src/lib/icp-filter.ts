@@ -18,7 +18,7 @@ export interface CompanyData {
 
 export interface ICPResult {
   target: boolean;
-  reason?: "not-recruitment" | "too-large" | "irrelevant-geo" | "no-remote-jobs";
+  reason?: "not-recruitment" | "too-large" | "irrelevant-geo" | "non-tech-vertical" | "no-remote-jobs";
 }
 
 // Parse LinkedIn size strings like "51-200 employees" → upper bound (200).
@@ -58,6 +58,73 @@ function isIrrelevantGeo(text: string): boolean {
   return REGION_LOCKED_PATTERNS.some((re) => re.test(text));
 }
 
+// Non-tech verticals — recruiters specializing in these fields are not ICP targets.
+// We want software/CS/IT/tech recruiting only.
+const NON_TECH_VERTICALS: RegExp[] = [
+  // Logistics & supply chain
+  /supply\s*chain/i,
+  /\blogistics?\b/i,
+  /\btransportation\b/i,
+  /\bwarehousing?\b/i,
+  /\bfreight\b/i,
+  /\bshipping\b/i,
+  /\btrucking\b/i,
+  /\bfleet\b/i,
+  // Healthcare & medical
+  /\bhealthcare\b/i,
+  /\bmedical\b/i,
+  /\bnursing\b/i,
+  /\bpharmac(?:y|eutical)\b/i,
+  /\bdental\b/i,
+  /\bclinical\b/i,
+  /\bphysician\b/i,
+  /\blocum\s*tenens\b/i,
+  /\ballied\s*health\b/i,
+  // Construction & trades
+  /\bconstruction\b/i,
+  /\btrades?\b/i,
+  /\bskilled\s*labor\b/i,
+  /\bmanufacturing\b/i,
+  /\bindustrial\b/i,
+  /\barchitect(?:ure|ural)?\b/i,
+  // Finance & accounting (non-tech)
+  /\baccounting\b/i,
+  /\btax\s+(?:staff|recruit|talent)/i,
+  /\baudit(?:ing)?\b/i,
+  /\bbookkeep/i,
+  /\bactuari/i,
+  // Legal
+  /\blegal\s+(?:staff|recruit|talent|place)/i,
+  /\bparalegal\b/i,
+  /\battorney\b/i,
+  /\blaw\s+firm/i,
+  // Hospitality & food
+  /\bhospitality\b/i,
+  /\bculinary\b/i,
+  /\brestaurant/i,
+  /\bcatering\b/i,
+  /\bhotel/i,
+  // Education
+  /\beducation\s+(?:staff|recruit|talent)/i,
+  /\bteacher\b/i,
+  /\bfaculty\b/i,
+  // Oil & gas / energy (non-renewable)
+  /\boil\s*(?:&|and)\s*gas\b/i,
+  /\bmining\b/i,
+  /\bdrilling\b/i,
+  // Insurance
+  /\binsurance\s+(?:staff|recruit|talent|agent)/i,
+  // Retail
+  /\bretail\s+(?:staff|recruit|talent)/i,
+  // Agriculture
+  /\bagri(?:culture|cultural)\b/i,
+  /\bfarming\b/i,
+];
+
+function isNonTechVertical(text: string): boolean {
+  return NON_TECH_VERTICALS.some((re) => re.test(text));
+}
+
 export function isICPTarget(data: CompanyData): ICPResult {
   const text = [data.industry, data.description, data.name, data.location].join(" ");
 
@@ -71,6 +138,12 @@ export function isICPTarget(data: CompanyData): ICPResult {
 
   if (isIrrelevantGeo(text)) {
     return { target: false, reason: "irrelevant-geo" };
+  }
+
+  // Check description + name for non-tech specialization
+  const descAndName = [data.description, data.name].join(" ");
+  if (isNonTechVertical(descAndName)) {
+    return { target: false, reason: "non-tech-vertical" };
   }
 
   return { target: true };

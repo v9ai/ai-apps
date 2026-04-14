@@ -421,6 +421,15 @@ function PrepPageInner() {
   const content = app?.aiInterviewQuestions;
   const processed = useMemo(() => content ? groupCodeBlocks(content) : null, [content]);
 
+  const techTags = useMemo(() => {
+    if (!app?.aiTechStack) return undefined;
+    try {
+      const arr = JSON.parse(app.aiTechStack);
+      if (Array.isArray(arr)) return arr.map((t: { tag: string }) => t.tag).filter(Boolean) as string[];
+    } catch {}
+    return undefined;
+  }, [app?.aiTechStack]);
+
   const mdComponents = useMemo(() => ({
     h1: ({ children }: { children: React.ReactNode }) => (
       <Heading size="6" mb="3" mt="6" style={{ color: "var(--violet-11)" }}>{children}</Heading>
@@ -644,7 +653,7 @@ function PrepPageInner() {
       </Flex>
 
       {/* Roadmap */}
-      {content && <StudyRoadmap markdown={content} />}
+      {content && <StudyRoadmap markdown={content} techTags={techTags} />}
 
       {/* Content */}
       {processed ? (
