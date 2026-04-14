@@ -4,25 +4,191 @@ Therapeutic research and story generation agent — LangGraph port of the Rust `
 
 ## Architecture
 
-```
-CLI (argparse) ──→ TherapyContext
-                        │
-              ┌─────────┼──────────┐
-              ▼         ▼          ▼
-        DeepSeek    Research     Neon PostgreSQL
-        Reasoner    Sources      (persistence)
-        (LangGraph  (multi-API
-         ReAct)      fallback)
-              │         │
-              ▼         ▼
-        Structured   Papers + embeddings
-        insights     (sentence-transformers)
-              │
-              ▼
-        Story generation + TTS
+```mermaid
+graph TB
+    CLI["CLI (argparse)"] --> TC[TherapyContext]
+    TC --> LG["LangGraph ReAct Agent<br/>(DeepSeek Reasoner)"]
+    TC --> QG["Query Generator<br/>(3–6 diverse queries)"]
+
+    QG --> LG
+
+    LG -->|"search_papers"| FB[Fallback Chain]
+    LG -->|"get_paper_detail"| SS3["Semantic Scholar<br/>Detail API"]
+    LG -->|"save_research_papers"| Neon[(Neon PostgreSQL)]
+
+    FB --> OA["OpenAlex<br/>214M+ papers"]
+    FB --> CR["Crossref<br/>DOI metadata"]
+    FB --> SS["Semantic Scholar<br/>Rich metadata"]
+
+    OA -->|normalize| NL[Normalized Papers]
+    CR -->|normalize| NL
+    SS -->|normalize| NL
+
+    NL --> RR["Cross-Encoder Reranker<br/>(ms-marco-MiniLM)"]
+    RR --> LG
+
+    LG --> MD[Markdown Summary]
+    LG --> Neon
+
+    style OA fill:#4a9eff,color:#fff
+    style CR fill:#ff6b6b,color:#fff
+    style SS fill:#ffa726,color:#fff
+    style LG fill:#7c4dff,color:#fff
+    style Neon fill:#00c853,color:#fff
+    style RR fill:#ff4081,color:#fff
 ```
 
-The agent uses LangGraph ReAct workflows with DeepSeek Reasoner to search academic literature across multiple sources, extract therapeutic insights, persist papers to Neon, and optionally generate therapeutic stories with audio delivery.
+## Provider Fallback Chain
+
+The system queries academic databases in priority order, returning results from the first provider that responds successfully:
+
+```mermaid
+flowchart LR
+    Q[Query] --> OA{OpenAlex}
+    OA -->|results| N1[Normalize + Return]
+    OA -->|empty / error| CR{Crossref}
+    CR -->|results| N2[Normalize + Return]
+    CR -->|empty / error| SS{Semantic Scholar}
+    SS --> N3[Normalize + Return]
+
+    style OA fill:#4a9eff,color:#fff
+    style CR fill:#ff6b6b,color:#fff
+    style SS fill:#ffa726,color:#fff
+```
+
+| Provider | Endpoint | Rate Limit | Auth | Strengths |
+|----------|----------|------------|------|-----------|
+| **OpenAlex** | `api.openalex.org/works` | None | None | 214M+ papers, inverted abstract index |
+| **Crossref** | `api.crossref.org/works` | None | None | DOI authority, full metadata |
+| **Semantic Scholar** | `api.semanticscholar.org/graph/v1` | Yes (higher w/ key) | Optional `x-api-key` | TLDRs, PDFs, fields of study |
+
+All providers normalize to a common schema:
+
+```python
+{"title", "authors", "year", "abstract", "doi", "url", "citation_count"}
+```
+
+## ReAct Agent Workflow
+
+```mermaid
+sequenceDiagram
+    participant U as CLI / Neon URL
+    participant TC as TherapyContext
+    participant A as DeepSeek ReAct Agent
+    participant S as search_papers
+    participant R as Cross-Encoder Reranker
+    participant D as get_paper_detail
+    participant P as save_research_papers
+    participant DB as Neon PostgreSQL
+
+    U->>TC: Build context (goal, issues, population)
+    TC->>A: Structured prompt + query suggestions
+
+    loop 3 search calls (different angles)
+        A->>S: search_papers(query, limit=10)
+        S->>S: Fetch 3x candidates via fallback chain
+        S->>R: Rerank by semantic relevance
+        R-->>A: Top 10 ranked papers
+    end
+
+    A->>D: get_paper_detail(DOI) — up to 2 papers
+    D-->>A: Full abstract + TLDR
+
+    A->>P: save_research_papers(curated JSON)
+    P->>DB: Upsert deduplicated papers
+    P-->>A: Saved N, skipped M
+
+    A-->>U: Markdown summary (< 500 words)
+```
+
+## Semantic Reranking Pipeline
+
+Papers go through a cross-encoder reranking step between search and extraction:
+
+```mermaid
+flowchart TD
+    S["search_papers_with_fallback()<br/>Fetch 3× limit candidates"] --> B["Build passages<br/>(title + abstract[:1000])"]
+    B --> CE["Cross-Encoder Scoring<br/>ms-marco-MiniLM-L-6-v2<br/>(22M params, ~15ms/pair)"]
+    CE --> Sort["Sort by descending score"]
+    Sort --> TopK["Return top K papers"]
+
+    style CE fill:#ff4081,color:#fff
+```
+
+## Confidence & Quality Scoring
+
+Papers are filtered and scored before persistence:
+
+```mermaid
+flowchart TD
+    P[Paper Candidate] --> F1{Abstract exists<br/>and ≥ 50 chars?}
+    F1 -->|No| Skip[Skip]
+    F1 -->|Yes| F2{Abstract is<br/>placeholder?}
+    F2 -->|Yes| Skip
+    F2 -->|No| Score[Calculate Confidence]
+
+    Score --> Base["Base: 40 pts"]
+    Score --> Ab{"Abstract ≥ 100 chars?<br/>+25 pts"}
+    Score --> Kf{"≥ 2 key findings?<br/>+20 pts"}
+    Score --> Tt{"≥ 1 technique?<br/>+15 pts"}
+
+    Base --> Total["Confidence: 40–100"]
+    Ab --> Total
+    Kf --> Total
+    Tt --> Total
+    Total --> DB[(Neon PostgreSQL)]
+
+    style Skip fill:#ff5252,color:#fff
+    style Total fill:#00c853,color:#fff
+```
+
+## Story Generation Flow
+
+```mermaid
+flowchart TD
+    FB[Feedback ID] --> Load["load_context()<br/>Feedback + issues + family member"]
+    Load --> SC[StoryContext]
+    SC --> Tier{"Age-based tier detection"}
+
+    Tier -->|"0–5"| EC[Early Childhood<br/>15 words/sentence max]
+    Tier -->|"6–9"| MC[Middle Childhood]
+    Tier -->|"10–13"| EA[Early Adolescence]
+    Tier -->|"14–17"| LA[Late Adolescence]
+    Tier -->|"18+"| AD[Adult<br/>20 words/sentence max]
+
+    EC & MC & EA & LA & AD --> Prompt["build_story_prompt()<br/>Audio-first, TTS-compatible"]
+    Prompt --> DS["DeepSeek Chat<br/>(streaming)"]
+    DS --> TTS["TTS Engine<br/>(Qwen / OpenAI)"]
+    TTS --> R2["Cloudflare R2<br/>(S3-compatible)"]
+    R2 --> DB[(Neon: stories table)]
+
+    style DS fill:#7c4dff,color:#fff
+    style TTS fill:#00bcd4,color:#fff
+    style R2 fill:#ff9800,color:#fff
+```
+
+## LangGraph Deployable Graphs
+
+Six independent graphs registered in `langgraph.json`:
+
+```mermaid
+graph LR
+    LG[LangGraph Server] --> R[research]
+    LG --> S[story]
+    LG --> T[tts]
+    LG --> DA[deep_analysis]
+    LG --> PA[parent_advice]
+    LG --> H[habits]
+
+    R --- G1["graph.py<br/>ReAct paper search"]
+    S --- G2["story_graph.py<br/>Therapeutic stories"]
+    T --- G3["tts_graph.py<br/>Audio synthesis"]
+    DA --- G4["deep_analysis_graph.py<br/>Structured insights"]
+    PA --- G5["parent_advice_graph.py<br/>Parent-focused advice"]
+    H --- G6["habits_graph.py<br/>Habit formation"]
+
+    style LG fill:#7c4dff,color:#fff
+```
 
 ## Modules
 
@@ -31,18 +197,42 @@ The agent uses LangGraph ReAct workflows with DeepSeek Reasoner to search academ
 | `cli.py` | CLI entry point — subcommand dispatch (`goal`, `support-need`, `query`, `url`, `story`) |
 | `graph.py` | Main LangGraph research workflow — ReAct agent with paper search, extraction, persistence |
 | `research_sources.py` | Multi-source paper search: OpenAlex, Crossref, Semantic Scholar with fallback logic |
-| `therapy_context.py` | Domain model — therapeutic goals, support needs, target population |
+| `therapy_context.py` | Domain model — therapeutic goals, support needs, target population, query generation |
 | `deep_analysis_graph.py` | Deep analysis sub-workflow with structured output |
 | `story_graph.py` | Story generation from research insights |
 | `parent_advice_graph.py` | Parent-focused therapeutic advice synthesis |
 | `habits_graph.py` | Habit formation research workflow |
 | `tts_graph.py` | Text-to-speech integration for audio delivery |
-| `embeddings.py` | Sentence-transformers embeddings for paper vectors |
-| `reranker.py` | Cross-encoder semantic reranking of search results |
-| `neon.py` | Neon PostgreSQL operations — paper CRUD, embedding storage |
-| `d1.py` | Cloudflare D1 database layer (legacy) |
+| `embeddings.py` | Sentence-transformers embeddings (`all-MiniLM-L6-v2`, 384 dims) |
+| `reranker.py` | Cross-encoder semantic reranking (`ms-marco-MiniLM-L-6-v2`, 22M params) |
+| `neon.py` | Neon PostgreSQL operations — paper CRUD, embedding storage, deduplication |
+| `d1.py` | Data models, URL path parser (legacy Cloudflare D1 layer) |
 | `backfill_embeddings.py` | Batch embedding generation for existing papers |
 | `story.py` | Story model and generation |
+
+## Evidence Hierarchy
+
+The agent weights papers by evidence level during research synthesis:
+
+```mermaid
+graph TD
+    MA["Meta-Analysis"] --> SR["Systematic Review"]
+    SR --> RCT["RCT"]
+    RCT --> CO["Cohort"]
+    CO --> CC["Case-Control"]
+    CC --> CS["Case Series"]
+    CS --> CST["Case Study"]
+    CST --> EO["Expert Opinion"]
+
+    style MA fill:#00c853,color:#fff
+    style SR fill:#4caf50,color:#fff
+    style RCT fill:#8bc34a,color:#000
+    style CO fill:#cddc39,color:#000
+    style CC fill:#ffeb3b,color:#000
+    style CS fill:#ffc107,color:#000
+    style CST fill:#ff9800,color:#fff
+    style EO fill:#ff5722,color:#fff
+```
 
 ## CLI Usage
 
@@ -99,8 +289,8 @@ python -m research_agent.cli query --therapeutic-type "anxiety" --title "Test"
 |---------|---------|
 | `langgraph` | Graph-based agent workflows (ReAct) |
 | `langchain` + `langchain-openai` | LLM framework, DeepSeek integration |
-| `sentence-transformers` | Local embeddings and cross-encoder reranking |
-| `psycopg[binary]` | Neon PostgreSQL driver |
+| `sentence-transformers` | Local embeddings (`all-MiniLM-L6-v2`) and cross-encoder reranking (`ms-marco-MiniLM`) |
+| `psycopg[binary]` | Neon PostgreSQL async driver |
 | `httpx` | Async HTTP client for research source APIs |
 | `boto3` | AWS S3/R2 for audio asset storage |
 | `python-dotenv` | Environment variable loading |

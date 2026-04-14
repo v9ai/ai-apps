@@ -1,42 +1,20 @@
-"""Embedding utilities for therapy research papers — uses all-MiniLM-L6-v2 (384 dims, local, no API key needed)."""
+"""Embedding utilities for therapy research papers.
+
+Generic embedding functions delegate to the shared research_client package.
+Therapy-specific text builders (paper_to_embedding_text, query_to_embedding_text)
+remain here since they encode domain knowledge.
+"""
 from __future__ import annotations
 
-import asyncio
-from sentence_transformers import SentenceTransformer
-
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-EMBEDDING_DIMS = 384
-
-_model: SentenceTransformer | None = None
-
-
-def _get_model() -> SentenceTransformer:
-    global _model
-    if _model is None:
-        _model = SentenceTransformer(EMBEDDING_MODEL)
-    return _model
-
-
-def embed_text(text: str) -> list[float]:
-    """Embed a single text string, returning a 384-dim vector."""
-    return _get_model().encode(text).tolist()
-
-
-async def aembed_text(text: str) -> list[float]:
-    """Async wrapper — runs embedding in a thread to avoid blocking the event loop."""
-    return await asyncio.to_thread(embed_text, text)
-
-
-def embed_texts(texts: list[str]) -> list[list[float]]:
-    """Embed multiple texts in a single batch call."""
-    if not texts:
-        return []
-    return [v.tolist() for v in _get_model().encode(texts)]
-
-
-async def aembed_texts(texts: list[str]) -> list[list[float]]:
-    """Async wrapper — runs batch embedding in a thread to avoid blocking the event loop."""
-    return await asyncio.to_thread(embed_texts, texts)
+# Re-export generic embedding functions from the shared package
+from research_client.embeddings import (  # noqa: F401
+    EMBEDDING_DIMS,
+    EMBEDDING_MODEL,
+    aembed_text,
+    aembed_texts,
+    embed_text,
+    embed_texts,
+)
 
 
 def paper_to_embedding_text(
