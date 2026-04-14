@@ -2946,7 +2946,7 @@ user: """
         <Flex
           direction="column"
           gap="3"
-          style={{ maxWidth: 720, margin: "0 auto" }}
+          style={{ margin: "0 auto" }}
           mb="5"
         >
           {embeddingPipelineSteps.map((ps, i) => (
