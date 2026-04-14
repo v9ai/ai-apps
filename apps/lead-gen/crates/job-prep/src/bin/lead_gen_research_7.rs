@@ -5,5 +5,5 @@ use anyhow::Result;
 async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     dotenvy::dotenv().ok();
-    research_agent::prompts::run_prompt(research_agent::prompts::prompt_7()).await
+    job_prep::prompts::run_prompt(job_prep::prompts::prompt_7()).await
 }

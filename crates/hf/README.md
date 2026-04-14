@@ -4,22 +4,25 @@ Parallel data retrieval from Hugging Face Hub API with bounded concurrency, orga
 
 ## Architecture
 
-```
-HfClient (reqwest + buffer_unordered)
-    │
-    ├── fetch_model_cards(repos)     ── parallel model card retrieval
-    ├── search_models(query, limit)  ── full-text model search
-    ├── list_org_repos(org)          ── enumerate org models/datasets
-    │
-    └── OrgScanner
-            │
-            ├── scan_org(name)       ── full org profile
-            │     ├── model inventory + training signal detection
-            │     ├── extract_arxiv_links() from model card text
-            │     ├── detect_auto_arxiv() (filter auto-generated citations)
-            │     └── compute_score() → sales-readiness verdict
-            │
-            └── find_similar_orgs()  ── fingerprint-based org similarity
+```mermaid
+graph TD
+    HC["HfClient<br/><small>reqwest + buffer_unordered</small>"]
+    HC --> FMC["fetch_model_cards(repos)<br/><small>parallel model card retrieval</small>"]
+    HC --> SM["search_models(query, limit)<br/><small>full-text model search</small>"]
+    HC --> LOR["list_org_repos(org)<br/><small>enumerate models/datasets</small>"]
+
+    HC --> OS["OrgScanner"]
+    OS --> SO["scan_org(name)"]
+    SO --> MI["Model Inventory +<br/>Training Signal Detection"]
+    SO --> AX["extract_arxiv_links()<br/><small>from model card text</small>"]
+    SO --> DA["detect_auto_arxiv()<br/><small>filter auto-generated citations</small>"]
+    SO --> CS["compute_score()<br/><small>sales-readiness verdict</small>"]
+
+    OS --> FSO["find_similar_orgs()<br/><small>fingerprint-based similarity</small>"]
+
+    style HC fill:#7c4dff,color:#fff
+    style OS fill:#ff9800,color:#fff
+    style AX fill:#4a9eff,color:#fff
 ```
 
 ## Modules

@@ -4,19 +4,19 @@ Interview prep, agentic coding training, and job market research via DeepSeek + 
 
 ## Architecture
 
-```
-CLI (clap) ──→ ResearchContext / AppContext
-                      │
-                ┌─────┴──────┐
-                ▼             ▼
-         DeepSeek Reasoner   Semantic Scholar API
-         (agent loop)        (search_papers, get_paper_detail)
-                │             │
-                ▼             ▼
-         Markdown reports    Paper insights
-                │
-                ▼
-         D1 / GraphQL persistence
+```mermaid
+graph TD
+    CLI["CLI (clap)"] --> CTX["ResearchContext / AppContext"]
+    CTX --> DS["DeepSeek Reasoner<br/><small>agent loop</small>"]
+    CTX --> SS["Semantic Scholar API<br/><small>search_papers, get_paper_detail</small>"]
+    DS --> MD["Markdown Reports"]
+    SS --> PI["Paper Insights"]
+    MD --> PERSIST["D1 / GraphQL<br/>Persistence"]
+    PI --> PERSIST
+
+    style DS fill:#7c4dff,color:#fff
+    style SS fill:#ffa726,color:#fff
+    style PERSIST fill:#00c853,color:#fff
 ```
 
 The agent builds a DeepSeek Reasoner tool-use loop with Semantic Scholar paper search and detail tools from the shared `research` crate. Results are persisted to the lead-gen app via D1 or GraphQL depending on the invocation mode.

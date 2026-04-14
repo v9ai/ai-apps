@@ -4,18 +4,28 @@ Academic paper search, normalization, embeddings, and cross-encoder reranking. P
 
 ## Architecture
 
-```
-search_papers(query)
-    │
-    ├── 1. OpenAlex  (no rate limit, inverted abstract reconstruction)
-    ├── 2. Crossref  (no rate limit, JATS tag stripping)
-    └── 3. Semantic Scholar  (rate-limited, rich metadata)
-    │
-    ▼
-list[Paper]  ← unified type matching Rust ResearchPaper
-    │
-    ├── reranker.rerank(query, papers)  → cross-encoder scoring
-    └── embeddings.embed_texts(...)     → 384D vectors
+```mermaid
+flowchart TD
+    Q["search_papers(query)"]
+
+    Q --> OA["OpenAlex<br/><small>no rate limit, inverted abstract</small>"]
+    Q --> CR["Crossref<br/><small>no rate limit, JATS stripping</small>"]
+    Q --> SS["Semantic Scholar<br/><small>rate-limited, rich metadata</small>"]
+
+    OA -->|"results"| N["list[Paper]<br/><small>unified type matching Rust ResearchPaper</small>"]
+    OA -->|"empty / error"| CR
+    CR -->|"results"| N
+    CR -->|"empty / error"| SS
+    SS --> N
+
+    N --> RR["reranker.rerank(query, papers)<br/><small>cross-encoder scoring</small>"]
+    N --> EM["embeddings.embed_texts(...)<br/><small>384D vectors</small>"]
+
+    style OA fill:#4a9eff,color:#fff
+    style CR fill:#ff6b6b,color:#fff
+    style SS fill:#ffa726,color:#fff
+    style RR fill:#ff4081,color:#fff
+    style EM fill:#7c4dff,color:#fff
 ```
 
 Fallback chain: returns results from the first source that responds. Retry with exponential backoff on 429/5xx (max 3 retries), matching the Rust crate's retry strategy.

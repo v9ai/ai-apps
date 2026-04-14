@@ -7,12 +7,12 @@ Therapeutic research and story generation agent — LangGraph port of the Rust `
 ```mermaid
 graph TB
     CLI["CLI (argparse)"] --> TC[TherapyContext]
-    TC --> LG["LangGraph ReAct Agent<br/>(DeepSeek Reasoner)"]
+    TC --> LG["LangGraph ReAct Agent<br/>(DeepSeek Chat)"]
     TC --> QG["Query Generator<br/>(3–6 diverse queries)"]
 
     QG --> LG
 
-    LG -->|"search_papers"| FB[Fallback Chain]
+    LG -->|"search_papers"| FB["Fallback Chain<br/>(via research-client)"]
     LG -->|"get_paper_detail"| SS3["Semantic Scholar<br/>Detail API"]
     LG -->|"save_research_papers"| Neon[(Neon PostgreSQL)]
 
@@ -74,7 +74,7 @@ All providers normalize to a common schema:
 sequenceDiagram
     participant U as CLI / Neon URL
     participant TC as TherapyContext
-    participant A as DeepSeek ReAct Agent
+    participant A as DeepSeek Chat ReAct Agent
     participant S as search_papers
     participant R as Cross-Encoder Reranker
     participant D as get_paper_detail
@@ -195,20 +195,20 @@ graph LR
 | Module | Purpose |
 |--------|---------|
 | `cli.py` | CLI entry point — subcommand dispatch (`goal`, `support-need`, `query`, `url`, `story`) |
-| `graph.py` | Main LangGraph research workflow — ReAct agent with paper search, extraction, persistence |
-| `research_sources.py` | Multi-source paper search: OpenAlex, Crossref, Semantic Scholar with fallback logic |
-| `therapy_context.py` | Domain model — therapeutic goals, support needs, target population, query generation |
-| `deep_analysis_graph.py` | Deep analysis sub-workflow with structured output |
-| `story_graph.py` | Story generation from research insights |
-| `parent_advice_graph.py` | Parent-focused therapeutic advice synthesis |
-| `habits_graph.py` | Habit formation research workflow |
-| `tts_graph.py` | Text-to-speech integration for audio delivery |
-| `embeddings.py` | Sentence-transformers embeddings (`all-MiniLM-L6-v2`, 384 dims) |
+| `graph.py` | Main LangGraph research workflow — ReAct agent (DeepSeek Chat) with paper search, extraction, persistence |
+| `research_sources.py` | Thin wrapper around `research-client` — delegates search/normalization/fallback to the shared package |
+| `therapy_context.py` | Domain model — `TherapyContext`, `StoryContext`, `IssueData`, query generation, age-based tier detection |
+| `deep_analysis_graph.py` | Deep analysis StateGraph — collects issues, observations, journals, characteristics; uses `deepseek_client` |
+| `story_graph.py` | Story generation StateGraph — loads feedback context, generates age-appropriate therapeutic audio scripts |
+| `parent_advice_graph.py` | Parent-focused advice StateGraph — evidence-grounded parenting recommendations via `deepseek_client` |
+| `habits_graph.py` | Habit formation StateGraph — personalized habit plans from goals, issues, and research |
+| `tts_graph.py` | TTS StateGraph — Qwen (DashScope) or OpenAI synthesis, chunked text, WAV assembly, R2 upload |
+| `embeddings.py` | Re-exports from `research-client` (`all-MiniLM-L6-v2`, 384 dims) + domain-specific text builders |
 | `reranker.py` | Cross-encoder semantic reranking (`ms-marco-MiniLM-L-6-v2`, 22M params) |
-| `neon.py` | Neon PostgreSQL operations — paper CRUD, embedding storage, deduplication |
-| `d1.py` | Data models, URL path parser (legacy Cloudflare D1 layer) |
-| `backfill_embeddings.py` | Batch embedding generation for existing papers |
-| `story.py` | Story model and generation |
+| `neon.py` | Neon PostgreSQL operations — paper CRUD, embedding storage, deduplication, feedback/issue/story queries |
+| `d1.py` | Data models (`Issue`, `FamilyMember`, `ContactFeedback`, `ResearchPaper`) and URL path parser |
+| `backfill_embeddings.py` | Batch embedding generation for existing papers (batches of 50) |
+| `story.py` | Story model and generation orchestration |
 
 ## Evidence Hierarchy
 

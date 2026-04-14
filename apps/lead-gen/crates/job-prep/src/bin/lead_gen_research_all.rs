@@ -4,7 +4,7 @@
 ///   lead-gen-research-all              # run all 9 in parallel
 ///   lead-gen-research-all 1 3 9        # run only prompts 1, 3, 9 in parallel
 use anyhow::{Context, Result};
-use research_agent::prompts::{self, run_prompt};
+use job_prep::prompts::{self, run_prompt};
 use std::env;
 use tokio::task::JoinSet;
 

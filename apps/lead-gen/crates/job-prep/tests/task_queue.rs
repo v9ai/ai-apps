@@ -1,8 +1,8 @@
-/// Tests for the generic team coordination primitives in `research_agent::team`.
+/// Tests for the generic team coordination primitives in `job_prep::team`.
 ///
 /// Covers: TaskQueue, Mailbox, PlanGate, TeamLead (full run).
 /// All tests are pure-Rust async (no network, no API keys).
-use research_agent::team::{
+use job_prep::team::{
     shutdown_pair, Mailbox, PlanGate, TaskQueue, TeamLead,
 };
 

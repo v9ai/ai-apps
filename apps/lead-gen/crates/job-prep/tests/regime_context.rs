@@ -1,6 +1,6 @@
 /// Tests for `RegimeContext`: JSON parsing, symbol splitting, strategy inference,
 /// and agent-prompt structure.
-use research_agent::regime_context::RegimeContext;
+use job_prep::regime_context::RegimeContext;
 use std::io::Write;
 use tempfile::NamedTempFile;
 

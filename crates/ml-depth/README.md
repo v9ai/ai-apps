@@ -4,27 +4,34 @@ Discover and validate genuine deep ML companies via HuggingFace Hub presence + a
 
 ## Architecture
 
-```
-CLI (clap)
-    │
-    ├── profile <company>      ── single company pipeline
-    ├── batch --input file.txt  ── parallel batch profiling
-    ├── discover --limit N     ── find ML-heavy HF orgs
-    └── sync --models N        ── populate local SQLite cache
-          │
-          ▼
-    MlDepthPipeline
-          │
-          ├── 1. HF org scan (hf::OrgScanner)
-          │     └── models, datasets, training signals, arXiv links
-          │
-          ├── 2. Paper search (research::CompanyPaperSearch)
-          │     ├── OpenAlex (affiliation search)
-          │     ├── Semantic Scholar (author/org search)
-          │     └── arXiv (keyword search)
-          │
-          └── 3. Depth scoring (research::MlDepthScore)
-                └── combine HF signals + paper count + paper quality → verdict
+```mermaid
+graph TD
+    CLI["CLI (clap)"]
+    CLI --> P["profile &lt;company&gt;"]
+    CLI --> B["batch --input file.txt"]
+    CLI --> D["discover --limit N"]
+    CLI --> S["sync --models N"]
+
+    P & B --> PIPE["MlDepthPipeline"]
+
+    PIPE --> HF["1. HF Org Scan<br/><small>hf::OrgScanner</small>"]
+    HF --> HFD["Models, datasets,<br/>training signals, arXiv links"]
+
+    PIPE --> PS["2. Paper Search<br/><small>research::CompanyPaperSearch</small>"]
+    PS --> OA["OpenAlex<br/><small>affiliation search</small>"]
+    PS --> SS["Semantic Scholar<br/><small>author/org search</small>"]
+    PS --> AX["arXiv<br/><small>keyword search</small>"]
+
+    PIPE --> SC["3. Depth Scoring<br/><small>research::MlDepthScore</small>"]
+    HFD --> SC
+    OA & SS & AX --> SC
+    SC --> V["Verdict"]
+
+    style HF fill:#ff9800,color:#fff
+    style OA fill:#4a9eff,color:#fff
+    style SS fill:#ffa726,color:#fff
+    style AX fill:#ff6b6b,color:#fff
+    style SC fill:#00c853,color:#fff
 ```
 
 ## Modules

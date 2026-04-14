@@ -1,17 +1,22 @@
-# paper-graph
+# scholar-graph
 
-Research paper storage and co-authorship graph backed by Neon PostgreSQL.
+Academic paper storage and co-authorship graph backed by Neon PostgreSQL.
 
 ## Architecture
 
-```
-arXiv Atom feed ──→ import ──→ papers table ──→ graph queries
-                        │              │
-                        ▼              ▼
-                  paper_authors   author_papers (join)
-                        │
-                        ▼
-                  co-authorship edges (computed)
+```mermaid
+graph TD
+    AX["arXiv Atom Feed"] --> IMP["import"]
+    IMP --> PT[("papers table")]
+    IMP --> PA[("paper_authors<br/><small>join table</small>")]
+    PT --> GQ["Graph Queries"]
+    PA --> CO["Co-authorship Edges<br/><small>computed from join</small>"]
+    CO --> GQ
+
+    style AX fill:#4a9eff,color:#fff
+    style PT fill:#00c853,color:#fff
+    style PA fill:#00c853,color:#fff
+    style CO fill:#ff9800,color:#fff
 ```
 
 Papers are fetched via the shared `research` crate's arXiv client, normalized into the unified `ResearchPaper` type, then stored in Neon with author linkage. The `graph` module computes co-authorship edges from the join table.

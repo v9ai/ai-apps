@@ -19,7 +19,7 @@
 //! # Minimal example
 //!
 //! ```rust,no_run
-//! use research_agent::team::{TaskQueue, Mailbox, TeamLead, shutdown_pair};
+//! use job_prep::team::{TaskQueue, Mailbox, TeamLead, shutdown_pair};
 //!
 //! #[tokio::main]
 //! async fn main() {
