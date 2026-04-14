@@ -1956,7 +1956,7 @@ export default function HowItWorksPage() {
                   <Text
                     size="2"
                     color="gray"
-                    style={{ maxWidth: 800, lineHeight: 1.65 }}
+                    style={{ lineHeight: 1.65 }}
                   >
                     {s.description}
                   </Text>
@@ -2092,7 +2092,7 @@ export default function HowItWorksPage() {
                   <Text
                     size="2"
                     color="gray"
-                    style={{ maxWidth: 800, lineHeight: 1.65 }}
+                    style={{ lineHeight: 1.65 }}
                   >
                     {r.description}
                   </Text>
@@ -2102,7 +2102,6 @@ export default function HowItWorksPage() {
                       size="2"
                       style={{
                         color: "var(--gray-10)",
-                        maxWidth: 800,
                         lineHeight: 1.65,
                         paddingLeft: "1rem",
                         borderLeft: "2px solid var(--gray-a4)",
@@ -3233,7 +3232,7 @@ user: """
           </Flex>
         </ScrollReveal>
 
-        <Flex direction="column" gap="3" style={{ maxWidth: 800, margin: "0 auto" }}>
+        <Flex direction="column" gap="3" style={{ margin: "0 auto" }}>
           {synthesisRules.map((sr, i) => (
             <ScrollReveal key={sr.num} delay={i * 50}>
               <Flex
@@ -3444,7 +3443,7 @@ user: """
           </Flex>
         </ScrollReveal>
 
-        <Flex direction="column" gap="4" style={{ maxWidth: 800, margin: "0 auto" }}>
+        <Flex direction="column" gap="4" style={{ margin: "0 auto" }}>
           {contextSteps.map((cs, i) => (
             <ScrollReveal key={cs.step} delay={i * 60}>
               <Flex
@@ -4164,7 +4163,7 @@ const vector = customType<{ data: number[]; driverData: string }>({
         </ScrollReveal>
 
         <ScrollReveal>
-          <pre className="pg-code-block" style={{ maxWidth: 800, margin: "0 auto 2rem" }}>
+          <pre className="pg-code-block" style={{ margin: "0 auto 2rem" }}>
             <code>{`// TRIAGE_SYSTEM prompt (verbatim)
 "You are a clinical query classifier for a blood marker
 intelligence system.
@@ -4187,7 +4186,7 @@ Respond ONLY with JSON:
           </pre>
         </ScrollReveal>
 
-        <Flex direction="column" gap="3" style={{ maxWidth: 800, margin: "0 auto" }}>
+        <Flex direction="column" gap="3" style={{ margin: "0 auto" }}>
           {triageSteps.map((ts, i) => (
             <ScrollReveal key={ts.step} delay={i * 50}>
               <Flex
@@ -4303,7 +4302,7 @@ Respond ONLY with JSON:
         </Grid>
 
         <ScrollReveal delay={280}>
-          <pre className="pg-code-block" style={{ maxWidth: 800, margin: "0 auto" }}>
+          <pre className="pg-code-block" style={{ margin: "0 auto" }}>
             <code>{`# llm_backend.py — retry loop (simplified)
 for attempt in range(MAX_RETRIES + 1):
     try:

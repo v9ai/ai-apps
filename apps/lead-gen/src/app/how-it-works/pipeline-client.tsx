@@ -521,7 +521,7 @@ const stages = [
     pattern: "Multi-source fan-in",
     nodes: discoveryNodes,
     edges: discoveryEdges,
-    height: 280,
+    height: 320,
   },
   {
     title: "enrichment",
@@ -530,7 +530,7 @@ const stages = [
     pattern: "LLM-assisted classification",
     nodes: enrichmentNodes,
     edges: enrichmentEdges,
-    height: 280,
+    height: 340,
   },
   {
     title: "lead_scoring",
@@ -539,7 +539,7 @@ const stages = [
     pattern: "Feature-based ranking",
     nodes: scoringNodes,
     edges: scoringEdges,
-    height: 220,
+    height: 280,
   },
   {
     title: "contact_pipeline",
@@ -548,7 +548,7 @@ const stages = [
     pattern: "Parallel discovery + verification",
     nodes: contactNodes,
     edges: contactEdges,
-    height: 200,
+    height: 260,
   },
   {
     title: "outreach_pipeline",
@@ -557,7 +557,7 @@ const stages = [
     pattern: "AI-personalized campaigns",
     nodes: outreachNodes,
     edges: outreachEdges,
-    height: 220,
+    height: 280,
   },
 ];
 
@@ -1343,7 +1343,7 @@ export function PipelineClient() {
   }, []);
 
   return (
-    <div style={{ width: "100%", padding: "var(--space-4) var(--space-5)" }}>
+    <div style={{ width: "100%", maxWidth: "100%", padding: "var(--space-4) var(--space-4)" }}>
       <Flex align="center" gap="2" mb="2">
         <LayersIcon width={22} height={22} style={{ color: "var(--violet-9)" }} />
         <Heading size="7">How It Works</Heading>
