@@ -34,7 +34,7 @@ from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core.schema import QueryBundle
 
 from llm_backend import llm_call as _llm_call
-from postprocessors import ClinicalRelevancePostprocessor
+from postprocessors import RERANK_SYSTEM, ClinicalRelevancePostprocessor
 from retrievers import build_retriever_for_intent, nodes_to_state, state_to_nodes
 
 logger = logging.getLogger(__name__)
@@ -328,27 +328,8 @@ def retrieve_multi_intent(state: GraphState) -> dict[str, Any]:
 # Node 3: Rerank
 # ═══════════════════════════════════════════════════════════════════════════
 
-RERANK_SYSTEM = """You are a clinical relevance assessor for a blood marker intelligence system.
-
-You will receive a USER QUERY and a CHUNK of retrieved health data.
-Score the chunk's relevance to answering the query on a scale of 0.0 to 1.0:
-
-- 1.0: Directly answers the query with specific data the user asked about
-- 0.7-0.9: Highly relevant context that supports answering the query
-- 0.4-0.6: Tangentially related but not directly useful
-- 0.1-0.3: Marginally related, mostly noise
-- 0.0: Completely irrelevant
-
-Consider:
-- Does the chunk contain the specific markers, conditions, or medications the query asks about?
-- Does the chunk contain data from the correct time period for trajectory questions?
-- Is the chunk from the right data domain (markers vs conditions vs medications)?
-
-Respond ONLY with JSON: {"score": 0.0-1.0, "rationale": "one sentence"}"""
-
-
 def rerank(state: GraphState) -> dict[str, Any]:
-    """LLM-based relevance reranking of retrieved chunks."""
+    """LLM-based relevance reranking via LlamaIndex ClinicalRelevancePostprocessor."""
     from config import settings
 
     if not settings.rerank_enabled:
@@ -366,42 +347,26 @@ def rerank(state: GraphState) -> dict[str, Any]:
             "rerank_rationales": [],
         }
 
-    scored: list[tuple[float, str, str, str, float]] = []
+    nodes = state_to_nodes(
+        state.context_chunks, state.retrieval_sources, state.retrieval_scores,
+    )
+    query_bundle = QueryBundle(state.query)
 
-    for chunk, source, orig_score in zip(
-        state.context_chunks, state.retrieval_sources, state.retrieval_scores
-    ):
-        user_prompt = f"USER QUERY: {state.query}\n\nCHUNK:\n{chunk}"
-        raw = _llm_call(RERANK_SYSTEM, user_prompt, max_tokens=128)
+    # Step 1: pre-filter by similarity threshold
+    sim_filter = SimilarityPostprocessor(similarity_cutoff=settings.rerank_min_score)
+    filtered = sim_filter.postprocess_nodes(nodes, query_bundle)
 
-        cleaned = re.sub(r"```json\s*|\s*```", "", raw).strip()
-        try:
-            parsed = json.loads(cleaned)
-            score = float(parsed.get("score", 0.0))
-            rationale = parsed.get("rationale", "")
-        except (json.JSONDecodeError, ValueError):
-            logger.warning("Rerank JSON parse failed, keeping original score: %s", raw)
-            score = orig_score
-            rationale = "parse_failure"
+    # Step 2: LLM-based clinical relevance scoring
+    reranker = ClinicalRelevancePostprocessor(
+        top_n=settings.rerank_top_k,
+        min_score=settings.rerank_min_score,
+    )
+    reranked = reranker.postprocess_nodes(filtered, query_bundle)
 
-        scored.append((score, rationale, chunk, source, orig_score))
-
-    scored.sort(key=lambda t: t[0], reverse=True)
-
-    top_k = settings.rerank_top_k
-    min_score = settings.rerank_min_score
-    filtered = [s for s in scored if s[0] >= min_score][:top_k]
-
-    if not filtered and scored:
-        filtered = scored[:3]
-
-    return {
-        "context_chunks": [s[2] for s in filtered],
-        "retrieval_sources": [s[3] for s in filtered],
-        "retrieval_scores": [s[4] for s in filtered],
-        "rerank_scores": [s[0] for s in filtered],
-        "rerank_rationales": [s[1] for s in filtered],
-    }
+    result = nodes_to_state(reranked)
+    result["rerank_scores"] = [n.score or 0.0 for n in reranked]
+    result["rerank_rationales"] = reranker.rationales
+    return result
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -455,34 +420,45 @@ SAFETY_REFUSAL_RESPONSE = (
     "physician or a qualified healthcare professional."
 )
 
+CLINICAL_QA_TEMPLATE = PromptTemplate(
+    SYNTHESIS_SYSTEM + "\n\n"
+    "RETRIEVED CONTEXT:\n---------------------\n{context_str}\n---------------------\n\n"
+    "QUERY: {query_str}\n"
+    "Answer: "
+)
+
+_CITATION_RE = re.compile(
+    r"(?:(?:Castelli|Millán|McLaughlin|Simental-Mendía|Forget|Hosten|De Ritis"
+    r"|Giannini|Fest|Botros|Inker|Gonzalez-Chavez)[^.]*\.)"
+)
+
 
 def synthesize(state: GraphState) -> dict[str, Any]:
-    """Generate response using retrieved context + clinical safety prompt."""
-    # Build context block
-    if state.context_chunks:
-        context_block = "\n\n---\n\n".join(state.context_chunks)
-        context_section = f"RETRIEVED CONTEXT ({len(state.context_chunks)} chunks from {', '.join(set(state.retrieval_sources))}):\n\n{context_block}"
-    else:
-        context_section = "RETRIEVED CONTEXT: No matching health data found for this query."
+    """Generate response via LlamaIndex ResponseSynthesizer with clinical prompt."""
+    nodes = state_to_nodes(
+        state.context_chunks, state.retrieval_sources, state.retrieval_scores,
+    )
 
-    # Build conversation history
+    # Prepend conversation history to query for context
     history_lines = []
     for msg in state.chat_history[-6:]:  # last 3 turns
         role = msg.get("role", "user")
         content = msg.get("content", "")
         history_lines.append(f"{role}: {content}")
-    history_section = "\n".join(history_lines) if history_lines else ""
 
-    parts = [context_section]
-    if history_section:
-        parts.append(f"CONVERSATION HISTORY:\n{history_section}")
-    parts.append(f"QUERY: {state.query}")
-    user_prompt = "\n\n".join(parts)
+    query_str = state.query
+    if history_lines:
+        history_block = "\n".join(history_lines)
+        query_str = f"CONVERSATION HISTORY:\n{history_block}\n\nQUERY: {state.query}"
 
-    answer = _llm_call(SYNTHESIS_SYSTEM, user_prompt, temperature=0.1)
+    synthesizer = get_response_synthesizer(
+        response_mode=ResponseMode.COMPACT,
+        text_qa_template=CLINICAL_QA_TEMPLATE,
+    )
+    response = synthesizer.synthesize(query_str, nodes=nodes)
+    answer = str(response)
 
-    # Extract citations from the answer (lines with reference patterns)
-    citations = re.findall(r"(?:(?:Castelli|Millán|McLaughlin|Simental-Mendía|Forget|Hosten|De Ritis|Giannini|Fest|Botros|Inker|Gonzalez-Chavez)[^.]*\.)", answer)
+    citations = _CITATION_RE.findall(answer)
 
     return {
         "answer": answer,
