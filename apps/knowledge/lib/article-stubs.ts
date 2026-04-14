@@ -148,30 +148,55 @@ export const ARTICLE_STUBS: LessonStub[] = LESSON_SLUGS.map((slug, i) => {
 
 /* ── Keyword index & matcher ────────────────────────────────────── */
 
+/** Words that appear in headings or categories but carry no matching signal */
+const STOPWORDS = new Set([
+  "deep", "dive", "dives", "advanced", "introduction", "overview", "mastery",
+  "questions", "reference", "cheat", "sheet", "quick", "live", "coding",
+  "exercises", "strategies", "patterns", "behavioral", "leadership",
+  "and", "the", "for", "with", "from", "into", "how", "what", "why",
+  "js", "css", "ai", "ml", "an", "to", "of", "in", "on", "is", "it",
+]);
+
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(/\s+/)
-    .filter((t) => t.length >= 2);
+    .filter((t) => t.length >= 2 && !STOPWORDS.has(t));
 }
 
-// Inverted index: token → set of article indices
-const KEYWORD_INDEX = new Map<string, Set<number>>();
+/** Compound tokens: merge adjacent tokens to catch multi-word slugs like "nodejs", "nextjs" */
+function compoundTokens(text: string): string[] {
+  const raw = text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/);
+  const compounds: string[] = [];
+  for (let i = 0; i < raw.length - 1; i++) {
+    compounds.push(raw[i] + raw[i + 1]); // "node" + "js" → "nodejs"
+  }
+  return compounds.filter((t) => t.length >= 4);
+}
+
+// Inverted index: token → set of article indices (slug tokens weighted higher)
+const SLUG_INDEX = new Map<string, Set<number>>();
+const TITLE_INDEX = new Map<string, Set<number>>();
+
+function addToIndex(index: Map<string, Set<number>>, token: string, i: number) {
+  let set = index.get(token);
+  if (!set) { set = new Set(); index.set(token, set); }
+  set.add(i);
+}
 
 for (let i = 0; i < ARTICLE_STUBS.length; i++) {
   const stub = ARTICLE_STUBS[i];
-  const tokens = new Set([
-    ...tokenize(stub.slug.replace(/-/g, " ")),
-    ...tokenize(stub.title),
-    ...tokenize(stub.category),
-  ]);
-  for (const t of tokens) {
-    let set = KEYWORD_INDEX.get(t);
-    if (!set) { set = new Set(); KEYWORD_INDEX.set(t, set); }
-    set.add(i);
-  }
+  // Slug tokens get the highest weight — they're the most descriptive
+  const slugTokens = tokenize(stub.slug.replace(/-/g, " "));
+  for (const t of slugTokens) addToIndex(SLUG_INDEX, t, i);
+  // Also index the full slug as a compound (e.g., "nodejs", "langgraph")
+  const rawSlug = stub.slug.replace(/-/g, "");
+  if (rawSlug.length >= 4) addToIndex(SLUG_INDEX, rawSlug, i);
+
+  // Title tokens get lower weight
+  for (const t of tokenize(stub.title)) addToIndex(TITLE_INDEX, t, i);
 }
 
 export function matchArticles(
@@ -180,31 +205,40 @@ export function matchArticles(
   maxResults = 4,
 ): LessonStub[] {
   const headingTokens = tokenize(heading);
+  const compounds = compoundTokens(heading);
   const scores = new Float32Array(ARTICLE_STUBS.length);
 
-  // Score by heading keyword matches against article index
+  // Exact slug-word match → strong signal
   for (const token of headingTokens) {
-    const indices = KEYWORD_INDEX.get(token);
-    if (indices) {
-      for (const idx of indices) scores[idx] += 3;
-    }
+    const slugHits = SLUG_INDEX.get(token);
+    if (slugHits) for (const idx of slugHits) scores[idx] += 4;
+    const titleHits = TITLE_INDEX.get(token);
+    if (titleHits) for (const idx of titleHits) scores[idx] += 2;
+  }
+
+  // Compound tokens catch "react" + "js" → "reactjs", "node" + "js" → "nodejs"
+  for (const compound of compounds) {
+    const slugHits = SLUG_INDEX.get(compound);
+    if (slugHits) for (const idx of slugHits) scores[idx] += 5;
   }
 
   // Boost articles whose slug contains a tech tag from the job description
   if (techTags) {
     for (const tag of techTags) {
       const tagToken = tag.toLowerCase().replace(/[^a-z0-9]/g, "");
-      if (tagToken.length < 2) continue;
+      if (tagToken.length < 3) continue;
       for (let i = 0; i < ARTICLE_STUBS.length; i++) {
-        if (ARTICLE_STUBS[i].slug.includes(tagToken)) scores[i] += 2;
+        if (ARTICLE_STUBS[i].slug === tagToken || ARTICLE_STUBS[i].slug.startsWith(tagToken + "-")) {
+          scores[i] += 2;
+        }
       }
     }
   }
 
-  // Collect, filter, sort, return top N
+  // Collect, filter, sort, return top N (threshold = 4 for at least one slug match)
   const results: { stub: LessonStub; score: number }[] = [];
   for (let i = 0; i < scores.length; i++) {
-    if (scores[i] >= 3) results.push({ stub: ARTICLE_STUBS[i], score: scores[i] });
+    if (scores[i] >= 4) results.push({ stub: ARTICLE_STUBS[i], score: scores[i] });
   }
   results.sort((a, b) => b.score - a.score);
   return results.slice(0, maxResults).map((r) => r.stub);
