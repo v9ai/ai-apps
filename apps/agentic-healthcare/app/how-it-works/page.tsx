@@ -242,16 +242,34 @@ const pgReasons = [
     bg: "var(--blue-a3)",
     title: "Hybrid Search in a Single Query",
     description:
-      "30% full-text search via ts_rank() + 70% cosine similarity via pgvector's <=> operator, computed in one SQL statement. No round-trips between services.",
-    sql: `SELECT marker_name, content,
-  0.3 * ts_rank(to_tsvector('english', content),
-                 plainto_tsquery('english', $1))
-+ 0.7 * (1 - (embedding <=> $2))
-  AS combined_score
-FROM blood_marker_embeddings
-WHERE user_id = $3
+      "30% full-text search via ts_rank() + 70% cosine similarity via pgvector's <=> operator, computed in one SQL statement. The ts_rank() function and the <=> operator run inside the same query planner, against the same rows, with no round-trip between services. With separate systems you'd compute vector similarity in Pinecone, full-text ranking in Elasticsearch, then merge and re-rank in application code — here PostgreSQL does it in a single pass.",
+    detail:
+      "The query is a two-CTE pipeline. The first CTE (scored) runs both scoring functions in parallel over the same row set: ts_rank() tokenizes the content column via to_tsvector('english', …) and ranks it against the plainto_tsquery parse of the raw user query, while 1 - (embedding <=> query_vec) inverts pgvector's cosine distance into a similarity score between 0 and 1. A WHERE clause filters rows below a configurable similarity threshold (default 0.3) before any ranking happens, so the second CTE never processes irrelevant rows. The second CTE (normalized) uses a window function — max(raw_fts) OVER () — to normalize the FTS scores into the same [0, 1] range as the vector similarity. This matters because ts_rank() returns unbounded values that vary with document length and term frequency; without normalization, a long clinical note with many keyword hits would dominate a short but semantically perfect match. The final SELECT combines them: 0.3 × fts_norm + 0.7 × vector_similarity. The 70/30 split is intentionally semantic-heavy — clinical queries like \"is my inflammation getting worse\" need embedding distance to capture meaning, but the 30% FTS weight ensures that exact marker names (\"HDL\", \"AST\", \"NLR\") still boost results when the user types them literally. Because both scores are computed in the same query plan, PostgreSQL can use its IVFFlat or HNSW index on the embedding column and the GIN index on to_tsvector in a single index scan phase — no scatter-gather across services, no network-serialized merge step, and the combined_score ORDER BY runs on the database's sort operator, not in Python.",
+    sql: `-- Two-CTE hybrid scoring (actual production query from db.py)
+WITH scored AS (
+  SELECT marker_id, test_id, marker_name, content,
+    ts_rank(to_tsvector('english', content),
+            plainto_tsquery('english', $1))   AS raw_fts,
+    1 - (embedding <=> $2)                    AS vector_similarity
+  FROM blood_marker_embeddings
+  WHERE user_id = $3
+    AND 1 - (embedding <=> $2) > $4           -- threshold filter
+),
+normalized AS (
+  SELECT *,
+    CASE WHEN max(raw_fts) OVER () > 0
+         THEN raw_fts / max(raw_fts) OVER ()
+         ELSE 0
+    END AS fts_norm
+  FROM scored
+)
+SELECT marker_id, test_id, marker_name, content,
+  raw_fts           AS fts_rank,
+  vector_similarity,
+  (0.3 * fts_norm + 0.7 * vector_similarity) AS combined_score
+FROM normalized
 ORDER BY combined_score DESC
-LIMIT 5;`,
+LIMIT $5;`,
   },
   {
     icon: BarChart3,
