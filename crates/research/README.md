@@ -6,29 +6,25 @@ Multi-model LLM research infrastructure — academic paper discovery across **6 
 
 ## Architecture
 
-```
-                            ┌─────────────┐
-                            │  TeamLead   │ ← synthesis + coordination
-                            └──────┬──────┘
-                       ┌───────────┼───────────┐
-                       ▼           ▼           ▼
-                 ┌──────────┐ ┌──────────┐ ┌──────────┐
-                 │Teammate 1│ │Teammate 2│ │Teammate N│  ← claim tasks, run agents
-                 └────┬─────┘ └────┬─────┘ └────┬─────┘
-                      │            │            │
-               ┌──────┴──────┬─────┴─────┬──────┴──────┐
-               ▼             ▼           ▼             ▼
-        ┌────────────┐ ┌──────────┐ ┌──────────┐ ┌─────────┐
-        │SearchPapers│ │GetDetail │ │GetRecomm.│ │CodeTools│
-        └────┬───────┘ └──────────┘ └──────────┘ └─────────┘
-             │
-     ┌───────┴────────────────────────────────────────┐
-     │            Paper API Fallback Chain             │
-     ├────────┬──────────┬──────────┬────────┬────────┤
-     │ arXiv  │ OpenAlex │ Crossref │  CORE  │ Zenodo │
-     │(Atom)  │ (REST)   │ (REST)   │ (REST) │ (REST) │
-     └────────┴──────────┴──────────┴────────┴────────┘
-             Semantic Scholar (primary + fallback)
+```mermaid
+graph TD
+    TL["TeamLead<br/><i>synthesis + coordination</i>"]
+    T1["Teammate 1"] & T2["Teammate 2"] & TN["Teammate N"]
+    TL --> T1 & T2 & TN
+
+    SP["SearchPapers"] & GD["GetPaperDetail"] & GR["GetRecommendations"] & CT["CodeTools"]
+    T1 & T2 & TN --> SP & GD & GR & CT
+
+    subgraph fallback ["Paper API Fallback Chain"]
+        direction LR
+        AX["arXiv<br/><small>Atom</small>"]
+        OA["OpenAlex<br/><small>REST</small>"]
+        CR["Crossref<br/><small>REST</small>"]
+        CO["CORE<br/><small>REST</small>"]
+        ZE["Zenodo<br/><small>REST</small>"]
+        SS["Semantic Scholar<br/><small>primary + fallback</small>"]
+    end
+    SP --> fallback
 ```
 
 ### Data Flow
@@ -42,17 +38,30 @@ Multi-model LLM research infrastructure — academic paper discovery across **6 
 
 ### Concurrency Model
 
-```
-TeamLead
-  ├── JoinSet<Teammate> (N parallel tokio tasks)
-  │     ├── SharedTaskList (Arc<Mutex<Vec<ResearchTask>>>)
-  │     │     └── claim() — atomic work-stealing with dependency resolution
-  │     ├── Semaphore(concurrency) — cross-worker rate limiter for S2 API
-  │     │     └── MIN_PERMIT_HOLD = 3s per permit (converts concurrency → throughput)
-  │     └── Mailbox (broadcast::channel<TeamMessage>)
-  │           └── Finding | StatusUpdate | Error
-  └── Monitor task (tokio::spawn)
-        └── Subscribes to Mailbox, logs progress, saves results to disk
+```mermaid
+graph TD
+    TL["TeamLead"]
+
+    subgraph joinset ["JoinSet &lt;Teammate&gt; — N parallel tokio tasks"]
+        STL["SharedTaskList<br/><small>Arc&lt;Mutex&lt;Vec&lt;ResearchTask&gt;&gt;&gt;</small>"]
+        STL_C["claim() — atomic work-stealing<br/>with dependency resolution"]
+        STL --> STL_C
+
+        SEM["Semaphore(concurrency)<br/><small>cross-worker rate limiter</small>"]
+        SEM_C["MIN_PERMIT_HOLD = 3s per permit<br/><small>converts concurrency → throughput</small>"]
+        SEM --> SEM_C
+
+        MBX["Mailbox<br/><small>broadcast::channel&lt;TeamMessage&gt;</small>"]
+        MBX_C["Finding | StatusUpdate | Error"]
+        MBX --> MBX_C
+    end
+
+    MON["Monitor task<br/><small>tokio::spawn</small>"]
+    MON_C["Subscribes to Mailbox,<br/>logs progress, saves to disk"]
+    MON --> MON_C
+
+    TL --> joinset
+    TL --> MON
 ```
 
 ### Local Vector Pipeline (feature: `local-vector`)
