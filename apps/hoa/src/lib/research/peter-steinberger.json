@@ -456,15 +456,15 @@
   "questions": [
     {
       "category": "origin",
-      "question": "In 'Finding My Spark Again | Peter Steinberger' you describe rediscovering your motivation after burnout. What specifically about AI-assisted development reignited your drive compared to everything you tried before?",
-      "why_this_question": "Directly references his blog post about burnout recovery — reveals the emotional arc behind his prolific output",
-      "expected_insight": "The specific moment or tool that made coding feel new again after years of burnout"
+      "question": "You've told the burnout story on Lex Fridman and at iOS Conf SG — three years of 'complete identity loss.' In 'Finding My Spark Again | Peter Steinberger' you go deeper into the recovery. But here's what nobody asks: during those three years, did you try to come back to code and fail? Were there false starts before the AI moment actually stuck?",
+      "why_this_question": "He's told the burnout-to-comeback arc many times. This pushes past the polished version to the messy middle — the attempts that didn't work",
+      "expected_insight": "Whether the AI breakthrough was the first attempt at returning or one of many, and what made this one stick when others didn't"
     },
     {
       "category": "origin",
-      "question": "You wrote 'How We Work at PSPDFKit | Peter Steinberger' about how a visa wait became a career-defining moment. After building PSPDFKit for a decade, what made you walk away — and what brought you back to shipping at this intensity?",
-      "why_this_question": "References his own blog post about the visa-to-PSPDFKit origin story — connects past and present identity",
-      "expected_insight": "How his relationship with building software fundamentally changed between PSPDFKit and the AI era"
+      "question": "In 'How We Work at PSPDFKit | Peter Steinberger' you documented building a company culture from scratch. PSPDFKit had 1B+ devices, a team, revenue, processes. OpenClaw has 356K stars and you commit directly to main with no code review. Which version of you was the better engineer — the one who built processes, or the one who threw them away?",
+      "why_this_question": "He's explained *why* he left PSPDFKit (burnout) many times. This asks which engineering identity is real — the process-builder or the process-destroyer",
+      "expected_insight": "Whether his current no-process style is liberation from past over-engineering or a phase he'll eventually correct"
     },
     {
       "category": "technical_depth",
@@ -480,9 +480,9 @@
     },
     {
       "category": "philosophy",
-      "question": "You draw a sharp line between 'vibe coding' and 'agentic engineering.' Most people conflate them. What's the specific failure mode you've seen when someone treats agent-driven development as just faster autocomplete?",
-      "why_this_question": "References his core philosophical distinction — this is his signature thesis",
-      "expected_insight": "A concrete story of agentic engineering done wrong, and what 'right' looks like"
+      "question": "You explained the vibe coding vs. agentic engineering distinction on Pragmatic Engineer and it's become your signature thesis. But you also say 'don't read most of the code your agents write.' To a skeptic, that sounds exactly like vibe coding. Where's the actual line — what do you do that a vibe coder doesn't?",
+      "why_this_question": "Pushes past the label he's popularized to the practice behind it — his own statements create apparent contradictions that force a sharper answer",
+      "expected_insight": "The concrete behaviors that distinguish his workflow from what he criticizes, not just the framing"
     },
     {
       "category": "philosophy",
@@ -492,9 +492,9 @@
     },
     {
       "category": "collaboration",
-      "question": "'Command your Claude Code Army, Reloaded | Peter Steinberger' describes orchestrating multiple Claude Code instances. You're essentially managing a team of AI agents. How does that compare to managing the human engineering team at PSPDFKit?",
-      "why_this_question": "Connects his management experience to his agent-orchestration workflow — unique perspective",
-      "expected_insight": "How managing humans vs. AI agents differs in practice — where each is harder"
+      "question": "In 'Command your Claude Code Army, Reloaded | Peter Steinberger' you describe running agents in the same folder with no worktrees, no PR-per-agent, committing directly to main. On Pragmatic Engineer you called PRs 'prompt requests.' What happens when two agents step on each other — do you have a war story where this blew up, and did it change your approach?",
+      "why_this_question": "He's described the parallel-agent setup many times but always as a success story. This probes the failure mode of his most contrarian practice",
+      "expected_insight": "Whether the no-isolation approach has real costs he's not sharing, or whether it genuinely works at scale"
     },
     {
       "category": "collaboration",
@@ -504,15 +504,15 @@
     },
     {
       "category": "future",
-      "question": "In 'Essential Reading for Agentic Engineers | Peter Steinberger' you explore where AI development is heading. You joined OpenAI to 'build an agent even my mum can use.' What specific interaction pattern are you betting on — and what current approaches are dead ends?",
-      "why_this_question": "References his stated mission at OpenAI — forces specificity about the product vision",
-      "expected_insight": "Concrete UX predictions for personal agents, not vague 'AI will change everything'"
+      "question": "You told Lex Fridman and the OpenAI Builders Unscripted audience you joined to 'build an agent even my mum can use.' You've been at OpenAI for two months now. What's the single biggest thing you believed about agent design before joining that turned out to be wrong once you saw it from the inside?",
+      "why_this_question": "He's repeated the 'agent for mum' mission many times. This asks what changed after actually being inside OpenAI — what the outsider view missed",
+      "expected_insight": "A concrete belief revision that reveals the gap between building open-source agents and building at OpenAI scale"
     },
     {
       "category": "future",
-      "question": "You shipped 684,000 GitHub contributions in one year. At what point does AI-assisted velocity hit diminishing returns — where shipping faster stops being the bottleneck?",
-      "why_this_question": "His extreme output volume raises questions about whether speed is always the goal",
-      "expected_insight": "Where the real bottleneck shifts to — design, distribution, user research, or something else"
+      "question": "On Pragmatic Engineer you described 6,600 commits in January and called it normal. But OpenClaw's star growth has plateaued since February while projects with fewer commits keep climbing. Is there a point where raw shipping velocity becomes noise — where the commits stop converting into user value?",
+      "why_this_question": "Challenges his velocity-as-virtue narrative with evidence that output quantity doesn't always track impact",
+      "expected_insight": "Whether he's starting to see the limits of the 'ship everything, let users sort it out' approach"
     },
     {
       "category": "ios_engineering",
@@ -606,9 +606,9 @@
     },
     {
       "category": "architecture",
-      "question": "ClawhHub skills run with the same permissions as the agent process — no sandboxing. You've said 'if you can't use a command line, this project is too dangerous for you.' At 356K stars, your user base now includes people who definitely can't use a command line. Has your thinking on the security model changed?",
-      "why_this_question": "Directly confronts the tension between OpenClaw's power-user security model and its massive mainstream adoption",
-      "expected_insight": "Whether growth forces a rethinking of the trust model, or whether he doubles down on user responsibility"
+      "question": "On Lex Fridman you discussed OpenClaw's security model and said the risk is acceptable. But you also run --dangerously-skip-permissions yourself. Has any community-contributed ClawhHub skill ever done something destructive that made you reconsider the no-sandbox design — or is the absence of incidents proof the model works?",
+      "why_this_question": "He's defended the security philosophy in multiple interviews. This asks for the empirical evidence — have there been actual incidents, or is this survivorship bias?",
+      "expected_insight": "Whether the 'no incidents' track record is real or whether close calls exist that haven't been publicized"
     },
     {
       "category": "architecture",
