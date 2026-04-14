@@ -288,6 +288,9 @@ async function voyagerFetch<T>(
 
   let retries = 0;
   while (true) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
     const res = await fetch(url.toString(), {
       headers: {
         "csrf-token": csrfToken,
@@ -295,7 +298,9 @@ async function voyagerFetch<T>(
         Accept: "application/vnd.linkedin.normalized+json+2.1",
       },
       credentials: "include",
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (res.status === 401 || res.status === 403) {
       throw new Error(`LinkedIn auth error: ${res.status}`);

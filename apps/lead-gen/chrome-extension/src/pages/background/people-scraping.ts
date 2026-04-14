@@ -75,7 +75,14 @@ export function scrollPeoplePage(tabId: number): Promise<void> {
           const totalHeight = document.body.scrollHeight;
           const viewportHeight = window.innerHeight;
           let current = window.scrollY;
-          const step = viewportHeight * 0.7;
+          const step = Math.max(viewportHeight * 0.7, 400);
+
+          // Guard: if page has no scrollable content, resolve immediately
+          if (totalHeight <= viewportHeight || totalHeight === 0) {
+            window.scrollTo(0, totalHeight);
+            resolve();
+            return;
+          }
 
           function doScroll() {
             current = Math.min(current + step, totalHeight);

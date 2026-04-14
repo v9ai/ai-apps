@@ -479,6 +479,9 @@ async function voyagerFetch<T>(
   const csrfToken = await getCsrfToken();
   const url = path.startsWith("http") ? path : `${VOYAGER_BASE}${path}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
   const res = await fetch(url, {
     ...options,
     headers: {
@@ -487,7 +490,9 @@ async function voyagerFetch<T>(
       ...(options.headers ?? {}),
     },
     credentials: "include",
+    signal: controller.signal,
   });
+  clearTimeout(timeoutId);
 
   if (res.status === 401 || res.status === 403) {
     throw new VoyagerAuthError(
