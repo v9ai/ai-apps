@@ -108,12 +108,12 @@ export async function scrapeCompanyFull(tabId: number): Promise<CompanyScraperRe
   if (companyData?.name) {
     try {
       const res = await gqlRequest(
-        `query FindCompanyByName($name: String!) {
-          companies(filter: { search: $name }, limit: 1) { id name }
+        `query FindCompanyByName($name: String) {
+          findCompany(name: $name) { found company { id name } }
         }`,
         { name: companyData.name },
       );
-      companyId = res.data?.companies?.[0]?.id ?? null;
+      companyId = res.data?.findCompany?.company?.id ?? null;
     } catch {
       // Non-critical — posts/jobs can still be saved without companyId
     }
@@ -183,7 +183,45 @@ export async function scrapeCompanyFull(tabId: number): Promise<CompanyScraperRe
 
   await reportProgress(tabId, "Phase 3/4: Jobs — fetching via Voyager API…");
 
-  const numericId = companyData?.linkedinNumericId;
+  let numericId = companyData?.linkedinNumericId || null;
+
+  // Fallback: try to extract numeric ID from the current page DOM if About page missed it
+  if (!numericId) {
+    try {
+      const idResults = await chrome.scripting.executeScript({
+        target: { tabId },
+        world: "MAIN",
+        func: () => {
+          // Strategy 1: data-urn attributes
+          const urnEl = document.querySelector(
+            '[data-urn*="urn:li:fsd_company:"], [data-urn*="urn:li:company:"]'
+          );
+          if (urnEl) {
+            const m = (urnEl.getAttribute("data-urn") || "").match(/urn:li:(?:fsd_)?company:(\d+)/);
+            if (m) return m[1];
+          }
+          // Strategy 2: script tags
+          for (const script of document.querySelectorAll("script")) {
+            const t = script.textContent || "";
+            const m = t.match(/"companyId"\s*:\s*(\d+)/) || t.match(/urn:li:(?:fsd_)?company:(\d+)/);
+            if (m) return m[1];
+          }
+          // Strategy 3: meta tags
+          for (const el of document.querySelectorAll('meta[content*="company"], link[href*="company"]')) {
+            const val = el.getAttribute("content") || el.getAttribute("href") || "";
+            const m = val.match(/company[:/](\d+)/);
+            if (m) return m[1];
+          }
+          return null;
+        },
+      });
+      numericId = (idResults?.[0]?.result as string | null) ?? null;
+      if (numericId) log(`Fallback numeric ID extraction succeeded: ${numericId}`);
+    } catch {
+      // Non-critical
+    }
+  }
+
   if (!numericId) {
     result.errors.push("Jobs: no LinkedIn numeric ID — skipping Voyager API");
     await reportProgress(tabId, "Phase 3/4: Jobs — skipped (no numeric ID)");
@@ -269,7 +307,8 @@ export async function scrapeCompanyFull(tabId: number): Promise<CompanyScraperRe
             })),
           ];
 
-          if (contactInputs.length > 0 && companyData?.name) {
+          if (contactInputs.length > 0) {
+            const hiringCompanyName = companyData?.name || baseUrl.split("/company/")[1] || "Unknown";
             const res = await gqlRequest(
               `mutation ImportHiringContacts($input: ImportCompanyWithContactsInput!) {
                 importCompanyWithContacts(input: $input) {
@@ -278,9 +317,9 @@ export async function scrapeCompanyFull(tabId: number): Promise<CompanyScraperRe
               }`,
               {
                 input: {
-                  companyName: companyData.name,
-                  linkedinUrl: companyData.linkedinUrl || null,
-                  website: companyData.website || null,
+                  companyName: hiringCompanyName,
+                  linkedinUrl: companyData?.linkedinUrl || baseUrl,
+                  website: companyData?.website || null,
                   contacts: contactInputs,
                 },
               },
@@ -353,7 +392,11 @@ export async function scrapeCompanyFull(tabId: number): Promise<CompanyScraperRe
       }
     }
 
-    if (allCards.length > 0 && companyData?.name) {
+    // Derive company name: prefer Phase 1 data, fall back to slug from URL
+    const companyName = companyData?.name || baseUrl.split("/company/")[1] || "Unknown";
+    const companyLinkedinUrl = companyData?.linkedinUrl || baseUrl;
+
+    if (allCards.length > 0) {
       const contactInputs = allCards.map((card) => ({
         name: card.name,
         linkedinUrl: card.linkedinUrl,
@@ -369,9 +412,9 @@ export async function scrapeCompanyFull(tabId: number): Promise<CompanyScraperRe
         }`,
         {
           input: {
-            companyName: companyData.name,
-            linkedinUrl: companyData.linkedinUrl || null,
-            website: companyData.website || null,
+            companyName,
+            linkedinUrl: companyLinkedinUrl,
+            website: companyData?.website || null,
             contacts: contactInputs,
           },
         },

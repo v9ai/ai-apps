@@ -371,14 +371,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // ── Scrape Full Company Profile (About + Posts + Jobs + People) ──
   if (message.action === "scrapeCompanyFull") {
-    const tabId = sender.tab?.id;
-    if (!tabId) {
-      sendResponse({ success: false, error: "No tab ID" });
-      return true;
+    // May come from content script (sender.tab) or popup (need to query active tab)
+    const directTabId = sender.tab?.id;
+    if (directTabId) {
+      sendResponse({ success: true });
+      startKeepAlive();
+      scrapeCompanyFull(directTabId).finally(stopKeepAlive);
+    } else {
+      chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+        const tabId = tabs[0]?.id;
+        if (!tabId) {
+          sendResponse({ success: false, error: "No active tab" });
+          return;
+        }
+        sendResponse({ success: true });
+        startKeepAlive();
+        scrapeCompanyFull(tabId).finally(stopKeepAlive);
+      });
     }
-    sendResponse({ success: true });
-    startKeepAlive();
-    scrapeCompanyFull(tabId).finally(stopKeepAlive);
     return true;
   }
 
