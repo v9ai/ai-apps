@@ -185,7 +185,7 @@ async fn mailbox_pending_count() {
 
 #[tokio::test]
 async fn plan_gate_approve() {
-    use research_agent::team::PlanDecision;
+    use job_prep::team::PlanDecision;
 
     let gate = PlanGate::new();
     let gate2 = gate.clone();
@@ -207,7 +207,7 @@ async fn plan_gate_approve() {
 
 #[tokio::test]
 async fn plan_gate_reject() {
-    use research_agent::team::PlanDecision;
+    use job_prep::team::PlanDecision;
 
     let gate = PlanGate::new();
     let gate2 = gate.clone();

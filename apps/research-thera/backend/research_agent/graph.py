@@ -1,8 +1,9 @@
 """LangGraph research agent — port of crates/research/src/bin/research_agent.rs (research flow).
 
-Uses create_react_agent with DeepSeek Reasoner and two tools:
+Uses create_react_agent with DeepSeek Chat and three tools:
   - search_papers: multi-source academic search (OpenAlex / Crossref / Semantic Scholar)
   - get_paper_detail: fetch full abstract + TLDR for a specific paper
+  - save_research_papers: persist curated papers to Neon PostgreSQL
 """
 from __future__ import annotations
 
@@ -209,7 +210,7 @@ def create_research_agent(
     api_key: Optional[str] = None,
     semantic_scholar_api_key: Optional[str] = None,
 ):
-    """Create a LangGraph ReAct agent using DeepSeek Reasoner.
+    """Create a LangGraph ReAct agent using DeepSeek Chat.
 
     When called with no args (by LangGraph server), reads from env vars.
     """

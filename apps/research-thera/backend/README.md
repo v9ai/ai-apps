@@ -264,11 +264,18 @@ research-agent --stdout query --therapeutic-type "sleep" --title "Sleep hygiene"
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `DEEPSEEK_API_KEY` | Yes | DeepSeek API key for Reasoner model |
+| `DEEPSEEK_API_KEY` | Yes | DeepSeek API key (`deepseek-chat` model) |
+| `NEON_DATABASE_URL` | For `url`/`story`/graphs | Neon PostgreSQL connection string |
 | `SEMANTIC_SCHOLAR_API_KEY` | No | Semantic Scholar API key (higher rate limits) |
-| `NEON_DATABASE_URL` | For `url`/`story` | Neon PostgreSQL connection string |
+| `DASHSCOPE_API_KEY` | For TTS (Qwen) | Alibaba DashScope API key for Qwen TTS |
+| `OPENAI_API_KEY` | For TTS (OpenAI) | OpenAI API key — TTS fallback |
+| `R2_ACCOUNT_ID` | For TTS | Cloudflare R2 account ID |
+| `R2_ACCESS_KEY_ID` | For TTS | Cloudflare R2 access key |
+| `R2_SECRET_ACCESS_KEY` | For TTS | Cloudflare R2 secret key |
+| `R2_BUCKET_NAME` | For TTS | R2 bucket name (default: `longform-tts`) |
+| `R2_PUBLIC_DOMAIN` | For TTS | Public URL for audio assets |
 
-Env is loaded from `.env.local` and `.env` via `python-dotenv`.
+Env is loaded from `.env` via `python-dotenv`.
 
 ## Development
 
@@ -287,13 +294,14 @@ python -m research_agent.cli query --therapeutic-type "anxiety" --title "Test"
 
 | Package | Purpose |
 |---------|---------|
-| `langgraph` | Graph-based agent workflows (ReAct) |
-| `langchain` + `langchain-openai` | LLM framework, DeepSeek integration |
-| `sentence-transformers` | Local embeddings (`all-MiniLM-L6-v2`) and cross-encoder reranking (`ms-marco-MiniLM`) |
+| `research-client[ml]` | Shared package — multi-source paper search (OpenAlex/Crossref/Semantic Scholar), embeddings, normalization. The `[ml]` extra pulls in `sentence-transformers` for local embeddings and cross-encoder reranking |
+| `langgraph` | Graph-based agent workflows (ReAct for research, StateGraph for story/TTS/analysis) |
+| `langchain` + `langchain-openai` | LLM framework — `ChatOpenAI` pointed at DeepSeek's API |
+| `openai` | TTS API access (OpenAI voices) |
 | `psycopg[binary]` | Neon PostgreSQL async driver |
-| `httpx` | Async HTTP client for research source APIs |
-| `boto3` | AWS S3/R2 for audio asset storage |
+| `boto3` | Cloudflare R2 (S3-compatible) for audio asset storage |
 | `python-dotenv` | Environment variable loading |
-| `openai` | TTS and embedding API access |
+
+The `deep_analysis`, `parent_advice`, and `habits` graphs also import `deepseek_client` from the monorepo's `pypackages/deepseek/` via `sys.path` injection.
 
 Requires Python >= 3.12.
