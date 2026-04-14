@@ -612,15 +612,15 @@
     },
     {
       "category": "architecture",
-      "question": "Lobster lets users compose skills into pipelines. ACPX provides stateful agent sessions. Together they enable complex multi-step automations. What's the most surprising workflow someone in the community has built that you didn't anticipate?",
-      "why_this_question": "Community usage patterns often reveal the real value of a platform better than the creator's intent",
-      "expected_insight": "How OpenClaw's composability enables emergent use cases beyond the original vision"
+      "question": "Lobster lets users compose skills into pipelines. ACPX provides stateful agent sessions. Together they enable complex automations you didn't anticipate. But has any community-built workflow broken something — exposed a design assumption in Lobster or ACPX that you had to fix? The interesting part isn't what worked surprisingly well, it's what broke surprisingly badly.",
+      "why_this_question": "Community usage patterns reveal design flaws better than any test suite. Instead of asking for a 'cool anecdote,' this asks for a stress-test failure — where real-world usage exposed a flaw in your architecture",
+      "expected_insight": "A specific design assumption that broke under community usage — revealing how composable systems fail in ways their creators can't predict"
     },
     {
       "category": "architecture",
-      "question": "You chose TypeScript for OpenClaw's core and Swift for macOS-native capabilities, then later adopted Go for standalone CLIs. Most open-source AI projects are Python-first. What would you tell a developer starting a similar project today about language choice?",
-      "why_this_question": "The TypeScript decision is contrarian in the AI/ML space and reveals deep thinking about developer tooling",
-      "expected_insight": "Whether the language choice was deliberate strategy or emerged from his iOS background, and whether he'd make the same choice now"
+      "question": "You chose TypeScript for OpenClaw's core when most open-source AI projects are Python-first. Was that a deliberate bet against the AI ecosystem's default language, or was it just what you knew from your iOS/web background? And have you ever hit a wall — a library, a model integration, a contributor who walked away — where Python would have been the obvious right choice?",
+      "why_this_question": "The TypeScript decision is contrarian in the AI/ML space. Instead of asking for advice ('what would you tell a developer?'), this asks whether the choice was deliberate strategy or path dependence — and whether you've ever regretted it",
+      "expected_insight": "Whether the TypeScript choice was a principled decision or an accident of background, and whether the AI ecosystem's Python dominance has ever been a real problem — not a theoretical one"
     }
   ]
 }
