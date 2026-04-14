@@ -873,6 +873,11 @@ export async function findRelatedCompanies(tabId: number) {
           const postsT0 = Date.now();
           const postsResult = await scrapePosts(tabId, companyBaseUrl, companyId);
           log(`[FindRelated] ${data.name} — posts: ${postsResult.saved} new, ${postsResult.updated} updated / ${postsResult.total} total (${((Date.now() - postsT0) / 1000).toFixed(1)}s)${postsResult.error ? ` (${postsResult.error})` : ""}`);
+          if (postsResult.signals && postsResult.signals.jobPosts > 0) {
+            log(`[FindRelated] ${data.name} — post signals: ${formatSignalSummary(postsResult.signals)}`);
+            totalPostSignalCompanies++;
+            if (postsResult.signals.hasIdealSignal) totalIdealSignalCompanies++;
+          }
 
           if (!findRelatedCancelled && (await isTabAlive(tabId)) && (Date.now() - deepT0) < DEEP_SCRAPE_TIMEOUT) {
             setCompanyScraperCancelled(false);
@@ -920,10 +925,10 @@ export async function findRelatedCompanies(tabId: number) {
     const elapsed = Date.now() - crawlT0;
     const elapsedMin = (elapsed / 60_000).toFixed(1);
     log(`[FindRelated] ═══ Crawl ${wasCancelled ? "CANCELLED" : "COMPLETE"} ═══ ${elapsedMin}min elapsed`);
-    log(`[FindRelated]   saved=${saved}, skipped=${skipped}, filtered=${filtered}, visited=${visited.size}, totalRemoteJobs=${totalRemoteJobs}, queue_remaining=${queue.length}`);
+    log(`[FindRelated]   saved=${saved}, skipped=${skipped}, filtered=${filtered}, visited=${visited.size}, totalRemoteJobs=${totalRemoteJobs}, postSignalCompanies=${totalPostSignalCompanies}, idealSignalCompanies=${totalIdealSignalCompanies}, queue_remaining=${queue.length}`);
 
     // Save crawl log to DB + download as file
-    const crawlStats = { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0, totalRemoteJobs };
+    const crawlStats = { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0, totalRemoteJobs, totalPostSignalCompanies, totalIdealSignalCompanies };
     await saveCrawlLogToDb({
       seedUrl: crawlSeedUrl,
       companySlug: crawlSlug,
