@@ -305,7 +305,7 @@ const pipelineNodes: Node[] = [
     id: "triage",
     type: "agent",
     position: { x: 180, y: 45 },
-    data: { label: "Triage", sublabel: "DeepSeek → 8 intent classes", icon: Brain, color: "var(--indigo-9)" },
+    data: { label: "Triage", sublabel: "Qwen 2.5 → 8 intent classes", icon: Brain, color: "var(--indigo-9)" },
   },
   {
     id: "retrieve",
@@ -317,7 +317,7 @@ const pipelineNodes: Node[] = [
     id: "synthesize",
     type: "agent",
     position: { x: 660, y: 45 },
-    data: { label: "Synthesize", sublabel: "DeepSeek + safety prompt", icon: Cpu, color: "var(--amber-9)" },
+    data: { label: "Synthesize", sublabel: "Qwen 2.5 + safety prompt", icon: Cpu, color: "var(--amber-9)" },
   },
   {
     id: "guard",
@@ -452,7 +452,7 @@ const guardNodes: Node[] = [
     id: "auditor",
     type: "agent",
     position: { x: 240, y: 40 },
-    data: { label: "Guard Auditor", sublabel: "DeepSeek — 5 safety checks", icon: Shield, color: "var(--crimson-9)" },
+    data: { label: "Guard Auditor", sublabel: "Qwen 2.5 — 5 safety checks", icon: Shield, color: "var(--crimson-9)" },
   },
   {
     id: "check-badge",
