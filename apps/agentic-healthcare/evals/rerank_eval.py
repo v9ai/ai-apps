@@ -41,7 +41,7 @@ from graph import GraphState, rerank, RERANK_SYSTEM
 
 @pytest.fixture
 def mock_llm():
-    with patch("graph._llm_call") as mock:
+    with patch("postprocessors.llm_call") as mock:
         yield mock
 
 

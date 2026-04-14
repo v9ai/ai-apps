@@ -3364,3 +3364,238 @@ body {
 @media (max-width: 640px) {
   .cw-learner-card { min-width: 100%; }
 }
+
+/* ================================================================
+   LANGGRAPH PAGE
+   ================================================================ */
+.lg-main {
+  min-height: 100vh;
+  padding-top: var(--yc-topbar-height);
+}
+.lg-banner {
+  padding: 48px 24px 40px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(20, 184, 166, 0.12));
+  border-bottom: 1px solid var(--gray-4);
+}
+.lg-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gray-12);
+  margin: 0 0 8px;
+  line-height: 1.3;
+}
+.lg-subtitle {
+  font-size: 15px;
+  color: var(--gray-11);
+  margin: 0 0 16px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+.lg-content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+.lg-section {
+  margin-bottom: 48px;
+}
+.lg-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.lg-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gray-12);
+  margin: 0;
+}
+.lg-prose {
+  font-size: 15px;
+  color: var(--gray-11);
+  line-height: 1.7;
+  margin: 0 0 12px;
+}
+.lg-prose strong {
+  color: var(--gray-12);
+  font-weight: 600;
+}
+
+/* Concepts grid */
+.lg-concepts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.lg-concept-card {
+  padding: 20px;
+  border: 1px solid var(--gray-4);
+  border-radius: 10px;
+  background: var(--gray-2);
+  transition: border-color 0.15s;
+}
+.lg-concept-card:hover {
+  border-color: var(--gray-6);
+}
+.lg-concept-icon {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 8px;
+}
+.lg-concept-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-12);
+  margin: 0 0 6px;
+}
+.lg-concept-desc {
+  font-size: 13px;
+  color: var(--gray-11);
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+.lg-concept-details {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lg-concept-details li {
+  font-size: 12px;
+  color: var(--gray-10);
+  line-height: 1.4;
+  padding-left: 14px;
+  position: relative;
+}
+.lg-concept-details li::before {
+  content: "\2023";
+  position: absolute;
+  left: 0;
+  color: var(--teal-9);
+  font-weight: 700;
+}
+
+/* Flow steps */
+.lg-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 16px;
+}
+.lg-flow-step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--gray-3);
+}
+.lg-flow-step:last-child {
+  border-bottom: none;
+}
+.lg-flow-num {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--teal-3);
+  color: var(--teal-11);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lg-flow-body {
+  flex: 1;
+  min-width: 0;
+}
+.lg-flow-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray-12);
+  margin: 0 0 4px;
+}
+.lg-flow-desc {
+  font-size: 13px;
+  color: var(--gray-11);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* CTA section */
+.lg-cta-section {
+  margin-top: 16px;
+}
+.lg-cta-card {
+  text-align: center;
+  padding: 48px 32px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.06), rgba(20, 184, 166, 0.1));
+  border: 1px solid var(--teal-4);
+}
+.lg-cta-card h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-12);
+  margin: 0 0 10px;
+}
+.lg-cta-card p {
+  font-size: 14px;
+  color: var(--gray-11);
+  line-height: 1.6;
+  max-width: 520px;
+  margin: 0 auto 24px;
+}
+.lg-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-1);
+  background: linear-gradient(135deg, var(--teal-9), var(--teal-10));
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 12px rgba(13, 148, 136, 0.25);
+}
+.lg-cta-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(13, 148, 136, 0.35);
+}
+.lg-cta-arrow {
+  transition: transform 0.15s;
+}
+.lg-cta-btn:hover .lg-cta-arrow {
+  transform: translateX(3px);
+}
+
+/* Courses grid override for langgraph page */
+.lg-courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .lg-title { font-size: 24px; }
+  .lg-banner { padding: 36px 16px 32px; }
+  .lg-content { padding: 24px 16px 48px; }
+  .lg-concepts-grid { grid-template-columns: 1fr; }
+  .lg-courses-grid { grid-template-columns: 1fr; }
+  .lg-cta-card { padding: 32px 20px; }
+}
+@media (max-width: 480px) {
+  .lg-title { font-size: 22px; }
+  .lg-flow-step { gap: 12px; }
+  .lg-flow-num { width: 28px; height: 28px; font-size: 13px; }
+}

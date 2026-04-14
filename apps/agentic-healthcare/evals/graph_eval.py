@@ -73,7 +73,7 @@ def mock_llm():
 
 @pytest.fixture
 def mock_embedding():
-    with patch("graph.generate_embedding") as mock:
+    with patch("retrievers.generate_embedding") as mock:
         mock.return_value = [0.0] * 1024
         yield mock
 
@@ -82,14 +82,14 @@ def mock_embedding():
 def mock_search_all():
     patches = {}
     search_fns = [
-        "graph.search_blood_tests",
-        "graph.search_markers_hybrid",
-        "graph.search_conditions",
-        "graph.search_medications",
-        "graph.search_symptoms",
-        "graph.search_appointments",
-        "graph.search_marker_trend",
-        "graph.search_health_states",
+        "retrievers.search_blood_tests",
+        "retrievers.search_markers_hybrid",
+        "retrievers.search_conditions",
+        "retrievers.search_medications",
+        "retrievers.search_symptoms",
+        "retrievers.search_appointments",
+        "retrievers.search_marker_trend",
+        "retrievers.search_health_states",
     ]
     entered = []
     for fn_path in search_fns:
@@ -99,6 +99,15 @@ def mock_search_all():
     yield patches
     for p_obj in entered:
         p_obj.stop()
+
+
+@pytest.fixture
+def mock_synthesizer():
+    """Mock the LlamaIndex response synthesizer used by graph.synthesize."""
+    from unittest.mock import MagicMock
+    mock_synth = MagicMock()
+    with patch("graph.get_response_synthesizer", return_value=mock_synth):
+        yield mock_synth
 
 
 def _make_state(**kwargs) -> GraphState:
@@ -258,29 +267,39 @@ class TestRetrievalRouting:
 
 class TestSynthesis:
 
-    def test_synthesis_with_context(self, mock_llm):
-        mock_llm.return_value = "TG/HDL is 1.8, optimal. Consult your physician."
+    def test_synthesis_with_context(self, mock_synthesizer):
+        from unittest.mock import MagicMock
+        mock_response = MagicMock()
+        mock_response.__str__ = lambda self: "TG/HDL is 1.8, optimal. Consult your physician."
+        mock_synthesizer.synthesize.return_value = mock_response
         state = _make_state(
             intent="markers",
             context_chunks=["TG/HDL: 1.8000 [optimal]"],
             retrieval_sources=["blood_marker_embeddings"],
+            retrieval_scores=[0.9],
         )
         result = synthesize(state)
         assert "TG/HDL" in result["answer"]
+        mock_synthesizer.synthesize.assert_called_once()
 
-    def test_synthesis_includes_history(self, mock_llm):
-        mock_llm.return_value = "Follow-up answer. Consult your physician."
+    def test_synthesis_includes_history(self, mock_synthesizer):
+        from unittest.mock import MagicMock
+        mock_response = MagicMock()
+        mock_response.__str__ = lambda self: "Follow-up answer. Consult your physician."
+        mock_synthesizer.synthesize.return_value = mock_response
         state = _make_state(
             intent="markers",
             context_chunks=["HDL: 55 mg/dL"],
             retrieval_sources=["blood_marker_embeddings"],
+            retrieval_scores=[0.8],
             chat_history=[
                 {"role": "user", "content": "What is my HDL?"},
                 {"role": "assistant", "content": "55 mg/dL."},
             ],
         )
         synthesize(state)
-        assert "CONVERSATION HISTORY" in mock_llm.call_args[0][1]
+        query_arg = mock_synthesizer.synthesize.call_args[0][0]
+        assert "CONVERSATION HISTORY" in query_arg
 
 
 # ═══════════════════════════════════════════════════════════════════════════
