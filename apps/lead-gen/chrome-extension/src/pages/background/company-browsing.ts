@@ -414,6 +414,9 @@ async function countRemoteJobsViaVoyager(
     url.searchParams.set("locationUnion", "(geoId:92000000)");
     url.searchParams.set("start", "0");
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
     const res = await fetch(url.toString(), {
       headers: {
         "csrf-token": csrfToken,
@@ -421,7 +424,9 @@ async function countRemoteJobsViaVoyager(
         Accept: "application/vnd.linkedin.normalized+json+2.1",
       },
       credentials: "include",
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (res.status === 401 || res.status === 403) {
       return { count: 0, error: `Auth error: ${res.status}` };
