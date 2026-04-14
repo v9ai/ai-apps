@@ -5494,7 +5494,7 @@ if not passed:
 
         <ScrollReveal delay={320}>
           <Flex gap="3" wrap="wrap" justify="center" mt="5">
-            <span className="arch-tag">DeepSeek auditor</span>
+            <span className="arch-tag">local Qwen 2.5 auditor</span>
             <span className="arch-tag">fail-safe = passed:false</span>
             <span className="arch-tag">JSON parse guard</span>
             <span className="arch-tag">disclaimer injection</span>
