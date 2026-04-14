@@ -16,6 +16,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from llm_settings import configure_llamaindex
+
+configure_llamaindex()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel

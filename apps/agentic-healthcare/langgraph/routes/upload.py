@@ -163,6 +163,22 @@ def _partition_pdf(file_bytes: bytes, file_name: str) -> list[dict]:
     parser = LlamaParse(
         api_key=settings.llama_cloud_api_key,
         result_type="markdown",
+        content_guideline_instruction=(
+            "This is a blood test / lab report document. "
+            "Extract all biomarker names, numeric values, units of measurement, "
+            "reference ranges, and abnormal flags. Preserve the tabular structure "
+            "of lab results. Include any physician notes or interpretations."
+        ),
+        complemental_formatting_instruction=(
+            "Format lab results as markdown tables with columns: "
+            "| Marker | Value | Unit | Reference Range | Flag |. "
+            "Separate different test panels with headers "
+            "(e.g., ## Lipid Panel, ## CBC, ## Metabolic Panel)."
+        ),
+        continuous_mode=True,
+        auto_mode=True,
+        auto_mode_trigger_on_table_in_page=True,
+        auto_mode_trigger_on_image_in_page=True,
     )
     suffix = os.path.splitext(file_name)[1] or ".pdf"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:

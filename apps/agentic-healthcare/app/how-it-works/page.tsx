@@ -116,7 +116,7 @@ const archSections = [
     title: "PDF Ingestion Pipeline",
     brief: "Upload \u2192 Parse \u2192 Extract \u2192 Store",
     description:
-      "Blood test PDFs are uploaded to R2, converted to markdown by LlamaParse, parsed through a 3-tier cascade (HTML table, FormKeysValues, free-text), then embedded with text-embedding-3-large at 1024 dimensions and stored in Neon PostgreSQL.",
+      "Blood test PDFs are uploaded to R2, converted to markdown by LlamaParse, parsed through a 3-tier cascade (HTML table, FormKeysValues, free-text), then embedded locally with BAAI/bge-large-en-v1.5 at 1024 dimensions via FastEmbed (ONNX Runtime) and stored in Neon PostgreSQL.",
     tags: ["Cloudflare R2", "LlamaParse", "3-tier cascade", "1024-dim vectors"],
     Flow: IngestionFlow,
   },
@@ -179,8 +179,8 @@ const archSections = [
     title: "Multi-Entity Embedding Strategy",
     brief: "7 types \u2192 format \u2192 embed \u2192 pgvector",
     description:
-      "Seven entity types (tests, markers, health state, conditions, medications, symptoms, appointments) each have a dedicated format_*_for_embedding() function that converts structured data into deterministic clinical text. Two ingestion paths feed the pipeline: blood data flows through a LlamaIndex IngestionPipeline with a custom BloodTestNodeParser that produces 3 node types per test (test-level, per-marker, health-state with 7 derived ratios), while user-entered entities hit POST /embed/* routes that format, embed, and upsert in one call. All text is embedded via OpenAI\u2019s text-embedding-3-large at 1024 dimensions (Matryoshka truncation from native 3072-dim) and stored in 7 paired pgvector tables with ON CONFLICT upsert for idempotency. Vector searches use sequential scan scoped by BTREE-indexed user_id \u2014 exact cosine distance at per-user scale, no approximate indexes needed.",
-    tags: ["7 entity types", "text-embedding-3-large 1024d", "dual ingestion paths", "ON CONFLICT upsert", "pgvector"],
+      "Seven entity types (tests, markers, health state, conditions, medications, symptoms, appointments) each have a dedicated format_*_for_embedding() function that converts structured data into deterministic clinical text. Two ingestion paths feed the pipeline: blood data flows through a LlamaIndex IngestionPipeline with a custom BloodTestNodeParser that produces 3 node types per test (test-level, per-marker, health-state with 7 derived ratios), while user-entered entities hit POST /embed/* routes that format, embed, and upsert in one call. All text is embedded locally via BAAI/bge-large-en-v1.5 at 1024 dimensions through FastEmbed (ONNX Runtime) \u2014 zero API cost, fully on-device. Vectors are stored in 7 paired pgvector tables with ON CONFLICT upsert for idempotency. Vector searches use sequential scan scoped by BTREE-indexed user_id \u2014 exact cosine distance at per-user scale, no approximate indexes needed.",
+    tags: ["7 entity types", "bge-large-en-v1.5 1024d", "dual ingestion paths", "ON CONFLICT upsert", "pgvector"],
     Flow: EmbeddingFlow,
   },
 ];
@@ -199,7 +199,7 @@ const techCategories = [
   {
     category: "AI / ML",
     color: "var(--amber-9)",
-    items: ["DeepSeek R1", "text-embedding-3-large", "LlamaParse"],
+    items: ["DeepSeek R1", "BAAI/bge-large-en-v1.5", "LlamaParse"],
   },
   {
     category: "Infrastructure",
@@ -726,8 +726,8 @@ const embeddingPipelineSteps = [
     step: "3",
     title: "Vector Encoding",
     color: "var(--green-9)",
-    description: "Text string sent to OpenAI text-embedding-3-large via /v1/embeddings. The dimensions parameter truncates from native 3072 to 1024 via Matryoshka representation learning — preserving retrieval quality at 1/3 storage cost.",
-    code: "POST /v1/embeddings { model: 'text-embedding-3-large', dimensions: 1024 }",
+    description: "Text string embedded locally via BAAI/bge-large-en-v1.5 through FastEmbed (ONNX Runtime). The model natively produces 1024-dim vectors on-device with zero API cost.",
+    code: "model = TextEmbedding('BAAI/bge-large-en-v1.5')  # local ONNX, 1024-dim",
   },
   {
     step: "4",
@@ -802,7 +802,7 @@ const ingestionPaths = [
     trigger: "Entity CRUD actions (create / update)",
     steps: [
       "formatForEmbedding() builds deterministic text",
-      "generateEmbedding() calls text-embedding-3-large",
+      "generateEmbedding() calls bge-large-en-v1.5 (local ONNX)",
       "Drizzle upsert with ON CONFLICT on entityId",
       "Single table per entity type",
     ],
@@ -2858,10 +2858,10 @@ user: """
               style={{ maxWidth: 560, lineHeight: 1.65 }}
             >
               Each entity type has a dedicated format function that builds a
-              deterministic clinical text string before text-embedding-3-large
-              encodes it into 1024 dimensions (Matryoshka truncation from
-              3072-dim). Python handles blood data; TypeScript handles
-              user-entered entities.
+              deterministic clinical text string before BAAI/bge-large-en-v1.5
+              encodes it into 1024 dimensions locally via FastEmbed (ONNX
+              Runtime, zero API cost). Python handles blood data; TypeScript
+              handles user-entered entities.
             </Text>
           </Flex>
         </ScrollReveal>
@@ -2986,8 +2986,8 @@ user: """
 
         <ScrollReveal delay={300}>
           <Flex gap="3" wrap="wrap" justify="center">
-            <span className="arch-tag">text-embedding-3-large</span>
-            <span className="arch-tag">1024 dims (Matryoshka)</span>
+            <span className="arch-tag">BAAI/bge-large-en-v1.5</span>
+            <span className="arch-tag">1024 dims (local ONNX)</span>
             <span className="arch-tag">ON CONFLICT upsert</span>
             <span className="arch-tag">BTREE user_id index</span>
             <span className="arch-tag">exact cosine scan</span>
@@ -3112,7 +3112,7 @@ user: """
               Blood data flows through a LlamaIndex IngestionPipeline in
               Python; user-entered entities use direct embed-and-upsert in
               TypeScript. Both paths converge on the same pgvector tables
-              and text-embedding-3-large model.
+              and BAAI/bge-large-en-v1.5 model (local ONNX).
             </Text>
           </Flex>
         </ScrollReveal>

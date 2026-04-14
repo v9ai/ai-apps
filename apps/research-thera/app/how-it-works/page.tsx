@@ -3,7 +3,7 @@ import { HowItWorksClient } from "./how-it-works-client";
 
 export const metadata: Metadata = {
   title: "How It Works | Research Thera",
-  description: "A therapeutic journaling platform that uses Next.js, GraphQL, and AI to connect personal mental health goals with evidence-based research",
+  description: "A therapeutic platform for families — connecting goals, journals, issues, and habits with peer-reviewed research via AI agents and a GraphQL API",
 };
 
 export default function HowItWorksPage() {

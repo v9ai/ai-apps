@@ -126,15 +126,19 @@ export const pipelineNodes: PipelineNode[] = [
 // ─── Python LangGraph ReAct Agent ──────────────────────────────────
 
 export const reactAgent = {
-  model: "gpt-4o-mini",
-  tool: "search_therapy_research",
+  model: "deepseek-chat",
+  tools: ["search_papers", "get_paper_detail", "save_research_papers"],
   description:
-    "A LangGraph ReAct agent (Python, backend/src/agent/graph.py) that answers questions about stored research. " +
-    "Uses create_react_agent with a single pgvector tool: it embeds the user query with text-embedding-3-small, " +
-    "runs cosine similarity search against the research_embeddings table, and returns the top-5 matching chunks " +
-    "formatted as '**{title}** (similarity: 0.NNN)\\n{content}' with scores to 3 decimal places.",
+    "A LangGraph ReAct agent (Python, backend/research_agent/graph.py) that discovers, evaluates, and persists therapy research. " +
+    "Uses create_react_agent with DeepSeek Chat and three tools: search_papers queries OpenAlex, Crossref, and Semantic Scholar " +
+    "in parallel then reranks results with cross-encoder/ms-marco-MiniLM-L-6-v2; get_paper_detail fetches the full abstract and TLDR " +
+    "for a given DOI or title; save_research_papers upserts curated papers to the therapy_research table with evidence level, " +
+    "therapeutic techniques, and key findings. The agent runs exactly 3 search calls, inspects up to 2 papers in detail, " +
+    "selects the top 10, and persists them — all in a single reasoning loop.",
   toolDetail:
-    "SELECT title, content, 1-(embedding <-> query_vec) AS similarity FROM research_embeddings ORDER BY distance LIMIT 5",
+    "1. search_papers(query, limit=10) — OpenAlex + Crossref + S2 → cross-encoder rerank → top K\n" +
+    "2. get_paper_detail(doi_or_title) — full abstract, TLDR, authors, citation count\n" +
+    "3. save_research_papers(papers_json) — upsert to therapy_research with goal/issue/feedback ID",
 };
 
 // ─── Technical Foundations ──────────────────────────────────────────
@@ -184,7 +188,7 @@ export const papers: Paper[] = [
     finding:
       "Relational database with vector similarity search via the <-> cosine distance operator",
     relevance:
-      "Stores goals, journal_entries, therapy_research; research_embeddings holds 1024-dim pgvector embeddings for semantic RAG retrieval across four entity types: Goal, Note, TherapyResearch, TherapeuticQuestion",
+      "39 tables: goals, issues, habits, journal_entries, conversations, claim_cards, deep_issue_analyses, discussion_guides, affirmations, contacts, therapy_research, and more. research_embeddings holds 1024-dim pgvector embeddings for semantic RAG retrieval across four entity types",
     url: "https://www.postgresql.org/docs/",
     categoryColor: "var(--green-9)",
   },
@@ -215,7 +219,7 @@ export const papers: Paper[] = [
     finding:
       "Framework for stateful multi-step AI workflows as directed graphs with conditional branching and tool calling",
     relevance:
-      "Python backend uses create_react_agent (prebuilt ReAct graph) with a pgvector search tool for RAG Q&A. The TypeScript pipeline mirrors the stateful node-passing pattern: each step function receives accumulated context and returns it enriched, making data flow explicit and each node independently testable.",
+      "Powers 4 AI agents: 2 Python LangGraph (research agent with 3 tools + cross-encoder reranking, deep analysis agent for pattern clustering) and 2 TypeScript AI SDK (storyTeller for interactive narratives, therapeutic for evidence-based audio). The TypeScript pipeline mirrors the stateful node-passing pattern.",
     url: "https://langchain-ai.github.io/langgraph/",
     categoryColor: "var(--red-9)",
   },
@@ -267,6 +271,36 @@ export const papers: Paper[] = [
     url: "https://www.radix-ui.com/docs/primitives/overview/introduction",
     categoryColor: "var(--blue-9)",
   },
+  {
+    slug: "openai-tts",
+    number: 9,
+    title: "OpenAI TTS",
+    category: "AI / Audio",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "OpenAI",
+    year: 2024,
+    finding:
+      "Text-to-speech via gpt-4o-mini-tts with 12 voices, 3 models, and chunked generation for long-form content",
+    relevance:
+      "Generates therapeutic audio — text is chunked to fit model limits, audio segments are concatenated and uploaded to Cloudflare R2, with SSE streaming for real-time progress",
+    categoryColor: "var(--purple-9)",
+  },
+  {
+    slug: "cross-encoder-reranking",
+    number: 10,
+    title: "Cross-Encoder Reranking",
+    category: "AI / ML",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Sentence-Transformers",
+    year: 2024,
+    finding:
+      "ms-marco-MiniLM-L-6-v2 (22M params) reranks search results with cross-attention between query and passage",
+    relevance:
+      "The Python research agent fetches 3x the requested limit from multi-source search, then reranks with the cross-encoder to surface the most relevant papers before LLM reasoning",
+    categoryColor: "var(--red-9)",
+  },
 ];
 
 // ─── Key Metrics ───────────────────────────────────────────────────
@@ -302,12 +336,32 @@ export const researchStats: Stat[] = [
     label: "pgvector embeddings in research_embeddings (OpenAI text-embedding-3-small)",
     source: "Supports 4 entity types: Goal, Note, TherapyResearch, TherapeuticQuestion",
   },
+  {
+    number: "4 agents",
+    label: "DeepSeek-powered AI agents across Python and TypeScript",
+    source: "2 Python LangGraph (research + deep analysis) + 2 TypeScript AI SDK (storyTeller + therapeutic)",
+  },
+  {
+    number: "39 tables",
+    label: "PostgreSQL schema via Drizzle ORM",
+    source: "goals, issues, habits, journal_entries, conversations, claim_cards, deep_issue_analyses, discussion_guides, affirmations, and more",
+  },
+  {
+    number: "7 sources",
+    label: "academic research APIs integrated",
+    source: "Crossref, PubMed, Semantic Scholar, OpenAlex, arXiv, Europe PMC, DataCite",
+  },
+  {
+    number: "reranking",
+    label: "cross-encoder ms-marco-MiniLM-L-6-v2 (22M params)",
+    source: "Sits between multi-source search and LLM extraction in the Python research agent",
+  },
 ];
 
 // ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "A user logs in via Neon Auth and creates a therapeutic goal — or incoming contact feedback triggers the pipeline automatically. Either way, the 7-node pipeline begins: loadContext reads the goal and family profile from PostgreSQL, normalizeGoal uses DeepSeek to translate and clinically classify it into one of 12 specific domains (never the generic 'behavioral_change'), planQuery generates up to 47 targeted academic search queries, and search fetches ~2,350 raw candidates from Crossref, PubMed, and Semantic Scholar plus S2 recommendations seeded by the most-cited paper. enrichAbstracts fills gaps via OpenAlex (concurrency 15), extractAll batch-scores each paper with DeepSeek for relevance and confidence, and persist applies a conditional blended formula to select the top 20 papers — upserted to therapy_research and stored as pgvector embeddings for RAG retrieval. A separate Python LangGraph ReAct agent answers user questions against this store using cosine similarity search.";
+  "Research Thera is a therapeutic platform for families — parents and caregivers create goals, track issues, log journals and habits, and receive AI-generated discussion guides, therapeutic questions, recommended books, and evidence-based audio content. Four DeepSeek-powered AI agents handle different concerns: a research agent discovers and persists academic papers via multi-source search and cross-encoder reranking, a deep analysis agent clusters patterns across a child's issues and family dynamics, a storyTeller agent generates interactive choose-your-own-adventure narratives, and a therapeutic agent produces audio-first guidance grounded in CBT, ACT, DBT, and LEGO-based therapy. At the core, a 7-node TypeScript pipeline (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist) fetches ~2,350 raw candidates from Crossref, PubMed, and Semantic Scholar, enriches abstracts via OpenAlex, batch-scores with DeepSeek, and persists the top 20 as pgvector embeddings. Meanwhile, a separate Python LangGraph ReAct agent uses cross-encoder reranking across OpenAlex, Crossref, and Semantic Scholar to discover, evaluate, and save therapy research on demand.";
 
 // ─── Extra Sections ────────────────────────────────────────────────
 
@@ -320,7 +374,7 @@ export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "Database Design",
     content:
-      "PostgreSQL stores core tables: users (managed by Neon Auth), goals with parentGoalId for hierarchies, family_members with relationship types, and journal_entries with mood and isPrivate flags. Goal-specific research lives in therapy_research (not a generic papers table) — columns include therapeuticGoalType, keyFindings, therapeuticTechniques, evidenceLevel, relevanceScore, extractionConfidence, and extractedBy. Semantic search is served by research_embeddings: 1024-dim pgvector vectors keyed by entity_type (Goal, Note, TherapyResearch, TherapeuticQuestion) and entity_id, with metadata stored alongside. The generation_jobs table tracks pipeline runs with status (RUNNING, SUCCEEDED, FAILED) and type (AUDIO, RESEARCH, QUESTIONS, LONGFORM), polled by the client every second during active runs.",
+      "PostgreSQL hosts 39 tables via Drizzle ORM. Core tables: users (Neon Auth), goals with parentGoalId for hierarchies, family_members with sharing (VIEWER/EDITOR/ADMIN), and family_member_characteristics (severity, risk tiers). Behavioral tracking: issues (8 categories, linked via issue_links and issue_contacts), habits + habit_logs (daily/weekly with target counts), behavior_observations (frequency/intensity), and affirmations (5 categories). Journaling: journal_entries (mood, tags, privacy), journal_analyses (emotional landscape, therapeutic insights), and discussion_guides (conversation starters, anticipated reactions). Communication: conversations + conversation_messages (per-issue AI chat), contacts, relationships, teacher_feedbacks, and contact_feedbacks. Evidence: therapy_research (12 domains, 7 study types, evidence level), research_embeddings (1024-dim pgvector), claim_cards (verdict: supported/contradicted/mixed/insufficient), and deep_issue_analyses (pattern clustering, family systems, root cause). Content: stories + text_segments, audio_assets, recommended_books, and therapeutic_questions. Infrastructure: generation_jobs (status RUNNING/SUCCEEDED/FAILED, type AUDIO/RESEARCH/QUESTIONS/LONGFORM/HABITS/BOOKS/ANALYSIS).",
   },
   {
     heading: "Resilience & Error Handling",
@@ -335,6 +389,146 @@ export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "Deployment & Infrastructure",
     content:
-      "Next.js frontend and GraphQL API deploy on Vercel (serverless functions). Neon hosts PostgreSQL with connection pooling for serverless compatibility. The Python LangGraph agent runs as a separate LangGraph Cloud deployment. Cloudflare R2 stores TTS audio files. GraphQL codegen ensures full type safety between schema, resolvers, and React hooks — any schema change that breaks a query fails at build time.",
+      "Next.js frontend and GraphQL API deploy on Vercel (serverless functions). Neon hosts PostgreSQL with connection pooling for serverless compatibility. Two Python LangGraph agents (research + deep analysis) run as a LangGraph Cloud deployment. Cloudflare R2 stores TTS audio files and issue screenshots. GraphQL codegen ensures full type safety between schema, resolvers, and React hooks — any schema change that breaks a query fails at build time.",
+  },
+  {
+    heading: "AI Agent Architecture",
+    content:
+      "Four DeepSeek-powered agents handle different concerns. The Research Agent (Python, LangGraph) uses create_react_agent with 3 tools — search_papers searches OpenAlex, Crossref, and Semantic Scholar in parallel then reranks with cross-encoder/ms-marco-MiniLM-L-6-v2; get_paper_detail fetches full abstracts; save_research_papers upserts curated papers to the database. The Deep Analysis Agent (Python, LangGraph) clusters a child's issues into thematic patterns, analyzes family dynamics, identifies root causes, and generates priority recommendations with research relevance. The StoryTeller Agent (TypeScript, AI SDK) generates interactive 3-part choose-your-own-adventure stories with numbered choices and TTS-optimized prose. The Therapeutic Agent (TypeScript, AI SDK) produces audio-first guidance grounded in CBT, ACT, DBT, MBSR, and LEGO-Based Therapy (LeGoff et al.) — with counted breathing, body-based activities, and developmental-tier awareness from preschool through adult.",
+  },
+];
+
+// ─── Platform Features ───────────────────────────────────────────
+
+export interface PlatformFeature {
+  name: string;
+  description: string;
+  color: string;
+}
+
+export interface FeatureCategory {
+  category: string;
+  color: string;
+  features: PlatformFeature[];
+}
+
+export const platformFeatures: FeatureCategory[] = [
+  {
+    category: "Therapeutic Core",
+    color: "var(--indigo-9)",
+    features: [
+      { name: "Goals", description: "Hierarchical therapeutic goals with sub-goals, priority levels, target dates, status tracking, family member association, and automatic research generation", color: "var(--indigo-9)" },
+      { name: "Therapeutic Questions", description: "AI-generated evidence-based reflection questions linked to research papers, with rationale explaining the therapeutic connection", color: "var(--indigo-9)" },
+      { name: "Recommended Books", description: "AI-generated book recommendations per goal with title, authors, ISBN, description, therapeutic rationale, and Amazon links", color: "var(--indigo-9)" },
+    ],
+  },
+  {
+    category: "Family & Contacts",
+    color: "var(--teal-9)",
+    features: [
+      { name: "Family Members", description: "Profiles with age, gender, relationship, developmental tier. Sharing with VIEWER/EDITOR/ADMIN roles for collaborative caregiving", color: "var(--teal-9)" },
+      { name: "Contacts & Relationships", description: "Teachers, therapists, and other professionals linked to family members and issues. Generic relationship mapping system", color: "var(--teal-9)" },
+      { name: "Contact Feedback", description: "Structured feedback collection from teachers and contacts. Automatic issue extraction from feedback text", color: "var(--teal-9)" },
+    ],
+  },
+  {
+    category: "Journal & Mood",
+    color: "var(--blue-9)",
+    features: [
+      { name: "Journal Entries", description: "Mood tracking (happy, sad, anxious, calm, frustrated, hopeful, neutral), tags, privacy settings, date filtering, family member association", color: "var(--blue-9)" },
+      { name: "Journal Analysis", description: "DeepSeek-powered analysis: emotional landscape, underlying emotions, regulation patterns, therapeutic insights, and actionable recommendations", color: "var(--blue-9)" },
+      { name: "Discussion Guides", description: "Age-appropriate parent conversation guides per journal entry: conversation starters, talking points, language guide, anticipated reactions, follow-up plan. Public sharing without auth", color: "var(--blue-9)" },
+    ],
+  },
+  {
+    category: "Issues & Analysis",
+    color: "var(--red-9)",
+    features: [
+      { name: "Issues", description: "8 categories (behavioral, emotional, social, developmental, academic, health, communication, other). Conversations, screenshots, severity, linked contacts, convert to goals", color: "var(--red-9)" },
+      { name: "Deep Issue Analysis", description: "Multi-pattern clustering across all of a child's issues: thematic clusters, timeline analysis, family system insights, root cause analysis, priority recommendations, research relevance mapping", color: "var(--red-9)" },
+    ],
+  },
+  {
+    category: "Habits & Behavior",
+    color: "var(--green-9)",
+    features: [
+      { name: "Habits", description: "Daily/weekly habits with target counts, streak logging, active/paused/archived status. AI-generated from family member profile or specific issues", color: "var(--green-9)" },
+      { name: "Behavior Observations", description: "Track observed behaviors with frequency, intensity (low/medium/high), type (refusal, target occurred, avoidance, partial), and contextual notes", color: "var(--green-9)" },
+      { name: "Affirmations", description: "Personalized positive reinforcement in 5 categories: gratitude, strength, encouragement, growth, self-worth. Per family member", color: "var(--green-9)" },
+    ],
+  },
+  {
+    category: "Stories & Audio",
+    color: "var(--purple-9)",
+    features: [
+      { name: "Interactive Stories", description: "StoryTeller agent generates 3-part choose-your-own-adventure narratives with numbered choices, TTS-optimized prose, and genre/protagonist/setting parameters", color: "var(--purple-9)" },
+      { name: "Therapeutic Audio", description: "Therapeutic agent produces audio-first guidance grounded in CBT, ACT, DBT, MBSR, and LEGO-Based Therapy. Counted breathing, body-based activities, developmental-tier awareness", color: "var(--purple-9)" },
+      { name: "OpenAI TTS", description: "gpt-4o-mini-tts with 12 voices, 3 models, 5 audio formats. Text chunking for long-form content, SSE streaming, Cloudflare R2 storage", color: "var(--purple-9)" },
+    ],
+  },
+  {
+    category: "Evidence & Claims",
+    color: "var(--orange-9)",
+    features: [
+      { name: "Claim Cards", description: "Extract and verify factual claims from notes. Verdicts: supported, contradicted, mixed, insufficient. Confidence scoring, evidence items with source paper links", color: "var(--orange-9)" },
+      { name: "Research Integration", description: "7 academic sources (Crossref, PubMed, Semantic Scholar, OpenAlex, arXiv, Europe PMC, DataCite). 7-node pipeline + Python ReAct agent with cross-encoder reranking", color: "var(--orange-9)" },
+      { name: "Note Sharing", description: "Notes linked to goals, journals, issues, stories. READER/EDITOR sharing roles, slug-based public URLs, claim card integration", color: "var(--orange-9)" },
+    ],
+  },
+];
+
+// ─── AI Agents ────────────────────────────────────────────────────
+
+export interface AIAgent {
+  name: string;
+  runtime: "Python" | "TypeScript";
+  model: string;
+  framework: string;
+  file: string;
+  tools: string[] | null;
+  description: string;
+  color: string;
+}
+
+export const aiAgents: AIAgent[] = [
+  {
+    name: "Research Agent",
+    runtime: "Python",
+    model: "deepseek-chat",
+    framework: "LangGraph (create_react_agent)",
+    file: "backend/research_agent/graph.py",
+    tools: ["search_papers", "get_paper_detail", "save_research_papers"],
+    description: "Discovers, evaluates, and persists therapy research. Runs 3 search calls across OpenAlex, Crossref, and Semantic Scholar, reranks with cross-encoder, inspects up to 2 papers in detail, selects top 10, and upserts to the database.",
+    color: "var(--cyan-9)",
+  },
+  {
+    name: "Deep Analysis Agent",
+    runtime: "Python",
+    model: "deepseek-chat",
+    framework: "LangGraph",
+    file: "backend/research_agent/deep_analysis_graph.py",
+    tools: null,
+    description: "Clusters a child's issues into thematic patterns, analyzes family dynamics and timeline, identifies root causes, and generates priority recommendations with research relevance mapping.",
+    color: "var(--red-9)",
+  },
+  {
+    name: "StoryTeller Agent",
+    runtime: "TypeScript",
+    model: "deepseek-chat",
+    framework: "AI SDK (generateObject + Zod)",
+    file: "src/agents/index.ts",
+    tools: null,
+    description: "Generates interactive 3-part choose-your-own-adventure stories with numbered choices, TTS-optimized prose (short sentences, clear pronunciation), and configurable genre, protagonist, and setting.",
+    color: "var(--purple-9)",
+  },
+  {
+    name: "Therapeutic Agent",
+    runtime: "TypeScript",
+    model: "deepseek-chat",
+    framework: "AI SDK (generateObject + Zod)",
+    file: "src/agents/index.ts",
+    tools: null,
+    description: "Produces audio-first therapeutic guidance grounded in CBT, ACT, DBT, MBSR, Play Therapy, and LEGO-Based Therapy (LeGoff et al.). Includes counted breathing, body-based activities, and developmental-tier awareness from preschool through adult.",
+    color: "var(--amber-9)",
   },
 ];

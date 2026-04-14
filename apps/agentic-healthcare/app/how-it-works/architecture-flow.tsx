@@ -505,7 +505,7 @@ export function GuardFlow() {
  *  5. EMBEDDING STRATEGY FLOW
  *
  *  Six entity types, each with a dedicated formatter, embedded
- *  into paired pgvector tables via text-embedding-3-large 1024-dim.
+ *  into paired pgvector tables via BAAI/bge-large-en-v1.5 1024-dim (local ONNX).
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const embeddingNodes: Node[] = [
@@ -543,7 +543,7 @@ const embeddingNodes: Node[] = [
     id: "embed",
     type: "agent",
     position: { x: 480, y: 45 },
-    data: { label: "text-embedding-3-large", sublabel: "OpenAI · 1024-dim Matryoshka", icon: Brain, color: "var(--amber-9)" },
+    data: { label: "bge-large-en-v1.5", sublabel: "BAAI · 1024-dim local ONNX", icon: Brain, color: "var(--amber-9)" },
   },
   {
     id: "pgvector",

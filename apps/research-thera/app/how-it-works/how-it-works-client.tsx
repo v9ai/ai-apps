@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { papers, researchStats, pipelineNodes, story, extraSections, type PipelineNode } from "./data";
+import { papers, researchStats, pipelineNodes, story, extraSections, platformFeatures, aiAgents, type PipelineNode } from "./data";
 import { PipelineFlow, SearchFlow, ExtractPersistFlow, RagAgentFlow, DataFlowDiagram } from "./architecture-flow";
 
 // ── Shared styles ────────────────────────────────────────────────────────────
@@ -490,7 +490,7 @@ function ReactAgentDiagram() {
         </span>
         <div style={{ height: 1, flex: 1, background: "var(--gray-a3, rgba(255,255,255,0.08))" }} />
         <span style={{ fontSize: "0.72rem", color: "var(--gray-a7, rgba(255,255,255,0.35))", fontFamily: "monospace" }}>
-          backend/src/agent/graph.py
+          backend/research_agent/graph.py
         </span>
       </div>
 
@@ -502,40 +502,31 @@ function ReactAgentDiagram() {
           </div>
           <div style={{ fontFamily: "monospace", fontWeight: 600, marginBottom: "0.3rem" }}>create_react_agent</div>
           <div style={{ color: "var(--gray-a9, rgba(255,255,255,0.5))", fontSize: "0.8rem" }}>
-            model: <code>gpt-4o-mini</code>
+            model: <code>deepseek-chat</code>
           </div>
           <div style={{ color: "var(--gray-a9, rgba(255,255,255,0.5))", fontSize: "0.8rem", marginTop: "0.2rem" }}>
-            Reasons over research chunks, decides when to call the search tool, synthesizes a final answer.
+            Runs 3 search calls across OpenAlex, Crossref, and Semantic Scholar, inspects up to 2 papers in detail, selects the top 10, and persists them.
           </div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", color: "var(--gray-a6)", fontSize: "1.1rem", flexShrink: 0 }}>⇄</div>
 
-        {/* Tool node */}
+        {/* Tool nodes */}
         <div style={boxStyle("var(--green-9)")}>
           <div style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--green-9)", marginBottom: "0.4rem" }}>
-            Tool Node
+            3 Tools
           </div>
-          <div style={{ fontFamily: "monospace", fontWeight: 600, marginBottom: "0.3rem" }}>search_therapy_research</div>
+          <div style={{ fontFamily: "monospace", fontWeight: 600, marginBottom: "0.3rem" }}>search_papers</div>
           <div style={{ color: "var(--gray-a9, rgba(255,255,255,0.5))", fontSize: "0.8rem" }}>
-            Embeds query with <code>text-embedding-3-small</code>, cosine similarity → top-5 chunks.
+            OpenAlex + Crossref + S2 → cross-encoder rerank (ms-marco-MiniLM-L-6-v2)
           </div>
-          <div style={{ position: "relative", marginTop: "0.6rem" }}>
-            <pre
-              style={{
-                margin: 0,
-                padding: "0.4rem 2.2rem 0.4rem 0.6rem",
-                background: "var(--gray-a3, rgba(255,255,255,0.05))",
-                borderRadius: 5,
-                fontSize: "0.65rem",
-                color: "var(--green-9)",
-                fontFamily: "monospace",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {`1 - (embedding <-> query_vec)\nFROM research_embeddings LIMIT 5`}
-            </pre>
-            <CopyButton text="SELECT title, content, 1 - (embedding <-> query_vec) AS similarity FROM research_embeddings ORDER BY embedding <-> query_vec LIMIT 5" />
+          <div style={{ fontFamily: "monospace", fontWeight: 600, marginBottom: "0.3rem", marginTop: "0.5rem" }}>get_paper_detail</div>
+          <div style={{ color: "var(--gray-a9, rgba(255,255,255,0.5))", fontSize: "0.8rem" }}>
+            Full abstract, TLDR, authors, citation count for a given DOI
+          </div>
+          <div style={{ fontFamily: "monospace", fontWeight: 600, marginBottom: "0.3rem", marginTop: "0.5rem" }}>save_research_papers</div>
+          <div style={{ color: "var(--gray-a9, rgba(255,255,255,0.5))", fontSize: "0.8rem" }}>
+            Upsert top 10 curated papers to <code>therapy_research</code> table
           </div>
         </div>
 
@@ -546,15 +537,15 @@ function ReactAgentDiagram() {
           <div style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--purple-9)", marginBottom: "0.4rem" }}>
             Vector Store
           </div>
-          <div style={{ fontFamily: "monospace", fontWeight: 600, marginBottom: "0.3rem" }}>research_embeddings</div>
+          <div style={{ fontFamily: "monospace", fontWeight: 600, marginBottom: "0.3rem" }}>therapy_research</div>
           <div style={{ color: "var(--gray-a9, rgba(255,255,255,0.5))", fontSize: "0.8rem" }}>
-            Neon PostgreSQL + pgvector. Populated by the <code>persist</code> node. 1024-dim embeddings.
+            Neon PostgreSQL. Populated by <code>save_research_papers</code> tool with evidence level, therapeutic techniques, and key findings.
           </div>
         </div>
       </div>
 
       <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
-        The ReAct loop runs until the agent has enough evidence — typically 1–2 tool calls. The research generation pipeline feeds directly into this store.
+        The agent follows a strict 5-step workflow: 3 search calls with different query terms, up to 2 detail lookups, top-10 selection, persistence via <code>save_research_papers</code>, then a summary. Cross-encoder reranking ensures search quality before the LLM reasons over results.
       </p>
     </div>
   );
@@ -722,8 +713,209 @@ function PageHeader() {
     >
       <h2 style={{ fontSize: "1.75rem", fontWeight: 700, margin: 0 }}>How It Works</h2>
       <p style={{ color: "var(--gray-a8, rgba(255,255,255,0.4))", margin: "0.5rem 0 0", fontSize: "0.95rem" }}>
-        A therapeutic journaling platform connecting mental health goals with peer-reviewed research — via a 7-node LangGraph pipeline, a ReAct RAG agent, and a GraphQL API.
+        A therapeutic platform for families — connecting goals, journals, issues, and habits with evidence-based research via 4 AI agents, a 7-node research pipeline, and a GraphQL API.
       </p>
+    </div>
+  );
+}
+
+// ── Platform Features Grid ──────────────────────────────────────────────────
+
+function PlatformFeaturesGrid() {
+  return (
+    <div>
+      {platformFeatures.map((cat) => (
+        <div key={cat.category} style={{ marginBottom: "1.5rem" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              marginBottom: "0.6rem",
+            }}
+          >
+            <div
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 3,
+                background: cat.color,
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                color: cat.color,
+              }}
+            >
+              {cat.category}
+            </span>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: "0.6rem",
+            }}
+          >
+            {cat.features.map((f) => (
+              <div
+                key={f.name}
+                style={{
+                  padding: "0.65rem 0.85rem",
+                  background: "var(--gray-a2, rgba(255,255,255,0.03))",
+                  border: "1px solid var(--gray-a3, rgba(255,255,255,0.08))",
+                  borderLeft: `3px solid ${f.color}`,
+                  borderRadius: 8,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    marginBottom: "0.25rem",
+                  }}
+                >
+                  {f.name}
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "var(--gray-a9, rgba(255,255,255,0.5))",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {f.description}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── AI Agents Section ───────────────────────────────────────────────────────
+
+function AIAgentsSection() {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+        gap: "0.75rem",
+      }}
+    >
+      {aiAgents.map((agent) => (
+        <div
+          key={agent.name}
+          style={{
+            padding: "0.85rem 1rem",
+            background: "var(--gray-a2, rgba(255,255,255,0.03))",
+            border: `1px solid var(--gray-a4, rgba(255,255,255,0.1))`,
+            borderTop: `3px solid ${agent.color}`,
+            borderRadius: 8,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              marginBottom: "0.4rem",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "0.6rem",
+                fontWeight: 700,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase" as const,
+                color: agent.runtime === "Python" ? "var(--green-9)" : "var(--blue-9)",
+                background:
+                  agent.runtime === "Python"
+                    ? "var(--green-9)1a"
+                    : "var(--blue-9)1a",
+                borderRadius: 4,
+                padding: "1px 5px",
+              }}
+            >
+              {agent.runtime}
+            </span>
+            <span
+              style={{
+                fontSize: "0.6rem",
+                fontWeight: 700,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase" as const,
+                color: "var(--gray-a8, rgba(255,255,255,0.4))",
+                background: "var(--gray-a3, rgba(255,255,255,0.08))",
+                borderRadius: 4,
+                padding: "1px 5px",
+              }}
+            >
+              {agent.model}
+            </span>
+          </div>
+          <div
+            style={{
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              marginBottom: "0.2rem",
+            }}
+          >
+            {agent.name}
+          </div>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              color: "var(--gray-a7, rgba(255,255,255,0.35))",
+              fontFamily: "monospace",
+              marginBottom: "0.35rem",
+            }}
+          >
+            {agent.framework}
+          </div>
+          <div
+            style={{
+              fontSize: "0.75rem",
+              color: "var(--gray-a9, rgba(255,255,255,0.5))",
+              lineHeight: 1.4,
+            }}
+          >
+            {agent.description}
+          </div>
+          {agent.tools && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.3rem",
+                marginTop: "0.4rem",
+              }}
+            >
+              {agent.tools.map((tool) => (
+                <span
+                  key={tool}
+                  style={{
+                    fontSize: "0.62rem",
+                    fontFamily: "monospace",
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                    background: `${agent.color}1a`,
+                    color: agent.color,
+                  }}
+                >
+                  {tool}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -740,6 +932,22 @@ export function HowItWorksClient() {
 
       {/* Enhancement 4: stat cards with left accent borders */}
       <StatsRow />
+
+      {/* Platform Features */}
+      <hr style={divider} />
+      <h3 style={sectionHead}>Platform Features</h3>
+      <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
+        Seven feature areas spanning therapeutic goal management, family coordination, journaling, behavioral tracking, evidence verification, interactive stories, and AI-generated audio.
+      </p>
+      <PlatformFeaturesGrid />
+
+      {/* AI Agents */}
+      <hr style={divider} />
+      <h3 style={sectionHead}>AI Agents</h3>
+      <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
+        Four DeepSeek-powered agents — two Python LangGraph agents for research and analysis, two TypeScript AI SDK agents for stories and therapeutic audio.
+      </p>
+      <AIAgentsSection />
 
       {/* Research pipeline graph */}
       <hr style={divider} />
@@ -776,7 +984,7 @@ export function HowItWorksClient() {
       <hr style={divider} />
       <h3 style={sectionHead}>RAG Chat Agent</h3>
       <p style={{ margin: "0 0 1.25rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
-        A separate Python LangGraph service answers user questions by reasoning over the research stored in pgvector.
+        A Python LangGraph ReAct agent discovers therapy research on demand — searching OpenAlex, Crossref, and Semantic Scholar, reranking with a cross-encoder, and persisting curated papers to the database.
       </p>
       <RagAgentFlow />
       <div style={{ height: "1rem" }} />

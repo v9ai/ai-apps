@@ -74,17 +74,17 @@ export const papers: Paper[] = [
     categoryColor: "var(--amber-9)",
   },
   {
-    slug: "text-embedding-3-large",
+    slug: "bge-large-en-v1-5",
     number: 6,
-    title: "text-embedding-3-large",
-    category: "AI/LLM",
+    title: "BAAI/bge-large-en-v1.5",
+    category: "AI/Embeddings",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "OpenAI",
-    year: 2024,
-    finding: "3072-dim embedding model with Matryoshka representation learning, truncated to 1024-dim for storage efficiency without meaningful recall loss",
-    relevance: "Used via OpenAI-compatible /v1/embeddings API in langgraph/embeddings.py to generate 1024-dim vectors for all 7 entity types, powering hybrid and cosine search across pgvector tables",
-    url: "https://platform.openai.com/docs/guides/embeddings",
+    authors: "Beijing Academy of AI",
+    year: 2023,
+    finding: "BERT-based bi-encoder producing native 1024-dim embeddings, ranked #1 on MTEB at release. Runs fully offline via ONNX Runtime (Python) and quantized INT8 (TypeScript) — zero API calls, zero egress, full data sovereignty",
+    relevance: "Dual-runtime embedding: FastEmbed (ONNX) in langgraph/embeddings.py for ingestion and search, Xenova/bge-large-en-v1.5 (q8 via @huggingface/transformers) in lib/embed.ts for browser-side entity embedding. Both produce aligned 1024-dim vectors stored in 7 pgvector tables",
+    url: "https://huggingface.co/BAAI/bge-large-en-v1.5",
     categoryColor: "var(--amber-9)",
   },
   {
@@ -164,8 +164,8 @@ export const papers: Paper[] = [
 export const researchStats: Stat[] = [
   {
     number: "1024-dim",
-    label: "Embedding dimension (Matryoshka truncation from 3072-dim)",
-    source: "langgraph/config.py: embed_api_model = text-embedding-3-large, embed_dimensions = 1024",
+    label: "Native embedding dimension (BAAI/bge-large-en-v1.5, no truncation needed)",
+    source: "langgraph/embeddings.py: _LOCAL_MODEL = \"BAAI/bge-large-en-v1.5\" via FastEmbed TextEmbedding",
   },
   {
     number: "7B",
@@ -204,59 +204,73 @@ export const researchStats: Stat[] = [
 export const pipelineAgents: PipelineAgent[] = [
   {
     name: "Blood Test Upload and Storage",
-    description: "Users upload blood test PDFs via the UploadForm component in app/(app)/blood-tests/upload-form.tsx, which handles file validation and multipart form data submission. The PDF is then uploaded to Cloudflare R2 bucket healthcare-blood-tests using AWS SDK v3 for secure storage. This step ensures raw data is persisted before processing, with userId isolation for multi-tenancy.",
-    researchBasis: "Cloudflare R2 object storage with S3-compatible API",
-    codeSnippet: "// UploadForm component handles file input and submission\nconst formData = new FormData();\nformData.append('file', pdfFile);\nawait fetch('/api/upload', { method: 'POST', body: formData });",
-    dataFlow: "PDF file \u2192 UploadForm validation \u2192 Cloudflare R2 bucket \u2192 stored with userId key",
+    description: "Users upload blood test PDFs via the UploadForm component in app/(app)/blood-tests/upload-form.tsx, which handles file validation and multipart form data submission. A Next.js Server Action sends the file to the Python FastAPI backend at POST /upload, which uploads the raw bytes to Cloudflare R2 bucket healthcare-blood-tests via boto3 (S3-compatible). This ensures raw data is persisted before processing, with userId isolation for multi-tenancy.",
+    researchBasis: "Cloudflare R2 object storage with S3-compatible API via boto3",
+    codeSnippet: "# langgraph/routes/upload.py\nfile_path = f\"{user_id}/{int(time.time() * 1000)}_{file.filename}\"\nupload_file(file_path, file_bytes, file.content_type or \"application/pdf\")\ntest_id = insert_blood_test(\n    user_id=user_id, file_name=file.filename,\n    file_path=file_path, status=\"processing\",\n)",
+    dataFlow: "PDF file → UploadForm → Server Action → FastAPI POST /upload → R2 bucket (userId/timestamp_fileName)",
   },
   {
-    name: "Embedding Generation and Processing",
-    description: "Blood test data flows through a LlamaIndex IngestionPipeline with a custom BloodTestNodeParser that produces 3 node types per test (test-level summary, per-marker, health-state with 7 derived ratios). User-entered entities hit dedicated POST /embed/* routes. All text is embedded via OpenAI's text-embedding-3-large at 1024 dimensions (Matryoshka truncation from native 3072-dim) and stored in 7 paired pgvector tables with ON CONFLICT upsert for idempotency.",
-    researchBasis: "OpenAI text-embedding-3-large with Matryoshka dimension reduction",
-    codeSnippet: "# langgraph/embeddings.py\ndef _call_embed_api(texts: list[str]) -> list[list[float]]:\n    payload = {\n        \"model\": app_settings.embed_api_model,  # text-embedding-3-large\n        \"input\": texts,\n        \"dimensions\": 1024,  # Matryoshka truncation\n    }\n    resp = _get_sync_client().post(\"/embeddings\", json=payload)\n    return [d[\"embedding\"] for d in resp.json()[\"data\"]]",
-    dataFlow: "Blood test text \u2192 text-embedding-3-large \u2192 1024-dim vector \u2192 pgvector ON CONFLICT upsert",
+    name: "LlamaParse PDF-to-Markdown Conversion",
+    description: "LlamaParse is called directly (not through LlamaIndex or LangGraph) to convert uploaded PDFs into structured markdown. The PDF bytes are written to a temp file, passed to LlamaParse's cloud API with result_type='markdown', then deleted. The returned markdown is processed by _markdown_to_elements() which uses regex to extract markdown tables and converts them to HTML via _md_table_to_html(). The result is a list of element dicts with type 'Table' (containing text_as_html) or 'NarrativeText'.",
+    researchBasis: "LlamaParse cloud API — standalone invocation, decoupled from LlamaIndex",
+    codeSnippet: "# langgraph/routes/upload.py — _partition_pdf()\nfrom llama_parse import LlamaParse\n\nparser = LlamaParse(\n    api_key=settings.llama_cloud_api_key,\n    result_type=\"markdown\",\n)\ndocs = parser.load_data(tmp_path)\nfor doc in docs:\n    elements.extend(_markdown_to_elements(doc.text))",
+    dataFlow: "PDF bytes → temp file → LlamaParse cloud API → markdown → _markdown_to_elements() → element dicts",
+  },
+  {
+    name: "3-Tier Marker Extraction",
+    description: "parse_markers() in langgraph/parsers.py applies a 3-tier fallback strategy to extract biomarkers from the LlamaParse element dicts. Tier 1: parse_html_table extracts name/value/unit/reference_range from HTML table cells. Tier 2: parse_form_key_values handles Romanian/European key-value lab formats. Tier 3: parse_text_markers uses regex pattern matching for tab/space-separated free text. Each marker's flag (normal/low/high) is computed by compare_flag() against the reference range. Markers are stored in the blood_markers table.",
+    researchBasis: "Multi-strategy parsing with compute_flag() for clinical range comparison",
+    codeSnippet: "# langgraph/parsers.py\n@dataclass\nclass Marker:\n    name: str           # e.g. \"Glucose\"\n    value: str          # e.g. \"95.5\"\n    unit: str           # e.g. \"mg/dL\"\n    reference_range: str # e.g. \"70-100\"\n    flag: str           # \"normal\" | \"low\" | \"high\"\n\n# 3-tier: parse_html_table → parse_form_key_values → parse_text_markers",
+    dataFlow: "Element dicts → 3-tier parse_markers() → Marker objects → insert_blood_markers() → blood_markers table",
+  },
+  {
+    name: "Embedding Generation (LlamaIndex IngestionPipeline)",
+    description: "After the upload response returns, a FastAPI BackgroundTask runs _run_ingestion() which orchestrates a LlamaIndex IngestionPipeline. A custom BloodTestNodeParser produces 3 node types per test: blood_test (summary), blood_marker (one per marker), and health_state (7 derived clinical ratios with risk classification). All text is embedded locally via BAAI/bge-large-en-v1.5 (1024-dim, ONNX Runtime) through FastEmbedEmbedding, then persisted to 3 pgvector tables with ON CONFLICT upsert for idempotency.",
+    researchBasis: "BAAI/bge-large-en-v1.5 via FastEmbed (local ONNX, zero API cost)",
+    codeSnippet: "# langgraph/embeddings.py\n_LOCAL_MODEL = \"BAAI/bge-large-en-v1.5\"\n\ndef generate_embedding(text: str) -> list[float]:\n    model = _get_local_model()  # FastEmbed ONNX\n    return [float(x) for x in next(model.embed([text]))]",
+    dataFlow: "Element dicts → BloodTestNodeParser (3 node types) → bge-large-en-v1.5 (1024-dim) → pgvector ON CONFLICT upsert",
   },
   {
     name: "Multi-Source Retrieval for RAG",
     description: "When a user submits a query, the triage node classifies intent into 8 categories, then the retrieve node dispatches to different pgvector search strategies. Marker queries use hybrid search (0.7 cosine + 0.3 FTS via a CTE with ts_rank normalization). Trajectory queries extend this with temporal joins for time-ordered series. General-health fans out to all 7 entity tables simultaneously. Results are deduplicated and re-ranked by score.",
     researchBasis: "Intent-routed hybrid search: cosine similarity + full-text search in one SQL CTE",
     codeSnippet: "# langgraph/db.py — hybrid scoring (markers only)\ncombined_score = (\n  0.3 * fts_norm  # normalized ts_rank\n+ 0.7 * (1 - (embedding <=> query_vec))  # cosine sim\n)\n# All other tables: pure cosine with 0.3 threshold",
-    dataFlow: "User query \u2192 triage (8 intents) \u2192 intent-routed pgvector search \u2192 dedup + re-rank \u2192 context_chunks[]",
+    dataFlow: "User query → triage (8 intents) → intent-routed pgvector search → dedup + re-rank → context_chunks[]",
   },
   {
     name: "LLM Generation and Streaming",
     description: "The assembled context is sent to the local Qwen 2.5 7B Instruct 4bit LLM via QwenClient, configured with LLM_BASE_URL and LLM_MODEL environment variables. The LLM generates an answer grounded in the retrieved context, with system prompts emphasizing medical accuracy. Responses are streamed back to the UI using the ChatInterface component, enabling real-time interaction with conversation history management.",
     researchBasis: "mlx_lm.server for Apple Silicon-optimized local inference",
     codeSnippet: "// QwenClient handles LLM requests\nconst response = await qwenClient.generate({\n  prompt: formattedPrompt,\n  stream: true\n});",
-    dataFlow: "Formatted context \u2192 Qwen 2.5 LLM \u2192 generated answer \u2192 streamed to ChatInterface",
+    dataFlow: "Formatted context → Qwen 2.5 LLM → generated answer → streamed to ChatInterface",
   },
   {
     name: "Trajectory Analysis and Velocity Calculation",
     description: "The TrajectoryPreview and TrajectoryInsights components analyze sequential blood tests by comparing embeddings via cosine similarity to detect pattern shifts. Functions calculate biomarker velocities (rate of change per day) and clinical ratios based on available markers. This enables trend detection and alerts for accelerating trends, providing longitudinal health insights beyond snapshot analysis.",
     researchBasis: "Embedding similarity for pattern recognition and rate calculations",
     codeSnippet: "// Velocity calculation between tests\nconst velocity = (currentValue - previousValue) / daysBetween;\nif (Math.abs(velocity) > threshold) triggerAlert();",
-    dataFlow: "Sequential test embeddings \u2192 cosine similarity \u2192 velocity calculation \u2192 trend insights",
+    dataFlow: "Sequential test embeddings → cosine similarity → velocity calculation → trend insights",
   },
   {
     name: "Evaluation and Quality Assurance",
     description: "Comprehensive evaluation is performed using DeepEval with RAGAS for RAG quality metrics (faithfulness, relevancy, contextual precision/recall), GEval custom criteria with DeepSeek as judge, and synthetic test generation. 15+ pytest modules cover critical paths: RAG triad, safety guardrails, trajectory analysis, conversational multi-turn, graph pipeline, ingestion, extraction, and embedding quality.",
     researchBasis: "DeepEval + RAGAS evaluation suite with custom DeepSeek judge model",
     codeSnippet: "# evals/conftest.py — shared DeepSeek judge\nclass DeepSeekEvalLLM(DeepEvalBaseLLM):\n    ...\ndef make_geval(name, criteria, params):\n    return GEval(name=name, criteria=criteria, ...)",
-    dataFlow: "Test scenarios \u2192 evaluation frameworks \u2192 metrics (precision, recall) \u2192 quality reports",
+    dataFlow: "Test scenarios → evaluation frameworks → metrics (precision, recall) → quality reports",
   },
 ];
 
 // ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "Users upload blood test PDFs via the UploadForm component, which are stored in Cloudflare R2 and processed through a LlamaIndex IngestionPipeline with a custom BloodTestNodeParser. The pipeline produces 3 node types per test\u2014test-level, per-marker, and health-state with 7 derived ratios\u2014all embedded via OpenAI\u2019s text-embedding-3-large at 1024 dimensions and stored in 7 paired pgvector tables. For AI Q&A, a 4-node LangGraph StateGraph (triage \u2192 retrieve \u2192 synthesize \u2192 guard) classifies intent into 8 categories, routes to intent-specific pgvector searches (hybrid for markers, fan-out for general health), generates a clinical answer, and audits it against 5 safety rules before delivery.";
+  "Users upload blood test PDFs via the UploadForm component, which are stored in Cloudflare R2 and processed through a LlamaIndex IngestionPipeline with a custom BloodTestNodeParser. The pipeline produces 3 node types per test\u2014test-level, per-marker, and health-state with 7 derived ratios\u2014all embedded locally via BAAI/bge-large-en-v1.5 (native 1024-dim, ONNX Runtime) and stored in 7 paired pgvector tables. For AI Q&A, a 4-node LangGraph StateGraph (triage \u2192 retrieve \u2192 synthesize \u2192 guard) classifies intent into 8 categories, routes to intent-specific pgvector searches (hybrid for markers, fan-out for general health), generates a clinical answer, and audits it against 5 safety rules before delivery.";
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
 export const extraSections: ExtraSection[] = [
   {
     heading: "System Architecture",
-    content: "A dual-runtime architecture: TypeScript (Next.js 15 App Router) handles entity CRUD and UI with Server Components and Server Actions, while Python (FastAPI on :8001) handles PDF ingestion, the LangGraph pipeline, and vector search. They communicate via internal API with a shared x-api-key header. Embeddings use OpenAI\u2019s text-embedding-3-large at 1024 dimensions via an OpenAI-compatible /v1/embeddings endpoint, ensuring vector space alignment across all 7 entity types.",
+    content: "A dual-runtime architecture: TypeScript (Next.js 15 App Router) handles entity CRUD and UI with Server Components and Server Actions, while Python (FastAPI on :8001) handles PDF ingestion, the LangGraph pipeline, and vector search. They communicate via internal API with a shared x-api-key header. Embeddings use BAAI/bge-large-en-v1.5 at 1024 dimensions via FastEmbed (ONNX Runtime) on the Python side and Xenova/bge-large-en-v1.5 (q8 via @huggingface/transformers) on the TypeScript side, ensuring vector space alignment across all 7 entity types with zero external API calls.",
   },
   {
     heading: "Database Design",
@@ -268,11 +282,11 @@ export const extraSections: ExtraSection[] = [
   },
   {
     heading: "AI Integration",
-    content: "AI capabilities use a 4-node LangGraph StateGraph (triage \u2192 retrieve \u2192 synthesize \u2192 guard) running on the Python backend. Triage classifies queries into 8 intent categories. Retrieve routes to intent-specific pgvector searches\u2014hybrid (0.7 cosine + 0.3 FTS) for markers, temporal joins for trajectory, fan-out for general health. Synthesize generates answers at temperature 0.1 with 7 clinical rules. Guard audits every response against 5 safety checks (no diagnosis, no prescription, physician referral required, no PII, no hallucination). Embeddings use OpenAI\u2019s text-embedding-3-large at 1024 dimensions for all 7 entity types.",
+    content: "AI capabilities use a 4-node LangGraph StateGraph (triage \u2192 retrieve \u2192 synthesize \u2192 guard) running on the Python backend. Triage classifies queries into 8 intent categories. Retrieve routes to intent-specific pgvector searches\u2014hybrid (0.7 cosine + 0.3 FTS) for markers, temporal joins for trajectory, fan-out for general health. Synthesize generates answers at temperature 0.1 with 7 clinical rules. Guard audits every response against 5 safety checks (no diagnosis, no prescription, physician referral required, no PII, no hallucination). Embeddings use BAAI/bge-large-en-v1.5 at 1024 dimensions via local ONNX Runtime for all 7 entity types.",
   },
   {
     heading: "Deployment & Infrastructure",
-    content: "The frontend is built with Next.js 15 and deployed on Vercel, using Turbopack for fast development builds. The Python backend (FastAPI) runs the LangGraph pipeline and embedding API. PostgreSQL is hosted on Neon for serverless scaling with pgvector extension, and Cloudflare R2 handles file storage via AWS SDK v3. Embeddings use OpenAI\u2019s text-embedding-3-large API. Evaluation infrastructure uses DeepEval and RAGAS for RAG-triad metrics.",
+    content: "The frontend is built with Next.js 15 and deployed on Vercel, using Turbopack for fast development builds. The Python backend (FastAPI) runs the LangGraph pipeline and local embedding generation via FastEmbed. PostgreSQL is hosted on Neon for serverless scaling with pgvector extension, and Cloudflare R2 handles file storage via AWS SDK v3. All embeddings run locally through BAAI/bge-large-en-v1.5 (ONNX Runtime) \u2014 no external embedding API required. Evaluation infrastructure uses DeepEval and RAGAS for RAG-triad metrics.",
   },
   {
     heading: "Evaluation Framework",
@@ -284,7 +298,7 @@ export const extraSections: ExtraSection[] = [
   },
   {
     heading: "Data Flow & Pipeline",
-    content: "Data flows from PDF upload \u2192 Cloudflare R2 \u2192 LlamaParse (PDF \u2192 markdown) \u2192 BloodTestNodeParser (3-tier marker extraction) \u2192 text-embedding-3-large (1024-dim) \u2192 7 pgvector tables via ON CONFLICT upsert. For Q&A, the LangGraph StateGraph runs: triage (intent classification into 8 categories) \u2192 retrieve (intent-routed pgvector search with hybrid scoring for markers) \u2192 synthesize (temperature 0.1 with 7 clinical rules and last 3 conversation turns) \u2192 guard (5 safety rules with disclaimer injection). The /chat endpoint returns full pipeline metadata\u2014intent, confidence, sources, guard status, and citations.",
+    content: "Data flows from PDF upload \u2192 Cloudflare R2 \u2192 LlamaParse (PDF \u2192 markdown) \u2192 BloodTestNodeParser (3-tier marker extraction) \u2192 BAAI/bge-large-en-v1.5 (1024-dim, ONNX) \u2192 7 pgvector tables via ON CONFLICT upsert. For Q&A, the LangGraph StateGraph runs: triage (intent classification into 8 categories) \u2192 retrieve (intent-routed pgvector search with hybrid scoring for markers) \u2192 synthesize (temperature 0.1 with 7 clinical rules and last 3 conversation turns) \u2192 guard (5 safety rules with disclaimer injection). The /chat endpoint returns full pipeline metadata\u2014intent, confidence, sources, guard status, and citations.",
   },
 ];
 
@@ -352,14 +366,14 @@ export const technicalDetails: TechnicalDetail[] = [
   },
   {
     type: "code",
-    heading: "Embedding API Pattern",
-    description: "Singleton httpx clients for OpenAI-compatible embedding API with batch support",
-    code: "# langgraph/embeddings.py\ndef _call_embed_api(texts: list[str]) -> list[list[float]]:\n    payload = {\n        \"model\": app_settings.embed_api_model,  # text-embedding-3-large\n        \"input\": texts,\n    }\n    if app_settings.embed_dimensions:  # 1024\n        payload[\"dimensions\"] = app_settings.embed_dimensions\n    resp = _get_sync_client().post(\"/embeddings\", json=payload)\n    data = resp.json()[\"data\"]\n    data.sort(key=lambda x: x[\"index\"])\n    return [d[\"embedding\"] for d in data]",
+    heading: "Local Embedding Pattern",
+    description: "Lazy-initialized FastEmbed singleton with ONNX Runtime for zero-cost local inference",
+    code: "# langgraph/embeddings.py\n_LOCAL_MODEL = \"BAAI/bge-large-en-v1.5\"\n_text_embed: TextEmbedding | None = None\n\ndef _get_local_model() -> TextEmbedding:\n    global _text_embed\n    if _text_embed is None:\n        _text_embed = TextEmbedding(model_name=_LOCAL_MODEL)\n    return _text_embed\n\ndef generate_embedding(text: str) -> list[float]:\n    model = _get_local_model()\n    return [float(x) for x in next(model.embed([text]))]",
   },
   {
     type: "diagram",
     heading: "System Architecture Overview",
     description: "End-to-end flow from upload to insights",
-    code: "User \u2192 [Next.js Frontend] \u2192 UploadForm \u2192 Cloudflare R2 (PDFs)\n                     \u2193\n        [FastAPI :8001] \u2190 LlamaParse \u2190 BloodTestNodeParser\n                     \u2193\n     [text-embedding-3-large] \u2192 1024-dim \u2192 7 pgvector tables\n                     \u2193\n  [LangGraph: triage \u2192 retrieve \u2192 synthesize \u2192 guard]\n                     \u2193\n           [ChatInterface] \u2192 answer + metadata \u2192 User\n                     \u2193\n        [Evaluation] \u2190 DeepEval/RAGAS",
+    code: "User → [Next.js Frontend] → UploadForm → Cloudflare R2 (PDFs)\n                     ↓\n        [FastAPI :8001] ← LlamaParse ← BloodTestNodeParser\n                     ↓\n     [bge-large-en-v1.5 (ONNX)] → 1024-dim → 7 pgvector tables\n                     ↓\n  [LangGraph: triage → retrieve → synthesize → guard]\n                     ↓\n           [ChatInterface] → answer + metadata → User\n                     ↓\n        [Evaluation] ← DeepEval/RAGAS",
   },
 ];
