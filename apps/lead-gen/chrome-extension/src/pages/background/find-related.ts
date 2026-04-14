@@ -520,6 +520,7 @@ export async function findRelatedCompanies(tabId: number) {
       // Pre-filter by industry when available from card metadata
       if (link.industry && link.industry.toLowerCase() !== INDUSTRY_FILTER) {
         seedFiltered++;
+        filtered++;
         continue;
       }
       queue.push(link.url);
