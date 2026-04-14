@@ -324,6 +324,7 @@ export async function scrapeJobs(
                 contacts: contactInputs,
               },
             },
+            15_000, // 15s timeout
           );
           hiringContactsSaved = res.data?.importCompanyWithContacts?.contactsImported ?? 0;
         }
@@ -421,6 +422,7 @@ export async function scrapePeople(
             contacts: contactInputs,
           },
         },
+        15_000, // 15s timeout — people save is non-critical, don't block deep scrape
       );
       saved = res.data?.importCompanyWithContacts?.contactsImported ?? 0;
     }

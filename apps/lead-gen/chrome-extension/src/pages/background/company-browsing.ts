@@ -410,7 +410,7 @@ export async function resolveNumericIdViaVoyager(slug: string): Promise<string |
     url.searchParams.set("universalName", slug);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+    const timeoutId = setTimeout(() => controller.abort("Voyager slug lookup timed out after 10s"), 10_000);
 
     const res = await fetch(url.toString(), {
       headers: {
@@ -467,7 +467,7 @@ async function countRemoteJobsViaVoyager(
     url.searchParams.set("start", "0");
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15_000);
+    const timeoutId = setTimeout(() => controller.abort("Voyager remote jobs check timed out after 15s"), 15_000);
 
     const res = await fetch(url.toString(), {
       headers: {
@@ -485,6 +485,10 @@ async function countRemoteJobsViaVoyager(
     }
     if (res.status === 429) {
       return { count: 0, error: "Rate limited (429)" };
+    }
+    if (res.status === 400) {
+      // 400 = company has no jobs or invalid filter — treat as empty, not error
+      return { count: 0, error: null };
     }
     if (!res.ok) {
       return { count: 0, error: `HTTP ${res.status}` };

@@ -480,7 +480,7 @@ async function voyagerFetch<T>(
   const url = path.startsWith("http") ? path : `${VOYAGER_BASE}${path}`;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  const timeoutId = setTimeout(() => controller.abort("Voyager request timed out after 15s"), 15_000);
 
   const res = await fetch(url, {
     ...options,
@@ -810,7 +810,16 @@ export async function searchJobs(
     url.searchParams.set("locationUnion", `(geoId:${filters.geoId})`);
   }
 
-  const data = await voyagerFetch<Record<string, unknown>>(url.toString());
+  let data: Record<string, unknown>;
+  try {
+    data = await voyagerFetch<Record<string, unknown>>(url.toString());
+  } catch (err) {
+    // 400 = company has no jobs listed or invalid filter combo — return empty
+    if (err instanceof VoyagerApiError && err.status === 400) {
+      return { jobs: [], paging: { count, start, total: 0 } };
+    }
+    throw err;
+  }
   const paging = (data.paging ?? (data.data as Record<string, unknown> | undefined)?.paging ?? { count, start, total: 0 }) as VoyagerPaging;
 
   return { jobs: parseJobCards(data), paging };

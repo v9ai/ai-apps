@@ -38,7 +38,7 @@ export async function gqlRequest(
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(`GraphQL request timed out after ${timeoutMs}ms`), timeoutMs);
 
   const res = await fetch(GRAPHQL_URL, {
     method: "POST",

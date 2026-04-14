@@ -698,6 +698,9 @@ export async function findRelatedCompanies(tabId: number) {
       }
       const icp = data?.name ? isICPTarget(data) : null;
 
+      // Track remote job count at company scope — used to gate deep scrape phases
+      let remoteJobCount = -1;
+
       if (data && data.name) {
         if (!icp?.target) {
           // Not recruitment — skip saving but still discover related companies below
@@ -706,7 +709,6 @@ export async function findRelatedCompanies(tabId: number) {
           await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name}`, step: `Skipped: ${icp.reason}`, phase: "saving", logText: crawlLog.join("\n") });
         } else {
           // Check remote jobs via Voyager API first (no tab navigation needed)
-          let remoteJobCount = -1;
           let jobStatus: RemoteJobsResult["status"] = "ok";
           // Strategy 4: Voyager API lookup by slug when DOM extraction fails
           if (!data.linkedinNumericId) {
@@ -879,26 +881,29 @@ export async function findRelatedCompanies(tabId: number) {
             if (postsResult.signals.hasIdealSignal) totalIdealSignalCompanies++;
           }
 
-          if (!findRelatedCancelled && (await isTabAlive(tabId)) && (Date.now() - deepT0) < DEEP_SCRAPE_TIMEOUT) {
+          // Jobs + People: only run if company has confirmed remote jobs (saves ~70s per company)
+          if (!hasRemoteJobs) {
+            log(`[FindRelated] ${data.name} — skipping jobs+people (0 confirmed remote jobs)`);
+          } else if (!findRelatedCancelled && (await isTabAlive(tabId)) && (Date.now() - deepT0) < DEEP_SCRAPE_TIMEOUT) {
             setCompanyScraperCancelled(false);
             // Jobs (Voyager API — may navigate to company home for numeric ID)
             await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `💼 Deep scrape → jobs + hiring contacts`, phase: "saving", logText: crawlLog.join("\n") });
             const jobsT0 = Date.now();
             const jobsResult = await scrapeJobs(tabId, companyBaseUrl, ctx, companyId);
             log(`[FindRelated] ${data.name} — jobs: ${jobsResult.jobsSaved} new, ${jobsResult.jobsUpdated} updated, hiring: ${jobsResult.hiringContactsSaved} (${((Date.now() - jobsT0) / 1000).toFixed(1)}s)${jobsResult.error ? ` (${jobsResult.error})` : ""}`);
+
+            if (!findRelatedCancelled && (await isTabAlive(tabId)) && (Date.now() - deepT0) < DEEP_SCRAPE_TIMEOUT) {
+              setCompanyScraperCancelled(false);
+              // People
+              await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `👥 Deep scrape → people`, phase: "saving", logText: crawlLog.join("\n") });
+              const peopleT0 = Date.now();
+              const peopleResult = await scrapePeople(tabId, companyBaseUrl, ctx, companyId);
+              log(`[FindRelated] ${data.name} — people: ${peopleResult.saved}/${peopleResult.total} (${((Date.now() - peopleT0) / 1000).toFixed(1)}s)${peopleResult.error ? ` (${peopleResult.error})` : ""}`);
+            } else if ((Date.now() - deepT0) >= DEEP_SCRAPE_TIMEOUT) {
+              logWarn(`[FindRelated] ${data.name} — deep scrape timeout, skipping people phase (${((Date.now() - deepT0) / 1000).toFixed(0)}s)`);
+            }
           } else if ((Date.now() - deepT0) >= DEEP_SCRAPE_TIMEOUT) {
             logWarn(`[FindRelated] ${data.name} — deep scrape timeout after posts phase (${((Date.now() - deepT0) / 1000).toFixed(0)}s)`);
-          }
-
-          if (!findRelatedCancelled && (await isTabAlive(tabId)) && (Date.now() - deepT0) < DEEP_SCRAPE_TIMEOUT) {
-            setCompanyScraperCancelled(false);
-            // People
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `👥 Deep scrape → people`, phase: "saving", logText: crawlLog.join("\n") });
-            const peopleT0 = Date.now();
-            const peopleResult = await scrapePeople(tabId, companyBaseUrl, ctx, companyId);
-            log(`[FindRelated] ${data.name} — people: ${peopleResult.saved}/${peopleResult.total} (${((Date.now() - peopleT0) / 1000).toFixed(1)}s)${peopleResult.error ? ` (${peopleResult.error})` : ""}`);
-          } else if ((Date.now() - deepT0) >= DEEP_SCRAPE_TIMEOUT) {
-            logWarn(`[FindRelated] ${data.name} — deep scrape timeout, skipping remaining phases (${((Date.now() - deepT0) / 1000).toFixed(0)}s)`);
           }
         } catch (deepErr) {
           logError(`[FindRelated] Deep scrape failed for ${data.name}: ${deepErr instanceof Error ? deepErr.message : String(deepErr)}`);
@@ -907,7 +912,8 @@ export async function findRelatedCompanies(tabId: number) {
       }
 
       log(`[FindRelated] ── ${urlSlug} done in ${((Date.now() - companyT0) / 1000).toFixed(1)}s ── (saved=${saved}, skipped=${skipped}, filtered=${filtered}, queue=${queue.length})`);
-      await randomDelay(1500);
+      // Shorter delay for filtered/unconfirmed companies, normal delay for targets with jobs
+      await randomDelay(icp?.target && hasRemoteJobs ? 1500 : 500);
     }
 
     // ── Flush remaining batch ─────────────────────────────────────────
