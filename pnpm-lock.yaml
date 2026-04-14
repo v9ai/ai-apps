@@ -274,6 +274,9 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.3.2
         version: 4.3.2(react@19.1.1)
+      '@xyflow/react':
+        specifier: ^12.10.1
+        version: 12.10.1(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       better-sqlite3:
         specifier: ^12.6.2
         version: 12.6.2

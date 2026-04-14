@@ -18,6 +18,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { AppData } from "@/components/app-detail/types";
+import { StudyRoadmap } from "@/components/app-detail/StudyRoadmap";
 
 const remarkPlugins = [remarkGfm];
 
@@ -641,6 +642,9 @@ function PrepPageInner() {
           )}
         </Flex>
       </Flex>
+
+      {/* Roadmap */}
+      {content && <StudyRoadmap markdown={content} />}
 
       {/* Content */}
       {processed ? (
