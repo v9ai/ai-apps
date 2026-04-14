@@ -668,10 +668,12 @@ export async function findRelatedCompanies(tabId: number) {
       }
 
       const url = queue.shift()!;
+      const companyT0 = Date.now();
 
       // a) Navigate to /about/ — scrape company data AND discover related companies
       const aboutUrl = url.replace(/\/$/, "") + "/about/";
       const urlSlug = url.match(/\/company\/([^/]+)/)?.[1] || "loading...";
+      log(`[FindRelated] ── Processing ${urlSlug} ──`);
       await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: urlSlug, step: `Navigating → ${urlSlug}/about/`, phase: "saving", logText: crawlLog.join("\n") });
       await safeTabUpdate(tabId, { url: aboutUrl });
       await waitForTabLoad(tabId);
@@ -710,10 +712,12 @@ export async function findRelatedCompanies(tabId: number) {
           if (data.linkedinNumericId) {
             log(`[FindRelated] Checking remote jobs for ${data.name} (ID: ${data.linkedinNumericId})...`);
             await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `Voyager API → checking remote jobs…`, phase: "saving", logText: crawlLog.join("\n") });
+            const voyT0 = Date.now();
             const jobResult = await countRemoteJobsVoyagerFirst(tabId, data.linkedinNumericId);
             remoteJobCount = jobResult.count;
             jobStatus = jobResult.status;
             totalRemoteJobs += Math.max(0, remoteJobCount);
+            log(`[FindRelated] ${data.name} — Voyager remote jobs check took ${((Date.now() - voyT0) / 1000).toFixed(1)}s (method: ${jobResult.method})`);
             if (jobResult.status === "login-wall") {
               log(`[FindRelated] ${data.name} — ⛔ LOGIN WALL — cannot check remote jobs`);
             } else if (jobResult.status === "no-selectors") {
@@ -814,6 +818,8 @@ export async function findRelatedCompanies(tabId: number) {
       // e) Deep scrape: Posts, Jobs, People for ICP-matching companies
       //    Runs AFTER discovery since it navigates away from /about/
       if (data && data.name && icp?.target && !findRelatedCancelled && (await isTabAlive(tabId))) {
+        const deepT0 = Date.now();
+        const DEEP_SCRAPE_TIMEOUT = 120_000; // 2 min per company
         try {
           const companyBaseUrl = url.replace(/\/$/, "");
           const ctx: CompanyContext = {
@@ -833,36 +839,48 @@ export async function findRelatedCompanies(tabId: number) {
               { name: data.name, linkedinUrl: data.linkedinUrl },
             );
             companyId = res.data?.findCompany?.company?.id ?? null;
-          } catch { /* non-critical — posts/jobs still save, just unlinked */ }
+            log(`[FindRelated] ${data.name} — DB companyId=${companyId ?? "not found"}`);
+          } catch (e) {
+            logWarn(`[FindRelated] ${data.name} — findCompany failed: ${e instanceof Error ? e.message : String(e)}`);
+          }
 
           // Sync cancellation flag so phase functions respect BFS cancel
           setCompanyScraperCancelled(findRelatedCancelled);
 
           // Posts
           await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `📝 Deep scrape → posts`, phase: "saving", logText: crawlLog.join("\n") });
+          const postsT0 = Date.now();
           const postsResult = await scrapePosts(tabId, companyBaseUrl, companyId);
-          log(`[FindRelated] ${data.name} — posts: ${postsResult.saved} new, ${postsResult.updated} updated / ${postsResult.total} total${postsResult.error ? ` (${postsResult.error})` : ""}`);
+          log(`[FindRelated] ${data.name} — posts: ${postsResult.saved} new, ${postsResult.updated} updated / ${postsResult.total} total (${((Date.now() - postsT0) / 1000).toFixed(1)}s)${postsResult.error ? ` (${postsResult.error})` : ""}`);
 
-          if (!findRelatedCancelled && (await isTabAlive(tabId))) {
+          if (!findRelatedCancelled && (await isTabAlive(tabId)) && (Date.now() - deepT0) < DEEP_SCRAPE_TIMEOUT) {
             setCompanyScraperCancelled(false);
             // Jobs (Voyager API — may navigate to company home for numeric ID)
             await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `💼 Deep scrape → jobs + hiring contacts`, phase: "saving", logText: crawlLog.join("\n") });
+            const jobsT0 = Date.now();
             const jobsResult = await scrapeJobs(tabId, companyBaseUrl, ctx, companyId);
-            log(`[FindRelated] ${data.name} — jobs: ${jobsResult.jobsSaved} new, ${jobsResult.jobsUpdated} updated, hiring: ${jobsResult.hiringContactsSaved}${jobsResult.error ? ` (${jobsResult.error})` : ""}`);
+            log(`[FindRelated] ${data.name} — jobs: ${jobsResult.jobsSaved} new, ${jobsResult.jobsUpdated} updated, hiring: ${jobsResult.hiringContactsSaved} (${((Date.now() - jobsT0) / 1000).toFixed(1)}s)${jobsResult.error ? ` (${jobsResult.error})` : ""}`);
+          } else if ((Date.now() - deepT0) >= DEEP_SCRAPE_TIMEOUT) {
+            logWarn(`[FindRelated] ${data.name} — deep scrape timeout after posts phase (${((Date.now() - deepT0) / 1000).toFixed(0)}s)`);
           }
 
-          if (!findRelatedCancelled && (await isTabAlive(tabId))) {
+          if (!findRelatedCancelled && (await isTabAlive(tabId)) && (Date.now() - deepT0) < DEEP_SCRAPE_TIMEOUT) {
             setCompanyScraperCancelled(false);
             // People
             await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data.name, step: `👥 Deep scrape → people`, phase: "saving", logText: crawlLog.join("\n") });
+            const peopleT0 = Date.now();
             const peopleResult = await scrapePeople(tabId, companyBaseUrl, ctx, companyId);
-            log(`[FindRelated] ${data.name} — people: ${peopleResult.saved}/${peopleResult.total}${peopleResult.error ? ` (${peopleResult.error})` : ""}`);
+            log(`[FindRelated] ${data.name} — people: ${peopleResult.saved}/${peopleResult.total} (${((Date.now() - peopleT0) / 1000).toFixed(1)}s)${peopleResult.error ? ` (${peopleResult.error})` : ""}`);
+          } else if ((Date.now() - deepT0) >= DEEP_SCRAPE_TIMEOUT) {
+            logWarn(`[FindRelated] ${data.name} — deep scrape timeout, skipping remaining phases (${((Date.now() - deepT0) / 1000).toFixed(0)}s)`);
           }
         } catch (deepErr) {
           logError(`[FindRelated] Deep scrape failed for ${data.name}: ${deepErr instanceof Error ? deepErr.message : String(deepErr)}`);
         }
+        log(`[FindRelated] ${data.name} — deep scrape total: ${((Date.now() - deepT0) / 1000).toFixed(1)}s`);
       }
 
+      log(`[FindRelated] ── ${urlSlug} done in ${((Date.now() - companyT0) / 1000).toFixed(1)}s ── (saved=${saved}, skipped=${skipped}, filtered=${filtered}, queue=${queue.length})`);
       await randomDelay(1500);
     }
 
