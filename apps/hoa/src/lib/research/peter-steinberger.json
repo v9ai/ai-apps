@@ -457,13 +457,13 @@
     {
       "category": "origin",
       "question": "You've told the burnout story on Lex Fridman and at iOS Conf SG — three years of 'complete identity loss.' In 'Finding My Spark Again | Peter Steinberger' you go deeper into the recovery. But here's what nobody asks: during those three years, did you try to come back to code and fail? Were there false starts before the AI moment actually stuck?",
-      "why_this_question": "He's told the burnout-to-comeback arc many times. This pushes past the polished version to the messy middle — the attempts that didn't work",
+      "why_this_question": "You've told the burnout-to-comeback arc many times. This pushes past the polished version to the messy middle — the attempts that didn't work",
       "expected_insight": "Whether the AI breakthrough was the first attempt at returning or one of many, and what made this one stick when others didn't"
     },
     {
       "category": "origin",
       "question": "In 'How We Work at PSPDFKit | Peter Steinberger' you documented building a company culture from scratch. PSPDFKit had 1B+ devices, a team, revenue, processes. OpenClaw has 356K stars and you commit directly to main with no code review. Which version of you was the better engineer — the one who built processes, or the one who threw them away?",
-      "why_this_question": "He's explained *why* he left PSPDFKit (burnout) many times. This asks which engineering identity is real — the process-builder or the process-destroyer",
+      "why_this_question": "You've explained *why* you left PSPDFKit (burnout) many times. This asks which engineering identity is real — the process-builder or the process-destroyer",
       "expected_insight": "Whether his current no-process style is liberation from past over-engineering or a phase he'll eventually correct"
     },
     {
@@ -481,7 +481,7 @@
     {
       "category": "philosophy",
       "question": "You explained the vibe coding vs. agentic engineering distinction on Pragmatic Engineer and it's become your signature thesis. But you also say 'don't read most of the code your agents write.' To a skeptic, that sounds exactly like vibe coding. Where's the actual line — what do you do that a vibe coder doesn't?",
-      "why_this_question": "Pushes past the label he's popularized to the practice behind it — his own statements create apparent contradictions that force a sharper answer",
+      "why_this_question": "Pushes past the label you've popularized to the practice behind it — your own statements create apparent contradictions that force a sharper answer",
       "expected_insight": "The concrete behaviors that distinguish his workflow from what he criticizes, not just the framing"
     },
     {
@@ -493,7 +493,7 @@
     {
       "category": "collaboration",
       "question": "In 'Command your Claude Code Army, Reloaded | Peter Steinberger' you describe running agents in the same folder with no worktrees, no PR-per-agent, committing directly to main. On Pragmatic Engineer you called PRs 'prompt requests.' What happens when two agents step on each other — do you have a war story where this blew up, and did it change your approach?",
-      "why_this_question": "He's described the parallel-agent setup many times but always as a success story. This probes the failure mode of his most contrarian practice",
+      "why_this_question": "You've described the parallel-agent setup many times but always as a success story. This probes the failure mode of your most contrarian practice",
       "expected_insight": "Whether the no-isolation approach has real costs he's not sharing, or whether it genuinely works at scale"
     },
     {
@@ -505,13 +505,13 @@
     {
       "category": "future",
       "question": "You told Lex Fridman and the OpenAI Builders Unscripted audience you joined to 'build an agent even my mum can use.' You've been at OpenAI for two months now. What's the single biggest thing you believed about agent design before joining that turned out to be wrong once you saw it from the inside?",
-      "why_this_question": "He's repeated the 'agent for mum' mission many times. This asks what changed after actually being inside OpenAI — what the outsider view missed",
+      "why_this_question": "You've repeated the 'agent for mum' mission many times. This asks what changed after actually being inside OpenAI — what the outsider view missed",
       "expected_insight": "A concrete belief revision that reveals the gap between building open-source agents and building at OpenAI scale"
     },
     {
       "category": "future",
       "question": "On Pragmatic Engineer you described 6,600 commits in January and called it normal. But OpenClaw's star growth has plateaued since February while projects with fewer commits keep climbing. Is there a point where raw shipping velocity becomes noise — where the commits stop converting into user value?",
-      "why_this_question": "Challenges his velocity-as-virtue narrative with evidence that output quantity doesn't always track impact",
+      "why_this_question": "Challenges your velocity-as-virtue narrative with evidence that output quantity doesn't always track impact",
       "expected_insight": "Whether he's starting to see the limits of the 'ship everything, let users sort it out' approach"
     },
     {
@@ -607,7 +607,7 @@
     {
       "category": "architecture",
       "question": "On Lex Fridman you discussed OpenClaw's security model and said the risk is acceptable. But you also run --dangerously-skip-permissions yourself. Has any community-contributed ClawhHub skill ever done something destructive that made you reconsider the no-sandbox design — or is the absence of incidents proof the model works?",
-      "why_this_question": "He's defended the security philosophy in multiple interviews. This asks for the empirical evidence — have there been actual incidents, or is this survivorship bias?",
+      "why_this_question": "You've defended the security philosophy in multiple interviews. This asks for the empirical evidence — have there been actual incidents, or is this survivorship bias?",
       "expected_insight": "Whether the 'no incidents' track record is real or whether close calls exist that haven't been publicized"
     },
     {

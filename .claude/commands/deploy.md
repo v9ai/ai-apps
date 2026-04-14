@@ -14,7 +14,7 @@ Use this mapping to find the correct deploy script:
 | real-estate | `pnpm deploy:re` |
 | vadim.blog | `pnpm deploy:blog` |
 | todo | `pnpm deploy:t` |
-| podcasts | `pnpm deploy:p` |
+| hoa | `pnpm deploy:p` |
 | bricks | `pnpm deploy:br` |
 | travel | `pnpm deploy:tr` |
 
