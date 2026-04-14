@@ -278,10 +278,29 @@ LIMIT $5;`,
     title: "JSONB for Derived Metrics",
     description:
       "7 clinical ratios — HDL/LDL, TC/HDL, TG/HDL, TyG Index, NLR, BUN/Creatinine, De Ritis — are computed per blood test and stored as structured JSONB in health_state_embeddings.derived_metrics, alongside a 1024-dim pgvector embedding in the same row. One row serves two query paradigms: the vector column enables semantic similarity search via <=>, while the JSONB column enables exact filtering, GIN-indexed lookups, and per-key extraction via ->> — no ETL pipeline between them.",
+    schema: `health_state_embeddings row:
+├── id:               uuid
+├── user_id:          "abc123"
+├── test_id:          uuid (FK → blood_tests)
+├── content:          "Health state: blood_panel_jan.pdf\\nDate: 2024-01-15\\n..."
+├── embedding:        [0.023, -0.041, 0.089, ... ] (1024 floats)
+└── derived_metrics:  {                             (JSONB)
+      "triglyceride_hdl_ratio": 2.8,
+      "tc_hdl_ratio": 4.1,
+      "hdl_ldl_ratio": 0.38,
+      "nlr": 2.1,
+      "ast_alt_ratio": 1.2,
+      "bun_creatinine_ratio": 15.0,
+      "tyg_index": 8.7
+    }`,
     detail:
-      "Adding a new ratio (e.g., ApoB/ApoA1 or Calcium/Albumin) requires only a Python dict entry in METRIC_REFERENCES and a line in compute_derived_metrics — no ALTER TABLE, no migration, no reindex. The JSONB column absorbs new keys transparently, and downstream consumers (trajectory velocity, risk classification, LLM context) pick them up automatically because they iterate over all keys in the payload.",
-    sql: `-- Filter tests with elevated triglyceride/HDL ratio
--- JSONB ->> extracts the value; no application-side parsing
+      "The JSONB column is powerful because PostgreSQL treats it as structured data, not just a text blob. You can query individual keys directly in SQL using the ->> operator — extracting, casting, and filtering on a single ratio without parsing anything in application code. A GIN index on the column makes containment checks (@>) fast, and the ->> extraction runs inside the query planner alongside the vector distance computation on the same row.",
+    detail2:
+      "Why JSONB instead of separate columns? Because it's flexible. If you add an 8th ratio like ApoB/ApoA1, you just start writing a new key into the JSON. No ALTER TABLE, no migration file, no reindex. The column absorbs new keys transparently. Downstream code iterates over all keys in the payload, so trajectory velocity computation and risk classification pick up new ratios automatically without code changes. Why store it alongside the embedding? Because the trajectory pipeline needs both. Stage 1 uses the embedding column to compute cosine similarity between consecutive health states (how much did your overall health profile shift?). Stage 3 uses the derived_metrics JSONB to compute velocity on each individual ratio (how fast is your TG/HDL changing per day?). Having both in the same row means one query gets everything — no join to a separate metrics table.",
+    detail3:
+      "How it gets there: during PDF ingestion, BloodTestNodeParser produces a health_state node. The compute_derived_metrics() function resolves marker names through the alias map, computes each ratio with null guards (skipping ratios where required markers are missing), classifies each against peer-reviewed thresholds, and packs the result into a Python dict. That dict becomes the JSONB value. The text content (which includes the ratios as human-readable text) gets embedded into the 1024-dim vector. Both land in the same row via ON CONFLICT upsert — so re-uploading the same PDF overwrites rather than duplicates.",
+    sql: `-- JSONB ->> extracts a key; ::float casts it for comparison
+-- No application-side parsing — PostgreSQL does it in the query planner
 SELECT t.test_date,
   (e.derived_metrics ->> 'triglyceride_hdl_ratio')::float AS tg_hdl,
   (e.derived_metrics ->> 'ast_alt_ratio')::float          AS de_ritis
@@ -2321,6 +2340,12 @@ export default function HowItWorksPage() {
                     {r.description}
                   </Text>
 
+                  {r.schema && (
+                    <pre className="pg-code-block" style={{ fontSize: "12px" }}>
+                      <code>{r.schema}</code>
+                    </pre>
+                  )}
+
                   {r.detail && (
                     <Text
                       size="2"
@@ -2339,6 +2364,34 @@ export default function HowItWorksPage() {
                     <pre className="pg-code-block">
                       <code>{r.sql}</code>
                     </pre>
+                  )}
+
+                  {r.detail2 && (
+                    <Text
+                      size="2"
+                      style={{
+                        color: "var(--gray-10)",
+                        lineHeight: 1.65,
+                        paddingLeft: "1rem",
+                        borderLeft: "2px solid var(--gray-a4)",
+                      }}
+                    >
+                      {r.detail2}
+                    </Text>
+                  )}
+
+                  {r.detail3 && (
+                    <Text
+                      size="2"
+                      style={{
+                        color: "var(--gray-10)",
+                        lineHeight: 1.65,
+                        paddingLeft: "1rem",
+                        borderLeft: "2px solid var(--amber-a4)",
+                      }}
+                    >
+                      {r.detail3}
+                    </Text>
                   )}
                 </Flex>
               </section>

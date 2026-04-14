@@ -10,6 +10,7 @@ import { ArticleNav } from "@/components/article-nav";
 import { CategoryProgress } from "@/components/category-progress";
 import { RelatedLessons } from "@/components/related-lessons";
 import { ExternalCourses } from "@/components/external-courses";
+import { LangGraphExtra } from "@/components/langgraph-extra";
 import { PageAnalytics } from "@/components/page-analytics";
 import { AudioPlayer } from "@/components/audio-player";
 import type { CategoryMeta } from "@/lib/data";
@@ -116,8 +117,12 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
           {/* Continue Learning */}
           <RelatedLessons lessons={related} meta={meta} />
 
-          {/* Class Central courses */}
-          <ExternalCourses courses={courses} />
+          {/* Courses / extra content */}
+          {slug === "langgraph" ? (
+            <LangGraphExtra />
+          ) : (
+            <ExternalCourses courses={courses} />
+          )}
 
           {/* Prev/Next */}
           <ArticleNav

@@ -5,9 +5,17 @@
  * Each entry has a `classcentralUrl` that links to a Class Central search
  * pre-filtered to that course title + provider (always resolves correctly).
  */
-import { contentDb as db } from "@/src/db/content";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
 import { externalCourses, lessonCourses } from "@/src/db/content-schema";
-import { eq, and } from "drizzle-orm";
+import path from "path";
+
+const DB_PATH =
+  process.env.CONTENT_DB_PATH ||
+  path.join(process.cwd(), "data", "knowledge.db");
+const sqlite = new Database(DB_PATH);
+sqlite.pragma("foreign_keys = ON");
+const db = drizzle(sqlite);
 
 interface CourseEntry {
   title: string;
@@ -825,6 +833,11 @@ async function main() {
       mappingsInserted++;
     }
   }
+
+  // Ensure DB is self-contained (no WAL/SHM) for Vercel's read-only fs
+  sqlite.pragma("wal_checkpoint(TRUNCATE)");
+  sqlite.pragma("journal_mode = DELETE");
+  sqlite.close();
 
   console.log(`Done. ${coursesInserted} courses, ${mappingsInserted} lesson mappings.`);
   process.exit(0);
