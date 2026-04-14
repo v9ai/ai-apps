@@ -3,6 +3,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
+import { MermaidFlow } from "@/components/mermaid-flow";
 
 function slugify(text: string): string {
   return text
@@ -71,10 +72,16 @@ export function MarkdownProse({ content }: { content: string }) {
           pre: ({ children, ...props }) => {
             // Extract language from the code child
             let lang = "";
+            let rawText = "";
             if (children && typeof children === "object" && "props" in (children as unknown as Record<string, unknown>)) {
-              const codeProps = (children as unknown as { props: { className?: string } }).props;
+              const codeProps = (children as unknown as { props: { className?: string; children?: string } }).props;
               const match = codeProps?.className?.match(/language-(\w+)/);
               if (match) lang = match[1];
+              rawText = String(codeProps?.children || "").replace(/\n$/, "");
+            }
+
+            if (lang === "mermaid") {
+              return <MermaidFlow chart={rawText} />;
             }
 
             return (

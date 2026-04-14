@@ -21,6 +21,8 @@ import {
 import { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import type { ReactElement } from "react";
+import { MermaidFlow } from "@/components/mermaid-flow";
 import type { TabBaseProps } from "./types";
 
 interface Note {
@@ -293,6 +295,17 @@ export function NotesTab({ app, isAdmin }: TabBaseProps) {
                         {children}
                       </Box>
                     ),
+                    pre: ({ children }: { children: React.ReactNode }) => {
+                      const codeEl = children as ReactElement<{ className?: string; children?: string }>;
+                      if (codeEl?.props) {
+                        const m = codeEl.props.className?.match(/language-(\w+)/);
+                        if (m?.[1] === "mermaid") {
+                          const raw = String(codeEl.props.children || "").replace(/\n$/, "");
+                          return <MermaidFlow chart={raw} />;
+                        }
+                      }
+                      return <pre>{children}</pre>;
+                    },
                     code: ({ children, className }) => {
                       const isBlock = className?.includes("language-");
                       return isBlock ? (

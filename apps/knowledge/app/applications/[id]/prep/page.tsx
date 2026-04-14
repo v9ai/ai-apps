@@ -20,6 +20,7 @@ import remarkGfm from "remark-gfm";
 import type { AppData } from "@/components/app-detail/types";
 import { StudyRoadmap } from "@/components/app-detail/StudyRoadmap";
 import { ArchitectureDiagram } from "@/components/app-detail/ArchitectureDiagram";
+import { MermaidFlow } from "@/components/mermaid-flow";
 
 const remarkPlugins = [remarkGfm];
 
@@ -507,6 +508,10 @@ function PrepPageInner() {
         const match = codeEl.props.className?.match(/language-(\w+)/);
         if (match) lang = match[1];
         rawText = String(codeEl.props.children || "").replace(/\n$/, "");
+      }
+
+      if (lang === "mermaid") {
+        return <MermaidFlow chart={rawText} />;
       }
 
       if (lang === "codepair") {
