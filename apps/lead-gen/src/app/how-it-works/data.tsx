@@ -756,6 +756,128 @@ await db.insert(replyDrafts).values({
   thread_context: JSON.stringify(thread.slice(-6)),
 });`,
   },
+  {
+    heading: "Dual-Runtime Skill Extraction",
+    content: "Skill extraction runs in two runtimes against a canonical 157-skill ESCO taxonomy. The Rust implementation (crates/metal) pre-computes 768-dim ConTeXT embeddings for all skill labels into a flat row-major array, then runs cosine similarity against incoming text embeddings — batch inference at Metal-accelerated speeds. The Python implementation (SalesCue) lazy-loads DeBERTa embeddings with mean pooling over token dimensions, caching after first call. Both use the same threshold (0.35) and top-K (10) parameters, producing identical skill tag outputs across runtimes.",
+    codeBlock: `// Rust — crates/metal/src/kernel/skill_extraction.rs
+pub struct SkillTaxonomy {
+    labels: Vec<String>,
+    embeddings: Vec<f32>,  // flat row-major: [n_skills x 768]
+    dim: usize,
+}
+
+impl SkillTaxonomy {
+    pub fn match_embedding(
+        &self, text_embedding: &[f32], top_k: usize, threshold: f32,
+    ) -> Vec<ExtractedSkill> {
+        let mut scores: Vec<(usize, f32)> = Vec::with_capacity(self.labels.len());
+        for i in 0..self.labels.len() {
+            let sim = cosine_similarity(text_embedding, self.get_embedding(i));
+            if sim >= threshold { scores.push((i, sim)); }
+        }
+        scores.sort_unstable_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+        scores.truncate(top_k);
+        scores.iter().map(|(i, s)| ExtractedSkill {
+            label: self.labels[*i].clone(), confidence: *s,
+        }).collect()
+    }
+}
+
+# Python — salescue/modules/skills.py
+class SkillExtractor(BaseModule):
+    def _ensure_skill_embeds(self) -> torch.Tensor:
+        """Pre-compute DeBERTa embeddings. Cached after first call."""
+        mask = encoded["attention_mask"].unsqueeze(-1).float()
+        summed = (last_hidden * mask).sum(dim=1)
+        pooled = summed / mask.sum(dim=1).clamp(min=1e-9)
+        self._skill_embeds = F.normalize(pooled, p=2, dim=1)
+        return self._skill_embeds`,
+  },
+  {
+    heading: "Follow-Up Scheduler Cron",
+    content: "A Vercel cron endpoint runs the multi-stage follow-up scheduler. Three timing windows (3 days after initial, 5 days after follow-up 1, 7 days after follow-up 2) drive the drip cadence. The scheduler respects conversation-stage gates — contacts who replied, converted, or scheduled meetings are immediately excluded. Before generating each draft, it checks for existing pending drafts to prevent duplicates. Generated drafts require human approval before sending, preserving the human-in-the-loop principle.",
+    codeBlock: `const DAYS_AFTER_INITIAL = 3;
+const DAYS_AFTER_FOLLOWUP_1 = 5;
+const DAYS_AFTER_FOLLOWUP_2 = 7;
+
+const needsFollowUp = eligibleEmails.filter((e) => {
+  const seqNum = parseInt(e.sequence_number || "0", 10);
+  const stage = e.conversation_stage;
+
+  // Respect conversation-stage gates
+  if (stage && stage.startsWith("replied_")) return false;
+  if (stage === "closed" || stage === "converted") return false;
+  if (stage === "meeting_scheduled") return false;
+
+  if (seqNum === 0 && sentAt < cutoffInitial) return true;
+  if (seqNum === 1 && sentAt < cutoffF1) return true;
+  if (seqNum === 2 && sentAt < cutoffF2) return true;
+  return false;
+});
+
+for (const email of needsFollowUp) {
+  // Prevent duplicate drafts
+  const [existingDraft] = await db.select({ id: replyDrafts.id })
+    .from(replyDrafts)
+    .where(and(
+      eq(replyDrafts.contact_id, email.contact_id),
+      eq(replyDrafts.draft_type, "follow_up"),
+      eq(replyDrafts.status, "pending"),
+    )).limit(1);
+
+  if (existingDraft) { skipped++; continue; }
+
+  // Generate follow-up via DeepSeek
+  const instructions = buildFollowUpInstructions(
+    (seqNum + 1).toString(), daysSince, email.subject,
+  );
+  // ... DeepSeek call with response_format: json_object
+  await db.insert(replyDrafts).values({
+    contact_id: email.contact_id,
+    status: "pending",  // requires human approval
+    draft_type: "follow_up",
+  });
+}`,
+  },
+  {
+    heading: "Admin Agent — LangGraph Bridge",
+    content: "The admin assistant is a typed HTTP bridge from TypeScript to a Python LangGraph server running on port 8002. The TypeScript layer handles error coercion into a discriminated union (either { text: string } or { text: null, error: string }) — callers never see raw exceptions. The Python side hosts an ops-grade agent for internal debugging, evidence inspection, and batch reprocessing. This architecture separates the LLM orchestration runtime (Python/LangGraph) from the serving runtime (TypeScript/Next.js), letting each use its optimal toolchain.",
+    codeBlock: `// src/agents/admin-assistant.ts
+export const adminAssistantAgent = {
+  async generate(prompt: string):
+    Promise<{ text: string } | { text: null; error: string }> {
+    try {
+      const result = await adminChat(prompt);
+      return { text: result.response };
+    } catch (err) {
+      const message = err instanceof Error
+        ? err.message : "Unknown error from admin agent";
+      return { text: null, error: message };
+    }
+  },
+};
+
+// src/lib/langgraph-client.ts — typed HTTP bridge
+export function adminChat(
+  prompt: string, system?: string,
+): Promise<AdminChatResult> {
+  return callLangGraph<AdminChatResult>("/admin-chat", {
+    prompt,
+    system: system ?? "",
+  });
+}
+
+async function callLangGraph<T>(path: string, body: unknown): Promise<T> {
+  const base = process.env.LANGGRAPH_URL ?? "http://localhost:8002";
+  const res = await fetch(\`\${base}\${path}\`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(\`LangGraph \${res.status}\`);
+  return res.json() as Promise<T>;
+}`,
+  },
 ];
 
 // ─── Technical Details ────────────────────────────────────────────

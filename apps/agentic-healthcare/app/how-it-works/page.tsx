@@ -3223,7 +3223,7 @@ user: """
               size="2"
               color="gray"
               align="center"
-              style={{ maxWidth: 560, lineHeight: 1.65 }}
+              style={{ maxWidth: 660, lineHeight: 1.65 }}
             >
               The SYNTHESIS_SYSTEM prompt enforces 7 clinical rules at
               generation time. Temperature is set to 0.1 for clinical
@@ -3232,14 +3232,141 @@ user: """
           </Flex>
         </ScrollReveal>
 
-        <Flex direction="column" gap="3" style={{ margin: "0 auto" }}>
+        {/* ── Derived Ratios Engine ── */}
+        <ScrollReveal delay={80}>
+          <Flex direction="column" gap="3" mb="7">
+            <Flex align="center" gap="2" mb="2">
+              <div
+                className="deep-dive-icon"
+                style={{ background: "color-mix(in srgb, var(--blue-9) 18%, transparent)", color: "var(--blue-9)" }}
+              >
+                <BarChart3 size={18} />
+              </div>
+              <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+                Derived Ratios Engine
+              </Heading>
+              <Text size="1" color="gray" ml="2">
+                7 peer-reviewed ratios computed per blood test
+              </Text>
+            </Flex>
+
+            <Box className="deep-dive-card" p="0" style={{ overflow: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "var(--font-mono, 'SF Mono', monospace)" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--gray-a4)" }}>
+                    {["Ratio", "Formula", "Optimal", "Borderline", "Elevated", "Reference"].map((h) => (
+                      <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--gray-9)", fontWeight: 600 }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { ratio: "TG/HDL Ratio", formula: "Triglycerides / HDL", optimal: "< 2.0", borderline: "2.0 – 3.5", elevated: "> 3.5", ref: "McLaughlin et al." },
+                    { ratio: "TC/HDL Ratio", formula: "Total Cholesterol / HDL", optimal: "< 4.0", borderline: "4.0 – 5.0", elevated: "> 5.0", ref: "Castelli et al." },
+                    { ratio: "HDL/LDL Ratio", formula: "HDL / LDL", optimal: "> 0.4", borderline: "0.3 – 0.4", elevated: "< 0.3", ref: "Millán et al." },
+                    { ratio: "NLR", formula: "Neutrophils / Lymphocytes", optimal: "1.0 – 3.0", borderline: "3.0 – 5.0", elevated: "> 5.0", ref: "Fest et al." },
+                    { ratio: "De Ritis Ratio", formula: "AST / ALT", optimal: "0.8 – 1.5", borderline: "1.5 – 2.0", elevated: "> 2.0", ref: "De Ritis et al." },
+                    { ratio: "BUN/Creatinine", formula: "BUN / Creatinine", optimal: "10 – 20", borderline: "20 – 25", elevated: "> 25", ref: "Hosten et al." },
+                    { ratio: "TyG Index", formula: "ln(TG × Glucose × 0.5)", optimal: "< 8.5", borderline: "8.5 – 9.0", elevated: "> 9.0", ref: "Simental-Mendía" },
+                  ].map((r, i) => (
+                    <tr key={r.ratio} style={{ borderBottom: i < 6 ? "1px solid var(--gray-a3)" : "none" }}>
+                      <td style={{ padding: "9px 14px", fontWeight: 600, color: "var(--gray-12)" }}>{r.ratio}</td>
+                      <td style={{ padding: "9px 14px", color: "var(--gray-10)" }}>{r.formula}</td>
+                      <td style={{ padding: "9px 14px" }}><span className="threshold-pill threshold-optimal">{r.optimal}</span></td>
+                      <td style={{ padding: "9px 14px" }}><span className="threshold-pill threshold-borderline">{r.borderline}</span></td>
+                      <td style={{ padding: "9px 14px" }}><span className="threshold-pill threshold-elevated">{r.elevated}</span></td>
+                      <td style={{ padding: "9px 14px", color: "var(--gray-9)", fontSize: "11px" }}>{r.ref}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Box>
+          </Flex>
+        </ScrollReveal>
+
+        {/* ── Organ System Mapping ── */}
+        <ScrollReveal delay={160}>
+          <Flex direction="column" gap="3" mb="7">
+            <Flex align="center" gap="2" mb="2">
+              <div
+                className="deep-dive-icon"
+                style={{ background: "color-mix(in srgb, var(--crimson-9) 18%, transparent)", color: "var(--crimson-9)" }}
+              >
+                <Activity size={18} />
+              </div>
+              <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+                Organ System Mapping
+              </Heading>
+              <Text size="1" color="gray" ml="2">
+                Elevated ratios map to affected organ systems
+              </Text>
+            </Flex>
+
+            <Grid columns={{ initial: "1", sm: "2", md: "5" }} gap="3">
+              {[
+                { system: "Metabolic", trigger: "TG/HDL or TyG elevated", signal: "Insulin resistance", color: "var(--amber-9)", icon: Zap },
+                { system: "Cardiovascular", trigger: "TC/HDL or low HDL/LDL", signal: "Atherogenic risk", color: "var(--crimson-9)", icon: Heart },
+                { system: "Inflammatory", trigger: "NLR elevated", signal: "Infection / stress / malignancy", color: "var(--orange-9)", icon: AlertTriangle },
+                { system: "Renal", trigger: "BUN/Creatinine elevated", signal: "Pre-renal vs intrinsic", color: "var(--green-9)", icon: FlaskConical },
+                { system: "Hepatic", trigger: "De Ritis elevated", signal: "Alcoholic / cardiac origin", color: "var(--violet-9)", icon: Activity },
+              ].map((os, i) => (
+                <ScrollReveal key={os.system} delay={160 + i * 50}>
+                  <Flex
+                    direction="column"
+                    gap="2"
+                    p="4"
+                    className="deep-dive-card"
+                    style={{ height: "100%" }}
+                  >
+                    <div
+                      className="deep-dive-icon"
+                      style={{
+                        background: `color-mix(in srgb, ${os.color} 18%, transparent)`,
+                        color: os.color,
+                      }}
+                    >
+                      <os.icon size={18} />
+                    </div>
+                    <Text size="2" weight="bold">{os.system}</Text>
+                    <Text size="1" style={{ fontFamily: "var(--font-mono, 'SF Mono', monospace)", fontSize: "11px", color: os.color }}>
+                      {os.trigger}
+                    </Text>
+                    <Text size="1" color="gray" style={{ lineHeight: 1.45 }}>
+                      {os.signal}
+                    </Text>
+                  </Flex>
+                </ScrollReveal>
+              ))}
+            </Grid>
+          </Flex>
+        </ScrollReveal>
+
+        {/* ── Clinical Rules ── */}
+        <ScrollReveal delay={240}>
+          <Flex align="center" gap="2" mb="3">
+            <div
+              className="deep-dive-icon"
+              style={{ background: "color-mix(in srgb, var(--indigo-9) 18%, transparent)", color: "var(--indigo-9)" }}
+            >
+              <ShieldCheck size={18} />
+            </div>
+            <Heading size="4" style={{ letterSpacing: "-0.01em" }}>
+              Clinical Rules
+            </Heading>
+          </Flex>
+        </ScrollReveal>
+
+        <Grid columns={{ initial: "1", md: "2" }} gap="3" mb="5">
           {synthesisRules.map((sr, i) => (
-            <ScrollReveal key={sr.num} delay={i * 50}>
+            <ScrollReveal key={sr.num} delay={260 + i * 50}>
               <Flex
                 align="start"
                 gap="3"
-                p="3"
+                p="4"
                 className="deep-dive-card"
+                style={{ height: "100%" }}
               >
                 <div className="synthesis-rule-num" style={{ color: sr.color, borderColor: sr.color }}>
                   {sr.num}
@@ -3259,14 +3386,15 @@ user: """
               </Flex>
             </ScrollReveal>
           ))}
-        </Flex>
+        </Grid>
 
-        <ScrollReveal delay={400}>
-          <Flex gap="3" wrap="wrap" justify="center" mt="5">
+        <ScrollReveal delay={600}>
+          <Flex gap="3" wrap="wrap" justify="center" mt="3">
             <span className="arch-tag">temperature = 0.1</span>
             <span className="arch-tag">chat_history[-6:]</span>
             <span className="arch-tag">context joined by ---</span>
             <span className="arch-tag">12 citation authors</span>
+            <span className="arch-tag">SAFETY_REFUSAL_RESPONSE fallback</span>
           </Flex>
         </ScrollReveal>
       </Box>
