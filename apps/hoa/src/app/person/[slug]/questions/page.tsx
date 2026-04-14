@@ -124,13 +124,13 @@ export default async function QuestionsPage({ params }: Props) {
               )}
             </div>
             <div className={cx("animate-fade-in-up", css({ minW: "0" }))} style={{ animationDelay: "0.15s" }}>
-              <h1 className={css({ fontSize: "xl", sm: { fontSize: "2xl" }, fontWeight: "900", color: "#E8E8ED", letterSpacing: "-0.02em" })}>
+              <h1 className={css({ fontSize: "2xl", sm: { fontSize: "3xl" }, fontWeight: "900", color: "#F0F0F5", letterSpacing: "-0.02em" })}>
                 Interview Questions
               </h1>
-              <p className={css({ color: "#8B8B96", fontSize: "sm", mt: "1" })}>
+              <p className={css({ color: "#A0A0AC", fontSize: "md", mt: "1" })}>
                 {person.name}
-                <span className={css({ color: "#7B7B86", mx: "1.5" })}>|</span>
-                <span className={css({ color: "#7B7B86" })}>{research.questions.length} questions</span>
+                <span className={css({ color: "#8B8B96", mx: "1.5" })}>|</span>
+                <span className={css({ color: "#8B8B96" })}>{research.questions.length} questions</span>
               </p>
             </div>
           </div>

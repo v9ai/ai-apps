@@ -53,7 +53,7 @@ export function ResearchQuestions({ research }: { research: PersonResearch }) {
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
         </div>
-        <h2 className={css({ fontSize: 'xl', fontWeight: 'bold', color: '#E8E8ED' })}>Interview Questions</h2>
+        <h2 className={css({ fontSize: '2xl', fontWeight: 'bold', color: '#F0F0F5' })}>Interview Questions</h2>
       </div>
 
       <div className={css({ display: 'flex', flexDir: 'column', gap: { base: '8', md: '10' } })}>
@@ -64,7 +64,7 @@ export function ResearchQuestions({ research }: { research: PersonResearch }) {
                 className={css({ w: '2.5', h: '2.5', rounded: 'full', flexShrink: '0' })}
                 style={{ backgroundColor: CATEGORY_COLORS[category] ?? '#7B7B86' }}
               />
-              <h3 className={css({ fontSize: 'sm', fontWeight: '600', color: '#C4C4CC', letterSpacing: '0.02em' })}>
+              <h3 className={css({ fontSize: 'md', fontWeight: '600', color: '#D8D8E0', letterSpacing: '0.02em' })}>
                 {CATEGORY_LABELS[category] ?? category}
               </h3>
             </div>
@@ -83,18 +83,18 @@ export function ResearchQuestions({ research }: { research: PersonResearch }) {
                     className={css({ pos: 'absolute', top: '0', left: '0', w: '1', h: 'full', roundedLeft: 'xl' })}
                     style={{ backgroundColor: CATEGORY_COLORS[category] ?? '#7B7B86', opacity: 0.5 }}
                   />
-                  <p className={css({ fontSize: 'sm', color: '#E8E8ED', lineHeight: '1.85' })}>
+                  <p className={css({ fontSize: 'md', color: '#F0F0F5', lineHeight: '1.85' })}>
                     {q.question}
                   </p>
                   {q.why_this_question && (
-                    <p className={css({ mt: '3', fontSize: 'xs', color: '#7B7B86', lineHeight: '1.7' })}>
-                      <span className={css({ fontWeight: '600', color: '#9B9BA4' })}>Why this question: </span>
+                    <p className={css({ mt: '3', fontSize: 'sm', color: '#9B9BA8', lineHeight: '1.75' })}>
+                      <span className={css({ fontWeight: '600', color: '#B0B0BC' })}>Why this question: </span>
                       {q.why_this_question}
                     </p>
                   )}
                   {q.expected_insight && (
-                    <p className={css({ mt: '1.5', fontSize: 'xs', color: '#7B7B86', lineHeight: '1.7' })}>
-                      <span className={css({ fontWeight: '600', color: '#9B9BA4' })}>Expected insight: </span>
+                    <p className={css({ mt: '1.5', fontSize: 'sm', color: '#9B9BA8', lineHeight: '1.75' })}>
+                      <span className={css({ fontWeight: '600', color: '#B0B0BC' })}>Expected insight: </span>
                       {q.expected_insight}
                     </p>
                   )}
