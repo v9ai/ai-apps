@@ -33,6 +33,16 @@ const CATEGORY_LABELS: Record<string, string> = {
   social_media: "Social Media & Writing",
 };
 
+function renderInline(text: string) {
+  const parts = text.split(/(\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    return part;
+  });
+}
+
 export function ResearchQuestions({ research }: { research: PersonResearch }) {
   if (!research.questions?.length) return null;
 
@@ -84,18 +94,18 @@ export function ResearchQuestions({ research }: { research: PersonResearch }) {
                     style={{ backgroundColor: CATEGORY_COLORS[category] ?? '#7B7B86', opacity: 0.5 }}
                   />
                   <p className={css({ fontSize: 'md', color: '#F0F0F5', lineHeight: '1.85' })}>
-                    {q.question}
+                    {renderInline(q.question)}
                   </p>
                   {q.why_this_question && (
                     <p className={css({ mt: '3', fontSize: 'sm', color: '#9B9BA8', lineHeight: '1.75' })}>
                       <span className={css({ fontWeight: '600', color: '#B0B0BC' })}>Why this question: </span>
-                      {q.why_this_question}
+                      {renderInline(q.why_this_question)}
                     </p>
                   )}
                   {q.expected_insight && (
                     <p className={css({ mt: '1.5', fontSize: 'sm', color: '#9B9BA8', lineHeight: '1.75' })}>
                       <span className={css({ fontWeight: '600', color: '#B0B0BC' })}>Expected insight: </span>
-                      {q.expected_insight}
+                      {renderInline(q.expected_insight)}
                     </p>
                   )}
                 </div>
