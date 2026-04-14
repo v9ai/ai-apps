@@ -3943,3 +3943,157 @@ body {
   font-size: 10px;
   color: var(--gray-9);
 }
+
+/* ── Mermaid Flow ──────────────────────────────────────────── */
+
+.mermaid-flow-container {
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-4);
+  background: var(--gray-1);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.mermaid-handle {
+  width: 6px !important;
+  height: 6px !important;
+  background: var(--gray-7) !important;
+  border: none !important;
+  opacity: 0;
+}
+
+/* Flowchart nodes */
+
+.mermaid-fc-node {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  white-space: pre-line;
+  line-height: 1.4;
+  font-family: var(--default-font-family, sans-serif);
+}
+
+.mermaid-fc-node--rect {
+  border-radius: 6px;
+}
+
+.mermaid-fc-node--stadium {
+  border-radius: 999px;
+  padding: 8px 20px;
+}
+
+.mermaid-fc-node--diamond {
+  border-radius: 4px;
+  transform: rotate(45deg);
+  padding: 14px;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mermaid-fc-node__diamond-label {
+  transform: rotate(-45deg);
+  font-size: 10px;
+  display: block;
+  line-height: 1.2;
+}
+
+.mermaid-fc-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--gray-12);
+  color: var(--gray-1);
+  font-family: var(--default-font-family, sans-serif);
+}
+
+/* Subgraph label */
+
+.mermaid-sg-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-10);
+  font-family: var(--default-font-family, sans-serif);
+  letter-spacing: 0.02em;
+}
+
+/* Sequence diagram */
+
+.mermaid-seq-participant {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--cyan-6);
+  background: var(--cyan-3);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cyan-12);
+  text-align: center;
+  font-family: var(--default-font-family, sans-serif);
+  white-space: nowrap;
+}
+
+.mermaid-seq-lifeline {
+  width: 0;
+  border-left: 1.5px dashed var(--gray-5);
+}
+
+/* ER entity */
+
+.mermaid-er-entity {
+  border: 1px solid var(--gray-6);
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--default-font-family, sans-serif);
+  font-size: 12px;
+  background: var(--gray-1);
+}
+
+.mermaid-er-entity__header {
+  padding: 8px 12px;
+  font-weight: 700;
+  background: var(--violet-3);
+  border-bottom: 1px solid var(--gray-6);
+  color: var(--violet-12);
+  font-size: 12px;
+}
+
+.mermaid-er-entity__row {
+  display: flex;
+  gap: 8px;
+  padding: 3px 12px;
+  border-bottom: 1px solid var(--gray-3);
+}
+
+.mermaid-er-entity__row:last-child {
+  border-bottom: none;
+}
+
+.mermaid-er-entity__type {
+  color: var(--cyan-11);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  min-width: 36px;
+}
+
+.mermaid-er-entity__name {
+  color: var(--gray-12);
+  flex: 1;
+}
+
+.mermaid-er-entity__badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--amber-11);
+  background: var(--amber-3);
+  padding: 0 4px;
+  border-radius: 3px;
+  line-height: 1.8;
+}

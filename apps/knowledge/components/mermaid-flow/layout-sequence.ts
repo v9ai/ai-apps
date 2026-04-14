@@ -1,4 +1,4 @@
-import type { Node, Edge } from "@xyflow/react";
+import { MarkerType, type Node, type Edge } from "@xyflow/react";
 import type { SequenceDiagramAST } from "./parser";
 
 /* ── Constants ─────────────────────────────────────────────── */
@@ -111,7 +111,7 @@ export function layoutSequence(
         strokeWidth: 2,
         ...(msg.lineStyle === "dashed" && { strokeDasharray: "6 3" }),
       },
-      markerEnd: { type: "arrowclosed" as const, color: "var(--cyan-8)" },
+      markerEnd: { type: MarkerType.ArrowClosed, color: "var(--cyan-8)" },
     });
   }
 

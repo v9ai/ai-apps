@@ -159,8 +159,8 @@ const ARROW_RE = /(-->|-.->|==>|---)\s*(?:\|([^|]*)\|\s*)?/;
 function parseFlowchart(lines: string[]): FlowchartAST {
   const first = lines.find((l) => l.trim().length > 0)!.trim();
   const dirMatch = first.match(/(?:graph|flowchart)\s+(TD|TB|LR|RL|BT)/i);
-  const dir = (dirMatch?.[1]?.toUpperCase() ?? "TD") as "TD" | "LR";
-  const direction = dir === "TB" || dir === "TD" ? "TD" : "LR";
+  const rawDir = dirMatch?.[1]?.toUpperCase() ?? "TD";
+  const direction: "TD" | "LR" = rawDir === "TD" || rawDir === "TB" ? "TD" : "LR";
 
   const nodes = new Map<string, FlowNodeDef>();
   const edges: FlowEdgeDef[] = [];
@@ -227,7 +227,7 @@ function parseFlowchart(lines: string[]): FlowchartAST {
         .trim();
 
       const lineStyle: FlowEdgeDef["lineStyle"] =
-        arrow === "-.->'" ? "dotted" : arrow === "==>" ? "thick" : "solid";
+        arrow === "-.->" ? "dotted" : arrow === "==>" ? "thick" : "solid";
 
       // Parse fan syntax (split by &)
       const sources = leftPart.split(/\s*&\s*/).map((s) => {

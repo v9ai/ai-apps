@@ -155,7 +155,7 @@ export function InterviewPrepTab({ app, isAdmin }: TabBaseProps) {
                 {children}
               </Box>
             ),
-            pre: ({ children }: { children: React.ReactNode }) => {
+            pre: ({ children }: { children?: React.ReactNode }) => {
               const codeEl = children as ReactElement<{ className?: string; children?: string }>;
               if (codeEl?.props) {
                 const m = codeEl.props.className?.match(/language-(\w+)/);
