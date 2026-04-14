@@ -4,7 +4,7 @@ use chrono::Utc;
 use research::agent::agent_builder;
 use research::scholar::SemanticScholarClient;
 use research::tools::{GetPaperDetail, SearchPapers};
-use research_agent::{
+use job_prep::{
     app_context::{AppContext, graphql_url_from_app_url},
     backend,
     d1::D1Client,
@@ -18,8 +18,8 @@ use tracing::info;
 
 #[derive(Parser)]
 #[command(
-    name = "research-agent",
-    about = "DeepSeek Reasoner + Semantic Scholar research agent",
+    name = "job-prep",
+    about = "Interview prep, agentic coding training, and job market research",
 )]
 struct Cli {
     #[command(subcommand)]
@@ -151,7 +151,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive("research_agent=info".parse()?),
+                .add_directive("job_prep=info".parse()?),
         )
         .init();
 

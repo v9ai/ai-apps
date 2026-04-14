@@ -1,12 +1,12 @@
 [package]
-name = "paper-graph"
+name = "scholar-graph"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-description = "Research paper storage and co-authorship graph backed by Neon PostgreSQL"
+description = "Academic paper storage and co-authorship graph backed by Neon PostgreSQL"
 
 [[bin]]
-name = "paper-graph"
+name = "scholar-graph"
 path = "src/main.rs"
 
 [dependencies]

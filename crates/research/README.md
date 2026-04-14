@@ -29,12 +29,19 @@ graph TD
 
 ### Data Flow
 
-1. **Binary** defines `Vec<ResearchTask>` with subjects, prompts, and dependency DAG
-2. **TeamLead** spawns N `Teammate` workers, a shared `Mailbox`, a `SharedTaskList`, and an optional `Semaphore` rate limiter
-3. Each **Teammate** loops: atomically `claim()` the next unblocked task, inject dependency findings as context, build a tool-use `AgentBuilder` with paper + code tools, run the agent loop until completion
-4. Completed findings are broadcast via `Mailbox` and incrementally saved to disk (`agent-{id:02}-{subject}.md`)
-5. After all tasks complete, **TeamLead** runs a separate synthesis agent that reads all findings and produces a cross-cutting report
-6. Output: per-task Markdown files + `synthesis.md` + combined report
+```mermaid
+flowchart TD
+    A["Binary defines Vec&lt;ResearchTask&gt;<br/><small>subjects, prompts, dependency DAG</small>"]
+    B["TeamLead spawns N Teammates<br/><small>+ Mailbox + SharedTaskList + Semaphore</small>"]
+    C["Each Teammate loops:<br/>claim() → inject dependency context<br/>→ build AgentBuilder → run agent"]
+    D["Broadcast findings via Mailbox<br/><small>incremental save to agent-{id}-{subject}.md</small>"]
+    E["TeamLead runs synthesis agent<br/><small>reads all findings, cross-cutting report</small>"]
+    F["Output:<br/>per-task .md + synthesis.md"]
+
+    A --> B --> C --> D
+    D -->|"all_done()"| E --> F
+    D -->|"more tasks"| C
+```
 
 ### Concurrency Model
 
@@ -66,17 +73,22 @@ graph TD
 
 ### Local Vector Pipeline (feature: `local-vector`)
 
-```
-Papers → Chunker → EmbeddingEngine (Candle, 384-d) → LanceDB
-                          │                               │
-                   all-MiniLM-L6-v2              ┌────────┴────────┐
-                   (on-device, ~22M params)       │  papers table   │
-                                                  │  chunks table   │
-                                                  └────────┬────────┘
-                                                           │
-                                              hybrid_search(query)
-                                              ├── paper-level cosine
-                                              └── chunk-level cosine
+```mermaid
+graph LR
+    P["Papers"] --> CH["Chunker"]
+    CH --> EE["EmbeddingEngine<br/><small>Candle, 384-d<br/>all-MiniLM-L6-v2<br/>on-device, ~22M params</small>"]
+
+    EE --> DB["LanceDB"]
+
+    subgraph storage ["Storage"]
+        PT["papers table"]
+        CT["chunks table"]
+    end
+    DB --> storage
+
+    Q["hybrid_search(query)"] --> storage
+    Q --> R1["paper-level cosine"]
+    Q --> R2["chunk-level cosine"]
 ```
 
 ## Modules
@@ -200,7 +212,22 @@ pub struct RetryConfig {
 pub async fn retry_get(client, url, params, config, api_name) -> Result<Response, RetryError>
 ```
 
-**Policy:** Always retry on 429 and connection timeouts. Retry on 5xx if enabled. Never retry on 4xx (except 429). Backoff formula: `base * 2^attempt`, capped at `max_delay`, with 50–100% random jitter.
+```mermaid
+flowchart TD
+    REQ["HTTP Request"] --> S{Status?}
+    S -->|"2xx–3xx"| OK["Success"]
+    S -->|"429"| W["Wait: base * 2^attempt + jitter"]
+    S -->|"5xx"| SE{"retry_on_server_error?"}
+    S -->|"4xx ≠ 429"| FAIL["ClientError — no retry"]
+    S -->|"timeout / connect"| W
+    SE -->|"true"| W
+    SE -->|"false"| FAIL
+    W --> R{"attempt < max_retries?"}
+    R -->|"yes"| REQ
+    R -->|"no"| EX["RetryError::Exhausted"]
+```
+
+Backoff formula: `base * 2^attempt`, capped at `max_delay`, with 50-100% random jitter.
 
 #### Error Handling
 
@@ -218,6 +245,16 @@ pub enum Error {
 ### Unified Paper Model
 
 All six API clients convert to a common `ResearchPaper` via `From` trait implementations:
+
+```mermaid
+flowchart LR
+    S["scholar::Paper"] -->|"From"| RP["ResearchPaper"]
+    O["openalex::Work"] -->|"From<br/><small>reconstruct_abstract()</small>"| RP
+    C["crossref::CrossrefWork"] -->|"From<br/><small>strip JATS tags</small>"| RP
+    CO["core_api::CoreWork"] -->|"From"| RP
+    A["ArxivPaper"] -->|"From"| RP
+    Z["ZenodoRecord"] -->|"From<br/><small>strip HTML</small>"| RP
+```
 
 ```rust
 pub enum PaperSource { SemanticScholar, OpenAlex, Crossref, Core, Arxiv, Zenodo }
@@ -260,7 +297,16 @@ impl CompanyPaperSearch {
 }
 ```
 
-**Strategy:** OpenAlex affiliation search (primary) → Semantic Scholar keyword (secondary) → arXiv (tertiary). DOI-based + normalized title dedup across sources. Short titles (≤10 chars) exempt from title dedup to avoid false positives.
+```mermaid
+flowchart LR
+    C["Company Name"] --> OA["OpenAlex<br/><small>affiliation search</small>"]
+    C --> SS["Semantic Scholar<br/><small>keyword search</small>"]
+    C --> AX["arXiv<br/><small>quoted search</small>"]
+    OA & SS & AX --> DD["Dedup<br/><small>DOI + normalized title</small>"]
+    DD --> R["Merged Results"]
+```
+
+Short titles (≤10 chars) exempt from title dedup to avoid false positives.
 
 ### LLM Provider Abstraction (`agent`)
 
@@ -456,7 +502,16 @@ impl MlDepthConfig {
 
 **7 scoring dimensions:** paper count, venue quality (35 top ML venues), citation impact (h-index-like), research breadth (12 ML subfields), novelty (recency-weighted), team pedigree (28 elite labs), HuggingFace signals.
 
-**Verdict thresholds:** GenuineDeepMl ≥ 0.65 (+ ≥3 papers, ≥0.3 venue quality) → AppliedMl ≥ 0.30 → ApiWrapper.
+```mermaid
+flowchart TD
+    P["Paper Portfolio"] --> E["evaluate()"]
+    E --> SC["overall_score"]
+    SC --> C1{"≥ 0.65 AND<br/>≥ 3 papers AND<br/>venue ≥ 0.3?"}
+    C1 -->|"yes"| G["GenuineDeepMl"]
+    C1 -->|"no"| C2{"≥ 0.30?"}
+    C2 -->|"yes"| A["AppliedMl"]
+    C2 -->|"no"| W["ApiWrapper"]
+```
 
 ### Agent Tools (`tools`)
 
@@ -489,7 +544,17 @@ SearchPapers::with_fallback(scholar, config, fallback_clients)
     .with_embedding_ranker(Arc::new(ranker))      // API-based or local ranker (both impl Ranker)
 ```
 
-**Fallback chain:** OpenAlex (no rate limits) → Crossref → Semantic Scholar `search_bulk`.
+**Fallback chain:**
+
+```mermaid
+flowchart LR
+    Q["search query"] --> OA["OpenAlex<br/><small>no rate limits</small>"]
+    OA -->|"empty/error"| CR["Crossref"]
+    CR -->|"empty/error"| SS["Semantic Scholar<br/><small>search_bulk</small>"]
+    OA -->|"results"| R["Return papers"]
+    CR -->|"results"| R
+    SS -->|"results"| R
+```
 
 ### Team Orchestration (`team`)
 

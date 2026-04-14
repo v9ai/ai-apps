@@ -10,7 +10,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "paper-graph", about = "Research paper storage and co-authorship graph")]
+#[command(name = "scholar-graph", about = "Academic paper storage and co-authorship graph")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "paper_graph=info,research=info".parse().unwrap()),
+                .unwrap_or_else(|_| "scholar_graph=info,research=info".parse().unwrap()),
         )
         .init();
 

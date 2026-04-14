@@ -1,51 +1,51 @@
 [package]
-name = "research-agent"
+name = "job-prep"
 version = "0.1.0"
 edition = "2021"
-description = "DeepSeek Reasoner + Semantic Scholar research agent for global remote job market analysis"
+description = "Interview prep, agentic coding training, and job market research via DeepSeek + Semantic Scholar"
 
 [[bin]]
-name = "research-agent"
+name = "job-prep"
 path = "src/bin/research_agent.rs"
 
 [[bin]]
-name = "lead-gen-research-1"
+name = "job-prep-1"
 path = "src/bin/lead_gen_research_1.rs"
 
 [[bin]]
-name = "lead-gen-research-2"
+name = "job-prep-2"
 path = "src/bin/lead_gen_research_2.rs"
 
 [[bin]]
-name = "lead-gen-research-3"
+name = "job-prep-3"
 path = "src/bin/lead_gen_research_3.rs"
 
 [[bin]]
-name = "lead-gen-research-4"
+name = "job-prep-4"
 path = "src/bin/lead_gen_research_4.rs"
 
 [[bin]]
-name = "lead-gen-research-5"
+name = "job-prep-5"
 path = "src/bin/lead_gen_research_5.rs"
 
 [[bin]]
-name = "lead-gen-research-6"
+name = "job-prep-6"
 path = "src/bin/lead_gen_research_6.rs"
 
 [[bin]]
-name = "lead-gen-research-7"
+name = "job-prep-7"
 path = "src/bin/lead_gen_research_7.rs"
 
 [[bin]]
-name = "lead-gen-research-8"
+name = "job-prep-8"
 path = "src/bin/lead_gen_research_8.rs"
 
 [[bin]]
-name = "lead-gen-research-9"
+name = "job-prep-9"
 path = "src/bin/lead_gen_research_9.rs"
 
 [[bin]]
-name = "lead-gen-research-all"
+name = "job-prep-all"
 path = "src/bin/lead_gen_research_all.rs"
 
 [dependencies]

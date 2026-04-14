@@ -1,6 +1,6 @@
-# research-agent
+# job-prep
 
-DeepSeek Reasoner + Semantic Scholar research agent for B2B lead generation and global remote job market analysis.
+Interview prep, agentic coding training, and job market research via DeepSeek + Semantic Scholar.
 
 ## Architecture
 
@@ -40,35 +40,35 @@ The agent builds a DeepSeek Reasoner tool-use loop with Semantic Scholar paper s
 
 | Binary | Purpose |
 |--------|---------|
-| `research-agent` | Main CLI with all subcommands |
-| `lead-gen-research-{1..9}` | Parallel research batch runners (domain-specific partitions) |
-| `lead-gen-research-all` | Run all 9 batch runners |
+| `job-prep` | Main CLI with all subcommands |
+| `job-prep-{1..9}` | Parallel research batch runners (domain-specific partitions) |
+| `job-prep-all` | Run all 9 batch runners |
 
 ## CLI Usage
 
 ```bash
 # Single-topic research with Semantic Scholar
-cargo run --bin research-agent -- research \
+cargo run --bin job-prep -- research \
   --topic "remote work trends" \
   --focus "remote work,distributed teams,global employment"
 
 # Enhance an application's agentic coding section (10 parallel agents)
-cargo run --bin research-agent -- enhance --url http://localhost:3000/applications/11
+cargo run --bin job-prep -- enhance --url http://localhost:3000/applications/11
 
 # Full enhancement (30 parallel agents: agentic-coding + backend)
-cargo run --bin research-agent -- enhance-all --app-id 11
+cargo run --bin job-prep -- enhance-all --app-id 11
 
 # Backend interview prep (20 parallel agents)
-cargo run --bin research-agent -- backend --url http://localhost:3000/applications/11
+cargo run --bin job-prep -- backend --url http://localhost:3000/applications/11
 
 # Dual-model deep research (DeepSeek Reasoner + Qwen Max)
-cargo run --bin research-agent -- deep-research --app-id 11
+cargo run --bin job-prep -- deep-research --app-id 11
 
 # Remote AI/ML job search strategies (15 parallel topic agents)
-cargo run --bin research-agent -- remote-job-search
+cargo run --bin job-prep -- remote-job-search
 
 # Run a specific batch
-cargo run --bin lead-gen-research-3
+cargo run --bin job-prep-3
 ```
 
 ## Environment Variables
