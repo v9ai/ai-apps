@@ -294,11 +294,6 @@ function injectCrawlOverlay(
     logText?: string;
   },
 ): Promise<void> {
-  // Cap log text to last N lines to avoid passing megabytes to DOM
-  const cappedLog = status.logText
-    ? status.logText.split("\n").slice(-MAX_LOG_LINES_IN_OVERLAY).join("\n")
-    : "";
-
   return chrome.scripting
     .executeScript({
       target: { tabId },
@@ -368,7 +363,7 @@ function injectCrawlOverlay(
           document.head.appendChild(style);
         }
       },
-      args: [{ ...status, logText: cappedLog }],
+      args: [{ ...status }],
     })
     .then(() => {})
     .catch(() => {});
@@ -449,21 +444,29 @@ const INDUSTRY_FILTER = "staffing and recruiting";
 export async function findRelatedCompanies(tabId: number) {
   findRelatedCancelled = false;
   setCompanyScraperCancelled(false);
-  const crawlLog: string[] = [];
+  const crawlLog: string[] = [];     // Capped for overlay display
+  const crawlLogFull: string[] = []; // Full log for JSON download
   const crawlT0 = Date.now();
   let crawlSlug = "unknown";
   let crawlSeedUrl = "unknown";
 
+  function appendLog(entry: string) {
+    crawlLogFull.push(entry);
+    crawlLog.push(entry);
+    if (crawlLog.length > MAX_LOG_LINES_IN_OVERLAY) {
+      crawlLog.splice(0, crawlLog.length - MAX_LOG_LINES_IN_OVERLAY);
+    }
+  }
   function log(msg: string) {
-    crawlLog.push(`[${new Date().toISOString()}] ${msg}`);
+    appendLog(`[${new Date().toISOString()}] ${msg}`);
     console.log(msg);
   }
   function logWarn(msg: string) {
-    crawlLog.push(`[${new Date().toISOString()}] WARN: ${msg}`);
+    appendLog(`[${new Date().toISOString()}] WARN: ${msg}`);
     console.warn(msg);
   }
   function logError(msg: string) {
-    crawlLog.push(`[${new Date().toISOString()}] ERROR: ${msg}`);
+    appendLog(`[${new Date().toISOString()}] ERROR: ${msg}`);
     console.error(msg);
   }
 
@@ -718,10 +721,10 @@ export async function findRelatedCompanies(tabId: number) {
           let companyId: number | null = null;
           try {
             const res = await gqlRequest(
-              `query FindCompanyByName($name: String) {
-                findCompany(name: $name) { found company { id } }
+              `query FindCompany($name: String, $linkedinUrl: String) {
+                findCompany(name: $name, linkedinUrl: $linkedinUrl) { found company { id } }
               }`,
-              { name: data.name },
+              { name: data.name, linkedinUrl: data.linkedinUrl },
             );
             companyId = res.data?.findCompany?.company?.id ?? null;
           } catch { /* non-critical — posts/jobs still save, just unlinked */ }
@@ -746,7 +749,7 @@ export async function findRelatedCompanies(tabId: number) {
             setCompanyScraperCancelled(false);
             // People
             await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `👥 ${data.name} people`, phase: "saving", logText: crawlLog.join("\n") });
-            const peopleResult = await scrapePeople(tabId, companyBaseUrl, ctx);
+            const peopleResult = await scrapePeople(tabId, companyBaseUrl, ctx, companyId);
             log(`[FindRelated] ${data.name} — people: ${peopleResult.saved}/${peopleResult.total}${peopleResult.error ? ` (${peopleResult.error})` : ""}`);
           }
         } catch (deepErr) {
@@ -776,7 +779,7 @@ export async function findRelatedCompanies(tabId: number) {
       seedUrl: crawlSeedUrl,
       companySlug: crawlSlug,
       stats: { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0, totalRemoteJobs, cancelled: wasCancelled },
-      entries: crawlLog,
+      entries: crawlLogFull,
     });
 
     // Navigate back to original page and remove overlay
@@ -809,7 +812,7 @@ export async function findRelatedCompanies(tabId: number) {
       seedUrl: crawlSeedUrl,
       companySlug: crawlSlug,
       stats: { saved: 0, skipped: 0, targets: 0, filtered: 0, visited: 0, duration_ms: Date.now() - crawlT0 },
-      entries: crawlLog,
+      entries: crawlLogFull,
     });
 
     if (await isTabAlive(tabId)) {

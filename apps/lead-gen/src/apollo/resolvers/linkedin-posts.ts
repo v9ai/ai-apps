@@ -1,5 +1,5 @@
 import { linkedinPosts, type LinkedInPost as DbLinkedInPost } from "@/db/schema";
-import { eq, and, sql, isNull, type SQL } from "drizzle-orm";
+import { eq, and, sql, isNull, inArray, type SQL } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -230,6 +230,14 @@ export const linkedinPostResolvers = {
         }));
 
         try {
+          // Check which URLs already exist to distinguish inserts from updates
+          const chunkUrls = rows.map((r) => r.url);
+          const existing = await context.db
+            .select({ url: linkedinPosts.url })
+            .from(linkedinPosts)
+            .where(inArray(linkedinPosts.url, chunkUrls));
+          const existingUrls = new Set(existing.map((r) => r.url));
+
           const result = await context.db
             .insert(linkedinPosts)
             .values(rows)
@@ -247,12 +255,18 @@ export const linkedinPostResolvers = {
                 employment_type: sql`excluded.employment_type`,
                 posted_at:       sql`excluded.posted_at`,
                 raw_data:        sql`excluded.raw_data`,
+                scraped_at:      sql`now()::text`,
               },
             })
             .returning();
-          // Count: if created_at differs from scraped_at significantly, it was an update
-          // Simplification: count all as inserted for now
-          inserted += result.length;
+
+          for (const row of result) {
+            if (existingUrls.has(row.url)) {
+              updated++;
+            } else {
+              inserted++;
+            }
+          }
         } catch (err) {
           errors.push(err instanceof Error ? err.message : String(err));
         }

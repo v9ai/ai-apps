@@ -964,6 +964,7 @@ type ImportCompanyResult {
 }
 
 input ImportCompanyWithContactsInput {
+  companyId: Int
   companyName: String!
   contacts: [ImportContactInput!]!
   linkedinUrl: String
@@ -1264,7 +1265,7 @@ type Query {
   emailThread(contactId: Int!): EmailThread
   emailThreads(classification: String, limit: Int, offset: Int, search: String, sortBy: String): EmailThreadsResult!
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
-  findCompany(name: String, website: String): FindCompanyResult!
+  findCompany(linkedinUrl: String, name: String, website: String): FindCompanyResult!
   intentDashboard: IntentDashboard!
   intentSignals(companyId: Int!, limit: Int, offset: Int, signalType: IntentSignalType): IntentSignalsResponse!
   linkedinPost(id: Int!): LinkedInPost

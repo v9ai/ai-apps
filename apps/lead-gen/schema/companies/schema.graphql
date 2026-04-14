@@ -18,7 +18,7 @@ extend type Query {
     offset: Int
   ): [CompanySnapshot!]!
   allCompanyTags: [String!]!
-  findCompany(name: String, website: String): FindCompanyResult!
+  findCompany(name: String, website: String, linkedinUrl: String): FindCompanyResult!
 }
 
 extend type Mutation {
@@ -304,6 +304,7 @@ type DeleteCompaniesResult {
 
 input ImportCompanyWithContactsInput {
   companyName: String!
+  companyId: Int
   website: String
   linkedinUrl: String
   contacts: [ImportContactInput!]!

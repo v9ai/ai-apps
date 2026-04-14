@@ -23,6 +23,7 @@ interface SendEmailRequest {
   body: string;
   includeResume?: boolean;
   receivedEmailId?: number;
+  scheduledAt?: string;
 }
 
 function textToHtml(text: string): string {
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Invalid request body" }, { status: 400 });
   }
 
-  const { contactId, to, name, subject, body, includeResume, receivedEmailId } = input;
+  const { contactId, to, name, subject, body, includeResume, receivedEmailId, scheduledAt } = input;
 
   if (!to || !subject || !body) {
     return NextResponse.json({ success: false, error: "to, subject, and body are required" }, { status: 400 });
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
       html,
       text: personalized,
       ...(attachments.length > 0 && { attachments }),
+      ...(scheduledAt && { scheduledAt }),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to send email";
@@ -101,6 +103,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Persist to DB if contactId provided
+  const isScheduled = !!scheduledAt;
   if (contactId) {
     try {
       await db.insert(contactEmails).values({
@@ -110,16 +113,18 @@ export async function POST(request: NextRequest) {
         to_emails: JSON.stringify([to]),
         subject: subject.trim(),
         text_content: personalized,
-        status: "sent",
-        sent_at: new Date().toISOString(),
+        status: isScheduled ? "scheduled" : "sent",
+        ...(isScheduled
+          ? { scheduled_at: scheduledAt }
+          : { sent_at: new Date().toISOString() }),
         recipient_name: name || null,
         ...(receivedEmailId ? { in_reply_to_received_id: receivedEmailId } : {}),
       });
     } catch (err) {
-      // Non-fatal — email was sent, just log the persistence failure
+      // Non-fatal — email was sent/scheduled, just log the persistence failure
       console.error("[send] Failed to persist contact email:", err);
     }
   }
 
-  return NextResponse.json({ success: true, id: result.id });
+  return NextResponse.json({ success: true, id: result.id, scheduled: isScheduled });
 }

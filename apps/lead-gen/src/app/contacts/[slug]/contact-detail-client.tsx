@@ -48,7 +48,17 @@ import {
   Pencil1Icon,
   TrashIcon,
   ChatBubbleIcon,
+  ClockIcon,
 } from "@radix-ui/react-icons";
+
+// ─── Schedule Delay Options ─────────────────────────────────────────────────
+
+const SCHEDULE_DELAYS = [
+  { label: "5 min", ms: 5 * 60 * 1000 },
+  { label: "15 min", ms: 15 * 60 * 1000 },
+  { label: "30 min", ms: 30 * 60 * 1000 },
+  { label: "1 hour", ms: 60 * 60 * 1000 },
+] as const;
 
 // ─── Generate Email Dialog ────────────────────────────────────────────────────
 
@@ -77,6 +87,7 @@ function GenerateEmailDialog({
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [customTime, setCustomTime] = useState("");
 
   const { content, partialContent, isStreaming, error, generate, stop, reset } =
     useStreamingEmail();
@@ -95,6 +106,7 @@ function GenerateEmailDialog({
       setIncludeResume(false);
       setSendResult(null);
       setCopied(false);
+      setCustomTime("");
     }
   };
 
@@ -122,7 +134,7 @@ function GenerateEmailDialog({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSend = async () => {
+  const handleSend = async (scheduledAt?: string) => {
     if (!contact.email) return;
     setSending(true);
     setSendResult(null);
@@ -137,11 +149,17 @@ function GenerateEmailDialog({
           subject: editSubject,
           body: editBody,
           includeResume,
+          ...(scheduledAt && { scheduledAt }),
         }),
       });
-      const json = (await res.json()) as { success: boolean; error?: string };
+      const json = (await res.json()) as { success: boolean; error?: string; scheduled?: boolean };
       if (json.success) {
-        setSendResult({ type: "success", message: `Sent to ${contact.email}` });
+        if (json.scheduled) {
+          const when = new Date(scheduledAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          setSendResult({ type: "success", message: `Scheduled for ${when}` });
+        } else {
+          setSendResult({ type: "success", message: `Sent to ${contact.email}` });
+        }
         onSent?.();
       } else {
         setSendResult({ type: "error", message: json.error ?? "Send failed" });
@@ -298,7 +316,7 @@ function GenerateEmailDialog({
               <button className={button({ variant: "ghost" })} onClick={() => setStep("generate")}>
                 ← Back
               </button>
-              <Flex gap="2">
+              <Flex gap="2" align="center">
                 <button className={button({ variant: "ghost" })} onClick={handleCopy}>
                   <CopyIcon />
                   {copied ? "Copied!" : "Copy"}
@@ -306,11 +324,11 @@ function GenerateEmailDialog({
                 {hasEmail ? (
                   <button
                     className={button({ variant: "solidGreen" })}
-                    onClick={handleSend}
+                    onClick={() => handleSend()}
                     disabled={sending || !editSubject || !editBody}
                   >
                     <PaperPlaneIcon />
-                    Send
+                    {sending ? "Sending…" : "Send now"}
                   </button>
                 ) : (
                   <button className={button({ variant: "ghost" })} disabled>
@@ -319,6 +337,42 @@ function GenerateEmailDialog({
                 )}
               </Flex>
             </Flex>
+
+            {hasEmail && (
+              <>
+                <Separator size="4" />
+                <Flex gap="2" align="center" wrap="wrap">
+                  <ClockIcon />
+                  <Text size="2" color="gray">Schedule:</Text>
+                  {SCHEDULE_DELAYS.map((d) => (
+                    <button
+                      key={d.label}
+                      className={button({ variant: "ghost", size: "sm" })}
+                      onClick={() => handleSend(new Date(Date.now() + d.ms).toISOString())}
+                      disabled={sending || !editSubject || !editBody}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                  <input
+                    type="datetime-local"
+                    value={customTime}
+                    onChange={(e) => setCustomTime(e.target.value)}
+                    style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--gray-6)", background: "transparent", color: "inherit" }}
+                  />
+                  {customTime && (
+                    <button
+                      className={button({ variant: "outline", size: "sm" })}
+                      onClick={() => handleSend(new Date(customTime).toISOString())}
+                      disabled={sending || !editSubject || !editBody}
+                    >
+                      <ClockIcon />
+                      Schedule
+                    </button>
+                  )}
+                </Flex>
+              </>
+            )}
           </Flex>
         )}
       </Dialog.Content>
@@ -359,6 +413,7 @@ function ReplyEmailDialog({
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [customTime, setCustomTime] = useState("");
 
   const { content, partialContent, isStreaming, error, generate, stop, reset } =
     useStreamingReply();
@@ -378,6 +433,7 @@ function ReplyEmailDialog({
       setEditBody("");
       setSendResult(null);
       setCopied(false);
+      setCustomTime("");
     }
   };
 
@@ -411,7 +467,7 @@ function ReplyEmailDialog({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSend = async () => {
+  const handleSend = async (scheduledAt?: string) => {
     const to = receivedEmail.fromEmail;
     if (!to) return;
     setSending(true);
@@ -427,11 +483,17 @@ function ReplyEmailDialog({
           subject: editSubject,
           body: editBody,
           receivedEmailId: receivedEmail.id,
+          ...(scheduledAt && { scheduledAt }),
         }),
       });
-      const json = (await res.json()) as { success: boolean; error?: string };
+      const json = (await res.json()) as { success: boolean; error?: string; scheduled?: boolean };
       if (json.success) {
-        setSendResult({ type: "success", message: `Reply sent to ${to}` });
+        if (json.scheduled) {
+          const when = new Date(scheduledAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          setSendResult({ type: "success", message: `Scheduled for ${when}` });
+        } else {
+          setSendResult({ type: "success", message: `Reply sent to ${to}` });
+        }
         onSent?.();
       } else {
         setSendResult({ type: "error", message: json.error ?? "Send failed" });
@@ -572,20 +634,53 @@ function ReplyEmailDialog({
               <button className={button({ variant: "ghost" })} onClick={() => setStep("compose")}>
                 ← Back
               </button>
-              <Flex gap="2">
+              <Flex gap="2" align="center" wrap="wrap">
                 <button className={button({ variant: "ghost" })} onClick={handleCopy}>
                   <CopyIcon />
                   {copied ? "Copied!" : "Copy"}
                 </button>
                 <button
                   className={button({ variant: "solidGreen" })}
-                  onClick={handleSend}
+                  onClick={() => handleSend()}
                   disabled={sending || !editSubject || !editBody}
                 >
                   <PaperPlaneIcon />
-                  {sending ? "Sending…" : "Send reply"}
+                  {sending ? "Sending…" : "Send now"}
                 </button>
               </Flex>
+            </Flex>
+
+            <Separator size="4" />
+
+            <Flex gap="2" align="center" wrap="wrap">
+              <ClockIcon />
+              <Text size="2" color="gray">Schedule:</Text>
+              {SCHEDULE_DELAYS.map((d) => (
+                <button
+                  key={d.label}
+                  className={button({ variant: "ghost", size: "sm" })}
+                  onClick={() => handleSend(new Date(Date.now() + d.ms).toISOString())}
+                  disabled={sending || !editSubject || !editBody}
+                >
+                  {d.label}
+                </button>
+              ))}
+              <input
+                type="datetime-local"
+                value={customTime}
+                onChange={(e) => setCustomTime(e.target.value)}
+                style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--gray-6)", background: "transparent", color: "inherit" }}
+              />
+              {customTime && (
+                <button
+                  className={button({ variant: "outline", size: "sm" })}
+                  onClick={() => handleSend(new Date(customTime).toISOString())}
+                  disabled={sending || !editSubject || !editBody}
+                >
+                  <ClockIcon />
+                  Schedule
+                </button>
+              )}
             </Flex>
           </Flex>
         )}

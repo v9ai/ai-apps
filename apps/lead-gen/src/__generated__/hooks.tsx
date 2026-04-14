@@ -1060,6 +1060,7 @@ export type ImportCompanyResult = {
 };
 
 export type ImportCompanyWithContactsInput = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
   companyName: Scalars['String']['input'];
   contacts: Array<ImportContactInput>;
   linkedinUrl?: InputMaybe<Scalars['String']['input']>;
@@ -1996,6 +1997,7 @@ export type QueryEmailsNeedingFollowUpArgs = {
 
 
 export type QueryFindCompanyArgs = {
+  linkedinUrl?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
 };

@@ -445,7 +445,7 @@ export const companyMutations = {
   ) {
     requireAdmin(context);
 
-    const { companyName, website, contacts: rawContactInputs, skillFilter } = args.input;
+    const { companyName, companyId: inputCompanyId, website, contacts: rawContactInputs, skillFilter } = args.input;
 
     // Apply skill filter if provided (e.g. ["Python", "Rust"])
     const contactInputs = skillFilter?.length
@@ -461,10 +461,19 @@ export const companyMutations = {
     const errors: string[] = [];
 
     try {
-      // Upsert company: find by linkedin_url first (most reliable), then by name
+      // Upsert company: find by ID first (if provided), then linkedin_url, then by name
       let companyRow: typeof companies.$inferSelect | undefined;
 
-      if (linkedinUrl) {
+      if (inputCompanyId) {
+        const byId = await context.db
+          .select()
+          .from(companies)
+          .where(eq(companies.id, inputCompanyId))
+          .limit(1);
+        companyRow = byId[0];
+      }
+
+      if (!companyRow && linkedinUrl) {
         const byUrl = await context.db
           .select()
           .from(companies)

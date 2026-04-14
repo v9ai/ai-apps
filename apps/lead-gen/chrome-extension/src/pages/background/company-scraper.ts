@@ -197,7 +197,7 @@ export async function scrapeJobs(
 
     if (!numericId) {
       log(`No numeric ID for ${company?.name || baseUrl} — skipping jobs`);
-      return { jobsSaved: 0, hiringContactsSaved: 0, error: "no numeric ID" };
+      return { jobsSaved: 0, jobsUpdated: 0, hiringContactsSaved: 0, error: "no numeric ID" };
     }
 
     if (cancelled) return { jobsSaved: 0, jobsUpdated: 0, hiringContactsSaved: 0 };
@@ -322,6 +322,7 @@ export async function scrapePeople(
   tabId: number,
   baseUrl: string,
   company: CompanyContext | null,
+  companyId: number | null = null,
 ): Promise<PhasePeopleResult> {
   try {
     await safeTabUpdate(tabId, { url: `${baseUrl}/people/` });
@@ -384,6 +385,7 @@ export async function scrapePeople(
         {
           input: {
             companyName: name,
+            companyId: companyId ?? undefined,
             linkedinUrl: company?.linkedinUrl || baseUrl,
             website: company?.website || null,
             contacts: contactInputs,
@@ -466,10 +468,10 @@ export async function scrapeCompanyFull(tabId: number): Promise<CompanyScraperRe
     if (companyData?.name) {
       try {
         const res = await gqlRequest(
-          `query FindCompanyByName($name: String) {
-            findCompany(name: $name) { found company { id name } }
+          `query FindCompany($name: String, $linkedinUrl: String) {
+            findCompany(name: $name, linkedinUrl: $linkedinUrl) { found company { id name } }
           }`,
-          { name: companyData.name },
+          { name: companyData.name, linkedinUrl: companyData.linkedinUrl },
         );
         companyId = res.data?.findCompany?.company?.id ?? null;
       } catch { /* non-critical */ }
@@ -496,7 +498,7 @@ export async function scrapeCompanyFull(tabId: number): Promise<CompanyScraperRe
 
     // Phase 4: People
     await reportProgress(tabId, "Phase 4/4: People…");
-    const peopleResult = await scrapePeople(tabId, baseUrl, companyData);
+    const peopleResult = await scrapePeople(tabId, baseUrl, companyData, companyId);
     result.peopleSaved = peopleResult.saved;
     if (peopleResult.error) result.errors.push(`People: ${peopleResult.error}`);
     await reportProgress(tabId, `Phase 4/4: People — ${peopleResult.saved}/${peopleResult.total}`);

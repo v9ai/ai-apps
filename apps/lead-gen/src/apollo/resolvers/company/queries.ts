@@ -7,7 +7,7 @@ import {
   companyFacts,
   companySnapshots,
 } from "@/db/schema";
-import { eq, and, or, like, asc, desc, gte, sql } from "drizzle-orm";
+import { eq, and, or, like, ilike, asc, desc, gte, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
 import type {
   QueryCompaniesArgs,
@@ -226,29 +226,42 @@ export const companyQueries = {
     context: GraphQLContext,
   ) {
     try {
-      if (!args.name && !args.website) {
+      if (!args.name && !args.website && !args.linkedinUrl) {
         return { found: false, company: null };
       }
 
-      const conditions = [];
+      // Priority 1: exact match by LinkedIn URL (most reliable identifier)
+      if (args.linkedinUrl) {
+        const byUrl = await context.db
+          .select()
+          .from(companies)
+          .where(eq(companies.linkedin_url, args.linkedinUrl.replace(/\/$/, "")))
+          .limit(1);
+        if (byUrl[0]) return { found: true, company: byUrl[0] };
+      }
+
+      // Priority 2: case-insensitive exact match by name
       if (args.name) {
-        conditions.push(like(companies.name, `%${args.name}%`));
+        const byName = await context.db
+          .select()
+          .from(companies)
+          .where(ilike(companies.name, args.name.trim()))
+          .limit(1);
+        if (byName[0]) return { found: true, company: byName[0] };
       }
+
+      // Priority 3: website domain substring (inherently fuzzy)
       if (args.website) {
-        // Match by domain substring
         const domain = args.website.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
-        conditions.push(like(companies.website, `%${domain}%`));
+        const escaped = domain.replace(/%/g, "\\%").replace(/_/g, "\\_");
+        const byDomain = await context.db
+          .select()
+          .from(companies)
+          .where(like(companies.website, `%${escaped}%`))
+          .limit(1);
+        if (byDomain[0]) return { found: true, company: byDomain[0] };
       }
 
-      const rows = await context.db
-        .select()
-        .from(companies)
-        .where(or(...conditions))
-        .limit(1);
-
-      if (rows[0]) {
-        return { found: true, company: rows[0] };
-      }
       return { found: false, company: null };
     } catch (error) {
       console.error("Error finding company:", error);
