@@ -402,6 +402,7 @@ async fn main() -> anyhow::Result<()> {
             &repos_json,
             record.user.pinned_repos_json.as_deref(),
             record.user.contributed_repos_json.as_deref(),
+            record.user.top_repos_json.as_deref(),
         );
         let skills: Vec<String> = extract_skills(&skills_text)
             .into_iter()

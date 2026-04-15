@@ -83,6 +83,8 @@ pub struct GhUser {
     #[serde(default)]
     pub organizations_json: Option<String>,
     #[serde(default)]
+    pub top_repos_json: Option<String>,
+    #[serde(default)]
     pub status_message: Option<String>,
     // ── Enriched fields from contributionCalendar ────────────────
     #[serde(default)]

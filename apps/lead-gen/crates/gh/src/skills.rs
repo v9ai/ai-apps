@@ -47,13 +47,15 @@ pub fn extract_skills(text: &str) -> Vec<&'static str> {
 }
 
 /// Build the skill-input text for a contributor record:
-/// bio + company + status + AI repo names + pinned repo names + contributed-to repo names/topics.
+/// bio + company + status + AI repo names + pinned repo names/languages +
+/// contributed-to repo names/topics/languages + top own repo names/languages.
 pub fn contributor_skills_text(
     bio: Option<&str>,
     company: Option<&str>,
     repos_json: &str,
     pinned_repos_json: Option<&str>,
     contributed_repos_json: Option<&str>,
+    top_repos_json: Option<&str>,
 ) -> String {
     use crate::types::{PinnedRepo, ContributedRepo};
     use serde_json::Value;
@@ -77,17 +79,21 @@ pub fn contributor_skills_text(
         }
     }
 
-    // Pinned repos — names often reveal specialisation
+    // Pinned repos — names and languages reveal specialisation
     if let Some(json) = pinned_repos_json {
         if let Ok(pinned) = serde_json::from_str::<Vec<PinnedRepo>>(json) {
             for p in &pinned {
                 text.push(' ');
                 text.push_str(&p.name);
+                if let Some(lang) = &p.language {
+                    text.push(' ');
+                    text.push_str(lang);
+                }
             }
         }
     }
 
-    // Contributed-to repos — names and topics are high-signal
+    // Contributed-to repos — names, topics, and languages are high-signal
     if let Some(json) = contributed_repos_json {
         if let Ok(contribs) = serde_json::from_str::<Vec<ContributedRepo>>(json) {
             for c in &contribs {
@@ -96,6 +102,24 @@ pub fn contributor_skills_text(
                 for topic in &c.topics {
                     text.push(' ');
                     text.push_str(topic);
+                }
+                if let Some(lang) = &c.language {
+                    text.push(' ');
+                    text.push_str(lang);
+                }
+            }
+        }
+    }
+
+    // Top own repos — names and languages (same PinnedRepo format)
+    if let Some(json) = top_repos_json {
+        if let Ok(top) = serde_json::from_str::<Vec<PinnedRepo>>(json) {
+            for r in &top {
+                text.push(' ');
+                text.push_str(&r.name);
+                if let Some(lang) = &r.language {
+                    text.push(' ');
+                    text.push_str(lang);
                 }
             }
         }
@@ -157,6 +181,7 @@ mod tests {
             repos_json,
             None,
             None,
+            None,
         );
         assert!(text.contains("RAG"));
         assert!(text.contains("openai"));
@@ -165,14 +190,14 @@ mod tests {
 
     #[test]
     fn contributor_skills_text_handles_none_fields() {
-        let text = contributor_skills_text(None, None, "[]", None, None);
+        let text = contributor_skills_text(None, None, "[]", None, None, None);
         assert!(text.is_empty());
     }
 
     #[test]
     fn contributor_skills_text_handles_invalid_json() {
         // Bad JSON → repos silently ignored, bio/company still included
-        let text = contributor_skills_text(Some("bio"), None, "not-json", None, None);
+        let text = contributor_skills_text(Some("bio"), None, "not-json", None, None, None);
         assert_eq!(text, "bio");
     }
 
@@ -180,9 +205,21 @@ mod tests {
     fn contributor_skills_text_includes_pinned_and_contributed() {
         let pinned = r#"[{"name":"my-rag-agent","stars":10,"language":"Python"}]"#;
         let contributed = r#"[{"name_with_owner":"langchain-ai/langchain","stars":100,"language":"Python","topics":["llm","agent"]}]"#;
-        let text = contributor_skills_text(Some("bio"), None, "[]", Some(pinned), Some(contributed));
+        let text = contributor_skills_text(Some("bio"), None, "[]", Some(pinned), Some(contributed), None);
         assert!(text.contains("my-rag-agent"));
         assert!(text.contains("langchain-ai/langchain"));
         assert!(text.contains("agent"));
+        assert!(text.contains("Python"), "language should be included in text");
+    }
+
+    #[test]
+    fn contributor_skills_text_includes_top_repos_and_languages() {
+        let top = r#"[{"name":"graphify","stars":27200,"language":"Python"},{"name":"kg-system","stars":5,"language":"Rust"}]"#;
+        let text = contributor_skills_text(Some("AI researcher"), None, "[]", None, None, Some(top));
+        assert!(text.contains("graphify"), "top repo name should be in text");
+        assert!(text.contains("Python"), "top repo language should be in text");
+        assert!(text.contains("Rust"), "second repo language should be in text");
+        let skills = extract_skills(&text);
+        assert!(skills.contains(&"python"), "python should be extracted: {:?}", skills);
     }
 }

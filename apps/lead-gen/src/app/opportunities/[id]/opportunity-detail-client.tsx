@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Badge,
   Card,
@@ -22,9 +23,10 @@ import {
   EnvelopeClosedIcon,
   GitHubLogoIcon,
   PlusIcon,
+  TrashIcon,
 } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
-import { updateOpportunityTags } from "../actions";
+import { updateOpportunityTags, deleteOpportunity } from "../actions";
 import { FollowUpEmailDialog } from "@/components/emails/follow-up-email-dialog";
 
 type OpportunityDetail = {
@@ -141,11 +143,21 @@ export function OpportunityDetailClient({
   opportunity: OpportunityDetail;
   sourcedCandidates?: SourcedCandidate[];
 }) {
+  const router = useRouter();
   const initialTags: string[] = opp.tags ? JSON.parse(opp.tags) : [];
   const meta: Record<string, string> = opp.metadata ? JSON.parse(opp.metadata) : {};
   const [tags, setTags] = useState(initialTags);
   const [newTag, setNewTag] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
+
+  function handleDelete() {
+    if (!confirm("Delete this opportunity?")) return;
+    startDeleteTransition(async () => {
+      const result = await deleteOpportunity(opp.id);
+      if (!result.error) router.push("/opportunities");
+    });
+  }
 
   function addTag(tag: string) {
     const t = tag.trim().toLowerCase();
@@ -195,6 +207,16 @@ export function OpportunityDetailClient({
           )}
           {opp.source && <Badge variant="surface" color="gray" size="1">{opp.source}</Badge>}
           {opp.applied && <Badge color="orange" size="1">applied</Badge>}
+          <IconButton
+            size="2"
+            variant="soft"
+            color="red"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            style={{ marginLeft: "auto" }}
+          >
+            <TrashIcon width={14} height={14} />
+          </IconButton>
         </Flex>
       </Flex>
 

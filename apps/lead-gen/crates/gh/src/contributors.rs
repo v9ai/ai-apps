@@ -161,10 +161,11 @@ pub fn compute_rising_score(record: &ContributorRecord, skill_count: usize) -> R
     let presence = public_repos + followers;
     let realness = 0.5 + 0.5 * (presence * 0.2_f32).tanh();
 
-    // ── Contribution quality (external repo impact) ─────────────────
+    // ── Contribution quality (own project + external repo impact) ────
     let contribution_quality = compute_contribution_quality(
         &record.user.login,
         record.user.contributed_repos_json.as_deref(),
+        record.user.top_repos_json.as_deref(),
     );
 
     // ── Weighted sum ────────────────────────────────────────────────
@@ -288,10 +289,11 @@ pub fn compute_strength_score(record: &ContributorRecord, skill_count: usize) ->
     let presence = public_repos + followers;
     let realness = 0.5 + 0.5 * (presence * 0.2_f32).tanh();
 
-    // ── Contribution quality (external repo impact) ─────────────────
+    // ── Contribution quality (own project + external repo impact) ────
     let contribution_quality = compute_contribution_quality(
         &record.user.login,
         record.user.contributed_repos_json.as_deref(),
+        record.user.top_repos_json.as_deref(),
     );
 
     // ── Weighted sum ───────────────────────────────────────────────
@@ -346,36 +348,59 @@ pub fn compute_opp_skill_match(candidate_skills: &[String], opp_skills: &[String
 
 /// Compute contribution quality: how impactful are this user's contributions?
 ///
-/// Rewards commits to external (non-owned) repos with high star counts and
-/// AI-relevant topics. Penalises profiles that only commit to their own repos.
+/// Five sub-signals:
+/// - Own project impact (0.30): star power of the user's own top repos
+/// - External ratio (0.18): fraction of contributed repos not owned by user
+/// - Star quality of external repos (0.25): top-3 external repo stars
+/// - External breadth (0.10): number of external repos contributed to
+/// - AI relevance (0.17): fraction of all repos with AI-related topics
+///
 /// Returns 0.0–1.0.
-pub fn compute_contribution_quality(login: &str, contributed_repos_json: Option<&str>) -> f32 {
-    let json = match contributed_repos_json {
-        Some(j) if !j.is_empty() => j,
-        _ => return 0.0,
-    };
+pub fn compute_contribution_quality(
+    login: &str,
+    contributed_repos_json: Option<&str>,
+    top_repos_json: Option<&str>,
+) -> f32 {
+    // Parse own top repos (by stars)
+    let own_repos: Vec<crate::types::PinnedRepo> = top_repos_json
+        .filter(|j| !j.is_empty())
+        .and_then(|j| serde_json::from_str(j).ok())
+        .unwrap_or_default();
 
-    let repos: Vec<crate::types::ContributedRepo> = match serde_json::from_str(json) {
-        Ok(v) => v,
-        Err(_) => return 0.0,
-    };
-    if repos.is_empty() {
+    // Parse external contributed repos
+    let contributed: Vec<crate::types::ContributedRepo> = contributed_repos_json
+        .filter(|j| !j.is_empty())
+        .and_then(|j| serde_json::from_str(j).ok())
+        .unwrap_or_default();
+
+    // Nothing at all → 0.0
+    if own_repos.is_empty() && contributed.is_empty() {
         return 0.0;
     }
 
-    let login_prefix = format!("{login}/");
-    let total = repos.len() as f32;
+    // ── Signal A: Own project impact (0.30) ────────────────────────
+    let own_project_impact = if own_repos.is_empty() {
+        0.0
+    } else {
+        let max_stars = own_repos.iter().map(|r| r.stars).max().unwrap_or(0);
+        (max_stars as f32 + 1.0).ln() / 100_001_f32.ln()
+    };
 
-    // External repos: not owned by this user
-    let external: Vec<&crate::types::ContributedRepo> = repos
+    // ── External repos: not owned by this user ─────────────────────
+    let login_prefix = format!("{login}/");
+    let external: Vec<&crate::types::ContributedRepo> = contributed
         .iter()
         .filter(|r| !r.name_with_owner.starts_with(&login_prefix))
         .collect();
 
-    // Signal A: External contribution ratio (0.30)
-    let external_ratio = external.len() as f32 / total;
+    // ── Signal B: External contribution ratio (0.18) ───────────────
+    let external_ratio = if contributed.is_empty() {
+        0.0
+    } else {
+        external.len() as f32 / contributed.len() as f32
+    };
 
-    // Signal B: Star quality of external repos — top-3 mean (0.35)
+    // ── Signal C: Star quality of external repos — top-3 mean (0.25)
     let star_quality = if external.is_empty() {
         0.0
     } else {
@@ -388,21 +413,37 @@ pub fn compute_contribution_quality(login: &str, contributed_repos_json: Option<
         star_scores[..top_n].iter().sum::<f32>() / top_n as f32
     };
 
-    // Signal C: External breadth (0.15)
+    // ── Signal D: External breadth (0.10) ──────────────────────────
     let external_breadth = (external.len() as f32 / 5.0).min(1.0);
 
-    // Signal D: AI relevance — fraction of repos with AI topics (0.20)
-    let ai_count = repos
-        .iter()
-        .filter(|r| {
-            r.topics.iter().any(|t| {
-                AI_RELEVANT_TOPICS.contains(&t.as_str())
-            })
-        })
-        .count() as f32;
-    let ai_relevance = ai_count / total;
+    // ── Signal E: AI relevance — across all repos (0.17) ───────────
+    let mut ai_total = 0usize;
+    let mut repo_count = 0usize;
+    for r in &contributed {
+        repo_count += 1;
+        if r.topics.iter().any(|t| AI_RELEVANT_TOPICS.contains(&t.as_str())) {
+            ai_total += 1;
+        }
+    }
+    // Check own repo names for AI keywords (they don't have topics in PinnedRepo)
+    for r in &own_repos {
+        repo_count += 1;
+        let name_lower = r.name.to_lowercase();
+        if AI_RELEVANT_TOPICS.iter().any(|&kw| name_lower.contains(kw)) {
+            ai_total += 1;
+        }
+    }
+    let ai_relevance = if repo_count > 0 {
+        ai_total as f32 / repo_count as f32
+    } else {
+        0.0
+    };
 
-    (0.30 * external_ratio + 0.35 * star_quality + 0.15 * external_breadth + 0.20 * ai_relevance)
+    (0.30 * own_project_impact
+        + 0.18 * external_ratio
+        + 0.25 * star_quality
+        + 0.10 * external_breadth
+        + 0.17 * ai_relevance)
         .clamp(0.0, 1.0)
 }
 
@@ -1789,13 +1830,13 @@ mod tests {
 
     #[test]
     fn contribution_quality_zero_when_no_data() {
-        assert_eq!(compute_contribution_quality("testuser", None), 0.0);
-        assert_eq!(compute_contribution_quality("testuser", Some("")), 0.0);
-        assert_eq!(compute_contribution_quality("testuser", Some("[]")), 0.0);
+        assert_eq!(compute_contribution_quality("testuser", None, None), 0.0);
+        assert_eq!(compute_contribution_quality("testuser", Some(""), None), 0.0);
+        assert_eq!(compute_contribution_quality("testuser", Some("[]"), None), 0.0);
     }
 
     #[test]
-    fn contribution_quality_zero_when_all_self_owned() {
+    fn contribution_quality_zero_when_all_self_owned_no_own_repos() {
         let repos = serde_json::to_string(&vec![
             crate::types::ContributedRepo {
                 name_with_owner: "testuser/my-repo".into(),
@@ -1810,8 +1851,8 @@ mod tests {
                 topics: vec![],
             },
         ]).unwrap();
-        let cq = compute_contribution_quality("testuser", Some(&repos));
-        assert!(cq < 0.05, "self-only repos should score near 0, got {cq}");
+        let cq = compute_contribution_quality("testuser", Some(&repos), None);
+        assert!(cq < 0.05, "self-only repos with no own stars should score near 0, got {cq}");
     }
 
     #[test]
@@ -1830,8 +1871,27 @@ mod tests {
                 topics: vec!["transformers".into(), "pytorch".into(), "machine-learning".into()],
             },
         ]).unwrap();
-        let cq = compute_contribution_quality("testuser", Some(&repos));
-        assert!(cq > 0.7, "external high-star AI repos should score high, got {cq}");
+        let cq = compute_contribution_quality("testuser", Some(&repos), None);
+        assert!(cq > 0.6, "external high-star AI repos should score high, got {cq}");
+    }
+
+    #[test]
+    fn contribution_quality_from_own_repos_only() {
+        // safishamsi scenario: no external contributions but owns a 27k-star repo
+        let own_repos = serde_json::to_string(&vec![
+            crate::types::PinnedRepo {
+                name: "graphify".into(),
+                stars: 27_200,
+                language: Some("Python".into()),
+            },
+            crate::types::PinnedRepo {
+                name: "mycetoma-kg-rag".into(),
+                stars: 22,
+                language: Some("Python".into()),
+            },
+        ]).unwrap();
+        let cq = compute_contribution_quality("safishamsi", None, Some(&own_repos));
+        assert!(cq > 0.20, "27k-star own repo should give meaningful cq, got {cq}");
     }
 
     #[test]
@@ -1841,7 +1901,7 @@ mod tests {
             r#"[{"name_with_owner":"org/repo","stars":100000,"language":"Python","topics":["machine-learning"]}]"#,
             r#"[{"name_with_owner":"me/repo","stars":50,"language":null,"topics":[]}]"#,
         ] {
-            let cq = compute_contribution_quality("me", Some(json));
+            let cq = compute_contribution_quality("me", Some(json), None);
             assert!(
                 (0.0..=1.0).contains(&cq),
                 "contribution_quality={cq} out of [0,1] for {json}",
@@ -1867,8 +1927,8 @@ mod tests {
                 topics: vec!["pytorch".into(), "deep-learning".into()],
             },
         ]).unwrap();
-        let score_self = compute_contribution_quality("alice", Some(&self_only));
-        let score_ext = compute_contribution_quality("alice", Some(&external));
+        let score_self = compute_contribution_quality("alice", Some(&self_only), None);
+        let score_ext = compute_contribution_quality("alice", Some(&external), None);
         assert!(
             score_ext > score_self,
             "external={score_ext:.3} should beat self-only={score_self:.3}",

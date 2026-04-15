@@ -305,8 +305,11 @@ impl GhClient {
         pinnedItems(first: 6) {
             nodes { ... on Repository { name stargazerCount primaryLanguage { name } } }
         }
-        repositoriesContributedTo(first: 10, contributionTypes: COMMIT, orderBy: {field: STARGAZERS, direction: DESC}) {
+        repositoriesContributedTo(first: 10, contributionTypes: [COMMIT, PULL_REQUEST], orderBy: {field: STARGAZERS, direction: DESC}) {
             nodes { nameWithOwner stargazerCount primaryLanguage { name } repositoryTopics(first: 5) { nodes { topic { name } } } }
+        }
+        topRepositories: repositories(first: 3, orderBy: {field: STARGAZERS, direction: DESC}, privacy: PUBLIC, isFork: false) {
+            nodes { name stargazerCount primaryLanguage { name } repositoryTopics(first: 5) { nodes { topic { name } } } }
         }
         organizations(first: 5) { nodes { login name } }
         status { message }
@@ -407,6 +410,23 @@ impl GhClient {
             })
             .filter(|s| s != "[]");
 
+        // ── Enriched: topRepositories (user's own, by stars) ─────────
+        let top_repos_json = value["topRepositories"]["nodes"]
+            .as_array()
+            .map(|nodes| {
+                let repos: Vec<PinnedRepo> = nodes
+                    .iter()
+                    .filter(|n| n.get("name").is_some())
+                    .map(|n| PinnedRepo {
+                        name: n["name"].as_str().unwrap_or_default().to_string(),
+                        stars: n["stargazerCount"].as_u64().unwrap_or(0) as u32,
+                        language: n["primaryLanguage"]["name"].as_str().map(String::from),
+                    })
+                    .collect();
+                serde_json::to_string(&repos).unwrap_or_default()
+            })
+            .filter(|s| s != "[]");
+
         // ── Enriched: organizations ──────────────────────────────────
         let organizations_json = value["organizations"]["nodes"]
             .as_array()
@@ -434,8 +454,8 @@ impl GhClient {
             hireable, created_at, updated_at,
             total_commit_contributions, total_pr_contributions,
             total_review_contributions, total_repos_contributed_to,
-            pinned_repos_json, contributed_repos_json, organizations_json,
-            status_message,
+            pinned_repos_json, contributed_repos_json, top_repos_json,
+            organizations_json, status_message,
             has_any_contributions, contribution_calendar_json, activity_profile,
         }
     }

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Container, Heading, Text, Table, Badge, Flex, Button } from "@radix-ui/themes";
 import Link from "next/link";
 import { Cross2Icon, ExternalLinkIcon } from "@radix-ui/react-icons";
+import { EvalStatsPanel } from "./eval-stats-panel";
 
 type OpportunityRow = {
   id: string;
@@ -139,6 +140,8 @@ export function OpportunitiesClient({ opportunities }: { opportunities: Opportun
           <Text size="1" color="gray" ml="2">click = include · right-click = exclude</Text>
         </Flex>
       )}
+
+      <EvalStatsPanel />
 
       {filtered.length === 0 ? (
         <Text color="gray">No opportunities match the current filters.</Text>
