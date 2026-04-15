@@ -14,7 +14,7 @@
 ///   OPP_ID                 Opportunity ID for contact tags
 ///                          (default: opp_20260415_principal_ai_eng_ob)
 ///   EXPORT_THRESHOLD       Minimum rising_score to export (default: 0.3)
-///   TOP_N                  Rising stars to display (default: 50)
+///   TOP_N                  Top candidates to display (default: 50)
 ///   DRY_RUN                Set to "1" to skip all DB writes
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
@@ -23,7 +23,7 @@ use regex::Regex;
 use tracing::{info, warn};
 
 use github_patterns::contributors::{
-    compute_rising_score, is_bot, ContributorRecord, ContributorsDb, RepoContrib, RisingStar,
+    compute_rising_score, is_bot, ContributorRecord, ContributorsDb, RepoContrib, Candidate,
 };
 use github_patterns::skills::{contributor_skills_text, extract_skills};
 use github_patterns::GhClient;
@@ -363,8 +363,8 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    // ── Phase 4: Build RisingStar entries ────────────────────────────────────
-    let mut stars: Vec<(RisingStar, bool)> = Vec::new();
+    // ── Phase 4: Build Candidate entries ────────────────────────────────────
+    let mut ranked: Vec<(Candidate, bool)> = Vec::new();
     for (record, london_verified) in &candidates {
         let repos_json = serde_json::to_string(&record.repos).unwrap_or_default();
         let skills_text = contributor_skills_text(
@@ -380,8 +380,8 @@ async fn main() -> anyhow::Result<()> {
             .collect();
         let score = compute_rising_score(record, skills.len());
 
-        stars.push((
-            RisingStar {
+        ranked.push((
+            Candidate {
                 login: record.user.login.clone(),
                 html_url: record.user.html_url.clone(),
                 name: record.user.name.clone(),
@@ -406,11 +406,11 @@ async fn main() -> anyhow::Result<()> {
     }
 
     // Sort by score descending
-    stars.sort_by(|a, b| b.0.rising_score.partial_cmp(&a.0.rising_score).unwrap());
+    ranked.sort_by(|a, b| b.0.rising_score.partial_cmp(&a.0.rising_score).unwrap());
 
     // ── Channel 5: Network expansion — followers of top candidates ──────────
     // Take top 15 and mine their followers for more candidates
-    let seed_logins: Vec<String> = stars
+    let seed_logins: Vec<String> = ranked
         .iter()
         .take(15)
         .map(|(s, _)| s.login.clone())
@@ -419,7 +419,7 @@ async fn main() -> anyhow::Result<()> {
     if !seed_logins.is_empty() {
         info!("Channel 5: network expansion from top {} seeds", seed_logins.len());
         let mut network_logins: HashSet<String> = HashSet::new();
-        let existing_logins: HashSet<String> = stars.iter().map(|(s, _)| s.login.clone()).collect();
+        let existing_logins: HashSet<String> = ranked.iter().map(|(s, _)| s.login.clone()).collect();
 
         for seed in &seed_logins {
             match gh.get_user_followers_graphql(seed, 20).await {
@@ -486,8 +486,8 @@ async fn main() -> anyhow::Result<()> {
                                 .collect();
                             let score = compute_rising_score(&record, skills.len());
 
-                            stars.push((
-                                RisingStar {
+                            ranked.push((
+                                Candidate {
                                     login: record.user.login.clone(),
                                     html_url: record.user.html_url.clone(),
                                     name: record.user.name.clone(),
@@ -523,14 +523,14 @@ async fn main() -> anyhow::Result<()> {
         }
 
         // Re-sort after network expansion
-        stars.sort_by(|a, b| b.0.rising_score.partial_cmp(&a.0.rising_score).unwrap());
-        info!("Channel 5 done: {} total candidates", stars.len());
+        ranked.sort_by(|a, b| b.0.rising_score.partial_cmp(&a.0.rising_score).unwrap());
+        info!("Channel 5 done: {} total candidates", ranked.len());
     }
 
     // ── Print summary ───────────────────────────────────────────────────────
-    let display_n = stars.len().min(top_n);
+    let display_n = ranked.len().min(top_n);
     println!("\n╔══ LONDON AI CANDIDATES v2 — {opp_id} ═══════════════════════╗");
-    for (rank, (s, london)) in stars.iter().take(display_n).enumerate() {
+    for (rank, (s, london)) in ranked.iter().take(display_n).enumerate() {
         let name = s.name.as_deref().unwrap_or(&s.login);
         let company = s.company.as_deref().unwrap_or("-");
         let location = s.location.as_deref().unwrap_or("-");
@@ -564,11 +564,11 @@ async fn main() -> anyhow::Result<()> {
     println!("╚══════════════════════════════════════════════════════════════════╝");
     println!(
         "Summary: {} total candidates, {} London-verified, {} UK-wide",
-        stars.len(),
-        stars.iter().filter(|(_, l)| *l).count(),
-        stars.iter().filter(|(_, l)| !*l).count(),
+        ranked.len(),
+        ranked.iter().filter(|(_, l)| *l).count(),
+        ranked.iter().filter(|(_, l)| !*l).count(),
     );
-    let above_threshold = stars.iter().filter(|(s, _)| s.rising_score >= threshold).count();
+    let above_threshold = ranked.iter().filter(|(s, _)| s.rising_score >= threshold).count();
     println!("  {} above {threshold:.2} threshold", above_threshold);
 
     // ── Export to Neon ───────────────────────────────────────────────────────
@@ -593,7 +593,7 @@ async fn main() -> anyhow::Result<()> {
         let mut exported = 0u32;
         let mut skipped = 0u32;
 
-        for (star, london_verified) in &stars {
+        for (candidate, london_verified) in &ranked {
             let mut extra_tags = vec![
                 format!("opp:{opp_id}"),
                 "github:candidate-search-v2".to_string(),
@@ -604,22 +604,22 @@ async fn main() -> anyhow::Result<()> {
                 extra_tags.push("location:uk-wide".to_string());
             }
             // Add source provenance tags
-            if let Some(src) = sources.get(&star.login) {
+            if let Some(src) = sources.get(&candidate.login) {
                 for s in src {
                     extra_tags.push(s.clone());
                 }
             }
 
-            match save_contributor_contact(&pool, star, threshold, &extra_tags).await {
+            match save_contributor_contact(&pool, candidate, threshold, &extra_tags).await {
                 Ok(Some(id)) => {
                     exported += 1;
-                    tracing::debug!("exported {} → contacts id={id}", star.login);
+                    tracing::debug!("exported {} → contacts id={id}", candidate.login);
                 }
                 Ok(None) => {
                     skipped += 1;
                 }
                 Err(e) => {
-                    warn!("failed to export {}: {e}", star.login);
+                    warn!("failed to export {}: {e}", candidate.login);
                 }
             }
         }

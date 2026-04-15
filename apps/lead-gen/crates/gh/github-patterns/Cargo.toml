@@ -20,7 +20,7 @@ lance    = ["client", "dep:lancedb", "dep:arrow-array", "dep:arrow-schema",
             "tokio/macros", "tokio/rt-multi-thread"]
 # Embed contributor bio+repos text into LanceDB for semantic search
 contrib-embed = ["lance", "embed"]
-# ICP feature bridge — map RisingStar → Vec<f32> for ML scorers (no leadgen dep)
+# ICP feature bridge — map Candidate → Vec<f32> for ML scorers (no leadgen dep)
 icp      = ["lance"]
 
 [dependencies]

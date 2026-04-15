@@ -1,4 +1,4 @@
-/// ICP Feature Bridge — map a `RisingStar` to ML-ready feature vectors.
+/// ICP Feature Bridge — map a `Candidate` to ML-ready feature vectors.
 ///
 /// Produces:
 /// - `contributor_to_features`     → `Vec<f32>` (8 dims, all in 0..1) for
@@ -7,7 +7,7 @@
 ///   `OnlineLearner::hash_features` (values formatted as f64 strings).
 ///
 /// No dependency on `crates/leadgen` — this crate stays self-contained.
-use crate::contributors::RisingStar;
+use crate::contributors::Candidate;
 
 /// Human-readable names for each feature dimension (matches vector index).
 pub const FEATURE_NAMES: [&str; 8] = [
@@ -21,7 +21,7 @@ pub const FEATURE_NAMES: [&str; 8] = [
     "log_ai_repos",
 ];
 
-/// Map a `RisingStar` to an 8-element feature vector, all values in `[0, 1]`.
+/// Map a `Candidate` to an 8-element feature vector, all values in `[0, 1]`.
 ///
 /// | idx | field                | normalisation                                  |
 /// |-----|----------------------|------------------------------------------------|
@@ -33,31 +33,31 @@ pub const FEATURE_NAMES: [&str; 8] = [
 /// |   5 | followers            | `ln(followers + 1) / 15.0`, clamped to 0..1   |
 /// |   6 | public_repos         | `ln(public_repos + 1) / 6.0`, clamped to 0..1 |
 /// |   7 | ai_repos_count       | `ln(count + 1) / ln(6)`, clamped to 0..1      |
-pub fn contributor_to_features(star: &RisingStar) -> Vec<f32> {
-    let log_followers = (star.followers as f32 + 1.0).ln() / 15.0;
-    let log_repos = (star.public_repos as f32 + 1.0).ln() / 6.0;
+pub fn contributor_to_features(candidate: &Candidate) -> Vec<f32> {
+    let log_followers = (candidate.followers as f32 + 1.0).ln() / 15.0;
+    let log_repos = (candidate.public_repos as f32 + 1.0).ln() / 6.0;
     // ln(6) ≈ 1.7918 — normalises so that 5 AI repos → 1.0
-    let log_ai_repos = (star.ai_repos_count as f32 + 1.0).ln() / 6.0_f32.ln();
+    let log_ai_repos = (candidate.ai_repos_count as f32 + 1.0).ln() / 6.0_f32.ln();
 
     vec![
-        star.rising_score,
-        star.contribution_density,
-        star.novelty,
-        star.breadth,
-        star.realness,
+        candidate.rising_score,
+        candidate.contribution_density,
+        candidate.novelty,
+        candidate.breadth,
+        candidate.realness,
         log_followers.clamp(0.0, 1.0),
         log_repos.clamp(0.0, 1.0),
         log_ai_repos.clamp(0.0, 1.0),
     ]
 }
 
-/// Map a `RisingStar` to `(feature_name, value_str)` pairs for
+/// Map a `Candidate` to `(feature_name, value_str)` pairs for
 /// `OnlineLearner::hash_features`.
 ///
 /// Values are formatted as 6-decimal float strings so
 /// `value.parse::<f64>()` succeeds.
-pub fn contributor_to_hash_features(star: &RisingStar) -> Vec<(String, String)> {
-    contributor_to_features(star)
+pub fn contributor_to_hash_features(candidate: &Candidate) -> Vec<(String, String)> {
+    contributor_to_features(candidate)
         .into_iter()
         .zip(FEATURE_NAMES)
         .map(|(v, name)| (name.to_string(), format!("{v:.6}")))
@@ -67,15 +67,15 @@ pub fn contributor_to_hash_features(star: &RisingStar) -> Vec<(String, String)> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contributors::RisingStar;
+    use crate::contributors::Candidate;
 
-    fn make_star(
+    fn make_candidate(
         rising_score: f32,
         followers: u32,
         public_repos: u32,
         ai_repos: usize,
-    ) -> RisingStar {
-        RisingStar {
+    ) -> Candidate {
+        Candidate {
             login: "test".into(),
             html_url: "https://github.com/test".into(),
             name: None,
@@ -99,8 +99,8 @@ mod tests {
 
     #[test]
     fn feature_vector_has_8_elements() {
-        let star = make_star(0.5, 100, 20, 3);
-        assert_eq!(contributor_to_features(&star).len(), 8);
+        let candidate = make_candidate(0.5, 100, 20, 3);
+        assert_eq!(contributor_to_features(&candidate).len(), 8);
     }
 
     #[test]
@@ -111,8 +111,8 @@ mod tests {
     #[test]
     fn all_features_in_unit_range() {
         for (followers, repos, ai_repos) in [(0u32, 0u32, 0usize), (50_000, 200, 50), (100, 30, 3)] {
-            let star = make_star(0.7, followers, repos, ai_repos);
-            for (i, v) in contributor_to_features(&star).iter().enumerate() {
+            let candidate = make_candidate(0.7, followers, repos, ai_repos);
+            for (i, v) in contributor_to_features(&candidate).iter().enumerate() {
                 assert!(
                     (0.0..=1.0).contains(v),
                     "feature[{i}] ({}) = {v} out of range for followers={followers}",
@@ -124,8 +124,8 @@ mod tests {
 
     #[test]
     fn hash_features_values_parse_as_f64() {
-        let star = make_star(0.6, 50, 10, 2);
-        for (name, val) in contributor_to_hash_features(&star) {
+        let candidate = make_candidate(0.6, 50, 10, 2);
+        for (name, val) in contributor_to_hash_features(&candidate) {
             val.parse::<f64>()
                 .unwrap_or_else(|_| panic!("feature {name}={val} must parse as f64"));
         }
@@ -133,16 +133,16 @@ mod tests {
 
     #[test]
     fn hash_feature_names_match_feature_names_const() {
-        let star = make_star(0.5, 10, 5, 2);
-        let pairs = contributor_to_hash_features(&star);
+        let candidate = make_candidate(0.5, 10, 5, 2);
+        let pairs = contributor_to_hash_features(&candidate);
         let names: Vec<&str> = pairs.iter().map(|(n, _)| n.as_str()).collect();
         assert_eq!(names, FEATURE_NAMES.as_slice());
     }
 
     #[test]
     fn zero_followers_log_feature_is_zero() {
-        let star = make_star(0.5, 0, 5, 1);
-        let features = contributor_to_features(&star);
+        let candidate = make_candidate(0.5, 0, 5, 1);
+        let features = contributor_to_features(&candidate);
         // ln(0+1) / 15 = 0/15 = 0
         assert!(
             (features[5] - 0.0).abs() < 1e-6,
@@ -153,8 +153,8 @@ mod tests {
 
     #[test]
     fn five_ai_repos_saturates_ai_repos_feature() {
-        let star = make_star(0.5, 0, 5, 5);
-        let features = contributor_to_features(&star);
+        let candidate = make_candidate(0.5, 0, 5, 5);
+        let features = contributor_to_features(&candidate);
         // ln(5+1) / ln(6) = ln(6) / ln(6) = 1.0
         assert!(
             (features[7] - 1.0).abs() < 1e-5,
@@ -165,8 +165,8 @@ mod tests {
 
     #[test]
     fn more_followers_gives_higher_log_followers() {
-        let low = contributor_to_features(&make_star(0.5, 10, 5, 1));
-        let high = contributor_to_features(&make_star(0.5, 10_000, 5, 1));
+        let low = contributor_to_features(&make_candidate(0.5, 10, 5, 1));
+        let high = contributor_to_features(&make_candidate(0.5, 10_000, 5, 1));
         assert!(
             high[5] > low[5],
             "10k followers ({}) should score higher than 10 ({}) on log_followers",

@@ -1,12 +1,12 @@
 /// scrape_contributors — Scrape contributors of AI GitHub projects into LanceDB,
-/// then rank them by rising-star score.
+/// then rank them by candidate score.
 ///
 /// Modes (SCRAPE_MODE env var):
 ///
 ///   discover (default) — search GitHub for AI repos by topic and scrape
 ///                         their top contributors.
 ///   repo               — scrape a single repo given by GH_REPO.
-///   top                — print top N rising stars from existing DB (no scraping).
+///   top                — print top N candidates from existing DB (no scraping).
 ///
 /// Environment variables:
 ///   GITHUB_TOKEN              GitHub PAT with public repo read access (required for scraping)
@@ -18,7 +18,7 @@
 ///   GH_REPO                   Specific "owner/repo" for repo mode
 ///   MAX_REPOS                 Max repos to scrape in discover mode (default: 20)
 ///   MAX_CONTRIBUTORS_PER_REPO Max contributors fetched per repo (default: 100)
-///   TOP_N                     Rising stars to display (default: 25)
+///   TOP_N                     Top candidates to display (default: 25)
 use std::time::Duration;
 
 use tracing::{error, info, warn};
@@ -51,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|s| s.parse().ok())
             .unwrap_or(25);
-        print_top_rising(&db, n).await?;
+        print_top_candidates(&db, n).await?;
         return Ok(());
     }
 
@@ -79,12 +79,12 @@ async fn main() -> anyhow::Result<()> {
     let total = db.count().await;
     info!("scraping done — {total} total contributors in DB");
 
-    // Always print top stars after a scrape run
+    // Always print top candidates after a scrape run
     let top_n: usize = std::env::var("TOP_N")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(25);
-    print_top_rising(&db, top_n).await?;
+    print_top_candidates(&db, top_n).await?;
 
     Ok(())
 }
@@ -208,17 +208,17 @@ async fn scrape_single_repo(
     Ok(())
 }
 
-// ── Top rising stars ──────────────────────────────────────────────────────────
+// ── Top candidates ───────────────────────────────────────────────────────────
 
-async fn print_top_rising(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
-    let stars = db.top_rising(n).await?;
-    if stars.is_empty() {
+async fn print_top_candidates(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
+    let ranked = db.top_candidates(n).await?;
+    if ranked.is_empty() {
         info!("no contributors in DB yet");
         return Ok(());
     }
 
-    println!("\n╔══ TOP {n} RISING AI STARS ══════════════════════════════════════════╗");
-    for (rank, s) in stars.iter().enumerate() {
+    println!("\n╔══ TOP {n} AI CANDIDATES ═══════════════════════════════════════════╗");
+    for (rank, s) in ranked.iter().enumerate() {
         let name = s.name.as_deref().unwrap_or(&s.login);
         let company = s.company.as_deref().unwrap_or("-");
         let location = s.location.as_deref().unwrap_or("-");

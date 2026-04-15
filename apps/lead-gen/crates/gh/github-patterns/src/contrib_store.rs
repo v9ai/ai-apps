@@ -1,13 +1,13 @@
 /// Neon PostgreSQL writer for GitHub contributor contacts.
 ///
-/// Maps `RisingStar` entries that meet the threshold score to the `contacts`
+/// Maps `Candidate` entries that meet the threshold score to the `contacts`
 /// table, using `github_handle` as the dedup key.
 ///
 /// Requires a unique partial index:
 ///   `CREATE UNIQUE INDEX idx_contacts_github_handle
 ///      ON contacts(github_handle) WHERE github_handle IS NOT NULL;`
 /// See migration `0041_add_github_handle_index.sql`.
-use crate::contributors::RisingStar;
+use crate::contributors::Candidate;
 use crate::error::{GhError, Result};
 use sqlx::PgPool;
 use tracing::info;
@@ -33,7 +33,7 @@ fn infer_position(bio: Option<&str>) -> Option<&'static str> {
     }
 }
 
-/// Upsert a `RisingStar` into the `contacts` table if `star.rising_score >= threshold`.
+/// Upsert a `Candidate` into the `contacts` table if `candidate.rising_score >= threshold`.
 ///
 /// The upsert key is `github_handle`.  On conflict the tags and optional
 /// fields (email, company, position) are refreshed; existing non-null values
@@ -45,16 +45,16 @@ fn infer_position(bio: Option<&str>) -> Option<&'static str> {
 /// Returns the contact `id` when upserted, `None` when below threshold.
 pub async fn save_contributor_contact(
     pool: &PgPool,
-    star: &RisingStar,
+    candidate: &Candidate,
     threshold: f32,
     extra_tags: &[String],
 ) -> Result<Option<i32>> {
-    if star.rising_score < threshold {
+    if candidate.rising_score < threshold {
         return Ok(None);
     }
 
     // ── Name ────────────────────────────────────────────────────────────────────
-    let (first_name, last_name) = match &star.name {
+    let (first_name, last_name) = match &candidate.name {
         Some(name) => {
             let trimmed = name.trim();
             match trimmed.split_once(' ') {
@@ -62,27 +62,27 @@ pub async fn save_contributor_contact(
                 None => (trimmed.to_string(), String::new()),
             }
         }
-        None => (star.login.clone(), String::new()),
+        None => (candidate.login.clone(), String::new()),
     };
 
     // ── Company ─────────────────────────────────────────────────────────────────
-    let company = star
+    let company = candidate
         .company
         .as_deref()
         .map(|c| c.trim_start_matches('@').trim().to_string())
         .filter(|s| !s.is_empty());
 
     // ── Position ────────────────────────────────────────────────────────────────
-    let position = infer_position(star.bio.as_deref());
+    let position = infer_position(candidate.bio.as_deref());
 
     // ── Tags ────────────────────────────────────────────────────────────────────
-    let tier = score_tier(star.rising_score);
+    let tier = score_tier(candidate.rising_score);
     let mut tags: Vec<String> = vec![
         "github:rising-star".to_string(),
         "github:ai-contributor".to_string(),
         format!("github:score:{tier}"),
     ];
-    for skill in &star.skills {
+    for skill in &candidate.skills {
         tags.push(format!("skill:{skill}"));
     }
     for tag in extra_tags {
@@ -108,19 +108,19 @@ pub async fn save_contributor_contact(
     )
     .bind(&first_name)
     .bind(&last_name)
-    .bind(star.email.as_deref())
+    .bind(candidate.email.as_deref())
     .bind(company.as_deref())
     .bind(position)
-    .bind(&star.login)
+    .bind(&candidate.login)
     .bind(&tags_json)
-    .bind(star.rising_score)
+    .bind(candidate.rising_score)
     .fetch_one(pool)
     .await
     .map_err(|e| GhError::Other(e.to_string()))?;
 
     info!(
         "upserted contact id={id} github_handle={} score={:.3}",
-        star.login, star.rising_score,
+        candidate.login, candidate.rising_score,
     );
     Ok(Some(id))
 }
@@ -129,15 +129,15 @@ pub async fn save_contributor_contact(
 mod tests {
     use super::*;
 
-    fn make_star(
+    fn make_candidate(
         login: &str,
         name: Option<&str>,
         bio: Option<&str>,
         company: Option<&str>,
         rising_score: f32,
         skills: Vec<String>,
-    ) -> RisingStar {
-        RisingStar {
+    ) -> Candidate {
+        Candidate {
             login: login.into(),
             html_url: format!("https://github.com/{login}"),
             name: name.map(str::to_string),
@@ -195,14 +195,14 @@ mod tests {
 
     #[test]
     fn name_splits_first_last() {
-        let star = make_star("jdoe", Some("Jane Doe"), None, None, 0.6, vec![]);
+        let candidate = make_candidate("jdoe", Some("Jane Doe"), None, None, 0.6, vec![]);
         // Simulate what save_contributor_contact does for name
-        let (first, last) = match &star.name {
+        let (first, last) = match &candidate.name {
             Some(n) => match n.trim().split_once(' ') {
                 Some((f, l)) => (f.to_string(), l.to_string()),
                 None => (n.trim().to_string(), String::new()),
             },
-            None => (star.login.clone(), String::new()),
+            None => (candidate.login.clone(), String::new()),
         };
         assert_eq!(first, "Jane");
         assert_eq!(last, "Doe");
@@ -210,21 +210,21 @@ mod tests {
 
     #[test]
     fn name_falls_back_to_login_when_absent() {
-        let star = make_star("jdoe", None, None, None, 0.6, vec![]);
-        let first = star.name.clone().unwrap_or_else(|| star.login.clone());
+        let candidate = make_candidate("jdoe", None, None, None, 0.6, vec![]);
+        let first = candidate.name.clone().unwrap_or_else(|| candidate.login.clone());
         assert_eq!(first, "jdoe");
     }
 
     #[test]
     fn company_strips_at_prefix() {
-        let star = make_star("u", None, None, Some("@anthropic"), 0.6, vec![]);
-        let company = star.company.as_deref().map(|c| c.trim_start_matches('@').trim().to_string());
+        let candidate = make_candidate("u", None, None, Some("@anthropic"), 0.6, vec![]);
+        let company = candidate.company.as_deref().map(|c| c.trim_start_matches('@').trim().to_string());
         assert_eq!(company.as_deref(), Some("anthropic"));
     }
 
     #[test]
     fn tags_include_score_tier_and_skills() {
-        let star = make_star(
+        let candidate = make_candidate(
             "alice",
             None,
             None,
@@ -232,13 +232,13 @@ mod tests {
             0.75,
             vec!["llm".to_string(), "rag".to_string()],
         );
-        let tier = score_tier(star.rising_score);
+        let tier = score_tier(candidate.rising_score);
         let mut tags: Vec<String> = vec![
             "github:rising-star".to_string(),
             "github:ai-contributor".to_string(),
             format!("github:score:{tier}"),
         ];
-        for skill in &star.skills {
+        for skill in &candidate.skills {
             tags.push(format!("skill:{skill}"));
         }
         assert!(tags.contains(&"github:score:A".to_string()));
@@ -249,7 +249,7 @@ mod tests {
     #[test]
     fn below_threshold_would_be_skipped() {
         // Just tests the threshold comparison — DB not needed
-        let star = make_star("low", None, None, None, 0.3, vec![]);
-        assert!(star.rising_score < 0.4, "should be below threshold");
+        let candidate = make_candidate("low", None, None, None, 0.3, vec![]);
+        assert!(candidate.rising_score < 0.4, "should be below threshold");
     }
 }

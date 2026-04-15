@@ -494,7 +494,7 @@ impl ContributorsDb {
     }
 
     /// Return the top N contributors by rising_score.
-    pub async fn top_rising(&self, n: usize) -> Result<Vec<RisingStar>> {
+    pub async fn top_candidates(&self, n: usize) -> Result<Vec<Candidate>> {
         use arrow_array::Array;
         use futures::TryStreamExt;
         use lancedb::query::{ExecutableQuery, QueryBase};
@@ -502,7 +502,7 @@ impl ContributorsDb {
         let table = self.conn.open_table("contributors").execute().await?;
 
         // Probe the table schema so we can include new columns only when present.
-        // This allows top_rising() to work against DBs created before skills_json
+        // This allows top_candidates() to work against DBs created before skills_json
         // was added (avoids "column not found" errors on old data).
         let table_schema = table.schema().await?;
         let has_skills = table_schema.field_with_name("skills_json").is_ok();
@@ -527,7 +527,7 @@ impl ContributorsDb {
             .execute()
             .await?;
 
-        let mut stars: Vec<RisingStar> = Vec::new();
+        let mut candidates: Vec<Candidate> = Vec::new();
         while let Some(batch) = stream.try_next().await? {
             let nrows = batch.num_rows();
             for i in 0..nrows {
@@ -573,7 +573,7 @@ impl ContributorsDb {
                     .and_then(|j| serde_json::from_str(&j).ok())
                     .unwrap_or_default();
 
-                stars.push(RisingStar {
+                candidates.push(Candidate {
                     login,
                     html_url: get_str("html_url").unwrap_or_default(),
                     name: get_str("name"),
@@ -596,9 +596,9 @@ impl ContributorsDb {
             }
         }
 
-        stars.sort_by(|a, b| b.rising_score.partial_cmp(&a.rising_score).unwrap());
-        stars.truncate(n);
-        Ok(stars)
+        candidates.sort_by(|a, b| b.rising_score.partial_cmp(&a.rising_score).unwrap());
+        candidates.truncate(n);
+        Ok(candidates)
     }
 
     /// Semantic nearest-neighbour search using the contributor's embedding vector.
@@ -608,7 +608,7 @@ impl ContributorsDb {
     /// opened with `.with_embed()` and rows inserted under the `contrib-embed`
     /// feature.
     #[cfg(feature = "contrib-embed")]
-    pub async fn search_similar(&self, query: &str, top_k: usize) -> Result<Vec<RisingStar>> {
+    pub async fn search_similar(&self, query: &str, top_k: usize) -> Result<Vec<Candidate>> {
         use futures::TryStreamExt;
 
         let model = self
@@ -632,7 +632,7 @@ impl ContributorsDb {
             .execute()
             .await?;
 
-        let mut stars: Vec<RisingStar> = Vec::new();
+        let mut candidates: Vec<Candidate> = Vec::new();
         while let Some(batch) = stream.try_next().await? {
             let nrows = batch.num_rows();
             for i in 0..nrows {
@@ -682,7 +682,7 @@ impl ContributorsDb {
                     .and_then(|j| serde_json::from_str(&j).ok())
                     .unwrap_or_default();
 
-                stars.push(RisingStar {
+                candidates.push(Candidate {
                     login,
                     html_url: get_str("html_url").unwrap_or_default(),
                     name: get_str("name"),
@@ -704,13 +704,13 @@ impl ContributorsDb {
                 });
             }
         }
-        Ok(stars)
+        Ok(candidates)
     }
 }
 
-/// A ranked rising-star entry for display.
+/// A ranked candidate entry for display.
 #[derive(Debug, Clone)]
-pub struct RisingStar {
+pub struct Candidate {
     pub login: String,
     pub html_url: String,
     pub name: Option<String>,
@@ -1091,7 +1091,7 @@ mod tests {
     // ── LanceDB round-trips ───────────────────────────────────────────────────
 
     #[tokio::test]
-    async fn insert_and_top_rising_roundtrip() {
+    async fn insert_and_top_candidates_roundtrip() {
         let path = temp_db_path("roundtrip");
         let mut db = ContributorsDb::open(&path).await.expect("open DB");
 
@@ -1112,7 +1112,7 @@ mod tests {
         let dup = { let mut r = make_record(5, 20, 200, 300, 4); r.user.login = "rising_star".into(); r };
         assert_eq!(db.insert(&[dup]).await.unwrap(), 0, "duplicate should be skipped");
 
-        let top = db.top_rising(10).await.expect("top_rising");
+        let top = db.top_candidates(10).await.expect("top_candidates");
         assert_eq!(top.len(), 2);
         assert_eq!(
             top[0].login, "rising_star",
@@ -1134,7 +1134,7 @@ mod tests {
         let active = { let mut r = make_record(0, 8, 500, 383, 1); r.user.login = "active_dev".into(); r };
 
         db.insert(&[ghost, active]).await.unwrap();
-        let top = db.top_rising(10).await.unwrap();
+        let top = db.top_candidates(10).await.unwrap();
         assert_eq!(
             top[0].login, "active_dev",
             "active dev should outrank ghost, got {} (score={:.3})",
@@ -1148,7 +1148,7 @@ mod tests {
     async fn empty_db_returns_empty_top() {
         let path = temp_db_path("empty");
         let db = ContributorsDb::open(&path).await.expect("open DB");
-        assert!(db.top_rising(10).await.unwrap().is_empty());
+        assert!(db.top_candidates(10).await.unwrap().is_empty());
         let _ = std::fs::remove_dir_all(&path);
     }
 
@@ -1165,7 +1165,7 @@ mod tests {
         r.user.bio = Some("Building LLM applications with RAG pipelines".into());
 
         db.insert(&[r]).await.unwrap();
-        let top = db.top_rising(10).await.unwrap();
+        let top = db.top_candidates(10).await.unwrap();
         assert_eq!(top.len(), 1);
         assert!(
             top[0].skills.contains(&"llm".to_string()),
@@ -1188,7 +1188,7 @@ mod tests {
 
         let r = make_record(5, 15, 400, 200, 1); // no bio set
         db.insert(&[r]).await.unwrap();
-        let top = db.top_rising(10).await.unwrap();
+        let top = db.top_candidates(10).await.unwrap();
         // skills may be empty or populated from repo names (org/repo0 has no AI keywords)
         // Either way the field exists and is a Vec
         let _ = top[0].skills.len(); // just assert it's accessible
