@@ -42,10 +42,10 @@ async function hfEmbed(inputs: string | string[]): Promise<number[][]> {
     if (res.ok) {
       const data = await res.json();
       // HF returns number[] for single string, number[][] for array
-      if (typeof inputs === "string") {
-        return [data as number[]];
-      }
-      return data as number[][];
+      const vecs: number[][] =
+        typeof inputs === "string" ? [data as number[]] : (data as number[][]);
+      // Normalize client-side (HF API doesn't always honor normalize param)
+      return vecs.map(l2Normalize);
     }
 
     // Model loading — HF returns 503 with estimated_time
@@ -73,6 +73,14 @@ async function hfEmbed(inputs: string | string[]): Promise<number[][]> {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function l2Normalize(vec: number[]): number[] {
+  let normSq = 0;
+  for (let i = 0; i < vec.length; i++) normSq += vec[i] * vec[i];
+  if (normSq === 0) return vec;
+  const inv = 1 / Math.sqrt(normSq);
+  return vec.map((v) => v * inv);
 }
 
 /** Embed a single post. Returns a 768-dim vector. */
