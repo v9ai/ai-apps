@@ -1371,6 +1371,349 @@ function observeProfileButton() {
 
 observeProfileButton();
 
+// ── Job Detail Page Floating Button (Import Opportunity) ───────────
+
+const IMPORT_OPPORTUNITY_BTN_ATTR = "data-lg-import-opportunity-btn";
+let importOpportunityBtn: HTMLButtonElement | null = null;
+let lastKnownJobId: string | null = null;
+
+function getJobId(): string | null {
+  const href = window.location.href;
+  if (!href.includes("/jobs/")) return null;
+
+  // Try URL param: ?currentJobId=NNNN
+  try {
+    const params = new URL(href).searchParams;
+    const id = params.get("currentJobId");
+    if (id) return id;
+  } catch { /* ignore */ }
+
+  // Try path: /jobs/view/NNNN/
+  const pathMatch = window.location.pathname.match(/\/jobs\/view\/(\d+)/);
+  if (pathMatch) return pathMatch[1];
+
+  return null;
+}
+
+function removeOpportunityButton() {
+  document.querySelectorAll(`[${IMPORT_OPPORTUNITY_BTN_ATTR}]`).forEach((el) => el.remove());
+  importOpportunityBtn = null;
+}
+
+/** Extract opportunity data from the job detail pane DOM. */
+function extractOpportunityFromDOM(): {
+  title: string;
+  companyName: string;
+  companyLinkedinUrl: string;
+  salary: string;
+  location: string;
+  remoteType: string;
+  employmentType: string;
+  appliedStatus: string;
+  jobUrl: string;
+  description: string;
+  hiringContact: { name: string; linkedinUrl: string; position: string } | null;
+} {
+  // Title
+  const titleEl =
+    document.querySelector("h1.t-24.t-bold.inline") ||
+    document.querySelector(".job-details-jobs-unified-top-card__job-title h1") ||
+    document.querySelector(".jobs-details h1");
+  const title = titleEl?.textContent?.trim() || "";
+
+  // Company
+  const companyLinkEl = document.querySelector<HTMLAnchorElement>(
+    ".job-details-jobs-unified-top-card__company-name a",
+  );
+  const companyName = companyLinkEl?.textContent?.trim() || "";
+  let companyLinkedinUrl = "";
+  if (companyLinkEl?.href) {
+    try {
+      const u = new URL(companyLinkEl.href, window.location.origin);
+      const m = u.pathname.match(/^\/company\/([^/]+)/);
+      if (m) companyLinkedinUrl = `https://www.linkedin.com/company/${m[1]}/`;
+    } catch { /* skip */ }
+  }
+
+  // Salary, remote, employment type from fit-level buttons
+  let salary = "";
+  let remoteType = "";
+  let employmentType = "";
+  const fitButtons = document.querySelectorAll(".job-details-fit-level-preferences button");
+  for (const btn of fitButtons) {
+    const text = btn.textContent?.trim() || "";
+    if (/[\$\£\€]|\/yr|\/hr|\/mo/i.test(text)) {
+      salary = text.replace(/^\s*✓\s*/, "").trim();
+    } else if (/\b(remote|hybrid|on-?\s?site)\b/i.test(text)) {
+      remoteType = text.replace(/^\s*✓\s*/, "").trim();
+    } else if (/\b(full-?\s?time|part-?\s?time|contract|temporary|internship|volunteer)\b/i.test(text)) {
+      employmentType = text.replace(/^\s*✓\s*/, "").trim();
+    }
+  }
+
+  // Location from tertiary description
+  let location = "";
+  const tertiaryDesc = document.querySelector(
+    ".job-details-jobs-unified-top-card__tertiary-description-container",
+  );
+  if (tertiaryDesc) {
+    const firstSpan = tertiaryDesc.querySelector(".tvm__text--low-emphasis");
+    if (firstSpan) location = firstSpan.textContent?.trim() || "";
+  }
+
+  // Applied status
+  let appliedStatus = "";
+  const appliedEl = document.querySelector(
+    ".artdeco-inline-feedback--success .artdeco-inline-feedback__message",
+  );
+  if (appliedEl) appliedStatus = appliedEl.textContent?.trim() || "";
+
+  // Canonical job URL
+  const jobId = getJobId();
+  const jobUrl = jobId
+    ? `https://www.linkedin.com/jobs/view/${jobId}/`
+    : window.location.href.split("?")[0];
+
+  // Job description
+  const descEl = document.querySelector("#job-details");
+  const description = descEl?.textContent?.trim() || "";
+
+  // Hiring team contact
+  let hiringContact: { name: string; linkedinUrl: string; position: string } | null = null;
+  const hiringSection = document.querySelector(
+    ".job-details-people-who-can-help__section--two-pane",
+  );
+  if (hiringSection) {
+    const nameEl = hiringSection.querySelector(".jobs-poster__name strong");
+    const contactName = nameEl?.textContent?.trim() || "";
+    if (contactName) {
+      let contactLinkedinUrl = "";
+      const profileLink = hiringSection.querySelector<HTMLAnchorElement>(
+        'a[href*="/in/"]',
+      );
+      if (profileLink?.href) {
+        try {
+          const u = new URL(profileLink.href, window.location.origin);
+          const m = u.pathname.match(/^\/in\/([^/]+)/);
+          if (m) contactLinkedinUrl = `https://www.linkedin.com/in/${m[1]}/`;
+        } catch { /* skip */ }
+      }
+
+      const positionEl = hiringSection.querySelector(
+        ".hirer-card__hirer-information .text-body-small.t-black",
+      );
+      const position = positionEl?.textContent?.trim() || "";
+
+      hiringContact = { name: contactName, linkedinUrl: contactLinkedinUrl, position };
+    }
+  }
+
+  return {
+    title,
+    companyName,
+    companyLinkedinUrl,
+    salary,
+    location,
+    remoteType,
+    employmentType,
+    appliedStatus,
+    jobUrl,
+    description,
+    hiringContact,
+  };
+}
+
+function showExistingOpportunityLink(
+  btn: HTMLButtonElement,
+  opportunity: { id?: string; title?: string },
+) {
+  btn.dataset.existingOpportunity = "true";
+  btn.style.backgroundColor = "#16a34a";
+  btn.style.padding = "0";
+  btn.disabled = false;
+  btn.innerHTML = "";
+  const link = document.createElement("a");
+  link.href = opportunity.id
+    ? `https://agenticleadgen.xyz/opportunities/${opportunity.id}`
+    : "https://agenticleadgen.xyz/opportunities";
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.textContent = opportunity.title ? `View: ${opportunity.title}` : "View Opportunity";
+  link.style.cssText = `
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `;
+  btn.appendChild(link);
+  btn.onmouseenter = null;
+  btn.onmouseleave = null;
+}
+
+function createImportOpportunityButton(): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.setAttribute(IMPORT_OPPORTUNITY_BTN_ATTR, "true");
+  btn.textContent = "Import Opportunity";
+  btn.title = "Import this job opportunity into the pipeline";
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    background-color: #0a66c2;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: background-color 0.2s;
+  `;
+
+  btn.addEventListener("mouseenter", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#004182";
+  });
+  btn.addEventListener("mouseleave", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#0a66c2";
+  });
+
+  btn.addEventListener("click", (e) => {
+    if (btn.dataset.existingOpportunity) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const oppData = extractOpportunityFromDOM();
+    if (!oppData.title) {
+      btn.textContent = "No job data found";
+      setTimeout(() => { btn.textContent = "Import Opportunity"; }, 2000);
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Importing...";
+
+    safeSendMessage(
+      { action: "importOpportunityFromPage", opportunityData: oppData },
+      (response) => {
+        if (!response?.success) {
+          btn.textContent = response?.error || "Error";
+          btn.style.backgroundColor = "#dc2626";
+          setTimeout(() => {
+            btn.textContent = "Import Opportunity";
+            btn.style.backgroundColor = "#0a66c2";
+            btn.disabled = false;
+          }, 3000);
+        }
+      },
+    );
+  });
+
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.action !== "importOpportunityPageProgress") return;
+    if (msg.error) {
+      btn.textContent = msg.error;
+      btn.style.backgroundColor = "#dc2626";
+      btn.disabled = false;
+      setTimeout(() => {
+        btn.textContent = "Import Opportunity";
+        btn.style.backgroundColor = "#0a66c2";
+      }, 3000);
+      return;
+    }
+    if (msg.done) {
+      showExistingOpportunityLink(btn, { id: msg.opportunityId, title: msg.title });
+      return;
+    }
+    if (msg.status) {
+      btn.textContent = msg.status;
+    }
+  });
+
+  return btn;
+}
+
+function syncOpportunityButton() {
+  if (!window.location.hostname.includes("linkedin.com")) {
+    removeOpportunityButton();
+    return;
+  }
+
+  const jobId = getJobId();
+
+  if (!jobId) {
+    if (importOpportunityBtn) {
+      removeOpportunityButton();
+      lastKnownJobId = null;
+    }
+    return;
+  }
+
+  if (jobId !== lastKnownJobId) {
+    removeOpportunityButton();
+    lastKnownJobId = jobId;
+  }
+
+  if (!document.querySelector(`[${IMPORT_OPPORTUNITY_BTN_ATTR}]`)) {
+    const btn = createImportOpportunityButton();
+    btn.textContent = "Checking...";
+    btn.disabled = true;
+    btn.style.backgroundColor = "#6b7280";
+    document.body.appendChild(btn);
+    importOpportunityBtn = btn;
+
+    const canonicalUrl = `https://www.linkedin.com/jobs/view/${jobId}/`;
+    safeSendMessage(
+      { action: "checkOpportunityByUrl", url: canonicalUrl },
+      (response) => {
+        if (!document.querySelector(`[${IMPORT_OPPORTUNITY_BTN_ATTR}]`)) return;
+        if (response?.success && response.opportunity) {
+          showExistingOpportunityLink(btn, response.opportunity);
+        } else {
+          btn.textContent = "Import Opportunity";
+          btn.disabled = false;
+          btn.style.backgroundColor = "#0a66c2";
+        }
+      },
+    );
+  }
+}
+
+function observeOpportunityButton() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+
+  setTimeout(syncOpportunityButton, 1500);
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const obs = new MutationObserver(() => {
+    if (teardownIfDead()) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(syncOpportunityButton, 1000);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+  _observers.push(obs);
+
+  let lastUrl = window.location.href;
+  const urlCheckInterval = setInterval(() => {
+    if (teardownIfDead()) return;
+    if (window.location.href !== lastUrl) {
+      lastUrl = window.location.href;
+      syncOpportunityButton();
+    }
+  }, 1000);
+  _intervals.push(urlCheckInterval);
+}
+
+observeOpportunityButton();
+
 function clickSalaryMetadata() {
   document.querySelectorAll(".job-card-container").forEach((jobCard) => {
     const metadataUls = jobCard.querySelectorAll(

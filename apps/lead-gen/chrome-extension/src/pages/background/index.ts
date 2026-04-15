@@ -711,5 +711,225 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Check if opportunity exists by URL ──
+  if (message.action === "checkOpportunityByUrl") {
+    const { url } = message as { url: string };
+
+    (async () => {
+      try {
+        const result = await gqlRequest(
+          `query CheckOpportunityByUrl($url: String!) {
+            opportunityByUrl(url: $url) {
+              id title
+            }
+          }`,
+          { url },
+        );
+        sendResponse({
+          success: true,
+          opportunity: result.data?.opportunityByUrl ?? null,
+        });
+      } catch (err) {
+        sendResponse({
+          success: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    })();
+
+    return true;
+  }
+
+  // ── Import Opportunity from LinkedIn Job Page ──
+  if (message.action === "importOpportunityFromPage") {
+    const { opportunityData } = message as {
+      opportunityData: {
+        title: string;
+        companyName: string;
+        companyLinkedinUrl: string;
+        salary: string;
+        location: string;
+        remoteType: string;
+        employmentType: string;
+        appliedStatus: string;
+        jobUrl: string;
+        description: string;
+        hiringContact: { name: string; linkedinUrl: string; position: string } | null;
+      };
+    };
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+
+    const notifyTab = async (data: Record<string, unknown>) => {
+      try {
+        await chrome.tabs.sendMessage(tabId, { action: "importOpportunityPageProgress", ...data });
+      } catch { /* tab closed */ }
+    };
+
+    (async () => {
+      startKeepAlive();
+      try {
+        await notifyTab({ status: `Looking up "${opportunityData.title}"...` });
+
+        // 1. Find or create company
+        let companyId: number | undefined;
+        if (opportunityData.companyName) {
+          const findResult = await gqlRequest(
+            `query FindCompany($name: String, $linkedinUrl: String) {
+              findCompany(name: $name, linkedinUrl: $linkedinUrl) {
+                found
+                company { id name }
+              }
+            }`,
+            {
+              name: opportunityData.companyName,
+              linkedinUrl: opportunityData.companyLinkedinUrl || undefined,
+            },
+          );
+
+          if (findResult.data?.findCompany?.found) {
+            companyId = findResult.data.findCompany.company.id;
+          } else {
+            const key = opportunityData.companyName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/(^-|-$)/g, "");
+
+            const createResult = await gqlRequest(
+              `mutation CreateCompany($input: CreateCompanyInput!) {
+                createCompany(input: $input) { id name }
+              }`,
+              {
+                input: {
+                  key,
+                  name: opportunityData.companyName,
+                  linkedin_url: opportunityData.companyLinkedinUrl || undefined,
+                },
+              },
+            );
+
+            if (createResult.data?.createCompany?.id) {
+              companyId = createResult.data.createCompany.id;
+            }
+          }
+        }
+
+        // 2. Find or create hiring contact
+        let contactId: number | undefined;
+        if (opportunityData.hiringContact?.name && opportunityData.hiringContact.linkedinUrl) {
+          await notifyTab({ status: "Checking contact..." });
+
+          const checkResult = await gqlRequest(
+            `query CheckContactByLinkedinUrl($linkedinUrl: String!) {
+              contactByLinkedinUrl(linkedinUrl: $linkedinUrl) {
+                id slug firstName lastName
+              }
+            }`,
+            { linkedinUrl: opportunityData.hiringContact.linkedinUrl },
+          );
+
+          if (checkResult.data?.contactByLinkedinUrl?.id) {
+            contactId = checkResult.data.contactByLinkedinUrl.id;
+          } else {
+            const { firstName, lastName } = parseName(opportunityData.hiringContact.name);
+            const createResult = await gqlRequest(
+              `mutation CreateContact($input: CreateContactInput!) {
+                createContact(input: $input) { id firstName lastName slug }
+              }`,
+              {
+                input: {
+                  firstName,
+                  lastName: lastName || undefined,
+                  linkedinUrl: opportunityData.hiringContact.linkedinUrl,
+                  position: opportunityData.hiringContact.position || undefined,
+                  ...(companyId !== undefined && { companyId }),
+                  tags: ["linkedin-import", "hiring-team"],
+                },
+              },
+            );
+
+            if (createResult.data?.createContact?.id) {
+              contactId = createResult.data.createContact.id;
+            }
+          }
+        }
+
+        // 3. Check if opportunity already exists
+        await notifyTab({ status: "Creating opportunity..." });
+        if (opportunityData.jobUrl) {
+          const existCheck = await gqlRequest(
+            `query CheckOpportunityByUrl($url: String!) {
+              opportunityByUrl(url: $url) { id title }
+            }`,
+            { url: opportunityData.jobUrl },
+          );
+
+          if (existCheck.data?.opportunityByUrl?.id) {
+            const existing = existCheck.data.opportunityByUrl;
+            await notifyTab({
+              done: true,
+              opportunityId: existing.id,
+              title: existing.title,
+              status: `Already imported: ${existing.title}`,
+            });
+            return;
+          }
+        }
+
+        // 4. Create opportunity
+        const isApplied = !!opportunityData.appliedStatus;
+        const metadata = JSON.stringify({
+          location: opportunityData.location,
+          remoteType: opportunityData.remoteType,
+          employmentType: opportunityData.employmentType,
+        });
+
+        const createResult = await gqlRequest(
+          `mutation CreateOpportunity($input: CreateOpportunityInput!) {
+            createOpportunity(input: $input) { id title }
+          }`,
+          {
+            input: {
+              title: opportunityData.title,
+              url: opportunityData.jobUrl || undefined,
+              source: "linkedin",
+              status: isApplied ? "applied" : "open",
+              rewardText: opportunityData.salary || undefined,
+              rawContext: opportunityData.description || undefined,
+              metadata,
+              applied: isApplied,
+              appliedAt: isApplied ? new Date().toISOString() : undefined,
+              tags: ["linkedin-import"],
+              ...(companyId !== undefined && { companyId }),
+              ...(contactId !== undefined && { contactId }),
+            },
+          },
+        );
+
+        if (createResult.errors) {
+          await notifyTab({ error: createResult.errors[0].message });
+        } else {
+          const opp = createResult.data.createOpportunity;
+          await notifyTab({
+            done: true,
+            opportunityId: opp.id,
+            title: opp.title,
+            status: `Imported: ${opp.title}${opportunityData.companyName ? " at " + opportunityData.companyName : ""}`,
+          });
+        }
+      } catch (err) {
+        await notifyTab({ error: err instanceof Error ? err.message : String(err) });
+      } finally {
+        stopKeepAlive();
+      }
+    })();
+
+    return true;
+  }
+
   return false;
 });
