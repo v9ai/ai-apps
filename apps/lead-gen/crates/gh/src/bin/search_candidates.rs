@@ -326,53 +326,74 @@ async fn main() -> anyhow::Result<()> {
         skipped_known,
     );
 
-    let batch_size = 10; // Small batches — enriched GQL payload hits resource limits at ~18 users
-    for (batch_idx, chunk) in logins.chunks(batch_size).enumerate() {
-        let chunk_vec: Vec<String> = chunk.to_vec();
-        match gh.get_users_graphql(&chunk_vec).await {
-            Ok(users) => {
-                for user in users {
-                    let loc = user.location.as_deref();
-                    let london = is_london(loc);
-                    let uk = is_uk_wide(loc);
+    let batch_size = 10;
+    let concurrency = 3; // 3 concurrent GraphQL requests
+    let total_batches = (logins.len() + batch_size - 1) / batch_size;
 
-                    if !london && !uk {
-                        skipped_location += 1;
-                    } else {
-                        // Use real contribution count from contributor mining if available
-                        let (repo_source, contrib_count) = contrib_counts
-                            .get(&user.login)
-                            .cloned()
-                            .unwrap_or_else(|| ("github-search".to_string(), user.public_repos));
+    // Process batches in groups of `concurrency`
+    for group_start in (0..total_batches).step_by(concurrency) {
+        let group_end = (group_start + concurrency).min(total_batches);
+        let mut handles = Vec::new();
 
-                        candidates.push((
-                            ContributorRecord {
-                                total_contributions: contrib_count,
-                                repos: vec![RepoContrib {
-                                    repo: repo_source,
-                                    contributions: contrib_count,
-                                }],
-                                user,
-                            },
-                            london,
-                        ));
-                    }
-                }
-            }
-            Err(e) => warn!("  GraphQL batch {} failed: {e}", batch_idx + 1),
+        for batch_idx in group_start..group_end {
+            let start = batch_idx * batch_size;
+            let end = (start + batch_size).min(logins.len());
+            let chunk_vec: Vec<String> = logins[start..end].to_vec();
+            let gh_ref = &gh;
+            handles.push(async move {
+                (batch_idx, gh_ref.get_users_graphql(&chunk_vec).await)
+            });
         }
 
-        let fetched = (batch_idx + 1) * batch_size;
+        let results = futures::future::join_all(handles).await;
+
+        for (batch_idx, result) in results {
+            match result {
+                Ok(users) => {
+                    for user in users {
+                        let loc = user.location.as_deref();
+                        let london = is_london(loc);
+                        let uk = is_uk_wide(loc);
+
+                        if !london && !uk {
+                            skipped_location += 1;
+                        } else {
+                            let (repo_source, contrib_count) = contrib_counts
+                                .get(&user.login)
+                                .cloned()
+                                .unwrap_or_else(|| ("github-search".to_string(), user.public_repos));
+
+                            candidates.push((
+                                ContributorRecord {
+                                    total_contributions: contrib_count,
+                                    repos: vec![RepoContrib {
+                                        repo: repo_source,
+                                        contributions: contrib_count,
+                                    }],
+                                    user,
+                                },
+                                london,
+                            ));
+                        }
+                    }
+                }
+                Err(e) => warn!("  GraphQL batch {} failed: {e}", batch_idx + 1),
+            }
+        }
+
+        let fetched = (group_end * batch_size).min(logins.len());
         info!(
-            "  batch {}: hydrated {}/{} — {} candidates, {} location-filtered",
-            batch_idx + 1,
-            fetched.min(logins.len()),
+            "  batch {}-{}/{}: hydrated {}/{} — {} candidates, {} location-filtered",
+            group_start + 1,
+            group_end,
+            total_batches,
+            fetched,
             logins.len(),
             candidates.len(),
             skipped_location,
         );
 
-        tokio::time::sleep(Duration::from_millis(500)).await;
+        tokio::time::sleep(Duration::from_millis(400)).await;
     }
 
     info!(

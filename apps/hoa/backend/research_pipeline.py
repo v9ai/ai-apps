@@ -1571,12 +1571,111 @@ async def phase3_exec(state: ResearchState) -> dict:
     return {"executive": result}
 
 
+# ── Per-person question categories ────────────────────────────────────────
+# Each person can have domain-specific categories. Falls back to DEFAULT_CATEGORIES.
+
+DEFAULT_CATEGORIES: dict[str, str] = {
+    "origin": "pivotal decisions or turning points that shaped their career path",
+    "technical_depth": "architectural trade-offs, design choices, or engineering bets in their core work",
+    "philosophy": "contrarian views, intellectual tensions, or where they disagree with mainstream",
+    "collaboration": "relationships, partnerships, or ecosystem dynamics that shaped key projects",
+    "future": "specific predictions, bets, or visions for where the field is heading",
+}
+
+PERSON_CATEGORIES: dict[str, dict[str, str]] = {
+    "athos-georgiou": {
+        "origin": "founding NCA, career transition from telescope control systems to AI, the spark that shifted focus from infrastructure to applied AI research",
+        "technical_depth": "Snappy architecture, ColPali/ColQwen late-interaction, patch-to-region relevance propagation, OCR integration decisions",
+        "philosophy": "responsible AI stance, 'raising AI' parent-child metaphor, whether GenAI alone is the answer, balancing capability with ethics",
+        "collaboration": "Claude Code ecosystem contributions, kimchi-cult plugin marketplace, Greek AI Startup Accelerator, open-source community dynamics",
+        "future": "enterprise AI adoption gap, AMD GPU scaling roadmap, vision-language retrieval becoming production-standard",
+        "vision_retrieval": "ColPali and ColQwen models, late-interaction retrieval, multimodal document understanding, Vidore benchmark participation",
+        "graph_rag": "Qdrant + Neo4j + Ollama pipeline, dynamic ontology for NLP GraphRAG, knowledge graph construction from video/images",
+        "gpu_optimization": "AMD Instinct MI325X benchmarks, 235B-1T parameter inference, dtype choices, batch size tuning, OOM survival strategies",
+        "observability": "Grafana Alloy stack, OpenTelemetry + Prometheus for Next.js, production monitoring philosophy for AI systems",
+        "responsible_ai": "AI rights and responsibilities, LLM consciousness debate, enterprise AI value gap, the 88% adoption vs 5% impact paradox",
+        "full_stack_ai": "RAG with Pinecone and Unstructured.io, vision RAG templates, Next.js AI integration, end-to-end production pipelines",
+        "model_training": "ColQwen3.5 v1/v2/v3 iteration, diminishing returns in benchmark optimization, fine-tuning decisions, when to stop optimizing",
+        "building_in_public": "blogging evolution from November 2023, open-source project growth, personal reflection posts, community building through technical writing",
+    },
+}
+
+# Blog search queries per category (for embedding-based context retrieval)
+BLOG_QUERIES: dict[str, dict[str, list[str]]] = {
+    "athos-georgiou": {
+        "origin": ["career journey NCA founding", "telescope infrastructure transition AI", "doing stuff learning journey 2023"],
+        "technical_depth": ["Snappy vision retrieval ColPali OCR", "patch-to-region propagation document", "ColQwen architecture design"],
+        "philosophy": ["raising artificial intelligence responsibility", "generative AI answer everything limitations", "AI value gap enterprise adoption"],
+        "collaboration": ["Claude Code plugin kimchi-cult", "open source community contribution", "Greek AI accelerator startup"],
+        "future": ["enterprise AI adoption future", "AMD GPU inference scaling", "vision language retrieval production"],
+        "vision_retrieval": ["ColPali ColQwen vision retrieval document", "Vidore benchmark GPU VRAM", "spatially grounded document retrieval"],
+        "graph_rag": ["GraphRAG Qdrant Neo4j Ollama", "knowledge graph video detection BLIP", "dynamic ontology NLP graph"],
+        "gpu_optimization": ["AMD Instinct MI325X benchmark", "inference optimization GPU memory", "dtype batch size OOM"],
+        "observability": ["Grafana Alloy observability stack", "OpenTelemetry Prometheus Next.js telemetry", "monitoring setup production"],
+        "responsible_ai": ["raising AI rights responsibilities", "LLM intelligence consciousness", "AI value gap enterprise impact"],
+        "full_stack_ai": ["RAG Pinecone Unstructured production", "vision RAG ColPali Qdrant MinIO", "Next.js AI assistant streaming"],
+        "model_training": ["ColQwen3.5 diminishing returns optimization", "Vidore benchmark fine-tuning", "ColQwen FastAPI integration"],
+        "building_in_public": ["welcome blog athrael.net", "been doing stuff reflection", "love over now personal"],
+    },
+}
+
+
+def _get_blog_context(slug: str, categories: dict[str, str]) -> str:
+    """Search blog embeddings for each category and return formatted context."""
+    if search_blog_results is None:
+        return ""
+
+    queries = BLOG_QUERIES.get(slug, {})
+    if not queries:
+        return ""
+
+    # Check if LanceDB table exists for this slug
+    lance_dir = PROJECT_ROOT / "lance_blogs"
+    if not lance_dir.exists():
+        return ""
+
+    import lancedb
+    db = lancedb.connect(str(lance_dir))
+    table_name = f"blog_{slug.replace('-', '_')}"
+    if table_name not in db.table_names():
+        return ""
+
+    context_parts: list[str] = []
+    seen_titles: set[str] = set()
+
+    for cat in categories:
+        cat_queries = queries.get(cat, [])
+        cat_posts: list[str] = []
+        for q in cat_queries:
+            results = search_blog_results(slug, q, top_k=5)
+            for r in results:
+                title = r["title"]
+                if title not in seen_titles:
+                    seen_titles.add(title)
+                    cat_posts.append(f"  - \"{title}\" ({r.get('date', '')}): {r['text'][:200]}")
+
+        if cat_posts:
+            context_parts.append(f"[{cat}]\n" + "\n".join(cat_posts[:5]))
+
+    if context_parts:
+        return "\n\n=== BLOG POST CONTEXT (reference these in questions) ===\n" + "\n\n".join(context_parts)
+    return ""
+
+
 async def question_generator(state: ResearchState) -> dict:
     client = _make_client()
     person = state["person"]
+    slug = person.get("slug", "")
     ctx = f"{person.get('name', '')} ({person.get('role', '')} @ {person.get('org', '')})"
 
     console.print("\n[bold cyan]Phase 3c: Question Generator[/]")
+
+    # Get person-specific categories or default
+    categories = PERSON_CATEGORIES.get(slug, DEFAULT_CATEGORIES)
+    num_questions = len(categories) * 2
+
+    console.print(f"  Categories: {len(categories)} ({', '.join(categories.keys())})")
+    console.print(f"  Target: {num_questions} questions")
 
     all_context = (
         _ctx_block("Biography", state.get("bio", ""))
@@ -1591,7 +1690,21 @@ async def question_generator(state: ResearchState) -> dict:
         + _ctx_block("Podcast & Media", state.get("podcast_data", ""))
         + _ctx_block("News", state.get("news_data", ""))
         + _ctx_block("Conferences", state.get("conference", ""))
+        + _ctx_block("Blog Posts", state.get("blog_data", ""))
     )
+
+    # Add blog embedding context if available
+    blog_context = _get_blog_context(slug, categories)
+    if blog_context:
+        all_context += blog_context
+        console.print(f"  [green]✓[/] Blog embedding context loaded")
+
+    # Build category listing for prompt
+    cat_lines = "\n".join(
+        f"{i}. {cat} — {desc}"
+        for i, (cat, desc) in enumerate(categories.items(), 1)
+    )
+    cat_names = "|".join(categories.keys())
 
     result = await _run_agent(
         client,
@@ -1607,28 +1720,25 @@ async def question_generator(state: ResearchState) -> dict:
             "- Questions that could apply to any tech CEO without modification\n"
             "- Duplicating topics the guest has already been asked on prior podcasts\n\n"
             "Quality markers:\n"
-            "- References a specific project, paper, decision, or quote from the research\n"
+            "- References a specific project, paper, decision, blog post title, or quote from the research\n"
             "- Creates productive tension (e.g., contrasting two positions the guest holds)\n"
             "- Invites a story or concrete example, not an abstract answer\n"
-            "- Under 40 words — concise enough to deliver naturally on air"
+            "- Under 40 words — concise enough to deliver naturally on air\n"
+            "- When blog posts are available, directly reference blog post titles in questions (e.g., \"In your post 'Title'...\")"
         ),
         (
-            f"Generate 10 high-quality interview questions for a podcast episode featuring {ctx}.\n"
+            f"Generate {num_questions} high-quality interview questions for a podcast episode featuring {ctx}.\n"
             f"Use the following research to make questions specific and probing:\n{all_context}\n\n"
-            f"Question categories (exactly 2 per category):\n"
-            f"1. origin — pivotal decisions or turning points that shaped their career path\n"
-            f"2. technical_depth — architectural trade-offs, design choices, or engineering bets in their core work\n"
-            f"3. philosophy — contrarian views, intellectual tensions, or where they disagree with mainstream\n"
-            f"4. collaboration — relationships, partnerships, or ecosystem dynamics that shaped key projects\n"
-            f"5. future — specific predictions, bets, or visions for where the field is heading\n\n"
+            f"Question categories (exactly 2 per category):\n{cat_lines}\n\n"
             f"Rules:\n"
-            f"- Reference actual project names, papers, quotes, or events from the research\n"
+            f"- Reference actual project names, papers, quotes, blog post titles, or events from the research\n"
             f"- Each question must be standalone (no follow-ups or 'building on the previous...')\n"
             f"- Keep each question under 40 words\n"
             f"- For each question, explain WHY this question matters and what INSIGHT you expect it to reveal\n"
-            f"- Check the person's prior podcast appearances and do NOT repeat questions they've likely been asked\n\n"
-            f"Output a JSON array of exactly 10 objects:\n"
-            f'{{"category": "origin|technical_depth|philosophy|collaboration|future", '
+            f"- Check the person's prior podcast appearances and do NOT repeat questions they've likely been asked\n"
+            f"- When blog post titles are in the context, weave them into questions naturally\n\n"
+            f"Output a JSON array of exactly {num_questions} objects:\n"
+            f'{{"category": "{cat_names}", '
             f'"question": "the question text", '
             f'"why_this_question": "1-sentence reason this question is worth asking", '
             f'"expected_insight": "what kind of answer this should draw out"}}'
