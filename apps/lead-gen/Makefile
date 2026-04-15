@@ -206,7 +206,7 @@ RUST_FILTER_6 = ml_eval weight_optimizer data_gen
 FT_TASK ?= all
 FT_PORT ?= 8080
 
-.PHONY: ft-export ft-stats ft-train ft-serve ft-loop
+.PHONY: ft-export ft-stats ft-train ft-serve ft-loop ft-publish ft-publish-dry
 
 ft-export: ## Export training data from Neon (TASK=role-tag|remote-worldwide|all)
 	python3 mlx-training/export_training_data.py --task $(FT_TASK)
@@ -218,10 +218,11 @@ ft-train: ## Train LoRA adapter (TASK=role-tag|remote-worldwide)
 	@test -n "$(TASK)" || { echo "Usage: make ft-train TASK=role-tag"; exit 1; }
 	python3 mlx-training/finetune.py --task $(TASK)
 
-ft-serve: ## Start mlx_lm.server with adapter (TASK=role-tag|remote-worldwide)
+ft-serve: ## Start mlx_lm.server with adapter (TASK=role-tag|remote-worldwide|outreach-email)
 	@test -n "$(TASK)" || { echo "Usage: make ft-serve TASK=role-tag"; exit 1; }
+	$(eval FT_MODEL := $(shell python3 -c "import json; print(json.load(open('mlx-training/models/$(TASK)/adapter_config.json'))['model'])" 2>/dev/null || echo "mlx-community/Qwen2.5-3B-Instruct-4bit"))
 	python3 -m mlx_lm.server \
-		--model mlx-community/Qwen2.5-3B-Instruct-4bit \
+		--model $(FT_MODEL) \
 		--adapter-path mlx-training/models/$(TASK) \
 		--port $(FT_PORT)
 
@@ -233,6 +234,19 @@ ft-loop: ## Full cycle: export → train (TASK=role-tag|remote-worldwide)
 	@echo "═══ Training complete ═══"
 	@echo "Start serving: make ft-serve TASK=$(TASK)"
 	@echo "Rust pipeline will connect to localhost:$(FT_PORT)"
+
+ft-publish: ## Upload LoRA adapter to HF Hub: make ft-publish TASK=outreach-email
+	@test -n "$(TASK)" || { echo "Usage: make ft-publish TASK=outreach-email"; exit 1; }
+	python3 mlx-training/hub.py upload \
+		--adapter-path mlx-training/models/$(TASK) \
+		--repo v9ai/$(TASK)-qwen3-1.7b-lora
+
+ft-publish-dry: ## Dry-run HF publish: make ft-publish-dry TASK=outreach-email
+	@test -n "$(TASK)" || { echo "Usage: make ft-publish-dry TASK=outreach-email"; exit 1; }
+	python3 mlx-training/hub.py upload \
+		--adapter-path mlx-training/models/$(TASK) \
+		--repo v9ai/$(TASK)-qwen3-1.7b-lora \
+		--dry-run
 
 # ── Intent Signal Detection ─────────────────────────────────
 # Finetuned Qwen2.5-3B for company buying/hiring signal classification.

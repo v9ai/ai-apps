@@ -364,10 +364,12 @@ def run_benchmark(model_cfg: dict, prompts: list[dict], max_tokens: int, verbose
     print(f"  Model: {model_id}" + (f" + adapter: {adapter}" if adapter else ""))
     print(f"{'=' * 60}")
 
-    # Load model
+    # Load model (supports local paths and HF repo IDs)
     try:
-        if adapter and Path(adapter).exists():
-            model, tokenizer = mlx_lm.load(model_id, adapter_path=adapter)
+        from hub import resolve_adapter
+        resolved_adapter = resolve_adapter(adapter) if adapter else None
+        if resolved_adapter:
+            model, tokenizer = mlx_lm.load(model_id, adapter_path=resolved_adapter)
         else:
             if adapter:
                 print(f"  Warning: adapter not found at {adapter}, using base model")

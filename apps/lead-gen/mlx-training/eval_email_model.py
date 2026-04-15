@@ -265,8 +265,9 @@ def main():
     print(f"Test examples: {len(test_data)}")
     print()
 
-    # Load model + adapter
-    adapter_path = args.adapter if Path(args.adapter).exists() else None
+    # Load model + adapter (supports local paths and HF repo IDs)
+    from hub import resolve_adapter
+    adapter_path = resolve_adapter(args.adapter)
     if adapter_path:
         print(f"Loading model with adapter from {adapter_path}...")
         model, tokenizer = mlx_lm.load(args.model, adapter_path=adapter_path)

@@ -1,54 +1,97 @@
 /**
- * HTTP client for the Candle embedding server (Rust, Metal-accelerated).
+ * HuggingFace Inference API client for JobBERT embeddings.
  *
- * Reads CANDLE_EMBED_URL from env (default: http://localhost:9998).
- * Used for JobBERT-v2 (768-dim) embeddings of LinkedIn posts.
+ * Calls the free Inference API at api-inference.huggingface.co for
+ * TechWolf/JobBERT-v2 sentence embeddings of LinkedIn posts.
+ *
+ * Replaces the prior Candle embed-server (Rust, localhost:9998).
+ * Same exported interface — consumers (post-analyzer, how-it-works) unchanged.
  */
 
-const BASE_URL =
-  process.env.CANDLE_EMBED_URL ?? "http://localhost:9998";
+const HF_MODEL = "TechWolf/JobBERT-v2";
+const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
+const MAX_RETRIES = 2;
+const RETRY_BASE_MS = 1_000;
 
-interface EmbedData {
-  embedding: number[];
-  index: number;
+function getToken(): string {
+  const token = process.env.HF_TOKEN;
+  if (!token) throw new Error("HF_TOKEN env var is required for HuggingFace Inference API");
+  return token;
 }
 
-interface EmbedResponse {
-  data: EmbedData[];
+interface HFErrorResponse {
+  error?: string;
+  estimated_time?: number;
 }
 
-async function postEmbed(input: string | string[]): Promise<EmbedResponse> {
-  const res = await fetch(`${BASE_URL}/embed`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ input }),
-  });
+async function hfEmbed(inputs: string | string[]): Promise<number[][]> {
+  const token = getToken();
+  let lastError: Error | null = null;
 
-  if (!res.ok) {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(HF_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inputs, normalize: true }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      // HF returns number[] for single string, number[][] for array
+      if (typeof inputs === "string") {
+        return [data as number[]];
+      }
+      return data as number[][];
+    }
+
+    // Model loading — HF returns 503 with estimated_time
+    if (res.status === 503) {
+      const body = (await res.json().catch(() => ({}))) as HFErrorResponse;
+      const waitMs = (body.estimated_time ?? 20) * 1_000;
+      lastError = new Error(`Model loading (est ${Math.round(waitMs / 1000)}s)`);
+      await sleep(Math.min(waitMs, 30_000));
+      continue;
+    }
+
+    // Rate limit — exponential backoff
+    if (res.status === 429) {
+      lastError = new Error("Rate limited");
+      await sleep(RETRY_BASE_MS * 2 ** attempt);
+      continue;
+    }
+
     const detail = await res.text().catch(() => res.statusText);
-    throw new Error(`Candle embed failed (${res.status}): ${detail}`);
+    throw new Error(`HF Inference API failed (${res.status}): ${detail}`);
   }
 
-  return res.json() as Promise<EmbedResponse>;
+  throw lastError ?? new Error("HF Inference API: max retries exceeded");
 }
 
-/** Embed a single post, returns a 768-dim vector. */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Embed a single post. Returns a vector (dimension depends on model). */
 export async function embedPost(text: string): Promise<number[]> {
-  const resp = await postEmbed(text);
-  return resp.data[0].embedding;
+  const [embedding] = await hfEmbed(text);
+  return embedding;
 }
 
 /** Batch-embed multiple posts. */
 export async function embedPostBatch(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
-  const resp = await postEmbed(texts);
-  return resp.data
-    .sort((a, b) => a.index - b.index)
-    .map((d) => d.embedding);
+  return hfEmbed(texts);
 }
 
-/** Health check. */
+/** Health check — probe the model endpoint. */
 export async function health(): Promise<string> {
-  const res = await fetch(`${BASE_URL}/health`);
-  return res.text();
+  try {
+    const embedding = await embedPost("test");
+    return `ok (dim=${embedding.length}, model=${HF_MODEL})`;
+  } catch (err) {
+    return `error: ${err instanceof Error ? err.message : String(err)}`;
+  }
 }
