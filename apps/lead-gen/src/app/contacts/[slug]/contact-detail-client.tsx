@@ -1104,10 +1104,10 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
     setScraping(true);
     setScrapeStatus("Starting...");
 
-    // Listen for progress updates from extension
+    // Listen for progress updates from extension (relayed via webapp-bridge)
+    const contactFullName = `${contact.firstName} ${contact.lastName}`.trim();
     const handler = (e: MessageEvent) => {
       if (e.data?.source !== "lead-gen-bg" || e.data?.action !== "postScrapingProgress") return;
-      if (e.data.source !== "contactScrape" && e.data.action === "postScrapingProgress" && !e.data.contactName) return;
       if (e.data.error) {
         setScrapeStatus(`Error: ${e.data.error}`);
         setScraping(false);

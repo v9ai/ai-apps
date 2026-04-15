@@ -13,7 +13,7 @@
 // Instead, we inline them directly in the executeScript calls below.
 
 import { fetchAllConnections, type ScrapedConnection } from "./connection-scraper";
-import { gqlRequest } from "./graphql";
+import { gqlRequest, GRAPHQL_URL } from "./graphql";
 import { parseJobFields, isJobRelatedPost } from "../lib/job-field-parser";
 
 const RUST_SERVER = import.meta.env.VITE_RUST_SERVER_URL || "http://localhost:9876";
@@ -670,11 +670,11 @@ export async function scrapeContactPostsSingle(
   // Check server
   const healthy = await checkServerHealth();
   if (!healthy) {
-    sendProgress({ error: "Rust server not running on localhost:9876", source: "contactScrape" });
+    await notifyWebApp({ error: "Rust server not running on localhost:9876", source: "contactScrape" });
     return;
   }
 
-  sendProgress({ status: `Navigating to ${contactName}'s activity...`, source: "contactScrape", contactName });
+  await notifyWebApp({ status: `Navigating to ${contactName}'s activity...`, source: "contactScrape", contactName });
 
   const baseUrl = linkedinUrl.replace(/\/$/, "");
   const activityUrl = baseUrl + "/recent-activity/all/";
@@ -683,7 +683,7 @@ export async function scrapeContactPostsSingle(
   try {
     await chrome.tabs.update(tabId, { url: activityUrl });
   } catch {
-    sendProgress({ error: "Tab closed", source: "contactScrape" });
+    await notifyWebApp({ error: "Tab closed", source: "contactScrape" });
     return;
   }
   await waitForTabLoad(tabId);
@@ -693,22 +693,22 @@ export async function scrapeContactPostsSingle(
   try {
     const tabInfo = await chrome.tabs.get(tabId);
     if (!tabInfo.url?.includes("linkedin.com/in/")) {
-      sendProgress({ error: `Redirected away from ${contactName}'s profile`, source: "contactScrape" });
+      await notifyWebApp({ error: `Redirected away from ${contactName}'s profile`, source: "contactScrape" });
       return;
     }
   } catch {
-    sendProgress({ error: "Tab closed", source: "contactScrape" });
+    await notifyWebApp({ error: "Tab closed", source: "contactScrape" });
     return;
   }
 
   // Scrape posts
-  sendProgress({ status: `Scrolling and extracting posts for ${contactName}...`, source: "contactScrape", contactName });
+  await notifyWebApp({ status: `Scrolling and extracting posts for ${contactName}...`, source: "contactScrape", contactName });
 
   let posts: ScrapedPost[] = [];
   try {
     posts = await scrollAndExtract(tabId);
   } catch (err) {
-    sendProgress({ error: `Extraction failed: ${err instanceof Error ? err.message : String(err)}`, source: "contactScrape" });
+    await notifyWebApp({ error: `Extraction failed: ${err instanceof Error ? err.message : String(err)}`, source: "contactScrape" });
     return;
   }
 
@@ -720,7 +720,7 @@ export async function scrapeContactPostsSingle(
       totalPosts = inserted;
       totalFiltered = filtered;
     } catch (err) {
-      sendProgress({ error: `Failed to save posts: ${err instanceof Error ? err.message : String(err)}`, source: "contactScrape" });
+      await notifyWebApp({ error: `Failed to save posts: ${err instanceof Error ? err.message : String(err)}`, source: "contactScrape" });
       return;
     }
   }
@@ -728,7 +728,7 @@ export async function scrapeContactPostsSingle(
   // Scrape likes
   let totalLikes = 0;
   if (!postsCancelled) {
-    sendProgress({ status: `Scraping likes for ${contactName}...`, source: "contactScrape", contactName });
+    await notifyWebApp({ status: `Scraping likes for ${contactName}...`, source: "contactScrape", contactName });
     await randomDelay(3000, 5000);
     const likesUrl = baseUrl + "/recent-activity/reactions/";
     try {
@@ -756,7 +756,7 @@ export async function scrapeContactPostsSingle(
     }
   }
 
-  sendProgress({
+  await notifyWebApp({
     done: true,
     source: "contactScrape",
     contactName,
@@ -781,6 +781,22 @@ function sendProgress(data: Record<string, unknown>) {
   } catch {
     // Popup may not be open
   }
+}
+
+async function notifyWebApp(data: Record<string, unknown>) {
+  try {
+    const appOrigin = new URL(GRAPHQL_URL).origin;
+    const tabs = await chrome.tabs.query({ url: [`${appOrigin}/*`] });
+    for (const tab of tabs) {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          source: "lead-gen-bg",
+          action: "postScrapingProgress",
+          ...data,
+        }).catch(() => {});
+      }
+    }
+  } catch { /* ignore */ }
 }
 
 function sendJobProgress(data: Record<string, unknown>) {
