@@ -45,14 +45,6 @@ pub struct GhContributor {
     pub contributions: u32,
 }
 
-/// Minimal user stub — shared shape returned by stargazers, org members,
-/// and other endpoints that list users without extra fields.
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct GhUserStub {
-    pub login: String,
-    pub id: u64,
-}
-
 /// Full GitHub user profile from `/users/{login}`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct GhUser {
@@ -74,6 +66,45 @@ pub struct GhUser {
     pub hireable: Option<bool>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    // ── Enriched fields from GraphQL contributionsCollection ──────────
+    #[serde(default)]
+    pub total_commit_contributions: Option<u32>,
+    #[serde(default)]
+    pub total_pr_contributions: Option<u32>,
+    #[serde(default)]
+    pub total_review_contributions: Option<u32>,
+    #[serde(default)]
+    pub total_repos_contributed_to: Option<u32>,
+    // ── JSON-serialized enrichment blobs ──────────────────────────────
+    #[serde(default)]
+    pub pinned_repos_json: Option<String>,
+    #[serde(default)]
+    pub contributed_repos_json: Option<String>,
+    #[serde(default)]
+    pub organizations_json: Option<String>,
+    #[serde(default)]
+    pub status_message: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PinnedRepo {
+    pub name: String,
+    pub stars: u32,
+    pub language: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContributedRepo {
+    pub name_with_owner: String,
+    pub stars: u32,
+    pub language: Option<String>,
+    pub topics: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrgMembership {
+    pub login: String,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -95,23 +126,29 @@ pub struct SearchReposResponse {
     pub items: Vec<GhRepo>,
 }
 
-/// GitHub Search Users API response (`GET /search/users`).
+/// Response from `GET /search/users`.
 #[derive(Debug, Clone, Deserialize)]
 pub struct SearchUsersResponse {
     pub total_count: u32,
-    pub incomplete_results: bool,
     pub items: Vec<SearchUserItem>,
 }
 
-/// Abbreviated user from search results (not the full profile — call `get_user` to hydrate).
-#[derive(Debug, Clone, Deserialize, Serialize)]
+/// Minimal user from GitHub search results.
+#[derive(Debug, Clone, Deserialize)]
 pub struct SearchUserItem {
     pub login: String,
     pub id: u64,
     pub html_url: String,
     pub avatar_url: String,
-    /// Relevance score assigned by GitHub.
     pub score: f64,
+}
+
+/// A stargazer entry — just a user login + id.
+#[derive(Debug, Clone, Deserialize)]
+pub struct StargazerItem {
+    pub login: String,
+    pub id: u64,
+    pub avatar_url: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]

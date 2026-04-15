@@ -183,13 +183,10 @@ impl GhClient {
 
     /// Search GitHub users by query string.
     ///
-    /// The `q` parameter supports GitHub qualifiers:
-    ///   `type:user`, `location:Berlin`, `language:python`,
-    ///   `followers:>100`, `repos:>10`, `created:>2020-01-01`,
-    ///   plus free-text matching against username, bio, email, and name.
+    /// Supports qualifiers like `location:London`, `language:python`, `type:user`.
     pub async fn search_users(
         &self,
-        q: &str,
+        query: &str,
         sort: Option<&str>,
         order: Option<&str>,
         per_page: u8,
@@ -197,7 +194,7 @@ impl GhClient {
     ) -> Result<SearchUsersResponse> {
         let mut url = format!(
             "{BASE_URL}/search/users?q={}&per_page={per_page}&page={page}",
-            urlencoding(q),
+            urlencoding(query),
         );
         if let Some(s) = sort {
             url.push_str(&format!("&sort={s}"));
@@ -208,367 +205,269 @@ impl GhClient {
         self.get_url(&url).await
     }
 
-    /// List stargazers of a repo (login + id).
-    /// Paginated — call with increasing `page` until empty.
+    /// Fetch stargazers of a repo (paginated).
     pub async fn repo_stargazers(
         &self,
         owner: &str,
         repo: &str,
         per_page: u8,
         page: u32,
-    ) -> Result<Vec<GhUserStub>> {
+    ) -> Result<Vec<StargazerItem>> {
         self.get(&format!(
             "/repos/{owner}/{repo}/stargazers?per_page={per_page}&page={page}"
         ))
         .await
     }
 
-    /// List public members of a GitHub org (login + id).
-    /// Paginated — call with increasing `page` until empty.
-    pub async fn org_members(
-        &self,
-        org: &str,
-        per_page: u8,
-        page: u32,
-    ) -> Result<Vec<GhUserStub>> {
-        self.get(&format!(
-            "/orgs/{org}/members?per_page={per_page}&page={page}"
-        ))
-        .await
-    }
+    // ── GraphQL endpoints ────────────────────────────────────────────────
 
-    /// Search repos by free-form query string.
-    /// Returns repo items — use `repo.full_name` to get the owner.
-    pub async fn search_repos_query(
-        &self,
-        q: &str,
-        sort: Option<&str>,
-        per_page: u8,
-        page: u32,
-    ) -> Result<SearchReposResponse> {
-        let mut url = format!(
-            "{BASE_URL}/search/repositories?q={}&per_page={per_page}&page={page}",
-            urlencoding(q),
-        );
-        if let Some(s) = sort {
-            url.push_str(&format!("&sort={s}"));
+    const GQL_URL: &'static str = "https://api.github.com/graphql";
+
+    /// POST a GraphQL query and return the parsed `data` field.
+    async fn graphql<T: DeserializeOwned>(&self, query: &str, variables: Option<&serde_json::Value>) -> Result<T> {
+        let body = if let Some(vars) = variables {
+            serde_json::json!({ "query": query, "variables": vars })
+        } else {
+            serde_json::json!({ "query": query })
+        };
+
+        debug!("GraphQL POST");
+        let resp = self
+            .inner
+            .post(Self::GQL_URL)
+            .bearer_auth(&self.token)
+            .json(&body)
+            .send()
+            .await
+            .map_err(GhError::Http)?;
+
+        let status = resp.status().as_u16();
+        if status == 429 || status == 403 {
+            let reset = resp
+                .headers()
+                .get("x-ratelimit-reset")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("unknown")
+                .to_string();
+            return Err(GhError::RateLimit { reset_at: reset });
         }
-        self.get_url(&url).await
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(GhError::Api { status, message: text });
+        }
+
+        let raw: serde_json::Value = resp.json().await.map_err(GhError::Http)?;
+        if let Some(errors) = raw.get("errors") {
+            // GitHub GraphQL returns partial data alongside errors.
+            // If `data` is present, return it (callers handle null fields);
+            // only hard-fail if there's no data at all.
+            if let Some(data) = raw.get("data") {
+                if !data.is_null() {
+                    let n_errors = errors.as_array().map(|a| a.len()).unwrap_or(1);
+                    tracing::warn!("GraphQL partial success: {n_errors} errors, returning available data");
+                    return serde_json::from_value(data.clone()).map_err(GhError::Deserialize);
+                }
+            }
+            let msg = errors.to_string();
+            return Err(GhError::Api { status: 200, message: msg });
+        }
+        let data = raw.get("data").ok_or_else(|| GhError::Other("no data field in GraphQL response".into()))?;
+        serde_json::from_value(data.clone()).map_err(GhError::Deserialize)
     }
 
-    // ── GraphQL batch user fetch ──────────────────────────────────────────
+    /// Shared GraphQL fields for User objects — used across batch, followers, and org member queries.
+    const USER_GQL_FIELDS: &'static str = r#"
+        login id: databaseId
+        url bio company location email name
+        avatarUrl websiteUrl twitterUsername
+        publicRepositories: repositories(privacy: PUBLIC) { totalCount }
+        publicGists: gists(privacy: PUBLIC) { totalCount }
+        followers { totalCount }
+        following { totalCount }
+        isHireable
+        createdAt updatedAt
+        contributionsCollection {
+            totalCommitContributions
+            totalPullRequestContributions
+            totalPullRequestReviewContributions
+            totalRepositoriesWithContributedCommits
+        }
+        pinnedItems(first: 6) {
+            nodes { ... on Repository { name stargazerCount primaryLanguage { name } } }
+        }
+        repositoriesContributedTo(first: 10, contributionTypes: COMMIT, orderBy: {field: STARGAZERS, direction: DESC}) {
+            nodes { nameWithOwner stargazerCount primaryLanguage { name } repositoryTopics(first: 5) { nodes { topic { name } } } }
+        }
+        organizations(first: 5) { nodes { login name } }
+        status { message }
+    "#;
 
-    /// Fetch full profiles for multiple users in a single GraphQL request.
-    /// Much more efficient than individual REST `/users/{login}` calls and
-    /// avoids secondary rate limits. Returns users in the same order as `logins`;
-    /// missing/errored users are silently omitted.
-    pub async fn get_users_graphql(&self, logins: &[&str]) -> Result<Vec<GhUser>> {
+    /// Parse a GraphQL user JSON node into a GhUser struct.
+    fn parse_gql_user(value: &serde_json::Value) -> GhUser {
+        use crate::types::{PinnedRepo, ContributedRepo, OrgMembership};
+
+        let login = value["login"].as_str().unwrap_or_default().to_string();
+        let id = value["id"].as_u64().unwrap_or(0);
+        let html_url = value["url"].as_str().unwrap_or_default().to_string();
+        let avatar_url = value["avatarUrl"].as_str().unwrap_or_default().to_string();
+        let name = value["name"].as_str().map(String::from);
+        let email = value["email"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let bio = value["bio"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let company = value["company"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let location = value["location"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let blog = value["websiteUrl"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let twitter_username = value["twitterUsername"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let public_repos = value["publicRepositories"]["totalCount"].as_u64().unwrap_or(0) as u32;
+        let public_gists = value["publicGists"]["totalCount"].as_u64().unwrap_or(0) as u32;
+        let followers = value["followers"]["totalCount"].as_u64().unwrap_or(0) as u32;
+        let following = value["following"]["totalCount"].as_u64().unwrap_or(0) as u32;
+        let hireable = value["isHireable"].as_bool();
+        let created_at = value["createdAt"]
+            .as_str()
+            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+            .map(|d| d.with_timezone(&chrono::Utc))
+            .unwrap_or_else(chrono::Utc::now);
+        let updated_at = value["updatedAt"]
+            .as_str()
+            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+            .map(|d| d.with_timezone(&chrono::Utc))
+            .unwrap_or_else(chrono::Utc::now);
+
+        // ── Enriched: contributionsCollection ────────────────────────
+        let cc = &value["contributionsCollection"];
+        let total_commit_contributions = cc["totalCommitContributions"].as_u64().map(|v| v as u32);
+        let total_pr_contributions = cc["totalPullRequestContributions"].as_u64().map(|v| v as u32);
+        let total_review_contributions = cc["totalPullRequestReviewContributions"].as_u64().map(|v| v as u32);
+        let total_repos_contributed_to = cc["totalRepositoriesWithContributedCommits"].as_u64().map(|v| v as u32);
+
+        // ── Enriched: pinnedItems ────────────────────────────────────
+        let pinned_repos_json = value["pinnedItems"]["nodes"]
+            .as_array()
+            .map(|nodes| {
+                let repos: Vec<PinnedRepo> = nodes
+                    .iter()
+                    .filter(|n| n.get("name").is_some())
+                    .map(|n| PinnedRepo {
+                        name: n["name"].as_str().unwrap_or_default().to_string(),
+                        stars: n["stargazerCount"].as_u64().unwrap_or(0) as u32,
+                        language: n["primaryLanguage"]["name"].as_str().map(String::from),
+                    })
+                    .collect();
+                serde_json::to_string(&repos).unwrap_or_default()
+            })
+            .filter(|s| s != "[]");
+
+        // ── Enriched: repositoriesContributedTo ──────────────────────
+        let contributed_repos_json = value["repositoriesContributedTo"]["nodes"]
+            .as_array()
+            .map(|nodes| {
+                let repos: Vec<ContributedRepo> = nodes
+                    .iter()
+                    .filter(|n| n.get("nameWithOwner").is_some())
+                    .map(|n| {
+                        let topics: Vec<String> = n["repositoryTopics"]["nodes"]
+                            .as_array()
+                            .map(|arr| {
+                                arr.iter()
+                                    .filter_map(|t| t["topic"]["name"].as_str().map(String::from))
+                                    .collect()
+                            })
+                            .unwrap_or_default();
+                        ContributedRepo {
+                            name_with_owner: n["nameWithOwner"].as_str().unwrap_or_default().to_string(),
+                            stars: n["stargazerCount"].as_u64().unwrap_or(0) as u32,
+                            language: n["primaryLanguage"]["name"].as_str().map(String::from),
+                            topics,
+                        }
+                    })
+                    .collect();
+                serde_json::to_string(&repos).unwrap_or_default()
+            })
+            .filter(|s| s != "[]");
+
+        // ── Enriched: organizations ──────────────────────────────────
+        let organizations_json = value["organizations"]["nodes"]
+            .as_array()
+            .map(|nodes| {
+                let orgs: Vec<OrgMembership> = nodes
+                    .iter()
+                    .map(|n| OrgMembership {
+                        login: n["login"].as_str().unwrap_or_default().to_string(),
+                        name: n["name"].as_str().map(String::from),
+                    })
+                    .collect();
+                serde_json::to_string(&orgs).unwrap_or_default()
+            })
+            .filter(|s| s != "[]");
+
+        // ── Enriched: status message ─────────────────────────────────
+        let status_message = value["status"]["message"]
+            .as_str()
+            .filter(|s| !s.is_empty())
+            .map(String::from);
+
+        GhUser {
+            login, id, html_url, avatar_url, name, email, bio, company, location,
+            blog, twitter_username, public_repos, public_gists, followers, following,
+            hireable, created_at, updated_at,
+            total_commit_contributions, total_pr_contributions,
+            total_review_contributions, total_repos_contributed_to,
+            pinned_repos_json, contributed_repos_json, organizations_json,
+            status_message,
+        }
+    }
+
+    /// Batch-fetch full user profiles via GraphQL. Up to 30 logins per call.
+    pub async fn get_users_graphql(&self, logins: &[String]) -> Result<Vec<GhUser>> {
         if logins.is_empty() {
             return Ok(vec![]);
         }
-        // Build aliased GraphQL query: u0: user(login:"x") { ... }, u1: ...
-        // NOTE: `email` field requires `user:email` or `read:user` scope on the PAT.
-        let fields = r#"login
-            id: databaseId
-            url
-            avatarUrl
-            name
-            email
-            bio
-            company
-            location
-            websiteUrl
-            twitterUsername
-            repositories(privacy: PUBLIC) { totalCount }
-            gists(privacy: PUBLIC) { totalCount }
-            followers { totalCount }
-            following { totalCount }
-            isHireable
-            createdAt
-            updatedAt"#;
 
-        let aliases: Vec<String> = logins
-            .iter()
-            .enumerate()
-            .map(|(i, login)| {
-                // Escape any quotes in login (shouldn't happen but be safe)
-                let escaped = login.replace('"', r#"\""#);
-                format!("u{i}: user(login: \"{escaped}\") {{ {fields} }}")
-            })
-            .collect();
-
-        let query = format!("query {{ {} }}", aliases.join("\n"));
-
-        let body = serde_json::json!({ "query": query });
-
-        let resp = self
-            .inner
-            .post("https://api.github.com/graphql")
-            .bearer_auth(&self.token)
-            .json(&body)
-            .send()
-            .await
-            .map_err(GhError::Http)?;
-
-        let status = resp.status().as_u16();
-        if status == 401 || status == 403 {
-            let reset = resp
-                .headers()
-                .get("x-ratelimit-reset")
-                .and_then(|v| v.to_str().ok())
-                .unwrap_or("unknown")
-                .to_string();
-            if status == 403 {
-                return Err(GhError::RateLimit { reset_at: reset });
-            }
-            let body_text = resp.text().await.unwrap_or_default();
-            return Err(GhError::Api { status, message: body_text });
+        let fields = Self::USER_GQL_FIELDS;
+        let mut parts = Vec::with_capacity(logins.len());
+        for (i, login) in logins.iter().enumerate() {
+            let escaped = login.replace('\\', "\\\\").replace('"', "\\\"");
+            parts.push(format!("u{i}: user(login: \"{escaped}\") {{ {fields} }}"));
         }
-        if !resp.status().is_success() {
-            let body_text = resp.text().await.unwrap_or_default();
-            return Err(GhError::Api { status, message: body_text });
-        }
+        let query = format!("query {{ {} }}", parts.join("\n"));
 
-        let json: serde_json::Value = resp.json().await.map_err(GhError::Http)?;
-
-        // Check for top-level errors
-        if let Some(errors) = json.get("errors") {
-            let err_str = serde_json::to_string(errors).unwrap_or_default();
-            tracing::warn!("GraphQL errors ({} logins): {}", logins.len(), &err_str[..err_str.len().min(300)]);
-            if json.get("data").is_none() {
-                return Err(GhError::Other(format!("GraphQL errors: {err_str}")));
+        let raw: HashMap<String, serde_json::Value> = self.graphql(&query, None).await?;
+        let mut users = Vec::with_capacity(raw.len());
+        for value in raw.values() {
+            if value.is_null() {
+                continue;
             }
+            users.push(Self::parse_gql_user(value));
         }
-
-        let data = match json.get("data") {
-            Some(d) => d,
-            None => {
-                tracing::warn!("GraphQL response has no 'data' field for {} logins", logins.len());
-                return Ok(vec![]);
-            }
-        };
-
-        let mut users = Vec::with_capacity(logins.len());
-        let mut null_count = 0u32;
-        let mut missing_count = 0u32;
-        let mut parse_fail = 0u32;
-        for i in 0..logins.len() {
-            let key = format!("u{i}");
-            if let Some(node) = data.get(&key) {
-                if node.is_null() {
-                    null_count += 1;
-                    continue;
-                }
-                if let Some(user) = graphql_node_to_user(node) {
-                    users.push(user);
-                } else {
-                    parse_fail += 1;
-                }
-            } else {
-                missing_count += 1;
-            }
-        }
-        if users.is_empty() && logins.len() > 5 {
-            tracing::warn!(
-                "get_users_graphql: 0/{} users parsed (null={null_count}, missing={missing_count}, parse_fail={parse_fail})",
-                logins.len()
-            );
-            // Log first few data keys for debugging
-            if let Some(obj) = data.as_object() {
-                let keys: Vec<&String> = obj.keys().take(5).collect();
-                tracing::warn!("  data keys sample: {:?}, total keys: {}", keys, obj.len());
-            }
-        }
-
         Ok(users)
     }
 
-    /// Search repos by query and return fully-hydrated owner profiles (users only).
-    /// Org-owned repos are filtered out (owner is not a User). This is ideal for
-    /// finding individual developers who built production code with a given SDK.
-    pub async fn search_repos_with_owners_graphql(
-        &self,
-        query: &str,
-        count: u32,
-    ) -> Result<Vec<GhUser>> {
-        let fields = r#"login
-                id: databaseId
-                url
-                avatarUrl
-                name
-                email
-                bio
-                company
-                location
-                websiteUrl
-                twitterUsername
-                repositories(privacy: PUBLIC) { totalCount }
-                gists(privacy: PUBLIC) { totalCount }
-                followers { totalCount }
-                following { totalCount }
-                isHireable
-                createdAt
-                updatedAt"#;
-
-        let gql = format!(
-            r#"query {{ search(query: "{}", type: REPOSITORY, first: {}) {{ nodes {{ ... on Repository {{ nameWithOwner owner {{ ... on User {{ {} }} }} }} }} }} }}"#,
-            query.replace('"', r#"\""#),
-            count.min(100),
-            fields,
-        );
-
-        let body = serde_json::json!({ "query": gql });
-
-        let resp = self
-            .inner
-            .post("https://api.github.com/graphql")
-            .bearer_auth(&self.token)
-            .json(&body)
-            .send()
-            .await
-            .map_err(GhError::Http)?;
-
-        let status = resp.status().as_u16();
-        if status == 403 {
-            let reset = resp
-                .headers()
-                .get("x-ratelimit-reset")
-                .and_then(|v| v.to_str().ok())
-                .unwrap_or("unknown")
-                .to_string();
-            return Err(GhError::RateLimit { reset_at: reset });
-        }
-        if !resp.status().is_success() {
-            let body_text = resp.text().await.unwrap_or_default();
-            return Err(GhError::Api { status, message: body_text });
-        }
-
-        let json: serde_json::Value = resp.json().await.map_err(GhError::Http)?;
-
-        if let Some(errors) = json.get("errors") {
-            if json.get("data").is_none() {
-                return Err(GhError::Other(format!(
-                    "GraphQL errors: {}",
-                    serde_json::to_string(errors).unwrap_or_default()
-                )));
-            }
-        }
-
-        let nodes = json
-            .get("data")
-            .and_then(|d| d.get("search"))
-            .and_then(|s| s.get("nodes"))
-            .and_then(|n| n.as_array());
-
-        let nodes = match nodes {
-            Some(n) => n,
-            None => return Ok(vec![]),
-        };
-
-        let mut users = Vec::new();
-        let mut seen_logins = std::collections::HashSet::new();
-        for node in nodes {
-            // owner is null for org-owned repos (User spread doesn't match)
-            let owner = match node.get("owner") {
-                Some(o) if !o.is_null() && o.get("login").is_some() => o,
-                _ => continue,
-            };
-            if let Some(user) = graphql_node_to_user(owner) {
-                if seen_logins.insert(user.login.clone()) {
-                    users.push(user);
-                }
-            }
-        }
-
-        Ok(users)
-    }
-
-    /// Fetch full profiles of org members in a single GraphQL query.
-    /// Returns up to 100 members with full user data — no separate hydration needed.
-    /// Falls back to empty vec on 403 (org members hidden) or other errors.
-    pub async fn get_org_members_graphql(&self, org: &str) -> Result<Vec<GhUser>> {
-        let fields = r#"login
-            id: databaseId
-            url
-            avatarUrl
-            name
-            email
-            bio
-            company
-            location
-            websiteUrl
-            twitterUsername
-            repositories(privacy: PUBLIC) { totalCount }
-            gists(privacy: PUBLIC) { totalCount }
-            followers { totalCount }
-            following { totalCount }
-            isHireable
-            createdAt
-            updatedAt"#;
-
+    /// Fetch public members of a GitHub organization via GraphQL.
+    pub async fn get_org_members_graphql(&self, org: &str, first: u32) -> Result<Vec<GhUser>> {
+        let fields = Self::USER_GQL_FIELDS;
         let query = format!(
-            r#"query {{ organization(login: "{}") {{ membersWithRole(first: 100) {{ nodes {{ {} }} }} }} }}"#,
-            org.replace('"', r#"\""#),
-            fields,
+            r#"query {{ organization(login: "{org}") {{ membersWithRole(first: {first}) {{ nodes {{ {fields} }} }} }} }}"#,
         );
+        let raw: serde_json::Value = self.graphql(&query, None).await?;
+        let nodes = raw["organization"]["membersWithRole"]["nodes"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+        Ok(nodes.iter().filter(|v| !v.is_null()).map(Self::parse_gql_user).collect())
+    }
 
-        let body = serde_json::json!({ "query": query });
-
-        let resp = self
-            .inner
-            .post("https://api.github.com/graphql")
-            .bearer_auth(&self.token)
-            .json(&body)
-            .send()
-            .await
-            .map_err(GhError::Http)?;
-
-        let status = resp.status().as_u16();
-        if status == 403 {
-            let reset = resp
-                .headers()
-                .get("x-ratelimit-reset")
-                .and_then(|v| v.to_str().ok())
-                .unwrap_or("unknown")
-                .to_string();
-            return Err(GhError::RateLimit { reset_at: reset });
-        }
-        if !resp.status().is_success() {
-            let body_text = resp.text().await.unwrap_or_default();
-            return Err(GhError::Api { status, message: body_text });
-        }
-
-        let json: serde_json::Value = resp.json().await.map_err(GhError::Http)?;
-
-        // GraphQL returns errors for hidden orgs / permission issues
-        if let Some(errors) = json.get("errors") {
-            let msg = serde_json::to_string(errors).unwrap_or_default();
-            if msg.contains("not found") || msg.contains("visible") {
-                return Ok(vec![]); // org members not public
-            }
-            if json.get("data").and_then(|d| d.get("organization")).map_or(true, |o| o.is_null()) {
-                return Err(GhError::Other(format!("GraphQL errors: {msg}")));
-            }
-        }
-
-        let nodes = json
-            .get("data")
-            .and_then(|d| d.get("organization"))
-            .and_then(|o| o.get("membersWithRole"))
-            .and_then(|m| m.get("nodes"))
-            .and_then(|n| n.as_array());
-
-        let nodes = match nodes {
-            Some(n) => n,
-            None => return Ok(vec![]),
-        };
-
-        let users: Vec<GhUser> = nodes
-            .iter()
-            .filter_map(|node| graphql_node_to_user(node))
-            .collect();
-
-        Ok(users)
+    /// Fetch followers of a user via GraphQL (enriched profiles).
+    pub async fn get_user_followers_graphql(&self, login: &str, first: u32) -> Result<Vec<GhUser>> {
+        let fields = Self::USER_GQL_FIELDS;
+        let query = format!(
+            r#"query {{ user(login: "{login}") {{ followers(first: {first}) {{ nodes {{ {fields} }} }} }} }}"#,
+        );
+        let raw: serde_json::Value = self.graphql(&query, None).await?;
+        let nodes = raw["user"]["followers"]["nodes"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+        Ok(nodes.iter().filter(|v| !v.is_null()).map(Self::parse_gql_user).collect())
     }
 
     /// Search repos by topic + optional language.
@@ -589,100 +488,6 @@ impl GhClient {
         );
         self.get_url(&url).await
     }
-}
-
-/// Convert a GraphQL user node (serde_json::Value) into a GhUser.
-fn graphql_node_to_user(node: &serde_json::Value) -> Option<GhUser> {
-    use chrono::{DateTime, Utc};
-
-    let login = node.get("login")?.as_str()?.to_string();
-    // "id" when aliased (get_users_graphql), "databaseId" when direct
-    let id = node.get("id").or_else(|| node.get("databaseId")).and_then(|v| v.as_u64()).unwrap_or(0);
-    let url = node.get("url")?.as_str()?.to_string();
-    let avatar_url = node
-        .get("avatarUrl")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
-    let name = node.get("name").and_then(|v| v.as_str()).map(String::from);
-    let email = node
-        .get("email")
-        .and_then(|v| v.as_str())
-        .filter(|e| !e.is_empty())
-        .map(String::from);
-    let bio = node.get("bio").and_then(|v| v.as_str()).filter(|b| !b.is_empty()).map(String::from);
-    let company = node
-        .get("company")
-        .and_then(|v| v.as_str())
-        .filter(|c| !c.is_empty())
-        .map(String::from);
-    let location = node
-        .get("location")
-        .and_then(|v| v.as_str())
-        .filter(|l| !l.is_empty())
-        .map(String::from);
-    let blog = node
-        .get("websiteUrl")
-        .and_then(|v| v.as_str())
-        .filter(|b| !b.is_empty())
-        .map(String::from);
-    let twitter_username = node
-        .get("twitterUsername")
-        .and_then(|v| v.as_str())
-        .filter(|t| !t.is_empty())
-        .map(String::from);
-    let public_repos = node
-        .get("repositories")
-        .and_then(|v| v.get("totalCount"))
-        .and_then(|v| v.as_u64())
-        .unwrap_or(0) as u32;
-    let public_gists = node
-        .get("gists")
-        .and_then(|v| v.get("totalCount"))
-        .and_then(|v| v.as_u64())
-        .unwrap_or(0) as u32;
-    let followers = node
-        .get("followers")
-        .and_then(|v| v.get("totalCount"))
-        .and_then(|v| v.as_u64())
-        .unwrap_or(0) as u32;
-    let following = node
-        .get("following")
-        .and_then(|v| v.get("totalCount"))
-        .and_then(|v| v.as_u64())
-        .unwrap_or(0) as u32;
-    let hireable = node.get("isHireable").and_then(|v| v.as_bool());
-    let created_at: DateTime<Utc> = node
-        .get("createdAt")
-        .and_then(|v| v.as_str())
-        .and_then(|s| s.parse().ok())
-        .unwrap_or_else(Utc::now);
-    let updated_at: DateTime<Utc> = node
-        .get("updatedAt")
-        .and_then(|v| v.as_str())
-        .and_then(|s| s.parse().ok())
-        .unwrap_or_else(Utc::now);
-
-    Some(GhUser {
-        login,
-        id,
-        html_url: url,
-        avatar_url,
-        name,
-        email,
-        bio,
-        company,
-        location,
-        blog,
-        twitter_username,
-        public_repos,
-        public_gists,
-        followers,
-        following,
-        hireable,
-        created_at,
-        updated_at,
-    })
 }
 
 pub(crate) fn urlencoding(s: &str) -> String {

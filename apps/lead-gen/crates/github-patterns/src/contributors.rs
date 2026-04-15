@@ -32,13 +32,11 @@ pub struct ContributorRecord {
     /// All AI repos this person was seen contributing to.
     pub repos: Vec<RepoContrib>,
     pub total_contributions: u32,
-    /// Extra tags merged into skills_json at insert time (e.g. "cpn:starred").
-    pub extra_tags: Vec<String>,
 }
 
-/// Weights for each score component: (density, novelty, breadth, activity, obscurity).
+/// Weights: density, novelty, breadth, activity, skill_relevance, engagement, obscurity.
 /// Must sum to 1.0.
-pub const SCORE_WEIGHTS: (f32, f32, f32, f32, f32) = (0.35, 0.25, 0.20, 0.10, 0.10);
+pub const SCORE_WEIGHTS: [f32; 7] = [0.25, 0.10, 0.15, 0.20, 0.10, 0.10, 0.10];
 
 /// Returns true for bot logins (dependabot, renovate, GitHub Apps, etc.).
 pub fn is_bot(login: &str) -> bool {
@@ -57,20 +55,23 @@ pub struct RisingScore {
     pub novelty: f32,
     /// Number of distinct AI repos contributed to (normalised 0–1, caps at 5).
     pub breadth: f32,
-    /// Active builder signal: public repos (normalised, caps at 50).
+    /// Active builder signal from real contribution data (commits, PRs, reviews).
     pub activity: f32,
+    /// AI skill count / 8 — richer skill profile = higher score.
+    pub skill_relevance: f32,
+    /// Reachability signals: email, hireable, blog, twitter, recently active.
+    pub engagement: f32,
     /// Inverse-fame penalty: 1 / (1 + followers / 500).
     pub obscurity: f32,
-    /// Ghost-account penalty: 0.0 when public_repos == 0 && followers == 0,
-    /// scaling to 1.0 as the account shows real activity.
+    /// Ghost-account penalty: scaling to 1.0 as the account shows real activity.
     pub realness: f32,
 }
 
 /// Compute rising-star score for a contributor.
 ///
-/// Formula rewards: low followers + high commits + new account + multi-repo breadth.
-/// Ghost accounts (0 public repos, 0 followers) are penalised via `realness`.
-pub fn compute_rising_score(record: &ContributorRecord) -> RisingScore {
+/// v2: Uses real contribution data from GraphQL (commits, PRs, reviews),
+/// hireable/recency multipliers, engagement signals, and skill relevance.
+pub fn compute_rising_score(record: &ContributorRecord, skill_count: usize) -> RisingScore {
     let followers = record.user.followers as f32;
     let total_contributions = record.total_contributions as f32;
     let public_repos = record.user.public_repos as f32;
@@ -81,43 +82,77 @@ pub fn compute_rising_score(record: &ContributorRecord) -> RisingScore {
         (now - record.user.created_at).num_days().max(1) as f32
     };
 
-    // High contributions relative to current fame.
-    // Normalise the raw ratio by 50 before tanh so the result lives in 0..1
-    // across realistic ranges (50 commits / 0 followers → ~0.76).
+    // ── Contribution density ────────────────────────────────────────
     let contribution_density =
         ((total_contributions / (followers + 1.0)) * 50.0_f32.recip()).tanh();
 
-    // Newer = more "rising" potential (linear decay over 5 years)
-    let novelty = (1.0 - account_age_days / (365.0 * 5.0)).max(0.0);
+    // ── Novelty (softened — 10 year decay, not 5) ───────────────────
+    let novelty = (1.0 - account_age_days / (365.0 * 10.0)).max(0.0);
 
-    // Breadth: contributing to multiple AI repos (cap at 5)
+    // ── Breadth ─────────────────────────────────────────────────────
     let breadth = (repos_count / 5.0).min(1.0);
 
-    // Builder signal: public repos capped at 50
-    let activity = (public_repos / 50.0).min(1.0);
+    // ── Activity (v2: real contribution data) ───────────────────────
+    let commits = record.user.total_commit_contributions
+        .unwrap_or(record.user.public_repos) as f32;
+    let prs = record.user.total_pr_contributions.unwrap_or(0) as f32;
+    let reviews = record.user.total_review_contributions.unwrap_or(0) as f32;
+    let activity = (commits / 200.0).min(1.0) * 0.5
+        + (prs / 50.0).min(1.0) * 0.3
+        + (reviews / 30.0).min(1.0) * 0.2;
 
-    // Obscurity bonus: less famous = more "rising"
+    // ── Skill relevance (NEW) ───────────────────────────────────────
+    let skill_relevance = (skill_count as f32 / 8.0).min(1.0);
+
+    // ── Engagement (NEW: reachability + availability) ────────────────
+    let days_since_update = (chrono::Utc::now() - record.user.updated_at).num_days();
+    let engagement = [
+        record.user.email.is_some(),
+        record.user.hireable == Some(true),
+        record.user.blog.as_ref().map_or(false, |b| !b.is_empty()),
+        record.user.twitter_username.is_some(),
+        days_since_update < 90,
+    ]
+    .iter()
+    .filter(|&&s| s)
+    .count() as f32
+        / 5.0;
+
+    // ── Obscurity ───────────────────────────────────────────────────
     let obscurity = 1.0 / (1.0 + followers / 500.0);
 
-    // Ghost-account guard: discount accounts with zero public footprint.
-    // Floor of 0.5 so real employees with only private repos aren't zeroed out.
-    // presence=0 → 0.5, presence=5 → ~0.88, presence=50+ → ~1.0
+    // ── Realness (ghost guard) ──────────────────────────────────────
     let presence = public_repos + followers;
     let realness = 0.5 + 0.5 * (presence * 0.2_f32).tanh();
 
-    let (w_d, w_n, w_b, w_a, w_o) = SCORE_WEIGHTS;
+    // ── Weighted sum ────────────────────────────────────────────────
+    let [w_d, w_n, w_b, w_a, w_s, w_e, w_o] = SCORE_WEIGHTS;
     let raw = w_d * contribution_density
         + w_n * novelty
         + w_b * breadth
         + w_a * activity
+        + w_s * skill_relevance
+        + w_e * engagement
         + w_o * obscurity;
 
+    // ── Multipliers ─────────────────────────────────────────────────
+    let hireable_bonus = if record.user.hireable == Some(true) { 1.15 } else { 1.0 };
+    let recency_bonus = if days_since_update <= 30 {
+        1.10
+    } else if days_since_update <= 90 {
+        1.05
+    } else {
+        1.0
+    };
+
     RisingScore {
-        score: (raw * realness).clamp(0.0, 1.0),
+        score: (raw * realness * hireable_bonus * recency_bonus).clamp(0.0, 1.0),
         contribution_density,
         novelty,
         breadth,
         activity,
+        skill_relevance,
+        engagement,
         obscurity,
         realness,
     }
@@ -240,7 +275,6 @@ impl ContributorsDb {
             return Ok(0);
         }
 
-        let scores: Vec<RisingScore> = new.iter().map(|r| compute_rising_score(r)).collect();
         let now = chrono::Utc::now().to_rfc3339();
         let n = new.len();
         let s = schema();
@@ -254,7 +288,6 @@ impl ContributorsDb {
             .collect();
 
         // Skills extraction (always computed — pure keyword matching, negligible cost)
-        // Caller-supplied extra_tags (e.g. "cpn:starred") are merged in.
         let skills_jsons: Vec<String> = new
             .iter()
             .zip(repos_jsons.iter())
@@ -263,19 +296,27 @@ impl ContributorsDb {
                     r.user.bio.as_deref(),
                     r.user.company.as_deref(),
                     repos_json,
+                    r.user.pinned_repos_json.as_deref(),
+                    r.user.contributed_repos_json.as_deref(),
                 );
-                let mut skills: Vec<String> = crate::skills::extract_skills(&text)
-                    .into_iter()
-                    .map(|s| s.to_string())
-                    .collect();
-                for tag in &r.extra_tags {
-                    if !skills.contains(tag) {
-                        skills.push(tag.clone());
-                    }
-                }
-                serde_json::to_string(&skills)
+                serde_json::to_string(&crate::skills::extract_skills(&text))
                     .unwrap_or_else(|_| "[]".to_string())
             })
+            .collect();
+
+        // Derive skill counts from skills_jsons, then compute scores
+        let skill_counts: Vec<usize> = skills_jsons
+            .iter()
+            .map(|j| {
+                serde_json::from_str::<Vec<String>>(j)
+                    .map(|v| v.len())
+                    .unwrap_or(0)
+            })
+            .collect();
+        let scores: Vec<RisingScore> = new
+            .iter()
+            .zip(skill_counts.iter())
+            .map(|(r, &sc)| compute_rising_score(r, sc))
             .collect();
 
         // Vector column: embed under contrib-embed feature, null otherwise.
@@ -291,6 +332,8 @@ impl ContributorsDb {
                             r.user.bio.as_deref(),
                             r.user.company.as_deref(),
                             repos_json,
+                            r.user.pinned_repos_json.as_deref(),
+                            r.user.contributed_repos_json.as_deref(),
                         )
                     })
                     .collect();
@@ -755,6 +798,14 @@ mod tests {
             hireable: None,
             created_at,
             updated_at: Utc::now(),
+            total_commit_contributions: None,
+            total_pr_contributions: None,
+            total_review_contributions: None,
+            total_repos_contributed_to: None,
+            pinned_repos_json: None,
+            contributed_repos_json: None,
+            organizations_json: None,
+            status_message: None,
         }
     }
 
@@ -775,7 +826,6 @@ mod tests {
             user: make_user(followers, public_repos, age_days),
             repos,
             total_contributions: contributions,
-            extra_tags: vec![],
         }
     }
 
@@ -832,7 +882,7 @@ mod tests {
             (0, 0, 365 * 10, 1000, 1), // ghost account, very old
         ] {
             let s = compute_rising_score(
-                &make_record(followers, public_repos, age_days, contributions, repos)
+                &make_record(followers, public_repos, age_days, contributions, repos), 0,
             );
             for (name, val) in [
                 ("score", s.score),
@@ -854,17 +904,23 @@ mod tests {
     // ── formula verification ──────────────────────────────────────────────────
 
     #[test]
-    fn score_equals_weighted_sum_times_realness() {
+    fn score_equals_weighted_sum_times_realness_and_multipliers() {
         let r = make_record(20, 15, 500, 200, 3);
-        let s = compute_rising_score(&r);
-        let (w_d, w_n, w_b, w_a, w_o) = SCORE_WEIGHTS;
+        let s = compute_rising_score(&r, 0);
+        let [w_d, w_n, w_b, w_a, w_s, w_e, w_o] = SCORE_WEIGHTS;
         let expected_raw =
             w_d * s.contribution_density
             + w_n * s.novelty
             + w_b * s.breadth
             + w_a * s.activity
+            + w_s * s.skill_relevance
+            + w_e * s.engagement
             + w_o * s.obscurity;
-        let expected = (expected_raw * s.realness).clamp(0.0, 1.0);
+        // Multipliers: hireable_bonus * recency_bonus
+        let hireable_bonus = if r.user.hireable == Some(true) { 1.15 } else { 1.0 };
+        let days_since_update = (chrono::Utc::now() - r.user.updated_at).num_days();
+        let recency_bonus = if days_since_update <= 30 { 1.10 } else if days_since_update <= 90 { 1.05 } else { 1.0 };
+        let expected = (expected_raw * s.realness * hireable_bonus * recency_bonus).clamp(0.0, 1.0);
         assert!(
             (s.score - expected).abs() < EPSILON,
             "score={} expected={expected} (diff={})",
@@ -874,8 +930,7 @@ mod tests {
 
     #[test]
     fn score_weights_sum_to_one() {
-        let (w_d, w_n, w_b, w_a, w_o) = SCORE_WEIGHTS;
-        let sum = w_d + w_n + w_b + w_a + w_o;
+        let sum: f32 = SCORE_WEIGHTS.iter().sum();
         assert!((sum - 1.0).abs() < EPSILON, "weights sum={sum}, expected 1.0");
     }
 
@@ -883,8 +938,8 @@ mod tests {
 
     #[test]
     fn contribution_density_increases_with_commits() {
-        let low = compute_rising_score(&make_record(10, 5, 365, 10, 1));
-        let high = compute_rising_score(&make_record(10, 5, 365, 500, 1));
+        let low = compute_rising_score(&make_record(10, 5, 365, 10, 1), 0);
+        let high = compute_rising_score(&make_record(10, 5, 365, 500, 1), 0);
         assert!(
             high.contribution_density > low.contribution_density,
             "density low={} high={}",
@@ -894,8 +949,8 @@ mod tests {
 
     #[test]
     fn contribution_density_decreases_with_followers() {
-        let obscure = compute_rising_score(&make_record(5, 10, 365, 100, 1));
-        let famous = compute_rising_score(&make_record(10_000, 10, 365, 100, 1));
+        let obscure = compute_rising_score(&make_record(5, 10, 365, 100, 1), 0);
+        let famous = compute_rising_score(&make_record(10_000, 10, 365, 100, 1), 0);
         assert!(
             obscure.contribution_density > famous.contribution_density,
             "obscure={} famous={}",
@@ -905,58 +960,59 @@ mod tests {
 
     #[test]
     fn novelty_decreases_with_age() {
-        let new_acc = compute_rising_score(&make_record(0, 5, 100, 1, 1));
-        let old_acc = compute_rising_score(&make_record(0, 5, 2000, 1, 1));
+        let new_acc = compute_rising_score(&make_record(0, 5, 100, 1, 1), 0);
+        let old_acc = compute_rising_score(&make_record(0, 5, 2000, 1, 1), 0);
         assert!(new_acc.novelty > old_acc.novelty);
     }
 
     #[test]
-    fn novelty_zero_after_five_years() {
-        let old = compute_rising_score(&make_record(0, 0, 365 * 10, 1, 1));
+    fn novelty_zero_after_ten_years() {
+        let old = compute_rising_score(&make_record(0, 0, 365 * 10, 1, 1), 0);
         assert_eq!(old.novelty, 0.0);
     }
 
     #[test]
     fn novelty_at_five_year_boundary() {
-        // Exactly 5 years (1825 days) → novelty should be very close to 0
-        let boundary = compute_rising_score(&make_record(0, 5, 1825, 50, 1));
-        assert!(boundary.novelty < 0.01, "novelty={}", boundary.novelty);
+        // Exactly 5 years (1825 days) → novelty should be ~0.5 with 10-year decay
+        let boundary = compute_rising_score(&make_record(0, 5, 1825, 50, 1), 0);
+        assert!(boundary.novelty > 0.4 && boundary.novelty < 0.6, "novelty={}", boundary.novelty);
     }
 
     #[test]
     fn breadth_increases_with_repo_count() {
-        let single = compute_rising_score(&make_record(0, 5, 365, 100, 1));
-        let multi = compute_rising_score(&make_record(0, 5, 365, 100, 5));
+        let single = compute_rising_score(&make_record(0, 5, 365, 100, 1), 0);
+        let multi = compute_rising_score(&make_record(0, 5, 365, 100, 5), 0);
         assert!(multi.breadth > single.breadth);
     }
 
     #[test]
     fn breadth_caps_at_five_repos() {
-        let five = compute_rising_score(&make_record(0, 5, 365, 100, 5));
-        let ten = compute_rising_score(&make_record(0, 5, 365, 100, 10));
+        let five = compute_rising_score(&make_record(0, 5, 365, 100, 5), 0);
+        let ten = compute_rising_score(&make_record(0, 5, 365, 100, 10), 0);
         assert_eq!(five.breadth, 1.0);
         assert_eq!(ten.breadth, 1.0);
     }
 
     #[test]
-    fn activity_caps_at_fifty_public_repos() {
-        let fifty = compute_rising_score(&make_record(0, 50, 365, 10, 1));
-        let hundred = compute_rising_score(&make_record(0, 100, 365, 10, 1));
-        assert_eq!(fifty.activity, 1.0);
-        assert_eq!(hundred.activity, 1.0);
+    fn activity_increases_with_public_repos() {
+        // Activity now uses real commit data, falling back to public_repos.
+        // Formula: (commits/200)*0.5 + (prs/50)*0.3 + (reviews/30)*0.2
+        let low = compute_rising_score(&make_record(0, 10, 365, 10, 1), 0);
+        let high = compute_rising_score(&make_record(0, 100, 365, 10, 1), 0);
+        assert!(high.activity > low.activity, "low={} high={}", low.activity, high.activity);
     }
 
     #[test]
     fn obscurity_decreases_with_followers() {
-        let nobody = compute_rising_score(&make_record(0, 5, 365, 10, 1));
-        let celebrity = compute_rising_score(&make_record(50_000, 5, 365, 10, 1));
+        let nobody = compute_rising_score(&make_record(0, 5, 365, 10, 1), 0);
+        let celebrity = compute_rising_score(&make_record(50_000, 5, 365, 10, 1), 0);
         assert!(nobody.obscurity > celebrity.obscurity);
     }
 
     #[test]
     fn obscurity_at_500_followers_is_half() {
         // formula: 1 / (1 + followers/500) → at 500 followers = 0.5
-        let r = compute_rising_score(&make_record(500, 10, 365, 50, 1));
+        let r = compute_rising_score(&make_record(500, 10, 365, 50, 1), 0);
         assert!((r.obscurity - 0.5).abs() < EPSILON, "obscurity={}", r.obscurity);
     }
 
@@ -965,14 +1021,14 @@ mod tests {
     #[test]
     fn realness_is_half_for_ghost_account() {
         // 0 public repos, 0 followers → realness = 0.5 + 0.5*tanh(0) = 0.5
-        let ghost = compute_rising_score(&make_record(0, 0, 200, 383, 1));
+        let ghost = compute_rising_score(&make_record(0, 0, 200, 383, 1), 0);
         assert!((ghost.realness - 0.5).abs() < EPSILON, "realness={}", ghost.realness);
     }
 
     #[test]
     fn realness_approaches_one_for_established_account() {
         // 50 public repos, 200 followers → presence=250 → tanh(50) ≈ 1.0
-        let established = compute_rising_score(&make_record(200, 50, 500, 100, 1));
+        let established = compute_rising_score(&make_record(200, 50, 500, 100, 1), 0);
         assert!(established.realness > 0.99, "realness={}", established.realness);
     }
 
@@ -982,8 +1038,8 @@ mod tests {
         let ghost = make_record(0, 0, 500, 383, 1);    // no public repos, no followers
         let active = make_record(0, 10, 500, 383, 1);  // 10 public repos
 
-        let s_ghost = compute_rising_score(&ghost).score;
-        let s_active = compute_rising_score(&active).score;
+        let s_ghost = compute_rising_score(&ghost, 0).score;
+        let s_active = compute_rising_score(&active, 0).score;
 
         assert!(
             s_active > s_ghost,
@@ -997,8 +1053,8 @@ mod tests {
     fn undiscovered_talent_beats_famous_contributor() {
         let rising = make_record(10, 30, 300, 400, 3);
         let famous = make_record(50_000, 30, 2000, 400, 3);
-        let s_rising = compute_rising_score(&rising).score;
-        let s_famous = compute_rising_score(&famous).score;
+        let s_rising = compute_rising_score(&rising, 0).score;
+        let s_famous = compute_rising_score(&famous, 0).score;
         assert!(s_rising > s_famous, "rising={s_rising:.3} famous={s_famous:.3}");
     }
 
@@ -1007,7 +1063,7 @@ mod tests {
         let broad = make_record(20, 40, 500, 300, 5);
         let narrow = make_record(20, 40, 500, 300, 1);
         assert!(
-            compute_rising_score(&broad).score > compute_rising_score(&narrow).score
+            compute_rising_score(&broad, 0).score > compute_rising_score(&narrow, 0).score
         );
     }
 
@@ -1016,7 +1072,7 @@ mod tests {
         // Fixed followers/age/repos, only contributions vary
         let scores: Vec<f32> = [10u32, 50, 200, 1000]
             .iter()
-            .map(|&c| compute_rising_score(&make_record(5, 10, 400, c, 1)).score)
+            .map(|&c| compute_rising_score(&make_record(5, 10, 400, c, 1), 0).score)
             .collect();
         for w in scores.windows(2) {
             assert!(w[1] > w[0], "score should increase with contributions: {:?}", scores);
@@ -1026,8 +1082,8 @@ mod tests {
     #[test]
     fn score_is_deterministic() {
         let r = make_record(20, 15, 730, 300, 3);
-        let s1 = compute_rising_score(&r).score;
-        let s2 = compute_rising_score(&r).score;
+        let s1 = compute_rising_score(&r, 0).score;
+        let s2 = compute_rising_score(&r, 0).score;
         // Age is in whole days, so two calls in the same test always agree
         assert_eq!(s1, s2, "score must be deterministic");
     }

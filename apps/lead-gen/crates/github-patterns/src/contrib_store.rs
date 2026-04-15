@@ -22,21 +22,6 @@ fn infer_position(bio: Option<&str>) -> Option<&'static str> {
     let bio = bio?.to_lowercase();
     if bio.contains("founder") || bio.contains("ceo") || bio.contains("cto") {
         Some("Founder")
-    } else if bio.contains("solution architect") || bio.contains("solutions architect")
-        || bio.contains("enterprise architect") || bio.contains("cloud architect")
-        || bio.contains("technical architect")
-    {
-        Some("Architect")
-    } else if bio.contains("consultant") || bio.contains("consulting")
-        || bio.contains("advisory")
-    {
-        Some("Consultant")
-    } else if bio.contains("delivery lead") || bio.contains("delivery manager")
-        || bio.contains("program manager") || bio.contains("engagement manager")
-    {
-        Some("Delivery Lead")
-    } else if bio.contains("director") || bio.contains("vp ") || bio.contains("head of") {
-        Some("Director")
     } else if bio.contains("researcher") || bio.contains("research scientist") || bio.contains("research engineer") {
         Some("Researcher")
     } else if bio.contains("scientist") || bio.contains("data scientist") {
@@ -54,11 +39,15 @@ fn infer_position(bio: Option<&str>) -> Option<&'static str> {
 /// fields (email, company, position) are refreshed; existing non-null values
 /// are preserved via `COALESCE`.
 ///
+/// `extra_tags` are appended alongside the default `github:rising-star` /
+/// `skill:*` tags — use for opportunity IDs, location verification, etc.
+///
 /// Returns the contact `id` when upserted, `None` when below threshold.
 pub async fn save_contributor_contact(
     pool: &PgPool,
     star: &RisingStar,
     threshold: f32,
+    extra_tags: &[String],
 ) -> Result<Option<i32>> {
     if star.rising_score < threshold {
         return Ok(None);
@@ -96,20 +85,24 @@ pub async fn save_contributor_contact(
     for skill in &star.skills {
         tags.push(format!("skill:{skill}"));
     }
+    for tag in extra_tags {
+        tags.push(tag.clone());
+    }
     let tags_json = serde_json::to_string(&tags).map_err(|e| GhError::Other(e.to_string()))?;
 
     // ── Upsert ───────────────────────────────────────────────────────────────────
     let id: i32 = sqlx::query_scalar(
         r#"
         INSERT INTO contacts
-          (first_name, last_name, email, company, position, github_handle, tags)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+          (first_name, last_name, email, company, position, github_handle, tags, authority_score)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (github_handle) WHERE github_handle IS NOT NULL DO UPDATE SET
-          tags       = EXCLUDED.tags,
-          email      = COALESCE(EXCLUDED.email, contacts.email),
-          company    = COALESCE(EXCLUDED.company, contacts.company),
-          position   = COALESCE(EXCLUDED.position, contacts.position),
-          updated_at = now()::text
+          tags            = EXCLUDED.tags,
+          email           = COALESCE(EXCLUDED.email, contacts.email),
+          company         = COALESCE(EXCLUDED.company, contacts.company),
+          position        = COALESCE(EXCLUDED.position, contacts.position),
+          authority_score = EXCLUDED.authority_score,
+          updated_at      = now()::text
         RETURNING id
         "#,
     )
@@ -120,6 +113,7 @@ pub async fn save_contributor_contact(
     .bind(position)
     .bind(&star.login)
     .bind(&tags_json)
+    .bind(star.rising_score)
     .fetch_one(pool)
     .await
     .map_err(|e| GhError::Other(e.to_string()))?;
