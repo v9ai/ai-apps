@@ -15,6 +15,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   apple_platform: "#64748B",
   ai_tools: "#10B981",
   social_media: "#EC4899",
+  vision_retrieval: "#0EA5E9",
+  graph_rag: "#22D3EE",
+  gpu_optimization: "#F97316",
+  observability: "#84CC16",
+  responsible_ai: "#D946EF",
+  full_stack_ai: "#14B8A6",
+  model_training: "#6366F1",
+  building_in_public: "#F43F5E",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -31,6 +39,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   apple_platform: "Apple Platform",
   ai_tools: "AI Tools",
   social_media: "Social Media & Writing",
+  vision_retrieval: "Vision-Language Retrieval",
+  graph_rag: "Graph RAG",
+  gpu_optimization: "GPU Optimization",
+  observability: "Observability & Monitoring",
+  responsible_ai: "Responsible AI",
+  full_stack_ai: "Full-Stack AI",
+  model_training: "Model Training & Benchmarks",
+  building_in_public: "Building in Public",
 };
 
 function renderInline(text: string) {

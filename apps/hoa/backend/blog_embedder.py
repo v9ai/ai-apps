@@ -45,6 +45,11 @@ BLOG_SOURCES: dict[str, dict[str, str]] = {
         "posts_url": "https://steipete.me/posts",
         "name": "Peter Steinberger",
     },
+    "athos-georgiou": {
+        "base_url": "https://athrael.net",
+        "posts_url": "https://athrael.net/posts",
+        "name": "Athos Georgiou",
+    },
 }
 
 
@@ -77,6 +82,37 @@ def _clean_markdown(md: str) -> str:
 
 
 POST_URLS: dict[str, list[str]] = {
+    "athos-georgiou": [
+        "/posts/diminishing-returns-benchmark-optimization",
+        "/posts/closing-the-ai-value-gap",
+        "/posts/spatially-grounded-document-retrieval",
+        "/posts/snappy",
+        "/posts/the-most-beautiful-vision-rag",
+        "/posts/you-too-can-run-the-vidore-benchmark",
+        "/posts/colqwen_fastapi",
+        "/posts/colqwen-omni-audio-rag",
+        "/posts/colnomic-qdrant-rag",
+        "/posts/mapping-worlds-into-graphs-with-rf-detr-blip-2-and-kung-fu",
+        "/posts/down-the-rabbit-hole-with-graph-rag",
+        "/posts/graphrag-with-qdrant-neo4j-and-ollama",
+        "/posts/crazy-good-observability-using-grafana-alloy",
+        "/posts/superfast-telemetry-setup",
+        "/posts/it-must-have-been-love-is-it-over-now",
+        "/posts/raising-artificial-intelligence",
+        "/posts/is-generative-ai-the-answer-to-everything",
+        "/posts/how-much-would-vtt-rag-cost",
+        "/posts/naive-no-sql-historical-retrieval",
+        "/posts/ive-been-doing-stuff",
+        "/posts/brief-analysis-on-rag-with-pinecone-and-unstructured-io",
+        "/posts/integrate-vision",
+        "/posts/thoughts-on-the-latest-openai-api-and-starting-a-new-project",
+        "/posts/integrate-multi-user-assistants",
+        "/posts/integrate-next-js-authentication",
+        "/posts/openai-law-copilot",
+        "/posts/create-a-customized-input-component-in-mui",
+        "/posts/add-markdown-to-streaming-chat",
+        "/posts/welcome",
+    ],
     "peter-steinberger": [
         "/posts/2026/openclaw",
         "/posts/2025/shipping-at-inference-speed",

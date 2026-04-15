@@ -34,6 +34,7 @@ const personality: Personality = {
     },
   ],
   knownFor: "AI Ethics",
+  blogUrl: "https://athrael.net",
 };
 
 export default personality;

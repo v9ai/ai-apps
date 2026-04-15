@@ -62,6 +62,11 @@ from mlx_client import (  # noqa: E402
     FunctionToolDef,
 )
 
+try:
+    from blog_embedder import search_blog_results
+except ImportError:
+    search_blog_results = None  # blog embedder not available
+
 console = Console()
 
 SCRIPT_DIR = Path(__file__).resolve().parent
