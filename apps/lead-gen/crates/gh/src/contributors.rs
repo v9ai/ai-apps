@@ -638,6 +638,7 @@ impl ContributorsDb {
                     repos_json,
                     r.user.pinned_repos_json.as_deref(),
                     r.user.contributed_repos_json.as_deref(),
+                    r.user.top_repos_json.as_deref(),
                 );
                 serde_json::to_string(&crate::skills::extract_skills(&text))
                     .unwrap_or_else(|_| "[]".to_string())
@@ -679,6 +680,7 @@ impl ContributorsDb {
                             repos_json,
                             r.user.pinned_repos_json.as_deref(),
                             r.user.contributed_repos_json.as_deref(),
+                            r.user.top_repos_json.as_deref(),
                         )
                     })
                     .collect();
@@ -1292,6 +1294,7 @@ mod tests {
             total_repos_contributed_to: None,
             pinned_repos_json: None,
             contributed_repos_json: None,
+            top_repos_json: None,
             organizations_json: None,
             status_message: None,
             has_any_contributions: None,
