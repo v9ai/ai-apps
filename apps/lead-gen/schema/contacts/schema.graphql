@@ -250,6 +250,8 @@ input UpdateContactInput {
   telegramHandle: String
   doNotContact: Boolean
   tags: [String!]
+  company: String
+  companyId: Int
 }
 
 type FindContactEmailResult {
