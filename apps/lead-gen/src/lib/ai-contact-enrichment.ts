@@ -19,6 +19,23 @@ export const ContactAIProfileSchema = z.object({
     topics: z.array(z.string()),
   })),
   github_total_stars: z.number(),
+  // ── GitHub activity metrics (added for deeper candidate evaluation) ────────
+  github_public_repos: z.number().default(0),
+  github_followers: z.number().default(0),
+  github_following: z.number().default(0),
+  github_account_age_days: z.number().default(0),
+  github_recent_push_count: z.number().default(0), // pushes in last 90 days
+  github_recent_repos: z.array(z.object({
+    name: z.string(),
+    description: z.string().nullable(),
+    stars: z.number(),
+    forks: z.number(),
+    language: z.string().nullable(),
+    pushed_at: z.string().nullable(),
+    topics: z.array(z.string()),
+  })).default([]),
+  github_hireable: z.boolean().nullable().default(null),
+  github_activity_score: z.number().default(0), // computed 0-1
   specialization: z.string().nullable(),
   skills: z.array(z.string()),
   research_areas: z.array(z.string()),
@@ -56,11 +73,30 @@ const AI_GITHUB_TOPICS = new Set([
 
 const AI_REPO_KEYWORD_RE = /\b(ai|ml|llm|nlp|neural|transformer|pytorch|tensorflow|deep.?learn|embedding|vector|rag|diffusion|generative|language.?model|gpt|bert|fine.?tun|candle|whisper|mistral|llama)\b/i;
 
+interface GitHubRecentRepo {
+  name: string;
+  description: string | null;
+  stars: number;
+  forks: number;
+  language: string | null;
+  pushed_at: string | null;
+  topics: string[];
+}
+
 interface GitHubProfile {
   bio: string | null;
   topLanguages: string[];
   aiRepos: Array<{ name: string; description: string | null; stars: number; topics: string[] }>;
   totalStars: number;
+  // ── Deep activity metrics ──────────────────────────────────────────────────
+  publicRepos: number;
+  followers: number;
+  following: number;
+  accountAgeDays: number;
+  recentPushCount: number;
+  recentRepos: GitHubRecentRepo[];
+  hireable: boolean | null;
+  activityScore: number; // computed 0-1
 }
 
 export async function fetchGitHubProfile(handle: string): Promise<GitHubProfile | null> {
@@ -69,9 +105,11 @@ export async function fetchGitHubProfile(handle: string): Promise<GitHubProfile 
     const ghToken = process.env.GITHUB_TOKEN;
     if (ghToken) headers["Authorization"] = `token ${ghToken}`;
 
-    const [userRes, reposRes] = await Promise.all([
-      fetch(`https://api.github.com/users/${encodeURIComponent(handle)}`, { headers }),
-      fetch(`https://api.github.com/users/${encodeURIComponent(handle)}/repos?sort=stars&per_page=50`, { headers }),
+    const encodedHandle = encodeURIComponent(handle);
+    const [userRes, reposRes, eventsRes] = await Promise.all([
+      fetch(`https://api.github.com/users/${encodedHandle}`, { headers }),
+      fetch(`https://api.github.com/users/${encodedHandle}/repos?sort=pushed&per_page=100`, { headers }),
+      fetch(`https://api.github.com/users/${encodedHandle}/events/public?per_page=100`, { headers }),
     ]);
 
     if (!userRes.ok || !reposRes.ok) return null;
@@ -80,7 +118,34 @@ export async function fetchGitHubProfile(handle: string): Promise<GitHubProfile 
     const repos = await reposRes.json();
     if (!Array.isArray(repos)) return null;
 
-    // Top languages by repo count
+    // ── User-level metrics ─────────────────────────────────────────────────
+    const publicRepos = (user.public_repos as number) ?? 0;
+    const followers = (user.followers as number) ?? 0;
+    const following = (user.following as number) ?? 0;
+    const hireable = (user.hireable as boolean | null) ?? null;
+    const createdAt = user.created_at as string | null;
+    const accountAgeDays = createdAt
+      ? Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000)
+      : 0;
+
+    // ── Recent push activity (last 90 days) ──────────────────────────────
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000).toISOString();
+    let recentPushCount = 0;
+
+    // Count push events from events API
+    if (eventsRes.ok) {
+      const events = await eventsRes.json();
+      if (Array.isArray(events)) {
+        recentPushCount = events.filter(
+          (e: Record<string, unknown>) =>
+            e.type === "PushEvent" &&
+            typeof e.created_at === "string" &&
+            e.created_at > ninetyDaysAgo,
+        ).length;
+      }
+    }
+
+    // ── Top languages by repo count ────────────────────────────────────────
     const langCount: Record<string, number> = {};
     for (const repo of repos) {
       if (repo.language) langCount[repo.language] = (langCount[repo.language] ?? 0) + 1;
@@ -90,11 +155,11 @@ export async function fetchGitHubProfile(handle: string): Promise<GitHubProfile 
       .slice(0, 5)
       .map(([lang]) => lang);
 
-    // Filter repos that look AI-related
+    // ── Filter AI-related repos ────────────────────────────────────────────
     const aiRepos = repos
       .filter((repo: Record<string, unknown>) => {
         const topics = (repo.topics as string[]) ?? [];
-        if (topics.some(t => AI_GITHUB_TOPICS.has(t))) return true;
+        if (topics.some((t: string) => AI_GITHUB_TOPICS.has(t))) return true;
         const nameAndDesc = `${repo.name} ${repo.description ?? ""}`;
         return AI_REPO_KEYWORD_RE.test(nameAndDesc);
       })
@@ -108,15 +173,94 @@ export async function fetchGitHubProfile(handle: string): Promise<GitHubProfile 
         topics: (repo.topics as string[]) ?? [],
       }));
 
+    // ── Recent repos (pushed in last 6 months, top 10 by stars) ────────────
+    const sixMonthsAgo = new Date(Date.now() - 180 * 86_400_000).toISOString();
+    const recentRepos: GitHubRecentRepo[] = repos
+      .filter((r: Record<string, unknown>) =>
+        typeof r.pushed_at === "string" && r.pushed_at > sixMonthsAgo && !r.fork)
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
+        ((b.stargazers_count as number) ?? 0) - ((a.stargazers_count as number) ?? 0))
+      .slice(0, 10)
+      .map((r: Record<string, unknown>) => ({
+        name: r.name as string,
+        description: (r.description as string | null) ?? null,
+        stars: (r.stargazers_count as number) ?? 0,
+        forks: (r.forks_count as number) ?? 0,
+        language: (r.language as string | null) ?? null,
+        pushed_at: (r.pushed_at as string | null) ?? null,
+        topics: (r.topics as string[]) ?? [],
+      }));
+
+    // ── Compute activity score (0-1) ───────────────────────────────────────
+    // Unlike rising_score which rewards obscurity, this rewards actual activity
+    const activityScore = computeActivityScore({
+      publicRepos,
+      followers,
+      accountAgeDays,
+      recentPushCount,
+      aiRepoCount: aiRepos.length,
+      totalAiStars: aiRepos.reduce((sum, r) => sum + r.stars, 0),
+      recentRepoCount: recentRepos.length,
+    });
+
     return {
       bio: (user.bio as string | null) ?? null,
       topLanguages,
       aiRepos,
       totalStars: aiRepos.reduce((sum, r) => sum + r.stars, 0),
+      publicRepos,
+      followers,
+      following,
+      accountAgeDays,
+      recentPushCount,
+      recentRepos,
+      hireable,
+      activityScore,
     };
   } catch {
     return null;
   }
+}
+
+/**
+ * Activity score that rewards actual engineering strength, NOT obscurity.
+ *
+ * Signals:
+ * - Recent push activity (last 90 days) → active contributor
+ * - AI repo depth → domain expertise
+ * - Stars on AI repos → community validation
+ * - Repo count → builder momentum
+ * - Followers → professional standing
+ * - Account age → experience (positive, not negative like rising_score)
+ */
+function computeActivityScore(data: {
+  publicRepos: number;
+  followers: number;
+  accountAgeDays: number;
+  recentPushCount: number;
+  aiRepoCount: number;
+  totalAiStars: number;
+  recentRepoCount: number;
+}): number {
+  // Recent activity: 0-0.30 (30+ pushes in 90 days = max)
+  const recency = Math.min(1.0, data.recentPushCount / 30) * 0.30;
+
+  // AI depth: 0-0.25 (5+ AI repos = max)
+  const aiDepth = Math.min(1.0, data.aiRepoCount / 5) * 0.25;
+
+  // Community validation: 0-0.15 (100+ stars on AI repos = max)
+  const stars = Math.min(1.0, data.totalAiStars / 100) * 0.15;
+
+  // Builder momentum: 0-0.10 (30+ public repos = max)
+  const building = Math.min(1.0, data.publicRepos / 30) * 0.10;
+
+  // Professional standing: 0-0.10 (100+ followers = max)
+  const standing = Math.min(1.0, data.followers / 100) * 0.10;
+
+  // Experience: 0-0.10 (3+ years = max)
+  const experience = Math.min(1.0, data.accountAgeDays / 1095) * 0.10;
+
+  return Math.round((recency + aiDepth + stars + building + standing + experience) * 1000) / 1000;
 }
 
 // ─── GitHub search by name ───────────────────────────────────────────────────
@@ -321,6 +465,14 @@ export async function gatherAIContactProfile(contact: Contact): Promise<ContactA
     github_top_languages: github?.topLanguages ?? [],
     github_ai_repos: github?.aiRepos ?? [],
     github_total_stars: github?.totalStars ?? 0,
+    github_public_repos: github?.publicRepos ?? 0,
+    github_followers: github?.followers ?? 0,
+    github_following: github?.following ?? 0,
+    github_account_age_days: github?.accountAgeDays ?? 0,
+    github_recent_push_count: github?.recentPushCount ?? 0,
+    github_recent_repos: github?.recentRepos ?? [],
+    github_hireable: github?.hireable ?? null,
+    github_activity_score: github?.activityScore ?? 0,
     specialization: synthesis?.specialization ?? null,
     skills: synthesis?.skills ?? [],
     research_areas: synthesis?.research_areas ?? [],

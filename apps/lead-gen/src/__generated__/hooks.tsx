@@ -1289,6 +1289,7 @@ export type Mutation = {
   enhanceCompany: EnhanceCompanyResponse;
   enrichAIContactProfile: EnrichAiContactResult;
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
+  enrichOpportunityCandidates: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   flagContactsForDeletion: BatchOperationResult;
@@ -1516,6 +1517,11 @@ export type MutationEnrichAiContactProfileArgs = {
 
 export type MutationEnrichAiContactsForCompanyArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationEnrichOpportunityCandidatesArgs = {
+  opportunityId: Scalars['String']['input'];
 };
 
 

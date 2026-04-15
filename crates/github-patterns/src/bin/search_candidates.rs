@@ -1,7 +1,11 @@
-/// search_candidates — Multi-pass GitHub user search for sourcing candidates
-/// matching a specific opportunity. Combines user bio search with stargazer
-/// mining of relevant repos, filters by location, scores via rising-star
-/// model, and exports to Neon PostgreSQL contacts.
+/// search_candidates v2 — Deep GitHub user search for sourcing candidates
+/// matching a specific opportunity. Six discovery channels:
+///   1. Bio/keyword search (passes A–K)
+///   2. Stargazer mining (9 repos)
+///   3. Contributor mining — actual code committers to key AI repos
+///   4. Org member mining — public members of London AI companies
+///   5. Network expansion — followers of top-scoring candidates
+///   6. GraphQL batch hydration with enriched fields
 ///
 /// Environment variables:
 ///   GITHUB_TOKEN           GitHub PAT (required)
@@ -12,7 +16,7 @@
 ///   EXPORT_THRESHOLD       Minimum rising_score to export (default: 0.3)
 ///   TOP_N                  Rising stars to display (default: 50)
 ///   DRY_RUN                Set to "1" to skip all DB writes
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
 use regex::Regex;
@@ -54,6 +58,10 @@ fn search_queries() -> Vec<(&'static str, &'static str)> {
         ("E: UK-wide RAG",        "location:\"United Kingdom\" RAG LLM type:user"),
         ("F: Claude/Anthropic",   "location:London anthropic claude type:user"),
         ("G: deep learning",      "location:London deep learning pytorch type:user"),
+        ("H: agentic AI",         "location:London agentic agent framework type:user"),
+        ("I: fine-tuning",        "location:London fine-tuning LoRA type:user"),
+        ("J: MLOps",              "location:London MLOps deployment type:user"),
+        ("K: principal/staff",    "location:London principal staff AI engineer type:user"),
     ]
 }
 
@@ -64,7 +72,47 @@ fn stargazer_repos() -> Vec<&'static str> {
         "crewAIInc/crewAI",
         "anthropics/anthropic-cookbook",
         "anthropics/anthropic-sdk-python",
+        "vllm-project/vllm",
+        "openai/evals",
+        "microsoft/autogen",
+        "huggingface/transformers",
+        "chroma-core/chroma",
     ]
+}
+
+/// Repos whose actual code contributors are highest-signal.
+fn contributor_repos() -> Vec<&'static str> {
+    vec![
+        "langchain-ai/langchain",
+        "langchain-ai/langgraph",
+        "run-llama/llama_index",
+        "crewAIInc/crewAI",
+        "microsoft/autogen",
+        "vllm-project/vllm",
+        "chroma-core/chroma",
+        "anthropics/anthropic-sdk-python",
+    ]
+}
+
+/// London AI companies/labs whose public members are high-signal.
+fn london_ai_orgs() -> Vec<&'static str> {
+    vec![
+        "deepmind",
+        "alan-turing-institute",
+        "stability-ai",
+        "faculty-ai",
+        "benevolentai",
+    ]
+}
+
+// ── Source tracking ──────────────────────────────────────────────────────────
+
+/// Track where each login was discovered (for provenance tags).
+fn add_source(sources: &mut HashMap<String, Vec<String>>, login: &str, tag: String) {
+    sources
+        .entry(login.to_string())
+        .or_default()
+        .push(tag);
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -98,10 +146,13 @@ async fn main() -> anyhow::Result<()> {
     let gh = GhClient::from_env()?;
     info!("GitHub client ready — opp_id={opp_id} dry_run={dry_run}");
 
-    // ── Phase 1: Multi-pass user search ─────────────────────────────────────
     let mut seen_logins: HashSet<String> = HashSet::new();
+    let mut sources: HashMap<String, Vec<String>> = HashMap::new();
 
-    // Pass A-G: bio/keyword search
+    // Track contribution counts from contributor mining (keyed by login)
+    let mut contrib_counts: HashMap<String, (String, u32)> = HashMap::new(); // login → (repo, count)
+
+    // ── Channel 1: Bio/keyword search (passes A–K) ──────────────────────────
     for (label, query) in search_queries() {
         info!("search pass {label}");
         match gh.search_users(query, Some("followers"), Some("desc"), 100, 1).await {
@@ -109,6 +160,7 @@ async fn main() -> anyhow::Result<()> {
                 let count = resp.items.len();
                 for item in resp.items {
                     if !is_bot(&item.login) {
+                        add_source(&mut sources, &item.login, format!("src:bio/{label}"));
                         seen_logins.insert(item.login);
                     }
                 }
@@ -116,16 +168,15 @@ async fn main() -> anyhow::Result<()> {
             }
             Err(e) => warn!("  {label} failed: {e}"),
         }
-        // Respect search API rate limit (30 req/min)
         tokio::time::sleep(Duration::from_secs(2)).await;
     }
+    info!("Channel 1 (bio search) done: {} logins", seen_logins.len());
 
-    // Stargazer mining
+    // ── Channel 2: Stargazer mining ─────────────────────────────────────────
     for repo_full in stargazer_repos() {
         let (owner, repo) = repo_full.split_once('/').unwrap();
         info!("mining stargazers: {repo_full}");
 
-        // Fetch up to 3 pages (300 stargazers) per repo
         for page in 1..=3 {
             match gh.repo_stargazers(owner, repo, 100, page).await {
                 Ok(stargazers) => {
@@ -134,6 +185,7 @@ async fn main() -> anyhow::Result<()> {
                     }
                     for sg in &stargazers {
                         if !is_bot(&sg.login) {
+                            add_source(&mut sources, &sg.login, format!("src:star/{repo_full}"));
                             seen_logins.insert(sg.login.clone());
                         }
                     }
@@ -155,18 +207,78 @@ async fn main() -> anyhow::Result<()> {
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
+    info!("Channel 2 (stargazers) done: {} logins", seen_logins.len());
 
-    info!("Phase 1 complete: {} unique logins to hydrate", seen_logins.len());
+    // ── Channel 3: Contributor mining — actual code committers ──────────────
+    for repo_full in contributor_repos() {
+        let (owner, repo) = repo_full.split_once('/').unwrap();
+        info!("mining contributors: {repo_full}");
 
-    // ── Phase 2: Hydrate profiles via GraphQL + location filter ───────────
+        match gh.repo_contributors(owner, repo).await {
+            Ok(contributors) => {
+                let mut added = 0;
+                for c in &contributors {
+                    if c.contributions >= 3 && !is_bot(&c.login) {
+                        add_source(&mut sources, &c.login, format!("src:contrib/{repo_full}"));
+                        // Track actual contribution count — use the highest if seen in multiple repos
+                        let entry = contrib_counts
+                            .entry(c.login.clone())
+                            .or_insert_with(|| (repo_full.to_string(), 0));
+                        if c.contributions > entry.1 {
+                            *entry = (repo_full.to_string(), c.contributions);
+                        }
+                        seen_logins.insert(c.login.clone());
+                        added += 1;
+                    }
+                }
+                info!(
+                    "  {repo_full}: {} contributors (>= 3 commits), {added} new, {} unique total",
+                    contributors.len(),
+                    seen_logins.len()
+                );
+            }
+            Err(e) => warn!("  contributors {repo_full} failed: {e}"),
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    info!("Channel 3 (contributors) done: {} logins", seen_logins.len());
+
+    // ── Channel 4: Org member mining ────────────────────────────────────────
+    for org in london_ai_orgs() {
+        info!("mining org members: {org}");
+        match gh.get_org_members_graphql(org, 100).await {
+            Ok(members) => {
+                let mut added = 0;
+                for m in &members {
+                    if !is_bot(&m.login) {
+                        add_source(&mut sources, &m.login, format!("src:org/{org}"));
+                        if seen_logins.insert(m.login.clone()) {
+                            added += 1;
+                        }
+                    }
+                }
+                info!(
+                    "  {org}: {} members, {added} new, {} unique total",
+                    members.len(),
+                    seen_logins.len()
+                );
+            }
+            Err(e) => warn!("  org {org} failed: {e}"),
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    info!("Channel 4 (orgs) done: {} logins", seen_logins.len());
+
+    info!("Discovery complete: {} unique logins to hydrate", seen_logins.len());
+
+    // ── Phase 2: Hydrate profiles via GraphQL + location filter ─────────────
     info!("opening LanceDB at {lance_path}");
     let mut lance_db = ContributorsDb::open(&lance_path).await?;
 
-    let mut candidates: Vec<(ContributorRecord, bool)> = Vec::new(); // (record, london_verified)
+    let mut candidates: Vec<(ContributorRecord, bool)> = Vec::new();
     let mut skipped_location = 0u32;
     let mut skipped_known = 0u32;
 
-    // Filter out already-known logins before hydration
     let logins: Vec<String> = seen_logins
         .into_iter()
         .filter(|l| {
@@ -180,13 +292,12 @@ async fn main() -> anyhow::Result<()> {
         .collect();
 
     info!(
-        "hydrating {} profiles via GraphQL (batches of 50), {} already known…",
+        "hydrating {} profiles via GraphQL (batches of 30), {} already known…",
         logins.len(),
         skipped_known,
     );
 
-    // GraphQL batch hydration — 50 users per request instead of 1 REST call each
-    let batch_size = 50;
+    let batch_size = 30; // Smaller batches — enriched payload is larger
     for (batch_idx, chunk) in logins.chunks(batch_size).enumerate() {
         let chunk_vec: Vec<String> = chunk.to_vec();
         match gh.get_users_graphql(&chunk_vec).await {
@@ -199,12 +310,18 @@ async fn main() -> anyhow::Result<()> {
                     if !london && !uk {
                         skipped_location += 1;
                     } else {
+                        // Use real contribution count from contributor mining if available
+                        let (repo_source, contrib_count) = contrib_counts
+                            .get(&user.login)
+                            .cloned()
+                            .unwrap_or_else(|| ("github-search".to_string(), user.public_repos));
+
                         candidates.push((
                             ContributorRecord {
-                                total_contributions: user.public_repos,
+                                total_contributions: contrib_count,
                                 repos: vec![RepoContrib {
-                                    repo: "github-search".to_string(),
-                                    contributions: user.public_repos,
+                                    repo: repo_source,
+                                    contributions: contrib_count,
                                 }],
                                 user,
                             },
@@ -226,7 +343,6 @@ async fn main() -> anyhow::Result<()> {
             skipped_location,
         );
 
-        // Brief pause between GraphQL calls to be nice
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
 
@@ -238,7 +354,6 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // ── Phase 3: Score + insert into LanceDB ────────────────────────────────
-    // Insert in batches of 10
     let records: Vec<&ContributorRecord> = candidates.iter().map(|(r, _)| r).collect();
     for chunk in records.chunks(10) {
         let chunk_vec: Vec<ContributorRecord> = chunk.iter().map(|r| (*r).clone()).collect();
@@ -248,20 +363,22 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    // ── Phase 4: Build RisingStar entries + export to Neon ──────────────────
-    let mut stars: Vec<(RisingStar, bool)> = Vec::new(); // (star, london_verified)
+    // ── Phase 4: Build RisingStar entries ────────────────────────────────────
+    let mut stars: Vec<(RisingStar, bool)> = Vec::new();
     for (record, london_verified) in &candidates {
-        let score = compute_rising_score(record);
         let repos_json = serde_json::to_string(&record.repos).unwrap_or_default();
         let skills_text = contributor_skills_text(
             record.user.bio.as_deref(),
             record.user.company.as_deref(),
             &repos_json,
+            record.user.pinned_repos_json.as_deref(),
+            record.user.contributed_repos_json.as_deref(),
         );
         let skills: Vec<String> = extract_skills(&skills_text)
             .into_iter()
             .map(String::from)
             .collect();
+        let score = compute_rising_score(record, skills.len());
 
         stars.push((
             RisingStar {
@@ -291,15 +408,138 @@ async fn main() -> anyhow::Result<()> {
     // Sort by score descending
     stars.sort_by(|a, b| b.0.rising_score.partial_cmp(&a.0.rising_score).unwrap());
 
-    // Print summary
+    // ── Channel 5: Network expansion — followers of top candidates ──────────
+    // Take top 15 and mine their followers for more candidates
+    let seed_logins: Vec<String> = stars
+        .iter()
+        .take(15)
+        .map(|(s, _)| s.login.clone())
+        .collect();
+
+    if !seed_logins.is_empty() {
+        info!("Channel 5: network expansion from top {} seeds", seed_logins.len());
+        let mut network_logins: HashSet<String> = HashSet::new();
+        let existing_logins: HashSet<String> = stars.iter().map(|(s, _)| s.login.clone()).collect();
+
+        for seed in &seed_logins {
+            match gh.get_user_followers_graphql(seed, 50).await {
+                Ok(followers) => {
+                    for f in &followers {
+                        if !is_bot(&f.login)
+                            && !existing_logins.contains(&f.login)
+                            && !lance_db.is_known(&f.login)
+                        {
+                            let loc = f.location.as_deref();
+                            if is_london(loc) || is_uk_wide(loc) {
+                                add_source(&mut sources, &f.login, format!("src:net/{seed}"));
+                                network_logins.insert(f.login.clone());
+                            }
+                        }
+                    }
+                    info!(
+                        "  @{seed}: {} followers, {} new UK-based",
+                        followers.len(),
+                        network_logins.len()
+                    );
+                }
+                Err(e) => warn!("  followers @{seed} failed: {e}"),
+            }
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+
+        // Network followers are already hydrated by get_user_followers_graphql
+        // but we need to re-hydrate those not yet in our set to get full profiles.
+        // Actually, get_user_followers_graphql already returns full GhUser profiles.
+        // So we can directly build ContributorRecords from them.
+        if !network_logins.is_empty() {
+            info!("Network expansion: re-hydrating {} new logins", network_logins.len());
+            let net_logins: Vec<String> = network_logins.into_iter().collect();
+
+            for chunk in net_logins.chunks(30) {
+                let chunk_vec: Vec<String> = chunk.to_vec();
+                match gh.get_users_graphql(&chunk_vec).await {
+                    Ok(users) => {
+                        for user in users {
+                            let loc = user.location.as_deref();
+                            let london = is_london(loc);
+
+                            let record = ContributorRecord {
+                                total_contributions: user.public_repos,
+                                repos: vec![RepoContrib {
+                                    repo: "network-expansion".to_string(),
+                                    contributions: user.public_repos,
+                                }],
+                                user,
+                            };
+
+                            let repos_json = serde_json::to_string(&record.repos).unwrap_or_default();
+                            let skills_text = contributor_skills_text(
+                                record.user.bio.as_deref(),
+                                record.user.company.as_deref(),
+                                &repos_json,
+                                record.user.pinned_repos_json.as_deref(),
+                                record.user.contributed_repos_json.as_deref(),
+                            );
+                            let skills: Vec<String> = extract_skills(&skills_text)
+                                .into_iter()
+                                .map(String::from)
+                                .collect();
+                            let score = compute_rising_score(&record, skills.len());
+
+                            stars.push((
+                                RisingStar {
+                                    login: record.user.login.clone(),
+                                    html_url: record.user.html_url.clone(),
+                                    name: record.user.name.clone(),
+                                    email: record.user.email.clone(),
+                                    company: record.user.company.clone(),
+                                    location: record.user.location.clone(),
+                                    bio: record.user.bio.clone(),
+                                    followers: record.user.followers,
+                                    public_repos: record.user.public_repos,
+                                    total_contributions: record.total_contributions,
+                                    ai_repos_count: record.repos.len(),
+                                    rising_score: score.score,
+                                    contribution_density: score.contribution_density,
+                                    novelty: score.novelty,
+                                    breadth: score.breadth,
+                                    realness: score.realness,
+                                    gh_created_at: record.user.created_at.to_rfc3339(),
+                                    skills,
+                                },
+                                london,
+                            ));
+
+                            // Insert into LanceDB
+                            if let Err(e) = lance_db.insert(&[record]).await {
+                                warn!("  LanceDB insert (net) failed: {e}");
+                            }
+                        }
+                    }
+                    Err(e) => warn!("  network hydration batch failed: {e}"),
+                }
+                tokio::time::sleep(Duration::from_millis(500)).await;
+            }
+        }
+
+        // Re-sort after network expansion
+        stars.sort_by(|a, b| b.0.rising_score.partial_cmp(&a.0.rising_score).unwrap());
+        info!("Channel 5 done: {} total candidates", stars.len());
+    }
+
+    // ── Print summary ───────────────────────────────────────────────────────
     let display_n = stars.len().min(top_n);
-    println!("\n╔══ LONDON AI CANDIDATES — {opp_id} ══════════════════════════╗");
+    println!("\n╔══ LONDON AI CANDIDATES v2 — {opp_id} ═══════════════════════╗");
     for (rank, (s, london)) in stars.iter().take(display_n).enumerate() {
         let name = s.name.as_deref().unwrap_or(&s.login);
         let company = s.company.as_deref().unwrap_or("-");
         let location = s.location.as_deref().unwrap_or("-");
         let email = s.email.as_deref().unwrap_or("-");
         let loc_tag = if *london { "LONDON" } else { "UK-WIDE" };
+        let src_tags = sources
+            .get(&s.login)
+            .map(|v| v.join(", "))
+            .unwrap_or_default();
 
         println!(
             "#{:<3} {:>5.3}  {name} (@{})",
@@ -316,6 +556,9 @@ async fn main() -> anyhow::Result<()> {
         if !s.skills.is_empty() {
             println!("      skills={}", s.skills.join(", "));
         }
+        if !src_tags.is_empty() {
+            println!("      sources={src_tags}");
+        }
         println!();
     }
     println!("╚══════════════════════════════════════════════════════════════════╝");
@@ -325,8 +568,10 @@ async fn main() -> anyhow::Result<()> {
         stars.iter().filter(|(_, l)| *l).count(),
         stars.iter().filter(|(_, l)| !*l).count(),
     );
+    let above_threshold = stars.iter().filter(|(s, _)| s.rising_score >= threshold).count();
+    println!("  {} above {threshold:.2} threshold", above_threshold);
 
-    // Export to Neon
+    // ── Export to Neon ───────────────────────────────────────────────────────
     if dry_run {
         info!("DRY_RUN=1 — skipping Neon export");
     } else {
@@ -351,12 +596,18 @@ async fn main() -> anyhow::Result<()> {
         for (star, london_verified) in &stars {
             let mut extra_tags = vec![
                 format!("opp:{opp_id}"),
-                "github:candidate-search".to_string(),
+                "github:candidate-search-v2".to_string(),
             ];
             if *london_verified {
                 extra_tags.push("location:london-verified".to_string());
             } else {
                 extra_tags.push("location:uk-wide".to_string());
+            }
+            // Add source provenance tags
+            if let Some(src) = sources.get(&star.login) {
+                for s in src {
+                    extra_tags.push(s.clone());
+                }
             }
 
             match save_contributor_contact(&pool, star, threshold, &extra_tags).await {

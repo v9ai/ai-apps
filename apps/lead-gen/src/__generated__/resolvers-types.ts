@@ -1289,6 +1289,7 @@ export type Mutation = {
   enhanceCompany: EnhanceCompanyResponse;
   enrichAIContactProfile: EnrichAiContactResult;
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
+  enrichOpportunityCandidates: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   flagContactsForDeletion: BatchOperationResult;
@@ -1516,6 +1517,11 @@ export type MutationEnrichAiContactProfileArgs = {
 
 export type MutationEnrichAiContactsForCompanyArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationEnrichOpportunityCandidatesArgs = {
+  opportunityId: Scalars['String']['input'];
 };
 
 
@@ -4777,6 +4783,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   enhanceCompany?: Resolver<ResolversTypes['EnhanceCompanyResponse'], ParentType, ContextType, Partial<MutationEnhanceCompanyArgs>>;
   enrichAIContactProfile?: Resolver<ResolversTypes['EnrichAIContactResult'], ParentType, ContextType, RequireFields<MutationEnrichAiContactProfileArgs, 'contactId'>>;
   enrichAIContactsForCompany?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichAiContactsForCompanyArgs, 'companyId'>>;
+  enrichOpportunityCandidates?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichOpportunityCandidatesArgs, 'opportunityId'>>;
   findCompanyEmails?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType, RequireFields<MutationFindCompanyEmailsArgs, 'companyId'>>;
   findContactEmail?: Resolver<ResolversTypes['FindContactEmailResult'], ParentType, ContextType, RequireFields<MutationFindContactEmailArgs, 'contactId'>>;
   flagContactsForDeletion?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationFlagContactsForDeletionArgs>>;

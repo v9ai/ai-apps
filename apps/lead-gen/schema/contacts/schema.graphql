@@ -61,6 +61,7 @@ extend type Mutation {
   flagContactsForDeletion(threshold: Float): BatchOperationResult!
   unflagContactForDeletion(id: Int!): Contact!
   purgeDeletedContacts(companyId: Int): BatchOperationResult!
+  enrichOpportunityCandidates(opportunityId: String!): EnrichAIContactsBulkResult!
 }
 
 type MergeDuplicateContactsResult {

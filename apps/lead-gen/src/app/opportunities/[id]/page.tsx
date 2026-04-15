@@ -5,6 +5,11 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Container, Text } from "@radix-ui/themes";
 import { OpportunityDetailClient } from "./opportunity-detail-client";
+import { ContactAIProfileSchema } from "@/lib/ai-contact-enrichment";
+import {
+  computeCandidateMatchScore,
+  type MatchBreakdown,
+} from "@/lib/candidate-match-scoring";
 
 export default async function OpportunityDetailPage({
   params,
@@ -56,8 +61,10 @@ export default async function OpportunityDetailPage({
 
   if (rows.length === 0) notFound();
 
-  // Load contacts tagged with this opportunity (sourced candidates)
-  const sourcedCandidates = await db
+  const opp = rows[0];
+
+  // Load contacts tagged with this opportunity — fetch full ai_profile for scoring
+  const rawCandidates = await db
     .select({
       id: contacts.id,
       first_name: contacts.first_name,
@@ -69,12 +76,61 @@ export default async function OpportunityDetailPage({
       github_handle: contacts.github_handle,
       tags: contacts.tags,
       authority_score: contacts.authority_score,
-      bio: sql<string | null>`substring(${contacts.ai_profile}::text from 1 for 200)`,
+      ai_profile: contacts.ai_profile,
     })
     .from(contacts)
     .where(sql`${contacts.tags}::text LIKE ${"%" + `opp:${id}` + "%"}`)
-    .orderBy(desc(contacts.authority_score))
     .limit(100);
+
+  // Parse opportunity data for scoring
+  const oppTags: string[] = opp.tags ? JSON.parse(opp.tags) : [];
+  const oppData = { tags: oppTags, raw_context: opp.raw_context };
+
+  // Score each candidate against this opportunity and sort by match score
+  const sourcedCandidates = rawCandidates
+    .map((c) => {
+      const cTags: string[] = c.tags ? JSON.parse(c.tags) : [];
+      let aiProfile = null;
+      if (c.ai_profile) {
+        try {
+          const parsed = ContactAIProfileSchema.safeParse(JSON.parse(c.ai_profile));
+          if (parsed.success) aiProfile = parsed.data;
+        } catch { /* ignore parse errors */ }
+      }
+
+      const match = computeCandidateMatchScore(
+        {
+          tags: cTags,
+          authority_score: c.authority_score,
+          ai_profile: aiProfile,
+          github_handle: c.github_handle,
+          position: c.position,
+        },
+        oppData,
+      );
+
+      return {
+        id: c.id,
+        first_name: c.first_name,
+        last_name: c.last_name,
+        slug: c.slug,
+        email: c.email,
+        company: c.company,
+        position: c.position,
+        github_handle: c.github_handle,
+        tags: c.tags,
+        authority_score: c.authority_score,
+        match_score: match.score,
+        match_breakdown: match,
+        github_activity_score: aiProfile?.github_activity_score ?? null,
+        github_public_repos: aiProfile?.github_public_repos ?? null,
+        github_followers: aiProfile?.github_followers ?? null,
+        github_recent_push_count: aiProfile?.github_recent_push_count ?? null,
+        experience_level: aiProfile?.experience_level ?? null,
+        specialization: aiProfile?.specialization ?? null,
+      };
+    })
+    .sort((a, b) => b.match_score - a.match_score);
 
   return (
     <Suspense
@@ -85,7 +141,7 @@ export default async function OpportunityDetailPage({
       }
     >
       <OpportunityDetailClient
-        opportunity={rows[0]}
+        opportunity={opp}
         sourcedCandidates={sourcedCandidates}
       />
     </Suspense>

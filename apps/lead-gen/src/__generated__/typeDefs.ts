@@ -1182,6 +1182,7 @@ type Mutation {
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
   enrichAIContactProfile(contactId: Int!): EnrichAIContactResult!
   enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
+  enrichOpportunityCandidates(opportunityId: String!): EnrichAIContactsBulkResult!
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!
   flagContactsForDeletion(threshold: Float): BatchOperationResult!

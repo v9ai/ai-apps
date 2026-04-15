@@ -55,6 +55,16 @@ type OpportunityDetail = {
   contact_email: string | null;
 };
 
+type MatchBreakdown = {
+  score: number;
+  skillMatch: number;
+  skillsMatched: number;
+  skillsRequired: number;
+  githubDepth: number;
+  experienceFit: number;
+  profileDepth: number;
+};
+
 type SourcedCandidate = {
   id: number;
   first_name: string;
@@ -66,7 +76,14 @@ type SourcedCandidate = {
   github_handle: string | null;
   tags: string | null;
   authority_score: number | null;
-  bio: string | null;
+  match_score: number;
+  match_breakdown: MatchBreakdown;
+  github_activity_score: number | null;
+  github_public_repos: number | null;
+  github_followers: number | null;
+  github_recent_push_count: number | null;
+  experience_level: string | null;
+  specialization: string | null;
 };
 
 const statusColors: Record<string, "green" | "blue" | "orange" | "red" | "gray" | "yellow"> = {
@@ -259,7 +276,8 @@ export function OpportunityDetailClient({
                     <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Position</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Company</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Score</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Match</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>GitHub</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Skills</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Location</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Links</Table.ColumnHeaderCell>
@@ -273,7 +291,19 @@ export function OpportunityDetailClient({
                       .map((t) => t.replace("skill:", ""));
                     const isLondon = cTags.includes("location:london-verified");
                     const scoreTier = cTags.find((t) => t.startsWith("github:score:"))?.replace("github:score:", "") ?? "-";
-                    const scoreColor = scoreTier === "A" ? "green" : scoreTier === "B" ? "yellow" : "gray";
+
+                    // Match score color thresholds
+                    const matchPct = Math.round(c.match_score * 100);
+                    const matchColor: "green" | "yellow" | "orange" | "red" | "gray" =
+                      matchPct >= 70 ? "green" :
+                      matchPct >= 50 ? "yellow" :
+                      matchPct >= 30 ? "orange" : "red";
+
+                    // GitHub tier color
+                    const ghColor: "green" | "yellow" | "gray" =
+                      scoreTier === "A" ? "green" : scoreTier === "B" ? "yellow" : "gray";
+
+                    const mb = c.match_breakdown;
 
                     return (
                       <Table.Row key={c.id}>
@@ -285,8 +315,18 @@ export function OpportunityDetailClient({
                             <Text size="2" weight="bold">
                               {c.first_name} {c.last_name}
                             </Text>
-                            {c.authority_score != null && (
-                              <Text size="1" color="gray">{c.authority_score.toFixed(3)}</Text>
+                            {c.experience_level && c.experience_level !== "unknown" && (
+                              <Badge
+                                variant="soft"
+                                size="1"
+                                color={c.experience_level === "principal" ? "purple" :
+                                  c.experience_level === "senior" ? "blue" : "gray"}
+                              >
+                                {c.experience_level}
+                              </Badge>
+                            )}
+                            {c.specialization && (
+                              <Text size="1" color="gray">{c.specialization}</Text>
                             )}
                           </Flex>
                         </Table.Cell>
@@ -297,7 +337,28 @@ export function OpportunityDetailClient({
                           <Text size="1">{c.company ?? "-"}</Text>
                         </Table.Cell>
                         <Table.Cell>
-                          <Badge color={scoreColor} size="1">{scoreTier}</Badge>
+                          <Flex direction="column" gap="1" align="start">
+                            <Badge color={matchColor} size="2">
+                              {matchPct}%
+                            </Badge>
+                            <Text size="1" color="gray" title={`Skills: ${mb.skillsMatched}/${mb.skillsRequired} | GH: ${(mb.githubDepth * 100).toFixed(0)}% | Exp: ${(mb.experienceFit * 100).toFixed(0)}%`}>
+                              {mb.skillsMatched}/{mb.skillsRequired} skills
+                            </Text>
+                          </Flex>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Flex direction="column" gap="1" align="start">
+                            <Badge color={ghColor} size="1">{scoreTier}</Badge>
+                            {c.github_recent_push_count != null && c.github_recent_push_count > 0 && (
+                              <Text size="1" color="gray">{c.github_recent_push_count} pushes/90d</Text>
+                            )}
+                            {c.github_followers != null && c.github_followers > 0 && (
+                              <Text size="1" color="gray">{c.github_followers} followers</Text>
+                            )}
+                            {c.github_public_repos != null && c.github_public_repos > 0 && (
+                              <Text size="1" color="gray">{c.github_public_repos} repos</Text>
+                            )}
+                          </Flex>
                         </Table.Cell>
                         <Table.Cell>
                           <Flex gap="1" wrap="wrap">

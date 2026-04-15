@@ -1485,4 +1485,68 @@ export const contactMutations = {
       results,
     };
   },
+
+  /**
+   * Re-enrich all sourced candidates for an opportunity with deep GitHub data.
+   * Fetches activity metrics, recent repos, push counts — then re-scores.
+   */
+  async enrichOpportunityCandidates(
+    _parent: unknown,
+    args: { opportunityId: string },
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    // Find all contacts tagged with this opportunity
+    const rows = await context.db
+      .select()
+      .from(contacts)
+      .where(sql`${contacts.tags}::text LIKE ${"%" + `opp:${args.opportunityId}` + "%"}`);
+
+    if (rows.length === 0) {
+      return { success: true, message: "No candidates found for this opportunity", enriched: 0, skipped: 0, errors: [] };
+    }
+
+    let enriched = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    // Process in batches of 3 to respect GitHub rate limits
+    for (let i = 0; i < rows.length; i += 3) {
+      const batch = rows.slice(i, i + 3);
+      await Promise.all(
+        batch.map(async (contact) => {
+          try {
+            // Skip if no GitHub handle — nothing to enrich
+            if (!contact.github_handle) {
+              skipped++;
+              return;
+            }
+
+            const profile = await gatherAIContactProfile(contact);
+            await context.db
+              .update(contacts)
+              .set({
+                ai_profile: JSON.stringify(profile),
+                updated_at: new Date().toISOString(),
+              })
+              .where(eq(contacts.id, contact.id));
+            enriched++;
+          } catch (err) {
+            errors.push(
+              `${contact.first_name} ${contact.last_name}: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }),
+      );
+    }
+
+    return {
+      success: true,
+      message: `Enriched ${enriched}/${rows.length} candidates (${skipped} skipped — no GitHub handle)`,
+      enriched,
+      skipped,
+      errors,
+    };
+  },
 };

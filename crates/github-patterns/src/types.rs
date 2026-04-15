@@ -66,6 +66,45 @@ pub struct GhUser {
     pub hireable: Option<bool>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    // ── Enriched fields from GraphQL contributionsCollection ──────────
+    #[serde(default)]
+    pub total_commit_contributions: Option<u32>,
+    #[serde(default)]
+    pub total_pr_contributions: Option<u32>,
+    #[serde(default)]
+    pub total_review_contributions: Option<u32>,
+    #[serde(default)]
+    pub total_repos_contributed_to: Option<u32>,
+    // ── JSON-serialized enrichment blobs ──────────────────────────────
+    #[serde(default)]
+    pub pinned_repos_json: Option<String>,
+    #[serde(default)]
+    pub contributed_repos_json: Option<String>,
+    #[serde(default)]
+    pub organizations_json: Option<String>,
+    #[serde(default)]
+    pub status_message: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PinnedRepo {
+    pub name: String,
+    pub stars: u32,
+    pub language: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContributedRepo {
+    pub name_with_owner: String,
+    pub stars: u32,
+    pub language: Option<String>,
+    pub topics: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrgMembership {
+    pub login: String,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

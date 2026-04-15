@@ -265,26 +265,155 @@ impl GhClient {
         serde_json::from_value(data.clone()).map_err(GhError::Deserialize)
     }
 
-    /// Batch-fetch full user profiles via GraphQL. Up to 50 logins per call.
-    /// Much faster than per-user REST calls (1 request vs 50).
+    /// Shared GraphQL fields for User objects — used across batch, followers, and org member queries.
+    const USER_GQL_FIELDS: &'static str = r#"
+        login id: databaseId
+        url bio company location email name
+        avatarUrl websiteUrl twitterUsername
+        publicRepositories: repositories(privacy: PUBLIC) { totalCount }
+        publicGists: gists(privacy: PUBLIC) { totalCount }
+        followers { totalCount }
+        following { totalCount }
+        isHireable
+        createdAt updatedAt
+        contributionsCollection {
+            totalCommitContributions
+            totalPullRequestContributions
+            totalPullRequestReviewContributions
+            totalRepositoriesWithContributedCommits
+        }
+        pinnedItems(first: 6) {
+            nodes { ... on Repository { name stargazerCount primaryLanguage { name } } }
+        }
+        repositoriesContributedTo(first: 10, contributionTypes: COMMIT, orderBy: {field: STARGAZERS, direction: DESC}) {
+            nodes { nameWithOwner stargazerCount primaryLanguage { name } repositoryTopics(first: 5) { nodes { topic { name } } } }
+        }
+        organizations(first: 5) { nodes { login name } }
+        status { message }
+    "#;
+
+    /// Parse a GraphQL user JSON node into a GhUser struct.
+    fn parse_gql_user(value: &serde_json::Value) -> GhUser {
+        use crate::types::{PinnedRepo, ContributedRepo, OrgMembership};
+
+        let login = value["login"].as_str().unwrap_or_default().to_string();
+        let id = value["id"].as_u64().unwrap_or(0);
+        let html_url = value["url"].as_str().unwrap_or_default().to_string();
+        let avatar_url = value["avatarUrl"].as_str().unwrap_or_default().to_string();
+        let name = value["name"].as_str().map(String::from);
+        let email = value["email"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let bio = value["bio"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let company = value["company"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let location = value["location"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let blog = value["websiteUrl"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let twitter_username = value["twitterUsername"].as_str().filter(|s| !s.is_empty()).map(String::from);
+        let public_repos = value["publicRepositories"]["totalCount"].as_u64().unwrap_or(0) as u32;
+        let public_gists = value["publicGists"]["totalCount"].as_u64().unwrap_or(0) as u32;
+        let followers = value["followers"]["totalCount"].as_u64().unwrap_or(0) as u32;
+        let following = value["following"]["totalCount"].as_u64().unwrap_or(0) as u32;
+        let hireable = value["isHireable"].as_bool();
+        let created_at = value["createdAt"]
+            .as_str()
+            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+            .map(|d| d.with_timezone(&chrono::Utc))
+            .unwrap_or_else(chrono::Utc::now);
+        let updated_at = value["updatedAt"]
+            .as_str()
+            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+            .map(|d| d.with_timezone(&chrono::Utc))
+            .unwrap_or_else(chrono::Utc::now);
+
+        // ── Enriched: contributionsCollection ────────────────────────
+        let cc = &value["contributionsCollection"];
+        let total_commit_contributions = cc["totalCommitContributions"].as_u64().map(|v| v as u32);
+        let total_pr_contributions = cc["totalPullRequestContributions"].as_u64().map(|v| v as u32);
+        let total_review_contributions = cc["totalPullRequestReviewContributions"].as_u64().map(|v| v as u32);
+        let total_repos_contributed_to = cc["totalRepositoriesWithContributedCommits"].as_u64().map(|v| v as u32);
+
+        // ── Enriched: pinnedItems ────────────────────────────────────
+        let pinned_repos_json = value["pinnedItems"]["nodes"]
+            .as_array()
+            .map(|nodes| {
+                let repos: Vec<PinnedRepo> = nodes
+                    .iter()
+                    .filter(|n| n.get("name").is_some())
+                    .map(|n| PinnedRepo {
+                        name: n["name"].as_str().unwrap_or_default().to_string(),
+                        stars: n["stargazerCount"].as_u64().unwrap_or(0) as u32,
+                        language: n["primaryLanguage"]["name"].as_str().map(String::from),
+                    })
+                    .collect();
+                serde_json::to_string(&repos).unwrap_or_default()
+            })
+            .filter(|s| s != "[]");
+
+        // ── Enriched: repositoriesContributedTo ──────────────────────
+        let contributed_repos_json = value["repositoriesContributedTo"]["nodes"]
+            .as_array()
+            .map(|nodes| {
+                let repos: Vec<ContributedRepo> = nodes
+                    .iter()
+                    .filter(|n| n.get("nameWithOwner").is_some())
+                    .map(|n| {
+                        let topics: Vec<String> = n["repositoryTopics"]["nodes"]
+                            .as_array()
+                            .map(|arr| {
+                                arr.iter()
+                                    .filter_map(|t| t["topic"]["name"].as_str().map(String::from))
+                                    .collect()
+                            })
+                            .unwrap_or_default();
+                        ContributedRepo {
+                            name_with_owner: n["nameWithOwner"].as_str().unwrap_or_default().to_string(),
+                            stars: n["stargazerCount"].as_u64().unwrap_or(0) as u32,
+                            language: n["primaryLanguage"]["name"].as_str().map(String::from),
+                            topics,
+                        }
+                    })
+                    .collect();
+                serde_json::to_string(&repos).unwrap_or_default()
+            })
+            .filter(|s| s != "[]");
+
+        // ── Enriched: organizations ──────────────────────────────────
+        let organizations_json = value["organizations"]["nodes"]
+            .as_array()
+            .map(|nodes| {
+                let orgs: Vec<OrgMembership> = nodes
+                    .iter()
+                    .map(|n| OrgMembership {
+                        login: n["login"].as_str().unwrap_or_default().to_string(),
+                        name: n["name"].as_str().map(String::from),
+                    })
+                    .collect();
+                serde_json::to_string(&orgs).unwrap_or_default()
+            })
+            .filter(|s| s != "[]");
+
+        // ── Enriched: status message ─────────────────────────────────
+        let status_message = value["status"]["message"]
+            .as_str()
+            .filter(|s| !s.is_empty())
+            .map(String::from);
+
+        GhUser {
+            login, id, html_url, avatar_url, name, email, bio, company, location,
+            blog, twitter_username, public_repos, public_gists, followers, following,
+            hireable, created_at, updated_at,
+            total_commit_contributions, total_pr_contributions,
+            total_review_contributions, total_repos_contributed_to,
+            pinned_repos_json, contributed_repos_json, organizations_json,
+            status_message,
+        }
+    }
+
+    /// Batch-fetch full user profiles via GraphQL. Up to 30 logins per call.
     pub async fn get_users_graphql(&self, logins: &[String]) -> Result<Vec<GhUser>> {
         if logins.is_empty() {
             return Ok(vec![]);
         }
 
-        // Build aliased query: u0: user(login:"a") { ...fields } u1: user(login:"b") { ...fields }
-        let fields = r#"
-            login id: databaseId
-            url bio company location email name
-            avatarUrl websiteUrl twitterUsername
-            publicRepositories: repositories(privacy: PUBLIC) { totalCount }
-            publicGists: gists(privacy: PUBLIC) { totalCount }
-            followers { totalCount }
-            following { totalCount }
-            isHireable
-            createdAt updatedAt
-        "#;
-
+        let fields = Self::USER_GQL_FIELDS;
         let mut parts = Vec::with_capacity(logins.len());
         for (i, login) in logins.iter().enumerate() {
             let escaped = login.replace('\\', "\\\\").replace('"', "\\\"");
@@ -294,62 +423,41 @@ impl GhClient {
 
         let raw: HashMap<String, serde_json::Value> = self.graphql(&query, None).await?;
         let mut users = Vec::with_capacity(raw.len());
-
         for value in raw.values() {
             if value.is_null() {
                 continue;
             }
-            // Map GraphQL shape → GhUser
-            let login = value["login"].as_str().unwrap_or_default().to_string();
-            let id = value["id"].as_u64().unwrap_or(0);
-            let html_url = value["url"].as_str().unwrap_or_default().to_string();
-            let avatar_url = value["avatarUrl"].as_str().unwrap_or_default().to_string();
-            let name = value["name"].as_str().map(String::from);
-            let email = value["email"].as_str().filter(|s| !s.is_empty()).map(String::from);
-            let bio = value["bio"].as_str().filter(|s| !s.is_empty()).map(String::from);
-            let company = value["company"].as_str().filter(|s| !s.is_empty()).map(String::from);
-            let location = value["location"].as_str().filter(|s| !s.is_empty()).map(String::from);
-            let blog = value["websiteUrl"].as_str().filter(|s| !s.is_empty()).map(String::from);
-            let twitter_username = value["twitterUsername"].as_str().filter(|s| !s.is_empty()).map(String::from);
-            let public_repos = value["publicRepositories"]["totalCount"].as_u64().unwrap_or(0) as u32;
-            let public_gists = value["publicGists"]["totalCount"].as_u64().unwrap_or(0) as u32;
-            let followers = value["followers"]["totalCount"].as_u64().unwrap_or(0) as u32;
-            let following = value["following"]["totalCount"].as_u64().unwrap_or(0) as u32;
-            let hireable = value["isHireable"].as_bool();
-            let created_at = value["createdAt"]
-                .as_str()
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|d| d.with_timezone(&chrono::Utc))
-                .unwrap_or_else(chrono::Utc::now);
-            let updated_at = value["updatedAt"]
-                .as_str()
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|d| d.with_timezone(&chrono::Utc))
-                .unwrap_or_else(chrono::Utc::now);
-
-            users.push(GhUser {
-                login,
-                id,
-                html_url,
-                avatar_url,
-                name,
-                email,
-                bio,
-                company,
-                location,
-                blog,
-                twitter_username,
-                public_repos,
-                public_gists,
-                followers,
-                following,
-                hireable,
-                created_at,
-                updated_at,
-            });
+            users.push(Self::parse_gql_user(value));
         }
-
         Ok(users)
+    }
+
+    /// Fetch public members of a GitHub organization via GraphQL.
+    pub async fn get_org_members_graphql(&self, org: &str, first: u32) -> Result<Vec<GhUser>> {
+        let fields = Self::USER_GQL_FIELDS;
+        let query = format!(
+            r#"query {{ organization(login: "{org}") {{ membersWithRole(first: {first}) {{ nodes {{ {fields} }} }} }} }}"#,
+        );
+        let raw: serde_json::Value = self.graphql(&query, None).await?;
+        let nodes = raw["organization"]["membersWithRole"]["nodes"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+        Ok(nodes.iter().filter(|v| !v.is_null()).map(Self::parse_gql_user).collect())
+    }
+
+    /// Fetch followers of a user via GraphQL (enriched profiles).
+    pub async fn get_user_followers_graphql(&self, login: &str, first: u32) -> Result<Vec<GhUser>> {
+        let fields = Self::USER_GQL_FIELDS;
+        let query = format!(
+            r#"query {{ user(login: "{login}") {{ followers(first: {first}) {{ nodes {{ {fields} }} }} }} }}"#,
+        );
+        let raw: serde_json::Value = self.graphql(&query, None).await?;
+        let nodes = raw["user"]["followers"]["nodes"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+        Ok(nodes.iter().filter(|v| !v.is_null()).map(Self::parse_gql_user).collect())
     }
 
     /// Search repos by topic + optional language.
