@@ -187,7 +187,7 @@
       {
         "id": "0",
         "name": "Agentic Lead Gen",
-        "description": "Autonomous B2B lead generation platform with a 5-agent agentic pipeline (Discovery Scout → Enrichment Specialist → Contact Hunter + QA Auditor → Outreach Composer), GraphQL API backed by Neon PostgreSQL, LLM-powered company enrichment, MLX local contact scoring at 4,618 embeddings/sec, and LangSmith observability.",
+        "description": "Autonomous B2B lead generation platform with a 5-agent agentic pipeline (Discovery Scout → Enrichment Specialist → Contact Hunter + QA Auditor → Outreach Composer), GraphQL API backed by Neon PostgreSQL, LLM-powered company enrichment, multilingual JobBERT-v3 embeddings via HuggingFace Inference API, MLX local scoring at 4,618 embeddings/sec, and LangSmith observability.",
         "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
@@ -196,7 +196,8 @@
           "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
           "3 competing-hypotheses agents — cross-reading findings — producing GO/NO-GO verdicts.",
           "MLX scoring at 4,618 embeddings/sec on M1; eval enforcer with LangSmith tracing.",
-          "Candle Rust ML inference for contact scoring with INT8 quantization.",
+          "TechWolf/JobBERT-v3 multilingual embeddings (768-dim, EN/ES/DE/ZH) via HuggingFace Inference API for semantic job matching; BGE-small INT8 for company search.",
+          "Hand-tuned ML scoring: 12-feature contact ranker, 18-feature ICP scorer, Aho-Corasick company classifier — all with INT8 quantization and LUT sigmoid.",
           "Eval-driven strategy enforcer validates every prompt/model change against 80% accuracy bar.",
           "LoRA fine-tuned Qwen3-1.7B-4bit (rank-8, cosine LR, DPO on synthetic data) deployed to HuggingFace Hub (v9ai/outreach-email-qwen3-1.7b-4bit-lora) for personalized outreach email generation; sgai-qwen3-1.7b for schema-constrained HTML→JSON company extraction on dual MLX servers."
         ]
