@@ -1117,20 +1117,7 @@ async def phase1(state: ResearchState) -> dict:
             TOOLS_BLOG,
         ))
 
-    # Sequential execution — local model handles one agent at a time
-    results: dict[str, str] = {}
-    for key, sys_prompt, task_prompt, agent_tools in specs:
-        if key in _SKIP_AGENTS:
-            results[key] = "(skipped)"
-            console.print(f"  [yellow]⊘[/] {key} (skipped)")
-            continue
-        try:
-            result = await _run_agent(client, sys_prompt, task_prompt, agent_tools)
-        except Exception as e:
-            result = f"(agent error: {e})"
-        results[key] = result
-        console.print(f"  [green]✓[/] {key} ({len(result)} chars)")
-
+    results = await _run_dual_lane(client, specs, phase_label="Phase 1")
     return results
 
 
