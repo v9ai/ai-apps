@@ -486,11 +486,13 @@ function downloadCrawlLog(data: {
   companySlug: string;
   stats: { saved: number; skipped: number; targets: number; filtered: number; visited: number; duration_ms: number; totalRemoteJobs?: number; cancelled?: boolean };
   entries: string[];
+  visitedUrls?: Array<{ url: string; status: string; name?: string }>;
 }) {
   const json = JSON.stringify({
     timestamp: new Date().toISOString(),
     seedUrl: data.seedUrl,
     stats: data.stats,
+    visitedUrls: data.visitedUrls ?? [],
     entries: data.entries,
   }, null, 2);
   const dataUrl = "data:application/json;base64," + btoa(unescape(encodeURIComponent(json)));
@@ -591,6 +593,7 @@ export async function findRelatedCompanies(tabId: number) {
 
     // BFS state
     const visited = new Set<string>();
+    const visitedUrls: Array<{ url: string; status: string; name?: string }> = [];
     const queue: string[] = [];
     let saved = 0;
     let skipped = 0;
@@ -640,10 +643,13 @@ export async function findRelatedCompanies(tabId: number) {
       visited.add(norm);
       // Pre-filter by industry when available from card metadata
       if (link.industry && link.industry.toLowerCase() !== INDUSTRY_FILTER) {
+        log(`[FindRelated] Seed URL filtered: ${link.url} (industry: ${link.industry})`);
+        visitedUrls.push({ url: link.url, status: "filtered", name: link.industry });
         seedFiltered++;
         filtered++;
         continue;
       }
+      log(`[FindRelated] Seed URL queued: ${link.url}${link.industry ? ` (industry: ${link.industry})` : ""}`);
       queue.push(link.url);
     }
     log(`[FindRelated] Seed: ${seedLinks.length} links found → ${queue.length} queued, ${seedFiltered} wrong industry, ${seedAlreadyVisited} already visited`);
@@ -683,6 +689,7 @@ export async function findRelatedCompanies(tabId: number) {
       const aboutUrl = url.replace(/\/$/, "") + "/about/";
       const urlSlug = url.match(/\/company\/([^/]+)/)?.[1] || "loading...";
       log(`[FindRelated] ── Processing ${urlSlug} ──`);
+      log(`[FindRelated] Navigating → ${aboutUrl}`);
       await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: urlSlug, step: `Navigating → ${urlSlug}/about/`, phase: "saving", logText: crawlLog.join("\n") });
       await safeTabUpdate(tabId, { url: aboutUrl });
       await waitForTabLoad(tabId);
@@ -695,6 +702,7 @@ export async function findRelatedCompanies(tabId: number) {
       const data = await extractCompanyData(tabId);
       if (!data || !data.name) {
         logWarn(`[FindRelated] ${urlSlug} — extractCompanyData returned ${!data ? "null" : "empty name"}, skipping`);
+        visitedUrls.push({ url, status: "error-no-data", name: urlSlug });
       }
       const icp = data?.name ? isICPTarget(data) : null;
 
@@ -705,6 +713,7 @@ export async function findRelatedCompanies(tabId: number) {
         if (!icp?.target) {
           // Not recruitment — skip saving but still discover related companies below
           filtered++;
+          visitedUrls.push({ url, status: "filtered-icp", name: data.name });
           log(`[FindRelated] SKIP ${data.name} — ${icp.reason} (industry: ${data.industry}) (queued: ${queue.length})`);
           await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name}`, step: `Skipped: ${icp.reason}`, phase: "saving", logText: crawlLog.join("\n") });
         } else {
@@ -757,6 +766,7 @@ export async function findRelatedCompanies(tabId: number) {
           const overlayName = (suffix: string) =>
             overlayJobText ? `🎯 ${suffix} ${data.name} (${overlayJobText})` : `🎯 ${suffix} ${data.name}`;
 
+          visitedUrls.push({ url, status: "saved", name: data.name });
           pendingBatch.push(company);
 
           // Flush batch when it reaches SAVE_BATCH_SIZE
@@ -822,10 +832,13 @@ export async function findRelatedCompanies(tabId: number) {
           visited.add(norm);
           // Pre-filter by industry when available from card metadata
           if (link.industry && link.industry.toLowerCase() !== INDUSTRY_FILTER) {
+            log(`[FindRelated] Discovered (filtered): ${link.url} [${link.industry}]`);
+            visitedUrls.push({ url: link.url, status: "filtered", name: link.industry });
             newFiltered++;
             filtered++;
             continue;
           }
+          log(`[FindRelated] Discovered: ${link.url}${link.industry ? ` [${link.industry}]` : ""}`);
           queue.push(link.url);
           newCount++;
         }
@@ -932,6 +945,10 @@ export async function findRelatedCompanies(tabId: number) {
     const elapsedMin = (elapsed / 60_000).toFixed(1);
     log(`[FindRelated] ═══ Crawl ${wasCancelled ? "CANCELLED" : "COMPLETE"} ═══ ${elapsedMin}min elapsed`);
     log(`[FindRelated]   saved=${saved}, skipped=${skipped}, filtered=${filtered}, visited=${visited.size}, totalRemoteJobs=${totalRemoteJobs}, postSignalCompanies=${totalPostSignalCompanies}, idealSignalCompanies=${totalIdealSignalCompanies}, queue_remaining=${queue.length}`);
+    log(`[FindRelated] ── All traversed URLs (${visitedUrls.length}) ──`);
+    for (const v of visitedUrls) {
+      log(`[FindRelated]   [${v.status}] ${v.url}${v.name ? ` (${v.name})` : ""}`);
+    }
 
     // Save crawl log to DB + download as file
     const crawlStats = { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0, totalRemoteJobs, totalPostSignalCompanies, totalIdealSignalCompanies };
@@ -947,6 +964,7 @@ export async function findRelatedCompanies(tabId: number) {
       companySlug: crawlSlug,
       stats: { ...crawlStats, cancelled: wasCancelled },
       entries: crawlLogFull,
+      visitedUrls,
     });
 
     // Navigate back to original page and remove overlay
@@ -989,6 +1007,7 @@ export async function findRelatedCompanies(tabId: number) {
       companySlug: crawlSlug,
       stats: errorStats,
       entries: crawlLogFull,
+      visitedUrls,
     });
 
     if (await isTabAlive(tabId)) {

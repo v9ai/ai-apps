@@ -345,7 +345,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // ── Find Related/Similar Companies ──
   if (message.action === "findRelatedCompanies") {
     const tabId = sender.tab?.id;
+    console.log(`[FindRelated:BG] Received findRelatedCompanies, tabId=${tabId}, url=${sender.tab?.url}`);
     if (!tabId) {
+      console.warn("[FindRelated:BG] No tab ID available");
       sendResponse({ success: false, error: "No tab ID" });
       return true;
     }

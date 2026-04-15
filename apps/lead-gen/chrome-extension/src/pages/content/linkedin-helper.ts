@@ -101,13 +101,17 @@ function safeSendMessage(
   message: unknown,
   callback?: (response: any) => void,
 ): void {
+  const action = (message as Record<string, unknown>)?.action ?? "unknown";
+  console.log(`[CS] sendMessage → ${action}`);
   if (teardownIfDead()) {
+    console.warn(`[CS] sendMessage → ${action} — extension context dead, skipping`);
     callback?.(undefined);
     return;
   }
   chrome.runtime.sendMessage(message, (response) => {
     if (chrome.runtime.lastError) {
       const msg = chrome.runtime.lastError.message || "";
+      console.warn(`[CS] sendMessage ← ${action} error:`, msg);
       if (msg.includes("Extension context invalidated")) {
         teardownIfDead();
         callback?.(undefined);
@@ -934,10 +938,12 @@ function createFindRelatedButton(): HTMLButtonElement {
     btn.style.backgroundColor = "#dc2626";
     btn.title = "Click to stop the crawl";
 
+    console.log("[FindRelated:CS] Button clicked, sending findRelatedCompanies...", window.location.href);
     safeSendMessage(
       { action: "findRelatedCompanies" },
       (response) => {
         if (!response?.success) {
+          console.warn("[FindRelated:CS] No response or error:", response);
           btn.textContent = "Error";
           btn.style.backgroundColor = "#dc2626";
           findRelatedRunning = false;
@@ -946,6 +952,8 @@ function createFindRelatedButton(): HTMLButtonElement {
             btn.style.backgroundColor = "#0d9488";
             btn.disabled = false;
           }, 2000);
+        } else {
+          console.log("[FindRelated:CS] Background response:", response);
         }
       },
     );

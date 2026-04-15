@@ -617,6 +617,7 @@ export async function saveCompanyBatch(
     industry?: string;
   }>,
 ): Promise<number> {
+  console.log(`[SaveBatch] ${batch.length} companies:`, batch.map(c => c.name).join(", "));
   try {
     const result = await gqlRequest(
       `mutation ImportCompanies($companies: [CompanyImportInput!]!) {
@@ -627,17 +628,18 @@ export async function saveCompanyBatch(
 
     if (result.data?.importCompanies) {
       const { imported, failed, errors } = result.data.importCompanies;
+      console.log(`[SaveBatch] Result: ${imported} imported, ${failed} failed`);
       if (failed > 0) {
-        console.warn(`[BrowseCompanies] ${failed} failed:`, errors);
+        console.warn(`[SaveBatch] ${failed} failed:`, errors);
       }
       return imported;
     }
     if (result.errors) {
-      console.error("[BrowseCompanies] GQL error:", result.errors[0].message);
+      console.error("[SaveBatch] GQL error:", result.errors[0].message);
     }
     return 0;
   } catch (err) {
-    console.error("[BrowseCompanies] Save batch error:", err);
+    console.error("[SaveBatch] Save batch error:", err);
     return 0;
   }
 }

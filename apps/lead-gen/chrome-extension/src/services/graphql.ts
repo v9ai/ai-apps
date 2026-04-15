@@ -29,7 +29,14 @@ export async function gqlRequest(
   variables: Record<string, unknown>,
   timeoutMs = 30_000,
 ): Promise<GqlResponse> {
+  // Extract operation name for logging
+  const opMatch = query.match(/(?:query|mutation)\s+(\w+)/);
+  const operationName = opMatch?.[1] ?? "anonymous";
+
   const sessionToken = await getSessionCookie();
+  if (!sessionToken) {
+    console.warn(`[GQL] ${operationName} — no session token, request will be unauthenticated`);
+  }
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -37,6 +44,7 @@ export async function gqlRequest(
     headers["Authorization"] = `Bearer ${sessionToken}`;
   }
 
+  console.log(`[GQL] ${operationName} → ${GRAPHQL_URL}`);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(`GraphQL request timed out after ${timeoutMs}ms`), timeoutMs);
 
@@ -49,8 +57,14 @@ export async function gqlRequest(
   clearTimeout(timeoutId);
 
   if (!res.ok) {
-    throw new Error(`GraphQL HTTP error: ${res.status} ${res.statusText}`);
+    const errMsg = `GraphQL HTTP error: ${res.status} ${res.statusText}`;
+    console.error(`[GQL] ${operationName} — ${errMsg}`);
+    throw new Error(errMsg);
   }
 
-  return res.json();
+  const json: GqlResponse = await res.json();
+  if (json.errors?.length) {
+    console.warn(`[GQL] ${operationName} — GraphQL errors:`, json.errors.map(e => e.message).join("; "));
+  }
+  return json;
 }
