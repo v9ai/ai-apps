@@ -34,9 +34,9 @@ pub struct ContributorRecord {
     pub total_contributions: u32,
 }
 
-/// Weights: density, novelty, breadth, activity, skill_relevance, engagement, obscurity.
+/// Weights: density, novelty, breadth, activity, skill_relevance, engagement, obscurity, recency.
 /// Must sum to 1.0.
-pub const SCORE_WEIGHTS: [f32; 7] = [0.25, 0.10, 0.15, 0.20, 0.10, 0.10, 0.10];
+pub const SCORE_WEIGHTS: [f32; 8] = [0.20, 0.08, 0.12, 0.15, 0.10, 0.08, 0.07, 0.20];
 
 /// Returns true for bot logins (dependabot, renovate, GitHub Apps, etc.).
 pub fn is_bot(login: &str) -> bool {
@@ -65,6 +65,8 @@ pub struct RisingScore {
     pub obscurity: f32,
     /// Ghost-account penalty: scaling to 1.0 as the account shows real activity.
     pub realness: f32,
+    /// Fine-grained recency from contribution calendar (last 90d activity).
+    pub recency: f32,
 }
 
 /// Compute rising-star score for a contributor.
@@ -121,28 +123,54 @@ pub fn compute_rising_score(record: &ContributorRecord, skill_count: usize) -> R
     // ── Obscurity ───────────────────────────────────────────────────
     let obscurity = 1.0 / (1.0 + followers / 500.0);
 
+    // ── Recency (v3: contribution calendar fine-grained) ────────────
+    let recency = if let Some(ref ap) = record.user.activity_profile {
+        let days_since = ap.days_since_last_active.unwrap_or(365) as f32;
+        let calendar_recency = (1.0 - days_since / 180.0).max(0.0);
+        let frequency_signal = (ap.avg_daily_90d / 2.0).min(1.0);
+        let trend_bonus = match ap.activity_trend.as_str() {
+            "rising" => 1.0,
+            "stable" => 0.7,
+            "new" => 0.5,
+            "declining" => 0.3,
+            "dormant" => 0.0,
+            _ => 0.3,
+        };
+        0.5 * calendar_recency + 0.3 * frequency_signal + 0.2 * trend_bonus
+    } else {
+        if days_since_update < 30 { 0.6 }
+        else if days_since_update < 90 { 0.3 }
+        else { 0.0 }
+    };
+
     // ── Realness (ghost guard) ──────────────────────────────────────
     let presence = public_repos + followers;
     let realness = 0.5 + 0.5 * (presence * 0.2_f32).tanh();
 
     // ── Weighted sum ────────────────────────────────────────────────
-    let [w_d, w_n, w_b, w_a, w_s, w_e, w_o] = SCORE_WEIGHTS;
+    let [w_d, w_n, w_b, w_a, w_s, w_e, w_o, w_r] = SCORE_WEIGHTS;
     let raw = w_d * contribution_density
         + w_n * novelty
         + w_b * breadth
         + w_a * activity
         + w_s * skill_relevance
         + w_e * engagement
-        + w_o * obscurity;
+        + w_o * obscurity
+        + w_r * recency;
 
     // ── Multipliers ─────────────────────────────────────────────────
     let hireable_bonus = if record.user.hireable == Some(true) { 1.15 } else { 1.0 };
-    let recency_bonus = if days_since_update <= 30 {
-        1.10
-    } else if days_since_update <= 90 {
-        1.05
+    let recency_bonus = if let Some(ref ap) = record.user.activity_profile {
+        match ap.days_since_last_active {
+            Some(d) if d <= 7 => 1.15,
+            Some(d) if d <= 30 => 1.10,
+            Some(d) if d <= 90 => 1.05,
+            _ => 1.0,
+        }
     } else {
-        1.0
+        if days_since_update <= 30 { 1.10 }
+        else if days_since_update <= 90 { 1.05 }
+        else { 1.0 }
     };
 
     RisingScore {
@@ -155,6 +183,169 @@ pub fn compute_rising_score(record: &ContributorRecord, skill_count: usize) -> R
         engagement,
         obscurity,
         realness,
+        recency,
+    }
+}
+
+/// Weights for strength score: activity, skill_depth, breadth, standing, engagement, realness.
+/// Must sum to 1.0.
+pub const STRENGTH_WEIGHTS: [f32; 6] = [0.30, 0.25, 0.15, 0.15, 0.10, 0.05];
+
+/// Breakdown of a contributor's strength score — values experience over obscurity.
+#[derive(Debug, Clone)]
+pub struct StrengthScore {
+    /// 0.0–1.0 composite strength score.
+    pub score: f32,
+    /// Real engineering output (commits, PRs, reviews).
+    pub activity: f32,
+    /// Domain expertise breadth: skill_count / 8.
+    pub skill_depth: f32,
+    /// Cross-project AI repo contributions (normalised 0–1, caps at 5).
+    pub breadth: f32,
+    /// Professional reputation: log-scaled followers + org membership + hireable + email.
+    pub standing: f32,
+    /// Reachability: email, hireable, blog, twitter, recency.
+    pub engagement: f32,
+    /// Ghost-account penalty.
+    pub realness: f32,
+}
+
+/// Compute strength score — rewards experience and standing, not obscurity.
+///
+/// Unlike `compute_rising_score` which penalises fame and old accounts,
+/// this score is designed for senior/principal-level candidate discovery.
+pub fn compute_strength_score(record: &ContributorRecord, skill_count: usize) -> StrengthScore {
+    let followers = record.user.followers as f32;
+    let public_repos = record.user.public_repos as f32;
+    let repos_count = record.repos.len() as f32;
+
+    // ── Activity (same formula as rising_score) ────────────────────
+    let commits = record.user.total_commit_contributions
+        .unwrap_or(record.user.public_repos) as f32;
+    let prs = record.user.total_pr_contributions.unwrap_or(0) as f32;
+    let reviews = record.user.total_review_contributions.unwrap_or(0) as f32;
+    let activity = (commits / 200.0).min(1.0) * 0.5
+        + (prs / 50.0).min(1.0) * 0.3
+        + (reviews / 30.0).min(1.0) * 0.2;
+
+    // ── Skill depth ────────────────────────────────────────────────
+    let skill_depth = (skill_count as f32 / 8.0).min(1.0);
+
+    // ── Breadth ────────────────────────────────────────────────────
+    let breadth = (repos_count / 5.0).min(1.0);
+
+    // ── Standing (rewards followers via log scale) ──────────────────
+    // ln(followers+1)/ln(10001) gives ~1.0 at 10k followers, ~0.75 at 1k
+    let log_followers = (followers + 1.0).ln() / (10001.0_f32).ln();
+    let org_count = record.user.organizations_json.as_ref()
+        .and_then(|j| serde_json::from_str::<Vec<serde_json::Value>>(j).ok())
+        .map(|v| v.len())
+        .unwrap_or(0) as f32;
+    let org_signal = (org_count / 3.0).min(1.0);
+    let hireable_signal = if record.user.hireable == Some(true) { 1.0 } else { 0.0 };
+    let email_signal = if record.user.email.is_some() { 1.0 } else { 0.0 };
+    let standing = log_followers * 0.5 + org_signal * 0.25 + hireable_signal * 0.15 + email_signal * 0.10;
+
+    // ── Engagement ─────────────────────────────────────────────────
+    let days_since_update = (chrono::Utc::now() - record.user.updated_at).num_days();
+    let engagement = [
+        record.user.email.is_some(),
+        record.user.hireable == Some(true),
+        record.user.blog.as_ref().map_or(false, |b| !b.is_empty()),
+        record.user.twitter_username.is_some(),
+        days_since_update < 90,
+    ]
+    .iter()
+    .filter(|&&s| s)
+    .count() as f32
+        / 5.0;
+
+    // ── Realness (ghost guard) ─────────────────────────────────────
+    let presence = public_repos + followers;
+    let realness = 0.5 + 0.5 * (presence * 0.2_f32).tanh();
+
+    // ── Weighted sum ───────────────────────────────────────────────
+    let [w_a, w_s, w_b, w_st, w_e, w_r] = STRENGTH_WEIGHTS;
+    let raw = w_a * activity
+        + w_s * skill_depth
+        + w_b * breadth
+        + w_st * standing
+        + w_e * engagement
+        + w_r * realness;
+
+    // Recency bonus (same as rising_score)
+    let recency_bonus = if let Some(ref ap) = record.user.activity_profile {
+        match ap.days_since_last_active {
+            Some(d) if d <= 7 => 1.15,
+            Some(d) if d <= 30 => 1.10,
+            Some(d) if d <= 90 => 1.05,
+            _ => 1.0,
+        }
+    } else {
+        if days_since_update <= 30 { 1.10 }
+        else if days_since_update <= 90 { 1.05 }
+        else { 1.0 }
+    };
+
+    StrengthScore {
+        score: (raw * realness * recency_bonus).clamp(0.0, 1.0),
+        activity,
+        skill_depth,
+        breadth,
+        standing,
+        engagement,
+        realness,
+    }
+}
+
+/// Compute opportunity skill match: |intersection| / |required|.
+///
+/// Returns 0.0 when `opp_skills` is empty (no opportunity context).
+pub fn compute_opp_skill_match(candidate_skills: &[String], opp_skills: &[String]) -> f32 {
+    if opp_skills.is_empty() {
+        return 0.0;
+    }
+    let matched = candidate_skills
+        .iter()
+        .filter(|s| opp_skills.iter().any(|o| o == *s))
+        .count() as f32;
+    (matched / opp_skills.len() as f32).clamp(0.0, 1.0)
+}
+
+/// Infer position title from bio keywords — 14 categories ordered by specificity.
+pub fn infer_position(bio: Option<&str>) -> Option<&'static str> {
+    let bio = bio?.to_lowercase();
+    if bio.contains("principal") { return Some("Principal Engineer"); }
+    if bio.contains("staff engineer") || bio.contains("staff software") { return Some("Staff Engineer"); }
+    if bio.contains("tech lead") || bio.contains("team lead") || bio.contains("engineering lead") { return Some("Lead Engineer"); }
+    if bio.contains("architect") { return Some("Architect"); }
+    if bio.contains("vp ") || bio.contains("vice president") { return Some("VP Engineering"); }
+    if bio.contains("director") { return Some("Director"); }
+    if bio.contains("head of") { return Some("Head of Engineering"); }
+    if bio.contains("manager") { return Some("Engineering Manager"); }
+    if bio.contains("founder") || bio.contains("ceo") || bio.contains("cto") { return Some("Founder"); }
+    if bio.contains("researcher") || bio.contains("research scientist") || bio.contains("research engineer") { return Some("Researcher"); }
+    if bio.contains("scientist") || bio.contains("data scientist") { return Some("Scientist"); }
+    if bio.contains("consultant") { return Some("Consultant"); }
+    if bio.contains("student") || bio.contains("intern") { return Some("Student"); }
+    if bio.contains("senior") { return Some("Senior Engineer"); }
+    if bio.contains("engineer") || bio.contains("developer") || bio.contains("programmer") { return Some("Engineer"); }
+    None
+}
+
+/// Map position title to a 0.0–1.0 seniority level.
+pub fn infer_seniority_level(position: Option<&str>) -> f32 {
+    match position {
+        Some("VP Engineering") | Some("Director") | Some("Head of Engineering") => 1.0,
+        Some("Principal Engineer") => 0.95,
+        Some("Staff Engineer") | Some("Architect") => 0.90,
+        Some("Lead Engineer") | Some("Engineering Manager") => 0.85,
+        Some("Founder") => 0.80,
+        Some("Senior Engineer") => 0.75,
+        Some("Researcher") | Some("Scientist") | Some("Consultant") => 0.70,
+        Some("Engineer") => 0.50,
+        Some("Student") => 0.20,
+        _ => 0.50,
     }
 }
 
@@ -187,10 +378,22 @@ fn schema() -> Arc<Schema> {
         Field::new("novelty", DataType::Float32, false),
         Field::new("breadth", DataType::Float32, false),
         Field::new("realness", DataType::Float32, false),
+        // Strength score — values experience over obscurity (nullable for backward compat)
+        Field::new("strength_score", DataType::Float32, true),
         Field::new("scraped_at", DataType::Utf8, false),
         // Skills extracted at insert time (JSON array of tag strings).
         // Nullable so old rows without this column read as empty.
         Field::new("skills_json", DataType::Utf8, true),
+        // Activity profile fields (nullable for backward compat)
+        Field::new("account_age_days", DataType::UInt32, true),
+        Field::new("last_active_date", DataType::Utf8, true),
+        Field::new("days_since_last_active", DataType::UInt32, true),
+        Field::new("contributions_30d", DataType::UInt32, true),
+        Field::new("contributions_90d", DataType::UInt32, true),
+        Field::new("contributions_365d", DataType::UInt32, true),
+        Field::new("current_streak_days", DataType::UInt32, true),
+        Field::new("activity_trend", DataType::Utf8, true),
+        Field::new("recency", DataType::Float32, true),
         // 384-d BAAI/bge-small-en-v1.5 embedding — null when contrib-embed feature is off.
         Field::new(
             "vector",
@@ -317,6 +520,11 @@ impl ContributorsDb {
             .iter()
             .zip(skill_counts.iter())
             .map(|(r, &sc)| compute_rising_score(r, sc))
+            .collect();
+        let strength_scores: Vec<StrengthScore> = new
+            .iter()
+            .zip(skill_counts.iter())
+            .map(|(r, &sc)| compute_strength_score(r, sc))
             .collect();
 
         // Vector column: embed under contrib-embed feature, null otherwise.
@@ -460,6 +668,10 @@ impl ContributorsDb {
                 Arc::new(Float32Array::from_iter_values(
                     scores.iter().map(|s| s.realness),
                 )),
+                // Strength score (nullable for backward compat)
+                Arc::new(Float32Array::from(
+                    strength_scores.iter().map(|s| Some(s.score)).collect::<Vec<_>>(),
+                )),
                 Arc::new(StringArray::from_iter_values(
                     std::iter::repeat(now.as_str()).take(n),
                 )),
@@ -469,6 +681,50 @@ impl ContributorsDb {
                         .iter()
                         .map(|s| Some(s.as_str()))
                         .collect::<Vec<_>>(),
+                )),
+                // Activity profile columns
+                Arc::new(UInt32Array::from(
+                    new.iter()
+                        .map(|r| r.user.activity_profile.as_ref().map(|ap| ap.account_age_days))
+                        .collect::<Vec<_>>(),
+                )),
+                Arc::new(StringArray::from(
+                    new.iter()
+                        .map(|r| r.user.activity_profile.as_ref().and_then(|ap| ap.last_active_date.as_deref()))
+                        .collect::<Vec<_>>(),
+                )),
+                Arc::new(UInt32Array::from(
+                    new.iter()
+                        .map(|r| r.user.activity_profile.as_ref().and_then(|ap| ap.days_since_last_active))
+                        .collect::<Vec<_>>(),
+                )),
+                Arc::new(UInt32Array::from(
+                    new.iter()
+                        .map(|r| r.user.activity_profile.as_ref().map(|ap| ap.contributions_30d))
+                        .collect::<Vec<_>>(),
+                )),
+                Arc::new(UInt32Array::from(
+                    new.iter()
+                        .map(|r| r.user.activity_profile.as_ref().map(|ap| ap.contributions_90d))
+                        .collect::<Vec<_>>(),
+                )),
+                Arc::new(UInt32Array::from(
+                    new.iter()
+                        .map(|r| r.user.activity_profile.as_ref().map(|ap| ap.contributions_365d))
+                        .collect::<Vec<_>>(),
+                )),
+                Arc::new(UInt32Array::from(
+                    new.iter()
+                        .map(|r| r.user.activity_profile.as_ref().map(|ap| ap.current_streak_days))
+                        .collect::<Vec<_>>(),
+                )),
+                Arc::new(StringArray::from(
+                    new.iter()
+                        .map(|r| r.user.activity_profile.as_ref().map(|ap| ap.activity_trend.as_str()))
+                        .collect::<Vec<_>>(),
+                )),
+                Arc::new(Float32Array::from(
+                    scores.iter().map(|s| Some(s.recency)).collect::<Vec<_>>(),
                 )),
                 // Embedding vector (null when contrib-embed feature is off)
                 vector_array,
@@ -506,6 +762,8 @@ impl ContributorsDb {
         // was added (avoids "column not found" errors on old data).
         let table_schema = table.schema().await?;
         let has_skills = table_schema.field_with_name("skills_json").is_ok();
+        let has_activity = table_schema.field_with_name("account_age_days").is_ok();
+        let has_strength = table_schema.field_with_name("strength_score").is_ok();
 
         let mut cols = vec![
             "login", "html_url", "name", "email", "company", "location",
@@ -515,6 +773,16 @@ impl ContributorsDb {
         ];
         if has_skills {
             cols.push("skills_json");
+        }
+        if has_strength {
+            cols.push("strength_score");
+        }
+        if has_activity {
+            cols.extend_from_slice(&[
+                "account_age_days", "last_active_date", "days_since_last_active",
+                "contributions_30d", "contributions_90d", "contributions_365d",
+                "current_streak_days", "activity_trend", "recency",
+            ]);
         }
 
         let mut stream: std::pin::Pin<
@@ -573,6 +841,21 @@ impl ContributorsDb {
                     .and_then(|j| serde_json::from_str(&j).ok())
                     .unwrap_or_default();
 
+                let get_opt_u32 = |name: &str| -> Option<u32> {
+                    batch
+                        .column_by_name(name)
+                        .and_then(|c| c.as_any().downcast_ref::<UInt32Array>())
+                        .and_then(|a| if a.is_null(i) { None } else { Some(a.value(i)) })
+                };
+                let get_opt_f32 = |name: &str| -> Option<f32> {
+                    batch
+                        .column_by_name(name)
+                        .and_then(|c| c.as_any().downcast_ref::<Float32Array>())
+                        .and_then(|a| if a.is_null(i) { None } else { Some(a.value(i)) })
+                };
+
+                let bio_ref = get_str("bio");
+                let position = infer_position(bio_ref.as_deref());
                 stars.push(RisingStar {
                     login,
                     html_url: get_str("html_url").unwrap_or_default(),
@@ -580,7 +863,7 @@ impl ContributorsDb {
                     email: get_str("email"),
                     company: get_str("company"),
                     location: get_str("location"),
-                    bio: get_str("bio"),
+                    bio: bio_ref,
                     followers: get_i32("followers") as u32,
                     public_repos: get_i32("public_repos") as u32,
                     total_contributions: get_u32("total_contributions"),
@@ -592,6 +875,18 @@ impl ContributorsDb {
                     realness: get_f32("realness"),
                     gh_created_at: get_str("gh_created_at").unwrap_or_default(),
                     skills,
+                    strength_score: get_opt_f32("strength_score").unwrap_or(0.0),
+                    opp_skill_match: 0.0,
+                    position_level: position.map(String::from),
+                    account_age_days: get_opt_u32("account_age_days"),
+                    last_active_date: get_str("last_active_date"),
+                    days_since_last_active: get_opt_u32("days_since_last_active"),
+                    contributions_30d: get_opt_u32("contributions_30d"),
+                    contributions_90d: get_opt_u32("contributions_90d"),
+                    contributions_365d: get_opt_u32("contributions_365d"),
+                    current_streak_days: get_opt_u32("current_streak_days"),
+                    activity_trend: get_str("activity_trend"),
+                    recency: get_opt_f32("recency"),
                 });
             }
         }
@@ -609,6 +904,7 @@ impl ContributorsDb {
     /// feature.
     #[cfg(feature = "contrib-embed")]
     pub async fn search_similar(&self, query: &str, top_k: usize) -> Result<Vec<RisingStar>> {
+        use arrow_array::Array;
         use futures::TryStreamExt;
 
         let model = self
@@ -682,6 +978,21 @@ impl ContributorsDb {
                     .and_then(|j| serde_json::from_str(&j).ok())
                     .unwrap_or_default();
 
+                let get_opt_u32 = |name: &str| -> Option<u32> {
+                    batch
+                        .column_by_name(name)
+                        .and_then(|c| c.as_any().downcast_ref::<UInt32Array>())
+                        .and_then(|a| if a.is_null(i) { None } else { Some(a.value(i)) })
+                };
+                let get_opt_f32 = |name: &str| -> Option<f32> {
+                    batch
+                        .column_by_name(name)
+                        .and_then(|c| c.as_any().downcast_ref::<Float32Array>())
+                        .and_then(|a| if a.is_null(i) { None } else { Some(a.value(i)) })
+                };
+
+                let bio_ref = get_str("bio");
+                let position = infer_position(bio_ref.as_deref());
                 stars.push(RisingStar {
                     login,
                     html_url: get_str("html_url").unwrap_or_default(),
@@ -689,7 +1000,7 @@ impl ContributorsDb {
                     email: get_str("email"),
                     company: get_str("company"),
                     location: get_str("location"),
-                    bio: get_str("bio"),
+                    bio: bio_ref,
                     followers: get_i32("followers") as u32,
                     public_repos: get_i32("public_repos") as u32,
                     total_contributions: get_u32("total_contributions"),
@@ -701,6 +1012,18 @@ impl ContributorsDb {
                     realness: get_f32("realness"),
                     gh_created_at: get_str("gh_created_at").unwrap_or_default(),
                     skills,
+                    strength_score: get_opt_f32("strength_score").unwrap_or(0.0),
+                    opp_skill_match: 0.0,
+                    position_level: position.map(String::from),
+                    account_age_days: get_opt_u32("account_age_days"),
+                    last_active_date: get_str("last_active_date"),
+                    days_since_last_active: get_opt_u32("days_since_last_active"),
+                    contributions_30d: get_opt_u32("contributions_30d"),
+                    contributions_90d: get_opt_u32("contributions_90d"),
+                    contributions_365d: get_opt_u32("contributions_365d"),
+                    current_streak_days: get_opt_u32("current_streak_days"),
+                    activity_trend: get_str("activity_trend"),
+                    recency: get_opt_f32("recency"),
                 });
             }
         }
@@ -730,6 +1053,22 @@ pub struct RisingStar {
     pub gh_created_at: String,
     /// AI/ML skill tags extracted at insert time.
     pub skills: Vec<String>,
+    /// Strength score — values experience over obscurity.
+    pub strength_score: f32,
+    /// Opportunity skill match ratio (0.0–1.0). 0.0 when no opp context.
+    pub opp_skill_match: f32,
+    /// Inferred position title from bio.
+    pub position_level: Option<String>,
+    // Activity profile fields
+    pub account_age_days: Option<u32>,
+    pub last_active_date: Option<String>,
+    pub days_since_last_active: Option<u32>,
+    pub contributions_30d: Option<u32>,
+    pub contributions_90d: Option<u32>,
+    pub contributions_365d: Option<u32>,
+    pub current_streak_days: Option<u32>,
+    pub activity_trend: Option<String>,
+    pub recency: Option<f32>,
 }
 
 async fn load_known_logins(conn: &Connection) -> Result<HashSet<String>> {
@@ -806,6 +1145,9 @@ mod tests {
             contributed_repos_json: None,
             organizations_json: None,
             status_message: None,
+            has_any_contributions: None,
+            contribution_calendar_json: None,
+            activity_profile: None,
         }
     }
 
@@ -907,7 +1249,7 @@ mod tests {
     fn score_equals_weighted_sum_times_realness_and_multipliers() {
         let r = make_record(20, 15, 500, 200, 3);
         let s = compute_rising_score(&r, 0);
-        let [w_d, w_n, w_b, w_a, w_s, w_e, w_o] = SCORE_WEIGHTS;
+        let [w_d, w_n, w_b, w_a, w_s, w_e, w_o, w_r] = SCORE_WEIGHTS;
         let expected_raw =
             w_d * s.contribution_density
             + w_n * s.novelty
@@ -915,7 +1257,8 @@ mod tests {
             + w_a * s.activity
             + w_s * s.skill_relevance
             + w_e * s.engagement
-            + w_o * s.obscurity;
+            + w_o * s.obscurity
+            + w_r * s.recency;
         // Multipliers: hireable_bonus * recency_bonus
         let hireable_bonus = if r.user.hireable == Some(true) { 1.15 } else { 1.0 };
         let days_since_update = (chrono::Utc::now() - r.user.updated_at).num_days();
@@ -1193,5 +1536,142 @@ mod tests {
         // Either way the field exists and is a Vec
         let _ = top[0].skills.len(); // just assert it's accessible
         let _ = std::fs::remove_dir_all(&path);
+    }
+
+    // ── strength_score tests ─────────────────────────────────────────────────
+
+    #[test]
+    fn strength_weights_sum_to_one() {
+        let sum: f32 = STRENGTH_WEIGHTS.iter().sum();
+        assert!((sum - 1.0).abs() < EPSILON, "strength weights sum={sum}, expected 1.0");
+    }
+
+    #[test]
+    fn strength_score_in_unit_range() {
+        for (followers, repos, age, contribs, repo_count) in [
+            (0u32, 0u32, 1i64, 1u32, 1usize),
+            (10_000, 50, 2000, 500, 5),
+            (100, 30, 400, 200, 3),
+        ] {
+            let s = compute_strength_score(
+                &make_record(followers, repos, age, contribs, repo_count), 4,
+            );
+            assert!(
+                (0.0..=1.0).contains(&s.score),
+                "strength_score={} out of [0,1] for followers={followers}",
+                s.score,
+            );
+        }
+    }
+
+    #[test]
+    fn strength_rewards_followers_not_penalises() {
+        let nobody = compute_strength_score(&make_record(5, 10, 365, 100, 2), 3);
+        let famous = compute_strength_score(&make_record(10_000, 10, 365, 100, 2), 3);
+        assert!(
+            famous.standing > nobody.standing,
+            "famous standing={} should beat nobody standing={}",
+            famous.standing, nobody.standing,
+        );
+        assert!(
+            famous.score > nobody.score,
+            "famous score={} should beat nobody score={}",
+            famous.score, nobody.score,
+        );
+    }
+
+    #[test]
+    fn strength_rewards_skill_depth() {
+        let few = compute_strength_score(&make_record(50, 10, 365, 100, 2), 1);
+        let many = compute_strength_score(&make_record(50, 10, 365, 100, 2), 7);
+        assert!(
+            many.skill_depth > few.skill_depth,
+            "many skills={} should beat few={}",
+            many.skill_depth, few.skill_depth,
+        );
+    }
+
+    #[test]
+    fn senior_beats_junior_on_strength() {
+        // Senior: many followers, orgs, commits
+        let mut senior_rec = make_record(5_000, 50, 2000, 500, 5);
+        senior_rec.user.organizations_json = Some(r#"[{"login":"deepmind"},{"login":"google"}]"#.into());
+        let senior = compute_strength_score(&senior_rec, 6);
+
+        // Junior: few followers, new account, few commits
+        let junior = compute_strength_score(&make_record(1, 5, 100, 20, 1), 2);
+
+        assert!(
+            senior.score > junior.score,
+            "senior={:.3} should beat junior={:.3}",
+            senior.score, junior.score,
+        );
+    }
+
+    // ── opp_skill_match tests ────────────────────────────────────────────────
+
+    #[test]
+    fn opp_match_empty_opp_returns_zero() {
+        let skills = vec!["llm".to_string(), "rag".to_string()];
+        assert_eq!(compute_opp_skill_match(&skills, &[]), 0.0);
+    }
+
+    #[test]
+    fn opp_match_full_overlap() {
+        let candidate = vec!["llm".to_string(), "rag".to_string(), "python".to_string()];
+        let opp = vec!["llm".to_string(), "rag".to_string()];
+        assert!((compute_opp_skill_match(&candidate, &opp) - 1.0).abs() < EPSILON);
+    }
+
+    #[test]
+    fn opp_match_partial_overlap() {
+        let candidate = vec!["llm".to_string(), "python".to_string()];
+        let opp = vec!["llm".to_string(), "rag".to_string(), "agents".to_string()];
+        let m = compute_opp_skill_match(&candidate, &opp);
+        assert!((m - 1.0 / 3.0).abs() < EPSILON, "expected ~0.333, got {m}");
+    }
+
+    #[test]
+    fn opp_match_no_overlap() {
+        let candidate = vec!["rust".to_string()];
+        let opp = vec!["llm".to_string(), "rag".to_string()];
+        assert_eq!(compute_opp_skill_match(&candidate, &opp), 0.0);
+    }
+
+    // ── infer_position tests ─────────────────────────────────────────────────
+
+    #[test]
+    fn infer_position_principal() {
+        assert_eq!(infer_position(Some("Principal ML engineer")), Some("Principal Engineer"));
+    }
+
+    #[test]
+    fn infer_position_staff() {
+        assert_eq!(infer_position(Some("Staff Engineer at Google")), Some("Staff Engineer"));
+    }
+
+    #[test]
+    fn infer_position_senior() {
+        assert_eq!(infer_position(Some("Senior backend developer")), Some("Senior Engineer"));
+    }
+
+    #[test]
+    fn infer_position_student() {
+        assert_eq!(infer_position(Some("CS student at MIT")), Some("Student"));
+    }
+
+    #[test]
+    fn infer_position_none_for_vague() {
+        assert_eq!(infer_position(Some("I love open source")), None);
+        assert_eq!(infer_position(None), None);
+    }
+
+    // ── seniority level tests ────────────────────────────────────────────────
+
+    #[test]
+    fn seniority_levels_ordered() {
+        assert!(infer_seniority_level(Some("Principal Engineer")) > infer_seniority_level(Some("Senior Engineer")));
+        assert!(infer_seniority_level(Some("Senior Engineer")) > infer_seniority_level(Some("Engineer")));
+        assert!(infer_seniority_level(Some("Engineer")) > infer_seniority_level(Some("Student")));
     }
 }

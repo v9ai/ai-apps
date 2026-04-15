@@ -7,30 +7,14 @@
 ///   `CREATE UNIQUE INDEX idx_contacts_github_handle
 ///      ON contacts(github_handle) WHERE github_handle IS NOT NULL;`
 /// See migration `0041_add_github_handle_index.sql`.
-use crate::contributors::RisingStar;
+use crate::contributors::{infer_position, infer_seniority_level, RisingStar};
 use crate::error::{GhError, Result};
 use sqlx::PgPool;
 use tracing::info;
 
-/// Score tiers used in `github:score:{tier}` contact tags.
-fn score_tier(rising_score: f32) -> &'static str {
-    if rising_score >= 0.70 { "A" } else if rising_score >= 0.50 { "B" } else { "C" }
-}
-
-/// Infer a position string from keywords in the bio.
-fn infer_position(bio: Option<&str>) -> Option<&'static str> {
-    let bio = bio?.to_lowercase();
-    if bio.contains("founder") || bio.contains("ceo") || bio.contains("cto") {
-        Some("Founder")
-    } else if bio.contains("researcher") || bio.contains("research scientist") || bio.contains("research engineer") {
-        Some("Researcher")
-    } else if bio.contains("scientist") || bio.contains("data scientist") {
-        Some("Scientist")
-    } else if bio.contains("engineer") || bio.contains("developer") || bio.contains("programmer") {
-        Some("Engineer")
-    } else {
-        None
-    }
+/// Score tiers used in `github:score:{tier}` and `github:strength:{tier}` contact tags.
+fn score_tier(score: f32) -> &'static str {
+    if score >= 0.70 { "A" } else if score >= 0.50 { "B" } else { "C" }
 }
 
 /// Upsert a `RisingStar` into the `contacts` table if `star.rising_score >= threshold`.
@@ -49,7 +33,9 @@ pub async fn save_contributor_contact(
     threshold: f32,
     extra_tags: &[String],
 ) -> Result<Option<i32>> {
-    if star.rising_score < threshold {
+    // Use the best of strength_score and rising_score for threshold check
+    let best_score = star.strength_score.max(star.rising_score);
+    if best_score < threshold {
         return Ok(None);
     }
 
@@ -76,14 +62,42 @@ pub async fn save_contributor_contact(
     let position = infer_position(star.bio.as_deref());
 
     // ── Tags ────────────────────────────────────────────────────────────────────
-    let tier = score_tier(star.rising_score);
+    let rising_tier = score_tier(star.rising_score);
+    let strength_tier = score_tier(star.strength_score);
     let mut tags: Vec<String> = vec![
         "github:rising-star".to_string(),
         "github:ai-contributor".to_string(),
-        format!("github:score:{tier}"),
+        format!("github:score:{rising_tier}"),
+        format!("github:strength:{strength_tier}"),
     ];
+    // Opportunity skill match percentage tag
+    if star.opp_skill_match > 0.0 {
+        let pct = (star.opp_skill_match * 100.0).round() as u32;
+        tags.push(format!("opp:skill-match:{pct}pct"));
+    }
+    // Seniority tag from position inference
+    let position = infer_position(star.bio.as_deref());
+    if let Some(pos) = position {
+        let level = infer_seniority_level(Some(pos));
+        let level_label = if level >= 0.90 { "staff-plus" }
+            else if level >= 0.75 { "senior" }
+            else if level >= 0.50 { "mid" }
+            else { "junior" };
+        tags.push(format!("seniority:{level_label}"));
+    }
     for skill in &star.skills {
         tags.push(format!("skill:{skill}"));
+    }
+    // Activity tags from calendar data
+    if let Some(d) = star.days_since_last_active {
+        if d <= 7 {
+            tags.push("github:active-this-week".to_string());
+        } else if d <= 30 {
+            tags.push("github:active-this-month".to_string());
+        }
+    }
+    if let Some(ref trend) = star.activity_trend {
+        tags.push(format!("github:trend:{trend}"));
     }
     for tag in extra_tags {
         tags.push(tag.clone());
@@ -113,14 +127,14 @@ pub async fn save_contributor_contact(
     .bind(position)
     .bind(&star.login)
     .bind(&tags_json)
-    .bind(star.rising_score)
+    .bind(star.strength_score) // authority_score ← strength_score (values experience)
     .fetch_one(pool)
     .await
     .map_err(|e| GhError::Other(e.to_string()))?;
 
     info!(
-        "upserted contact id={id} github_handle={} score={:.3}",
-        star.login, star.rising_score,
+        "upserted contact id={id} github_handle={} strength={:.3} rising={:.3} opp_match={:.0}%",
+        star.login, star.strength_score, star.rising_score, star.opp_skill_match * 100.0,
     );
     Ok(Some(id))
 }
@@ -156,6 +170,18 @@ mod tests {
             realness: 0.8,
             gh_created_at: "2022-01-01T00:00:00Z".into(),
             skills,
+            strength_score: rising_score, // mirror rising in tests
+            opp_skill_match: 0.0,
+            position_level: None,
+            account_age_days: None,
+            last_active_date: None,
+            days_since_last_active: None,
+            contributions_30d: None,
+            contributions_90d: None,
+            contributions_365d: None,
+            current_streak_days: None,
+            activity_trend: None,
+            recency: None,
         }
     }
 
@@ -171,7 +197,8 @@ mod tests {
 
     #[test]
     fn infer_position_engineer() {
-        assert_eq!(infer_position(Some("Senior ML engineer at Anthropic")), Some("Engineer"));
+        // "Senior" matches before "engineer" in the expanded taxonomy
+        assert_eq!(infer_position(Some("Senior ML engineer at Anthropic")), Some("Senior Engineer"));
         assert_eq!(infer_position(Some("Software developer")), Some("Engineer"));
     }
 
@@ -196,7 +223,6 @@ mod tests {
     #[test]
     fn name_splits_first_last() {
         let star = make_star("jdoe", Some("Jane Doe"), None, None, 0.6, vec![]);
-        // Simulate what save_contributor_contact does for name
         let (first, last) = match &star.name {
             Some(n) => match n.trim().split_once(' ') {
                 Some((f, l)) => (f.to_string(), l.to_string()),
@@ -232,24 +258,18 @@ mod tests {
             0.75,
             vec!["llm".to_string(), "rag".to_string()],
         );
-        let tier = score_tier(star.rising_score);
-        let mut tags: Vec<String> = vec![
-            "github:rising-star".to_string(),
-            "github:ai-contributor".to_string(),
-            format!("github:score:{tier}"),
-        ];
-        for skill in &star.skills {
-            tags.push(format!("skill:{skill}"));
-        }
-        assert!(tags.contains(&"github:score:A".to_string()));
-        assert!(tags.contains(&"skill:llm".to_string()));
-        assert!(tags.contains(&"skill:rag".to_string()));
+        let rising_tier = score_tier(star.rising_score);
+        let strength_tier = score_tier(star.strength_score);
+        assert_eq!(rising_tier, "A");
+        assert_eq!(strength_tier, "A");
     }
 
     #[test]
-    fn below_threshold_would_be_skipped() {
-        // Just tests the threshold comparison — DB not needed
-        let star = make_star("low", None, None, None, 0.3, vec![]);
-        assert!(star.rising_score < 0.4, "should be below threshold");
+    fn below_threshold_uses_best_score() {
+        // rising_score below threshold but strength_score above → should NOT skip
+        let mut star = make_star("high_strength", None, None, None, 0.3, vec![]);
+        star.strength_score = 0.6;
+        let best = star.strength_score.max(star.rising_score);
+        assert!(best >= 0.4, "best_score={best} should pass threshold 0.4");
     }
 }

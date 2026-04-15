@@ -1,7 +1,7 @@
 /// ICP Feature Bridge — map a `RisingStar` to ML-ready feature vectors.
 ///
 /// Produces:
-/// - `contributor_to_features`     → `Vec<f32>` (8 dims, all in 0..1) for
+/// - `contributor_to_features`     → `Vec<f32>` (12 dims, all in 0..1) for
 ///   `AttentionScorer` and other f32-input scorers.
 /// - `contributor_to_hash_features` → `Vec<(String, String)>` pairs for
 ///   `OnlineLearner::hash_features` (values formatted as f64 strings).
@@ -10,7 +10,7 @@
 use crate::contributors::RisingStar;
 
 /// Human-readable names for each feature dimension (matches vector index).
-pub const FEATURE_NAMES: [&str; 8] = [
+pub const FEATURE_NAMES: [&str; 12] = [
     "rising_score",
     "contribution_density",
     "novelty",
@@ -19,9 +19,13 @@ pub const FEATURE_NAMES: [&str; 8] = [
     "log_followers",
     "log_public_repos",
     "log_ai_repos",
+    "recency",
+    "log_contributions_90d",
+    "strength_score",
+    "opp_skill_match",
 ];
 
-/// Map a `RisingStar` to an 8-element feature vector, all values in `[0, 1]`.
+/// Map a `RisingStar` to a 12-element feature vector, all values in `[0, 1]`.
 ///
 /// | idx | field                | normalisation                                  |
 /// |-----|----------------------|------------------------------------------------|
@@ -33,11 +37,23 @@ pub const FEATURE_NAMES: [&str; 8] = [
 /// |   5 | followers            | `ln(followers + 1) / 15.0`, clamped to 0..1   |
 /// |   6 | public_repos         | `ln(public_repos + 1) / 6.0`, clamped to 0..1 |
 /// |   7 | ai_repos_count       | `ln(count + 1) / ln(6)`, clamped to 0..1      |
+/// |   8 | recency              | days since last active, 180d decay to 0        |
+/// |   9 | log_contributions_90d| `ln(c90 + 1) / 6.0`, clamped to 0..1          |
+/// |  10 | strength_score       | already 0..1 (experience-weighted composite)   |
+/// |  11 | opp_skill_match      | already 0..1 (skill overlap ratio)             |
 pub fn contributor_to_features(star: &RisingStar) -> Vec<f32> {
     let log_followers = (star.followers as f32 + 1.0).ln() / 15.0;
     let log_repos = (star.public_repos as f32 + 1.0).ln() / 6.0;
     // ln(6) ≈ 1.7918 — normalises so that 5 AI repos → 1.0
     let log_ai_repos = (star.ai_repos_count as f32 + 1.0).ln() / 6.0_f32.ln();
+
+    let recency = star.days_since_last_active
+        .map(|d| (1.0 - d as f32 / 180.0).max(0.0))
+        .unwrap_or(0.0);
+    let log_contrib_90d = star.contributions_90d
+        .map(|c| (c as f32 + 1.0).ln() / 6.0)
+        .unwrap_or(0.0)
+        .clamp(0.0, 1.0);
 
     vec![
         star.rising_score,
@@ -48,6 +64,10 @@ pub fn contributor_to_features(star: &RisingStar) -> Vec<f32> {
         log_followers.clamp(0.0, 1.0),
         log_repos.clamp(0.0, 1.0),
         log_ai_repos.clamp(0.0, 1.0),
+        recency,
+        log_contrib_90d,
+        star.strength_score.clamp(0.0, 1.0),
+        star.opp_skill_match.clamp(0.0, 1.0),
     ]
 }
 
@@ -94,18 +114,30 @@ mod tests {
             realness: 0.8,
             gh_created_at: "2022-01-01T00:00:00Z".into(),
             skills: vec![],
+            strength_score: rising_score * 0.8,
+            opp_skill_match: 0.6,
+            position_level: None,
+            account_age_days: Some(1000),
+            last_active_date: Some("2026-04-10".into()),
+            days_since_last_active: Some(5),
+            contributions_30d: Some(30),
+            contributions_90d: Some(80),
+            contributions_365d: Some(300),
+            current_streak_days: Some(3),
+            activity_trend: Some("stable".into()),
+            recency: Some(0.5),
         }
     }
 
     #[test]
-    fn feature_vector_has_8_elements() {
+    fn feature_vector_has_12_elements() {
         let star = make_star(0.5, 100, 20, 3);
-        assert_eq!(contributor_to_features(&star).len(), 8);
+        assert_eq!(contributor_to_features(&star).len(), 12);
     }
 
     #[test]
     fn feature_names_matches_vector_length() {
-        assert_eq!(FEATURE_NAMES.len(), 8);
+        assert_eq!(FEATURE_NAMES.len(), 12);
     }
 
     #[test]

@@ -23,7 +23,8 @@ use regex::Regex;
 use tracing::{info, warn};
 
 use github_patterns::contributors::{
-    compute_rising_score, is_bot, ContributorRecord, ContributorsDb, RepoContrib, RisingStar,
+    compute_opp_skill_match, compute_rising_score, compute_strength_score,
+    infer_position, is_bot, ContributorRecord, ContributorsDb, RepoContrib, RisingStar,
 };
 use github_patterns::skills::{contributor_skills_text, extract_skills};
 use github_patterns::GhClient;
@@ -62,6 +63,11 @@ fn search_queries() -> Vec<(&'static str, &'static str)> {
         ("I: fine-tuning",        "location:London fine-tuning LoRA type:user"),
         ("J: MLOps",              "location:London MLOps deployment type:user"),
         ("K: principal/staff",    "location:London principal staff AI engineer type:user"),
+        // v3: expanded passes
+        ("L: DSPy/instructor",    "location:London dspy instructor outlines type:user"),
+        ("M: retrieval expert",   "location:London retrieval vector search embedding type:user"),
+        ("N: UK principal",       "location:\"United Kingdom\" principal AI staff engineer type:user"),
+        ("O: vector DB",          "location:London pinecone weaviate qdrant lancedb type:user"),
     ]
 }
 
@@ -77,6 +83,11 @@ fn stargazer_repos() -> Vec<&'static str> {
         "microsoft/autogen",
         "huggingface/transformers",
         "chroma-core/chroma",
+        // v3: expanded
+        "stanfordnlp/dspy",
+        "jxnl/instructor",
+        "outlines-dev/outlines",
+        "run-llama/llama_index",
     ]
 }
 
@@ -91,6 +102,11 @@ fn contributor_repos() -> Vec<&'static str> {
         "vllm-project/vllm",
         "chroma-core/chroma",
         "anthropics/anthropic-sdk-python",
+        // v3: expanded
+        "stanfordnlp/dspy",
+        "jxnl/instructor",
+        "microsoft/semantic-kernel",
+        "BerriAI/litellm",
     ]
 }
 
@@ -380,6 +396,9 @@ async fn main() -> anyhow::Result<()> {
             .collect();
         let score = compute_rising_score(record, skills.len());
 
+        let ap = record.user.activity_profile.as_ref();
+        let strength = compute_strength_score(record, skills.len());
+        let position_level = infer_position(record.user.bio.as_deref()).map(String::from);
         stars.push((
             RisingStar {
                 login: record.user.login.clone(),
@@ -400,6 +419,18 @@ async fn main() -> anyhow::Result<()> {
                 realness: score.realness,
                 gh_created_at: record.user.created_at.to_rfc3339(),
                 skills,
+                strength_score: strength.score,
+                opp_skill_match: 0.0,
+                position_level,
+                account_age_days: ap.map(|a| a.account_age_days),
+                last_active_date: ap.and_then(|a| a.last_active_date.clone()),
+                days_since_last_active: ap.and_then(|a| a.days_since_last_active),
+                contributions_30d: ap.map(|a| a.contributions_30d),
+                contributions_90d: ap.map(|a| a.contributions_90d),
+                contributions_365d: ap.map(|a| a.contributions_365d),
+                current_streak_days: ap.map(|a| a.current_streak_days),
+                activity_trend: ap.map(|a| a.activity_trend.clone()),
+                recency: Some(score.recency),
             },
             *london_verified,
         ));
@@ -486,6 +517,9 @@ async fn main() -> anyhow::Result<()> {
                                 .collect();
                             let score = compute_rising_score(&record, skills.len());
 
+                            let ap = record.user.activity_profile.as_ref();
+                            let strength = compute_strength_score(&record, skills.len());
+                            let position_level = infer_position(record.user.bio.as_deref()).map(String::from);
                             stars.push((
                                 RisingStar {
                                     login: record.user.login.clone(),
@@ -506,6 +540,18 @@ async fn main() -> anyhow::Result<()> {
                                     realness: score.realness,
                                     gh_created_at: record.user.created_at.to_rfc3339(),
                                     skills,
+                                    strength_score: strength.score,
+                                    opp_skill_match: 0.0,
+                                    position_level,
+                                    account_age_days: ap.map(|a| a.account_age_days),
+                                    last_active_date: ap.and_then(|a| a.last_active_date.clone()),
+                                    days_since_last_active: ap.and_then(|a| a.days_since_last_active),
+                                    contributions_30d: ap.map(|a| a.contributions_30d),
+                                    contributions_90d: ap.map(|a| a.contributions_90d),
+                                    contributions_365d: ap.map(|a| a.contributions_365d),
+                                    current_streak_days: ap.map(|a| a.current_streak_days),
+                                    activity_trend: ap.map(|a| a.activity_trend.clone()),
+                                    recency: Some(score.recency),
                                 },
                                 london,
                             ));
@@ -541,6 +587,16 @@ async fn main() -> anyhow::Result<()> {
             .map(|v| v.join(", "))
             .unwrap_or_default();
 
+        let age_str = match s.account_age_days {
+            Some(d) => format!("{:.1}y", d as f32 / 365.0),
+            None => "?".into(),
+        };
+        let last_active_str = match (&s.last_active_date, s.days_since_last_active) {
+            (Some(date), Some(d)) => format!("{date} ({d}d ago)"),
+            _ => "-".into(),
+        };
+        let trend = s.activity_trend.as_deref().unwrap_or("-");
+
         println!(
             "#{:<3} {:>5.3}  {name} (@{})",
             rank + 1,
@@ -549,6 +605,13 @@ async fn main() -> anyhow::Result<()> {
         );
         println!("      [{loc_tag}] {location}  company={company}");
         println!("      email={email}  followers={}  repos={}", s.followers, s.public_repos);
+        println!(
+            "      account_age={age_str}  last_active={last_active_str}  trend={trend}",
+        );
+        if let (Some(c30), Some(c90), Some(c365)) = (s.contributions_30d, s.contributions_90d, s.contributions_365d) {
+            let streak = s.current_streak_days.unwrap_or(0);
+            println!("      30d={c30}  90d={c90}  365d={c365}  streak={streak}d");
+        }
         if let Some(bio) = &s.bio {
             let truncated: String = bio.chars().take(120).collect();
             println!("      bio={truncated}");

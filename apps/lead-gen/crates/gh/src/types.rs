@@ -84,6 +84,61 @@ pub struct GhUser {
     pub organizations_json: Option<String>,
     #[serde(default)]
     pub status_message: Option<String>,
+    // ── Enriched fields from contributionCalendar ────────────────
+    #[serde(default)]
+    pub has_any_contributions: Option<bool>,
+    #[serde(default)]
+    pub contribution_calendar_json: Option<String>,
+    #[serde(default)]
+    pub activity_profile: Option<ActivityProfile>,
+}
+
+/// Pre-computed activity metrics derived from GitHub contributionCalendar.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ActivityProfile {
+    /// Days since GitHub account creation.
+    pub account_age_days: u32,
+    /// Account age as fractional years.
+    pub account_age_years: f32,
+    /// Most recent date with at least 1 contribution ("YYYY-MM-DD"), or None.
+    pub last_active_date: Option<String>,
+    /// Days since last contribution. None if never contributed.
+    pub days_since_last_active: Option<u32>,
+    /// Total contributions in the last 30 days.
+    pub contributions_30d: u32,
+    /// Total contributions in the last 90 days.
+    pub contributions_90d: u32,
+    /// Total contributions in the last 365 days.
+    pub contributions_365d: u32,
+    /// Current consecutive-days streak of contributions.
+    pub current_streak_days: u32,
+    /// Longest streak in the calendar window.
+    pub longest_streak_days: u32,
+    /// Activity trend: "rising", "stable", "declining", "dormant", "new".
+    pub activity_trend: String,
+    /// Average daily contributions over the last 90 days.
+    pub avg_daily_90d: f32,
+}
+
+/// Parsed contribution calendar from GitHub GraphQL.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContributionCalendar {
+    #[serde(rename = "totalContributions")]
+    pub total_contributions: u32,
+    pub weeks: Vec<ContributionWeek>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContributionWeek {
+    #[serde(rename = "contributionDays")]
+    pub contribution_days: Vec<ContributionDay>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContributionDay {
+    #[serde(rename = "contributionCount")]
+    pub contribution_count: u32,
+    pub date: String, // "YYYY-MM-DD"
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

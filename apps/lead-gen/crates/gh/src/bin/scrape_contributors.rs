@@ -224,13 +224,23 @@ async fn print_top_rising(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
         let location = s.location.as_deref().unwrap_or("-");
         let email = s.email.as_deref().unwrap_or("-");
 
-        // Account age in years
-        let age_years = if let Ok(created) = chrono::DateTime::parse_from_rfc3339(&s.gh_created_at) {
-            let days = (chrono::Utc::now() - created.with_timezone(&chrono::Utc)).num_days();
-            days as f32 / 365.0
-        } else {
-            0.0
+        let age_str = match s.account_age_days {
+            Some(d) => format!("{:.1}y", d as f32 / 365.0),
+            None => {
+                if let Ok(created) = chrono::DateTime::parse_from_rfc3339(&s.gh_created_at) {
+                    let days = (chrono::Utc::now() - created.with_timezone(&chrono::Utc)).num_days();
+                    format!("{:.1}y", days as f32 / 365.0)
+                } else {
+                    "?".into()
+                }
+            }
         };
+
+        let last_active_str = match (&s.last_active_date, s.days_since_last_active) {
+            (Some(date), Some(d)) => format!("{date} ({d}d ago)"),
+            _ => "-".into(),
+        };
+        let trend = s.activity_trend.as_deref().unwrap_or("-");
 
         println!(
             "#{:<3} {:>5.3}  {name} (@{})",
@@ -249,8 +259,17 @@ async fn print_top_rising(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
             s.followers, s.public_repos, s.ai_repos_count, s.total_contributions,
         );
         println!(
-            "      account_age={:.1}y  density={:.3}  novelty={:.3}  breadth={:.3}  realness={:.3}",
-            age_years, s.contribution_density, s.novelty, s.breadth, s.realness,
+            "      account_age={age_str}  last_active={last_active_str}  trend={trend}",
+        );
+        if let (Some(c30), Some(c90), Some(c365)) = (s.contributions_30d, s.contributions_90d, s.contributions_365d) {
+            let streak = s.current_streak_days.unwrap_or(0);
+            println!(
+                "      30d={c30}  90d={c90}  365d={c365}  streak={streak}d",
+            );
+        }
+        println!(
+            "      density={:.3}  novelty={:.3}  breadth={:.3}  realness={:.3}  recency={:.3}",
+            s.contribution_density, s.novelty, s.breadth, s.realness, s.recency.unwrap_or(0.0),
         );
         if let Some(bio) = &s.bio {
             let truncated: String = bio.chars().take(100).collect();

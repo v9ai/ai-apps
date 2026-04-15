@@ -291,6 +291,16 @@ impl GhClient {
             totalPullRequestContributions
             totalPullRequestReviewContributions
             totalRepositoriesWithContributedCommits
+            hasAnyContributions
+            contributionCalendar {
+                totalContributions
+                weeks {
+                    contributionDays {
+                        contributionCount
+                        date
+                    }
+                }
+            }
         }
         pinnedItems(first: 6) {
             nodes { ... on Repository { name stargazerCount primaryLanguage { name } } }
@@ -339,6 +349,18 @@ impl GhClient {
         let total_pr_contributions = cc["totalPullRequestContributions"].as_u64().map(|v| v as u32);
         let total_review_contributions = cc["totalPullRequestReviewContributions"].as_u64().map(|v| v as u32);
         let total_repos_contributed_to = cc["totalRepositoriesWithContributedCommits"].as_u64().map(|v| v as u32);
+        let has_any_contributions = cc["hasAnyContributions"].as_bool();
+
+        // ── Enriched: contributionCalendar ───────────────────────────
+        let contribution_calendar_json = cc.get("contributionCalendar")
+            .filter(|v| !v.is_null())
+            .and_then(|cal| serde_json::to_string(cal).ok())
+            .filter(|s| !s.is_empty());
+
+        let activity_profile = compute_activity_profile(
+            &created_at,
+            contribution_calendar_json.as_deref(),
+        );
 
         // ── Enriched: pinnedItems ────────────────────────────────────
         let pinned_repos_json = value["pinnedItems"]["nodes"]
@@ -414,6 +436,7 @@ impl GhClient {
             total_review_contributions, total_repos_contributed_to,
             pinned_repos_json, contributed_repos_json, organizations_json,
             status_message,
+            has_any_contributions, contribution_calendar_json, activity_profile,
         }
     }
 
@@ -488,6 +511,134 @@ impl GhClient {
         );
         self.get_url(&url).await
     }
+}
+
+/// Derive activity metrics from `created_at` and the contribution calendar JSON.
+fn compute_activity_profile(
+    created_at: &chrono::DateTime<chrono::Utc>,
+    calendar_json: Option<&str>,
+) -> Option<ActivityProfile> {
+    let now = chrono::Utc::now();
+    let account_age_days = (now - *created_at).num_days().max(0) as u32;
+    let account_age_years = account_age_days as f32 / 365.0;
+
+    let calendar: Option<ContributionCalendar> =
+        calendar_json.and_then(|j| serde_json::from_str(j).ok());
+
+    let calendar = match calendar {
+        Some(c) => c,
+        None => {
+            return Some(ActivityProfile {
+                account_age_days,
+                account_age_years,
+                activity_trend: "unknown".into(),
+                ..Default::default()
+            });
+        }
+    };
+
+    let today = now.date_naive();
+    let mut all_days: Vec<(chrono::NaiveDate, u32)> = Vec::new();
+    for week in &calendar.weeks {
+        for day in &week.contribution_days {
+            if let Ok(d) = chrono::NaiveDate::parse_from_str(&day.date, "%Y-%m-%d") {
+                all_days.push((d, day.contribution_count));
+            }
+        }
+    }
+    all_days.sort_by_key(|(d, _)| *d);
+
+    let last_active = all_days.iter().rev().find(|(_, c)| *c > 0).map(|(d, _)| *d);
+    let last_active_date = last_active.map(|d| d.format("%Y-%m-%d").to_string());
+    let days_since_last_active = last_active.map(|d| (today - d).num_days().max(0) as u32);
+
+    let contributions_30d = sum_window(&all_days, today, 30);
+    let contributions_90d = sum_window(&all_days, today, 90);
+    let contributions_365d = sum_window(&all_days, today, 365);
+
+    let (current_streak, longest_streak) = compute_streaks(&all_days, today);
+
+    let recent_45 = sum_window(&all_days, today, 45) as f32;
+    let prior_45 = (sum_window(&all_days, today, 90) - sum_window(&all_days, today, 45)) as f32;
+    let activity_trend = if account_age_days < 90 {
+        "new"
+    } else if contributions_90d == 0 {
+        "dormant"
+    } else if prior_45 == 0.0 {
+        if recent_45 > 0.0 { "rising" } else { "dormant" }
+    } else if recent_45 > prior_45 * 1.3 {
+        "rising"
+    } else if recent_45 < prior_45 * 0.7 {
+        "declining"
+    } else {
+        "stable"
+    };
+
+    Some(ActivityProfile {
+        account_age_days,
+        account_age_years,
+        last_active_date,
+        days_since_last_active,
+        contributions_30d,
+        contributions_90d,
+        contributions_365d,
+        current_streak_days: current_streak,
+        longest_streak_days: longest_streak,
+        activity_trend: activity_trend.into(),
+        avg_daily_90d: contributions_90d as f32 / 90.0,
+    })
+}
+
+fn sum_window(days: &[(chrono::NaiveDate, u32)], today: chrono::NaiveDate, window: i64) -> u32 {
+    let cutoff = today - chrono::TimeDelta::days(window);
+    days.iter()
+        .filter(|(d, _)| *d > cutoff)
+        .map(|(_, c)| c)
+        .sum()
+}
+
+fn compute_streaks(days: &[(chrono::NaiveDate, u32)], today: chrono::NaiveDate) -> (u32, u32) {
+    // Current streak: consecutive days with contributions ending at today or yesterday
+    let mut current = 0u32;
+    for day_offset in 0..=1i64 {
+        let start = today - chrono::TimeDelta::days(day_offset);
+        let mut streak = 0u32;
+        let mut check = start;
+        loop {
+            let has = days.iter().any(|(d, c)| *d == check && *c > 0);
+            if has {
+                streak += 1;
+                check -= chrono::TimeDelta::days(1);
+            } else {
+                break;
+            }
+        }
+        if streak > 0 {
+            current = streak;
+            break;
+        }
+    }
+
+    // Longest streak
+    let mut longest = 0u32;
+    let mut streak = 0u32;
+    let mut prev_date: Option<chrono::NaiveDate> = None;
+    for (d, c) in days {
+        if *c > 0 {
+            if prev_date.map_or(true, |p| *d - p == chrono::TimeDelta::days(1)) {
+                streak += 1;
+            } else {
+                streak = 1;
+            }
+            longest = longest.max(streak);
+            prev_date = Some(*d);
+        } else {
+            streak = 0;
+            prev_date = None;
+        }
+    }
+
+    (current, longest)
 }
 
 pub(crate) fn urlencoding(s: &str) -> String {
