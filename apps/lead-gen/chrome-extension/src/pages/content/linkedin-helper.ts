@@ -1036,6 +1036,163 @@ function observeCompanyButtons() {
 
 observeCompanyButtons();
 
+// ── Profile Page Floating Button (Import Profile) ────────────────────
+
+const IMPORT_PROFILE_BTN_ATTR = "data-lg-import-profile-btn";
+let importProfileBtn: HTMLButtonElement | null = null;
+let lastKnownProfileSlug: string | null = null;
+
+function getProfileSlug(): string | null {
+  const match = window.location.pathname.match(/^\/in\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
+function removeProfileButton() {
+  document.querySelectorAll(`[${IMPORT_PROFILE_BTN_ATTR}]`).forEach((el) => el.remove());
+  importProfileBtn = null;
+}
+
+function createImportProfileButton(): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.setAttribute(IMPORT_PROFILE_BTN_ATTR, "true");
+  btn.textContent = "Import Profile";
+  btn.title = "Import this LinkedIn profile into the CRM";
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    background-color: #0a66c2;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: background-color 0.2s;
+  `;
+
+  btn.addEventListener("mouseenter", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#004182";
+  });
+  btn.addEventListener("mouseleave", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#0a66c2";
+  });
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    btn.disabled = true;
+    btn.textContent = "Importing...";
+
+    safeSendMessage(
+      {
+        action: "importProfileFromPage",
+        linkedinUrl: window.location.href.split("?")[0],
+      },
+      (response) => {
+        if (!response?.success) {
+          btn.textContent = response?.error || "Error";
+          btn.style.backgroundColor = "#dc2626";
+          setTimeout(() => {
+            btn.textContent = "Import Profile";
+            btn.style.backgroundColor = "#0a66c2";
+            btn.disabled = false;
+          }, 3000);
+        }
+      },
+    );
+  });
+
+  // Listen for progress from background
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.action !== "importProfilePageProgress") return;
+    if (msg.error) {
+      btn.textContent = msg.error;
+      btn.style.backgroundColor = "#dc2626";
+      btn.disabled = false;
+      setTimeout(() => {
+        btn.textContent = "Import Profile";
+        btn.style.backgroundColor = "#0a66c2";
+      }, 3000);
+      return;
+    }
+    if (msg.done) {
+      btn.textContent = msg.status || "Imported!";
+      btn.style.backgroundColor = "#16a34a";
+      setTimeout(() => {
+        btn.textContent = "Import Profile";
+        btn.style.backgroundColor = "#0a66c2";
+        btn.disabled = false;
+      }, 3000);
+      return;
+    }
+    if (msg.status) {
+      btn.textContent = msg.status;
+    }
+  });
+
+  return btn;
+}
+
+function syncProfileButton() {
+  if (!window.location.hostname.includes("linkedin.com")) {
+    removeProfileButton();
+    return;
+  }
+
+  const slug = getProfileSlug();
+
+  if (!slug) {
+    if (importProfileBtn) {
+      removeProfileButton();
+      lastKnownProfileSlug = null;
+    }
+    return;
+  }
+
+  if (slug !== lastKnownProfileSlug) {
+    removeProfileButton();
+    lastKnownProfileSlug = slug;
+  }
+
+  if (!document.querySelector(`[${IMPORT_PROFILE_BTN_ATTR}]`)) {
+    const btn = createImportProfileButton();
+    document.body.appendChild(btn);
+    importProfileBtn = btn;
+  }
+}
+
+function observeProfileButton() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+
+  setTimeout(syncProfileButton, 1500);
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const obs = new MutationObserver(() => {
+    if (teardownIfDead()) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(syncProfileButton, 1000);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+  _observers.push(obs);
+
+  let lastUrl = window.location.href;
+  const urlCheckInterval = setInterval(() => {
+    if (teardownIfDead()) return;
+    if (window.location.href !== lastUrl) {
+      lastUrl = window.location.href;
+      syncProfileButton();
+    }
+  }, 1000);
+  _intervals.push(urlCheckInterval);
+}
+
+observeProfileButton();
+
 function clickSalaryMetadata() {
   document.querySelectorAll(".job-card-container").forEach((jobCard) => {
     const metadataUls = jobCard.querySelectorAll(
