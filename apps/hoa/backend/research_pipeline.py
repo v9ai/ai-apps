@@ -873,6 +873,85 @@ async def _run_agent(
         return f"(agent error: {e})"
 
 
+async def _run_dual_lane(
+    mlx_client,
+    specs: list[tuple[str, str, str, list | None]],
+    *,
+    phase_label: str = "",
+) -> dict[str, str]:
+    """Run agents across two lanes: tool-heavy on MLX, synthesis on HF concurrently.
+
+    Agents WITH tools → MLX (local, sequential — single GPU)
+    Agents WITHOUT tools → HF 72B (remote, concurrent via asyncio.gather)
+
+    When HF is unavailable, all agents run sequentially on MLX (fallback).
+    """
+    hf_client = _make_hf_client()
+    results: dict[str, str] = {}
+
+    # Partition into tool-heavy (MLX) and synthesis (HF) lanes
+    mlx_specs: list[tuple[str, str, str, list | None]] = []
+    hf_specs: list[tuple[str, str, str, list | None]] = []
+
+    for spec in specs:
+        key, sys_prompt, task_prompt, agent_tools = spec
+        if key in _SKIP_AGENTS:
+            results[key] = "(skipped)"
+            console.print(f"  [yellow]⊘[/] {key} (skipped)")
+            continue
+        if agent_tools and hf_client:
+            # Tool-heavy → MLX (needs local tool execution loop)
+            mlx_specs.append(spec)
+        elif not agent_tools and hf_client:
+            # Pure synthesis → HF 72B (concurrent)
+            hf_specs.append(spec)
+        else:
+            # No HF available — everything goes to MLX
+            mlx_specs.append(spec)
+
+    if hf_client and hf_specs:
+        console.print(f"  [bold magenta]Dual-lane:[/] {len(mlx_specs)} agents → MLX local, "
+                       f"{len(hf_specs)} agents → HF 72B concurrent")
+    else:
+        console.print(f"  [dim]Single-lane: {len(mlx_specs)} agents → MLX local (sequential)[/]")
+
+    # Run both lanes concurrently
+    async def _mlx_lane() -> dict[str, str]:
+        """Sequential execution on local MLX model."""
+        lane_results: dict[str, str] = {}
+        for key, sys_prompt, task_prompt, agent_tools in mlx_specs:
+            try:
+                result = await _run_agent(mlx_client, sys_prompt, task_prompt, agent_tools)
+            except Exception as e:
+                result = f"(agent error: {e})"
+            lane_results[key] = result
+            console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← MLX[/]")
+        return lane_results
+
+    async def _hf_lane() -> dict[str, str]:
+        """Concurrent execution on HF Inference API."""
+        if not hf_client or not hf_specs:
+            return {}
+
+        async def _run_one(key: str, sys_prompt: str, task_prompt: str, agent_tools) -> tuple[str, str]:
+            try:
+                result = await _run_agent(hf_client, sys_prompt, task_prompt, agent_tools)
+            except Exception as e:
+                result = f"(agent error: {e})"
+            console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← HF 72B[/]")
+            return key, result
+
+        pairs = await asyncio.gather(*[
+            _run_one(key, sp, tp, tools) for key, sp, tp, tools in hf_specs
+        ])
+        return dict(pairs)
+
+    mlx_results, hf_results = await asyncio.gather(_mlx_lane(), _hf_lane())
+    results.update(mlx_results)
+    results.update(hf_results)
+    return results
+
+
 def _ctx_block(label: str, content: str) -> str:
     """Format a context block for inclusion in agent prompts."""
     if not content or content.strip().startswith("("):
@@ -1879,10 +1958,15 @@ async def reresearch(state: ResearchState) -> dict:
         )))
 
     if tasks:
-        for key, coro in tasks:
+        # Run re-research tasks concurrently
+        async def _reresearch_one(key: str, coro) -> tuple[str, str]:
             result = await coro
-            updates[key] = result
             console.print(f"  [green]✓[/] {key} re-researched ({len(result)} chars)")
+            return key, result
+
+        pairs = await asyncio.gather(*[_reresearch_one(k, c) for k, c in tasks])
+        for key, result in pairs:
+            updates[key] = result
     else:
         console.print("  [dim]No dimensions need re-research[/]")
 
@@ -2181,8 +2265,19 @@ async def main():
         _SKIP_AGENTS.update(a.strip() for a in args.skip_agents.split(","))
 
     if args.model:
-        import os
         os.environ["MLX_MODEL"] = args.model
+
+    # Set up HF dual-lane from env or cached token
+    global _HF_TOKEN
+    if not _HF_TOKEN:
+        token_path = Path.home() / ".cache" / "huggingface" / "token"
+        if token_path.exists():
+            _HF_TOKEN = token_path.read_text().strip()
+    if _HF_TOKEN:
+        hf_model = os.environ.get("HF_MODEL", "Qwen/Qwen2.5-72B-Instruct")
+        console.print(f"[bold magenta]Dual-lane mode:[/] MLX local + HF {hf_model}")
+    else:
+        console.print("[dim]Single-lane mode: MLX local only (set HF_TOKEN for dual-lane)[/]")
 
     if args.slug:
         ts_path = PERSONALITIES_DIR / f"{args.slug}.ts"
