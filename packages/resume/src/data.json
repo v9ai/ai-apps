@@ -250,8 +250,6 @@
         "highlights": [
           "6-agent adversarial pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
           "Citation verification and fabrication detection with chain-of-thought audit trails.",
-          "Jurisdiction-specific legal precedent hierarchy mapping, multi-jurisdiction comparison.",
-          "Real-time SSE streaming with structured per-agent logging.",
           "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics; DeepTeam safety red-teaming via 7 attack methods."
         ]
       }
