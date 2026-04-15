@@ -42,14 +42,14 @@ function extractProfileData(tabId: number): Promise<{
     .catch(() => null);
 }
 
-function parseName(fullName: string): { firstName: string; lastName: string } {
+export function parseName(fullName: string): { firstName: string; lastName: string } {
   const parts = fullName.trim().split(/\s+/);
   if (parts.length === 0) return { firstName: "Unknown", lastName: "" };
   if (parts.length === 1) return { firstName: parts[0], lastName: "" };
   return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
 }
 
-function parseHeadline(headline: string): {
+export function parseHeadline(headline: string): {
   position: string;
   company: string;
 } {
