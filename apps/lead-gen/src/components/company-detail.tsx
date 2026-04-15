@@ -19,6 +19,7 @@ import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
+import { CompanyContactsClient } from "@/app/companies/[key]/contacts/contacts-client";
 import {
   AlertDialog,
   Avatar,

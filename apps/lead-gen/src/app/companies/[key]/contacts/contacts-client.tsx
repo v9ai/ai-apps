@@ -1534,7 +1534,7 @@ export function CompanyContactsClient({
         }))}
         onSuccess={() => { refetch(); refetchEmails(); }}
       />
-
+    </>
   );
 
   if (embedded) return content;
