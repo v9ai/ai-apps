@@ -26,41 +26,35 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const [session, { id: appId }] = await Promise.all([getSession(), params]);
-  if (!session)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Load categories from application row
-  const [app] = await db
-    .select({ id: applications.id, aiMemorizeCategories: applications.aiMemorizeCategories })
-    .from(applications)
-    .where(whereApp(appId, session.user.id));
+  // Try authenticated lookup first, then public fallback
+  const col = UUID_RE.test(appId) ? applications.id : applications.slug;
+  let app: { id: string; aiMemorizeCategories: string | null } | undefined;
 
-  if (!app)
+  if (session) {
+    [app] = await db
+      .select({ id: applications.id, aiMemorizeCategories: applications.aiMemorizeCategories })
+      .from(applications)
+      .where(whereApp(appId, session.user.id));
+  }
+
+  if (!app) {
+    // Public fallback
+    [app] = await db
+      .select({ id: applications.id, aiMemorizeCategories: applications.aiMemorizeCategories })
+      .from(applications)
+      .where(and(eq(col, appId), eq(applications.public, true)));
+  }
+
+  if (!app) {
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   const generated = !!app.aiMemorizeCategories;
   const categories = generated ? JSON.parse(app.aiMemorizeCategories!) : [];
 
-  // Query mastery for app-scoped concepts
-  const prefix = `app:${app.id}:%`;
-  const rows = await db
-    .select({
-      conceptName: concepts.name,
-      pMastery: knowledgeStates.pMastery,
-      masteryLevel: knowledgeStates.masteryLevel,
-      totalInteractions: knowledgeStates.totalInteractions,
-      correctInteractions: knowledgeStates.correctInteractions,
-      lastInteractionAt: knowledgeStates.lastInteractionAt,
-    })
-    .from(knowledgeStates)
-    .innerJoin(concepts, eq(knowledgeStates.conceptId, concepts.id))
-    .where(
-      and(
-        eq(knowledgeStates.userId, session.user.id),
-        like(concepts.name, prefix),
-      ),
-    );
-
+  // Query mastery for app-scoped concepts (only for authenticated users)
   const mastery: Record<
     string,
     {
@@ -72,17 +66,37 @@ export async function GET(
     }
   > = {};
 
-  // Strip "app:{appId}:" prefix to get itemId
-  const stripPrefix = `app:${app.id}:`;
-  for (const row of rows) {
-    const key = row.conceptName.replace(stripPrefix, "");
-    mastery[key] = {
-      pMastery: row.pMastery,
-      masteryLevel: row.masteryLevel,
-      totalInteractions: row.totalInteractions,
-      correctInteractions: row.correctInteractions,
-      lastInteractionAt: row.lastInteractionAt,
-    };
+  if (session) {
+    const prefix = `app:${app.id}:%`;
+    const rows = await db
+      .select({
+        conceptName: concepts.name,
+        pMastery: knowledgeStates.pMastery,
+        masteryLevel: knowledgeStates.masteryLevel,
+        totalInteractions: knowledgeStates.totalInteractions,
+        correctInteractions: knowledgeStates.correctInteractions,
+        lastInteractionAt: knowledgeStates.lastInteractionAt,
+      })
+      .from(knowledgeStates)
+      .innerJoin(concepts, eq(knowledgeStates.conceptId, concepts.id))
+      .where(
+        and(
+          eq(knowledgeStates.userId, session.user.id),
+          like(concepts.name, prefix),
+        ),
+      );
+
+    const stripPrefix = `app:${app.id}:`;
+    for (const row of rows) {
+      const key = row.conceptName.replace(stripPrefix, "");
+      mastery[key] = {
+        pMastery: row.pMastery,
+        masteryLevel: row.masteryLevel,
+        totalInteractions: row.totalInteractions,
+        correctInteractions: row.correctInteractions,
+        lastInteractionAt: row.lastInteractionAt,
+      };
+    }
   }
 
   return NextResponse.json({ mastery, categories, generated });
