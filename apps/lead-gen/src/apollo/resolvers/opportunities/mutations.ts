@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { isAdminEmail } from "@/lib/admin";
 import { opportunities } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
@@ -62,10 +62,15 @@ export const opportunityQueryExtensions = {
     args: QueryOpportunityByUrlArgs,
     context: GraphQLContext,
   ) {
+    const normalized = args.url.replace(/\/+$/, "");
+    const withSlash = normalized + "/";
     const rows = await context.db
       .select()
       .from(opportunities)
-      .where(eq(opportunities.url, args.url))
+      .where(or(
+        eq(opportunities.url, normalized),
+        eq(opportunities.url, withSlash),
+      ))
       .limit(1);
 
     return rows[0] ?? null;
