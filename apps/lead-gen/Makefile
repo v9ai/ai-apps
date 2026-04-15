@@ -237,15 +237,17 @@ ft-loop: ## Full cycle: export → train (TASK=role-tag|remote-worldwide)
 
 ft-publish: ## Upload LoRA adapter to HF Hub: make ft-publish TASK=outreach-email
 	@test -n "$(TASK)" || { echo "Usage: make ft-publish TASK=outreach-email"; exit 1; }
+	$(eval FT_PUB_MODEL := $(shell python3 -c "import json,re; m=json.load(open('mlx-training/models/$(TASK)/adapter_config.json'))['model']; print(re.sub(r'.*/','',m).lower())" 2>/dev/null || echo "unknown"))
 	python3 mlx-training/hub.py upload \
 		--adapter-path mlx-training/models/$(TASK) \
-		--repo v9ai/$(TASK)-qwen3-1.7b-lora
+		--repo v9ai/$(TASK)-$(FT_PUB_MODEL)-lora
 
 ft-publish-dry: ## Dry-run HF publish: make ft-publish-dry TASK=outreach-email
 	@test -n "$(TASK)" || { echo "Usage: make ft-publish-dry TASK=outreach-email"; exit 1; }
+	$(eval FT_PUB_MODEL := $(shell python3 -c "import json,re; m=json.load(open('mlx-training/models/$(TASK)/adapter_config.json'))['model']; print(re.sub(r'.*/','',m).lower())" 2>/dev/null || echo "unknown"))
 	python3 mlx-training/hub.py upload \
 		--adapter-path mlx-training/models/$(TASK) \
-		--repo v9ai/$(TASK)-qwen3-1.7b-lora \
+		--repo v9ai/$(TASK)-$(FT_PUB_MODEL)-lora \
 		--dry-run
 
 # ── Intent Signal Detection ─────────────────────────────────

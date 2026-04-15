@@ -1,15 +1,16 @@
 /**
- * HuggingFace Inference API client for JobBERT embeddings.
+ * HuggingFace Inference API client for JobBERT-v3 embeddings.
  *
- * Calls the free Inference API at api-inference.huggingface.co for
- * TechWolf/JobBERT-v2 sentence embeddings of LinkedIn posts.
+ * Calls the serverless Inference API at router.huggingface.co for
+ * TechWolf/JobBERT-v3 (768-dim) sentence embeddings of LinkedIn posts.
+ * Multilingual: EN, ES, DE, ZH.
  *
  * Replaces the prior Candle embed-server (Rust, localhost:9998).
  * Same exported interface — consumers (post-analyzer, how-it-works) unchanged.
  */
 
-const HF_MODEL = "TechWolf/JobBERT-v2";
-const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
+const HF_MODEL = "TechWolf/JobBERT-v3";
+const HF_API_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`;
 const MAX_RETRIES = 2;
 const RETRY_BASE_MS = 1_000;
 
@@ -74,7 +75,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Embed a single post. Returns a vector (dimension depends on model). */
+/** Embed a single post. Returns a 768-dim vector. */
 export async function embedPost(text: string): Promise<number[]> {
   const [embedding] = await hfEmbed(text);
   return embedding;

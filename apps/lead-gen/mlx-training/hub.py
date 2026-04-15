@@ -23,8 +23,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import re
 import shutil
 import sys
 import tempfile
@@ -118,16 +116,12 @@ via [MLX](https://github.com/ml-explore/mlx).
 
 ```python
 import mlx_lm
+from huggingface_hub import snapshot_download
+
+# Download adapter from HF Hub to local cache
+adapter_path = snapshot_download("{repo_id}")
 
 # Load base model with adapter
-model, tokenizer = mlx_lm.load(
-    "{base_model}",
-    adapter_path="{repo_id}",  # downloads from HF Hub automatically
-)
-
-# Or download first, then load
-from huggingface_hub import snapshot_download
-adapter_path = snapshot_download("{repo_id}")
 model, tokenizer = mlx_lm.load("{base_model}", adapter_path=adapter_path)
 
 # Generate
@@ -142,10 +136,12 @@ output = mlx_lm.generate(model, tokenizer, prompt=prompt, max_tokens=512)
 ## Serving
 
 ```bash
-# Serve via mlx_lm.server (OpenAI-compatible API)
+# Download adapter first, then serve via mlx_lm.server (OpenAI-compatible API)
+python3 -c "from huggingface_hub import snapshot_download; print(snapshot_download('{repo_id}'))"
+# Use the printed path as --adapter-path:
 python3 -m mlx_lm.server \\
     --model {base_model} \\
-    --adapter-path {repo_id} \\
+    --adapter-path /path/to/cached/adapter \\
     --port 8080
 ```
 
