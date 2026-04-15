@@ -45,7 +45,7 @@ export function CompaniesList() {
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchTerm) params.set("q", searchTerm);
-    if (category !== "CONSULTANCY") params.set("cat", category);
+    if (category !== "ALL") params.set("cat", category);
     if (sortBy !== "name") params.set("sort", sortBy);
     if (minTier !== "all") params.set("tier", minTier);
     const qs = params.toString();
@@ -415,14 +415,6 @@ export function CompaniesList() {
 
       {/* filter bar */}
       <Flex gap="3" align="center" mb="2" wrap="wrap">
-        <Select.Root value={category} onValueChange={setCategory}>
-          <Select.Trigger variant="ghost" size="1" style={{ fontSize: 12 }} />
-          <Select.Content>
-            <Select.Item value="ALL">All categories</Select.Item>
-            <Select.Item value="CONSULTANCY">Consultancy</Select.Item>
-          </Select.Content>
-        </Select.Root>
-
         <Select.Root value={sortBy} onValueChange={setSortBy}>
           <Select.Trigger variant="ghost" size="1" style={{ fontSize: 12 }} />
           <Select.Content>
@@ -440,11 +432,10 @@ export function CompaniesList() {
           </Select.Content>
         </Select.Root>
 
-        {(category !== "CONSULTANCY" || minTier !== "all" || sortBy !== "name") && (
+        {(minTier !== "all" || sortBy !== "name") && (
           <button
             className={button({ variant: "ghost", size: "sm" })}
             onClick={() => {
-              setCategory("CONSULTANCY");
               setSortBy("name");
               setMinTier("all");
             }}
