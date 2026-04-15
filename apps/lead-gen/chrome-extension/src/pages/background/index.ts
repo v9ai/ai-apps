@@ -2,7 +2,7 @@
 import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts, runUnifiedPipeline, scrapeRecruiterPosts, scrapeContactPostsSingle } from "../../services/post-scraper";
 import { gqlRequest } from "../../services/graphql";
 import { startKeepAlive, stopKeepAlive } from "./tab-utils";
-import { browseProfiles, setBrowseCancelled } from "./profile-browsing";
+import { browseProfiles, setBrowseCancelled, extractFullProfileData, parseName, parseHeadline } from "./profile-browsing";
 import { browseCompanies, setCompanyCancelled } from "./company-browsing";
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
