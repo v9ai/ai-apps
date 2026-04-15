@@ -411,6 +411,7 @@ async fn main() -> anyhow::Result<()> {
 
         let ap = record.user.activity_profile.as_ref();
         let strength = compute_strength_score(record, skills.len());
+        let opp_match = compute_opp_skill_match(&skills, &opp_skills);
         let position_level = infer_position(record.user.bio.as_deref()).map(String::from);
         stars.push((
             RisingStar {
@@ -433,7 +434,7 @@ async fn main() -> anyhow::Result<()> {
                 gh_created_at: record.user.created_at.to_rfc3339(),
                 skills,
                 strength_score: strength.score,
-                opp_skill_match: 0.0,
+                opp_skill_match: opp_match,
                 position_level,
                 account_age_days: ap.map(|a| a.account_age_days),
                 last_active_date: ap.and_then(|a| a.last_active_date.clone()),
@@ -449,8 +450,15 @@ async fn main() -> anyhow::Result<()> {
         ));
     }
 
-    // Sort by score descending
-    stars.sort_by(|a, b| b.0.rising_score.partial_cmp(&a.0.rising_score).unwrap());
+    // Composite sort: opp_match (if available) + strength + rising
+    let composite = |s: &RisingStar| -> f32 {
+        if !opp_skills.is_empty() {
+            0.40 * s.opp_skill_match + 0.35 * s.strength_score + 0.25 * s.rising_score
+        } else {
+            0.60 * s.strength_score + 0.40 * s.rising_score
+        }
+    };
+    stars.sort_by(|a, b| composite(&b.0).partial_cmp(&composite(&a.0)).unwrap());
 
     // ── Channel 5: Network expansion — followers of top candidates ──────────
     // Take top 15 and mine their followers for more candidates
@@ -532,6 +540,7 @@ async fn main() -> anyhow::Result<()> {
 
                             let ap = record.user.activity_profile.as_ref();
                             let strength = compute_strength_score(&record, skills.len());
+                            let opp_match = compute_opp_skill_match(&skills, &opp_skills);
                             let position_level = infer_position(record.user.bio.as_deref()).map(String::from);
                             stars.push((
                                 RisingStar {
@@ -554,7 +563,7 @@ async fn main() -> anyhow::Result<()> {
                                     gh_created_at: record.user.created_at.to_rfc3339(),
                                     skills,
                                     strength_score: strength.score,
-                                    opp_skill_match: 0.0,
+                                    opp_skill_match: opp_match,
                                     position_level,
                                     account_age_days: ap.map(|a| a.account_age_days),
                                     last_active_date: ap.and_then(|a| a.last_active_date.clone()),
@@ -581,14 +590,14 @@ async fn main() -> anyhow::Result<()> {
             }
         }
 
-        // Re-sort after network expansion
-        stars.sort_by(|a, b| b.0.rising_score.partial_cmp(&a.0.rising_score).unwrap());
+        // Re-sort after network expansion (composite rank)
+        stars.sort_by(|a, b| composite(&b.0).partial_cmp(&composite(&a.0)).unwrap());
         info!("Channel 5 done: {} total candidates", stars.len());
     }
 
     // ── Print summary ───────────────────────────────────────────────────────
     let display_n = stars.len().min(top_n);
-    println!("\n╔══ LONDON AI CANDIDATES v2 — {opp_id} ═══════════════════════╗");
+    println!("\n╔══ LONDON AI CANDIDATES v3 — {opp_id} ═══════════════════════╗");
     for (rank, (s, london)) in stars.iter().take(display_n).enumerate() {
         let name = s.name.as_deref().unwrap_or(&s.login);
         let company = s.company.as_deref().unwrap_or("-");
@@ -599,6 +608,8 @@ async fn main() -> anyhow::Result<()> {
             .get(&s.login)
             .map(|v| v.join(", "))
             .unwrap_or_default();
+        let comp_score = composite(s);
+        let pos_label = s.position_level.as_deref().unwrap_or("-");
 
         let age_str = match s.account_age_days {
             Some(d) => format!("{:.1}y", d as f32 / 365.0),
@@ -611,12 +622,15 @@ async fn main() -> anyhow::Result<()> {
         let trend = s.activity_trend.as_deref().unwrap_or("-");
 
         println!(
-            "#{:<3} {:>5.3}  {name} (@{})",
+            "#{:<3} comp={:.3}  strength={:.3}  rising={:.3}  opp={:.0}%  {name} (@{})",
             rank + 1,
+            comp_score,
+            s.strength_score,
             s.rising_score,
+            s.opp_skill_match * 100.0,
             s.login,
         );
-        println!("      [{loc_tag}] {location}  company={company}");
+        println!("      [{loc_tag}] {location}  company={company}  position={pos_label}");
         println!("      email={email}  followers={}  repos={}", s.followers, s.public_repos);
         println!(
             "      account_age={age_str}  last_active={last_active_str}  trend={trend}",

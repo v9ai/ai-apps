@@ -76,7 +76,6 @@ pub async fn save_contributor_contact(
         tags.push(format!("opp:skill-match:{pct}pct"));
     }
     // Seniority tag from position inference
-    let position = infer_position(star.bio.as_deref());
     if let Some(pos) = position {
         let level = infer_seniority_level(Some(pos));
         let level_label = if level >= 0.90 { "staff-plus" }

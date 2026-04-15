@@ -35,9 +35,9 @@ export const companyQueries = {
           const searchPattern = `%${args.filter.text}%`;
           conditions.push(
             or(
-              like(companies.name, searchPattern),
-              like(companies.key, searchPattern),
-              like(companies.description, searchPattern),
+              ilike(companies.name, searchPattern),
+              ilike(companies.key, searchPattern),
+              ilike(companies.description, searchPattern),
             )!,
           );
         }
