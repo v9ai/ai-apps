@@ -420,5 +420,152 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Import LinkedIn Profile (triggered from web app contact detail) ──
+  if (message.action === "importLinkedInProfile") {
+    const { contactId, linkedinUrl } = message as {
+      contactId: number;
+      linkedinUrl: string;
+      contactName: string;
+    };
+
+    /** Send progress to all app tabs (webapp-bridge relays source: "lead-gen-bg") */
+    const notifyApp = async (data: Record<string, unknown>) => {
+      try {
+        const appTabs = await chrome.tabs.query({ url: ["http://localhost:*/*", "https://*.vercel.app/*"] });
+        for (const t of appTabs) {
+          if (t.id) {
+            chrome.tabs.sendMessage(t.id, {
+              source: "lead-gen-bg",
+              action: "importProfileProgress",
+              contactId,
+              ...data,
+            }).catch(() => {});
+          }
+        }
+      } catch { /* ignore */ }
+    };
+
+    chrome.tabs.create({ url: linkedinUrl, active: true }).then(async (tab) => {
+      if (!tab.id) {
+        sendResponse({ success: false, error: "Failed to create tab" });
+        return;
+      }
+      sendResponse({ success: true });
+      startKeepAlive();
+
+      try {
+        await waitForTabLoad(tab.id);
+        await randomDelay(2500);
+
+        await notifyApp({ status: "Extracting profile data..." });
+
+        // Expand "See more" sections
+        const expanded = await clickSeeMore(tab.id);
+        if (expanded > 0) await randomDelay(800);
+
+        const data = await extractFullProfileData(tab.id);
+        if (!data || !data.name) {
+          await notifyApp({ error: "Could not extract profile data — page may require login" });
+          try { await chrome.tabs.remove(tab.id); } catch { /* */ }
+          return;
+        }
+
+        const { firstName, lastName } = parseName(data.name);
+        const { position, company: headlineCompany } = parseHeadline(data.headline);
+        const companyName = data.currentCompany || headlineCompany;
+
+        await notifyApp({
+          status: `Extracted: ${data.name}${position ? " — " + position : ""}${companyName ? " at " + companyName : ""}`,
+        });
+
+        // Find or create company
+        let companyId: number | undefined;
+        if (companyName) {
+          await notifyApp({ status: `Looking up company: ${companyName}...` });
+
+          const findResult = await gqlRequest(
+            `query FindCompany($name: String, $linkedinUrl: String) {
+              findCompany(name: $name, linkedinUrl: $linkedinUrl) {
+                found
+                company { id name }
+              }
+            }`,
+            {
+              name: companyName,
+              linkedinUrl: data.currentCompanyLinkedinUrl || undefined,
+            },
+          );
+
+          if (findResult.data?.findCompany?.found) {
+            companyId = findResult.data.findCompany.company.id;
+            await notifyApp({ status: `Found company: ${findResult.data.findCompany.company.name}` });
+          } else {
+            await notifyApp({ status: `Creating company: ${companyName}...` });
+            const key = companyName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/(^-|-$)/g, "");
+
+            const createResult = await gqlRequest(
+              `mutation CreateCompany($input: CreateCompanyInput!) {
+                createCompany(input: $input) { id name }
+              }`,
+              {
+                input: {
+                  key,
+                  name: companyName,
+                  linkedin_url: data.currentCompanyLinkedinUrl || undefined,
+                },
+              },
+            );
+
+            if (createResult.data?.createCompany?.id) {
+              companyId = createResult.data.createCompany.id;
+              await notifyApp({ status: `Created company: ${companyName}` });
+            } else if (createResult.errors) {
+              console.warn("[ImportProfile] Create company error:", createResult.errors[0].message);
+            }
+          }
+        }
+
+        // Update the contact
+        await notifyApp({ status: "Updating contact..." });
+        const updateResult = await gqlRequest(
+          `mutation UpdateContact($id: Int!, $input: UpdateContactInput!) {
+            updateContact(id: $id, input: $input) { id firstName lastName position company }
+          }`,
+          {
+            id: contactId,
+            input: {
+              firstName,
+              lastName: lastName || undefined,
+              position: position || undefined,
+              company: companyName || undefined,
+              ...(companyId !== undefined && { companyId }),
+            },
+          },
+        );
+
+        if (updateResult.errors) {
+          await notifyApp({ error: `Update failed: ${updateResult.errors[0].message}` });
+        } else {
+          await notifyApp({
+            done: true,
+            status: `Imported: ${data.name}${companyName ? " at " + companyName : ""}`,
+          });
+        }
+
+        // Close the scraping tab
+        try { await chrome.tabs.remove(tab.id); } catch { /* already closed */ }
+      } catch (err) {
+        await notifyApp({ error: err instanceof Error ? err.message : String(err) });
+      } finally {
+        stopKeepAlive();
+      }
+    });
+
+    return true;
+  }
+
   return false;
 });
