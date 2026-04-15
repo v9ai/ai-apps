@@ -344,6 +344,68 @@ pub fn compute_opp_skill_match(candidate_skills: &[String], opp_skills: &[String
     (matched / opp_skills.len() as f32).clamp(0.0, 1.0)
 }
 
+/// Compute contribution quality: how impactful are this user's contributions?
+///
+/// Rewards commits to external (non-owned) repos with high star counts and
+/// AI-relevant topics. Penalises profiles that only commit to their own repos.
+/// Returns 0.0–1.0.
+pub fn compute_contribution_quality(login: &str, contributed_repos_json: Option<&str>) -> f32 {
+    let json = match contributed_repos_json {
+        Some(j) if !j.is_empty() => j,
+        _ => return 0.0,
+    };
+
+    let repos: Vec<crate::types::ContributedRepo> = match serde_json::from_str(json) {
+        Ok(v) => v,
+        Err(_) => return 0.0,
+    };
+    if repos.is_empty() {
+        return 0.0;
+    }
+
+    let login_prefix = format!("{login}/");
+    let total = repos.len() as f32;
+
+    // External repos: not owned by this user
+    let external: Vec<&crate::types::ContributedRepo> = repos
+        .iter()
+        .filter(|r| !r.name_with_owner.starts_with(&login_prefix))
+        .collect();
+
+    // Signal A: External contribution ratio (0.30)
+    let external_ratio = external.len() as f32 / total;
+
+    // Signal B: Star quality of external repos — top-3 mean (0.35)
+    let star_quality = if external.is_empty() {
+        0.0
+    } else {
+        let mut star_scores: Vec<f32> = external
+            .iter()
+            .map(|r| (r.stars as f32 + 1.0).ln() / 100_001_f32.ln())
+            .collect();
+        star_scores.sort_by(|a, b| b.partial_cmp(a).unwrap());
+        let top_n = star_scores.len().min(3);
+        star_scores[..top_n].iter().sum::<f32>() / top_n as f32
+    };
+
+    // Signal C: External breadth (0.15)
+    let external_breadth = (external.len() as f32 / 5.0).min(1.0);
+
+    // Signal D: AI relevance — fraction of repos with AI topics (0.20)
+    let ai_count = repos
+        .iter()
+        .filter(|r| {
+            r.topics.iter().any(|t| {
+                AI_RELEVANT_TOPICS.contains(&t.as_str())
+            })
+        })
+        .count() as f32;
+    let ai_relevance = ai_count / total;
+
+    (0.30 * external_ratio + 0.35 * star_quality + 0.15 * external_breadth + 0.20 * ai_relevance)
+        .clamp(0.0, 1.0)
+}
+
 /// Infer position title from bio keywords — 14 categories ordered by specificity.
 pub fn infer_position(bio: Option<&str>) -> Option<&'static str> {
     let bio = bio?.to_lowercase();
@@ -426,6 +488,8 @@ fn schema() -> Arc<Schema> {
         Field::new("current_streak_days", DataType::UInt32, true),
         Field::new("activity_trend", DataType::Utf8, true),
         Field::new("recency", DataType::Float32, true),
+        // Contribution quality — external repo impact (nullable for backward compat)
+        Field::new("contribution_quality", DataType::Float32, true),
         // 384-d BAAI/bge-small-en-v1.5 embedding — null when contrib-embed feature is off.
         Field::new(
             "vector",
@@ -758,6 +822,10 @@ impl ContributorsDb {
                 Arc::new(Float32Array::from(
                     scores.iter().map(|s| Some(s.recency)).collect::<Vec<_>>(),
                 )),
+                // Contribution quality
+                Arc::new(Float32Array::from(
+                    scores.iter().map(|s| Some(s.contribution_quality)).collect::<Vec<_>>(),
+                )),
                 // Embedding vector (null when contrib-embed feature is off)
                 vector_array,
             ],
@@ -796,6 +864,7 @@ impl ContributorsDb {
         let has_skills = table_schema.field_with_name("skills_json").is_ok();
         let has_activity = table_schema.field_with_name("account_age_days").is_ok();
         let has_strength = table_schema.field_with_name("strength_score").is_ok();
+        let has_contribution_quality = table_schema.field_with_name("contribution_quality").is_ok();
 
         let mut cols = vec![
             "login", "html_url", "name", "email", "company", "location",
@@ -815,6 +884,9 @@ impl ContributorsDb {
                 "contributions_30d", "contributions_90d", "contributions_365d",
                 "current_streak_days", "activity_trend", "recency",
             ]);
+        }
+        if has_contribution_quality {
+            cols.push("contribution_quality");
         }
 
         let mut stream: std::pin::Pin<
@@ -919,6 +991,7 @@ impl ContributorsDb {
                     current_streak_days: get_opt_u32("current_streak_days"),
                     activity_trend: get_str("activity_trend"),
                     recency: get_opt_f32("recency"),
+                    contribution_quality: get_opt_f32("contribution_quality"),
                 });
             }
         }
@@ -1056,6 +1129,7 @@ impl ContributorsDb {
                     current_streak_days: get_opt_u32("current_streak_days"),
                     activity_trend: get_str("activity_trend"),
                     recency: get_opt_f32("recency"),
+                    contribution_quality: get_opt_f32("contribution_quality"),
                 });
             }
         }
@@ -1101,6 +1175,8 @@ pub struct RisingStar {
     pub current_streak_days: Option<u32>,
     pub activity_trend: Option<String>,
     pub recency: Option<f32>,
+    /// Quality of contributions to external repos (0.0–1.0).
+    pub contribution_quality: Option<f32>,
 }
 
 async fn load_known_logins(conn: &Connection) -> Result<HashSet<String>> {
@@ -1266,6 +1342,7 @@ mod tests {
                 ("activity", s.activity),
                 ("obscurity", s.obscurity),
                 ("realness", s.realness),
+                ("contribution_quality", s.contribution_quality),
             ] {
                 assert!(
                     (0.0..=1.0).contains(&val),
@@ -1281,7 +1358,7 @@ mod tests {
     fn score_equals_weighted_sum_times_realness_and_multipliers() {
         let r = make_record(20, 15, 500, 200, 3);
         let s = compute_rising_score(&r, 0);
-        let [w_d, w_n, w_b, w_a, w_s, w_e, w_o, w_r] = SCORE_WEIGHTS;
+        let [w_d, w_n, w_b, w_a, w_s, w_e, w_o, w_r, w_cq] = SCORE_WEIGHTS;
         let expected_raw =
             w_d * s.contribution_density
             + w_n * s.novelty
@@ -1290,7 +1367,8 @@ mod tests {
             + w_s * s.skill_relevance
             + w_e * s.engagement
             + w_o * s.obscurity
-            + w_r * s.recency;
+            + w_r * s.recency
+            + w_cq * s.contribution_quality;
         // Multipliers: hireable_bonus * recency_bonus
         let hireable_bonus = if r.user.hireable == Some(true) { 1.15 } else { 1.0 };
         let days_since_update = (chrono::Utc::now() - r.user.updated_at).num_days();
@@ -1705,5 +1783,95 @@ mod tests {
         assert!(infer_seniority_level(Some("Principal Engineer")) > infer_seniority_level(Some("Senior Engineer")));
         assert!(infer_seniority_level(Some("Senior Engineer")) > infer_seniority_level(Some("Engineer")));
         assert!(infer_seniority_level(Some("Engineer")) > infer_seniority_level(Some("Student")));
+    }
+
+    // ── contribution_quality tests ──────────────────────────────────────────
+
+    #[test]
+    fn contribution_quality_zero_when_no_data() {
+        assert_eq!(compute_contribution_quality("testuser", None), 0.0);
+        assert_eq!(compute_contribution_quality("testuser", Some("")), 0.0);
+        assert_eq!(compute_contribution_quality("testuser", Some("[]")), 0.0);
+    }
+
+    #[test]
+    fn contribution_quality_zero_when_all_self_owned() {
+        let repos = serde_json::to_string(&vec![
+            crate::types::ContributedRepo {
+                name_with_owner: "testuser/my-repo".into(),
+                stars: 0,
+                language: None,
+                topics: vec![],
+            },
+            crate::types::ContributedRepo {
+                name_with_owner: "testuser/another-repo".into(),
+                stars: 2,
+                language: None,
+                topics: vec![],
+            },
+        ]).unwrap();
+        let cq = compute_contribution_quality("testuser", Some(&repos));
+        assert!(cq < 0.05, "self-only repos should score near 0, got {cq}");
+    }
+
+    #[test]
+    fn contribution_quality_high_for_external_starred_repos() {
+        let repos = serde_json::to_string(&vec![
+            crate::types::ContributedRepo {
+                name_with_owner: "langchain-ai/langchain".into(),
+                stars: 90_000,
+                language: Some("Python".into()),
+                topics: vec!["llm".into(), "ai-agent".into()],
+            },
+            crate::types::ContributedRepo {
+                name_with_owner: "huggingface/transformers".into(),
+                stars: 130_000,
+                language: Some("Python".into()),
+                topics: vec!["transformers".into(), "pytorch".into(), "machine-learning".into()],
+            },
+        ]).unwrap();
+        let cq = compute_contribution_quality("testuser", Some(&repos));
+        assert!(cq > 0.7, "external high-star AI repos should score high, got {cq}");
+    }
+
+    #[test]
+    fn contribution_quality_in_unit_range() {
+        for json in [
+            r#"[{"name_with_owner":"org/repo","stars":0,"language":null,"topics":[]}]"#,
+            r#"[{"name_with_owner":"org/repo","stars":100000,"language":"Python","topics":["machine-learning"]}]"#,
+            r#"[{"name_with_owner":"me/repo","stars":50,"language":null,"topics":[]}]"#,
+        ] {
+            let cq = compute_contribution_quality("me", Some(json));
+            assert!(
+                (0.0..=1.0).contains(&cq),
+                "contribution_quality={cq} out of [0,1] for {json}",
+            );
+        }
+    }
+
+    #[test]
+    fn external_contributor_beats_self_only() {
+        let self_only = serde_json::to_string(&vec![
+            crate::types::ContributedRepo {
+                name_with_owner: "alice/tutorial".into(),
+                stars: 0,
+                language: None,
+                topics: vec![],
+            },
+        ]).unwrap();
+        let external = serde_json::to_string(&vec![
+            crate::types::ContributedRepo {
+                name_with_owner: "pytorch/pytorch".into(),
+                stars: 80_000,
+                language: Some("Python".into()),
+                topics: vec!["pytorch".into(), "deep-learning".into()],
+            },
+        ]).unwrap();
+        let score_self = compute_contribution_quality("alice", Some(&self_only));
+        let score_ext = compute_contribution_quality("alice", Some(&external));
+        assert!(
+            score_ext > score_self,
+            "external={score_ext:.3} should beat self-only={score_self:.3}",
+        );
     }
 }
