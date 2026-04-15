@@ -4,7 +4,7 @@
  */
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
-import { externalCourses, lessonCourses } from "../db/content-schema";
+import { externalCourses, lessonCourses } from "../src/db/content-schema";
 import path from "path";
 
 const DB_PATH =
