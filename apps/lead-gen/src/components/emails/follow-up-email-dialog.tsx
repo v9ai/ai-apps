@@ -51,6 +51,7 @@ export function FollowUpEmailDialog({
   onSent?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [editTo, setEditTo] = useState(contact.email ?? "");
   const [editSubject, setEditSubject] = useState("");
   const [editBody, setEditBody] = useState("");
   const [includeResume, setIncludeResume] = useState(false);
@@ -61,7 +62,7 @@ export function FollowUpEmailDialog({
 
   const recipientName = `${contact.firstName} ${contact.lastName}`.trim();
   const firstName = contact.firstName;
-  const hasEmail = !!contact.email;
+  const hasEmail = !!editTo.trim();
 
   // Pick the most relevant opportunity (applied ones first)
   const appliedOpp = opportunities?.find((o) => o.status === "applied") ?? opportunities?.[0];
@@ -89,6 +90,7 @@ Vadim`;
     setOpen(val);
     if (val) {
       const { subject, body } = buildFollowUp();
+      setEditTo(contact.email ?? "");
       setEditSubject(subject);
       setEditBody(body);
       setSendResult(null);
@@ -105,7 +107,8 @@ Vadim`;
   };
 
   const handleSend = async (scheduledAt?: string) => {
-    if (!contact.email) return;
+    const to = editTo.trim();
+    if (!to) return;
     setSending(true);
     setSendResult(null);
     try {
@@ -114,7 +117,7 @@ Vadim`;
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contactId: contact.id,
-          to: contact.email,
+          to,
           name: recipientName,
           subject: editSubject,
           body: editBody,
@@ -128,7 +131,7 @@ Vadim`;
           const when = new Date(scheduledAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
           setSendResult({ type: "success", message: `Scheduled for ${when}` });
         } else {
-          setSendResult({ type: "success", message: `Sent to ${contact.email}` });
+          setSendResult({ type: "success", message: `Sent to ${to}` });
         }
         onSent?.();
       } else {
@@ -144,7 +147,7 @@ Vadim`;
   return (
     <Dialog.Root open={open} onOpenChange={handleOpen}>
       <Dialog.Trigger>
-        <button className={button({ variant: "ghost", size: "md" })} disabled={!hasEmail}>
+        <button className={button({ variant: "ghost", size: "md" })}>
           <PaperPlaneIcon />
           Follow up
         </button>
@@ -161,6 +164,16 @@ Vadim`;
         )}
 
         <Flex direction="column" gap="3">
+          <Box>
+            <Text size="1" color="gray" weight="medium" mb="1" as="p">To</Text>
+            <TextField.Root
+              type="email"
+              placeholder="recipient@example.com"
+              value={editTo}
+              onChange={(e) => setEditTo(e.target.value)}
+            />
+          </Box>
+
           <Box>
             <Text size="1" color="gray" weight="medium" mb="1" as="p">Subject</Text>
             <TextField.Root
@@ -206,35 +219,28 @@ Vadim`;
                 <CopyIcon />
                 {copied ? "Copied!" : "Copy"}
               </button>
-              {hasEmail ? (
-                <button
-                  className={button({ variant: "solidGreen" })}
-                  onClick={() => handleSend()}
-                  disabled={sending || !editSubject || !editBody}
-                >
-                  <PaperPlaneIcon />
-                  {sending ? "Sending…" : "Send now"}
-                </button>
-              ) : (
-                <button className={button({ variant: "ghost" })} disabled>
-                  No email address
-                </button>
-              )}
+              <button
+                className={button({ variant: "solidGreen" })}
+                onClick={() => handleSend()}
+                disabled={sending || !hasEmail || !editSubject || !editBody}
+              >
+                <PaperPlaneIcon />
+                {sending ? "Sending…" : "Send now"}
+              </button>
             </Flex>
           </Flex>
 
-          {hasEmail && (
-            <>
-              <Separator size="4" />
-              <Flex gap="2" align="center" wrap="wrap">
-                <ClockIcon />
-                <Text size="2" color="gray">Schedule:</Text>
+          <>
+            <Separator size="4" />
+            <Flex gap="2" align="center" wrap="wrap">
+              <ClockIcon />
+              <Text size="2" color="gray">Schedule:</Text>
                 {SCHEDULE_DELAYS.map((d) => (
                   <button
                     key={d.label}
                     className={button({ variant: "ghost", size: "sm" })}
                     onClick={() => handleSend(new Date(Date.now() + d.ms).toISOString())}
-                    disabled={sending || !editSubject || !editBody}
+                    disabled={sending || !hasEmail || !editSubject || !editBody}
                   >
                     {d.label}
                   </button>
@@ -249,7 +255,7 @@ Vadim`;
                   <button
                     className={button({ variant: "outline", size: "sm" })}
                     onClick={() => handleSend(new Date(customTime).toISOString())}
-                    disabled={sending || !editSubject || !editBody}
+                    disabled={sending || !hasEmail || !editSubject || !editBody}
                   >
                     <ClockIcon />
                     Schedule
@@ -257,7 +263,6 @@ Vadim`;
                 )}
               </Flex>
             </>
-          )}
         </Flex>
       </Dialog.Content>
     </Dialog.Root>

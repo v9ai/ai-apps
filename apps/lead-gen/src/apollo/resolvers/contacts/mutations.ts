@@ -93,27 +93,40 @@ export const contactMutations = {
       last_name: lastName ?? "",
     });
     const slug = await resolveUniqueSlug(context.db, baseSlug);
-    const rows = await context.db
-      .insert(contacts)
-      .values({
-        first_name: firstName,
-        last_name: lastName ?? "",
-        slug,
-        emails: emails ? JSON.stringify(emails) : "[]",
-        tags: tags ? JSON.stringify(tags) : "[]",
-        ...(companyId !== undefined && { company_id: companyId }),
-        ...(linkedinUrl !== undefined && { linkedin_url: linkedinUrl }),
-        ...(githubHandle !== undefined && { github_handle: githubHandle }),
-        ...(telegramHandle !== undefined && { telegram_handle: telegramHandle }),
-        ...(position !== undefined && { position }),
-        ...(email !== undefined && { email }),
-        seniority: mlClassification.seniority,
-        department: mlClassification.department,
-        is_decision_maker: mlClassification.isDecisionMaker,
-        authority_score: mlClassification.authorityScore,
-        dm_reasons: JSON.stringify(mlClassification.dmReasons),
-      })
-      .returning();
+    let rows;
+    try {
+      rows = await context.db
+        .insert(contacts)
+        .values({
+          first_name: firstName,
+          last_name: lastName ?? "",
+          slug,
+          emails: emails ? JSON.stringify(emails) : "[]",
+          tags: tags ? JSON.stringify(tags) : "[]",
+          ...(companyId !== undefined && { company_id: companyId }),
+          ...(linkedinUrl !== undefined && { linkedin_url: linkedinUrl }),
+          ...(githubHandle !== undefined && { github_handle: githubHandle }),
+          ...(telegramHandle !== undefined && { telegram_handle: telegramHandle }),
+          ...(position !== undefined && { position }),
+          ...(email !== undefined && { email }),
+          seniority: mlClassification.seniority,
+          department: mlClassification.department,
+          is_decision_maker: mlClassification.isDecisionMaker,
+          authority_score: mlClassification.authorityScore,
+          dm_reasons: JSON.stringify(mlClassification.dmReasons),
+        })
+        .returning();
+    } catch (err: unknown) {
+      if (err instanceof Error && "code" in err && (err as { code: string }).code === "23505") {
+        const detail = "detail" in err ? String((err as { detail: string }).detail) : "";
+        const field = detail.match(/\((\w+)\)/)?.[1] ?? "field";
+        throw new GraphQLError(
+          `A contact with this ${field} already exists.`,
+          { extensions: { code: "CONFLICT" } },
+        );
+      }
+      throw err;
+    }
     return rows[0];
   },
 
@@ -151,11 +164,25 @@ export const contactMutations = {
     }
     patch.updated_at = new Date().toISOString();
 
-    const rows = await context.db
-      .update(contacts)
-      .set(patch)
-      .where(eq(contacts.id, args.id))
-      .returning();
+    let rows;
+    try {
+      rows = await context.db
+        .update(contacts)
+        .set(patch)
+        .where(eq(contacts.id, args.id))
+        .returning();
+    } catch (err: unknown) {
+      // Unique constraint violation (email, slug, github_handle)
+      if (err instanceof Error && "code" in err && (err as { code: string }).code === "23505") {
+        const detail = "detail" in err ? String((err as { detail: string }).detail) : "";
+        const field = detail.match(/\((\w+)\)/)?.[1] ?? "field";
+        throw new GraphQLError(
+          `A contact with this ${field} already exists.`,
+          { extensions: { code: "CONFLICT" } },
+        );
+      }
+      throw err;
+    }
     if (!rows[0]) {
       throw new GraphQLError("Contact not found", { extensions: { code: "NOT_FOUND" } });
     }
