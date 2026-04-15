@@ -657,6 +657,119 @@ export async function browseContactPosts(tabId: number): Promise<void> {
   );
 }
 
+// ── Scrape posts for a single contact (triggered from web app) ──
+
+export async function scrapeContactPostsSingle(
+  tabId: number,
+  contactId: number,
+  linkedinUrl: string,
+  contactName: string,
+): Promise<void> {
+  postsCancelled = false;
+
+  // Check server
+  const healthy = await checkServerHealth();
+  if (!healthy) {
+    sendProgress({ error: "Rust server not running on localhost:9876", source: "contactScrape" });
+    return;
+  }
+
+  sendProgress({ status: `Navigating to ${contactName}'s activity...`, source: "contactScrape", contactName });
+
+  const baseUrl = linkedinUrl.replace(/\/$/, "");
+  const activityUrl = baseUrl + "/recent-activity/all/";
+
+  // Navigate to activity page
+  try {
+    await chrome.tabs.update(tabId, { url: activityUrl });
+  } catch {
+    sendProgress({ error: "Tab closed", source: "contactScrape" });
+    return;
+  }
+  await waitForTabLoad(tabId);
+  await sleep(3000);
+
+  // Verify we're on the right page
+  try {
+    const tabInfo = await chrome.tabs.get(tabId);
+    if (!tabInfo.url?.includes("linkedin.com/in/")) {
+      sendProgress({ error: `Redirected away from ${contactName}'s profile`, source: "contactScrape" });
+      return;
+    }
+  } catch {
+    sendProgress({ error: "Tab closed", source: "contactScrape" });
+    return;
+  }
+
+  // Scrape posts
+  sendProgress({ status: `Scrolling and extracting posts for ${contactName}...`, source: "contactScrape", contactName });
+
+  let posts: ScrapedPost[] = [];
+  try {
+    posts = await scrollAndExtract(tabId);
+  } catch (err) {
+    sendProgress({ error: `Extraction failed: ${err instanceof Error ? err.message : String(err)}`, source: "contactScrape" });
+    return;
+  }
+
+  let totalPosts = 0;
+  let totalFiltered = 0;
+  if (posts.length > 0) {
+    try {
+      const { inserted, filtered } = await postPosts(contactId, posts);
+      totalPosts = inserted;
+      totalFiltered = filtered;
+    } catch (err) {
+      sendProgress({ error: `Failed to save posts: ${err instanceof Error ? err.message : String(err)}`, source: "contactScrape" });
+      return;
+    }
+  }
+
+  // Scrape likes
+  let totalLikes = 0;
+  if (!postsCancelled) {
+    sendProgress({ status: `Scraping likes for ${contactName}...`, source: "contactScrape", contactName });
+    await randomDelay(3000, 5000);
+    const likesUrl = baseUrl + "/recent-activity/reactions/";
+    try {
+      await chrome.tabs.update(tabId, { url: likesUrl });
+    } catch {
+      // Tab closed — still report posts
+    }
+    await waitForTabLoad(tabId);
+    await sleep(3000);
+
+    let likes: ScrapedLike[] = [];
+    try {
+      likes = await scrollAndExtractLikes(tabId);
+    } catch {
+      // Non-critical
+    }
+
+    if (likes.length > 0) {
+      try {
+        const { inserted } = await postLikes(contactId, likes);
+        totalLikes = inserted;
+      } catch {
+        // Non-critical
+      }
+    }
+  }
+
+  sendProgress({
+    done: true,
+    source: "contactScrape",
+    contactName,
+    totalPosts,
+    totalFiltered,
+    totalLikes,
+  });
+
+  console.log(
+    `[PostScraper] ${contactName}: ${totalPosts} posts, ${totalFiltered} filtered, ${totalLikes} likes`,
+  );
+}
+
 // ── Progress messaging ──
 
 function sendProgress(data: Record<string, unknown>) {

@@ -1,5 +1,5 @@
 // Background service worker — message listener & orchestrator
-import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts, runUnifiedPipeline, scrapeRecruiterPosts } from "../../services/post-scraper";
+import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts, runUnifiedPipeline, scrapeRecruiterPosts, scrapeContactPostsSingle } from "../../services/post-scraper";
 import { gqlRequest } from "../../services/graphql";
 import { startKeepAlive, stopKeepAlive } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled } from "./profile-browsing";
@@ -390,6 +390,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         scrapeCompanyFull(tabId).finally(stopKeepAlive);
       });
     }
+    return true;
+  }
+
+  // ── Scrape Posts for a Single Contact (triggered from web app) ──
+  if (message.action === "scrapeContactPosts") {
+    const { contactId, linkedinUrl, contactName } = message as {
+      contactId: number;
+      linkedinUrl: string;
+      contactName: string;
+    };
+    // Create a new tab for scraping (don't hijack the app tab)
+    chrome.tabs.create({ url: linkedinUrl, active: true }).then((tab) => {
+      if (!tab.id) {
+        sendResponse({ success: false, error: "Failed to create tab" });
+        return;
+      }
+      sendResponse({ success: true });
+      startKeepAlive();
+      scrapeContactPostsSingle(tab.id, contactId, linkedinUrl, contactName).finally(stopKeepAlive);
+    });
     return true;
   }
 

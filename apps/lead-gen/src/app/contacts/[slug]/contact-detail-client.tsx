@@ -1087,6 +1087,56 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
     message: string;
   } | null>(null);
 
+  // Scrape posts via Chrome extension
+  const [scraping, setScraping] = useState(false);
+  const [scrapeStatus, setScrapeStatus] = useState<string | null>(null);
+
+  const handleScrapePosts = useCallback(() => {
+    if (!contact?.linkedinUrl) return;
+    setScraping(true);
+    setScrapeStatus("Starting...");
+
+    // Listen for progress updates from extension
+    const handler = (e: MessageEvent) => {
+      if (e.data?.source !== "lead-gen-bg" || e.data?.action !== "postScrapingProgress") return;
+      if (e.data.source !== "contactScrape" && e.data.action === "postScrapingProgress" && !e.data.contactName) return;
+      if (e.data.error) {
+        setScrapeStatus(`Error: ${e.data.error}`);
+        setScraping(false);
+        return;
+      }
+      if (e.data.done) {
+        setScrapeStatus(`Done: ${e.data.totalPosts ?? 0} posts, ${e.data.totalLikes ?? 0} likes`);
+        setScraping(false);
+        return;
+      }
+      if (e.data.status) {
+        setScrapeStatus(e.data.status);
+      }
+    };
+    window.addEventListener("message", handler);
+
+    // Send message to extension
+    window.postMessage({
+      source: "lead-gen-ext",
+      action: "scrapeContactPosts",
+      contactId: contact.id,
+      linkedinUrl: contact.linkedinUrl,
+      contactName: `${contact.firstName} ${contact.lastName}`.trim(),
+    }, "*");
+
+    // Cleanup listener after 5 minutes
+    setTimeout(() => {
+      window.removeEventListener("message", handler);
+      if (scraping) {
+        setScraping(false);
+        setScrapeStatus("Timed out");
+      }
+    }, 300000);
+
+    return () => window.removeEventListener("message", handler);
+  }, [contact, scraping]);
+
   const handleFindEmail = useCallback(async () => {
     if (!contact) return;
     setFindResult(null);
@@ -1185,6 +1235,16 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
 
             {/* Header actions */}
             <Flex gap="2" wrap="wrap">
+              {contact.linkedinUrl && (
+                <button
+                  className={button({ variant: "outline" })}
+                  onClick={handleScrapePosts}
+                  disabled={scraping}
+                >
+                  <LinkedInLogoIcon />
+                  {scraping ? "Scraping…" : "Scrape posts"}
+                </button>
+              )}
               <EditContactDialog contact={contact} onUpdated={() => refetch()} />
               <DeleteContactDialog
                 contactId={contact.id}
@@ -1202,6 +1262,16 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
               <InfoCircledIcon />
             </Callout.Icon>
             <Callout.Text>{findResult.message}</Callout.Text>
+          </Callout.Root>
+        )}
+
+        {/* Scrape posts status */}
+        {scrapeStatus && (
+          <Callout.Root color={scrapeStatus.startsWith("Error") ? "red" : scrapeStatus.startsWith("Done") ? "green" : "blue"} size="1">
+            <Callout.Icon>
+              {scraping ? <LinkedInLogoIcon /> : <InfoCircledIcon />}
+            </Callout.Icon>
+            <Callout.Text>{scrapeStatus}</Callout.Text>
           </Callout.Root>
         )}
 
