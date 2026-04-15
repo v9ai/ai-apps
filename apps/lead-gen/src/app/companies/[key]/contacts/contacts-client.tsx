@@ -898,6 +898,7 @@ export function CompanyContactsClient({
     }));
 
   const content = (
+    <>
       <Flex direction="column" gap="5">
         {/* Back link + header (standalone page only) */}
         {!embedded && (
