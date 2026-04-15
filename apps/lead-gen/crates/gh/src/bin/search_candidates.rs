@@ -118,6 +118,10 @@ fn london_ai_orgs() -> Vec<&'static str> {
         "stability-ai",
         "faculty-ai",
         "benevolentai",
+        // v3: expanded
+        "huggingface",
+        "cohere-ai",
+        "google-deepmind",
     ]
 }
 
@@ -148,6 +152,15 @@ async fn main() -> anyhow::Result<()> {
     let dry_run = std::env::var("DRY_RUN").unwrap_or_default() == "1";
     let opp_id = std::env::var("OPP_ID")
         .unwrap_or_else(|_| "opp_20260415_principal_ai_eng_ob".into());
+    let opp_skills: Vec<String> = std::env::var("OPP_SKILLS")
+        .unwrap_or_default()
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+    if !opp_skills.is_empty() {
+        info!("OPP_SKILLS: {:?}", opp_skills);
+    }
     let lance_path = std::env::var("LANCE_DB_PATH")
         .unwrap_or_else(|_| "./candidates.lance".into());
     let threshold: f32 = std::env::var("EXPORT_THRESHOLD")
