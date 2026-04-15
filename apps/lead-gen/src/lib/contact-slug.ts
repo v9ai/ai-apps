@@ -4,7 +4,7 @@
  * Priority: github_handle > LinkedIn username > first-last name.
  */
 
-function extractLinkedInUsername(url: string): string | null {
+export function extractLinkedInUsername(url: string): string | null {
   const match = url.match(/linkedin\.com\/in\/([^/?#]+)/);
   if (!match?.[1]) return null;
   // Strip LinkedIn's auto-generated hex ID suffix (e.g., "zinnia-everatt-81678a340" → "zinnia-everatt")

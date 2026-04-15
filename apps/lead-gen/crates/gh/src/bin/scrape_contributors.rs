@@ -1,12 +1,12 @@
 /// scrape_contributors — Scrape contributors of AI GitHub projects into LanceDB,
-/// then rank them by rising-star score.
+/// then rank them by candidate score.
 ///
 /// Modes (SCRAPE_MODE env var):
 ///
 ///   discover (default) — search GitHub for AI repos by topic and scrape
 ///                         their top contributors.
 ///   repo               — scrape a single repo given by GH_REPO.
-///   top                — print top N rising stars from existing DB (no scraping).
+///   top                — print top N candidates from existing DB (no scraping).
 ///
 /// Environment variables:
 ///   GITHUB_TOKEN              GitHub PAT with public repo read access (required for scraping)
@@ -208,7 +208,7 @@ async fn scrape_single_repo(
     Ok(())
 }
 
-// ── Top rising stars ──────────────────────────────────────────────────────────
+// ── Top candidates ───────────────────────────────────────────────────────────
 
 async fn print_top_candidates(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
     let stars = db.top_candidates(n).await?;

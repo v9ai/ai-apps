@@ -4,7 +4,7 @@
 
 import { contacts, companies, contactEmails, messages, receivedEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";
-import { eq, and, like, or, count, desc } from "drizzle-orm";
+import { eq, and, like, or, count, desc, asc, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
 
 export const contactQueries = {
@@ -88,7 +88,7 @@ export const contactQueries = {
       .select()
       .from(contacts)
       .where(or(eq(contacts.linkedin_url, stripped), eq(contacts.linkedin_url, withSlash)))
-      .orderBy(desc(contacts.id))
+      .orderBy(sql`${contacts.slug} ASC NULLS LAST`, asc(contacts.id))
       .limit(1);
     return rows[0] ?? null;
   },

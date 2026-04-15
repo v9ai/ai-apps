@@ -73,6 +73,18 @@ export const contactMutations = {
   ) {
     requireAdmin(context);
     const { firstName, lastName, emails, tags, companyId, linkedinUrl, githubHandle, telegramHandle, position, email } = args.input;
+
+    // Dedup: if a contact with this LinkedIn URL already exists, return it
+    if (linkedinUrl) {
+      const normalized = linkedinUrl.replace(/\/+$/, "").split("?")[0];
+      const withSlash = normalized + "/";
+      const [existing] = await context.db.select().from(contacts)
+        .where(or(eq(contacts.linkedin_url, normalized), eq(contacts.linkedin_url, withSlash)))
+        .orderBy(sql`${contacts.slug} ASC NULLS LAST`)
+        .limit(1);
+      if (existing) return existing;
+    }
+
     const mlClassification = classifyContact(position);
     const baseSlug = deriveContactSlug({
       github_handle: githubHandle,
