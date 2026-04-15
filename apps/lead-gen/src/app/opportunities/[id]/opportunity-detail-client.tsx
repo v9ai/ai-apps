@@ -25,6 +25,7 @@ import {
 } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { updateOpportunityTags } from "../actions";
+import { FollowUpEmailDialog } from "@/components/emails/follow-up-email-dialog";
 
 type OpportunityDetail = {
   id: string;
@@ -59,6 +60,7 @@ type OpportunityDetail = {
   contact_position: string | null;
   contact_linkedin: string | null;
   contact_email: string | null;
+  contact_id: number | null;
 };
 
 type MatchBreakdown = {
@@ -255,6 +257,26 @@ export function OpportunityDetailClient({
                     </a>
                   )}
                 </Flex>
+                {opp.contact_id && (
+                  <FollowUpEmailDialog
+                    contact={{
+                      id: opp.contact_id,
+                      firstName: opp.contact_first ?? "",
+                      lastName: opp.contact_last ?? "",
+                      email: opp.contact_email,
+                      position: opp.contact_position,
+                      company: opp.company_name,
+                    }}
+                    opportunities={[{
+                      id: opp.id,
+                      title: opp.title,
+                      status: opp.status,
+                      appliedAt: opp.applied_at,
+                      applicationStatus: opp.application_status,
+                      companyName: opp.company_name,
+                    }]}
+                  />
+                )}
               </Flex>
             </Card>
           )}

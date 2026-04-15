@@ -52,6 +52,7 @@ export default async function OpportunityDetailPage({
       contact_position: contacts.position,
       contact_linkedin: contacts.linkedin_url,
       contact_email: contacts.email,
+      contact_id: contacts.id,
     })
     .from(opportunities)
     .leftJoin(companies, eq(opportunities.company_id, companies.id))
