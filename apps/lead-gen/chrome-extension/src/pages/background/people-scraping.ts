@@ -4,6 +4,7 @@ import { gqlRequest, GRAPHQL_URL } from "../../services/graphql";
 import { randomDelay, waitForTabLoad, isTabAlive, safeTabUpdate, safeSendMessage } from "./tab-utils";
 
 const SCROLL_TIMEOUT_MS = 15_000;
+const BROWSE_PEOPLE_TIMEOUT_MS = 240_000; // 4 minutes max for entire operation
 
 let peopleCancelled = false;
 
@@ -217,6 +218,22 @@ export async function browsePeople(tabId: number, companyId: number) {
   peopleCancelled = false;
   console.log(`[BrowsePeople] Starting for companyId=${companyId}, tab=${tabId}`);
 
+  try {
+    await Promise.race([
+      browsePeopleInner(tabId, companyId),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Import timed out after 4 minutes")), BROWSE_PEOPLE_TIMEOUT_MS)
+      ),
+    ]);
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[BrowsePeople] Fatal:", errMsg);
+    chrome.tabs.remove(tabId).catch(() => {});
+    await notifyWebApp("peopleScrapeError", { error: errMsg });
+  }
+}
+
+async function browsePeopleInner(tabId: number, companyId: number) {
   await waitForTabLoad(tabId);
   // Extra wait for LinkedIn SPA to hydrate
   await randomDelay(3000);
@@ -238,6 +255,14 @@ export async function browsePeople(tabId: number, companyId: number) {
   let consecutiveEmptyRounds = 0;
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
+    if (!(await isTabAlive(tabId))) {
+      console.warn("[BrowsePeople] Tab closed during scrape, aborting");
+      await notifyWebApp("peopleScrapeError", {
+        error: "LinkedIn tab was closed during scraping.",
+      });
+      return;
+    }
+
     await scrollPeoplePage(tabId);
     if (peopleCancelled) break;
 

@@ -576,6 +576,7 @@ export function CompanyContactsClient({
     type: "idle" | "running" | "done" | "error";
     message?: string;
   }>({ type: "idle" });
+  const lastPeopleMessageRef = React.useRef(Date.now());
   const { isStreaming, progress, completion, error: schedulerError, scheduleEmails, reset: resetScheduler } = useStreamingEmailScheduler();
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -632,6 +633,7 @@ export function CompanyContactsClient({
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.source !== "lead-gen-bg") return;
+      lastPeopleMessageRef.current = Date.now();
       if (e.data.action === "peopleScrapeProgress") {
         setLinkedinPeopleStatus({ type: "running", message: e.data.message });
       } else if (e.data.action === "peopleScrapeComplete") {
@@ -647,6 +649,20 @@ export function CompanyContactsClient({
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, [refetch]);
+
+  // Stale detection: if no extension message arrives for 2 minutes while running, assume dead
+  useEffect(() => {
+    if (linkedinPeopleStatus.type !== "running") return;
+    const id = setInterval(() => {
+      if (Date.now() - lastPeopleMessageRef.current > 120_000) {
+        setLinkedinPeopleStatus({
+          type: "error",
+          message: "Import timed out — extension may have stopped. Try again.",
+        });
+      }
+    }, 15_000);
+    return () => clearInterval(id);
+  }, [linkedinPeopleStatus.type]);
 
   const handleImportContacts = useCallback(async () => {
     if (!linkedinHtml || !company) return;
