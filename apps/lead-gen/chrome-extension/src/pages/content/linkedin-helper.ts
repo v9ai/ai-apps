@@ -1187,6 +1187,9 @@ function createImportProfileButton(): HTMLButtonElement {
   });
 
   btn.addEventListener("click", (e) => {
+    // If showing an existing contact link, let the <a> navigate normally
+    if (btn.dataset.existingContact) return;
+
     e.preventDefault();
     e.stopPropagation();
 
@@ -1269,6 +1272,7 @@ function showExistingContactLink(
   btn: HTMLButtonElement,
   contact: { slug?: string; firstName?: string; lastName?: string },
 ) {
+  btn.dataset.existingContact = "true";
   btn.style.backgroundColor = "#16a34a";
   btn.style.padding = "0";
   btn.disabled = false;
