@@ -525,25 +525,6 @@ export type ContactNextTouch = {
   position: Maybe<Scalars['String']['output']>;
 };
 
-export type ContactReminder = {
-  __typename?: 'ContactReminder';
-  contactId: Scalars['Int']['output'];
-  createdAt: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  note: Maybe<Scalars['String']['output']>;
-  recurrence: Scalars['String']['output'];
-  remindAt: Scalars['String']['output'];
-  snoozedUntil: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-};
-
-export type ContactReminderWithContact = {
-  __typename?: 'ContactReminderWithContact';
-  contact: Contact;
-  reminder: ContactReminder;
-};
-
 export type ContactWorkExperience = {
   __typename?: 'ContactWorkExperience';
   company: Scalars['String']['output'];
@@ -661,7 +642,8 @@ export type CreateEmailTemplateInput = {
 };
 
 export type CreateReminderInput = {
-  contactId: Scalars['Int']['input'];
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   recurrence?: InputMaybe<Scalars['String']['input']>;
   remindAt: Scalars['String']['input'];
@@ -1274,7 +1256,7 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createReminder: ContactReminder;
+  createReminder: Reminder;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
@@ -1284,7 +1266,7 @@ export type Mutation = {
   detectIntentSignals: DetectIntentResult;
   dismissAllDrafts: BatchDismissResult;
   dismissDraft: DismissDraftResult;
-  dismissReminder: ContactReminder;
+  dismissReminder: Reminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
   enrichAIContactProfile: EnrichAiContactResult;
@@ -1321,7 +1303,7 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
-  snoozeReminder: ContactReminder;
+  snoozeReminder: Reminder;
   syncResendEmails: SyncResendResult;
   /**
    * Fetch jobs from Voyager API and upsert into linkedin_posts (type='job').
@@ -1337,7 +1319,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateReminder: ContactReminder;
+  updateReminder: Reminder;
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
@@ -1838,12 +1820,11 @@ export type Query = {
   contactMessages: Array<ContactMessage>;
   contactOpportunities: Array<Opportunity>;
   contactReceivedEmails: Array<ReceivedEmail>;
-  contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
   crawlLog: Maybe<CrawlLog>;
   crawlLogs: Array<CrawlLog>;
   draftSummary: DraftSummary;
-  dueReminders: Array<ContactReminderWithContact>;
+  dueReminders: Array<ReminderWithContact>;
   emailCampaign: Maybe<EmailCampaign>;
   emailCampaigns: EmailCampaignsResult;
   emailStats: EmailStats;
@@ -1865,6 +1846,7 @@ export type Query = {
   recommendedCompanies: Array<RecommendedCompany>;
   /** Best contacts to reach within a company */
   recommendedContacts: Array<RankedContact>;
+  reminders: Array<Reminder>;
   replyDrafts: ReplyDraftsResult;
   resendEmail: Maybe<ResendEmailDetail>;
   salescueEntities: SalescueEntitiesResult;
@@ -2006,11 +1988,6 @@ export type QueryContactReceivedEmailsArgs = {
 };
 
 
-export type QueryContactRemindersArgs = {
-  contactId: Scalars['Int']['input'];
-};
-
-
 export type QueryContactsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -2124,6 +2101,12 @@ export type QueryRecommendedCompaniesArgs = {
 export type QueryRecommendedContactsArgs = {
   companyId: Scalars['Int']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryRemindersArgs = {
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
 };
 
 
@@ -2340,6 +2323,26 @@ export type RegionGrowth = {
   location: Scalars['String']['output'];
   previousCount: Scalars['Int']['output'];
   remoteCount: Scalars['Int']['output'];
+};
+
+export type Reminder = {
+  __typename?: 'Reminder';
+  createdAt: Scalars['String']['output'];
+  entityId: Scalars['Int']['output'];
+  entityType: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  note: Maybe<Scalars['String']['output']>;
+  recurrence: Scalars['String']['output'];
+  remindAt: Scalars['String']['output'];
+  snoozedUntil: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ReminderWithContact = {
+  __typename?: 'ReminderWithContact';
+  contact: Contact;
+  reminder: Reminder;
 };
 
 export type ReplyDraft = {
@@ -3421,8 +3424,6 @@ export type ResolversTypes = {
   ContactMLScore: ResolverTypeWrapper<Partial<ContactMlScore>>;
   ContactMessage: ResolverTypeWrapper<Partial<ContactMessage>>;
   ContactNextTouch: ResolverTypeWrapper<Partial<ContactNextTouch>>;
-  ContactReminder: ResolverTypeWrapper<Partial<ContactReminder>>;
-  ContactReminderWithContact: ResolverTypeWrapper<Partial<ContactReminderWithContact>>;
   ContactWorkExperience: ResolverTypeWrapper<Partial<ContactWorkExperience>>;
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
   CountRemoteVoyagerJobsInput: ResolverTypeWrapper<Partial<CountRemoteVoyagerJobsInput>>;
@@ -3509,6 +3510,8 @@ export type ResolversTypes = {
   RecommendedCompany: ResolverTypeWrapper<Partial<RecommendedCompany>>;
   RefreshIntentResult: ResolverTypeWrapper<Partial<RefreshIntentResult>>;
   RegionGrowth: ResolverTypeWrapper<Partial<RegionGrowth>>;
+  Reminder: ResolverTypeWrapper<Partial<Reminder>>;
+  ReminderWithContact: ResolverTypeWrapper<Partial<ReminderWithContact>>;
   ReplyDraft: ResolverTypeWrapper<Partial<ReplyDraft>>;
   ReplyDraftsResult: ResolverTypeWrapper<Partial<ReplyDraftsResult>>;
   RepostReport: ResolverTypeWrapper<Partial<RepostReport>>;
@@ -3649,8 +3652,6 @@ export type ResolversParentTypes = {
   ContactMLScore: Partial<ContactMlScore>;
   ContactMessage: Partial<ContactMessage>;
   ContactNextTouch: Partial<ContactNextTouch>;
-  ContactReminder: Partial<ContactReminder>;
-  ContactReminderWithContact: Partial<ContactReminderWithContact>;
   ContactWorkExperience: Partial<ContactWorkExperience>;
   ContactsResult: Partial<ContactsResult>;
   CountRemoteVoyagerJobsInput: Partial<CountRemoteVoyagerJobsInput>;
@@ -3734,6 +3735,8 @@ export type ResolversParentTypes = {
   RecommendedCompany: Partial<RecommendedCompany>;
   RefreshIntentResult: Partial<RefreshIntentResult>;
   RegionGrowth: Partial<RegionGrowth>;
+  Reminder: Partial<Reminder>;
+  ReminderWithContact: Partial<ReminderWithContact>;
   ReplyDraft: Partial<ReplyDraft>;
   ReplyDraftsResult: Partial<ReplyDraftsResult>;
   RepostReport: Partial<RepostReport>;
@@ -4222,23 +4225,6 @@ export type ContactNextTouchResolvers<ContextType = GraphQLContext, ParentType e
   lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   nextTouchScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type ContactReminderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactReminder'] = ResolversParentTypes['ContactReminder']> = {
-  contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  note?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  recurrence?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  remindAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  snoozedUntil?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type ContactReminderWithContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactReminderWithContact'] = ResolversParentTypes['ContactReminderWithContact']> = {
-  contact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType>;
-  reminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType>;
 };
 
 export type ContactWorkExperienceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactWorkExperience'] = ResolversParentTypes['ContactWorkExperience']> = {
@@ -4770,7 +4756,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationCreateContactArgs, 'input'>>;
   createDraftCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationCreateDraftCampaignArgs, 'input'>>;
   createEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationCreateEmailTemplateArgs, 'input'>>;
-  createReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationCreateReminderArgs, 'input'>>;
+  createReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationCreateReminderArgs, 'input'>>;
   deleteCampaign?: Resolver<ResolversTypes['DeleteCampaignResult'], ParentType, ContextType, RequireFields<MutationDeleteCampaignArgs, 'id'>>;
   deleteCompanies?: Resolver<ResolversTypes['DeleteCompaniesResult'], ParentType, ContextType, RequireFields<MutationDeleteCompaniesArgs, 'companyIds'>>;
   deleteCompany?: Resolver<ResolversTypes['DeleteCompanyResponse'], ParentType, ContextType, RequireFields<MutationDeleteCompanyArgs, 'id'>>;
@@ -4780,7 +4766,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   detectIntentSignals?: Resolver<ResolversTypes['DetectIntentResult'], ParentType, ContextType, RequireFields<MutationDetectIntentSignalsArgs, 'companyId'>>;
   dismissAllDrafts?: Resolver<ResolversTypes['BatchDismissResult'], ParentType, ContextType, RequireFields<MutationDismissAllDraftsArgs, 'draftIds'>>;
   dismissDraft?: Resolver<ResolversTypes['DismissDraftResult'], ParentType, ContextType, RequireFields<MutationDismissDraftArgs, 'draftId'>>;
-  dismissReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationDismissReminderArgs, 'id'>>;
+  dismissReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationDismissReminderArgs, 'id'>>;
   enhanceAllContacts?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType>;
   enhanceCompany?: Resolver<ResolversTypes['EnhanceCompanyResponse'], ParentType, ContextType, Partial<MutationEnhanceCompanyArgs>>;
   enrichAIContactProfile?: Resolver<ResolversTypes['EnrichAIContactResult'], ParentType, ContextType, RequireFields<MutationEnrichAiContactProfileArgs, 'contactId'>>;
@@ -4816,7 +4802,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   sendEmail?: Resolver<ResolversTypes['SendEmailResult'], ParentType, ContextType, RequireFields<MutationSendEmailArgs, 'input'>>;
   sendOutreachEmail?: Resolver<ResolversTypes['SendOutreachEmailResult'], ParentType, ContextType, RequireFields<MutationSendOutreachEmailArgs, 'input'>>;
   sendScheduledEmailNow?: Resolver<ResolversTypes['SendNowResult'], ParentType, ContextType, RequireFields<MutationSendScheduledEmailNowArgs, 'resendId'>>;
-  snoozeReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationSnoozeReminderArgs, 'days' | 'id'>>;
+  snoozeReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationSnoozeReminderArgs, 'days' | 'id'>>;
   syncResendEmails?: Resolver<ResolversTypes['SyncResendResult'], ParentType, ContextType, Partial<MutationSyncResendEmailsArgs>>;
   syncVoyagerJobs?: Resolver<ResolversTypes['SyncVoyagerJobsResult'], ParentType, ContextType, RequireFields<MutationSyncVoyagerJobsArgs, 'input'>>;
   unarchiveEmail?: Resolver<ResolversTypes['ArchiveEmailResult'], ParentType, ContextType, RequireFields<MutationUnarchiveEmailArgs, 'id'>>;
@@ -4827,7 +4813,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUpdateCompanyArgs, 'id' | 'input'>>;
   updateContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationUpdateContactArgs, 'id' | 'input'>>;
   updateEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationUpdateEmailTemplateArgs, 'id' | 'input'>>;
-  updateReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationUpdateReminderArgs, 'id' | 'input'>>;
+  updateReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationUpdateReminderArgs, 'id' | 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   upsertLinkedInPost?: Resolver<ResolversTypes['LinkedInPost'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostArgs, 'input'>>;
   upsertLinkedInPosts?: Resolver<ResolversTypes['UpsertLinkedInPostsResult'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostsArgs, 'inputs'>>;
@@ -4884,12 +4870,11 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contactMessages?: Resolver<Array<ResolversTypes['ContactMessage']>, ParentType, ContextType, RequireFields<QueryContactMessagesArgs, 'contactId'>>;
   contactOpportunities?: Resolver<Array<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryContactOpportunitiesArgs, 'contactId'>>;
   contactReceivedEmails?: Resolver<Array<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryContactReceivedEmailsArgs, 'contactId'>>;
-  contactReminders?: Resolver<Array<ResolversTypes['ContactReminder']>, ParentType, ContextType, RequireFields<QueryContactRemindersArgs, 'contactId'>>;
   contacts?: Resolver<ResolversTypes['ContactsResult'], ParentType, ContextType, Partial<QueryContactsArgs>>;
   crawlLog?: Resolver<Maybe<ResolversTypes['CrawlLog']>, ParentType, ContextType, RequireFields<QueryCrawlLogArgs, 'id'>>;
   crawlLogs?: Resolver<Array<ResolversTypes['CrawlLog']>, ParentType, ContextType, Partial<QueryCrawlLogsArgs>>;
   draftSummary?: Resolver<ResolversTypes['DraftSummary'], ParentType, ContextType>;
-  dueReminders?: Resolver<Array<ResolversTypes['ContactReminderWithContact']>, ParentType, ContextType>;
+  dueReminders?: Resolver<Array<ResolversTypes['ReminderWithContact']>, ParentType, ContextType>;
   emailCampaign?: Resolver<Maybe<ResolversTypes['EmailCampaign']>, ParentType, ContextType, RequireFields<QueryEmailCampaignArgs, 'id'>>;
   emailCampaigns?: Resolver<ResolversTypes['EmailCampaignsResult'], ParentType, ContextType, Partial<QueryEmailCampaignsArgs>>;
   emailStats?: Resolver<ResolversTypes['EmailStats'], ParentType, ContextType>;
@@ -4908,6 +4893,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
   recommendedCompanies?: Resolver<Array<ResolversTypes['RecommendedCompany']>, ParentType, ContextType, Partial<QueryRecommendedCompaniesArgs>>;
   recommendedContacts?: Resolver<Array<ResolversTypes['RankedContact']>, ParentType, ContextType, RequireFields<QueryRecommendedContactsArgs, 'companyId'>>;
+  reminders?: Resolver<Array<ResolversTypes['Reminder']>, ParentType, ContextType, RequireFields<QueryRemindersArgs, 'entityId' | 'entityType'>>;
   replyDrafts?: Resolver<ResolversTypes['ReplyDraftsResult'], ParentType, ContextType, Partial<QueryReplyDraftsArgs>>;
   resendEmail?: Resolver<Maybe<ResolversTypes['ResendEmailDetail']>, ParentType, ContextType, RequireFields<QueryResendEmailArgs, 'resendId'>>;
   salescueEntities?: Resolver<ResolversTypes['SalescueEntitiesResult'], ParentType, ContextType, RequireFields<QuerySalescueEntitiesArgs, 'text'>>;
@@ -4994,6 +4980,24 @@ export type RegionGrowthResolvers<ContextType = GraphQLContext, ParentType exten
   location?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   previousCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   remoteCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type ReminderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Reminder'] = ResolversParentTypes['Reminder']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  entityId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  entityType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  note?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  recurrence?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  remindAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  snoozedUntil?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ReminderWithContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReminderWithContact'] = ResolversParentTypes['ReminderWithContact']> = {
+  contact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType>;
+  reminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType>;
 };
 
 export type ReplyDraftResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReplyDraft'] = ResolversParentTypes['ReplyDraft']> = {
@@ -5698,8 +5702,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactMLScore?: ContactMlScoreResolvers<ContextType>;
   ContactMessage?: ContactMessageResolvers<ContextType>;
   ContactNextTouch?: ContactNextTouchResolvers<ContextType>;
-  ContactReminder?: ContactReminderResolvers<ContextType>;
-  ContactReminderWithContact?: ContactReminderWithContactResolvers<ContextType>;
   ContactWorkExperience?: ContactWorkExperienceResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
   CountRemoteVoyagerJobsResult?: CountRemoteVoyagerJobsResultResolvers<ContextType>;
@@ -5768,6 +5770,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   RecommendedCompany?: RecommendedCompanyResolvers<ContextType>;
   RefreshIntentResult?: RefreshIntentResultResolvers<ContextType>;
   RegionGrowth?: RegionGrowthResolvers<ContextType>;
+  Reminder?: ReminderResolvers<ContextType>;
+  ReminderWithContact?: ReminderWithContactResolvers<ContextType>;
   ReplyDraft?: ReplyDraftResolvers<ContextType>;
   ReplyDraftsResult?: ReplyDraftsResultResolvers<ContextType>;
   RepostReport?: RepostReportResolvers<ContextType>;

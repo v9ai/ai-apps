@@ -467,23 +467,6 @@ type ContactNextTouch {
   position: String
 }
 
-type ContactReminder {
-  contactId: Int!
-  createdAt: String!
-  id: Int!
-  note: String
-  recurrence: String!
-  remindAt: String!
-  snoozedUntil: String
-  status: String!
-  updatedAt: String!
-}
-
-type ContactReminderWithContact {
-  contact: Contact!
-  reminder: ContactReminder!
-}
-
 type ContactWorkExperience {
   company: String!
   companyLogo: String
@@ -597,7 +580,8 @@ input CreateEmailTemplateInput {
 }
 
 input CreateReminderInput {
-  contactId: Int!
+  entityId: Int!
+  entityType: String!
   note: String
   recurrence: String
   remindAt: String!
@@ -1167,7 +1151,7 @@ type Mutation {
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
-  createReminder(input: CreateReminderInput!): ContactReminder!
+  createReminder(input: CreateReminderInput!): Reminder!
   deleteCampaign(id: String!): DeleteCampaignResult!
   deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
   deleteCompany(id: Int!): DeleteCompanyResponse!
@@ -1177,7 +1161,7 @@ type Mutation {
   detectIntentSignals(companyId: Int!): DetectIntentResult!
   dismissAllDrafts(draftIds: [Int!]!): BatchDismissResult!
   dismissDraft(draftId: Int!): DismissDraftResult!
-  dismissReminder(id: Int!): ContactReminder!
+  dismissReminder(id: Int!): Reminder!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
   enrichAIContactProfile(contactId: Int!): EnrichAIContactResult!
@@ -1214,7 +1198,7 @@ type Mutation {
   sendEmail(input: SendEmailInput!): SendEmailResult!
   sendOutreachEmail(input: SendOutreachEmailInput!): SendOutreachEmailResult!
   sendScheduledEmailNow(resendId: String!): SendNowResult!
-  snoozeReminder(days: Int!, id: Int!): ContactReminder!
+  snoozeReminder(days: Int!, id: Int!): Reminder!
   syncResendEmails(companyId: Int): SyncResendResult!
   """
   Fetch jobs from Voyager API and upsert into linkedin_posts (type='job').
@@ -1230,7 +1214,7 @@ type Mutation {
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
-  updateReminder(id: Int!, input: UpdateReminderInput!): ContactReminder!
+  updateReminder(id: Int!, input: UpdateReminderInput!): Reminder!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   upsertLinkedInPost(input: UpsertLinkedInPostInput!): LinkedInPost!
   upsertLinkedInPosts(inputs: [UpsertLinkedInPostInput!]!): UpsertLinkedInPostsResult!
@@ -1301,12 +1285,11 @@ type Query {
   contactMessages(contactId: Int!): [ContactMessage!]!
   contactOpportunities(contactId: Int!): [Opportunity!]!
   contactReceivedEmails(contactId: Int!): [ReceivedEmail!]!
-  contactReminders(contactId: Int!): [ContactReminder!]!
   contacts(companyId: Int, limit: Int, offset: Int, search: String): ContactsResult!
   crawlLog(id: Int!): CrawlLog
   crawlLogs(limit: Int, offset: Int): [CrawlLog!]!
   draftSummary: DraftSummary!
-  dueReminders: [ContactReminderWithContact!]!
+  dueReminders: [ReminderWithContact!]!
   emailCampaign(id: String!): EmailCampaign
   emailCampaigns(limit: Int, offset: Int, status: String): EmailCampaignsResult!
   emailStats: EmailStats!
@@ -1328,6 +1311,7 @@ type Query {
   recommendedCompanies(limit: Int, minScore: Float): [RecommendedCompany!]!
   """Best contacts to reach within a company"""
   recommendedContacts(companyId: Int!, limit: Int): [RankedContact!]!
+  reminders(entityId: Int!, entityType: String!): [Reminder!]!
   replyDrafts(draftType: String, limit: Int, offset: Int, status: String): ReplyDraftsResult!
   resendEmail(resendId: String!): ResendEmailDetail
   salescueEntities(text: String!): SalescueEntitiesResult!
@@ -1447,6 +1431,24 @@ type RegionGrowth {
   location: String!
   previousCount: Int!
   remoteCount: Int!
+}
+
+type Reminder {
+  createdAt: String!
+  entityId: Int!
+  entityType: String!
+  id: Int!
+  note: String
+  recurrence: String!
+  remindAt: String!
+  snoozedUntil: String
+  status: String!
+  updatedAt: String!
+}
+
+type ReminderWithContact {
+  contact: Contact!
+  reminder: Reminder!
 }
 
 type ReplyDraft {

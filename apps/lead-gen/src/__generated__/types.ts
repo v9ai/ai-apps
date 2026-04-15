@@ -522,25 +522,6 @@ export type ContactNextTouch = {
   position: Maybe<Scalars['String']['output']>;
 };
 
-export type ContactReminder = {
-  __typename: 'ContactReminder';
-  contactId: Scalars['Int']['output'];
-  createdAt: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  note: Maybe<Scalars['String']['output']>;
-  recurrence: Scalars['String']['output'];
-  remindAt: Scalars['String']['output'];
-  snoozedUntil: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-};
-
-export type ContactReminderWithContact = {
-  __typename: 'ContactReminderWithContact';
-  contact: Contact;
-  reminder: ContactReminder;
-};
-
 export type ContactWorkExperience = {
   __typename: 'ContactWorkExperience';
   company: Scalars['String']['output'];
@@ -658,7 +639,8 @@ export type CreateEmailTemplateInput = {
 };
 
 export type CreateReminderInput = {
-  contactId: Scalars['Int']['input'];
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   recurrence?: InputMaybe<Scalars['String']['input']>;
   remindAt: Scalars['String']['input'];
@@ -1271,7 +1253,7 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createReminder: ContactReminder;
+  createReminder: Reminder;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
@@ -1281,7 +1263,7 @@ export type Mutation = {
   detectIntentSignals: DetectIntentResult;
   dismissAllDrafts: BatchDismissResult;
   dismissDraft: DismissDraftResult;
-  dismissReminder: ContactReminder;
+  dismissReminder: Reminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
   enrichAIContactProfile: EnrichAiContactResult;
@@ -1318,7 +1300,7 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
-  snoozeReminder: ContactReminder;
+  snoozeReminder: Reminder;
   syncResendEmails: SyncResendResult;
   /**
    * Fetch jobs from Voyager API and upsert into linkedin_posts (type='job').
@@ -1334,7 +1316,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateReminder: ContactReminder;
+  updateReminder: Reminder;
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
@@ -1835,12 +1817,11 @@ export type Query = {
   contactMessages: Array<ContactMessage>;
   contactOpportunities: Array<Opportunity>;
   contactReceivedEmails: Array<ReceivedEmail>;
-  contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
   crawlLog: Maybe<CrawlLog>;
   crawlLogs: Array<CrawlLog>;
   draftSummary: DraftSummary;
-  dueReminders: Array<ContactReminderWithContact>;
+  dueReminders: Array<ReminderWithContact>;
   emailCampaign: Maybe<EmailCampaign>;
   emailCampaigns: EmailCampaignsResult;
   emailStats: EmailStats;
@@ -1862,6 +1843,7 @@ export type Query = {
   recommendedCompanies: Array<RecommendedCompany>;
   /** Best contacts to reach within a company */
   recommendedContacts: Array<RankedContact>;
+  reminders: Array<Reminder>;
   replyDrafts: ReplyDraftsResult;
   resendEmail: Maybe<ResendEmailDetail>;
   salescueEntities: SalescueEntitiesResult;
@@ -2003,11 +1985,6 @@ export type QueryContactReceivedEmailsArgs = {
 };
 
 
-export type QueryContactRemindersArgs = {
-  contactId: Scalars['Int']['input'];
-};
-
-
 export type QueryContactsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -2121,6 +2098,12 @@ export type QueryRecommendedCompaniesArgs = {
 export type QueryRecommendedContactsArgs = {
   companyId: Scalars['Int']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryRemindersArgs = {
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
 };
 
 
@@ -2337,6 +2320,26 @@ export type RegionGrowth = {
   location: Scalars['String']['output'];
   previousCount: Scalars['Int']['output'];
   remoteCount: Scalars['Int']['output'];
+};
+
+export type Reminder = {
+  __typename: 'Reminder';
+  createdAt: Scalars['String']['output'];
+  entityId: Scalars['Int']['output'];
+  entityType: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  note: Maybe<Scalars['String']['output']>;
+  recurrence: Scalars['String']['output'];
+  remindAt: Scalars['String']['output'];
+  snoozedUntil: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ReminderWithContact = {
+  __typename: 'ReminderWithContact';
+  contact: Contact;
+  reminder: Reminder;
 };
 
 export type ReplyDraft = {

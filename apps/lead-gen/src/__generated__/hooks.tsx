@@ -525,25 +525,6 @@ export type ContactNextTouch = {
   position: Maybe<Scalars['String']['output']>;
 };
 
-export type ContactReminder = {
-  __typename?: 'ContactReminder';
-  contactId: Scalars['Int']['output'];
-  createdAt: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  note: Maybe<Scalars['String']['output']>;
-  recurrence: Scalars['String']['output'];
-  remindAt: Scalars['String']['output'];
-  snoozedUntil: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-};
-
-export type ContactReminderWithContact = {
-  __typename?: 'ContactReminderWithContact';
-  contact: Contact;
-  reminder: ContactReminder;
-};
-
 export type ContactWorkExperience = {
   __typename?: 'ContactWorkExperience';
   company: Scalars['String']['output'];
@@ -661,7 +642,8 @@ export type CreateEmailTemplateInput = {
 };
 
 export type CreateReminderInput = {
-  contactId: Scalars['Int']['input'];
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   recurrence?: InputMaybe<Scalars['String']['input']>;
   remindAt: Scalars['String']['input'];
@@ -1274,7 +1256,7 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createReminder: ContactReminder;
+  createReminder: Reminder;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
@@ -1284,7 +1266,7 @@ export type Mutation = {
   detectIntentSignals: DetectIntentResult;
   dismissAllDrafts: BatchDismissResult;
   dismissDraft: DismissDraftResult;
-  dismissReminder: ContactReminder;
+  dismissReminder: Reminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
   enrichAIContactProfile: EnrichAiContactResult;
@@ -1321,7 +1303,7 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
-  snoozeReminder: ContactReminder;
+  snoozeReminder: Reminder;
   syncResendEmails: SyncResendResult;
   /**
    * Fetch jobs from Voyager API and upsert into linkedin_posts (type='job').
@@ -1337,7 +1319,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateReminder: ContactReminder;
+  updateReminder: Reminder;
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
@@ -1838,12 +1820,11 @@ export type Query = {
   contactMessages: Array<ContactMessage>;
   contactOpportunities: Array<Opportunity>;
   contactReceivedEmails: Array<ReceivedEmail>;
-  contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
   crawlLog: Maybe<CrawlLog>;
   crawlLogs: Array<CrawlLog>;
   draftSummary: DraftSummary;
-  dueReminders: Array<ContactReminderWithContact>;
+  dueReminders: Array<ReminderWithContact>;
   emailCampaign: Maybe<EmailCampaign>;
   emailCampaigns: EmailCampaignsResult;
   emailStats: EmailStats;
@@ -1865,6 +1846,7 @@ export type Query = {
   recommendedCompanies: Array<RecommendedCompany>;
   /** Best contacts to reach within a company */
   recommendedContacts: Array<RankedContact>;
+  reminders: Array<Reminder>;
   replyDrafts: ReplyDraftsResult;
   resendEmail: Maybe<ResendEmailDetail>;
   salescueEntities: SalescueEntitiesResult;
@@ -2006,11 +1988,6 @@ export type QueryContactReceivedEmailsArgs = {
 };
 
 
-export type QueryContactRemindersArgs = {
-  contactId: Scalars['Int']['input'];
-};
-
-
 export type QueryContactsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -2124,6 +2101,12 @@ export type QueryRecommendedCompaniesArgs = {
 export type QueryRecommendedContactsArgs = {
   companyId: Scalars['Int']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryRemindersArgs = {
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
 };
 
 
@@ -2340,6 +2323,26 @@ export type RegionGrowth = {
   location: Scalars['String']['output'];
   previousCount: Scalars['Int']['output'];
   remoteCount: Scalars['Int']['output'];
+};
+
+export type Reminder = {
+  __typename?: 'Reminder';
+  createdAt: Scalars['String']['output'];
+  entityId: Scalars['Int']['output'];
+  entityType: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  note: Maybe<Scalars['String']['output']>;
+  recurrence: Scalars['String']['output'];
+  remindAt: Scalars['String']['output'];
+  snoozedUntil: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ReminderWithContact = {
+  __typename?: 'ReminderWithContact';
+  contact: Contact;
+  reminder: Reminder;
 };
 
 export type ReplyDraft = {
@@ -3877,21 +3880,22 @@ export type AnalyzeLinkedInPostsMutation = { __typename?: 'Mutation', analyzeLin
 export type DueRemindersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type DueRemindersQuery = { __typename?: 'Query', dueReminders: Array<{ __typename?: 'ContactReminderWithContact', reminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }, contact: { __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, position: string | null, tags: Array<string> } }> };
+export type DueRemindersQuery = { __typename?: 'Query', dueReminders: Array<{ __typename?: 'ReminderWithContact', reminder: { __typename?: 'Reminder', id: number, entityType: string, entityId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }, contact: { __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, position: string | null, tags: Array<string> } }> };
 
-export type ContactRemindersQueryVariables = Exact<{
-  contactId: Scalars['Int']['input'];
+export type RemindersQueryVariables = Exact<{
+  entityType: Scalars['String']['input'];
+  entityId: Scalars['Int']['input'];
 }>;
 
 
-export type ContactRemindersQuery = { __typename?: 'Query', contactReminders: Array<{ __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }> };
+export type RemindersQuery = { __typename?: 'Query', reminders: Array<{ __typename?: 'Reminder', id: number, entityType: string, entityId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }> };
 
 export type CreateReminderMutationVariables = Exact<{
   input: CreateReminderInput;
 }>;
 
 
-export type CreateReminderMutation = { __typename?: 'Mutation', createReminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, createdAt: string } };
+export type CreateReminderMutation = { __typename?: 'Mutation', createReminder: { __typename?: 'Reminder', id: number, entityType: string, entityId: number, remindAt: string, recurrence: string, note: string | null, status: string, createdAt: string } };
 
 export type UpdateReminderMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3899,7 +3903,7 @@ export type UpdateReminderMutationVariables = Exact<{
 }>;
 
 
-export type UpdateReminderMutation = { __typename?: 'Mutation', updateReminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, updatedAt: string } };
+export type UpdateReminderMutation = { __typename?: 'Mutation', updateReminder: { __typename?: 'Reminder', id: number, entityType: string, entityId: number, remindAt: string, recurrence: string, note: string | null, status: string, updatedAt: string } };
 
 export type SnoozeReminderMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3907,14 +3911,14 @@ export type SnoozeReminderMutationVariables = Exact<{
 }>;
 
 
-export type SnoozeReminderMutation = { __typename?: 'Mutation', snoozeReminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, status: string, snoozedUntil: string | null, updatedAt: string } };
+export type SnoozeReminderMutation = { __typename?: 'Mutation', snoozeReminder: { __typename?: 'Reminder', id: number, entityType: string, entityId: number, remindAt: string, status: string, snoozedUntil: string | null, updatedAt: string } };
 
 export type DismissReminderMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type DismissReminderMutation = { __typename?: 'Mutation', dismissReminder: { __typename?: 'ContactReminder', id: number, contactId: number, status: string, updatedAt: string } };
+export type DismissReminderMutation = { __typename?: 'Mutation', dismissReminder: { __typename?: 'Reminder', id: number, entityType: string, entityId: number, status: string, updatedAt: string } };
 
 export type ComputeNextTouchScoresMutationVariables = Exact<{
   companyId: Scalars['Int']['input'];
@@ -7376,7 +7380,8 @@ export const DueRemindersDocument = gql`
   dueReminders {
     reminder {
       id
-      contactId
+      entityType
+      entityId
       remindAt
       recurrence
       note
@@ -7431,11 +7436,12 @@ export type DueRemindersQueryHookResult = ReturnType<typeof useDueRemindersQuery
 export type DueRemindersLazyQueryHookResult = ReturnType<typeof useDueRemindersLazyQuery>;
 export type DueRemindersSuspenseQueryHookResult = ReturnType<typeof useDueRemindersSuspenseQuery>;
 export type DueRemindersQueryResult = Apollo.QueryResult<DueRemindersQuery, DueRemindersQueryVariables>;
-export const ContactRemindersDocument = gql`
-    query ContactReminders($contactId: Int!) {
-  contactReminders(contactId: $contactId) {
+export const RemindersDocument = gql`
+    query Reminders($entityType: String!, $entityId: Int!) {
+  reminders(entityType: $entityType, entityId: $entityId) {
     id
-    contactId
+    entityType
+    entityId
     remindAt
     recurrence
     note
@@ -7448,45 +7454,47 @@ export const ContactRemindersDocument = gql`
     `;
 
 /**
- * __useContactRemindersQuery__
+ * __useRemindersQuery__
  *
- * To run a query within a React component, call `useContactRemindersQuery` and pass it any options that fit your needs.
- * When your component renders, `useContactRemindersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useRemindersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRemindersQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useContactRemindersQuery({
+ * const { data, loading, error } = useRemindersQuery({
  *   variables: {
- *      contactId: // value for 'contactId'
+ *      entityType: // value for 'entityType'
+ *      entityId: // value for 'entityId'
  *   },
  * });
  */
-export function useContactRemindersQuery(baseOptions: Apollo.QueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables> & ({ variables: ContactRemindersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useRemindersQuery(baseOptions: Apollo.QueryHookOptions<RemindersQuery, RemindersQueryVariables> & ({ variables: RemindersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ContactRemindersQuery, ContactRemindersQueryVariables>(ContactRemindersDocument, options);
+        return Apollo.useQuery<RemindersQuery, RemindersQueryVariables>(RemindersDocument, options);
       }
-export function useContactRemindersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables>) {
+export function useRemindersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RemindersQuery, RemindersQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ContactRemindersQuery, ContactRemindersQueryVariables>(ContactRemindersDocument, options);
+          return Apollo.useLazyQuery<RemindersQuery, RemindersQueryVariables>(RemindersDocument, options);
         }
 // @ts-ignore
-export function useContactRemindersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables>): Apollo.UseSuspenseQueryResult<ContactRemindersQuery, ContactRemindersQueryVariables>;
-export function useContactRemindersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables>): Apollo.UseSuspenseQueryResult<ContactRemindersQuery | undefined, ContactRemindersQueryVariables>;
-export function useContactRemindersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables>) {
+export function useRemindersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<RemindersQuery, RemindersQueryVariables>): Apollo.UseSuspenseQueryResult<RemindersQuery, RemindersQueryVariables>;
+export function useRemindersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RemindersQuery, RemindersQueryVariables>): Apollo.UseSuspenseQueryResult<RemindersQuery | undefined, RemindersQueryVariables>;
+export function useRemindersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RemindersQuery, RemindersQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<ContactRemindersQuery, ContactRemindersQueryVariables>(ContactRemindersDocument, options);
+          return Apollo.useSuspenseQuery<RemindersQuery, RemindersQueryVariables>(RemindersDocument, options);
         }
-export type ContactRemindersQueryHookResult = ReturnType<typeof useContactRemindersQuery>;
-export type ContactRemindersLazyQueryHookResult = ReturnType<typeof useContactRemindersLazyQuery>;
-export type ContactRemindersSuspenseQueryHookResult = ReturnType<typeof useContactRemindersSuspenseQuery>;
-export type ContactRemindersQueryResult = Apollo.QueryResult<ContactRemindersQuery, ContactRemindersQueryVariables>;
+export type RemindersQueryHookResult = ReturnType<typeof useRemindersQuery>;
+export type RemindersLazyQueryHookResult = ReturnType<typeof useRemindersLazyQuery>;
+export type RemindersSuspenseQueryHookResult = ReturnType<typeof useRemindersSuspenseQuery>;
+export type RemindersQueryResult = Apollo.QueryResult<RemindersQuery, RemindersQueryVariables>;
 export const CreateReminderDocument = gql`
     mutation CreateReminder($input: CreateReminderInput!) {
   createReminder(input: $input) {
     id
-    contactId
+    entityType
+    entityId
     remindAt
     recurrence
     note
@@ -7525,7 +7533,8 @@ export const UpdateReminderDocument = gql`
     mutation UpdateReminder($id: Int!, $input: UpdateReminderInput!) {
   updateReminder(id: $id, input: $input) {
     id
-    contactId
+    entityType
+    entityId
     remindAt
     recurrence
     note
@@ -7565,7 +7574,8 @@ export const SnoozeReminderDocument = gql`
     mutation SnoozeReminder($id: Int!, $days: Int!) {
   snoozeReminder(id: $id, days: $days) {
     id
-    contactId
+    entityType
+    entityId
     remindAt
     status
     snoozedUntil
@@ -7604,7 +7614,8 @@ export const DismissReminderDocument = gql`
     mutation DismissReminder($id: Int!) {
   dismissReminder(id: $id) {
     id
-    contactId
+    entityType
+    entityId
     status
     updatedAt
   }
