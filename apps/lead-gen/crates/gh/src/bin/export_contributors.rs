@@ -58,26 +58,26 @@ async fn main() -> anyhow::Result<()> {
     let total_in_db = db.count().await;
     info!("LanceDB has {total_in_db} contributors, considering top {top_n}");
 
-    let stars = db.top_candidates(top_n).await?;
+    let ranked = db.top_candidates(top_n).await?;
     info!(
         "fetched {} contributors, threshold={threshold:.2}",
-        stars.len()
+        ranked.len()
     );
 
     let mut exported = 0usize;
     let mut skipped = 0usize;
 
-    for star in &stars {
-        match save_contributor_contact(&pool, star, threshold, &[]).await {
+    for candidate in &ranked {
+        match save_contributor_contact(&pool, candidate, threshold, &[]).await {
             Ok(Some(id)) => {
                 exported += 1;
-                tracing::debug!("exported {} → contacts id={id}", star.login);
+                tracing::debug!("exported {} → contacts id={id}", candidate.login);
             }
             Ok(None) => {
                 skipped += 1;
             }
             Err(e) => {
-                tracing::warn!("failed to export {}: {e}", star.login);
+                tracing::warn!("failed to export {}: {e}", candidate.login);
             }
         }
     }

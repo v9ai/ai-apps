@@ -79,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
     let total = db.count().await;
     info!("scraping done — {total} total contributors in DB");
 
-    // Always print top stars after a scrape run
+    // Always print top candidates after a scrape run
     let top_n: usize = std::env::var("TOP_N")
         .ok()
         .and_then(|s| s.parse().ok())
@@ -211,14 +211,14 @@ async fn scrape_single_repo(
 // ── Top candidates ───────────────────────────────────────────────────────────
 
 async fn print_top_candidates(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
-    let stars = db.top_candidates(n).await?;
-    if stars.is_empty() {
+    let ranked = db.top_candidates(n).await?;
+    if ranked.is_empty() {
         info!("no contributors in DB yet");
         return Ok(());
     }
 
-    println!("\n╔══ TOP {n} RISING AI STARS ══════════════════════════════════════════╗");
-    for (rank, s) in stars.iter().enumerate() {
+    println!("\n╔══ TOP {n} AI CANDIDATES ═══════════════════════════════════════════╗");
+    for (rank, s) in ranked.iter().enumerate() {
         let name = s.name.as_deref().unwrap_or(&s.login);
         let company = s.company.as_deref().unwrap_or("-");
         let location = s.location.as_deref().unwrap_or("-");

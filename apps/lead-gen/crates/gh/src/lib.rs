@@ -30,11 +30,11 @@ pub mod contributors;
 #[cfg(feature = "lance")]
 pub mod skills;
 
-/// ICP feature bridge — maps `RisingStar` to `Vec<f32>` for ML scorers.
+/// ICP feature bridge — maps `Candidate` to `Vec<f32>` for ML scorers.
 #[cfg(feature = "icp")]
 pub mod icp_bridge;
 
-/// Neon PostgreSQL writer — saves `RisingStar` entries to the contacts table.
+/// Neon PostgreSQL writer — saves `Candidate` entries to the contacts table.
 #[cfg(all(feature = "lance", feature = "neon"))]
 pub mod contrib_store;
 
