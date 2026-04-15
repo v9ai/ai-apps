@@ -8,6 +8,7 @@
 pub mod error;
 pub mod hf_client;
 pub mod llm;
+pub mod output;
 pub mod pipeline;
 pub mod tools;
 pub mod types;

@@ -8,6 +8,7 @@ use tracing_subscriber::EnvFilter;
 use hoa_research::error::Result;
 use hoa_research::hf_client::HfClient;
 use hoa_research::llm::{best_device, LocalLlm};
+use hoa_research::output;
 use hoa_research::pipeline::Pipeline;
 use hoa_research::types::PersonInput;
 
@@ -33,6 +34,10 @@ struct Cli {
     /// Output directory for research JSON
     #[arg(long, default_value = "../src/lib/research")]
     output_dir: PathBuf,
+
+    /// Reformat an existing raw ResearchState JSON into frontend schema (skip pipeline)
+    #[arg(long)]
+    reformat: Option<PathBuf>,
 }
 
 #[tokio::main]
@@ -42,6 +47,25 @@ async fn main() -> Result<()> {
         .init();
 
     let cli = Cli::parse();
+
+    // Reformat mode: skip pipeline, just transform existing raw JSON
+    if let Some(raw_path) = &cli.reformat {
+        let raw = std::fs::read_to_string(raw_path)?;
+        let state: hoa_research::types::ResearchState = serde_json::from_str(&raw)?;
+        let research = output::transform(&state);
+        let output_path = cli.output_dir.join(format!("{}.json", cli.slug));
+        let json = serde_json::to_string_pretty(&research)?;
+        std::fs::write(&output_path, &json)?;
+        tracing::info!("Reformatted → {}", output_path.display());
+        tracing::info!(
+            "Output: {} timeline, {} contributions, {} quotes, {} questions",
+            research.timeline.len(),
+            research.key_contributions.len(),
+            research.quotes.len(),
+            research.questions.as_ref().map(|q| q.len()).unwrap_or(0),
+        );
+        return Ok(());
+    }
 
     // Load personality from TypeScript file (or use CLI overrides)
     let person = load_personality(&cli)?;
@@ -67,11 +91,19 @@ async fn main() -> Result<()> {
     let pipeline = Pipeline::new(llm, hf_client);
     let state = pipeline.run(person).await?;
 
-    // Write output
+    // Transform to frontend-compatible schema and write
+    let research = output::transform(&state);
     let output_path = cli.output_dir.join(format!("{}.json", cli.slug));
-    let json = serde_json::to_string_pretty(&state)?;
+    let json = serde_json::to_string_pretty(&research)?;
     std::fs::write(&output_path, &json)?;
     tracing::info!("Saved to {}", output_path.display());
+    tracing::info!(
+        "Output: {} timeline events, {} contributions, {} quotes, {} questions",
+        research.timeline.len(),
+        research.key_contributions.len(),
+        research.quotes.len(),
+        research.questions.as_ref().map(|q| q.len()).unwrap_or(0),
+    );
 
     Ok(())
 }

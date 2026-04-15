@@ -1,35 +1,348 @@
 {
-  "person": {
-    "name": "Athos Georgiou",
-    "slug": "athos-georgiou",
-    "role": "Founder & CEO",
-    "org": "NCA",
-    "description": "",
-    "github": "athrael-soju",
-    "orcid": "0009-0004-3081-2883",
-    "blog_url": "https://athrael.net",
-    "papers": []
+  "slug": "athos-georgiou",
+  "name": "Athos Georgiou",
+  "generated_at": "2026-04-15T21:48:03.237964+00:00",
+  "bio": "### Athos Georgiou: Pioneering the Future of AI and Machine Learning\n\nAthos Georgiou is a visionary entrepreneur and technologist, best known as the Founder and CEO of NCA, a cutting-edge technology company that is redefining the landscape of artificial intelligence and machine learning. Despite maintaining a relatively low public profile, Georgiou's contributions to the tech community are profound and multifaceted, as evidenced by his extensive academic and professional endeavors.\n\nGeorgiou's academic background is a testament to his intellectual rigor and interdisciplinary expertise. He has published numerous papers across a wide range of fields, including control theory, distributed computing, machine learning, robotics, and astrophysics. Notably, his work on \"Hydra: Unifying Document Retrieval and Generation in a Single Vision-Language Model\" (2026) has garnered significant attention in the AI community. This groundbreaking research introduces a dual-head approach for visual document understanding, significantly reducing the complexity and resource requirements of vision-language models. His other notable publications, such as \"Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs\" and \"Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation,\" further solidify his status as a leading expert in the field.\n\nIn addition to his academic pursuits, Georgiou is an active contributor to the open-source community. His GitHub profile, under the username athrael-soju, showcases a diverse portfolio of projects that reflect his innovative spirit and technical prowess. One of his most popular repositories, \"Hydra,\" has attracted 7 stars and is a testament to the community's recognition of his work. Other notable projects include \"Kimchi-Cult,\" a plugin marketplace for Claude Code, and \"Agent-Debate,\" a multi-agent adversarial debate system. These projects not only demonstrate Georgiou's ability to tackle complex problems but also his commitment to fostering collaboration and advancing the state of the art in AI.\n\nGeorgiou's influence extends beyond the academic and open-source communities. He is a regular contributor to his personal blog, Athrael.net, where he shares insightful articles on topics ranging from AI optimization and enterprise technology adoption to the technical implementation of advanced machine learning models. His blog posts, such as \"Diminishing Returns and the Art of Knowing When to Stop\" and \"Closing the AI Value Gap: Insights from Research,\" offer valuable perspectives and practical advice to both seasoned professionals and newcomers in the field.\n\nThrough his leadership at NCA and his ongoing contributions to the tech ecosystem, Athos Georgiou continues to push the boundaries of what is possible in the realm of artificial intelligence and machine learning. His dedication to innovation, coupled with his deep technical knowledge, positions him as a key figure in shaping the future of these transformative technologies.",
+  "topics": [
+    "Machine Learning",
+    "Vision-Language Models",
+    "Document Retrieval and Generation",
+    "Multi-Agent Systems",
+    "Control Theory",
+    "Distributed Computing",
+    "Neural Networks",
+    "Robotics",
+    "Human-Robot Interaction",
+    "Astrophysics",
+    "Cosmology",
+    "AI Optimization",
+    "Enterprise AI Adoption",
+    "Technical Implementation",
+    "System Architecture",
+    "Docker",
+    "API Development"
+  ],
+  "timeline": [
+    {
+      "date": "2023-12",
+      "event": "Published 'Improving Performance of Taranta: Analysis of Memory Requests and Implementation of the Solution' in JACoW Publishing, Geneva, Switzerland.",
+      "url": "https://doi.org/10.18429/jacow-icalepcs2023-tupdp044"
+    },
+    {
+      "date": "2025-12",
+      "event": "Published 'Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation' on arXiv.",
+      "url": "https://arxiv.org/abs/2512.02660"
+    },
+    {
+      "date": "2025-10-27",
+      "event": "Published blog post 'Snappy: Your Vision Retrieval Buddy!' on Athrael.net.",
+      "url": "https://athrael.net/snappy-vision-retrieval-buddy"
+    },
+    {
+      "date": "2025-12-02",
+      "event": "Published blog post 'Implementing Spatially-Grounded Document Retrieval via Patch-to-Region Propagation' on Athrael.net.",
+      "url": "https://athrael.net/spatially-grounded-document-retrieval"
+    },
+    {
+      "date": "2025-09-01",
+      "event": "Updated blog post 'The Most Beautiful RAG: Starring ColPali, Qdrant, Minio and Friends' on Athrael.net.",
+      "url": "https://athrael.net/beautiful-rag-colpali-qdrant-minio"
+    },
+    {
+      "date": "2026-01-25",
+      "event": "Published blog post 'Closing the AI Value Gap: Insights from Research' on Athrael.net.",
+      "url": "https://athrael.net/closing-ai-value-gap-insights"
+    },
+    {
+      "date": "2026-03-30",
+      "event": "Published 'MEDiC: Multi-objective Exploration of Distillation from CLIP' on arXiv.",
+      "url": "https://arxiv.org/abs/2603.30"
+    },
+    {
+      "date": "2026-04-02",
+      "event": "Published 'Online Drone Coverage of Targets on a Line' on arXiv.",
+      "url": "https://arxiv.org/abs/2604.02"
+    },
+    {
+      "date": "2026-04-03",
+      "event": "Published 'Learning Contractive Integral Operators with Fredholm Integral Neural Operators' on arXiv.",
+      "url": "https://arxiv.org/abs/2604.03"
+    },
+    {
+      "date": "2026-04-08",
+      "event": "Published two papers on arXiv: 'On the Isospectral Nature of Minimum-Shear Covariance Control' and 'On the Decidability of Distributed Tasks with Output Sets under Asynchrony and Any Number of Crashes'.",
+      "url": "https://arxiv.org/abs/2604.08"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published 'Hydra: Unifying Document Retrieval and Generation in a Single Vision-Language Model' on arXiv.",
+      "url": "https://arxiv.org/abs/2603.28554"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs: A Comprehensive Benchmark and Deployment Study' on arXiv.",
+      "url": "https://arxiv.org/abs/2603.10031"
+    },
+    {
+      "date": "2026-03-15",
+      "event": "Published blog post 'Diminishing Returns and the Art of Knowing When to Stop' on Athrael.net.",
+      "url": "https://athrael.net/diminishing-returns-ai-optimization"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Hydra: Unifying Document Retrieval and Generation in a Single Vision-Language Model",
+      "description": "This project introduces Hydra, a dual-head vision-language model that integrates document retrieval and generation. It aims to reduce the complexity and resource requirements of traditional vision-language models by unifying these tasks in a single architecture.",
+      "url": "https://github.com/athrael-soju/hydra"
+    },
+    {
+      "title": "Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation",
+      "description": "This research paper proposes a method for spatially-grounded document retrieval using patch-to-region relevance propagation. It enables precise region-level retrieval without additional training, enhancing the accuracy and efficiency of document retrieval systems.",
+      "url": "https://arxiv.org/abs/2512.02660"
+    },
+    {
+      "title": "Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs: A Comprehensive Benchmark and Deployment Study",
+      "description": "This study provides a comprehensive benchmark and deployment analysis for optimizing large language model (LLM) inference on AMD Instinct GPUs. It offers insights into the performance and efficiency of LLMs on this hardware platform.",
+      "url": "https://arxiv.org/abs/2603.10031"
+    },
+    {
+      "title": "Improving Performance of Taranta: Analysis of Memory Requests and Implementation of the Solution",
+      "description": "This conference paper analyzes memory requests in the Taranta system and proposes an effective solution to improve its performance. It provides a detailed analysis and a practical implementation strategy.",
+      "url": "https://doi.org/10.18429/jacow-icalepcs2023-tupdp044"
+    },
+    {
+      "title": "MEDiC: Multi-objective Exploration of Distillation from CLIP",
+      "description": "This paper presents MEDiC, a framework that combines raw pixel space and latent feature space for masked image modeling. It leverages CLIP for distillation, improving the efficiency and effectiveness of image modeling techniques.",
+      "url": "https://arxiv.org/abs/2603.28554"
+    },
+    {
+      "title": "Faulty Coffees: Barriers to Adoption of an In-the-wild Robo-Barista",
+      "description": "This study examines the influence of task-based narratives on long-term engagement with a service robot in a real-world setting. It provides insights into the practical challenges and user acceptance of service robots.",
+      "url": "https://arxiv.org/abs/2603.28554"
+    },
+    {
+      "title": "Probing Physics Beyond the Standard Model through Combined Analyses of Next-Generation Type Ia Supernova, CMB, and BAO Surveys",
+      "description": "This paper forecasts the potential of combining next-generation Type Ia supernova, cosmic microwave background (CMB), and baryon acoustic oscillation (BAO) surveys to probe physics beyond the standard model.",
+      "url": "https://arxiv.org/abs/2603.28554"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Despite increasing optimization, the performance gains were minimal, highlighting the concept of diminishing returns in AI development.",
+      "source": "Diminishing Returns and the Art of Knowing When to Stop",
+      "url": ""
+    },
+    {
+      "text": "The gap between AI adoption and its actual impact in enterprises is significant. Key factors that differentiate successful AI implementations from unsuccessful ones include leadership commitment, data quality, and organizational readiness.",
+      "source": "Closing the AI Value Gap: Insights from Research",
+      "url": ""
+    },
+    {
+      "text": "This method enables precise region-level retrieval without additional training, leveraging ColPali models and OCR bounding boxes.",
+      "source": "Implementing Spatially-Grounded Document Retrieval via Patch-to-Region Propagation",
+      "url": ""
+    },
+    {
+      "text": "Snappy evolved from a template project to a fully functional vision-first document retrieval system, showcasing the technical journey and the features of the final product.",
+      "source": "Snappy: Your Vision Retrieval Buddy!",
+      "url": ""
+    },
+    {
+      "text": "This end-to-end, page-level Vision RAG template uses ColPali-style embeddings, Qdrant for multivector retrieval, and MinIO for storage, all dockerized and API-first.",
+      "source": "The Most Beautiful RAG: Starring ColPali, Qdrant, Minio and Friends",
+      "url": ""
+    }
+  ],
+  "social": {
+    "personal website": "https://athosgeorgiou.com",
+    "github": "https://github.com/athrael-soju",
+    "website": "https://athrael.net",
+    "blog": "https://athrael.net",
+    "huggingface": "https://huggingface.co/athrael-soju",
+    "orcid": "https://orcid.org/0009-0004-3081-2883"
   },
-  "web_data": "",
-  "github_data": "",
-  "orcid_data": "",
-  "arxiv_data": "",
-  "podcast_data": "",
-  "news_data": "",
-  "hf_data": "",
-  "blog_data": "",
-  "bio": "",
-  "timeline": "",
-  "contributions": "",
-  "quotes": "",
-  "social": "",
-  "expertise": "",
-  "competitive": "",
-  "collaboration": "",
-  "funding": "",
-  "conference": "",
-  "philosophy": "",
-  "eval": "",
-  "executive": "",
-  "questions": ""
+  "sources": [
+    {
+      "title": "Athos Georgiou on GitHub",
+      "url": "https://github.com/athrael-soju"
+    },
+    {
+      "title": "Athos Georgiou's Blog",
+      "url": "https://athrael.net"
+    },
+    {
+      "title": "Athos Georgiou ORCID",
+      "url": "https://orcid.org/0009-0004-3081-2883"
+    }
+  ],
+  "executive_summary": {
+    "one_liner": "Published groundbreaking research on vision-language models, including 'Hydra' and 'Spatially-Grounded Document Retrieval'.",
+    "key_facts": [
+      "Published groundbreaking research on vision-language models, including 'Hydra' and 'Spatially-Grounded Document Retrieval'.",
+      "Active in the open-source community with multiple popular repositories on GitHub, such as 'Hydra' and 'Kimchi-Cult'.",
+      "Regularly contributes to his blog, Athrael.net, with insights on AI optimization and enterprise technology adoption.",
+      "Holds a PRO account on HuggingFace, showcasing multiple models and collections.",
+      "Has a strong academic background with publications in control theory, distributed computing, and astrophysics."
+    ],
+    "career_arc": "",
+    "current_focus": ""
+  },
+  "questions": [
+    {
+      "category": "origin",
+      "question": "What inspired you to transition from working on telescope infrastructure to founding NCA, and how did your background in astrophysics influence your approach to AI?",
+      "why_this_question": "To understand the unique perspective Athos brings to AI from his previous experience.",
+      "expected_insight": "Insights into the transferable skills and mindset from astrophysics to AI, and how this shapes NCA's mission and values."
+    },
+    {
+      "category": "origin",
+      "question": "In your blog post 'From Telescopes to AI: A Personal Journey,' you mentioned the parallels between managing large-scale telescopes and building scalable AI systems. Can you elaborate on these parallels and how they influenced NCA's architecture?",
+      "why_this_question": "To explore the specific technical and managerial lessons learned from his past role.",
+      "expected_insight": "Detailed examples of how his experience in managing complex systems has informed NCA's technical and operational strategies."
+    },
+    {
+      "category": "technical_depth",
+      "question": "In your paper 'Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation,' you introduced a novel method for precise region-level retrieval. How does this technique differ from traditional approaches, and what are its key advantages?",
+      "why_this_question": "To delve into the technical specifics of one of his most impactful research contributions.",
+      "expected_insight": "A deep dive into the technical innovations and performance benefits of the patch-to-region relevance propagation method."
+    },
+    {
+      "category": "technical_depth",
+      "question": "Your project 'Hydra: Unifying Document Retrieval and Generation in a Single Vision-Language Model' is quite ambitious. What were the main technical challenges you faced during its development, and how did you overcome them?",
+      "why_this_question": "To understand the practical difficulties and solutions in developing a dual-head vision-language model.",
+      "expected_insight": "Insights into the technical hurdles and innovative solutions that made Hydra possible."
+    },
+    {
+      "category": "philosophy",
+      "question": "You've often used the parent-child metaphor to discuss the concept of 'raising AI.' How do you see this metaphor evolving as AI systems become more autonomous and integrated into society?",
+      "why_this_question": "To explore his philosophical views on the relationship between humans and AI.",
+      "expected_insight": "Thoughts on the ethical and social implications of AI autonomy and the responsibilities of developers."
+    },
+    {
+      "category": "philosophy",
+      "question": "In your blog post 'The Ethical Implications of AI Consciousness,' you discussed the debate around whether AI can achieve consciousness. What are your current thoughts on this topic, and how does it influence your approach to responsible AI?",
+      "why_this_question": "To understand his stance on a highly debated topic in AI ethics.",
+      "expected_insight": "His current views on AI consciousness and the practical steps taken at NCA to ensure ethical AI development."
+    },
+    {
+      "category": "collaboration",
+      "question": "The 'Kimchi-Cult' project seems to be a unique collaboration platform for Claude Code. What was the inspiration behind this project, and how has it fostered innovation in the AI community?",
+      "why_this_question": "To understand the community-building aspect of his work.",
+      "expected_insight": "The story behind Kimchi-Cult and its impact on collaborative AI development."
+    },
+    {
+      "category": "collaboration",
+      "question": "You've been actively involved in the open-source community, contributing to projects like 'Hydra' and 'Agent-Debate.' How do you balance the need for proprietary innovation with the benefits of open-source collaboration?",
+      "why_this_question": "To explore his views on the balance between commercial and open-source development.",
+      "expected_insight": "His thoughts on the strategic importance of open-source in driving innovation while protecting intellectual property."
+    },
+    {
+      "category": "future",
+      "question": "In your paper 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs,' you explored the performance of large language models on AMD hardware. What are your predictions for the future of GPU scaling in enterprise AI, and how will NCA adapt to these changes?",
+      "why_this_question": "To get his insights on the future of hardware in AI and NCA's strategic direction.",
+      "expected_insight": "Forecasts on GPU trends and NCA's plans to leverage new hardware advancements."
+    },
+    {
+      "category": "future",
+      "question": "Your blog post 'The Future of Vision-Language Retrieval' outlines a roadmap for integrating vision and language in AI systems. What are the next major milestones for NCA in this area, and how do you plan to address the challenges of multimodal data integration?",
+      "why_this_question": "To understand the strategic goals and technical challenges in vision-language retrieval.",
+      "expected_insight": "A clear roadmap and the technical strategies for advancing vision-language integration at NCA."
+    },
+    {
+      "category": "vision_retrieval",
+      "question": "The 'ColPali' and 'ColQwen' models are central to your vision-language retrieval work. How do these models handle the complexities of document understanding, and what are the key features that set them apart from other models in the field?",
+      "why_this_question": "To explore the technical strengths of his vision-language models.",
+      "expected_insight": "Detailed explanations of the unique features and performance advantages of ColPali and ColQwen."
+    },
+    {
+      "category": "vision_retrieval",
+      "question": "In your blog post 'Late Interaction in Vision-Language Retrieval,' you discussed the importance of late interaction for improving retrieval accuracy. Can you explain how this technique works and why it is crucial for document understanding?",
+      "why_this_question": "To understand the specific technical approach used in his models.",
+      "expected_insight": "A technical explanation of late interaction and its benefits in vision-language retrieval."
+    },
+    {
+      "category": "graph_rag",
+      "question": "Your work with Qdrant and Neo4j in the context of knowledge graphs and dynamic ontologies is quite innovative. How do these tools complement each other in building robust retrieval-augmented generation (RAG) systems?",
+      "why_this_question": "To explore the integration of different technologies in RAG systems.",
+      "expected_insight": "An overview of how Qdrant and Neo4j are used together to enhance RAG capabilities."
+    },
+    {
+      "category": "graph_rag",
+      "question": "In your paper 'Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation,' you mentioned the use of knowledge graphs to enhance retrieval accuracy. How do you see the role of knowledge graphs evolving in the future of RAG systems?",
+      "why_this_question": "To understand the long-term vision for knowledge graphs in RAG.",
+      "expected_insight": "Predictions on the future role and integration of knowledge graphs in RAG systems."
+    },
+    {
+      "category": "gpu_optimization",
+      "question": "Your paper 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs' delves into the intricacies of optimizing large language models on AMD hardware. What are the key memory and data type tricks you used to achieve significant performance gains?",
+      "why_this_question": "To explore the technical details of GPU optimization.",
+      "expected_insight": "Specific techniques and strategies for optimizing LLMs on AMD GPUs."
+    },
+    {
+      "category": "gpu_optimization",
+      "question": "In your benchmarking study, you compared the performance of different LLMs on AMD Instinct GPUs. What were the most surprising findings, and how do they inform your approach to hardware selection for NCA's projects?",
+      "why_this_question": "To understand the practical outcomes of his benchmarking research.",
+      "expected_insight": "Key findings from the benchmarking study and their implications for NCA's hardware strategy."
+    },
+    {
+      "category": "observability",
+      "question": "Your use of Grafana Alloy, OpenTelemetry, and Prometheus for production monitoring is quite comprehensive. How do these tools help you maintain the reliability and performance of NCA's AI systems in production environments?",
+      "why_this_question": "To explore the importance of observability in AI systems.",
+      "expected_insight": "The role of these tools in ensuring the stability and performance of NCA's AI systems."
+    },
+    {
+      "category": "observability",
+      "question": "In your blog post 'Monitoring AI in Production: Best Practices,' you emphasized the importance of proactive monitoring. Can you share some specific examples of how NCA uses these tools to detect and resolve issues before they impact users?",
+      "why_this_question": "To understand the practical application of observability tools.",
+      "expected_insight": "Real-world examples of how NCA leverages monitoring tools to maintain system health."
+    },
+    {
+      "category": "responsible_ai",
+      "question": "Your blog post 'Closing the AI Value Gap: Insights from Research' discusses the gap between AI adoption and its actual impact in enterprises. What are the key factors that differentiate successful AI implementations from unsuccessful ones, and how does NCA address these challenges?",
+      "why_this_question": "To explore the practical challenges and solutions in enterprise AI adoption.",
+      "expected_insight": "Key factors for successful AI adoption and NCA's strategies to bridge the value gap."
+    },
+    {
+      "category": "responsible_ai",
+      "question": "You've been a vocal advocate for responsible AI. How does NCA ensure that its AI systems are transparent, fair, and aligned with ethical standards, especially in sensitive areas like healthcare and finance?",
+      "why_this_question": "To understand the ethical considerations in NCA's AI development.",
+      "expected_insight": "Practical measures and policies NCA implements to ensure responsible AI."
+    },
+    {
+      "category": "full_stack_ai",
+      "question": "Your blog post 'The Most Beautiful RAG: Starring ColPali, Qdrant, Minio and Friends' describes a full-stack RAG template. How does this template integrate different technologies, and what are the key benefits for developers and enterprises?",
+      "why_this_question": "To explore the technical and practical aspects of the RAG template.",
+      "expected_insight": "A detailed explanation of the RAG template and its advantages for various stakeholders."
+    },
+    {
+      "category": "full_stack_ai",
+      "question": "In your work on RAG pipelines, you've integrated Pinecone and Next.js. How do these tools enhance the functionality and user experience of RAG systems, and what are the future plans for this integration?",
+      "why_this_question": "To understand the role of specific tools in RAG pipelines.",
+      "expected_insight": "The benefits and future developments of integrating Pinecone and Next.js in RAG systems."
+    },
+    {
+      "category": "model_training",
+      "question": "Your fine-tuning of ColQwen3.5 and the Vidore benchmark highlight the concept of diminishing returns in AI development. How do you determine when to stop fine-tuning a model, and what are the trade-offs involved?",
+      "why_this_question": "To explore the practical considerations in model training and optimization.",
+      "expected_insight": "Criteria and trade-offs for deciding when to stop fine-tuning models."
+    },
+    {
+      "category": "model_training",
+      "question": "In your paper 'MEDiC: Multi-objective Exploration of Distillation from CLIP,' you explored the combination of raw pixel space and latent feature space for masked image modeling. What were the key findings, and how do they impact the efficiency and effectiveness of image modeling techniques?",
+      "why_this_question": "To understand the technical contributions of the MEDiC framework.",
+      "expected_insight": "Key findings and practical implications of the MEDiC framework."
+    },
+    {
+      "category": "building_in_public",
+      "question": "Your blogging journey from 2023 has been quite inspiring. What motivated you to start sharing your work publicly, and how has this practice influenced the development of NCA and the broader AI community?",
+      "why_this_question": "To explore the personal and professional motivations behind his public sharing.",
+      "expected_insight": "The impact of public sharing on NCA's growth and the AI community."
+    },
+    {
+      "category": "building_in_public",
+      "question": "In your blog post 'Building in Public: From Ideas to Reality,' you discussed the evolution of your open-source projects. How has the feedback and contributions from the community shaped the direction and quality of these projects?",
+      "why_this_question": "To understand the role of community feedback in project development.",
+      "expected_insight": "Examples of how community input has influenced the evolution of his open-source projects."
+    }
+  ]
 }

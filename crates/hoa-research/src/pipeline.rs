@@ -661,15 +661,49 @@ fn synthesis_prompt(agent: AgentType, state: &ResearchState) -> (String, String)
             format!("Evaluate research quality for {ctx}. Output JSON {{\"completeness\": N, \"accuracy\": N, \"depth\": N, \"source_quality\": N, \"overall\": N, \"summary\": \"...\"}}:\n{all_analysis}"),
         ),
         AgentType::ExecutiveSynthesizer => (
-            "You are an executive summary synthesizer. Produce the final comprehensive profile.".into(),
-            format!("Synthesize executive summary for {ctx}:\n{all_analysis}"),
+            "You are an executive summary synthesizer. Output a JSON object with these fields: one_liner (one sentence), key_facts (array of 5-8 bullet strings), career_arc (2-3 sentence narrative), current_focus (1-2 sentences), industry_significance (1-2 sentences), confidence_level (\"high\"/\"medium\"/\"low\"). Output ONLY valid JSON, no markdown.".into(),
+            format!("Synthesize executive summary for {ctx}. Output ONLY a JSON object:\n{all_analysis}"),
         ),
-        AgentType::QuestionGenerator => (
-            "You are an expert podcast interviewer. Generate probing, specific interview questions.".into(),
-            format!(
-                "Generate 26 interview questions for {ctx} (2 per category). Output JSON array of {{\"category\": \"...\", \"question\": \"...\", \"why_this_question\": \"...\", \"expected_insight\": \"...\"}}:\n{all_analysis}"
-            ),
-        ),
+        AgentType::QuestionGenerator => {
+            let categories = get_question_categories(&state.person.slug);
+            (
+                "You are an expert podcast interviewer who has read everything this person has written. Generate probing, specific questions that reference their actual work — blog posts by name, specific projects, technical decisions they made. Never ask generic questions that could apply to anyone. Each question should make the interviewee think 'this person really did their homework.' Output ONLY a JSON array, no markdown.".into(),
+                format!(
+                    "Generate {count} interview questions for {ctx} ({per} per category).\n\nCategories (use these exact category keys):\n{cats}\n\nOutput JSON array of {{\"category\": \"...\", \"question\": \"...\", \"why_this_question\": \"...\", \"expected_insight\": \"...\"}}:\n{all_analysis}",
+                    count = categories.len() * 2,
+                    per = 2,
+                    cats = categories.iter().map(|(k, desc)| format!("- {k}: {desc}")).collect::<Vec<_>>().join("\n"),
+                ),
+            )
+        },
         _ => ("".into(), "".into()),
+    }
+}
+
+/// Per-person question categories.
+fn get_question_categories(slug: &str) -> Vec<(&'static str, &'static str)> {
+    match slug {
+        "athos-georgiou" => vec![
+            ("origin", "Founding NCA, career transition from telescope infrastructure to AI"),
+            ("technical_depth", "Snappy architecture, ColPali/ColQwen, patch-to-region propagation"),
+            ("philosophy", "Responsible AI, 'raising AI' parent-child metaphor, GenAI limitations"),
+            ("collaboration", "Claude Code ecosystem, kimchi-cult, open-source community"),
+            ("future", "Enterprise AI adoption, AMD GPU scaling, vision-language retrieval roadmap"),
+            ("vision_retrieval", "ColPali, ColQwen models, late interaction, document understanding"),
+            ("graph_rag", "Qdrant, Neo4j, Ollama, knowledge graphs, dynamic ontology"),
+            ("gpu_optimization", "AMD Instinct MI325X, inference benchmarking, dtype/memory tricks"),
+            ("observability", "Grafana Alloy, OpenTelemetry, Prometheus, production monitoring"),
+            ("responsible_ai", "Ethics, AI consciousness debate, enterprise adoption gaps"),
+            ("full_stack_ai", "RAG pipelines, Pinecone, Next.js integration, vision RAG templates"),
+            ("model_training", "ColQwen3.5 fine-tuning, Vidore benchmark, diminishing returns"),
+            ("building_in_public", "Blogging journey from 2023, open-source evolution, community building"),
+        ],
+        _ => vec![
+            ("origin", "Founding story, career path, what led them here"),
+            ("technical_depth", "Architecture decisions, technical trade-offs, implementation details"),
+            ("philosophy", "Core beliefs about technology, industry predictions, contrarian takes"),
+            ("collaboration", "Key partnerships, team dynamics, community engagement"),
+            ("future", "What they're building next, industry trends, long-term vision"),
+        ],
     }
 }

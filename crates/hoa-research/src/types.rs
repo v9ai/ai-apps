@@ -120,11 +120,18 @@ pub struct PersonResearch {
     pub bio: String,
     pub topics: Vec<String>,
     pub timeline: Vec<TimelineEvent>,
-    pub contributions: Vec<Contribution>,
+    pub key_contributions: Vec<Contribution>,
     pub quotes: Vec<Quote>,
-    pub social_links: Vec<SocialLink>,
-    pub questions: Vec<InterviewQuestion>,
-    pub evaluation: ResearchEvaluation,
+    pub social: std::collections::HashMap<String, String>,
+    pub sources: Vec<Source>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub executive_summary: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub competitive_landscape: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub technical_philosophy: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub questions: Option<Vec<InterviewQuestion>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -132,7 +139,7 @@ pub struct TimelineEvent {
     pub date: String,
     pub event: String,
     #[serde(default)]
-    pub url: Option<String>,
+    pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -140,34 +147,22 @@ pub struct Contribution {
     pub title: String,
     pub description: String,
     #[serde(default)]
-    pub url: Option<String>,
-    #[serde(default)]
-    pub impact: Option<String>,
+    pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Quote {
     pub text: String,
     #[serde(default)]
-    pub source: Option<String>,
+    pub source: String,
     #[serde(default)]
-    pub date: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SocialLink {
-    pub platform: String,
     pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResearchEvaluation {
-    pub completeness: u8,
-    pub accuracy: u8,
-    pub depth: u8,
-    pub source_quality: u8,
-    pub overall: u8,
-    pub summary: String,
+pub struct Source {
+    pub title: String,
+    pub url: String,
 }
 
 /// The 20 agent types organized by phase.
