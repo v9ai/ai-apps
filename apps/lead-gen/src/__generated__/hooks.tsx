@@ -3095,6 +3095,8 @@ export type UpdateCompanyInput = {
 };
 
 export type UpdateContactInput = {
+  company?: InputMaybe<Scalars['String']['input']>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
   doNotContact?: InputMaybe<Scalars['Boolean']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   emails?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -3329,10 +3331,11 @@ export type AllCompanyTagsQuery = { __typename?: 'Query', allCompanyTags: Array<
 export type FindCompanyQueryVariables = Exact<{
   name?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
+  linkedinUrl?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type FindCompanyQuery = { __typename?: 'Query', findCompany: { __typename?: 'FindCompanyResult', found: boolean, company: { __typename?: 'Company', id: number, key: string, name: string, website: string | null, email: string | null, location: string | null } | null } };
+export type FindCompanyQuery = { __typename?: 'Query', findCompany: { __typename?: 'FindCompanyResult', found: boolean, company: { __typename?: 'Company', id: number, key: string, name: string, website: string | null, email: string | null, location: string | null, linkedin_url: string | null } | null } };
 
 export type EvidenceFieldsFragment = { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null };
 
@@ -4204,8 +4207,8 @@ export type AllCompanyTagsLazyQueryHookResult = ReturnType<typeof useAllCompanyT
 export type AllCompanyTagsSuspenseQueryHookResult = ReturnType<typeof useAllCompanyTagsSuspenseQuery>;
 export type AllCompanyTagsQueryResult = Apollo.QueryResult<AllCompanyTagsQuery, AllCompanyTagsQueryVariables>;
 export const FindCompanyDocument = gql`
-    query FindCompany($name: String, $website: String) {
-  findCompany(name: $name, website: $website) {
+    query FindCompany($name: String, $website: String, $linkedinUrl: String) {
+  findCompany(name: $name, website: $website, linkedinUrl: $linkedinUrl) {
     found
     company {
       id
@@ -4214,6 +4217,7 @@ export const FindCompanyDocument = gql`
       website
       email
       location
+      linkedin_url
     }
   }
 }
@@ -4233,6 +4237,7 @@ export const FindCompanyDocument = gql`
  *   variables: {
  *      name: // value for 'name'
  *      website: // value for 'website'
+ *      linkedinUrl: // value for 'linkedinUrl'
  *   },
  * });
  */

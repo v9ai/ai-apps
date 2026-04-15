@@ -2138,6 +2138,8 @@ input UpdateCompanyInput {
 }
 
 input UpdateContactInput {
+  company: String
+  companyId: Int
   doNotContact: Boolean
   email: String
   emails: [String!]

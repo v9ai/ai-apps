@@ -3092,6 +3092,8 @@ export type UpdateCompanyInput = {
 };
 
 export type UpdateContactInput = {
+  company?: InputMaybe<Scalars['String']['input']>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
   doNotContact?: InputMaybe<Scalars['Boolean']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   emails?: InputMaybe<Array<Scalars['String']['input']>>;

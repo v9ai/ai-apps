@@ -4,8 +4,8 @@ query AllCompanyTags {
   allCompanyTags
 }
 
-query FindCompany($name: String, $website: String) {
-  findCompany(name: $name, website: $website) {
+query FindCompany($name: String, $website: String, $linkedinUrl: String) {
+  findCompany(name: $name, website: $website, linkedinUrl: $linkedinUrl) {
     found
     company {
       id
@@ -14,6 +14,7 @@ query FindCompany($name: String, $website: String) {
       website
       email
       location
+      linkedin_url
     }
   }
 }
