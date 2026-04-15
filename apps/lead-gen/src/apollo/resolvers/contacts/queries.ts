@@ -82,11 +82,13 @@ export const contactQueries = {
     args: { linkedinUrl: string },
     context: GraphQLContext,
   ) {
-    const normalized = args.linkedinUrl.replace(/\/+$/, "").split("?")[0];
+    const stripped = args.linkedinUrl.replace(/\/+$/, "").split("?")[0];
+    const withSlash = stripped + "/";
     const rows = await context.db
       .select()
       .from(contacts)
-      .where(eq(contacts.linkedin_url, normalized))
+      .where(or(eq(contacts.linkedin_url, stripped), eq(contacts.linkedin_url, withSlash)))
+      .orderBy(desc(contacts.id))
       .limit(1);
     return rows[0] ?? null;
   },

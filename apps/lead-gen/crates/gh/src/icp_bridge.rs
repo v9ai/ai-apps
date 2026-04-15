@@ -10,7 +10,7 @@
 use crate::contributors::RisingStar;
 
 /// Human-readable names for each feature dimension (matches vector index).
-pub const FEATURE_NAMES: [&str; 12] = [
+pub const FEATURE_NAMES: [&str; 13] = [
     "rising_score",
     "contribution_density",
     "novelty",
@@ -23,6 +23,7 @@ pub const FEATURE_NAMES: [&str; 12] = [
     "log_contributions_90d",
     "strength_score",
     "opp_skill_match",
+    "contribution_quality",
 ];
 
 /// Map a `RisingStar` to a 12-element feature vector, all values in `[0, 1]`.
@@ -41,6 +42,7 @@ pub const FEATURE_NAMES: [&str; 12] = [
 /// |   9 | log_contributions_90d| `ln(c90 + 1) / 6.0`, clamped to 0..1          |
 /// |  10 | strength_score       | already 0..1 (experience-weighted composite)   |
 /// |  11 | opp_skill_match      | already 0..1 (skill overlap ratio)             |
+/// |  12 | contribution_quality | already 0..1 (external repo impact)            |
 pub fn contributor_to_features(star: &RisingStar) -> Vec<f32> {
     let log_followers = (star.followers as f32 + 1.0).ln() / 15.0;
     let log_repos = (star.public_repos as f32 + 1.0).ln() / 6.0;
@@ -55,6 +57,8 @@ pub fn contributor_to_features(star: &RisingStar) -> Vec<f32> {
         .unwrap_or(0.0)
         .clamp(0.0, 1.0);
 
+    let contribution_quality = star.contribution_quality.unwrap_or(0.0);
+
     vec![
         star.rising_score,
         star.contribution_density,
@@ -68,6 +72,7 @@ pub fn contributor_to_features(star: &RisingStar) -> Vec<f32> {
         log_contrib_90d,
         star.strength_score.clamp(0.0, 1.0),
         star.opp_skill_match.clamp(0.0, 1.0),
+        contribution_quality.clamp(0.0, 1.0),
     ]
 }
 
@@ -126,18 +131,19 @@ mod tests {
             current_streak_days: Some(3),
             activity_trend: Some("stable".into()),
             recency: Some(0.5),
+            contribution_quality: Some(0.4),
         }
     }
 
     #[test]
-    fn feature_vector_has_12_elements() {
+    fn feature_vector_has_13_elements() {
         let star = make_star(0.5, 100, 20, 3);
-        assert_eq!(contributor_to_features(&star).len(), 12);
+        assert_eq!(contributor_to_features(&star).len(), 13);
     }
 
     #[test]
     fn feature_names_matches_vector_length() {
-        assert_eq!(FEATURE_NAMES.len(), 12);
+        assert_eq!(FEATURE_NAMES.len(), 13);
     }
 
     #[test]

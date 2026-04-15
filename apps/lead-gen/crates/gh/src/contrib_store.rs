@@ -98,6 +98,12 @@ pub async fn save_contributor_contact(
     if let Some(ref trend) = star.activity_trend {
         tags.push(format!("github:trend:{trend}"));
     }
+    // Contribution quality tag
+    if let Some(cq) = star.contribution_quality {
+        if cq >= 0.5 {
+            tags.push("github:quality:external-contributor".to_string());
+        }
+    }
     for tag in extra_tags {
         tags.push(tag.clone());
     }
@@ -181,6 +187,7 @@ mod tests {
             current_streak_days: None,
             activity_trend: None,
             recency: None,
+            contribution_quality: None,
         }
     }
 

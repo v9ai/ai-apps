@@ -445,20 +445,22 @@ async fn main() -> anyhow::Result<()> {
                 current_streak_days: ap.map(|a| a.current_streak_days),
                 activity_trend: ap.map(|a| a.activity_trend.clone()),
                 recency: Some(score.recency),
+                contribution_quality: Some(score.contribution_quality),
             },
             *london_verified,
         ));
     }
 
-    // Composite sort: strength-gated skill match + strength + rising
+    // Composite sort: strength-gated skill match + strength + rising + contribution quality
     // Low-credibility profiles (few followers/stars) get their skill match discounted
     let composite = |s: &RisingStar| -> f32 {
         // Credibility: log(followers+1)/log(100) capped at 1.0, floored at 0.3
         let cred = 0.3 + 0.7 * ((s.followers as f32 + 1.0).ln() / 100_f32.ln()).min(1.0);
+        let cq = s.contribution_quality.unwrap_or(0.0);
         if !opp_skills.is_empty() {
-            0.35 * (s.opp_skill_match * cred) + 0.35 * s.strength_score + 0.30 * s.rising_score
+            0.30 * (s.opp_skill_match * cred) + 0.30 * s.strength_score + 0.25 * s.rising_score + 0.15 * cq
         } else {
-            0.60 * s.strength_score + 0.40 * s.rising_score
+            0.50 * s.strength_score + 0.30 * s.rising_score + 0.20 * cq
         }
     };
     stars.sort_by(|a, b| composite(&b.0).partial_cmp(&composite(&a.0)).unwrap());
@@ -577,6 +579,7 @@ async fn main() -> anyhow::Result<()> {
                                     current_streak_days: ap.map(|a| a.current_streak_days),
                                     activity_trend: ap.map(|a| a.activity_trend.clone()),
                                     recency: Some(score.recency),
+                                    contribution_quality: Some(score.contribution_quality),
                                 },
                                 london,
                             ));
@@ -624,13 +627,15 @@ async fn main() -> anyhow::Result<()> {
         };
         let trend = s.activity_trend.as_deref().unwrap_or("-");
 
+        let cq = s.contribution_quality.unwrap_or(0.0);
         println!(
-            "#{:<3} comp={:.3}  strength={:.3}  rising={:.3}  opp={:.0}%  {name} (@{})",
+            "#{:<3} comp={:.3}  strength={:.3}  rising={:.3}  opp={:.0}%  cq={:.3}  {name} (@{})",
             rank + 1,
             comp_score,
             s.strength_score,
             s.rising_score,
             s.opp_skill_match * 100.0,
+            cq,
             s.login,
         );
         println!("      [{loc_tag}] {location}  company={company}  position={pos_label}");
