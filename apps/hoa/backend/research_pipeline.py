@@ -63,6 +63,12 @@ from mlx_client import (  # noqa: E402
 )
 
 try:
+    from hf_client import HFClient, HFConfig
+except ImportError:
+    HFClient = None  # type: ignore[misc,assignment]
+    HFConfig = None  # type: ignore[misc,assignment]
+
+try:
     from blog_embedder import search_blog_results
 except ImportError:
     search_blog_results = None  # blog embedder not available
@@ -81,11 +87,24 @@ _SKIP_AGENTS: set[str] = set()  # populated via --skip-agents CLI flag
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# LLM — Local MLX inference
+# LLM — Dual-lane: local MLX + remote HuggingFace Inference API
 # ═══════════════════════════════════════════════════════════════════════════
+
+_HF_TOKEN: str = os.environ.get("HF_TOKEN", "")
 
 def _make_client() -> MLXClient:
     return MLXClient(MLXConfig(
+        default_temperature=0.2,
+        default_max_tokens=8192,
+    ))
+
+
+def _make_hf_client():
+    """Create an HFClient for the remote lane (72B model). Returns None if unavailable."""
+    if HFClient is None or not _HF_TOKEN:
+        return None
+    return HFClient(HFConfig(
+        token=_HF_TOKEN,
         default_temperature=0.2,
         default_max_tokens=8192,
     ))
