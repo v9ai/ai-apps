@@ -1,6 +1,7 @@
-type ContactReminder {
+type Reminder {
   id: Int!
-  contactId: Int!
+  entityType: String!
+  entityId: Int!
   remindAt: String!
   recurrence: String!
   note: String
@@ -10,8 +11,8 @@ type ContactReminder {
   updatedAt: String!
 }
 
-type ContactReminderWithContact {
-  reminder: ContactReminder!
+type ReminderWithContact {
+  reminder: Reminder!
   contact: Contact!
 }
 
@@ -32,7 +33,8 @@ type ContactNextTouch {
 }
 
 input CreateReminderInput {
-  contactId: Int!
+  entityType: String!
+  entityId: Int!
   remindAt: String!
   recurrence: String
   note: String
@@ -46,14 +48,14 @@ input UpdateReminderInput {
 }
 
 extend type Query {
-  contactReminders(contactId: Int!): [ContactReminder!]!
-  dueReminders: [ContactReminderWithContact!]!
+  reminders(entityType: String!, entityId: Int!): [Reminder!]!
+  dueReminders: [ReminderWithContact!]!
 }
 
 extend type Mutation {
-  createReminder(input: CreateReminderInput!): ContactReminder!
-  updateReminder(id: Int!, input: UpdateReminderInput!): ContactReminder!
-  snoozeReminder(id: Int!, days: Int!): ContactReminder!
-  dismissReminder(id: Int!): ContactReminder!
+  createReminder(input: CreateReminderInput!): Reminder!
+  updateReminder(id: Int!, input: UpdateReminderInput!): Reminder!
+  snoozeReminder(id: Int!, days: Int!): Reminder!
+  dismissReminder(id: Int!): Reminder!
   computeNextTouchScores(companyId: Int!): ComputeNextTouchScoresResult!
 }

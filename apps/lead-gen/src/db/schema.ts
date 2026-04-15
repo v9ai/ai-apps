@@ -286,13 +286,12 @@ export type Contact = typeof contacts.$inferSelect;
 export type NewContact = typeof contacts.$inferInsert;
 
 // Contact Reminders (explicit dated reminders per contact)
-export const contactReminders = pgTable(
-  "contact_reminders",
+export const reminders = pgTable(
+  "reminders",
   {
     id: serial("id").primaryKey(),
-    contact_id: integer("contact_id")
-      .notNull()
-      .references(() => contacts.id, { onDelete: "cascade" }),
+    entity_type: text("entity_type").notNull(), // contact | company | ...
+    entity_id: integer("entity_id").notNull(),
     remind_at: text("remind_at").notNull(),
     recurrence: text("recurrence").notNull().default("none"), // none | weekly | biweekly | monthly
     note: text("note"),
@@ -306,14 +305,14 @@ export const contactReminders = pgTable(
       .default(sql`now()::text`),
   },
   (table) => ({
-    contactIdIdx: index("idx_contact_reminders_contact_id").on(table.contact_id),
-    remindAtIdx: index("idx_contact_reminders_remind_at").on(table.remind_at),
-    statusIdx: index("idx_contact_reminders_status").on(table.status),
+    entityIdx: index("idx_reminders_entity").on(table.entity_type, table.entity_id),
+    remindAtIdx: index("idx_reminders_remind_at").on(table.remind_at),
+    statusIdx: index("idx_reminders_status").on(table.status),
   }),
 );
 
-export type ContactReminder = typeof contactReminders.$inferSelect;
-export type NewContactReminder = typeof contactReminders.$inferInsert;
+export type Reminder = typeof reminders.$inferSelect;
+export type NewReminder = typeof reminders.$inferInsert;
 
 // Contact Emails (outbound emails sent to a contact)
 export const contactEmails = pgTable(
