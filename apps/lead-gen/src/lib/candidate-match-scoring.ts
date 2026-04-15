@@ -162,17 +162,22 @@ function scoreGitHubDepth(
 
   if (!profile) return base;
 
-  // If we have the enhanced activity_score from deep enrichment, weight it heavily
+  // Always compute profile signals from actual metrics
+  const profileSignals = computeProfileSignals(profile);
+
+  // If we have the enhanced activity_score from deep enrichment, blend it
+  // but cap it when credibility is low (prevents inflated scores for
+  // keyword-stuffed profiles with minimal real engagement)
   const activityScore = profile.github_activity_score ?? 0;
   if (activityScore > 0) {
-    // Blend: 60% activity score + 40% profile signals
-    const profileSignals = computeProfileSignals(profile);
-    return 0.60 * activityScore + 0.40 * profileSignals;
+    const cred = computeCredibility(profile);
+    // Low-credibility profiles: activity score is capped at 0.4
+    const cappedActivity = activityScore * (0.4 + 0.6 * cred);
+    return 0.50 * cappedActivity + 0.50 * profileSignals;
   }
 
   // Fallback: use basic profile data
-  const profileScore = computeProfileSignals(profile);
-  return Math.max(base, profileScore);
+  return Math.max(base, profileSignals);
 }
 
 function computeProfileSignals(profile: ContactAIProfile): number {
@@ -286,11 +291,42 @@ function scoreProfileDepth(
   return Math.min(1.0, score);
 }
 
+// ─── Credibility gate ───────────────────────────────────────────────────────
+
+/**
+ * Credibility multiplier: discounts claimed skills when the profile lacks
+ * evidence of real-world impact. A keyword-stuffed bio with 1 follower and
+ * 3 stars shouldn't rank above someone with genuine contributions.
+ *
+ * Returns 0.3–1.0: low-credibility profiles get skill scores reduced by up to 70%.
+ */
+function computeCredibility(profile: ContactAIProfile | null): number {
+  if (!profile) return 0.5;
+
+  const followers = profile.github_followers ?? 0;
+  const totalStars = profile.github_total_stars ?? 0;
+  const publicRepos = profile.github_public_repos ?? 0;
+
+  // Stars per repo: high ratio = quality signal (0–0.30)
+  const starsPerRepo = publicRepos > 0 ? totalStars / publicRepos : 0;
+  const qualitySignal = Math.min(1.0, starsPerRepo / 2.0) * 0.30;
+
+  // Follower credibility: log scale, 10+ followers starts mattering (0–0.40)
+  const followerSignal = Math.min(1.0, Math.log(followers + 1) / Math.log(100)) * 0.40;
+
+  // Total stars: 10+ = credible (0–0.30)
+  const starSignal = Math.min(1.0, totalStars / 10) * 0.30;
+
+  const raw = qualitySignal + followerSignal + starSignal;
+  // Floor at 0.3 so even zero-credibility profiles get partial skill credit
+  return 0.3 + 0.7 * raw;
+}
+
 // ─── Main scoring function ───────────────────────────────────────────────────
 
 const WEIGHTS = {
-  skillMatch: 0.40,
-  githubDepth: 0.25,
+  skillMatch: 0.35,
+  githubDepth: 0.30,
   experienceFit: 0.20,
   profileDepth: 0.15,
 };
@@ -323,8 +359,12 @@ export function computeCandidateMatchScore(
   const experienceFit = scoreExperienceFit(candidate.ai_profile, candidate.position, opportunity.tags);
   const profileDepth = scoreProfileDepth(candidate.tags, candidate.ai_profile, !!candidate.github_handle);
 
+  // Credibility gate: discount skill match for low-evidence profiles
+  const credibility = computeCredibility(candidate.ai_profile);
+  const adjustedSkillMatch = skillResult.ratio * credibility;
+
   const score =
-    WEIGHTS.skillMatch * skillResult.ratio +
+    WEIGHTS.skillMatch * adjustedSkillMatch +
     WEIGHTS.githubDepth * githubDepth +
     WEIGHTS.experienceFit * experienceFit +
     WEIGHTS.profileDepth * profileDepth;

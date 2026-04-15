@@ -450,10 +450,13 @@ async fn main() -> anyhow::Result<()> {
         ));
     }
 
-    // Composite sort: opp_match (if available) + strength + rising
+    // Composite sort: strength-gated skill match + strength + rising
+    // Low-credibility profiles (few followers/stars) get their skill match discounted
     let composite = |s: &RisingStar| -> f32 {
+        // Credibility: log(followers+1)/log(100) capped at 1.0, floored at 0.3
+        let cred = 0.3 + 0.7 * ((s.followers as f32 + 1.0).ln() / 100_f32.ln()).min(1.0);
         if !opp_skills.is_empty() {
-            0.40 * s.opp_skill_match + 0.35 * s.strength_score + 0.25 * s.rising_score
+            0.35 * (s.opp_skill_match * cred) + 0.35 * s.strength_score + 0.30 * s.rising_score
         } else {
             0.60 * s.strength_score + 0.40 * s.rising_score
         }
