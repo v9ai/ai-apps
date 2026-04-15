@@ -111,13 +111,23 @@ export const contactMutations = {
     context: GraphQLContext,
   ) {
     requireAdmin(context);
-    const { firstName, lastName, emails, tags, doNotContact, ...rest } = args.input;
+    const {
+      firstName, lastName, emails, tags, doNotContact,
+      linkedinUrl, githubHandle, telegramHandle,
+      company, companyId,
+      ...rest // email, position — these match DB column names
+    } = args.input;
     const patch: ContactUpdate = stripNulls({ ...rest });
     if (firstName != null) patch.first_name = firstName;
     if (lastName != null) patch.last_name = lastName;
     if (emails != null) patch.emails = JSON.stringify(emails);
     if (tags != null) patch.tags = JSON.stringify(tags);
     if (doNotContact != null) patch.do_not_contact = doNotContact;
+    if (linkedinUrl !== undefined) patch.linkedin_url = linkedinUrl ?? undefined;
+    if (githubHandle !== undefined) patch.github_handle = githubHandle ?? undefined;
+    if (telegramHandle !== undefined) patch.telegram_handle = telegramHandle ?? undefined;
+    if (company !== undefined) patch.company = company ?? undefined;
+    if (companyId !== undefined) patch.company_id = companyId ?? undefined;
     // Re-classify whenever position changes
     if (args.input.position !== undefined) {
       const mlClassification = classifyContact(args.input.position);
