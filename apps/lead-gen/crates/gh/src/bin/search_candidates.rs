@@ -24,7 +24,7 @@ use tracing::{info, warn};
 
 use github_patterns::contributors::{
     compute_opp_skill_match, compute_rising_score, compute_strength_score,
-    infer_position, is_bot, ContributorRecord, ContributorsDb, RepoContrib, RisingStar,
+    infer_position, is_bot, ContributorRecord, ContributorsDb, RepoContrib, Candidate,
 };
 use github_patterns::skills::{contributor_skills_text, extract_skills};
 use github_patterns::GhClient;
@@ -392,8 +392,8 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    // ── Phase 4: Build RisingStar entries ────────────────────────────────────
-    let mut stars: Vec<(RisingStar, bool)> = Vec::new();
+    // ── Phase 4: Build Candidate entries ────────────────────────────────────
+    let mut stars: Vec<(Candidate, bool)> = Vec::new();
     for (record, london_verified) in &candidates {
         let repos_json = serde_json::to_string(&record.repos).unwrap_or_default();
         let skills_text = contributor_skills_text(
@@ -414,7 +414,7 @@ async fn main() -> anyhow::Result<()> {
         let opp_match = compute_opp_skill_match(&skills, &opp_skills);
         let position_level = infer_position(record.user.bio.as_deref()).map(String::from);
         stars.push((
-            RisingStar {
+            Candidate {
                 login: record.user.login.clone(),
                 html_url: record.user.html_url.clone(),
                 name: record.user.name.clone(),
@@ -453,7 +453,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Composite sort: strength-gated skill match + strength + rising + contribution quality
     // Low-credibility profiles (few followers/stars) get their skill match discounted
-    let composite = |s: &RisingStar| -> f32 {
+    let composite = |s: &Candidate| -> f32 {
         // Credibility: log(followers+1)/log(100) capped at 1.0, floored at 0.3
         let cred = 0.3 + 0.7 * ((s.followers as f32 + 1.0).ln() / 100_f32.ln()).min(1.0);
         let cq = s.contribution_quality.unwrap_or(0.0);
@@ -548,7 +548,7 @@ async fn main() -> anyhow::Result<()> {
                             let opp_match = compute_opp_skill_match(&skills, &opp_skills);
                             let position_level = infer_position(record.user.bio.as_deref()).map(String::from);
                             stars.push((
-                                RisingStar {
+                                Candidate {
                                     login: record.user.login.clone(),
                                     html_url: record.user.html_url.clone(),
                                     name: record.user.name.clone(),

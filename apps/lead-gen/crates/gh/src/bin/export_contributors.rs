@@ -58,7 +58,7 @@ async fn main() -> anyhow::Result<()> {
     let total_in_db = db.count().await;
     info!("LanceDB has {total_in_db} contributors, considering top {top_n}");
 
-    let stars = db.top_rising(top_n).await?;
+    let stars = db.top_candidates(top_n).await?;
     info!(
         "fetched {} contributors, threshold={threshold:.2}",
         stars.len()

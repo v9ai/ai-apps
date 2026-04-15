@@ -51,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|s| s.parse().ok())
             .unwrap_or(25);
-        print_top_rising(&db, n).await?;
+        print_top_candidates(&db, n).await?;
         return Ok(());
     }
 
@@ -84,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(25);
-    print_top_rising(&db, top_n).await?;
+    print_top_candidates(&db, top_n).await?;
 
     Ok(())
 }
@@ -210,8 +210,8 @@ async fn scrape_single_repo(
 
 // ── Top rising stars ──────────────────────────────────────────────────────────
 
-async fn print_top_rising(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
-    let stars = db.top_rising(n).await?;
+async fn print_top_candidates(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
+    let stars = db.top_candidates(n).await?;
     if stars.is_empty() {
         info!("no contributors in DB yet");
         return Ok(());
