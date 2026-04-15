@@ -1234,13 +1234,26 @@ function createImportProfileButton(): HTMLButtonElement {
       return;
     }
     if (msg.done) {
-      btn.textContent = msg.status || "Imported!";
       btn.style.backgroundColor = "#16a34a";
-      setTimeout(() => {
-        btn.textContent = "Import Profile";
-        btn.style.backgroundColor = "#0a66c2";
-        btn.disabled = false;
-      }, 3000);
+      btn.style.padding = "0";
+      btn.disabled = false;
+      btn.innerHTML = "";
+      const link = document.createElement("a");
+      link.href = msg.slug
+        ? `https://agenticleadgen.xyz/contacts/${msg.slug}`
+        : "https://agenticleadgen.xyz/contacts";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = msg.status || "Imported!";
+      link.style.cssText = `
+        color: white;
+        text-decoration: none;
+        display: block;
+        padding: 12px 24px;
+        font-size: 15px;
+        font-weight: 600;
+      `;
+      btn.appendChild(link);
       return;
     }
     if (msg.status) {

@@ -665,8 +665,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (createResult.errors) {
           await notifyTab({ error: createResult.errors[0].message });
         } else {
+          const contact = createResult.data.createContact;
           await notifyTab({
             done: true,
+            slug: contact.slug,
             status: `Imported: ${profileData.name}${companyName ? " at " + companyName : ""}`,
           });
         }
