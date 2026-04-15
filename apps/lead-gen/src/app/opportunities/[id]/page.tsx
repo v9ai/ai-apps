@@ -80,7 +80,7 @@ export default async function OpportunityDetailPage({
     })
     .from(contacts)
     .where(sql`${contacts.tags}::text LIKE ${"%" + `opp:${id}` + "%"}`)
-    .limit(100);
+    .limit(500);
 
   // Parse opportunity data for scoring
   const oppTags: string[] = opp.tags ? JSON.parse(opp.tags) : [];

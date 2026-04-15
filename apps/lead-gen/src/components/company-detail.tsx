@@ -1467,6 +1467,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             </Box>
           )}
         </Flex>
+      </Flex>
     </Container>
   );
 }
