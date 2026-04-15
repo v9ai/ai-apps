@@ -1239,6 +1239,9 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                   do not contact
                 </Badge>
               )}
+              <Badge color="gray" variant="soft">
+                0 notifications total
+              </Badge>
             </Flex>
 
             {/* Header actions */}
