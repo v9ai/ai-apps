@@ -1145,6 +1145,54 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
     return () => window.removeEventListener("message", handler);
   }, [contact, scraping]);
 
+  // Import profile via Chrome extension
+  const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+
+  const handleImportProfile = useCallback(() => {
+    if (!contact?.linkedinUrl) return;
+    setImporting(true);
+    setImportStatus("Starting...");
+
+    const handler = (e: MessageEvent) => {
+      if (e.data?.source !== "lead-gen-bg" || e.data?.action !== "importProfileProgress") return;
+      if (e.data.contactId !== contact.id) return;
+      if (e.data.error) {
+        setImportStatus(`Error: ${e.data.error}`);
+        setImporting(false);
+        return;
+      }
+      if (e.data.done) {
+        setImportStatus(e.data.status || "Import complete");
+        setImporting(false);
+        refetch();
+        return;
+      }
+      if (e.data.status) {
+        setImportStatus(e.data.status);
+      }
+    };
+    window.addEventListener("message", handler);
+
+    window.postMessage({
+      source: "lead-gen-ext",
+      action: "importLinkedInProfile",
+      contactId: contact.id,
+      linkedinUrl: contact.linkedinUrl,
+      contactName: `${contact.firstName} ${contact.lastName}`.trim(),
+    }, "*");
+
+    setTimeout(() => {
+      window.removeEventListener("message", handler);
+      if (importing) {
+        setImporting(false);
+        setImportStatus("Timed out");
+      }
+    }, 120000);
+
+    return () => window.removeEventListener("message", handler);
+  }, [contact, importing, refetch]);
+
   const handleFindEmail = useCallback(async () => {
     if (!contact) return;
     setFindResult(null);
@@ -1246,6 +1294,16 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
               {contact.linkedinUrl && (
                 <button
                   className={button({ variant: "outline" })}
+                  onClick={handleImportProfile}
+                  disabled={importing}
+                >
+                  <LinkedInLogoIcon />
+                  {importing ? "Importing…" : "Import profile"}
+                </button>
+              )}
+              {contact.linkedinUrl && (
+                <button
+                  className={button({ variant: "outline" })}
                   onClick={handleScrapePosts}
                   disabled={scraping}
                 >
@@ -1280,6 +1338,16 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
               {scraping ? <LinkedInLogoIcon /> : <InfoCircledIcon />}
             </Callout.Icon>
             <Callout.Text>{scrapeStatus}</Callout.Text>
+          </Callout.Root>
+        )}
+
+        {/* Import profile status */}
+        {importStatus && (
+          <Callout.Root color={importStatus.startsWith("Error") ? "red" : importStatus.startsWith("Imported") ? "green" : "blue"} size="1">
+            <Callout.Icon>
+              {importing ? <LinkedInLogoIcon /> : <InfoCircledIcon />}
+            </Callout.Icon>
+            <Callout.Text>{importStatus}</Callout.Text>
           </Callout.Root>
         )}
 
