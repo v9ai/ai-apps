@@ -298,81 +298,8 @@ function KeyFactsCard({
     [jobBoardUrl]
   );
 
-  const rows: Array<{
-    label: string;
-    value: React.ReactNode;
-  }> = [
-    {
-      label: "LinkedIn",
-      value: linkedinHref ? (
-        <Flex display="inline-flex" align="center" gap="1" maxWidth="100%" overflow="hidden" asChild>
-          <RadixLink
-            href={linkedinHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            color="gray"
-            title={linkedinHref}
-          >
-            <Text truncate>linkedin.com</Text>
-            <ExternalLinkIcon />
-          </RadixLink>
-        </Flex>
-      ) : (
-        <Text size="2">—</Text>
-      ),
-    },
-    {
-      label: "Job board",
-      value: jobBoardHref ? (
-        <Flex display="inline-flex" align="center" gap="1" maxWidth="100%" overflow="hidden" asChild>
-          <RadixLink
-            href={jobBoardHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            color="gray"
-            title={jobBoardHref}
-          >
-            <Text truncate>Jobs</Text>
-            <ExternalLinkIcon />
-          </RadixLink>
-        </Flex>
-      ) : (
-        <Text size="2">—</Text>
-      ),
-    },
-    ...(isAdmin
-      ? [
-          {
-            label: "Crawl confidence",
-            value: (
-              <Text size="2">
-                {formatScore(score)}
-              </Text>
-            ),
-          },
-        ]
-      : []),
-    ...(updatedAt
-      ? [
-          {
-            label: "Updated",
-            value: (
-              <Text size="2">
-                {new Date(updatedAt).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </Text>
-            ),
-          },
-        ]
-      : []),
-  ];
-
   return (
     <Card>
-      {/* tighter padding to reduce "empty space" */}
       <Box p="3">
         <Text
           size="1"
@@ -383,36 +310,70 @@ function KeyFactsCard({
           KEY FACTS
         </Text>
 
-        <Box mt="3">
-          {rows.map((row, idx) => (
-            <Box key={row.label}>
-              <Flex
-                direction={{ initial: "column", sm: "row" }}
-                align={{ initial: "start", sm: "center" }}
-                justify="between"
-                gap="1"
-                minWidth="0"
-                py="1"
-              >
-                <Text size="1" color="gray">
-                  {row.label}
-                </Text>
-
-                {/* right-aligned value, ellipsis-safe */}
-                <Box
-                  minWidth="0"
-                  maxWidth="100%"
-                  style={{ textAlign: "right" }}
+        <Box mt="3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
+          {/* LinkedIn */}
+          <Box>
+            <Text size="1" color="gray" as="p" mb="1">LinkedIn</Text>
+            {linkedinHref ? (
+              <Flex display="inline-flex" align="center" gap="1" asChild>
+                <RadixLink
+                  href={linkedinHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="2"
+                  title={linkedinHref}
                 >
-                  {row.value}
-                </Box>
+                  <LinkedInLogoIcon />
+                  <Text size="2" truncate>Profile</Text>
+                </RadixLink>
               </Flex>
+            ) : (
+              <Text size="2" color="gray">—</Text>
+            )}
+          </Box>
 
-              {idx < rows.length - 1 ? (
-                <Separator size="4" my="1" />
-              ) : null}
+          {/* Job board */}
+          <Box>
+            <Text size="1" color="gray" as="p" mb="1">Job board</Text>
+            {jobBoardHref ? (
+              <Flex display="inline-flex" align="center" gap="1" asChild>
+                <RadixLink
+                  href={jobBoardHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="2"
+                  title={jobBoardHref}
+                >
+                  <Text size="2" truncate>Careers</Text>
+                  <ExternalLinkIcon />
+                </RadixLink>
+              </Flex>
+            ) : (
+              <Text size="2" color="gray">—</Text>
+            )}
+          </Box>
+
+          {/* Crawl confidence (admin) */}
+          {isAdmin && (
+            <Box>
+              <Text size="1" color="gray" as="p" mb="1">Confidence</Text>
+              <Text size="2" weight="medium">{formatScore(score)}</Text>
             </Box>
-          ))}
+          )}
+
+          {/* Updated */}
+          {updatedAt && (
+            <Box>
+              <Text size="1" color="gray" as="p" mb="1">Updated</Text>
+              <Text size="2">
+                {new Date(updatedAt).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </Text>
+            </Box>
+          )}
         </Box>
       </Box>
     </Card>
