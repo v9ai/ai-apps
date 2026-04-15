@@ -1495,6 +1495,11 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                 ) : null}
               </Flex>
             </Box>
+
+            {/* Contacts (embedded) */}
+            {isAdmin && company.id && (
+              <CompanyContactsClient companyKey={effectiveKey} embedded />
+            )}
       </Flex>
     </Container>
   );
