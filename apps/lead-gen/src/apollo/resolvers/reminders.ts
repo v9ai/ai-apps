@@ -1,4 +1,4 @@
-import { contacts, contactReminders, contactEmails, type ContactReminder as DbContactReminder } from "@/db/schema";
+import { contacts, reminders, contactEmails, type Reminder as DbReminder } from "@/db/schema";
 import { eq, and, lte, sql, max, desc, inArray } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -82,25 +82,26 @@ function advanceDate(isoDate: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-// ─── ContactReminder field resolver ─────────────────────────────────────────
+// ─── Reminder field resolver ────────────────────────────────────────────────
 
-const ContactReminder = {
-  contactId: (p: DbContactReminder) => p.contact_id,
-  remindAt:  (p: DbContactReminder) => p.remind_at,
-  snoozedUntil: (p: DbContactReminder) => p.snoozed_until ?? null,
-  createdAt: (p: DbContactReminder) => p.created_at,
-  updatedAt: (p: DbContactReminder) => p.updated_at,
+const Reminder = {
+  entityType:  (p: DbReminder) => p.entity_type,
+  entityId:    (p: DbReminder) => p.entity_id,
+  remindAt:    (p: DbReminder) => p.remind_at,
+  snoozedUntil:(p: DbReminder) => p.snoozed_until ?? null,
+  createdAt:   (p: DbReminder) => p.created_at,
+  updatedAt:   (p: DbReminder) => p.updated_at,
 };
 
 // ─── Resolver map ────────────────────────────────────────────────────────────
 
 export const remindersResolvers = {
-  ContactReminder,
+  Reminder,
 
   Query: {
-    async contactReminders(
+    async reminders(
       _parent: unknown,
-      args: { contactId: number },
+      args: { entityType: string; entityId: number },
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
@@ -108,9 +109,14 @@ export const remindersResolvers = {
       }
       return context.db
         .select()
-        .from(contactReminders)
-        .where(eq(contactReminders.contact_id, args.contactId))
-        .orderBy(contactReminders.remind_at);
+        .from(reminders)
+        .where(
+          and(
+            eq(reminders.entity_type, args.entityType),
+            eq(reminders.entity_id, args.entityId),
+          ),
+        )
+        .orderBy(reminders.remind_at);
     },
 
     async dueReminders(_parent: unknown, _args: unknown, context: GraphQLContext) {
@@ -118,20 +124,24 @@ export const remindersResolvers = {
         throw new Error("Forbidden");
       }
       const now = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      // For backward compat, dueReminders still joins contacts for entity_type=contact
       const rows = await context.db
         .select({
-          reminder: contactReminders,
+          reminder: reminders,
           contact: contacts,
         })
-        .from(contactReminders)
-        .innerJoin(contacts, eq(contactReminders.contact_id, contacts.id))
+        .from(reminders)
+        .innerJoin(contacts, and(
+          eq(reminders.entity_type, "contact"),
+          eq(reminders.entity_id, contacts.id),
+        ))
         .where(
           and(
-            eq(contactReminders.status, "pending"),
-            lte(contactReminders.remind_at, now),
+            eq(reminders.status, "pending"),
+            lte(reminders.remind_at, now),
           ),
         )
-        .orderBy(contactReminders.remind_at);
+        .orderBy(reminders.remind_at);
 
       return rows.map((r) => ({ reminder: r.reminder, contact: r.contact }));
     },
@@ -140,17 +150,18 @@ export const remindersResolvers = {
   Mutation: {
     async createReminder(
       _parent: unknown,
-      args: { input: { contactId: number; remindAt: string; recurrence?: string | null; note?: string | null } },
+      args: { input: { entityType: string; entityId: number; remindAt: string; recurrence?: string | null; note?: string | null } },
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
-      const { contactId, remindAt, recurrence, note } = args.input;
+      const { entityType, entityId, remindAt, recurrence, note } = args.input;
       const rows = await context.db
-        .insert(contactReminders)
+        .insert(reminders)
         .values({
-          contact_id: contactId,
+          entity_type: entityType,
+          entity_id: entityId,
           remind_at: remindAt,
           recurrence: recurrence ?? "none",
           note: note ?? null,
@@ -175,9 +186,9 @@ export const remindersResolvers = {
       if (args.input.status     != null) patch.status     = args.input.status;
 
       const rows = await context.db
-        .update(contactReminders)
+        .update(reminders)
         .set(patch)
-        .where(eq(contactReminders.id, args.id))
+        .where(eq(reminders.id, args.id))
         .returning();
       if (!rows[0]) throw new Error("Reminder not found");
       return rows[0];
@@ -195,8 +206,8 @@ export const remindersResolvers = {
 
       const [existing] = await context.db
         .select()
-        .from(contactReminders)
-        .where(eq(contactReminders.id, args.id))
+        .from(reminders)
+        .where(eq(reminders.id, args.id))
         .limit(1);
       if (!existing) throw new Error("Reminder not found");
 
@@ -211,9 +222,9 @@ export const remindersResolvers = {
       }
 
       const rows = await context.db
-        .update(contactReminders)
+        .update(reminders)
         .set(patch)
-        .where(eq(contactReminders.id, args.id))
+        .where(eq(reminders.id, args.id))
         .returning();
       return rows[0];
     },
@@ -228,24 +239,25 @@ export const remindersResolvers = {
       }
       const [existing] = await context.db
         .select()
-        .from(contactReminders)
-        .where(eq(contactReminders.id, args.id))
+        .from(reminders)
+        .where(eq(reminders.id, args.id))
         .limit(1);
       if (!existing) throw new Error("Reminder not found");
 
       // Mark as done
       const rows = await context.db
-        .update(contactReminders)
+        .update(reminders)
         .set({ status: "done", updated_at: new Date().toISOString() })
-        .where(eq(contactReminders.id, args.id))
+        .where(eq(reminders.id, args.id))
         .returning();
 
       // If recurring → create next occurrence automatically
       if (existing.recurrence !== "none") {
         const intervalDays = addRecurrenceDays(existing.recurrence);
         const nextRemindAt = advanceDate(existing.remind_at, intervalDays);
-        await context.db.insert(contactReminders).values({
-          contact_id: existing.contact_id,
+        await context.db.insert(reminders).values({
+          entity_type: existing.entity_type,
+          entity_id: existing.entity_id,
           remind_at: nextRemindAt,
           recurrence: existing.recurrence,
           note: existing.note,
