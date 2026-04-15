@@ -195,10 +195,10 @@
           "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
           "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
           "3 competing-hypotheses agents — cross-reading findings — producing GO/NO-GO verdicts.",
-          "MLX scoring at 4,618 embeddings/sec on M1; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing.",
+          "MLX scoring at 4,618 embeddings/sec on M1; eval enforcer with LangSmith tracing.",
           "Candle Rust ML inference for contact scoring with INT8 quantization.",
           "Eval-driven strategy enforcer validates every prompt/model change against 80% accuracy bar.",
-          "LoRA fine-tuned Qwen3-1.7B (rank-8, DPO on synthetic data) for personalized outreach emails; sgai-qwen3-1.7b for schema-constrained HTML→JSON company extraction on dual MLX servers."
+          "LoRA fine-tuned Qwen3-1.7B-4bit (rank-8, cosine LR, DPO on synthetic data) deployed to HuggingFace Hub (v9ai/outreach-email-qwen3-1.7b-4bit-lora) for personalized outreach email generation; sgai-qwen3-1.7b for schema-constrained HTML→JSON company extraction on dual MLX servers."
         ]
       },
       {
