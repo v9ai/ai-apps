@@ -232,10 +232,10 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "AI Embedding Generation",
-    description: "A local Candle embedding server (port 9998) generates JobBERT-v2 embeddings for company descriptions and posts. This uses the Rust ML framework with Metal acceleration for efficiency, avoiding cloud API costs. Embeddings are computed via batch processing, often triggered by Inngest jobs, and stored for semantic search. The embeddings enable similarity queries (useGetSimilarPostsLazyQuery) and contribute to lead scoring based on cosine distance.",
-    researchBasis: "Candle framework, JobBERT-v2 model",
-    codeSnippet: "Embedding server on http://localhost:9998",
-    dataFlow: "Text data \u2192 Candle server \u2192 vector embeddings",
+    description: "The HuggingFace Inference API generates JobBERT-v3 embeddings (768-dim, multilingual) for company descriptions and posts. Embeddings are computed via batch processing, often triggered by Inngest jobs, and stored for semantic search. The embeddings enable similarity queries (useGetSimilarPostsLazyQuery) and contribute to lead scoring based on cosine distance.",
+    researchBasis: "TechWolf/JobBERT-v3, HuggingFace Inference API",
+    codeSnippet: "await hfEmbed(texts, { normalize: true })",
+    dataFlow: "Text data \u2192 HF Inference API \u2192 vector embeddings",
   },
   {
     name: "Data Storage & Scoring",
@@ -698,7 +698,7 @@ return parsed.success ? parsed.data : null;`,
 async function analyzePost(content: string): Promise<PostAnalysis> {
   const [skillsResult, jobEmbedding] = await Promise.all([
     extractSkillsHttp(content),   // SalesCue: semantic skill tags
-    candle.embedPost(content),    // JobBERT-v2: dense vector embedding
+    candle.embedPost(content),    // JobBERT-v3: dense vector embedding (HF API)
   ]);
   return {
     skills: skillsResult.result.skills,
@@ -1037,8 +1037,8 @@ export function isAdminEmail(email: string | null | undefined): boolean {
     },
     {
       label: "Embedding Similarity",
-      value: "JobBERT-v2 embeddings via local Candle server (Metal-accelerated, 4618 emb/sec) for semantic ICP matching",
-      metadata: {"port": "9998, cosine distance"},
+      value: "JobBERT-v3 embeddings via HuggingFace Inference API (768-dim, multilingual) for semantic ICP matching",
+      metadata: {"model": "TechWolf/JobBERT-v3, cosine distance"},
     },
     ],
   },
