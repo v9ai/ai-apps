@@ -38,9 +38,7 @@ export function CompaniesList() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
-  const [category, setCategory] = useState(
-    searchParams.get("cat") ?? (searchParams.get("q") ? "ALL" : "CONSULTANCY")
-  );
+  const [category] = useState("ALL");
   const [sortBy, setSortBy] = useState(searchParams.get("sort") ?? "name");
   const [minTier, setMinTier] = useState(searchParams.get("tier") ?? "all");
 
