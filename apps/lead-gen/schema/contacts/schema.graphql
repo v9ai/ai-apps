@@ -2,6 +2,7 @@ extend type Query {
   contacts(companyId: Int, search: String, limit: Int, offset: Int): ContactsResult!
   contact(id: Int, slug: String): Contact
   contactByEmail(email: String!): Contact
+  contactByLinkedinUrl(linkedinUrl: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
   contactReceivedEmails(contactId: Int!): [ReceivedEmail!]!
   contactMessages(contactId: Int!): [ContactMessage!]!

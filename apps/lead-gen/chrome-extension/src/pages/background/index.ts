@@ -567,6 +567,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Check if contact exists by LinkedIn URL ──
+  if (message.action === "checkContactByLinkedinUrl") {
+    const { linkedinUrl } = message as { linkedinUrl: string };
+
+    (async () => {
+      try {
+        const result = await gqlRequest(
+          `query CheckContactByLinkedinUrl($linkedinUrl: String!) {
+            contactByLinkedinUrl(linkedinUrl: $linkedinUrl) {
+              id slug firstName lastName
+            }
+          }`,
+          { linkedinUrl },
+        );
+        sendResponse({
+          success: true,
+          contact: result.data?.contactByLinkedinUrl ?? null,
+        });
+      } catch (err) {
+        sendResponse({
+          success: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    })();
+
+    return true;
+  }
+
   // ── Import Profile from LinkedIn Page (triggered by content script button) ──
   if (message.action === "importProfileFromPage") {
     const { profileData } = message as {

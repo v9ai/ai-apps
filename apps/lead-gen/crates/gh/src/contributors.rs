@@ -34,9 +34,21 @@ pub struct ContributorRecord {
     pub total_contributions: u32,
 }
 
-/// Weights: density, novelty, breadth, activity, skill_relevance, engagement, obscurity, recency.
+/// Weights: density, novelty, breadth, activity, skill_relevance, engagement, obscurity, recency, contribution_quality.
 /// Must sum to 1.0.
-pub const SCORE_WEIGHTS: [f32; 8] = [0.20, 0.08, 0.12, 0.15, 0.10, 0.08, 0.07, 0.20];
+pub const SCORE_WEIGHTS: [f32; 9] = [0.15, 0.06, 0.08, 0.12, 0.08, 0.06, 0.05, 0.18, 0.22];
+
+/// AI-relevant topic keywords for contribution quality scoring.
+const AI_RELEVANT_TOPICS: &[&str] = &[
+    "machine-learning", "deep-learning", "artificial-intelligence",
+    "llm", "large-language-model", "large-language-models", "generative-ai",
+    "nlp", "natural-language-processing", "computer-vision",
+    "reinforcement-learning", "neural-network", "neural-networks",
+    "rag", "vector-database", "embeddings", "fine-tuning",
+    "ai-agent", "ai-agents", "multimodal", "langchain", "llamaindex",
+    "transformers", "pytorch", "tensorflow", "huggingface",
+    "stable-diffusion", "diffusion-models", "mlops",
+];
 
 /// Returns true for bot logins (dependabot, renovate, GitHub Apps, etc.).
 pub fn is_bot(login: &str) -> bool {
@@ -67,6 +79,8 @@ pub struct RisingScore {
     pub realness: f32,
     /// Fine-grained recency from contribution calendar (last 90d activity).
     pub recency: f32,
+    /// Quality of contributions: external repos, star counts, AI relevance.
+    pub contribution_quality: f32,
 }
 
 /// Compute rising-star score for a contributor.
@@ -147,8 +161,14 @@ pub fn compute_rising_score(record: &ContributorRecord, skill_count: usize) -> R
     let presence = public_repos + followers;
     let realness = 0.5 + 0.5 * (presence * 0.2_f32).tanh();
 
+    // ── Contribution quality (external repo impact) ─────────────────
+    let contribution_quality = compute_contribution_quality(
+        &record.user.login,
+        record.user.contributed_repos_json.as_deref(),
+    );
+
     // ── Weighted sum ────────────────────────────────────────────────
-    let [w_d, w_n, w_b, w_a, w_s, w_e, w_o, w_r] = SCORE_WEIGHTS;
+    let [w_d, w_n, w_b, w_a, w_s, w_e, w_o, w_r, w_cq] = SCORE_WEIGHTS;
     let raw = w_d * contribution_density
         + w_n * novelty
         + w_b * breadth
@@ -156,7 +176,8 @@ pub fn compute_rising_score(record: &ContributorRecord, skill_count: usize) -> R
         + w_s * skill_relevance
         + w_e * engagement
         + w_o * obscurity
-        + w_r * recency;
+        + w_r * recency
+        + w_cq * contribution_quality;
 
     // ── Multipliers ─────────────────────────────────────────────────
     let hireable_bonus = if record.user.hireable == Some(true) { 1.15 } else { 1.0 };
@@ -184,12 +205,13 @@ pub fn compute_rising_score(record: &ContributorRecord, skill_count: usize) -> R
         obscurity,
         realness,
         recency,
+        contribution_quality,
     }
 }
 
-/// Weights for strength score: activity, skill_depth, breadth, standing, engagement, realness.
+/// Weights for strength score: activity, skill_depth, breadth, standing, engagement, realness, contribution_quality.
 /// Must sum to 1.0.
-pub const STRENGTH_WEIGHTS: [f32; 6] = [0.30, 0.25, 0.15, 0.15, 0.10, 0.05];
+pub const STRENGTH_WEIGHTS: [f32; 7] = [0.22, 0.20, 0.10, 0.13, 0.08, 0.05, 0.22];
 
 /// Breakdown of a contributor's strength score — values experience over obscurity.
 #[derive(Debug, Clone)]
@@ -208,6 +230,8 @@ pub struct StrengthScore {
     pub engagement: f32,
     /// Ghost-account penalty.
     pub realness: f32,
+    /// Quality of contributions: external repos, star counts, AI relevance.
+    pub contribution_quality: f32,
 }
 
 /// Compute strength score — rewards experience and standing, not obscurity.
@@ -264,14 +288,21 @@ pub fn compute_strength_score(record: &ContributorRecord, skill_count: usize) ->
     let presence = public_repos + followers;
     let realness = 0.5 + 0.5 * (presence * 0.2_f32).tanh();
 
+    // ── Contribution quality (external repo impact) ─────────────────
+    let contribution_quality = compute_contribution_quality(
+        &record.user.login,
+        record.user.contributed_repos_json.as_deref(),
+    );
+
     // ── Weighted sum ───────────────────────────────────────────────
-    let [w_a, w_s, w_b, w_st, w_e, w_r] = STRENGTH_WEIGHTS;
+    let [w_a, w_s, w_b, w_st, w_e, w_r, w_cq] = STRENGTH_WEIGHTS;
     let raw = w_a * activity
         + w_s * skill_depth
         + w_b * breadth
         + w_st * standing
         + w_e * engagement
-        + w_r * realness;
+        + w_r * realness
+        + w_cq * contribution_quality;
 
     // Recency bonus (same as rising_score)
     let recency_bonus = if let Some(ref ap) = record.user.activity_profile {
@@ -295,6 +326,7 @@ pub fn compute_strength_score(record: &ContributorRecord, skill_count: usize) ->
         standing,
         engagement,
         realness,
+        contribution_quality,
     }
 }
 

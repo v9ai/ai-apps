@@ -77,6 +77,20 @@ export const contactQueries = {
     return rows[0] ?? null;
   },
 
+  async contactByLinkedinUrl(
+    _parent: unknown,
+    args: { linkedinUrl: string },
+    context: GraphQLContext,
+  ) {
+    const normalized = args.linkedinUrl.replace(/\/+$/, "").split("?")[0];
+    const rows = await context.db
+      .select()
+      .from(contacts)
+      .where(eq(contacts.linkedin_url, normalized))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
   async contactEmails(
     _parent: unknown,
     args: { contactId: number },

@@ -1816,6 +1816,7 @@ export type Query = {
   company_snapshots: Array<CompanySnapshot>;
   contact: Maybe<Contact>;
   contactByEmail: Maybe<Contact>;
+  contactByLinkedinUrl: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
   contactMessages: Array<ContactMessage>;
   contactOpportunities: Array<Opportunity>;
@@ -1965,6 +1966,11 @@ export type QueryContactArgs = {
 
 export type QueryContactByEmailArgs = {
   email: Scalars['String']['input'];
+};
+
+
+export type QueryContactByLinkedinUrlArgs = {
+  linkedinUrl: Scalars['String']['input'];
 };
 
 
@@ -4866,6 +4872,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   company_snapshots?: Resolver<Array<ResolversTypes['CompanySnapshot']>, ParentType, ContextType, RequireFields<QueryCompany_SnapshotsArgs, 'company_id'>>;
   contact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, Partial<QueryContactArgs>>;
   contactByEmail?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactByEmailArgs, 'email'>>;
+  contactByLinkedinUrl?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactByLinkedinUrlArgs, 'linkedinUrl'>>;
   contactEmails?: Resolver<Array<ResolversTypes['ContactEmail']>, ParentType, ContextType, RequireFields<QueryContactEmailsArgs, 'contactId'>>;
   contactMessages?: Resolver<Array<ResolversTypes['ContactMessage']>, ParentType, ContextType, RequireFields<QueryContactMessagesArgs, 'contactId'>>;
   contactOpportunities?: Resolver<Array<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryContactOpportunitiesArgs, 'contactId'>>;

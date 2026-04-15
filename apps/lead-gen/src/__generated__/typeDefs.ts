@@ -1281,6 +1281,7 @@ type Query {
   company_snapshots(company_id: Int!, limit: Int, offset: Int): [CompanySnapshot!]!
   contact(id: Int, slug: String): Contact
   contactByEmail(email: String!): Contact
+  contactByLinkedinUrl(linkedinUrl: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
   contactMessages(contactId: Int!): [ContactMessage!]!
   contactOpportunities(contactId: Int!): [Opportunity!]!

@@ -1264,6 +1264,36 @@ function createImportProfileButton(): HTMLButtonElement {
   return btn;
 }
 
+/** Transform the import button into a green link to the existing contact's app page. */
+function showExistingContactLink(
+  btn: HTMLButtonElement,
+  contact: { slug?: string; firstName?: string; lastName?: string },
+) {
+  btn.style.backgroundColor = "#16a34a";
+  btn.style.padding = "0";
+  btn.disabled = false;
+  btn.innerHTML = "";
+  const link = document.createElement("a");
+  link.href = contact.slug
+    ? `https://agenticleadgen.xyz/contacts/${contact.slug}`
+    : "https://agenticleadgen.xyz/contacts";
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  const name = [contact.firstName, contact.lastName].filter(Boolean).join(" ");
+  link.textContent = name ? `View: ${name}` : "View Contact";
+  link.style.cssText = `
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+  `;
+  btn.appendChild(link);
+  btn.onmouseenter = null;
+  btn.onmouseleave = null;
+}
+
 function syncProfileButton() {
   if (!window.location.hostname.includes("linkedin.com")) {
     removeProfileButton();
@@ -1287,8 +1317,26 @@ function syncProfileButton() {
 
   if (!document.querySelector(`[${IMPORT_PROFILE_BTN_ATTR}]`)) {
     const btn = createImportProfileButton();
+    btn.textContent = "Checking...";
+    btn.disabled = true;
+    btn.style.backgroundColor = "#6b7280";
     document.body.appendChild(btn);
     importProfileBtn = btn;
+
+    const linkedinUrl = window.location.href.split("?")[0];
+    safeSendMessage(
+      { action: "checkContactByLinkedinUrl", linkedinUrl },
+      (response) => {
+        if (!document.querySelector(`[${IMPORT_PROFILE_BTN_ATTR}]`)) return;
+        if (response?.success && response.contact) {
+          showExistingContactLink(btn, response.contact);
+        } else {
+          btn.textContent = "Import Profile";
+          btn.disabled = false;
+          btn.style.backgroundColor = "#0a66c2";
+        }
+      },
+    );
   }
 }
 

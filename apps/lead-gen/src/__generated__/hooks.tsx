@@ -1816,6 +1816,7 @@ export type Query = {
   company_snapshots: Array<CompanySnapshot>;
   contact: Maybe<Contact>;
   contactByEmail: Maybe<Contact>;
+  contactByLinkedinUrl: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
   contactMessages: Array<ContactMessage>;
   contactOpportunities: Array<Opportunity>;
@@ -1965,6 +1966,11 @@ export type QueryContactArgs = {
 
 export type QueryContactByEmailArgs = {
   email: Scalars['String']['input'];
+};
+
+
+export type QueryContactByLinkedinUrlArgs = {
+  linkedinUrl: Scalars['String']['input'];
 };
 
 
