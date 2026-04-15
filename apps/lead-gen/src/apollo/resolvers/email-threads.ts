@@ -382,8 +382,8 @@ export const emailThreadResolvers = {
         });
       }
 
-      // Sort chronologically (oldest first)
-      messages.sort((a, b) => toMs(a.sentAt) - toMs(b.sentAt));
+      // Sort reverse-chronologically (newest first)
+      messages.sort((a, b) => toMs(b.sentAt) - toMs(a.sentAt));
 
       // Get latest inbound classification
       const latestInbound = inbound[0];
