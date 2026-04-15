@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
 
     // Load HF token from cache
     let hf_token = load_hf_token();
-    let hf_client = HfClient::new(&hf_token);
+    let hf_client = HfClient::new(&hf_token).await;
     if hf_client.is_some() {
         tracing::info!("Dual-lane mode: Candle local + HF 72B");
     } else {
@@ -78,7 +78,17 @@ async fn main() -> Result<()> {
 
 fn load_personality(cli: &Cli) -> Result<PersonInput> {
     // Try to read from personality TS file
-    let ts_path = PathBuf::from("../personalities").join(format!("{}.ts", cli.slug));
+    // Try multiple paths relative to CWD
+    let candidates = [
+        PathBuf::from("../../apps/hoa/personalities"),   // from crates/hoa-research/
+        PathBuf::from("../personalities"),                // from apps/hoa/backend/
+        PathBuf::from("personalities"),                   // from apps/hoa/
+    ];
+    let ts_path = candidates
+        .iter()
+        .map(|p| p.join(format!("{}.ts", cli.slug)))
+        .find(|p| p.exists())
+        .unwrap_or_else(|| PathBuf::from("personalities").join(format!("{}.ts", cli.slug)));
 
     if ts_path.exists() {
         let content = std::fs::read_to_string(&ts_path)?;
@@ -98,18 +108,21 @@ fn load_personality(cli: &Cli) -> Result<PersonInput> {
 /// Best-effort extraction from TypeScript personality files.
 fn parse_personality_ts(content: &str, slug: &str, cli: &Cli) -> PersonInput {
     let extract = |key: &str| -> Option<String> {
-        let pattern = format!("{key}:");
-        content
-            .lines()
-            .find(|line| line.trim().starts_with(&pattern))
-            .and_then(|line| {
-                let after = line.split_once(':')?.1.trim();
-                let unquoted = after
-                    .trim_start_matches('"')
-                    .trim_end_matches(',')
-                    .trim_end_matches('"');
-                Some(unquoted.to_string())
-            })
+        // Match lines like:  name: "Athos Georgiou",
+        // or:                 blogUrl: "https://athrael.net",
+        let pattern = format!("{}:", key);
+        content.lines().find_map(|line| {
+            let trimmed = line.trim();
+            if !trimmed.starts_with(&pattern) {
+                return None;
+            }
+            // Find the first quote after the colon
+            let after_colon = &trimmed[pattern.len()..];
+            let start = after_colon.find('"')? + 1;
+            let rest = &after_colon[start..];
+            let end = rest.find('"')?;
+            Some(rest[..end].to_string())
+        })
     };
 
     PersonInput {
@@ -121,7 +134,7 @@ fn parse_personality_ts(content: &str, slug: &str, cli: &Cli) -> PersonInput {
         github: extract("github"),
         orcid: extract("orcid"),
         blog_url: extract("blogUrl"),
-        papers: Vec::new(), // TODO: parse papers array
+        papers: Vec::new(),
     }
 }
 
