@@ -1091,10 +1091,21 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
   });
 
   const [findEmail, { loading: finding }] = useFindContactEmailMutation();
+  const [importResendEmails] = useImportResendEmailsMutation();
   const [findResult, setFindResult] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  // Background Resend sync — fetch latest emails after initial load
+  const [resendSynced, setResendSynced] = useState(false);
+  useEffect(() => {
+    if (!resolvedId || !isAdmin || resendSynced) return;
+    setResendSynced(true);
+    importResendEmails({ variables: { maxEmails: 50 } }).then(() => {
+      refetchEmails();
+    }).catch(() => {});
+  }, [resolvedId, isAdmin, resendSynced, importResendEmails, refetchEmails]);
 
   // Scrape posts via Chrome extension
   const [scraping, setScraping] = useState(false);
