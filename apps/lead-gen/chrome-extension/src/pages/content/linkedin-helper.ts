@@ -1052,6 +1052,85 @@ function removeProfileButton() {
   importProfileBtn = null;
 }
 
+/** Extract profile data directly from the DOM (runs in content script context). */
+function extractProfileFromDOM(): {
+  name: string;
+  headline: string;
+  location: string;
+  linkedinUrl: string;
+  currentCompany: string;
+  currentCompanyLinkedinUrl: string;
+} {
+  // Name — try multiple selectors
+  const nameEl =
+    document.querySelector("h1.text-heading-xlarge") ||
+    document.querySelector("h1.break-words") ||
+    document.querySelector(".pv-top-card--list h1") ||
+    document.querySelector("h1");
+  const name = nameEl?.textContent?.trim() || "";
+
+  // Headline
+  const headlineEl =
+    document.querySelector(".text-body-medium.break-words") ||
+    document.querySelector(".pv-top-card--list .text-body-medium");
+  const headline = headlineEl?.textContent?.trim() || "";
+
+  // Location
+  const locationEl =
+    document.querySelector("span.text-body-small.inline.t-black--light.break-words") ||
+    document.querySelector(".pv-top-card--list-bullet .text-body-small");
+  const location = locationEl?.textContent?.trim() || "";
+
+  // Current company — try top-card company link
+  let currentCompany = "";
+  let currentCompanyLinkedinUrl = "";
+
+  const companyLink = document.querySelector<HTMLAnchorElement>(
+    'a[href*="/company/"][data-field="experience_company_logo"],' +
+    'div.pv-text-details__right-panel a[href*="/company/"],' +
+    '.pv-top-card--experience-list-item a[href*="/company/"]',
+  );
+  if (companyLink) {
+    currentCompany = companyLink.textContent?.trim() || "";
+    currentCompanyLinkedinUrl = companyLink.href.split("?")[0].replace(/\/$/, "");
+  }
+
+  // Fallback: experience section
+  if (!currentCompany) {
+    const expSection = document.querySelector("#experience")?.closest("section");
+    if (expSection) {
+      const firstLink = expSection.querySelector<HTMLAnchorElement>('a[href*="/company/"]');
+      if (firstLink) {
+        // The company name is usually in a span inside the link
+        const nameSpan = firstLink.querySelector("span.visually-hidden") ||
+          firstLink.querySelector("span");
+        currentCompany = nameSpan?.textContent?.trim() || firstLink.textContent?.trim() || "";
+        currentCompanyLinkedinUrl = firstLink.href.split("?")[0].replace(/\/$/, "");
+      }
+    }
+  }
+
+  // Fallback: parse company from headline ("Title at Company")
+  if (!currentCompany && headline) {
+    for (const sep of [" at ", " @ ", " | "]) {
+      const idx = headline.toLowerCase().indexOf(sep);
+      if (idx > 0) {
+        currentCompany = headline.slice(idx + sep.length).trim();
+        break;
+      }
+    }
+  }
+
+  return {
+    name,
+    headline,
+    location,
+    linkedinUrl: window.location.href.split("?")[0],
+    currentCompany,
+    currentCompanyLinkedinUrl,
+  };
+}
+
 function createImportProfileButton(): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.setAttribute(IMPORT_PROFILE_BTN_ATTR, "true");
@@ -1085,13 +1164,21 @@ function createImportProfileButton(): HTMLButtonElement {
     e.preventDefault();
     e.stopPropagation();
 
+    // Extract data directly from the DOM (no chrome.scripting.executeScript needed)
+    const profileData = extractProfileFromDOM();
+    if (!profileData.name) {
+      btn.textContent = "No profile data found";
+      setTimeout(() => { btn.textContent = "Import Profile"; }, 2000);
+      return;
+    }
+
     btn.disabled = true;
     btn.textContent = "Importing...";
 
     safeSendMessage(
       {
         action: "importProfileFromPage",
-        linkedinUrl: window.location.href.split("?")[0],
+        profileData,
       },
       (response) => {
         if (!response?.success) {
