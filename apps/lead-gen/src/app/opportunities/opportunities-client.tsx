@@ -100,15 +100,15 @@ export function OpportunitiesClient({ opportunities }: { opportunities: Opportun
 
       {/* Tag filter bar */}
       {allTags.length > 0 && (
-        <Flex gap="1" wrap="wrap" mb="3" align="center">
-          <Text size="1" color="gray" mr="1">Tags:</Text>
+        <Flex gap="2" wrap="wrap" mb="3" align="center">
+          <Text size="2" color="gray" mr="1">Tags:</Text>
           {allTags.map((tag) => {
             const isIncluded = includeTags.includes(tag);
             const isExcluded = excludeTags.includes(tag);
             return (
               <Badge
                 key={tag}
-                size="1"
+                size="2"
                 variant={isIncluded ? "solid" : isExcluded ? "outline" : "surface"}
                 color={isExcluded ? "red" : isIncluded ? "blue" : tagColor(tag)}
                 style={{
@@ -175,9 +175,9 @@ export function OpportunitiesClient({ opportunities }: { opportunities: Opportun
                       {tags.length > 0 && (
                         <Flex gap="1" wrap="wrap">
                           {tags.slice(0, 5).map((tag) => (
-                            <Badge key={tag} size="1" variant="surface" color={tagColor(tag)}>{tag}</Badge>
+                            <Badge key={tag} size="2" variant="surface" color={tagColor(tag)}>{tag}</Badge>
                           ))}
-                          {tags.length > 5 && <Text size="1" color="gray">+{tags.length - 5}</Text>}
+                          {tags.length > 5 && <Text size="2" color="gray">+{tags.length - 5}</Text>}
                         </Flex>
                       )}
                     </Flex>

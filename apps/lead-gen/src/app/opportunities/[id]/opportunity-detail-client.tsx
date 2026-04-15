@@ -278,9 +278,9 @@ export function OpportunityDetailClient({
         <Card>
           <Flex direction="column" gap="2" p="1">
             <Text size="1" color="gray" weight="medium">Tags</Text>
-            <Flex gap="1" wrap="wrap" align="center">
+            <Flex gap="2" wrap="wrap" align="center">
               {tags.map((tag) => (
-                <Badge key={tag} variant="surface" color={tagColor(tag)}>
+                <Badge key={tag} size="2" variant="surface" color={tagColor(tag)}>
                   <Flex align="center" gap="1">
                     {tag}
                     <button
@@ -295,14 +295,14 @@ export function OpportunityDetailClient({
                         opacity: 0.6,
                       }}
                     >
-                      <Cross2Icon width={10} height={10} />
+                      <Cross2Icon width={12} height={12} />
                     </button>
                   </Flex>
                 </Badge>
               ))}
               <Flex align="center" gap="1">
                 <TextField.Root
-                  size="1"
+                  size="2"
                   placeholder="Add tag…"
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
@@ -313,15 +313,15 @@ export function OpportunityDetailClient({
                     }
                   }}
                   disabled={isPending}
-                  style={{ width: 120 }}
+                  style={{ width: 140 }}
                 />
                 <IconButton
-                  size="1"
+                  size="2"
                   variant="soft"
                   onClick={() => addTag(newTag)}
                   disabled={isPending || !newTag.trim()}
                 >
-                  <PlusIcon width={12} height={12} />
+                  <PlusIcon width={14} height={14} />
                 </IconButton>
               </Flex>
             </Flex>
