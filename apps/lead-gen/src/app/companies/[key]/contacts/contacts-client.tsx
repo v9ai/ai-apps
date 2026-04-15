@@ -544,8 +544,10 @@ function DeleteContactButton({
 
 export function CompanyContactsClient({
   companyKey,
+  embedded,
 }: {
   companyKey: string;
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -895,10 +897,10 @@ export function CompanyContactsClient({
       email: c.email as string,
     }));
 
-  return (
-    <Container size="3" p={{ initial: "4", md: "6" }}>
+  const content = (
       <Flex direction="column" gap="5">
-        {/* Back link + header */}
+        {/* Back link + header (standalone page only) */}
+        {!embedded && (
         <Box>
           <Link
             href={`/companies/${companyKey}`}
@@ -925,6 +927,7 @@ export function CompanyContactsClient({
             </TabNav.Link>
           </TabNav.Root>
         </Box>
+        )}
 
         {/* Email discovery status */}
         {emailDiscoveryStatus && (
