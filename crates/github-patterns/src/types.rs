@@ -87,6 +87,31 @@ pub struct SearchReposResponse {
     pub items: Vec<GhRepo>,
 }
 
+/// Response from `GET /search/users`.
+#[derive(Debug, Clone, Deserialize)]
+pub struct SearchUsersResponse {
+    pub total_count: u32,
+    pub items: Vec<SearchUserItem>,
+}
+
+/// Minimal user from GitHub search results.
+#[derive(Debug, Clone, Deserialize)]
+pub struct SearchUserItem {
+    pub login: String,
+    pub id: u64,
+    pub html_url: String,
+    pub avatar_url: String,
+    pub score: f64,
+}
+
+/// A stargazer entry — just a user login + id.
+#[derive(Debug, Clone, Deserialize)]
+pub struct StargazerItem {
+    pub login: String,
+    pub id: u64,
+    pub avatar_url: String,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct GhApiError {
     pub message: String,
