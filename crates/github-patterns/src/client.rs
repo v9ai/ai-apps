@@ -258,6 +258,16 @@ impl GhClient {
 
         let raw: serde_json::Value = resp.json().await.map_err(GhError::Http)?;
         if let Some(errors) = raw.get("errors") {
+            // GitHub GraphQL returns partial data alongside errors.
+            // If `data` is present, return it (callers handle null fields);
+            // only hard-fail if there's no data at all.
+            if let Some(data) = raw.get("data") {
+                if !data.is_null() {
+                    let n_errors = errors.as_array().map(|a| a.len()).unwrap_or(1);
+                    tracing::warn!("GraphQL partial success: {n_errors} errors, returning available data");
+                    return serde_json::from_value(data.clone()).map_err(GhError::Deserialize);
+                }
+            }
             let msg = errors.to_string();
             return Err(GhError::Api { status: 200, message: msg });
         }

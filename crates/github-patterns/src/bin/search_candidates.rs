@@ -246,7 +246,7 @@ async fn main() -> anyhow::Result<()> {
     // ── Channel 4: Org member mining ────────────────────────────────────────
     for org in london_ai_orgs() {
         info!("mining org members: {org}");
-        match gh.get_org_members_graphql(org, 100).await {
+        match gh.get_org_members_graphql(org, 20).await {
             Ok(members) => {
                 let mut added = 0;
                 for m in &members {
@@ -292,12 +292,12 @@ async fn main() -> anyhow::Result<()> {
         .collect();
 
     info!(
-        "hydrating {} profiles via GraphQL (batches of 30), {} already known…",
+        "hydrating {} profiles via GraphQL (batches of 10), {} already known…",
         logins.len(),
         skipped_known,
     );
 
-    let batch_size = 30; // Smaller batches — enriched payload is larger
+    let batch_size = 10; // Small batches — enriched GQL payload hits resource limits at ~18 users
     for (batch_idx, chunk) in logins.chunks(batch_size).enumerate() {
         let chunk_vec: Vec<String> = chunk.to_vec();
         match gh.get_users_graphql(&chunk_vec).await {
@@ -422,7 +422,7 @@ async fn main() -> anyhow::Result<()> {
         let existing_logins: HashSet<String> = stars.iter().map(|(s, _)| s.login.clone()).collect();
 
         for seed in &seed_logins {
-            match gh.get_user_followers_graphql(seed, 50).await {
+            match gh.get_user_followers_graphql(seed, 20).await {
                 Ok(followers) => {
                     for f in &followers {
                         if !is_bot(&f.login)
@@ -455,7 +455,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Network expansion: re-hydrating {} new logins", network_logins.len());
             let net_logins: Vec<String> = network_logins.into_iter().collect();
 
-            for chunk in net_logins.chunks(30) {
+            for chunk in net_logins.chunks(10) {
                 let chunk_vec: Vec<String> = chunk.to_vec();
                 match gh.get_users_graphql(&chunk_vec).await {
                     Ok(users) => {
