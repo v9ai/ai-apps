@@ -1061,47 +1061,71 @@ function extractProfileFromDOM(): {
   currentCompany: string;
   currentCompanyLinkedinUrl: string;
 } {
-  // Name — try multiple selectors
+  // Debug: log all h1 elements to console
+  const allH1 = document.querySelectorAll("h1");
+  console.log("[LG ImportProfile] h1 elements:", allH1.length, Array.from(allH1).map(h => `"${h.textContent?.trim()}" class="${h.className}"`));
+
+  // Name — try multiple selectors, broadest last
   const nameEl =
     document.querySelector("h1.text-heading-xlarge") ||
     document.querySelector("h1.break-words") ||
     document.querySelector(".pv-top-card--list h1") ||
+    document.querySelector(".artdeco-entity-lockup__title h1") ||
+    document.querySelector("[data-anonymize='person-name']") ||
     document.querySelector("h1");
-  const name = nameEl?.textContent?.trim() || "";
+  let name = nameEl?.textContent?.trim() || "";
 
-  // Headline
+  // Fallback: parse from document title ("FirstName LastName - Title | LinkedIn")
+  if (!name && document.title) {
+    const titleMatch = document.title.match(/^(.+?)\s*[-–—|]/);
+    if (titleMatch) name = titleMatch[1].trim();
+  }
+
+  console.log("[LG ImportProfile] name:", JSON.stringify(name), "from:", nameEl?.tagName, nameEl?.className);
+
+  // Headline — try multiple selectors
   const headlineEl =
     document.querySelector(".text-body-medium.break-words") ||
-    document.querySelector(".pv-top-card--list .text-body-medium");
+    document.querySelector(".pv-top-card--list .text-body-medium") ||
+    document.querySelector("[data-anonymize='headline']") ||
+    document.querySelector(".pv-text-details__left-panel div.text-body-medium");
   const headline = headlineEl?.textContent?.trim() || "";
+
+  console.log("[LG ImportProfile] headline:", JSON.stringify(headline));
 
   // Location
   const locationEl =
     document.querySelector("span.text-body-small.inline.t-black--light.break-words") ||
-    document.querySelector(".pv-top-card--list-bullet .text-body-small");
+    document.querySelector(".pv-top-card--list-bullet .text-body-small") ||
+    document.querySelector("[data-anonymize='location']");
   const location = locationEl?.textContent?.trim() || "";
 
-  // Current company — try top-card company link
+  // Current company — try various selectors
   let currentCompany = "";
   let currentCompanyLinkedinUrl = "";
 
-  const companyLink = document.querySelector<HTMLAnchorElement>(
-    'a[href*="/company/"][data-field="experience_company_logo"],' +
-    'div.pv-text-details__right-panel a[href*="/company/"],' +
+  // Strategy 1: company link in the top card area
+  const companySelectors = [
+    'a[href*="/company/"][data-field="experience_company_logo"]',
+    'div.pv-text-details__right-panel a[href*="/company/"]',
     '.pv-top-card--experience-list-item a[href*="/company/"]',
-  );
-  if (companyLink) {
-    currentCompany = companyLink.textContent?.trim() || "";
-    currentCompanyLinkedinUrl = companyLink.href.split("?")[0].replace(/\/$/, "");
+    '.pv-top-card .experience-item a[href*="/company/"]',
+  ];
+  for (const sel of companySelectors) {
+    const link = document.querySelector<HTMLAnchorElement>(sel);
+    if (link) {
+      currentCompany = link.textContent?.trim() || "";
+      currentCompanyLinkedinUrl = link.href.split("?")[0].replace(/\/$/, "");
+      break;
+    }
   }
 
-  // Fallback: experience section
+  // Strategy 2: experience section
   if (!currentCompany) {
     const expSection = document.querySelector("#experience")?.closest("section");
     if (expSection) {
       const firstLink = expSection.querySelector<HTMLAnchorElement>('a[href*="/company/"]');
       if (firstLink) {
-        // The company name is usually in a span inside the link
         const nameSpan = firstLink.querySelector("span.visually-hidden") ||
           firstLink.querySelector("span");
         currentCompany = nameSpan?.textContent?.trim() || firstLink.textContent?.trim() || "";
@@ -1110,7 +1134,7 @@ function extractProfileFromDOM(): {
     }
   }
 
-  // Fallback: parse company from headline ("Title at Company")
+  // Strategy 3: parse company from headline ("Title at Company")
   if (!currentCompany && headline) {
     for (const sep of [" at ", " @ ", " | "]) {
       const idx = headline.toLowerCase().indexOf(sep);
@@ -1120,6 +1144,8 @@ function extractProfileFromDOM(): {
       }
     }
   }
+
+  console.log("[LG ImportProfile] company:", JSON.stringify(currentCompany), "url:", currentCompanyLinkedinUrl);
 
   return {
     name,
