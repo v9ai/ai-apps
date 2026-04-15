@@ -6,7 +6,9 @@
 
 function extractLinkedInUsername(url: string): string | null {
   const match = url.match(/linkedin\.com\/in\/([^/?#]+)/);
-  return match?.[1]?.toLowerCase() ?? null;
+  if (!match?.[1]) return null;
+  // Strip LinkedIn's auto-generated hex ID suffix (e.g., "zinnia-everatt-81678a340" → "zinnia-everatt")
+  return match[1].toLowerCase().replace(/-[0-9a-f]{7,}$/, "");
 }
 
 function slugify(text: string): string {
