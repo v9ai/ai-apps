@@ -1445,58 +1445,28 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                         </SectionCard>
                       ) : null}
 
-                    </Flex>
-                  </Box>
-
-                  <Box flexGrow="1" minWidth="0">
-                    <Flex direction="column" gap="4">
-                      <KeyFactsCard
-                        linkedinUrl={company.linkedin_url}
-                        jobBoardUrl={company.job_board_url}
-                        score={company.score}
-                        isAdmin={isAdmin}
-                        updatedAt={company.updated_at}
-                      />
-
-                      {company.industries?.length ? (
-                        <SectionCard title="Industries">
-                          <CollapsibleChips
-                            items={company.industries}
-                            visibleCount={8}
-                          />
-                        </SectionCard>
-                      ) : null}
-
-                      {(() => {
-                        const displayTags = (company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-'));
-                        return displayTags.length ? (
-                          <SectionCard title="Tags">
-                            <CollapsibleChips items={displayTags} visibleCount={10} />
-                          </SectionCard>
-                        ) : null;
-                      })()}
-                    </Flex>
-                  </Box>
-                </Flex>
-
-                {/* Admin-only: Score breakdown */}
-                {isAdmin && company.score_reasons?.length ? (
-                  <SectionCard title="Score breakdown">
-                    <Flex direction="column" gap="2">
-                      {company.score_reasons.map((reason: string, idx: number) => (
-                        <Box key={`${idx}-${reason}`} px="3" py="1" style={{ background: 'var(--gray-2)' }}><Text size="2" color="gray">{reason}</Text></Box>
-                      ))}
-                    </Flex>
-                  </SectionCard>
-                ) : null}
               </Flex>
-            </Box>
 
-            {/* Contacts (embedded) */}
-            {isAdmin && company.id && (
+              {/* Admin-only: Score breakdown */}
+              {isAdmin && company.score_reasons?.length ? (
+                <SectionCard title="Score breakdown">
+                  <Flex direction="column" gap="2">
+                    {company.score_reasons.map((reason: string, idx: number) => (
+                      <Box key={`${idx}-${reason}`} px="3" py="1" style={{ background: 'var(--gray-2)' }}><Text size="2" color="gray">{reason}</Text></Box>
+                    ))}
+                  </Flex>
+                </SectionCard>
+              ) : null}
+            </Flex>
+          </Box>
+
+          {/* Right column: contacts */}
+          {isAdmin && company.id && (
+            <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
               <CompanyContactsClient companyKey={effectiveKey} embedded />
-            )}
-      </Flex>
+            </Box>
+          )}
+        </Flex>
     </Container>
   );
 }
