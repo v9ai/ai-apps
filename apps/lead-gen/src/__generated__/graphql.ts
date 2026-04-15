@@ -640,6 +640,21 @@ export type CreateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+export type CreateOpportunityInput = {
+  applied?: InputMaybe<Scalars['Boolean']['input']>;
+  appliedAt?: InputMaybe<Scalars['String']['input']>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  contactId?: InputMaybe<Scalars['Int']['input']>;
+  metadata?: InputMaybe<Scalars['String']['input']>;
+  rawContext?: InputMaybe<Scalars['String']['input']>;
+  rewardText?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  title: Scalars['String']['input'];
+  url?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateReminderInput = {
   entityId: Scalars['Int']['input'];
   entityType: Scalars['String']['input'];
@@ -1255,6 +1270,7 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
+  createOpportunity: Opportunity;
   createReminder: Reminder;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
@@ -1427,6 +1443,11 @@ export type MutationCreateDraftCampaignArgs = {
 
 export type MutationCreateEmailTemplateArgs = {
   input: CreateEmailTemplateInput;
+};
+
+
+export type MutationCreateOpportunityArgs = {
+  input: CreateOpportunityInput;
 };
 
 
@@ -1840,6 +1861,7 @@ export type Query = {
   linkedinPosts: Array<LinkedInPost>;
   /** ML model health and stats */
   mlStats: MlStats;
+  opportunityByUrl: Maybe<Opportunity>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   /** Next best companies to contact based on ML scoring */
@@ -2081,6 +2103,11 @@ export type QueryLinkedinPostsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   type?: InputMaybe<LinkedInPostType>;
+};
+
+
+export type QueryOpportunityByUrlArgs = {
+  url: Scalars['String']['input'];
 };
 
 

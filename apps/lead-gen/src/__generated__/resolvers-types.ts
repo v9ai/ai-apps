@@ -641,6 +641,21 @@ export type CreateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+export type CreateOpportunityInput = {
+  applied?: InputMaybe<Scalars['Boolean']['input']>;
+  appliedAt?: InputMaybe<Scalars['String']['input']>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  contactId?: InputMaybe<Scalars['Int']['input']>;
+  metadata?: InputMaybe<Scalars['String']['input']>;
+  rawContext?: InputMaybe<Scalars['String']['input']>;
+  rewardText?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  title: Scalars['String']['input'];
+  url?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateReminderInput = {
   entityId: Scalars['Int']['input'];
   entityType: Scalars['String']['input'];
@@ -1256,6 +1271,7 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
+  createOpportunity: Opportunity;
   createReminder: Reminder;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
@@ -1428,6 +1444,11 @@ export type MutationCreateDraftCampaignArgs = {
 
 export type MutationCreateEmailTemplateArgs = {
   input: CreateEmailTemplateInput;
+};
+
+
+export type MutationCreateOpportunityArgs = {
+  input: CreateOpportunityInput;
 };
 
 
@@ -1841,6 +1862,7 @@ export type Query = {
   linkedinPosts: Array<LinkedInPost>;
   /** ML model health and stats */
   mlStats: MlStats;
+  opportunityByUrl: Maybe<Opportunity>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   /** Next best companies to contact based on ML scoring */
@@ -2082,6 +2104,11 @@ export type QueryLinkedinPostsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   type?: InputMaybe<LinkedInPostType>;
+};
+
+
+export type QueryOpportunityByUrlArgs = {
+  url: Scalars['String']['input'];
 };
 
 
@@ -3439,6 +3466,7 @@ export type ResolversTypes = {
   CreateCompanyInput: ResolverTypeWrapper<Partial<CreateCompanyInput>>;
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
   CreateEmailTemplateInput: ResolverTypeWrapper<Partial<CreateEmailTemplateInput>>;
+  CreateOpportunityInput: ResolverTypeWrapper<Partial<CreateOpportunityInput>>;
   CreateReminderInput: ResolverTypeWrapper<Partial<CreateReminderInput>>;
   DailyJobCount: ResolverTypeWrapper<Partial<DailyJobCount>>;
   DataQualityScore: ResolverTypeWrapper<Partial<DataQualityScore>>;
@@ -3667,6 +3695,7 @@ export type ResolversParentTypes = {
   CreateCompanyInput: Partial<CreateCompanyInput>;
   CreateContactInput: Partial<CreateContactInput>;
   CreateEmailTemplateInput: Partial<CreateEmailTemplateInput>;
+  CreateOpportunityInput: Partial<CreateOpportunityInput>;
   CreateReminderInput: Partial<CreateReminderInput>;
   DailyJobCount: Partial<DailyJobCount>;
   DataQualityScore: Partial<DataQualityScore>;
@@ -4762,6 +4791,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationCreateContactArgs, 'input'>>;
   createDraftCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationCreateDraftCampaignArgs, 'input'>>;
   createEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationCreateEmailTemplateArgs, 'input'>>;
+  createOpportunity?: Resolver<ResolversTypes['Opportunity'], ParentType, ContextType, RequireFields<MutationCreateOpportunityArgs, 'input'>>;
   createReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationCreateReminderArgs, 'input'>>;
   deleteCampaign?: Resolver<ResolversTypes['DeleteCampaignResult'], ParentType, ContextType, RequireFields<MutationDeleteCampaignArgs, 'id'>>;
   deleteCompanies?: Resolver<ResolversTypes['DeleteCompaniesResult'], ParentType, ContextType, RequireFields<MutationDeleteCompaniesArgs, 'companyIds'>>;
@@ -4896,6 +4926,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   linkedinPost?: Resolver<Maybe<ResolversTypes['LinkedInPost']>, ParentType, ContextType, RequireFields<QueryLinkedinPostArgs, 'id'>>;
   linkedinPosts?: Resolver<Array<ResolversTypes['LinkedInPost']>, ParentType, ContextType, Partial<QueryLinkedinPostsArgs>>;
   mlStats?: Resolver<ResolversTypes['MLStats'], ParentType, ContextType>;
+  opportunityByUrl?: Resolver<Maybe<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryOpportunityByUrlArgs, 'url'>>;
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
   recommendedCompanies?: Resolver<Array<ResolversTypes['RecommendedCompany']>, ParentType, ContextType, Partial<QueryRecommendedCompaniesArgs>>;

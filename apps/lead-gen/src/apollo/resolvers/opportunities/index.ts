@@ -1,5 +1,6 @@
 import type { GraphQLContext } from "../../context";
 import type { Opportunity } from "@/db/schema";
+import { opportunityMutations, opportunityQueryExtensions } from "./mutations";
 
 type DbOpportunityRow = Opportunity & { company_name: string | null };
 
@@ -39,9 +40,11 @@ const opportunityQueries = {
   ) {
     return context.loaders.opportunitiesByContact.load(args.contactId);
   },
+  ...opportunityQueryExtensions,
 };
 
 export const opportunityResolvers = {
   Opportunity: OpportunityField,
   Query: opportunityQueries,
+  Mutation: opportunityMutations,
 };

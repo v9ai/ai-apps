@@ -24,6 +24,26 @@ type Opportunity {
   updatedAt: String!
 }
 
+input CreateOpportunityInput {
+  title: String!
+  url: String
+  source: String
+  status: String
+  rewardText: String
+  rawContext: String
+  metadata: String
+  applied: Boolean
+  appliedAt: String
+  tags: [String!]
+  companyId: Int
+  contactId: Int
+}
+
 extend type Query {
   contactOpportunities(contactId: Int!): [Opportunity!]!
+  opportunityByUrl(url: String!): Opportunity
+}
+
+extend type Mutation {
+  createOpportunity(input: CreateOpportunityInput!): Opportunity!
 }

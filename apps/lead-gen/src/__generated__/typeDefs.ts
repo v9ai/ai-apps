@@ -579,6 +579,21 @@ input CreateEmailTemplateInput {
   variables: [String!]
 }
 
+input CreateOpportunityInput {
+  applied: Boolean
+  appliedAt: String
+  companyId: Int
+  contactId: Int
+  metadata: String
+  rawContext: String
+  rewardText: String
+  source: String
+  status: String
+  tags: [String!]
+  title: String!
+  url: String
+}
+
 input CreateReminderInput {
   entityId: Int!
   entityType: String!
@@ -1151,6 +1166,7 @@ type Mutation {
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
+  createOpportunity(input: CreateOpportunityInput!): Opportunity!
   createReminder(input: CreateReminderInput!): Reminder!
   deleteCampaign(id: String!): DeleteCampaignResult!
   deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
@@ -1306,6 +1322,7 @@ type Query {
   linkedinPosts(companyId: Int, limit: Int, offset: Int, type: LinkedInPostType): [LinkedInPost!]!
   """ML model health and stats"""
   mlStats: MLStats!
+  opportunityByUrl(url: String!): Opportunity
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, classification: String, limit: Int, offset: Int): ReceivedEmailsResult!
   """Next best companies to contact based on ML scoring"""
