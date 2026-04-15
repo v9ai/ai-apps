@@ -71,6 +71,8 @@ fn stargazer_repos() -> Vec<&'static str> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Load .env.local from lead-gen app (where GITHUB_TOKEN lives), then .env
+    dotenvy::from_filename("../../apps/lead-gen/.env.local").ok();
     dotenvy::dotenv().ok();
     tracing_subscriber::fmt()
         .with_env_filter(
@@ -156,7 +158,7 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Phase 1 complete: {} unique logins to hydrate", seen_logins.len());
 
-    // ── Phase 2: Hydrate profiles + location filter ─────────────────────────
+    // ── Phase 2: Hydrate profiles via GraphQL + location filter ───────────
     info!("opening LanceDB at {lance_path}");
     let mut lance_db = ContributorsDb::open(&lance_path).await?;
 
@@ -164,53 +166,68 @@ async fn main() -> anyhow::Result<()> {
     let mut skipped_location = 0u32;
     let mut skipped_known = 0u32;
 
-    let logins: Vec<String> = seen_logins.into_iter().collect();
-    info!("hydrating {} profiles…", logins.len());
+    // Filter out already-known logins before hydration
+    let logins: Vec<String> = seen_logins
+        .into_iter()
+        .filter(|l| {
+            if lance_db.is_known(l) {
+                skipped_known += 1;
+                false
+            } else {
+                true
+            }
+        })
+        .collect();
 
-    for (idx, login) in logins.iter().enumerate() {
-        if lance_db.is_known(login) {
-            skipped_known += 1;
-            continue;
-        }
+    info!(
+        "hydrating {} profiles via GraphQL (batches of 50), {} already known…",
+        logins.len(),
+        skipped_known,
+    );
 
-        match gh.get_user(login).await {
-            Ok(user) => {
-                let loc = user.location.as_deref();
-                let london = is_london(loc);
-                let uk = is_uk_wide(loc);
+    // GraphQL batch hydration — 50 users per request instead of 1 REST call each
+    let batch_size = 50;
+    for (batch_idx, chunk) in logins.chunks(batch_size).enumerate() {
+        let chunk_vec: Vec<String> = chunk.to_vec();
+        match gh.get_users_graphql(&chunk_vec).await {
+            Ok(users) => {
+                for user in users {
+                    let loc = user.location.as_deref();
+                    let london = is_london(loc);
+                    let uk = is_uk_wide(loc);
 
-                if !london && !uk {
-                    skipped_location += 1;
-                } else {
-                    candidates.push((
-                        ContributorRecord {
-                            total_contributions: user.public_repos, // proxy: repos as contribution signal
-                            repos: vec![RepoContrib {
-                                repo: "github-search".to_string(),
-                                contributions: user.public_repos,
-                            }],
-                            user,
-                        },
-                        london,
-                    ));
+                    if !london && !uk {
+                        skipped_location += 1;
+                    } else {
+                        candidates.push((
+                            ContributorRecord {
+                                total_contributions: user.public_repos,
+                                repos: vec![RepoContrib {
+                                    repo: "github-search".to_string(),
+                                    contributions: user.public_repos,
+                                }],
+                                user,
+                            },
+                            london,
+                        ));
+                    }
                 }
             }
-            Err(e) => warn!("failed to fetch {login}: {e}"),
+            Err(e) => warn!("  GraphQL batch {} failed: {e}", batch_idx + 1),
         }
 
-        // ~6 req/s to stay within secondary rate limit
-        tokio::time::sleep(Duration::from_millis(170)).await;
+        let fetched = (batch_idx + 1) * batch_size;
+        info!(
+            "  batch {}: hydrated {}/{} — {} candidates, {} location-filtered",
+            batch_idx + 1,
+            fetched.min(logins.len()),
+            logins.len(),
+            candidates.len(),
+            skipped_location,
+        );
 
-        if (idx + 1) % 50 == 0 {
-            info!(
-                "  hydrated {}/{} — {} candidates, {} location-filtered, {} already-known",
-                idx + 1,
-                logins.len(),
-                candidates.len(),
-                skipped_location,
-                skipped_known,
-            );
-        }
+        // Brief pause between GraphQL calls to be nice
+        tokio::time::sleep(Duration::from_millis(500)).await;
     }
 
     info!(

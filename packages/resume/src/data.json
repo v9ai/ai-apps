@@ -211,8 +211,7 @@
         "highlights": [
           "Biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
           "Risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
-          "7 server actions with 15 test cases covering diverse metabolic profiles.",
-          "Supabase + pgvector with Row Level Security, Drizzle ORM, medication and diagnosis management."
+          "7 server actions with 15 test cases covering diverse metabolic profiles."
         ]
       },
       {
@@ -225,8 +224,7 @@
           "Knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
           "Per-user Bayesian knowledge tracing (p_mastery, p_transit, p_slip, p_guess per concept), novice → expert classification.",
           "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
-          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI.",
-          "Real-time streaming chat with thread-scoped persistence, 17-table Drizzle schema, pgvector embeddings."
+          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI."
         ]
       },
       {

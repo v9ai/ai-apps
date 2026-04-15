@@ -219,6 +219,139 @@ impl GhClient {
         .await
     }
 
+    // ── GraphQL endpoints ────────────────────────────────────────────────
+
+    const GQL_URL: &'static str = "https://api.github.com/graphql";
+
+    /// POST a GraphQL query and return the parsed `data` field.
+    async fn graphql<T: DeserializeOwned>(&self, query: &str, variables: Option<&serde_json::Value>) -> Result<T> {
+        let body = if let Some(vars) = variables {
+            serde_json::json!({ "query": query, "variables": vars })
+        } else {
+            serde_json::json!({ "query": query })
+        };
+
+        debug!("GraphQL POST");
+        let resp = self
+            .inner
+            .post(Self::GQL_URL)
+            .bearer_auth(&self.token)
+            .json(&body)
+            .send()
+            .await
+            .map_err(GhError::Http)?;
+
+        let status = resp.status().as_u16();
+        if status == 429 || status == 403 {
+            let reset = resp
+                .headers()
+                .get("x-ratelimit-reset")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("unknown")
+                .to_string();
+            return Err(GhError::RateLimit { reset_at: reset });
+        }
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(GhError::Api { status, message: text });
+        }
+
+        let raw: serde_json::Value = resp.json().await.map_err(GhError::Http)?;
+        if let Some(errors) = raw.get("errors") {
+            let msg = errors.to_string();
+            return Err(GhError::Api { status: 200, message: msg });
+        }
+        let data = raw.get("data").ok_or_else(|| GhError::Other("no data field in GraphQL response".into()))?;
+        serde_json::from_value(data.clone()).map_err(GhError::Deserialize)
+    }
+
+    /// Batch-fetch full user profiles via GraphQL. Up to 50 logins per call.
+    /// Much faster than per-user REST calls (1 request vs 50).
+    pub async fn get_users_graphql(&self, logins: &[String]) -> Result<Vec<GhUser>> {
+        if logins.is_empty() {
+            return Ok(vec![]);
+        }
+
+        // Build aliased query: u0: user(login:"a") { ...fields } u1: user(login:"b") { ...fields }
+        let fields = r#"
+            login id: databaseId
+            url bio company location email name
+            avatarUrl websiteUrl twitterUsername
+            publicRepositories: repositories(privacy: PUBLIC) { totalCount }
+            publicGists: gists(privacy: PUBLIC) { totalCount }
+            followers { totalCount }
+            following { totalCount }
+            isHireable
+            createdAt updatedAt
+        "#;
+
+        let mut parts = Vec::with_capacity(logins.len());
+        for (i, login) in logins.iter().enumerate() {
+            let escaped = login.replace('\\', "\\\\").replace('"', "\\\"");
+            parts.push(format!("u{i}: user(login: \"{escaped}\") {{ {fields} }}"));
+        }
+        let query = format!("query {{ {} }}", parts.join("\n"));
+
+        let raw: HashMap<String, serde_json::Value> = self.graphql(&query, None).await?;
+        let mut users = Vec::with_capacity(raw.len());
+
+        for value in raw.values() {
+            if value.is_null() {
+                continue;
+            }
+            // Map GraphQL shape → GhUser
+            let login = value["login"].as_str().unwrap_or_default().to_string();
+            let id = value["id"].as_u64().unwrap_or(0);
+            let html_url = value["url"].as_str().unwrap_or_default().to_string();
+            let avatar_url = value["avatarUrl"].as_str().unwrap_or_default().to_string();
+            let name = value["name"].as_str().map(String::from);
+            let email = value["email"].as_str().filter(|s| !s.is_empty()).map(String::from);
+            let bio = value["bio"].as_str().filter(|s| !s.is_empty()).map(String::from);
+            let company = value["company"].as_str().filter(|s| !s.is_empty()).map(String::from);
+            let location = value["location"].as_str().filter(|s| !s.is_empty()).map(String::from);
+            let blog = value["websiteUrl"].as_str().filter(|s| !s.is_empty()).map(String::from);
+            let twitter_username = value["twitterUsername"].as_str().filter(|s| !s.is_empty()).map(String::from);
+            let public_repos = value["publicRepositories"]["totalCount"].as_u64().unwrap_or(0) as u32;
+            let public_gists = value["publicGists"]["totalCount"].as_u64().unwrap_or(0) as u32;
+            let followers = value["followers"]["totalCount"].as_u64().unwrap_or(0) as u32;
+            let following = value["following"]["totalCount"].as_u64().unwrap_or(0) as u32;
+            let hireable = value["isHireable"].as_bool();
+            let created_at = value["createdAt"]
+                .as_str()
+                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+                .map(|d| d.with_timezone(&chrono::Utc))
+                .unwrap_or_else(chrono::Utc::now);
+            let updated_at = value["updatedAt"]
+                .as_str()
+                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+                .map(|d| d.with_timezone(&chrono::Utc))
+                .unwrap_or_else(chrono::Utc::now);
+
+            users.push(GhUser {
+                login,
+                id,
+                html_url,
+                avatar_url,
+                name,
+                email,
+                bio,
+                company,
+                location,
+                blog,
+                twitter_username,
+                public_repos,
+                public_gists,
+                followers,
+                following,
+                hireable,
+                created_at,
+                updated_at,
+            });
+        }
+
+        Ok(users)
+    }
+
     /// Search repos by topic + optional language.
     pub async fn search_repos(
         &self,
