@@ -1486,17 +1486,17 @@ function extractOpportunityFromDOM(): {
   const descEl = document.querySelector("#job-details");
   const description = descEl?.textContent?.trim() || "";
 
-  // Hiring team contact
+  // Hiring team contact — use .hirer-card__hirer-information directly because
+  // .job-details-people-who-can-help__section--two-pane matches both the
+  // connections card AND the hiring team card; querySelector returns the wrong one.
   let hiringContact: { name: string; linkedinUrl: string; position: string } | null = null;
-  const hiringSection = document.querySelector(
-    ".job-details-people-who-can-help__section--two-pane",
-  );
-  if (hiringSection) {
-    const nameEl = hiringSection.querySelector(".jobs-poster__name strong");
+  const hirerCard = document.querySelector(".hirer-card__hirer-information");
+  if (hirerCard) {
+    const nameEl = hirerCard.querySelector(".jobs-poster__name strong");
     const contactName = nameEl?.textContent?.trim() || "";
     if (contactName) {
       let contactLinkedinUrl = "";
-      const profileLink = hiringSection.querySelector<HTMLAnchorElement>(
+      const profileLink = hirerCard.querySelector<HTMLAnchorElement>(
         'a[href*="/in/"]',
       );
       if (profileLink?.href) {
@@ -1507,8 +1507,8 @@ function extractOpportunityFromDOM(): {
         } catch { /* skip */ }
       }
 
-      const positionEl = hiringSection.querySelector(
-        ".hirer-card__hirer-information .text-body-small.t-black",
+      const positionEl = hirerCard.querySelector(
+        ".text-body-small.t-black",
       );
       const position = positionEl?.textContent?.trim() || "";
 

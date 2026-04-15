@@ -822,21 +822,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // 2. Find or create hiring contact
         let contactId: number | undefined;
-        if (opportunityData.hiringContact?.name && opportunityData.hiringContact.linkedinUrl) {
+        if (opportunityData.hiringContact?.name) {
           await notifyTab({ status: "Checking contact..." });
 
-          const checkResult = await gqlRequest(
-            `query CheckContactByLinkedinUrl($linkedinUrl: String!) {
-              contactByLinkedinUrl(linkedinUrl: $linkedinUrl) {
-                id slug firstName lastName
-              }
-            }`,
-            { linkedinUrl: opportunityData.hiringContact.linkedinUrl },
-          );
+          // Try dedup by linkedinUrl first if available
+          if (opportunityData.hiringContact.linkedinUrl) {
+            const checkResult = await gqlRequest(
+              `query CheckContactByLinkedinUrl($linkedinUrl: String!) {
+                contactByLinkedinUrl(linkedinUrl: $linkedinUrl) {
+                  id slug firstName lastName
+                }
+              }`,
+              { linkedinUrl: opportunityData.hiringContact.linkedinUrl },
+            );
 
-          if (checkResult.data?.contactByLinkedinUrl?.id) {
-            contactId = checkResult.data.contactByLinkedinUrl.id;
-          } else {
+            if (checkResult.data?.contactByLinkedinUrl?.id) {
+              contactId = checkResult.data.contactByLinkedinUrl.id;
+            }
+          }
+
+          if (contactId === undefined) {
             const { firstName, lastName } = parseName(opportunityData.hiringContact.name);
             const createResult = await gqlRequest(
               `mutation CreateContact($input: CreateContactInput!) {
@@ -846,7 +851,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 input: {
                   firstName,
                   lastName: lastName || undefined,
-                  linkedinUrl: opportunityData.hiringContact.linkedinUrl,
+                  linkedinUrl: opportunityData.hiringContact.linkedinUrl || undefined,
                   position: opportunityData.hiringContact.position || undefined,
                   ...(companyId !== undefined && { companyId }),
                   tags: ["linkedin-import", "hiring-team"],
