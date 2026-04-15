@@ -1446,20 +1446,7 @@ async def phase2(state: ResearchState) -> dict:
         ),
     ]
 
-    # Sequential execution — local model handles one agent at a time
-    results: dict[str, str] = {}
-    for key, sys_prompt, task_prompt, agent_tools in specs:
-        if key in _SKIP_AGENTS:
-            results[key] = "(skipped)"
-            console.print(f"  [yellow]⊘[/] {key} (skipped)")
-            continue
-        try:
-            result = await _run_agent(client, sys_prompt, task_prompt, agent_tools)
-        except Exception as e:
-            result = f"(agent error: {e})"
-        results[key] = result
-        console.print(f"  [green]✓[/] {key} ({len(result)} chars)")
-
+    results = await _run_dual_lane(client, specs, phase_label="Phase 2")
     return results
 
 
@@ -1468,7 +1455,7 @@ async def phase2(state: ResearchState) -> dict:
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def phase3_eval(state: ResearchState) -> dict:
-    client = _make_client()
+    client = _make_hf_client() or _make_client()  # prefer HF 72B for synthesis
     person = state["person"]
     ctx = f"{person.get('name', '')} ({person.get('role', '')} @ {person.get('org', '')})"
 
