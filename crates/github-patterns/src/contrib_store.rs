@@ -39,11 +39,15 @@ fn infer_position(bio: Option<&str>) -> Option<&'static str> {
 /// fields (email, company, position) are refreshed; existing non-null values
 /// are preserved via `COALESCE`.
 ///
+/// `extra_tags` are appended alongside the default `github:rising-star` /
+/// `skill:*` tags — use for opportunity IDs, location verification, etc.
+///
 /// Returns the contact `id` when upserted, `None` when below threshold.
 pub async fn save_contributor_contact(
     pool: &PgPool,
     star: &RisingStar,
     threshold: f32,
+    extra_tags: &[String],
 ) -> Result<Option<i32>> {
     if star.rising_score < threshold {
         return Ok(None);
@@ -80,6 +84,9 @@ pub async fn save_contributor_contact(
     ];
     for skill in &star.skills {
         tags.push(format!("skill:{skill}"));
+    }
+    for tag in extra_tags {
+        tags.push(tag.clone());
     }
     let tags_json = serde_json::to_string(&tags).map_err(|e| GhError::Other(e.to_string()))?;
 

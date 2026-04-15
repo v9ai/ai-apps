@@ -31,6 +31,7 @@ async-trait = "0.1"
 tracing     = "0.1"
 chrono      = { version = "0.4", features = ["serde"] }
 base64      = "0.22"
+regex       = "1"
 
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false, optional = true }
 tokio   = { version = "1", features = ["time"], optional = true }
@@ -58,6 +59,11 @@ required-features = ["lance"]
 [[bin]]
 name = "export_contributors"
 path = "src/bin/export_contributors.rs"
+required-features = ["lance", "neon"]
+
+[[bin]]
+name = "search_candidates"
+path = "src/bin/search_candidates.rs"
 required-features = ["lance", "neon"]
 
 [dev-dependencies]

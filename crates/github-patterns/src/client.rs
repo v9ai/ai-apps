@@ -181,6 +181,44 @@ impl GhClient {
         self.get(&format!("/users/{login}")).await
     }
 
+    /// Search GitHub users by query string.
+    ///
+    /// Supports qualifiers like `location:London`, `language:python`, `type:user`.
+    pub async fn search_users(
+        &self,
+        query: &str,
+        sort: Option<&str>,
+        order: Option<&str>,
+        per_page: u8,
+        page: u32,
+    ) -> Result<SearchUsersResponse> {
+        let mut url = format!(
+            "{BASE_URL}/search/users?q={}&per_page={per_page}&page={page}",
+            urlencoding(query),
+        );
+        if let Some(s) = sort {
+            url.push_str(&format!("&sort={s}"));
+        }
+        if let Some(o) = order {
+            url.push_str(&format!("&order={o}"));
+        }
+        self.get_url(&url).await
+    }
+
+    /// Fetch stargazers of a repo (paginated).
+    pub async fn repo_stargazers(
+        &self,
+        owner: &str,
+        repo: &str,
+        per_page: u8,
+        page: u32,
+    ) -> Result<Vec<StargazerItem>> {
+        self.get(&format!(
+            "/repos/{owner}/{repo}/stargazers?per_page={per_page}&page={page}"
+        ))
+        .await
+    }
+
     /// Search repos by topic + optional language.
     pub async fn search_repos(
         &self,

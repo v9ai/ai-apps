@@ -68,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
     let mut skipped = 0usize;
 
     for star in &stars {
-        match save_contributor_contact(&pool, star, threshold).await {
+        match save_contributor_contact(&pool, star, threshold, &[]).await {
             Ok(Some(id)) => {
                 exported += 1;
                 tracing::debug!("exported {} → contacts id={id}", star.login);
