@@ -1,24 +1,30 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import {
   Badge,
   Card,
   Container,
   Flex,
   Heading,
+  IconButton,
   Separator,
   Text,
   Table,
+  TextField,
 } from "@radix-ui/themes";
 import Link from "next/link";
 import {
   ArrowLeftIcon,
+  Cross2Icon,
   ExternalLinkIcon,
   LinkedInLogoIcon,
   EnvelopeClosedIcon,
   GitHubLogoIcon,
+  PlusIcon,
 } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
+import { updateOpportunityTags } from "../actions";
 
 type OpportunityDetail = {
   id: string;
@@ -95,6 +101,18 @@ const statusColors: Record<string, "green" | "blue" | "orange" | "red" | "gray" 
   closed: "gray",
 };
 
+const specialTagColors: Record<string, "red" | "orange" | "green" | "blue" | "purple"> = {
+  excluded: "red",
+  priority: "green",
+  applied: "orange",
+  referral: "purple",
+  remote: "blue",
+};
+
+function tagColor(tag: string): "red" | "orange" | "green" | "blue" | "purple" | "gray" {
+  return specialTagColors[tag] ?? "gray";
+}
+
 function InfoItem({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
   return (
@@ -121,8 +139,30 @@ export function OpportunityDetailClient({
   opportunity: OpportunityDetail;
   sourcedCandidates?: SourcedCandidate[];
 }) {
-  const tags: string[] = opp.tags ? JSON.parse(opp.tags) : [];
+  const initialTags: string[] = opp.tags ? JSON.parse(opp.tags) : [];
   const meta: Record<string, string> = opp.metadata ? JSON.parse(opp.metadata) : {};
+  const [tags, setTags] = useState(initialTags);
+  const [newTag, setNewTag] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  function addTag(tag: string) {
+    const t = tag.trim().toLowerCase();
+    if (!t || tags.includes(t)) return;
+    const next = [...tags, t];
+    setTags(next);
+    setNewTag("");
+    startTransition(async () => {
+      await updateOpportunityTags(opp.id, next);
+    });
+  }
+
+  function removeTag(tag: string) {
+    const next = tags.filter((t) => t !== tag);
+    setTags(next);
+    startTransition(async () => {
+      await updateOpportunityTags(opp.id, next);
+    });
+  }
 
   return (
     <Container size="3" p="6">
@@ -235,13 +275,58 @@ export function OpportunityDetailClient({
         )}
 
         {/* Tags */}
-        {tags.length > 0 && (
-          <Flex gap="1" wrap="wrap">
-            {tags.map((tag) => (
-              <Badge key={tag} variant="surface" color="gray">{tag}</Badge>
-            ))}
+        <Card>
+          <Flex direction="column" gap="2" p="1">
+            <Text size="1" color="gray" weight="medium">Tags</Text>
+            <Flex gap="1" wrap="wrap" align="center">
+              {tags.map((tag) => (
+                <Badge key={tag} variant="surface" color={tagColor(tag)}>
+                  <Flex align="center" gap="1">
+                    {tag}
+                    <button
+                      onClick={() => removeTag(tag)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        opacity: 0.6,
+                      }}
+                    >
+                      <Cross2Icon width={10} height={10} />
+                    </button>
+                  </Flex>
+                </Badge>
+              ))}
+              <Flex align="center" gap="1">
+                <TextField.Root
+                  size="1"
+                  placeholder="Add tag…"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag(newTag);
+                    }
+                  }}
+                  disabled={isPending}
+                  style={{ width: 120 }}
+                />
+                <IconButton
+                  size="1"
+                  variant="soft"
+                  onClick={() => addTag(newTag)}
+                  disabled={isPending || !newTag.trim()}
+                >
+                  <PlusIcon width={12} height={12} />
+                </IconButton>
+              </Flex>
+            </Flex>
           </Flex>
-        )}
+        </Card>
 
         {/* Application status */}
         {(opp.applied || opp.application_status || opp.application_notes) && (

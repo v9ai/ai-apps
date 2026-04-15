@@ -1334,6 +1334,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
+  updateOpportunityTags: Opportunity;
   updateReminder: Reminder;
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
@@ -1741,6 +1742,12 @@ export type MutationUpdateContactArgs = {
 export type MutationUpdateEmailTemplateArgs = {
   id: Scalars['Int']['input'];
   input: UpdateEmailTemplateInput;
+};
+
+
+export type MutationUpdateOpportunityTagsArgs = {
+  id: Scalars['String']['input'];
+  tags: Array<Scalars['String']['input']>;
 };
 
 

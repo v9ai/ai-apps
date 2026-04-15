@@ -46,4 +46,5 @@ extend type Query {
 
 extend type Mutation {
   createOpportunity(input: CreateOpportunityInput!): Opportunity!
+  updateOpportunityTags(id: String!, tags: [String!]!): Opportunity!
 }

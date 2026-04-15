@@ -4,6 +4,7 @@ import { opportunities } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import type {
   MutationCreateOpportunityArgs,
+  MutationUpdateOpportunityTagsArgs,
   QueryOpportunityByUrlArgs,
 } from "@/__generated__/resolvers-types";
 
@@ -20,6 +21,26 @@ function generateOpportunityId(): string {
 }
 
 export const opportunityMutations = {
+  async updateOpportunityTags(
+    _parent: unknown,
+    args: MutationUpdateOpportunityTagsArgs,
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+    const now = new Date().toISOString();
+    const rows = await context.db
+      .update(opportunities)
+      .set({
+        tags: JSON.stringify(args.tags),
+        updated_at: now,
+      })
+      .where(eq(opportunities.id, args.id))
+      .returning();
+
+    if (rows.length === 0) throw new Error("Opportunity not found");
+    return rows[0];
+  },
+
   async createOpportunity(
     _parent: unknown,
     args: MutationCreateOpportunityArgs,

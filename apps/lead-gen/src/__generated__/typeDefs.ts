@@ -1230,6 +1230,7 @@ type Mutation {
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
+  updateOpportunityTags(id: String!, tags: [String!]!): Opportunity!
   updateReminder(id: Int!, input: UpdateReminderInput!): Reminder!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   upsertLinkedInPost(input: UpsertLinkedInPostInput!): LinkedInPost!

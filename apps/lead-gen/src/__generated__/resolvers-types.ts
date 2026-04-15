@@ -1335,6 +1335,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
+  updateOpportunityTags: Opportunity;
   updateReminder: Reminder;
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
@@ -1742,6 +1743,12 @@ export type MutationUpdateContactArgs = {
 export type MutationUpdateEmailTemplateArgs = {
   id: Scalars['Int']['input'];
   input: UpdateEmailTemplateInput;
+};
+
+
+export type MutationUpdateOpportunityTagsArgs = {
+  id: Scalars['String']['input'];
+  tags: Array<Scalars['String']['input']>;
 };
 
 
@@ -4849,6 +4856,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUpdateCompanyArgs, 'id' | 'input'>>;
   updateContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationUpdateContactArgs, 'id' | 'input'>>;
   updateEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationUpdateEmailTemplateArgs, 'id' | 'input'>>;
+  updateOpportunityTags?: Resolver<ResolversTypes['Opportunity'], ParentType, ContextType, RequireFields<MutationUpdateOpportunityTagsArgs, 'id' | 'tags'>>;
   updateReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationUpdateReminderArgs, 'id' | 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   upsertLinkedInPost?: Resolver<ResolversTypes['LinkedInPost'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostArgs, 'input'>>;
