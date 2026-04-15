@@ -73,7 +73,8 @@ try:
 except ImportError:
     search_blog_results = None  # blog embedder not available
 
-console = Console(force_terminal=True)
+import sys as _sys
+console = Console(force_terminal=True, file=_sys.stderr)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent

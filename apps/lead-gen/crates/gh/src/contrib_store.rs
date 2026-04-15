@@ -104,7 +104,25 @@ pub async fn save_contributor_contact(
             tags.push("github:quality:external-contributor".to_string());
         }
     }
+    // ── Quality gate: strip opp: link for low-quality matches ─────────────────
+    // Candidates with C-tier scores AND ≤50% skill match AND below-senior
+    // seniority should not be linked to the opportunity — they add noise.
+    let dominated_by_weak_signal = rising_tier == "C"
+        && strength_tier == "C"
+        && candidate.opp_skill_match <= 0.50;
+    let seniority_mismatch = position
+        .map(|p| infer_seniority_level(Some(p)) < 0.75) // below senior
+        .unwrap_or(true); // unknown seniority = mismatch
+
     for tag in extra_tags {
+        // Drop the opp:<id> tag when the candidate is clearly unqualified
+        if dominated_by_weak_signal && seniority_mismatch && tag.starts_with("opp:opp_") {
+            info!(
+                "dropping opp tag for {} — score:{}/{}, skill-match:{:.0}%, seniority too low",
+                candidate.login, rising_tier, strength_tier, candidate.opp_skill_match * 100.0,
+            );
+            continue;
+        }
         tags.push(tag.clone());
     }
     let tags_json = serde_json::to_string(&tags).map_err(|e| GhError::Other(e.to_string()))?;
@@ -277,5 +295,44 @@ mod tests {
         candidate.strength_score = 0.6;
         let best = candidate.strength_score.max(candidate.rising_score);
         assert!(best >= 0.4, "best_score={best} should pass threshold 0.4");
+    }
+
+    #[test]
+    fn quality_gate_drops_opp_tag_for_weak_candidates() {
+        // C-tier, 50% skill match, mid seniority → opp tag should be stripped
+        let rising_tier = score_tier(0.3);
+        let strength_tier = score_tier(0.3);
+        let opp_skill_match: f32 = 0.50;
+        let seniority_level = infer_seniority_level(Some("Engineer")); // mid
+
+        let dominated = rising_tier == "C" && strength_tier == "C" && opp_skill_match <= 0.50;
+        let seniority_mismatch = seniority_level < 0.75;
+        assert!(dominated, "C/C + 50% should trigger dominated flag");
+        assert!(seniority_mismatch, "mid seniority should be a mismatch for senior+ roles");
+    }
+
+    #[test]
+    fn quality_gate_keeps_opp_tag_for_strong_candidates() {
+        // B-tier, 80% skill match → should keep opp tag
+        let rising_tier = score_tier(0.55);
+        let strength_tier = score_tier(0.60);
+        let opp_skill_match: f32 = 0.80;
+
+        let dominated = rising_tier == "C" && strength_tier == "C" && opp_skill_match <= 0.50;
+        assert!(!dominated, "B-tier candidate should NOT be filtered");
+    }
+
+    #[test]
+    fn quality_gate_keeps_opp_tag_for_senior_c_tier() {
+        // C-tier but senior → seniority passes, keep opp tag
+        let rising_tier = score_tier(0.3);
+        let strength_tier = score_tier(0.3);
+        let opp_skill_match: f32 = 0.50;
+        let seniority_level = infer_seniority_level(Some("Senior Engineer"));
+
+        let dominated = rising_tier == "C" && strength_tier == "C" && opp_skill_match <= 0.50;
+        let seniority_mismatch = seniority_level < 0.75;
+        assert!(dominated, "C/C + 50% triggers dominated");
+        assert!(!seniority_mismatch, "senior seniority should pass the gate");
     }
 }
