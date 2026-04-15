@@ -567,5 +567,120 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Import Profile from LinkedIn Page (triggered by content script button) ──
+  if (message.action === "importProfileFromPage") {
+    const { linkedinUrl } = message as { linkedinUrl: string };
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+
+    const notifyTab = async (data: Record<string, unknown>) => {
+      try {
+        await chrome.tabs.sendMessage(tabId, { action: "importProfilePageProgress", ...data });
+      } catch { /* tab closed */ }
+    };
+
+    (async () => {
+      startKeepAlive();
+      try {
+        await notifyTab({ status: "Extracting..." });
+
+        const expanded = await clickSeeMore(tabId);
+        if (expanded > 0) await randomDelay(800);
+
+        const data = await extractFullProfileData(tabId);
+        if (!data || !data.name) {
+          await notifyTab({ error: "Could not extract profile data" });
+          return;
+        }
+
+        const { firstName, lastName } = parseName(data.name);
+        const { position, company: headlineCompany } = parseHeadline(data.headline);
+        const companyName = data.currentCompany || headlineCompany;
+
+        await notifyTab({ status: `${data.name} — looking up...` });
+
+        // Find or create company
+        let companyId: number | undefined;
+        if (companyName) {
+          const findResult = await gqlRequest(
+            `query FindCompany($name: String, $linkedinUrl: String) {
+              findCompany(name: $name, linkedinUrl: $linkedinUrl) {
+                found
+                company { id name }
+              }
+            }`,
+            {
+              name: companyName,
+              linkedinUrl: data.currentCompanyLinkedinUrl || undefined,
+            },
+          );
+
+          if (findResult.data?.findCompany?.found) {
+            companyId = findResult.data.findCompany.company.id;
+          } else {
+            const key = companyName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/(^-|-$)/g, "");
+
+            const createResult = await gqlRequest(
+              `mutation CreateCompany($input: CreateCompanyInput!) {
+                createCompany(input: $input) { id name }
+              }`,
+              {
+                input: {
+                  key,
+                  name: companyName,
+                  linkedin_url: data.currentCompanyLinkedinUrl || undefined,
+                },
+              },
+            );
+
+            if (createResult.data?.createCompany?.id) {
+              companyId = createResult.data.createCompany.id;
+            }
+          }
+        }
+
+        // Create contact
+        await notifyTab({ status: "Saving contact..." });
+        const createResult = await gqlRequest(
+          `mutation CreateContact($input: CreateContactInput!) {
+            createContact(input: $input) { id firstName lastName slug }
+          }`,
+          {
+            input: {
+              firstName,
+              lastName: lastName || undefined,
+              linkedinUrl: data.linkedinUrl,
+              position: position || undefined,
+              ...(companyId !== undefined && { companyId }),
+              tags: ["linkedin-import"],
+            },
+          },
+        );
+
+        if (createResult.errors) {
+          await notifyTab({ error: createResult.errors[0].message });
+        } else {
+          await notifyTab({
+            done: true,
+            status: `Imported: ${data.name}${companyName ? " at " + companyName : ""}`,
+          });
+        }
+      } catch (err) {
+        await notifyTab({ error: err instanceof Error ? err.message : String(err) });
+      } finally {
+        stopKeepAlive();
+      }
+    })();
+
+    return true;
+  }
+
   return false;
 });
