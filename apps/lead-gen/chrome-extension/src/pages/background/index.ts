@@ -1,7 +1,7 @@
 // Background service worker — message listener & orchestrator
 import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts, runUnifiedPipeline, scrapeRecruiterPosts, scrapeContactPostsSingle } from "../../services/post-scraper";
 import { gqlRequest } from "../../services/graphql";
-import { startKeepAlive, stopKeepAlive } from "./tab-utils";
+import { startKeepAlive, stopKeepAlive, waitForTabLoad, clickSeeMore, randomDelay } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled, extractFullProfileData, parseName, parseHeadline } from "./profile-browsing";
 import { browseCompanies, setCompanyCancelled } from "./company-browsing";
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
