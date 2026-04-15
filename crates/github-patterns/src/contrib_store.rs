@@ -94,14 +94,15 @@ pub async fn save_contributor_contact(
     let id: i32 = sqlx::query_scalar(
         r#"
         INSERT INTO contacts
-          (first_name, last_name, email, company, position, github_handle, tags)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+          (first_name, last_name, email, company, position, github_handle, tags, authority_score)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (github_handle) WHERE github_handle IS NOT NULL DO UPDATE SET
-          tags       = EXCLUDED.tags,
-          email      = COALESCE(EXCLUDED.email, contacts.email),
-          company    = COALESCE(EXCLUDED.company, contacts.company),
-          position   = COALESCE(EXCLUDED.position, contacts.position),
-          updated_at = now()::text
+          tags            = EXCLUDED.tags,
+          email           = COALESCE(EXCLUDED.email, contacts.email),
+          company         = COALESCE(EXCLUDED.company, contacts.company),
+          position        = COALESCE(EXCLUDED.position, contacts.position),
+          authority_score = EXCLUDED.authority_score,
+          updated_at      = now()::text
         RETURNING id
         "#,
     )
@@ -112,6 +113,7 @@ pub async fn save_contributor_contact(
     .bind(position)
     .bind(&star.login)
     .bind(&tags_json)
+    .bind(star.rising_score)
     .fetch_one(pool)
     .await
     .map_err(|e| GhError::Other(e.to_string()))?;

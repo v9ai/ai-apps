@@ -8,6 +8,7 @@ import {
   Heading,
   Separator,
   Text,
+  Table,
 } from "@radix-ui/themes";
 import Link from "next/link";
 import {
@@ -15,6 +16,7 @@ import {
   ExternalLinkIcon,
   LinkedInLogoIcon,
   EnvelopeClosedIcon,
+  GitHubLogoIcon,
 } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 
@@ -53,6 +55,20 @@ type OpportunityDetail = {
   contact_email: string | null;
 };
 
+type SourcedCandidate = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  slug: string | null;
+  email: string | null;
+  company: string | null;
+  position: string | null;
+  github_handle: string | null;
+  tags: string | null;
+  authority_score: number | null;
+  bio: string | null;
+};
+
 const statusColors: Record<string, "green" | "blue" | "orange" | "red" | "gray" | "yellow"> = {
   open: "blue",
   applied: "orange",
@@ -81,7 +97,13 @@ function formatDate(d: string | null | undefined): string | null {
   }
 }
 
-export function OpportunityDetailClient({ opportunity: opp }: { opportunity: OpportunityDetail }) {
+export function OpportunityDetailClient({
+  opportunity: opp,
+  sourcedCandidates = [],
+}: {
+  opportunity: OpportunityDetail;
+  sourcedCandidates?: SourcedCandidate[];
+}) {
   const tags: string[] = opp.tags ? JSON.parse(opp.tags) : [];
   const meta: Record<string, string> = opp.metadata ? JSON.parse(opp.metadata) : {};
 
@@ -217,6 +239,105 @@ export function OpportunityDetailClient({ opportunity: opp }: { opportunity: Opp
               {opp.application_notes && (
                 <Text size="2" color="gray" style={{ whiteSpace: "pre-wrap" }}>{opp.application_notes}</Text>
               )}
+            </Flex>
+          </>
+        )}
+
+        {/* Sourced Candidates */}
+        {sourcedCandidates.length > 0 && (
+          <>
+            <Separator size="4" />
+            <Flex direction="column" gap="3">
+              <Flex align="center" gap="2">
+                <Heading size="4">Sourced Candidates</Heading>
+                <Badge color="blue" size="1">{sourcedCandidates.length}</Badge>
+              </Flex>
+              <Table.Root variant="surface" size="1">
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeaderCell>#</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Position</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Company</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Score</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Skills</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Location</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Links</Table.ColumnHeaderCell>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {sourcedCandidates.map((c, i) => {
+                    const cTags: string[] = c.tags ? JSON.parse(c.tags) : [];
+                    const skills = cTags
+                      .filter((t) => t.startsWith("skill:"))
+                      .map((t) => t.replace("skill:", ""));
+                    const isLondon = cTags.includes("location:london-verified");
+                    const scoreTier = cTags.find((t) => t.startsWith("github:score:"))?.replace("github:score:", "") ?? "-";
+                    const scoreColor = scoreTier === "A" ? "green" : scoreTier === "B" ? "yellow" : "gray";
+
+                    return (
+                      <Table.Row key={c.id}>
+                        <Table.Cell>
+                          <Text size="1" color="gray">{i + 1}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Flex direction="column" gap="1">
+                            <Text size="2" weight="bold">
+                              {c.first_name} {c.last_name}
+                            </Text>
+                            {c.authority_score != null && (
+                              <Text size="1" color="gray">{c.authority_score.toFixed(3)}</Text>
+                            )}
+                          </Flex>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="1">{c.position ?? "-"}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="1">{c.company ?? "-"}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Badge color={scoreColor} size="1">{scoreTier}</Badge>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Flex gap="1" wrap="wrap">
+                            {skills.map((s) => (
+                              <Badge key={s} variant="surface" color="gray" size="1">{s}</Badge>
+                            ))}
+                          </Flex>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Badge
+                            color={isLondon ? "green" : "blue"}
+                            variant="soft"
+                            size="1"
+                          >
+                            {isLondon ? "London" : "UK"}
+                          </Badge>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Flex gap="2" align="center">
+                            {c.github_handle && (
+                              <a
+                                href={`https://github.com/${c.github_handle}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <GitHubLogoIcon width={14} height={14} style={{ color: "var(--gray-9)" }} />
+                              </a>
+                            )}
+                            {c.email && (
+                              <a href={`mailto:${c.email}`}>
+                                <EnvelopeClosedIcon width={14} height={14} style={{ color: "var(--gray-9)" }} />
+                              </a>
+                            )}
+                          </Flex>
+                        </Table.Cell>
+                      </Table.Row>
+                    );
+                  })}
+                </Table.Body>
+              </Table.Root>
             </Flex>
           </>
         )}

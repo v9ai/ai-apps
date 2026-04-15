@@ -276,6 +276,9 @@ export const contacts = pgTable(
     emailIdx: uniqueIndex("idx_contacts_email").on(table.email),
     companyIdIdx: index("idx_contacts_company_id").on(table.company_id),
     linkedinUrlIdx: index("idx_contacts_linkedin_url").on(table.linkedin_url),
+    githubHandleIdx: uniqueIndex("idx_contacts_github_handle")
+      .on(table.github_handle)
+      .where(sql`github_handle IS NOT NULL`),
   }),
 );
 

@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { opportunities, companies, contacts } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Container, Text } from "@radix-ui/themes";
@@ -56,6 +56,26 @@ export default async function OpportunityDetailPage({
 
   if (rows.length === 0) notFound();
 
+  // Load contacts tagged with this opportunity (sourced candidates)
+  const sourcedCandidates = await db
+    .select({
+      id: contacts.id,
+      first_name: contacts.first_name,
+      last_name: contacts.last_name,
+      slug: contacts.slug,
+      email: contacts.email,
+      company: contacts.company,
+      position: contacts.position,
+      github_handle: contacts.github_handle,
+      tags: contacts.tags,
+      authority_score: contacts.authority_score,
+      bio: sql<string | null>`substring(${contacts.ai_profile}::text from 1 for 200)`,
+    })
+    .from(contacts)
+    .where(sql`${contacts.tags}::text LIKE ${"%" + `opp:${id}` + "%"}`)
+    .orderBy(desc(contacts.authority_score))
+    .limit(100);
+
   return (
     <Suspense
       fallback={
@@ -64,7 +84,10 @@ export default async function OpportunityDetailPage({
         </Container>
       }
     >
-      <OpportunityDetailClient opportunity={rows[0]} />
+      <OpportunityDetailClient
+        opportunity={rows[0]}
+        sourcedCandidates={sourcedCandidates}
+      />
     </Suspense>
   );
 }
