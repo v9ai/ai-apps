@@ -67,7 +67,9 @@ export function OpportunitiesClient({ opportunities }: { opportunities: Opportun
                   <Table.Cell>
                     <Flex direction="column" gap="1">
                       <Flex align="center" gap="1">
-                        <Text size="2" weight="medium">{opp.title}</Text>
+                        <Link href={`/opportunities/${opp.id}`} style={{ textDecoration: "none" }}>
+                          <Text size="2" weight="medium" color="blue">{opp.title}</Text>
+                        </Link>
                         {opp.url && (
                           <a href={opp.url} target="_blank" rel="noopener noreferrer">
                             <ExternalLinkIcon width={12} height={12} style={{ color: "var(--gray-9)" }} />

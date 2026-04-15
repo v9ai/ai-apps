@@ -5,6 +5,13 @@ import { db } from "@/src/db";
 import { applications, concepts, knowledgeStates } from "@/src/db/schema";
 import { eq, and, like } from "drizzle-orm";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function whereApp(id: string, userId: string) {
+  const col = UUID_RE.test(id) ? applications.id : applications.slug;
+  return and(eq(col, id), eq(applications.userId, userId));
+}
+
 async function getSession() {
   return auth.api.getSession({ headers: await headers() });
 }
@@ -24,11 +31,9 @@ export async function GET(
 
   // Load categories from application row
   const [app] = await db
-    .select({ aiMemorizeCategories: applications.aiMemorizeCategories })
+    .select({ id: applications.id, aiMemorizeCategories: applications.aiMemorizeCategories })
     .from(applications)
-    .where(
-      and(eq(applications.id, appId), eq(applications.userId, session.user.id)),
-    );
+    .where(whereApp(appId, session.user.id));
 
   if (!app)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -37,7 +42,7 @@ export async function GET(
   const categories = generated ? JSON.parse(app.aiMemorizeCategories!) : [];
 
   // Query mastery for app-scoped concepts
-  const prefix = `app:${appId}:%`;
+  const prefix = `app:${app.id}:%`;
   const rows = await db
     .select({
       conceptName: concepts.name,
@@ -68,7 +73,7 @@ export async function GET(
   > = {};
 
   // Strip "app:{appId}:" prefix to get itemId
-  const stripPrefix = `app:${appId}:`;
+  const stripPrefix = `app:${app.id}:`;
   for (const row of rows) {
     const key = row.conceptName.replace(stripPrefix, "");
     mastery[key] = {
@@ -110,7 +115,16 @@ export async function POST(
     );
   }
 
-  const conceptName = `app:${appId}:${propertyId}`;
+  // Resolve real app ID from slug or UUID
+  const [app] = await db
+    .select({ id: applications.id })
+    .from(applications)
+    .where(whereApp(appId, session.user.id));
+
+  if (!app)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const conceptName = `app:${app.id}:${propertyId}`;
 
   // Find or create the concept
   let [concept] = await db

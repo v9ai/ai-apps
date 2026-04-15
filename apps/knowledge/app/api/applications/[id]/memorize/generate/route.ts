@@ -7,6 +7,8 @@ import { eq, and } from "drizzle-orm";
 import { generateMemorizeContent } from "@/lib/memorize-generator";
 import type { MemorizeCategory } from "@/lib/memorize-types";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function getSession() {
   return auth.api.getSession({ headers: await headers() });
 }
@@ -24,6 +26,7 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Load application
+  const col = UUID_RE.test(appId) ? applications.id : applications.slug;
   const [app] = await db
     .select({
       id: applications.id,
@@ -36,7 +39,7 @@ export async function POST(
     })
     .from(applications)
     .where(
-      and(eq(applications.id, appId), eq(applications.userId, session.user.id)),
+      and(eq(col, appId), eq(applications.userId, session.user.id)),
     );
 
   if (!app)
