@@ -1533,6 +1533,9 @@ export function CompanyContactsClient({
         }))}
         onSuccess={() => { refetch(); refetchEmails(); }}
       />
-    </Container>
+
   );
+
+  if (embedded) return content;
+  return <Container size="3" p={{ initial: "4", md: "6" }}>{content}</Container>;
 }
