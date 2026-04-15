@@ -1506,7 +1506,7 @@ async def phase3_eval(state: ResearchState) -> dict:
 
 
 async def phase3_exec(state: ResearchState) -> dict:
-    client = _make_client()
+    client = _make_hf_client() or _make_client()  # prefer HF 72B for synthesis
     person = state["person"]
     ctx = f"{person.get('name', '')} ({person.get('role', '')} @ {person.get('org', '')})"
 
@@ -1656,7 +1656,7 @@ def _get_blog_context(slug: str, categories: dict[str, str]) -> str:
 
 
 async def question_generator(state: ResearchState) -> dict:
-    client = _make_client()
+    client = _make_hf_client() or _make_client()  # prefer HF 72B for quality
     person = state["person"]
     slug = person.get("slug", "")
     ctx = f"{person.get('name', '')} ({person.get('role', '')} @ {person.get('org', '')})"
