@@ -1773,6 +1773,33 @@ export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
 
+export type Opportunity = {
+  __typename?: 'Opportunity';
+  applicationNotes: Maybe<Scalars['String']['output']>;
+  applicationStatus: Maybe<Scalars['String']['output']>;
+  applied: Scalars['Boolean']['output'];
+  appliedAt: Maybe<Scalars['String']['output']>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  contactId: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['String']['output'];
+  deadline: Maybe<Scalars['String']['output']>;
+  endDate: Maybe<Scalars['String']['output']>;
+  firstSeen: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  lastSeen: Maybe<Scalars['String']['output']>;
+  rewardText: Maybe<Scalars['String']['output']>;
+  rewardUsd: Maybe<Scalars['Float']['output']>;
+  score: Maybe<Scalars['Int']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  startDate: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+};
+
 export type PreviewEmailInput = {
   content: Scalars['String']['input'];
   drySend?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1803,6 +1830,7 @@ export type Query = {
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
   contactMessages: Array<ContactMessage>;
+  contactOpportunities: Array<Opportunity>;
   contactReceivedEmails: Array<ReceivedEmail>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
@@ -1958,6 +1986,11 @@ export type QueryContactEmailsArgs = {
 
 
 export type QueryContactMessagesArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactOpportunitiesArgs = {
   contactId: Scalars['Int']['input'];
 };
 
@@ -3490,6 +3523,13 @@ export type GetContactMessagesQueryVariables = Exact<{
 
 
 export type GetContactMessagesQuery = { __typename?: 'Query', contactMessages: Array<{ __typename?: 'ContactMessage', id: number, channel: string, direction: string, contactId: number | null, senderName: string | null, senderProfileUrl: string | null, content: string | null, subject: string | null, sentAt: string, classification: string | null, createdAt: string }> };
+
+export type GetContactOpportunitiesQueryVariables = Exact<{
+  contactId: Scalars['Int']['input'];
+}>;
+
+
+export type GetContactOpportunitiesQuery = { __typename?: 'Query', contactOpportunities: Array<{ __typename?: 'Opportunity', id: string, title: string, url: string | null, source: string | null, status: string, rewardText: string | null, rewardUsd: number | null, score: number | null, tags: Array<string>, applied: boolean, appliedAt: string | null, applicationStatus: string | null, companyName: string | null, createdAt: string }> };
 
 export type GetContactEmailsQueryVariables = Exact<{
   contactId: Scalars['Int']['input'];
@@ -5228,6 +5268,62 @@ export type GetContactMessagesQueryHookResult = ReturnType<typeof useGetContactM
 export type GetContactMessagesLazyQueryHookResult = ReturnType<typeof useGetContactMessagesLazyQuery>;
 export type GetContactMessagesSuspenseQueryHookResult = ReturnType<typeof useGetContactMessagesSuspenseQuery>;
 export type GetContactMessagesQueryResult = Apollo.QueryResult<GetContactMessagesQuery, GetContactMessagesQueryVariables>;
+export const GetContactOpportunitiesDocument = gql`
+    query GetContactOpportunities($contactId: Int!) {
+  contactOpportunities(contactId: $contactId) {
+    id
+    title
+    url
+    source
+    status
+    rewardText
+    rewardUsd
+    score
+    tags
+    applied
+    appliedAt
+    applicationStatus
+    companyName
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useGetContactOpportunitiesQuery__
+ *
+ * To run a query within a React component, call `useGetContactOpportunitiesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetContactOpportunitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetContactOpportunitiesQuery({
+ *   variables: {
+ *      contactId: // value for 'contactId'
+ *   },
+ * });
+ */
+export function useGetContactOpportunitiesQuery(baseOptions: Apollo.QueryHookOptions<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables> & ({ variables: GetContactOpportunitiesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables>(GetContactOpportunitiesDocument, options);
+      }
+export function useGetContactOpportunitiesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables>(GetContactOpportunitiesDocument, options);
+        }
+// @ts-ignore
+export function useGetContactOpportunitiesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables>;
+export function useGetContactOpportunitiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactOpportunitiesQuery | undefined, GetContactOpportunitiesQueryVariables>;
+export function useGetContactOpportunitiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables>(GetContactOpportunitiesDocument, options);
+        }
+export type GetContactOpportunitiesQueryHookResult = ReturnType<typeof useGetContactOpportunitiesQuery>;
+export type GetContactOpportunitiesLazyQueryHookResult = ReturnType<typeof useGetContactOpportunitiesLazyQuery>;
+export type GetContactOpportunitiesSuspenseQueryHookResult = ReturnType<typeof useGetContactOpportunitiesSuspenseQuery>;
+export type GetContactOpportunitiesQueryResult = Apollo.QueryResult<GetContactOpportunitiesQuery, GetContactOpportunitiesQueryVariables>;
 export const GetContactEmailsDocument = gql`
     query GetContactEmails($contactId: Int!) {
   contactEmails(contactId: $contactId) {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   useGetContactQuery,
   useGetContactEmailsQuery,
+  useGetContactOpportunitiesQuery,
   useFindContactEmailMutation,
   useUpdateContactMutation,
   useDeleteContactMutation,
@@ -1080,6 +1081,13 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
     skip: !resolvedId || !isAdmin,
   });
 
+  const {
+    data: opportunitiesData,
+    loading: opportunitiesLoading,
+  } = useGetContactOpportunitiesQuery({
+    variables: { contactId: resolvedId! },
+    skip: !resolvedId || !isAdmin,
+  });
 
   const [findEmail, { loading: finding }] = useFindContactEmailMutation();
   const [findResult, setFindResult] = useState<{
@@ -1640,6 +1648,86 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
           )}
           <GenerateEmailDialog contact={contact} onSent={() => refetchEmails()} />
         </Flex>
+
+        {/* Related Opportunities */}
+        <Box>
+          <Flex align="center" justify="between" mb="3">
+            <Heading size="4">Opportunities</Heading>
+            {(opportunitiesData?.contactOpportunities?.length ?? 0) > 0 && (
+              <Badge color="orange" variant="soft">
+                {opportunitiesData!.contactOpportunities.length}
+              </Badge>
+            )}
+          </Flex>
+
+          {opportunitiesLoading ? (
+            <Flex justify="center" py="4">
+              <Spinner size="2" />
+            </Flex>
+          ) : !opportunitiesData?.contactOpportunities || opportunitiesData.contactOpportunities.length === 0 ? (
+            <Text size="2" color="gray">No opportunities linked to this contact.</Text>
+          ) : (
+            <Flex direction="column" gap="2">
+              {opportunitiesData.contactOpportunities.map((opp) => (
+                <Card key={opp.id}>
+                  <Box p="3">
+                    <Flex justify="between" align="start" gap="2" wrap="wrap">
+                      <Box style={{ flex: 1, minWidth: 0 }}>
+                        <Flex align="center" gap="2" mb="1">
+                          <Link href={`/opportunities/${opp.id}`} style={{ textDecoration: "none" }}>
+                            <Text size="2" weight="medium" color="blue">{opp.title}</Text>
+                          </Link>
+                          {opp.url && (
+                            <a href={opp.url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLinkIcon width={12} height={12} style={{ color: "var(--gray-9)" }} />
+                            </a>
+                          )}
+                        </Flex>
+                        <Flex align="center" gap="2" wrap="wrap">
+                          <Badge
+                            color={
+                              opp.status === "offer" ? "green"
+                                : opp.status === "interviewing" ? "yellow"
+                                : opp.status === "applied" ? "orange"
+                                : opp.status === "rejected" ? "red"
+                                : opp.status === "closed" ? "gray"
+                                : "blue"
+                            }
+                            variant="soft"
+                            size="1"
+                          >
+                            {opp.status}
+                          </Badge>
+                          {opp.companyName && (
+                            <Text size="1" color="gray">{opp.companyName}</Text>
+                          )}
+                          {opp.rewardText && (
+                            <Text size="1" color="gray">{opp.rewardText}</Text>
+                          )}
+                          {opp.score != null && (
+                            <Badge color={opp.score >= 70 ? "green" : opp.score >= 40 ? "yellow" : "gray"} variant="soft" size="1">
+                              {opp.score}%
+                            </Badge>
+                          )}
+                        </Flex>
+                        {opp.tags.length > 0 && (
+                          <Flex gap="1" mt="1" wrap="wrap">
+                            {opp.tags.map((tag) => (
+                              <Badge key={tag} color="gray" variant="soft" size="1">{tag}</Badge>
+                            ))}
+                          </Flex>
+                        )}
+                      </Box>
+                      <Text size="1" color="gray" style={{ whiteSpace: "nowrap" }}>
+                        {new Date(opp.createdAt).toLocaleDateString()}
+                      </Text>
+                    </Flex>
+                  </Box>
+                </Card>
+              ))}
+            </Flex>
+          )}
+        </Box>
 
         {/* Email History (outbound + inbound merged) */}
         <Box>

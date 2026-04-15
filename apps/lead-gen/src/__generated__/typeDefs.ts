@@ -1244,6 +1244,32 @@ type Mutation {
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
 }
 
+type Opportunity {
+  applicationNotes: String
+  applicationStatus: String
+  applied: Boolean!
+  appliedAt: String
+  companyId: Int
+  companyName: String
+  contactId: Int
+  createdAt: String!
+  deadline: String
+  endDate: String
+  firstSeen: String
+  id: String!
+  lastSeen: String
+  rewardText: String
+  rewardUsd: Float
+  score: Int
+  source: String
+  startDate: String
+  status: String!
+  tags: [String!]!
+  title: String!
+  updatedAt: String!
+  url: String
+}
+
 input PreviewEmailInput {
   content: String!
   drySend: Boolean
@@ -1272,6 +1298,7 @@ type Query {
   contactByEmail(email: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
   contactMessages(contactId: Int!): [ContactMessage!]!
+  contactOpportunities(contactId: Int!): [Opportunity!]!
   contactReceivedEmails(contactId: Int!): [ReceivedEmail!]!
   contactReminders(contactId: Int!): [ContactReminder!]!
   contacts(companyId: Int, limit: Int, offset: Int, search: String): ContactsResult!

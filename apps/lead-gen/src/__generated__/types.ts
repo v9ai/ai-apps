@@ -1770,6 +1770,33 @@ export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
 
+export type Opportunity = {
+  __typename: 'Opportunity';
+  applicationNotes: Maybe<Scalars['String']['output']>;
+  applicationStatus: Maybe<Scalars['String']['output']>;
+  applied: Scalars['Boolean']['output'];
+  appliedAt: Maybe<Scalars['String']['output']>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  contactId: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['String']['output'];
+  deadline: Maybe<Scalars['String']['output']>;
+  endDate: Maybe<Scalars['String']['output']>;
+  firstSeen: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  lastSeen: Maybe<Scalars['String']['output']>;
+  rewardText: Maybe<Scalars['String']['output']>;
+  rewardUsd: Maybe<Scalars['Float']['output']>;
+  score: Maybe<Scalars['Int']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  startDate: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+};
+
 export type PreviewEmailInput = {
   content: Scalars['String']['input'];
   drySend?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1800,6 +1827,7 @@ export type Query = {
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
   contactMessages: Array<ContactMessage>;
+  contactOpportunities: Array<Opportunity>;
   contactReceivedEmails: Array<ReceivedEmail>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
@@ -1955,6 +1983,11 @@ export type QueryContactEmailsArgs = {
 
 
 export type QueryContactMessagesArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactOpportunitiesArgs = {
   contactId: Scalars['Int']['input'];
 };
 

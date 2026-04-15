@@ -1,0 +1,29 @@
+type Opportunity {
+  id: String!
+  title: String!
+  url: String
+  source: String
+  status: String!
+  rewardUsd: Float
+  rewardText: String
+  startDate: String
+  endDate: String
+  deadline: String
+  firstSeen: String
+  lastSeen: String
+  score: Int
+  applied: Boolean!
+  appliedAt: String
+  applicationStatus: String
+  applicationNotes: String
+  tags: [String!]!
+  companyId: Int
+  contactId: Int
+  companyName: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+extend type Query {
+  contactOpportunities(contactId: Int!): [Opportunity!]!
+}

@@ -1773,6 +1773,33 @@ export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
 
+export type Opportunity = {
+  __typename?: 'Opportunity';
+  applicationNotes: Maybe<Scalars['String']['output']>;
+  applicationStatus: Maybe<Scalars['String']['output']>;
+  applied: Scalars['Boolean']['output'];
+  appliedAt: Maybe<Scalars['String']['output']>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  contactId: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['String']['output'];
+  deadline: Maybe<Scalars['String']['output']>;
+  endDate: Maybe<Scalars['String']['output']>;
+  firstSeen: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  lastSeen: Maybe<Scalars['String']['output']>;
+  rewardText: Maybe<Scalars['String']['output']>;
+  rewardUsd: Maybe<Scalars['Float']['output']>;
+  score: Maybe<Scalars['Int']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  startDate: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+};
+
 export type PreviewEmailInput = {
   content: Scalars['String']['input'];
   drySend?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1803,6 +1830,7 @@ export type Query = {
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
   contactMessages: Array<ContactMessage>;
+  contactOpportunities: Array<Opportunity>;
   contactReceivedEmails: Array<ReceivedEmail>;
   contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
@@ -1958,6 +1986,11 @@ export type QueryContactEmailsArgs = {
 
 
 export type QueryContactMessagesArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactOpportunitiesArgs = {
   contactId: Scalars['Int']['input'];
 };
 
@@ -3458,6 +3491,7 @@ export type ResolversTypes = {
   MergeCompaniesResult: ResolverTypeWrapper<Partial<MergeCompaniesResult>>;
   MergeDuplicateContactsResult: ResolverTypeWrapper<Partial<MergeDuplicateContactsResult>>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  Opportunity: ResolverTypeWrapper<Partial<Opportunity>>;
   PreviewEmailInput: ResolverTypeWrapper<Partial<PreviewEmailInput>>;
   QualityGateResult: ResolverTypeWrapper<Partial<QualityGateResult>>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
@@ -3682,6 +3716,7 @@ export type ResolversParentTypes = {
   MergeCompaniesResult: Partial<MergeCompaniesResult>;
   MergeDuplicateContactsResult: Partial<MergeDuplicateContactsResult>;
   Mutation: Record<PropertyKey, never>;
+  Opportunity: Partial<Opportunity>;
   PreviewEmailInput: Partial<PreviewEmailInput>;
   QualityGateResult: Partial<QualityGateResult>;
   Query: Record<PropertyKey, never>;
@@ -4792,6 +4827,32 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
 };
 
+export type OpportunityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Opportunity'] = ResolversParentTypes['Opportunity']> = {
+  applicationNotes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  applicationStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  applied?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  appliedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  companyName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  contactId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  deadline?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  endDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  firstSeen?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastSeen?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  rewardText?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  rewardUsd?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  score?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  startDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
 export type QualityGateResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['QualityGateResult'] = ResolversParentTypes['QualityGateResult']> = {
   adjustedScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   flags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -4812,6 +4873,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contactByEmail?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactByEmailArgs, 'email'>>;
   contactEmails?: Resolver<Array<ResolversTypes['ContactEmail']>, ParentType, ContextType, RequireFields<QueryContactEmailsArgs, 'contactId'>>;
   contactMessages?: Resolver<Array<ResolversTypes['ContactMessage']>, ParentType, ContextType, RequireFields<QueryContactMessagesArgs, 'contactId'>>;
+  contactOpportunities?: Resolver<Array<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryContactOpportunitiesArgs, 'contactId'>>;
   contactReceivedEmails?: Resolver<Array<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryContactReceivedEmailsArgs, 'contactId'>>;
   contactReminders?: Resolver<Array<ResolversTypes['ContactReminder']>, ParentType, ContextType, RequireFields<QueryContactRemindersArgs, 'contactId'>>;
   contacts?: Resolver<ResolversTypes['ContactsResult'], ParentType, ContextType, Partial<QueryContactsArgs>>;
@@ -5688,6 +5750,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   MergeCompaniesResult?: MergeCompaniesResultResolvers<ContextType>;
   MergeDuplicateContactsResult?: MergeDuplicateContactsResultResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
+  Opportunity?: OpportunityResolvers<ContextType>;
   QualityGateResult?: QualityGateResultResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RankedContact?: RankedContactResolvers<ContextType>;

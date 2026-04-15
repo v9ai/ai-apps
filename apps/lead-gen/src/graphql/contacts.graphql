@@ -115,6 +115,25 @@ query GetContactMessages($contactId: Int!) {
   }
 }
 
+query GetContactOpportunities($contactId: Int!) {
+  contactOpportunities(contactId: $contactId) {
+    id
+    title
+    url
+    source
+    status
+    rewardText
+    rewardUsd
+    score
+    tags
+    applied
+    appliedAt
+    applicationStatus
+    companyName
+    createdAt
+  }
+}
+
 query GetContactEmails($contactId: Int!) {
   contactEmails(contactId: $contactId) {
     id

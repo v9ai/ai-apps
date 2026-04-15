@@ -14,6 +14,7 @@ import { mlResolvers } from "./resolvers/ml";
 import { salescueResolvers } from "./resolvers/salescue";
 import { replyDraftResolvers } from "./resolvers/reply-drafts";
 import { crawlLogResolvers } from "./resolvers/crawl-logs";
+import { opportunityResolvers } from "./resolvers/opportunities";
 import { merge } from "lodash";
 
 export const resolvers = merge(
@@ -34,4 +35,5 @@ export const resolvers = merge(
   salescueResolvers,
   replyDraftResolvers,
   crawlLogResolvers,
+  opportunityResolvers,
 );
