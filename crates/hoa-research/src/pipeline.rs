@@ -1,9 +1,9 @@
-//! Pipeline orchestrator — dual-lane parallel execution.
+//! Pipeline orchestrator — fully parallel dual-lane execution.
 //!
-//! Phase 1: Tool-heavy agents run on Candle local (sequential, needs tool calling)
-//!          BUT HTTP tool calls themselves are parallel via tokio.
-//! Phase 2: Synthesis agents run on HF 72B (concurrent via tokio::join_all).
-//! Phase 3: Eval + exec + questions on HF 72B (sequential, depend on each other).
+//! Phase 1a: ALL HTTP tool calls run concurrently (8 agents' fetches in parallel).
+//! Phase 1b: ALL LLM synthesis calls run concurrently on HF 72B (or sequential on Candle).
+//! Phase 2:  ALL 11 analysis agents run concurrently on HF 72B.
+//! Phase 3:  Eval → executive → questions (sequential, each depends on previous).
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -16,11 +16,17 @@ use crate::hf_client::HfClient;
 use crate::llm::LocalLlm;
 use crate::types::{AgentType, PersonInput, ResearchState};
 
+/// Raw data gathered by HTTP tools (before LLM synthesis).
+struct GatheredData {
+    key: &'static str,
+    agent: AgentType,
+    system_prompt: String,
+    user_prompt: String,
+}
+
 /// Dual-lane pipeline runner.
 pub struct Pipeline {
-    /// Local Candle LLM (Qwen2.5-7B on Metal) — behind Mutex for &mut self.
     local_llm: Arc<Mutex<LocalLlm>>,
-    /// Remote HF client (72B) — Clone-able, concurrent.
     hf_client: Option<HfClient>,
 }
 
@@ -46,17 +52,17 @@ impl Pipeline {
             ..Default::default()
         };
 
-        // ── Phase 1: Intelligence Gathering ──────────────────────────────────
+        // ── Phase 1: Intelligence Gathering (fully parallel) ─────────────────
         info!("Phase 1: Intelligence Gathering ({} agents)", AgentType::PHASE1.len());
         let phase1_results = self.run_phase1(&person).await?;
         self.merge_results(&mut state, phase1_results);
 
-        // ── Phase 2: Deep Analysis ───────────────────────────────────────────
+        // ── Phase 2: Deep Analysis (fully parallel on HF 72B) ────────────────
         info!("Phase 2: Deep Analysis ({} agents)", AgentType::PHASE2.len());
         let phase2_results = self.run_phase2(&state).await?;
         self.merge_results(&mut state, phase2_results);
 
-        // ── Phase 3: Synthesis ───────────────────────────────────────────────
+        // ── Phase 3: Synthesis (sequential — each depends on previous) ───────
         info!("Phase 3: Synthesis (eval → executive → questions)");
         self.run_phase3(&mut state).await?;
 
@@ -66,51 +72,220 @@ impl Pipeline {
         Ok(state)
     }
 
-    /// Phase 1: Tool-heavy agents. Each agent calls HTTP tools, then synthesizes with LLM.
-    /// HTTP tool calls are parallel; LLM calls are sequential (single GPU).
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 1 — fully parallel: HTTP gather + LLM synthesize
+    // ═════════════════════════════════════════════════════════════════════════
+
     async fn run_phase1(&self, person: &PersonInput) -> Result<HashMap<String, String>> {
-        let mut results = HashMap::new();
+        // 1a: ALL HTTP fetches run concurrently
+        info!("  Phase 1a: {} HTTP gather tasks → tokio parallel", AgentType::PHASE1.len());
+        let gather_start = Instant::now();
 
-        for agent in AgentType::PHASE1 {
-            let key = agent.as_str();
-            info!("  → {key}");
-            let start = Instant::now();
+        let gathered = self.gather_all(person).await;
 
-            let result = match agent {
-                AgentType::WebResearch => self.agent_web_research(person).await,
-                AgentType::GitHubAnalyst => self.agent_github(person).await,
-                AgentType::OrcidAnalyst => self.agent_orcid(person).await,
-                AgentType::ArxivAnalyst => self.agent_arxiv(person).await,
-                AgentType::PodcastAnalyst => self.agent_podcast(person).await,
-                AgentType::NewsAnalyst => self.agent_news(person).await,
-                AgentType::HuggingFaceAnalyst => self.agent_huggingface(person).await,
-                AgentType::BlogAnalyst => self.agent_blog(person).await,
-                _ => Ok(String::new()),
-            };
+        let gather_elapsed = gather_start.elapsed();
+        info!(
+            "  Phase 1a complete: {} tasks in {:.1}s",
+            gathered.len(),
+            gather_elapsed.as_secs_f64()
+        );
 
-            let elapsed = start.elapsed();
-            match result {
-                Ok(data) => {
-                    info!("  ✓ {key} ({} chars, {:.1}s)", data.len(), elapsed.as_secs_f64());
-                    results.insert(agent.state_key().to_string(), data);
-                }
-                Err(e) => {
-                    warn!("  ✗ {key} failed: {e}");
-                    results.insert(agent.state_key().to_string(), String::new());
-                }
-            }
-        }
+        // 1b: ALL LLM synthesis calls
+        let synth_start = Instant::now();
+
+        let results = if let Some(hf) = &self.hf_client {
+            // Concurrent on HF 72B
+            info!(
+                "  Phase 1b: {} LLM synthesis → HF 72B concurrent",
+                gathered.len()
+            );
+            self.synthesize_all_hf(hf, gathered).await
+        } else {
+            // Sequential on Candle local
+            info!(
+                "  Phase 1b: {} LLM synthesis → Candle local (sequential)",
+                gathered.len()
+            );
+            self.synthesize_all_local(gathered).await
+        };
+
+        let synth_elapsed = synth_start.elapsed();
+        info!("  Phase 1b complete in {:.1}s", synth_elapsed.as_secs_f64());
 
         Ok(results)
     }
 
-    /// Phase 2: Synthesis agents. No tools — pure LLM.
-    /// If HF client available: all agents run concurrently via tokio::join_all.
-    /// Otherwise: sequential on local LLM.
+    /// Run ALL HTTP gather tasks concurrently via tokio::spawn.
+    async fn gather_all(&self, person: &PersonInput) -> Vec<GatheredData> {
+        let p = person.clone();
+
+        // Spawn all HTTP gather tasks concurrently
+        let web_handle = {
+            let p = p.clone();
+            tokio::spawn(async move { gather_web_research(&p).await })
+        };
+        let github_handle = {
+            let p = p.clone();
+            tokio::spawn(async move { gather_github(&p).await })
+        };
+        let orcid_handle = {
+            let p = p.clone();
+            tokio::spawn(async move { gather_orcid(&p).await })
+        };
+        let arxiv_handle = {
+            let p = p.clone();
+            tokio::spawn(async move { gather_arxiv(&p).await })
+        };
+        let podcast_handle = {
+            let p = p.clone();
+            tokio::spawn(async move { gather_podcast(&p).await })
+        };
+        let news_handle = {
+            let p = p.clone();
+            tokio::spawn(async move { gather_news(&p).await })
+        };
+        let hf_handle = {
+            let p = p.clone();
+            tokio::spawn(async move { gather_huggingface(&p).await })
+        };
+        let blog_handle = {
+            let p = p.clone();
+            tokio::spawn(async move { gather_blog(&p).await })
+        };
+
+        // Await all concurrently
+        let (web, github, orcid, arxiv, podcast, news, hf, blog) = tokio::join!(
+            web_handle,
+            github_handle,
+            orcid_handle,
+            arxiv_handle,
+            podcast_handle,
+            news_handle,
+            hf_handle,
+            blog_handle,
+        );
+
+        let mut gathered = Vec::new();
+
+        for (result, agent) in [
+            (web, AgentType::WebResearch),
+            (github, AgentType::GitHubAnalyst),
+            (orcid, AgentType::OrcidAnalyst),
+            (arxiv, AgentType::ArxivAnalyst),
+            (podcast, AgentType::PodcastAnalyst),
+            (news, AgentType::NewsAnalyst),
+            (hf, AgentType::HuggingFaceAnalyst),
+            (blog, AgentType::BlogAnalyst),
+        ] {
+            match result {
+                Ok(Some(data)) => {
+                    info!("  ✓ {} gathered ({} chars prompt)", agent.as_str(), data.user_prompt.len());
+                    gathered.push(data);
+                }
+                Ok(None) => {
+                    info!("  ⊘ {} skipped (no data source)", agent.as_str());
+                }
+                Err(e) => {
+                    warn!("  ✗ {} gather failed: {e}", agent.as_str());
+                }
+            }
+        }
+
+        gathered
+    }
+
+    /// Synthesize ALL gathered data concurrently on HF 72B.
+    async fn synthesize_all_hf(
+        &self,
+        hf: &HfClient,
+        gathered: Vec<GatheredData>,
+    ) -> HashMap<String, String> {
+        let mut handles = Vec::new();
+
+        for data in gathered {
+            let hf = hf.clone();
+            let key = data.key.to_string();
+            let name = data.agent.as_str().to_string();
+            let system = data.system_prompt;
+            let user = data.user_prompt;
+
+            let handle = tokio::spawn(async move {
+                let start = Instant::now();
+                let result = hf.chat(&system, &user, 4096).await;
+                let elapsed = start.elapsed();
+                (key, name, result, elapsed)
+            });
+            handles.push(handle);
+        }
+
+        let mut results = HashMap::new();
+        for handle in handles {
+            match handle.await {
+                Ok((key, name, Ok(data), elapsed)) => {
+                    info!(
+                        "  ✓ {name} synthesized ({} chars, {:.1}s) ← HF",
+                        data.len(),
+                        elapsed.as_secs_f64()
+                    );
+                    results.insert(key, data);
+                }
+                Ok((key, name, Err(e), _)) => {
+                    warn!("  ✗ {name} synthesis failed: {e}");
+                    results.insert(key, String::new());
+                }
+                Err(e) => {
+                    warn!("  ✗ join error: {e}");
+                }
+            }
+        }
+        results
+    }
+
+    /// Synthesize ALL gathered data sequentially on Candle local.
+    async fn synthesize_all_local(
+        &self,
+        gathered: Vec<GatheredData>,
+    ) -> HashMap<String, String> {
+        let mut results = HashMap::new();
+
+        for data in gathered {
+            let name = data.agent.as_str();
+            info!("  → {name} (Candle)");
+            let start = Instant::now();
+
+            let mut llm = self.local_llm.lock().await;
+            let result = llm.chat(&data.system_prompt, &data.user_prompt, 4096);
+            drop(llm);
+
+            let elapsed = start.elapsed();
+            match result {
+                Ok(text) => {
+                    info!(
+                        "  ✓ {name} ({} chars, {:.1}s)",
+                        text.len(),
+                        elapsed.as_secs_f64()
+                    );
+                    results.insert(data.key.to_string(), text);
+                }
+                Err(e) => {
+                    warn!("  ✗ {name} failed: {e}");
+                    results.insert(data.key.to_string(), String::new());
+                }
+            }
+        }
+        results
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 2 — fully parallel synthesis on HF 72B
+    // ═════════════════════════════════════════════════════════════════════════
+
     async fn run_phase2(&self, state: &ResearchState) -> Result<HashMap<String, String>> {
         if let Some(hf) = &self.hf_client {
-            // Concurrent on HF 72B
-            info!("  Dual-lane: {} agents → HF 72B concurrent", AgentType::PHASE2.len());
+            info!(
+                "  {} agents → HF 72B concurrent",
+                AgentType::PHASE2.len()
+            );
 
             let mut handles = Vec::new();
             for agent in AgentType::PHASE2 {
@@ -118,7 +293,8 @@ impl Pipeline {
                 let state = state.clone();
                 let handle = tokio::spawn(async move {
                     let start = Instant::now();
-                    let result = run_synthesis_agent_hf(&hf, *agent, &state).await;
+                    let (system, user) = synthesis_prompt(*agent, &state);
+                    let result = hf.chat(&system, &user, 4096).await;
                     let elapsed = start.elapsed();
                     (agent.state_key().to_string(), result, agent.as_str(), elapsed)
                 });
@@ -129,7 +305,11 @@ impl Pipeline {
             for handle in handles {
                 match handle.await {
                     Ok((key, Ok(data), name, elapsed)) => {
-                        info!("  ✓ {name} ({} chars, {:.1}s) ← HF", data.len(), elapsed.as_secs_f64());
+                        info!(
+                            "  ✓ {name} ({} chars, {:.1}s) ← HF",
+                            data.len(),
+                            elapsed.as_secs_f64()
+                        );
                         results.insert(key, data);
                     }
                     Ok((key, Err(e), name, _)) => {
@@ -143,8 +323,10 @@ impl Pipeline {
             }
             Ok(results)
         } else {
-            // Sequential on local LLM
-            info!("  Single-lane: {} agents → Candle local (sequential)", AgentType::PHASE2.len());
+            info!(
+                "  {} agents → Candle local (sequential)",
+                AgentType::PHASE2.len()
+            );
 
             let mut results = HashMap::new();
             for agent in AgentType::PHASE2 {
@@ -173,7 +355,10 @@ impl Pipeline {
         }
     }
 
-    /// Phase 3: Sequential synthesis — eval, executive, questions.
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 3 — sequential (each depends on previous)
+    // ═════════════════════════════════════════════════════════════════════════
+
     async fn run_phase3(&self, state: &mut ResearchState) -> Result<()> {
         let agents = [
             AgentType::QualityEvaluator,
@@ -210,6 +395,10 @@ impl Pipeline {
         Ok(())
     }
 
+    // ═════════════════════════════════════════════════════════════════════════
+    // Helpers
+    // ═════════════════════════════════════════════════════════════════════════
+
     fn merge_results(&self, state: &mut ResearchState, results: HashMap<String, String>) {
         for (key, value) in results {
             self.set_state_field(state, &key, value);
@@ -245,159 +434,141 @@ impl Pipeline {
     }
 }
 
-// ── Phase 1 agent implementations ───────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════════════
+// Phase 1a — HTTP gather functions (pure async, no LLM)
+// ═════════════════════════════════════════════════════════════════════════════
 
-impl Pipeline {
-    async fn agent_web_research(&self, person: &PersonInput) -> Result<String> {
-        use crate::tools::web_search;
+async fn gather_web_research(person: &PersonInput) -> Option<GatheredData> {
+    use crate::tools::web_search;
 
-        let queries = vec![
-            format!("{} {} {}", person.name, person.role, person.org),
-            format!("{} interview podcast", person.name),
-            format!("{} blog technical writing", person.name),
-        ];
+    let queries = vec![
+        format!("{} {} {}", person.name, person.role, person.org),
+        format!("{} interview podcast", person.name),
+        format!("{} blog technical writing", person.name),
+    ];
 
-        // Run all searches concurrently
-        let search_futures: Vec<_> = queries.iter().map(|q| web_search(q)).collect();
-        let search_results = futures::future::join_all(search_futures).await;
+    let futs: Vec<_> = queries.iter().map(|q| web_search(q)).collect();
+    let results = futures::future::join_all(futs).await;
+    let raw: String = results.join("\n\n");
 
-        let raw_data: String = search_results.into_iter().collect::<Vec<_>>().join("\n\n");
-
-        // Synthesize with LLM
-        let system = "You are a web research specialist. Summarize the search results into a structured intelligence report about the person.";
-        let user = format!(
+    Some(GatheredData {
+        key: "web_data",
+        agent: AgentType::WebResearch,
+        system_prompt: "You are a web research specialist. Summarize the search results into a structured intelligence report about the person.".into(),
+        user_prompt: format!(
             "Compile a research dossier on {} ({} at {}) from these search results:\n\n{}",
-            person.name, person.role, person.org, &raw_data[..raw_data.len().min(6000)]
-        );
-
-        let mut llm = self.local_llm.lock().await;
-        llm.chat(system, &user, 4096)
-    }
-
-    async fn agent_github(&self, person: &PersonInput) -> Result<String> {
-        let username = match &person.github {
-            Some(u) if !u.is_empty() => u.clone(),
-            _ => return Ok("(no GitHub username)".into()),
-        };
-
-        let data = crate::tools::github_profile(&username).await;
-
-        let system = "You are a GitHub & open-source analyst. Analyze the profile and repos.";
-        let user = format!(
-            "Analyze this GitHub profile for {}:\n\n{}",
-            person.name, data
-        );
-
-        let mut llm = self.local_llm.lock().await;
-        llm.chat(system, &user, 4096)
-    }
-
-    async fn agent_orcid(&self, person: &PersonInput) -> Result<String> {
-        let orcid = match &person.orcid {
-            Some(o) if !o.is_empty() => o.clone(),
-            _ => return Ok("(no ORCID)".into()),
-        };
-
-        let data = crate::tools::orcid_works(&orcid).await;
-
-        let system = "You are an academic publications analyst. Extract publication records.";
-        let user = format!(
-            "Analyze ORCID publications for {}:\n\n{}",
-            person.name, &data[..data.len().min(6000)]
-        );
-
-        let mut llm = self.local_llm.lock().await;
-        llm.chat(system, &user, 4096)
-    }
-
-    async fn agent_arxiv(&self, person: &PersonInput) -> Result<String> {
-        // Run arXiv + Semantic Scholar concurrently
-        let (arxiv, scholar) = tokio::join!(
-            crate::tools::arxiv_search(&person.name, 10),
-            crate::tools::semantic_scholar_search(&person.name),
-        );
-
-        let combined = format!("=== arXiv ===\n{arxiv}\n\n=== Semantic Scholar ===\n{scholar}");
-
-        let system = "You are an academic research analyst. Analyze papers, citations, and impact.";
-        let user = format!(
-            "Analyze academic output for {}:\n\n{}",
-            person.name, &combined[..combined.len().min(8000)]
-        );
-
-        let mut llm = self.local_llm.lock().await;
-        llm.chat(system, &user, 4096)
-    }
-
-    async fn agent_podcast(&self, person: &PersonInput) -> Result<String> {
-        let data = crate::tools::web_search(
-            &format!("{} podcast interview appearance", person.name),
-        )
-        .await;
-
-        let system = "You are a podcast & media analyst. Extract podcast appearances and key discussion points.";
-        let user = format!(
-            "Find podcast appearances for {}:\n\n{}",
-            person.name, data
-        );
-
-        let mut llm = self.local_llm.lock().await;
-        llm.chat(system, &user, 4096)
-    }
-
-    async fn agent_news(&self, person: &PersonInput) -> Result<String> {
-        let data = crate::tools::web_search(
-            &format!("{} {} news announcement", person.name, person.org),
-        )
-        .await;
-
-        let system = "You are a news & press analyst. Extract recent news and press coverage.";
-        let user = format!(
-            "Find news coverage for {}:\n\n{}",
-            person.name, data
-        );
-
-        let mut llm = self.local_llm.lock().await;
-        llm.chat(system, &user, 2048)
-    }
-
-    async fn agent_huggingface(&self, person: &PersonInput) -> Result<String> {
-        let username = person.github.as_deref().unwrap_or(&person.slug);
-        let data = crate::tools::fetch_url(
-            &format!("https://huggingface.co/{username}"),
-        )
-        .await;
-
-        let system = "You are a HuggingFace & model registry analyst. Extract models, datasets, and spaces.";
-        let user = format!(
-            "Analyze HuggingFace presence for {}:\n\n{}",
-            person.name, &data[..data.len().min(6000)]
-        );
-
-        let mut llm = self.local_llm.lock().await;
-        llm.chat(system, &user, 2048)
-    }
-
-    async fn agent_blog(&self, person: &PersonInput) -> Result<String> {
-        let blog_url = match &person.blog_url {
-            Some(u) if !u.is_empty() => u.clone(),
-            _ => return Ok("(no blog URL)".into()),
-        };
-
-        let data = crate::tools::fetch_url(&blog_url).await;
-
-        let system = "You are a blog & writing analyst. Extract blog post topics, themes, and writing patterns.";
-        let user = format!(
-            "Analyze the blog at {} for {}:\n\n{}",
-            blog_url, person.name, &data[..data.len().min(8000)]
-        );
-
-        let mut llm = self.local_llm.lock().await;
-        llm.chat(system, &user, 4096)
-    }
+            person.name, person.role, person.org, &raw[..raw.len().min(6000)]
+        ),
+    })
 }
 
-// ── Phase 2/3 synthesis prompts ─────────────────────────────────────────────
+async fn gather_github(person: &PersonInput) -> Option<GatheredData> {
+    let username = person.github.as_deref().filter(|u| !u.is_empty())?;
+    let data = crate::tools::github_profile(username).await;
+
+    Some(GatheredData {
+        key: "github_data",
+        agent: AgentType::GitHubAnalyst,
+        system_prompt: "You are a GitHub & open-source analyst. Analyze the profile and repos.".into(),
+        user_prompt: format!("Analyze this GitHub profile for {}:\n\n{}", person.name, data),
+    })
+}
+
+async fn gather_orcid(person: &PersonInput) -> Option<GatheredData> {
+    let orcid = person.orcid.as_deref().filter(|o| !o.is_empty())?;
+    let data = crate::tools::orcid_works(orcid).await;
+
+    Some(GatheredData {
+        key: "orcid_data",
+        agent: AgentType::OrcidAnalyst,
+        system_prompt: "You are an academic publications analyst. Extract publication records.".into(),
+        user_prompt: format!(
+            "Analyze ORCID publications for {}:\n\n{}",
+            person.name, &data[..data.len().min(6000)]
+        ),
+    })
+}
+
+async fn gather_arxiv(person: &PersonInput) -> Option<GatheredData> {
+    let (arxiv, scholar) = tokio::join!(
+        crate::tools::arxiv_search(&person.name, 10),
+        crate::tools::semantic_scholar_search(&person.name),
+    );
+
+    let combined = format!("=== arXiv ===\n{arxiv}\n\n=== Semantic Scholar ===\n{scholar}");
+
+    Some(GatheredData {
+        key: "arxiv_data",
+        agent: AgentType::ArxivAnalyst,
+        system_prompt: "You are an academic research analyst. Analyze papers, citations, and impact.".into(),
+        user_prompt: format!(
+            "Analyze academic output for {}:\n\n{}",
+            person.name, &combined[..combined.len().min(8000)]
+        ),
+    })
+}
+
+async fn gather_podcast(person: &PersonInput) -> Option<GatheredData> {
+    let data = crate::tools::web_search(
+        &format!("{} podcast interview appearance", person.name),
+    ).await;
+
+    Some(GatheredData {
+        key: "podcast_data",
+        agent: AgentType::PodcastAnalyst,
+        system_prompt: "You are a podcast & media analyst. Extract podcast appearances and key discussion points.".into(),
+        user_prompt: format!("Find podcast appearances for {}:\n\n{}", person.name, data),
+    })
+}
+
+async fn gather_news(person: &PersonInput) -> Option<GatheredData> {
+    let data = crate::tools::web_search(
+        &format!("{} {} news announcement", person.name, person.org),
+    ).await;
+
+    Some(GatheredData {
+        key: "news_data",
+        agent: AgentType::NewsAnalyst,
+        system_prompt: "You are a news & press analyst. Extract recent news and press coverage.".into(),
+        user_prompt: format!("Find news coverage for {}:\n\n{}", person.name, data),
+    })
+}
+
+async fn gather_huggingface(person: &PersonInput) -> Option<GatheredData> {
+    let username = person.github.as_deref().unwrap_or(&person.slug);
+    let data = crate::tools::fetch_url(
+        &format!("https://huggingface.co/{username}"),
+    ).await;
+
+    Some(GatheredData {
+        key: "hf_data",
+        agent: AgentType::HuggingFaceAnalyst,
+        system_prompt: "You are a HuggingFace & model registry analyst. Extract models, datasets, and spaces.".into(),
+        user_prompt: format!(
+            "Analyze HuggingFace presence for {}:\n\n{}",
+            person.name, &data[..data.len().min(6000)]
+        ),
+    })
+}
+
+async fn gather_blog(person: &PersonInput) -> Option<GatheredData> {
+    let blog_url = person.blog_url.as_deref().filter(|u| !u.is_empty())?;
+    let data = crate::tools::fetch_url(blog_url).await;
+
+    Some(GatheredData {
+        key: "blog_data",
+        agent: AgentType::BlogAnalyst,
+        system_prompt: "You are a blog & writing analyst. Extract blog post topics, themes, and writing patterns.".into(),
+        user_prompt: format!(
+            "Analyze the blog at {} for {}:\n\n{}",
+            blog_url, person.name, &data[..data.len().min(8000)]
+        ),
+    })
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Synthesis prompts (Phase 2/3)
+// ═════════════════════════════════════════════════════════════════════════════
 
 fn ctx_block(label: &str, data: &str) -> String {
     if data.is_empty() {
@@ -501,14 +672,4 @@ fn synthesis_prompt(agent: AgentType, state: &ResearchState) -> (String, String)
         ),
         _ => ("".into(), "".into()),
     }
-}
-
-/// Run a synthesis agent on HF 72B (for concurrent Phase 2 execution).
-async fn run_synthesis_agent_hf(
-    hf: &HfClient,
-    agent: AgentType,
-    state: &ResearchState,
-) -> Result<String> {
-    let (system, user) = synthesis_prompt(agent, state);
-    hf.chat(&system, &user, 4096).await
 }
