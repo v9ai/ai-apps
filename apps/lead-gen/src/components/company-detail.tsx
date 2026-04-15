@@ -1326,17 +1326,52 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           )}
         </TabNav.Root>
 
-        <Box pt="4">
-              <Flex direction="column" gap="5">
-                {/* Balanced 2/3 + 1/3 layout */}
-                <Flex
-                  direction={{ initial: "column", md: "row" }}
-                  gap="4"
-                  align="start"
-                >
-                  <Box flexGrow="2" minWidth="0">
-                    <Flex direction="column" gap="4">
-                      {company.deep_analysis && (
+        <Flex
+          pt="4"
+          direction={{ initial: "column", lg: "row" }}
+          gap="5"
+          align="start"
+        >
+          {/* Left column: overview */}
+          <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
+            <Flex direction="column" gap="5">
+              {/* Key facts + meta row */}
+              <Flex
+                direction={{ initial: "column", sm: "row" }}
+                gap="4"
+                align="start"
+              >
+                <Box style={{ flex: "1 1 0%" }}>
+                  <KeyFactsCard
+                    linkedinUrl={company.linkedin_url}
+                    jobBoardUrl={company.job_board_url}
+                    score={company.score}
+                    isAdmin={isAdmin}
+                    updatedAt={company.updated_at}
+                  />
+                </Box>
+                <Box style={{ flex: "1 1 0%" }}>
+                  <Flex direction="column" gap="4">
+                    {company.industries?.length ? (
+                      <SectionCard title="Industries">
+                        <CollapsibleChips items={company.industries} visibleCount={8} />
+                      </SectionCard>
+                    ) : null}
+                    {(() => {
+                      const displayTags = (company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-'));
+                      return displayTags.length ? (
+                        <SectionCard title="Tags">
+                          <CollapsibleChips items={displayTags} visibleCount={10} />
+                        </SectionCard>
+                      ) : null;
+                    })()}
+                  </Flex>
+                </Box>
+              </Flex>
+
+              {/* Deep analysis / About / Services */}
+              <Flex direction="column" gap="4">
+                {company.deep_analysis && (
                         <SectionCard title="Deep Analysis">
                           <Text size="2" as="div">
                             <ReactMarkdown
