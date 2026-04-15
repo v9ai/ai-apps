@@ -43,6 +43,7 @@
         "https://*.linkedin.com/feed/*",
         "https://*.linkedin.com/search/*",
         "https://*.linkedin.com/company/*",
+        "https://*.linkedin.com/in/*",
         "https://*.google.com/search*"
       ],
       "js": ["src/pages/content/index.tsx"],
