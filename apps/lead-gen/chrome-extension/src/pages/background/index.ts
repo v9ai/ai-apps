@@ -569,7 +569,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // ── Import Profile from LinkedIn Page (triggered by content script button) ──
   if (message.action === "importProfileFromPage") {
-    const { linkedinUrl } = message as { linkedinUrl: string };
+    const { profileData } = message as {
+      profileData: {
+        name: string;
+        headline: string;
+        location: string;
+        linkedinUrl: string;
+        currentCompany: string;
+        currentCompanyLinkedinUrl: string;
+      };
+    };
     const tabId = sender.tab?.id;
     if (!tabId) {
       sendResponse({ success: false, error: "No tab ID" });
@@ -586,22 +595,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       startKeepAlive();
       try {
-        await notifyTab({ status: "Extracting..." });
+        const { firstName, lastName } = parseName(profileData.name);
+        const { position } = parseHeadline(profileData.headline);
+        const companyName = profileData.currentCompany;
 
-        const expanded = await clickSeeMore(tabId);
-        if (expanded > 0) await randomDelay(800);
-
-        const data = await extractFullProfileData(tabId);
-        if (!data || !data.name) {
-          await notifyTab({ error: "Could not extract profile data" });
-          return;
-        }
-
-        const { firstName, lastName } = parseName(data.name);
-        const { position, company: headlineCompany } = parseHeadline(data.headline);
-        const companyName = data.currentCompany || headlineCompany;
-
-        await notifyTab({ status: `${data.name} — looking up...` });
+        await notifyTab({ status: `${profileData.name} — looking up...` });
 
         // Find or create company
         let companyId: number | undefined;
@@ -615,7 +613,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }`,
             {
               name: companyName,
-              linkedinUrl: data.currentCompanyLinkedinUrl || undefined,
+              linkedinUrl: profileData.currentCompanyLinkedinUrl || undefined,
             },
           );
 
@@ -635,7 +633,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 input: {
                   key,
                   name: companyName,
-                  linkedin_url: data.currentCompanyLinkedinUrl || undefined,
+                  linkedin_url: profileData.currentCompanyLinkedinUrl || undefined,
                 },
               },
             );
@@ -656,7 +654,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             input: {
               firstName,
               lastName: lastName || undefined,
-              linkedinUrl: data.linkedinUrl,
+              linkedinUrl: profileData.linkedinUrl,
               position: position || undefined,
               ...(companyId !== undefined && { companyId }),
               tags: ["linkedin-import"],
@@ -669,7 +667,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else {
           await notifyTab({
             done: true,
-            status: `Imported: ${data.name}${companyName ? " at " + companyName : ""}`,
+            status: `Imported: ${profileData.name}${companyName ? " at " + companyName : ""}`,
           });
         }
       } catch (err) {
