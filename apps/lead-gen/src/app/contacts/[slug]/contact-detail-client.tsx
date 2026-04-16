@@ -1557,19 +1557,24 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                   <Text size="2" color="gray" weight="medium">
                     Role
                   </Text>
-                  <Text size="3" as="p" mt="1">
-                    {contact.position}
-                    {contact.position && contact.company && " at "}
-                    {contact.companyId ? (
-                      <RadixLink asChild>
-                        <Link href={`/companies/${contact.companyId}`}>
-                          {contact.company}
-                        </Link>
-                      </RadixLink>
-                    ) : (
-                      contact.company
-                    )}
-                  </Text>
+                  {contact.position && (
+                    <Text size="3" as="p" mt="1">
+                      {contact.position}
+                    </Text>
+                  )}
+                  {contact.company && (
+                    <Text size="2" as="p" mt="1" color="gray">
+                      {contact.companyId ? (
+                        <RadixLink asChild>
+                          <Link href={`/companies/${contact.companyId}`}>
+                            {contact.company}
+                          </Link>
+                        </RadixLink>
+                      ) : (
+                        contact.company
+                      )}
+                    </Text>
+                  )}
                 </Box>
               )}
 
