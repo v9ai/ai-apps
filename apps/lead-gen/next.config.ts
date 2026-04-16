@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  serverExternalPackages: ["onnxruntime-node"],
+  serverExternalPackages: ["onnxruntime-node", "better-sqlite3"],
   outputFileTracingRoot: path.join(__dirname, "../.."),
   outputFileTracingExcludes: {
     "*": ["node_modules/onnxruntime-node"],

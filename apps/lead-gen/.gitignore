@@ -85,5 +85,10 @@ mlx-training/data/
 # LlamaIndex local storage
 llamaindex/.storage/
 
+# SQLite databases
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
 # PandaCSS generated output
 /styled-system/

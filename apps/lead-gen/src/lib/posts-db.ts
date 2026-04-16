@@ -1,7 +1,7 @@
-import * as Database from "better-sqlite3";
-import * as path from "path";
+import Database from "better-sqlite3";
+import { join } from "path";
 
-const DB_PATH = process.env.POSTS_DB_PATH || path.join(process.cwd(), "data", "posts.db");
+const DB_PATH = process.env.POSTS_DB_PATH || join(process.cwd(), "data", "posts.db");
 
 let _db: Database.Database | null = null;
 
