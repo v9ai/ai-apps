@@ -40,6 +40,43 @@ export function teardownIfDead(): boolean {
   return true;
 }
 
+// ── Visible error toast ───────────────────────────────────────────────
+// Surfaces GraphQL / network / background errors to the user so 500s and
+// other failures are not silently swallowed by callback fallthroughs.
+
+const TOAST_ATTR = "data-lg-toast";
+
+export function showErrorToast(message: string, opts: { durationMs?: number } = {}) {
+  if (typeof document === "undefined" || !document.body) return;
+  const durationMs = opts.durationMs ?? 6000;
+
+  const toast = document.createElement("div");
+  toast.setAttribute(TOAST_ATTR, "true");
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 10000;
+    max-width: 520px;
+    background: #dc2626;
+    color: white;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    cursor: pointer;
+    word-break: break-word;
+  `;
+  toast.title = "Click to dismiss";
+  toast.addEventListener("click", () => toast.remove());
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), durationMs);
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /** Safe wrapper: only calls chrome.runtime.sendMessage when context is alive. */
 export function safeSendMessage(

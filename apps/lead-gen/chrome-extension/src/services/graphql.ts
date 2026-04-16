@@ -57,8 +57,15 @@ export async function gqlRequest(
   clearTimeout(timeoutId);
 
   if (!res.ok) {
-    const errMsg = `GraphQL HTTP error: ${res.status} ${res.statusText}`;
-    console.error(`[GQL] ${operationName} — ${errMsg}`);
+    // Try to read the response body — servers often put the real failure
+    // reason (stack trace, GraphQL error message, Vercel error page) there.
+    let bodySnippet = "";
+    try {
+      const bodyText = await res.text();
+      bodySnippet = bodyText.slice(0, 500);
+    } catch { /* ignore */ }
+    const errMsg = `${operationName} — HTTP ${res.status} ${res.statusText}${bodySnippet ? `: ${bodySnippet}` : ""}`;
+    console.error(`[GQL] ${errMsg}`);
     throw new Error(errMsg);
   }
 

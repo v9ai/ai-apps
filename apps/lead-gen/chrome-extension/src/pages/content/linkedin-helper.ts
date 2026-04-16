@@ -7,6 +7,7 @@ import {
   teardownIfDead as _teardownIfDead,
   onTeardown,
   safeSendMessage,
+  showErrorToast,
 } from "./lifecycle";
 
 function clickDismiss(el: HTMLElement) {
@@ -1696,6 +1697,14 @@ function syncOpportunityButton() {
       { action: "checkOpportunityByUrl", url: canonicalUrl },
       (response) => {
         if (!document.querySelector(`[${IMPORT_OPPORTUNITY_BTN_ATTR}]`)) return;
+        // Surface backend errors instead of silently falling through.
+        if (response && response.success === false && response.error) {
+          showErrorToast(`CheckOpportunityByUrl failed: ${response.error}`);
+          btn.textContent = "Check failed — retry";
+          btn.disabled = false;
+          btn.style.backgroundColor = "#dc2626";
+          return;
+        }
         if (response?.success && response.opportunity) {
           showExistingOpportunityLink(btn, response.opportunity);
         } else {

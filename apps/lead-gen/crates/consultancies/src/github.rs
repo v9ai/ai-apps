@@ -131,6 +131,7 @@ pub struct OrgCandidate {
     pub created_at: String,
     pub public_repos: u32,
     pub ai_repo_count: u32,
+    pub recently_active_repos: u32,
     pub total_stars: u32,
     pub most_recent_push: String,
     pub pinned_summaries: Vec<String>,
@@ -247,14 +248,15 @@ pub fn score_org(org: &OrgCandidate) -> (i32, Vec<String>) {
         reasons.push("very large org (likely product co / enterprise)".to_string());
     }
 
-    if !org.most_recent_push.is_empty() {
-        if let Ok(pushed_at) = DateTime::parse_from_rfc3339(&org.most_recent_push) {
-            let age_days = (Utc::now() - pushed_at.with_timezone(&Utc)).num_days();
-            if age_days < 120 {
-                s += 10;
-                reasons.push(format!("active ({age_days}d since push)"));
-            }
-        }
+    if org.recently_active_repos >= 3 {
+        s += 15;
+        reasons.push(format!("{} repos active in last 90d", org.recently_active_repos));
+    } else if org.recently_active_repos >= 1 {
+        s += 7;
+        reasons.push(format!("{} repo active in last 90d", org.recently_active_repos));
+    } else if org.ai_repo_count >= 2 {
+        s -= 10;
+        reasons.push("no repos active in last 90d".to_string());
     }
 
     if negative_re().is_match(&blob) {
@@ -368,6 +370,11 @@ async fn run_slice(
             let pushed = node.get("pushedAt").and_then(|v| v.as_str()).unwrap_or("");
             if pushed > cand.most_recent_push.as_str() {
                 cand.most_recent_push = pushed.to_string();
+            }
+            if let Ok(dt) = DateTime::parse_from_rfc3339(pushed) {
+                if (Utc::now() - dt.with_timezone(&Utc)).num_days() < 90 {
+                    cand.recently_active_repos += 1;
+                }
             }
 
             if let Some(topics) = node
@@ -703,11 +710,10 @@ mod tests {
             "AI consulting firm — we help enterprises with LLM and machine learning.".to_string();
         c.website = "https://acme-ai.com".to_string();
         c.ai_repo_count = 10;
+        c.recently_active_repos = 5;
         c.public_repos = 30;
-        // 15 days ago — within the 120-day window
-        c.most_recent_push = "2026-04-01T00:00:00Z".to_string();
         let (score, _) = score_org(&c);
-        // consultancy(30) + AI(15) + website(20) + ai_repos(15) + sweet_spot(10) + recent(10) = 100
+        // consultancy(30) + AI(15) + website(20) + ai_repos(15) + sweet_spot(10) + active(15) = 105
         assert!(score >= 80, "score={score}");
     }
 
