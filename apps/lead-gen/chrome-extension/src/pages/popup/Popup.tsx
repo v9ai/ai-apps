@@ -7,6 +7,7 @@ import {
   Text,
 } from "@mantine/core";
 import logo from "@assets/img/logo.svg";
+import CompanyCheckSection from "./company-check-section";
 import PostsSection from "./posts-section";
 
 export default function Popup() {
