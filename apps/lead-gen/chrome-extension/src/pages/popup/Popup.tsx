@@ -33,6 +33,7 @@ export default function Popup() {
         </AppShell.Header>
 
         <AppShell.Main bg="dark.9" style={{ overflow: "auto" }}>
+          <CompanyCheckSection />
           <PostsSection />
         </AppShell.Main>
 
