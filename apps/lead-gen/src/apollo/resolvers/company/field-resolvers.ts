@@ -79,11 +79,20 @@ export const CompanyField = {
   score_reasons(parent: DbCompany) {
     const parsed = cachedSafeJsonParse<unknown>(parent, "score_reasons", parent.score_reasons, []);
     if (Array.isArray(parsed)) return parsed as string[];
-    // recruitment-verify stores an object — flatten to readable strings
     if (parsed && typeof parsed === "object") {
       const obj = parsed as Record<string, unknown>;
       const reasons: string[] = [];
+      // consultancy-discover-v1 format
       if (obj.method) reasons.push(`Method: ${obj.method}`);
+      if (Array.isArray(obj.keyword_hits) && obj.keyword_hits.length > 0)
+        reasons.push(`Keywords: ${obj.keyword_hits.join(", ")}`);
+      if (Array.isArray(obj.ai_keyword_hits) && obj.ai_keyword_hits.length > 0)
+        reasons.push(`AI keywords: ${(obj.ai_keyword_hits as unknown[]).slice(0, 5).join(", ")}`);
+      if (typeof obj.ai_score === "number")
+        reasons.push(`AI score: ${(obj.ai_score * 100).toFixed(0)}%`);
+      if (typeof obj.consultancy_score === "number")
+        reasons.push(`Consultancy score: ${(obj.consultancy_score * 100).toFixed(0)}%`);
+      // recruitment-verify format
       if (typeof obj.is_recruitment === "boolean")
         reasons.push(obj.is_recruitment ? "Is recruitment agency" : "Not a recruitment agency");
       if (typeof obj.confidence === "number")
