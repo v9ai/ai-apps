@@ -438,19 +438,6 @@ export function LandingHero() {
             meet the agents
             <ArrowRightIcon width={14} height={14} />
           </Link>
-          <Link
-            href="/docs"
-            className={cx(
-              button({ variant: "outline", size: "lg" }),
-              css({
-                justifyContent: "center",
-                width: { base: "100%", sm: "auto" },
-              }),
-              "cta-ghost-animated",
-            )}
-          >
-            view documentation
-          </Link>
         </div>
 
         {/* --- live activity indicator --- */}
