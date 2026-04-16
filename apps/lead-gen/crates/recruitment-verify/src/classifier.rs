@@ -1,8 +1,16 @@
-/// Recruitment classifier: Candle embeddings → LanceDB kNN → majority vote.
+/// Recruitment classifier: dual-signal approach.
 ///
-/// Embeds the website text, queries the reference corpus for the top-7 nearest
-/// neighbours, and returns a verdict based on majority label + distance-weighted
-/// confidence.
+/// Signal 1 — **Centroid distance**: Candle embeds the website text, LanceDB
+///   retrieves top-K neighbours. Instead of raw majority vote, compute average
+///   cosine similarity to recruitment centroid vs non-recruitment centroid.
+///   A company must be *closer* to the recruitment cluster to pass.
+///
+/// Signal 2 — **Keyword scoring**: scan the website text for UK-recruitment
+///   specific terms (REC, AWR, IR35, "we recruit", "staffing", "placing
+///   candidates", etc.). This catches hard signals that embedding similarity
+///   alone misses and guards against false positives from generic corporate text.
+///
+/// Final verdict requires BOTH signals to agree, or a very strong keyword score.
 
 use anyhow::Result;
 use candle_core::{Device, Tensor, D};
@@ -16,6 +24,146 @@ use crate::Verdict;
 
 const MODEL_ID: &str = "sentence-transformers/all-MiniLM-L6-v2";
 const TOP_K: usize = 7;
+
+// ── Keyword scoring ──────────────────────────────────────────────────────────
+
+/// Strong signals: if any of these appear, it's almost certainly recruitment.
+const STRONG_KEYWORDS: &[&str] = &[
+    "we recruit",
+    "we are a recruitment",
+    "recruitment agency",
+    "recruitment consultancy",
+    "staffing agency",
+    "staffing solutions",
+    "placing candidates",
+    "place candidates",
+    "executive search",
+    "headhunting",
+    "talent acquisition",
+    "rec member",
+    "rec accredited",
+    "awr compliant",
+    "ir35",
+    "umbrella company",
+    "locum",
+    "temporary staffing",
+    "contract staffing",
+    "permanent placement",
+    "we place ",
+    "our recruiters",
+    "our recruitment consultants",
+    "job seekers with employers",
+    "connecting talent",
+    "find your next role",
+    "hiring solutions",
+    "contingent workforce",
+    "managed service provider for recruitment",
+    "recruitment process outsourcing",
+];
+
+/// Moderate signals: recruitment-adjacent but also found on non-recruitment sites.
+const MODERATE_KEYWORDS: &[&str] = &[
+    "recruiter",
+    "staffing",
+    "vacancies",
+    "job board",
+    "submit your cv",
+    "upload your cv",
+    "register your cv",
+    "looking for work",
+    "find a job",
+    "browse jobs",
+    "apply now",
+    "we're hiring",
+    "career opportunities",
+    "open positions",
+    "current vacancies",
+    "contractor",
+    "temp agency",
+    "employment agency",
+];
+
+/// Anti-signals: strongly suggest this is NOT a recruitment company.
+const ANTI_KEYWORDS: &[&str] = &[
+    "our product",
+    "our platform",
+    "our software",
+    "saas",
+    "api",
+    "sdk",
+    "open source",
+    "download",
+    "install",
+    "pricing plans",
+    "free trial",
+    "sign up free",
+    "developer documentation",
+    "github.com/",
+    "npm install",
+    "pip install",
+    "cargo add",
+    "docker",
+    "kubernetes",
+    "cloud platform",
+    "machine learning platform",
+    "analytics platform",
+    "e-commerce",
+    "marketplace",
+    "checkout",
+    "add to cart",
+    "shopping",
+];
+
+struct KeywordScore {
+    strong_hits: usize,
+    moderate_hits: usize,
+    anti_hits: usize,
+    /// Net score: strong*3 + moderate*1 - anti*2
+    net: i32,
+    detail: Vec<String>,
+}
+
+fn score_keywords(text: &str) -> KeywordScore {
+    let lower = text.to_lowercase();
+    let mut strong_hits = 0;
+    let mut moderate_hits = 0;
+    let mut anti_hits = 0;
+    let mut detail = Vec::new();
+
+    for &kw in STRONG_KEYWORDS {
+        if lower.contains(kw) {
+            strong_hits += 1;
+            if detail.len() < 3 {
+                detail.push(format!("+STRONG:{kw}"));
+            }
+        }
+    }
+    for &kw in MODERATE_KEYWORDS {
+        if lower.contains(kw) {
+            moderate_hits += 1;
+        }
+    }
+    for &kw in ANTI_KEYWORDS {
+        if lower.contains(kw) {
+            anti_hits += 1;
+            if detail.len() < 3 {
+                detail.push(format!("-ANTI:{kw}"));
+            }
+        }
+    }
+
+    let net = (strong_hits as i32 * 3) + (moderate_hits as i32) - (anti_hits as i32 * 2);
+
+    KeywordScore {
+        strong_hits,
+        moderate_hits,
+        anti_hits,
+        net,
+        detail,
+    }
+}
+
+// ── Embedding model ──────────────────────────────────────────────────────────
 
 /// Candle BERT embedding model — mirrors `crates/candle/src/embeddings.rs`.
 pub struct EmbeddingModel {
@@ -99,7 +247,9 @@ impl EmbeddingModel {
     }
 }
 
-/// Orchestrates embedding + kNN search + majority vote.
+// ── Classifier ───────────────────────────────────────────────────────────────
+
+/// Orchestrates embedding + kNN centroid distance + keyword scoring.
 pub struct RecruitmentClassifier {
     pub model: EmbeddingModel,
     pub store: CorpusStore,
@@ -108,42 +258,80 @@ pub struct RecruitmentClassifier {
 impl RecruitmentClassifier {
     /// Classify a company's website text.
     pub async fn classify(&self, website_text: &str) -> Result<Verdict> {
+        // ── Signal 1: LanceDB centroid distance ──────────────────────────
         let vec = self.model.embed_one(website_text)?;
         let neighbours = self.store.query(vec, TOP_K).await?;
 
-        let recruitment_count = neighbours.iter().filter(|n| n.label == 1).count();
-        let total = neighbours.len().max(1);
-        let is_recruitment = recruitment_count * 2 > total; // strict majority
+        // Compute average similarity to each class (distance → similarity).
+        let mut rec_sim_sum = 0.0f32;
+        let mut rec_count = 0u32;
+        let mut non_sim_sum = 0.0f32;
+        let mut non_count = 0u32;
 
-        // Distance-weighted confidence: closer neighbours count more.
-        // Convert L2 distance → similarity: sim = 1 / (1 + dist)
-        let mut weighted_recruitment = 0.0f32;
-        let mut weighted_total = 0.0f32;
         for n in &neighbours {
             let sim = 1.0 / (1.0 + n.distance);
-            weighted_total += sim;
             if n.label == 1 {
-                weighted_recruitment += sim;
+                rec_sim_sum += sim;
+                rec_count += 1;
+            } else {
+                non_sim_sum += sim;
+                non_count += 1;
             }
         }
-        let confidence = if weighted_total > 0.0 {
-            if is_recruitment {
-                weighted_recruitment / weighted_total
-            } else {
-                1.0 - (weighted_recruitment / weighted_total)
-            }
+
+        let avg_rec_sim = if rec_count > 0 { rec_sim_sum / rec_count as f32 } else { 0.0 };
+        let avg_non_sim = if non_count > 0 { non_sim_sum / non_count as f32 } else { 0.0 };
+
+        // Semantic margin: how much closer to recruitment vs non-recruitment.
+        // Positive = closer to recruitment, negative = closer to non-recruitment.
+        let semantic_margin = avg_rec_sim - avg_non_sim;
+
+        // ── Signal 2: Keyword scoring ────────────────────────────────────
+        let kw = score_keywords(website_text);
+
+        // ── Combine signals ──────────────────────────────────────────────
+        //
+        // Decision matrix:
+        //   strong_hits >= 2                           → RECRUITMENT (keyword alone is decisive)
+        //   strong_hits >= 1 AND semantic_margin > 0   → RECRUITMENT
+        //   kw.net >= 3 AND semantic_margin > 0        → RECRUITMENT
+        //   anti_hits >= 3 AND strong_hits == 0        → NOT RECRUITMENT (anti-signals dominate)
+        //   kw.net <= -3                               → NOT RECRUITMENT
+        //   otherwise                                  → NOT RECRUITMENT (default to safe)
+
+        let is_recruitment = if kw.strong_hits >= 2 {
+            true
+        } else if kw.strong_hits >= 1 && semantic_margin > 0.0 {
+            true
+        } else if kw.net >= 3 && semantic_margin > 0.0 {
+            true
         } else {
-            0.5
+            false
         };
 
-        let top_matches: Vec<String> = neighbours
-            .iter()
-            .take(3)
-            .map(|n| {
-                let tag = if n.label == 1 { "REC" } else { "NON" };
-                format!("[{tag} d={:.3}] {}", n.distance, truncate(&n.text, 60))
-            })
-            .collect();
+        // Confidence: blend keyword strength and semantic margin.
+        let keyword_confidence = (kw.strong_hits as f32 * 0.2 + kw.moderate_hits as f32 * 0.05)
+            .min(0.5);
+        let semantic_confidence = (semantic_margin.abs() * 2.0).min(0.5);
+        let confidence = (keyword_confidence + semantic_confidence).min(1.0);
+
+        let top_matches: Vec<String> = {
+            let mut v: Vec<String> = neighbours
+                .iter()
+                .take(2)
+                .map(|n| {
+                    let tag = if n.label == 1 { "REC" } else { "NON" };
+                    format!("[{tag} d={:.3}] {}", n.distance, truncate(&n.text, 50))
+                })
+                .collect();
+            // Add keyword detail
+            v.push(format!(
+                "kw: strong={} mod={} anti={} net={} margin={:.3}",
+                kw.strong_hits, kw.moderate_hits, kw.anti_hits, kw.net, semantic_margin,
+            ));
+            v.extend(kw.detail);
+            v
+        };
 
         Ok(Verdict {
             is_recruitment,
