@@ -7,6 +7,7 @@ import { browseCompanies, setCompanyCancelled } from "./company-browsing";
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
 import { scrapeCompanyFull, setCompanyScraperCancelled } from "./company-scraper";
+import { scrapePeoplePostsFromCompanyPage, setPeoplePostsCancelled } from "./people-posts-scraper";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -368,6 +369,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // ── Stop People Scraping (browsePeople / importPeopleFromCurrentPage) ──
   if (message.action === "stopPeopleScraping") {
     setPeopleCancelled(true);
+    sendResponse({ success: true });
+    return true;
+  }
+
+  // ── Scrape Posts for All People on Company Page ──
+  if (message.action === "scrapePeoplePostsFromCompanyPage") {
+    const { companyName, companyLinkedinUrl } = message as {
+      companyName: string;
+      companyLinkedinUrl: string;
+    };
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+    startKeepAlive();
+    scrapePeoplePostsFromCompanyPage(tabId, companyName, companyLinkedinUrl).finally(stopKeepAlive);
+    return true;
+  }
+
+  // ── Stop People Posts Scraping ──
+  if (message.action === "stopPeoplePostsScraping") {
+    setPeoplePostsCancelled(true);
     sendResponse({ success: true });
     return true;
   }

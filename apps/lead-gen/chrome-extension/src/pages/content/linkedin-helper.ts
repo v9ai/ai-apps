@@ -768,8 +768,11 @@ chrome.runtime.onMessage.addListener((message) => {
 
 const IMPORT_PEOPLE_BTN_ATTR = "data-lg-import-people-btn";
 const FIND_RELATED_BTN_ATTR = "data-lg-find-related-btn";
+const SCRAPE_PEOPLE_POSTS_BTN_ATTR = "data-lg-scrape-people-posts-btn";
 let importPeopleBtn: HTMLButtonElement | null = null;
 let findRelatedBtn: HTMLButtonElement | null = null;
+let scrapePeoplePostsBtn: HTMLButtonElement | null = null;
+let scrapePeoplePostsRunning = false;
 let companyButtonsObserver: MutationObserver | null = null;
 let lastKnownCompanySlug: string | null = null;
 

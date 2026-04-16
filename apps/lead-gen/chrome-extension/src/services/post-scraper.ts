@@ -29,7 +29,7 @@ interface ScrapedContact {
   position: string | null;
 }
 
-interface ScrapedPost {
+export interface ScrapedPost {
   post_url: string | null;
   post_text: string | null;
   posted_date: string | null;
@@ -172,7 +172,7 @@ interface PostResult {
   filtered: number;
 }
 
-async function postPosts(
+export async function postPosts(
   contactId: number,
   posts: ScrapedPost[],
 ): Promise<PostResult> {
@@ -321,7 +321,7 @@ async function scrollAndExtractLikes(
 
 // ── Scroll and extract posts from an activity page ──
 
-async function scrollAndExtract(
+export async function scrollAndExtract(
   tabId: number,
 ): Promise<ScrapedPost[]> {
   // Click "see more" buttons first
