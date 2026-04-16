@@ -56,6 +56,194 @@ import {
 
 // SCHEDULE_DELAYS and FollowUpEmailDialog imported from @/components/emails/follow-up-email-dialog
 
+// ─── Compose Email Dialog (manual, no AI) ────────────────────────────────────
+
+function ComposeEmailDialog({
+  contact,
+  onSent,
+}: {
+  contact: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    company?: string | null;
+    position?: string | null;
+    email?: string | null;
+  };
+  onSent?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [includeResume, setIncludeResume] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [customTime, setCustomTime] = useState("");
+
+  const recipientName = `${contact.firstName} ${contact.lastName}`.trim();
+
+  const handleOpen = (val: boolean) => {
+    setOpen(val);
+    if (!val) {
+      setSubject("");
+      setBody("");
+      setIncludeResume(false);
+      setSendResult(null);
+      setCustomTime("");
+    }
+  };
+
+  const handleSend = async (scheduledAt?: string) => {
+    if (!contact.email) return;
+    setSending(true);
+    setSendResult(null);
+    try {
+      const res = await fetch("/api/emails/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactId: contact.id,
+          to: contact.email,
+          name: recipientName,
+          subject,
+          body,
+          includeResume,
+          ...(scheduledAt && { scheduledAt }),
+        }),
+      });
+      const json = (await res.json()) as { success: boolean; error?: string; scheduled?: boolean };
+      if (json.success) {
+        if (json.scheduled) {
+          const when = new Date(scheduledAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          setSendResult({ type: "success", message: `Scheduled for ${when}` });
+        } else {
+          setSendResult({ type: "success", message: `Sent to ${contact.email}` });
+        }
+        onSent?.();
+      } else {
+        setSendResult({ type: "error", message: json.error ?? "Send failed" });
+      }
+    } catch (err: unknown) {
+      setSendResult({ type: "error", message: err instanceof Error ? err.message : "Send failed" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpen}>
+      <Dialog.Trigger>
+        <button className={button({ variant: "ghost", size: "md" })}>
+          <EnvelopeClosedIcon />
+          Send email
+        </button>
+      </Dialog.Trigger>
+
+      <Dialog.Content maxWidth="540px">
+        <Dialog.Title>Send email — {recipientName}</Dialog.Title>
+        {(contact.position || contact.company) && (
+          <Dialog.Description size="2" color="gray" mb="4">
+            {contact.position ?? ""}
+            {contact.position && contact.company ? " · " : ""}
+            {contact.company ?? ""}
+          </Dialog.Description>
+        )}
+
+        <Flex direction="column" gap="3">
+          <Box>
+            <Text size="1" color="gray" weight="medium" mb="1" as="p">To</Text>
+            <TextField.Root value={contact.email ?? ""} disabled />
+          </Box>
+
+          <Box>
+            <Text size="1" color="gray" weight="medium" mb="1" as="p">Subject</Text>
+            <TextField.Root
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Email subject"
+            />
+          </Box>
+
+          <Box>
+            <Text size="1" color="gray" weight="medium" mb="1" as="p">Body</Text>
+            <TextArea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={12}
+              placeholder="Write your message…"
+            />
+          </Box>
+
+          <Flex align="center" gap="2">
+            <input
+              type="checkbox"
+              id="includeResumeCompose"
+              checked={includeResume}
+              onChange={(e) => setIncludeResume(e.target.checked)}
+            />
+            <Text size="2" as="label" htmlFor="includeResumeCompose">
+              Include resume
+            </Text>
+          </Flex>
+
+          {sendResult && (
+            <Callout.Root color={sendResult.type === "success" ? "green" : "red"} size="1">
+              <Callout.Icon><InfoCircledIcon /></Callout.Icon>
+              <Callout.Text>{sendResult.message}</Callout.Text>
+            </Callout.Root>
+          )}
+
+          <Flex justify="between" gap="2" wrap="wrap">
+            <Dialog.Close>
+              <button className={button({ variant: "ghost" })}>Close</button>
+            </Dialog.Close>
+            <button
+              className={button({ variant: "solidGreen" })}
+              onClick={() => handleSend()}
+              disabled={sending || !subject || !body}
+            >
+              <PaperPlaneIcon />
+              {sending ? "Sending…" : "Send now"}
+            </button>
+          </Flex>
+
+          <Separator size="4" />
+          <Flex gap="2" align="center" wrap="wrap">
+            <ClockIcon />
+            <Text size="2" color="gray">Schedule:</Text>
+            {SCHEDULE_DELAYS.map((d) => (
+              <button
+                key={d.label}
+                className={button({ variant: "ghost", size: "sm" })}
+                onClick={() => handleSend(new Date(Date.now() + d.ms).toISOString())}
+                disabled={sending || !subject || !body}
+              >
+                {d.label}
+              </button>
+            ))}
+            <input
+              type="datetime-local"
+              value={customTime}
+              onChange={(e) => setCustomTime(e.target.value)}
+              style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--gray-6)", background: "transparent", color: "inherit" }}
+            />
+            {customTime && (
+              <button
+                className={button({ variant: "outline", size: "sm" })}
+                onClick={() => handleSend(new Date(customTime).toISOString())}
+                disabled={sending || !subject || !body}
+              >
+                <ClockIcon />
+                Schedule
+              </button>
+            )}
+          </Flex>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
+
 // ─── Generate Email Dialog ────────────────────────────────────────────────────
 
 type EmailStep = "generate" | "edit";
@@ -1711,10 +1899,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
         {/* Bottom actions */}
         <Flex gap="2" wrap="wrap">
           {contact.email && (
-            <a href={`mailto:${contact.email}`} className={button({ variant: "ghost", size: "md" })}>
-              <EnvelopeClosedIcon />
-              Send email
-            </a>
+            <ComposeEmailDialog contact={contact} onSent={() => refetchEmails()} />
           )}
           {!contact.email && (
             <button className={button({ variant: "ghost", size: "md" })} onClick={handleFindEmail} disabled={finding}>
