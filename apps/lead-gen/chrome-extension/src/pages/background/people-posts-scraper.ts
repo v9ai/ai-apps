@@ -42,6 +42,36 @@ async function contactHasPosts(contactId: number): Promise<boolean> {
   }
 }
 
+/** Check if a post date is within the last N days. Handles ISO dates and LinkedIn relative text (1w, 2mo, 1yr). */
+function isWithinDays(postedDate: string | null, maxDays: number): boolean {
+  if (!postedDate) return true; // keep posts with unknown dates
+
+  // Try ISO date first (e.g. "2025-03-15T10:30:00.000Z")
+  const parsed = Date.parse(postedDate);
+  if (!isNaN(parsed)) {
+    const ageMs = Date.now() - parsed;
+    return ageMs <= maxDays * 86_400_000;
+  }
+
+  // LinkedIn relative text: "1d", "2w", "3mo", "1yr", "2h", "30m"
+  const match = postedDate.match(/(\d+)\s*(m|min|h|hr|d|w|mo|yr)/i);
+  if (!match) return true; // unknown format — keep it
+
+  const value = parseInt(match[1]);
+  const unit = match[2].toLowerCase();
+  let days = 0;
+  if (unit === "m" || unit === "min") days = 0;
+  else if (unit === "h" || unit === "hr") days = 0;
+  else if (unit === "d") days = value;
+  else if (unit === "w") days = value * 7;
+  else if (unit === "mo") days = value * 30;
+  else if (unit === "yr") days = value * 365;
+
+  return days <= maxDays;
+}
+
+const MAX_POST_AGE_DAYS = 30;
+
 export function setPeoplePostsCancelled(value: boolean) {
   cancelled = value;
 }
@@ -311,6 +341,13 @@ export async function scrapePeoplePostsFromCompanyPage(
       } catch (err) {
         console.warn(`${LOG} Extraction failed for ${person.name}:`, err);
         continue;
+      }
+
+      // Filter to last month only
+      const before = posts.length;
+      posts = posts.filter((p) => isWithinDays(p.posted_date, MAX_POST_AGE_DAYS));
+      if (before !== posts.length) {
+        console.log(`${LOG} ${personLabel} — filtered ${before - posts.length} old posts (kept ${posts.length})`);
       }
 
       // Save to LanceDB via Rust server

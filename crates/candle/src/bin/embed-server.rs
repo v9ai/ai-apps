@@ -101,7 +101,7 @@ async fn embed_named(
     Path(model_name): Path<String>,
     Json(req): Json<EmbedRequest>,
 ) -> Result<Json<EmbedResponse>, (StatusCode, String)> {
-    embed_with_model(&state, &model_name, req).await
+    embed_with_model(state, model_name, req).await
 }
 
 async fn embed_default(
@@ -109,40 +109,37 @@ async fn embed_default(
     Json(req): Json<EmbedRequest>,
 ) -> Result<Json<EmbedResponse>, (StatusCode, String)> {
     let default = state.default_model.clone();
-    embed_with_model(&state, &default, req).await
+    embed_with_model(state, default, req).await
 }
 
 async fn embed_with_model(
-    state: &AppState,
-    model_name: &str,
+    state: Arc<AppState>,
+    model_name: String,
     req: EmbedRequest,
 ) -> Result<Json<EmbedResponse>, (StatusCode, String)> {
-    let entry = state.models.get(model_name).ok_or_else(|| {
-        let available: Vec<&str> = state.models.keys().map(|k| k.as_str()).collect();
-        (
-            StatusCode::NOT_FOUND,
-            format!("model '{model_name}' not loaded. available: {available:?}"),
-        )
-    })?;
+    // Validate model exists before spawning blocking task
+    let dim = state
+        .models
+        .get(&model_name)
+        .map(|e| e.dim)
+        .ok_or_else(|| {
+            let available: Vec<&str> = state.models.keys().map(|k| k.as_str()).collect();
+            (
+                StatusCode::NOT_FOUND,
+                format!("model '{model_name}' not loaded. available: {available:?}"),
+            )
+        })?;
 
     let texts: Vec<String> = match req.input {
         StringOrVec::Single(s) => vec![s],
         StringOrVec::Batch(v) => v,
     };
 
-    let dim = entry.dim;
-    let name = model_name.to_string();
-
-    // SAFETY: EmbeddingModel is Send (Tensor + Tokenizer are Send).
-    // We clone Arc<AppState> so the blocking task owns a reference.
-    let model_ptr = state as *const AppState as usize;
-    let model_name_clone = model_name.to_string();
+    let name = model_name.clone();
 
     // Run on blocking thread — Metal/CPU bound
     let data = tokio::task::spawn_blocking(move || {
-        // SAFETY: AppState lives for the duration of the server (Arc<AppState>).
-        let state = unsafe { &*(model_ptr as *const AppState) };
-        let entry = state.models.get(&model_name_clone).unwrap();
+        let entry = state.models.get(&model_name).unwrap();
         let refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
         let tensor = entry.model.embed(&refs)?;
         let (batch, _hidden) = tensor.dims2().map_err(candle::Error::from)?;
