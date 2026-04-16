@@ -299,84 +299,54 @@ function KeyFactsCard({
   );
 
   return (
-    <Card>
-      <Box p="3">
-        <Text
-          size="1"
-          color="gray"
-          weight="medium"
-          style={{ letterSpacing: "0.12em" }}
-        >
-          KEY FACTS
+    <Flex align="center" gap="4" wrap="wrap" py="2">
+      {linkedinHref ? (
+        <Flex display="inline-flex" align="center" gap="1" asChild>
+          <RadixLink
+            href={linkedinHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            size="2"
+            title={linkedinHref}
+          >
+            <LinkedInLogoIcon />
+            <Text size="2">Profile</Text>
+          </RadixLink>
+        </Flex>
+      ) : null}
+
+      {jobBoardHref ? (
+        <Flex display="inline-flex" align="center" gap="1" asChild>
+          <RadixLink
+            href={jobBoardHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            size="2"
+            title={jobBoardHref}
+          >
+            <Text size="2">Careers</Text>
+            <ExternalLinkIcon />
+          </RadixLink>
+        </Flex>
+      ) : null}
+
+      {isAdmin && (
+        <Text size="2" color="gray">
+          Confidence: <Strong>{formatScore(score)}</Strong>
         </Text>
+      )}
 
-        <Box mt="3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
-          {/* LinkedIn */}
-          <Box>
-            <Text size="1" color="gray" as="p" mb="1">LinkedIn</Text>
-            {linkedinHref ? (
-              <Flex display="inline-flex" align="center" gap="1" asChild>
-                <RadixLink
-                  href={linkedinHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  size="2"
-                  title={linkedinHref}
-                >
-                  <LinkedInLogoIcon />
-                  <Text size="2" truncate>Profile</Text>
-                </RadixLink>
-              </Flex>
-            ) : (
-              <Text size="2" color="gray">—</Text>
-            )}
-          </Box>
-
-          {/* Job board */}
-          <Box>
-            <Text size="1" color="gray" as="p" mb="1">Job board</Text>
-            {jobBoardHref ? (
-              <Flex display="inline-flex" align="center" gap="1" asChild>
-                <RadixLink
-                  href={jobBoardHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  size="2"
-                  title={jobBoardHref}
-                >
-                  <Text size="2" truncate>Careers</Text>
-                  <ExternalLinkIcon />
-                </RadixLink>
-              </Flex>
-            ) : (
-              <Text size="2" color="gray">—</Text>
-            )}
-          </Box>
-
-          {/* Crawl confidence (admin) */}
-          {isAdmin && (
-            <Box>
-              <Text size="1" color="gray" as="p" mb="1">Confidence</Text>
-              <Text size="2" weight="medium">{formatScore(score)}</Text>
-            </Box>
-          )}
-
-          {/* Updated */}
-          {updatedAt && (
-            <Box>
-              <Text size="1" color="gray" as="p" mb="1">Updated</Text>
-              <Text size="2">
-                {new Date(updatedAt).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </Text>
-            </Box>
-          )}
-        </Box>
-      </Box>
-    </Card>
+      {updatedAt && (
+        <Text size="2" color="gray">
+          Updated{" "}
+          {new Date(updatedAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
+        </Text>
+      )}
+    </Flex>
   );
 }
 
@@ -1335,39 +1305,37 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           {/* Left column: overview */}
           <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
             <Flex direction="column" gap="5">
-              {/* Key facts + meta row */}
-              <Flex
-                direction={{ initial: "column", sm: "row" }}
-                gap="4"
-                align="start"
-              >
-                <Box style={{ flex: "1 1 0%" }}>
-                  <KeyFactsCard
-                    linkedinUrl={company.linkedin_url}
-                    jobBoardUrl={company.job_board_url}
-                    score={company.score}
-                    isAdmin={isAdmin}
-                    updatedAt={company.updated_at}
-                  />
-                </Box>
-                <Box style={{ flex: "1 1 0%" }}>
-                  <Flex direction="column" gap="4">
-                    {company.industries?.length ? (
+              {/* Key facts — single line */}
+              <KeyFactsCard
+                linkedinUrl={company.linkedin_url}
+                jobBoardUrl={company.job_board_url}
+                score={company.score}
+                isAdmin={isAdmin}
+                updatedAt={company.updated_at}
+              />
+
+              {/* Industries + Tags */}
+              {(company.industries?.length || (company.tags ?? []).some((t: string) => !t.startsWith('leadgen-'))) && (
+                <Flex gap="4" wrap="wrap" align="start">
+                  {company.industries?.length ? (
+                    <Box style={{ flex: "1 1 0%", minWidth: 200 }}>
                       <SectionCard title="Industries">
                         <CollapsibleChips items={company.industries} visibleCount={8} />
                       </SectionCard>
-                    ) : null}
-                    {(() => {
-                      const displayTags = (company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-'));
-                      return displayTags.length ? (
+                    </Box>
+                  ) : null}
+                  {(() => {
+                    const displayTags = (company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-'));
+                    return displayTags.length ? (
+                      <Box style={{ flex: "1 1 0%", minWidth: 200 }}>
                         <SectionCard title="Tags">
                           <CollapsibleChips items={displayTags} visibleCount={10} />
                         </SectionCard>
-                      ) : null;
-                    })()}
-                  </Flex>
-                </Box>
-              </Flex>
+                      </Box>
+                    ) : null;
+                  })()}
+                </Flex>
+              )}
 
               {/* Deep analysis / About / Services */}
               <Flex direction="column" gap="4">
