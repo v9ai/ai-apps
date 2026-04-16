@@ -715,6 +715,35 @@ chrome.runtime.onMessage.addListener((message) => {
     }, 3000);
   }
 
+  // Scrape People Posts progress
+  if (message.action === "scrapePeoplePostsProgress" && scrapePeoplePostsBtn) {
+    scrapePeoplePostsBtn.textContent = message.message || "Scraping...";
+  }
+  if (message.action === "scrapePeoplePostsDone" && scrapePeoplePostsBtn) {
+    scrapePeoplePostsBtn.textContent = `Done! ${message.people} people, ${message.posts} posts`;
+    scrapePeoplePostsBtn.style.backgroundColor = "#16a34a";
+    scrapePeoplePostsRunning = false;
+    setTimeout(() => {
+      if (scrapePeoplePostsBtn) {
+        scrapePeoplePostsBtn.textContent = "Scrape People Posts";
+        scrapePeoplePostsBtn.style.backgroundColor = "#7c3aed";
+        scrapePeoplePostsBtn.disabled = false;
+      }
+    }, 3000);
+  }
+  if (message.action === "scrapePeoplePostsError" && scrapePeoplePostsBtn) {
+    scrapePeoplePostsBtn.textContent = message.error?.slice(0, 35) || "Error";
+    scrapePeoplePostsBtn.style.backgroundColor = "#dc2626";
+    scrapePeoplePostsRunning = false;
+    setTimeout(() => {
+      if (scrapePeoplePostsBtn) {
+        scrapePeoplePostsBtn.textContent = "Scrape People Posts";
+        scrapePeoplePostsBtn.style.backgroundColor = "#7c3aed";
+        scrapePeoplePostsBtn.disabled = false;
+      }
+    }, 3000);
+  }
+
   // Find Related progress
   if (message.action === "findRelatedProgress" && findRelatedBtn) {
     const dupes = message.skipped || 0;
