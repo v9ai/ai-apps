@@ -1,14 +1,15 @@
-//! HuggingFace Inference API client (free tier via nscale provider).
+//! Remote LLM client — DeepSeek API (OpenAI-compatible).
 //!
-//! Uses router.huggingface.co/nscale — free, no credits consumed.
+//! Uses api.deepseek.com with deepseek-chat (V3).
+//! Cheap, fast, no monthly credit limits.
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{PipelineError, Result};
 
-const DEFAULT_MODEL: &str = "meta-llama/Llama-3.3-70B-Instruct";
-const PROVIDER: &str = "nscale";
+const API_BASE: &str = "https://api.deepseek.com";
+const DEFAULT_MODEL: &str = "deepseek-chat";
 
 #[derive(Debug, Clone)]
 pub struct HfClient {
@@ -47,19 +48,19 @@ struct ChatChoiceMessage {
 }
 
 impl HfClient {
-    /// Create a new HF client using the free serverless API.
+    /// Create a new DeepSeek client.
     pub async fn new(token: &str) -> Option<Self> {
         if token.is_empty() {
             return None;
         }
 
         let client = Client::builder()
-            .timeout(std::time::Duration::from_secs(120))
+            .timeout(std::time::Duration::from_secs(300))
             .build()
             .ok()?;
 
         let model = DEFAULT_MODEL.to_string();
-        tracing::info!("HF free ({PROVIDER}): {model}");
+        tracing::info!("Remote LLM: DeepSeek {model}");
 
         Some(Self {
             client,
@@ -72,7 +73,7 @@ impl HfClient {
         &self.model
     }
 
-    /// Chat completion via the free nscale provider.
+    /// Chat completion via DeepSeek API.
     pub async fn chat(
         &self,
         system: &str,
@@ -95,9 +96,7 @@ impl HfClient {
             temperature: 0.2,
         };
 
-        let url = format!(
-            "https://router.huggingface.co/{PROVIDER}/v1/chat/completions",
-        );
+        let url = format!("{API_BASE}/chat/completions");
 
         let resp = self
             .client
@@ -112,7 +111,7 @@ impl HfClient {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
             return Err(PipelineError::Other(format!(
-                "HF API {status}: {}",
+                "DeepSeek API {status}: {}",
                 &body[..body.len().min(200)]
             )));
         }
@@ -123,6 +122,6 @@ impl HfClient {
             .choices
             .first()
             .and_then(|c| c.message.content.clone())
-            .ok_or_else(|| PipelineError::Other("Empty HF response".into()))
+            .ok_or_else(|| PipelineError::Other("Empty DeepSeek response".into()))
     }
 }

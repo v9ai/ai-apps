@@ -74,11 +74,14 @@ async fn main() -> Result<()> {
         person.name, person.role, person.org
     );
 
-    // Load HF token from cache
-    let hf_token = load_hf_token();
-    let hf_client = HfClient::new(&hf_token).await;
+    // Load DeepSeek API key (fallback: HF token for legacy)
+    let remote_key = load_deepseek_key().or_else(|| {
+        let hf = load_hf_token();
+        if hf.is_empty() { None } else { Some(hf) }
+    }).unwrap_or_default();
+    let hf_client = HfClient::new(&remote_key).await;
     if hf_client.is_some() {
-        tracing::info!("Dual-lane mode: Candle local + HF 72B");
+        tracing::info!("Dual-lane mode: Candle local + DeepSeek remote");
     } else {
         tracing::info!("Single-lane mode: Candle local only");
     }
@@ -168,6 +171,29 @@ fn parse_personality_ts(content: &str, slug: &str, cli: &Cli) -> PersonInput {
         blog_url: extract("blogUrl"),
         papers: Vec::new(),
     }
+}
+
+fn load_deepseek_key() -> Option<String> {
+    // Check env
+    if let Ok(key) = std::env::var("DEEPSEEK_API_KEY") {
+        if !key.is_empty() {
+            return Some(key);
+        }
+    }
+    // Check .env files relative to crate root
+    for path in &["../../.env", "../../apps/hoa/.env.local", ".env"] {
+        if let Ok(contents) = std::fs::read_to_string(path) {
+            for line in contents.lines() {
+                if let Some(val) = line.strip_prefix("DEEPSEEK_API_KEY=") {
+                    let val = val.trim().trim_matches('"');
+                    if !val.is_empty() {
+                        return Some(val.to_string());
+                    }
+                }
+            }
+        }
+    }
+    None
 }
 
 fn load_hf_token() -> String {
