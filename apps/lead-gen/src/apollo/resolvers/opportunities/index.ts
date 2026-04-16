@@ -1,5 +1,5 @@
 import type { GraphQLContext } from "../../context";
-import type { Opportunity } from "@/db/schema";
+import type { Opportunity, Company as DbCompany } from "@/db/schema";
 import { opportunityMutations, opportunityQueryExtensions } from "./mutations";
 
 type DbOpportunityRow = Opportunity & { company_name: string | null };
@@ -45,6 +45,11 @@ const opportunityQueries = {
 
 export const opportunityResolvers = {
   Opportunity: OpportunityField,
+  Company: {
+    async opportunities(parent: DbCompany, _args: unknown, context: GraphQLContext) {
+      return context.loaders.opportunitiesByCompany.load(parent.id);
+    },
+  },
   Query: opportunityQueries,
   Mutation: opportunityMutations,
 };

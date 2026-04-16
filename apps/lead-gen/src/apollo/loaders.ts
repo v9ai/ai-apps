@@ -270,6 +270,51 @@ export function createLoaders(db: DbInstance) {
       { maxBatchSize: BATCH_CONTACT, batchScheduleFn: batchSchedule },
     ),
 
+    opportunitiesByCompany: new DataLoader<number, (Opportunity & { company_name: string | null })[]>(
+      async (companyIds) => {
+        const rows = await db
+          .select({
+            id: opportunities.id,
+            title: opportunities.title,
+            url: opportunities.url,
+            source: opportunities.source,
+            status: opportunities.status,
+            reward_usd: opportunities.reward_usd,
+            reward_text: opportunities.reward_text,
+            start_date: opportunities.start_date,
+            end_date: opportunities.end_date,
+            deadline: opportunities.deadline,
+            first_seen: opportunities.first_seen,
+            last_seen: opportunities.last_seen,
+            score: opportunities.score,
+            raw_context: opportunities.raw_context,
+            metadata: opportunities.metadata,
+            applied: opportunities.applied,
+            applied_at: opportunities.applied_at,
+            application_status: opportunities.application_status,
+            application_notes: opportunities.application_notes,
+            tags: opportunities.tags,
+            company_id: opportunities.company_id,
+            contact_id: opportunities.contact_id,
+            created_at: opportunities.created_at,
+            updated_at: opportunities.updated_at,
+            company_name: companies.name,
+          })
+          .from(opportunities)
+          .leftJoin(companies, eq(opportunities.company_id, companies.id))
+          .where(inArray(opportunities.company_id, [...companyIds]));
+        const byCompany = new Map<number, (Opportunity & { company_name: string | null })[]>();
+        for (const row of rows) {
+          if (row.company_id == null) continue;
+          const arr = byCompany.get(row.company_id);
+          if (arr) arr.push(row);
+          else byCompany.set(row.company_id, [row]);
+        }
+        return companyIds.map((id) => byCompany.get(id) ?? []);
+      },
+      { maxBatchSize: BATCH_CONTACT, batchScheduleFn: batchSchedule },
+    ),
+
   };
 }
 
