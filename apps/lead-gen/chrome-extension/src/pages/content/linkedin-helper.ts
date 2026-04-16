@@ -968,6 +968,96 @@ function createFindRelatedButton(): HTMLButtonElement {
   return btn;
 }
 
+function createScrapePeoplePostsButton(): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.setAttribute(SCRAPE_PEOPLE_POSTS_BTN_ATTR, "true");
+  btn.textContent = "Scrape People Posts";
+  btn.title = "Navigate to each person's activity page and save their posts to LanceDB";
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 136px;
+    right: 24px;
+    z-index: 9999;
+    background-color: #7c3aed;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: background-color 0.2s;
+    max-width: 420px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `;
+
+  btn.addEventListener("mouseenter", () => {
+    if (!btn.disabled) {
+      btn.style.backgroundColor = scrapePeoplePostsRunning ? "#991b1b" : "#6d28d9";
+    }
+  });
+  btn.addEventListener("mouseleave", () => {
+    if (!btn.disabled) {
+      btn.style.backgroundColor = scrapePeoplePostsRunning ? "#dc2626" : "#7c3aed";
+    }
+  });
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (scrapePeoplePostsRunning) {
+      // Stop
+      safeSendMessage({ action: "stopPeoplePostsScraping" });
+      btn.textContent = "Stopping...";
+      btn.disabled = true;
+      scrapePeoplePostsRunning = false;
+      setTimeout(() => {
+        btn.textContent = "Scrape People Posts";
+        btn.style.backgroundColor = "#7c3aed";
+        btn.disabled = false;
+      }, 2000);
+      return;
+    }
+
+    const companyInfo = extractCompanyInfoFromPage();
+    if (!companyInfo.name) {
+      btn.textContent = "No company found";
+      setTimeout(() => { btn.textContent = "Scrape People Posts"; }, 2000);
+      return;
+    }
+
+    scrapePeoplePostsRunning = true;
+    btn.textContent = "Starting...";
+    btn.style.backgroundColor = "#dc2626";
+
+    safeSendMessage(
+      {
+        action: "scrapePeoplePostsFromCompanyPage",
+        companyName: companyInfo.name,
+        companyLinkedinUrl: companyInfo.linkedinUrl,
+      },
+      (response) => {
+        if (!response?.success) {
+          btn.textContent = "Error";
+          btn.style.backgroundColor = "#dc2626";
+          scrapePeoplePostsRunning = false;
+          setTimeout(() => {
+            btn.textContent = "Scrape People Posts";
+            btn.style.backgroundColor = "#7c3aed";
+            btn.disabled = false;
+          }, 2000);
+        }
+      },
+    );
+  });
+
+  return btn;
+}
+
 /**
  * Synchronize floating buttons with current URL state.
  * - On company pages: inject buttons if missing, or replace if slug changed
