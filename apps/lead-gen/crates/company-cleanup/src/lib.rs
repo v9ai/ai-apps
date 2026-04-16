@@ -1,4 +1,5 @@
 pub mod classifier;
+pub mod contacts;
 pub mod corpus;
 pub mod db;
 pub mod store;
