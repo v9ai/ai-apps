@@ -1,0 +1,25 @@
+[package]
+name = "common-crawl"
+version = "0.1.0"
+edition = "2021"
+description = "Seed company discovery from Common Crawl CDX API — fetch WARC snapshots, upsert last_seen metadata to Neon"
+
+[[bin]]
+name = "common-crawl"
+path = "src/main.rs"
+
+[dependencies]
+anyhow             = { workspace = true }
+chrono             = { workspace = true }
+clap               = { workspace = true }
+dotenvy            = { workspace = true }
+reqwest            = { workspace = true }
+scraper            = { workspace = true }
+serde              = { workspace = true }
+serde_json         = { workspace = true }
+sqlx               = { workspace = true }
+tokio              = { workspace = true }
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
+url                = { workspace = true }
+flate2             = "1"

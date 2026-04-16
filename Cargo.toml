@@ -15,6 +15,7 @@ members = [
   "apps/lead-gen/crates/companies-verify",
   "apps/lead-gen/crates/consultancies",
   "apps/lead-gen/crates/scholar-graph",
+  "apps/lead-gen/crates/common-crawl",
 ]
 
 [workspace.dependencies]
