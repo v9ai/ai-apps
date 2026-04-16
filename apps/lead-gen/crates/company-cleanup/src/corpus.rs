@@ -144,5 +144,54 @@ pub fn corpus() -> Vec<CorpusEntry> {
             text: "Revolut. Digital banking app for personal and business finances across multiple currencies. FinTech, Neobank. [digital banking, multi-currency accounts, money transfers, budgeting, business accounts]",
             is_crypto: false,
         },
+        // Recruitment / staffing negatives (prevent false positives)
+        CorpusEntry {
+            text: "Harvey Nash. Global technology recruitment and IT outsourcing firm placing candidates in technology, digital, and transformation roles. Staffing and Recruiting. [technology recruitment, IT staffing, digital transformation, executive search]",
+            is_crypto: false,
+        },
+        CorpusEntry {
+            text: "Tenth Revolution Group. Global cloud technology staffing specialist. Recruitment firm placing professionals in Salesforce, AWS, Azure, and Microsoft roles. Staffing and Recruiting. [tech recruitment, cloud staffing, IT jobs, contract placement]",
+            is_crypto: false,
+        },
+        CorpusEntry {
+            text: "Hunter Bond. Global firm specialising in the finance and technology recruitment sectors. Staffing and Recruiting. [financial recruitment, technology jobs, executive search, contract staffing]",
+            is_crypto: false,
+        },
+        CorpusEntry {
+            text: "Nigel Frank International. Global recruitment agency for Microsoft technology professionals. Staffing and Recruiting. [Microsoft recruitment, Dynamics 365, Azure staffing, IT jobs]",
+            is_crypto: false,
+        },
+        CorpusEntry {
+            text: "Hamilton Barnes. Network and infrastructure recruitment consultancy placing engineers and architects. Staffing and Recruiting. [network engineer recruitment, infrastructure staffing, IT recruitment]",
+            is_crypto: false,
+        },
+        CorpusEntry {
+            text: "Investigo. Professional services and technology recruitment consultancy based in London. Staffing and Recruiting. [professional recruitment, technology staffing, interim management, consulting]",
+            is_crypto: false,
+        },
+        // Neobank / fintech negatives
+        CorpusEntry {
+            text: "Monzo Bank. UK digital bank offering current accounts, savings, and financial management tools. FinTech, Neobank. [digital banking, current accounts, savings pots, budgeting, mobile banking]",
+            is_crypto: false,
+        },
+        // Workflow / infrastructure negatives
+        CorpusEntry {
+            text: "Temporal Technologies. Open-source durable execution platform for building reliable distributed applications and workflows. Infrastructure, Developer Tools. [workflow orchestration, durable execution, microservices, distributed systems]",
+            is_crypto: false,
+        },
+        // AI / ML negatives
+        CorpusEntry {
+            text: "Peak AI. AI platform helping businesses apply artificial intelligence to decision-making and operations. AI, Enterprise. [decision intelligence, AI platform, machine learning, predictive analytics]",
+            is_crypto: false,
+        },
+        CorpusEntry {
+            text: "Nous Research. Open-source AI research lab building large language models and AI tools. AI, Research. [large language models, open-source AI, fine-tuning, model training, AI research]",
+            is_crypto: false,
+        },
+        // Energy negative
+        CorpusEntry {
+            text: "JD Ross Energy. Specialist energy recruitment and staffing consultancy for oil, gas, and renewables sectors. Energy, Staffing. [energy recruitment, oil and gas, renewable energy, power generation]",
+            is_crypto: false,
+        },
     ]
 }

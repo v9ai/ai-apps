@@ -1,10 +1,9 @@
 use candle_core::{Device, Tensor, D};
 use candle_nn::VarBuilder;
 use candle_transformers::models::bert::{BertModel, Config as BertConfig};
-use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::Tokenizer;
 
-use crate::{Error, Result};
+use crate::{hub, Error, Result};
 
 pub struct EmbeddingModel {
     model: BertModel,
@@ -14,8 +13,12 @@ pub struct EmbeddingModel {
 
 impl EmbeddingModel {
     pub fn from_hf(repo_id: &str, device: &Device) -> Result<Self> {
-        let api = Api::new().map_err(|e| Error::ModelNotFound(e.to_string()))?;
-        let repo = api.repo(Repo::new(repo_id.to_string(), RepoType::Model));
+        Self::from_hf_rev(repo_id, None, device)
+    }
+
+    pub fn from_hf_rev(repo_id: &str, revision: Option<&str>, device: &Device) -> Result<Self> {
+        let api = hub::api()?;
+        let repo = api.repo(hub::repo(repo_id, revision));
 
         let config_path = repo
             .get("config.json")

@@ -55,10 +55,10 @@ pub fn cache_dir() -> PathBuf {
     }
 
     // Default: ~/.cache/huggingface/hub (same as hf-hub default)
-    dirs_next::cache_dir()
-        .unwrap_or_else(|| PathBuf::from(".cache"))
-        .join("huggingface")
-        .join("hub")
+    let home = std::env::var("HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("."));
+    home.join(".cache").join("huggingface").join("hub")
 }
 
 #[cfg(test)]
