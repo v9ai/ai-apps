@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 use arrow_array::{
-    ArrayRef, FixedSizeListArray, Float32Array, RecordBatch, StringArray, UInt8Array,
+    Array, ArrayRef, FixedSizeListArray, Float32Array, RecordBatch, StringArray, UInt8Array,
 };
 use arrow_schema::{DataType, Field, Schema};
 use futures::TryStreamExt;
@@ -62,7 +62,7 @@ impl CorpusStore {
         // Drop old table if it exists
         let tables = conn.table_names().execute().await?;
         if tables.contains(&TABLE.to_string()) {
-            conn.drop_table(TABLE).await?;
+            conn.drop_table(TABLE, &[]).await?;
         }
 
         let n = entries.len();

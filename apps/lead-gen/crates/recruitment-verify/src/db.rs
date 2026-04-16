@@ -5,11 +5,11 @@
 
 use anyhow::{Context, Result};
 use sqlx::postgres::PgPoolOptions;
-use sqlx::PgPool;
+use sqlx::{FromRow, PgPool};
 
 use crate::Verdict;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, FromRow)]
 pub struct CompanyRow {
     pub id: i32,
     pub key: String,
@@ -31,22 +31,21 @@ pub async fn connect(database_url: &str) -> Result<PgPool> {
 
 /// Fetch all non-blocked companies that have a website.
 pub async fn fetch_companies(pool: &PgPool) -> Result<Vec<CompanyRow>> {
-    let rows = sqlx::query_as!(
-        CompanyRow,
+    let rows: Vec<CompanyRow> = sqlx::query_as(
         r#"
         SELECT
             id,
             key,
             name,
-            website AS "website!",
-            category AS "category!",
+            website,
+            category,
             description
         FROM companies
         WHERE blocked = false
           AND website IS NOT NULL
           AND website != ''
         ORDER BY id
-        "#
+        "#,
     )
     .fetch_all(pool)
     .await
@@ -72,7 +71,7 @@ pub async fn update_verdict(pool: &PgPool, company_id: i32, verdict: &Verdict) -
         "UNKNOWN"
     };
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         UPDATE companies
         SET category = $1,
@@ -81,11 +80,11 @@ pub async fn update_verdict(pool: &PgPool, company_id: i32, verdict: &Verdict) -
             updated_at = now()::text
         WHERE id = $4
         "#,
-        new_category,
-        verdict.confidence,
-        reasons.to_string(),
-        company_id,
     )
+    .bind(new_category)
+    .bind(verdict.confidence)
+    .bind(reasons.to_string())
+    .bind(company_id)
     .execute(pool)
     .await
     .with_context(|| format!("updating company id={company_id}"))?;
