@@ -70,18 +70,7 @@ export function ResearchQuestions({ research }: { research: PersonResearch }) {
   }
 
   return (
-    <div className={css({ mt: '14', borderTopWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', pt: { base: '8', md: '10' } })}>
-      <div className={css({ display: 'flex', alignItems: 'center', gap: '3.5', mb: '6' })}>
-        <div className={css({ w: '10', h: '10', rounded: 'full', bg: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.08)', flexShrink: '0' })}>
-          <svg viewBox="0 0 24 24" className={css({ w: '5', h: '5', color: '#7B7B86' })} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-        </div>
-        <h2 className={css({ fontSize: '2xl', fontWeight: 'bold', color: '#F0F0F5' })}>Interview Questions</h2>
-      </div>
-
+    <div>
       <div className={css({ display: 'flex', flexDir: 'column', gap: { base: '8', md: '10' } })}>
         {Array.from(grouped.entries()).map(([category, questions], gi) => (
           <div key={category}>
