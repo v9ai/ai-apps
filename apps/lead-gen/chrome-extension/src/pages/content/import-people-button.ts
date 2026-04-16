@@ -19,12 +19,14 @@ import {
 } from "./lifecycle";
 
 const BTN_ATTR = "data-lg-import-people-btn";
-const PEOPLE_PATH_RE = /^\/company\/[^/]+\/people\/?$/;
+// Match /company/{slug}/people, /company/{slug}/people/, and any deeper path
+// under /people (e.g. filter sub-routes LinkedIn may add).
+const PEOPLE_PATH_RE = /^\/company\/[^/]+\/people(\/|$)/;
 
 let importPeopleBtn: HTMLButtonElement | null = null;
 let lastUrl = "";
 
-/** True only on `/company/{slug}/people` or `/company/{slug}/people/`. */
+/** True on any `/company/{slug}/people[...]` path. */
 function isOnPeoplePage(): boolean {
   if (!window.location.hostname.includes("linkedin.com")) return false;
   return PEOPLE_PATH_RE.test(window.location.pathname);
@@ -118,6 +120,8 @@ function removeButton() {
 
 /** Inject the button if we're on /people/ and it isn't already present. */
 function sync() {
+  if (!document.body) return;
+
   if (!isOnPeoplePage()) {
     if (importPeopleBtn || document.querySelector(`[${BTN_ATTR}]`)) {
       removeButton();
@@ -192,8 +196,16 @@ function init() {
   if (!window.location.hostname.includes("linkedin.com")) return;
   if (!isExtensionAlive()) return;
 
+  console.log(`[ImportPeopleBtn] init on ${window.location.href} — onPeoplePage=${isOnPeoplePage()}`);
+
   lastUrl = window.location.href;
   installHistoryPatch();
+
+  // If body isn't attached yet (rare at document_idle, but possible), defer.
+  if (!document.body) {
+    document.addEventListener("DOMContentLoaded", () => init(), { once: true });
+    return;
+  }
 
   // Initial retry burst to cover direct-load + React hydration
   syncWithRetries();
