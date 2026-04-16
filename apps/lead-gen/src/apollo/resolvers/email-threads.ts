@@ -167,6 +167,43 @@ export const emailThreadResolvers = {
         draftMap.set(d.contact_id, d.draft_id);
       }
 
+      // Find inbound-only contacts (have received emails but no outbound in contact_emails)
+      const outboundContactIds = new Set(outboundThreads.map((r) => r.contact_id));
+      const inboundOnlyContactIds = [...inboundMap.keys()].filter((cid) => !outboundContactIds.has(cid));
+
+      if (inboundOnlyContactIds.length > 0) {
+        const inboundOnlyContacts = await context.db
+          .select({
+            id: contacts.id,
+            slug: contacts.slug,
+            first_name: contacts.first_name,
+            last_name: contacts.last_name,
+            email: contacts.email,
+            position: contacts.position,
+            company_name: companies.name,
+            company_key: companies.key,
+          })
+          .from(contacts)
+          .leftJoin(companies, eq(contacts.company_id, companies.id))
+          .where(sql`${contacts.id} IN (${sql.join(inboundOnlyContactIds.map(id => sql`${id}`), sql`, `)})`);
+
+        for (const c of inboundOnlyContacts) {
+          outboundThreads.push({
+            contact_id: c.id,
+            slug: c.slug,
+            first_name: c.first_name,
+            last_name: c.last_name,
+            email: c.email,
+            position: c.position,
+            company_name: c.company_name,
+            company_key: c.company_key,
+            outbound_count: 0,
+            latest_outbound_at: null,
+            latest_status: null,
+          });
+        }
+      }
+
       // Fetch authority scores and conversation stages for contacts
       const contactIds = outboundThreads.map((r) => r.contact_id);
       const contactExtras = contactIds.length > 0
