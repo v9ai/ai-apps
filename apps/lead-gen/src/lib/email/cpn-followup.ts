@@ -57,7 +57,7 @@ Thanks for following up — I appreciate the persistence.
 
 I'm still waiting on Karl's side for the registration link and cohort details. Haven't forgotten about you — you're on my list and I'll forward everything the moment it lands.
 
-Sit tight, and I'll be in touch as soon as there's movement.
+I'll be in touch as soon as there's movement.
 
 Vadim Nicolai
 vadim.blog`;
