@@ -1,11 +1,11 @@
 /**
- * BGE-small-en-v1.5 embedding service via @huggingface/transformers.
+ * BGE-small-en-v1.5 embedding service.
  *
- * Lazy singleton pattern -- model loads once per Lambda container.
- * Model: Xenova/bge-small-en-v1.5 (INT8 quantized, ~32 MB)
- *
- * All HF imports are dynamic so the build succeeds even when
- * @huggingface/transformers is not installed.
+ * Dual-mode inference:
+ * 1. **Embed-server** (preferred): Metal-accelerated Candle server via HTTP.
+ *    Set `EMBED_SERVER_URL` (default: http://localhost:9999) to enable.
+ * 2. **WASM fallback**: @huggingface/transformers in-process (serverless/Vercel).
+ *    Used when embed-server is unreachable.
  *
  * Arena allocation: Float32Array buffers are pooled to reduce GC pressure
  * during batch embedding. Buffers are checked out from the pool, used, and
@@ -14,9 +14,13 @@
 
 export const EMBEDDING_DIM = 384;
 export const MODEL_ID = "Xenova/bge-small-en-v1.5";
+const EMBED_MODEL_NAME = "bge-small";
 
 const BGE_RETRIEVAL_PREFIX = "Represent this sentence for searching relevant passages: ";
 const BATCH_CHUNK_SIZE = 32;
+
+/** Embed-server URL. Set EMBED_SERVER_URL env var to override. */
+const EMBED_SERVER_URL = process.env.EMBED_SERVER_URL || "http://localhost:9999";
 
 // ============================================================================
 // Arena-style buffer pool — module-level singleton
@@ -75,10 +79,48 @@ class EmbeddingArena {
 /** Module-level singleton arena for 384-dim embedding buffers. */
 const embeddingArena = new EmbeddingArena(EMBEDDING_DIM, 8);
 
+// ============================================================================
+// Dual-mode backend: embed-server (HTTP) or WASM fallback
+// ============================================================================
+
+/** Cached probe result: true = embed-server available, false = use WASM. */
+let _serverAvailable: boolean | null = null;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _pipeline: any = null;
 
-async function getEmbedder() {
+/** Check if the local embed-server is reachable. Cached after first probe. */
+async function isServerAvailable(): Promise<boolean> {
+  if (_serverAvailable !== null) return _serverAvailable;
+  try {
+    const res = await fetch(`${EMBED_SERVER_URL}/health`, {
+      signal: AbortSignal.timeout(1000),
+    });
+    _serverAvailable = res.ok;
+  } catch {
+    _serverAvailable = false;
+  }
+  return _serverAvailable;
+}
+
+/** Call the embed-server HTTP API. */
+async function embedViaServer(texts: string[]): Promise<Float32Array[]> {
+  const res = await fetch(`${EMBED_SERVER_URL}/embed/${EMBED_MODEL_NAME}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ input: texts }),
+  });
+  if (!res.ok) {
+    throw new Error(`embed-server error: ${res.status} ${await res.text()}`);
+  }
+  const json = (await res.json()) as {
+    data: { embedding: number[]; index: number }[];
+  };
+  return json.data.map((d) => new Float32Array(d.embedding));
+}
+
+/** Get the WASM pipeline (lazy singleton). */
+async function getWasmPipeline() {
   if (!_pipeline) {
     try {
       const { pipeline } = await import("@huggingface/transformers");
@@ -97,9 +139,14 @@ async function getEmbedder() {
 
 /**
  * Embed a raw text string. Returns a 384-dim unit vector.
+ * Uses embed-server if available, WASM fallback otherwise.
  */
 export async function embedText(text: string): Promise<number[]> {
-  const pipe = await getEmbedder();
+  if (await isServerAvailable()) {
+    const [result] = await embedViaServer([text]);
+    return Array.from(result);
+  }
+  const pipe = await getWasmPipeline();
   const output = await pipe(text, { pooling: "mean", normalize: true });
   return Array.from(output.data as Float32Array).slice(0, EMBEDDING_DIM);
 }
@@ -127,22 +174,28 @@ export async function embedDocument(text: string): Promise<number[]> {
 export async function embedBatch(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
 
-  const pipe = await getEmbedder();
-  // Pre-allocate output array to avoid push/resize
+  const useServer = await isServerAvailable();
   const results = new Array<number[]>(texts.length);
 
   for (let i = 0; i < texts.length; i += BATCH_CHUNK_SIZE) {
     const end = Math.min(i + BATCH_CHUNK_SIZE, texts.length);
     const chunk = texts.slice(i, end);
     const chunkLen = chunk.length;
-    const output = await pipe(chunk, { pooling: "mean", normalize: true });
-    const flat: Float32Array = output.data as Float32Array;
-    for (let j = 0; j < chunkLen; j++) {
-      // Use subarray() (view, no copy) + Array.from() instead of
-      // slice() (copy) + Array.from() — avoids an intermediate Float32Array allocation
-      results[i + j] = Array.from(
-        flat.subarray(j * EMBEDDING_DIM, (j + 1) * EMBEDDING_DIM),
-      );
+
+    if (useServer) {
+      const embeddings = await embedViaServer(chunk);
+      for (let j = 0; j < chunkLen; j++) {
+        results[i + j] = Array.from(embeddings[j]);
+      }
+    } else {
+      const pipe = await getWasmPipeline();
+      const output = await pipe(chunk, { pooling: "mean", normalize: true });
+      const flat: Float32Array = output.data as Float32Array;
+      for (let j = 0; j < chunkLen; j++) {
+        results[i + j] = Array.from(
+          flat.subarray(j * EMBEDDING_DIM, (j + 1) * EMBEDDING_DIM),
+        );
+      }
     }
   }
   return results;
