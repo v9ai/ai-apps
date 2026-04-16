@@ -13,7 +13,7 @@ export async function linkDoctorToFamilyMember(
   const { userId } = await withAuth();
 
   const [member] = await db
-    .select({ id: familyMembers.id })
+    .select({ id: familyMembers.id, slug: familyMembers.slug })
     .from(familyMembers)
     .where(and(eq(familyMembers.id, familyMemberId), eq(familyMembers.userId, userId)));
 
@@ -31,7 +31,7 @@ export async function linkDoctorToFamilyMember(
     .values({ familyMemberId, doctorId })
     .onConflictDoNothing();
 
-  revalidatePath(`/family/${familyMemberId}`);
+  revalidatePath(`/family/${member.slug}`);
   revalidatePath(`/doctors/${doctorId}`);
 }
 
@@ -42,7 +42,7 @@ export async function unlinkDoctorFromFamilyMember(
   const { userId } = await withAuth();
 
   const [member] = await db
-    .select({ id: familyMembers.id })
+    .select({ id: familyMembers.id, slug: familyMembers.slug })
     .from(familyMembers)
     .where(and(eq(familyMembers.id, familyMemberId), eq(familyMembers.userId, userId)));
 
@@ -64,6 +64,6 @@ export async function unlinkDoctorFromFamilyMember(
       ),
     );
 
-  revalidatePath(`/family/${familyMemberId}`);
+  revalidatePath(`/family/${member.slug}`);
   revalidatePath(`/doctors/${doctorId}`);
 }
