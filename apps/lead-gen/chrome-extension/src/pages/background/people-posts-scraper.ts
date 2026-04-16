@@ -26,7 +26,21 @@ import {
 import { gqlRequest } from "../../services/graphql";
 import { sleep } from "../../lib/scraper-utils";
 
+const RUST_SERVER = import.meta.env.VITE_RUST_SERVER_URL || "http://localhost:9876";
+
 let cancelled = false;
+
+/** Check if a contact already has posts saved in LanceDB */
+async function contactHasPosts(contactId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${RUST_SERVER}/posts/classified?contact_id=${contactId}&limit=1`);
+    if (!res.ok) return false;
+    const posts = await res.json();
+    return Array.isArray(posts) && posts.length > 0;
+  } catch {
+    return false;
+  }
+}
 
 export function setPeoplePostsCancelled(value: boolean) {
   cancelled = value;
@@ -182,13 +196,68 @@ export async function scrapePeoplePostsFromCompanyPage(
       return;
     }
 
-    // ── Phase 3: Iterate people and scrape their posts ──
+    // ── Phase 2b: Filter out people already scraped ──
+
+    if (cancelled) return;
+
+    await safeSendMessage(tabId, {
+      action: "scrapePeoplePostsProgress",
+      message: `Checking ${allCards.length} people against DB...`,
+    });
+
+    // Look up contact IDs and check which already have posts
+    const toScrape: { card: PersonCard; contactId: number }[] = [];
+    let alreadyScraped = 0;
+
+    for (const card of allCards) {
+      if (cancelled) break;
+
+      let contactId = 0;
+      try {
+        const result = await gqlRequest(
+          `query ContactByLinkedinUrl($linkedinUrl: String!) {
+            contactByLinkedinUrl(linkedinUrl: $linkedinUrl) { id }
+          }`,
+          { linkedinUrl: card.linkedinUrl },
+        );
+        contactId = result.data?.contactByLinkedinUrl?.id ?? 0;
+      } catch {
+        // No contact found — will use id 0
+      }
+
+      if (contactId > 0 && await contactHasPosts(contactId)) {
+        alreadyScraped++;
+        console.log(`${LOG} Skipping ${card.name} — already has posts (contact ${contactId})`);
+      } else {
+        toScrape.push({ card, contactId });
+      }
+    }
+
+    console.log(`${LOG} ${alreadyScraped} already scraped, ${toScrape.length} to scrape`);
+
+    if (toScrape.length === 0) {
+      await safeSendMessage(tabId, {
+        action: "scrapePeoplePostsDone",
+        people: 0,
+        posts: 0,
+        filtered: 0,
+        skipped: alreadyScraped,
+      });
+      return;
+    }
+
+    await safeSendMessage(tabId, {
+      action: "scrapePeoplePostsProgress",
+      message: `${alreadyScraped} already saved, scraping ${toScrape.length} remaining...`,
+    });
+
+    // ── Phase 3: Iterate remaining people and scrape their posts ──
 
     let totalPostsSaved = 0;
     let totalPostsFiltered = 0;
     let peopleScraped = 0;
 
-    for (let i = 0; i < allCards.length; i++) {
+    for (let i = 0; i < toScrape.length; i++) {
       if (cancelled) {
         console.log(`${LOG} Cancelled after ${peopleScraped} people`);
         break;
@@ -198,22 +267,8 @@ export async function scrapePeoplePostsFromCompanyPage(
         return;
       }
 
-      const person = allCards[i];
-      const personLabel = `${i + 1}/${allCards.length}: ${person.name}`;
-
-      // Look up contact_id
-      let contactId = 0;
-      try {
-        const result = await gqlRequest(
-          `query ContactByLinkedinUrl($linkedinUrl: String!) {
-            contactByLinkedinUrl(linkedinUrl: $linkedinUrl) { id }
-          }`,
-          { linkedinUrl: person.linkedinUrl },
-        );
-        contactId = result.data?.contactByLinkedinUrl?.id ?? 0;
-      } catch {
-        console.warn(`${LOG} Could not look up contact ID for ${person.name}`);
-      }
+      const { card: person, contactId } = toScrape[i];
+      const personLabel = `${i + 1}/${toScrape.length}: ${person.name}`;
 
       // Navigate to activity page
       const baseUrl = person.linkedinUrl.replace(/\/$/, "");
@@ -280,7 +335,7 @@ export async function scrapePeoplePostsFromCompanyPage(
       });
 
       // Rate limit between people
-      if (i < allCards.length - 1) {
+      if (i < toScrape.length - 1) {
         await randomDelay(12000);
       }
     }
