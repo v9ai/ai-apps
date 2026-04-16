@@ -8,11 +8,9 @@ export function ResearchBio({ research }: { research: PersonResearch }) {
     <div className={css({ mt: '14', borderTopWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', pt: { base: '8', md: '10' } })}>
       <p className={cx("section-label", css({ mb: '6' }))}>Biography</p>
 
-      <h2 className={css({ fontSize: 'lg', fontWeight: 'semibold', color: '#E8E8ED', mb: '6' })}>Deep Research</h2>
-
       {research.bio && (
         <div
-          className={css({ maxW: '3xl', pl: { base: '6', md: '8' }, py: '2' })}
+          className={css({ pl: { base: '6', md: '8' }, py: '2' })}
           style={{ borderLeft: "2px solid rgba(139,92,246,0.3)" }}
         >
           <p className={css({ color: '#8B8B96', fontSize: '0.9375rem', lineHeight: '1.85' })}>
