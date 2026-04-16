@@ -1,0 +1,26 @@
+{
+  "$schema": "./icp-weights.schema.json",
+  "description": "ICP (Ideal Customer Profile) company-level scoring weights. Used by apps/lead-gen/src/ml/icp-scorer.ts for weighted-sum company scoring based on data completeness and AI signal strength.",
+  "bias": 0.10,
+  "weights": {
+    "hasDescription": 0.05,
+    "descriptionLengthNorm": 0.03,
+    "hasWebsite": 0.04,
+    "hasLinkedin": 0.03,
+    "hasEmail": 0.06,
+    "emailCount": 0.02,
+    "tagCount": 0.01,
+    "serviceCount": 0.02,
+    "aiTier": 0.15,
+    "isConsultancy": -0.08,
+    "isProduct": 0.06,
+    "factsCount": 0.01,
+    "hasGithub": 0.04,
+    "githubAiScore": 0.10,
+    "hfPresenceScore": 0.08,
+    "intentScore": 0.12,
+    "contactsCount": 0.03,
+    "dmContactsCount": 0.08,
+    "hasJobBoard": 0.05
+  }
+}

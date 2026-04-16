@@ -1,0 +1,46 @@
+# Model version pinning — maps repo IDs to specific revisions.
+#
+# When a revision is set, the hub loader will pin to that exact git ref
+# (commit SHA, tag, or branch). This prevents silent model upgrades from
+# breaking production embeddings or scoring.
+#
+# To update a model: change the revision here, then re-download.
+# Leave revision empty to track the default branch (main).
+
+# ── Embedding models ─────────────────────────────────────────────
+
+[models."BAAI/bge-small-en-v1.5"]
+alias = "bge-small"
+dim = 384
+# revision = ""  # pin when ready
+
+[models."BAAI/bge-base-en-v1.5"]
+alias = "bge-base"
+dim = 768
+# revision = ""
+
+[models."BAAI/bge-large-en-v1.5"]
+alias = "bge-large"
+dim = 1024
+# revision = ""
+
+[models."sentence-transformers/all-MiniLM-L6-v2"]
+alias = "minilm"
+dim = 384
+# revision = ""
+
+# ── Classification / NER models ──────────────────────────────────
+
+[models."jjzha/jobbert_knowledge_extraction"]
+alias = "jobbert-ner"
+# revision = ""
+
+[models."jjzha/jobbert-base-cased"]
+alias = "jobbert-base"
+# revision = ""
+
+# ── Generative models ───────────────────────────────────────────
+
+[models."microsoft/Phi-3.5-mini-instruct"]
+alias = "phi-3.5-mini"
+# revision = ""

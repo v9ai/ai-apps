@@ -3,7 +3,12 @@
  *
  * Hand-tuned weighted sum with domain-knowledge weights for B2B lead-gen.
  * Features are extracted from the company record and related counts.
+ *
+ * Weights are loaded from config/scoring/icp-weights.json (single source of truth).
  */
+
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 export interface ICPFeatures {
   hasDescription: number;
@@ -78,31 +83,41 @@ export function extractICPFeatures(
   };
 }
 
-// ── Hand-tuned weights (domain knowledge) ────────────────────────────────
+// ── Weights loaded from config/scoring/icp-weights.json ──────────────────
 
-const WEIGHTS: Record<keyof ICPFeatures, number> = {
-  hasDescription: 0.05,
-  descriptionLengthNorm: 0.03,
-  hasWebsite: 0.04,
-  hasLinkedin: 0.03,
-  hasEmail: 0.06,
-  emailCount: 0.02,
-  tagCount: 0.01,
-  serviceCount: 0.02,
-  aiTier: 0.15,           // AI-first companies are highest priority
-  isConsultancy: -0.08,   // Consultancies are lower priority
-  isProduct: 0.06,
-  factsCount: 0.01,
-  hasGithub: 0.04,
-  githubAiScore: 0.10,    // GitHub AI activity is a strong signal
-  hfPresenceScore: 0.08,  // HuggingFace presence indicates AI depth
-  intentScore: 0.12,      // Intent signals are highly predictive
-  contactsCount: 0.03,
-  dmContactsCount: 0.08,  // Having DM contacts is critical for outreach
-  hasJobBoard: 0.05,
-};
+interface ICPWeightsConfig {
+  bias: number;
+  weights: Record<keyof ICPFeatures, number>;
+}
 
-const BIAS = 0.10; // baseline score
+function loadWeightsConfig(): ICPWeightsConfig {
+  // Walk up from src/ml/ to find monorepo root's config/
+  const configPath = resolve(
+    import.meta.dirname ?? __dirname,
+    "../../../../config/scoring/icp-weights.json",
+  );
+  try {
+    const raw = readFileSync(configPath, "utf-8");
+    return JSON.parse(raw) as ICPWeightsConfig;
+  } catch {
+    // Fallback: hardcoded defaults if config file is missing (e.g. in tests)
+    return {
+      bias: 0.10,
+      weights: {
+        hasDescription: 0.05, descriptionLengthNorm: 0.03, hasWebsite: 0.04,
+        hasLinkedin: 0.03, hasEmail: 0.06, emailCount: 0.02, tagCount: 0.01,
+        serviceCount: 0.02, aiTier: 0.15, isConsultancy: -0.08, isProduct: 0.06,
+        factsCount: 0.01, hasGithub: 0.04, githubAiScore: 0.10,
+        hfPresenceScore: 0.08, intentScore: 0.12, contactsCount: 0.03,
+        dmContactsCount: 0.08, hasJobBoard: 0.05,
+      },
+    };
+  }
+}
+
+const _config = loadWeightsConfig();
+const WEIGHTS: Record<keyof ICPFeatures, number> = _config.weights;
+const BIAS = _config.bias;
 
 // ── Feature key ordering (stable, used by typed-array paths) ────────────
 const FEATURE_KEYS: (keyof ICPFeatures)[] = Object.keys(WEIGHTS) as (keyof ICPFeatures)[];
