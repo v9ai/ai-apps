@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Badge, Box, Button, Card, Flex, Heading, Text } from "@radix-ui/themes";
-import { ChevronDown, ChevronRight, ExternalLink, FileText, Mail, ScrollText, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, ExternalLink, FileText, Mail, ScrollText, Trash2 } from "lucide-react";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { addFamilyDocument, deleteFamilyDocument } from "../document-actions";
 
@@ -15,6 +15,8 @@ type FamilyDocument = {
   source: string | null;
   content: string | null;
   externalUrl: string | null;
+  fileName: string | null;
+  filePath: string | null;
   createdAt: Date;
 };
 
@@ -87,10 +89,17 @@ function DocumentCard({
             </Flex>
           </Flex>
           <Flex align="center" gap="2" style={{ flexShrink: 0 }}>
+            {doc.filePath && (
+              <Button size="1" variant="soft" asChild>
+                <a href={`/api/family-documents/${doc.id}`} target="_blank" rel="noopener noreferrer">
+                  <Download size={12} /> File
+                </a>
+              </Button>
+            )}
             {doc.externalUrl && (
               <Button size="1" variant="soft" asChild>
                 <a href={doc.externalUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink size={12} /> View
+                  <ExternalLink size={12} /> Drive
                 </a>
               </Button>
             )}
@@ -185,6 +194,15 @@ export function FamilyDocumentsSection({
               <Flex direction="column" gap="1">
                 <Text size="2" color="gray">Content (markdown)</Text>
                 <textarea name="content" rows={5} style={inputStyle} placeholder="Full text of the document..." />
+              </Flex>
+              <Flex direction="column" gap="1">
+                <Text size="2" color="gray">File (PDF, image, or Word doc)</Text>
+                <input
+                  type="file"
+                  name="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  style={{ fontSize: "var(--font-size-2)", color: "var(--gray-12)" }}
+                />
               </Flex>
               <Flex direction="column" gap="1">
                 <Text size="2" color="gray">External URL</Text>

@@ -275,6 +275,8 @@ export const familyDocuments = pgTable(
     source: text("source"),
     content: text("content"),
     externalUrl: text("external_url"),
+    fileName: text("file_name"),
+    filePath: text("file_path"),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
