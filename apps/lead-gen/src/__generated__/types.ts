@@ -192,6 +192,7 @@ export type Company = {
   location: Maybe<Scalars['String']['output']>;
   logo_url: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  opportunities: Array<Opportunity>;
   /** ML quality gate evaluation */
   qualityGate: QualityGateResult;
   /** ML-computed rank score (0-1) */

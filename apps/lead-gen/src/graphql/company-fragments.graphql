@@ -87,4 +87,17 @@ fragment CompanyFields on Company {
   last_seen_capture_timestamp
   last_seen_source_url
 
+  # Opportunities
+  opportunities {
+    id
+    title
+    url
+    status
+    score
+    rewardText
+    applied
+    appliedAt
+    tags
+    createdAt
+  }
 }

@@ -1337,6 +1337,59 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                 </Flex>
               )}
 
+              {/* Opportunities */}
+              {company.opportunities && company.opportunities.length > 0 && (
+                <SectionCard title={`Opportunities (${company.opportunities.length})`}>
+                  <Flex direction="column" gap="2">
+                    {company.opportunities.map((opp) => (
+                      <Flex key={opp.id} align="center" justify="between" gap="3" wrap="wrap" py="1">
+                        <Flex align="center" gap="2" style={{ minWidth: 0, flex: "1 1 0%" }}>
+                          {opp.url ? (
+                            <RadixLink href={opp.url} target="_blank" rel="noopener noreferrer" size="2" truncate>
+                              {opp.title}
+                              <ExternalLinkIcon style={{ marginLeft: 4, flexShrink: 0 }} />
+                            </RadixLink>
+                          ) : (
+                            <Text size="2" truncate>{opp.title}</Text>
+                          )}
+                        </Flex>
+                        <Flex align="center" gap="2" shrink="0">
+                          {opp.rewardText && (
+                            <Text size="1" color="gray">{opp.rewardText}</Text>
+                          )}
+                          {opp.score != null && (
+                            <Badge
+                              color={opp.score >= 80 ? "green" : opp.score >= 50 ? "yellow" : "gray"}
+                              variant="soft"
+                              size="1"
+                            >
+                              {opp.score}
+                            </Badge>
+                          )}
+                          <Badge
+                            color={
+                              opp.status === "offer" ? "green"
+                                : opp.status === "open" ? "blue"
+                                : opp.status === "applied" ? "orange"
+                                : opp.status === "interviewing" ? "yellow"
+                                : opp.status === "rejected" ? "red"
+                                : "gray"
+                            }
+                            variant="soft"
+                            size="1"
+                          >
+                            {opp.status}
+                          </Badge>
+                          {opp.applied && (
+                            <Badge color="green" variant="soft" size="1">applied</Badge>
+                          )}
+                        </Flex>
+                      </Flex>
+                    ))}
+                  </Flex>
+                </SectionCard>
+              )}
+
               {/* Deep analysis / About / Services */}
               <Flex direction="column" gap="4">
                 {company.deep_analysis && (

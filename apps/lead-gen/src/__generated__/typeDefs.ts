@@ -162,6 +162,7 @@ type Company {
   location: String
   logo_url: String
   name: String!
+  opportunities: [Opportunity!]!
   """ML quality gate evaluation"""
   qualityGate: QualityGateResult!
   """ML-computed rank score (0-1)"""
