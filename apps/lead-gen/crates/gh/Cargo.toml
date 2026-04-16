@@ -24,27 +24,27 @@ contrib-embed = ["lance", "embed"]
 icp      = ["lance"]
 
 [dependencies]
-serde       = { version = "1", features = ["derive"] }
-serde_json  = "1"
-thiserror   = "2"
-async-trait = "0.1"
-tracing     = "0.1"
-chrono      = { version = "0.4", features = ["serde"] }
-base64      = "0.22"
-regex       = "1"
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+async-trait = { workspace = true }
+tracing     = { workspace = true }
+chrono      = { workspace = true }
+base64      = { workspace = true }
+regex       = { workspace = true }
 
-reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false, optional = true }
+reqwest = { workspace = true, optional = true }
 tokio   = { version = "1", features = ["time"], optional = true }
-anyhow  = { version = "1", optional = true }
-futures = { version = "0.3", features = ["std"], optional = true }
+anyhow  = { workspace = true, optional = true }
+futures = { workspace = true, features = ["std"], optional = true }
 toml    = { version = "0.8", optional = true }
-candle  = { package = "candle-leadgen", path = "../candle", optional = true, default-features = false }
-sqlx    = { version = "0.8", features = ["postgres", "runtime-tokio-rustls"], optional = true }
-dotenvy = { version = "0.15", optional = true }
-tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
-lancedb     = { version = "0.27", optional = true }
-arrow-array = { version = "57", optional = true }
-arrow-schema = { version = "57", optional = true }
+candle  = { workspace = true, optional = true }
+sqlx    = { workspace = true, optional = true }
+dotenvy = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+lancedb     = { workspace = true, optional = true }
+arrow-array = { workspace = true, optional = true }
+arrow-schema = { workspace = true, optional = true }
 
 [[bin]]
 name = "scan_orgs"
@@ -67,4 +67,4 @@ path = "src/bin/search_candidates.rs"
 required-features = ["lance", "neon"]
 
 [dev-dependencies]
-tokio = { version = "1", features = ["full"] }
+tokio = { workspace = true }

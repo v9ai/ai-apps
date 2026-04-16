@@ -1,7 +1,7 @@
 /// Neon PostgreSQL access for the lead-gen companies table.
 ///
 /// Reads all non-blocked companies that have a website, and writes back
-/// the recruitment-verify verdict into `category` + `score_reasons`.
+/// the companies-verify verdict into `category` + `score_reasons`.
 
 use anyhow::{Context, Result};
 use sqlx::postgres::PgPoolOptions;

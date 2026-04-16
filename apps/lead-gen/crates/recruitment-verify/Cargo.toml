@@ -1,16 +1,16 @@
 [package]
-name = "company-cleanup"
+name = "recruitment-verify"
 version = "0.1.0"
 edition = "2021"
-description = "Candle ML + LanceDB kNN classifier — identifies and removes crypto/blockchain companies from the lead-gen DB"
+description = "Candle ML + LanceDB kNN classifier — verifies UK recruitment companies against the lead-gen DB"
 
 [features]
 default = ["metal"]
 metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]
 
 [[bin]]
-name = "cleanup"
-path = "src/bin/cleanup.rs"
+name = "verify"
+path = "src/bin/verify.rs"
 
 [dependencies]
 candle-core         = { workspace = true }
@@ -23,6 +23,8 @@ arrow-array         = { workspace = true }
 arrow-schema        = { workspace = true }
 futures             = { workspace = true }
 sqlx                = { workspace = true }
+reqwest             = { workspace = true }
+scraper             = { workspace = true }
 tokio               = { workspace = true }
 serde               = { workspace = true }
 serde_json          = { workspace = true }

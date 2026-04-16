@@ -1,4 +1,4 @@
-/// recruitment-verify — classify all lead-gen companies as UK recruitment or not.
+/// companies-verify — classify all lead-gen companies as UK recruitment or not.
 ///
 /// Usage:
 ///   DATABASE_URL=postgresql://... cargo run --release --bin verify
@@ -12,11 +12,11 @@ use anyhow::{Context, Result};
 use futures::stream::{self, StreamExt};
 use tracing::{error, info, warn};
 
-use recruitment_verify::classifier::{EmbeddingModel, RecruitmentClassifier};
-use recruitment_verify::corpus;
-use recruitment_verify::db;
-use recruitment_verify::scrape;
-use recruitment_verify::store::CorpusStore;
+use companies_verify::classifier::{EmbeddingModel, RecruitmentClassifier};
+use companies_verify::corpus;
+use companies_verify::db;
+use companies_verify::scrape;
+use companies_verify::store::CorpusStore;
 
 const PARALLELISM: usize = 8;
 
@@ -37,7 +37,7 @@ async fn main() -> Result<()> {
     info!("Model loaded");
 
     // ── 2. Build LanceDB reference corpus ────────────────────────────────
-    let lance_path = "/tmp/recruitment-verify-lance";
+    let lance_path = "/tmp/companies-verify-lance";
     let entries = corpus::corpus();
     info!("Embedding {} reference texts ...", entries.len());
 

@@ -10,16 +10,16 @@ name = "scholar-graph"
 path = "src/main.rs"
 
 [dependencies]
-research = { path = "../../../../crates/research" }
-tokio = { version = "1", features = ["full"] }
+research   = { workspace = true }
+tokio      = { workspace = true }
 tokio-postgres = "0.7"
 tokio-postgres-rustls = "0.13"
-rustls = { version = "0.23", features = ["ring"] }
+rustls     = { version = "0.23", features = ["ring"] }
 webpki-roots = "1"
-clap = { version = "4", features = ["derive"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+clap       = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
 unicode-normalization = "0.1"
-anyhow = "1"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow     = { workspace = true }
+tracing    = { workspace = true }
+tracing-subscriber = { workspace = true }

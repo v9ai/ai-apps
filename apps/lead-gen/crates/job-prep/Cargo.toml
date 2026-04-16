@@ -49,22 +49,22 @@ name = "job-prep-all"
 path = "src/bin/lead_gen_research_all.rs"
 
 [dependencies]
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tokio = { version = "1", features = ["full"] }
-anyhow = "1"
-thiserror = "2"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-chrono = { version = "0.4", features = ["serde"] }
-clap = { version = "4", features = ["derive"] }
-async-trait = "0.1"
-reqwest = { version = "0.12", features = ["json"] }
-dotenvy = "0.15"
-url = "2"
-research = { path = "../../../../crates/research" }
-deepseek = { path = "../../../../crates/deepseek" }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+tokio      = { workspace = true }
+anyhow     = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = { workspace = true }
+tracing-subscriber = { workspace = true }
+chrono     = { workspace = true }
+clap       = { workspace = true }
+async-trait = { workspace = true }
+reqwest    = { workspace = true }
+dotenvy    = { workspace = true }
+url        = { workspace = true }
+research   = { workspace = true }
+deepseek   = { workspace = true }
 
 [dev-dependencies]
-axum = "0.8"
+axum     = { workspace = true }
 tempfile = "3"

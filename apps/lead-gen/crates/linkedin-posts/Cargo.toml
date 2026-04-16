@@ -22,22 +22,22 @@ name = "ingest-contact"
 path = "src/bin/ingest_contact.rs"
 
 [dependencies]
-jobbert = { path = "../jobbert" }
-dotenvy = "0.15"
-lancedb = "0.27"
-arrow-array = "57"
-arrow-schema = "57"
-axum = { version = "0.8", features = ["json"] }
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tower-http = { version = "0.6", features = ["cors"] }
-anyhow = "1"
-chrono = { version = "0.4", features = ["serde"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-futures = "0.3"
+jobbert    = { workspace = true }
+dotenvy    = { workspace = true }
+lancedb    = { workspace = true }
+arrow-array  = { workspace = true }
+arrow-schema = { workspace = true }
+axum       = { workspace = true, features = ["json"] }
+tokio      = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+tower-http = { workspace = true }
+anyhow     = { workspace = true }
+chrono     = { workspace = true }
+tracing    = { workspace = true }
+tracing-subscriber = { workspace = true }
+futures    = { workspace = true }
 tokio-postgres = "0.7"
 tokio-postgres-rustls = "0.13"
-rustls = { version = "0.23", features = ["ring"] }
+rustls     = { version = "0.23", features = ["ring"] }
 webpki-roots = "1"

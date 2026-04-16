@@ -1,5 +1,5 @@
 [package]
-name = "recruitment-verify"
+name = "companies-verify"
 version = "0.1.0"
 edition = "2021"
 description = "Candle ML + LanceDB kNN classifier — verifies UK recruitment companies against the lead-gen DB"

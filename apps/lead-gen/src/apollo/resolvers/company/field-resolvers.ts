@@ -77,7 +77,22 @@ export const CompanyField = {
     return cachedSafeJsonParse(parent, "industries", parent.industries, []);
   },
   score_reasons(parent: DbCompany) {
-    return cachedSafeJsonParse(parent, "score_reasons", parent.score_reasons, []);
+    const parsed = cachedSafeJsonParse<unknown>(parent, "score_reasons", parent.score_reasons, []);
+    if (Array.isArray(parsed)) return parsed as string[];
+    // recruitment-verify stores an object — flatten to readable strings
+    if (parsed && typeof parsed === "object") {
+      const obj = parsed as Record<string, unknown>;
+      const reasons: string[] = [];
+      if (obj.method) reasons.push(`Method: ${obj.method}`);
+      if (typeof obj.is_recruitment === "boolean")
+        reasons.push(obj.is_recruitment ? "Is recruitment agency" : "Not a recruitment agency");
+      if (typeof obj.confidence === "number")
+        reasons.push(`Confidence: ${(obj.confidence * 100).toFixed(1)}%`);
+      if (Array.isArray(obj.top_matches))
+        reasons.push(...obj.top_matches.map(String));
+      return reasons;
+    }
+    return [];
   },
   email(parent: DbCompany) {
     return parent.email ?? null;

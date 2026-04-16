@@ -12,7 +12,7 @@ members = [
   "apps/lead-gen/crates/jobbert",
   "apps/lead-gen/crates/linkedin-posts",
   "apps/lead-gen/crates/metal",
-  "apps/lead-gen/crates/recruitment-verify",
+  "apps/lead-gen/crates/companies-verify",
   "apps/lead-gen/crates/scholar-graph",
 ]
 
