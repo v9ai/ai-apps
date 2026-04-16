@@ -13,21 +13,21 @@ name = "verify"
 path = "src/bin/verify.rs"
 
 [dependencies]
-candle-core         = "0.8"
-candle-nn           = "0.8"
-candle-transformers = "0.8"
-hf-hub              = "0.4"
-tokenizers          = "0.21"
-lancedb             = "0.27"
-arrow-array         = "57"
-arrow-schema        = "57"
-futures             = "0.3"
-sqlx                = { version = "0.8", features = ["runtime-tokio", "postgres", "tls-rustls"] }
-reqwest             = { version = "0.12", features = ["json", "rustls-tls"] }
-scraper             = "0.20"
-tokio               = { version = "1", features = ["full"] }
-serde               = { version = "1", features = ["derive"] }
-serde_json          = "1"
-anyhow              = "1"
-tracing             = "0.1"
-tracing-subscriber  = { version = "0.3", features = ["env-filter"] }
+candle-core         = { workspace = true }
+candle-nn           = { workspace = true }
+candle-transformers = { workspace = true }
+hf-hub              = { workspace = true }
+tokenizers          = { workspace = true }
+lancedb             = { workspace = true }
+arrow-array         = { workspace = true }
+arrow-schema        = { workspace = true }
+futures             = { workspace = true }
+sqlx                = { workspace = true }
+reqwest             = { workspace = true }
+scraper             = { workspace = true }
+tokio               = { workspace = true }
+serde               = { workspace = true }
+serde_json          = { workspace = true }
+anyhow              = { workspace = true }
+tracing             = { workspace = true }
+tracing-subscriber  = { workspace = true }
