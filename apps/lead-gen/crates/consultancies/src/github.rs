@@ -165,7 +165,7 @@ fn negative_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
         Regex::new(
-            r"(?i)\b(university|college|student|research\s+lab|personal|hobby|fork\s+of|awesome[-\s]list|tutorial|course|bootcamp|open.source\s+(library|framework|tool|sdk)|we\s+build\s+(open|tools?|libraries|frameworks?|software|products?))\b",
+            r"(?i)\b(university|college|student|research\s+lab|personal|hobby|fork\s+of|awesome[-\s]list|tutorial|course|bootcamp|open.source\s+(library|framework|tool|sdk|database|platform)|we\s+build\s+(open|tools?|libraries|frameworks?|software|products?)|mlops\s+platform|ml\s+platform|vector\s+database|data\s+infrastructure|developer\s+tools?|devtools?|open.source\s+project)\b",
         )
         .unwrap()
     })
@@ -183,7 +183,9 @@ fn bad_login_re() -> &'static Regex {
                 |ragapp|mozilla|netflix|airbnb|spotify|shopify|atlassian
                 |hashicorp|elastic|redis|mongodb|couchbase-ecosystem
                 |google-marketing-solutions|google-cloud-platform
-                |imbue-ai|gchq|edgeandnode|hkuds|smk-is)$
+                |imbue-ai|gchq|edgeandnode|hkuds|smk-is
+                |basilisk-labs|zilliztech|polyaxon|tensoropsai|vinkius-labs
+                |promptslab|montevive|amikos-tech)$
             ",
         )
         .unwrap()
@@ -219,8 +221,15 @@ pub fn score_org(org: &OrgCandidate) -> (i32, Vec<String>) {
     }
 
     if org.website.starts_with("http") {
-        s += 20;
-        reasons.push("has website".to_string());
+        let bad_url = ["discord.gg", "discord.com", "github.io", "t.me",
+                       "twitter.com", "linkedin.com", "youtube.com"];
+        if bad_url.iter().any(|b| org.website.contains(b)) {
+            s -= 20;
+            reasons.push("community/social URL instead of company website".to_string());
+        } else {
+            s += 20;
+            reasons.push("has website".to_string());
+        }
     }
 
     if org.ai_repo_count >= 3 {

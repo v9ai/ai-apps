@@ -151,6 +151,20 @@ const OFFSHORE_SIGNALS: &[&str] = &[
     "ghana",
     "egypt",
     "morocco",
+    // Non-English EU / lower-priority markets (Madrid/Barcelona intentionally excluded)
+    "bulgaria",
+    "stara zagora",
+    "sofia, bulgaria",
+    "romania",
+    "bucharest",
+    "cluj",
+    "croatia",
+    "zagreb",
+    "slovakia",
+    "bratislava",
+    "granada",
+    "sevilla",
+    "bilbao",
 ];
 
 pub fn classify(text: &str) -> ClassificationResult {

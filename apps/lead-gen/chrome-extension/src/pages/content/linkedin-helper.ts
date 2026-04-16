@@ -1,5 +1,14 @@
 // LinkedIn job helper — salary extraction + Block Company button
 
+import {
+  _observers,
+  _intervals,
+  isExtensionAlive,
+  teardownIfDead as _teardownIfDead,
+  onTeardown,
+  safeSendMessage,
+} from "./lifecycle";
+
 function clickDismiss(el: HTMLElement) {
   el.click();
 }
@@ -67,59 +76,18 @@ let dismissTimer: ReturnType<typeof setTimeout> | null = null;
 const queuedButtons = new WeakSet<HTMLButtonElement>();
 
 // ── Extension context lifecycle ────────────────────────────────────
-/** Returns false once the extension has been reloaded/updated. */
-function isExtensionAlive(): boolean {
-  return !!chrome.runtime?.id;
-}
+// Shared primitives imported from ./lifecycle (see top of file).
 
-/** Registry of active MutationObservers for bulk teardown. */
-const _observers: MutationObserver[] = [];
-/** Registry of interval IDs for bulk teardown. */
-const _intervals: ReturnType<typeof setInterval>[] = [];
-
-/** One-shot teardown: disconnect observers, clear timers, drain queues. */
-function teardownIfDead(): boolean {
-  if (isExtensionAlive()) return false;
-
-  console.warn("[LG] Extension context invalidated — tearing down content script.");
-
-  for (const obs of _observers) obs.disconnect();
-  _observers.length = 0;
-
-  for (const id of _intervals) clearInterval(id);
-  _intervals.length = 0;
-
+// Register this module's dismiss-queue cleanup once, to run at teardown.
+onTeardown(() => {
   if (dismissTimer) clearTimeout(dismissTimer);
   dismissTimer = null;
   dismissQueue = [];
+});
 
-  return true;
-}
-
-/** Safe wrapper: only calls chrome.runtime.sendMessage when context is alive. */
-function safeSendMessage(
-  message: unknown,
-  callback?: (response: any) => void,
-): void {
-  const action = (message as Record<string, unknown>)?.action ?? "unknown";
-  console.log(`[CS] sendMessage → ${action}`);
-  if (teardownIfDead()) {
-    console.warn(`[CS] sendMessage → ${action} — extension context dead, skipping`);
-    callback?.(undefined);
-    return;
-  }
-  chrome.runtime.sendMessage(message, (response) => {
-    if (chrome.runtime.lastError) {
-      const msg = chrome.runtime.lastError.message || "";
-      console.warn(`[CS] sendMessage ← ${action} error:`, msg);
-      if (msg.includes("Extension context invalidated")) {
-        teardownIfDead();
-        callback?.(undefined);
-        return;
-      }
-    }
-    callback?.(response);
-  });
+/** Thin alias so existing call sites below don't need to change. */
+function teardownIfDead(): boolean {
+  return _teardownIfDead();
 }
 
 function queueDismiss(card: Element, btn: HTMLButtonElement) {
@@ -688,32 +656,7 @@ chrome.runtime.onMessage.addListener((message) => {
     }, 3000);
   }
 
-  // Import People progress
-  if (message.action === "importPeopleProgress" && importPeopleBtn) {
-    importPeopleBtn.textContent = message.message;
-  }
-  if (message.action === "importPeopleDone" && importPeopleBtn) {
-    importPeopleBtn.textContent = `Done! ${message.imported} imported`;
-    importPeopleBtn.style.backgroundColor = "#16a34a";
-    setTimeout(() => {
-      if (importPeopleBtn) {
-        importPeopleBtn.textContent = "Import People";
-        importPeopleBtn.style.backgroundColor = "#0a66c2";
-        importPeopleBtn.disabled = false;
-      }
-    }, 3000);
-  }
-  if (message.action === "importPeopleError" && importPeopleBtn) {
-    importPeopleBtn.textContent = message.error?.slice(0, 30) || "Error";
-    importPeopleBtn.style.backgroundColor = "#dc2626";
-    setTimeout(() => {
-      if (importPeopleBtn) {
-        importPeopleBtn.textContent = "Import People";
-        importPeopleBtn.style.backgroundColor = "#0a66c2";
-        importPeopleBtn.disabled = false;
-      }
-    }, 3000);
-  }
+  // Import People progress messages are handled by ./import-people-button.
 
   // Scrape People Posts progress
   if (message.action === "scrapePeoplePostsProgress" && scrapePeoplePostsBtn) {
@@ -796,10 +739,10 @@ chrome.runtime.onMessage.addListener((message) => {
 //   3. Cleaning up stale buttons when navigating between company pages
 //   4. Disconnecting the observer if the hostname changes (unlikely but safe)
 
-const IMPORT_PEOPLE_BTN_ATTR = "data-lg-import-people-btn";
+// NOTE: The "Import People" button (formerly data-lg-import-people-btn) lives
+// in ./import-people-button — it's URL-scoped to /company/{slug}/people/ only.
 const FIND_RELATED_BTN_ATTR = "data-lg-find-related-btn";
 const SCRAPE_PEOPLE_POSTS_BTN_ATTR = "data-lg-scrape-people-posts-btn";
-let importPeopleBtn: HTMLButtonElement | null = null;
 let findRelatedBtn: HTMLButtonElement | null = null;
 let scrapePeoplePostsBtn: HTMLButtonElement | null = null;
 let scrapePeoplePostsRunning = false;
@@ -829,79 +772,11 @@ function getCompanySlug(): string | null {
 
 function removeCompanyButtons() {
   // Remove all buttons from DOM (handles duplicates too)
-  document.querySelectorAll(`[${IMPORT_PEOPLE_BTN_ATTR}]`).forEach((el) => el.remove());
   document.querySelectorAll(`[${FIND_RELATED_BTN_ATTR}]`).forEach((el) => el.remove());
   document.querySelectorAll(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`).forEach((el) => el.remove());
-  importPeopleBtn = null;
   findRelatedBtn = null;
   scrapePeoplePostsBtn = null;
   scrapePeoplePostsRunning = false;
-}
-
-function createImportPeopleButton(): HTMLButtonElement {
-  const btn = document.createElement("button");
-  btn.setAttribute(IMPORT_PEOPLE_BTN_ATTR, "true");
-  btn.textContent = "Import People";
-  btn.title = "Scrape all people on this company page and save to CRM";
-  btn.style.cssText = `
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 9999;
-    background-color: #0a66c2;
-    color: white;
-    border: none;
-    border-radius: 24px;
-    padding: 12px 24px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    transition: background-color 0.2s;
-  `;
-
-  btn.addEventListener("mouseenter", () => {
-    if (!btn.disabled) btn.style.backgroundColor = "#004182";
-  });
-  btn.addEventListener("mouseleave", () => {
-    if (!btn.disabled) btn.style.backgroundColor = "#0a66c2";
-  });
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const companyInfo = extractCompanyInfoFromPage();
-    if (!companyInfo.name) {
-      btn.textContent = "No company found";
-      setTimeout(() => { btn.textContent = "Import People"; }, 2000);
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = "Starting...";
-
-    safeSendMessage(
-      {
-        action: "importPeopleFromCompanyPage",
-        companyName: companyInfo.name,
-        companyLinkedinUrl: companyInfo.linkedinUrl,
-      },
-      (response) => {
-        if (!response?.success) {
-          btn.textContent = "Error";
-          btn.style.backgroundColor = "#dc2626";
-          setTimeout(() => {
-            btn.textContent = "Import People";
-            btn.style.backgroundColor = "#0a66c2";
-            btn.disabled = false;
-          }, 2000);
-        }
-      },
-    );
-  });
-
-  return btn;
 }
 
 let findRelatedRunning = false;
@@ -1103,7 +978,7 @@ function syncCompanyButtons() {
 
   if (!slug) {
     // Not on a company page — remove buttons if they exist
-    if (importPeopleBtn || findRelatedBtn || scrapePeoplePostsBtn) {
+    if (findRelatedBtn || scrapePeoplePostsBtn) {
       removeCompanyButtons();
       lastKnownCompanySlug = null;
     }
@@ -1117,13 +992,7 @@ function syncCompanyButtons() {
     lastKnownCompanySlug = slug;
   }
 
-  // Inject buttons if not present
-  if (!document.querySelector(`[${IMPORT_PEOPLE_BTN_ATTR}]`)) {
-    const ipBtn = createImportPeopleButton();
-    document.body.appendChild(ipBtn);
-    importPeopleBtn = ipBtn;
-  }
-
+  // Inject buttons if not present (Import People is owned by ./import-people-button)
   if (!document.querySelector(`[${FIND_RELATED_BTN_ATTR}]`)) {
     const frBtn = createFindRelatedButton();
     document.body.appendChild(frBtn);
