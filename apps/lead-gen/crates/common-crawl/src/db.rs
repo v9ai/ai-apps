@@ -69,6 +69,7 @@ pub async fn upsert_snapshot(
     }
 
     let text_sample: String = content.text.chars().take(500).collect();
+    let source_type = if record.filename.is_empty() { "LIVE" } else { "COMMONCRAWL" };
     let id: i32 = sqlx::query_scalar(
         r#"INSERT INTO company_snapshots
              (company_id, source_url, crawl_id, capture_timestamp, fetched_at,
@@ -77,7 +78,7 @@ pub async fn upsert_snapshot(
               warc_filename, warc_offset, warc_length)
            VALUES ($1,$2,$3,$4, now()::text,
                    200,'text/html',$5,$6,
-                   'COMMONCRAWL','HEURISTIC','common-crawl-rs/0.1',
+                   $10,'HEURISTIC','common-crawl-rs/0.1',
                    $7,$8,$9)
            RETURNING id"#,
     )
@@ -90,6 +91,7 @@ pub async fn upsert_snapshot(
     .bind(&record.filename)
     .bind(record.offset as i64)
     .bind(record.length as i64)
+    .bind(source_type)
     .fetch_one(pool)
     .await
     .context("insert company_snapshot")?;
@@ -106,11 +108,11 @@ pub async fn upsert_fact(
     record: &CdxRecord,
     confidence: f32,
 ) -> Result<()> {
-    // Skip if identical (field + value_text) already recorded for this company+source
+    // Skip if identical (field + value_text) already recorded for this company — regardless of source page
     let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM company_facts WHERE company_id=$1 AND field=$2 AND value_text=$3 AND source_url=$4)",
+        "SELECT EXISTS(SELECT 1 FROM company_facts WHERE company_id=$1 AND field=$2 AND value_text=$3)",
     )
-    .bind(company_id).bind(field).bind(value_text).bind(&record.url)
+    .bind(company_id).bind(field).bind(value_text)
     .fetch_one(pool).await.unwrap_or(false);
     if exists { return Ok(()); }
 

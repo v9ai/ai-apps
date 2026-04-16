@@ -30,7 +30,7 @@ enum Cmd {
     },
     /// Process all companies in Neon that have no last_seen_crawl_id
     Backfill {
-        #[arg(long, default_value = "200")]
+        #[arg(long, default_value = "500")]
         limit: i64,
         #[arg(long, default_value = "15")]
         pages_per_domain: usize,

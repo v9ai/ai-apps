@@ -448,3 +448,97 @@ pub fn sha256_hex(data: &[u8]) -> String {
     h.update(data);
     hex::encode(h.finalize())
 }
+
+// ── Organization facts (JSON-LD @type:Organization) ───────────────────────────
+
+#[derive(Debug, Default, Clone)]
+pub struct OrgFacts {
+    pub description: Option<String>,
+    pub founded_year: Option<String>,
+    pub location: Option<String>,
+    pub social_links: Vec<String>,
+}
+
+pub fn extract_org_facts(html: &str) -> OrgFacts {
+    let doc = Html::parse_document(html);
+    let Ok(sel) = Selector::parse(r#"script[type="application/ld+json"]"#) else { return OrgFacts::default() };
+    for el in doc.select(&sel) {
+        let raw = el.text().collect::<String>();
+        if let Ok(v) = serde_json::from_str::<Value>(&raw) {
+            if let Some(facts) = collect_jsonld_org(&v) {
+                return facts;
+            }
+        }
+    }
+    OrgFacts::default()
+}
+
+fn collect_jsonld_org(v: &Value) -> Option<OrgFacts> {
+    match v {
+        Value::Object(obj) => {
+            let is_org = match obj.get("@type") {
+                Some(Value::String(s)) => is_org_type(s),
+                Some(Value::Array(arr)) => arr.iter().any(|v| v.as_str().map(is_org_type).unwrap_or(false)),
+                _ => false,
+            };
+            if is_org {
+                let mut facts = OrgFacts::default();
+                facts.description = obj.get("description")
+                    .and_then(|v| v.as_str()).map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
+                facts.founded_year = obj.get("foundingDate")
+                    .and_then(|v| v.as_str()).map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
+                if let Some(addr) = obj.get("address") {
+                    let loc = extract_address_text(addr);
+                    if !loc.is_empty() { facts.location = Some(loc); }
+                }
+                if let Some(same_as) = obj.get("sameAs") {
+                    match same_as {
+                        Value::Array(links) => {
+                            for link in links {
+                                if let Some(url) = link.as_str() { facts.social_links.push(url.to_string()); }
+                            }
+                        }
+                        Value::String(url) => facts.social_links.push(url.to_string()),
+                        _ => {}
+                    }
+                }
+                if facts.description.is_some() || facts.founded_year.is_some()
+                    || facts.location.is_some() || !facts.social_links.is_empty()
+                {
+                    return Some(facts);
+                }
+            }
+            for (key, val) in obj {
+                if key == "@context" { continue; }
+                if let Some(facts) = collect_jsonld_org(val) { return Some(facts); }
+            }
+        }
+        Value::Array(arr) => {
+            for item in arr {
+                if let Some(facts) = collect_jsonld_org(item) { return Some(facts); }
+            }
+        }
+        _ => {}
+    }
+    None
+}
+
+fn is_org_type(s: &str) -> bool {
+    matches!(s, "Organization" | "LocalBusiness" | "Corporation" | "ProfessionalService"
+                | "Consulting" | "LegalService" | "FinancialService" | "GovernmentOrganization"
+                | "NGO" | "ResearchOrganization" | "EducationalOrganization")
+}
+
+fn extract_address_text(addr: &Value) -> String {
+    match addr {
+        Value::String(s) => s.trim().to_string(),
+        Value::Object(obj) => {
+            let parts: Vec<&str> = ["streetAddress", "addressLocality", "addressRegion", "addressCountry"]
+                .iter()
+                .filter_map(|key| obj.get(*key).and_then(|v| v.as_str()))
+                .collect();
+            parts.join(", ")
+        }
+        _ => String::new(),
+    }
+}

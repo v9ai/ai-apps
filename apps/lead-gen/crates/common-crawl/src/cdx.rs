@@ -183,6 +183,32 @@ fn skip_past_blank(text: &str) -> Option<&str> {
     None
 }
 
+/// Fetch an HTML page directly via HTTP (for depth-1 discovery links not in CC).
+pub async fn fetch_live_html(client: &Client, url: &str) -> anyhow::Result<String> {
+    let text = client
+        .get(url)
+        .header("Accept", "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8")
+        .send()
+        .await
+        .context("live fetch")?
+        .text()
+        .await
+        .context("live fetch body")?;
+    Ok(text)
+}
+
+/// Construct a placeholder CdxRecord for a live-fetched page (no WARC entry).
+pub fn synthetic_record(url: &str, crawl_id: &str) -> CdxRecord {
+    CdxRecord {
+        url: url.to_string(),
+        timestamp: chrono::Utc::now().format("%Y%m%d%H%M%S").to_string(),
+        crawl_id: crawl_id.to_string(),
+        filename: String::new(),
+        offset: 0,
+        length: 0,
+    }
+}
+
 /// Page type score (0.0–1.0). Higher = more likely to contain contacts.
 pub fn page_score(url: &str) -> f32 {
     let path = url_path(url).to_lowercase();
