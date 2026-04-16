@@ -238,6 +238,12 @@ export async function scrapePeoplePostsFromCompanyPage(
         filtered: 0,
         skipped: alreadyScraped,
       });
+      chrome.notifications.create(`posts-done-${Date.now()}`, {
+        type: "basic",
+        iconUrl: chrome.runtime.getURL("icon-128.png"),
+        title: `Posts scraped — ${companyName}`,
+        message: `All ${alreadyScraped} people already scraped`,
+      });
       return;
     }
 
@@ -350,12 +356,26 @@ export async function scrapePeoplePostsFromCompanyPage(
       filtered: 0,
       skipped: alreadyScraped,
     });
+
+    chrome.notifications.create(`posts-done-${Date.now()}`, {
+      type: "basic",
+      iconUrl: chrome.runtime.getURL("icon-128.png"),
+      title: `Posts scraped — ${companyName}`,
+      message: `${peopleScraped} people, ${totalPostsSaved} posts saved${alreadyScraped ? `, ${alreadyScraped} skipped` : ""}`,
+    });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error(`${LOG} Unexpected error:`, errMsg);
     await safeSendMessage(tabId, {
       action: "scrapePeoplePostsError",
       error: errMsg,
+    });
+
+    chrome.notifications.create(`posts-error-${Date.now()}`, {
+      type: "basic",
+      iconUrl: chrome.runtime.getURL("icon-128.png"),
+      title: `Posts scrape failed — ${companyName}`,
+      message: errMsg.slice(0, 120),
     });
   }
 }
