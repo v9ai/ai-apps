@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -24,7 +26,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "better-auth": "^1.5.5"
+    "better-auth": "^1.6.5"
   },
   "peerDependencies": {
     "drizzle-orm": ">=0.41.0",
@@ -35,11 +37,11 @@
     "@ai-apps/typescript-config": "workspace:*",
     "@types/node": "^22",
     "@types/react": "^19",
-    "vitest": "^4.0.18",
     "bunchee": "^6.4.0",
     "drizzle-orm": "^0.45.1",
     "next": "latest",
     "react": "^19.0.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.0.18"
   }
 }
