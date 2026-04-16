@@ -3,7 +3,7 @@
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
 import { useEffect, useState } from "react";
-import { NIGHTS, DATE_RANGE_LABEL } from "../constants";
+import { NIGHTS, DATE_RANGE_LABEL } from "./constants";
 
 type Status = "Ok" | "Warning" | "Over";
 

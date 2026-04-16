@@ -2,7 +2,7 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
-import { DAYS } from "../constants";
+import { DAYS } from "./constants";
 
 const T = {
   ro: {

@@ -2,7 +2,7 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
-import { NIGHTS, DATE_RANGE_LABEL, RECOMMENDED_TIER } from "../constants";
+import { NIGHTS, DATE_RANGE_LABEL, RECOMMENDED_TIER } from "./constants";
 
 const T = {
   en: {

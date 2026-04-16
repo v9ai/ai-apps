@@ -2,7 +2,7 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
-import { DAYS, DATE_RANGE_LABEL } from "../constants";
+import { DAYS, DATE_RANGE_LABEL } from "./constants";
 
 const T = {
   en: {

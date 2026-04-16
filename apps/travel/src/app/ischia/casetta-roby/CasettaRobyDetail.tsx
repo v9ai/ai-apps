@@ -59,7 +59,7 @@ const AMENITIES_RO = [
 
 const T = {
   en: {
-    back: "Naples Guide",
+    back: "Ischia",
     badge: "Apartment — Centro Storico",
     name: "Casetta Roby",
     subtitle: "Vico Zuroli 42, Centro Storico, 80138 Naples",
@@ -94,7 +94,7 @@ const T = {
     airport: "Capodichino Airport — 6 km (8 min drive)",
   },
   ro: {
-    back: "Ghid Napoli",
+    back: "Ischia",
     badge: "Apartament — Centro Storico",
     name: "Casetta Roby",
     subtitle: "Vico Zuroli 42, Centro Storico, 80138 Napoli",
@@ -148,7 +148,7 @@ export function CasettaRobyDetail() {
     >
       {/* ── Back link ── */}
       <Link
-        href="/napoli"
+        href="/ischia"
         className={css({
           display: "inline-flex",
           alignItems: "center",
@@ -541,7 +541,7 @@ export function CasettaRobyDetail() {
 
         <div>
           <Link
-            href="/napoli"
+            href="/ischia"
             className={css({
               display: "inline-block",
               fontSize: "meta",

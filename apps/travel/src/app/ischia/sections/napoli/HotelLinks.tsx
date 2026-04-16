@@ -2,7 +2,7 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
-import { RECOMMENDED_TIER, CHECK_IN, CHECK_OUT } from "../constants";
+import { RECOMMENDED_TIER, CHECK_IN, CHECK_OUT } from "./constants";
 
 type HotelLink = {
   name: string;

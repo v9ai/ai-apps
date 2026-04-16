@@ -12,6 +12,8 @@ import { FerryGuide } from "./sections/FerryGuide";
 import { IslandTransport } from "./sections/IslandTransport";
 import { BudgetOverview } from "./sections/BudgetOverview";
 import { DayItinerary } from "./sections/DayItinerary";
+import { SleepGuide as NaplesSleepGuide } from "./sections/napoli/SleepGuide";
+import { HotelLinks as NaplesHotelLinks } from "./sections/napoli/HotelLinks";
 import { DATE_RANGE_LABEL } from "./constants";
 
 const T = {
@@ -174,6 +176,10 @@ export function IschiaPageContent() {
 
       {/* ── Accommodation ── */}
       <SleepGuide />
+
+      {/* ── Naples Accommodation ── */}
+      <NaplesSleepGuide />
+      <NaplesHotelLinks />
 
       <Footer city={city} count={places.length} />
     </>
