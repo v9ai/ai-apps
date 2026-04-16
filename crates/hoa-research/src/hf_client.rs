@@ -1,7 +1,7 @@
-//! HuggingFace Inference API client for remote 72B model.
+//! HuggingFace free serverless Inference API client.
 //!
-//! Discovers the inference provider via HF's model API, then routes
-//! requests through router.huggingface.co. Supports concurrent requests.
+//! Uses api-inference.huggingface.co (free, rate-limited, no credits).
+//! No provider discovery needed — hits the model endpoint directly.
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -13,11 +13,8 @@ const DEFAULT_MODEL: &str = "Qwen/Qwen2.5-72B-Instruct";
 #[derive(Debug, Clone)]
 pub struct HfClient {
     client: Client,
-    /// Model ID as seen by the provider (e.g. "qwen/qwen-2.5-72b-instruct")
-    provider_model_id: String,
+    model: String,
     token: String,
-    /// Full route prefix (e.g. "novita/v3/openai")
-    provider_route: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -49,15 +46,8 @@ struct ChatChoiceMessage {
     content: Option<String>,
 }
 
-/// Model API response for provider discovery.
-#[derive(Debug, Deserialize)]
-struct ModelInfo {
-    #[serde(rename = "inferenceProviderMapping")]
-    inference_provider_mapping: Option<serde_json::Value>,
-}
-
 impl HfClient {
-    /// Create a new HF client. Discovers the inference provider at init time.
+    /// Create a new HF client using the free serverless API.
     pub async fn new(token: &str) -> Option<Self> {
         if token.is_empty() {
             return None;
@@ -68,30 +58,21 @@ impl HfClient {
             .build()
             .ok()?;
 
-        // Discover provider route + provider-side model ID
-        let (provider_route, provider_model_id) =
-            discover_provider(&client, token, DEFAULT_MODEL)
-                .await
-                .unwrap_or_else(|e| {
-                    tracing::warn!("HF provider discovery failed: {e}, using fallback");
-                    ("novita/v3/openai".to_string(), DEFAULT_MODEL.to_string())
-                });
-
-        tracing::info!("HF route: {provider_route} | model: {provider_model_id}");
+        let model = DEFAULT_MODEL.to_string();
+        tracing::info!("HF serverless (free): {model}");
 
         Some(Self {
             client,
-            provider_model_id,
+            model,
             token: token.to_string(),
-            provider_route,
         })
     }
 
     pub fn model_name(&self) -> &str {
-        &self.provider_model_id
+        &self.model
     }
 
-    /// Chat completion via HF router.
+    /// Chat completion via the free serverless Inference API.
     pub async fn chat(
         &self,
         system: &str,
@@ -99,7 +80,7 @@ impl HfClient {
         max_tokens: usize,
     ) -> Result<String> {
         let request = ChatRequest {
-            model: self.provider_model_id.clone(),
+            model: self.model.clone(),
             messages: vec![
                 ChatMessage {
                     role: "system".into(),
@@ -115,8 +96,8 @@ impl HfClient {
         };
 
         let url = format!(
-            "https://router.huggingface.co/{}/chat/completions",
-            self.provider_route
+            "https://api-inference.huggingface.co/models/{}/v1/chat/completions",
+            self.model
         );
 
         let resp = self
@@ -145,72 +126,4 @@ impl HfClient {
             .and_then(|c| c.message.content.clone())
             .ok_or_else(|| PipelineError::Other("Empty HF response".into()))
     }
-}
-
-/// Discover the inference provider for a model via HF API.
-/// Returns (route_prefix, provider_model_id).
-async fn discover_provider(
-    client: &Client,
-    token: &str,
-    model: &str,
-) -> Result<(String, String)> {
-    let url = format!(
-        "https://huggingface.co/api/models/{model}?expand=inferenceProviderMapping"
-    );
-
-    let resp = client
-        .get(&url)
-        .bearer_auth(token)
-        .send()
-        .await
-        .map_err(PipelineError::Http)?;
-
-    if !resp.status().is_success() {
-        return Err(PipelineError::Other(format!(
-            "Model API {}: {}",
-            resp.status(),
-            model
-        )));
-    }
-
-    let info: ModelInfo = resp.json().await.map_err(PipelineError::Http)?;
-
-    // Extract provider. Prefer "novita" (matches Python client), fallback to first "live".
-    if let Some(mapping) = info.inference_provider_mapping {
-        if let Some(obj) = mapping.as_object() {
-            // Prefer novita
-            let preferred = ["novita", "featherless-ai"];
-            for pref in &preferred {
-                if let Some(details) = obj.get(*pref) {
-                    let status = details
-                        .get("status")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("");
-                    if status == "live" {
-                        let provider_id = details
-                            .get("providerId")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or(model);
-                        // Route: {provider}/v3/openai
-                        let route = format!("{pref}/v3/openai");
-                        tracing::info!("Provider: {pref} → model: {provider_id}");
-                        return Ok((route, provider_id.to_string()));
-                    }
-                }
-            }
-
-            // Fallback: first live provider
-            for (provider, details) in obj {
-                let provider_id = details
-                    .get("providerId")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(model);
-                let route = format!("{provider}/v3/openai");
-                tracing::info!("Provider (fallback): {provider} → model: {provider_id}");
-                return Ok((route, provider_id.to_string()));
-            }
-        }
-    }
-
-    Err(PipelineError::Other("No inference provider found".into()))
 }

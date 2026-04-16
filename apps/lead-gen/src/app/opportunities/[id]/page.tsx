@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { opportunities, companies, contacts } from "@/db/schema";
+import { opportunities, companies, contacts, contactEmails, receivedEmails } from "@/db/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -83,6 +83,45 @@ export default async function OpportunityDetailPage({
     .where(sql`${contacts.tags}::text LIKE ${"%" + `opp:${id}` + "%"}`)
     .limit(500);
 
+  // Load emails for the related contact (sent + received)
+  const sentEmails = opp.contact_id
+    ? await db
+        .select({
+          id: contactEmails.id,
+          resend_id: contactEmails.resend_id,
+          from_email: contactEmails.from_email,
+          to_emails: contactEmails.to_emails,
+          subject: contactEmails.subject,
+          text_content: contactEmails.text_content,
+          status: contactEmails.status,
+          sent_at: contactEmails.sent_at,
+          reply_received: contactEmails.reply_received,
+          created_at: contactEmails.created_at,
+        })
+        .from(contactEmails)
+        .where(eq(contactEmails.contact_id, opp.contact_id))
+        .orderBy(desc(contactEmails.created_at))
+        .limit(50)
+    : [];
+
+  const inboundEmails = opp.contact_id
+    ? await db
+        .select({
+          id: receivedEmails.id,
+          from_email: receivedEmails.from_email,
+          subject: receivedEmails.subject,
+          text_content: receivedEmails.text_content,
+          classification: receivedEmails.classification,
+          classification_confidence: receivedEmails.classification_confidence,
+          received_at: receivedEmails.received_at,
+          created_at: receivedEmails.created_at,
+        })
+        .from(receivedEmails)
+        .where(eq(receivedEmails.matched_contact_id, opp.contact_id))
+        .orderBy(desc(receivedEmails.received_at))
+        .limit(50)
+    : [];
+
   // Parse opportunity data for scoring
   const oppTags: string[] = opp.tags ? JSON.parse(opp.tags) : [];
   const oppData = { tags: oppTags, raw_context: opp.raw_context };
@@ -144,6 +183,8 @@ export default async function OpportunityDetailPage({
       <OpportunityDetailClient
         opportunity={opp}
         sourcedCandidates={sourcedCandidates}
+        sentEmails={sentEmails}
+        inboundEmails={inboundEmails}
       />
     </Suspense>
   );

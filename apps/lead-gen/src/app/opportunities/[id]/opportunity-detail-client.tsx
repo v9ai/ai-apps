@@ -96,6 +96,39 @@ type SourcedCandidate = {
   specialization: string | null;
 };
 
+type SentEmail = {
+  id: number;
+  resend_id: string;
+  from_email: string;
+  to_emails: string;
+  subject: string;
+  text_content: string | null;
+  status: string;
+  sent_at: string | null;
+  reply_received: boolean | null;
+  created_at: string;
+};
+
+type InboundEmail = {
+  id: number;
+  from_email: string | null;
+  subject: string | null;
+  text_content: string | null;
+  classification: string | null;
+  classification_confidence: number | null;
+  received_at: string;
+  created_at: string;
+};
+
+function stripQuotedReply(text: string): string {
+  return text.replace(/\n*On .+wrote:\n*(>.*\n?)*/gs, "").trim();
+}
+
+const classificationColors: Record<string, "green" | "red" | "gray"> = {
+  interested: "green",
+  not_interested: "red",
+};
+
 const statusColors: Record<string, "green" | "blue" | "orange" | "red" | "gray" | "yellow"> = {
   open: "blue",
   applied: "orange",
@@ -139,9 +172,13 @@ function formatDate(d: string | null | undefined): string | null {
 export function OpportunityDetailClient({
   opportunity: opp,
   sourcedCandidates = [],
+  sentEmails = [],
+  inboundEmails = [],
 }: {
   opportunity: OpportunityDetail;
   sourcedCandidates?: SourcedCandidate[];
+  sentEmails?: SentEmail[];
+  inboundEmails?: InboundEmail[];
 }) {
   const router = useRouter();
   const initialTags: string[] = opp.tags ? JSON.parse(opp.tags) : [];
@@ -385,6 +422,129 @@ export function OpportunityDetailClient({
               {opp.application_notes && (
                 <Text size="2" color="gray" style={{ whiteSpace: "pre-wrap" }}>{opp.application_notes}</Text>
               )}
+            </Flex>
+          </>
+        )}
+
+        {/* Email History */}
+        {(sentEmails.length > 0 || inboundEmails.length > 0) && (
+          <>
+            <Separator size="4" />
+            <Flex direction="column" gap="3">
+              <Flex align="center" gap="2">
+                <Heading size="4">Email History</Heading>
+                <Badge color="blue" variant="soft" size="1">
+                  {sentEmails.length + inboundEmails.length}
+                </Badge>
+              </Flex>
+              <Flex direction="column" gap="2">
+                {[
+                  ...sentEmails.map((e) => ({
+                    type: "sent" as const,
+                    date: e.sent_at ?? e.created_at,
+                    sent: e,
+                  })),
+                  ...inboundEmails.map((e) => ({
+                    type: "received" as const,
+                    date: e.received_at,
+                    received: e,
+                  })),
+                ]
+                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                  .map((item) =>
+                    item.type === "sent" ? (
+                      <Card key={`sent-${item.sent.id}`}>
+                        <Flex direction="column" gap="2" p="3">
+                          <Flex justify="between" align="start" gap="2" wrap="wrap">
+                            <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
+                              <Text size="2" weight="medium" style={{ wordBreak: "break-word" }}>
+                                {item.sent.subject}
+                              </Text>
+                              <Text size="1" color="gray">
+                                {item.sent.from_email} → {JSON.parse(item.sent.to_emails).join(", ")} · {item.sent.sent_at
+                                  ? new Date(item.sent.sent_at).toLocaleString()
+                                  : new Date(item.sent.created_at).toLocaleString()}
+                              </Text>
+                            </Flex>
+                            <Flex gap="1">
+                              {item.sent.reply_received && (
+                                <Badge color="purple" variant="soft" size="1">replied</Badge>
+                              )}
+                              <Badge
+                                color={item.sent.status === "delivered" ? "green" : item.sent.status === "bounced" ? "red" : "blue"}
+                                variant="soft"
+                                size="1"
+                              >
+                                {item.sent.status}
+                              </Badge>
+                            </Flex>
+                          </Flex>
+                          {item.sent.text_content && (
+                            <Text
+                              size="2"
+                              style={{
+                                background: "var(--gray-2)",
+                                borderRadius: 6,
+                                padding: "var(--space-3)",
+                                whiteSpace: "pre-wrap",
+                                lineHeight: "1.6",
+                                maxHeight: 200,
+                                overflow: "auto",
+                                display: "block",
+                              }}
+                            >
+                              {item.sent.text_content}
+                            </Text>
+                          )}
+                        </Flex>
+                      </Card>
+                    ) : (
+                      <Card key={`recv-${item.received.id}`} style={{ borderLeft: "3px solid var(--purple-9)" }}>
+                        <Flex direction="column" gap="2" p="3">
+                          <Flex justify="between" align="start" gap="2" wrap="wrap">
+                            <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
+                              <Flex align="center" gap="2">
+                                <Badge color="purple" variant="soft" size="1">reply</Badge>
+                                {item.received.classification && (
+                                  <Badge
+                                    color={classificationColors[item.received.classification] ?? "gray"}
+                                    variant="soft"
+                                    size="1"
+                                  >
+                                    {item.received.classification}
+                                  </Badge>
+                                )}
+                              </Flex>
+                              <Text size="2" weight="medium" style={{ wordBreak: "break-word" }}>
+                                {item.received.subject ?? "(no subject)"}
+                              </Text>
+                              <Text size="1" color="gray">
+                                From {item.received.from_email} · {new Date(item.received.received_at).toLocaleString()}
+                              </Text>
+                            </Flex>
+                          </Flex>
+                          {item.received.text_content && (
+                            <Text
+                              size="2"
+                              style={{
+                                background: "var(--purple-2)",
+                                borderRadius: 6,
+                                padding: "var(--space-3)",
+                                whiteSpace: "pre-wrap",
+                                lineHeight: "1.6",
+                                maxHeight: 200,
+                                overflow: "auto",
+                                display: "block",
+                              }}
+                            >
+                              {stripQuotedReply(item.received.text_content)}
+                            </Text>
+                          )}
+                        </Flex>
+                      </Card>
+                    ),
+                  )}
+              </Flex>
             </Flex>
           </>
         )}
