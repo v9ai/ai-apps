@@ -1,0 +1,22 @@
+query GetCompanyScrapedPosts($companySlug: String!) {
+  companyScrapedPosts(companySlug: $companySlug) {
+    companyName
+    slug
+    peopleCount
+    postsCount
+    posts {
+      personName
+      personLinkedinUrl
+      personHeadline
+      postUrl
+      postText
+      postedDate
+      reactionsCount
+      commentsCount
+      repostsCount
+      isRepost
+      originalAuthor
+      scrapedAt
+    }
+  }
+}

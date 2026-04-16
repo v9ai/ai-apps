@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   useGetCompanyQuery,
+  useGetCompanyScrapedPostsQuery,
   useEnhanceCompanyMutation,
   useAnalyzeCompanyMutation,
   useUpdateCompanyMutation,
@@ -917,49 +918,12 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   // When a numeric ID is passed, derive the slug from the loaded company record
   const effectiveKey = companyKey ?? company?.key;
 
-  // Fetch posts from SQLite via /api/companies/[slug]/posts
-  type SqlitePost = {
-    person_name: string;
-    person_linkedin_url: string;
-    person_headline: string | null;
-    post_url: string | null;
-    post_text: string | null;
-    posted_date: string | null;
-    reactions_count: number;
-    comments_count: number;
-    reposts_count: number;
-    is_repost: number;
-    original_author: string | null;
-    author_name: string | null;
-    author_url: string | null;
-    scraped_at: string;
-  };
-  const [posts, setPosts] = useState<SqlitePost[]>([]);
-  const [postsLoading, setPostsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!isAdmin || !effectiveKey) {
-      setPosts([]);
-      return;
-    }
-    let cancelled = false;
-    setPostsLoading(true);
-    fetch(`/api/companies/${effectiveKey}/posts`)
-      .then((r) => {
-        if (!r.ok) throw new Error(`${r.status}`);
-        return r.json();
-      })
-      .then((data: { posts: SqlitePost[] }) => {
-        if (!cancelled) setPosts(data.posts ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setPosts([]);
-      })
-      .finally(() => {
-        if (!cancelled) setPostsLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [isAdmin, effectiveKey]);
+  // Fetch scraped posts from SQLite via GraphQL
+  const { data: scrapedPostsData, loading: postsLoading } = useGetCompanyScrapedPostsQuery({
+    variables: { companySlug: effectiveKey! },
+    skip: !isAdmin || !effectiveKey,
+  });
+  const posts = scrapedPostsData?.companyScrapedPosts?.posts ?? [];
 
   const handleDelete = useCallback(async () => {
     if (!company?.id) return;
@@ -1405,23 +1369,23 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             <SectionCard title={`Posts (${posts.length})`}>
               <Flex direction="column" gap="1">
                 {posts.map((p, idx) => {
-                  const name = p.person_name || "Unknown";
-                  const text = p.post_text
-                    ? p.post_text.length > 150
-                      ? p.post_text.slice(0, 150) + "…"
-                      : p.post_text
+                  const name = p.personName || "Unknown";
+                  const text = p.postText
+                    ? p.postText.length > 150
+                      ? p.postText.slice(0, 150) + "…"
+                      : p.postText
                     : "(no text)";
                   let ago = "";
-                  if (p.posted_date) {
-                    const parsed = parseISO(p.posted_date);
+                  if (p.postedDate) {
+                    const parsed = parseISO(p.postedDate);
                     if (isValid(parsed)) {
                       ago = formatDistanceToNow(parsed, { addSuffix: false });
                     } else {
-                      ago = p.posted_date;
+                      ago = p.postedDate;
                     }
                   }
                   return (
-                    <Flex key={p.post_url ?? idx} align="start" gap="2" py="1" style={{ borderBottom: "1px solid var(--gray-3)" }}>
+                    <Flex key={p.postUrl ?? idx} align="start" gap="2" py="1" style={{ borderBottom: "1px solid var(--gray-3)" }}>
                       <Text size="1" weight="medium" style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
                         {name}
                       </Text>
@@ -1430,14 +1394,14 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                       </Text>
                       <Flex align="center" gap="2" flexShrink="0">
                         {ago && <Text size="1" color="gray">{ago}</Text>}
-                        {(p.reactions_count > 0 || p.comments_count > 0) && (
+                        {(p.reactionsCount > 0 || p.commentsCount > 0) && (
                           <Text size="1" color="gray">
-                            {p.reactions_count > 0 && `${p.reactions_count}↑`}
-                            {p.comments_count > 0 && ` ${p.comments_count}💬`}
+                            {p.reactionsCount > 0 && `${p.reactionsCount}↑`}
+                            {p.commentsCount > 0 && ` ${p.commentsCount}💬`}
                           </Text>
                         )}
-                        {p.post_url && (
-                          <RadixLink href={p.post_url} target="_blank" rel="noopener noreferrer" size="1">
+                        {p.postUrl && (
+                          <RadixLink href={p.postUrl} target="_blank" rel="noopener noreferrer" size="1">
                             <ExternalLinkIcon />
                           </RadixLink>
                         )}

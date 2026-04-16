@@ -260,6 +260,16 @@ enum CompanyOrderBy {
   UPDATED_AT_DESC
 }
 
+type CompanyScrapedPostsResult {
+  companyName: String!
+  firstScraped: String
+  lastScraped: String
+  peopleCount: Int!
+  posts: [ScrapedPost!]!
+  postsCount: Int!
+  slug: String!
+}
+
 type CompanySnapshot {
   capture_timestamp: String
   company_id: Int!
@@ -1295,6 +1305,7 @@ type Query {
   companiesLike(companyId: Int!, limit: Int, minScore: Float): [SimilarCompanyResult!]!
   company(id: Int, key: String): Company
   companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
+  companyScrapedPosts(companySlug: String!): CompanyScrapedPostsResult!
   company_facts(company_id: Int!, field: String, limit: Int, offset: Int): [CompanyFact!]!
   company_snapshots(company_id: Int!, limit: Int, offset: Int): [CompanySnapshot!]!
   contact(id: Int, slug: String): Contact
@@ -1927,6 +1938,24 @@ type ScoreContactsMLResult {
   message: String!
   results: [ContactMLScore!]!
   success: Boolean!
+}
+
+type ScrapedPost {
+  authorName: String
+  authorUrl: String
+  commentsCount: Int!
+  isRepost: Boolean!
+  mediaType: String
+  originalAuthor: String
+  personHeadline: String
+  personLinkedinUrl: String!
+  personName: String!
+  postText: String
+  postUrl: String
+  postedDate: String
+  reactionsCount: Int!
+  repostsCount: Int!
+  scrapedAt: String!
 }
 
 type SendDraftResult {

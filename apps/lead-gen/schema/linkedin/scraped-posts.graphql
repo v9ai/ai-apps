@@ -1,0 +1,31 @@
+extend type Query {
+  companyScrapedPosts(companySlug: String!): CompanyScrapedPostsResult!
+}
+
+type CompanyScrapedPostsResult {
+  companyName: String!
+  slug: String!
+  peopleCount: Int!
+  postsCount: Int!
+  firstScraped: String
+  lastScraped: String
+  posts: [ScrapedPost!]!
+}
+
+type ScrapedPost {
+  personName: String!
+  personLinkedinUrl: String!
+  personHeadline: String
+  postUrl: String
+  postText: String
+  postedDate: String
+  reactionsCount: Int!
+  commentsCount: Int!
+  repostsCount: Int!
+  mediaType: String
+  isRepost: Boolean!
+  originalAuthor: String
+  authorName: String
+  authorUrl: String
+  scrapedAt: String!
+}

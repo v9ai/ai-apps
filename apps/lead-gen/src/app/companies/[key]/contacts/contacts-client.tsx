@@ -1401,7 +1401,7 @@ export function CompanyContactsClient({
                       </Flex>
                     </Box>
 
-                    <Flex direction="column" align="end" gap="2" flexShrink="0" onClick={(e) => e.stopPropagation()}>
+                    <Flex align="center" gap="2" flexShrink="0" wrap="wrap" onClick={(e) => e.stopPropagation()}>
                       {!contact.doNotContact && (
                         <GenerateEmailDialog
                           contact={contact}

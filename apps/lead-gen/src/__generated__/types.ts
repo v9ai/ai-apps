@@ -303,6 +303,17 @@ export type CompanyOrderBy =
   | 'SCORE_DESC'
   | 'UPDATED_AT_DESC';
 
+export type CompanyScrapedPostsResult = {
+  __typename: 'CompanyScrapedPostsResult';
+  companyName: Scalars['String']['output'];
+  firstScraped: Maybe<Scalars['String']['output']>;
+  lastScraped: Maybe<Scalars['String']['output']>;
+  peopleCount: Scalars['Int']['output'];
+  posts: Array<ScrapedPost>;
+  postsCount: Scalars['Int']['output'];
+  slug: Scalars['String']['output'];
+};
+
 export type CompanySnapshot = {
   __typename: 'CompanySnapshot';
   capture_timestamp: Maybe<Scalars['String']['output']>;
@@ -1838,6 +1849,7 @@ export type Query = {
   companiesLike: Array<SimilarCompanyResult>;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
+  companyScrapedPosts: CompanyScrapedPostsResult;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
   contact: Maybe<Contact>;
@@ -1967,6 +1979,11 @@ export type QueryCompanyArgs = {
 
 export type QueryCompanyContactEmailsArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type QueryCompanyScrapedPostsArgs = {
+  companySlug: Scalars['String']['input'];
 };
 
 
@@ -2886,6 +2903,25 @@ export type ScoreContactsMlResult = {
   message: Scalars['String']['output'];
   results: Array<ContactMlScore>;
   success: Scalars['Boolean']['output'];
+};
+
+export type ScrapedPost = {
+  __typename: 'ScrapedPost';
+  authorName: Maybe<Scalars['String']['output']>;
+  authorUrl: Maybe<Scalars['String']['output']>;
+  commentsCount: Scalars['Int']['output'];
+  isRepost: Scalars['Boolean']['output'];
+  mediaType: Maybe<Scalars['String']['output']>;
+  originalAuthor: Maybe<Scalars['String']['output']>;
+  personHeadline: Maybe<Scalars['String']['output']>;
+  personLinkedinUrl: Scalars['String']['output'];
+  personName: Scalars['String']['output'];
+  postText: Maybe<Scalars['String']['output']>;
+  postUrl: Maybe<Scalars['String']['output']>;
+  postedDate: Maybe<Scalars['String']['output']>;
+  reactionsCount: Scalars['Int']['output'];
+  repostsCount: Scalars['Int']['output'];
+  scrapedAt: Scalars['String']['output'];
 };
 
 export type SendDraftResult = {

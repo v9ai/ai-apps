@@ -306,6 +306,17 @@ export type CompanyOrderBy =
   | 'SCORE_DESC'
   | 'UPDATED_AT_DESC';
 
+export type CompanyScrapedPostsResult = {
+  __typename?: 'CompanyScrapedPostsResult';
+  companyName: Scalars['String']['output'];
+  firstScraped: Maybe<Scalars['String']['output']>;
+  lastScraped: Maybe<Scalars['String']['output']>;
+  peopleCount: Scalars['Int']['output'];
+  posts: Array<ScrapedPost>;
+  postsCount: Scalars['Int']['output'];
+  slug: Scalars['String']['output'];
+};
+
 export type CompanySnapshot = {
   __typename?: 'CompanySnapshot';
   capture_timestamp: Maybe<Scalars['String']['output']>;
@@ -1841,6 +1852,7 @@ export type Query = {
   companiesLike: Array<SimilarCompanyResult>;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
+  companyScrapedPosts: CompanyScrapedPostsResult;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
   contact: Maybe<Contact>;
@@ -1970,6 +1982,11 @@ export type QueryCompanyArgs = {
 
 export type QueryCompanyContactEmailsArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type QueryCompanyScrapedPostsArgs = {
+  companySlug: Scalars['String']['input'];
 };
 
 
@@ -2891,6 +2908,25 @@ export type ScoreContactsMlResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ScrapedPost = {
+  __typename?: 'ScrapedPost';
+  authorName: Maybe<Scalars['String']['output']>;
+  authorUrl: Maybe<Scalars['String']['output']>;
+  commentsCount: Scalars['Int']['output'];
+  isRepost: Scalars['Boolean']['output'];
+  mediaType: Maybe<Scalars['String']['output']>;
+  originalAuthor: Maybe<Scalars['String']['output']>;
+  personHeadline: Maybe<Scalars['String']['output']>;
+  personLinkedinUrl: Scalars['String']['output'];
+  personName: Scalars['String']['output'];
+  postText: Maybe<Scalars['String']['output']>;
+  postUrl: Maybe<Scalars['String']['output']>;
+  postedDate: Maybe<Scalars['String']['output']>;
+  reactionsCount: Scalars['Int']['output'];
+  repostsCount: Scalars['Int']['output'];
+  scrapedAt: Scalars['String']['output'];
+};
+
 export type SendDraftResult = {
   __typename?: 'SendDraftResult';
   error: Maybe<Scalars['String']['output']>;
@@ -3452,6 +3488,7 @@ export type ResolversTypes = {
   CompanyFilterInput: ResolverTypeWrapper<Partial<CompanyFilterInput>>;
   CompanyImportInput: ResolverTypeWrapper<Partial<CompanyImportInput>>;
   CompanyOrderBy: ResolverTypeWrapper<Partial<CompanyOrderBy>>;
+  CompanyScrapedPostsResult: ResolverTypeWrapper<Partial<CompanyScrapedPostsResult>>;
   CompanySnapshot: ResolverTypeWrapper<Partial<CompanySnapshot>>;
   CompanyVelocity: ResolverTypeWrapper<Partial<CompanyVelocity>>;
   CompetitiveReport: ResolverTypeWrapper<Partial<CompetitiveReport>>;
@@ -3605,6 +3642,7 @@ export type ResolversTypes = {
   ScheduleBatchEmailsInput: ResolverTypeWrapper<Partial<ScheduleBatchEmailsInput>>;
   ScheduleBatchResult: ResolverTypeWrapper<Partial<ScheduleBatchResult>>;
   ScoreContactsMLResult: ResolverTypeWrapper<Partial<ScoreContactsMlResult>>;
+  ScrapedPost: ResolverTypeWrapper<Partial<ScrapedPost>>;
   SendDraftResult: ResolverTypeWrapper<Partial<SendDraftResult>>;
   SendEmailInput: ResolverTypeWrapper<Partial<SendEmailInput>>;
   SendEmailResult: ResolverTypeWrapper<Partial<SendEmailResult>>;
@@ -3681,6 +3719,7 @@ export type ResolversParentTypes = {
   CompanyFactInput: Partial<CompanyFactInput>;
   CompanyFilterInput: Partial<CompanyFilterInput>;
   CompanyImportInput: Partial<CompanyImportInput>;
+  CompanyScrapedPostsResult: Partial<CompanyScrapedPostsResult>;
   CompanySnapshot: Partial<CompanySnapshot>;
   CompanyVelocity: Partial<CompanyVelocity>;
   CompetitiveReport: Partial<CompetitiveReport>;
@@ -3830,6 +3869,7 @@ export type ResolversParentTypes = {
   ScheduleBatchEmailsInput: Partial<ScheduleBatchEmailsInput>;
   ScheduleBatchResult: Partial<ScheduleBatchResult>;
   ScoreContactsMLResult: Partial<ScoreContactsMlResult>;
+  ScrapedPost: Partial<ScrapedPost>;
   SendDraftResult: Partial<SendDraftResult>;
   SendEmailInput: Partial<SendEmailInput>;
   SendEmailResult: Partial<SendEmailResult>;
@@ -4075,6 +4115,16 @@ export type CompanyFactResolvers<ContextType = GraphQLContext, ParentType extend
   normalized_value?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   value_json?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   value_text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type CompanyScrapedPostsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompanyScrapedPostsResult'] = ResolversParentTypes['CompanyScrapedPostsResult']> = {
+  companyName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  firstScraped?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  lastScraped?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  peopleCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  posts?: Resolver<Array<ResolversTypes['ScrapedPost']>, ParentType, ContextType>;
+  postsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type CompanySnapshotResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompanySnapshot'] = ResolversParentTypes['CompanySnapshot']> = {
@@ -4908,6 +4958,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   companiesLike?: Resolver<Array<ResolversTypes['SimilarCompanyResult']>, ParentType, ContextType, RequireFields<QueryCompaniesLikeArgs, 'companyId'>>;
   company?: Resolver<Maybe<ResolversTypes['Company']>, ParentType, ContextType, Partial<QueryCompanyArgs>>;
   companyContactEmails?: Resolver<Array<ResolversTypes['CompanyContactEmail']>, ParentType, ContextType, RequireFields<QueryCompanyContactEmailsArgs, 'companyId'>>;
+  companyScrapedPosts?: Resolver<ResolversTypes['CompanyScrapedPostsResult'], ParentType, ContextType, RequireFields<QueryCompanyScrapedPostsArgs, 'companySlug'>>;
   company_facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, RequireFields<QueryCompany_FactsArgs, 'company_id'>>;
   company_snapshots?: Resolver<Array<ResolversTypes['CompanySnapshot']>, ParentType, ContextType, RequireFields<QueryCompany_SnapshotsArgs, 'company_id'>>;
   contact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, Partial<QueryContactArgs>>;
@@ -5461,6 +5512,24 @@ export type ScoreContactsMlResultResolvers<ContextType = GraphQLContext, ParentT
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type ScrapedPostResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScrapedPost'] = ResolversParentTypes['ScrapedPost']> = {
+  authorName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  authorUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  commentsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  isRepost?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  mediaType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  originalAuthor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  personHeadline?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  personLinkedinUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  personName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  postText?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  postUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  postedDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  reactionsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  repostsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  scrapedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type SendDraftResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SendDraftResult'] = ResolversParentTypes['SendDraftResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resendId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5738,6 +5807,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Company?: CompanyResolvers<ContextType>;
   CompanyContactEmail?: CompanyContactEmailResolvers<ContextType>;
   CompanyFact?: CompanyFactResolvers<ContextType>;
+  CompanyScrapedPostsResult?: CompanyScrapedPostsResultResolvers<ContextType>;
   CompanySnapshot?: CompanySnapshotResolvers<ContextType>;
   CompanyVelocity?: CompanyVelocityResolvers<ContextType>;
   CompetitiveReport?: CompetitiveReportResolvers<ContextType>;
@@ -5868,6 +5938,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SaveCrawlLogResult?: SaveCrawlLogResultResolvers<ContextType>;
   ScheduleBatchResult?: ScheduleBatchResultResolvers<ContextType>;
   ScoreContactsMLResult?: ScoreContactsMlResultResolvers<ContextType>;
+  ScrapedPost?: ScrapedPostResolvers<ContextType>;
   SendDraftResult?: SendDraftResultResolvers<ContextType>;
   SendEmailResult?: SendEmailResultResolvers<ContextType>;
   SendNowResult?: SendNowResultResolvers<ContextType>;

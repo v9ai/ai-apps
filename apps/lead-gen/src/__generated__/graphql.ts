@@ -305,6 +305,17 @@ export type CompanyOrderBy =
   | 'SCORE_DESC'
   | 'UPDATED_AT_DESC';
 
+export type CompanyScrapedPostsResult = {
+  __typename: 'CompanyScrapedPostsResult';
+  companyName: Scalars['String']['output'];
+  firstScraped: Maybe<Scalars['String']['output']>;
+  lastScraped: Maybe<Scalars['String']['output']>;
+  peopleCount: Scalars['Int']['output'];
+  posts: Array<ScrapedPost>;
+  postsCount: Scalars['Int']['output'];
+  slug: Scalars['String']['output'];
+};
+
 export type CompanySnapshot = {
   __typename: 'CompanySnapshot';
   capture_timestamp: Maybe<Scalars['String']['output']>;
@@ -1840,6 +1851,7 @@ export type Query = {
   companiesLike: Array<SimilarCompanyResult>;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
+  companyScrapedPosts: CompanyScrapedPostsResult;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
   contact: Maybe<Contact>;
@@ -1969,6 +1981,11 @@ export type QueryCompanyArgs = {
 
 export type QueryCompanyContactEmailsArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type QueryCompanyScrapedPostsArgs = {
+  companySlug: Scalars['String']['input'];
 };
 
 
@@ -2888,6 +2905,25 @@ export type ScoreContactsMlResult = {
   message: Scalars['String']['output'];
   results: Array<ContactMlScore>;
   success: Scalars['Boolean']['output'];
+};
+
+export type ScrapedPost = {
+  __typename: 'ScrapedPost';
+  authorName: Maybe<Scalars['String']['output']>;
+  authorUrl: Maybe<Scalars['String']['output']>;
+  commentsCount: Scalars['Int']['output'];
+  isRepost: Scalars['Boolean']['output'];
+  mediaType: Maybe<Scalars['String']['output']>;
+  originalAuthor: Maybe<Scalars['String']['output']>;
+  personHeadline: Maybe<Scalars['String']['output']>;
+  personLinkedinUrl: Scalars['String']['output'];
+  personName: Scalars['String']['output'];
+  postText: Maybe<Scalars['String']['output']>;
+  postUrl: Maybe<Scalars['String']['output']>;
+  postedDate: Maybe<Scalars['String']['output']>;
+  reactionsCount: Scalars['Int']['output'];
+  repostsCount: Scalars['Int']['output'];
+  scrapedAt: Scalars['String']['output'];
 };
 
 export type SendDraftResult = {
@@ -4081,6 +4117,13 @@ export type DismissAllDraftsMutationVariables = Exact<{
 
 export type DismissAllDraftsMutation = { __typename: 'Mutation', dismissAllDrafts: { __typename: 'BatchDismissResult', success: boolean, dismissed: number } };
 
+export type GetCompanyScrapedPostsQueryVariables = Exact<{
+  companySlug: Scalars['String']['input'];
+}>;
+
+
+export type GetCompanyScrapedPostsQuery = { __typename: 'Query', companyScrapedPosts: { __typename: 'CompanyScrapedPostsResult', companyName: string, slug: string, peopleCount: number, postsCount: number, posts: Array<{ __typename: 'ScrapedPost', personName: string, personLinkedinUrl: string, personHeadline: string | null, postUrl: string | null, postText: string | null, postedDate: string | null, reactionsCount: number, commentsCount: number, repostsCount: number, isRepost: boolean, originalAuthor: string | null, scrapedAt: string }> } };
+
 export const EvidenceFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"EvidenceFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Evidence"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source_type"}},{"kind":"Field","name":{"kind":"Name","value":"source_url"}},{"kind":"Field","name":{"kind":"Name","value":"crawl_id"}},{"kind":"Field","name":{"kind":"Name","value":"capture_timestamp"}},{"kind":"Field","name":{"kind":"Name","value":"observed_at"}},{"kind":"Field","name":{"kind":"Name","value":"method"}},{"kind":"Field","name":{"kind":"Name","value":"extractor_version"}},{"kind":"Field","name":{"kind":"Name","value":"http_status"}},{"kind":"Field","name":{"kind":"Name","value":"mime"}},{"kind":"Field","name":{"kind":"Name","value":"content_hash"}},{"kind":"Field","name":{"kind":"Name","value":"warc"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"filename"}},{"kind":"Field","name":{"kind":"Name","value":"offset"}},{"kind":"Field","name":{"kind":"Name","value":"length"}},{"kind":"Field","name":{"kind":"Name","value":"digest"}}]}}]}}]} as unknown as DocumentNode<EvidenceFieldsFragment, unknown>;
 export const CompanyFactFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CompanyFactFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"CompanyFact"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"company_id"}},{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"value_json"}},{"kind":"Field","name":{"kind":"Name","value":"value_text"}},{"kind":"Field","name":{"kind":"Name","value":"normalized_value"}},{"kind":"Field","name":{"kind":"Name","value":"confidence"}},{"kind":"Field","name":{"kind":"Name","value":"evidence"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"EvidenceFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"EvidenceFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Evidence"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source_type"}},{"kind":"Field","name":{"kind":"Name","value":"source_url"}},{"kind":"Field","name":{"kind":"Name","value":"crawl_id"}},{"kind":"Field","name":{"kind":"Name","value":"capture_timestamp"}},{"kind":"Field","name":{"kind":"Name","value":"observed_at"}},{"kind":"Field","name":{"kind":"Name","value":"method"}},{"kind":"Field","name":{"kind":"Name","value":"extractor_version"}},{"kind":"Field","name":{"kind":"Name","value":"http_status"}},{"kind":"Field","name":{"kind":"Name","value":"mime"}},{"kind":"Field","name":{"kind":"Name","value":"content_hash"}},{"kind":"Field","name":{"kind":"Name","value":"warc"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"filename"}},{"kind":"Field","name":{"kind":"Name","value":"offset"}},{"kind":"Field","name":{"kind":"Name","value":"length"}},{"kind":"Field","name":{"kind":"Name","value":"digest"}}]}}]}}]} as unknown as DocumentNode<CompanyFactFieldsFragment, unknown>;
 export const CompanySnapshotFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CompanySnapshotFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"CompanySnapshot"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"company_id"}},{"kind":"Field","name":{"kind":"Name","value":"source_url"}},{"kind":"Field","name":{"kind":"Name","value":"crawl_id"}},{"kind":"Field","name":{"kind":"Name","value":"capture_timestamp"}},{"kind":"Field","name":{"kind":"Name","value":"fetched_at"}},{"kind":"Field","name":{"kind":"Name","value":"http_status"}},{"kind":"Field","name":{"kind":"Name","value":"mime"}},{"kind":"Field","name":{"kind":"Name","value":"content_hash"}},{"kind":"Field","name":{"kind":"Name","value":"text_sample"}},{"kind":"Field","name":{"kind":"Name","value":"jsonld"}},{"kind":"Field","name":{"kind":"Name","value":"extracted"}},{"kind":"Field","name":{"kind":"Name","value":"evidence"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"EvidenceFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"EvidenceFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Evidence"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source_type"}},{"kind":"Field","name":{"kind":"Name","value":"source_url"}},{"kind":"Field","name":{"kind":"Name","value":"crawl_id"}},{"kind":"Field","name":{"kind":"Name","value":"capture_timestamp"}},{"kind":"Field","name":{"kind":"Name","value":"observed_at"}},{"kind":"Field","name":{"kind":"Name","value":"method"}},{"kind":"Field","name":{"kind":"Name","value":"extractor_version"}},{"kind":"Field","name":{"kind":"Name","value":"http_status"}},{"kind":"Field","name":{"kind":"Name","value":"mime"}},{"kind":"Field","name":{"kind":"Name","value":"content_hash"}},{"kind":"Field","name":{"kind":"Name","value":"warc"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"filename"}},{"kind":"Field","name":{"kind":"Name","value":"offset"}},{"kind":"Field","name":{"kind":"Name","value":"length"}},{"kind":"Field","name":{"kind":"Name","value":"digest"}}]}}]}}]} as unknown as DocumentNode<CompanySnapshotFieldsFragment, unknown>;
@@ -4175,3 +4218,4 @@ export const GenerateDraftsForPendingDocument = {"kind":"Document","definitions"
 export const GenerateFollowUpDraftsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateFollowUpDrafts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"daysAfterInitial"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"daysAfterFollowUp1"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"daysAfterFollowUp2"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateFollowUpDrafts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"daysAfterInitial"},"value":{"kind":"Variable","name":{"kind":"Name","value":"daysAfterInitial"}}},{"kind":"Argument","name":{"kind":"Name","value":"daysAfterFollowUp1"},"value":{"kind":"Variable","name":{"kind":"Name","value":"daysAfterFollowUp1"}}},{"kind":"Argument","name":{"kind":"Name","value":"daysAfterFollowUp2"},"value":{"kind":"Variable","name":{"kind":"Name","value":"daysAfterFollowUp2"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"generated"}},{"kind":"Field","name":{"kind":"Name","value":"skipped"}},{"kind":"Field","name":{"kind":"Name","value":"failed"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<GenerateFollowUpDraftsMutation, GenerateFollowUpDraftsMutationVariables>;
 export const ApproveAllDraftsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ApproveAllDrafts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"draftIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"approveAllDrafts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"draftIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"draftIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"sent"}},{"kind":"Field","name":{"kind":"Name","value":"failed"}},{"kind":"Field","name":{"kind":"Name","value":"errors"}}]}}]}}]} as unknown as DocumentNode<ApproveAllDraftsMutation, ApproveAllDraftsMutationVariables>;
 export const DismissAllDraftsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DismissAllDrafts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"draftIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"dismissAllDrafts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"draftIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"draftIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"dismissed"}}]}}]}}]} as unknown as DocumentNode<DismissAllDraftsMutation, DismissAllDraftsMutationVariables>;
+export const GetCompanyScrapedPostsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetCompanyScrapedPosts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companySlug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"companyScrapedPosts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"companySlug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companySlug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"companyName"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"peopleCount"}},{"kind":"Field","name":{"kind":"Name","value":"postsCount"}},{"kind":"Field","name":{"kind":"Name","value":"posts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"personName"}},{"kind":"Field","name":{"kind":"Name","value":"personLinkedinUrl"}},{"kind":"Field","name":{"kind":"Name","value":"personHeadline"}},{"kind":"Field","name":{"kind":"Name","value":"postUrl"}},{"kind":"Field","name":{"kind":"Name","value":"postText"}},{"kind":"Field","name":{"kind":"Name","value":"postedDate"}},{"kind":"Field","name":{"kind":"Name","value":"reactionsCount"}},{"kind":"Field","name":{"kind":"Name","value":"commentsCount"}},{"kind":"Field","name":{"kind":"Name","value":"repostsCount"}},{"kind":"Field","name":{"kind":"Name","value":"isRepost"}},{"kind":"Field","name":{"kind":"Name","value":"originalAuthor"}},{"kind":"Field","name":{"kind":"Name","value":"scrapedAt"}}]}}]}}]}}]} as unknown as DocumentNode<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>;

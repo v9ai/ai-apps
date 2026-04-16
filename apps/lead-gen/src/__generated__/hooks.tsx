@@ -306,6 +306,17 @@ export type CompanyOrderBy =
   | 'SCORE_DESC'
   | 'UPDATED_AT_DESC';
 
+export type CompanyScrapedPostsResult = {
+  __typename?: 'CompanyScrapedPostsResult';
+  companyName: Scalars['String']['output'];
+  firstScraped: Maybe<Scalars['String']['output']>;
+  lastScraped: Maybe<Scalars['String']['output']>;
+  peopleCount: Scalars['Int']['output'];
+  posts: Array<ScrapedPost>;
+  postsCount: Scalars['Int']['output'];
+  slug: Scalars['String']['output'];
+};
+
 export type CompanySnapshot = {
   __typename?: 'CompanySnapshot';
   capture_timestamp: Maybe<Scalars['String']['output']>;
@@ -1841,6 +1852,7 @@ export type Query = {
   companiesLike: Array<SimilarCompanyResult>;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
+  companyScrapedPosts: CompanyScrapedPostsResult;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
   contact: Maybe<Contact>;
@@ -1970,6 +1982,11 @@ export type QueryCompanyArgs = {
 
 export type QueryCompanyContactEmailsArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type QueryCompanyScrapedPostsArgs = {
+  companySlug: Scalars['String']['input'];
 };
 
 
@@ -2889,6 +2906,25 @@ export type ScoreContactsMlResult = {
   message: Scalars['String']['output'];
   results: Array<ContactMlScore>;
   success: Scalars['Boolean']['output'];
+};
+
+export type ScrapedPost = {
+  __typename?: 'ScrapedPost';
+  authorName: Maybe<Scalars['String']['output']>;
+  authorUrl: Maybe<Scalars['String']['output']>;
+  commentsCount: Scalars['Int']['output'];
+  isRepost: Scalars['Boolean']['output'];
+  mediaType: Maybe<Scalars['String']['output']>;
+  originalAuthor: Maybe<Scalars['String']['output']>;
+  personHeadline: Maybe<Scalars['String']['output']>;
+  personLinkedinUrl: Scalars['String']['output'];
+  personName: Scalars['String']['output'];
+  postText: Maybe<Scalars['String']['output']>;
+  postUrl: Maybe<Scalars['String']['output']>;
+  postedDate: Maybe<Scalars['String']['output']>;
+  reactionsCount: Scalars['Int']['output'];
+  repostsCount: Scalars['Int']['output'];
+  scrapedAt: Scalars['String']['output'];
 };
 
 export type SendDraftResult = {
@@ -4042,6 +4078,13 @@ export type DismissAllDraftsMutationVariables = Exact<{
 
 
 export type DismissAllDraftsMutation = { __typename?: 'Mutation', dismissAllDrafts: { __typename?: 'BatchDismissResult', success: boolean, dismissed: number } };
+
+export type GetCompanyScrapedPostsQueryVariables = Exact<{
+  companySlug: Scalars['String']['input'];
+}>;
+
+
+export type GetCompanyScrapedPostsQuery = { __typename?: 'Query', companyScrapedPosts: { __typename?: 'CompanyScrapedPostsResult', companyName: string, slug: string, peopleCount: number, postsCount: number, posts: Array<{ __typename?: 'ScrapedPost', personName: string, personLinkedinUrl: string, personHeadline: string | null, postUrl: string | null, postText: string | null, postedDate: string | null, reactionsCount: number, commentsCount: number, repostsCount: number, isRepost: boolean, originalAuthor: string | null, scrapedAt: string }> } };
 
 export const EvidenceFieldsFragmentDoc = gql`
     fragment EvidenceFields on Evidence {
@@ -8180,3 +8223,63 @@ export function useDismissAllDraftsMutation(baseOptions?: Apollo.MutationHookOpt
 export type DismissAllDraftsMutationHookResult = ReturnType<typeof useDismissAllDraftsMutation>;
 export type DismissAllDraftsMutationResult = Apollo.MutationResult<DismissAllDraftsMutation>;
 export type DismissAllDraftsMutationOptions = Apollo.BaseMutationOptions<DismissAllDraftsMutation, DismissAllDraftsMutationVariables>;
+export const GetCompanyScrapedPostsDocument = gql`
+    query GetCompanyScrapedPosts($companySlug: String!) {
+  companyScrapedPosts(companySlug: $companySlug) {
+    companyName
+    slug
+    peopleCount
+    postsCount
+    posts {
+      personName
+      personLinkedinUrl
+      personHeadline
+      postUrl
+      postText
+      postedDate
+      reactionsCount
+      commentsCount
+      repostsCount
+      isRepost
+      originalAuthor
+      scrapedAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetCompanyScrapedPostsQuery__
+ *
+ * To run a query within a React component, call `useGetCompanyScrapedPostsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCompanyScrapedPostsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCompanyScrapedPostsQuery({
+ *   variables: {
+ *      companySlug: // value for 'companySlug'
+ *   },
+ * });
+ */
+export function useGetCompanyScrapedPostsQuery(baseOptions: Apollo.QueryHookOptions<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables> & ({ variables: GetCompanyScrapedPostsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>(GetCompanyScrapedPostsDocument, options);
+      }
+export function useGetCompanyScrapedPostsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>(GetCompanyScrapedPostsDocument, options);
+        }
+// @ts-ignore
+export function useGetCompanyScrapedPostsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>): Apollo.UseSuspenseQueryResult<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>;
+export function useGetCompanyScrapedPostsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>): Apollo.UseSuspenseQueryResult<GetCompanyScrapedPostsQuery | undefined, GetCompanyScrapedPostsQueryVariables>;
+export function useGetCompanyScrapedPostsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>(GetCompanyScrapedPostsDocument, options);
+        }
+export type GetCompanyScrapedPostsQueryHookResult = ReturnType<typeof useGetCompanyScrapedPostsQuery>;
+export type GetCompanyScrapedPostsLazyQueryHookResult = ReturnType<typeof useGetCompanyScrapedPostsLazyQuery>;
+export type GetCompanyScrapedPostsSuspenseQueryHookResult = ReturnType<typeof useGetCompanyScrapedPostsSuspenseQuery>;
+export type GetCompanyScrapedPostsQueryResult = Apollo.QueryResult<GetCompanyScrapedPostsQuery, GetCompanyScrapedPostsQueryVariables>;
