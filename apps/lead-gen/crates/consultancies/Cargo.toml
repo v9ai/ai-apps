@@ -8,6 +8,10 @@ description = "Discover top-tier AI/ML consultancies (EU, UK, US) and upsert int
 name = "consultancies"
 path = "src/main.rs"
 
+[[bin]]
+name = "gh_discover"
+path = "src/bin/gh_discover.rs"
+
 [dependencies]
 futures            = { workspace = true }
 sqlx               = { workspace = true }
@@ -24,3 +28,4 @@ chrono             = { workspace = true }
 dotenvy            = { workspace = true }
 url                = { workspace = true }
 regex              = { workspace = true }
+github-patterns    = { path = "../gh" }

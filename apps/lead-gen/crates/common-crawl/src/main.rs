@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 use reqwest::Client;
 use tracing::{info, warn};
 
-use common_crawl::{cdx, db, extract};
+use common_crawl::{cdx, db, pipeline};
 
 #[derive(Parser)]
 #[command(name = "common-crawl", about = "Seed company discovery from Common Crawl")]
@@ -14,25 +14,25 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Cmd {
-    /// Print CDX records found for a domain (no DB writes)
+    /// Print CDX records for a domain without DB writes
     Seed {
         domain: String,
         #[arg(long, default_value = "50")]
         limit: usize,
     },
-    /// Fetch WARC snapshots for a domain and upsert last_seen to Neon
+    /// Fetch WARC snapshots, extract contacts, write to Neon
     Fetch {
         domain: String,
-        #[arg(long, default_value = "10")]
-        limit: usize,
+        #[arg(long, default_value = "15")]
+        pages: usize,
         #[arg(long)]
         dry_run: bool,
     },
-    /// Batch-fetch all companies in Neon that have no last_seen_crawl_id
+    /// Process all companies in Neon that have no last_seen_crawl_id
     Backfill {
-        #[arg(long, default_value = "100")]
+        #[arg(long, default_value = "200")]
         limit: i64,
-        #[arg(long, default_value = "5")]
+        #[arg(long, default_value = "15")]
         pages_per_domain: usize,
         #[arg(long)]
         dry_run: bool,
@@ -57,111 +57,59 @@ async fn main() -> Result<()> {
         .timeout(std::time::Duration::from_secs(30))
         .build()?;
 
-    info!("resolving latest Common Crawl index...");
-    let crawl_id = cdx::latest_crawl_id(&client).await?;
-    info!(crawl_id = %crawl_id, "using crawl index");
-
     match cli.cmd {
         Cmd::Seed { domain, limit } => {
-            let records = cdx::query_domain(&client, &crawl_id, &domain, limit).await?;
-            let interesting: Vec<_> = records.iter().filter(|r| cdx::is_interesting(&r.url)).collect();
-            println!("{} records total, {} interesting", records.len(), interesting.len());
-            for r in &interesting {
-                println!("  {} | {} | off={} len={}", r.timestamp, r.url, r.offset, r.length);
+            info!("resolving CC indices...");
+            let (crawl_id, records) = cdx::query_domain_multi(&client, &domain, limit).await?;
+            println!("crawl_id={crawl_id}  total={}", records.len());
+            for r in &records {
+                println!("  score={:.1}  ts={}  {}", cdx::page_score(&r.url), r.timestamp, r.url);
             }
         }
 
-        Cmd::Fetch { domain, limit, dry_run } => {
-            let db_url = require_db_url()?;
-            let pool = db::connect(&db_url).await?;
-            fetch_domain(&client, &pool, &crawl_id, &domain, limit, dry_run).await?;
+        Cmd::Fetch { domain, pages, dry_run } => {
+            let pool = connect_db().await?;
+            let stats = pipeline::run_domain(&client, &pool, &domain, pages, dry_run).await?;
+            println!(
+                "{}: {} pages, {} persons, {} contacts upserted, {} snapshots",
+                stats.domain, stats.pages_fetched, stats.persons_found,
+                stats.contacts_upserted, stats.snapshots_written,
+            );
         }
 
         Cmd::Backfill { limit, pages_per_domain, dry_run } => {
-            let db_url = require_db_url()?;
-            let pool = db::connect(&db_url).await?;
-
+            let pool = connect_db().await?;
             let domains = db::domains_without_crawl(&pool, limit).await?;
-            info!(count = domains.len(), "domains queued for backfill");
+            info!(count = domains.len(), "domains queued");
+
+            let mut total_contacts = 0usize;
+            let mut total_pages = 0usize;
 
             for domain in &domains {
-                match fetch_domain(&client, &pool, &crawl_id, domain, pages_per_domain, dry_run).await {
-                    Ok(_) => {}
-                    Err(e) => warn!(domain = %domain, error = %e, "fetch failed, skipping"),
+                match pipeline::run_domain(&client, &pool, domain, pages_per_domain, dry_run).await {
+                    Ok(stats) => {
+                        total_contacts += stats.contacts_upserted;
+                        total_pages += stats.pages_fetched;
+                    }
+                    Err(e) => warn!(domain = %domain, error = %e, "skipping"),
                 }
             }
-            info!("backfill complete");
+
+            info!(
+                domains = domains.len(),
+                total_pages,
+                total_contacts,
+                "backfill complete"
+            );
         }
     }
 
     Ok(())
 }
 
-async fn fetch_domain(
-    client: &Client,
-    pool: &sqlx::PgPool,
-    crawl_id: &str,
-    domain: &str,
-    limit: usize,
-    dry_run: bool,
-) -> Result<()> {
-    let records = cdx::query_domain(client, crawl_id, domain, limit * 4)
-        .await
-        .with_context(|| format!("CDX query for {domain}"))?;
-
-    let interesting: Vec<_> = records
-        .into_iter()
-        .filter(|r| cdx::is_interesting(&r.url))
-        .take(limit)
-        .collect();
-
-    if interesting.is_empty() {
-        info!(domain = %domain, "no interesting pages in CDX");
-        return Ok(());
-    }
-
-    info!(domain = %domain, pages = interesting.len(), "fetching WARC snapshots");
-
-    // Use the most recent record as the last_seen anchor.
-    let anchor = interesting.iter().max_by(|a, b| a.timestamp.cmp(&b.timestamp)).unwrap();
-
-    let mut emails_found = Vec::new();
-    for record in &interesting {
-        match cdx::fetch_warc_html(client, record).await {
-            Ok(html) => {
-                let content = extract::extract(&html, &record.url);
-                emails_found.extend(content.emails);
-                info!(
-                    url = %record.url,
-                    title = ?content.title,
-                    text_bytes = content.text.len(),
-                    "fetched"
-                );
-            }
-            Err(e) => {
-                warn!(url = %record.url, error = %e, "WARC fetch failed");
-            }
-        }
-    }
-
-    emails_found.sort();
-    emails_found.dedup();
-    if !emails_found.is_empty() {
-        info!(domain = %domain, emails = ?emails_found, "emails extracted");
-    }
-
-    if !dry_run {
-        let rows = db::update_last_seen(pool, domain, anchor).await?;
-        info!(domain = %domain, rows_updated = rows, crawl_id = %anchor.crawl_id, ts = %anchor.timestamp, "last_seen updated");
-    } else {
-        info!(domain = %domain, "dry_run — skipping DB write");
-    }
-
-    Ok(())
-}
-
-fn require_db_url() -> Result<String> {
-    std::env::var("NEON_DATABASE_URL")
+async fn connect_db() -> Result<sqlx::PgPool> {
+    let url = std::env::var("NEON_DATABASE_URL")
         .or_else(|_| std::env::var("DATABASE_URL"))
-        .context("NEON_DATABASE_URL must be set")
+        .context("NEON_DATABASE_URL must be set")?;
+    db::connect(&url).await
 }

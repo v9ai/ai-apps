@@ -3,6 +3,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 
 use crate::cdx::CdxRecord;
+use crate::extract::{PageContent, Person};
 
 pub async fn connect(database_url: &str) -> Result<PgPool> {
     PgPoolOptions::new()
@@ -12,8 +13,19 @@ pub async fn connect(database_url: &str) -> Result<PgPool> {
         .context("connecting to Neon PostgreSQL")
 }
 
-/// Write last_seen Common Crawl metadata for a company identified by canonical_domain.
-/// Does nothing if no row matches the domain.
+/// Look up a company's integer primary key by canonical_domain or key.
+pub async fn company_id_by_domain(pool: &PgPool, domain: &str) -> Result<Option<i32>> {
+    let row: Option<(i32,)> = sqlx::query_as(
+        "SELECT id FROM companies WHERE canonical_domain = $1 OR key = $1 LIMIT 1",
+    )
+    .bind(domain)
+    .fetch_optional(pool)
+    .await
+    .context("company_id_by_domain")?;
+    Ok(row.map(|(id,)| id))
+}
+
+/// Update `last_seen_*` fields on the companies row.
 pub async fn update_last_seen(pool: &PgPool, domain: &str, record: &CdxRecord) -> Result<u64> {
     let rows = sqlx::query(
         r#"UPDATE companies
@@ -31,11 +43,152 @@ pub async fn update_last_seen(pool: &PgPool, domain: &str, record: &CdxRecord) -
     .await
     .context("update last_seen")?
     .rows_affected();
-
     Ok(rows)
 }
 
-/// Fetch all canonical_domains that have no last_seen_crawl_id yet.
+/// Write a snapshot row for one fetched WARC page.
+/// Skips if a snapshot with the same content_hash already exists for this company.
+pub async fn upsert_snapshot(
+    pool: &PgPool,
+    company_id: i32,
+    record: &CdxRecord,
+    content: &PageContent,
+) -> Result<Option<i32>> {
+    // Check dedup by content hash
+    let existing: Option<(i32,)> = sqlx::query_as(
+        "SELECT id FROM company_snapshots WHERE company_id = $1 AND content_hash = $2 LIMIT 1",
+    )
+    .bind(company_id)
+    .bind(&content.content_hash)
+    .fetch_optional(pool)
+    .await?;
+
+    if let Some((id,)) = existing {
+        return Ok(Some(id));
+    }
+
+    let text_sample: String = content.text.chars().take(500).collect();
+    let id: i32 = sqlx::query_scalar(
+        r#"INSERT INTO company_snapshots
+             (company_id, source_url, crawl_id, capture_timestamp, fetched_at,
+              http_status, mime, content_hash, text_sample,
+              source_type, method, extractor_version,
+              warc_filename, warc_offset, warc_length)
+           VALUES ($1,$2,$3,$4, now()::text,
+                   200,'text/html',$5,$6,
+                   'COMMONCRAWL','HEURISTIC','common-crawl-rs/0.1',
+                   $7,$8,$9)
+           RETURNING id"#,
+    )
+    .bind(company_id)
+    .bind(&record.url)
+    .bind(&record.crawl_id)
+    .bind(&record.timestamp)
+    .bind(&content.content_hash)
+    .bind(&text_sample)
+    .bind(&record.filename)
+    .bind(record.offset as i64)
+    .bind(record.length as i64)
+    .fetch_one(pool)
+    .await
+    .context("insert company_snapshot")?;
+
+    Ok(Some(id))
+}
+
+/// Write a company_facts row for a discovered field (e.g. "description", "email").
+pub async fn upsert_fact(
+    pool: &PgPool,
+    company_id: i32,
+    field: &str,
+    value_text: &str,
+    record: &CdxRecord,
+    confidence: f32,
+) -> Result<()> {
+    // Skip if identical (field + value_text) already recorded for this company+source
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM company_facts WHERE company_id=$1 AND field=$2 AND value_text=$3 AND source_url=$4)",
+    )
+    .bind(company_id).bind(field).bind(value_text).bind(&record.url)
+    .fetch_one(pool).await.unwrap_or(false);
+    if exists { return Ok(()); }
+
+    sqlx::query(
+        r#"INSERT INTO company_facts
+             (company_id, field, value_text, confidence,
+              source_type, source_url, crawl_id, capture_timestamp,
+              observed_at, method, extractor_version,
+              warc_filename, warc_offset, warc_length)
+           VALUES ($1,$2,$3,$4,
+                   'COMMONCRAWL',$5,$6,$7,
+                   now()::text,'HEURISTIC','common-crawl-rs/0.1',
+                   $8,$9,$10)"#,
+    )
+    .bind(company_id)
+    .bind(field)
+    .bind(value_text)
+    .bind(confidence)
+    .bind(&record.url)
+    .bind(&record.crawl_id)
+    .bind(&record.timestamp)
+    .bind(&record.filename)
+    .bind(record.offset as i64)
+    .bind(record.length as i64)
+    .execute(pool)
+    .await
+    .context("insert company_fact")?;
+    Ok(())
+}
+
+/// Insert a contact discovered from a WARC page, skipping if the name already exists for that company.
+pub async fn upsert_contact(pool: &PgPool, company_id: i32, person: &Person) -> Result<Option<i32>> {
+    let (first, last) = split_name(&person.name);
+    if first.is_empty() || last.is_empty() {
+        return Ok(None);
+    }
+
+    // Check for existing row first (no unique constraint on name+company_id)
+    let existing: Option<(i32,)> = sqlx::query_as(
+        "SELECT id FROM contacts WHERE company_id = $1 AND first_name = $2 AND last_name = $3 LIMIT 1",
+    )
+    .bind(company_id)
+    .bind(&first)
+    .bind(&last)
+    .fetch_optional(pool)
+    .await
+    .context("check existing contact")?;
+
+    if let Some((id,)) = existing {
+        // Update position/email if we have new data
+        sqlx::query(
+            "UPDATE contacts SET position = COALESCE($1, position), email = COALESCE($2, email) WHERE id = $3",
+        )
+        .bind(&person.title)
+        .bind(&person.email)
+        .bind(id)
+        .execute(pool)
+        .await?;
+        return Ok(Some(id));
+    }
+
+    let id: i32 = sqlx::query_scalar(
+        r#"INSERT INTO contacts (first_name, last_name, position, email, company_id, tags)
+           VALUES ($1, $2, $3, $4, $5, '["source:common-crawl"]')
+           RETURNING id"#,
+    )
+    .bind(&first)
+    .bind(&last)
+    .bind(&person.title)
+    .bind(&person.email)
+    .bind(company_id)
+    .fetch_one(pool)
+    .await
+    .context("insert contact")?;
+
+    Ok(Some(id))
+}
+
+/// Domains in Neon that have no last_seen_crawl_id yet.
 pub async fn domains_without_crawl(pool: &PgPool, limit: i64) -> Result<Vec<String>> {
     let rows: Vec<(String,)> = sqlx::query_as(
         r#"SELECT COALESCE(canonical_domain, key)
@@ -49,7 +202,15 @@ pub async fn domains_without_crawl(pool: &PgPool, limit: i64) -> Result<Vec<Stri
     .bind(limit)
     .fetch_all(pool)
     .await
-    .context("querying domains without crawl")?;
-
+    .context("domains_without_crawl")?;
     Ok(rows.into_iter().map(|(d,)| d).collect())
+}
+
+fn split_name(full: &str) -> (String, String) {
+    let parts: Vec<&str> = full.trim().splitn(2, ' ').collect();
+    match parts.len() {
+        2 => (parts[0].to_string(), parts[1].to_string()),
+        1 => (parts[0].to_string(), String::new()),
+        _ => (String::new(), String::new()),
+    }
 }

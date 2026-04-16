@@ -224,7 +224,7 @@ impl GhClient {
     const GQL_URL: &'static str = "https://api.github.com/graphql";
 
     /// POST a GraphQL query and return the parsed `data` field.
-    async fn graphql<T: DeserializeOwned>(&self, query: &str, variables: Option<&serde_json::Value>) -> Result<T> {
+    pub async fn graphql<T: DeserializeOwned>(&self, query: &str, variables: Option<&serde_json::Value>) -> Result<T> {
         let body = if let Some(vars) = variables {
             serde_json::json!({ "query": query, "variables": vars })
         } else {

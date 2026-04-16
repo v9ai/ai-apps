@@ -5,6 +5,9 @@ use serde::Deserialize;
 const CDX_BASE: &str = "https://index.commoncrawl.org";
 const S3_BASE: &str = "https://data.commoncrawl.org";
 
+/// How many recent CC indices to search before giving up.
+const MAX_INDICES: usize = 3;
+
 #[derive(Debug, Deserialize)]
 struct CollInfo {
     id: String,
@@ -20,8 +23,8 @@ pub struct CdxRecord {
     pub length: u64,
 }
 
-/// Returns the id of the most recent Common Crawl index (e.g. "CC-MAIN-2025-13").
-pub async fn latest_crawl_id(client: &Client) -> Result<String> {
+/// Returns the ids of the `n` most recent Common Crawl indices.
+pub async fn recent_crawl_ids(client: &Client, n: usize) -> Result<Vec<String>> {
     let infos: Vec<CollInfo> = client
         .get(format!("{CDX_BASE}/collinfo.json"))
         .send()
@@ -30,16 +33,47 @@ pub async fn latest_crawl_id(client: &Client) -> Result<String> {
         .json()
         .await
         .context("parsing collinfo")?;
-    infos
-        .into_iter()
-        .next()
-        .map(|c| c.id)
-        .ok_or_else(|| anyhow::anyhow!("collinfo returned empty list"))
+    Ok(infos.into_iter().take(n).map(|c| c.id).collect())
 }
 
-/// Query the CDX API for up to `limit` HTML snapshots of `domain`.
-/// Only status-200 records are returned.
-pub async fn query_domain(
+/// Query CDX across the latest `MAX_INDICES` crawl indices.
+/// Returns deduplicated records (by URL), preferring the most recent capture.
+/// Filters to status-200 HTML pages that pass `is_interesting()`.
+pub async fn query_domain_multi(
+    client: &Client,
+    domain: &str,
+    per_index_limit: usize,
+) -> Result<(String, Vec<CdxRecord>)> {
+    let ids = recent_crawl_ids(client, MAX_INDICES).await?;
+    let primary = ids.first().cloned().unwrap_or_default();
+
+    let mut seen_urls = std::collections::HashSet::new();
+    let mut all = Vec::new();
+
+    for crawl_id in &ids {
+        let batch = query_one_index(client, crawl_id, domain, per_index_limit).await;
+        match batch {
+            Ok(records) => {
+                for r in records {
+                    if seen_urls.insert(r.url.clone()) {
+                        all.push(r);
+                    }
+                }
+                if !all.is_empty() {
+                    // Found results — no need to try older indices
+                    break;
+                }
+            }
+            Err(e) => tracing::warn!(crawl_id = %crawl_id, domain = %domain, error = %e, "CDX index query failed"),
+        }
+    }
+
+    // Sort by descending timestamp (most recent first)
+    all.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+    Ok((primary, all))
+}
+
+async fn query_one_index(
     client: &Client,
     crawl_id: &str,
     domain: &str,
@@ -70,7 +104,8 @@ pub async fn query_domain(
             continue;
         }
         match parse_cdx_line(line, crawl_id) {
-            Ok(rec) => records.push(rec),
+            Ok(rec) if is_interesting(&rec.url) => records.push(rec),
+            Ok(_) => {}
             Err(e) => tracing::debug!(line, error = %e, "skipping CDX line"),
         }
     }
@@ -87,15 +122,13 @@ fn parse_cdx_line(line: &str, crawl_id: &str) -> Result<CdxRecord> {
         length: serde_json::Value,
     }
     let raw: Raw = serde_json::from_str(line).context("JSON parse")?;
-    let offset = coerce_u64(&raw.offset).context("offset")?;
-    let length = coerce_u64(&raw.length).context("length")?;
     Ok(CdxRecord {
         url: raw.url,
         timestamp: raw.timestamp,
         crawl_id: crawl_id.to_string(),
         filename: raw.filename,
-        offset,
-        length,
+        offset: coerce_u64(&raw.offset).context("offset")?,
+        length: coerce_u64(&raw.length).context("length")?,
     })
 }
 
@@ -131,7 +164,6 @@ fn parse_warc_html(compressed: &[u8]) -> Result<String> {
     let mut raw = Vec::new();
     decoder.read_to_end(&mut raw).context("gzip decompress")?;
 
-    // Find end of WARC headers, then end of HTTP headers.
     let text = String::from_utf8_lossy(&raw);
     let after_warc = skip_past_blank(&text)
         .ok_or_else(|| anyhow::anyhow!("no WARC header boundary"))?;
@@ -151,26 +183,64 @@ fn skip_past_blank(text: &str) -> Option<&str> {
     None
 }
 
-/// True if the URL path is a high-value company page worth fetching.
+/// Page type score (0.0–1.0). Higher = more likely to contain contacts.
+pub fn page_score(url: &str) -> f32 {
+    let path = url_path(url).to_lowercase();
+    // Exact or prefix match against ranked tiers
+    const TIER1: &[&str] = &["/team", "/our-team", "/the-team", "/meet-the-team", "/people", "/staff", "/leadership", "/management", "/about/team", "/about/people"];
+    const TIER2: &[&str] = &["/about", "/about-us", "/about_us", "/who-we-are", "/company", "/company/about"];
+    const TIER3: &[&str] = &["/contact", "/contact-us", "/careers", "/jobs", "/services", "/what-we-do", "/solutions"];
+
+    for t in TIER1 { if path == *t || path.starts_with(&format!("{t}/")) { return 1.0; } }
+    for t in TIER2 { if path == *t || path.starts_with(&format!("{t}/")) { return 0.7; } }
+    for t in TIER3 { if path == *t || path.starts_with(&format!("{t}/")) { return 0.4; } }
+    if path == "/" { return 0.3; }
+    0.0
+}
+
+/// Subdomains that never contain company-info pages.
+const NOISE_SUBDOMAINS: &[&str] = &[
+    "careers.", "jobs.", "apply.", "talent.", "hire.",
+    "blog.", "news.", "press.", "media.",
+    "api.", "cdn.", "assets.", "static.", "img.", "images.",
+    "help.", "support.", "docs.", "developers.", "dev.",
+    "shop.", "store.", "ecommerce.",
+    "mail.", "webmail.", "smtp.",
+];
+
+/// Query-string params that are pure tracking noise (page content is identical).
+const TRACKING_PARAMS: &[&str] = &[
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "ref", "source", "fbclid", "gclid", "msclkid", "ref_src",
+];
+
 pub fn is_interesting(url: &str) -> bool {
-    let path = url
-        .split("://")
+    let after_scheme = url.split("://").nth(1).unwrap_or(url);
+    let host = after_scheme.split('/').next().unwrap_or("").to_lowercase();
+    if NOISE_SUBDOMAINS.iter().any(|prefix| host.starts_with(prefix)) {
+        return false;
+    }
+    // Reject URLs whose query string is entirely tracking params
+    if let Some(qs) = url.find('?').map(|i| &url[i + 1..]) {
+        let non_tracking = qs.split('&')
+            .filter(|p| {
+                let key = p.split('=').next().unwrap_or("");
+                !TRACKING_PARAMS.contains(&key)
+            })
+            .count();
+        if non_tracking == 0 && !qs.is_empty() {
+            return false;
+        }
+    }
+    page_score(url) > 0.0
+}
+
+pub fn url_path(url: &str) -> &str {
+    url.split("://")
         .nth(1)
         .and_then(|s| s.find('/').map(|i| &s[i..]))
         .unwrap_or("/")
         .split('?')
         .next()
         .unwrap_or("/")
-        .to_lowercase();
-
-    const KEEP: &[&str] = &[
-        "/", "/about", "/about-us", "/about_us", "/who-we-are",
-        "/team", "/our-team", "/the-team", "/meet-the-team",
-        "/leadership", "/management", "/people", "/staff",
-        "/contact", "/contact-us",
-        "/services", "/what-we-do", "/solutions",
-        "/careers", "/jobs",
-    ];
-    // Exact match or starts-with for multi-segment paths like /about/team
-    KEEP.iter().any(|&keep| path == keep || path.starts_with(&format!("{keep}/")))
 }

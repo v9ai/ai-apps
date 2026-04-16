@@ -1,6 +1,7 @@
 pub mod classify;
 pub mod db;
 pub mod discovery;
+pub mod github;
 pub mod scrape;
 pub mod seeds;
 
