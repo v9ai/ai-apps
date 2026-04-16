@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   useGetCompanyQuery,
+  useGetContactsQuery,
   useEnhanceCompanyMutation,
   useAnalyzeCompanyMutation,
   useUpdateCompanyMutation,
@@ -39,6 +40,7 @@ import {
   Select,
   Separator,
   Skeleton,
+  Spinner,
   Strong,
   TabNav,
   Text,
@@ -915,6 +917,65 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   // When a numeric ID is passed, derive the slug from the loaded company record
   const effectiveKey = companyKey ?? company?.key;
 
+  // Fetch contact IDs for this company (used to load posts from LanceDB)
+  const { data: contactsData } = useGetContactsQuery({
+    variables: { companyId: company?.id ?? 0, limit: 200 },
+    skip: !isAdmin || !company?.id,
+  });
+
+  // Fetch posts from LanceDB server via proxy API
+  type LancePost = {
+    id: number;
+    contact_id: number;
+    post_url: string | null;
+    post_text: string | null;
+    posted_date: string | null;
+    reactions_count: number;
+    comments_count: number;
+    reposts_count: number;
+    is_repost: boolean;
+    original_author: string | null;
+    primary_intent: string;
+    relevance_score: number;
+  };
+  const [posts, setPosts] = useState<LancePost[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+
+  const contactIds = useMemo(
+    () => (contactsData?.contacts?.contacts ?? []).map((c) => c.id),
+    [contactsData],
+  );
+
+  // Build a contactId → name map for display
+  const contactNameMap = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const c of contactsData?.contacts?.contacts ?? []) {
+      map.set(c.id, `${c.firstName} ${c.lastName}`.trim());
+    }
+    return map;
+  }, [contactsData]);
+
+  useEffect(() => {
+    if (contactIds.length === 0) {
+      setPosts([]);
+      return;
+    }
+    let cancelled = false;
+    setPostsLoading(true);
+    fetch(`/api/posts?contactIds=${contactIds.join(",")}&limit=100`)
+      .then((r) => r.json())
+      .then((data: LancePost[]) => {
+        if (!cancelled) setPosts(data);
+      })
+      .catch(() => {
+        if (!cancelled) setPosts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setPostsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [contactIds]);
+
   const handleDelete = useCallback(async () => {
     if (!company?.id) return;
     await deleteCompany({ variables: { id: company.id } });
@@ -1352,6 +1413,52 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                 ))}
               </Flex>
             </SectionCard>
+          )}
+
+          {/* Posts from company contacts */}
+          {isAdmin && posts.length > 0 && (
+            <SectionCard title={`Posts (${posts.length})`}>
+              <Flex direction="column" gap="1">
+                {posts.map((p) => {
+                  const name = contactNameMap.get(p.contact_id) ?? "Unknown";
+                  const text = p.post_text
+                    ? p.post_text.length > 150
+                      ? p.post_text.slice(0, 150) + "…"
+                      : p.post_text
+                    : "(no text)";
+                  const ago = p.posted_date
+                    ? `${Math.max(0, Math.floor((Date.now() - new Date(p.posted_date).getTime()) / 86_400_000))}d`
+                    : "";
+                  return (
+                    <Flex key={p.id} align="start" gap="2" py="1" style={{ borderBottom: "1px solid var(--gray-3)" }}>
+                      <Text size="1" weight="medium" style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
+                        {name}
+                      </Text>
+                      <Text size="1" color="gray" style={{ flex: "1 1 0%", minWidth: 0 }}>
+                        {text}
+                      </Text>
+                      <Flex align="center" gap="2" flexShrink="0">
+                        {ago && <Text size="1" color="gray">{ago}</Text>}
+                        {(p.reactions_count > 0 || p.comments_count > 0) && (
+                          <Text size="1" color="gray">
+                            {p.reactions_count > 0 && `${p.reactions_count}↑`}
+                            {p.comments_count > 0 && ` ${p.comments_count}💬`}
+                          </Text>
+                        )}
+                        {p.post_url && (
+                          <RadixLink href={p.post_url} target="_blank" rel="noopener noreferrer" size="1">
+                            <ExternalLinkIcon />
+                          </RadixLink>
+                        )}
+                      </Flex>
+                    </Flex>
+                  );
+                })}
+              </Flex>
+            </SectionCard>
+          )}
+          {isAdmin && postsLoading && (
+            <Flex justify="center" py="3"><Spinner size="2" /></Flex>
           )}
 
           {/* Deep analysis / About / Services */}
