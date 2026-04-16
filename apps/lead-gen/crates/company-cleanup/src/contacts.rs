@@ -72,6 +72,21 @@ pub async fn clear_positions_batch(pool: &PgPool, ids: &[i32]) -> Result<u64> {
     Ok(n)
 }
 
+/// Delete contacts by ID.
+pub async fn delete_contacts_batch(pool: &PgPool, ids: &[i32]) -> Result<u64> {
+    if ids.is_empty() {
+        return Ok(0);
+    }
+    let result = sqlx::query("DELETE FROM contacts WHERE id = ANY($1)")
+        .bind(ids)
+        .execute(pool)
+        .await
+        .context("batch deleting contacts")?;
+    let n = result.rows_affected();
+    info!("Deleted {n} contacts");
+    Ok(n)
+}
+
 /// Classify a position string — returns None if it looks like a real job title,
 /// Some(verdict) if it looks like a LinkedIn headline.
 pub fn classify_position(contact: &ContactRow) -> Option<HeadlineVerdict> {
