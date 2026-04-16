@@ -1099,6 +1099,18 @@ function syncCompanyButtons() {
     document.body.appendChild(frBtn);
     findRelatedBtn = frBtn;
   }
+
+  // Only show "Scrape People Posts" on /people/ sub-path
+  const onPeoplePage = window.location.pathname.includes("/people");
+  if (onPeoplePage && !document.querySelector(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`)) {
+    const sppBtn = createScrapePeoplePostsButton();
+    document.body.appendChild(sppBtn);
+    scrapePeoplePostsBtn = sppBtn;
+  } else if (!onPeoplePage && scrapePeoplePostsBtn) {
+    document.querySelectorAll(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`).forEach((el) => el.remove());
+    scrapePeoplePostsBtn = null;
+    scrapePeoplePostsRunning = false;
+  }
 }
 
 function observeCompanyButtons() {
