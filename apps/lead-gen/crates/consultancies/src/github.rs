@@ -420,6 +420,13 @@ pub async fn run(pool: &PgPool, dry_run: bool) -> Result<()> {
 
     let mut candidates: Vec<OrgCandidate> = orgs
         .into_values()
+        .filter(|c| {
+            if crate::classify::is_offshore_location(&c.location) {
+                info!("[GH] {} skipped — offshore: {}", c.login, c.location);
+                return false;
+            }
+            true
+        })
         .map(|mut c| {
             let (score, reasons) = score_org(&c);
             c.score = score;
@@ -442,16 +449,7 @@ pub async fn run(pool: &PgPool, dry_run: bool) -> Result<()> {
 
     let to_upsert: Vec<_> = candidates
         .iter()
-        .filter(|c| {
-            if c.score < MIN_SCORE_TO_SAVE {
-                return false;
-            }
-            if crate::classify::is_offshore_location(&c.location) {
-                info!("[GH] {} skipped — offshore: {}", c.login, c.location);
-                return false;
-            }
-            true
-        })
+        .filter(|c| c.score >= MIN_SCORE_TO_SAVE)
         .collect();
 
     let skipped = candidates.len() - to_upsert.len();
