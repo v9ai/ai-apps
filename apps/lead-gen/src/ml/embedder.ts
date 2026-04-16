@@ -277,13 +277,9 @@ export async function embedBatchOptimized(
   if (texts.length === 0) return [];
 
   const chunkSize = options?.chunkSize ?? BATCH_CHUNK_SIZE;
-  const pipe = await getEmbedder();
-
-  // Pre-allocate output array (no push/resize)
+  const useServer = await isServerAvailable();
   const results = new Array<Float32Array>(texts.length);
 
-  // Warm up arena so we have enough pooled buffers for the entire batch.
-  // This front-loads allocation before the hot loop.
   embeddingArena.warmUp(texts.length);
 
   for (let i = 0; i < texts.length; i += chunkSize) {
@@ -291,17 +287,23 @@ export async function embedBatchOptimized(
     const chunk = texts.slice(i, end);
     const chunkLen = chunk.length;
 
-    const output = await pipe(chunk, { pooling: "mean", normalize: true });
-    const flat: Float32Array = output.data as Float32Array;
-
-    // Copy each embedding from the flat pipeline output into an arena buffer.
-    // subarray() creates a view (no copy), then set() does a single memcpy.
-    // This replaces flat.slice() which allocates a new ArrayBuffer each time.
-    for (let j = 0; j < chunkLen; j++) {
-      const offset = j * EMBEDDING_DIM;
-      const buf = embeddingArena.acquire();
-      buf.set(flat.subarray(offset, offset + EMBEDDING_DIM));
-      results[i + j] = buf;
+    if (useServer) {
+      const embeddings = await embedViaServer(chunk);
+      for (let j = 0; j < chunkLen; j++) {
+        const buf = embeddingArena.acquire();
+        buf.set(embeddings[j]);
+        results[i + j] = buf;
+      }
+    } else {
+      const pipe = await getWasmPipeline();
+      const output = await pipe(chunk, { pooling: "mean", normalize: true });
+      const flat: Float32Array = output.data as Float32Array;
+      for (let j = 0; j < chunkLen; j++) {
+        const offset = j * EMBEDDING_DIM;
+        const buf = embeddingArena.acquire();
+        buf.set(flat.subarray(offset, offset + EMBEDDING_DIM));
+        results[i + j] = buf;
+      }
     }
   }
 
