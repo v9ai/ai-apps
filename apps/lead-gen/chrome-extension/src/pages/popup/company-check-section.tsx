@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Stack, Button, Loader, Text, Group } from "@mantine/core";
+import { Button, Loader, Text, Group } from "@mantine/core";
 import { gqlRequest } from "../../services/graphql";
 
 const APP_BASE =
