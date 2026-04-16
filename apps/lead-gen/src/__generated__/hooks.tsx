@@ -3787,10 +3787,11 @@ export type GetReceivedEmailsQueryVariables = Exact<{
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   archived?: InputMaybe<Scalars['Boolean']['input']>;
+  classification?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetReceivedEmailsQuery = { __typename?: 'Query', receivedEmails: { __typename?: 'ReceivedEmailsResult', totalCount: number, emails: Array<{ __typename?: 'ReceivedEmail', id: number, resendId: string | null, fromEmail: string | null, toEmails: Array<string>, subject: string | null, receivedAt: string, archivedAt: string | null, createdAt: string }> } };
+export type GetReceivedEmailsQuery = { __typename?: 'Query', receivedEmails: { __typename?: 'ReceivedEmailsResult', totalCount: number, emails: Array<{ __typename?: 'ReceivedEmail', id: number, resendId: string | null, fromEmail: string | null, toEmails: Array<string>, subject: string | null, receivedAt: string, archivedAt: string | null, classification: string | null, classificationConfidence: number | null, matchedContactId: number | null, textContent: string | null, htmlContent: string | null, createdAt: string }> } };
 
 export type GetReceivedEmailQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -6569,8 +6570,13 @@ export type GetEmailStatsLazyQueryHookResult = ReturnType<typeof useGetEmailStat
 export type GetEmailStatsSuspenseQueryHookResult = ReturnType<typeof useGetEmailStatsSuspenseQuery>;
 export type GetEmailStatsQueryResult = Apollo.QueryResult<GetEmailStatsQuery, GetEmailStatsQueryVariables>;
 export const GetReceivedEmailsDocument = gql`
-    query GetReceivedEmails($limit: Int, $offset: Int, $archived: Boolean) {
-  receivedEmails(limit: $limit, offset: $offset, archived: $archived) {
+    query GetReceivedEmails($limit: Int, $offset: Int, $archived: Boolean, $classification: String) {
+  receivedEmails(
+    limit: $limit
+    offset: $offset
+    archived: $archived
+    classification: $classification
+  ) {
     emails {
       id
       resendId
@@ -6579,6 +6585,11 @@ export const GetReceivedEmailsDocument = gql`
       subject
       receivedAt
       archivedAt
+      classification
+      classificationConfidence
+      matchedContactId
+      textContent
+      htmlContent
       createdAt
     }
     totalCount
@@ -6601,6 +6612,7 @@ export const GetReceivedEmailsDocument = gql`
  *      limit: // value for 'limit'
  *      offset: // value for 'offset'
  *      archived: // value for 'archived'
+ *      classification: // value for 'classification'
  *   },
  * });
  */
