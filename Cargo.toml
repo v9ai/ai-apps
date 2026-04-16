@@ -1,5 +1,6 @@
 [workspace]
 resolver = "2"
+exclude = ["crates/.claude"]
 members = [
   "crates/*",
   "apps/lead-gen/crates/agentic-search",

@@ -6,14 +6,14 @@ license = "MIT"
 description = "Spec-Driven Development pipeline — runtime-agnostic core library"
 
 [dependencies]
-deepseek = { path = "../deepseek", default-features = false, features = ["reqwest-client"] }
-qwen = { path = "../qwen" }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-futures = "0.3"
-async-trait = "0.1"
-anyhow = "1"
-thiserror = "2"
+deepseek   = { workspace = true, features = ["reqwest-client"] }
+qwen       = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+futures    = { workspace = true }
+async-trait = { workspace = true }
+anyhow     = { workspace = true }
+thiserror  = { workspace = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "macros", "time"] }

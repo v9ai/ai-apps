@@ -1102,7 +1102,7 @@ function syncCompanyButtons() {
 
   if (!slug) {
     // Not on a company page — remove buttons if they exist
-    if (importPeopleBtn || findRelatedBtn) {
+    if (importPeopleBtn || findRelatedBtn || scrapePeoplePostsBtn) {
       removeCompanyButtons();
       lastKnownCompanySlug = null;
     }
@@ -1129,16 +1129,10 @@ function syncCompanyButtons() {
     findRelatedBtn = frBtn;
   }
 
-  // Only show "Scrape People Posts" on /people/ sub-path
-  const onPeoplePage = window.location.pathname.includes("/people");
-  if (onPeoplePage && !document.querySelector(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`)) {
+  if (!document.querySelector(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`)) {
     const sppBtn = createScrapePeoplePostsButton();
     document.body.appendChild(sppBtn);
     scrapePeoplePostsBtn = sppBtn;
-  } else if (!onPeoplePage && scrapePeoplePostsBtn) {
-    document.querySelectorAll(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`).forEach((el) => el.remove());
-    scrapePeoplePostsBtn = null;
-    scrapePeoplePostsRunning = false;
   }
 }
 

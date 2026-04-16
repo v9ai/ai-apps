@@ -15,19 +15,19 @@ metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]
 cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
 
 [dependencies]
-candle-core = "0.8"
-candle-nn = "0.8"
-candle-transformers = "0.8"
-hf-hub = "0.4"
-tokenizers = "0.21"
+candle-core         = { workspace = true }
+candle-nn           = { workspace = true }
+candle-transformers = { workspace = true }
+hf-hub              = { workspace = true }
+tokenizers          = { workspace = true }
 
-axum = { version = "0.8", features = ["json"] }
-tokio = { version = "1", features = ["full"] }
-tower-http = { version = "0.6", features = ["cors"] }
+axum       = { workspace = true, features = ["json"] }
+tokio      = { workspace = true }
+tower-http = { workspace = true }
 
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde      = { workspace = true }
+serde_json = { workspace = true }
 
-anyhow = "1"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow              = { workspace = true }
+tracing             = { workspace = true }
+tracing-subscriber  = { workspace = true }

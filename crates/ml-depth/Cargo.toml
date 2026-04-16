@@ -9,13 +9,13 @@ name = "ml-depth"
 path = "src/main.rs"
 
 [dependencies]
-hf = { path = "../hf", features = ["sqlite"] }
-research = { path = "../research", default-features = false }
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-anyhow = "1"
-dotenvy = "0.15"
-clap = { version = "4", features = ["derive"] }
+hf       = { workspace = true, features = ["sqlite"] }
+research = { workspace = true }
+tokio    = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+tracing    = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow     = { workspace = true }
+dotenvy    = { workspace = true }
+clap       = { workspace = true }

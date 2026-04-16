@@ -15,42 +15,30 @@ name = "hoa-research"
 path = "src/main.rs"
 
 [dependencies]
-# Local model inference (Candle Qwen2.5 GGUF on Metal)
-candle-core         = "0.8"
-candle-nn           = "0.8"
-candle-transformers = "0.8"
-hf-hub              = "0.4"
-tokenizers          = "0.21"
+candle-core         = { workspace = true }
+candle-nn           = { workspace = true }
+candle-transformers = { workspace = true }
+hf-hub              = { workspace = true }
+tokenizers          = { workspace = true }
 
-# Lance vector store (blog embeddings)
-lancedb      = "0.27"
-arrow-array  = "57"
-arrow-schema = "57"
-futures      = "0.3"
+lancedb      = { workspace = true }
+arrow-array  = { workspace = true }
+arrow-schema = { workspace = true }
+futures      = { workspace = true }
 
-# HTTP client (web search, API calls, page scraping)
-reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+reqwest = { workspace = true }
+tokio   = { workspace = true }
+clap    = { workspace = true }
 
-# Async runtime
-tokio = { version = "1", features = ["full"] }
+serde      = { workspace = true }
+serde_json = { workspace = true }
 
-# CLI
-clap = { version = "4", features = ["derive"] }
+thiserror          = { workspace = true }
+anyhow             = { workspace = true }
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
 
-# Serialization
-serde      = { version = "1", features = ["derive"] }
-serde_json = "1"
-
-# Error handling
-thiserror = "2"
-anyhow    = "1"
-
-# Logging
-tracing            = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-
-# Utilities
-chrono     = { version = "0.4", features = ["serde"] }
-scraper    = "0.22"
+chrono     = { workspace = true }
+scraper    = { workspace = true }
 regex-lite = "0.1"
-url        = "2"
+url        = { workspace = true }
