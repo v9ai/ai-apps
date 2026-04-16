@@ -145,7 +145,7 @@ fn consultancy_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
         Regex::new(
-            r"(?i)\b(consult|advisor|services|agency|studio|labs|partners?|solutions?|engineering\s+firm|boutique|we\s+help|we\s+build|we\s+design|client\s+work)\b",
+            r"(?i)\b(consulting|consultancy|advisor[sy]?|agency|partners?|engineering\s+firm|boutique|we\s+help|client\s+work|professional\s+services|managed\s+services)\b",
         )
         .unwrap()
     })
@@ -165,7 +165,7 @@ fn negative_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
         Regex::new(
-            r"(?i)\b(university|college|student|research\s+lab|personal|hobby|fork\s+of|awesome[-\s]list|tutorial|course|bootcamp)\b",
+            r"(?i)\b(university|college|student|research\s+lab|personal|hobby|fork\s+of|awesome[-\s]list|tutorial|course|bootcamp|open.source\s+(library|framework|tool|sdk)|we\s+build\s+(open|tools?|libraries|frameworks?|software|products?))\b",
         )
         .unwrap()
     })
