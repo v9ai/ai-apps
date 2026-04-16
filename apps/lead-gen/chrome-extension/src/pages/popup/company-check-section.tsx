@@ -78,19 +78,17 @@ export default function CompanyCheckSection() {
 
   if (state.phase === "found") {
     return (
-      <Stack gap={4}>
-        <Button
-          component="a"
-          href={`${APP_BASE}/companies/${state.key}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          color="teal"
-          size="sm"
-          fullWidth
-        >
-          Open {state.name} in Lead Gen →
-        </Button>
-      </Stack>
+      <Button
+        component="a"
+        href={`${APP_BASE}/companies/${state.key}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        color="teal"
+        size="sm"
+        fullWidth
+      >
+        Open {state.name} in Lead Gen →
+      </Button>
     );
   }
 
