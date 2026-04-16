@@ -720,7 +720,8 @@ chrome.runtime.onMessage.addListener((message) => {
     scrapePeoplePostsBtn.textContent = message.message || "Scraping...";
   }
   if (message.action === "scrapePeoplePostsDone" && scrapePeoplePostsBtn) {
-    scrapePeoplePostsBtn.textContent = `Done! ${message.people} people, ${message.posts} posts`;
+    const skippedText = message.skipped ? `, ${message.skipped} skipped` : "";
+    scrapePeoplePostsBtn.textContent = `Done! ${message.people} scraped, ${message.posts} posts${skippedText}`;
     scrapePeoplePostsBtn.style.backgroundColor = "#16a34a";
     scrapePeoplePostsRunning = false;
     setTimeout(() => {

@@ -342,12 +342,13 @@ export async function scrapePeoplePostsFromCompanyPage(
 
     // ── Phase 4: Done ──
 
-    console.log(`${LOG} Done! ${peopleScraped} people, ${totalPostsSaved} posts saved, ${totalPostsFiltered} filtered`);
+    console.log(`${LOG} Done! ${peopleScraped} scraped, ${alreadyScraped} skipped, ${totalPostsSaved} posts saved, ${totalPostsFiltered} filtered`);
     await safeSendMessage(tabId, {
       action: "scrapePeoplePostsDone",
       people: peopleScraped,
       posts: totalPostsSaved,
       filtered: totalPostsFiltered,
+      skipped: alreadyScraped,
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
