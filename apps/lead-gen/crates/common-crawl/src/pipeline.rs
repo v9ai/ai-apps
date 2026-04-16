@@ -107,6 +107,9 @@ pub async fn run_domain(
                     for p in &content.persons {
                         info!(name = %p.name, title = ?p.title, source = ?p.source, "  person");
                     }
+                    for e in &content.emails {
+                        info!(email = %e, "  email");
+                    }
                     continue;
                 }
 

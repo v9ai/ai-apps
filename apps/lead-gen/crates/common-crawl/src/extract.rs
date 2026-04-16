@@ -49,14 +49,8 @@ pub fn extract(html: &str, source_url: &str) -> PageContent {
     out.description = select_meta(&doc, "description")
         .or_else(|| select_meta_property(&doc, "og:description"));
 
-    // Full visible text (script/style excluded by scraper's text() iterator)
-    out.text = doc
-        .root_element()
-        .text()
-        .map(|t| t.trim())
-        .filter(|t| !t.is_empty())
-        .collect::<Vec<_>>()
-        .join(" ");
+    // Visible text — collect from body, excluding script/style/noscript/template nodes
+    out.text = visible_text(&doc);
 
     // Emails from mailto: links
     if let Ok(sel) = Selector::parse("a[href^='mailto:']") {
@@ -370,15 +364,58 @@ fn scan_emails_in_text(text: &str) -> Vec<String> {
     let mut emails = Vec::new();
     for word in text.split_whitespace() {
         let word = word.trim_matches(|c: char| !c.is_alphanumeric() && c != '@' && c != '.' && c != '-' && c != '+' && c != '_');
-        if let Some(at) = word.find('@') {
-            let local = &word[..at];
-            let domain = &word[at + 1..];
-            if !local.is_empty() && domain.contains('.') && domain.len() > 3 && local.len() > 1 {
-                emails.push(word.to_lowercase());
-            }
+        if is_valid_email(word) {
+            emails.push(word.to_lowercase());
         }
     }
     emails
+}
+
+fn is_valid_email(s: &str) -> bool {
+    // Must contain exactly one @
+    let parts: Vec<&str> = s.splitn(2, '@').collect();
+    if parts.len() != 2 { return false; }
+    let local = parts[0];
+    let domain = parts[1];
+    // Local: 1–64 chars, alphanumeric + . - + _
+    if local.is_empty() || local.len() > 64 { return false; }
+    if !local.chars().all(|c| c.is_alphanumeric() || matches!(c, '.' | '-' | '+' | '_')) { return false; }
+    // Domain: has a dot, no slashes (not a URL path), 4–253 chars, ends with 2–6 letter TLD
+    if domain.contains('/') || domain.contains(':') || domain.contains('@') { return false; }
+    if domain.len() < 4 || domain.len() > 253 { return false; }
+    let tld = domain.rsplit('.').next().unwrap_or("");
+    tld.len() >= 2 && tld.len() <= 6 && tld.chars().all(|c| c.is_alphabetic())
+}
+
+fn visible_text(doc: &Html) -> String {
+    use scraper::node::Node;
+
+    fn collect_text(node: scraper::element_ref::ElementRef<'_>, out: &mut Vec<String>) {
+        for child in node.children() {
+            match child.value() {
+                Node::Text(t) => {
+                    let s = t.trim();
+                    if !s.is_empty() {
+                        out.push(s.to_string());
+                    }
+                }
+                Node::Element(el) => {
+                    let tag = el.name();
+                    if matches!(tag, "script" | "style" | "noscript" | "template" | "svg" | "canvas") {
+                        continue;
+                    }
+                    if let Some(child_el) = scraper::ElementRef::wrap(child) {
+                        collect_text(child_el, out);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    let mut parts = Vec::new();
+    collect_text(doc.root_element(), &mut parts);
+    parts.join(" ")
 }
 
 fn extract_base_domain(url: &str) -> String {

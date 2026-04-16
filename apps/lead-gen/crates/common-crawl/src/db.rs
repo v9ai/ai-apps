@@ -63,8 +63,9 @@ pub async fn upsert_snapshot(
     .fetch_optional(pool)
     .await?;
 
-    if let Some((id,)) = existing {
-        return Ok(Some(id));
+    if existing.is_some() {
+        // Already processed — signal caller to skip fact/contact extraction for this page
+        return Ok(None);
     }
 
     let text_sample: String = content.text.chars().take(500).collect();
@@ -140,16 +141,43 @@ pub async fn upsert_fact(
     Ok(())
 }
 
-/// Insert a contact discovered from a WARC page, skipping if the name already exists for that company.
+/// Upsert a contact discovered from a WARC page.
+/// Strategy: if email present, use ON CONFLICT(email) to merge into existing row.
+/// If no email, check by company+first+last then insert.
 pub async fn upsert_contact(pool: &PgPool, company_id: i32, person: &Person) -> Result<Option<i32>> {
     let (first, last) = split_name(&person.name);
     if first.is_empty() || last.is_empty() {
         return Ok(None);
     }
 
-    // Check for existing row first (no unique constraint on name+company_id)
+    // When we have an email, use ON CONFLICT(email) — enriches existing row
+    if let Some(ref email) = person.email {
+        if !email.is_empty() {
+            let id: i32 = sqlx::query_scalar(
+                r#"INSERT INTO contacts (first_name, last_name, position, email, company_id, tags)
+                   VALUES ($1, $2, $3, $4, $5, '["source:common-crawl"]')
+                   ON CONFLICT (email) DO UPDATE SET
+                     position   = COALESCE(EXCLUDED.position, contacts.position),
+                     company_id = COALESCE(EXCLUDED.company_id, contacts.company_id),
+                     first_name = CASE WHEN contacts.first_name = '' THEN EXCLUDED.first_name ELSE contacts.first_name END,
+                     last_name  = CASE WHEN contacts.last_name  = '' THEN EXCLUDED.last_name  ELSE contacts.last_name  END
+                   RETURNING id"#,
+            )
+            .bind(&first)
+            .bind(&last)
+            .bind(&person.title)
+            .bind(email)
+            .bind(company_id)
+            .fetch_one(pool)
+            .await
+            .context("upsert contact by email")?;
+            return Ok(Some(id));
+        }
+    }
+
+    // No email — check by company + full name first to avoid duplicates
     let existing: Option<(i32,)> = sqlx::query_as(
-        "SELECT id FROM contacts WHERE company_id = $1 AND first_name = $2 AND last_name = $3 LIMIT 1",
+        "SELECT id FROM contacts WHERE company_id = $1 AND first_name ILIKE $2 AND last_name ILIKE $3 LIMIT 1",
     )
     .bind(company_id)
     .bind(&first)
@@ -159,12 +187,10 @@ pub async fn upsert_contact(pool: &PgPool, company_id: i32, person: &Person) -> 
     .context("check existing contact")?;
 
     if let Some((id,)) = existing {
-        // Update position/email if we have new data
         sqlx::query(
-            "UPDATE contacts SET position = COALESCE($1, position), email = COALESCE($2, email) WHERE id = $3",
+            "UPDATE contacts SET position = COALESCE($1, position) WHERE id = $2",
         )
         .bind(&person.title)
-        .bind(&person.email)
         .bind(id)
         .execute(pool)
         .await?;
@@ -173,13 +199,12 @@ pub async fn upsert_contact(pool: &PgPool, company_id: i32, person: &Person) -> 
 
     let id: i32 = sqlx::query_scalar(
         r#"INSERT INTO contacts (first_name, last_name, position, email, company_id, tags)
-           VALUES ($1, $2, $3, $4, $5, '["source:common-crawl"]')
+           VALUES ($1, $2, $3, NULL, $4, '["source:common-crawl"]')
            RETURNING id"#,
     )
     .bind(&first)
     .bind(&last)
     .bind(&person.title)
-    .bind(&person.email)
     .bind(company_id)
     .fetch_one(pool)
     .await
