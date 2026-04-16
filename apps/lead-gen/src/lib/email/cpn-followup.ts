@@ -49,6 +49,21 @@ vadim.blog`;
   return { subject, text };
 }
 
+export function buildCpnWaitingReply(firstNameStr: string) {
+  const subject = `Re: Claude Partner Network — ${firstNameStr}`;
+  const text = `Hi ${firstNameStr},
+
+Thanks for following up — I appreciate the persistence.
+
+I'm still waiting on Karl's side for the registration link and cohort details. Haven't forgotten about you — you're on my list and I'll forward everything the moment it lands.
+
+Sit tight, and I'll be in touch as soon as there's movement.
+
+Vadim Nicolai
+vadim.blog`;
+  return { subject, text };
+}
+
 export const STATUS_ORDER: Record<CpnFollowupStatus, number> = {
   ready: 0,
   has_questions: 1,

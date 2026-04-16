@@ -59,6 +59,28 @@ impl fmt::Display for RepoType {
     }
 }
 
+// ── Interop with hf-hub crate ───────────────────────────────────
+
+impl From<hf_hub::RepoType> for RepoType {
+    fn from(rt: hf_hub::RepoType) -> Self {
+        match rt {
+            hf_hub::RepoType::Model => Self::Model,
+            hf_hub::RepoType::Dataset => Self::Dataset,
+            hf_hub::RepoType::Space => Self::Space,
+        }
+    }
+}
+
+impl From<RepoType> for hf_hub::RepoType {
+    fn from(rt: RepoType) -> Self {
+        match rt {
+            RepoType::Model => Self::Model,
+            RepoType::Dataset => Self::Dataset,
+            RepoType::Space => Self::Space,
+        }
+    }
+}
+
 /// Options for listing repos from the HF Hub API.
 #[derive(Debug, Clone)]
 pub struct ListOptions {
