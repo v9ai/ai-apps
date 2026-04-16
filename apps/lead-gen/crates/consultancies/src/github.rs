@@ -172,7 +172,21 @@ fn negative_re() -> &'static Regex {
 
 fn bad_login_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?i)(^awesome-|-tutorial|-course|-examples$)").unwrap())
+    RE.get_or_init(|| {
+        Regex::new(
+            r"(?ix)
+              (^awesome-|-tutorial|-course|-examples$)
+            | ^(oracle|adobe|google|microsoft|apple|meta|amazon|ibm|sap
+                |salesforce|nvidia|samsung|bytedance|alibaba|tencent|baidu
+                |cloudwego|kubeflow|mlflow|mariadb|redisearch
+                |ragapp|mozilla|netflix|airbnb|spotify|shopify|atlassian
+                |hashicorp|elastic|redis|mongodb|couchbase-ecosystem
+                |google-marketing-solutions|google-cloud-platform
+                |imbue-ai|gchq|edgeandnode|hkuds|smk-is)$
+            ",
+        )
+        .unwrap()
+    })
 }
 
 // ── Scoring ───────────────────────────────────────────────────────────────────
@@ -408,9 +422,15 @@ pub async fn run(pool: &PgPool, dry_run: bool) -> Result<()> {
 
     let mut inserted = 0usize;
     let mut skipped = 0usize;
+    let mut skipped_offshore = 0usize;
     for c in &candidates {
         if c.score < MIN_SCORE_TO_SAVE {
             skipped += 1;
+            continue;
+        }
+        if crate::classify::is_offshore_location(&c.location) {
+            info!("[GH] {} skipped — offshore: {}", c.login, c.location);
+            skipped_offshore += 1;
             continue;
         }
         let consultancy = candidate_to_consultancy(c);
@@ -425,10 +445,11 @@ pub async fn run(pool: &PgPool, dry_run: bool) -> Result<()> {
 
     info!("──────────────────────────────────────────────");
     info!(
-        "GitHub: total={} upserted={} skipped_low_score={}",
+        "GitHub: total={} upserted={} skipped_low_score={} skipped_offshore={}",
         candidates.len(),
         inserted,
-        skipped
+        skipped,
+        skipped_offshore
     );
 
     Ok(())

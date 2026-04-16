@@ -135,6 +135,22 @@ const OFFSHORE_SIGNALS: &[&str] = &[
     "headquartered in vietnam",
     "ho chi minh",
     "hanoi",
+    // country-level signals (GitHub orgs often list country, not city)
+    "tanzania",
+    "afghanistan",
+    "kazakhstan",
+    "uzbekistan",
+    "kyrgyzstan",
+    "serbia",
+    "moldova",
+    "myanmar",
+    "cambodia",
+    "nigeria",
+    "kenya",
+    "ethiopia",
+    "ghana",
+    "egypt",
+    "morocco",
 ];
 
 pub fn classify(text: &str) -> ClassificationResult {
