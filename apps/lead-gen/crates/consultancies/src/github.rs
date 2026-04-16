@@ -398,7 +398,7 @@ pub async fn run(pool: &PgPool, dry_run: bool) -> Result<()> {
                 (query, result)
             }
         })
-        .buffer_unordered(4)
+        .buffer_unordered(TOPIC_SLICES.len())
         .collect()
         .await;
 
@@ -440,36 +440,49 @@ pub async fn run(pool: &PgPool, dry_run: bool) -> Result<()> {
         return Ok(());
     }
 
+    let to_upsert: Vec<_> = candidates
+        .iter()
+        .filter(|c| {
+            if c.score < MIN_SCORE_TO_SAVE {
+                return false;
+            }
+            if crate::classify::is_offshore_location(&c.location) {
+                info!("[GH] {} skipped — offshore: {}", c.login, c.location);
+                return false;
+            }
+            true
+        })
+        .collect();
+
+    let skipped = candidates.len() - to_upsert.len();
+
+    let upsert_results: Vec<_> = stream::iter(to_upsert)
+        .map(|c| async move {
+            let consultancy = candidate_to_consultancy(c);
+            let result = db::upsert_company(pool, &consultancy).await;
+            (c.login.clone(), c.score, result)
+        })
+        .buffer_unordered(8)
+        .collect()
+        .await;
+
     let mut inserted = 0usize;
-    let mut skipped = 0usize;
-    let mut skipped_offshore = 0usize;
-    for c in &candidates {
-        if c.score < MIN_SCORE_TO_SAVE {
-            skipped += 1;
-            continue;
-        }
-        if crate::classify::is_offshore_location(&c.location) {
-            info!("[GH] {} skipped — offshore: {}", c.login, c.location);
-            skipped_offshore += 1;
-            continue;
-        }
-        let consultancy = candidate_to_consultancy(c);
-        match db::upsert_company(pool, &consultancy).await {
+    for (login, score, result) in upsert_results {
+        match result {
             Ok(id) => {
-                info!("[GH] {} → id={id} score={}", c.login, c.score);
+                info!("[GH] {} → id={id} score={}", login, score);
                 inserted += 1;
             }
-            Err(e) => warn!("[GH-DB] {}: {e:#}", c.login),
+            Err(e) => warn!("[GH-DB] {}: {e:#}", login),
         }
     }
 
     info!("──────────────────────────────────────────────");
     info!(
-        "GitHub: total={} upserted={} skipped_low_score={} skipped_offshore={}",
+        "GitHub: total={} upserted={} skipped={}",
         candidates.len(),
         inserted,
-        skipped,
-        skipped_offshore
+        skipped
     );
 
     Ok(())
