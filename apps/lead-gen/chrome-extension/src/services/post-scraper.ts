@@ -324,13 +324,16 @@ async function scrollAndExtractLikes(
 export async function scrollAndExtract(
   tabId: number,
 ): Promise<ScrapedPost[]> {
-  // Click "see more" buttons first
+  // Click "see more" buttons first — scoped to post containers to avoid sidebar buttons
+  // (e.g. "Pages people also viewed" has a "See more" that opens a modal)
   await chrome.scripting.executeScript({
     target: { tabId },
     world: "MAIN",
     func: () => {
       let clicked = 0;
-      document.querySelectorAll<HTMLElement>("button, a").forEach((el) => {
+      document.querySelectorAll<HTMLElement>(
+        ".feed-shared-update-v2 button, .feed-shared-update-v2 a, .occludable-update button, .occludable-update a"
+      ).forEach((el) => {
         const text = el.textContent?.trim().toLowerCase() || "";
         if ((text === "see more" || text === "…see more" || text === "...see more") && el.offsetParent !== null) {
           el.click();
@@ -341,46 +344,6 @@ export async function scrollAndExtract(
     },
   });
   await sleep(800);
-
-  // Scroll until no new content loads
-  let previousHeight = 0;
-  let staleCount = 0;
-
-  while (staleCount < 3) {
-    const results = await chrome.scripting.executeScript({
-      target: { tabId },
-      world: "MAIN",
-      func: () => {
-        window.scrollTo(0, document.body.scrollHeight);
-        return document.body.scrollHeight;
-      },
-    });
-    const currentHeight = results?.[0]?.result ?? 0;
-
-    await sleep(2000);
-
-    if (currentHeight === previousHeight) {
-      staleCount++;
-    } else {
-      staleCount = 0;
-    }
-    previousHeight = currentHeight;
-
-    // Click any new "see more" buttons that appeared
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      world: "MAIN",
-      func: () => {
-        document.querySelectorAll<HTMLElement>("button, a").forEach((el) => {
-          const text = el.textContent?.trim().toLowerCase() || "";
-          if ((text === "see more" || text === "…see more" || text === "...see more") && el.offsetParent !== null) {
-            el.click();
-          }
-        });
-      },
-    });
-    await sleep(300);
-  }
 
   // Extract all posts
   const results = await chrome.scripting.executeScript({
