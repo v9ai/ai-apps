@@ -53,8 +53,8 @@ async fn main() -> Result<()> {
     // Print flagged (limit to 50 in dry-run for readability)
     let display_limit = if fix_mode { flagged.len() } else { 50 };
     for (i, v) in flagged.iter().enumerate().take(display_limit) {
-        let pos_preview = if v.position.len() > 80 {
-            format!("{}…", &v.position[..80])
+        let pos_preview: String = if v.position.chars().count() > 80 {
+            format!("{}…", v.position.chars().take(80).collect::<String>())
         } else {
             v.position.clone()
         };
