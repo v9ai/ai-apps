@@ -1,14 +1,14 @@
-//! HuggingFace free serverless Inference API client.
+//! HuggingFace Inference API client (free tier via nscale provider).
 //!
-//! Uses api-inference.huggingface.co (free, rate-limited, no credits).
-//! No provider discovery needed — hits the model endpoint directly.
+//! Uses router.huggingface.co/nscale — free, no credits consumed.
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{PipelineError, Result};
 
-const DEFAULT_MODEL: &str = "Qwen/Qwen2.5-72B-Instruct";
+const DEFAULT_MODEL: &str = "meta-llama/Llama-3.3-70B-Instruct";
+const PROVIDER: &str = "nscale";
 
 #[derive(Debug, Clone)]
 pub struct HfClient {
@@ -59,7 +59,7 @@ impl HfClient {
             .ok()?;
 
         let model = DEFAULT_MODEL.to_string();
-        tracing::info!("HF serverless (free): {model}");
+        tracing::info!("HF free ({PROVIDER}): {model}");
 
         Some(Self {
             client,
@@ -72,7 +72,7 @@ impl HfClient {
         &self.model
     }
 
-    /// Chat completion via the free serverless Inference API.
+    /// Chat completion via the free nscale provider.
     pub async fn chat(
         &self,
         system: &str,
@@ -96,8 +96,7 @@ impl HfClient {
         };
 
         let url = format!(
-            "https://api-inference.huggingface.co/models/{}/v1/chat/completions",
-            self.model
+            "https://router.huggingface.co/{PROVIDER}/v1/chat/completions",
         );
 
         let resp = self
