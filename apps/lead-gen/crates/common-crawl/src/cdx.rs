@@ -8,6 +8,13 @@ const S3_BASE: &str = "https://data.commoncrawl.org";
 /// How many recent CC indices to search before giving up.
 const MAX_INDICES: usize = 3;
 
+/// Known recent crawl IDs used as fallback when collinfo.json is unreachable.
+const FALLBACK_CRAWL_IDS: &[&str] = &[
+    "CC-MAIN-2026-12",
+    "CC-MAIN-2025-51",
+    "CC-MAIN-2025-40",
+];
+
 #[derive(Debug, Deserialize)]
 struct CollInfo {
     id: String,
@@ -24,16 +31,26 @@ pub struct CdxRecord {
 }
 
 /// Returns the ids of the `n` most recent Common Crawl indices.
+/// Falls back to a hardcoded list when collinfo.json is unreachable.
 pub async fn recent_crawl_ids(client: &Client, n: usize) -> Result<Vec<String>> {
-    let infos: Vec<CollInfo> = client
+    match client
         .get(format!("{CDX_BASE}/collinfo.json"))
         .send()
         .await
-        .context("fetching collinfo")?
-        .json()
-        .await
-        .context("parsing collinfo")?;
-    Ok(infos.into_iter().take(n).map(|c| c.id).collect())
+        .and_then(|r| Ok(r))
+    {
+        Ok(resp) => {
+            if let Ok(infos) = resp.json::<Vec<CollInfo>>().await {
+                if !infos.is_empty() {
+                    return Ok(infos.into_iter().take(n).map(|c| c.id).collect());
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "collinfo.json unavailable — using fallback crawl IDs");
+        }
+    }
+    Ok(FALLBACK_CRAWL_IDS.iter().take(n).map(|s| s.to_string()).collect())
 }
 
 /// Query CDX across the latest `MAX_INDICES` crawl indices.
