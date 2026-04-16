@@ -801,8 +801,11 @@ function removeCompanyButtons() {
   // Remove all buttons from DOM (handles duplicates too)
   document.querySelectorAll(`[${IMPORT_PEOPLE_BTN_ATTR}]`).forEach((el) => el.remove());
   document.querySelectorAll(`[${FIND_RELATED_BTN_ATTR}]`).forEach((el) => el.remove());
+  document.querySelectorAll(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`).forEach((el) => el.remove());
   importPeopleBtn = null;
   findRelatedBtn = null;
+  scrapePeoplePostsBtn = null;
+  scrapePeoplePostsRunning = false;
 }
 
 function createImportPeopleButton(): HTMLButtonElement {
