@@ -4,7 +4,6 @@ import * as React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   useGetCompanyQuery,
-  useGetContactsQuery,
   useEnhanceCompanyMutation,
   useAnalyzeCompanyMutation,
   useUpdateCompanyMutation,
@@ -18,6 +17,7 @@ import type { CompanyCategory } from "@/__generated__/graphql";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
+import { formatDistanceToNow, isValid, parseISO } from "date-fns";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { CompanyContactsClient } from "@/app/companies/[key]/contacts/contacts-client";
@@ -917,55 +917,40 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   // When a numeric ID is passed, derive the slug from the loaded company record
   const effectiveKey = companyKey ?? company?.key;
 
-  // Fetch contact IDs for this company (used to load posts from LanceDB)
-  const { data: contactsData } = useGetContactsQuery({
-    variables: { companyId: company?.id ?? 0, limit: 200 },
-    skip: !isAdmin || !company?.id,
-  });
-
-  // Fetch posts from LanceDB server via proxy API
-  type LancePost = {
-    id: number;
-    contact_id: number;
+  // Fetch posts from SQLite via /api/companies/[slug]/posts
+  type SqlitePost = {
+    person_name: string;
+    person_linkedin_url: string;
+    person_headline: string | null;
     post_url: string | null;
     post_text: string | null;
     posted_date: string | null;
     reactions_count: number;
     comments_count: number;
     reposts_count: number;
-    is_repost: boolean;
+    is_repost: number;
     original_author: string | null;
-    primary_intent: string;
-    relevance_score: number;
+    author_name: string | null;
+    author_url: string | null;
+    scraped_at: string;
   };
-  const [posts, setPosts] = useState<LancePost[]>([]);
+  const [posts, setPosts] = useState<SqlitePost[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
 
-  const contactIds = useMemo(
-    () => (contactsData?.contacts?.contacts ?? []).map((c) => c.id),
-    [contactsData],
-  );
-
-  // Build a contactId → name map for display
-  const contactNameMap = useMemo(() => {
-    const map = new Map<number, string>();
-    for (const c of contactsData?.contacts?.contacts ?? []) {
-      map.set(c.id, `${c.firstName} ${c.lastName}`.trim());
-    }
-    return map;
-  }, [contactsData]);
-
   useEffect(() => {
-    if (contactIds.length === 0) {
+    if (!isAdmin || !effectiveKey) {
       setPosts([]);
       return;
     }
     let cancelled = false;
     setPostsLoading(true);
-    fetch(`/api/posts?contactIds=${contactIds.join(",")}&limit=100`)
-      .then((r) => r.json())
-      .then((data: LancePost[]) => {
-        if (!cancelled) setPosts(data);
+    fetch(`/api/companies/${effectiveKey}/posts`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
+      .then((data: { posts: SqlitePost[] }) => {
+        if (!cancelled) setPosts(data.posts ?? []);
       })
       .catch(() => {
         if (!cancelled) setPosts([]);
@@ -974,7 +959,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
         if (!cancelled) setPostsLoading(false);
       });
     return () => { cancelled = true; };
-  }, [contactIds]);
+  }, [isAdmin, effectiveKey]);
 
   const handleDelete = useCallback(async () => {
     if (!company?.id) return;
@@ -1419,18 +1404,24 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           {isAdmin && posts.length > 0 && (
             <SectionCard title={`Posts (${posts.length})`}>
               <Flex direction="column" gap="1">
-                {posts.map((p) => {
-                  const name = contactNameMap.get(p.contact_id) ?? "Unknown";
+                {posts.map((p, idx) => {
+                  const name = p.person_name || "Unknown";
                   const text = p.post_text
                     ? p.post_text.length > 150
                       ? p.post_text.slice(0, 150) + "…"
                       : p.post_text
                     : "(no text)";
-                  const ago = p.posted_date
-                    ? `${Math.max(0, Math.floor((Date.now() - new Date(p.posted_date).getTime()) / 86_400_000))}d`
-                    : "";
+                  let ago = "";
+                  if (p.posted_date) {
+                    const parsed = parseISO(p.posted_date);
+                    if (isValid(parsed)) {
+                      ago = formatDistanceToNow(parsed, { addSuffix: false });
+                    } else {
+                      ago = p.posted_date;
+                    }
+                  }
                   return (
-                    <Flex key={p.id} align="start" gap="2" py="1" style={{ borderBottom: "1px solid var(--gray-3)" }}>
+                    <Flex key={p.post_url ?? idx} align="start" gap="2" py="1" style={{ borderBottom: "1px solid var(--gray-3)" }}>
                       <Text size="1" weight="medium" style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
                         {name}
                       </Text>
