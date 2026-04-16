@@ -26,6 +26,7 @@ const T = {
           { name: "B&B Palazzo Ferrante",     area: "Spaccanapoli",      price: "~€65 / night", note: "Restored palazzo, family room, rooftop terrace" },
           { name: "Casa Tolentino",           area: "Quartieri Spagnoli", price: "~€75 / night", note: "2★, triple room, central, breakfast included" },
           { name: "Hotel Piazza Bellini",     area: "Centro Storico",     price: "~€85 / night", note: "3★, boutique feel, quiet piazza location" },
+          { name: "Casetta Roby",              area: "Centro Storico",     price: "~€70 / night", note: "Apartment, kitchen, AC, next to Naples Cathedral & Cappella Sansevero" },
         ],
       },
       {
@@ -108,6 +109,7 @@ const T = {
           { name: "B&B Palazzo Ferrante",     area: "Spaccanapoli",      price: "~€65 / noapte", note: "Palat restaurat, cameră de familie, terasă pe acoperiș" },
           { name: "Casa Tolentino",           area: "Quartieri Spagnoli", price: "~€75 / noapte", note: "2★, cameră triplă, central, mic dejun inclus" },
           { name: "Hotel Piazza Bellini",     area: "Centro Storico",     price: "~€85 / noapte", note: "3★, atmosferă boutique, locație pe piață liniștită" },
+          { name: "Casetta Roby",              area: "Centro Storico",     price: "~€70 / noapte", note: "Apartament, bucătărie, AC, lângă Catedrala din Napoli & Cappella Sansevero" },
         ],
       },
       {

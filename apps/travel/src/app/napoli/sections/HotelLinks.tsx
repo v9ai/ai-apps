@@ -30,6 +30,7 @@ const TIERS_EN: TierGroup[] = [
       { name: "B&B Palazzo Ferrante",  area: "Spaccanapoli",       price: "~€65 / night",  booking: bookingUrl("B&B Palazzo Ferrante"),  google: googleUrl("B&B Palazzo Ferrante Naples") },
       { name: "Casa Tolentino",        area: "Quartieri Spagnoli", price: "~€75 / night",  booking: bookingUrl("Casa Tolentino"),        google: googleUrl("Casa Tolentino Naples") },
       { name: "Hotel Piazza Bellini",  area: "Centro Storico",     price: "~€85 / night",  booking: bookingUrl("Hotel Piazza Bellini"),  google: googleUrl("Hotel Piazza Bellini Naples") },
+      { name: "Casetta Roby",         area: "Centro Storico",     price: "~€70 / night",  booking: `https://www.booking.com/hotel/it/casetta-roby.html?checkin=${CHECK_IN}&checkout=${CHECK_OUT}&group_adults=2&group_children=1&age=8`, google: googleUrl("Casetta Roby Naples") },
     ],
   },
   {
@@ -57,6 +58,7 @@ const TIERS_RO: TierGroup[] = [
       { name: "B&B Palazzo Ferrante",  area: "Spaccanapoli",       price: "~€65 / noapte",  booking: bookingUrl("B&B Palazzo Ferrante"),  google: googleUrl("B&B Palazzo Ferrante Naples") },
       { name: "Casa Tolentino",        area: "Quartieri Spagnoli", price: "~€75 / noapte",  booking: bookingUrl("Casa Tolentino"),        google: googleUrl("Casa Tolentino Naples") },
       { name: "Hotel Piazza Bellini",  area: "Centro Storico",     price: "~€85 / noapte",  booking: bookingUrl("Hotel Piazza Bellini"),  google: googleUrl("Hotel Piazza Bellini Naples") },
+      { name: "Casetta Roby",         area: "Centro Storico",     price: "~€70 / noapte",  booking: `https://www.booking.com/hotel/it/casetta-roby.html?checkin=${CHECK_IN}&checkout=${CHECK_OUT}&group_adults=2&group_children=1&age=8`, google: googleUrl("Casetta Roby Naples") },
     ],
   },
   {
