@@ -1227,137 +1227,88 @@ export function CompanyContactsClient({
               >
                 <Box p="3">
                   <Flex align="start" justify="between" gap="3" wrap="wrap">
-                    <Box minWidth="0">
-                      <Flex align="center" gap="2" wrap="wrap">
-                        <Text size="3" weight="medium">
-                          {contact.firstName} {contact.lastName}
-                        </Text>
-                        {contact.emailVerified && (
-                          <Badge color="green" variant="soft" size="1">
-                            verified
-                          </Badge>
-                        )}
-                        {contact.email && !contact.emailVerified && contact.nbResult && (
-                          <Badge color="orange" variant="soft" size="1">
-                            {contact.nbResult}
-                          </Badge>
-                        )}
-                        {contact.doNotContact && (
-                          <Badge color="red" variant="soft" size="1">
-                            do not contact
-                          </Badge>
-                        )}
-                        {contact.isDecisionMaker && (
-                          <Badge color="green" variant="solid" size="1">
-                            DM
-                          </Badge>
-                        )}
-                        {dueContactIds.has(contact.id) && (
-                          <Badge color="red" variant="solid" size="1">
-                            reminder due
-                          </Badge>
-                        )}
-                        {!dueContactIds.has(contact.id) && (contact.nextTouchScore ?? 0) > 0.7 && (
-                          <Badge color="orange" variant="soft" size="1">
-                            follow up
-                          </Badge>
-                        )}
-                        {contact.seniority && (
-                          <Badge
-                            color={seniorityColor(contact.seniority)}
-                            variant="soft"
-                            size="1"
-                          >
-                            {contact.seniority}
-                          </Badge>
-                        )}
-                        {contact.department && contact.department !== "Other" && (
-                          <Badge color="gray" variant="outline" size="1">
-                            {contact.department}
-                          </Badge>
-                        )}
-                      </Flex>
-
+                    <Flex align="center" gap="2" wrap="wrap" minWidth="0">
+                      <Text size="2" weight="medium" style={{ whiteSpace: "nowrap" }}>
+                        {contact.firstName} {contact.lastName}
+                      </Text>
                       {contact.position && (
-                        <Text size="2" color="gray" mt="1" as="p">
+                        <Text size="1" color="gray" style={{ whiteSpace: "nowrap" }}>
                           {contact.position}
                           {contact.authorityScore != null && contact.authorityScore > 0 && (
-                            <Text as="span" size="1" color="gray" ml="2">
+                            <Text as="span" size="1" color="gray" ml="1">
                               {(contact.authorityScore * 100).toFixed(0)}%
                             </Text>
                           )}
                           {contact.lastContactedAt && (
-                            <Text as="span" size="1" color="gray" ml="2">
-                              · last: {Math.floor((Date.now() - new Date(contact.lastContactedAt).getTime()) / 86_400_000)}d ago
+                            <Text as="span" size="1" color="gray" ml="1">
+                              · {Math.floor((Date.now() - new Date(contact.lastContactedAt).getTime()) / 86_400_000)}d ago
                             </Text>
                           )}
                         </Text>
                       )}
-
-                      <Flex gap="3" mt="2" wrap="wrap" align="center">
-                        {contact.email && (
-                          <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
-                            <EnvelopeClosedIcon color="gray" />
-                            <RadixLink
-                              href={`mailto:${contact.email}`}
-                              size="2"
-                              color="gray"
-                            >
-                              {contact.email}
-                            </RadixLink>
-                          </Flex>
-                        )}
-                        {contact.linkedinUrl && (
-                          <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
-                            <LinkedInLogoIcon color="gray" />
-                            <RadixLink
-                              href={contact.linkedinUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              size="2"
-                              color="gray"
-                            >
-                              <Flex as="span" align="center" gap="1">
-                                LinkedIn
-                                <ExternalLinkIcon />
-                              </Flex>
-                            </RadixLink>
-                          </Flex>
-                        )}
-                        {contact.githubHandle && (
-                          <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
-                            <GitHubLogoIcon color="gray" />
-                            <RadixLink
-                              href={`https://github.com/${contact.githubHandle}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              size="2"
-                              color="gray"
-                            >
-                              {contact.githubHandle}
-                            </RadixLink>
-                          </Flex>
-                        )}
-                      </Flex>
-
-                      <Flex gap="1" mt="2" wrap="wrap" align="center" onClick={(e) => e.stopPropagation()}>
-                        {(localTags[contact.id] ?? contact.tags ?? []).map((tag) => (
-                          <Badge
-                            key={tag}
-                            color="gray"
-                            variant="surface"
-                            size="1"
-                            style={{ cursor: "pointer" }}
-                            title="Click to remove"
-                            onClick={() => {
-                              const next = (localTags[contact.id] ?? contact.tags ?? []).filter((t) => t !== tag);
-                              setLocalTags((prev) => ({ ...prev, [contact.id]: next }));
-                              updateContact({ variables: { id: contact.id, input: { tags: next } } });
-                            }}
-                          >
-                            {tag} ×
-                          </Badge>
-                        ))}
+                      {contact.emailVerified && (
+                        <Badge color="green" variant="soft" size="1">verified</Badge>
+                      )}
+                      {contact.email && !contact.emailVerified && contact.nbResult && (
+                        <Badge color="orange" variant="soft" size="1">{contact.nbResult}</Badge>
+                      )}
+                      {contact.doNotContact && (
+                        <Badge color="red" variant="soft" size="1">do not contact</Badge>
+                      )}
+                      {contact.isDecisionMaker && (
+                        <Badge color="green" variant="solid" size="1">DM</Badge>
+                      )}
+                      {dueContactIds.has(contact.id) && (
+                        <Badge color="red" variant="solid" size="1">reminder due</Badge>
+                      )}
+                      {!dueContactIds.has(contact.id) && (contact.nextTouchScore ?? 0) > 0.7 && (
+                        <Badge color="orange" variant="soft" size="1">follow up</Badge>
+                      )}
+                      {contact.seniority && (
+                        <Badge color={seniorityColor(contact.seniority)} variant="soft" size="1">{contact.seniority}</Badge>
+                      )}
+                      {contact.department && contact.department !== "Other" && (
+                        <Badge color="gray" variant="outline" size="1">{contact.department}</Badge>
+                      )}
+                      {contact.email && (
+                        <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
+                          <EnvelopeClosedIcon color="gray" />
+                          <RadixLink href={`mailto:${contact.email}`} size="1" color="gray">{contact.email}</RadixLink>
+                        </Flex>
+                      )}
+                      {contact.linkedinUrl && (
+                        <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
+                          <LinkedInLogoIcon color="gray" />
+                          <RadixLink href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer" size="1" color="gray">
+                            LinkedIn <ExternalLinkIcon style={{ display: "inline" }} />
+                          </RadixLink>
+                        </Flex>
+                      )}
+                      {contact.githubHandle && (
+                        <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
+                          <GitHubLogoIcon color="gray" />
+                          <RadixLink href={`https://github.com/${contact.githubHandle}`} target="_blank" rel="noopener noreferrer" size="1" color="gray">{contact.githubHandle}</RadixLink>
+                        </Flex>
+                      )}
+                      {(localTags[contact.id] ?? contact.tags ?? []).map((tag) => (
+                        <Badge
+                          key={tag}
+                          color="gray"
+                          variant="surface"
+                          size="1"
+                          style={{ cursor: "pointer" }}
+                          title="Click to remove"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const next = (localTags[contact.id] ?? contact.tags ?? []).filter((t) => t !== tag);
+                            setLocalTags((prev) => ({ ...prev, [contact.id]: next }));
+                            updateContact({ variables: { id: contact.id, input: { tags: next } } });
+                          }}
+                        >
+                          {tag} ×
+                        </Badge>
+                      ))}
+                      <span onClick={(e) => e.stopPropagation()}>
                         {editingTagContactId === contact.id ? (
                           <TextField.Root
                             size="1"
@@ -1398,8 +1349,8 @@ export function CompanyContactsClient({
                             +
                           </button>
                         )}
-                      </Flex>
-                    </Box>
+                      </span>
+                    </Flex>
 
                     <Flex align="center" gap="2" flexShrink="0" wrap="wrap" onClick={(e) => e.stopPropagation()}>
                       {!contact.doNotContact && (
