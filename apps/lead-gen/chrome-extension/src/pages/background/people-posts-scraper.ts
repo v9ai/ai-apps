@@ -116,6 +116,7 @@ export async function scrapePeoplePostsFromCompanyPage(
   companyLinkedinUrl: string,
 ): Promise<void> {
   cancelled = false;
+  await chrome.storage.session.set({ postScrapingActive: true });
 
   const LOG = "[PeoplePosts]";
   const slug = extractSlug(companyLinkedinUrl);
@@ -377,5 +378,7 @@ export async function scrapePeoplePostsFromCompanyPage(
       title: `Posts scrape failed — ${companyName}`,
       message: errMsg.slice(0, 120),
     });
+  } finally {
+    await chrome.storage.session.set({ postScrapingActive: false });
   }
 }

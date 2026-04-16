@@ -1454,6 +1454,18 @@ function syncProfileButton() {
     return;
   }
 
+  // Skip injecting profile button while post scraping is active —
+  // the tab navigates through many /in/ pages and the button is noise.
+  chrome.storage.session.get("postScrapingActive", (data) => {
+    if (data?.postScrapingActive) {
+      removeProfileButton();
+      return;
+    }
+    _doSyncProfileButton(slug);
+  });
+}
+
+function _doSyncProfileButton(slug: string) {
   if (slug !== lastKnownProfileSlug) {
     removeProfileButton();
     lastKnownProfileSlug = slug;
