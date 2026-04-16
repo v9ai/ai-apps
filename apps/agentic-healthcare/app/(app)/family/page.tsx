@@ -1,6 +1,6 @@
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { familyMembers, familyMemberDoctors } from "@/lib/db/schema";
+import { familyMembers, familyMemberDoctors, familyDocuments } from "@/lib/db/schema";
 import { eq, asc, count } from "drizzle-orm";
 import { Box, Badge, Button, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
@@ -84,7 +84,7 @@ function calculateAge(dateOfBirth: string): number {
 async function FamilyList() {
   const { userId } = await withAuth();
 
-  const [rows, doctorCounts] = await Promise.all([
+  const [rows, doctorCounts, docCounts] = await Promise.all([
     db
       .select()
       .from(familyMembers)
@@ -94,9 +94,14 @@ async function FamilyList() {
       .select({ familyMemberId: familyMemberDoctors.familyMemberId, doctorCount: count() })
       .from(familyMemberDoctors)
       .groupBy(familyMemberDoctors.familyMemberId),
+    db
+      .select({ familyMemberId: familyDocuments.familyMemberId, docCount: count() })
+      .from(familyDocuments)
+      .groupBy(familyDocuments.familyMemberId),
   ]);
 
   const doctorCountMap = new Map(doctorCounts.map((r) => [r.familyMemberId, r.doctorCount]));
+  const docCountMap = new Map(docCounts.map((r) => [r.familyMemberId, r.docCount]));
 
   if (!rows.length) {
     return (
@@ -122,7 +127,8 @@ async function FamilyList() {
         })}
       >
         {rows.map((m) => {
-          const docCount = doctorCountMap.get(m.id) ?? 0;
+          const drCount = doctorCountMap.get(m.id) ?? 0;
+          const docsCount = docCountMap.get(m.id) ?? 0;
           const age = m.dateOfBirth ? calculateAge(m.dateOfBirth) : null;
 
           return (
@@ -171,10 +177,16 @@ async function FamilyList() {
                         <Text size="1" color="gray">yrs old</Text>
                       </Flex>
                     )}
-                    {docCount > 0 && (
+                    {drCount > 0 && (
                       <Flex direction="column" gap="0">
-                        <Text size="4" weight="bold">{docCount}</Text>
-                        <Text size="1" color="gray">{docCount === 1 ? "doctor" : "doctors"}</Text>
+                        <Text size="4" weight="bold">{drCount}</Text>
+                        <Text size="1" color="gray">{drCount === 1 ? "doctor" : "doctors"}</Text>
+                      </Flex>
+                    )}
+                    {docsCount > 0 && (
+                      <Flex direction="column" gap="0">
+                        <Text size="4" weight="bold">{docsCount}</Text>
+                        <Text size="1" color="gray">{docsCount === 1 ? "doc" : "docs"}</Text>
                       </Flex>
                     )}
                   </Flex>

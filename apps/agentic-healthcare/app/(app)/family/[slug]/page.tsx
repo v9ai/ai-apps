@@ -1,16 +1,18 @@
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { familyMembers, familyMemberDoctors, doctors } from "@/lib/db/schema";
-import { and, eq, asc, notInArray } from "drizzle-orm";
+import { familyMembers, familyMemberDoctors, familyDocuments, doctors } from "@/lib/db/schema";
+import { and, eq, asc, desc, notInArray } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { Box, Badge, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Stethoscope } from "lucide-react";
+import { Mail, Phone, Stethoscope } from "lucide-react";
 import { deleteFamilyMember } from "../actions";
 import { linkDoctorToFamilyMember, unlinkDoctorFromFamilyMember } from "../doctor-link-actions";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
+import { MarkdownProse } from "@/components/markdown-prose";
 import { LinkDoctorForm } from "./link-doctor-form";
+import { FamilyDocumentsSection } from "./family-documents";
 
 async function FamilyMemberDetail({ slug }: { slug: string }) {
   const { userId } = await withAuth();
@@ -30,19 +32,25 @@ async function FamilyMemberDetail({ slug }: { slug: string }) {
       )
     : null;
 
-  // Fetch linked doctors
-  const linkedDoctors = await db
-    .select({
-      id: doctors.id,
-      name: doctors.name,
-      specialty: doctors.specialty,
-      phone: doctors.phone,
-      address: doctors.address,
-    })
-    .from(familyMemberDoctors)
-    .innerJoin(doctors, eq(familyMemberDoctors.doctorId, doctors.id))
-    .where(eq(familyMemberDoctors.familyMemberId, id))
-    .orderBy(asc(doctors.name));
+  const [linkedDoctors, documents] = await Promise.all([
+    db
+      .select({
+        id: doctors.id,
+        name: doctors.name,
+        specialty: doctors.specialty,
+        phone: doctors.phone,
+        address: doctors.address,
+      })
+      .from(familyMemberDoctors)
+      .innerJoin(doctors, eq(familyMemberDoctors.doctorId, doctors.id))
+      .where(eq(familyMemberDoctors.familyMemberId, id))
+      .orderBy(asc(doctors.name)),
+    db
+      .select()
+      .from(familyDocuments)
+      .where(eq(familyDocuments.familyMemberId, id))
+      .orderBy(desc(familyDocuments.documentDate)),
+  ]);
 
   // Fetch user's doctors not yet linked — for the link form
   const linkedDoctorIds = linkedDoctors.map((d) => d.id);
@@ -90,15 +98,41 @@ async function FamilyMemberDetail({ slug }: { slug: string }) {
             <Text size="3">{new Date(member.dateOfBirth).toLocaleDateString()}</Text>
           </Flex>
         )}
+        {(member.phone || member.email) && (
+          <Flex gap="4" wrap="wrap">
+            {member.phone && (
+              <Flex align="center" gap="2">
+                <Phone size={14} color="var(--gray-8)" />
+                <Text size="2">{member.phone}</Text>
+              </Flex>
+            )}
+            {member.email && (
+              <Flex align="center" gap="2">
+                <Mail size={14} color="var(--gray-8)" />
+                <Text size="2">{member.email}</Text>
+              </Flex>
+            )}
+          </Flex>
+        )}
         {member.notes ? (
           <Flex direction="column" gap="1">
             <Text size="2" weight="medium" color="gray">Notes</Text>
-            <Text size="3" style={{ whiteSpace: "pre-wrap" }}>{member.notes}</Text>
+            <MarkdownProse content={member.notes} />
           </Flex>
         ) : (
-          !member.dateOfBirth && <Text size="2" color="gray">No additional details.</Text>
+          !member.dateOfBirth && !member.phone && !member.email && (
+            <Text size="2" color="gray">No additional details.</Text>
+          )
         )}
       </Flex>
+
+      <Separator size="4" />
+
+      <FamilyDocumentsSection
+        familyMemberId={id}
+        familyMemberSlug={slug}
+        initialDocuments={documents}
+      />
 
       <Separator size="4" />
 

@@ -80,6 +80,16 @@ const T = {
       expect: "What to expect",
       goodFor: "Good for",
     },
+    ourHotel: "Our Stay",
+    ourHotelName: "La Vispa Teresa",
+    ourHotelDesc: "B&B in Ischia Porto, rated 9.7/10 Exceptional. Junior Suite with breakfast included, free WiFi, garden, parking. 6 nights, 31 May – 6 Jun. Genius Level 2 discount (16%).",
+    ourHotelCta: "View Details",
+    ourHotelScore: "9.7 / 10 · 4,492 RON",
+    marontiLabel: "Beach Accommodation",
+    marontiName: "Hotel Maronti",
+    marontiDesc: "Family-run beachfront hotel, 1 min from Maronti Beach. Breakfast included, free beach service, jacuzzi garden. 6 nights, 31 May – 6 Jun.",
+    marontiCta: "View Hotel Details",
+    marontiScore: "9.1 / 10 Booking.com",
   },
   ro: {
     sectionLabel: "Unde Dormi",
@@ -143,6 +153,16 @@ const T = {
       expect: "La ce să te aștepți",
       goodFor: "Potrivit pentru",
     },
+    ourHotel: "Cazarea Noastră",
+    ourHotelName: "La Vispa Teresa",
+    ourHotelDesc: "B&B în Ischia Porto, evaluat 9,7/10 Excepțional. Suită Junior cu mic dejun inclus, WiFi gratuit, grădină, parcare. 6 nopți, 31 mai – 6 iun. Discount Genius Nivelul 2 (16%).",
+    ourHotelCta: "Vezi Detalii",
+    ourHotelScore: "9,7 / 10 · 4.492 lei",
+    marontiLabel: "Cazare pe Plajă",
+    marontiName: "Hotel Maronti",
+    marontiDesc: "Hotel de familie pe plajă, la 1 min de Plaja Maronti. Mic dejun inclus, serviciu plajă gratuit, grădină cu jacuzzi. 6 nopți, 31 mai – 6 iun.",
+    marontiCta: "Vezi Detalii Hotel",
+    marontiScore: "9.1 / 10 Booking.com",
   },
 };
 
@@ -691,6 +711,211 @@ export function SleepGuide() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── La Vispa Teresa card ── */}
+      <div className={css({ maxW: "none", mx: "auto", mt: { base: "10", md: "14" } })}>
+        <Link
+          href="/ischia/la-vispa-teresa"
+          className={css({
+            display: "block",
+            bg: "steel.surface",
+            border: "1px solid",
+            borderColor: "amber.warm",
+            rounded: "card",
+            boxShadow: "card.hover",
+            p: { base: "6", md: "8" },
+            textDecoration: "none",
+            transition: "border-color 0.2s, box-shadow 0.2s",
+            _hover: { borderColor: "amber.bright" },
+          })}
+        >
+          <div
+            className={css({
+              display: "flex",
+              flexDir: { base: "column", md: "row" },
+              alignItems: { md: "center" },
+              justifyContent: "space-between",
+              gap: { base: "4", md: "6" },
+            })}
+          >
+            <div>
+              <p
+                className={css({
+                  fontSize: "label",
+                  fontFamily: "display",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "amber.warm",
+                  mb: "2",
+                })}
+              >
+                {t.ourHotel}
+              </p>
+              <p
+                className={css({
+                  fontSize: "h3",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  color: "text.primary",
+                  lineHeight: "1.2",
+                  mb: "2",
+                })}
+              >
+                {t.ourHotelName}
+              </p>
+              <p
+                className={css({
+                  fontSize: "meta",
+                  color: "text.secondary",
+                  lineHeight: "1.55",
+                  maxW: "600px",
+                })}
+              >
+                {t.ourHotelDesc}
+              </p>
+            </div>
+            <div
+              className={css({
+                display: "flex",
+                flexDir: "column",
+                alignItems: { base: "flex-start", md: "flex-end" },
+                gap: "2",
+                flexShrink: 0,
+              })}
+            >
+              <p
+                className={css({
+                  fontSize: "xs",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  color: "amber.warm",
+                })}
+              >
+                {t.ourHotelScore}
+              </p>
+              <span
+                className={css({
+                  display: "inline-block",
+                  bg: "amber.warm",
+                  color: "steel.dark",
+                  rounded: "pill",
+                  px: "5",
+                  py: "2",
+                  fontSize: "2xs",
+                  fontFamily: "display",
+                  fontWeight: "700",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                })}
+              >
+                {t.ourHotelCta} &rarr;
+              </span>
+            </div>
+          </div>
+        </Link>
+
+        {/* Hotel Maronti */}
+        <Link
+          href="/maronti"
+          className={css({
+            display: "block",
+            bg: "steel.surface",
+            border: "1px solid",
+            borderColor: "steel.border",
+            rounded: "card",
+            boxShadow: "card",
+            p: { base: "6", md: "8" },
+            textDecoration: "none",
+            transition: "border-color 0.2s, box-shadow 0.2s",
+            _hover: { borderColor: "amber.warm", boxShadow: "card.hover" },
+            mt: { base: "4", md: "6" },
+          })}
+        >
+          <div
+            className={css({
+              display: "flex",
+              flexDir: { base: "column", md: "row" },
+              alignItems: { md: "center" },
+              justifyContent: "space-between",
+              gap: { base: "4", md: "6" },
+            })}
+          >
+            <div>
+              <p
+                className={css({
+                  fontSize: "label",
+                  fontFamily: "display",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "text.muted",
+                  mb: "2",
+                })}
+              >
+                {t.marontiLabel}
+              </p>
+              <p
+                className={css({
+                  fontSize: "h3",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  color: "text.primary",
+                  lineHeight: "1.2",
+                  mb: "2",
+                })}
+              >
+                {t.marontiName}
+              </p>
+              <p
+                className={css({
+                  fontSize: "meta",
+                  color: "text.secondary",
+                  lineHeight: "1.55",
+                  maxW: "600px",
+                })}
+              >
+                {t.marontiDesc}
+              </p>
+            </div>
+            <div
+              className={css({
+                display: "flex",
+                flexDir: "column",
+                alignItems: { base: "flex-start", md: "flex-end" },
+                gap: "2",
+                flexShrink: 0,
+              })}
+            >
+              <p
+                className={css({
+                  fontSize: "xs",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  color: "amber.warm",
+                })}
+              >
+                {t.marontiScore}
+              </p>
+              <span
+                className={css({
+                  display: "inline-block",
+                  bg: "amber.warm",
+                  color: "steel.dark",
+                  rounded: "pill",
+                  px: "5",
+                  py: "2",
+                  fontSize: "2xs",
+                  fontFamily: "display",
+                  fontWeight: "700",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                })}
+              >
+                {t.marontiCta} &rarr;
+              </span>
+            </div>
+          </div>
+        </Link>
       </div>
     </section>
   );
