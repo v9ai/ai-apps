@@ -1307,26 +1307,15 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             updatedAt={company.updated_at}
           />
 
-          {/* Industries + Tags */}
+          {/* Industries + Tags — inline */}
           {(company.industries?.length || (company.tags ?? []).some((t: string) => !t.startsWith('leadgen-'))) && (
-            <Flex gap="4" wrap="wrap" align="start">
-              {company.industries?.length ? (
-                <Box style={{ flex: "1 1 0%", minWidth: 200 }}>
-                  <SectionCard title="Industries">
-                    <CollapsibleChips items={company.industries} visibleCount={8} />
-                  </SectionCard>
-                </Box>
-              ) : null}
-              {(() => {
-                const displayTags = (company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-'));
-                return displayTags.length ? (
-                  <Box style={{ flex: "1 1 0%", minWidth: 200 }}>
-                    <SectionCard title="Tags">
-                      <CollapsibleChips items={displayTags} visibleCount={10} />
-                    </SectionCard>
-                  </Box>
-                ) : null;
-              })()}
+            <Flex gap="2" wrap="wrap" align="center">
+              {(company.industries ?? []).map((ind) => (
+                <Badge key={ind} color="blue" variant="soft" size="1">{ind}</Badge>
+              ))}
+              {(company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-')).map((tag) => (
+                <Badge key={tag} color="gray" variant="surface" size="1">{tag}</Badge>
+              ))}
             </Flex>
           )}
 
