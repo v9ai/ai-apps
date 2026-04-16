@@ -46,10 +46,10 @@ quick-xml = "0.37"
 futures   = { workspace = true }
 chrono    = { version = "0.4" }
 
-# Local vector pipeline (feature-gated) — pinned at 0.9, workspace upgrade in Phase 2
-candle-core         = { version = "0.9", optional = true }
-candle-nn           = { version = "0.9", optional = true }
-candle-transformers = { version = "0.9", optional = true }
+# Local vector pipeline (feature-gated)
+candle-core         = { workspace = true, optional = true }
+candle-nn           = { workspace = true, optional = true }
+candle-transformers = { workspace = true, optional = true }
 hf-hub     = { workspace = true, optional = true }
 tokenizers = { workspace = true, optional = true }
 lancedb    = { workspace = true, optional = true }

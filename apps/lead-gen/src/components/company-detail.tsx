@@ -1296,196 +1296,182 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           )}
         </TabNav.Root>
 
-        <Flex
-          pt="4"
-          direction={{ initial: "column", lg: "row" }}
-          gap="5"
-          align="start"
-        >
-          {/* Left column: overview */}
-          <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-            <Flex direction="column" gap="5">
-              {/* Key facts — single line */}
-              <KeyFactsCard
-                linkedinUrl={company.linkedin_url}
-                jobBoardUrl={company.job_board_url}
-                score={company.score}
-                isAdmin={isAdmin}
-                updatedAt={company.updated_at}
-              />
+        {/* Overview */}
+        <Flex direction="column" gap="5" pt="4">
+          {/* Key facts — single line */}
+          <KeyFactsCard
+            linkedinUrl={company.linkedin_url}
+            jobBoardUrl={company.job_board_url}
+            score={company.score}
+            isAdmin={isAdmin}
+            updatedAt={company.updated_at}
+          />
 
-              {/* Industries + Tags */}
-              {(company.industries?.length || (company.tags ?? []).some((t: string) => !t.startsWith('leadgen-'))) && (
-                <Flex gap="4" wrap="wrap" align="start">
-                  {company.industries?.length ? (
-                    <Box style={{ flex: "1 1 0%", minWidth: 200 }}>
-                      <SectionCard title="Industries">
-                        <CollapsibleChips items={company.industries} visibleCount={8} />
-                      </SectionCard>
-                    </Box>
-                  ) : null}
-                  {(() => {
-                    const displayTags = (company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-'));
-                    return displayTags.length ? (
-                      <Box style={{ flex: "1 1 0%", minWidth: 200 }}>
-                        <SectionCard title="Tags">
-                          <CollapsibleChips items={displayTags} visibleCount={10} />
-                        </SectionCard>
-                      </Box>
-                    ) : null;
-                  })()}
-                </Flex>
-              )}
-
-              {/* Opportunities */}
-              {company.opportunities && company.opportunities.length > 0 && (
-                <SectionCard title={`Opportunities (${company.opportunities.length})`}>
-                  <Flex direction="column" gap="2">
-                    {company.opportunities.map((opp) => (
-                      <Flex key={opp.id} align="center" justify="between" gap="3" wrap="wrap" py="1">
-                        <Flex align="center" gap="2" style={{ minWidth: 0, flex: "1 1 0%" }}>
-                          {opp.url ? (
-                            <RadixLink href={opp.url} target="_blank" rel="noopener noreferrer" size="2" truncate>
-                              {opp.title}
-                              <ExternalLinkIcon style={{ marginLeft: 4, flexShrink: 0 }} />
-                            </RadixLink>
-                          ) : (
-                            <Text size="2" truncate>{opp.title}</Text>
-                          )}
-                        </Flex>
-                        <Flex align="center" gap="2" shrink="0">
-                          {opp.rewardText && (
-                            <Text size="1" color="gray">{opp.rewardText}</Text>
-                          )}
-                          {opp.score != null && (
-                            <Badge
-                              color={opp.score >= 80 ? "green" : opp.score >= 50 ? "yellow" : "gray"}
-                              variant="soft"
-                              size="1"
-                            >
-                              {opp.score}
-                            </Badge>
-                          )}
-                          <Badge
-                            color={
-                              opp.status === "offer" ? "green"
-                                : opp.status === "open" ? "blue"
-                                : opp.status === "applied" ? "orange"
-                                : opp.status === "interviewing" ? "yellow"
-                                : opp.status === "rejected" ? "red"
-                                : "gray"
-                            }
-                            variant="soft"
-                            size="1"
-                          >
-                            {opp.status}
-                          </Badge>
-                          {opp.applied && (
-                            <Badge color="green" variant="soft" size="1">applied</Badge>
-                          )}
-                        </Flex>
-                      </Flex>
-                    ))}
-                  </Flex>
-                </SectionCard>
-              )}
-
-              {/* Deep analysis / About / Services */}
-              <Flex direction="column" gap="4">
-                {company.deep_analysis && (
-                        <SectionCard title="Deep Analysis">
-                          <Text size="2" as="div">
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                h1: ({ children }) => (
-                                  <Heading as="h1" size="5" weight="bold" mt="4" mb="2">{children}</Heading>
-                                ),
-                                h2: ({ children }) => (
-                                  <Heading as="h2" size="4" weight="bold" mt="3" mb="2">{children}</Heading>
-                                ),
-                                h3: ({ children }) => (
-                                  <Heading as="h3" size="3" weight="bold" mt="3" mb="1">{children}</Heading>
-                                ),
-                                p: ({ children }) => (
-                                  <Text as="p" size="2" color="gray" mb="3">{children}</Text>
-                                ),
-                                ul: ({ children }) => (
-                                  <ul style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ul>
-                                ),
-                                ol: ({ children }) => (
-                                  <ol style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ol>
-                                ),
-                                li: ({ children }) => (
-                                  <li style={{ marginBottom: '0.25em' }}>{children}</li>
-                                ),
-                                strong: ({ children }) => (
-                                  <Strong>{children}</Strong>
-                                ),
-                                em: ({ children }) => (
-                                  <Em>{children}</Em>
-                                ),
-                                code: ({ children, className }) => {
-                                  const isBlock = className?.includes('language-');
-                                  return isBlock ? (
-                                    <Code size="2" style={{ display: 'block', overflowX: 'auto', padding: '0.5em 0.75em' }}>{children}</Code>
-                                  ) : (
-                                    <Code size="2">{children}</Code>
-                                  );
-                                },
-                                blockquote: ({ children }) => (
-                                  <Blockquote>{children}</Blockquote>
-                                ),
-                                hr: () => (
-                                  <Separator size="4" my="4" />
-                                ),
-                              }}
-                            >
-                              {company.deep_analysis}
-                            </ReactMarkdown>
-                          </Text>
-                        </SectionCard>
-                      )}
-
-                      {company.description ? (
-                        <SectionCard title="About">
-                          <Text
-                            as="p"
-                            size="3"
-                            color="gray"
-                            style={{ whiteSpace: "pre-wrap" }}
-                          >
-                            {company.description}
-                          </Text>
-                        </SectionCard>
-                      ) : null}
-
-                      {company.services?.length ? (
-                        <SectionCard title="Services">
-                          <CollapsibleChips items={company.services} visibleCount={8} />
-                        </SectionCard>
-                      ) : null}
-
-              </Flex>
-
-              {/* Admin-only: Score breakdown */}
-              {isAdmin && company.score_reasons?.length ? (
-                <SectionCard title="Score breakdown">
-                  <Flex direction="column" gap="2">
-                    {company.score_reasons.map((reason: string, idx: number) => (
-                      <Box key={`${idx}-${reason}`} px="3" py="1" style={{ background: 'var(--gray-2)' }}><Text size="2" color="gray">{reason}</Text></Box>
-                    ))}
-                  </Flex>
-                </SectionCard>
+          {/* Industries + Tags */}
+          {(company.industries?.length || (company.tags ?? []).some((t: string) => !t.startsWith('leadgen-'))) && (
+            <Flex gap="4" wrap="wrap" align="start">
+              {company.industries?.length ? (
+                <Box style={{ flex: "1 1 0%", minWidth: 200 }}>
+                  <SectionCard title="Industries">
+                    <CollapsibleChips items={company.industries} visibleCount={8} />
+                  </SectionCard>
+                </Box>
               ) : null}
+              {(() => {
+                const displayTags = (company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-'));
+                return displayTags.length ? (
+                  <Box style={{ flex: "1 1 0%", minWidth: 200 }}>
+                    <SectionCard title="Tags">
+                      <CollapsibleChips items={displayTags} visibleCount={10} />
+                    </SectionCard>
+                  </Box>
+                ) : null;
+              })()}
             </Flex>
-          </Box>
+          )}
 
-          {/* Right column: contacts */}
+          {/* Opportunities */}
+          {company.opportunities && company.opportunities.length > 0 && (
+            <SectionCard title={`Opportunities (${company.opportunities.length})`}>
+              <Flex direction="column" gap="2">
+                {company.opportunities.map((opp) => (
+                  <Flex key={opp.id} align="center" justify="between" gap="3" wrap="wrap" py="1">
+                    <Flex align="center" gap="2" style={{ minWidth: 0, flex: "1 1 0%" }}>
+                      {opp.url ? (
+                        <RadixLink href={opp.url} target="_blank" rel="noopener noreferrer" size="2" truncate>
+                          {opp.title}
+                          <ExternalLinkIcon style={{ marginLeft: 4, flexShrink: 0 }} />
+                        </RadixLink>
+                      ) : (
+                        <Text size="2" truncate>{opp.title}</Text>
+                      )}
+                    </Flex>
+                    <Flex align="center" gap="2" shrink="0">
+                      {opp.rewardText && (
+                        <Text size="1" color="gray">{opp.rewardText}</Text>
+                      )}
+                      {opp.score != null && (
+                        <Badge
+                          color={opp.score >= 80 ? "green" : opp.score >= 50 ? "yellow" : "gray"}
+                          variant="soft"
+                          size="1"
+                        >
+                          {opp.score}
+                        </Badge>
+                      )}
+                      <Badge
+                        color={
+                          opp.status === "offer" ? "green"
+                            : opp.status === "open" ? "blue"
+                            : opp.status === "applied" ? "orange"
+                            : opp.status === "interviewing" ? "yellow"
+                            : opp.status === "rejected" ? "red"
+                            : "gray"
+                        }
+                        variant="soft"
+                        size="1"
+                      >
+                        {opp.status}
+                      </Badge>
+                      {opp.applied && (
+                        <Badge color="green" variant="soft" size="1">applied</Badge>
+                      )}
+                    </Flex>
+                  </Flex>
+                ))}
+              </Flex>
+            </SectionCard>
+          )}
+
+          {/* Deep analysis / About / Services */}
+          {company.deep_analysis && (
+            <SectionCard title="Deep Analysis">
+              <Text size="2" as="div">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ children }) => (
+                      <Heading as="h1" size="5" weight="bold" mt="4" mb="2">{children}</Heading>
+                    ),
+                    h2: ({ children }) => (
+                      <Heading as="h2" size="4" weight="bold" mt="3" mb="2">{children}</Heading>
+                    ),
+                    h3: ({ children }) => (
+                      <Heading as="h3" size="3" weight="bold" mt="3" mb="1">{children}</Heading>
+                    ),
+                    p: ({ children }) => (
+                      <Text as="p" size="2" color="gray" mb="3">{children}</Text>
+                    ),
+                    ul: ({ children }) => (
+                      <ul style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ol>
+                    ),
+                    li: ({ children }) => (
+                      <li style={{ marginBottom: '0.25em' }}>{children}</li>
+                    ),
+                    strong: ({ children }) => (
+                      <Strong>{children}</Strong>
+                    ),
+                    em: ({ children }) => (
+                      <Em>{children}</Em>
+                    ),
+                    code: ({ children, className }) => {
+                      const isBlock = className?.includes('language-');
+                      return isBlock ? (
+                        <Code size="2" style={{ display: 'block', overflowX: 'auto', padding: '0.5em 0.75em' }}>{children}</Code>
+                      ) : (
+                        <Code size="2">{children}</Code>
+                      );
+                    },
+                    blockquote: ({ children }) => (
+                      <Blockquote>{children}</Blockquote>
+                    ),
+                    hr: () => (
+                      <Separator size="4" my="4" />
+                    ),
+                  }}
+                >
+                  {company.deep_analysis}
+                </ReactMarkdown>
+              </Text>
+            </SectionCard>
+          )}
+
+          {company.description ? (
+            <SectionCard title="About">
+              <Text
+                as="p"
+                size="3"
+                color="gray"
+                style={{ whiteSpace: "pre-wrap" }}
+              >
+                {company.description}
+              </Text>
+            </SectionCard>
+          ) : null}
+
+          {company.services?.length ? (
+            <SectionCard title="Services">
+              <CollapsibleChips items={company.services} visibleCount={8} />
+            </SectionCard>
+          ) : null}
+
+          {/* Admin-only: Score breakdown */}
+          {isAdmin && company.score_reasons?.length ? (
+            <SectionCard title="Score breakdown">
+              <Flex direction="column" gap="2">
+                {company.score_reasons.map((reason: string, idx: number) => (
+                  <Box key={`${idx}-${reason}`} px="3" py="1" style={{ background: 'var(--gray-2)' }}><Text size="2" color="gray">{reason}</Text></Box>
+                ))}
+              </Flex>
+            </SectionCard>
+          ) : null}
+
+          {/* Contacts — full width */}
           {isAdmin && company.id && (
-            <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-              <CompanyContactsClient companyKey={effectiveKey} embedded />
-            </Box>
+            <CompanyContactsClient companyKey={effectiveKey} embedded />
           )}
         </Flex>
       </Flex>
