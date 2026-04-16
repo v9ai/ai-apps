@@ -1,0 +1,72 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/*",
+  "apps/lead-gen/crates/agentic-search",
+  "apps/lead-gen/crates/ats",
+  "apps/lead-gen/crates/company-cleanup",
+  "apps/lead-gen/crates/email-verifier",
+  "apps/lead-gen/crates/gh",
+  "apps/lead-gen/crates/job-prep",
+  "apps/lead-gen/crates/jobbert",
+  "apps/lead-gen/crates/linkedin-posts",
+  "apps/lead-gen/crates/metal",
+  "apps/lead-gen/crates/recruitment-verify",
+  "apps/lead-gen/crates/scholar-graph",
+]
+
+[workspace.dependencies]
+# ── ML / HuggingFace ──────────────────────────────────────────────
+candle-core         = "0.8"
+candle-nn           = "0.8"
+candle-transformers = "0.8"
+hf-hub              = "0.4"
+tokenizers          = "0.21"
+lancedb             = "0.27"
+arrow-array         = "57"
+arrow-schema        = "57"
+ndarray             = "0.16"
+ort                 = { version = "2.0.0-rc.12", features = ["load-dynamic"] }
+
+# ── Serialization ─────────────────────────────────────────────────
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# ── Async runtime ─────────────────────────────────────────────────
+tokio      = { version = "1", features = ["full"] }
+futures    = "0.3"
+async-trait = "0.1"
+
+# ── HTTP ──────────────────────────────────────────────────────────
+reqwest    = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+axum       = "0.8"
+tower-http = { version = "0.6", features = ["cors"] }
+
+# ── Error handling / logging ──────────────────────────────────────
+thiserror  = "2"
+anyhow     = "1"
+tracing    = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# ── Database ──────────────────────────────────────────────────────
+sqlx       = { version = "0.8", features = ["runtime-tokio", "postgres", "tls-rustls"] }
+
+# ── CLI / utilities ───────────────────────────────────────────────
+clap       = { version = "4", features = ["derive"] }
+chrono     = { version = "0.4", features = ["serde"] }
+dotenvy    = "0.15"
+regex      = "1"
+uuid       = { version = "1", features = ["v4"] }
+base64     = "0.22"
+walkdir    = "2"
+scraper    = "0.22"
+url        = "2"
+
+# ── Internal path dependencies ────────────────────────────────────
+candle     = { path = "crates/candle", default-features = false }
+deepseek   = { path = "crates/deepseek", default-features = false }
+qwen       = { path = "crates/qwen" }
+research   = { path = "crates/research", default-features = false }
+sdd        = { path = "crates/sdd" }
+hf         = { path = "crates/hf" }
+jobbert    = { path = "apps/lead-gen/crates/jobbert", default-features = false }
