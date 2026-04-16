@@ -39,11 +39,11 @@ export function extractPeopleCards(tabId: number): Promise<PersonCard[]> {
           const name = nameEl?.textContent?.trim() || "";
           if (!name || name === "LinkedIn Member") return;
 
-          // Headline / title
+          // Position at this company (preferred) or headline fallback
           const headlineEl =
-            card.querySelector(".lit-lockup__subtitle") ||
+            card.querySelector(".org-people-profile-card__profile-position") ||
             card.querySelector(".artdeco-entity-lockup__caption") ||
-            card.querySelector(".org-people-profile-card__profile-position");
+            card.querySelector(".lit-lockup__subtitle");
           const headline = headlineEl?.textContent?.trim() || "";
 
           // Profile URL
