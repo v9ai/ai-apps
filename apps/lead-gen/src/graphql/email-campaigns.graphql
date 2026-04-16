@@ -120,8 +120,8 @@ query GetEmailStats {
   }
 }
 
-query GetReceivedEmails($limit: Int, $offset: Int, $archived: Boolean) {
-  receivedEmails(limit: $limit, offset: $offset, archived: $archived) {
+query GetReceivedEmails($limit: Int, $offset: Int, $archived: Boolean, $classification: String) {
+  receivedEmails(limit: $limit, offset: $offset, archived: $archived, classification: $classification) {
     emails {
       id
       resendId
@@ -130,6 +130,11 @@ query GetReceivedEmails($limit: Int, $offset: Int, $archived: Boolean) {
       subject
       receivedAt
       archivedAt
+      classification
+      classificationConfidence
+      matchedContactId
+      textContent
+      htmlContent
       createdAt
     }
     totalCount

@@ -1,12 +1,13 @@
 /**
  * Contact matcher — match inbound received emails to contacts and outbound emails.
  *
- * Two matching strategies:
- * 1. from_email → contacts.email / contacts.emails (JSON array)
- * 2. In-Reply-To / References header → contact_emails.resend_id
+ * Three matching strategies (in priority order):
+ * 1. In-Reply-To header → contact_emails.resend_id (most precise)
+ * 2. from_email → contacts.email / contacts.emails (JSON array)
+ * 3. Subject line → contact_emails.subject (fuzzy fallback)
  */
 
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, contactEmails } from "@/db/schema";
 
@@ -76,13 +77,88 @@ export async function matchOutboundByResendId(
 }
 
 /**
- * Full contact matching: try email match first, then optionally outbound match.
+ * Parse a Resend ID from an In-Reply-To or References header value.
+ * Header format: "<resend_id@resend.dev>" → extracts "resend_id"
+ * Also handles multiple message IDs separated by spaces.
+ */
+export function parseResendIdFromHeader(header: string): string | null {
+  // Match angle-bracketed message IDs with @resend.dev domain
+  const matches = header.match(/<([^@>]+)@resend\.dev>/g);
+  if (!matches || matches.length === 0) return null;
+
+  // Extract the local part from the first match
+  const match = matches[0].match(/<([^@>]+)@resend\.dev>/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Strip reply/forward prefixes from a subject line.
+ */
+function stripSubjectPrefixes(subject: string): string {
+  return subject.replace(/^(?:(?:Re|Fwd|FW|Fw|RE):\s*)+/i, "").trim();
+}
+
+/**
+ * Match an inbound email to an outbound contact_email by subject line.
+ * Only matches if the stripped subject is >= 10 chars and maps to exactly one contact.
+ */
+export async function matchContactBySubject(
+  subject: string,
+): Promise<ContactMatch | null> {
+  const stripped = stripSubjectPrefixes(subject);
+  if (stripped.length < 10) return null;
+
+  const rows = await db
+    .select({
+      id: contactEmails.id,
+      contact_id: contactEmails.contact_id,
+    })
+    .from(contactEmails)
+    .where(sql`lower(${contactEmails.subject}) = ${stripped.toLowerCase()}`)
+    .orderBy(desc(contactEmails.sent_at))
+    .limit(10);
+
+  if (rows.length === 0) return null;
+
+  // Check for ambiguity — if multiple distinct contacts match, skip
+  const uniqueContacts = new Set(rows.map((r) => r.contact_id));
+  if (uniqueContacts.size > 1) {
+    console.log(
+      `[CONTACT_MATCHER] subject match ambiguous (${uniqueContacts.size} contacts) for: "${stripped}"`,
+    );
+    return null;
+  }
+
+  const best = rows[0];
+  console.log(
+    `[CONTACT_MATCHER] subject match → contact ${best.contact_id}, outbound ${best.id}`,
+  );
+  return { contactId: best.contact_id, outboundEmailId: best.id };
+}
+
+/**
+ * Full contact matching with three strategies (in priority order):
+ * 1. In-Reply-To header match (most precise)
+ * 2. Sender email match (reliable)
+ * 3. Subject line match (fuzzy fallback)
  */
 export async function matchContact(
   fromEmail: string,
   inReplyToResendId?: string | null,
+  subject?: string | null,
 ): Promise<ContactMatch | null> {
-  // Strategy 1: match by sender email
+  // Strategy 1: match by In-Reply-To resend_id (most precise)
+  if (inReplyToResendId) {
+    const outbound = await matchOutboundByResendId(inReplyToResendId);
+    if (outbound) {
+      return {
+        contactId: outbound.contactId,
+        outboundEmailId: outbound.outboundEmailId,
+      };
+    }
+  }
+
+  // Strategy 2: match by sender email
   const emailMatch = await matchContactByEmail(fromEmail);
 
   if (emailMatch) {
@@ -97,14 +173,11 @@ export async function matchContact(
     return { contactId: emailMatch.contactId, outboundEmailId };
   }
 
-  // Strategy 2: match by outbound resend_id (fallback)
-  if (inReplyToResendId) {
-    const outbound = await matchOutboundByResendId(inReplyToResendId);
-    if (outbound) {
-      return {
-        contactId: outbound.contactId,
-        outboundEmailId: outbound.outboundEmailId,
-      };
+  // Strategy 3: match by subject line (fuzzy fallback)
+  if (subject) {
+    const subjectMatch = await matchContactBySubject(subject);
+    if (subjectMatch) {
+      return subjectMatch;
     }
   }
 

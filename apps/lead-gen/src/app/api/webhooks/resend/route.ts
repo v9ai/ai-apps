@@ -4,7 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { contactEmails, contacts, messages, receivedEmails } from "@/db/schema";
 import { classifyReply, classifyReplyHybrid } from "@/lib/email/reply-classifier";
-import { matchContact } from "@/lib/email/contact-matcher";
+import { matchContact, parseResendIdFromHeader } from "@/lib/email/contact-matcher";
 import { resend } from "@/lib/resend";
 
 /**
@@ -352,23 +352,22 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
     console.log(`[RESEND_WEBHOOK] email.received persisted: ${emailId}`);
   });
 
-  // 1b. Fetch full email content from Resend API (webhook payload lacks body)
-  if (!html && !text) {
-    await withRetry(`handleReceived/fetchContent(${emailId})`, async () => {
-      const full = await resend.instance.getReceivedEmail(emailId);
-      if (full && (full.html || full.text)) {
-        await db
-          .update(receivedEmails)
-          .set({
-            html_content: full.html ?? null,
-            text_content: full.text ?? null,
-            updated_at: new Date().toISOString(),
-          })
-          .where(eq(receivedEmails.resend_id, emailId));
-        console.log(`[RESEND_WEBHOOK] fetched content for ${emailId}`);
-      }
-    });
-  }
+  // 1b. Always fetch full email from Resend API for headers + content
+  let fullEmail: Awaited<ReturnType<typeof resend.instance.getReceivedEmail>> = null;
+  await withRetry(`handleReceived/fetchFull(${emailId})`, async () => {
+    fullEmail = await resend.instance.getReceivedEmail(emailId);
+    if (fullEmail && !html && !text && (fullEmail.html || fullEmail.text)) {
+      await db
+        .update(receivedEmails)
+        .set({
+          html_content: fullEmail.html ?? null,
+          text_content: fullEmail.text ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        .where(eq(receivedEmails.resend_id, emailId));
+      console.log(`[RESEND_WEBHOOK] fetched content for ${emailId}`);
+    }
+  });
 
   // 2. Classify reply and match to contact
   await withRetry(`handleReceived/classify(${emailId})`, async () => {
@@ -384,10 +383,20 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
     }
     const emailSubject = subject || "";
 
-    // Match to a contact first (needed for thread context)
+    // Extract In-Reply-To from API headers (webhook payload doesn't include it)
+    const inReplyToHeader =
+      fullEmail?.headers?.["In-Reply-To"] ||
+      fullEmail?.headers?.["in-reply-to"] ||
+      null;
+    const inReplyToResendId = inReplyToHeader
+      ? parseResendIdFromHeader(inReplyToHeader)
+      : null;
+
+    // Match to a contact using all three strategies
     const contactMatch = await matchContact(
       from || "",
-      (event.data as any).in_reply_to ?? null,
+      inReplyToResendId,
+      emailSubject || null,
     );
 
     // Build thread context from matched outbound email
