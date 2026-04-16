@@ -188,12 +188,16 @@ export const familyMembers = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    slug: text("slug").notNull(),
     relationship: text("relationship"),
     dateOfBirth: date("date_of_birth"),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("family_members_user_idx").on(table.userId)],
+  (table) => [
+    index("family_members_user_idx").on(table.userId),
+    uniqueIndex("family_members_user_slug_idx").on(table.userId, table.slug),
+  ],
 );
 
 export const appointments = pgTable(

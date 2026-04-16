@@ -12,15 +12,17 @@ import { linkDoctorToFamilyMember, unlinkDoctorFromFamilyMember } from "../docto
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 import { LinkDoctorForm } from "./link-doctor-form";
 
-async function FamilyMemberDetail({ id }: { id: string }) {
+async function FamilyMemberDetail({ slug }: { slug: string }) {
   const { userId } = await withAuth();
 
   const [member] = await db
     .select()
     .from(familyMembers)
-    .where(eq(familyMembers.id, id));
+    .where(and(eq(familyMembers.slug, slug), eq(familyMembers.userId, userId)));
 
-  if (!member || member.userId !== userId) notFound();
+  if (!member) notFound();
+
+  const id = member.id;
 
   const age = member.dateOfBirth
     ? Math.floor(
@@ -154,9 +156,9 @@ async function FamilyMemberDetail({ id }: { id: string }) {
 export default async function FamilyMemberDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
 
   return (
     <Box py="8" style={{ maxWidth: 600, margin: "0 auto" }}>
@@ -172,7 +174,7 @@ export default async function FamilyMemberDetailPage({
             <Skeleton height="120px" />
           </Flex>
         }>
-          <FamilyMemberDetail id={id} />
+          <FamilyMemberDetail slug={slug} />
         </Suspense>
       </Flex>
     </Box>

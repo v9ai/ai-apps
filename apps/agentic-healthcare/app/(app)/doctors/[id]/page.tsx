@@ -54,6 +54,7 @@ async function DoctorDetail({ id }: { id: string }) {
     db
       .select({
         id: familyMembers.id,
+        slug: familyMembers.slug,
         name: familyMembers.name,
         relationship: familyMembers.relationship,
         dateOfBirth: familyMembers.dateOfBirth,
@@ -145,7 +146,7 @@ async function DoctorDetail({ id }: { id: string }) {
             <Heading size="4">Family members</Heading>
             {linkedFamilyMembers.map((fm) => (
               <Card key={fm.id} asChild className="card-hover">
-                <Link href={`/family/${fm.id}`} style={{ textDecoration: "none" }}>
+                <Link href={`/family/${fm.slug}`} style={{ textDecoration: "none" }}>
                   <Flex align="center" gap="2">
                     <Users size={14} color="var(--gray-8)" />
                     <Text size="2" weight="medium">

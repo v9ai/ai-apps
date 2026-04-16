@@ -137,7 +137,7 @@ async function FamilyList() {
                 transition: "all 150ms ease",
               })}
             >
-              <Link href={`/family/${m.id}`} style={{ textDecoration: "none" }}>
+              <Link href={`/family/${m.slug}`} style={{ textDecoration: "none" }}>
                 <Flex direction="column" gap="3">
                   {/* Header row: avatar + name + delete */}
                   <Flex justify="between" align="start" gap="2">

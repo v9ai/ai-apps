@@ -22,7 +22,7 @@ async function AppointmentDetail({ id }: { id: string }) {
 
   const familyMember = appointment.familyMemberId
     ? await db
-        .select({ id: familyMembers.id, name: familyMembers.name, relationship: familyMembers.relationship })
+        .select({ id: familyMembers.id, slug: familyMembers.slug, name: familyMembers.name, relationship: familyMembers.relationship })
         .from(familyMembers)
         .where(eq(familyMembers.id, appointment.familyMemberId))
         .then((rows) => rows[0] ?? null)
@@ -58,7 +58,7 @@ async function AppointmentDetail({ id }: { id: string }) {
           <Text size="2" weight="medium" color="gray">For</Text>
           <Flex align="center" gap="2">
             <Text size="3" asChild>
-              <Link href={`/family/${familyMember.id}`}>{familyMember.name}</Link>
+              <Link href={`/family/${familyMember.slug}`}>{familyMember.name}</Link>
             </Text>
             {familyMember.relationship && (
               <Badge color="blue" radius="full" size="1">{familyMember.relationship}</Badge>
