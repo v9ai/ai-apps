@@ -51,7 +51,7 @@ Content scripts
 | Build | Vite + @crxjs/vite-plugin (MV3) |
 | Language | TypeScript strict |
 | GraphQL client | graphql-request |
-| Backend | Next.js GraphQL API (Apollo Server 5) + Rust LanceDB server |
+| Backend | Next.js GraphQL API (Apollo Server 5) + SQLite (posts) |
 
 ---
 

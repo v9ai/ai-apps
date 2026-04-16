@@ -1002,7 +1002,7 @@ function createScrapePeoplePostsButton(): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.setAttribute(SCRAPE_PEOPLE_POSTS_BTN_ATTR, "true");
   btn.textContent = "Scrape People Posts";
-  btn.title = "Navigate to each person's activity page and save their posts to LanceDB";
+  btn.title = "Navigate to each person's activity page and save their posts";
   btn.style.cssText = `
     position: fixed;
     bottom: 136px;

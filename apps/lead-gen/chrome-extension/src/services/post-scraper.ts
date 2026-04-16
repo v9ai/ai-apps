@@ -1,6 +1,6 @@
 /**
  * Post scraping orchestration service.
- * Navigates LinkedIn profiles, extracts posts, sends to local Rust/LanceDB server.
+ * Navigates LinkedIn profiles, extracts posts, sends to local SQLite API.
  *
  * Two entry points:
  *   browseContactPosts(tabId) — scrape posts for DB contacts only (legacy)
