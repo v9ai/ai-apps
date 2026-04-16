@@ -9,6 +9,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
+use futures::stream::{self, StreamExt};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -288,8 +289,8 @@ async fn gql_with_retry(client: &GhClient, vars: &serde_json::Value) -> Result<G
 async fn run_slice(
     client: &GhClient,
     query: &str,
-    orgs: &mut HashMap<String, OrgCandidate>,
-) -> Result<()> {
+) -> Result<HashMap<String, OrgCandidate>> {
+    let mut orgs: HashMap<String, OrgCandidate> = HashMap::new();
     let mut cursor: Option<String> = None;
 
     for page in 0..MAX_PAGES_PER_SLICE {
@@ -380,19 +381,38 @@ async fn run_slice(
         tokio::time::sleep(Duration::from_millis(PAGE_DELAY_MS)).await;
     }
 
-    Ok(())
+    Ok(orgs)
 }
 
 // ── Main entry point ──────────────────────────────────────────────────────────
 
 pub async fn run(pool: &PgPool, dry_run: bool) -> Result<()> {
     let client = GhClient::from_env().context("GITHUB_TOKEN / GH_TOKEN not set")?;
-    let mut orgs: HashMap<String, OrgCandidate> = HashMap::new();
 
-    for query in TOPIC_SLICES {
-        info!("GitHub slice: {query}");
-        if let Err(e) = run_slice(&client, query, &mut orgs).await {
-            warn!("slice failed: {e:#}");
+    let slice_results: Vec<_> = stream::iter(TOPIC_SLICES)
+        .map(|&query| {
+            let c = &client;
+            async move {
+                info!("GitHub slice: {query}");
+                let result = run_slice(c, query).await;
+                (query, result)
+            }
+        })
+        .buffer_unordered(4)
+        .collect()
+        .await;
+
+    let mut orgs: HashMap<String, OrgCandidate> = HashMap::new();
+    for (query, result) in slice_results {
+        match result {
+            Ok(slice_orgs) => {
+                let before = orgs.len();
+                for (k, v) in slice_orgs {
+                    orgs.entry(k).or_insert(v);
+                }
+                info!("slice {query} contributed {} new orgs (total {})", orgs.len() - before, orgs.len());
+            }
+            Err(e) => warn!("slice {query} failed: {e:#}"),
         }
     }
 
