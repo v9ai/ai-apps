@@ -1,6 +1,8 @@
 import { getCompanyPosts, getCompanyStats } from "@/lib/posts-db";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import { companies } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 interface SqlitePost {
   person_name: string;
@@ -51,7 +53,7 @@ export const scrapedPostResolvers = {
   ScrapedPost,
 
   Query: {
-    companyScrapedPosts(
+    async companyScrapedPosts(
       _parent: unknown,
       args: { companySlug: string },
       context: GraphQLContext,
@@ -60,30 +62,50 @@ export const scrapedPostResolvers = {
         throw new Error("Forbidden");
       }
 
-      const stats = getCompanyStats(args.companySlug) as SqliteStats | undefined;
-      if (!stats) {
-        return {
-          companyName: args.companySlug,
-          slug: args.companySlug,
-          peopleCount: 0,
-          postsCount: 0,
-          firstScraped: null,
-          lastScraped: null,
-          posts: [],
-        };
+      const empty = {
+        companyName: args.companySlug,
+        slug: args.companySlug,
+        peopleCount: 0,
+        postsCount: 0,
+        firstScraped: null,
+        lastScraped: null,
+        posts: [],
+      };
+
+      // Try the provided slug first (company.key from Neon, e.g. "oliver-bernard")
+      // then the LinkedIn slug extracted from linkedin_url (e.g. "oliverbernard")
+      const slugsToTry = [args.companySlug];
+
+      const [company] = await context.db
+        .select({ linkedin_url: companies.linkedin_url })
+        .from(companies)
+        .where(eq(companies.key, args.companySlug))
+        .limit(1);
+
+      if (company?.linkedin_url) {
+        const match = company.linkedin_url.match(/\/company\/([^/?#]+)/);
+        if (match && match[1] !== args.companySlug) {
+          slugsToTry.push(match[1]);
+        }
       }
 
-      const posts = getCompanyPosts(args.companySlug);
+      for (const slug of slugsToTry) {
+        const stats = getCompanyStats(slug) as SqliteStats | undefined;
+        if (stats) {
+          const posts = getCompanyPosts(slug);
+          return {
+            companyName: stats.company_name,
+            slug: stats.slug,
+            peopleCount: stats.people_count,
+            postsCount: stats.posts_count,
+            firstScraped: stats.first_scraped,
+            lastScraped: stats.last_scraped,
+            posts,
+          };
+        }
+      }
 
-      return {
-        companyName: stats.company_name,
-        slug: stats.slug,
-        peopleCount: stats.people_count,
-        postsCount: stats.posts_count,
-        firstScraped: stats.first_scraped,
-        lastScraped: stats.last_scraped,
-        posts,
-      };
+      return empty;
     },
   },
 };
