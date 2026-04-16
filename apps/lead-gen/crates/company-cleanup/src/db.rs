@@ -38,13 +38,23 @@ pub async fn connect(database_url: &str) -> Result<PgPool> {
     Ok(pool)
 }
 
-/// Fetch all non-blocked companies.
+/// Fetch non-blocked, non-staffing companies that have enough text to classify.
+///
+/// Excludes STAFFING category (already handled by recruitment-verify) and
+/// requires at least one of description/industry/tags/services to be populated.
 pub async fn fetch_companies(pool: &PgPool) -> Result<Vec<CompanyRow>> {
     let rows: Vec<CompanyRow> = sqlx::query_as(
         r#"
         SELECT id, key, name, description, industry, industries, tags, services
         FROM companies
         WHERE blocked = false
+          AND category != 'STAFFING'
+          AND (
+            (description IS NOT NULL AND description != '')
+            OR (industry IS NOT NULL AND industry != '')
+            OR (tags IS NOT NULL AND tags != '' AND tags != '[]')
+            OR (services IS NOT NULL AND services != '' AND services != '[]')
+          )
         ORDER BY id
         "#,
     )

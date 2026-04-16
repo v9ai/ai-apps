@@ -1322,37 +1322,33 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           {/* Opportunities */}
           {company.opportunities && company.opportunities.length > 0 && (
             <SectionCard title={`Opportunities (${company.opportunities.length})`}>
-              <Flex gap="2" wrap="wrap">
+              <Flex direction="column" gap="1">
                 {company.opportunities.map((opp) => (
-                  <Badge
-                    key={opp.id}
-                    color={
-                      opp.status === "offer" ? "green"
-                        : opp.status === "open" ? "blue"
-                        : opp.status === "applied" ? "orange"
-                        : opp.status === "interviewing" ? "yellow"
-                        : opp.status === "rejected" ? "red"
-                        : "gray"
-                    }
-                    variant="soft"
-                    size="1"
-                    style={{ cursor: opp.url ? "pointer" : undefined }}
-                    asChild={!!opp.url}
-                  >
+                  <Flex key={opp.id} align="center" gap="2">
+                    <Badge
+                      color={
+                        opp.status === "offer" ? "green"
+                          : opp.status === "open" ? "blue"
+                          : opp.status === "applied" ? "orange"
+                          : opp.status === "interviewing" ? "yellow"
+                          : opp.status === "rejected" ? "red"
+                          : "gray"
+                      }
+                      variant="soft"
+                      size="1"
+                    >
+                      {opp.status}
+                    </Badge>
                     {opp.url ? (
-                      <a href={opp.url} target="_blank" rel="noopener noreferrer">
+                      <RadixLink href={opp.url} target="_blank" rel="noopener noreferrer" size="1" truncate>
                         {opp.title}
-                        {opp.score != null && ` (${opp.score})`}
-                        {opp.applied && " \u2713"}
-                      </a>
+                      </RadixLink>
                     ) : (
-                      <span>
-                        {opp.title}
-                        {opp.score != null && ` (${opp.score})`}
-                        {opp.applied && " \u2713"}
-                      </span>
+                      <Text size="1" truncate>{opp.title}</Text>
                     )}
-                  </Badge>
+                    {opp.score != null && <Text size="1" color="gray">{opp.score}</Text>}
+                    {opp.applied && <Badge color="green" variant="soft" size="1">{"\u2713"}</Badge>}
+                  </Flex>
                 ))}
               </Flex>
             </SectionCard>
