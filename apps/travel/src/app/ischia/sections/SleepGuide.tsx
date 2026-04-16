@@ -90,6 +90,11 @@ const T = {
     marontiDesc: "Family-run beachfront hotel, 1 min from Maronti Beach. Breakfast included, free beach service, jacuzzi garden. 6 nights, 31 May – 6 Jun.",
     marontiCta: "View Hotel Details",
     marontiScore: "9.1 / 10 Booking.com",
+    tifeoLabel: "Wellness Aparthotel",
+    tifeoName: "Il Soffio di Tifeo Resort",
+    tifeoDesc: "4-star boutique aparthotel in Forio. Heated pool, jacuzzi, sauna, Turkish bath. Self-catering apartments. 9.8/10 on Booking.com. 6 nights, 31 May – 6 Jun.",
+    tifeoCta: "View Resort Details",
+    tifeoScore: "9.8 / 10 Booking.com",
   },
   ro: {
     sectionLabel: "Unde Dormi",
@@ -163,6 +168,11 @@ const T = {
     marontiDesc: "Hotel de familie pe plajă, la 1 min de Plaja Maronti. Mic dejun inclus, serviciu plajă gratuit, grădină cu jacuzzi. 6 nopți, 31 mai – 6 iun.",
     marontiCta: "Vezi Detalii Hotel",
     marontiScore: "9.1 / 10 Booking.com",
+    tifeoLabel: "Aparthotel Wellness",
+    tifeoName: "Il Soffio di Tifeo Resort",
+    tifeoDesc: "Aparthotel boutique 4 stele în Forio. Piscină încălzită, jacuzzi, saună, baie turcească. Apartamente self-catering. 9.8/10 pe Booking.com. 6 nopți, 31 mai – 6 iun.",
+    tifeoCta: "Vezi Detalii Resort",
+    tifeoScore: "9.8 / 10 Booking.com",
   },
 };
 
@@ -912,6 +922,108 @@ export function SleepGuide() {
                 })}
               >
                 {t.marontiCta} &rarr;
+              </span>
+            </div>
+          </div>
+        </Link>
+
+        {/* Il Soffio di Tifeo */}
+        <Link
+          href="/tifeo"
+          className={css({
+            display: "block",
+            bg: "steel.surface",
+            border: "1px solid",
+            borderColor: "steel.border",
+            rounded: "card",
+            boxShadow: "card",
+            p: { base: "6", md: "8" },
+            textDecoration: "none",
+            transition: "border-color 0.2s, box-shadow 0.2s",
+            _hover: { borderColor: "amber.warm", boxShadow: "card.hover" },
+            mt: { base: "4", md: "6" },
+          })}
+        >
+          <div
+            className={css({
+              display: "flex",
+              flexDir: { base: "column", md: "row" },
+              alignItems: { md: "center" },
+              justifyContent: "space-between",
+              gap: { base: "4", md: "6" },
+            })}
+          >
+            <div>
+              <p
+                className={css({
+                  fontSize: "label",
+                  fontFamily: "display",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "text.muted",
+                  mb: "2",
+                })}
+              >
+                {t.tifeoLabel}
+              </p>
+              <p
+                className={css({
+                  fontSize: "h3",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  color: "text.primary",
+                  lineHeight: "1.2",
+                  mb: "2",
+                })}
+              >
+                {t.tifeoName}
+              </p>
+              <p
+                className={css({
+                  fontSize: "meta",
+                  color: "text.secondary",
+                  lineHeight: "1.55",
+                  maxW: "600px",
+                })}
+              >
+                {t.tifeoDesc}
+              </p>
+            </div>
+            <div
+              className={css({
+                display: "flex",
+                flexDir: "column",
+                alignItems: { base: "flex-start", md: "flex-end" },
+                gap: "2",
+                flexShrink: 0,
+              })}
+            >
+              <p
+                className={css({
+                  fontSize: "xs",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  color: "amber.warm",
+                })}
+              >
+                {t.tifeoScore}
+              </p>
+              <span
+                className={css({
+                  display: "inline-block",
+                  bg: "amber.warm",
+                  color: "steel.dark",
+                  rounded: "pill",
+                  px: "5",
+                  py: "2",
+                  fontSize: "2xs",
+                  fontFamily: "display",
+                  fontWeight: "700",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                })}
+              >
+                {t.tifeoCta} &rarr;
               </span>
             </div>
           </div>

@@ -9,6 +9,7 @@ const DESTINATIONS = [
   { label: "Naples", href: "/napoli" },
   { label: "Ischia", href: "/ischia" },
   { label: "Maronti", href: "/maronti" },
+  { label: "Tifeo", href: "/tifeo" },
   { label: "Greece", href: "/greece" },
   { label: "Spain", href: "/spain" },
   { label: "Long Stay", href: "/greece/long-stay" },
