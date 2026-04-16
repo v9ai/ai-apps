@@ -191,6 +191,8 @@ export const familyMembers = pgTable(
     slug: text("slug").notNull(),
     relationship: text("relationship"),
     dateOfBirth: date("date_of_birth"),
+    phone: text("phone"),
+    email: text("email"),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -254,6 +256,32 @@ export const medicalLetters = pgTable(
   (table) => [
     index("medical_letters_user_idx").on(table.userId),
     index("medical_letters_doctor_idx").on(table.doctorId),
+  ],
+);
+
+export const familyDocuments = pgTable(
+  "family_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    familyMemberId: uuid("family_member_id")
+      .notNull()
+      .references(() => familyMembers.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    documentType: text("document_type").notNull(),
+    documentDate: date("document_date"),
+    source: text("source"),
+    content: text("content"),
+    externalUrl: text("external_url"),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("family_docs_user_idx").on(table.userId),
+    index("family_docs_member_idx").on(table.familyMemberId),
+    index("family_docs_date_idx").on(table.documentDate),
   ],
 );
 

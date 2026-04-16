@@ -338,6 +338,34 @@ export const ISCHIA_HOTELS: IschiaHotelBilingual[] = [
       qualityPrice: 4,
     },
   },
+  // ── Featured: La Villarosa Terme (dedicated page) ──
+  {
+    slug: "la-villarosa-terme",
+    tierIndex: 2,
+    priceNum: 220,
+    en: {
+      name: "Hotel La Villarosa Terme",
+      area: "Ischia Porto",
+      price: "~€220 / night",
+      note: "4★, BB/HB/FB, private beach 300m, rooftop restaurant",
+      thermalPools: "1 outdoor thermal + Parco Aurora wellness (500m)",
+      thermalDetail: "Outdoor thermal pool with volcanic-source hot water. Free access to Parco Aurora wellness centre and gym 500m away. Swimming cap required for pool (€2.50 on-site). Private beach with free sunbeds open May–mid October.",
+      board: "Breakfast / Half board / Full board",
+      bestFor: "Central Ischia Porto location with character — 19th century gardens, rooftop dining, private beach",
+      qualityPrice: 4,
+    },
+    ro: {
+      name: "Hotel La Villarosa Terme",
+      area: "Ischia Porto",
+      price: "~€220 / noapte",
+      note: "4★, MD/DP/PC, plajă privată 300m, restaurant panoramic",
+      thermalPools: "1 termală exterioară + Parco Aurora wellness (500m)",
+      thermalDetail: "Piscină termală exterioară cu apă caldă din sursă vulcanică. Acces gratuit la centrul wellness Parco Aurora și sala de fitness la 500m. Cască de înot obligatorie (€2.50). Plajă privată cu șezlonguri gratuite, deschisă mai–mijlocul lui octombrie.",
+      board: "Mic dejun / Demi-pensiune / Pensiune completă",
+      bestFor: "Locație centrală Ischia Porto cu caracter — grădini din sec. XIX, restaurant panoramic, plajă privată",
+      qualityPrice: 4,
+    },
+  },
 ];
 
 export function getIschiaHotelBySlug(slug: string) {
