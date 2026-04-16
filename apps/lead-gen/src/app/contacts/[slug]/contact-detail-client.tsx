@@ -37,6 +37,7 @@ import {
 } from "@radix-ui/themes";
 import {
   ArrowLeftIcon,
+  CheckCircledIcon,
   CheckIcon,
   CopyIcon,
   EnvelopeClosedIcon,
@@ -61,6 +62,7 @@ import {
 function ComposeEmailDialog({
   contact,
   onSent,
+  onToast,
 }: {
   contact: {
     id: number;
@@ -71,13 +73,14 @@ function ComposeEmailDialog({
     email?: string | null;
   };
   onSent?: () => void;
+  onToast?: (message: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [includeResume, setIncludeResume] = useState(false);
   const [sending, setSending] = useState(false);
-  const [sendResult, setSendResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [customTime, setCustomTime] = useState("");
 
   const recipientName = `${contact.firstName} ${contact.lastName}`.trim();
@@ -88,7 +91,7 @@ function ComposeEmailDialog({
       setSubject("");
       setBody("");
       setIncludeResume(false);
-      setSendResult(null);
+      setError(null);
       setCustomTime("");
     }
   };
@@ -96,7 +99,7 @@ function ComposeEmailDialog({
   const handleSend = async (scheduledAt?: string) => {
     if (!contact.email) return;
     setSending(true);
-    setSendResult(null);
+    setError(null);
     try {
       const res = await fetch("/api/emails/send", {
         method: "POST",
@@ -113,18 +116,17 @@ function ComposeEmailDialog({
       });
       const json = (await res.json()) as { success: boolean; error?: string; scheduled?: boolean };
       if (json.success) {
-        if (json.scheduled) {
-          const when = new Date(scheduledAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-          setSendResult({ type: "success", message: `Scheduled for ${when}` });
-        } else {
-          setSendResult({ type: "success", message: `Sent to ${contact.email}` });
-        }
+        const message = json.scheduled
+          ? `Scheduled for ${new Date(scheduledAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+          : `Sent to ${contact.email}`;
+        setOpen(false);
+        onToast?.(message);
         onSent?.();
       } else {
-        setSendResult({ type: "error", message: json.error ?? "Send failed" });
+        setError(json.error ?? "Send failed");
       }
     } catch (err: unknown) {
-      setSendResult({ type: "error", message: err instanceof Error ? err.message : "Send failed" });
+      setError(err instanceof Error ? err.message : "Send failed");
     } finally {
       setSending(false);
     }
@@ -186,10 +188,10 @@ function ComposeEmailDialog({
             </Text>
           </Flex>
 
-          {sendResult && (
-            <Callout.Root color={sendResult.type === "success" ? "green" : "red"} size="1">
-              <Callout.Icon><InfoCircledIcon /></Callout.Icon>
-              <Callout.Text>{sendResult.message}</Callout.Text>
+          {error && (
+            <Callout.Root color="red" size="1">
+              <Callout.Icon><ExclamationTriangleIcon /></Callout.Icon>
+              <Callout.Text>{error}</Callout.Text>
             </Callout.Root>
           )}
 
@@ -1281,6 +1283,14 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
     message: string;
   } | null>(null);
 
+  // Toast notification for email sent/scheduled
+  const [emailToast, setEmailToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!emailToast) return;
+    const t = setTimeout(() => setEmailToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [emailToast]);
+
   // Background Resend sync — fetch latest emails after initial load
   const [resendSynced, setResendSynced] = useState(false);
   useEffect(() => {
@@ -1904,7 +1914,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
         {/* Bottom actions */}
         <Flex gap="2" wrap="wrap">
           {contact.email && (
-            <ComposeEmailDialog contact={contact} onSent={() => refetchEmails()} />
+            <ComposeEmailDialog contact={contact} onSent={() => refetchEmails()} onToast={setEmailToast} />
           )}
           {!contact.email && (
             <button className={button({ variant: "ghost", size: "md" })} onClick={handleFindEmail} disabled={finding}>
@@ -2123,6 +2133,28 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
         </Box>
 
       </Flex>
+
+      {/* Email sent toast */}
+      {emailToast && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            padding: "12px 20px",
+            backgroundColor: "#30A46C",
+            color: "white",
+            borderRadius: 6,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            zIndex: 9999,
+          }}
+        >
+          <Flex align="center" gap="2">
+            <CheckCircledIcon />
+            <Text size="2" weight="medium">{emailToast}</Text>
+          </Flex>
+        </div>
+      )}
     </Container>
   );
 }
