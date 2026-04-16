@@ -161,7 +161,7 @@ export default async function FamilyMemberDetailPage({
   const { slug } = await params;
 
   return (
-    <Box py="8" style={{ maxWidth: 600, margin: "0 auto" }}>
+    <Box py="8" px="4">
       <Flex direction="column" gap="6">
         <Text size="2" asChild>
           <Link href="/family" style={{ color: "var(--gray-9)" }}>
