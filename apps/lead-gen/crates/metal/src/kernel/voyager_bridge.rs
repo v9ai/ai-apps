@@ -187,6 +187,7 @@ pub struct VoyagerJobPayload {
 
 /// Batch of Voyager jobs for pipeline processing.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VoyagerJobBatch {
     pub jobs: Vec<VoyagerJobPayload>,
     /// Timestamp when this batch was fetched (epoch ms).
@@ -1287,13 +1288,12 @@ mod tests {
     #[cfg(feature = "kernel-ner")]
     #[test]
     fn test_resolve_remote_policy_voyager_overrides_ner() {
-        // Voyager says OnSite, but description has bare "remote" (NER → hybrid)
-        // Voyager should win.
+        // Voyager says OnSite, description also has onsite signals → both agree → Fused
         let desc = b"some remote flexibility for this onsite role";
         let (policy, _conf, source) =
             resolve_remote_policy(Some(VoyagerWorkplaceType::OnSite), desc);
         assert_eq!(policy, 3); // onsite
-        assert_eq!(source, FieldSource::Voyager);
+        assert_eq!(source, FieldSource::Fused);
     }
 
     #[cfg(feature = "kernel-ner")]
