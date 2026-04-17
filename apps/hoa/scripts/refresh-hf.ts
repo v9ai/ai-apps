@@ -46,19 +46,24 @@ function extractSlug(filePath: string): string {
   return base.replace(/\.ts$/, "");
 }
 
-async function fetchHFModels(username: string): Promise<HFModel[]> {
+const MAX_MODELS = 20;
+
+async function fetchHFModels(username: string): Promise<{ models: HFModel[]; totalCount: number }> {
   const url = `https://huggingface.co/api/models?author=${encodeURIComponent(username)}&sort=likes`;
   const res = await fetch(url);
-  if (!res.ok) return [];
+  if (!res.ok) return { models: [], totalCount: 0 };
   const raw: HFModelRaw[] = await res.json();
-  return raw.map((m) => ({
-    id: m.modelId ?? m.id,
-    likes: m.likes ?? 0,
-    downloads: m.downloads ?? 0,
-    tags: m.tags ?? [],
-    pipelineTag: m.pipeline_tag ?? null,
-    createdAt: m.createdAt ?? null,
-  }));
+  const all = raw
+    .map((m) => ({
+      id: m.modelId ?? m.id,
+      likes: m.likes ?? 0,
+      downloads: m.downloads ?? 0,
+      tags: m.tags ?? [],
+      pipelineTag: m.pipeline_tag ?? null,
+      createdAt: m.createdAt ?? null,
+    }))
+    .sort((a, b) => b.downloads - a.downloads);
+  return { models: all.slice(0, MAX_MODELS), totalCount: all.length };
 }
 
 async function main() {
@@ -82,12 +87,12 @@ async function main() {
     const chunk = tasks.slice(i, i + BATCH);
     const results = await Promise.all(
       chunk.map(async ({ slug, hfUsername }) => {
-        const models = await fetchHFModels(hfUsername);
-        return { slug, models };
+        const { models, totalCount } = await fetchHFModels(hfUsername);
+        return { slug, models, totalCount };
       }),
     );
 
-    for (const { slug, models } of results) {
+    for (const { slug, models, totalCount } of results) {
       const enrichPath = join(ENRICHMENT_DIR, `${slug}.json`);
       let enrichment: Record<string, unknown> = {
         github: null,
@@ -102,14 +107,16 @@ async function main() {
       }
 
       if (models.length > 0) {
+        const totalDownloads = models.reduce((s, m) => s + m.downloads, 0);
         enrichment.huggingface = {
           models,
-          totalDownloads: models.reduce((s, m) => s + m.downloads, 0),
+          totalDownloads,
           totalLikes: models.reduce((s, m) => s + m.likes, 0),
+          totalModels: totalCount,
         };
         updated++;
         console.log(
-          `  ${slug}: ${models.length} models, ${(enrichment.huggingface as { totalDownloads: number }).totalDownloads.toLocaleString()} downloads`,
+          `  ${slug}: ${totalCount} models (top ${models.length}), ${totalDownloads.toLocaleString()} downloads`,
         );
       } else {
         enrichment.huggingface = null;

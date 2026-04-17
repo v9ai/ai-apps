@@ -41,6 +41,7 @@ export type EnrichedData = {
     models: HFModel[];
     totalDownloads: number;
     totalLikes: number;
+    totalModels?: number;
   } | null;
   imageUrl: string | null;
 };
