@@ -5,6 +5,12 @@ import {
   GitHubLogoIcon,
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon,
+  HomeIcon,
+  RocketIcon,
+  CountdownTimerIcon,
+  PersonIcon,
+  EnvelopeClosedIcon,
+  Pencil2Icon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -14,6 +20,15 @@ import { useSidebar } from "@/components/sidebar-provider";
 
 const SIDEBAR_WIDTH = 200;
 const SIDEBAR_COLLAPSED_WIDTH = 56;
+
+const NAV_ITEMS = [
+  { href: "/companies", label: "Companies", icon: HomeIcon },
+  { href: "/opportunities", label: "Opportunities", icon: RocketIcon },
+  { href: "/follow-ups", label: "Follow-ups", icon: CountdownTimerIcon },
+  { href: "/admin/contacts", label: "Contacts", icon: PersonIcon },
+  { href: "/admin/emails", label: "Emails", icon: EnvelopeClosedIcon },
+  { href: "/admin/linkedin-posts", label: "Posts", icon: Pencil2Icon },
+];
 
 export function Sidebar() {
   const { collapsed, toggle } = useSidebar();
@@ -56,6 +71,42 @@ export function Sidebar() {
             <Text size="3" weight="bold" style={{ color: "var(--accent-11)", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>agentic lead gen</Text>
           )}
         </Link>
+        </Flex>
+
+        {/* nav links */}
+        <Flex direction="column" gap="1" pt="4" pb="2" style={{ flex: 1, overflowY: "auto" }}>
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            const active = pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                style={{ textDecoration: "none" }}
+              >
+                <Flex
+                  align="center"
+                  gap="2"
+                  px="2"
+                  py="1"
+                  style={{
+                    borderRadius: 6,
+                    background: active ? "var(--accent-3)" : "transparent",
+                    color: active ? "var(--accent-11)" : "var(--gray-11)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                  }}
+                  className={css({ _hover: { background: "var(--accent-3)" } })}
+                >
+                  <Icon width={16} height={16} style={{ flexShrink: 0 }} />
+                  {!collapsed && (
+                    <Text size="2" weight={active ? "medium" : "regular"}>
+                      {label}
+                    </Text>
+                  )}
+                </Flex>
+              </Link>
+            );
+          })}
         </Flex>
 
         {/* footer: auth + github + toggle */}
