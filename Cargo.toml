@@ -69,6 +69,7 @@ url        = "2"
 candle     = { path = "crates/candle", default-features = false }
 deepseek   = { path = "crates/deepseek", default-features = false }
 qwen       = { path = "crates/qwen" }
+qwen-vl    = { path = "crates/qwen-vl", default-features = false }
 research   = { path = "crates/research", default-features = false }
 sdd        = { path = "crates/sdd" }
 hf         = { path = "crates/hf" }

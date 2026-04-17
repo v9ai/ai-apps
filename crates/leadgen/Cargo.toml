@@ -46,3 +46,6 @@ async-channel = "2"
 
 # Local ML inference
 candle = { workspace = true }
+
+# Vision-language model scraping
+qwen-vl = { workspace = true }

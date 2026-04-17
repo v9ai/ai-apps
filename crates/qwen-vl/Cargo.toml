@@ -1,0 +1,23 @@
+[package]
+name = "qwen-vl"
+version = "0.1.0"
+edition = "2021"
+description = "Async Rust client for self-hosted Qwen3-VL via vLLM (OpenAI-compatible)"
+license = "MIT"
+
+[features]
+default = []
+screenshot = ["dep:tokio"]
+
+[dependencies]
+reqwest    = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = { workspace = true }
+base64     = { workspace = true }
+tokio      = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio   = { workspace = true }
+dotenvy = { workspace = true }

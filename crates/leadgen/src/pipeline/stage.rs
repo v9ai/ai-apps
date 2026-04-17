@@ -27,6 +27,7 @@ pub struct PipelineContext {
     pub icp: IcpProfile,
     pub search_index: tantivy::Index,
     pub config: PipelineConfig,
+    pub vlm: Option<qwen_vl::VlClient>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
