@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+icp        = { path = "../icp", features = ["scoring", "calibration", "optim"] }
 libc       = "0.2"
 memmap2    = "0.9"
 tokio      = { workspace = true }

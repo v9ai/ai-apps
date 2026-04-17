@@ -107,6 +107,7 @@ async fn main() -> Result<()> {
             ],
             target_locations: vec![],
             funding_stages: vec![],
+            ..Default::default()
         }
     } else {
         scoring::IcpProfile::default()

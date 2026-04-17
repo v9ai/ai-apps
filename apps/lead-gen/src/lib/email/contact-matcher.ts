@@ -101,9 +101,11 @@ function stripSubjectPrefixes(subject: string): string {
 /**
  * Match an inbound email to an outbound contact_email by subject line.
  * Only matches if the stripped subject is >= 10 chars and maps to exactly one contact.
+ * When ambiguous, tries to disambiguate using sender display name or email domain.
  */
 export async function matchContactBySubject(
   subject: string,
+  fromEmail?: string | null,
 ): Promise<ContactMatch | null> {
   const stripped = stripSubjectPrefixes(subject);
   if (stripped.length < 10) return null;
@@ -120,20 +122,85 @@ export async function matchContactBySubject(
 
   if (rows.length === 0) return null;
 
-  // Check for ambiguity — if multiple distinct contacts match, skip
   const uniqueContacts = new Set(rows.map((r) => r.contact_id));
-  if (uniqueContacts.size > 1) {
+  if (uniqueContacts.size === 1) {
+    const best = rows[0];
     console.log(
-      `[CONTACT_MATCHER] subject match ambiguous (${uniqueContacts.size} contacts) for: "${stripped}"`,
+      `[CONTACT_MATCHER] subject match → contact ${best.contact_id}, outbound ${best.id}`,
     );
-    return null;
+    return { contactId: best.contact_id, outboundEmailId: best.id };
   }
 
-  const best = rows[0];
+  // Ambiguous — try to disambiguate by matching sender against contact names/emails
+  if (fromEmail) {
+    const contactIds = [...uniqueContacts];
+    const candidateContacts = await db
+      .select({
+        id: contacts.id,
+        first_name: contacts.first_name,
+        last_name: contacts.last_name,
+        email: contacts.email,
+        emails: contacts.emails,
+      })
+      .from(contacts)
+      .where(sql`${contacts.id} IN ${contactIds}`);
+
+    const senderNorm = fromEmail.trim().toLowerCase();
+    const senderLocal = senderNorm.split("@")[0];
+    const senderDomain = senderNorm.split("@")[1];
+
+    // Try exact email match in primary or alternate emails
+    const emailExact = candidateContacts.find(
+      (c) =>
+        c.email?.toLowerCase() === senderNorm ||
+        (Array.isArray(c.emails) && c.emails.some((e: string) => e.toLowerCase() === senderNorm)),
+    );
+    if (emailExact) {
+      const outbound = rows.find((r) => r.contact_id === emailExact.id);
+      console.log(
+        `[CONTACT_MATCHER] subject+email disambiguated → contact ${emailExact.id}`,
+      );
+      return { contactId: emailExact.id, outboundEmailId: outbound?.id ?? null };
+    }
+
+    // Try domain match (e.g. sender@pieper.io → contact email dominik@pieper.io)
+    if (senderDomain && !["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "protonmail.com", "proton.me"].includes(senderDomain)) {
+      const domainMatch = candidateContacts.filter(
+        (c) => c.email?.toLowerCase().endsWith(`@${senderDomain}`),
+      );
+      if (domainMatch.length === 1) {
+        const outbound = rows.find((r) => r.contact_id === domainMatch[0].id);
+        console.log(
+          `[CONTACT_MATCHER] subject+domain disambiguated → contact ${domainMatch[0].id}`,
+        );
+        return { contactId: domainMatch[0].id, outboundEmailId: outbound?.id ?? null };
+      }
+    }
+
+    // Try name match — check if sender local part contains contact name
+    const nameMatch = candidateContacts.filter((c) => {
+      const first = c.first_name?.toLowerCase() ?? "";
+      const last = c.last_name?.toLowerCase() ?? "";
+      if (!first && !last) return false;
+      return (
+        (first && senderLocal.includes(first)) ||
+        (last && senderLocal.includes(last)) ||
+        (first && last && senderNorm.includes(`${first}.${last}`))
+      );
+    });
+    if (nameMatch.length === 1) {
+      const outbound = rows.find((r) => r.contact_id === nameMatch[0].id);
+      console.log(
+        `[CONTACT_MATCHER] subject+name disambiguated → contact ${nameMatch[0].id}`,
+      );
+      return { contactId: nameMatch[0].id, outboundEmailId: outbound?.id ?? null };
+    }
+  }
+
   console.log(
-    `[CONTACT_MATCHER] subject match → contact ${best.contact_id}, outbound ${best.id}`,
+    `[CONTACT_MATCHER] subject match ambiguous (${uniqueContacts.size} contacts) for: "${stripped}"`,
   );
-  return { contactId: best.contact_id, outboundEmailId: best.id };
+  return null;
 }
 
 /**
@@ -173,9 +240,9 @@ export async function matchContact(
     return { contactId: emailMatch.contactId, outboundEmailId };
   }
 
-  // Strategy 3: match by subject line (fuzzy fallback)
+  // Strategy 3: match by subject line (fuzzy fallback, with sender-based disambiguation)
   if (subject) {
-    const subjectMatch = await matchContactBySubject(subject);
+    const subjectMatch = await matchContactBySubject(subject, fromEmail);
     if (subjectMatch) {
       return subjectMatch;
     }

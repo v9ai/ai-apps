@@ -66,10 +66,10 @@ pub fn passes_icp(org: &GhOrg, repos: &[GhRepo], criteria: &IcpCriteria) -> bool
             return false;
         }
     }
-    if !criteria.languages.is_empty() {
+    if !criteria.required_languages.is_empty() {
         let repo_langs: Vec<_> = repos.iter().filter_map(|r| r.language.as_deref()).collect();
         let any_lang = criteria
-            .languages
+            .required_languages
             .iter()
             .any(|l| repo_langs.contains(&l.as_str()));
         if !any_lang {
@@ -193,7 +193,7 @@ mod tests {
         let mut repo = make_repo("ts-project");
         repo.language = Some("TypeScript".to_string());
         let criteria = IcpCriteria {
-            languages: vec!["Rust".to_string()],
+            required_languages: vec!["Rust".to_string()],
             ..Default::default()
         };
         assert!(!passes_icp(&org, &[repo], &criteria));
@@ -205,7 +205,7 @@ mod tests {
         let mut repo = make_repo("rust-project");
         repo.language = Some("Rust".to_string());
         let criteria = IcpCriteria {
-            languages: vec!["Rust".to_string(), "Go".to_string()],
+            required_languages: vec!["Rust".to_string(), "Go".to_string()],
             ..Default::default()
         };
         assert!(passes_icp(&org, &[repo], &criteria));
@@ -219,7 +219,7 @@ mod tests {
         repo.language = Some("Python".to_string());
         let criteria = IcpCriteria {
             min_repos: Some(5),
-            languages: vec!["Rust".to_string()],
+            required_languages: vec!["Rust".to_string()],
             ..Default::default()
         };
         assert!(!passes_icp(&org, &[repo], &criteria));

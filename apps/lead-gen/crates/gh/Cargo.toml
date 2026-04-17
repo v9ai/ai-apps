@@ -21,7 +21,7 @@ lance    = ["client", "dep:lancedb", "dep:arrow-array", "dep:arrow-schema",
 # Embed contributor bio+repos text into LanceDB for semantic search
 contrib-embed = ["lance", "embed"]
 # ICP feature bridge — map Candidate → Vec<f32> for ML scorers (no leadgen dep)
-icp      = ["lance"]
+icp      = ["lance", "icp-crate/contributor"]
 
 [dependencies]
 serde       = { workspace = true }
@@ -33,6 +33,7 @@ chrono      = { workspace = true }
 base64      = { workspace = true }
 regex       = { workspace = true }
 
+icp-crate = { package = "icp", path = "../icp", default-features = false }
 reqwest = { workspace = true, optional = true }
 tokio   = { version = "1", features = ["time"], optional = true }
 anyhow  = { workspace = true, optional = true }

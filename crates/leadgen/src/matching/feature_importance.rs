@@ -205,6 +205,7 @@ mod tests {
             target_tech_stack: vec!["Rust".into(), "Python".into()],
             target_locations: vec![],
             funding_stages: vec![],
+            ..Default::default()
         }
     }
 
@@ -234,7 +235,7 @@ mod tests {
             industry: Some(industry.into()),
             employee_count: Some(employees),
             funding_stage: Some("Series B".into()),
-            tech_stack: Some(r#"["Rust","Python","Go"]"#.into()),
+            tech_stack: Some(r#"["Rust","Python"]"#.into()),
             location: Some("Berlin".into()),
             description: None,
             source: None,

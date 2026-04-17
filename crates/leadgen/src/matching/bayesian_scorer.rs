@@ -839,6 +839,7 @@ mod tests {
             target_tech_stack: vec!["Rust".into(), "PostgreSQL".into()],
             target_locations: vec![],
             funding_stages: vec!["Series A".into(), "Series B".into()],
+            ..Default::default()
         }
     }
 

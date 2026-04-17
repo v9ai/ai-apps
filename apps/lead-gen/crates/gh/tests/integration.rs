@@ -78,7 +78,7 @@ mod live {
         let repos = client.org_repos("torvalds", 10).await.unwrap_or_default();
 
         let criteria = IcpCriteria {
-            languages: vec!["TypeScript".to_string()],
+            required_languages: vec!["TypeScript".to_string()],
             ..Default::default()
         };
         // torvalds repos are C — should fail TypeScript filter

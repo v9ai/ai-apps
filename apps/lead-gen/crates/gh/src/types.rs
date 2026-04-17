@@ -312,17 +312,4 @@ pub struct ActivitySummary {
 
 // ── Search / ICP criteria ────────────────────────────────────────────────────
 
-/// ICP filter for GitHub org search.
-#[derive(Debug, Clone, Default)]
-pub struct IcpCriteria {
-    /// GitHub topics the org's repos must include (OR match)
-    pub topics: Vec<String>,
-    /// Min star count for at least one repo
-    pub min_stars: Option<u32>,
-    /// Require the primary language to be one of these
-    pub languages: Vec<String>,
-    /// Minimum public repo count
-    pub min_repos: Option<u32>,
-    /// Org must have been active within this many days
-    pub active_within_days: Option<u32>,
-}
+pub use icp_crate::IcpCriteria;

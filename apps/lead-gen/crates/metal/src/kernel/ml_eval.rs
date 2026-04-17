@@ -18,43 +18,7 @@ use serde::{Deserialize, Serialize};
 
 use super::scoring::LogisticScorer;
 
-// ── Data types ────────────────────────────────────────────────────────────────
-
-/// A single labeled sample loaded from the JSONL evaluation file.
-///
-/// Each JSONL line must be a JSON object of this shape:
-/// ```json
-/// {"features": [1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9], "label": 1.0}
-/// ```
-///
-/// `features` maps to the 7-element vector produced by
-/// `LogisticScorer::extract_features`:
-/// `[industry_match, employee_in_range, seniority_match, department_match,
-///   tech_norm, email_norm, recency_smooth]`
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LabeledSample {
-    /// 7-element feature vector.
-    pub features: [f32; 7],
-    /// Ground-truth label: `1.0` = positive lead, `0.0` = negative.
-    pub label: f32,
-}
-
-impl LabeledSample {
-    /// Construct a sample directly from a feature vector and label.
-    pub fn new(features: [f32; 7], label: f32) -> Self {
-        Self { features, label }
-    }
-
-    /// Convenience constructor for a positive-class sample (label = 1.0).
-    pub fn positive(features: [f32; 7]) -> Self {
-        Self::new(features, 1.0)
-    }
-
-    /// Convenience constructor for a negative-class sample (label = 0.0).
-    pub fn negative(features: [f32; 7]) -> Self {
-        Self::new(features, 0.0)
-    }
-}
+pub use icp::optim::LabeledSample;
 
 /// Binary classification metrics for the contact scorer.
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -94,7 +94,7 @@ function loadWeightsConfig(): ICPWeightsConfig {
   // Walk up from src/ml/ to find monorepo root's config/
   const configPath = resolve(
     import.meta.dirname ?? __dirname,
-    "../../../../config/scoring/icp-weights.json",
+    "../../crates/icp/data/company_icp_weights.json",
   );
   try {
     const raw = readFileSync(configPath, "utf-8");

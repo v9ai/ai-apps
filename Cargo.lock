@@ -3558,6 +3558,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "futures",
+ "icp",
  "lancedb",
  "regex",
  "reqwest 0.12.28",
@@ -4114,6 +4115,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
 dependencies = [
  "cc",
+]
+
+[[package]]
+name = "icp"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]
@@ -5141,6 +5151,7 @@ dependencies = [
  "candle",
  "chrono",
  "hickory-resolver",
+ "icp",
  "ndarray 0.16.1",
  "petgraph 0.6.5",
  "qwen-vl",
@@ -5172,6 +5183,7 @@ dependencies = [
  "clap",
  "crc32fast",
  "crossbeam",
+ "icp",
  "libc",
  "memmap2",
  "ndarray 0.16.1",

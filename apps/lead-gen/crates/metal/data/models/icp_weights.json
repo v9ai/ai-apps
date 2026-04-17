@@ -1,8 +1,0 @@
-{
-  "industry_weight": 5.0,
-  "employee_weight": 5.0,
-  "seniority_weight": 5.0,
-  "department_weight": 5.0,
-  "tech_weight": 15.0,
-  "email_weight": 5.0
-}

@@ -4,36 +4,10 @@ pub mod online_learner;
 pub use authority::{classify_contact, ContactClassification};
 pub use online_learner::OnlineLearner;
 
-use serde::{Deserialize, Serialize};
+pub use icp::IcpCriteria as IcpProfile;
 
-/// Exponential recency decay half-life in days (~28 days → still 5% signal at 120 days).
 const RECENCY_HALF_LIFE_DAYS: f64 = 28.0;
-/// Derived decay constant: k = ln(2) / half_life
 const RECENCY_K: f64 = std::f64::consts::LN_2 / RECENCY_HALF_LIFE_DAYS;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct IcpProfile {
-    pub target_industries: Vec<String>,
-    pub min_employees: Option<i32>,
-    pub max_employees: Option<i32>,
-    pub target_seniorities: Vec<String>,
-    pub target_departments: Vec<String>,
-    pub target_tech_stack: Vec<String>,
-    pub target_locations: Vec<String>,
-    pub funding_stages: Vec<String>,
-}
-
-impl Default for IcpProfile {
-    fn default() -> Self {
-        Self {
-            target_industries: vec!["SaaS".into(), "Software".into(), "Technology".into()],
-            min_employees: Some(10), max_employees: Some(500),
-            target_seniorities: vec!["C-level".into(), "VP".into(), "Director".into()],
-            target_departments: vec!["Engineering".into(), "Product".into()],
-            target_tech_stack: vec![], target_locations: vec![], funding_stages: vec![],
-        }
-    }
-}
 
 /// Score tech stack overlap using Jaccard similarity: |intersection| / |union|.
 /// Both sets are normalised to lowercase before comparison.

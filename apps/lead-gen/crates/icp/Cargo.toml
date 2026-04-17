@@ -1,0 +1,19 @@
+[package]
+name = "icp"
+version = "0.1.0"
+edition = "2021"
+description = "Ideal Customer Profile scoring, matching, and optimization"
+
+[features]
+default = ["scoring"]
+scoring = []
+optim = ["scoring"]
+calibration = ["scoring"]
+contributor = []
+
+[dependencies]
+serde      = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
