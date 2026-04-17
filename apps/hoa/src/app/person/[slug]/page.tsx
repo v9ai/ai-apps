@@ -18,7 +18,7 @@ import { css, cx } from "styled-system/css";
 
 /* ─── Extracted components ────────────────────────────── */
 import NavHeader from "@/app/_components/nav-header";
-import { ExternalLinkIcon, MicrophoneIcon, GitHubIcon, PencilIcon } from "./_components/icons";
+import { ExternalLinkIcon, MicrophoneIcon, GitHubIcon } from "./_components/icons";
 import { GitHubSection } from "./_components/github-section";
 import { HuggingFaceSection } from "./_components/huggingface-section";
 import { TechStackSection } from "./_components/tech-stack-section";
@@ -107,7 +107,6 @@ export default async function PersonPage({ params }: Props) {
   const totalPersonalities = allPersonalities.length;
   const totalPodcasts = allPersonalities.reduce((acc, p) => acc + p.podcasts.length, 0);
 
-  const editUrl = `https://github.com/v9ai/ai-apps/blob/main/apps/podcasts/personalities/${slug}.ts`;
 
   return (
     <main className={css({ minH: 'screen', bg: '#0B0B0F' })}>
@@ -161,7 +160,7 @@ export default async function PersonPage({ params }: Props) {
       {/* ── Hero ────────────────────────────────────────── */}
       <div className={css({ pos: 'relative', overflow: 'hidden' })}>
         <div className={css({ pos: 'relative', zIndex: 10, maxW: '7xl', mx: 'auto', px: { base: '5', sm: '6', lg: '8' } })}>
-          {/* Back nav + Edit btn */}
+          {/* Back nav */}
           <div className={cx("animate-fade-in", css({ pt: { base: '22', md: '24' }, pb: { base: '5', md: '6' }, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }))} style={{ animationDelay: "0.1s" }}>
             <Link
               href="/"

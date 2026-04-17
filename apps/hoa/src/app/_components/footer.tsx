@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { css } from "styled-system/css";
 
-const GITHUB_URL = "https://github.com/v9ai/ai-apps";
+const GITHUB_URL = "https://github.com/v9ai/ai-apps/tree/main/apps/hoa";
 
 const navLinkStyle = css({
   color: 'ui.secondary',
