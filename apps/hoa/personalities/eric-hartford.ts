@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "eric-hartford",
   podcasts: ["Latent Space"],
   github: "ehartford",
+  hfUsername: "ehartford",
   knownFor: "Dolphin Uncensored Models",
 };
 

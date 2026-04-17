@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "jeremy-howard",
   podcasts: ["Lex Fridman Podcast", "Latent Space", "The MAD Podcast", "SE Radio", "Network State Podcast"],
   github: "jph00",
+  hfUsername: "jhoward",
   knownFor: "ULMFiT / fast.ai",
   papers: [
     {

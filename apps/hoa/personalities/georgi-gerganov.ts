@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "georgi-gerganov",
   podcasts: ["Changelog Interviews"],
   github: "ggerganov",
+  hfUsername: "ggerganov",
   knownFor: "llama.cpp",
 };
 

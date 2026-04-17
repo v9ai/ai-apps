@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "thomas-wolf",
   podcasts: ["Training Data (Sequoia)", "Practical AI", "MLOps Community", "TWIML AI", "Analytics Vidhya", "Prosus From Data to Dollars"],
   github: "thomwolf",
+  hfUsername: "thomwolf",
   knownFor: "Hugging Face Transformers",
   papers: [
     {

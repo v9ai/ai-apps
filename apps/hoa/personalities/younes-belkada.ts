@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "younes-belkada",
   podcasts: [],
   github: "younesbelkada",
+  hfUsername: "ybelkada",
   knownFor: "PEFT / QLoRA / bitsandbytes",
   papers: [
     {

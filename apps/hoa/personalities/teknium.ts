@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "teknium",
   podcasts: ["ThursdAI"],
   github: "teknium1",
+  hfUsername: "teknium",
   knownFor: "OpenHermes",
 };
 

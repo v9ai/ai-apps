@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "edward-beeching",
   podcasts: [],
   github: "edbeeching",
+  hfUsername: "edbeeching",
   papers: [
     {
       title: "Optimizing Test-Time Compute via Meta Reinforcement Fine-Tuning",

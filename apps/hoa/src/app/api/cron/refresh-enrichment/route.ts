@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAllPersonalities, getResearch } from "@/lib/personalities";
+import { getAllPersonalities } from "@/lib/personalities";
 import { getEnrichment } from "@/lib/enrichment";
 import type { EnrichedData, HFModel } from "@/lib/enrichment";
 
@@ -80,7 +80,7 @@ export async function GET(req: Request) {
   }[] = [];
   const errors: string[] = [];
 
-  const batch = personalities.filter((p) => p.github);
+  const batch = personalities.filter((p) => p.github || p.hfUsername);
   const BATCH_SIZE = 5;
 
   for (let i = 0; i < batch.length; i += BATCH_SIZE) {
@@ -89,23 +89,10 @@ export async function GET(req: Request) {
       chunk.map(async (p) => {
         try {
           const enrichment = getEnrichment(p.slug);
-          const research = getResearch(p.slug);
-
-          let hfUsername: string | null = null;
-          if (research?.social) {
-            const hfUrl =
-              research.social["hugging face"] ??
-              research.social["huggingface"] ??
-              "";
-            if (hfUrl) {
-              const parts = hfUrl.replace(/\/$/, "").split("/");
-              hfUsername = parts[parts.length - 1] || null;
-            }
-          }
 
           const [ghStats, hfStats] = await Promise.all([
             p.github ? fetchGitHubStats(p.github) : Promise.resolve(null),
-            hfUsername ? fetchHFStats(hfUsername) : Promise.resolve(null),
+            p.hfUsername ? fetchHFStats(p.hfUsername) : Promise.resolve(null),
           ]);
 
           if (ghStats) {

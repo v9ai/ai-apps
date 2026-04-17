@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "athos-georgiou",
   podcasts: [],
   github: "athrael-soju",
+  hfUsername: "athrael-soju",
   orcid: "0009-0004-3081-2883",
   linkedinImage: "https://athosgeorgiou.com/social/athos.webp",
   papers: [

@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "patrick-von-platen",
   podcasts: [],
   github: "patrickvonplaten",
+  hfUsername: "patrickvonplaten",
   knownFor: "HuggingFace Diffusers",
   papers: [
     {

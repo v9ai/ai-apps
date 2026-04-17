@@ -20,6 +20,7 @@ const personality: Personality = {
     "Gradient Dissent",
   ],
   github: "hwchase17",
+  hfUsername: "hwchase17",
   papers: [
     {
       title: "PROMPTEVALS: A Dataset of Assertions and Guardrails for Custom Production Large Language Model Pipelines",

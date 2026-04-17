@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "andrej-karpathy",
   podcasts: ["Dwarkesh Podcast", "Lex Fridman", "YC AI Startup School", "Latent Space"],
   github: "karpathy",
+  hfUsername: "karpathy",
   papers: [
     {
       title: "Deep Visual-Semantic Alignments for Generating Image Descriptions",

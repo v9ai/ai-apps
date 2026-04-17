@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "lysandre-debut",
   podcasts: [],
   github: "LysandreJik",
+  hfUsername: "lysandre",
   papers: [
     {
       title: "Transformers: State-of-the-Art Natural Language Processing",

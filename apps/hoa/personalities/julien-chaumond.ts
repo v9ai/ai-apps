@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "julien-chaumond",
   podcasts: ["MLOps Podcast", "Chai Time Data Science", "Practical AI"],
   github: "julien-c",
+  hfUsername: "julien-c",
   knownFor: "Hugging Face Transformers & Hub",
 };
 

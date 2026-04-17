@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "lewis-tunstall",
   podcasts: ["SuperDataScience", "The Sequence Chat", "Learning from Machine Learning", "Hugging Face ML Experts"],
   github: "lewtun",
+  hfUsername: "lewtun",
   knownFor: "NLP with Transformers book",
   papers: [
     {

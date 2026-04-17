@@ -91,6 +91,7 @@ export type Personality = {
   slug: string;
   podcasts: string[];
   github?: string;
+  hfUsername?: string;
   orcid?: string;
   linkedinImage?: string;
   papers?: Paper[];

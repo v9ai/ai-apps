@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "nate-raw",
   podcasts: [],
   github: "nateraw",
+  hfUsername: "nateraw",
   papers: [
     {
       title: "Generative Disco: Text-to-Video Generation for Music Visualization",

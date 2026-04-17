@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "yih-dar-shieh",
   podcasts: [],
   github: "ydshieh",
+  hfUsername: "ydshieh",
   knownFor: "Transformers Vision & Multimodal Models",
 };
 

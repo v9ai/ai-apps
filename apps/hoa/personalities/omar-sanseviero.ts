@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "omar-sanseviero",
   podcasts: ["InfoQ Podcast", "Inteligencia Artificial (Spanish)", "Chatbot Summit", "Abracadata Summit"],
   github: "osanseviero",
+  hfUsername: "osanseviero",
   knownFor: "Hugging Face Spaces, Gemma developer experience",
 };
 
