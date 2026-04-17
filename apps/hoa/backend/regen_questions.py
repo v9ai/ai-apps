@@ -54,14 +54,18 @@ import research_pipeline
 research_pipeline._HF_TOKEN = _hf_token
 
 
+_FORCE_LOCAL = False
+
+
 def _make_client():
     """Get best available client: HF 72B preferred, MLX fallback."""
     from research_pipeline import _make_hf_client, _make_client as _make_mlx
-    client = _make_hf_client()
-    if client:
-        console.print("[bold magenta]Using HF 72B for debate[/]")
-        return client
-    console.print("[dim]Falling back to local MLX[/]")
+    if not _FORCE_LOCAL:
+        client = _make_hf_client()
+        if client:
+            console.print("[bold magenta]Using HF 72B for debate[/]")
+            return client
+    console.print("[dim]Using local MLX (Qwen2.5-7B)[/]")
     return _make_mlx()
 
 
@@ -472,14 +476,105 @@ async def regenerate_questions(slug: str, rounds: int = 2, dry_run: bool = False
     return questions
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Batch mode
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _discover_slugs(force: bool = False) -> list[str]:
+    """Find all research JSON slugs, optionally filtering to those without questions."""
+    slugs = []
+    for f in sorted(RESEARCH_DIR.glob("*.json")):
+        if "timeline" in f.name or "eval" in f.name:
+            continue
+        slug = f.stem
+        if not force:
+            data = json.loads(f.read_text())
+            if data.get("questions"):
+                continue
+        slugs.append(slug)
+    return slugs
+
+
+async def regenerate_all(
+    rounds: int = 2,
+    dry_run: bool = False,
+    force: bool = False,
+    concurrency: int = 3,
+) -> None:
+    slugs = _discover_slugs(force=force)
+    total = len(slugs)
+
+    if not slugs:
+        console.print("[green]All personalities already have questions.[/]")
+        return
+
+    console.print(Panel(
+        f"[bold cyan]{total} personalities to process[/]\n"
+        f"[dim]concurrency={concurrency}, rounds={rounds}, force={force}, dry_run={dry_run}[/]",
+        title="Batch Question Generation",
+    ))
+
+    semaphore = asyncio.Semaphore(concurrency)
+    results: list[tuple[str, str, int]] = []
+
+    async def _run_one(slug: str, idx: int) -> None:
+        async with semaphore:
+            console.print(f"\n[bold]({idx}/{total}) {slug}[/]")
+            try:
+                questions = await regenerate_questions(slug, rounds=rounds, dry_run=dry_run)
+                status = "ok" if questions else "empty"
+                results.append((slug, status, len(questions)))
+            except Exception as e:
+                console.print(f"  [red]Error: {e}[/]")
+                results.append((slug, f"error: {e}", 0))
+
+    tasks = [_run_one(slug, i + 1) for i, slug in enumerate(slugs)]
+    await asyncio.gather(*tasks)
+
+    # Summary
+    console.print("\n")
+    summary = Table(title="Batch Results", show_lines=True)
+    summary.add_column("Slug", width=30)
+    summary.add_column("Status", width=12)
+    summary.add_column("Questions", width=10, justify="right")
+
+    ok_count = 0
+    for slug, status, count in sorted(results):
+        style = "green" if status == "ok" else ("yellow" if status == "empty" else "red")
+        summary.add_row(slug, f"[{style}]{status}[/]", str(count))
+        if status == "ok":
+            ok_count += 1
+
+    console.print(summary)
+    console.print(f"\n[bold]{ok_count}/{total} succeeded[/]")
+
+
 async def main():
     parser = argparse.ArgumentParser(description="Regenerate questions via adversarial debate")
-    parser.add_argument("slug", help="Person slug")
+    parser.add_argument("slug", nargs="?", help="Person slug (omit with --all)")
+    parser.add_argument("--all", action="store_true", help="Process all personalities")
     parser.add_argument("--rounds", type=int, default=2, help="Debate rounds (default: 2)")
     parser.add_argument("--dry-run", action="store_true", help="Print without saving")
+    parser.add_argument("--force", action="store_true", help="Regenerate even if questions exist")
+    parser.add_argument("--concurrency", type=int, default=3, help="Max concurrent debates (default: 3)")
+    parser.add_argument("--local", action="store_true", help="Force local MLX model (skip HF API)")
     args = parser.parse_args()
 
-    await regenerate_questions(args.slug, rounds=args.rounds, dry_run=args.dry_run)
+    global _FORCE_LOCAL
+    if args.local:
+        _FORCE_LOCAL = True
+
+    if args.all:
+        await regenerate_all(
+            rounds=args.rounds,
+            dry_run=args.dry_run,
+            force=args.force,
+            concurrency=args.concurrency,
+        )
+    elif args.slug:
+        await regenerate_questions(args.slug, rounds=args.rounds, dry_run=args.dry_run)
+    else:
+        parser.error("Provide a slug or use --all")
 
 
 if __name__ == "__main__":
