@@ -21,7 +21,6 @@ import NavHeader from "@/app/_components/nav-header";
 import { ExternalLinkIcon, MicrophoneIcon, GitHubIcon } from "./_components/icons";
 import { GitHubSection } from "./_components/github-section";
 import { HuggingFaceSection } from "./_components/huggingface-section";
-import { TechStackSection } from "./_components/tech-stack-section";
 import { EpisodesSection } from "./_components/episodes-section";
 import { PapersSection } from "./_components/papers-section";
 import { ResearchBio } from "./_components/research-bio";
@@ -330,9 +329,6 @@ export default async function PersonPage({ params }: Props) {
         {/* ── Extracted content sections ────────────────────── */}
         <GitHubSection github={enriched.github} />
         <HuggingFaceSection huggingface={enriched.huggingface} />
-        {enriched.github && enriched.github.languages.length > 0 && (
-          <TechStackSection languages={enriched.github.languages} />
-        )}
         <EpisodesSection episodes={episodes} />
         {research?.videos && research.videos.length > 0 && (
           <VideosSection videos={research.videos} />
