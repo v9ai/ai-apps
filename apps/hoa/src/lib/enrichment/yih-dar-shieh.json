@@ -1,0 +1,1045 @@
+{
+  "github": null,
+  "huggingface": {
+    "models": [
+      {
+        "id": "ydshieh/kosmos-2-patch14-224",
+        "likes": 54,
+        "downloads": 51,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "kosmos-2",
+          "image-text-to-text",
+          "custom_code",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-text-to-text",
+        "createdAt": "2023-07-29T17:44:41.000Z"
+      },
+      {
+        "id": "ydshieh/vit-gpt2-coco-en",
+        "likes": 39,
+        "downloads": 5359,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "jax",
+          "tensorboard",
+          "safetensors",
+          "vision-encoder-decoder",
+          "image-text-to-text",
+          "image-to-text",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-to-text",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "ydshieh/wav2vec2-large-xlsr-53-chinese-zh-cn-gpt",
+        "likes": 32,
+        "downloads": 50,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "wav2vec2",
+          "automatic-speech-recognition",
+          "audio",
+          "speech",
+          "xlsr-fine-tuning-week",
+          "zh",
+          "dataset:common_voice",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "ydshieh/vit-gpt2-coco-en-ckpts",
+        "likes": 11,
+        "downloads": 8,
+        "tags": [
+          "generic",
+          "pytorch",
+          "jax",
+          "tensorboard",
+          "vision-encoder-decoder",
+          "image-classification",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-gptj-for-question-answering",
+        "likes": 3,
+        "downloads": 12,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "gptj",
+          "question-answering",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-04-08T10:21:02.000Z"
+      },
+      {
+        "id": "ydshieh/bert2bert-cnn_dailymail-fp16",
+        "likes": 2,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "tf",
+          "encoder-decoder",
+          "text2text-generation",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "ydshieh/roberta-large-ner-english",
+        "likes": 2,
+        "downloads": 11,
+        "tags": [
+          "transformers",
+          "tf",
+          "roberta",
+          "token-classification",
+          "en",
+          "dataset:conll2003",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-23T22:13:16.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-gptj-for-sequence-classification",
+        "likes": 2,
+        "downloads": 21,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "gptj",
+          "text-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-08T10:21:20.000Z"
+      },
+      {
+        "id": "ydshieh/clip-vit-base-patch32",
+        "likes": 1,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "tf",
+          "clip",
+          "zero-shot-image-classification",
+          "summarization",
+          "en",
+          "dataset:scientific_papers",
+          "arxiv:2007.14062",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "summarization",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "ydshieh/image-captioning-training-results",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "tensorboard",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "ydshieh/256x256_diffusion_uncond_from_blended_diffusion",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-24T15:27:36.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-GPT2ForSequenceClassification",
+        "likes": 1,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "gpt2",
+          "text-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-10-29T09:18:38.000Z"
+      },
+      {
+        "id": "ydshieh/_flax-vision-encoder-decoder-vit-gpt2-coco-en",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "ydshieh/flax-vision-encoder-decoder-vit-gpt2-coco-en",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-rembert",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "rembert",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-08T07:31:36.000Z"
+      },
+      {
+        "id": "ydshieh/roberta-base-squad2",
+        "likes": 0,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "tf",
+          "roberta",
+          "question-answering",
+          "en",
+          "dataset:squad_v2",
+          "license:cc-by-4.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-03-23T22:29:51.000Z"
+      },
+      {
+        "id": "ydshieh/bert-base-uncased-yelp-polarity",
+        "likes": 0,
+        "downloads": 83,
+        "tags": [
+          "transformers",
+          "tf",
+          "bert",
+          "text-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-01T15:17:35.000Z"
+      },
+      {
+        "id": "ydshieh/bert-base-cased-squad2",
+        "likes": 0,
+        "downloads": 58,
+        "tags": [
+          "transformers",
+          "tf",
+          "bert",
+          "question-answering",
+          "license:cc-by-4.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-04-01T15:23:10.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-gptj-base",
+        "likes": 0,
+        "downloads": 16,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "gptj",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-04-08T10:20:24.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-gptj-for-causal-lm",
+        "likes": 0,
+        "downloads": 16,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "gptj",
+          "text-generation",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2022-04-08T10:20:42.000Z"
+      },
+      {
+        "id": "ydshieh/dummy-test-model",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-28T12:59:21.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-BertForQuestionAnswering",
+        "likes": 0,
+        "downloads": 9,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "question-answering",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-10-28T13:22:39.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-BertModel",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "feature-extraction",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-10-28T13:25:14.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-BertForNextSentencePrediction",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "next-sentence-prediction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-28T13:25:26.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-BertForTokenClassification",
+        "likes": 0,
+        "downloads": 11,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "token-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-10-28T13:25:38.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-BertForMultipleChoice",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "multiple-choice",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "multiple-choice",
+        "createdAt": "2022-10-28T13:25:49.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-BertLMHeadModel",
+        "likes": 0,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "text-generation",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2022-10-28T13:26:13.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-BertForSequenceClassification",
+        "likes": 0,
+        "downloads": 426,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "text-classification",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-10-28T15:39:20.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-BertForPreTraining",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "pretraining",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-28T15:39:31.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-ViTForImageClassification",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "vit",
+          "image-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-10-28T19:00:32.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-ViTModel",
+        "likes": 0,
+        "downloads": 11,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "vit",
+          "image-feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-feature-extraction",
+        "createdAt": "2022-10-28T19:00:43.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-ViTForMaskedImageModeling",
+        "likes": 0,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "vit",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-28T19:00:55.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaForTokenClassification",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta",
+          "token-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-10-28T19:04:06.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaModel",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-10-28T19:04:18.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaForQuestionAnswering",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta",
+          "question-answering",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-10-28T19:04:30.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaForSequenceClassification",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta",
+          "text-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-10-28T19:04:41.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaForMaskedLM",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-10-28T19:04:53.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-GPT2LMHeadModel",
+        "likes": 0,
+        "downloads": 27,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "gpt2",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2022-10-29T09:18:26.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-GPT2ForTokenClassification",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "gpt2",
+          "token-classification",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-10-29T09:18:50.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-GPT2Model",
+        "likes": 0,
+        "downloads": 12,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "gpt2",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-10-29T09:19:01.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-LiltForQuestionAnswering",
+        "likes": 0,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "lilt",
+          "question-answering",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-11-08T13:04:22.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-LiltModel",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "lilt",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-11-08T13:04:43.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-LiltForTokenClassification",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "lilt",
+          "token-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-11-08T13:05:04.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-LiltForSequenceClassification",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "lilt",
+          "text-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-11-08T13:05:15.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaV2ForQuestionAnswering",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta-v2",
+          "question-answering",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-11-08T13:05:26.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaV2ForTokenClassification",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta-v2",
+          "token-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-11-08T13:05:37.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaV2ForMultipleChoice",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "deberta-v2",
+          "multiple-choice",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "multiple-choice",
+        "createdAt": "2022-11-08T13:05:48.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaV2ForMaskedLM",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta-v2",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-11-08T13:05:59.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaV2ForSequenceClassification",
+        "likes": 0,
+        "downloads": 12,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta-v2",
+          "text-classification",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-11-08T13:06:11.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-DebertaV2Model",
+        "likes": 0,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "deberta-v2",
+          "feature-extraction",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-11-08T13:06:22.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-YosoForTokenClassification",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "yoso",
+          "token-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-11-08T13:06:33.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-YosoForMaskedLM",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-08T13:06:44.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-BertForMaskedLM",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-11-08T13:13:31.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-AlbertForMaskedLM",
+        "likes": 0,
+        "downloads": 9,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "albert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-11-09T09:35:51.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-AlbertForMultipleChoice",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "albert",
+          "multiple-choice",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "multiple-choice",
+        "createdAt": "2022-11-09T09:36:02.000Z"
+      },
+      {
+        "id": "ydshieh/tiny-random-AlbertForPreTraining",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-09T09:36:12.000Z"
+      },
+      {
+        "id": "ydshieh/tf_custom_model_example",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "tf",
+          "my_model",
+          "custom_code",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-12-08T13:03:04.000Z"
+      },
+      {
+        "id": "ydshieh/pt_custom_model_example",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "my_model",
+          "custom_code",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-12-08T13:05:05.000Z"
+      },
+      {
+        "id": "ydshieh/test-dynamic-processor",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-10T12:09:08.000Z"
+      },
+      {
+        "id": "ydshieh/clip-roberta-finetuned",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "vision-text-dual-encoder",
+          "feature-extraction",
+          "generated_from_trainer",
+          "dataset:ydshieh/coco_dataset_script",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2024-01-12T14:57:22.000Z"
+      },
+      {
+        "id": "ydshieh/my-llama-2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-23T10:42:04.000Z"
+      },
+      {
+        "id": "ydshieh/debug-temp",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-06T12:01:41.000Z"
+      },
+      {
+        "id": "ydshieh/dummy_tok",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-06-13T09:22:06.000Z"
+      },
+      {
+        "id": "ydshieh/LLama_4_Future_Tokens",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-07-18T18:50:58.000Z"
+      },
+      {
+        "id": "ydshieh/Gemma_4_Future_Tokens",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gemma",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-07-18T19:26:39.000Z"
+      },
+      {
+        "id": "ydshieh/my_bert",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-27T16:02:02.000Z"
+      },
+      {
+        "id": "ydshieh/my_bert_2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-27T16:28:42.000Z"
+      },
+      {
+        "id": "ydshieh/my-kosmos25",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-12-17T17:13:51.000Z"
+      },
+      {
+        "id": "ydshieh/mistral3-test-data",
+        "likes": 0,
+        "downloads": 16,
+        "tags": [
+          "safetensors",
+          "kosmos-2.5",
+          "en",
+          "arxiv:2309.11419",
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-04-28T10:24:13.000Z"
+      }
+    ],
+    "totalDownloads": 6396,
+    "totalLikes": 149
+  },
+  "imageUrl": null
+}

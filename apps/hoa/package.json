@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 3005",
+    "prebuild": "npx tsx scripts/refresh-hf.ts",
     "build": "next build --webpack",
     "start": "next start",
     "prepare": "panda codegen",

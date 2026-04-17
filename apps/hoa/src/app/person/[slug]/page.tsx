@@ -228,7 +228,7 @@ export default async function PersonPage({ params }: Props) {
                 <span className={css({ color: '#7B7B86', mx: '1.5' })}>|</span>
                 <span className={css({ color: '#8B8B96' })}>{person.org}</span>
               </p>
-              <p className={css({ color: '#C4C4CC', fontSize: '0.9375rem', mt: '3.5', maxW: 'xl', lineHeight: 'relaxed' })}>
+              <p className={css({ color: '#C4C4CC', fontSize: '0.9375rem', mt: '2.5', maxW: 'xl', lineHeight: 'relaxed' })}>
                 {person.description}
               </p>
             </div>

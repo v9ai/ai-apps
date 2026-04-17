@@ -1,0 +1,43 @@
+{
+  "github": null,
+  "huggingface": {
+    "models": [
+      {
+        "id": "ggerganov/whisper.cpp",
+        "likes": 1366,
+        "downloads": 0,
+        "tags": [
+          "automatic-speech-recognition",
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2023-03-22T08:01:21.000Z"
+      },
+      {
+        "id": "ggerganov/ggml",
+        "likes": 39,
+        "downloads": 0,
+        "tags": [
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-03-22T08:10:58.000Z"
+      },
+      {
+        "id": "ggerganov/presets",
+        "likes": 6,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2026-01-07T07:00:37.000Z"
+      }
+    ],
+    "totalDownloads": 0,
+    "totalLikes": 1411
+  },
+  "imageUrl": null
+}

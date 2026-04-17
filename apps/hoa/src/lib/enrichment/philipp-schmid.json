@@ -1,0 +1,2603 @@
+{
+  "github": null,
+  "huggingface": {
+    "models": [
+      {
+        "id": "philschmid/bart-large-cnn-samsum",
+        "likes": 267,
+        "downloads": 174559,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bart",
+          "text2text-generation",
+          "sagemaker",
+          "summarization",
+          "en",
+          "dataset:samsum",
+          "license:mit",
+          "model-index",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "summarization",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/flan-t5-base-samsum",
+        "likes": 93,
+        "downloads": 739,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "t5",
+          "text2text-generation",
+          "generated_from_trainer",
+          "dataset:samsum",
+          "license:apache-2.0",
+          "model-index",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-12-23T19:26:30.000Z"
+      },
+      {
+        "id": "philschmid/flan-t5-xxl-sharded-fp16",
+        "likes": 56,
+        "downloads": 51,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "t5",
+          "text2text-generation",
+          "endpoints-template",
+          "arxiv:2210.11416",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-01-27T15:05:31.000Z"
+      },
+      {
+        "id": "philschmid/instruct-igel-001",
+        "likes": 47,
+        "downloads": 13,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bloom",
+          "text-generation",
+          "LLM",
+          "de",
+          "license:bigscience-openrail-m",
+          "text-generation-inference",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-04-03T06:57:57.000Z"
+      },
+      {
+        "id": "philschmid/gemma-tokenizer-chatml",
+        "likes": 32,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "gemma",
+          "chatml",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-24T12:44:13.000Z"
+      },
+      {
+        "id": "philschmid/flan-ul2-20b-fp16",
+        "likes": 27,
+        "downloads": 250,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "t5",
+          "text2text-generation",
+          "endpoints-template",
+          "arxiv:2205.05131",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-03-03T15:29:23.000Z"
+      },
+      {
+        "id": "philschmid/distilbart-cnn-12-6-samsum",
+        "likes": 21,
+        "downloads": 168,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bart",
+          "text2text-generation",
+          "sagemaker",
+          "summarization",
+          "en",
+          "dataset:samsum",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "summarization",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/pyannote-speaker-diarization-endpoint",
+        "likes": 20,
+        "downloads": 13,
+        "tags": [
+          "pyannote-audio",
+          "pyannote",
+          "pyannote-audio-pipeline",
+          "audio",
+          "voice",
+          "speech",
+          "speaker",
+          "speaker-diarization",
+          "speaker-change-detection",
+          "voice-activity-detection",
+          "overlapped-speech-detection",
+          "dataset:ami",
+          "dataset:dihard",
+          "dataset:voxconverse",
+          "dataset:aishell",
+          "dataset:repere",
+          "dataset:voxceleb",
+          "arxiv:2012.01477",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "voice-activity-detection",
+        "createdAt": "2022-10-07T07:01:58.000Z"
+      },
+      {
+        "id": "philschmid/llama-2-7b-instruction-generator",
+        "likes": 18,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "llama",
+          "text-generation",
+          "llama-2",
+          "en",
+          "license:openrail",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-07-25T11:43:08.000Z"
+      },
+      {
+        "id": "philschmid/clip-zero-shot-image-classification",
+        "likes": 16,
+        "downloads": 20,
+        "tags": [
+          "generic",
+          "pytorch",
+          "clip",
+          "vision",
+          "zero-shot-image-classification",
+          "endpoints-template",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "zero-shot-image-classification",
+        "createdAt": "2022-08-10T11:57:55.000Z"
+      },
+      {
+        "id": "philschmid/stable-diffusion-v1-4-endpoints",
+        "likes": 16,
+        "downloads": 25,
+        "tags": [
+          "diffusers",
+          "stable-diffusion",
+          "stable-diffusion-diffusers",
+          "text-to-image",
+          "endpoints-template",
+          "license:creativeml-openrail-m",
+          "endpoints_compatible",
+          "diffusers:StableDiffusionPipeline",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2022-09-08T13:02:12.000Z"
+      },
+      {
+        "id": "philschmid/BERT-Banking77",
+        "likes": 15,
+        "downloads": 119,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "text-classification",
+          "autotrain",
+          "en",
+          "dataset:banking77",
+          "model-index",
+          "co2_eq_emissions",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-06-02T10:37:57.000Z"
+      },
+      {
+        "id": "philschmid/ControlNet-endpoint",
+        "likes": 13,
+        "downloads": 0,
+        "tags": [
+          "stable-diffusion",
+          "stable-diffusion-diffusers",
+          "controlnet",
+          "endpoints-template",
+          "arxiv:2302.05543",
+          "license:openrail",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-03-03T08:41:56.000Z"
+      },
+      {
+        "id": "philschmid/gemma-7b-dolly-chatml",
+        "likes": 13,
+        "downloads": 63,
+        "tags": [
+          "peft",
+          "tensorboard",
+          "safetensors",
+          "trl",
+          "sft",
+          "generated_from_trainer",
+          "dataset:generator",
+          "base_model:google/gemma-7b",
+          "base_model:adapter:google/gemma-7b",
+          "license:other",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-27T14:20:13.000Z"
+      },
+      {
+        "id": "philschmid/openai-whisper-endpoint",
+        "likes": 11,
+        "downloads": 0,
+        "tags": [
+          "generic",
+          "audio",
+          "automatic-speech-recognition",
+          "endpoints-template",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2022-09-23T20:27:44.000Z"
+      },
+      {
+        "id": "philschmid/pyannote-segmentation",
+        "likes": 10,
+        "downloads": 192,
+        "tags": [
+          "pyannote-audio",
+          "pytorch",
+          "pyannote",
+          "pyannote-audio-model",
+          "audio",
+          "voice",
+          "speech",
+          "speaker",
+          "speaker-segmentation",
+          "voice-activity-detection",
+          "overlapped-speech-detection",
+          "resegmentation",
+          "dataset:ami",
+          "dataset:dihard",
+          "dataset:voxconverse",
+          "arxiv:2104.04045",
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": "voice-activity-detection",
+        "createdAt": "2022-11-08T17:13:14.000Z"
+      },
+      {
+        "id": "philschmid/stable-diffusion-2-inpainting-endpoint",
+        "likes": 10,
+        "downloads": 19,
+        "tags": [
+          "diffusers",
+          "stable-diffusion",
+          "stable-diffusion-diffusers",
+          "text-guided-to-image-inpainting",
+          "endpoints-template",
+          "license:openrail++",
+          "endpoints_compatible",
+          "diffusers:StableDiffusionInpaintPipeline",
+          "region:us"
+        ],
+        "pipelineTag": "image-to-image",
+        "createdAt": "2022-12-14T07:43:29.000Z"
+      },
+      {
+        "id": "philschmid/bge-base-financial-matryoshka",
+        "likes": 10,
+        "downloads": 4052,
+        "tags": [
+          "sentence-transformers",
+          "safetensors",
+          "bert",
+          "sentence-similarity",
+          "feature-extraction",
+          "dataset_size:1K<n<10K",
+          "loss:MatryoshkaLoss",
+          "loss:MultipleNegativesRankingLoss",
+          "en",
+          "arxiv:1908.10084",
+          "arxiv:2205.13147",
+          "arxiv:1705.00652",
+          "base_model:BAAI/bge-base-en-v1.5",
+          "base_model:finetune:BAAI/bge-base-en-v1.5",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "sentence-similarity",
+        "createdAt": "2024-06-03T16:43:01.000Z"
+      },
+      {
+        "id": "philschmid/gpt-j-6B-fp16-sharded",
+        "likes": 9,
+        "downloads": 8,
+        "tags": [
+          "generic",
+          "pytorch",
+          "gptj",
+          "endpoints-template",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-25T12:19:41.000Z"
+      },
+      {
+        "id": "philschmid/setfit-ag-news-endpoint",
+        "likes": 8,
+        "downloads": 12,
+        "tags": [
+          "setfit",
+          "pytorch",
+          "mpnet",
+          "endpoints-template",
+          "text-classification",
+          "arxiv:2209.11055",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-10-21T09:53:46.000Z"
+      },
+      {
+        "id": "philschmid/qwen-2.5-3b-r1-countdown",
+        "likes": 8,
+        "downloads": 69,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "qwen2",
+          "text-generation",
+          "generated_from_trainer",
+          "trl",
+          "grpo",
+          "r1",
+          "rl",
+          "conversational",
+          "arxiv:2402.03300",
+          "base_model:Qwen/Qwen2.5-3B-Instruct",
+          "base_model:finetune:Qwen/Qwen2.5-3B-Instruct",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2025-01-29T21:58:27.000Z"
+      },
+      {
+        "id": "philschmid/all-MiniLM-L6-v2-optimum-embeddings",
+        "likes": 7,
+        "downloads": 7,
+        "tags": [
+          "generic",
+          "onnx",
+          "sentence-embeddings",
+          "endpoints-template",
+          "optimum",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-31T19:15:30.000Z"
+      },
+      {
+        "id": "philschmid/donut-base-finetuned-cord-v2",
+        "likes": 6,
+        "downloads": 16,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "vision-encoder-decoder",
+          "image-text-to-text",
+          "donut",
+          "image-to-text",
+          "vision",
+          "endpoints-template",
+          "arxiv:2111.15664",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-to-text",
+        "createdAt": "2022-10-18T13:08:02.000Z"
+      },
+      {
+        "id": "philschmid/t5-11b-sharded",
+        "likes": 6,
+        "downloads": 19,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "t5",
+          "text-generation",
+          "text2text-generation",
+          "endpoints-template",
+          "en",
+          "fr",
+          "ro",
+          "de",
+          "dataset:c4",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2022-10-20T12:01:20.000Z"
+      },
+      {
+        "id": "philschmid/distilbert-onnx-banking77",
+        "likes": 5,
+        "downloads": 21,
+        "tags": [
+          "generic",
+          "onnx",
+          "text-classification",
+          "endpoints-template",
+          "optimum",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-06-24T19:53:29.000Z"
+      },
+      {
+        "id": "philschmid/distilbert-base-multilingual-cased-sentiment-2",
+        "likes": 4,
+        "downloads": 43,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "distilbert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:amazon_reviews_multi",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/flair-ner-english-ontonotes-large",
+        "likes": 4,
+        "downloads": 0,
+        "tags": [
+          "flair",
+          "pytorch",
+          "token-classification",
+          "sequence-tagger-model",
+          "endpoints-template",
+          "en",
+          "dataset:ontonotes",
+          "arxiv:2011.06993",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-10-13T11:14:03.000Z"
+      },
+      {
+        "id": "philschmid/code-llama-7b-text-to-sql",
+        "likes": 4,
+        "downloads": 9,
+        "tags": [
+          "peft",
+          "tensorboard",
+          "safetensors",
+          "trl",
+          "sft",
+          "generated_from_trainer",
+          "dataset:generator",
+          "base_model:codellama/CodeLlama-7b-hf",
+          "base_model:adapter:codellama/CodeLlama-7b-hf",
+          "license:llama2",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-17T07:57:21.000Z"
+      },
+      {
+        "id": "philschmid/code-llama-3-1-8b-text-to-sql-lora",
+        "likes": 4,
+        "downloads": 3355,
+        "tags": [
+          "peft",
+          "tensorboard",
+          "safetensors",
+          "trl",
+          "sft",
+          "generated_from_trainer",
+          "dataset:generator",
+          "base_model:meta-llama/Llama-3.1-8B",
+          "base_model:adapter:meta-llama/Llama-3.1-8B",
+          "license:llama3.1",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-29T11:40:31.000Z"
+      },
+      {
+        "id": "philschmid/gemma-text-to-sql",
+        "likes": 4,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "generated_from_trainer",
+          "trl",
+          "sft",
+          "base_model:google/gemma-3-1b-pt",
+          "base_model:finetune:google/gemma-3-1b-pt",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-03-12T10:03:21.000Z"
+      },
+      {
+        "id": "philschmid/bart-base-samsum",
+        "likes": 3,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bart",
+          "text2text-generation",
+          "sagemaker",
+          "summarization",
+          "en",
+          "dataset:samsum",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "summarization",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/distilroberta-base-ner-conll2003",
+        "likes": 3,
+        "downloads": 2761,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "roberta",
+          "token-classification",
+          "dataset:conll2003",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/gbert-base-germaner",
+        "likes": 3,
+        "downloads": 28,
+        "tags": [
+          "transformers",
+          "tf",
+          "tensorboard",
+          "bert",
+          "token-classification",
+          "de",
+          "dataset:germaner",
+          "license:mit",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/space-naver-donut-cord",
+        "likes": 3,
+        "downloads": 0,
+        "tags": [
+          "generic",
+          "document-understanding",
+          "endpoints-template",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-10T19:50:13.000Z"
+      },
+      {
+        "id": "philschmid/donut-base-sroie",
+        "likes": 3,
+        "downloads": 93,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "vision-encoder-decoder",
+          "image-text-to-text",
+          "generated_from_trainer",
+          "dataset:imagefolder",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-text-to-text",
+        "createdAt": "2022-09-02T09:23:22.000Z"
+      },
+      {
+        "id": "philschmid/multi-model-inference-endpoint",
+        "likes": 3,
+        "downloads": 0,
+        "tags": [
+          "endpoints-template",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-17T08:31:25.000Z"
+      },
+      {
+        "id": "philschmid/lilt-en-funsd",
+        "likes": 3,
+        "downloads": 58,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "lilt",
+          "token-classification",
+          "generated_from_trainer",
+          "dataset:funsd-layoutlmv3",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-11-18T08:27:17.000Z"
+      },
+      {
+        "id": "philschmid/flan-t5-xxl-samsum-peft",
+        "likes": 3,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "peft",
+          "lora",
+          "t5",
+          "flan",
+          "en",
+          "dataset:samsum",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-03-18T15:11:30.000Z"
+      },
+      {
+        "id": "philschmid/distilbert-base-multilingual-cased-sentiment",
+        "likes": 2,
+        "downloads": 2509,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "distilbert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:amazon_reviews_multi",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/distilbert-onnx",
+        "likes": 2,
+        "downloads": 40627,
+        "tags": [
+          "transformers",
+          "onnx",
+          "distilbert",
+          "question-answering",
+          "en",
+          "dataset:squad",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/distilroberta-base-ner-wikiann-conll2003-3-class",
+        "likes": 2,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "roberta",
+          "token-classification",
+          "dataset:wikiann-conll2003",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/tiny-bert-sst2-distilled",
+        "likes": 2,
+        "downloads": 6043,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/tiny-distilbert-classification",
+        "likes": 2,
+        "downloads": 21,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "distilbert",
+          "text-classification",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/tiny-random-wav2vec2",
+        "likes": 2,
+        "downloads": 46,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "wav2vec2",
+          "automatic-speech-recognition",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2022-04-12T06:09:56.000Z"
+      },
+      {
+        "id": "philschmid/trocr-base-printed",
+        "likes": 2,
+        "downloads": 17,
+        "tags": [
+          "generic",
+          "pytorch",
+          "vision-encoder-decoder",
+          "trocr",
+          "image-to-text",
+          "endpoints-template",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-to-text",
+        "createdAt": "2022-08-17T14:24:24.000Z"
+      },
+      {
+        "id": "philschmid/distilbert-base-uncased-emotion",
+        "likes": 2,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "text-classification",
+          "emotion",
+          "endpoints-template",
+          "en",
+          "dataset:emotion",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-08-18T05:56:21.000Z"
+      },
+      {
+        "id": "philschmid/codegen-6B-mono-sharded-bnb",
+        "likes": 2,
+        "downloads": 15,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "codegen",
+          "text-generation",
+          "endpoints-template",
+          "license:bsd-3-clause",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2022-08-30T08:01:31.000Z"
+      },
+      {
+        "id": "philschmid/roberta-base-squad2-optimized",
+        "likes": 2,
+        "downloads": 7,
+        "tags": [
+          "generic",
+          "onnx",
+          "endpoints-template",
+          "optimum",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-09-12T18:31:10.000Z"
+      },
+      {
+        "id": "philschmid/layoutlm-funsd",
+        "likes": 2,
+        "downloads": 104,
+        "tags": [
+          "generic",
+          "pytorch",
+          "tensorboard",
+          "layoutlm",
+          "generated_from_trainer",
+          "endpoints-template",
+          "other",
+          "dataset:funsd",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "other",
+        "createdAt": "2022-10-04T12:25:48.000Z"
+      },
+      {
+        "id": "philschmid/falcon-40b-instruct-GPTQ-inference-endpoints",
+        "likes": 2,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "RefinedWeb",
+          "text-generation",
+          "custom_code",
+          "en",
+          "dataset:tiiuae/falcon-refinedweb",
+          "arxiv:2205.14135",
+          "arxiv:1911.02150",
+          "arxiv:2005.14165",
+          "arxiv:2104.09864",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-06-02T08:56:31.000Z"
+      },
+      {
+        "id": "philschmid/gemma-7b-chatml-orca-100k-test",
+        "likes": 2,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "gemma",
+          "text-generation",
+          "generated_from_trainer",
+          "conversational",
+          "dataset:generator",
+          "base_model:google/gemma-7b",
+          "base_model:finetune:google/gemma-7b",
+          "license:other",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-29T18:20:24.000Z"
+      },
+      {
+        "id": "philschmid/DistilBERT-tweet-eval-emotion",
+        "likes": 1,
+        "downloads": 36,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "text-classification",
+          "en",
+          "dataset:tweet_eval",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/MiniLM-L6-H384-uncased-sst2",
+        "likes": 1,
+        "downloads": 872,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "text-classification",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/deberta-v3-xsmall-emotion",
+        "likes": 1,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "deberta-v2",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:emotion",
+          "license:mit",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/finbert-pretrain-yiyanghkust",
+        "likes": 1,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "bert",
+          "fill-mask",
+          "en",
+          "arxiv:2006.08097",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/pt-tblard-tf-allocine",
+        "likes": 1,
+        "downloads": 24,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "camembert",
+          "text-classification",
+          "fr",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/vit-base-patch16-224-in21k-euroSat",
+        "likes": 1,
+        "downloads": 34,
+        "tags": [
+          "transformers",
+          "tf",
+          "tensorboard",
+          "vit",
+          "image-classification",
+          "generated_from_keras_callback",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/MiniLMv2-L6-H384-sst2",
+        "likes": 1,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-08T13:54:14.000Z"
+      },
+      {
+        "id": "philschmid/custom-pipeline-text-classification",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "generic",
+          "text-classification",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-07-18T12:21:29.000Z"
+      },
+      {
+        "id": "philschmid/shepherd-2-hf-int4",
+        "likes": 1,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "llama",
+          "text-generation",
+          "license:llama2",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-08-25T07:53:30.000Z"
+      },
+      {
+        "id": "philschmid/meta-llama-3-tokenizer",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "license:other",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-04-18T16:49:41.000Z"
+      },
+      {
+        "id": "philschmid/code-llama-3-1-8b-text-to-sql-medusa",
+        "likes": 1,
+        "downloads": 2,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-12T06:17:12.000Z"
+      },
+      {
+        "id": "philschmid/llama-3-1-8b-instruct-medusa",
+        "likes": 1,
+        "downloads": 1,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-18T05:41:34.000Z"
+      },
+      {
+        "id": "philschmid/modernbert-llm-router",
+        "likes": 1,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "bert",
+          "text-classification",
+          "generated_from_trainer",
+          "base_model:answerdotai/ModernBERT-base",
+          "base_model:finetune:answerdotai/ModernBERT-base",
+          "license:apache-2.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2024-12-24T14:51:13.000Z"
+      },
+      {
+        "id": "philschmid/BERT-tweet-eval-emotion",
+        "likes": 0,
+        "downloads": 14,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "text-classification",
+          "en",
+          "dataset:tweet_eval",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/Infinity_cpu_MiniLM_L6_H384_uncased_sst2",
+        "likes": 0,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/Infinity_gpu_MiniLM_L6_H384_uncased_sst2",
+        "likes": 0,
+        "downloads": 14,
+        "tags": [
+          "transformers",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/MiniLMv2-L12-H384-emotion",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:emotion",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/MiniLMv2-L6-H384-emotion",
+        "likes": 0,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:emotion",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/RoBERTa-Banking77",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "roberta",
+          "text-classification",
+          "en",
+          "dataset:banking77",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/bert-mini-sst2-distilled",
+        "likes": 0,
+        "downloads": 12,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/distilroberta-base-ner-wikiann-conll2003-4-class",
+        "likes": 0,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "roberta",
+          "token-classification",
+          "dataset:wikiann-conll2003",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/distilroberta-base-ner-wikiann",
+        "likes": 0,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "roberta",
+          "token-classification",
+          "dataset:wikiann",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/mt5-small-prompted-germanquad-1",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "mt5",
+          "text2text-generation",
+          "summarization",
+          "dataset:philschmid/prompted-germanquad",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "summarization",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/my-onnx-repo",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "onnx",
+          "text-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/my-test-repo",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/pt-test",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "t5",
+          "text2text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/resnet50-cardamage-classifier",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/sentence_transformers__multi_qa_MiniLM_L6_cos_v1",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/t5-efficient-gc4-german-small-el32-germeval18",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/test",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/tf-distilbart-cnn-12-6-tradetheevent",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "tf",
+          "tensorboard",
+          "bart",
+          "text2text-generation",
+          "generated_from_keras_callback",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/tf-distilbart-cnn-12-6",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "tf",
+          "bart",
+          "text2text-generation",
+          "summarization",
+          "en",
+          "dataset:cnn_dailymail",
+          "dataset:xsum",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "summarization",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/unit_test_model",
+        "likes": 0,
+        "downloads": 3471,
+        "tags": [
+          "transformers",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/unit_test_save_model",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/vit-base-patch16-224-in21k-image-classification-sagemaker",
+        "likes": 0,
+        "downloads": 11,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "vit",
+          "image-classification",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "philschmid/distilbert-neuron",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "distilbert",
+          "question-answering",
+          "en",
+          "dataset:squad",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-03-03T15:25:21.000Z"
+      },
+      {
+        "id": "philschmid/bert-large-cased-whole-word-masking-sst2",
+        "likes": 0,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "bert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-07T13:55:11.000Z"
+      },
+      {
+        "id": "philschmid/roberta-large-sst2",
+        "likes": 0,
+        "downloads": 95,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "license:mit",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-08T07:27:49.000Z"
+      },
+      {
+        "id": "philschmid/MiniLMv2-L12-H384-sst2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-08T13:38:14.000Z"
+      },
+      {
+        "id": "philschmid/MiniLMv2-L6-H768-sst2",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-08T13:54:38.000Z"
+      },
+      {
+        "id": "philschmid/minilm-l12-h384-sst2-distilled",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-11T06:28:39.000Z"
+      },
+      {
+        "id": "philschmid/MiniLMv2-L12-H384-distilled-finetuned-clinc",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:clinc_oos",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-13T11:56:01.000Z"
+      },
+      {
+        "id": "philschmid/roberta-large-finetuned-clinc",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:clinc_oos",
+          "license:mit",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-14T13:11:33.000Z"
+      },
+      {
+        "id": "philschmid/sagemaker-distilbert-emotion",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:emotion",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-05-04T13:46:51.000Z"
+      },
+      {
+        "id": "philschmid/DistilBERT-Banking77",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "text-classification",
+          "en",
+          "dataset:banking77",
+          "model-index",
+          "co2_eq_emissions",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-06-02T10:38:18.000Z"
+      },
+      {
+        "id": "philschmid/quantized-distilbert-banking77",
+        "likes": 0,
+        "downloads": 12,
+        "tags": [
+          "transformers",
+          "onnx",
+          "text-classification",
+          "optimum",
+          "dataset:banking77",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-06-07T14:18:48.000Z"
+      },
+      {
+        "id": "philschmid/habana-xlm-r-large-amazon-massive",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "optimum_habana",
+          "xlm-roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "habana",
+          "dataset:AmazonScience/massive",
+          "license:apache-2.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-06-20T14:16:49.000Z"
+      },
+      {
+        "id": "philschmid/msmarco-distilbert-base-tas-b-onnx",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "generic",
+          "onnx",
+          "text-classification",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-06-24T21:00:16.000Z"
+      },
+      {
+        "id": "philschmid/gpu-xlm-roberta-large-amazon-massive",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "xlm-roberta",
+          "text-classification",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-06-28T16:06:30.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-uncased-2022-habana",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "optimum_habana",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-19T15:32:45.000Z"
+      },
+      {
+        "id": "philschmid/distilbert-imdb-habana-remote-runner",
+        "likes": 0,
+        "downloads": 11,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "optimum_habana",
+          "distilbert",
+          "text-classification",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-07-25T08:11:00.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-uncased-2022-habana-test-1",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "optimum_habana",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-08-10T11:57:31.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-uncased-2022-habana-test-2",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "optimum_habana",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-08-14T11:06:55.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-uncased-2022-nvidia-test-3",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-08-14T15:59:33.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-uncased-2022-habana-test-3",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "optimum_habana",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-08-14T17:16:13.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-uncased-2022-nvidia-test-2",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-08-15T11:37:42.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-uncased-2022-habana-test-4",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "optimum_habana",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-08-16T11:53:01.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-uncased-2022-habana-test-5",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "optimum_habana",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-08-17T19:38:53.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-uncased-2022-habana-test-6",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "optimum_habana",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-08-18T07:02:53.000Z"
+      },
+      {
+        "id": "philschmid/custom-handler-test",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-30T06:44:06.000Z"
+      },
+      {
+        "id": "philschmid/custom-handler-distilbert",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "distilbert",
+          "text-classification",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-08-30T06:52:47.000Z"
+      },
+      {
+        "id": "philschmid/layoutlm-endpoint",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-09-26T14:39:08.000Z"
+      },
+      {
+        "id": "philschmid/layoutlm-funsd-tf",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "tf",
+          "tensorboard",
+          "layoutlm",
+          "token-classification",
+          "generated_from_keras_callback",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-10-10T12:21:04.000Z"
+      },
+      {
+        "id": "philschmid/tapex-tiny",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bart",
+          "text2text-generation",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-11T08:02:39.000Z"
+      },
+      {
+        "id": "philschmid/laion-asthetic-endpoint",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "generic",
+          "clip",
+          "endpoints-template",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-12-31T08:54:45.000Z"
+      },
+      {
+        "id": "philschmid/finbert-tone-endpoint-ds",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "text-classification",
+          "financial-sentiment-analysis",
+          "sentiment-analysis",
+          "en",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2023-01-18T18:50:04.000Z"
+      },
+      {
+        "id": "philschmid/pythia-6.9b-eli5",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-03-14T14:14:30.000Z"
+      },
+      {
+        "id": "philschmid/bert-base-banking77-pt2",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "bert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:banking77",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2023-03-16T08:07:34.000Z"
+      },
+      {
+        "id": "philschmid/stable-diffusion-2-1",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "diffusers",
+          "stable-diffusion",
+          "text-to-image",
+          "arxiv:2112.10752",
+          "arxiv:2202.00512",
+          "arxiv:1910.09700",
+          "license:openrail++",
+          "endpoints_compatible",
+          "diffusers:StableDiffusionPipeline",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2023-03-31T08:15:11.000Z"
+      },
+      {
+        "id": "philschmid/neuron-cache",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-04-19T13:35:48.000Z"
+      },
+      {
+        "id": "philschmid/sagemaker-models",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-07-18T14:15:36.000Z"
+      },
+      {
+        "id": "philschmid/neuron-supported",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-08-07T14:24:46.000Z"
+      },
+      {
+        "id": "philschmid/kenlm",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "kenlm",
+          "perplexity",
+          "n-gram",
+          "kneser-ney",
+          "bigscience",
+          "es",
+          "af",
+          "ar",
+          "arz",
+          "as",
+          "bn",
+          "fr",
+          "sw",
+          "eu",
+          "ca",
+          "zh",
+          "en",
+          "hi",
+          "ur",
+          "id",
+          "pt",
+          "vi",
+          "gu",
+          "kn",
+          "ml",
+          "mr",
+          "ta",
+          "te",
+          "yo",
+          "de",
+          "dataset:wikipedia",
+          "dataset:oscar",
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-08-11T12:07:37.000Z"
+      },
+      {
+        "id": "philschmid/330aa24bbb",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-08-22T15:26:21.000Z"
+      },
+      {
+        "id": "philschmid/f9749f03ca",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-08-22T18:44:00.000Z"
+      },
+      {
+        "id": "philschmid/shepherd-2-7b-hf-adapters",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "tensorboard",
+          "safetensors",
+          "generated_from_trainer",
+          "base_model:meta-llama/Llama-2-7b-hf",
+          "base_model:finetune:meta-llama/Llama-2-7b-hf",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-08-23T15:33:53.000Z"
+      },
+      {
+        "id": "philschmid/test-gptq",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "llama",
+          "text-generation",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-08-30T13:28:37.000Z"
+      },
+      {
+        "id": "philschmid/tiny-random-idefics-m4",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "idefics",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-10-12T06:54:51.000Z"
+      },
+      {
+        "id": "philschmid/stable-diffusion-xl-base-1-0-1024x1024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-11-06T17:58:17.000Z"
+      },
+      {
+        "id": "philschmid/mistral-guanco",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-11-15T09:18:28.000Z"
+      },
+      {
+        "id": "philschmid/Llama-2-7b-hf",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "facebook",
+          "meta",
+          "pytorch",
+          "llama-2",
+          "en",
+          "arxiv:2307.09288",
+          "text-generation-inference",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-12-20T10:01:24.000Z"
+      },
+      {
+        "id": "philschmid/gpt2-chatml-tokenizer",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-09T14:01:00.000Z"
+      },
+      {
+        "id": "philschmid/CodeLlama-7b-hf",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "llama-2",
+          "code",
+          "arxiv:2308.12950",
+          "license:llama2",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-19T17:18:47.000Z"
+      },
+      {
+        "id": "philschmid/Llama-3-70b-lora",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "peft",
+          "tensorboard",
+          "safetensors",
+          "arxiv:1910.09700",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-05-14T15:18:52.000Z"
+      },
+      {
+        "id": "philschmid/llama3-fsdp-qlora",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "peft",
+          "tensorboard",
+          "safetensors",
+          "trl",
+          "sft",
+          "generated_from_trainer",
+          "dataset:generator",
+          "license:llama3",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-05-23T12:53:45.000Z"
+      },
+      {
+        "id": "philschmid/code-llama-3-1-8b-text-to-sql",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "conversational",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-08-29T14:12:24.000Z"
+      },
+      {
+        "id": "philschmid/qwen2-2b-instruct-amazon-description",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "peft",
+          "tensorboard",
+          "safetensors",
+          "trl",
+          "sft",
+          "generated_from_trainer",
+          "base_model:Qwen/Qwen2-VL-7B-Instruct",
+          "base_model:adapter:Qwen/Qwen2-VL-7B-Instruct",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-30T10:03:50.000Z"
+      },
+      {
+        "id": "philschmid/meta-llama-3.1-8b-instruct-trt",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "trtllm",
+          "model_hub_mixin",
+          "optimum-nvidia",
+          "en",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-11-04T12:27:50.000Z"
+      },
+      {
+        "id": "philschmid/meta-llama-3.1-8b-instruct-trt-l4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-11-04T13:34:23.000Z"
+      },
+      {
+        "id": "philschmid/meta-llama-3.1-8b-instruct-trt-l4-bs4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-11-04T13:54:17.000Z"
+      },
+      {
+        "id": "philschmid/llama-3-1-8b-math-orca-qlora-10k-ep1",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "generated_from_trainer",
+          "trl",
+          "sft",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-11-29T10:12:11.000Z"
+      },
+      {
+        "id": "philschmid/llama-3-1-8b-math-orca-qlora-10k-ep1-merged",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "safetensors",
+          "llama",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-11-29T14:29:00.000Z"
+      },
+      {
+        "id": "philschmid/llama-3-1-8b-math-orca-spectrum-10k-ep1",
+        "likes": 0,
+        "downloads": 13,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "generated_from_trainer",
+          "trl",
+          "sft",
+          "conversational",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-12-19T16:52:13.000Z"
+      },
+      {
+        "id": "philschmid/dpo-llama-3-1-8b-math-ep3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "generated_from_trainer",
+          "trl",
+          "dpo",
+          "arxiv:2305.18290",
+          "base_model:philschmid/llama-3-1-8b-math-orca-spectrum-10k-ep1",
+          "base_model:finetune:philschmid/llama-3-1-8b-math-orca-spectrum-10k-ep1",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-01-22T20:33:56.000Z"
+      },
+      {
+        "id": "philschmid/dpo-llama-3-1-8b-math-ep3-merged",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "safetensors",
+          "llama",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-01-23T08:09:48.000Z"
+      },
+      {
+        "id": "philschmid/dpo-llama-3-1-8b-math",
+        "likes": 0,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "tensorboard",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "generated_from_trainer",
+          "trl",
+          "dpo",
+          "conversational",
+          "arxiv:2305.18290",
+          "base_model:philschmid/llama-3-1-8b-math-orca-spectrum-10k-ep1",
+          "base_model:finetune:philschmid/llama-3-1-8b-math-orca-spectrum-10k-ep1",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2025-01-23T10:38:07.000Z"
+      },
+      {
+        "id": "philschmid/qwen-3b-r1-aha-moment",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-01-29T16:05:52.000Z"
+      },
+      {
+        "id": "philschmid/gemma-product-description",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-03-11T21:35:53.000Z"
+      }
+    ],
+    "totalDownloads": 241071,
+    "totalLikes": 827
+  },
+  "imageUrl": null
+}

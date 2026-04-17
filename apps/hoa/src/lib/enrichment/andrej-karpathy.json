@@ -229,7 +229,7 @@
       },
       {
         "name": "jobs",
-        "description": "A research tool for visually exploring Bureau of Labor Statistics Occupational Outlook Handbook data. This is not a report, a paper, or a serious economic publication \u2014 it is a development tool for exploring BLS data visually.",
+        "description": "A research tool for visually exploring Bureau of Labor Statistics Occupational Outlook Handbook data. This is not a report, a paper, or a serious economic publication — it is a development tool for exploring BLS data visually.",
         "url": "https://github.com/karpathy/jobs",
         "stars": 823,
         "forks": 185,
@@ -350,5 +350,108 @@
       }
     ]
   },
-  "huggingface": null
+  "huggingface": {
+    "models": [
+      {
+        "id": "karpathy/tinyllamas",
+        "likes": 184,
+        "downloads": 0,
+        "tags": [
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-07-26T22:31:12.000Z"
+      },
+      {
+        "id": "karpathy/nanochat-d32",
+        "likes": 88,
+        "downloads": 1258,
+        "tags": [
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-10-16T01:34:08.000Z"
+      },
+      {
+        "id": "karpathy/nanochat-d34",
+        "likes": 48,
+        "downloads": 0,
+        "tags": [
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-11-20T16:32:13.000Z"
+      },
+      {
+        "id": "karpathy/gpt2_1558M_final2_hf",
+        "likes": 17,
+        "downloads": 91,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt2",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-07-02T16:25:28.000Z"
+      },
+      {
+        "id": "karpathy/gpt2_1558M_final4_hf",
+        "likes": 11,
+        "downloads": 474,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt2",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-07-12T18:35:46.000Z"
+      },
+      {
+        "id": "karpathy/gpt2_1558M_final3_hf",
+        "likes": 7,
+        "downloads": 12,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt2",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-07-12T19:11:31.000Z"
+      },
+      {
+        "id": "karpathy/774M_export",
+        "likes": 4,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt2",
+          "text-generation",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-06-14T17:25:59.000Z"
+      }
+    ],
+    "totalDownloads": 1845,
+    "totalLikes": 359
+  }
 }

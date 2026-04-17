@@ -1,0 +1,4244 @@
+{
+  "github": null,
+  "huggingface": {
+    "models": [
+      {
+        "id": "osanseviero/BigGAN-deep-128",
+        "likes": 19,
+        "downloads": 15,
+        "tags": [
+          "generic",
+          "pytorch",
+          "text-to-image",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/llama-alpaca-guanaco-vicuna",
+        "likes": 6,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "vit",
+          "image-classification",
+          "huggingpics",
+          "llama-leaderboard",
+          "doi:10.57967/hf/0035",
+          "model-index",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/wine-quality",
+        "likes": 6,
+        "downloads": 13,
+        "tags": [
+          "sklearn",
+          "joblib",
+          "tabular-classification",
+          "region:us"
+        ],
+        "pipelineTag": "tabular-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_sb3",
+        "likes": 6,
+        "downloads": 2,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-05-04T09:15:46.000Z"
+      },
+      {
+        "id": "osanseviero/dalle-mini-fork",
+        "likes": 5,
+        "downloads": 9,
+        "tags": [
+          "generic",
+          "jax",
+          "bart",
+          "text-to-image",
+          "en",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fasttext_nearest",
+        "likes": 5,
+        "downloads": 5,
+        "tags": [
+          "fasttext",
+          "text-classification",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fastai_cat_vs_dog",
+        "likes": 4,
+        "downloads": 10,
+        "tags": [
+          "generic",
+          "image-classification",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fasttext_english",
+        "likes": 4,
+        "downloads": 0,
+        "tags": [
+          "generic",
+          "feature-extraction",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/magma",
+        "likes": 4,
+        "downloads": 0,
+        "tags": [
+          "arxiv:2112.05253",
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-17T12:59:07.000Z"
+      },
+      {
+        "id": "osanseviero/browser-actions",
+        "likes": 3,
+        "downloads": 13,
+        "tags": [
+          "transformers",
+          "onnx",
+          "safetensors",
+          "gemma3_text",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "conversational",
+          "en",
+          "base_model:unsloth/functiongemma-270m-it",
+          "base_model:quantized:unsloth/functiongemma-270m-it",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2026-01-06T14:11:05.000Z"
+      },
+      {
+        "id": "osanseviero/fashion_brands_patterns",
+        "likes": 2,
+        "downloads": 5,
+        "tags": [
+          "spacy",
+          "token-classification",
+          "en",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/full-sentence-distillroberta3",
+        "likes": 2,
+        "downloads": 4,
+        "tags": [
+          "sentence-transformers",
+          "pytorch",
+          "jax",
+          "roberta",
+          "causal-lm",
+          "sentence-similarity",
+          "license:cc-by-sa-4.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "sentence-similarity",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/hubert_base",
+        "likes": 2,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/hugging-geese",
+        "likes": 2,
+        "downloads": 11,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "vit",
+          "image-classification",
+          "huggingpics",
+          "model-index",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/t5-finetuned-test",
+        "likes": 2,
+        "downloads": 11,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "jax",
+          "coreml",
+          "t5",
+          "text2text-generation",
+          "wikihow",
+          "t5-small",
+          "lm-head",
+          "seq2seq",
+          "pipeline:summarization",
+          "summarization",
+          "eng",
+          "dataset:Wikihow",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "summarization",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/huggingface2",
+        "likes": 2,
+        "downloads": 13,
+        "tags": [
+          "diffusers",
+          "tensorboard",
+          "text-to-image",
+          "doi:10.57967/hf/0705",
+          "license:creativeml-openrail-m",
+          "endpoints_compatible",
+          "diffusers:StableDiffusionPipeline",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2022-11-25T10:29:34.000Z"
+      },
+      {
+        "id": "osanseviero/mistral-instruct-frankenmerge",
+        "likes": 2,
+        "downloads": 69,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "mergekit",
+          "merge",
+          "conversational",
+          "base_model:mistralai/Mistral-7B-Instruct-v0.1",
+          "base_model:merge:mistralai/Mistral-7B-Instruct-v0.1",
+          "base_model:mistralai/Mistral-7B-Instruct-v0.2",
+          "base_model:merge:mistralai/Mistral-7B-Instruct-v0.2",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-10T16:22:14.000Z"
+      },
+      {
+        "id": "osanseviero/mistral-instruct-moe-experimental",
+        "likes": 2,
+        "downloads": 70,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mixtral",
+          "text-generation",
+          "mergekit",
+          "merge",
+          "moe",
+          "conversational",
+          "base_model:mistralai/Mistral-7B-Instruct-v0.1",
+          "base_model:merge:mistralai/Mistral-7B-Instruct-v0.1",
+          "base_model:mistralai/Mistral-7B-Instruct-v0.2",
+          "base_model:merge:mistralai/Mistral-7B-Instruct-v0.2",
+          "license:apache-2.0",
+          "model-index",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-10T16:23:12.000Z"
+      },
+      {
+        "id": "osanseviero/diffusion_pusht",
+        "likes": 2,
+        "downloads": 18,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "robotics",
+          "dataset:lerobot/pusht",
+          "arxiv:2303.04137",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "robotics",
+        "createdAt": "2024-06-10T14:49:31.000Z"
+      },
+      {
+        "id": "osanseviero/asr-with-transformers-wav2vec2",
+        "likes": 1,
+        "downloads": 5,
+        "tags": [
+          "superb",
+          "pytorch",
+          "tf",
+          "wav2vec2",
+          "audio",
+          "automatic-speech-recognition",
+          "en",
+          "dataset:librispeech_asr",
+          "arxiv:2006.11477",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/corenlp_chinese",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "corenlp",
+          "ch",
+          "license:gpl",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/el_core_news_sm",
+        "likes": 1,
+        "downloads": 1,
+        "tags": [
+          "spacy",
+          "token-classification",
+          "el",
+          "license:cc-by-nc-sa-3.0",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v2",
+        "likes": 1,
+        "downloads": 9,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/pyctcdecode_asr",
+        "likes": 1,
+        "downloads": 7,
+        "tags": [
+          "generic",
+          "pytorch",
+          "tf",
+          "wav2vec2",
+          "automatic-speech-recognition",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_allennlp",
+        "likes": 1,
+        "downloads": 6,
+        "tags": [
+          "allennlp",
+          "tensorboard",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/6DRepNet_300W_LP_AFLW2000",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-04T08:08:47.000Z"
+      },
+      {
+        "id": "osanseviero/cool_synth_learner",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "fastai",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-04-27T07:46:00.000Z"
+      },
+      {
+        "id": "osanseviero/test_metrics",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "image-classification",
+          "pytorch",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-05-03T12:45:48.000Z"
+      },
+      {
+        "id": "osanseviero/testing_stuff",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-05-24T12:09:24.000Z"
+      },
+      {
+        "id": "osanseviero/Reinforce-CartPole",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "CartPole-v1",
+          "reinforce",
+          "reinforcement-learning",
+          "custom-implementation",
+          "deep-rl-class",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-01T12:10:18.000Z"
+      },
+      {
+        "id": "osanseviero/Reinforce-Pixelcopter-PLE-v0",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "Pixelcopter-PLE-v0",
+          "reinforce",
+          "reinforcement-learning",
+          "custom-implementation",
+          "deep-rl-class",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-01T13:32:34.000Z"
+      },
+      {
+        "id": "osanseviero/worms",
+        "likes": 1,
+        "downloads": 15,
+        "tags": [
+          "ml-agents",
+          "tensorboard",
+          "onnx",
+          "unity-ml-agents",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "ML-Agents-Worm",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-03T11:49:31.000Z"
+      },
+      {
+        "id": "osanseviero/swin_unetr_btcv_segmentation",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "MONAI",
+          "arxiv:2201.01266",
+          "arxiv:2111.14791",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-25T09:27:20.000Z"
+      },
+      {
+        "id": "osanseviero/us-patents",
+        "likes": 1,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "deberta-v2",
+          "text-classification",
+          "generated_from_trainer",
+          "license:mit",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-10-09T16:05:13.000Z"
+      },
+      {
+        "id": "osanseviero/titanic_mlconsole",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "mlconsole",
+          "tabular-classification",
+          "dataset:train.csv",
+          "license:unknown",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "tabular-classification",
+        "createdAt": "2022-10-13T09:56:23.000Z"
+      },
+      {
+        "id": "osanseviero/compvis_fix",
+        "likes": 1,
+        "downloads": 11,
+        "tags": [
+          "diffusers",
+          "stable-diffusion",
+          "stable-diffusion-diffusers",
+          "text-to-image",
+          "arxiv:2112.10752",
+          "arxiv:2103.00020",
+          "arxiv:2205.11487",
+          "arxiv:2207.12598",
+          "arxiv:1910.09700",
+          "license:creativeml-openrail-m",
+          "diffusers:StableDiffusionPipeline",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2022-11-09T21:03:28.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-Huggy",
+        "likes": 1,
+        "downloads": 14,
+        "tags": [
+          "ml-agents",
+          "tensorboard",
+          "onnx",
+          "unity-ml-agents",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "ML-Agents-Huggy",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-05T12:39:16.000Z"
+      },
+      {
+        "id": "osanseviero/trainer-chapter3",
+        "likes": 1,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:ag_news",
+          "base_model:distilbert/distilbert-base-uncased",
+          "base_model:finetune:distilbert/distilbert-base-uncased",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2023-10-08T10:43:59.000Z"
+      },
+      {
+        "id": "osanseviero/distilbert-base-uncased-finetuned-quantized",
+        "likes": 1,
+        "downloads": 9,
+        "tags": [
+          "transformers.js",
+          "onnx",
+          "distilbert",
+          "text-classification",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2023-10-19T19:36:23.000Z"
+      },
+      {
+        "id": "osanseviero/sft_cml4",
+        "likes": 1,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "gpt2",
+          "text-generation",
+          "generated_from_trainer",
+          "dataset:ag_news",
+          "base_model:openai-community/gpt2",
+          "base_model:finetune:openai-community/gpt2",
+          "license:mit",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-10-22T13:59:03.000Z"
+      },
+      {
+        "id": "osanseviero/pollotoy",
+        "likes": 1,
+        "downloads": 5,
+        "tags": [
+          "diffusers",
+          "tensorboard",
+          "stable-diffusion-xl",
+          "stable-diffusion-xl-diffusers",
+          "text-to-image",
+          "lora",
+          "template:sd-lora",
+          "base_model:stabilityai/stable-diffusion-xl-base-1.0",
+          "base_model:adapter:stabilityai/stable-diffusion-xl-base-1.0",
+          "license:openrail++",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2023-12-08T15:03:25.000Z"
+      },
+      {
+        "id": "osanseviero/mistral-instruct-slerp",
+        "likes": 1,
+        "downloads": 66,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "mergekit",
+          "merge",
+          "conversational",
+          "base_model:mistralai/Mistral-7B-Instruct-v0.1",
+          "base_model:merge:mistralai/Mistral-7B-Instruct-v0.1",
+          "base_model:mistralai/Mistral-7B-Instruct-v0.2",
+          "base_model:merge:mistralai/Mistral-7B-Instruct-v0.2",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-10T16:22:44.000Z"
+      },
+      {
+        "id": "osanseviero/stable-code-3b-Q2_K-GGUF",
+        "likes": 1,
+        "downloads": 13,
+        "tags": [
+          "transformers",
+          "gguf",
+          "causal-lm",
+          "code",
+          "en",
+          "dataset:tiiuae/falcon-refinedweb",
+          "dataset:bigcode/the-stack-github-issues",
+          "dataset:bigcode/commitpackft",
+          "dataset:bigcode/starcoderdata",
+          "dataset:EleutherAI/proof-pile-2",
+          "dataset:meta-math/MetaMathQA",
+          "arxiv:2307.09288",
+          "arxiv:2104.09864",
+          "arxiv:2204.06745",
+          "arxiv:2305.06161",
+          "arxiv:2310.10631",
+          "arxiv:2309.12284",
+          "arxiv:1910.02054",
+          "license:other",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-03-26T19:43:22.000Z"
+      },
+      {
+        "id": "osanseviero/example-classifier",
+        "likes": 1,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "distilbert",
+          "text-classification",
+          "generated_from_trainer",
+          "base_model:distilbert/distilbert-base-uncased",
+          "base_model:finetune:distilbert/distilbert-base-uncased",
+          "license:apache-2.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2024-05-26T20:17:41.000Z"
+      },
+      {
+        "id": "osanseviero/qwen2.5-0.5b-instruct-q2_K",
+        "likes": 1,
+        "downloads": 31,
+        "tags": [
+          "gguf",
+          "494.03M",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-10-10T15:54:52.000Z"
+      },
+      {
+        "id": "osanseviero/ConvTasNet_Libri1Mix_enhsingle_16k",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "pytorch",
+          "audio",
+          "ConvTasNet",
+          "audio-to-audio",
+          "dataset:Libri1Mix",
+          "dataset:enh_single",
+          "license:cc-by-sa-4.0",
+          "region:us"
+        ],
+        "pipelineTag": "audio-to-audio",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/SMILES_RDKit_Py3DMOL_FORK",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/adapter-test",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "adapter-transformers",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/audio_test",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "generic",
+          "audio-to-audio",
+          "region:us"
+        ],
+        "pipelineTag": "audio-to-audio",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/b_test",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/bidaf-model-2020.03.19",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "allennlp",
+          "question-answering",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/clip-st",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "sentence-transformers",
+          "pytorch",
+          "distilbert",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/code-search-net-tokenizer",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/corenlp_arabic",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "corenlp",
+          "ar",
+          "license:gpl",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/corenlp_english-default",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "corenlp",
+          "en",
+          "license:gpl",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/corenlp_english-extra",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "corenlp",
+          "en",
+          "license:gpl",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/corenlp_english-kbp",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "corenlp",
+          "en",
+          "license:gpl",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/corenlp_french",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "corenlp",
+          "fr",
+          "license:gpl",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/corenlp_german",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "corenlp",
+          "ge",
+          "license:gpl",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/corenlp_spanish",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "corenlp",
+          "sp",
+          "license:gpl",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/da_core_news_sm",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "spacy",
+          "token-classification",
+          "da",
+          "license:cc-by-sa-4.0",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/da_core_news_trf",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/de_udv25_germanhdt_trf",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/debug-example",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/debug-example2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/distilbert-base-nli-wkpooling",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/distilbert-base-uncased-finetuned-emotion",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:emotion",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/dummy-model-livestream-2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/dummy-model-livestream",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/dummy-model-test",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "camembert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/dummy-model",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "camembert",
+          "fill-mask",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/dummy-model2",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "camembert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/en_core_web_trf",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/en_ner_fashion",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "spacy",
+          "token-classification",
+          "en",
+          "license:mit",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/example_audio",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "audio-classification",
+          "region:us"
+        ],
+        "pipelineTag": "audio-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fastai_cat_vs_dog_fork",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fastai_cat_vs_dog_fork2",
+        "likes": 0,
+        "downloads": 16,
+        "tags": [
+          "generic",
+          "image-classification",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fastai_cat_vs_dog_fork_3",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "generic",
+          "image-classification",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fastai_income",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fastspeech",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "translation",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "translation",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fasttext_embedding",
+        "likes": 0,
+        "downloads": 26,
+        "tags": [
+          "fasttext",
+          "feature-extraction",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fasttext_english_nn",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fasttext_test",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "generic",
+          "feature-extraction",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/flair-ner-english",
+        "likes": 0,
+        "downloads": 27,
+        "tags": [
+          "flair",
+          "pytorch",
+          "token-classification",
+          "sequence-tagger-model",
+          "en",
+          "dataset:conll2003",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/flair-ner-english3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "pytorch",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fork_a_repo2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/fork_a_repo_2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/full-sentence-distillroberta2",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "sentence-transformers",
+          "pytorch",
+          "jax",
+          "roberta",
+          "sentence-similarity",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "sentence-similarity",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/full-sentence-upload-to-hub2",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "jax",
+          "roberta",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/hot_dog_or_sandwich",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "vit",
+          "image-classification",
+          "huggingpics",
+          "model-index",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/hubert-sd",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "superb",
+          "speaker-diarization",
+          "benchmark:superb",
+          "speech-segmentation",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/hubert_asr_using_hub",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "superb",
+          "automatic-speech-recognition",
+          "benchmark:superb",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/hubert_s3prl",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "superb",
+          "automatic-speech-recognition",
+          "benchmark:superb",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/hubert_s3prl_req",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "superb",
+          "automatic-speech-recognition",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/just-a-test",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "sentence-transformers",
+          "pytorch",
+          "jax",
+          "roberta",
+          "causal-lm",
+          "sentence-similarity",
+          "doi:10.57967/hf/0820",
+          "license:cc-by-sa-4.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "sentence-similarity",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/keras-conv-mnist",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "keras",
+          "tf",
+          "image-classification",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/keras-dog-or-cat",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "keras",
+          "tf",
+          "image-classification",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/keras",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "tf-keras",
+          "tf",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/melgan",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/my-keras-example",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "tf-keras",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/my-keras-example2",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "tf-keras",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/my-keras-example3",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "tf-keras",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/my-new-sentence-transformer",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "sentence-transformers",
+          "pytorch",
+          "xlm-roberta",
+          "feature-extraction",
+          "sentence-similarity",
+          "transformers",
+          "arxiv:1908.10084",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "sentence-similarity",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/my-sent-transformer",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/my-sentence-transformer",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/my-sentencen-transformer",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/my_new_model",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "sentence-transformers",
+          "pytorch",
+          "roberta",
+          "feature-extraction",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/osan-testing-more",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/pickle_example",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/taco_or_what",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "vit",
+          "image-classification",
+          "huggingpics",
+          "model-index",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-bin-bug",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-osan",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-osan2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-osan3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-osan4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-osan5",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "tf-keras",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-osan6",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "tf-keras",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-osan7",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "tf-keras",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-osan8",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "tf-keras",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "keras",
+          "tf-keras",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test123",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "spacy",
+          "token-classification",
+          "de",
+          "license:cc-by-sa-4.0",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_adapters",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "text-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_delete",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_large_readme",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_lewis",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_meta",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "spacy",
+          "token-classification",
+          "license:lgpl-lr",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_tag",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_zero",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "zero-shot-classification",
+          "region:us"
+        ],
+        "pipelineTag": "zero-shot-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/testlangtag",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/testosan4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/torch",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/upload-to-hub",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "jax",
+          "roberta",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/xlm-roberta-base-finetuned-panx-de",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "xlm-roberta",
+          "token-classification",
+          "generated_from_trainer",
+          "dataset:xtreme",
+          "license:mit",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "osanseviero/xlm-roberta-base-finetuned-panx-de-fr",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "xlm-roberta",
+          "token-classification",
+          "generated_from_trainer",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-06T20:35:13.000Z"
+      },
+      {
+        "id": "osanseviero/distilbert-base-uncased-finetuned-squad-d5716d28",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "fill-mask",
+          "question-answering",
+          "en",
+          "dataset:squad",
+          "arxiv:1910.01108",
+          "license:apache-2.0",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "question-answering",
+        "createdAt": "2022-03-16T13:49:18.000Z"
+      },
+      {
+        "id": "osanseviero/pegasus-samsum",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-20T14:33:24.000Z"
+      },
+      {
+        "id": "osanseviero/test_model_bertmesh",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "custom_code",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-31T19:47:46.000Z"
+      },
+      {
+        "id": "osanseviero/llama-or-potato",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "vit",
+          "image-classification",
+          "huggingpics",
+          "llama-leaderboard",
+          "model-index",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-04-01T09:05:43.000Z"
+      },
+      {
+        "id": "osanseviero/llama-alpaca-snake",
+        "likes": 0,
+        "downloads": 15,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "vit",
+          "image-classification",
+          "huggingpics",
+          "llama-leaderboard",
+          "model-index",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-04-01T09:20:01.000Z"
+      },
+      {
+        "id": "osanseviero/llama-horse-zebra",
+        "likes": 0,
+        "downloads": 11,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "vit",
+          "image-classification",
+          "huggingpics",
+          "llama-leaderboard",
+          "model-index",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-04-01T09:42:21.000Z"
+      },
+      {
+        "id": "osanseviero/magma2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "license:afl-3.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-04-07T18:26:11.000Z"
+      },
+      {
+        "id": "osanseviero/TEST_VM_ppo-SpaceInvadersNoFrameskip-v4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-04-08T08:02:49.000Z"
+      },
+      {
+        "id": "osanseviero/TEST_VM_ppo-SpaceInvadersNoFrameskip-v41",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-04-08T08:05:53.000Z"
+      },
+      {
+        "id": "osanseviero/TEST_VM_ppo-SpaceInvadersNoFrameskip-v42",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-04-08T08:07:44.000Z"
+      },
+      {
+        "id": "osanseviero/TEST_VM_ppo-SpaceInvadersNoFrameskip-v43",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "SpaceInvadersNoFrameskip-v4",
+          "reinforcement-learning",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-04-08T08:09:58.000Z"
+      },
+      {
+        "id": "osanseviero/TEST_VM_ppo-SpaceInvadersNoFrameskip-v44",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "SpaceInvadersNoFrameskip-v4",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-04-08T08:16:44.000Z"
+      },
+      {
+        "id": "osanseviero/distilbert-base-uncased-finetuned-clinc",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "text-classification",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-04-10T21:39:59.000Z"
+      },
+      {
+        "id": "osanseviero/Ball_test",
+        "likes": 0,
+        "downloads": 17,
+        "tags": [
+          "ml-agents",
+          "tensorboard",
+          "onnx",
+          "unity-ml-agents",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "3DBall",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-04-19T12:59:18.000Z"
+      },
+      {
+        "id": "osanseviero/TEST_COLAB_ppo-SpaceInvadersNoFrameskip-v4",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "stable-baselines3",
+          "SpaceInvadersNoFrameskip-v4",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-04-19T13:43:58.000Z"
+      },
+      {
+        "id": "osanseviero/fastai-dummy-learner",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "fastai",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-04-21T07:01:37.000Z"
+      },
+      {
+        "id": "osanseviero/test2112",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-05-03T18:21:15.000Z"
+      },
+      {
+        "id": "osanseviero/testing_empty",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "license:afl-3.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-05-03T18:21:25.000Z"
+      },
+      {
+        "id": "osanseviero/test_sb_course",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-05-03T20:25:12.000Z"
+      },
+      {
+        "id": "osanseviero/TEST2ppo-LunarLander-v2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-05-04T09:18:34.000Z"
+      },
+      {
+        "id": "osanseviero/TEST2ppo-LunarLander-v3",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "stable-baselines3",
+          "MountainCar-v0",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-05-04T09:38:06.000Z"
+      },
+      {
+        "id": "osanseviero/q-FrozenLake-v1-noSlippery1",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "Taxi-v3",
+          "q-learning",
+          "reinforcement-learning",
+          "custom-implementation",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-05-19T20:40:31.000Z"
+      },
+      {
+        "id": "osanseviero/my-helsinki-duplicate",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "rust",
+          "marian",
+          "text2text-generation",
+          "translation",
+          "zh",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "translation",
+        "createdAt": "2022-06-01T15:56:44.000Z"
+      },
+      {
+        "id": "osanseviero/test_tacotron",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-06-02T14:19:51.000Z"
+      },
+      {
+        "id": "osanseviero/test_copy",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-06-09T14:19:20.000Z"
+      },
+      {
+        "id": "osanseviero/text_image_dual_encoder",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-06-22T07:38:43.000Z"
+      },
+      {
+        "id": "osanseviero/text_image_dual_encoder2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-06-22T07:39:59.000Z"
+      },
+      {
+        "id": "osanseviero/test_nemo",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-06-30T08:51:22.000Z"
+      },
+      {
+        "id": "osanseviero/stanza-untagged",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-04T15:19:17.000Z"
+      },
+      {
+        "id": "osanseviero/tips",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "sklearn",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-05T10:07:27.000Z"
+      },
+      {
+        "id": "osanseviero/tipsuhtxfu-sex-classification",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "sklearn",
+          "tabular-classification",
+          "baseline-trainer",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "tabular-classification",
+        "createdAt": "2022-07-05T17:18:04.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v4",
+        "likes": 0,
+        "downloads": 10,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-05T19:12:02.000Z"
+      },
+      {
+        "id": "osanseviero/grumpy-cats",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-06T13:18:13.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v7",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-07T08:27:29.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v5",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-07T08:47:49.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v6",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-07T09:07:08.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v8",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-07T09:35:32.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v9",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-07T09:36:34.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v10",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-07T09:38:00.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v11",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-07T09:42:42.000Z"
+      },
+      {
+        "id": "osanseviero/ca_core_news_sm",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "spacy",
+          "token-classification",
+          "ca",
+          "license:gpl-3.0",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-07-07T21:22:35.000Z"
+      },
+      {
+        "id": "osanseviero/en_core_web_sm",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "spacy",
+          "token-classification",
+          "en",
+          "license:mit",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-07-07T21:28:43.000Z"
+      },
+      {
+        "id": "osanseviero/tfjs-mobilenet-611",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "image-classification",
+          "tfjs",
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-07-11T07:33:21.000Z"
+      },
+      {
+        "id": "osanseviero/ddpm-aurora-28",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-22T09:23:04.000Z"
+      },
+      {
+        "id": "osanseviero/platzi-test",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "tf",
+          "distilbert",
+          "text-classification",
+          "generated_from_keras_callback",
+          "license:apache-2.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-07-22T18:11:18.000Z"
+      },
+      {
+        "id": "osanseviero/hf_hub_example-f7d1d7e5-f207-4eef-99bb-57408d604e2b",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "sklearn",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-23T21:04:37.000Z"
+      },
+      {
+        "id": "osanseviero/hf_hub_example-821defb0-1482-4d27-884d-4359bfad704f",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "sklearn",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-23T21:08:18.000Z"
+      },
+      {
+        "id": "osanseviero/hf_hub_example-023f3150-3eae-45a4-bd3c-7a95639e10e0",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "sklearn",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-23T21:11:49.000Z"
+      },
+      {
+        "id": "osanseviero/my-llamas",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "diffusers",
+          "tensorboard",
+          "diffusers:DDPMPipeline",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-24T13:03:51.000Z"
+      },
+      {
+        "id": "osanseviero/my-sunset",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-24T14:18:29.000Z"
+      },
+      {
+        "id": "osanseviero/my-llama",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "diffusers",
+          "tensorboard",
+          "en",
+          "dataset:llama",
+          "license:apache-2.0",
+          "diffusers:DDPMPipeline",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-24T14:26:50.000Z"
+      },
+      {
+        "id": "osanseviero/my-aurora",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "diffusers",
+          "tensorboard",
+          "en",
+          "dataset:aurora",
+          "license:apache-2.0",
+          "diffusers:DDPMPipeline",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-07-24T15:55:45.000Z"
+      },
+      {
+        "id": "osanseviero/a2c-AntBulletEnv-v0",
+        "likes": 0,
+        "downloads": 7,
+        "tags": [
+          "stable-baselines3",
+          "AntBulletEnv-v0",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-07-25T08:37:33.000Z"
+      },
+      {
+        "id": "osanseviero/CleanRLTest",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "CartPole-v1",
+          "ppo",
+          "reinforcement-learning",
+          "custom-implementation",
+          "deep-rl-class",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-08-02T17:45:02.000Z"
+      },
+      {
+        "id": "osanseviero/is_it_a_llama",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "fastai",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-07T07:02:02.000Z"
+      },
+      {
+        "id": "osanseviero/llama_or_alpaca",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "fastai",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-07T08:23:33.000Z"
+      },
+      {
+        "id": "osanseviero/osans",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "keras",
+          "tf-keras",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-08T07:04:37.000Z"
+      },
+      {
+        "id": "osanseviero/distilroberta-base-sentence-transformer",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "sentence-transformers",
+          "pytorch",
+          "roberta",
+          "feature-extraction",
+          "sentence-similarity",
+          "transformers",
+          "dataset:embedding-data/QQP_triplets",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "sentence-similarity",
+        "createdAt": "2022-08-08T09:33:42.000Z"
+      },
+      {
+        "id": "osanseviero/flair_test",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "flair",
+          "pytorch",
+          "token-classification",
+          "sequence-tagger-model",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-08-08T16:55:04.000Z"
+      },
+      {
+        "id": "osanseviero/fastai_bears",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "fastai",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-21T14:54:33.000Z"
+      },
+      {
+        "id": "osanseviero/test_stability",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "stable-diffusion",
+          "clip",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-22T12:46:26.000Z"
+      },
+      {
+        "id": "osanseviero/testing1231",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-08-25T08:55:19.000Z"
+      },
+      {
+        "id": "osanseviero/flair_test3",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "flair",
+          "pytorch",
+          "token-classification",
+          "sequence-tagger-model",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-08-31T08:59:11.000Z"
+      },
+      {
+        "id": "osanseviero/flair_test4",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "flair",
+          "pytorch",
+          "token-classification",
+          "sequence-tagger-model",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-08-31T09:02:30.000Z"
+      },
+      {
+        "id": "osanseviero/flair_test5",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "flair",
+          "pytorch",
+          "token-classification",
+          "sequence-tagger-model",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-08-31T10:07:21.000Z"
+      },
+      {
+        "id": "osanseviero/my-awesome-model",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "roberta",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-09-13T15:53:52.000Z"
+      },
+      {
+        "id": "osanseviero/outputs",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-09T16:02:39.000Z"
+      },
+      {
+        "id": "osanseviero/house_price_prediction",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "mlconsole",
+          "en",
+          "license:unknown",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-10T08:08:20.000Z"
+      },
+      {
+        "id": "osanseviero/Cartpole-Test-SB3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-10T14:16:55.000Z"
+      },
+      {
+        "id": "osanseviero/test081",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-10T14:23:33.000Z"
+      },
+      {
+        "id": "osanseviero/q-FrozenLake-v1-4x4-noSlippery-works",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "FrozenLake-v1-4x4-no_slippery",
+          "q-learning",
+          "reinforcement-learning",
+          "custom-implementation",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-10-12T07:57:11.000Z"
+      },
+      {
+        "id": "osanseviero/testdisabled",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "dataset:llamas",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-10-19T10:31:19.000Z"
+      },
+      {
+        "id": "osanseviero/llamas-alpacas-camellos-platzi",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "vit",
+          "image-classification",
+          "huggingpics",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-10-28T16:08:57.000Z"
+      },
+      {
+        "id": "osanseviero/test_sentence_transformers",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-02T21:52:39.000Z"
+      },
+      {
+        "id": "osanseviero/test_sentence_transformers2",
+        "likes": 0,
+        "downloads": 10,
+        "tags": [
+          "sentence-transformers",
+          "pytorch",
+          "bert",
+          "feature-extraction",
+          "sentence-similarity",
+          "transformers",
+          "dataset:flax-sentence-embeddings/stackexchange_xml",
+          "dataset:s2orc",
+          "dataset:ms_marco",
+          "dataset:wiki_atomic_edits",
+          "dataset:snli",
+          "dataset:multi_nli",
+          "dataset:embedding-data/altlex",
+          "dataset:embedding-data/simple-wiki",
+          "dataset:embedding-data/flickr30k-captions",
+          "dataset:embedding-data/coco_captions",
+          "dataset:embedding-data/sentence-compression",
+          "dataset:embedding-data/QQP",
+          "dataset:yahoo_answers_topics",
+          "arxiv:1908.10084",
+          "license:apache-2.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "sentence-similarity",
+        "createdAt": "2022-11-02T21:53:19.000Z"
+      },
+      {
+        "id": "osanseviero/test_sentence_transformers3",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "sentence-transformers",
+          "pytorch",
+          "bert",
+          "feature-extraction",
+          "sentence-similarity",
+          "transformers",
+          "dataset:flax-sentence-embeddings/stackexchange_xml",
+          "dataset:s2orc",
+          "dataset:ms_marco",
+          "dataset:wiki_atomic_edits",
+          "dataset:snli",
+          "dataset:multi_nli",
+          "dataset:embedding-data/altlex",
+          "dataset:embedding-data/simple-wiki",
+          "dataset:embedding-data/flickr30k-captions",
+          "dataset:embedding-data/coco_captions",
+          "dataset:embedding-data/sentence-compression",
+          "dataset:embedding-data/QQP",
+          "dataset:yahoo_answers_topics",
+          "arxiv:1908.10084",
+          "license:apache-2.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "sentence-similarity",
+        "createdAt": "2022-11-02T21:57:39.000Z"
+      },
+      {
+        "id": "osanseviero/test_bug",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-09T01:35:47.000Z"
+      },
+      {
+        "id": "osanseviero/test_sb3_is_working",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-09T02:15:43.000Z"
+      },
+      {
+        "id": "osanseviero/test_sb3_is_working2",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-11-09T02:20:32.000Z"
+      },
+      {
+        "id": "osanseviero/stable-diffing",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-09T14:41:14.000Z"
+      },
+      {
+        "id": "osanseviero/stable-diffing2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-09T20:55:55.000Z"
+      },
+      {
+        "id": "osanseviero/stable-diffing3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-09T20:59:27.000Z"
+      },
+      {
+        "id": "osanseviero/stable-diffingw",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-09T21:03:01.000Z"
+      },
+      {
+        "id": "osanseviero/test_configs",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "paddle_nlp",
+          "fill-mask",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-11-19T02:25:54.000Z"
+      },
+      {
+        "id": "osanseviero/test-ernie-paddle",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "paddlepaddle",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-19T05:25:31.000Z"
+      },
+      {
+        "id": "osanseviero/testing_cards2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "en",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-11-23T17:08:34.000Z"
+      },
+      {
+        "id": "osanseviero/sucky-LunarLander-v2",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-05T16:18:03.000Z"
+      },
+      {
+        "id": "osanseviero/succky-2-ppo-LunarLander-v2",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-05T17:15:39.000Z"
+      },
+      {
+        "id": "osanseviero/testrgege",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-12-07T22:36:10.000Z"
+      },
+      {
+        "id": "osanseviero/q-FrozenLake-v1-4x4-noSlippery-test",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "FrozenLake-v1-4x4-no_slippery",
+          "q-learning",
+          "reinforcement-learning",
+          "custom-implementation",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-10T21:46:27.000Z"
+      },
+      {
+        "id": "osanseviero/q-FrozenLake-v1-4x4-noSlippery-test2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "FrozenLake-v1-4x4-no_slippery",
+          "q-learning",
+          "reinforcement-learning",
+          "custom-implementation",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-10T21:58:21.000Z"
+      },
+      {
+        "id": "osanseviero/q-FrozenLake-v1-4x4-noSlippery-test3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "FrozenLake-v1-4x4-no_slippery",
+          "q-learning",
+          "reinforcement-learning",
+          "custom-implementation",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-10T21:58:46.000Z"
+      },
+      {
+        "id": "osanseviero/q-FrozenLake-v1-4x4-noSlippery-test4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "FrozenLake-v1-4x4-no_slippery",
+          "q-learning",
+          "reinforcement-learning",
+          "custom-implementation",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-10T22:07:59.000Z"
+      },
+      {
+        "id": "osanseviero/q-Taxi-v3-nice",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "Taxi-v3",
+          "q-learning",
+          "reinforcement-learning",
+          "custom-implementation",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-10T22:16:53.000Z"
+      },
+      {
+        "id": "osanseviero/q-FrozenLake-v1-4x4-noSlippery-wohoo",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "FrozenLake-v1-4x4-no_slippery",
+          "q-learning",
+          "reinforcement-learning",
+          "custom-implementation",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-12T11:08:05.000Z"
+      },
+      {
+        "id": "osanseviero/super_taxi",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "Taxi-v3",
+          "q-learning",
+          "reinforcement-learning",
+          "custom-implementation",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2022-12-12T11:10:15.000Z"
+      },
+      {
+        "id": "osanseviero/endpoint-test",
+        "likes": 0,
+        "downloads": 15,
+        "tags": [
+          "diffusers",
+          "stable-diffusion",
+          "text-to-image",
+          "arxiv:2112.10752",
+          "arxiv:2202.00512",
+          "arxiv:1910.09700",
+          "license:openrail++",
+          "diffusers:StableDiffusionInpaintPipeline",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2022-12-14T07:39:50.000Z"
+      },
+      {
+        "id": "osanseviero/tesg_123",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-12-16T18:50:37.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-LunarLander-v2-AGAIN",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "stable-baselines3",
+          "LunarLander-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2023-01-03T10:14:45.000Z"
+      },
+      {
+        "id": "osanseviero/reinforce-cartpole-slow",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "CartPole-v1",
+          "reinforce",
+          "reinforcement-learning",
+          "custom-implementation",
+          "deep-rl-class",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2023-01-04T11:03:08.000Z"
+      },
+      {
+        "id": "osanseviero/reinforce-cartpole-slow2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "CartPole-v1",
+          "reinforce",
+          "reinforcement-learning",
+          "custom-implementation",
+          "deep-rl-class",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2023-01-04T11:04:24.000Z"
+      },
+      {
+        "id": "osanseviero/exp",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-01-05T20:03:56.000Z"
+      },
+      {
+        "id": "osanseviero/ppo-SnowballTarget",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "ml-agents",
+          "tensorboard",
+          "onnx",
+          "unity-ml-agents",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "ML-Agents-SnowballTarget",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2023-01-15T18:19:05.000Z"
+      },
+      {
+        "id": "osanseviero/test_cfg",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-01-16T09:22:52.000Z"
+      },
+      {
+        "id": "osanseviero/a2c-PandaReachDense-v2",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "stable-baselines3",
+          "PandaReachDense-v2",
+          "deep-reinforcement-learning",
+          "reinforcement-learning",
+          "arxiv:2106.13687",
+          "model-index",
+          "region:us"
+        ],
+        "pipelineTag": "reinforcement-learning",
+        "createdAt": "2023-01-17T08:17:43.000Z"
+      },
+      {
+        "id": "osanseviero/catss",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-02-03T10:47:33.000Z"
+      },
+      {
+        "id": "osanseviero/mnist-classifier",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-02-03T13:18:09.000Z"
+      },
+      {
+        "id": "osanseviero/test_trainer",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-02-25T22:19:29.000Z"
+      },
+      {
+        "id": "osanseviero/khipu_example",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "text-classification",
+          "generated_from_trainer",
+          "license:apache-2.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2023-02-25T22:32:45.000Z"
+      },
+      {
+        "id": "osanseviero/khipu-finetuned-amazon_reviews_multi",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:amazon_reviews_multi",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2023-03-06T01:50:02.000Z"
+      },
+      {
+        "id": "osanseviero/roberta-base-bne-finetuned-amazon_reviews_multi",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-03-06T01:58:04.000Z"
+      },
+      {
+        "id": "osanseviero/khipu-finetuned-amazon_reviews_multi2",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "roberta",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:amazon_reviews_multi",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2023-03-06T20:15:23.000Z"
+      },
+      {
+        "id": "osanseviero/test_osan_bert",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-03-30T16:14:12.000Z"
+      },
+      {
+        "id": "osanseviero/bert-base-uncased-copy",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "jax",
+          "rust",
+          "coreml",
+          "safetensors",
+          "bert",
+          "fill-mask",
+          "exbert",
+          "en",
+          "dataset:bookcorpus",
+          "dataset:wikipedia",
+          "arxiv:1810.04805",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2023-03-30T19:29:49.000Z"
+      },
+      {
+        "id": "osanseviero/bert-copy",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-03-30T19:33:29.000Z"
+      },
+      {
+        "id": "osanseviero/local_demo",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "arxiv:0704.0526",
+          "arxiv:2303.10130",
+          "arxiv:0704.0988",
+          "arxiv:2304.06715",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-04-14T17:28:39.000Z"
+      },
+      {
+        "id": "osanseviero/tiny-controlnet",
+        "likes": 0,
+        "downloads": 64,
+        "tags": [
+          "diffusers",
+          "art",
+          "controlnet",
+          "stable-diffusion",
+          "image-to-image",
+          "base_model:hf-internal-testing/tiny-stable-diffusion-pipe-no-safety",
+          "base_model:adapter:hf-internal-testing/tiny-stable-diffusion-pipe-no-safety",
+          "license:openrail",
+          "region:us"
+        ],
+        "pipelineTag": "image-to-image",
+        "createdAt": "2023-04-21T08:32:29.000Z"
+      },
+      {
+        "id": "osanseviero/test_Gated2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "text-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2023-06-30T08:38:07.000Z"
+      },
+      {
+        "id": "osanseviero/test-poli",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-07-14T09:24:38.000Z"
+      },
+      {
+        "id": "osanseviero/test-poli2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-07-14T09:31:05.000Z"
+      },
+      {
+        "id": "osanseviero/test-poli3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-07-14T09:35:04.000Z"
+      },
+      {
+        "id": "osanseviero/eee",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "license:other",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-08-01T16:51:11.000Z"
+      },
+      {
+        "id": "osanseviero/test3131",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-08-10T13:59:28.000Z"
+      },
+      {
+        "id": "osanseviero/test_bugs",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-08-10T14:01:16.000Z"
+      },
+      {
+        "id": "osanseviero/im-julien",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-08-28T14:59:03.000Z"
+      },
+      {
+        "id": "osanseviero/test-transf",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "text-generation",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-09-12T07:37:11.000Z"
+      },
+      {
+        "id": "osanseviero/sd-hubble-model",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-09-16T20:31:40.000Z"
+      },
+      {
+        "id": "osanseviero/test-trainer",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-09-24T19:17:01.000Z"
+      },
+      {
+        "id": "osanseviero/trainer-chapter",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:emotion",
+          "base_model:distilbert/distilbert-base-uncased",
+          "base_model:finetune:distilbert/distilbert-base-uncased",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2023-09-24T20:27:01.000Z"
+      },
+      {
+        "id": "osanseviero/llama-tune",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-10-08T09:24:25.000Z"
+      },
+      {
+        "id": "osanseviero/widget-outputs-example",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "diffusers",
+          "safetensors",
+          "stable-diffusion",
+          "stable-diffusion-diffusers",
+          "text-to-image",
+          "arxiv:2207.12598",
+          "arxiv:2112.10752",
+          "arxiv:2103.00020",
+          "arxiv:2205.11487",
+          "arxiv:1910.09700",
+          "license:creativeml-openrail-m",
+          "endpoints_compatible",
+          "diffusers:StableDiffusionPipeline",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2023-10-10T14:15:06.000Z"
+      },
+      {
+        "id": "osanseviero/sft_cml5",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "generated_from_trainer",
+          "base_model:mistralai/Mistral-7B-v0.1",
+          "base_model:finetune:mistralai/Mistral-7B-v0.1",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-10-22T19:13:59.000Z"
+      },
+      {
+        "id": "osanseviero/llama-code-tokenizer",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-11-23T13:06:57.000Z"
+      },
+      {
+        "id": "osanseviero/sft_cml_zephyr",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-12-03T16:23:50.000Z"
+      },
+      {
+        "id": "osanseviero/seamless-copy",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "seamless_m4t_v2",
+          "feature-extraction",
+          "automatic-speech-recognition",
+          "audio-to-audio",
+          "text-to-speech",
+          "seamless_communication",
+          "af",
+          "am",
+          "ar",
+          "as",
+          "az",
+          "be",
+          "bn",
+          "bs",
+          "bg",
+          "ca",
+          "cs",
+          "zh",
+          "cy",
+          "da",
+          "de",
+          "el",
+          "en",
+          "et",
+          "fi",
+          "fr",
+          "or",
+          "om",
+          "ga",
+          "gl",
+          "gu",
+          "ha",
+          "he",
+          "hi",
+          "hr",
+          "hu",
+          "hy",
+          "ig",
+          "id",
+          "is",
+          "it",
+          "jv",
+          "ja",
+          "kn",
+          "ka",
+          "kk",
+          "mn",
+          "km",
+          "ky",
+          "ko",
+          "lo",
+          "ln",
+          "lt",
+          "lb",
+          "lg",
+          "lv",
+          "ml",
+          "mr",
+          "mk",
+          "mt",
+          "mi",
+          "my",
+          "nl",
+          "nb",
+          "ne",
+          "ny",
+          "oc",
+          "pa",
+          "ps",
+          "fa",
+          "pl",
+          "pt",
+          "ro",
+          "ru",
+          "sk",
+          "sl",
+          "sn",
+          "sd",
+          "so",
+          "es",
+          "sr",
+          "sv",
+          "sw",
+          "ta",
+          "te",
+          "tg",
+          "tl",
+          "th",
+          "tr",
+          "uk",
+          "ur",
+          "uz",
+          "vi",
+          "wo",
+          "xh",
+          "yo",
+          "ms",
+          "zu",
+          "ary",
+          "arz",
+          "yue",
+          "kea",
+          "license:cc-by-nc-4.0",
+          "region:us"
+        ],
+        "pipelineTag": "automatic-speech-recognition",
+        "createdAt": "2023-12-04T09:57:31.000Z"
+      },
+      {
+        "id": "osanseviero/pollo-toy",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "diffusers",
+          "tensorboard",
+          "stable-diffusion-xl",
+          "stable-diffusion-xl-diffusers",
+          "text-to-image",
+          "lora",
+          "template:sd-lora",
+          "base_model:stabilityai/stable-diffusion-xl-base-1.0",
+          "base_model:adapter:stabilityai/stable-diffusion-xl-base-1.0",
+          "license:openrail++",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2023-12-08T14:25:31.000Z"
+      },
+      {
+        "id": "osanseviero/qtest",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "mixtral",
+          "text-generation",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-12-14T21:57:43.000Z"
+      },
+      {
+        "id": "osanseviero/kato-dummy",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-12-22T02:23:57.000Z"
+      },
+      {
+        "id": "osanseviero/Mistral-7B-v0.1",
+        "likes": 0,
+        "downloads": 18,
+        "tags": [
+          "mlx",
+          "pytorch",
+          "safetensors",
+          "mistral",
+          "pretrained",
+          "conversational",
+          "text-generation",
+          "en",
+          "arxiv:2310.06825",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-03T11:05:08.000Z"
+      },
+      {
+        "id": "osanseviero/AIM-600M",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "aim",
+          "pytorch",
+          "image-classification",
+          "license:other",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2024-01-19T11:59:09.000Z"
+      },
+      {
+        "id": "osanseviero/test-tiny-random",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt2",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2024-01-25T20:23:47.000Z"
+      },
+      {
+        "id": "osanseviero/test-repo-thumbnail",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-06T21:00:23.000Z"
+      },
+      {
+        "id": "osanseviero/DareVox-7B-AWQ",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "llama.cpp",
+          "safetensors",
+          "mistral",
+          "merge",
+          "mergekit",
+          "lazymergekit",
+          "teknium/OpenHermes-2.5-Mistral-7B",
+          "abacusai/Slerp-CM-mist-dpo",
+          "berkeley-nest/Starling-LM-7B-alpha",
+          "base_model:abideen/DareVox-7B",
+          "base_model:quantized:abideen/DareVox-7B",
+          "license:apache-2.0",
+          "4-bit",
+          "awq",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-07T15:13:05.000Z"
+      },
+      {
+        "id": "osanseviero/SciGraph-50-percent-lora",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "peft",
+          "llava",
+          "test",
+          "text-classification",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2024-03-06T16:14:14.000Z"
+      },
+      {
+        "id": "osanseviero/autotrain-sbpr1-6z22v",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "peft",
+          "tensorboard",
+          "safetensors",
+          "autotrain",
+          "text-generation",
+          "conversational",
+          "base_model:meta-llama/Llama-2-7b-hf",
+          "base_model:adapter:meta-llama/Llama-2-7b-hf",
+          "license:other",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-03-21T13:27:47.000Z"
+      },
+      {
+        "id": "osanseviero/TinyLlama-1.1B-Chat-v1.0-Q4_K_M-GGUF",
+        "likes": 0,
+        "downloads": 30,
+        "tags": [
+          "gguf",
+          "llama-cpp",
+          "en",
+          "dataset:cerebras/SlimPajama-627B",
+          "dataset:bigcode/starcoderdata",
+          "dataset:HuggingFaceH4/ultrachat_200k",
+          "dataset:HuggingFaceH4/ultrafeedback_binarized",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-03-27T17:01:30.000Z"
+      },
+      {
+        "id": "osanseviero/llama2-gate-test",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "facebook",
+          "meta",
+          "pytorch",
+          "llama",
+          "llama-2",
+          "text-generation",
+          "en",
+          "license:llama2",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-04-17T08:00:44.000Z"
+      },
+      {
+        "id": "osanseviero/sft_extra",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt2",
+          "text-generation",
+          "generated_from_trainer",
+          "base_model:openai-community/gpt2",
+          "base_model:finetune:openai-community/gpt2",
+          "license:mit",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-05-26T20:31:11.000Z"
+      },
+      {
+        "id": "osanseviero/my_food_model",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "vit",
+          "image-classification",
+          "generated_from_trainer",
+          "base_model:google/vit-base-patch16-224-in21k",
+          "base_model:finetune:google/vit-base-patch16-224-in21k",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2024-06-01T09:55:16.000Z"
+      },
+      {
+        "id": "osanseviero/musicgen-small-js",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "onnx",
+          "musicgen",
+          "text-to-audio",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-audio",
+        "createdAt": "2024-06-01T15:29:35.000Z"
+      },
+      {
+        "id": "osanseviero/business-news-generator2",
+        "likes": 0,
+        "downloads": 44,
+        "tags": [
+          "tensorboard",
+          "safetensors",
+          "llama",
+          "generated_from_trainer",
+          "base_model:HuggingFaceTB/SmolLM-135M",
+          "base_model:finetune:HuggingFaceTB/SmolLM-135M",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-04T13:36:02.000Z"
+      },
+      {
+        "id": "osanseviero/test_pushes",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-28T09:57:23.000Z"
+      },
+      {
+        "id": "osanseviero/test_repo",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-12T19:42:11.000Z"
+      },
+      {
+        "id": "osanseviero/test-repo-go",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-12T19:48:04.000Z"
+      },
+      {
+        "id": "osanseviero/test-repo-go2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-12T19:49:12.000Z"
+      },
+      {
+        "id": "osanseviero/test-in-go",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-12T20:15:20.000Z"
+      },
+      {
+        "id": "osanseviero/test-in-go3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-13T09:25:55.000Z"
+      },
+      {
+        "id": "osanseviero/test-in-go4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-13T14:53:33.000Z"
+      },
+      {
+        "id": "osanseviero/Reflection-Llama-3.1-70B-GGUF",
+        "likes": 0,
+        "downloads": 88,
+        "tags": [
+          "transformers",
+          "gguf",
+          "text-generation",
+          "base_model:mattshumer/Reflection-Llama-3.1-70B",
+          "base_model:quantized:mattshumer/Reflection-Llama-3.1-70B",
+          "license:llama3",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-09-16T19:35:54.000Z"
+      },
+      {
+        "id": "osanseviero/test-in-go5",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-10-07T16:16:22.000Z"
+      },
+      {
+        "id": "osanseviero/test-in-go6",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-10-08T13:09:57.000Z"
+      },
+      {
+        "id": "osanseviero/test-in-go7",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-10-08T13:39:05.000Z"
+      },
+      {
+        "id": "osanseviero/o-blob-3.2",
+        "likes": 0,
+        "downloads": 10,
+        "tags": [
+          "gguf",
+          "1.2B",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-10-10T15:38:21.000Z"
+      }
+    ],
+    "totalDownloads": 1144,
+    "totalLikes": 106
+  },
+  "imageUrl": null
+}

@@ -1,0 +1,2240 @@
+{
+  "github": null,
+  "huggingface": {
+    "models": [
+      {
+        "id": "danielhanchen/open_llama_3b",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "en",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-06-07T12:56:22.000Z"
+      },
+      {
+        "id": "danielhanchen/model3",
+        "likes": 1,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gguf",
+          "mistral",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "sft",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-03-19T08:19:22.000Z"
+      },
+      {
+        "id": "danielhanchen/finetune_llama_vision",
+        "likes": 1,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "text-generation-inference",
+          "unsloth",
+          "mllama",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-11-21T11:17:03.000Z"
+      },
+      {
+        "id": "danielhanchen/cosy-05-qwen-unsloth-bnb-4bit",
+        "likes": 1,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen2",
+          "text-generation",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-12-29T22:34:44.000Z"
+      },
+      {
+        "id": "danielhanchen/gemma-3-finetune",
+        "likes": 1,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gemma3_text",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "gemma3",
+          "conversational",
+          "en",
+          "base_model:unsloth/gemma-3-4b-it-unsloth-bnb-4bit",
+          "base_model:finetune:unsloth/gemma-3-4b-it-unsloth-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2025-03-14T14:49:45.000Z"
+      },
+      {
+        "id": "danielhanchen/Qwen3-8B-FP8-Block",
+        "likes": 1,
+        "downloads": 1,
+        "tags": [
+          "safetensors",
+          "qwen3",
+          "compressed-tensors",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-10-06T12:09:29.000Z"
+      },
+      {
+        "id": "danielhanchen/Qwen3-8B-FP8-Dynamic",
+        "likes": 1,
+        "downloads": 1,
+        "tags": [
+          "safetensors",
+          "qwen3",
+          "compressed-tensors",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-10-06T12:10:56.000Z"
+      },
+      {
+        "id": "danielhanchen/open_llama_3b_600bt_preview",
+        "likes": 0,
+        "downloads": 1290,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "en",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-05-27T17:14:59.000Z"
+      },
+      {
+        "id": "danielhanchen/open_llama_7b_700bt_preview",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-05-29T09:11:53.000Z"
+      },
+      {
+        "id": "danielhanchen/open_llama_7b",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "en",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-06-07T13:34:16.000Z"
+      },
+      {
+        "id": "danielhanchen/open_llama_13b_600bt",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "en",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-06-07T13:34:31.000Z"
+      },
+      {
+        "id": "danielhanchen/llama-2-7b-4bit",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-11-29T05:36:52.000Z"
+      },
+      {
+        "id": "danielhanchen/test",
+        "likes": 0,
+        "downloads": 12,
+        "tags": [
+          "peft",
+          "safetensors",
+          "llama",
+          "unsloth",
+          "arxiv:1910.09700",
+          "base_model:unsloth/llama-2-7b",
+          "base_model:adapter:unsloth/llama-2-7b",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-12-05T12:05:23.000Z"
+      },
+      {
+        "id": "danielhanchen/test2",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-07T07:21:01.000Z"
+      },
+      {
+        "id": "danielhanchen/test3",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-07T09:14:02.000Z"
+      },
+      {
+        "id": "danielhanchen/test4",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-07T17:05:01.000Z"
+      },
+      {
+        "id": "danielhanchen/test_upload",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-12T12:48:25.000Z"
+      },
+      {
+        "id": "danielhanchen/test_lora_new",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "peft",
+          "safetensors",
+          "arxiv:1910.09700",
+          "base_model:unsloth/mistral-7b",
+          "base_model:adapter:unsloth/mistral-7b",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-15T08:48:48.000Z"
+      },
+      {
+        "id": "danielhanchen/test_lora_tag",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "unsloth",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-16T15:13:06.000Z"
+      },
+      {
+        "id": "danielhanchen/test_model_lora",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "unsloth",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-16T15:37:18.000Z"
+      },
+      {
+        "id": "danielhanchen/test_adapters",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "peft",
+          "safetensors",
+          "llama",
+          "arxiv:1910.09700",
+          "base_model:unsloth/tinyllama",
+          "base_model:adapter:unsloth/tinyllama",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-17T08:07:44.000Z"
+      },
+      {
+        "id": "danielhanchen/test_adapters2",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "unsloth",
+          "trl",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-17T08:19:14.000Z"
+      },
+      {
+        "id": "danielhanchen/outputs",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "peft",
+          "tensorboard",
+          "safetensors",
+          "trl",
+          "sft",
+          "unsloth",
+          "generated_from_trainer",
+          "base_model:unsloth/tinyllama",
+          "base_model:adapter:unsloth/tinyllama",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-17T08:28:58.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_model",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "unsloth",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-17T14:54:16.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_model2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-17T16:10:53.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_model3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-17T16:11:36.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_model4",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-17T16:14:21.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_model4_slow",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "unsloth",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-18T02:45:03.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_model4_slow_gguf",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-18T07:37:50.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_gguf_trial",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "gguf",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-18T15:49:32.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_16bit",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "unsloth",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-20T07:34:53.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_16bit_new",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "unsloth",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-20T08:07:20.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf_8bit",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "gguf",
+          "unsloth",
+          "text-generation-inference",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-20T08:37:49.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf_8bit_2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "gguf",
+          "unsloth",
+          "text-generation-inference",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-20T09:35:41.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf_8bit_3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "gguf",
+          "unsloth",
+          "text-generation-inference",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-20T11:21:16.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_16bit_with_tags",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b",
+          "base_model:finetune:unsloth/mistral-7b",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-20T14:57:29.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_16bit_with_tags2",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b",
+          "base_model:finetune:unsloth/mistral-7b",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-20T16:24:54.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf_4bit",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "gguf",
+          "text-generation-inference",
+          "unsloth",
+          "mistral",
+          "en",
+          "base_model:unsloth/mistral-7b",
+          "base_model:quantized:unsloth/mistral-7b",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-01-20T17:58:21.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_16bit_final",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b",
+          "base_model:finetune:unsloth/mistral-7b",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-01-21T06:05:58.000Z"
+      },
+      {
+        "id": "danielhanchen/quantized_trial2",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "gguf",
+          "mistral",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-04T03:14:52.000Z"
+      },
+      {
+        "id": "danielhanchen/vllm_upload",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-04T15:48:18.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_18022024",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "unsloth",
+          "trl",
+          "sft",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-18T08:20:22.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model_18022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "text-generation-inference",
+          "unsloth",
+          "mistral",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-18T08:23:46.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_19022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "unsloth",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-18T16:27:29.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model_19022024",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "sft",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-18T16:29:25.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_model_20022024",
+        "likes": 0,
+        "downloads": 12,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "safetensors",
+          "gguf",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "sft",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-19T13:25:01.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model_20022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "unsloth",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-19T13:31:34.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_new_20022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "mistral",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-19T16:39:05.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf_merged_model_20022024",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "gguf",
+          "mistral",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-19T16:52:03.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_4bit_20022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "text-generation-inference",
+          "unsloth",
+          "mistral",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-19T16:54:33.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_model2_20022024",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-19T17:19:43.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model2_20022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "mistral",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T06:07:42.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf_merged_model2_20022024",
+        "likes": 0,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "gguf",
+          "mistral",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T06:24:24.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_4bit2_20022024",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-20T06:28:31.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_model2_21022024",
+        "likes": 0,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "sft",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-20T07:06:13.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model2_21022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "mistral",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T07:11:52.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf_merged_model2_21022024",
+        "likes": 0,
+        "downloads": 12,
+        "tags": [
+          "transformers",
+          "gguf",
+          "mistral",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T07:25:09.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_4bit2_21022024",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "sft",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-20T07:29:47.000Z"
+      },
+      {
+        "id": "danielhanchen/tinyllama_lora_new_20022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "base_model:unsloth/tinyllama-bnb-4bit",
+          "base_model:finetune:unsloth/tinyllama-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T07:48:07.000Z"
+      },
+      {
+        "id": "danielhanchen/tinyllama_merged_model2_21022024",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "en",
+          "base_model:unsloth/tinyllama-bnb-4bit",
+          "base_model:finetune:unsloth/tinyllama-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-20T07:48:20.000Z"
+      },
+      {
+        "id": "danielhanchen/tinyllama_lora_model2_21022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "base_model:unsloth/tinyllama-bnb-4bit",
+          "base_model:finetune:unsloth/tinyllama-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T07:49:53.000Z"
+      },
+      {
+        "id": "danielhanchen/tinyllama_gguf_merged_model2_21022024",
+        "likes": 0,
+        "downloads": 26,
+        "tags": [
+          "transformers",
+          "gguf",
+          "llama",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/tinyllama-bnb-4bit",
+          "base_model:quantized:unsloth/tinyllama-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T07:54:54.000Z"
+      },
+      {
+        "id": "danielhanchen/tinyllama_merged_4bit2_21022024",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "en",
+          "base_model:unsloth/tinyllama-bnb-4bit",
+          "base_model:quantized:unsloth/tinyllama-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-20T07:55:39.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model3_21022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "unsloth",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T09:24:07.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_new2_20022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "unsloth",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T13:59:09.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model4_21022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "unsloth",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T13:59:33.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf_merged_model3_21022024",
+        "likes": 0,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "gguf",
+          "mistral",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T14:35:46.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_new3_20022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "mistral",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T15:11:16.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model5_21022024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "mistral",
+          "trl",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:finetune:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T15:11:47.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf_merged_model4_21022024",
+        "likes": 0,
+        "downloads": 17,
+        "tags": [
+          "transformers",
+          "gguf",
+          "mistral",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-02-20T15:16:14.000Z"
+      },
+      {
+        "id": "danielhanchen/merged_4bit3_21022024",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "sft",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-02-20T15:34:16.000Z"
+      },
+      {
+        "id": "danielhanchen/model",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "unsloth",
+          "trl",
+          "sft",
+          "conversational",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-03-18T14:42:57.000Z"
+      },
+      {
+        "id": "danielhanchen/model_21032024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mistral",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "sft",
+          "en",
+          "base_model:unsloth/mistral-7b-bnb-4bit",
+          "base_model:quantized:unsloth/mistral-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-03-21T08:57:13.000Z"
+      },
+      {
+        "id": "danielhanchen/gemma_gguf",
+        "likes": 0,
+        "downloads": 15,
+        "tags": [
+          "transformers",
+          "gguf",
+          "gemma",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/gemma-7b-bnb-4bit",
+          "base_model:quantized:unsloth/gemma-7b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-04-09T03:49:48.000Z"
+      },
+      {
+        "id": "danielhanchen/llama-3-fixed",
+        "likes": 0,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "trl",
+          "sft",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-05-04T19:34:27.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf-16062024-bf16",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "gguf",
+          "llama",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/llama-3-8b-bnb-4bit",
+          "base_model:quantized:unsloth/llama-3-8b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-06-15T16:07:52.000Z"
+      },
+      {
+        "id": "danielhanchen/gguf-16062024",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "gguf",
+          "llama",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/llama-3-8b-bnb-4bit",
+          "base_model:quantized:unsloth/llama-3-8b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-06-15T16:19:43.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model_16062024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "base_model:unsloth/llama-3-8b-bnb-4bit",
+          "base_model:finetune:unsloth/llama-3-8b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-06-15T18:24:36.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_retrain",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-06-16T07:10:00.000Z"
+      },
+      {
+        "id": "danielhanchen/new_ollama",
+        "likes": 0,
+        "downloads": 180,
+        "tags": [
+          "transformers",
+          "gguf",
+          "llama",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/llama-3-8b-bnb-4bit",
+          "base_model:quantized:unsloth/llama-3-8b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-06-19T16:38:18.000Z"
+      },
+      {
+        "id": "danielhanchen/statistics-colab",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2024-07-06T22:37:51.000Z"
+      },
+      {
+        "id": "danielhanchen/model_30072024",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "gguf",
+          "gemma2",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/gemma-2-9b-bnb-4bit",
+          "base_model:quantized:unsloth/gemma-2-9b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-07-31T06:34:10.000Z"
+      },
+      {
+        "id": "danielhanchen/lora",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen2_vl",
+          "image-text-to-text",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "image-text-to-text",
+        "createdAt": "2024-08-08T02:22:35.000Z"
+      },
+      {
+        "id": "danielhanchen/llama-3-finetune",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "llama",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-10T01:05:53.000Z"
+      },
+      {
+        "id": "danielhanchen/llama-3-finetune2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-10T02:20:42.000Z"
+      },
+      {
+        "id": "danielhanchen/llama-3-finetune3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-10T02:25:08.000Z"
+      },
+      {
+        "id": "danielhanchen/llama-3-finetune4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-10T02:26:52.000Z"
+      },
+      {
+        "id": "danielhanchen/llama-finetune5",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-08-10T03:42:11.000Z"
+      },
+      {
+        "id": "danielhanchen/20240810-lora",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-11T00:51:10.000Z"
+      },
+      {
+        "id": "danielhanchen/20240810",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "trl",
+          "sft",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-08-11T00:59:17.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v0",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:40:07.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v1",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:40:15.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v2",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:40:21.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v3",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:40:28.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v4",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:40:33.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v5",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:40:38.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v6",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:40:45.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v7",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:40:50.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v8",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:40:55.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v9",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-18T23:41:00.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_vA",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-21T05:35:22.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_v999",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-21T05:56:29.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_test_vHHHHHH",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-21T06:08:33.000Z"
+      },
+      {
+        "id": "danielhanchen/EAGLE-llama2-chat-7B",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "eagle",
+          "arxiv:1910.09700",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-08-25T07:21:14.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_model_new",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-27T08:29:41.000Z"
+      },
+      {
+        "id": "danielhanchen/llama-3.2-lora",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "text-generation-inference",
+          "unsloth",
+          "llama",
+          "trl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-09-29T08:31:01.000Z"
+      },
+      {
+        "id": "danielhanchen/gemma2_test",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "gguf",
+          "gemma2",
+          "text-generation-inference",
+          "unsloth",
+          "en",
+          "base_model:unsloth/gemma-2-9b-bnb-4bit",
+          "base_model:quantized:unsloth/gemma-2-9b-bnb-4bit",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-10-20T08:19:49.000Z"
+      },
+      {
+        "id": "danielhanchen/Qwen2.5-Coder-1.5B-bnb-4bit",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen2",
+          "text-generation",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-11-12T00:24:41.000Z"
+      },
+      {
+        "id": "danielhanchen/Qwen2.5-Coder-3B-Instruct-Q2_K-GGUF",
+        "likes": 0,
+        "downloads": 21,
+        "tags": [
+          "transformers",
+          "gguf",
+          "code",
+          "codeqwen",
+          "chat",
+          "qwen",
+          "qwen-coder",
+          "llama-cpp",
+          "gguf-my-repo",
+          "text-generation",
+          "en",
+          "base_model:Qwen/Qwen2.5-Coder-3B-Instruct",
+          "base_model:quantized:Qwen/Qwen2.5-Coder-3B-Instruct",
+          "license:other",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-11-15T04:09:13.000Z"
+      },
+      {
+        "id": "danielhanchen/unsloth_finetune_ocr",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen2_vl",
+          "image-text-to-text",
+          "text-generation-inference",
+          "unsloth",
+          "conversational",
+          "en",
+          "base_model:unsloth/Qwen2-VL-2B-Instruct",
+          "base_model:finetune:unsloth/Qwen2-VL-2B-Instruct",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-text-to-text",
+        "createdAt": "2024-12-04T13:20:05.000Z"
+      },
+      {
+        "id": "danielhanchen/combined_saving_new",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "transformers",
+          "text-generation-inference",
+          "unsloth",
+          "qwen2_vl",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-12-10T02:51:29.000Z"
+      },
+      {
+        "id": "danielhanchen/lora_upload",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen2_vl",
+          "image-text-to-text",
+          "unsloth",
+          "trl",
+          "sft",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "image-text-to-text",
+        "createdAt": "2024-12-10T10:48:45.000Z"
+      },
+      {
+        "id": "danielhanchen/Temp",
+        "likes": 0,
+        "downloads": 0,
+        "tags": [
+          "safetensors",
+          "qwen2",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2024-12-29T22:28:35.000Z"
+      },
+      {
+        "id": "danielhanchen/llama-vision-new",
+        "likes": 0,
+        "downloads": 1,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "llama",
+          "text-generation",
+          "arxiv:1910.09700",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "4-bit",
+          "bitsandbytes",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2025-03-12T06:08:22.000Z"
+      },
+      {
+        "id": "danielhanchen/unsloth_finetune2",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "mllama",
+          "image-text-to-text",
+          "text-generation-inference",
+          "unsloth",
+          "conversational",
+          "en",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-text-to-text",
+        "createdAt": "2025-03-14T09:56:58.000Z"
+      },
+      {
+        "id": "danielhanchen/Qwen3-8B-FP8-Static",
+        "likes": 0,
+        "downloads": 3,
+        "tags": [
+          "safetensors",
+          "qwen3",
+          "compressed-tensors",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-10-06T12:10:12.000Z"
+      },
+      {
+        "id": "danielhanchen/gpt-oss-20B-GRPO-kernels",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt_oss",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "conversational",
+          "en",
+          "base_model:unsloth/gpt-oss-20b-BF16",
+          "base_model:finetune:unsloth/gpt-oss-20b-BF16",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2025-10-17T02:55:04.000Z"
+      },
+      {
+        "id": "danielhanchen/gpt-oss-20B-GRPO-2048-game",
+        "likes": 0,
+        "downloads": 744,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt_oss",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "conversational",
+          "en",
+          "base_model:unsloth/gpt-oss-20b-BF16",
+          "base_model:finetune:unsloth/gpt-oss-20b-BF16",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2025-10-17T14:14:50.000Z"
+      },
+      {
+        "id": "danielhanchen/functiongemma-finetune",
+        "likes": 0,
+        "downloads": 2,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gemma3_text",
+          "text-generation",
+          "text-generation-inference",
+          "unsloth",
+          "conversational",
+          "en",
+          "base_model:unsloth/functiongemma-270m-it",
+          "base_model:finetune:unsloth/functiongemma-270m-it",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2025-12-23T12:33:54.000Z"
+      },
+      {
+        "id": "danielhanchen/functiongemma-gguf",
+        "likes": 0,
+        "downloads": 20,
+        "tags": [
+          "gguf",
+          "gemma3_text",
+          "llama.cpp",
+          "unsloth",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-12-23T12:35:09.000Z"
+      }
+    ],
+    "totalDownloads": 2491,
+    "totalLikes": 7
+  },
+  "imageUrl": null
+}

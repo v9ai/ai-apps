@@ -8,9 +8,11 @@
  */
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
-const ROOT = join(import.meta.dirname, "..");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, "..");
 const PERSONALITIES_DIR = join(ROOT, "personalities");
 const ENRICHMENT_DIR = join(ROOT, "src", "lib", "enrichment");
 
