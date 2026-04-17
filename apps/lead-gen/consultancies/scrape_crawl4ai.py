@@ -8,10 +8,10 @@ Complements enrich_brave.py (bulk aiohttp+BS4) for high-quality single-company
 enrichment where JS rendering and deep crawling matter.
 
 Usage:
-    python scrape_crawl4ai.py https://satalia.com/                   # Crawl + LLM + print
-    python scrape_crawl4ai.py https://satalia.com/ --no-llm          # Markdown only
-    python scrape_crawl4ai.py https://satalia.com/ --update          # Write to Neon
-    python scrape_crawl4ai.py https://satalia.com/ --update --id 42  # Update specific company ID
+    python scrape_crawl4ai.py https://satalia.com/                   # Crawl + LLM + write to Neon
+    python scrape_crawl4ai.py https://satalia.com/ --no-llm          # Markdown only (no DB write)
+    python scrape_crawl4ai.py https://satalia.com/ --dry-run         # Print results, skip DB
+    python scrape_crawl4ai.py https://satalia.com/ --id 42           # Target specific company ID
     python scrape_crawl4ai.py https://satalia.com/ --pages 20 --depth 3  # Bigger crawl
 """
 
@@ -732,7 +732,7 @@ async def main():
     parser.add_argument("--depth", type=int, default=2, help="Max crawl depth (default: 2)")
     parser.add_argument("--provider", default="anthropic/claude-sonnet-4-6",
                         help="LLM provider (default: anthropic/claude-sonnet-4-6)")
-    parser.add_argument("--update", action="store_true", help="Write results to Neon PostgreSQL")
+    parser.add_argument("--dry-run", action="store_true", help="Print results without writing to Neon")
     parser.add_argument("--id", type=int, default=None, help="Company ID in Neon (auto-lookup if omitted)")
     parser.add_argument("--json", action="store_true", help="Output raw JSON only")
     args = parser.parse_args()
@@ -752,15 +752,13 @@ async def main():
         )
 
     # Lookup company in DB
-    company = None
-    if args.update or args.id:
-        domain = urlparse(args.url).netloc.removeprefix("www.")
-        company = lookup_company(domain, args.id)
-        if not company:
-            log.warning(f"Company not found in Neon for domain={domain} id={args.id}")
+    domain = urlparse(args.url).netloc.removeprefix("www.")
+    company = lookup_company(domain, args.id)
+    if not company:
+        log.warning(f"Company not found in Neon for domain={domain} id={args.id} — skipping DB write")
 
-    # Phase 3: DB update
-    if args.update and company and output.enrichment:
+    # Phase 3: Write to Neon (unless --dry-run)
+    if not args.dry_run and company and output.enrichment:
         update_neon(company, output)
 
     # Output
