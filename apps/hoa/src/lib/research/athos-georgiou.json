@@ -262,20 +262,6 @@
       "last_verified": "2026-04-17T15:45:41+00:00"
     },
     {
-      "category": "technical_depth",
-      "question": "How does the Hydra dual-head architecture balance document retrieval and generation, and what challenges did you face in unifying these tasks?",
-      "why_this_question": "Understanding the technical intricacies of Hydra provides insight into the innovation behind the model.",
-      "expected_insight": "Detailed explanation of the architectural design and the challenges overcome in its development.",
-      "last_verified": "2026-04-17T15:45:41+00:00"
-    },
-    {
-      "category": "technical_depth",
-      "question": "What are the key differences between ColPali and ColQwen in terms of late-interaction and patch-to-region relevance propagation?",
-      "why_this_question": "Comparing these models highlights the technical advancements and specific features of each.",
-      "expected_insight": "Clarification on the technical distinctions and their implications for document retrieval and generation.",
-      "last_verified": "2026-04-17T15:45:41+00:00"
-    },
-    {
       "category": "philosophy",
       "question": "Critics say that generative AI is overhyped and not the answer to everything. Where are they wrong, and what are the true capabilities of GenAI?",
       "why_this_question": "Addressing common criticisms allows Athos to articulate the realistic potential and limitations of generative AI.",

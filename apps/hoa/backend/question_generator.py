@@ -58,38 +58,6 @@ CATEGORIES = {
             "insight": "Which engineering instincts serve vs. hinder in the AI-native workflow",
         },
     },
-    "technical_depth": {
-        "label": "Technical Depth",
-        "queries": [
-            "architecture MCP server design tool building CLI Swift engineering",
-            "Peekaboo screenshot automation GUI macOS agent screenshot MCP",
-            "code signing notarization build system hot reload Poltergeist",
-            "Demark HTML markdown conversion CLI fast tool",
-            "llm.codes Apple documentation AI readable developer",
-            "Signature Flicker animation detail polish macOS app",
-        ],
-        "question_templates": [
-            {
-                "template": "In '{title}' you detail building MCP infrastructure for AI agents. What's the hardest design tradeoff you've hit — where agent convenience conflicts with system safety?",
-                "why": "References his specific MCP work — surfaces real engineering tensions in agent-computer interaction",
-                "insight": "Concrete examples of where giving agents more capability creates security or reliability risks",
-                "keywords": ["mcp", "peekaboo", "screenshot", "agent"],
-                "theme": "MCP infrastructure for AI agents",
-            },
-            {
-                "template": "You ship CLI tools at extraordinary velocity — Poltergeist, Demark, Trimmy, dozens more. When you're building a new tool in a single session, what's your actual decision process for what to keep vs. cut?",
-                "why": "Probes the rapid-shipping methodology behind his prolific output",
-                "insight": "The specific heuristics and shortcuts that enable shipping full tools in hours",
-                "keywords": ["poltergeist", "demark", "cli", "tool"],
-                "theme": "rapid CLI tool development",
-            },
-        ],
-        "fallback": {
-            "question": "You've built tools across Swift, TypeScript, Go, and Shell. When you sit down to build a new CLI, what determines which language you reach for — and has AI changed that calculus?",
-            "why": "His polyglot tool output suggests deliberate language choices worth exploring",
-            "insight": "How AI-assisted development changes language selection when the developer isn't writing most of the code",
-        },
-    },
     "philosophy": {
         "label": "Philosophy & Beliefs",
         "queries": [

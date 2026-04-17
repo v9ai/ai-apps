@@ -1666,7 +1666,6 @@ async def phase3_exec(state: ResearchState) -> dict:
 
 DEFAULT_CATEGORIES: dict[str, str] = {
     "origin": "pivotal decisions or turning points that shaped their career path",
-    "technical_depth": "architectural trade-offs, design choices, or engineering bets in their core work",
     "philosophy": "contrarian views, intellectual tensions, or where they disagree with mainstream",
     "collaboration": "relationships, partnerships, or ecosystem dynamics that shaped key projects",
     "future": "specific predictions, bets, or visions for where the field is heading",
@@ -1675,7 +1674,6 @@ DEFAULT_CATEGORIES: dict[str, str] = {
 PERSON_CATEGORIES: dict[str, dict[str, str]] = {
     "athos-georgiou": {
         "origin": "founding NCA, career transition from telescope control systems to AI, the spark that shifted focus from infrastructure to applied AI research",
-        "technical_depth": "Hydra dual-head architecture, ColPali/ColQwen late-interaction, patch-to-region relevance propagation, systems engineering meets ML",
         "philosophy": "responsible AI stance, 'raising AI' parent-child metaphor, whether GenAI alone is the answer, enterprise AI value gap",
         "collaboration": "Claude Code ecosystem contributions, open-source community dynamics, bridging research and production",
         "future": "enterprise AI adoption gap, GPU inference scaling roadmap, vision-language retrieval becoming production-standard",
@@ -1688,7 +1686,6 @@ PERSON_CATEGORIES: dict[str, dict[str, str]] = {
 BLOG_QUERIES: dict[str, dict[str, list[str]]] = {
     "athos-georgiou": {
         "origin": ["career journey NCA founding", "telescope infrastructure transition AI", "doing stuff learning journey 2023"],
-        "technical_depth": ["Hydra dual-head retrieval generation", "patch-to-region propagation document", "ColQwen architecture design"],
         "philosophy": ["raising artificial intelligence responsibility", "generative AI answer everything limitations", "AI value gap enterprise adoption"],
         "collaboration": ["Claude Code plugin kimchi-cult", "open source community contribution", "bridging research production"],
         "future": ["enterprise AI adoption future", "GPU inference scaling roadmap", "vision language retrieval production"],

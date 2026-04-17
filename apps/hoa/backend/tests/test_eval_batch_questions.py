@@ -17,7 +17,7 @@ import pytest
 
 VALID_CATEGORIES_OLD = {"origin", "technical depth", "philosophy & contrarian views",
                         "collaboration & ecosystem", "future & predictions"}
-VALID_CATEGORIES_NEW = {"origin", "technical_depth", "philosophy", "collaboration", "future"}
+VALID_CATEGORIES_NEW = {"origin", "philosophy", "collaboration", "future"}
 VALID_CATEGORIES_ALL = VALID_CATEGORIES_OLD | VALID_CATEGORIES_NEW
 
 

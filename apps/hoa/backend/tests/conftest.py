@@ -246,13 +246,13 @@ SAMPLE_RESEARCH: dict[str, Any] = {
             "expected_insight": "A specific technical or product choice, e.g., chain composability or the agent abstraction.",
         },
         {
-            "category": "technical_depth",
+            "category": "philosophy",
             "question": "LangGraph introduces cyclic computation graphs for agents — a sharp departure from LangChain's DAG model. What production failure pattern forced that architectural shift?",
             "why_this_question": "Exposes the real-world limitations that drove the new abstraction.",
             "expected_insight": "A concrete use case where DAG-based chains failed, leading to the stateful graph model.",
         },
         {
-            "category": "technical_depth",
+            "category": "collaboration",
             "question": "Your SPADE paper argues for automated data quality assertions in LLM pipelines. What's the most counterintuitive assertion type that catches bugs traditional tests miss?",
             "why_this_question": "Connects his academic work to practical engineering value.",
             "expected_insight": "A specific assertion category from SPADE with a real example of a caught bug.",

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-VALID_CATEGORIES = {"origin", "technical_depth", "philosophy", "collaboration", "future"}
+VALID_CATEGORIES = {"origin", "philosophy", "collaboration", "future"}
 MAX_QUESTION_WORDS = 45
 MIN_QUESTION_WORDS = 8
 EXPECTED_COUNT = 10

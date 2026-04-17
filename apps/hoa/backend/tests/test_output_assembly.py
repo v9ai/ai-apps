@@ -201,7 +201,7 @@ def test_questions_extraction():
             "expected_insight": "A concrete anecdote.",
         },
         {
-            "category": "technical_depth",
+            "category": "philosophy",
             "question": "Why did LangGraph introduce cyclic graphs?",
             "why_this_question": "Exposes DAG limitations.",
             "expected_insight": "A specific failure pattern.",

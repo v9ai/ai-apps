@@ -243,7 +243,7 @@ async def test_question_generator_enriched_output():
             "expected_insight": "A concrete anecdote about commitment.",
         },
         {
-            "category": "technical_depth",
+            "category": "philosophy",
             "question": "Why did LangGraph introduce cyclic graphs?",
             "why_this_question": "Exposes DAG limitations in production.",
             "expected_insight": "A specific failure pattern.",

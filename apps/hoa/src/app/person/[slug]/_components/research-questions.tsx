@@ -4,7 +4,6 @@ import type { PersonResearch } from "@/lib/personalities/types";
 
 const CATEGORY_COLORS: Record<string, string> = {
   origin: "#E8A838",
-  technical_depth: "#38BDF8",
   philosophy: "#A78BFA",
   collaboration: "#34D399",
   future: "#F472B6",
@@ -28,7 +27,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const CATEGORY_LABELS: Record<string, string> = {
   origin: "Origin & Turning Points",
-  technical_depth: "Technical Depth",
   philosophy: "Philosophy & Beliefs",
   collaboration: "Collaboration & Community",
   future: "Future & Predictions",

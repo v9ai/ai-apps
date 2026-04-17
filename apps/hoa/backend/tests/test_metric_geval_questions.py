@@ -275,10 +275,10 @@ def test_questions_interview_arc(sample_questions, sample_research):
     metric = GEval(
         name="Interview Arc Coherence",
         criteria=(
-            "When read in sequence by category (origin, technical_depth, philosophy, "
+            "When read in sequence by category (origin, philosophy, "
             "collaboration, future), the questions should form a natural interview arc "
             "that a podcast host could follow. The progression should feel logical — "
-            "starting with the person's journey, diving into technical work, exploring "
+            "starting with the person's journey, exploring "
             "their worldview, examining their network, and ending with forward-looking "
             "vision. Questions within the same category should not feel redundant."
         ),
@@ -287,7 +287,7 @@ def test_questions_interview_arc(sample_questions, sample_research):
         model=get_eval_model(),
     )
     # Order by category to match the intended interview flow
-    cat_order = {"origin": 0, "technical_depth": 1, "philosophy": 2, "collaboration": 3, "future": 4}
+    cat_order = {"origin": 0, "philosophy": 1, "collaboration": 2, "future": 3}
     ordered = sorted(sample_questions, key=lambda q: cat_order.get(q["category"], 99))
     test_case = LLMTestCase(
         input=f"Evaluate the interview arc for a podcast with {sample_research['name']}",
