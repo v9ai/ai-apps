@@ -1,96 +1,404 @@
 {
-  "github": null,
-  "huggingface": {
-    "models": [
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 34,
+      "followers": 36,
+      "location": null,
+      "createdAt": "2017-01-31T11:50:09Z"
+    },
+    "repos": [
       {
-        "id": "athrael-soju/colqwen3.5-4.5B-v1",
-        "likes": 11,
-        "downloads": 199,
-        "tags": [
-          "colpali_engine",
-          "safetensors",
-          "qwen3_5",
+        "name": "Snappy",
+        "description": "\ud83d\udc0a Snappy's unique approach unifies vision-language late interaction with structured OCR for region-level knowledge retrieval. Like the project? Drop a star! \u2b50",
+        "url": "https://github.com/athrael-soju/Snappy",
+        "stars": 83,
+        "forks": 16,
+        "language": "Python",
+        "topics": [
           "colpali",
-          "colbert",
-          "visual-document-retrieval",
+          "computer-vision",
+          "deepseek-ocr",
+          "docker",
           "document-retrieval",
-          "multimodal",
-          "embedding",
-          "vidore",
-          "late-interaction",
-          "en",
-          "de",
-          "es",
-          "fr",
-          "it",
-          "arxiv:2407.01449",
-          "base_model:Qwen/Qwen3.5-4B",
-          "base_model:finetune:Qwen/Qwen3.5-4B",
-          "license:apache-2.0",
-          "region:us"
+          "document-understanding",
+          "fastapi",
+          "multimodal-ai",
+          "multivector-search",
+          "nextjs",
+          "pdf-search",
+          "python",
+          "qdrant",
+          "rag",
+          "typescript",
+          "vector-database",
+          "vector-search",
+          "vision-ai",
+          "visual-retrieval"
         ],
-        "pipelineTag": "visual-document-retrieval",
-        "createdAt": "2026-03-10T22:25:33.000Z"
+        "updatedAt": "2026-04-06T00:58:51Z",
+        "createdAt": "2025-07-28T13:40:25Z"
       },
       {
-        "id": "athrael-soju/colqwen3.5-4.5B-v3",
-        "likes": 2,
-        "downloads": 123,
-        "tags": [
-          "colpali_engine",
-          "safetensors",
-          "qwen3_5",
-          "visual-document-retrieval",
-          "colbert",
-          "late-interaction",
-          "multi-vector",
-          "lora",
-          "model-soup",
-          "hpo",
-          "en",
-          "fr",
-          "de",
-          "es",
-          "zh",
-          "base_model:Qwen/Qwen3.5-4B",
-          "base_model:adapter:Qwen/Qwen3.5-4B",
-          "license:apache-2.0",
-          "region:us"
-        ],
-        "pipelineTag": "visual-document-retrieval",
-        "createdAt": "2026-03-15T21:33:30.000Z"
+        "name": "Qdrant-Neo4j-Ollama-Graph-Rag",
+        "description": null,
+        "url": "https://github.com/athrael-soju/Qdrant-Neo4j-Ollama-Graph-Rag",
+        "stars": 58,
+        "forks": 14,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-13T17:57:24Z",
+        "createdAt": "2025-03-03T16:49:45Z"
       },
       {
-        "id": "athrael-soju/colqwen3.5-4.5B-v2",
-        "likes": 1,
-        "downloads": 101,
-        "tags": [
-          "colpali_engine",
-          "safetensors",
-          "qwen3_5",
-          "visual-document-retrieval",
-          "colbert",
-          "late-interaction",
-          "multi-vector",
-          "lora",
-          "model-soup",
-          "en",
-          "fr",
-          "de",
-          "es",
-          "it",
-          "arxiv:2407.01449",
-          "base_model:Qwen/Qwen3.5-4B",
-          "base_model:adapter:Qwen/Qwen3.5-4B",
-          "license:apache-2.0",
-          "region:us"
+        "name": "nlp-graphrag-with-qdrant-and-neo4j",
+        "description": "I know Kung Fu",
+        "url": "https://github.com/athrael-soju/nlp-graphrag-with-qdrant-and-neo4j",
+        "stars": 24,
+        "forks": 3,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-13T17:57:24Z",
+        "createdAt": "2025-03-17T15:11:23Z"
+      },
+      {
+        "name": "grafana-alloy-example",
+        "description": "Observability stack using Grafana Alloy, Prometheus, Node Exporter, Mimir, Loki, Tempo & Pyroscope.",
+        "url": "https://github.com/athrael-soju/grafana-alloy-example",
+        "stars": 21,
+        "forks": 5,
+        "language": "Jsonnet",
+        "topics": [
+          "grafana",
+          "grafana-alloy",
+          "jsonnet",
+          "loki",
+          "mimir",
+          "node-exporter",
+          "observability",
+          "prometheus",
+          "pyroscope",
+          "tempo"
         ],
-        "pipelineTag": "visual-document-retrieval",
-        "createdAt": "2026-03-13T18:47:45.000Z"
+        "updatedAt": "2026-03-06T22:26:57Z",
+        "createdAt": "2024-09-27T12:19:34Z"
+      },
+      {
+        "name": "little-scripts",
+        "description": "A monorepo containing various utility scripts, tools, and applications for development, automation, and AI-powered tasks.",
+        "url": "https://github.com/athrael-soju/little-scripts",
+        "stars": 15,
+        "forks": 0,
+        "language": "Python",
+        "topics": [
+          "colpali",
+          "computer-vision",
+          "cuda",
+          "deepseek-ocr",
+          "document-understanding",
+          "fastapi",
+          "flash-attention",
+          "gradio",
+          "ocr",
+          "paddle-ocr",
+          "qdrant",
+          "rag-chatbot",
+          "speech-to-text",
+          "text-to-speech",
+          "vector-search"
+        ],
+        "updatedAt": "2026-04-02T02:08:10Z",
+        "createdAt": "2025-05-24T17:56:55Z"
+      },
+      {
+        "name": "hydra",
+        "description": "Hydra: Unifying Document Retrieval and Generation in a Single Vision-Language Model",
+        "url": "https://github.com/athrael-soju/hydra",
+        "stars": 7,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-04-15T15:32:22Z",
+        "createdAt": "2026-03-30T14:18:33Z"
+      },
+      {
+        "name": "larvling",
+        "description": null,
+        "url": "https://github.com/athrael-soju/larvling",
+        "stars": 7,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-04-03T01:08:58Z",
+        "createdAt": "2026-02-15T17:55:12Z"
+      },
+      {
+        "name": "video-annotation-and-disambiguation-using-RF-DETR-and-BLIP2",
+        "description": "Video annotation & Disambiguation using Qdrant, Neo4J, RF-DETR + BLIP2",
+        "url": "https://github.com/athrael-soju/video-annotation-and-disambiguation-using-RF-DETR-and-BLIP2",
+        "stars": 7,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-01T19:33:49Z",
+        "createdAt": "2025-04-20T18:53:00Z"
+      },
+      {
+        "name": "colpali1.3-colqwen2.5-v0.1",
+        "description": null,
+        "url": "https://github.com/athrael-soju/colpali1.3-colqwen2.5-v0.1",
+        "stars": 3,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-01T19:33:58Z",
+        "createdAt": "2025-02-27T00:59:46Z"
+      },
+      {
+        "name": "framework-generator",
+        "description": "Create structured, repeatable frameworks from any workflow through guided stages. Human-in-the-loop design with Claude.",
+        "url": "https://github.com/athrael-soju/framework-generator",
+        "stars": 2,
+        "forks": 0,
+        "language": null,
+        "topics": [
+          "anthropic",
+          "claude",
+          "claude-code",
+          "claude-plugins",
+          "claude-skills",
+          "framework-generator",
+          "workflow-automation"
+        ],
+        "updatedAt": "2026-03-01T19:33:36Z",
+        "createdAt": "2026-01-04T17:51:02Z"
+      },
+      {
+        "name": "Plucky",
+        "description": "Plucky is a Personalized, Agentic Voice Assistant",
+        "url": "https://github.com/athrael-soju/Plucky",
+        "stars": 2,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [
+          "conversational-ai",
+          "graphiti",
+          "knowledge-graph",
+          "mcp",
+          "neo4j",
+          "openai-realtime-api",
+          "threejs",
+          "webrtc"
+        ],
+        "updatedAt": "2026-03-01T19:33:41Z",
+        "createdAt": "2025-11-15T15:29:45Z"
+      },
+      {
+        "name": "tracking-with-dfine-and-boxmot",
+        "description": null,
+        "url": "https://github.com/athrael-soju/tracking-with-dfine-and-boxmot",
+        "stars": 2,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-01T19:33:50Z",
+        "createdAt": "2025-05-15T16:58:48Z"
+      },
+      {
+        "name": "openai-realtime-console-next.js",
+        "description": "The same Realtime Console app provided by OpenAI, but broken down to humanely readable components and integrated with Next.js",
+        "url": "https://github.com/athrael-soju/openai-realtime-console-next.js",
+        "stars": 2,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2025-01-06T18:15:15Z",
+        "createdAt": "2024-10-08T16:36:24Z"
+      },
+      {
+        "name": "atlas-v0.2",
+        "description": "Atlas v0.2 - Your personal knowledgebase",
+        "url": "https://github.com/athrael-soju/atlas-v0.2",
+        "stars": 2,
+        "forks": 1,
+        "language": "TypeScript",
+        "topics": [
+          "ai",
+          "cohere",
+          "llm",
+          "openai",
+          "pinecone",
+          "qdrant",
+          "unstructured-io"
+        ],
+        "updatedAt": "2025-06-07T18:47:56Z",
+        "createdAt": "2024-08-22T16:25:11Z"
+      },
+      {
+        "name": "titanium-lite-1.5",
+        "description": "Adds Assistants",
+        "url": "https://github.com/athrael-soju/titanium-lite-1.5",
+        "stars": 2,
+        "forks": 1,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-01-06T18:15:19Z",
+        "createdAt": "2024-05-14T10:27:05Z"
+      },
+      {
+        "name": "titanium-lite-1.4",
+        "description": "Adds Multi-User Persistent  memory using NoSQL & VectorDB",
+        "url": "https://github.com/athrael-soju/titanium-lite-1.4",
+        "stars": 2,
+        "forks": 1,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-01-06T18:15:20Z",
+        "createdAt": "2024-05-07T14:18:43Z"
+      },
+      {
+        "name": "titanium-lite-1.3",
+        "description": "Adds Retrieval Augmented Generation",
+        "url": "https://github.com/athrael-soju/titanium-lite-1.3",
+        "stars": 2,
+        "forks": 2,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-01-06T18:15:22Z",
+        "createdAt": "2024-04-18T15:43:54Z"
+      },
+      {
+        "name": "titanium-lite-1.2",
+        "description": "Adds Vision",
+        "url": "https://github.com/athrael-soju/titanium-lite-1.2",
+        "stars": 2,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-01-06T18:15:25Z",
+        "createdAt": "2024-04-09T15:07:10Z"
+      },
+      {
+        "name": "titanium-lite-1.1",
+        "description": null,
+        "url": "https://github.com/athrael-soju/titanium-lite-1.1",
+        "stars": 2,
+        "forks": 1,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-01-06T18:15:22Z",
+        "createdAt": "2024-04-09T13:41:41Z"
+      },
+      {
+        "name": "kimchi-cult",
+        "description": "Claude Code plugin marketplace by athrael-soju",
+        "url": "https://github.com/athrael-soju/kimchi-cult",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-04-03T01:09:14Z",
+        "createdAt": "2026-02-27T22:13:31Z"
+      },
+      {
+        "name": "agent-debate",
+        "description": "Multi-agent adversarial debate plugin for Claude Code using Team agents",
+        "url": "https://github.com/athrael-soju/agent-debate",
+        "stars": 1,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-03-29T20:33:23Z",
+        "createdAt": "2026-02-27T21:10:05Z"
+      },
+      {
+        "name": "paddleocr-vl",
+        "description": "GPU-accelerated PaddleOCR-VL wrapper service for document OCR processing with FastAPI",
+        "url": "https://github.com/athrael-soju/paddleocr-vl",
+        "stars": 1,
+        "forks": 2,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-03-01T19:33:43Z",
+        "createdAt": "2025-10-31T14:12:46Z"
+      },
+      {
+        "name": "athrael-soju",
+        "description": "Le me",
+        "url": "https://github.com/athrael-soju/athrael-soju",
+        "stars": 1,
+        "forks": 1,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-04-14T20:23:56Z",
+        "createdAt": "2025-08-27T00:12:54Z"
+      },
+      {
+        "name": "trackers-with-supervision-and-rfdetr",
+        "description": null,
+        "url": "https://github.com/athrael-soju/trackers-with-supervision-and-rfdetr",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-01T19:33:52Z",
+        "createdAt": "2025-04-27T13:01:35Z"
+      },
+      {
+        "name": "skao-antenna-svg-map",
+        "description": "Creates an exportable SVG given a yaml configuration containing SKA-low antenna data",
+        "url": "https://github.com/athrael-soju/skao-antenna-svg-map",
+        "stars": 1,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-01-06T18:15:00Z",
+        "createdAt": "2024-11-22T18:12:54Z"
+      },
+      {
+        "name": "atlas-v0.1",
+        "description": "Atlas v0.1",
+        "url": "https://github.com/athrael-soju/atlas-v0.1",
+        "stars": 1,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [
+          "ai",
+          "cartesia",
+          "cohere",
+          "llm",
+          "openai",
+          "pinecone",
+          "unstructured-io"
+        ],
+        "updatedAt": "2025-12-23T22:34:51Z",
+        "createdAt": "2024-05-08T20:08:56Z"
       }
     ],
-    "totalDownloads": 423,
-    "totalLikes": 14
+    "totalStars": 252,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 11,
+        "color": "#3572A5"
+      },
+      {
+        "name": "TypeScript",
+        "count": 9,
+        "color": "#3178c6"
+      },
+      {
+        "name": "Jsonnet",
+        "count": 1,
+        "color": "#8b8b8b"
+      },
+      {
+        "name": "JavaScript",
+        "count": 1,
+        "color": "#f1e05a"
+      }
+    ]
   },
+  "huggingface": null,
   "imageUrl": "https://www.london.gov.uk/sites/default/files/2024-05/Alessandro+Georgiou+headshot.jpg"
 }

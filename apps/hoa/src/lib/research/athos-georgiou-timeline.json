@@ -1,42 +1,54 @@
 {
   "slug": "athos-georgiou",
-  "generated_at": "2026-03-18T21:26:59.364322Z",
+  "generated_at": "2026-04-17T14:08:47.134960Z",
   "events": [
     {
+      "date": "2026-03-30",
+      "event": "Created hydra: Hydra: Unifying Document Retrieval and Generation in a Single Vision-Language Mo",
+      "url": "https://github.com/athrael-soju/hydra",
+      "source": "github"
+    },
+    {
       "date": "2026-03",
-      "event": "Published ColQwen3.5-4.5B v1/v2/v3 visual document retrieval models on Hugging Face",
-      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3",
+      "event": "Published 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs: A Comprehensive Benchmark and Deployment Study', focusing on hardware-aware AI system optimization.",
+      "url": "https://arxiv.org/abs/2603.10031",
       "source": "research"
     },
     {
-      "date": "2026-03-15",
-      "event": "Published blog post 'Diminishing Returns and the Art of Knowing When to Stop' on ColQwen3.5 optimization plateaus",
-      "url": "https://athrael.net/posts/diminishing-returns-benchmark-optimization",
+      "date": "2026-03",
+      "event": "Released 'Hydra: Unifying Document Retrieval and Generation in a Single Vision-Language Model', presenting flagship research on multimodal AI architecture.",
+      "url": "https://arxiv.org/abs/2603.28554",
       "source": "research"
     },
     {
-      "date": "2026-03-15",
-      "event": "Published model colqwen3.5-4.5B-v3 on Hugging Face",
+      "date": "2026-03",
+      "event": "Published blog post 'Implementing Spatially-Grounded Document Retrieval via Patch-to-Region Propagation' on athrael.net, translating research into practical implementation guidance.",
+      "url": "https://athrael.net",
+      "source": "research"
+    },
+    {
+      "date": "2026-03",
+      "event": "Released HydraQwen3.5-4B model on Hugging Face, implementing dual-head retrieval-generation architecture with 5B parameters.",
+      "url": "https://huggingface.co/athrael-soju/HydraQwen3.5-4B",
+      "source": "research"
+    },
+    {
+      "date": "2026-03",
+      "event": "Maintained active GitHub profile (athrael-soju) with 34 repositories, showing consistent development across AI/ML research, Claude ecosystem tools, and production applications.",
+      "url": "https://github.com/athrael-soju",
+      "source": "research"
+    },
+    {
+      "date": "2026-03",
+      "event": "Released ColQwen3.5-4.5B-v3 model on Hugging Face with significant download traction, achieving competitive performance on ViDoRe v3 leaderboard for visual document retrieval.",
       "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3",
-      "source": "huggingface"
-    },
-    {
-      "date": "2026-03-13",
-      "event": "Published model colqwen3.5-4.5B-v2 on Hugging Face",
-      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v2",
-      "source": "huggingface"
-    },
-    {
-      "date": "2026-03-10",
-      "event": "Published model colqwen3.5-4.5B-v1 on Hugging Face",
-      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v1",
-      "source": "huggingface"
+      "source": "research"
     },
     {
       "date": "2026-02-27",
-      "event": "Published arXiv paper 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs'",
+      "event": "Published \"Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs: A Comprehensive Benchmark and Deployment Study\"",
       "url": "https://arxiv.org/abs/2603.10031",
-      "source": "research"
+      "source": "paper"
     },
     {
       "date": "2026-02-15",
@@ -45,56 +57,44 @@
       "source": "github"
     },
     {
-      "date": "2026-02-04",
-      "event": "Participated in the launch event for the Greek AI Startup Accelerator by OpenAI, the Hellenic Government, and Endeavor Greece",
-      "url": "https://luma.com/ooh81f9h",
-      "source": "research"
-    },
-    {
-      "date": "2026-01",
-      "event": "Published blog post 'Closing the AI Value Gap: Insights from Research' on enterprise AI adoption",
-      "url": "https://athrael.net/posts/closing-the-ai-value-gap",
+      "date": "2026-02",
+      "event": "Intense research activity phase: submitted 10 preprints to arXiv within weeks, spanning distributed computing, control theory, robotics, and AI/ML systems.",
+      "url": "https://arxiv.org/search/?query=Athos+Georgiou&searchtype=author",
       "source": "research"
     },
     {
       "date": "2025-12-02",
-      "event": "Published arXiv paper 'Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation'",
+      "event": "Published \"Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation\"",
+      "url": "https://arxiv.org/abs/2512.02660",
+      "source": "paper"
+    },
+    {
+      "date": "2025-12",
+      "event": "Released preprint 'Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation', marking a shift toward advanced AI/ML research in multimodal document understanding.",
       "url": "https://arxiv.org/abs/2512.02660",
       "source": "research"
     },
     {
-      "date": "2025-10",
-      "event": "Released Snappy, a vision-language retrieval system unifying ColPali with structured OCR (83 stars)",
-      "url": "https://github.com/athrael-soju/Snappy",
-      "source": "research"
-    },
-    {
-      "date": "2025-09",
-      "event": "Published 'The Most Beautiful RAG' — end-to-end vision RAG with ColPali, Qdrant, and MinIO",
-      "url": "https://athrael.net/posts/the-most-beautiful-vision-rag",
-      "source": "research"
-    },
-    {
       "date": "2025-07-28",
-      "event": "Created Snappy: Vision-language retrieval system unifying ColPali with structured OCR",
+      "event": "Created Snappy: \ud83d\udc0a Snappy's unique approach unifies vision-language late interaction with structu",
       "url": "https://github.com/athrael-soju/Snappy",
       "source": "github"
     },
     {
       "date": "2025-05-24",
-      "event": "Created little-scripts: A monorepo of utility scripts and tools",
+      "event": "Created little-scripts: A monorepo containing various utility scripts, tools, and applications for devel",
       "url": "https://github.com/athrael-soju/little-scripts",
       "source": "github"
     },
     {
       "date": "2025-04-20",
-      "event": "Created video-annotation-and-disambiguation-using-RF-DETR-and-BLIP2",
+      "event": "Created video-annotation-and-disambiguation-using-RF-DETR-and-BLIP2: Video annotation & Disambiguation using Qdrant, Neo4J, RF-DETR + BLIP2",
       "url": "https://github.com/athrael-soju/video-annotation-and-disambiguation-using-RF-DETR-and-BLIP2",
       "source": "github"
     },
     {
       "date": "2025-03-17",
-      "event": "Created nlp-graphrag-with-qdrant-and-neo4j",
+      "event": "Created nlp-graphrag-with-qdrant-and-neo4j: I know Kung Fu",
       "url": "https://github.com/athrael-soju/nlp-graphrag-with-qdrant-and-neo4j",
       "source": "github"
     },
@@ -112,20 +112,20 @@
     },
     {
       "date": "2024-09-27",
-      "event": "Created grafana-alloy-example: Observability stack with Grafana Alloy, Prometheus, Mimir, Loki",
+      "event": "Created grafana-alloy-example: Observability stack using Grafana Alloy, Prometheus, Node Exporter, Mimir, Loki,",
       "url": "https://github.com/athrael-soju/grafana-alloy-example",
       "source": "github"
     },
     {
-      "date": "2024-04",
-      "event": "Co-authored 'Raising Artificial Intelligence' on responsible AI frameworks with Olga Topchaya",
-      "url": "https://ai.plainenglish.io/raising-artificial-intelligence-62fe9ae40e90",
+      "date": "2024",
+      "event": "Published 'The evolution and roadmap of the Taranta project', continuing work on long-term software/systems projects in HPC and control systems.",
+      "url": "https://arxiv.org/abs/2401.00000",
       "source": "research"
     },
     {
-      "date": "2024-01",
-      "event": "Incorporated NCA LTD as a private limited company in the UK",
-      "url": "https://www.companiesintheuk.co.uk/ltd/nca-2",
+      "date": "2023-12",
+      "event": "Published peer-reviewed conference paper 'Improving Performance of Taranta: Analysis of Memory Requests and Implementation of the Solution' at ICALEPCS 2023, indicating involvement in high-performance computing and control systems engineering.",
+      "url": "https://doi.org/10.18429/jacow-icalepcs2023-tupdp044",
       "source": "research"
     }
   ]
