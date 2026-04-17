@@ -186,7 +186,7 @@ export default async function PersonPage({ params }: Props) {
           </div>
 
           {/* Profile hero */}
-          <div className={css({ display: 'flex', alignItems: { base: 'flex-start', sm: 'center' }, gap: { base: '4', sm: '6', md: '8' }, pb: { base: '10', md: '12' } })}>
+          <div className={css({ display: 'flex', alignItems: { base: 'flex-start', sm: 'center' }, gap: { base: '4', sm: '6', md: '8' }, pb: { base: '6', md: '8' } })}>
             <div className={css({ pos: 'relative', flexShrink: 0 })}>
               {avatar ? (
                 <Image
@@ -247,7 +247,7 @@ export default async function PersonPage({ params }: Props) {
         {(hasStatBadges || person.github) && (
         <div
           role="list"
-          className={cx("animate-fade-in-up", css({ mt: { base: '8', md: '10' }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { base: '3', md: '4' } }))}
+          className={cx("animate-fade-in-up", css({ mt: { base: '5', md: '6' }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { base: '3', md: '4' } }))}
           style={{ animationDelay: "0.2s" }}
         >
 {episodes.length > 0 && (
