@@ -205,159 +205,101 @@
   "questions": [
     {
       "category": "origin",
-      "question": "Your 2023 ICALEPCS paper on optimizing Taranta's memory requests represents classic high-performance computing systems engineering. What specific insight from that telescope infrastructure work directly informed your architectural approach to building Hydra's dual-head vision-language model?",
-      "why_this_question": "This connects his foundational systems engineering background to his current AI research, showing how core principles transfer across domains.",
-      "expected_insight": "Expectation of hearing about latency optimization patterns, memory hierarchy awareness, or distributed system design principles that translated from HPC control systems to multimodal AI architecture."
+      "question": "What sparked your transition from high-performance computing and control systems to applied AI research, and how did it shape NCA's mission?",
+      "why_this_question": "Understanding the catalyst for his career shift provides context for NCA's focus.",
+      "expected_insight": "Reveals personal motivations and the strategic direction of NCA.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "origin",
-      "question": "In your blog, you mention the 'grind' of enterprise AI adoption versus measurable value. Given your transition from deterministic control systems to probabilistic AI models, what was the most surprising gap you encountered between academic AI research and production-ready systems?",
-      "why_this_question": "This probes the practical realities of his career transition and how his systems engineering background shapes his critique of current AI deployment.",
-      "expected_insight": "Expectation of hearing about monitoring challenges, reproducibility issues, or the difference between benchmark performance and real-world reliability that surprised someone with a deterministic systems background."
+      "question": "Walk me through the early days of NCA. What were the biggest challenges in bridging academic research with practical AI implementations?",
+      "why_this_question": "Gives insight into the initial hurdles and problem-solving mindset.",
+      "expected_insight": "Highlights key obstacles and how they were overcome.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "technical_depth",
-      "question": "In your 'Implementing Spatially-Grounded Document Retrieval' blog post, you describe patch-to-region propagation as 'relating visual patches to relevant text regions.' Could you walk through a specific technical challenge you faced when implementing this propagation mechanism in ColQwen3.5, and how you resolved it?",
-      "why_this_question": "This gets into the implementation details of his signature research contribution, moving beyond the paper's abstract to practical engineering challenges.",
-      "expected_insight": "Expectation of hearing about attention mechanism modifications, training data preparation challenges, or computational efficiency optimizations specific to making patch-to-region propagation work in practice."
+      "question": "How does the Hydra dual-head architecture balance the trade-offs between document retrieval and text generation, and what unique challenges did this pose?",
+      "why_this_question": "Delves into the technical intricacies of Hydra.",
+      "expected_insight": "Explains the design decisions and technical challenges in creating a unified model.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "technical_depth",
-      "question": "Your Hydra architecture paper mentions 'unifying document retrieval and generation in a single model.' What specific architectural trade-off did you make between the retrieval head's performance and the generation head's capabilities, and how does this manifest in the HydraQwen3.5-4B model's behavior?",
-      "why_this_question": "This asks about the concrete engineering decisions behind his novel architecture, forcing specificity about design choices.",
-      "expected_insight": "Expectation of hearing about parameter allocation, attention sharing mechanisms, or training objective balancing that reveals the practical constraints of dual-head design."
+      "question": "What surprised you most about the performance gains achieved with ColPali and ColQwen in late-interaction retrieval systems?",
+      "why_this_question": "Explores unexpected outcomes in his research.",
+      "expected_insight": "Reveals insights gained from empirical results.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "philosophy",
-      "question": "In your writing, you use the 'raising AI' parent-child metaphor while simultaneously publishing candid critiques of GenAI limitations. How do you reconcile these seemingly contradictory views—seeing AI as something to nurture while being clear-eyed about its current shortcomings?",
-      "why_this_question": "This probes the tension in his philosophical stance, moving beyond surface-level metaphors to deeper consistency.",
-      "expected_insight": "Expectation of hearing about developmental stages, capability thresholds, or a distinction between current technical limitations and long-term potential that resolves the apparent contradiction."
+      "question": "Critics say that generative AI is overhyped and not a panacea for all problems. Where are they wrong, and what role do you see for GenAI in the future?",
+      "why_this_question": "Challenges a common critique and invites a nuanced response.",
+      "expected_insight": "Provides a balanced view on the potential and limitations of generative AI.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "philosophy",
-      "question": "Your blog discusses 'diminishing returns' in model training, yet you continue pushing ColQwen3.5 performance on ViDoRe. What specific metric or capability threshold would make you say 'the returns are no longer diminishing' for visual document retrieval models?",
-      "why_this_question": "This forces concrete definition of his philosophical stance on progress, moving from abstract 'diminishing returns' to measurable criteria.",
-      "expected_insight": "Expectation of hearing about specific nDCG scores, inference latency targets, or real-world task completion rates that would justify continued scaling."
+      "question": "In your blog post 'Raising Artificial Intelligence,' you draw a parent-child metaphor for AI responsibility. How does this analogy guide your approach to developing and deploying AI systems?",
+      "why_this_question": "Connects personal philosophy to practical application.",
+      "expected_insight": "Reveals the ethical and practical considerations in AI development.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "collaboration",
-      "question": "Your kimchi-cult repository suggests deep engagement with the Claude ecosystem. What specific limitation or gap in Claude's official tooling prompted you to build these community tools, and how do you see this ecosystem evolving differently from, say, the OpenAI plugin system?",
-      "why_this_question": "This shows understanding of his ecosystem work while asking for comparative analysis and specific pain points.",
-      "expected_insight": "Expectation of hearing about API limitations, deployment challenges, or use cases not covered by official tooling that drove community development."
+      "question": "How does your work on the Claude AI ecosystem contribute to the broader open-source community, and what are the key benefits of this collaboration?",
+      "why_this_question": "Highlights the impact of his contributions beyond NCA.",
+      "expected_insight": "Explains the value and dynamics of open-source collaboration.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "collaboration",
-      "question": "With 39.8k+ downloads of ColQwen3.5-4.5B-v3, you've built significant open-source traction. What's one contribution from the community—a PR, issue, or use case—that meaningfully changed how you think about or develop your visual retrieval models?",
-      "why_this_question": "This moves beyond download counts to specific community interactions, showing genuine engagement with users.",
-      "expected_insight": "Expectation of hearing about an unexpected use case, bug report that revealed architectural flaw, or feature request that expanded the model's design scope."
+      "question": "What are the most significant challenges you face in bridging the gap between cutting-edge research and production-ready AI systems, and how do you address them?",
+      "why_this_question": "Focuses on the practical aspects of research-to-production transitions.",
+      "expected_insight": "Provides concrete examples of challenges and solutions.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "future",
-      "question": "Your AMD Instinct MI325X benchmarking paper shows deep hardware optimization work. Given AMD's growing presence, what specific architectural advantage does their platform offer for your patch-to-region propagation approach that NVIDIA's doesn't, beyond just cost?",
-      "why_this_question": "This moves beyond generic 'AMD vs NVIDIA' to specific technical advantages relevant to his research focus.",
-      "expected_insight": "Expectation of hearing about memory bandwidth utilization, matrix operation optimizations, or hardware features particularly beneficial for vision-language model inference patterns."
+      "question": "What would need to be true for vision-language retrieval to become a standard feature in enterprise AI applications, and what are the current barriers?",
+      "why_this_question": "Looks ahead to future trends and obstacles.",
+      "expected_insight": "Identifies key factors and challenges for widespread adoption.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "future",
-      "question": "You've written about the gap between enterprise AI adoption and measurable value. What's one concrete, non-obvious metric you believe enterprises should track for visual document retrieval systems that most are currently overlooking?",
-      "why_this_question": "This asks for specific, actionable insight from his enterprise experience, moving beyond generic ROI discussions.",
-      "expected_insight": "Expectation of hearing about user interaction patterns, false positive/negative trade-offs in specific domains, or integration latency metrics that matter more than benchmark scores."
+      "question": "How does your work on GPU inference optimization for AMD Instinct GPUs inform your broader strategy for scaling AI inference in production environments?",
+      "why_this_question": "Connects specific technical work to strategic planning.",
+      "expected_insight": "Reveals the strategic implications of hardware-specific optimizations.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "vision_retrieval",
-      "question": "ColQwen3.5 uses 128-dim multi-vector retrieval. What specific failure mode of single-vector retrieval on the ViDoRe benchmark drove you to implement this approach, and how did you determine 128 dimensions was the sweet spot versus 64 or 256?",
-      "why_this_question": "This gets into the quantitative engineering decisions behind his model's architecture, showing understanding of the trade-offs.",
-      "expected_insight": "Expectation of hearing about recall-precision curves, memory-compute trade-offs, or specific query types that single-vector approaches failed on."
+      "question": "How does the ColQwen3.5-4.5B model's performance on the ViDoRe v3 leaderboard reflect the advancements in visual document retrieval, and what are the next steps?",
+      "why_this_question": "Evaluates the impact of his models on benchmark performance.",
+      "expected_insight": "Discusses the significance of benchmark results and future improvements.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "vision_retrieval",
-      "question": "Your late interaction approach in ColPali/ColQwen suggests you believe in separating representation learning from similarity computation. What's the most surprising way this separation affects training dynamics compared to end-to-end retrieval approaches?",
-      "why_this_question": "This probes the practical training implications of his architectural choice, moving beyond the theoretical advantage.",
-      "expected_insight": "Expectation of hearing about gradient flow patterns, regularization effects, or data efficiency differences observed during training."
-    },
-    {
-      "category": "graph_rag",
-      "question": "You've integrated Qdrant, Neo4j, and Ollama in your RAG templates. When would you choose to add Neo4j's graph structure over just using Qdrant's vector search for a document retrieval system, and what's the performance trade-off you've measured?",
-      "why_this_question": "This asks for specific use case differentiation and quantitative trade-offs between technologies he uses.",
-      "expected_insight": "Expectation of hearing about query types that benefit from graph traversal, latency measurements for multi-hop queries, or maintenance overhead comparisons."
-    },
-    {
-      "category": "graph_rag",
-      "question": "Your dynamic ontology concept suggests evolving knowledge graphs. What's the most challenging aspect of keeping Neo4j relationships updated when new documents are ingested, and how does your system handle contradictory information?",
-      "why_this_question": "This addresses the practical implementation challenges of his theoretical approach.",
-      "expected_insight": "Expectation of hearing about consistency algorithms, versioning strategies, or confidence scoring mechanisms for graph updates."
+      "question": "If you had to rebuild the Hydra architecture without the benefit of patch-to-region relevance propagation, what alternative approaches would you consider?",
+      "why_this_question": "Explores alternative design choices and their implications.",
+      "expected_insight": "Reveals the importance of specific techniques and potential alternatives.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "gpu_optimization",
-      "question": "In your AMD Instinct benchmarking paper, you detail dtype and memory tricks. What's one optimization that worked surprisingly well on AMD hardware that doesn't translate effectively to NVIDIA, and why do you think that is?",
-      "why_this_question": "This shows deep understanding of his research while asking for hardware-specific insights.",
-      "expected_insight": "Expectation of hearing about memory layout optimizations, instruction scheduling differences, or cache utilization patterns unique to AMD's architecture."
+      "question": "How does the choice of data types (dtypes) affect the performance and efficiency of large-parameter models during GPU inference, and what are the trade-offs?",
+      "why_this_question": "Delves into the technical details of GPU optimization.",
+      "expected_insight": "Explains the impact of dtypes on model performance and resource utilization.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     },
     {
       "category": "gpu_optimization",
-      "question": "You benchmark inference performance across different batch sizes. For your ColQwen3.5 model serving real-time document queries, what's the optimal batch size you've determined, and what specifically degrades when you go above that threshold?",
-      "why_this_question": "This moves from academic benchmarking to practical deployment configuration.",
-      "expected_insight": "Expectation of hearing about memory pressure points, latency variance increases, or throughput-quality trade-offs at different batch sizes."
-    },
-    {
-      "category": "observability",
-      "question": "Your Grafana Alloy and OpenTelemetry setup suggests production-grade monitoring. What's one metric you added to your ColQwen3.5 deployment that revealed a previously invisible failure mode in document retrieval?",
-      "why_this_question": "This asks for specific operational insights gained from instrumentation.",
-      "expected_insight": "Expectation of hearing about attention pattern degradation, embedding drift detection, or query-type-specific performance regression metrics."
-    },
-    {
-      "category": "observability",
-      "question": "In moving from research to production, what OpenTelemetry trace or span did you find most valuable for debugging patch-to-region propagation issues that you didn't anticipate needing during development?",
-      "why_this_question": "This connects his research to operational reality through specific instrumentation examples.",
-      "expected_insight": "Expectation of hearing about cross-modal alignment timing, cache hit/miss tracking, or error propagation through the retrieval pipeline."
-    },
-    {
-      "category": "responsible_ai",
-      "question": "You've written about AI consciousness debates while building enterprise systems. How does your practical work on deterministic retrieval systems like ColQwen inform your philosophical position on whether current AI systems have any form of consciousness?",
-      "why_this_question": "This connects his technical work to philosophical positions, forcing concrete grounding.",
-      "expected_insight": "Expectation of hearing about how working with mechanistic retrieval systems shapes his view on emergence, agency, or what consciousness would need to manifest as in AI systems."
-    },
-    {
-      "category": "responsible_ai",
-      "question": "Your enterprise adoption gap analysis suggests many companies deploy AI without proper guardrails. What's one specific, technically implementable guardrail for visual document retrieval systems that you believe should be standard but isn't?",
-      "why_this_question": "This moves from criticism to concrete solution proposal in his area of expertise.",
-      "expected_insight": "Expectation of hearing about confidence threshold enforcement, source attribution requirements, or audit trail mechanisms specific to multimodal systems."
-    },
-    {
-      "category": "full_stack_ai",
-      "question": "Your vision RAG templates integrate Pinecone with Next.js. What specific challenge did you encounter with Next.js serverless functions for embedding generation that drove your architecture decisions, and how did you solve it?",
-      "why_this_question": "This gets into the full-stack implementation details beyond the AI models themselves.",
-      "expected_insight": "Expectation of hearing about cold start latency, memory limitations, or deployment complexity that shaped the template design."
-    },
-    {
-      "category": "full_stack_ai",
-      "question": "In your production-ready RAG template, you made specific choices about when to use vector search versus keyword search. What's one query pattern where you found hybrid search actually performed worse than either approach alone, and why?",
-      "why_this_question": "This probes the edge cases and practical limitations of his recommended approaches.",
-      "expected_insight": "Expectation of hearing about query ambiguity scenarios, domain-specific terminology issues, or latency compounding effects."
-    },
-    {
-      "category": "model_training",
-      "question": "Your ColQwen3.5 fine-tuning achieved competitive ViDoRe performance. What's one hyperparameter or training configuration you tried that intuition suggested would help but actually hurt performance, and what did that teach you about vision-language model training?",
-      "why_this_question": "This asks for specific learning from failed experiments, showing depth beyond successful results.",
-      "expected_insight": "Expectation of hearing about learning rate schedules, loss weighting strategies, or data augmentation approaches that backfired and why."
-    },
-    {
-      "category": "model_training",
-      "question": "You mention diminishing returns in model scaling. Looking at your ColQwen3.5-4.5B-v3 versus smaller variants, what specific capability emerged only at the 4.5B scale that wasn't present in smaller versions, justifying the parameter increase?",
-      "why_this_question": "This forces concrete examples of where scaling helped, moving beyond generic scaling laws.",
-      "expected_insight": "Expectation of hearing about multi-hop reasoning emergence, better handling of document layout complexity, or improved out-of-domain generalization."
-    },
-    {
-      "category": "building_in_public",
-      "question": "Your blogging journey from 2023 shows increasing technical depth. What's one thing you wrote about early on that you now realize was wrong or overly simplistic, and how did building ColPali/ColQwen change your perspective?",
-      "why_this_question": "This shows engagement with his evolution and willingness to examine past assumptions.",
-      "expected_insight": "Expectation of hearing about initial assumptions about multimodal fusion, retrieval difficulty, or deployment challenges that practical experience overturned."
-    },
-    {
-      "category": "building_in_public",
-      "question": "Your open-source evolution shows projects becoming more production-focused. What's the main tension you've experienced between research innovation and production stability in maintaining your GitHub repositories, and how do you balance it?",
-      "why_this_question": "This addresses the practical challenges of maintaining both cutting-edge research and usable tools.",
-      "expected_insight": "Expectation of hearing about API stability promises versus architectural innovation, documentation burden, or backward compatibility challenges."
+      "question": "What are the most effective memory optimization strategies you've discovered for running large-scale AI models on GPUs with limited VRAM, and how do they impact overall performance?",
+      "why_this_question": "Focuses on practical solutions for resource-constrained environments.",
+      "expected_insight": "Provides actionable insights for optimizing GPU memory usage.",
+      "last_verified": "2026-04-17T13:53:26+00:00"
     }
   ]
 }
