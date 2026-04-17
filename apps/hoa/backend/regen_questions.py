@@ -2,10 +2,13 @@
 regen_questions.py
 ──────────────────
 Regenerate ONLY the questions for a person, using existing research JSON.
-Avoids re-running the full 20-agent pipeline.
+Uses a multi-agent adversarial debate protocol: advocate generates,
+critic attacks, judge rules. Only questions that survive the debate are kept.
 
 Usage:
     python3 regen_questions.py athos-georgiou
+    python3 regen_questions.py athos-georgiou --rounds 3
+    python3 regen_questions.py athos-georgiou --dry-run
 """
 
 from __future__ import annotations
@@ -20,6 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 
 console = Console()
@@ -40,14 +44,12 @@ from research_pipeline import (
     _HF_TOKEN,
 )
 
-# Set up HF token from cache
 _hf_token = os.environ.get("HF_TOKEN", "")
 if not _hf_token:
     token_path = Path.home() / ".cache" / "huggingface" / "token"
     if token_path.exists():
         _hf_token = token_path.read_text().strip()
 
-# Patch the module-level token
 import research_pipeline
 research_pipeline._HF_TOKEN = _hf_token
 
@@ -57,7 +59,7 @@ def _make_client():
     from research_pipeline import _make_hf_client, _make_client as _make_mlx
     client = _make_hf_client()
     if client:
-        console.print("[bold magenta]Using HF 72B for question generation[/]")
+        console.print("[bold magenta]Using HF 72B for debate[/]")
         return client
     console.print("[dim]Falling back to local MLX[/]")
     return _make_mlx()
@@ -69,27 +71,7 @@ def _ctx_block(label: str, text: str) -> str:
     return f"\n=== {label.upper()} ===\n{text[:3000]}\n"
 
 
-async def regenerate_questions(slug: str) -> list[dict]:
-    research_path = RESEARCH_DIR / f"{slug}.json"
-    if not research_path.exists():
-        console.print(f"[red]No research JSON for {slug}[/]")
-        return []
-
-    research = json.loads(research_path.read_text())
-    console.print(f"[bold cyan]Regenerating questions for {slug}[/]")
-
-    # Get categories (capped at 7)
-    categories = PERSON_CATEGORIES.get(slug, DEFAULT_CATEGORIES)
-    if len(categories) > 7:
-        core = dict(list(categories.items())[:5])
-        domain = dict(list(categories.items())[5:7])
-        categories = {**core, **domain}
-
-    num_questions = len(categories) * 2
-    console.print(f"  Categories: {len(categories)} ({', '.join(categories.keys())})")
-    console.print(f"  Target: {num_questions} questions")
-
-    # Build context from existing research
+def _build_research_context(research: dict, slug: str, categories: dict) -> str:
     all_context = (
         _ctx_block("Biography", research.get("bio", ""))
         + _ctx_block("Contributions", json.dumps(research.get("key_contributions", []), indent=2))
@@ -99,84 +81,346 @@ async def regenerate_questions(slug: str) -> list[dict]:
         + _ctx_block("Timeline", json.dumps(research.get("timeline", []), indent=2))
         + _ctx_block("Blog Posts", json.dumps(research.get("blog_posts", []), indent=2))
     )
-
-    # Add blog embedding context if available
     blog_context = _get_blog_context(slug, categories)
     if blog_context:
         all_context += blog_context
         console.print(f"  [green]✓[/] Blog embedding context loaded")
+    return all_context
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Agent system prompts
+# ═══════════════════════════════════════════════════════════════════════════
+
+ADVOCATE_SYSTEM = (
+    "You are an expert podcast host who crafts incisive interview questions. "
+    "You reference the guest's specific projects, papers, blog posts, and quotes — "
+    "never generic questions that could apply to anyone. Each question opens a "
+    "thread the guest hasn't been asked before.\n\n"
+    "You build the strongest possible set of questions and defend them on merit. "
+    "When the critic attacks your questions, you either improve them with concrete "
+    "fixes or argue why the original stands — with evidence from the research."
+)
+
+CRITIC_SYSTEM = (
+    "You are a ruthless quality auditor for interview questions. Your job is to "
+    "find every weakness, every generic phrase, every hallucinated reference, and "
+    "every violated rule. You are adversarial — you want to force the advocate to "
+    "produce genuinely excellent questions by rejecting mediocre ones.\n\n"
+    "You check each question against these failure modes:\n"
+    "- GENERIC: Could be asked to any tech leader without modification\n"
+    "- HALLUCINATED: References a project, paper, or quote not in the research\n"
+    "- NUMERIC: Embeds specific counts, percentages, or timeframes that will age\n"
+    "- REPETITIVE: Same 2-word prefix as 3+ other questions, or duplicate topic\n"
+    "- TEMPLATED: why_this_question or expected_insight uses boilerplate openers "
+    "(e.g., 'Understanding the...', 'Insight into...', 'Exploring the...')\n"
+    "- VAGUE: Invites an abstract answer instead of a story or concrete example\n"
+    "- OVERLONG: Exceeds 40 words\n"
+    "- LAZY: 'Tell me about X', 'What is X', answerable with a single fact\n\n"
+    "For each flaw, cite the specific words that fail and explain why."
+)
+
+JUDGE_SYSTEM = (
+    "You are an impartial judge evaluating interview questions through adversarial "
+    "debate. You have access to the full research context and can independently "
+    "verify claims. You issue binding verdicts on each question.\n\n"
+    "Your verdicts:\n"
+    "- ACCEPTED: Question passes all quality checks\n"
+    "- REVISION REQUIRED: Fixable flaw — you specify the exact revision needed\n"
+    "- REJECTED: Fundamentally flawed — must be replaced entirely\n\n"
+    "You also enforce structural rules across the full set:\n"
+    "- At least 4 different question structures (narrative, comparative, "
+    "counterfactual, contrarian, surprise, forward-looking)\n"
+    "- No more than 3 questions starting with the same 2-word prefix\n"
+    "- Exactly 2 questions per category\n"
+    "- Every why_this_question must be specific to THIS person, not boilerplate\n\n"
+    "In the final round, you produce the definitive question set as JSON."
+)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Debate rounds
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def _advocate_generate(
+    client, research: dict, all_context: str, categories: dict,
+    num_questions: int, prior_critique: str | None = None,
+) -> str:
     cat_lines = "\n".join(
         f"{i}. {cat} — {desc}"
         for i, (cat, desc) in enumerate(categories.items(), 1)
     )
     cat_names = "|".join(categories.keys())
 
-    client = _make_client()
-
-    result = await _run_agent(
-        client,
-        (
-            "You are an expert podcast host and interviewer who specializes in deep technical "
-            "conversations with AI/tech leaders. You craft questions that reveal genuine insight — "
-            "referencing the person's specific work, intellectual tensions in their field, and "
-            "decisions they've made. You never ask generic or Wikipedia-level questions. Each "
-            "question opens a thread the guest hasn't been asked before.\n\n"
-            "Anti-patterns to avoid:\n"
-            "- 'Tell me about X' or 'What is X' — these are lazy prompts, not questions\n"
-            "- Questions answerable with a single fact (yes/no, a date, a name)\n"
-            "- Questions that could apply to any tech CEO without modification\n"
-            "- Duplicating topics the guest has already been asked on prior podcasts\n"
-            "- Do NOT embed specific numeric values (download counts, star counts, repo counts, percentages). "
-            "Use relative references: 'your most-downloaded model', 'your highest-starred repo', 'the benchmark you lead on'\n"
-            "- Do NOT invent comparisons or alternatives not in the source material "
-            "(e.g., don't say 'versus 64 or 256' unless sources explicitly discuss those values)\n"
-            "- Do NOT assume the answer space (e.g., 'What's the optimal batch size' presumes there is one)\n"
-            "- Do NOT assume current vendor/employer affiliation from papers — "
-            "a paper about AMD GPUs does not mean the person works exclusively on AMD\n"
-            "- Do NOT name specific GPU vendors (AMD, NVIDIA, Intel) in questions unless "
-            "the person's identity is inseparable from that vendor. Use 'GPU inference' not 'AMD Instinct inference'\n\n"
-            "Quality markers:\n"
-            "- References a specific project, paper, decision, blog post title, or quote from the research\n"
-            "- Creates productive tension (e.g., contrasting two positions the guest holds)\n"
-            "- Invites a story or concrete example, not an abstract answer\n"
-            "- Under 40 words — concise enough to deliver naturally on air\n"
-            "- Questions remain valid even if download counts, star counts, or affiliations change\n"
-            "- When blog posts are available, directly reference blog post titles in questions (e.g., \"In your post 'Title'...\")"
-        ),
-        (
+    if prior_critique:
+        task = (
+            f"The critic and judge found flaws in your previous questions. "
+            f"Here is their feedback:\n\n{prior_critique}\n\n"
+            f"Revise or replace the flagged questions. Keep any ACCEPTED questions unchanged. "
+            f"For REVISION REQUIRED questions, apply the judge's specified fix. "
+            f"For REJECTED questions, write entirely new ones grounded in the research.\n\n"
+            f"Research context:\n{all_context}\n\n"
+            f"Categories (exactly 2 per category):\n{cat_lines}\n\n"
+            f"Output a JSON array of exactly {num_questions} objects:\n"
+            f'{{"category": "{cat_names}", '
+            f'"question": "the question text", '
+            f'"why_this_question": "1-sentence reason — specific to this person, not boilerplate", '
+            f'"expected_insight": "what kind of answer this should draw out"}}'
+        )
+    else:
+        task = (
             f"Generate {num_questions} high-quality interview questions for a podcast episode featuring "
-            f"{research.get('name', slug)} ({research.get('executive_summary', {}).get('one_liner', '')}).\n"
+            f"{research.get('name', '?')} ({research.get('executive_summary', {}).get('one_liner', '')}).\n"
             f"Use the following research to make questions specific and probing:\n{all_context}\n\n"
             f"Question categories (exactly 2 per category):\n{cat_lines}\n\n"
             f"Rules:\n"
             f"- Reference actual project names, papers, quotes, blog post titles, or events from the research\n"
             f"- Each question must be standalone (no follow-ups or 'building on the previous...')\n"
             f"- Keep each question under 40 words\n"
-            f"- For each question, explain WHY this question matters and what INSIGHT you expect it to reveal\n"
-            f"- Check the person's prior podcast appearances and do NOT repeat questions they've likely been asked\n"
+            f"- For each question, explain WHY this question matters and what INSIGHT you expect\n"
+            f"- why_this_question must be specific to THIS person — never use boilerplate openers "
+            f"like 'Understanding the...', 'Insight into...', 'Exploring the...'\n"
             f"- When blog post titles are in the context, weave them into questions naturally\n"
-            f"- Use AT LEAST 4 different question structures across your output:\n"
+            f"- Use AT LEAST 4 different question structures:\n"
             f"  * Open narrative: 'Walk me through...'\n"
             f"  * Comparative: 'How does X compare to Y...'\n"
             f"  * Counterfactual: 'If you had to rebuild X without Y...'\n"
             f"  * Contrarian: 'Critics say X. Where are they wrong?'\n"
             f"  * Surprise/failure: 'What surprised you most about...'\n"
             f"  * Forward-looking: 'What would need to be true for...'\n"
-            f"- Do NOT use 'In your [artifact], you [claim]. What specific...' more than twice total\n"
-            f"- No more than 3 questions may start with the same 2-word prefix (e.g., 'How does', 'What are')\n\n"
+            f"- Do NOT use 'In your [artifact], you [claim]. What specific...' more than twice\n"
+            f"- No more than 3 questions may start with the same 2-word prefix\n"
+            f"- Do NOT embed specific numeric values (download counts, star counts, percentages)\n"
+            f"- Do NOT invent comparisons or alternatives not in the source material\n"
+            f"- Do NOT assume vendor/employer affiliation from papers\n\n"
             f"Output a JSON array of exactly {num_questions} objects:\n"
             f'{{"category": "{cat_names}", '
             f'"question": "the question text", '
-            f'"why_this_question": "1-sentence reason this question is worth asking", '
+            f'"why_this_question": "1-sentence reason — specific to this person, not boilerplate", '
             f'"expected_insight": "what kind of answer this should draw out"}}'
-        ),
+        )
+
+    return await _run_agent(client, ADVOCATE_SYSTEM, task)
+
+
+async def _critic_review(
+    client, questions_json: str, all_context: str, research: dict,
+) -> str:
+    contributions = research.get("key_contributions", [])
+    contrib_names = [c.get("name", c.get("title", "")) for c in contributions if isinstance(c, dict)]
+    blog_posts = research.get("blog_posts", [])
+    blog_titles = [b.get("title", "") for b in blog_posts if isinstance(b, dict)]
+
+    grounding_ref = ""
+    if contrib_names:
+        grounding_ref += f"\nKnown projects/papers: {', '.join(contrib_names)}\n"
+    if blog_titles:
+        grounding_ref += f"Known blog posts: {', '.join(blog_titles[:15])}\n"
+
+    task = (
+        f"Review these interview questions for {research.get('name', '?')}. "
+        f"Attack every weakness you find.\n\n"
+        f"QUESTIONS TO REVIEW:\n{questions_json}\n\n"
+        f"RESEARCH CONTEXT (ground truth):\n{all_context}\n\n"
+        f"GROUNDING REFERENCES:{grounding_ref}\n"
+        f"Any project, paper, or quote mentioned in a question that is NOT in the lists above "
+        f"or the research context is HALLUCINATED — flag it.\n\n"
+        f"For EACH question, output:\n"
+        f"- Question number and text\n"
+        f"- Verdict: PASS or FAIL\n"
+        f"- If FAIL: which failure mode(s) (GENERIC, HALLUCINATED, NUMERIC, REPETITIVE, "
+        f"TEMPLATED, VAGUE, OVERLONG, LAZY) and the specific words that fail\n\n"
+        f"Then provide a STRUCTURAL REVIEW of the full set:\n"
+        f"- Count of question structures used (narrative, comparative, counterfactual, etc.)\n"
+        f"- Any 2-word prefix appearing 3+ times\n"
+        f"- Category balance (exactly 2 per category?)\n"
+        f"- Overall quality score: 1-10"
     )
 
-    questions_raw = _extract_json(result)
-    if not questions_raw or not isinstance(questions_raw, list):
-        console.print(f"[red]Failed to parse questions from LLM output ({len(result)} chars)[/]")
-        console.print(result[:500])
+    return await _run_agent(client, CRITIC_SYSTEM, task)
+
+
+async def _judge_rule(
+    client, questions_json: str, critique: str, all_context: str,
+    research: dict, num_questions: int, categories: dict, is_final: bool,
+) -> str:
+    cat_names = "|".join(categories.keys())
+
+    final_instruction = ""
+    if is_final:
+        final_instruction = (
+            f"\n\nThis is the FINAL ROUND. You MUST produce the definitive question set.\n"
+            f"Output a JSON array of exactly {num_questions} final questions. "
+            f"For ACCEPTED questions, keep them verbatim. "
+            f"For REVISION REQUIRED, apply your own fix inline. "
+            f"For REJECTED, write a replacement yourself using the research context.\n\n"
+            f"Output format — JSON array of exactly {num_questions} objects:\n"
+            f'{{"category": "{cat_names}", '
+            f'"question": "the question text", '
+            f'"why_this_question": "specific to this person", '
+            f'"expected_insight": "what answer this draws out", '
+            f'"verdict": "ACCEPTED|REVISED|REPLACED"}}'
+        )
+
+    task = (
+        f"Evaluate this debate about interview questions for {research.get('name', '?')}.\n\n"
+        f"ADVOCATE'S QUESTIONS:\n{questions_json}\n\n"
+        f"CRITIC'S REVIEW:\n{critique}\n\n"
+        f"RESEARCH CONTEXT (use this to independently verify claims):\n{all_context}\n\n"
+        f"For each question, issue a binding verdict:\n"
+        f"- ACCEPTED: passes all checks\n"
+        f"- REVISION REQUIRED: specify the exact fix needed\n"
+        f"- REJECTED: explain why and what kind of replacement is needed\n\n"
+        f"Also rule on structural issues the critic raised."
+        f"{final_instruction}"
+    )
+
+    return await _run_agent(client, JUDGE_SYSTEM, task)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Post-generation validation
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _validate_questions(questions: list[dict], research: dict, categories: dict) -> list[str]:
+    """Check questions against rules that can be verified programmatically."""
+    issues = []
+
+    contrib_names = set()
+    for c in research.get("key_contributions", []):
+        if isinstance(c, dict):
+            for key in ("name", "title"):
+                if c.get(key):
+                    contrib_names.add(c[key].lower())
+
+    blog_titles = set()
+    for b in research.get("blog_posts", []):
+        if isinstance(b, dict) and b.get("title"):
+            blog_titles.add(b["title"].lower())
+
+    valid_cats = set(categories.keys())
+    prefix_counts: dict[str, int] = {}
+
+    for i, q in enumerate(questions):
+        text = q.get("question", "")
+        cat = q.get("category", "")
+        why = q.get("why_this_question", "")
+
+        if cat not in valid_cats:
+            issues.append(f"Q{i+1}: invalid category '{cat}'")
+
+        word_count = len(text.split())
+        if word_count > 45:
+            issues.append(f"Q{i+1}: {word_count} words (limit 40)")
+
+        prefix = " ".join(text.split()[:2]).lower().rstrip(".,")
+        prefix_counts[prefix] = prefix_counts.get(prefix, 0) + 1
+
+        boilerplate = ("understanding the", "insight into", "exploring the",
+                       "detailed explanation", "discussion on")
+        why_lower = why.lower()
+        for bp in boilerplate:
+            if why_lower.startswith(bp):
+                issues.append(f"Q{i+1}: boilerplate why_this_question ('{bp}...')")
+                break
+
+    for prefix, count in prefix_counts.items():
+        if count > 3:
+            issues.append(f"Prefix '{prefix}' used {count} times (max 3)")
+
+    cat_counts = {}
+    for q in questions:
+        cat_counts[q.get("category", "")] = cat_counts.get(q.get("category", ""), 0) + 1
+    for cat in valid_cats:
+        if cat_counts.get(cat, 0) != 2:
+            issues.append(f"Category '{cat}' has {cat_counts.get(cat, 0)} questions (expected 2)")
+
+    return issues
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Main debate orchestrator
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def regenerate_questions(slug: str, rounds: int = 2, dry_run: bool = False) -> list[dict]:
+    research_path = RESEARCH_DIR / f"{slug}.json"
+    if not research_path.exists():
+        console.print(f"[red]No research JSON for {slug}[/]")
+        return []
+
+    research = json.loads(research_path.read_text())
+    name = research.get("name", slug)
+    console.print(Panel(
+        f"[bold cyan]Adversarial debate: {name}[/]\n"
+        f"[dim]{rounds} round{'s' if rounds > 1 else ''} — advocate → critic → judge[/]",
+        title="Question Generation",
+    ))
+
+    categories = PERSON_CATEGORIES.get(slug, DEFAULT_CATEGORIES)
+    if len(categories) > 7:
+        core = dict(list(categories.items())[:5])
+        domain = dict(list(categories.items())[5:7])
+        categories = {**core, **domain}
+
+    num_questions = len(categories) * 2
+    console.print(f"  Categories: {len(categories)} ({', '.join(categories.keys())})")
+    console.print(f"  Target: {num_questions} questions\n")
+
+    all_context = _build_research_context(research, slug, categories)
+    client = _make_client()
+
+    prior_critique = None
+    final_questions = None
+
+    for round_num in range(1, rounds + 1):
+        is_final = round_num == rounds
+        console.print(f"[bold yellow]── Round {round_num}/{rounds} ──[/]")
+
+        # Advocate generates/revises
+        console.print(f"  [blue]Advocate[/] {'revising' if prior_critique else 'generating'}...")
+        advocate_output = await _advocate_generate(
+            client, research, all_context, categories,
+            num_questions, prior_critique,
+        )
+        questions_raw = _extract_json(advocate_output)
+        if not questions_raw or not isinstance(questions_raw, list):
+            console.print(f"  [red]Advocate failed to produce valid JSON[/]")
+            if round_num == 1:
+                return []
+            break
+
+        questions_json = json.dumps(questions_raw, indent=2)
+        console.print(f"  [blue]Advocate[/] produced {len(questions_raw)} questions")
+
+        # Critic attacks
+        console.print(f"  [red]Critic[/] reviewing...")
+        critique = await _critic_review(client, questions_json, all_context, research)
+
+        pass_count = critique.lower().count("pass")
+        fail_count = critique.lower().count("fail")
+        console.print(f"  [red]Critic[/] verdict: ~{pass_count} pass, ~{fail_count} fail")
+
+        # Judge rules
+        console.print(f"  [magenta]Judge[/] {'issuing final ruling' if is_final else 'evaluating'}...")
+        ruling = await _judge_rule(
+            client, questions_json, critique, all_context,
+            research, num_questions, categories, is_final,
+        )
+
+        if is_final:
+            final_questions = _extract_json(ruling)
+            if final_questions and isinstance(final_questions, list):
+                console.print(f"  [magenta]Judge[/] finalized {len(final_questions)} questions")
+            else:
+                console.print(f"  [yellow]Judge ruling had no JSON — using advocate's last set[/]")
+                final_questions = questions_raw
+        else:
+            prior_critique = f"CRITIC:\n{critique}\n\nJUDGE RULING:\n{ruling}"
+
+        console.print()
+
+    if not final_questions:
+        console.print("[red]Debate produced no questions[/]")
         return []
 
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -189,21 +433,38 @@ async def regenerate_questions(slug: str) -> list[dict]:
             "expected_insight": q.get("expected_insight", ""),
             "last_verified": now,
         }
-        for q in questions_raw
+        for q in final_questions
         if isinstance(q, dict) and q.get("question")
     ]
 
-    console.print(f"\n  [green]✓[/] Generated {len(questions)} questions")
+    # Post-generation validation
+    issues = _validate_questions(questions, research, categories)
+    if issues:
+        console.print(Panel(
+            "\n".join(f"  [yellow]⚠[/] {issue}" for issue in issues),
+            title="[yellow]Post-debate validation[/]",
+        ))
 
     # Display
-    table = Table(title="Regenerated Interview Questions", show_lines=True)
+    table = Table(title="Final Questions (post-debate)", show_lines=True)
+    table.add_column("#", width=3)
     table.add_column("Category", width=18)
-    table.add_column("Question", width=78)
-    for q in questions:
-        table.add_row(q["category"], q["question"])
+    table.add_column("Question", width=70)
+    table.add_column("V", width=3)
+    for i, q in enumerate(questions, 1):
+        verdict = q.get("verdict", "")
+        v_icon = {"ACCEPTED": "✓", "REVISED": "~", "REPLACED": "+"}.get(verdict, " ")
+        table.add_row(str(i), q["category"], q["question"], v_icon)
     console.print(table)
 
-    # Update research JSON
+    if dry_run:
+        console.print("[dim]Dry run — not saving[/]")
+        return questions
+
+    # Save
+    for q in questions:
+        q.pop("verdict", None)
+
     research["questions"] = questions
     research_path.write_text(json.dumps(research, indent=2, ensure_ascii=False) + "\n")
     console.print(f"  [green]✓[/] Saved to {research_path.relative_to(PROJECT_ROOT)}")
@@ -212,12 +473,13 @@ async def regenerate_questions(slug: str) -> list[dict]:
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="Regenerate questions for a person using existing research")
+    parser = argparse.ArgumentParser(description="Regenerate questions via adversarial debate")
     parser.add_argument("slug", help="Person slug")
+    parser.add_argument("--rounds", type=int, default=2, help="Debate rounds (default: 2)")
     parser.add_argument("--dry-run", action="store_true", help="Print without saving")
     args = parser.parse_args()
 
-    await regenerate_questions(args.slug)
+    await regenerate_questions(args.slug, rounds=args.rounds, dry_run=args.dry_run)
 
 
 if __name__ == "__main__":
