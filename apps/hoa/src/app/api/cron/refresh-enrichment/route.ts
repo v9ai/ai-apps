@@ -13,28 +13,38 @@ async function fetchGitHubStats(
   if (token) headers.Authorization = `token ${token}`;
 
   try {
-    const [profileRes, reposRes] = await Promise.all([
-      fetch(`https://api.github.com/users/${username}`, { headers }),
-      fetch(
-        `https://api.github.com/users/${username}/repos?sort=stars&per_page=30&type=owner`,
-        { headers },
-      ),
-    ]);
+    const profileRes = await fetch(
+      `https://api.github.com/users/${username}`,
+      { headers },
+    );
+    if (!profileRes.ok) return null;
 
-    const followers = profileRes.ok
-      ? ((await profileRes.json()).followers ?? 0)
-      : 0;
+    const profile = await profileRes.json();
+    const followers = profile.followers ?? 0;
 
     let totalStars = 0;
-    if (reposRes.ok) {
+    let page = 1;
+
+    while (page <= 5) {
+      const reposRes = await fetch(
+        `https://api.github.com/users/${username}/repos?sort=stars&per_page=100&page=${page}&type=owner`,
+        { headers },
+      );
+      if (!reposRes.ok) return null;
+
       const repos = await reposRes.json();
-      totalStars = repos
+      if (!Array.isArray(repos) || repos.length === 0) break;
+
+      totalStars += repos
         .filter((r: Record<string, unknown>) => !r.fork)
         .reduce(
           (sum: number, r: Record<string, unknown>) =>
             sum + ((r.stargazers_count as number) ?? 0),
           0,
         );
+
+      if (repos.length < 100) break;
+      page++;
     }
 
     return { stars: totalStars, followers };
@@ -81,7 +91,8 @@ export async function GET(req: Request) {
   const errors: string[] = [];
 
   const batch = personalities.filter((p) => p.github || p.hfUsername);
-  const BATCH_SIZE = 5;
+  const skipped: string[] = [];
+  const BATCH_SIZE = 3;
 
   for (let i = 0; i < batch.length; i += BATCH_SIZE) {
     const chunk = batch.slice(i, i + BATCH_SIZE);
@@ -95,6 +106,9 @@ export async function GET(req: Request) {
             p.hfUsername ? fetchHFStats(p.hfUsername) : Promise.resolve(null),
           ]);
 
+          if (p.github && !ghStats) {
+            skipped.push(`${p.slug}:github`);
+          }
           if (ghStats) {
             const storedStars = enrichment.github?.totalStars ?? 0;
             if (Math.abs(ghStats.stars - storedStars) > 5) {
@@ -107,6 +121,9 @@ export async function GET(req: Request) {
             }
           }
 
+          if (p.hfUsername && !hfStats) {
+            skipped.push(`${p.slug}:hf`);
+          }
           if (hfStats) {
             const storedDownloads =
               enrichment.huggingface?.totalDownloads ?? 0;
@@ -142,6 +159,8 @@ export async function GET(req: Request) {
     processed: batch.length,
     drifted: drifted.length,
     drift: drifted,
+    skipped: skipped.length,
+    skippedDetails: skipped,
     redeployTriggered,
     errors,
     timestamp: new Date().toISOString(),

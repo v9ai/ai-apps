@@ -1407,6 +1407,7 @@ type Query {
   voyagerSkillsDemand(period: String, query: String): SkillsDemandReport!
   """6. Time-to-fill estimation (how long jobs stay open)."""
   voyagerTimeToFill: TimeToFillReport!
+  webhookEvents(eventType: String, limit: Int, offset: Int): WebhookEventsResult!
 }
 
 type RankedContact {
@@ -2391,5 +2392,23 @@ input WarcPointerInput {
   filename: String!
   length: Int!
   offset: Int!
+}
+
+type WebhookEvent {
+  createdAt: String!
+  emailId: String
+  error: String
+  eventType: String!
+  fromEmail: String
+  httpStatus: Int
+  id: Int!
+  payload: String
+  subject: String
+  toEmails: String
+}
+
+type WebhookEventsResult {
+  events: [WebhookEvent!]!
+  totalCount: Int!
 }
 `;

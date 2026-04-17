@@ -1948,6 +1948,7 @@ export type Query = {
   voyagerSkillsDemand: SkillsDemandReport;
   /** 6. Time-to-fill estimation (how long jobs stay open). */
   voyagerTimeToFill: TimeToFillReport;
+  webhookEvents: WebhookEventsResult;
 };
 
 
@@ -2320,6 +2321,13 @@ export type QueryVoyagerSalaryTrendsArgs = {
 export type QueryVoyagerSkillsDemandArgs = {
   period?: InputMaybe<Scalars['String']['input']>;
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryWebhookEventsArgs = {
+  eventType?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type RankedContact = {
@@ -3388,6 +3396,26 @@ export type WarcPointerInput = {
   offset: Scalars['Int']['input'];
 };
 
+export type WebhookEvent = {
+  __typename?: 'WebhookEvent';
+  createdAt: Scalars['String']['output'];
+  emailId: Maybe<Scalars['String']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  eventType: Scalars['String']['output'];
+  fromEmail: Maybe<Scalars['String']['output']>;
+  httpStatus: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  payload: Maybe<Scalars['String']['output']>;
+  subject: Maybe<Scalars['String']['output']>;
+  toEmails: Maybe<Scalars['String']['output']>;
+};
+
+export type WebhookEventsResult = {
+  __typename?: 'WebhookEventsResult';
+  events: Array<WebhookEvent>;
+  totalCount: Scalars['Int']['output'];
+};
+
 
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -3690,6 +3718,8 @@ export type ResolversTypes = {
   VoyagerRemoteMetrics: ResolverTypeWrapper<Partial<VoyagerRemoteMetrics>>;
   WarcPointer: ResolverTypeWrapper<Partial<WarcPointer>>;
   WarcPointerInput: ResolverTypeWrapper<Partial<WarcPointerInput>>;
+  WebhookEvent: ResolverTypeWrapper<Partial<WebhookEvent>>;
+  WebhookEventsResult: ResolverTypeWrapper<Partial<WebhookEventsResult>>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -3916,6 +3946,8 @@ export type ResolversParentTypes = {
   VoyagerRemoteMetrics: Partial<VoyagerRemoteMetrics>;
   WarcPointer: Partial<WarcPointer>;
   WarcPointerInput: Partial<WarcPointerInput>;
+  WebhookEvent: Partial<WebhookEvent>;
+  WebhookEventsResult: Partial<WebhookEventsResult>;
 };
 
 export type AnalyzeCompanyResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AnalyzeCompanyResponse'] = ResolversParentTypes['AnalyzeCompanyResponse']> = {
@@ -5024,6 +5056,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   voyagerSalaryTrends?: Resolver<ResolversTypes['SalaryTrend'], ParentType, ContextType, Partial<QueryVoyagerSalaryTrendsArgs>>;
   voyagerSkillsDemand?: Resolver<ResolversTypes['SkillsDemandReport'], ParentType, ContextType, Partial<QueryVoyagerSkillsDemandArgs>>;
   voyagerTimeToFill?: Resolver<ResolversTypes['TimeToFillReport'], ParentType, ContextType>;
+  webhookEvents?: Resolver<ResolversTypes['WebhookEventsResult'], ParentType, ContextType, Partial<QueryWebhookEventsArgs>>;
 };
 
 export type RankedContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RankedContact'] = ResolversParentTypes['RankedContact']> = {
@@ -5786,6 +5819,24 @@ export type WarcPointerResolvers<ContextType = GraphQLContext, ParentType extend
   offset?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
+export type WebhookEventResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WebhookEvent'] = ResolversParentTypes['WebhookEvent']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  emailId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  eventType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  fromEmail?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  httpStatus?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  payload?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  toEmails?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type WebhookEventsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WebhookEventsResult'] = ResolversParentTypes['WebhookEventsResult']> = {
+  events?: Resolver<Array<ResolversTypes['WebhookEvent']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type Resolvers<ContextType = GraphQLContext> = {
   AnalyzeCompanyResponse?: AnalyzeCompanyResponseResolvers<ContextType>;
   AnalyzePostsResult?: AnalyzePostsResultResolvers<ContextType>;
@@ -5972,5 +6023,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   VoyagerJobSearchResult?: VoyagerJobSearchResultResolvers<ContextType>;
   VoyagerRemoteMetrics?: VoyagerRemoteMetricsResolvers<ContextType>;
   WarcPointer?: WarcPointerResolvers<ContextType>;
+  WebhookEvent?: WebhookEventResolvers<ContextType>;
+  WebhookEventsResult?: WebhookEventsResultResolvers<ContextType>;
 };
 

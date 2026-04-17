@@ -984,3 +984,27 @@ export const crawlLogs = pgTable("crawl_logs", {
 
 export type CrawlLog = typeof crawlLogs.$inferSelect;
 export type NewCrawlLog = typeof crawlLogs.$inferInsert;
+
+// ── Webhook Events (Resend webhook event log) ──
+
+export const webhookEvents = pgTable("webhook_events", {
+  id: serial("id").primaryKey(),
+  event_type: text("event_type").notNull(),
+  email_id: text("email_id"),
+  from_email: text("from_email"),
+  to_emails: text("to_emails"),
+  subject: text("subject"),
+  payload: text("payload"),
+  http_status: integer("http_status"),
+  error: text("error"),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`now()::text`),
+}, (table) => [
+  index("idx_webhook_events_event_type").on(table.event_type),
+  index("idx_webhook_events_email_id").on(table.email_id),
+  index("idx_webhook_events_created_at").on(table.created_at),
+]);
+
+export type WebhookEvent = typeof webhookEvents.$inferSelect;
+export type NewWebhookEvent = typeof webhookEvents.$inferInsert;

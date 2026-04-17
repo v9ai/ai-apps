@@ -1948,6 +1948,7 @@ export type Query = {
   voyagerSkillsDemand: SkillsDemandReport;
   /** 6. Time-to-fill estimation (how long jobs stay open). */
   voyagerTimeToFill: TimeToFillReport;
+  webhookEvents: WebhookEventsResult;
 };
 
 
@@ -2320,6 +2321,13 @@ export type QueryVoyagerSalaryTrendsArgs = {
 export type QueryVoyagerSkillsDemandArgs = {
   period?: InputMaybe<Scalars['String']['input']>;
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryWebhookEventsArgs = {
+  eventType?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type RankedContact = {
@@ -3388,6 +3396,26 @@ export type WarcPointerInput = {
   offset: Scalars['Int']['input'];
 };
 
+export type WebhookEvent = {
+  __typename?: 'WebhookEvent';
+  createdAt: Scalars['String']['output'];
+  emailId: Maybe<Scalars['String']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  eventType: Scalars['String']['output'];
+  fromEmail: Maybe<Scalars['String']['output']>;
+  httpStatus: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  payload: Maybe<Scalars['String']['output']>;
+  subject: Maybe<Scalars['String']['output']>;
+  toEmails: Maybe<Scalars['String']['output']>;
+};
+
+export type WebhookEventsResult = {
+  __typename?: 'WebhookEventsResult';
+  events: Array<WebhookEvent>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type GetUserSettingsQueryVariables = Exact<{
   userId: Scalars['String']['input'];
 }>;
@@ -3871,6 +3899,15 @@ export type GetEmailsNeedingFollowUpQueryVariables = Exact<{
 
 
 export type GetEmailsNeedingFollowUpQuery = { __typename?: 'Query', emailsNeedingFollowUp: { __typename?: 'FollowUpEmailsResult', totalCount: number, emails: Array<{ __typename?: 'FollowUpEmail', id: number, contactId: number, resendId: string, fromEmail: string, toEmails: Array<string>, subject: string, status: string, sentAt: string | null, sequenceType: string | null, sequenceNumber: string | null, followupStatus: string | null, companyId: number | null, recipientName: string | null, createdAt: string }> } };
+
+export type GetWebhookEventsQueryVariables = Exact<{
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  eventType?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GetWebhookEventsQuery = { __typename?: 'Query', webhookEvents: { __typename?: 'WebhookEventsResult', totalCount: number, events: Array<{ __typename?: 'WebhookEvent', id: number, eventType: string, emailId: string | null, fromEmail: string | null, toEmails: string | null, subject: string | null, httpStatus: number | null, error: string | null, createdAt: string }> } };
 
 export type GetEmailTemplatesQueryVariables = Exact<{
   category?: InputMaybe<Scalars['String']['input']>;
@@ -6955,6 +6992,62 @@ export type GetEmailsNeedingFollowUpQueryHookResult = ReturnType<typeof useGetEm
 export type GetEmailsNeedingFollowUpLazyQueryHookResult = ReturnType<typeof useGetEmailsNeedingFollowUpLazyQuery>;
 export type GetEmailsNeedingFollowUpSuspenseQueryHookResult = ReturnType<typeof useGetEmailsNeedingFollowUpSuspenseQuery>;
 export type GetEmailsNeedingFollowUpQueryResult = Apollo.QueryResult<GetEmailsNeedingFollowUpQuery, GetEmailsNeedingFollowUpQueryVariables>;
+export const GetWebhookEventsDocument = gql`
+    query GetWebhookEvents($limit: Int, $offset: Int, $eventType: String) {
+  webhookEvents(limit: $limit, offset: $offset, eventType: $eventType) {
+    events {
+      id
+      eventType
+      emailId
+      fromEmail
+      toEmails
+      subject
+      httpStatus
+      error
+      createdAt
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetWebhookEventsQuery__
+ *
+ * To run a query within a React component, call `useGetWebhookEventsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetWebhookEventsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetWebhookEventsQuery({
+ *   variables: {
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *      eventType: // value for 'eventType'
+ *   },
+ * });
+ */
+export function useGetWebhookEventsQuery(baseOptions?: Apollo.QueryHookOptions<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>(GetWebhookEventsDocument, options);
+      }
+export function useGetWebhookEventsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>(GetWebhookEventsDocument, options);
+        }
+// @ts-ignore
+export function useGetWebhookEventsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>): Apollo.UseSuspenseQueryResult<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>;
+export function useGetWebhookEventsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>): Apollo.UseSuspenseQueryResult<GetWebhookEventsQuery | undefined, GetWebhookEventsQueryVariables>;
+export function useGetWebhookEventsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>(GetWebhookEventsDocument, options);
+        }
+export type GetWebhookEventsQueryHookResult = ReturnType<typeof useGetWebhookEventsQuery>;
+export type GetWebhookEventsLazyQueryHookResult = ReturnType<typeof useGetWebhookEventsLazyQuery>;
+export type GetWebhookEventsSuspenseQueryHookResult = ReturnType<typeof useGetWebhookEventsSuspenseQuery>;
+export type GetWebhookEventsQueryResult = Apollo.QueryResult<GetWebhookEventsQuery, GetWebhookEventsQueryVariables>;
 export const GetEmailTemplatesDocument = gql`
     query GetEmailTemplates($category: String, $limit: Int, $offset: Int) {
   emailTemplates(category: $category, limit: $limit, offset: $offset) {

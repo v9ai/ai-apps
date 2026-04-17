@@ -234,3 +234,20 @@ query GetEmailsNeedingFollowUp($limit: Int, $offset: Int) {
     totalCount
   }
 }
+
+query GetWebhookEvents($limit: Int, $offset: Int, $eventType: String) {
+  webhookEvents(limit: $limit, offset: $offset, eventType: $eventType) {
+    events {
+      id
+      eventType
+      emailId
+      fromEmail
+      toEmails
+      subject
+      httpStatus
+      error
+      createdAt
+    }
+    totalCount
+  }
+}

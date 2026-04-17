@@ -7,6 +7,25 @@ extend type Query {
   receivedEmails(limit: Int, offset: Int, archived: Boolean, classification: String): ReceivedEmailsResult!
   receivedEmail(id: Int!): ReceivedEmail
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
+  webhookEvents(limit: Int, offset: Int, eventType: String): WebhookEventsResult!
+}
+
+type WebhookEvent {
+  id: Int!
+  eventType: String!
+  emailId: String
+  fromEmail: String
+  toEmails: String
+  subject: String
+  payload: String
+  httpStatus: Int
+  error: String
+  createdAt: String!
+}
+
+type WebhookEventsResult {
+  events: [WebhookEvent!]!
+  totalCount: Int!
 }
 
 type FollowUpEmail {

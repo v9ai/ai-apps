@@ -55,6 +55,7 @@ import {
   useGetEmailStatsQuery,
   useSyncResendEmailsMutation,
   useImportResendEmailsMutation,
+  useGetWebhookEventsQuery,
 } from "@/__generated__/hooks";
 
 type SentEmail = {
@@ -555,6 +556,111 @@ function EmailTemplatesList() {
   );
 }
 
+const EVENT_TYPE_COLORS: Record<string, "green" | "blue" | "red" | "orange" | "gray" | "purple"> = {
+  "email.sent": "blue",
+  "email.delivered": "green",
+  "email.bounced": "red",
+  "email.complained": "red",
+  "email.delivery_delayed": "orange",
+  "email.opened": "purple",
+  "email.clicked": "purple",
+  "email.received": "blue",
+};
+
+function WebhookEventsList() {
+  const [eventFilter, setEventFilter] = useState<string | undefined>(undefined);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const { data, loading, refetch } = useGetWebhookEventsQuery({
+    variables: { limit: 100, eventType: eventFilter },
+    fetchPolicy: "cache-and-network",
+  });
+
+  const events = data?.webhookEvents?.events ?? [];
+  const totalCount = data?.webhookEvents?.totalCount ?? 0;
+
+  if (loading && events.length === 0) {
+    return <Text color="gray" size="2">Loading…</Text>;
+  }
+
+  const eventTypes = ["email.sent", "email.delivered", "email.bounced", "email.opened", "email.received"];
+
+  return (
+    <Flex direction="column" gap="2">
+      <Flex justify="between" align="center" mb="2">
+        <Flex gap="2" align="center">
+          <Badge color="gray" size="2" variant="soft">{totalCount} events</Badge>
+          <Flex gap="1">
+            <button
+              className={button({ variant: eventFilter === undefined ? "solid" : "ghost", size: "sm" })}
+              onClick={() => setEventFilter(undefined)}
+            >
+              All
+            </button>
+            {eventTypes.map((type) => (
+              <button
+                key={type}
+                className={button({ variant: eventFilter === type ? "solid" : "ghost", size: "sm" })}
+                onClick={() => setEventFilter(type === eventFilter ? undefined : type)}
+              >
+                {type.replace("email.", "")}
+              </button>
+            ))}
+          </Flex>
+        </Flex>
+        <button className={button({ variant: "ghost", size: "sm" })} onClick={() => refetch()}>
+          <ReloadIcon /> Refresh
+        </button>
+      </Flex>
+
+      {events.length === 0 ? (
+        <Card><Text color="gray" size="2">No webhook events yet. Events will appear here as they arrive.</Text></Card>
+      ) : (
+        events.map((event) => (
+          <Card key={event.id} style={{ cursor: "pointer" }} onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}>
+            <Flex justify="between" align="start" gap="3">
+              <Flex gap="2" align="center" style={{ flex: 1, minWidth: 0 }}>
+                <Badge color={EVENT_TYPE_COLORS[event.eventType] ?? "gray"} size="1" variant="soft" style={{ flexShrink: 0 }}>
+                  {event.eventType.replace("email.", "")}
+                </Badge>
+                <Text size="2" weight="bold" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {event.subject || event.emailId || "(no subject)"}
+                </Text>
+              </Flex>
+              <Flex gap="2" align="center" style={{ flexShrink: 0 }}>
+                {event.httpStatus && (
+                  <Badge color={event.httpStatus === 200 ? "green" : "red"} size="1" variant="soft">
+                    {event.httpStatus}
+                  </Badge>
+                )}
+                <Text size="1" color="gray" style={{ whiteSpace: "nowrap" }}>
+                  {new Date(event.createdAt).toLocaleString()}
+                </Text>
+              </Flex>
+            </Flex>
+            {event.fromEmail && (
+              <Text size="1" color="gray" as="div" mt="1">
+                From: {event.fromEmail} → {event.toEmails ? JSON.parse(event.toEmails).join(", ") : ""}
+              </Text>
+            )}
+            {event.error && (
+              <Text size="1" color="red" as="div" mt="1">
+                Error: {event.error}
+              </Text>
+            )}
+            {expandedId === event.id && (
+              <Box mt="3" p="2" style={{ background: "var(--gray-a2)", borderRadius: "var(--radius-2)", overflow: "auto", maxHeight: 300 }}>
+                <Text size="1" as="div" style={{ fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                  ID: {event.emailId}
+                </Text>
+              </Box>
+            )}
+          </Card>
+        ))
+      )}
+    </Flex>
+  );
+}
+
 export function EmailsPageContent() {
   const [tab, setTab] = useState("inbox");
 
@@ -642,6 +748,10 @@ export function EmailsPageContent() {
             <BarChartIcon />
             &nbsp;Stats
           </Tabs.Trigger>
+          <Tabs.Trigger value="logs">
+            <ExclamationTriangleIcon />
+            &nbsp;Logs
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="inbox">
@@ -674,6 +784,10 @@ export function EmailsPageContent() {
 
         <Tabs.Content value="stats">
           <EmailStatsDashboard />
+        </Tabs.Content>
+
+        <Tabs.Content value="logs">
+          <WebhookEventsList />
         </Tabs.Content>
       </Tabs.Root>
     </Container>

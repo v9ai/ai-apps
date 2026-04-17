@@ -1945,6 +1945,7 @@ export type Query = {
   voyagerSkillsDemand: SkillsDemandReport;
   /** 6. Time-to-fill estimation (how long jobs stay open). */
   voyagerTimeToFill: TimeToFillReport;
+  webhookEvents: WebhookEventsResult;
 };
 
 
@@ -2317,6 +2318,13 @@ export type QueryVoyagerSalaryTrendsArgs = {
 export type QueryVoyagerSkillsDemandArgs = {
   period?: InputMaybe<Scalars['String']['input']>;
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryWebhookEventsArgs = {
+  eventType?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type RankedContact = {
@@ -3383,4 +3391,24 @@ export type WarcPointerInput = {
   filename: Scalars['String']['input'];
   length: Scalars['Int']['input'];
   offset: Scalars['Int']['input'];
+};
+
+export type WebhookEvent = {
+  __typename: 'WebhookEvent';
+  createdAt: Scalars['String']['output'];
+  emailId: Maybe<Scalars['String']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  eventType: Scalars['String']['output'];
+  fromEmail: Maybe<Scalars['String']['output']>;
+  httpStatus: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  payload: Maybe<Scalars['String']['output']>;
+  subject: Maybe<Scalars['String']['output']>;
+  toEmails: Maybe<Scalars['String']['output']>;
+};
+
+export type WebhookEventsResult = {
+  __typename: 'WebhookEventsResult';
+  events: Array<WebhookEvent>;
+  totalCount: Scalars['Int']['output'];
 };

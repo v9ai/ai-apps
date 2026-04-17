@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { contactEmails, contacts, messages, receivedEmails } from "@/db/schema";
+import { contactEmails, contacts, messages, receivedEmails, webhookEvents } from "@/db/schema";
 import { classifyReply, classifyReplyHybrid } from "@/lib/email/reply-classifier";
 import { matchContact, parseResendIdFromHeader } from "@/lib/email/contact-matcher";
 import { resend } from "@/lib/resend";
@@ -630,6 +630,21 @@ export async function POST(req: NextRequest) {
       subject: event.data.subject,
     });
 
+    // Log every webhook event to the database
+    const webhookEventId = await db
+      .insert(webhookEvents)
+      .values({
+        event_type: event.type,
+        email_id: emailId,
+        from_email: event.data.from ?? null,
+        to_emails: JSON.stringify(event.data.to ?? []),
+        subject: event.data.subject ?? null,
+        payload: rawBody,
+        created_at: event.created_at ?? new Date().toISOString(),
+      })
+      .returning({ id: webhookEvents.id })
+      .then((rows) => rows[0]?.id);
+
     switch (event.type) {
       case "email.sent":
         await handleSent(emailId);
@@ -670,7 +685,14 @@ export async function POST(req: NextRequest) {
         console.log(`[RESEND_WEBHOOK] Unhandled event type: ${event.type}`);
     }
 
-    // Always return 200 to prevent Resend from retrying indefinitely
+    // Update webhook event with success status
+    if (webhookEventId) {
+      db.update(webhookEvents)
+        .set({ http_status: 200 })
+        .where(eq(webhookEvents.id, webhookEventId))
+        .catch(() => {});
+    }
+
     return NextResponse.json({
       received: true,
       eventType: event.type,
@@ -680,7 +702,6 @@ export async function POST(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[RESEND_WEBHOOK] Unexpected error processing webhook:", message);
 
-    // Always return 200 to prevent Resend from retrying indefinitely
     return NextResponse.json({
       received: true,
       error: message,
