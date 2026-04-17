@@ -1,4 +1,5 @@
 import { css, cx } from "styled-system/css";
+import { formatDistanceToNow } from "date-fns";
 import type { PersonResearch } from "@/lib/personalities/types";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -59,7 +60,7 @@ function renderInline(text: string) {
   });
 }
 
-export function ResearchQuestions({ research }: { research: PersonResearch }) {
+export function ResearchQuestions({ research, debug = false }: { research: PersonResearch; debug?: boolean }) {
   if (!research.questions?.length) return null;
 
   const grouped = new Map<string, typeof research.questions>();
