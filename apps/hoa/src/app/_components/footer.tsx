@@ -175,12 +175,6 @@ export default function Footer() {
                 >
                   Stats
                 </Link>
-                <Link
-                  href="/compare"
-                  className={`${navLinkStyle} ${navLinkHoverUnderline}`}
-                >
-                  Compare
-                </Link>
               </nav>
             </div>
 

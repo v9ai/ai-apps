@@ -120,7 +120,7 @@ PERSON_SLUGS = {
     "Swami Sivasubramanian": "swami-sivasubramanian",
     "Woosuk Kwon": "woosuk-kwon", "Jeffrey Morgan": "jeffrey-morgan",
     "Alex Atallah": "alex-atallah", "Yagil Burowski": "yagil-burowski",
-    "Krrish Dholakia": "krrish-dholakia", "Rohit Agarwal": "rohit-agarwal",
+    "Rohit Agarwal": "rohit-agarwal",
     "Jeff Huber": "jeff-huber", "Bob van Luijt": "bob-van-luijt",
     "Andre Zayarni": "andre-zayarni", "Vasilije Markovic": "vasilije-markovic",
     "Shay Banon": "shay-banon", "Andrew Kane": "andrew-kane",

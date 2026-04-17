@@ -108,7 +108,7 @@ import woosukKwon from "../../../personalities/woosuk-kwon";
 import jeffreyMorgan from "../../../personalities/jeffrey-morgan";
 import alexAtallah from "../../../personalities/alex-atallah";
 import yagilBurowski from "../../../personalities/yagil-burowski";
-import krrishDholakia from "../../../personalities/krrish-dholakia";
+
 import ishaanJaff from "../../../personalities/ishaan-jaff";
 import rohitAgarwal from "../../../personalities/rohit-agarwal";
 import richardLiaw from "../../../personalities/richard-liaw";
@@ -162,7 +162,7 @@ export const categories: Category[] = [
   {
     title: "AI Infrastructure & Inference",
     slug: "infrastructure",
-    personalities: [swamiSivasubramanian, woosukKwon, jeffreyMorgan, alexAtallah, yagilBurowski, krrishDholakia, ishaanJaff, rohitAgarwal, georgiGerganov, robertNishihara, danielHan, richardLiaw, connorHolmes, lukasBiewald, seanOwen, zachNussbaum],
+    personalities: [swamiSivasubramanian, woosukKwon, jeffreyMorgan, alexAtallah, yagilBurowski, ishaanJaff, rohitAgarwal, georgiGerganov, robertNishihara, danielHan, richardLiaw, connorHolmes, lukasBiewald, seanOwen, zachNussbaum],
   },
   {
     title: "Vector Database Founders",

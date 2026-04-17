@@ -454,9 +454,6 @@
     }
   ],
   "questions": [
-    {
-      "category": "origin",
-      "question": "You've told the burnout story on Lex Fridman and at iOS Conf SG — three years of 'complete identity loss.' In 'Finding My Spark Again | Peter Steinberger' you go deeper into the recovery. But here's what nobody asks: during those three years, did you try to come back to code and fail? Were there false starts before the AI moment actually stuck?",
       "why_this_question": "You've told the burnout-to-comeback arc many times. This pushes past the polished version to the messy middle — the attempts that didn't work",
       "expected_insight": "Whether the AI breakthrough was the first attempt at returning or one of many, and what made this one stick when others didn't"
     },

@@ -185,16 +185,6 @@ export default async function PersonPage({ params }: Props) {
               </svg>
               <span className={css({ textUnderlineOffset: '2px', _groupHover: { textDecoration: 'underline', textDecorationColor: 'rgba(123,123,134,0.5)' } })}>Back</span>
             </Link>
-            <a
-              href={editUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cx("group", css({ display: 'inline-flex', alignItems: 'center', gap: '2', px: '4', py: '2', rounded: 'lg', bg: 'rgba(255,255,255,0.05)', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.08)', transition: 'all', transitionDuration: '200ms', fontSize: 'xs', color: '#8B8B96', _hover: { bg: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.12)', color: '#E8E8ED' } }))}
-            >
-              <PencilIcon className={css({ w: '3.5', h: '3.5' })} />
-              <span>Edit</span>
-              <ExternalLinkIcon className={css({ w: '3', h: '3', color: '#7B7B86', transition: 'colors', transitionDuration: '200ms', _groupHover: { color: '#C4C4CC' } })} />
-            </a>
           </div>
 
           {/* Profile hero */}

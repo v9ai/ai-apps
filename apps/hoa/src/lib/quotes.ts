@@ -61,8 +61,6 @@ export const quotes: Record<string, string> = {
     "The best developer tools disappear into the workflow — they just make you faster.",
   "yagil-burowski":
     "Code completion was just the beginning. AI will transform every part of how we build software.",
-  "krrish-dholakia":
-    "The future is model-agnostic. The best apps will seamlessly use whatever model is best for each task.",
   "rohit-agarwal":
     "Reliability in AI isn't optional — it's the difference between a demo and a product.",
   "andrej-karpathy":

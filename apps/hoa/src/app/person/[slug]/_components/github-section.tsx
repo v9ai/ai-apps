@@ -31,14 +31,14 @@ export function GitHubSection({ github }: Props) {
         </div>
       </div>
 
-      <div className={css({ display: 'grid', gap: '5', sm: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' } })}>
+      <div className={css({ display: 'grid', gap: '3', sm: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' } })}>
         {github.repos.slice(0, 8).map((repo, i) => (
           <a
             key={repo.name}
             href={repo.url}
             target="_blank"
             rel="noopener noreferrer"
-            className={cx("group", "animate-row-enter", css({ display: 'block', px: '6', py: '6', rounded: 'xl', bg: '#141418', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', transition: 'all', transitionDuration: '200ms', _hover: { borderColor: 'rgba(255,255,255,0.1)' } }))}
+            className={cx("group", "animate-row-enter", css({ display: 'block', px: '5', py: '4', rounded: 'xl', bg: '#141418', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', transition: 'all', transitionDuration: '200ms', _hover: { borderColor: 'rgba(255,255,255,0.1)' } }))}
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className={css({ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '3' })}>
@@ -88,7 +88,7 @@ export function GitHubSection({ github }: Props) {
               </div>
             </div>
             {repo.topics.length > 0 && (
-              <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2.5', mt: '5' })}>
+              <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2', mt: '3' })}>
                 {repo.topics.slice(0, 4).map((topic) => (
                   <span
                     key={topic}
