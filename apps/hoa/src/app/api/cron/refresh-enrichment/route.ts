@@ -10,7 +10,7 @@ async function fetchGitHubStats(
     Accept: "application/vnd.github.v3+json",
   };
   const token = process.env.GITHUB_TOKEN;
-  if (token) headers.Authorization = `token ${token}`;
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   try {
     const profileRes = await fetch(

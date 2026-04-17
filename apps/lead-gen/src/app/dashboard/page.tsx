@@ -1,5 +1,5 @@
-import { DashboardTabs } from "./dashboard-tabs";
+import { CompaniesList } from "@/components/companies-list";
 
 export default function DashboardPage() {
-  return <DashboardTabs />;
+  return <CompaniesList />;
 }
