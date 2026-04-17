@@ -50,10 +50,11 @@ fn ner_to_company_extraction(ner: &contact_ner::ContactExtraction) -> llm::Compa
     }
 }
 
-/// Try NER extraction first; fall back to LLM only when NER confidence is too low.
-/// Returns (extraction, source_label) where source_label is "ner" or "llm".
-async fn extract_with_ner_fallback(
+/// Three-tier extraction cascade: NER → VLM → LLM.
+/// Returns (extraction, source_label).
+async fn extract_with_cascade(
     text: &str,
+    vlm: Option<&qwen_vl::VlClient>,
     llm: &llm::LlmClient,
 ) -> (Result<llm::CompanyExtraction>, &'static str) {
     let mut ner_out = contact_ner::ContactExtraction::new();
@@ -64,15 +65,57 @@ async fn extract_with_ner_fallback(
         return (Ok(data), "ner");
     }
 
-    // NER didn't find enough — fall back to LLM
+    // Try VLM text extraction (local, structured)
+    if let Some(vl) = vlm {
+        match vl
+            .extract_from_html::<qwen_vl::DiscoveryExtraction>(text, qwen_vl::schema::DISCOVERY_PROMPT)
+            .await
+        {
+            Ok(disc) => {
+                let data = discovery_to_company_extraction(&disc);
+                return (Ok(data), "vlm-text");
+            }
+            Err(e) => {
+                tracing::debug!(error = %e, "VLM text extraction failed, falling back to LLM");
+            }
+        }
+    }
+
+    // Fall back to LLM
     let truncated = extractor::truncate_for_llm(text, 3000);
     match llm.extract_entities(&truncated).await {
         Ok(data) => (Ok(data), "llm"),
         Err(_) => {
-            // LLM unavailable — return NER result even if low-confidence
             let data = ner_to_company_extraction(&ner_out);
             (Ok(data), "ner")
         }
+    }
+}
+
+fn discovery_to_company_extraction(disc: &qwen_vl::DiscoveryExtraction) -> llm::CompanyExtraction {
+    let key_people = disc
+        .key_people
+        .iter()
+        .map(|p| llm::PersonExtraction {
+            name: p.name.clone(),
+            title: p.title.clone().unwrap_or_default(),
+            department: None,
+        })
+        .collect();
+
+    llm::CompanyExtraction {
+        company_name: disc.company_name.clone().unwrap_or_default(),
+        industry: disc.industry.clone(),
+        employee_count: disc
+            .employee_count_hint
+            .as_deref()
+            .and_then(|s| s.split('-').next())
+            .and_then(|s| s.trim().replace(['+', ','], "").parse().ok()),
+        founding_year: None,
+        location: disc.location.clone(),
+        tech_stack: Vec::new(),
+        key_people,
+        description: disc.tagline.clone(),
     }
 }
 
