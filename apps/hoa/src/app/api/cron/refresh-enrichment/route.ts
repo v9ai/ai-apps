@@ -3,19 +3,31 @@ import { getAllPersonalities } from "@/lib/personalities";
 import { getEnrichment } from "@/lib/enrichment";
 import type { EnrichedData, HFModel } from "@/lib/enrichment";
 
-async function fetchGitHubStats(
-  username: string,
-): Promise<{ stars: number; followers: number } | null> {
-  const headers: Record<string, string> = {
+function ghHeaders(): Record<string, string> {
+  const h: Record<string, string> = {
     Accept: "application/vnd.github.v3+json",
   };
   const token = process.env.GITHUB_TOKEN;
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token) h.Authorization = `Bearer ${token}`;
+  return h;
+}
 
+async function ghFetch(url: string): Promise<Response> {
+  const res = await fetch(url, { headers: ghHeaders() });
+  if (res.status === 401 && process.env.GITHUB_TOKEN) {
+    return fetch(url, {
+      headers: { Accept: "application/vnd.github.v3+json" },
+    });
+  }
+  return res;
+}
+
+async function fetchGitHubStats(
+  username: string,
+): Promise<{ stars: number; followers: number } | null> {
   try {
-    const profileRes = await fetch(
+    const profileRes = await ghFetch(
       `https://api.github.com/users/${username}`,
-      { headers },
     );
     if (!profileRes.ok) return null;
 
@@ -26,9 +38,8 @@ async function fetchGitHubStats(
     let page = 1;
 
     while (page <= 5) {
-      const reposRes = await fetch(
+      const reposRes = await ghFetch(
         `https://api.github.com/users/${username}/repos?sort=stars&per_page=100&page=${page}&type=owner`,
-        { headers },
       );
       if (!reposRes.ok) return null;
 

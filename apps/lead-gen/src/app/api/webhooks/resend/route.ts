@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { contactEmails, contacts, messages, receivedEmails, webhookEvents } from "@/db/schema";
-import { classifyReply, classifyReplyHybrid } from "@/lib/email/reply-classifier";
-import { matchContact, parseResendIdFromHeader } from "@/lib/email/contact-matcher";
-import { resend } from "@/lib/resend";
+import { contactEmails, contacts, webhookEvents } from "@/db/schema";
+import { processReceivedEmail } from "@/lib/email/process-received";
 
 /**
  * Resend Webhook Handler
@@ -327,249 +325,27 @@ async function handleOpened(emailId: string): Promise<void> {
 
 /**
  * Persist an inbound received email and forward to personal inbox.
+ * Delegates to the shared processReceivedEmail function.
  */
 async function handleReceived(event: ResendWebhookEvent): Promise<void> {
   const { email_id: emailId, from, to, subject, html, text } = event.data;
+  const data = event.data as any;
 
-  // 1. Persist to database
-  await withRetry(`handleReceived/persist(${emailId})`, async () => {
-    await db
-      .insert(receivedEmails)
-      .values({
-        resend_id: emailId,
-        from_email: from ?? null,
-        to_emails: JSON.stringify(to ?? []),
-        cc_emails: JSON.stringify((event.data as any).cc ?? []),
-        reply_to_emails: JSON.stringify((event.data as any).reply_to ?? []),
-        subject: subject ?? null,
-        message_id: (event.data as any).message_id ?? null,
-        html_content: html ?? null,
-        text_content: text ?? null,
-        attachments: JSON.stringify((event.data as any).attachments ?? []),
-        received_at: event.created_at ?? new Date().toISOString(),
-      })
-      .onConflictDoNothing();
-    console.log(`[RESEND_WEBHOOK] email.received persisted: ${emailId}`);
-  });
-
-  // 1b. Always fetch full email from Resend API for headers + content
-  let fullEmail: Awaited<ReturnType<typeof resend.instance.getReceivedEmail>> = null;
-  await withRetry(`handleReceived/fetchFull(${emailId})`, async () => {
-    fullEmail = await resend.instance.getReceivedEmail(emailId);
-    if (fullEmail && !html && !text && (fullEmail.html || fullEmail.text)) {
-      await db
-        .update(receivedEmails)
-        .set({
-          html_content: fullEmail.html ?? null,
-          text_content: fullEmail.text ?? null,
-          updated_at: new Date().toISOString(),
-        })
-        .where(eq(receivedEmails.resend_id, emailId));
-      console.log(`[RESEND_WEBHOOK] fetched content for ${emailId}`);
-    }
-  });
-
-  // 2. Classify reply and match to contact
-  await withRetry(`handleReceived/classify(${emailId})`, async () => {
-    // Use webhook body if available, otherwise read from DB (fetched in step 1b)
-    let textBody = text || "";
-    if (!textBody) {
-      const [row] = await db
-        .select({ text_content: receivedEmails.text_content })
-        .from(receivedEmails)
-        .where(eq(receivedEmails.resend_id, emailId))
-        .limit(1);
-      textBody = row?.text_content || "";
-    }
-    const emailSubject = subject || "";
-
-    // Extract In-Reply-To from API headers (webhook payload doesn't include it)
-    const inReplyToHeader =
-      fullEmail?.headers?.["In-Reply-To"] ||
-      fullEmail?.headers?.["in-reply-to"] ||
-      null;
-    const inReplyToResendId = inReplyToHeader
-      ? parseResendIdFromHeader(inReplyToHeader)
-      : null;
-
-    // Match to a contact using all three strategies
-    const contactMatch = await matchContact(
-      from || "",
-      inReplyToResendId,
-      emailSubject || null,
-    );
-
-    // Build thread context from matched outbound email
-    let threadContext: string | undefined;
-    if (contactMatch?.outboundEmailId) {
-      const [outbound] = await db
-        .select({ subject: contactEmails.subject, text_content: contactEmails.text_content })
-        .from(contactEmails)
-        .where(eq(contactEmails.id, contactMatch.outboundEmailId))
-        .limit(1);
-      if (outbound) {
-        threadContext = `Subject: ${outbound.subject}\n${outbound.text_content || ""}`;
-      }
-    }
-
-    // Classify the reply with LLM-first hybrid classifier
-    const result = await classifyReplyHybrid(emailSubject, textBody, threadContext);
-
-    // Update the received email with classification + contact match
-    await db
-      .update(receivedEmails)
-      .set({
-        classification: result.label,
-        classification_confidence: result.confidence,
-        classified_at: new Date().toISOString(),
-        ...(contactMatch?.contactId ? { matched_contact_id: contactMatch.contactId } : {}),
-        ...(contactMatch?.outboundEmailId ? { matched_outbound_id: contactMatch.outboundEmailId } : {}),
-        updated_at: new Date().toISOString(),
-      })
-      .where(eq(receivedEmails.resend_id, emailId));
-
-    console.log(
-      `[RESEND_WEBHOOK] classified: ${result.label} (${result.confidence.toFixed(2)})` +
-        (contactMatch ? ` → contact ${contactMatch.contactId}` : ""),
-    );
-
-    // Save alternate sender email on the matched contact for future matching
-    if (contactMatch?.contactId && from) {
-      const senderNorm = from.trim().toLowerCase();
-      if (senderNorm.includes("@")) {
-        const [contact] = await db
-          .select({ email: contacts.email, emails: contacts.emails })
-          .from(contacts)
-          .where(eq(contacts.id, contactMatch.contactId))
-          .limit(1);
-        if (contact) {
-          const knownEmails = new Set<string>();
-          if (contact.email) knownEmails.add(contact.email.toLowerCase());
-          if (Array.isArray(contact.emails)) {
-            for (const e of contact.emails) knownEmails.add(String(e).toLowerCase());
-          }
-          if (!knownEmails.has(senderNorm)) {
-            const updatedEmails = [...(Array.isArray(contact.emails) ? contact.emails : []), senderNorm];
-            await db
-              .update(contacts)
-              .set({ emails: updatedEmails, updated_at: new Date().toISOString() })
-              .where(eq(contacts.id, contactMatch.contactId));
-            console.log(`[RESEND_WEBHOOK] saved alternate email ${senderNorm} on contact ${contactMatch.contactId}`);
-          }
-        }
-      }
-    }
-
-    // Persist to messages table so it appears on the contact detail page
-    if (contactMatch?.contactId) {
-      await db.insert(messages).values({
-        channel: "email",
-        direction: "inbound",
-        contact_id: contactMatch.contactId,
-        contact_email_id: contactMatch.outboundEmailId ?? null,
-        sender_name: from || null,
-        content: textBody || null,
-        subject: emailSubject || null,
-        sent_at: new Date().toISOString(),
-        classification: result.label,
-        classification_confidence: result.confidence,
-      });
-    }
-
-    // Side effects based on classification
-    if (contactMatch?.contactId) {
-      if (result.label === "unsubscribe") {
-        // Mark contact as do_not_contact
-        await db
-          .update(contacts)
-          .set({ do_not_contact: true, updated_at: new Date().toISOString() })
-          .where(eq(contacts.id, contactMatch.contactId));
-        console.log(`[RESEND_WEBHOOK] contact ${contactMatch.contactId} marked do_not_contact (unsubscribe)`);
-      }
-
-      if (contactMatch.outboundEmailId) {
-        // Update outbound email with reply classification
-        await db
-          .update(contactEmails)
-          .set({
-            reply_received: true,
-            reply_received_at: new Date().toISOString(),
-            reply_classification: result.label,
-            updated_at: new Date().toISOString(),
-          })
-          .where(eq(contactEmails.id, contactMatch.outboundEmailId));
-      }
-
-      // Advance conversation state machine
-      import("@/lib/email/conversation-state")
-        .then(({ advanceConversationState }) =>
-          advanceConversationState(contactMatch.contactId!, result.label),
-        )
-        .catch((err) => {
-          console.error(`[RESEND_WEBHOOK] conversation state update failed:`, err);
-        });
-
-      // Auto-draft reply for interested/info_request contacts (fire-and-forget)
-      if (
-        (result.label === "interested" || result.label === "info_request") &&
-        result.confidence > 0.5
-      ) {
-        // Look up the received email ID we just persisted
-        const [receivedRow] = await db
-          .select({ id: receivedEmails.id })
-          .from(receivedEmails)
-          .where(eq(receivedEmails.resend_id, emailId))
-          .limit(1);
-
-        if (receivedRow) {
-          import("@/lib/email/auto-draft")
-            .then(({ generateReplyDraft }) =>
-              generateReplyDraft(receivedRow.id, result.label, contactMatch!.contactId!),
-            )
-            .catch((err) => {
-              const msg = err instanceof Error ? err.message : String(err);
-              console.error(`[RESEND_WEBHOOK] auto-draft failed: ${msg}`);
-            });
-        }
-      }
-    }
-  });
-
-  // 3. Forward to personal inbox
-  if (!RESEND_API_KEY) {
-    console.warn("[RESEND_WEBHOOK] RESEND_API_KEY not set — cannot forward received email");
-    return;
-  }
-
-  const forwardPayload = {
-    from: SENDER_EMAIL,
-    to: [NOTIFICATION_EMAIL],
-    subject: `[Fwd] ${subject ?? "(no subject)"}`,
-    reply_to: from,
-    ...(html ? { html: `<p><strong>Forwarded from:</strong> ${from}</p><hr />${html}` } : {}),
-    ...(text ? { text: `Forwarded from: ${from}\n\n${text}` } : {}),
-  };
-
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(forwardPayload),
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      console.error(`[RESEND_WEBHOOK] Failed to forward received email: ${response.status} ${body}`);
-    } else {
-      console.log(`[RESEND_WEBHOOK] email.received forwarded to ${NOTIFICATION_EMAIL} (from: ${from})`);
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[RESEND_WEBHOOK] Error forwarding received email:", msg);
-  }
+  await processReceivedEmail(
+    emailId,
+    from ?? null,
+    to ?? [],
+    subject ?? null,
+    html,
+    text,
+    event.created_at ?? new Date().toISOString(),
+    {
+      cc: data.cc,
+      reply_to: data.reply_to,
+      message_id: data.message_id,
+      attachments: data.attachments,
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
