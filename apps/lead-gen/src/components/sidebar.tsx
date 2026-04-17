@@ -3,29 +3,17 @@
 import { Flex, Box, IconButton, Text } from "@radix-ui/themes";
 import {
   GitHubLogoIcon,
-  CubeIcon,
-  LayersIcon,
-  BellIcon,
-  RocketIcon,
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { css } from "styled-system/css";
-import { NavLink } from "@/components/ui";
 import { AuthHeader } from "@/components/auth-header";
-import { AdminNav } from "@/components/admin-nav";
 import { useSidebar } from "@/components/sidebar-provider";
 
 const SIDEBAR_WIDTH = 200;
 const SIDEBAR_COLLAPSED_WIDTH = 56;
-
-const NAV_ITEMS = [
-  { href: "/companies", label: "companies", icon: <CubeIcon width={15} height={15} /> },
-  { href: "/opportunities", label: "opportunities", icon: <RocketIcon width={15} height={15} /> },
-  { href: "/follow-ups", label: "follow-ups", icon: <BellIcon width={15} height={15} /> },
-];
 
 export function Sidebar() {
   const { collapsed, toggle } = useSidebar();
@@ -61,53 +49,13 @@ export function Sidebar() {
       <nav>
         {/* logo */}
         <Flex asChild align="center" justify="center" style={{ paddingLeft: collapsed ? 0 : 10, overflow: "hidden" }}>
-        <Link href="/" style={{ textDecoration: "none" }}>
+        <Link href="/dashboard" style={{ textDecoration: "none" }}>
           {collapsed ? (
             <Text size="4" weight="bold" style={{ color: "var(--accent-11)", letterSpacing: "-0.02em" }}>A</Text>
           ) : (
             <Text size="3" weight="bold" style={{ color: "var(--accent-11)", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>agentic lead gen</Text>
           )}
         </Link>
-        </Flex>
-
-        {/* primary links */}
-        <Flex direction="column" gap="1" mt="5" flexGrow="1">
-          {NAV_ITEMS.map(({ href, label, icon }) => (
-            <NavLink
-              key={href}
-              href={href}
-              title={collapsed ? label : undefined}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                justifyContent: collapsed ? "center" : "flex-start",
-                padding: collapsed ? "5px 0" : "5px 8px",
-              }}
-            >
-              {icon}
-              {!collapsed && <Text as="span" size="2">{label}</Text>}
-            </NavLink>
-          ))}
-          {!collapsed && <AdminNav />}
-        </Flex>
-
-        {/* bottom link */}
-        <Flex direction="column" gap="1" mt="auto" pb="3">
-          <NavLink
-            href="/how-it-works"
-            title={collapsed ? "how it works" : undefined}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              justifyContent: collapsed ? "center" : "flex-start",
-              padding: collapsed ? "5px 0" : "5px 8px",
-            }}
-          >
-            <LayersIcon width={15} height={15} />
-            {!collapsed && <Text as="span" size="2">how it works</Text>}
-          </NavLink>
         </Flex>
 
         {/* footer: auth + github + toggle */}
