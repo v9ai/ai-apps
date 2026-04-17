@@ -120,6 +120,30 @@ CONFIGS = {
         lora=LoRAConfig(rank=8, alpha=32.0, dropout=0.1),
         warmup_steps=30,
     ),
+    "reply-classification": TrainConfig(
+        data_dir="mlx-training/data/reply-classification",
+        adapter_path="mlx-training/models/reply-classification",
+        max_seq_length=512,  # emails are short; subject + stripped body < 500 tokens
+        epochs=5,
+        lora=LoRAConfig(rank=8, alpha=16.0, dropout=0.1),
+    ),
+    "contact-title": TrainConfig(
+        model="mlx-community/Qwen2.5-1.5B-Instruct-4bit",
+        data_dir="mlx-training/data/contact-title",
+        adapter_path="mlx-training/models/contact-title",
+        max_seq_length=256,  # job titles are < 20 tokens
+        epochs=3,  # large dataset (10k+), fewer epochs to avoid overfitting
+        learning_rate=1e-5,  # gentler for small 1.5B model
+        lora=LoRAConfig(rank=4, alpha=8.0, dropout=0.1),
+        warmup_steps=30,
+    ),
+    "company-vertical": TrainConfig(
+        data_dir="mlx-training/data/company-vertical",
+        adapter_path="mlx-training/models/company-vertical",
+        max_seq_length=512,  # name + description + website < 300 tokens
+        epochs=5,
+        lora=LoRAConfig(rank=8, alpha=16.0, dropout=0.1),
+    ),
     "intent-signal": TrainConfig(
         data_dir="mlx-training/data/intent-signal",
         adapter_path="mlx-training/models/intent-signal",
