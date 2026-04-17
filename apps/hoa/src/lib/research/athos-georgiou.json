@@ -205,101 +205,101 @@
   "questions": [
     {
       "category": "origin",
-      "question": "What sparked your transition from high-performance computing and control systems to applied AI research, and how did it shape NCA's mission?",
-      "why_this_question": "Understanding the catalyst for his career shift provides context for NCA's focus.",
-      "expected_insight": "Reveals personal motivations and the strategic direction of NCA.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "Walk me through the moment you realized the potential of unifying vision-language models and document retrieval systems, leading to the founding of NCA.",
+      "why_this_question": "Understanding the pivotal moment that sparked the creation of NCA provides insight into the founder's vision.",
+      "expected_insight": "A story that reveals the inspiration and motivation behind NCA's mission.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "origin",
-      "question": "Walk me through the early days of NCA. What were the biggest challenges in bridging academic research with practical AI implementations?",
-      "why_this_question": "Gives insight into the initial hurdles and problem-solving mindset.",
-      "expected_insight": "Highlights key obstacles and how they were overcome.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "How did your background in high-performance computing and control systems influence your approach to applied AI research and the development of Hydra?",
+      "why_this_question": "Connecting past experience to current work highlights the unique perspective brought to AI research.",
+      "expected_insight": "An explanation of how systems engineering principles inform AI architecture design.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "technical_depth",
-      "question": "How does the Hydra dual-head architecture balance the trade-offs between document retrieval and text generation, and what unique challenges did this pose?",
-      "why_this_question": "Delves into the technical intricacies of Hydra.",
-      "expected_insight": "Explains the design decisions and technical challenges in creating a unified model.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "In your blog post 'Implementing Spatially-Grounded Document Retrieval via Patch-to-Region Propagation,' what was the most challenging aspect of translating this research into a practical implementation?",
+      "why_this_question": "Identifying key challenges in practical implementation reveals the depth of technical expertise.",
+      "expected_insight": "Specific technical hurdles and how they were overcome.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "technical_depth",
-      "question": "What surprised you most about the performance gains achieved with ColPali and ColQwen in late-interaction retrieval systems?",
-      "why_this_question": "Explores unexpected outcomes in his research.",
-      "expected_insight": "Reveals insights gained from empirical results.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "How does the Hydra dual-head architecture balance the trade-offs between document retrieval and text generation, and what unique benefits does this design offer?",
+      "why_this_question": "Exploring the design rationale of Hydra provides insight into its innovative features.",
+      "expected_insight": "A detailed explanation of the architectural decisions and their implications.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "philosophy",
-      "question": "Critics say that generative AI is overhyped and not a panacea for all problems. Where are they wrong, and what role do you see for GenAI in the future?",
-      "why_this_question": "Challenges a common critique and invites a nuanced response.",
-      "expected_insight": "Provides a balanced view on the potential and limitations of generative AI.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "Critics say that generative AI is overhyped and not the answer to everything. Where are they wrong, and what role do you see generative AI playing in the future?",
+      "why_this_question": "Challenging the common critique of generative AI can reveal a nuanced view of its potential.",
+      "expected_insight": "A balanced perspective on the strengths and limitations of generative AI.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "philosophy",
-      "question": "In your blog post 'Raising Artificial Intelligence,' you draw a parent-child metaphor for AI responsibility. How does this analogy guide your approach to developing and deploying AI systems?",
-      "why_this_question": "Connects personal philosophy to practical application.",
-      "expected_insight": "Reveals the ethical and practical considerations in AI development.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "In your blog post 'Raising Artificial Intelligence,' you draw a parallel between raising children and developing AI responsibly. How does this metaphor guide your approach to AI ethics?",
+      "why_this_question": "Exploring the ethical framework guiding AI development reveals the philosophical underpinnings of NCA's work.",
+      "expected_insight": "A discussion of the responsibilities and ethical considerations in AI development.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "collaboration",
-      "question": "How does your work on the Claude AI ecosystem contribute to the broader open-source community, and what are the key benefits of this collaboration?",
-      "why_this_question": "Highlights the impact of his contributions beyond NCA.",
-      "expected_insight": "Explains the value and dynamics of open-source collaboration.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "What motivated you to contribute to the Claude AI ecosystem, and how do you see these tools integrating with broader AI workflows?",
+      "why_this_question": "Understanding the rationale behind open-source contributions highlights the importance of community and collaboration.",
+      "expected_insight": "A vision for how open-source tools can enhance AI development and deployment.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "collaboration",
-      "question": "What are the most significant challenges you face in bridging the gap between cutting-edge research and production-ready AI systems, and how do you address them?",
-      "why_this_question": "Focuses on the practical aspects of research-to-production transitions.",
-      "expected_insight": "Provides concrete examples of challenges and solutions.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "How do you manage the dynamic between cutting-edge research and practical, production-ready implementations in your open-source projects?",
+      "why_this_question": "Balancing research and production is a critical challenge in AI, and this question explores the strategies used to achieve it.",
+      "expected_insight": "Practical approaches to ensuring research translates into usable tools.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "future",
-      "question": "What would need to be true for vision-language retrieval to become a standard feature in enterprise AI applications, and what are the current barriers?",
-      "why_this_question": "Looks ahead to future trends and obstacles.",
-      "expected_insight": "Identifies key factors and challenges for widespread adoption.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "What would need to be true for vision-language retrieval to become a standard feature in enterprise AI systems, and what are the key barriers to adoption?",
+      "why_this_question": "Identifying the conditions for widespread adoption helps frame the future of the field.",
+      "expected_insight": "A roadmap for overcoming current limitations and achieving industry-wide acceptance.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "future",
-      "question": "How does your work on GPU inference optimization for AMD Instinct GPUs inform your broader strategy for scaling AI inference in production environments?",
-      "why_this_question": "Connects specific technical work to strategic planning.",
-      "expected_insight": "Reveals the strategic implications of hardware-specific optimizations.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "What surprised you most about the performance of your ColQwen3.5 models on the ViDoRe v3 leaderboard, and what does this indicate about the state of visual document retrieval?",
+      "why_this_question": "Surprises in benchmark performance can reveal unexpected insights and areas for improvement.",
+      "expected_insight": "An analysis of the model's strengths and the current landscape of visual document retrieval.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "vision_retrieval",
-      "question": "How does the ColQwen3.5-4.5B model's performance on the ViDoRe v3 leaderboard reflect the advancements in visual document retrieval, and what are the next steps?",
-      "why_this_question": "Evaluates the impact of his models on benchmark performance.",
-      "expected_insight": "Discusses the significance of benchmark results and future improvements.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "How does the late-interaction retrieval approach in ColPali and ColQwen models improve the accuracy and efficiency of multimodal document understanding?",
+      "why_this_question": "Exploring the technical details of late-interaction retrieval highlights the innovation in these models.",
+      "expected_insight": "A technical explanation of the late-interaction mechanism and its benefits.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "vision_retrieval",
-      "question": "If you had to rebuild the Hydra architecture without the benefit of patch-to-region relevance propagation, what alternative approaches would you consider?",
-      "why_this_question": "Explores alternative design choices and their implications.",
-      "expected_insight": "Reveals the importance of specific techniques and potential alternatives.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "What specific optimizations did you implement in the ColQwen3.5 models to achieve competitive performance on the ViDoRe v3 leaderboard?",
+      "why_this_question": "Understanding the specific optimizations provides insight into the technical rigor of the models.",
+      "expected_insight": "Detailed technical strategies and their impact on performance.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "gpu_optimization",
-      "question": "How does the choice of data types (dtypes) affect the performance and efficiency of large-parameter models during GPU inference, and what are the trade-offs?",
-      "why_this_question": "Delves into the technical details of GPU optimization.",
-      "expected_insight": "Explains the impact of dtypes on model performance and resource utilization.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "In your paper 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs,' what were the most significant memory optimization strategies you employed, and how did they affect performance?",
+      "why_this_question": "Exploring memory optimization strategies reveals the technical depth of GPU inference optimization.",
+      "expected_insight": "A detailed account of the memory management techniques and their effectiveness.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     },
     {
       "category": "gpu_optimization",
-      "question": "What are the most effective memory optimization strategies you've discovered for running large-scale AI models on GPUs with limited VRAM, and how do they impact overall performance?",
-      "why_this_question": "Focuses on practical solutions for resource-constrained environments.",
-      "expected_insight": "Provides actionable insights for optimizing GPU memory usage.",
-      "last_verified": "2026-04-17T13:53:26+00:00"
+      "question": "If you had to rebuild the Hydra architecture without access to specialized GPU hardware, what alternative approaches would you consider to maintain performance?",
+      "why_this_question": "Considering alternative approaches in the absence of specialized hardware reveals the flexibility and adaptability of the architecture.",
+      "expected_insight": "Strategies for optimizing performance using general-purpose hardware.",
+      "last_verified": "2026-04-17T14:21:33+00:00"
     }
   ]
 }
