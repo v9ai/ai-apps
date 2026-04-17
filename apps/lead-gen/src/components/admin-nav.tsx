@@ -28,7 +28,7 @@ export function AdminNav() {
         </Flex>
       </NavLink>
 
-      <NavLink href="/admin/emails" title="Emails">
+      <NavLink href="/emails" title="Emails">
         <Flex align="center" gap="2">
           <EnvelopeClosedIcon width={14} height={14} />
           emails

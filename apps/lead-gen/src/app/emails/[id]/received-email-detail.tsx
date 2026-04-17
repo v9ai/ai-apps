@@ -74,7 +74,7 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
         <Flex direction="column" gap="3">
           <button
             className={button({ variant: "ghost", size: "sm" })}
-            onClick={() => router.push("/admin/emails")}
+            onClick={() => router.push("/emails")}
           >
             <ArrowLeftIcon /> Back to Emails
           </button>
@@ -96,7 +96,7 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
       refetch();
     } else {
       await archiveEmail({ variables: { id: emailId } });
-      router.push("/admin/emails");
+      router.push("/emails");
     }
   };
 
@@ -107,7 +107,7 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
         <Flex justify="between" align="center">
           <button
             className={button({ variant: "ghost", size: "sm" })}
-            onClick={() => router.push("/admin/emails")}
+            onClick={() => router.push("/emails")}
           >
             <ArrowLeftIcon /> Back to Emails
           </button>

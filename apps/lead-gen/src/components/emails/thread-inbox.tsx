@@ -225,7 +225,7 @@ export function ThreadInbox() {
   const handleSelectThread = (contactId: number) => {
     const params = new URLSearchParams(searchParams?.toString() || "");
     params.set("thread", String(contactId));
-    router.push(`/admin/emails?${params.toString()}`);
+    router.push(`/emails?${params.toString()}`);
   };
 
   return (
@@ -363,7 +363,7 @@ export function ThreadInbox() {
             onArchive={() => {
               const params = new URLSearchParams(searchParams?.toString() || "");
               params.delete("thread");
-              router.push(`/admin/emails?${params.toString()}`);
+              router.push(`/emails?${params.toString()}`);
               refetch();
             }}
           />

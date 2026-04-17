@@ -22,7 +22,7 @@ const ContactsContent = dynamic(
   () => import("@/app/admin/contacts/page"),
 );
 const EmailsContent = dynamic(() =>
-  import("@/app/admin/emails/page").then((m) => ({
+  import("@/app/emails/page").then((m) => ({
     default: m.EmailsPageContent,
   })),
 );

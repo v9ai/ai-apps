@@ -26,7 +26,7 @@ const NAV_ITEMS = [
   { href: "/opportunities", label: "Opportunities", icon: RocketIcon },
   { href: "/follow-ups", label: "Follow-ups", icon: CountdownTimerIcon },
   { href: "/admin/contacts", label: "Contacts", icon: PersonIcon },
-  { href: "/admin/emails", label: "Emails", icon: EnvelopeClosedIcon },
+  { href: "/emails", label: "Emails", icon: EnvelopeClosedIcon },
   { href: "/admin/linkedin-posts", label: "Posts", icon: Pencil2Icon },
 ];
 
