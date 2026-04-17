@@ -116,26 +116,41 @@ async def _fetch_github_repos(inp: PipelineInput) -> list[dict[str, Any]]:
     username = inp.get("github_username")
     if not username:
         return []
+    gh_token = os.environ.get("GITHUB_TOKEN")
+    if not gh_token:
+        return []
+    query = """
+    query($login: String!) {
+      user(login: $login) {
+        repositories(first: 30, ownerAffiliations: OWNER, isFork: false,
+                     orderBy: {field: STARGAZERS, direction: DESC}) {
+          nodes { name description url stargazerCount createdAt }
+        }
+      }
+    }
+    """
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.get(
-                f"https://api.github.com/users/{username}/repos",
-                params={"sort": "stars", "per_page": 30, "type": "owner"},
-                headers={"Accept": "application/vnd.github.v3+json"},
+            resp = await client.post(
+                _GH_GQL,
+                headers={"Authorization": f"Bearer {gh_token}", "Content-Type": "application/json"},
+                json={"query": query, "variables": {"login": username}},
             )
             if resp.status_code != 200:
                 return []
-            repos = resp.json()
+            data = resp.json().get("data", {})
+            user = data.get("user")
+            if not user:
+                return []
             return [
                 {
                     "name": r["name"],
                     "description": r.get("description") or "",
-                    "url": r["html_url"],
-                    "stars": r["stargazers_count"],
-                    "created_at": r["created_at"],
+                    "url": r["url"],
+                    "stars": r["stargazerCount"],
+                    "created_at": r["createdAt"],
                 }
-                for r in repos
-                if not r.get("fork")
+                for r in user["repositories"]["nodes"]
             ]
     except Exception:
         return []
@@ -464,6 +479,28 @@ LANG_COLORS: dict[str, str] = {
 }
 
 
+_GH_GQL = "https://api.github.com/graphql"
+
+_GH_ENRICHMENT_QUERY = """
+query($login: String!) {
+  user(login: $login) {
+    bio location createdAt
+    publicRepositories: repositories(privacy: PUBLIC) { totalCount }
+    followers { totalCount }
+    repositories(first: 30, ownerAffiliations: OWNER, isFork: false,
+                 orderBy: {field: STARGAZERS, direction: DESC}) {
+      nodes {
+        name description url stargazerCount forkCount
+        primaryLanguage { name }
+        repositoryTopics(first: 10) { nodes { topic { name } } }
+        updatedAt createdAt
+      }
+    }
+  }
+}
+"""
+
+
 async def fetch_enrichment_data(
     github_username: str | None,
     hf_username: str | None,
@@ -473,80 +510,66 @@ async def fetch_enrichment_data(
     """Fetch GitHub profile/repos and HuggingFace models for a person."""
     result: dict[str, Any] = {"github": None, "huggingface": None, "imageUrl": None}
 
-    gh_headers = {"Accept": "application/vnd.github.v3+json"}
     gh_token = os.environ.get("GITHUB_TOKEN")
-    if gh_token:
-        gh_headers["Authorization"] = f"token {gh_token}"
 
     async with httpx.AsyncClient(timeout=15) as client:
-        # ── GitHub ────────────────────────────────────────────
-        if github_username:
-            profile = None
-            repos: list[dict[str, Any]] = []
-
+        # ── GitHub (GraphQL) ──────────────────────────────────
+        if github_username and gh_token:
             try:
-                resp = await client.get(
-                    f"https://api.github.com/users/{github_username}",
-                    headers=gh_headers,
+                resp = await client.post(
+                    _GH_GQL,
+                    headers={"Authorization": f"Bearer {gh_token}", "Content-Type": "application/json"},
+                    json={"query": _GH_ENRICHMENT_QUERY, "variables": {"login": github_username}},
                 )
                 if resp.status_code == 200:
-                    d = resp.json()
-                    profile = {
-                        "bio": d.get("bio"),
-                        "publicRepos": d.get("public_repos", 0),
-                        "followers": d.get("followers", 0),
-                        "location": d.get("location"),
-                        "createdAt": d.get("created_at"),
-                    }
-            except Exception:
-                pass
-
-            try:
-                resp = await client.get(
-                    f"https://api.github.com/users/{github_username}/repos",
-                    params={"sort": "stars", "per_page": 30, "type": "owner"},
-                    headers=gh_headers,
-                )
-                if resp.status_code == 200:
-                    repos = [
-                        {
-                            "name": r["name"],
-                            "description": r.get("description"),
-                            "url": r["html_url"],
-                            "stars": r["stargazers_count"],
-                            "forks": r["forks_count"],
-                            "language": r.get("language"),
-                            "topics": r.get("topics", []),
-                            "updatedAt": r["updated_at"],
-                            "createdAt": r["created_at"],
+                    data = resp.json().get("data", {})
+                    u = data.get("user")
+                    if u:
+                        profile = {
+                            "bio": u.get("bio"),
+                            "publicRepos": u["publicRepositories"]["totalCount"],
+                            "followers": u["followers"]["totalCount"],
+                            "location": u.get("location"),
+                            "createdAt": u.get("createdAt"),
                         }
-                        for r in resp.json()
-                        if not r.get("fork")
-                    ]
-                    repos.sort(key=lambda r: r["stars"], reverse=True)
+                        repos: list[dict[str, Any]] = []
+                        for r in u["repositories"]["nodes"]:
+                            lang = (r.get("primaryLanguage") or {}).get("name")
+                            topics = [t["topic"]["name"] for t in r.get("repositoryTopics", {}).get("nodes", [])]
+                            repos.append({
+                                "name": r["name"],
+                                "description": r.get("description"),
+                                "url": r["url"],
+                                "stars": r["stargazerCount"],
+                                "forks": r["forkCount"],
+                                "language": lang,
+                                "topics": topics,
+                                "updatedAt": r["updatedAt"],
+                                "createdAt": r["createdAt"],
+                            })
+                        repos.sort(key=lambda x: x["stars"], reverse=True)
+
+                        total_stars = sum(r["stars"] for r in repos)
+                        lang_map: dict[str, int] = {}
+                        for r in repos:
+                            if r["language"]:
+                                lang_map[r["language"]] = lang_map.get(r["language"], 0) + 1
+                        languages = sorted(
+                            [
+                                {"name": ln, "count": ct, "color": LANG_COLORS.get(ln, "#8b8b8b")}
+                                for ln, ct in lang_map.items()
+                            ],
+                            key=lambda l: l["count"],
+                            reverse=True,
+                        )
+                        result["github"] = {
+                            "profile": profile,
+                            "repos": repos,
+                            "totalStars": total_stars,
+                            "languages": languages,
+                        }
             except Exception:
                 pass
-
-            if profile or repos:
-                total_stars = sum(r["stars"] for r in repos)
-                lang_map: dict[str, int] = {}
-                for r in repos:
-                    if r["language"]:
-                        lang_map[r["language"]] = lang_map.get(r["language"], 0) + 1
-                languages = sorted(
-                    [
-                        {"name": name, "count": count, "color": LANG_COLORS.get(name, "#8b8b8b")}
-                        for name, count in lang_map.items()
-                    ],
-                    key=lambda l: l["count"],
-                    reverse=True,
-                )
-                result["github"] = {
-                    "profile": profile,
-                    "repos": repos,
-                    "totalStars": total_stars,
-                    "languages": languages,
-                }
 
         # ── HuggingFace ───────────────────────────────────────
         if hf_username:
