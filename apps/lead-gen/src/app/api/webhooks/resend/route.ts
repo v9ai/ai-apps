@@ -433,6 +433,33 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
         (contactMatch ? ` → contact ${contactMatch.contactId}` : ""),
     );
 
+    // Save alternate sender email on the matched contact for future matching
+    if (contactMatch?.contactId && from) {
+      const senderNorm = from.trim().toLowerCase();
+      if (senderNorm.includes("@")) {
+        const [contact] = await db
+          .select({ email: contacts.email, emails: contacts.emails })
+          .from(contacts)
+          .where(eq(contacts.id, contactMatch.contactId))
+          .limit(1);
+        if (contact) {
+          const knownEmails = new Set<string>();
+          if (contact.email) knownEmails.add(contact.email.toLowerCase());
+          if (Array.isArray(contact.emails)) {
+            for (const e of contact.emails) knownEmails.add(String(e).toLowerCase());
+          }
+          if (!knownEmails.has(senderNorm)) {
+            const updatedEmails = [...(Array.isArray(contact.emails) ? contact.emails : []), senderNorm];
+            await db
+              .update(contacts)
+              .set({ emails: updatedEmails, updated_at: new Date().toISOString() })
+              .where(eq(contacts.id, contactMatch.contactId));
+            console.log(`[RESEND_WEBHOOK] saved alternate email ${senderNorm} on contact ${contactMatch.contactId}`);
+          }
+        }
+      }
+    }
+
     // Persist to messages table so it appears on the contact detail page
     if (contactMatch?.contactId) {
       await db.insert(messages).values({
