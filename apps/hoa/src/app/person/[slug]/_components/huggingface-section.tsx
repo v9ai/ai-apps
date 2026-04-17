@@ -26,8 +26,14 @@ function getLicense(tags: string[]): string | null {
   return tag ? tag.replace("license:", "") : null;
 }
 
+const MAX_DISPLAY = 10;
+
 export function HuggingFaceSection({ huggingface }: Props) {
   if (!huggingface || huggingface.models.length === 0) return null;
+
+  const totalModels = huggingface.totalModels ?? huggingface.models.length;
+  const displayModels = huggingface.models.slice(0, MAX_DISPLAY);
+  const remaining = totalModels - displayModels.length;
 
   return (
     <div className={css({ mt: '14' })}>
@@ -48,14 +54,14 @@ export function HuggingFaceSection({ huggingface }: Props) {
         <div>
           <h2 className={css({ fontSize: 'xl', fontWeight: 'bold', color: '#E8E8ED' })}>AI Models</h2>
           <p className={css({ fontSize: 'xs', color: '#7B7B86', mt: '1' })}>
-            {huggingface.models.length} model{huggingface.models.length !== 1 ? "s" : ""} on Hugging Face ·{" "}
+            {totalModels} model{totalModels !== 1 ? "s" : ""} on Hugging Face ·{" "}
             {formatNumber(huggingface.totalDownloads)} downloads
           </p>
         </div>
       </div>
 
       <div className={css({ display: 'flex', flexDir: 'column', gap: '5' })}>
-        {huggingface.models.map((model, i) => {
+        {displayModels.map((model, i) => {
           const displayTags = getDisplayTags(model.tags);
           const license = getLicense(model.tags);
 
@@ -137,6 +143,20 @@ export function HuggingFaceSection({ huggingface }: Props) {
             </a>
           );
         })}
+
+        {remaining > 0 && (
+          <a
+            href={`https://huggingface.co/${huggingface.models[0].id.split("/")[0]}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cx("group", css({ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2', px: '6', py: '4', rounded: 'xl', bg: '#141418', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', transition: 'all', transitionDuration: '200ms', _hover: { borderColor: 'rgba(255,255,255,0.1)', bg: '#1C1C22' } }))}
+          >
+            <span className={css({ fontSize: 'sm', color: '#7B7B86', transition: 'colors', transitionDuration: '200ms', _groupHover: { color: '#C4C4CC' } })}>
+              +{remaining} more model{remaining !== 1 ? "s" : ""} on Hugging Face
+            </span>
+            <ExternalLinkIcon className={css({ w: '3.5', h: '3.5', color: '#5A5A65', transition: 'colors', transitionDuration: '200ms', _groupHover: { color: '#7B7B86' } })} />
+          </a>
+        )}
       </div>
     </div>
   );

@@ -3,29 +3,26 @@
   "huggingface": {
     "models": [
       {
-        "id": "sgugger/resnet50d",
-        "likes": 6,
-        "downloads": 8,
+        "id": "sgugger/funnel-random-tiny",
+        "likes": 0,
+        "downloads": 5999,
         "tags": [
-          "timm",
+          "transformers",
           "pytorch",
-          "image-classification",
-          "resnet",
-          "dataset:imagenet",
-          "arxiv:1512.03385",
-          "arxiv:1812.01187",
-          "arxiv:1906.02659",
-          "arxiv:2010.15052",
-          "license:apache-2.0",
+          "tf",
+          "funnel",
+          "feature-extraction",
+          "endpoints_compatible",
+          "deploy:azure",
           "region:us"
         ],
-        "pipelineTag": "image-classification",
+        "pipelineTag": "feature-extraction",
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "sgugger/rwkv-7b-pile",
-        "likes": 5,
-        "downloads": 6,
+        "id": "sgugger/rwkv-430M-pile",
+        "likes": 2,
+        "downloads": 2484,
         "tags": [
           "transformers",
           "pytorch",
@@ -34,22 +31,66 @@
           "region:us"
         ],
         "pipelineTag": null,
-        "createdAt": "2023-04-16T21:46:36.000Z"
+        "createdAt": "2023-04-27T21:09:05.000Z"
       },
       {
-        "id": "sgugger/sharded-gpt-j-6B",
-        "likes": 3,
-        "downloads": 10,
+        "id": "sgugger/tiny-distilbert-classification",
+        "likes": 1,
+        "downloads": 1090,
         "tags": [
           "transformers",
           "pytorch",
-          "gptj",
-          "text-generation",
+          "tf",
+          "distilbert",
+          "text-classification",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "sgugger/finetuned-bert-mrpc",
+        "likes": 0,
+        "downloads": 422,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "bert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "license:apache-2.0",
+          "text-embeddings-inference",
           "endpoints_compatible",
           "region:us"
         ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2022-04-08T17:59:26.000Z"
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "sgugger/bert-fine-tuned-cola",
+        "likes": 1,
+        "downloads": 23,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "bert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
         "id": "sgugger/custom-resnet50d",
@@ -89,84 +130,19 @@
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "sgugger/rwkv-430M-pile",
-        "likes": 2,
-        "downloads": 2484,
+        "id": "sgugger/sharded-gpt-j-6B",
+        "likes": 3,
+        "downloads": 10,
         "tags": [
           "transformers",
           "pytorch",
-          "rwkv",
+          "gptj",
+          "text-generation",
           "endpoints_compatible",
           "region:us"
         ],
-        "pipelineTag": null,
-        "createdAt": "2023-04-27T21:09:05.000Z"
-      },
-      {
-        "id": "sgugger/bert-fine-tuned-cola",
-        "likes": 1,
-        "downloads": 23,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tensorboard",
-          "bert",
-          "text-classification",
-          "generated_from_trainer",
-          "dataset:glue",
-          "license:apache-2.0",
-          "model-index",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/bert-like-tokenizer",
-        "likes": 1,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/my-bert-model",
-        "likes": 1,
-        "downloads": 4,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "feature-extraction",
-          "custom_code",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/tiny-distilbert-classification",
-        "likes": 1,
-        "downloads": 1090,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tf",
-          "distilbert",
-          "text-classification",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "deploy:azure",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
+        "pipelineTag": "text-generation",
+        "createdAt": "2022-04-08T17:59:26.000Z"
       },
       {
         "id": "sgugger/bert-finetuned-mrpc",
@@ -192,13 +168,110 @@
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "sgugger/code-search-net-tokenizer",
-        "likes": 0,
-        "downloads": 0,
+        "id": "sgugger/resnet50d",
+        "likes": 6,
+        "downloads": 8,
         "tags": [
+          "timm",
+          "pytorch",
+          "image-classification",
+          "resnet",
+          "dataset:imagenet",
+          "arxiv:1512.03385",
+          "arxiv:1812.01187",
+          "arxiv:1906.02659",
+          "arxiv:2010.15052",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "sgugger/distilbert-base-uncased-finetuned-cola",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "distilbert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "license:apache-2.0",
+          "model-index",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "sgugger/rwkv-7b-pile",
+        "likes": 5,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "rwkv",
+          "endpoints_compatible",
           "region:us"
         ],
         "pipelineTag": null,
+        "createdAt": "2023-04-16T21:46:36.000Z"
+      },
+      {
+        "id": "sgugger/test-upload",
+        "likes": 0,
+        "downloads": 6,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "feature-extraction",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "sgugger/finetuned-bert",
+        "likes": 0,
+        "downloads": 5,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "safetensors",
+          "bert",
+          "text-classification",
+          "generated_from_trainer",
+          "dataset:glue",
+          "license:apache-2.0",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "sgugger/my-bert-model",
+        "likes": 1,
+        "downloads": 4,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "feature-extraction",
+          "custom_code",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
@@ -233,27 +306,6 @@
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "sgugger/distilbert-base-uncased-finetuned-cola",
-        "likes": 0,
-        "downloads": 8,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tensorboard",
-          "distilbert",
-          "text-classification",
-          "generated_from_trainer",
-          "dataset:glue",
-          "license:apache-2.0",
-          "model-index",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
         "id": "sgugger/esberto-small",
         "likes": 0,
         "downloads": 3,
@@ -269,83 +321,6 @@
           "region:us"
         ],
         "pipelineTag": "fill-mask",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/finetuned-bert-mrpc",
-        "likes": 0,
-        "downloads": 422,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tensorboard",
-          "bert",
-          "text-classification",
-          "generated_from_trainer",
-          "dataset:glue",
-          "license:apache-2.0",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/finetuned-bert",
-        "likes": 0,
-        "downloads": 5,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "safetensors",
-          "bert",
-          "text-classification",
-          "generated_from_trainer",
-          "dataset:glue",
-          "license:apache-2.0",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/funnel-random-tiny",
-        "likes": 0,
-        "downloads": 5999,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tf",
-          "funnel",
-          "feature-extraction",
-          "endpoints_compatible",
-          "deploy:azure",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/gpt2-like-tokenizer",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/marian-en-to-fr",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
@@ -384,161 +359,11 @@
         ],
         "pipelineTag": "text-classification",
         "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/my-new-shiny-tokenizer",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/roberta-base-finetuned-squad",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/test-ner",
-        "likes": 0,
-        "downloads": 1,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tensorboard",
-          "bert",
-          "token-classification",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "token-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/test-upload",
-        "likes": 0,
-        "downloads": 6,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "feature-extraction",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/test-upload1",
-        "likes": 0,
-        "downloads": 2,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "distilbert",
-          "text-classification",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "sgugger/bert-sharded",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "feature-extraction",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-22T17:41:48.000Z"
-      },
-      {
-        "id": "sgugger/test-bert-sharded",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "feature-extraction",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-04-07T17:08:04.000Z"
-      },
-      {
-        "id": "sgugger/test-dynamic-pipeline",
-        "likes": 0,
-        "downloads": 2,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "text-classification",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-07-06T22:21:38.000Z"
-      },
-      {
-        "id": "sgugger/pair-classification-tool",
-        "likes": 0,
-        "downloads": 2,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "text-classification",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2023-04-27T18:28:38.000Z"
-      },
-      {
-        "id": "sgugger/push-to-hub-test-2",
-        "likes": 0,
-        "downloads": 2,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "text-classification",
-          "generated_from_trainer",
-          "en",
-          "dataset:glue",
-          "base_model:google-bert/bert-base-cased",
-          "base_model:finetune:google-bert/bert-base-cased",
-          "license:apache-2.0",
-          "model-index",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2023-08-04T15:37:44.000Z"
       }
     ],
-    "totalDownloads": 10130,
-    "totalLikes": 24
+    "totalDownloads": 10121,
+    "totalLikes": 23,
+    "totalModels": 33
   },
   "imageUrl": null
 }

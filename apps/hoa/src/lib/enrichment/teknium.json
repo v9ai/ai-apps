@@ -33,423 +33,6 @@
         "createdAt": "2023-10-29T20:36:39.000Z"
       },
       {
-        "id": "teknium/OpenHermes-2-Mistral-7B",
-        "likes": 256,
-        "downloads": 774,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mistral",
-          "text-generation",
-          "instruct",
-          "finetune",
-          "chatml",
-          "gpt4",
-          "synthetic data",
-          "distillation",
-          "conversational",
-          "en",
-          "base_model:mistralai/Mistral-7B-v0.1",
-          "base_model:finetune:mistralai/Mistral-7B-v0.1",
-          "license:apache-2.0",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us",
-          "deploy:azure"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-10-12T20:07:15.000Z"
-      },
-      {
-        "id": "teknium/Mistral-Trismegistus-7B",
-        "likes": 238,
-        "downloads": 1329,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mistral",
-          "text-generation",
-          "mistral-7b",
-          "instruct",
-          "finetune",
-          "gpt4",
-          "synthetic data",
-          "distillation",
-          "en",
-          "base_model:mistralai/Mistral-7B-v0.1",
-          "base_model:finetune:mistralai/Mistral-7B-v0.1",
-          "license:apache-2.0",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-10-07T00:21:46.000Z"
-      },
-      {
-        "id": "teknium/CollectiveCognition-v1.1-Mistral-7B",
-        "likes": 77,
-        "downloads": 20,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mistral",
-          "text-generation",
-          "mistral-7b",
-          "instruct",
-          "finetune",
-          "gpt4",
-          "synthetic data",
-          "distillation",
-          "sharegpt",
-          "en",
-          "dataset:CollectiveCognition/chats-data-2023-09-27",
-          "base_model:mistralai/Mistral-7B-v0.1",
-          "base_model:finetune:mistralai/Mistral-7B-v0.1",
-          "license:apache-2.0",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "deploy:azure",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-10-04T20:29:59.000Z"
-      },
-      {
-        "id": "teknium/Replit-v2-CodeInstruct-3B",
-        "likes": 71,
-        "downloads": 15,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mpt",
-          "text-generation",
-          "code",
-          "instruct",
-          "self instruct",
-          "custom_code",
-          "dataset:bigcode/the-stack-dedup",
-          "dataset:sahil2801/CodeAlpaca-20k",
-          "dataset:teknium/GPTeacher-CodeInstruct",
-          "license:cc-by-sa-4.0",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-06-01T16:49:11.000Z"
-      },
-      {
-        "id": "teknium/OpenHermes-13B",
-        "likes": 56,
-        "downloads": 1674,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "llama",
-          "text-generation",
-          "llama-2",
-          "instruct",
-          "finetune",
-          "alpaca",
-          "gpt4",
-          "synthetic data",
-          "distillation",
-          "en",
-          "dataset:teknium/openhermes",
-          "base_model:NousResearch/Llama-2-13b-hf",
-          "base_model:finetune:NousResearch/Llama-2-13b-hf",
-          "license:mit",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-09-06T04:36:29.000Z"
-      },
-      {
-        "id": "teknium/Hermes-Trismegistus-Mistral-7B",
-        "likes": 55,
-        "downloads": 14,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mistral",
-          "text-generation",
-          "mistral-7b",
-          "instruct",
-          "finetune",
-          "gpt4",
-          "synthetic data",
-          "distillation",
-          "en",
-          "dataset:teknium/trismegistus-project",
-          "license:apache-2.0",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-11-02T12:10:29.000Z"
-      },
-      {
-        "id": "teknium/Base-GPT4-x-Alpaca-Roleplay-Lora",
-        "likes": 46,
-        "downloads": 41,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "llama",
-          "text-generation",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-04-12T02:21:38.000Z"
-      },
-      {
-        "id": "teknium/Phi-Hermes-1.3B",
-        "likes": 44,
-        "downloads": 17,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "safetensors",
-          "mixformer-sequential",
-          "text-generation",
-          "custom_code",
-          "en",
-          "dataset:teknium/openhermes",
-          "license:other",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-09-13T19:12:40.000Z"
-      },
-      {
-        "id": "teknium/Puffin-Phi-v2",
-        "likes": 39,
-        "downloads": 8,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mixformer-sequential",
-          "text-generation",
-          "custom_code",
-          "en",
-          "dataset:LDJnr/Puffin",
-          "license:other",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-09-12T22:00:45.000Z"
-      },
-      {
-        "id": "teknium/Replit-v1-CodeInstruct-3B",
-        "likes": 36,
-        "downloads": 11,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mpt",
-          "text-generation",
-          "code",
-          "instruct",
-          "self instruct",
-          "custom_code",
-          "dataset:bigcode/the-stack-dedup",
-          "dataset:sahil2801/CodeAlpaca-20k",
-          "dataset:teknium/GPTeacher-CodeInstruct",
-          "license:cc-by-sa-4.0",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-05-25T20:41:19.000Z"
-      },
-      {
-        "id": "teknium/airoboros-mistral2.2-7b",
-        "likes": 36,
-        "downloads": 10,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mistral",
-          "text-generation",
-          "llama-2",
-          "instruct",
-          "finetune",
-          "alpaca",
-          "gpt4",
-          "synthetic data",
-          "distillation",
-          "en",
-          "dataset:jondurbin/airoboros-2.2.1",
-          "license:mit",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-10-03T15:07:51.000Z"
-      },
-      {
-        "id": "teknium/llama-deus-7b-v3-lora",
-        "likes": 33,
-        "downloads": 0,
-        "tags": [
-          "license:mit",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2023-05-15T19:05:01.000Z"
-      },
-      {
-        "id": "teknium/GPT4-x-Alpaca13b-RolePlayLora-4bit-v2",
-        "likes": 24,
-        "downloads": 10,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "llama",
-          "text-generation",
-          "license:mit",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-04-22T20:56:53.000Z"
-      },
-      {
-        "id": "teknium/llama-deus-7b-v3-lora-merged",
-        "likes": 17,
-        "downloads": 15,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "llama",
-          "text-generation",
-          "license:mit",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-05-17T20:14:03.000Z"
-      },
-      {
-        "id": "teknium/CollectiveCognition-v1-Mistral-7B",
-        "likes": 17,
-        "downloads": 27,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mistral",
-          "text-generation",
-          "mistral-7b",
-          "instruct",
-          "finetune",
-          "gpt4",
-          "synthetic data",
-          "distillation",
-          "sharegpt",
-          "en",
-          "dataset:CollectiveCognition/chats-data-2023-09-27",
-          "base_model:mistralai/Mistral-7B-v0.1",
-          "base_model:finetune:mistralai/Mistral-7B-v0.1",
-          "license:apache-2.0",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "deploy:azure",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-10-04T18:49:33.000Z"
-      },
-      {
-        "id": "teknium/Replit-v1-CodeInstruct-3B-fp16",
-        "likes": 14,
-        "downloads": 11,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mpt",
-          "text-generation",
-          "code",
-          "instruct",
-          "self instruct",
-          "custom_code",
-          "dataset:bigcode/the-stack-dedup",
-          "dataset:sahil2801/CodeAlpaca-20k",
-          "dataset:teknium/GPTeacher-CodeInstruct",
-          "license:cc-by-sa-4.0",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-05-26T21:21:25.000Z"
-      },
-      {
-        "id": "teknium/OpenHermes-7B",
-        "likes": 14,
-        "downloads": 21,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "llama",
-          "text-generation",
-          "llama-2",
-          "instruct",
-          "finetune",
-          "alpaca",
-          "gpt4",
-          "synthetic data",
-          "distillation",
-          "en",
-          "dataset:teknium/openhermes",
-          "base_model:NousResearch/Llama-2-7b-hf",
-          "base_model:finetune:NousResearch/Llama-2-7b-hf",
-          "license:mit",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-09-14T10:22:23.000Z"
-      },
-      {
-        "id": "teknium/SD-PrompTune-v1",
-        "likes": 13,
-        "downloads": 10,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "mistral",
-          "text-generation",
-          "license:mit",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-10-18T14:30:36.000Z"
-      },
-      {
-        "id": "teknium/Llama-Deus-7b-Lora",
-        "likes": 8,
-        "downloads": 0,
-        "tags": [
-          "license:mit",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2023-05-02T06:55:53.000Z"
-      },
-      {
         "id": "teknium/Llama-3.1-AlternateTokenizer",
         "likes": 5,
         "downloads": 1893,
@@ -482,6 +65,250 @@
         "createdAt": "2024-07-23T23:50:37.000Z"
       },
       {
+        "id": "teknium/OpenHermes-13B",
+        "likes": 56,
+        "downloads": 1674,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "llama",
+          "text-generation",
+          "llama-2",
+          "instruct",
+          "finetune",
+          "alpaca",
+          "gpt4",
+          "synthetic data",
+          "distillation",
+          "en",
+          "dataset:teknium/openhermes",
+          "base_model:NousResearch/Llama-2-13b-hf",
+          "base_model:finetune:NousResearch/Llama-2-13b-hf",
+          "license:mit",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-09-06T04:36:29.000Z"
+      },
+      {
+        "id": "teknium/Mistral-Trismegistus-7B",
+        "likes": 238,
+        "downloads": 1329,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "mistral-7b",
+          "instruct",
+          "finetune",
+          "gpt4",
+          "synthetic data",
+          "distillation",
+          "en",
+          "base_model:mistralai/Mistral-7B-v0.1",
+          "base_model:finetune:mistralai/Mistral-7B-v0.1",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-10-07T00:21:46.000Z"
+      },
+      {
+        "id": "teknium/OpenHermes-2-Mistral-7B",
+        "likes": 256,
+        "downloads": 774,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "instruct",
+          "finetune",
+          "chatml",
+          "gpt4",
+          "synthetic data",
+          "distillation",
+          "conversational",
+          "en",
+          "base_model:mistralai/Mistral-7B-v0.1",
+          "base_model:finetune:mistralai/Mistral-7B-v0.1",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-10-12T20:07:15.000Z"
+      },
+      {
+        "id": "teknium/Base-GPT4-x-Alpaca-Roleplay-Lora",
+        "likes": 46,
+        "downloads": 41,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "llama",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-04-12T02:21:38.000Z"
+      },
+      {
+        "id": "teknium/CollectiveCognition-v1-Mistral-7B",
+        "likes": 17,
+        "downloads": 27,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "mistral-7b",
+          "instruct",
+          "finetune",
+          "gpt4",
+          "synthetic data",
+          "distillation",
+          "sharegpt",
+          "en",
+          "dataset:CollectiveCognition/chats-data-2023-09-27",
+          "base_model:mistralai/Mistral-7B-v0.1",
+          "base_model:finetune:mistralai/Mistral-7B-v0.1",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-10-04T18:49:33.000Z"
+      },
+      {
+        "id": "teknium/OpenHermes-7B",
+        "likes": 14,
+        "downloads": 21,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "llama",
+          "text-generation",
+          "llama-2",
+          "instruct",
+          "finetune",
+          "alpaca",
+          "gpt4",
+          "synthetic data",
+          "distillation",
+          "en",
+          "dataset:teknium/openhermes",
+          "base_model:NousResearch/Llama-2-7b-hf",
+          "base_model:finetune:NousResearch/Llama-2-7b-hf",
+          "license:mit",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-09-14T10:22:23.000Z"
+      },
+      {
+        "id": "teknium/CollectiveCognition-v1.1-Mistral-7B",
+        "likes": 77,
+        "downloads": 20,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "mistral-7b",
+          "instruct",
+          "finetune",
+          "gpt4",
+          "synthetic data",
+          "distillation",
+          "sharegpt",
+          "en",
+          "dataset:CollectiveCognition/chats-data-2023-09-27",
+          "base_model:mistralai/Mistral-7B-v0.1",
+          "base_model:finetune:mistralai/Mistral-7B-v0.1",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-10-04T20:29:59.000Z"
+      },
+      {
+        "id": "teknium/Phi-Hermes-1.3B",
+        "likes": 44,
+        "downloads": 17,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "safetensors",
+          "mixformer-sequential",
+          "text-generation",
+          "custom_code",
+          "en",
+          "dataset:teknium/openhermes",
+          "license:other",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-09-13T19:12:40.000Z"
+      },
+      {
+        "id": "teknium/Replit-v2-CodeInstruct-3B",
+        "likes": 71,
+        "downloads": 15,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mpt",
+          "text-generation",
+          "code",
+          "instruct",
+          "self instruct",
+          "custom_code",
+          "dataset:bigcode/the-stack-dedup",
+          "dataset:sahil2801/CodeAlpaca-20k",
+          "dataset:teknium/GPTeacher-CodeInstruct",
+          "license:cc-by-sa-4.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-06-01T16:49:11.000Z"
+      },
+      {
+        "id": "teknium/llama-deus-7b-v3-lora-merged",
+        "likes": 17,
+        "downloads": 15,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "llama",
+          "text-generation",
+          "license:mit",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-05-17T20:14:03.000Z"
+      },
+      {
         "id": "teknium/MPT-7B-Mercury-Experimental",
         "likes": 4,
         "downloads": 15,
@@ -500,25 +327,87 @@
         "createdAt": "2023-06-12T02:49:56.000Z"
       },
       {
-        "id": "teknium/Puffin-Phi",
-        "likes": 4,
-        "downloads": 6,
+        "id": "teknium/Hermes-Trismegistus-Mistral-7B",
+        "likes": 55,
+        "downloads": 14,
         "tags": [
           "transformers",
           "pytorch",
-          "mixformer-sequential",
+          "mistral",
           "text-generation",
-          "custom_code",
+          "mistral-7b",
+          "instruct",
+          "finetune",
+          "gpt4",
+          "synthetic data",
+          "distillation",
+          "en",
+          "dataset:teknium/trismegistus-project",
+          "license:apache-2.0",
+          "text-generation-inference",
+          "endpoints_compatible",
           "region:us"
         ],
         "pipelineTag": "text-generation",
-        "createdAt": "2023-09-12T05:58:25.000Z"
+        "createdAt": "2023-11-02T12:10:29.000Z"
       },
       {
-        "id": "teknium/OpenHermes-7B-adapter",
-        "likes": 3,
-        "downloads": 0,
+        "id": "teknium/Replit-v1-CodeInstruct-3B",
+        "likes": 36,
+        "downloads": 11,
         "tags": [
+          "transformers",
+          "pytorch",
+          "mpt",
+          "text-generation",
+          "code",
+          "instruct",
+          "self instruct",
+          "custom_code",
+          "dataset:bigcode/the-stack-dedup",
+          "dataset:sahil2801/CodeAlpaca-20k",
+          "dataset:teknium/GPTeacher-CodeInstruct",
+          "license:cc-by-sa-4.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-05-25T20:41:19.000Z"
+      },
+      {
+        "id": "teknium/Replit-v1-CodeInstruct-3B-fp16",
+        "likes": 14,
+        "downloads": 11,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mpt",
+          "text-generation",
+          "code",
+          "instruct",
+          "self instruct",
+          "custom_code",
+          "dataset:bigcode/the-stack-dedup",
+          "dataset:sahil2801/CodeAlpaca-20k",
+          "dataset:teknium/GPTeacher-CodeInstruct",
+          "license:cc-by-sa-4.0",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-05-26T21:21:25.000Z"
+      },
+      {
+        "id": "teknium/airoboros-mistral2.2-7b",
+        "likes": 36,
+        "downloads": 10,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
           "llama-2",
           "instruct",
           "finetune",
@@ -527,98 +416,71 @@
           "synthetic data",
           "distillation",
           "en",
-          "dataset:teknium/openhermes",
-          "base_model:NousResearch/Llama-2-7b-hf",
-          "base_model:finetune:NousResearch/Llama-2-7b-hf",
+          "dataset:jondurbin/airoboros-2.2.1",
           "license:mit",
+          "text-generation-inference",
+          "endpoints_compatible",
           "region:us"
         ],
-        "pipelineTag": null,
-        "createdAt": "2023-09-14T12:09:32.000Z"
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-10-03T15:07:51.000Z"
       },
       {
-        "id": "teknium/llama-deus-7b-v2-lora",
-        "likes": 2,
-        "downloads": 0,
+        "id": "teknium/GPT4-x-Alpaca13b-RolePlayLora-4bit-v2",
+        "likes": 24,
+        "downloads": 10,
         "tags": [
+          "transformers",
+          "pytorch",
+          "llama",
+          "text-generation",
+          "license:mit",
+          "text-generation-inference",
+          "endpoints_compatible",
           "region:us"
         ],
-        "pipelineTag": null,
-        "createdAt": "2023-05-06T06:22:23.000Z"
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-04-22T20:56:53.000Z"
       },
       {
-        "id": "teknium/DeepHermes-3-Mistral-24B-Preview-GGUF",
-        "likes": 2,
-        "downloads": 0,
+        "id": "teknium/SD-PrompTune-v1",
+        "likes": 13,
+        "downloads": 10,
         "tags": [
+          "transformers",
+          "pytorch",
+          "mistral",
+          "text-generation",
+          "license:mit",
+          "text-generation-inference",
+          "endpoints_compatible",
           "region:us"
         ],
-        "pipelineTag": null,
-        "createdAt": "2025-03-11T10:45:21.000Z"
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-10-18T14:30:36.000Z"
       },
       {
-        "id": "teknium/DeepHermes-3-Llama-3-8B-Preview-GRPO-1",
-        "likes": 0,
-        "downloads": 0,
+        "id": "teknium/Puffin-Phi-v2",
+        "likes": 39,
+        "downloads": 8,
         "tags": [
+          "transformers",
+          "pytorch",
+          "mixformer-sequential",
+          "text-generation",
+          "custom_code",
+          "en",
+          "dataset:LDJnr/Puffin",
+          "license:other",
           "region:us"
         ],
-        "pipelineTag": null,
-        "createdAt": "2025-02-14T09:11:20.000Z"
-      },
-      {
-        "id": "teknium/DeepHermes-3-Llama-3-3B-Preview-GRPO-1",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2025-02-16T22:21:59.000Z"
-      },
-      {
-        "id": "teknium/DeepHermes-3-Llama-3-3B-Preview-GRPO-2",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2025-02-16T23:14:52.000Z"
-      },
-      {
-        "id": "teknium/DeepHermes-3-Llama-3-3B-RC1-GRPO-2",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2025-02-16T23:16:47.000Z"
-      },
-      {
-        "id": "teknium/DeepHermes-3-Llama-3-3B-RC2-GRPO-1",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2025-02-16T23:16:50.000Z"
-      },
-      {
-        "id": "teknium/meta-llama-tok",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2025-02-26T05:38:24.000Z"
+        "pipelineTag": "text-generation",
+        "createdAt": "2023-09-12T22:00:45.000Z"
       }
     ],
-    "totalDownloads": 147306,
-    "totalLikes": 2009
+    "totalDownloads": 147300,
+    "totalLikes": 1957,
+    "totalModels": 32
   },
   "imageUrl": null
 }

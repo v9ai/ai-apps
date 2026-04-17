@@ -353,17 +353,6 @@
   "huggingface": {
     "models": [
       {
-        "id": "karpathy/tinyllamas",
-        "likes": 184,
-        "downloads": 0,
-        "tags": [
-          "license:mit",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2023-07-26T22:31:12.000Z"
-      },
-      {
         "id": "karpathy/nanochat-d32",
         "likes": 88,
         "downloads": 1258,
@@ -373,33 +362,6 @@
         ],
         "pipelineTag": null,
         "createdAt": "2025-10-16T01:34:08.000Z"
-      },
-      {
-        "id": "karpathy/nanochat-d34",
-        "likes": 48,
-        "downloads": 0,
-        "tags": [
-          "license:mit",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2025-11-20T16:32:13.000Z"
-      },
-      {
-        "id": "karpathy/gpt2_1558M_final2_hf",
-        "likes": 17,
-        "downloads": 91,
-        "tags": [
-          "transformers",
-          "safetensors",
-          "gpt2",
-          "text-generation",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2024-07-02T16:25:28.000Z"
       },
       {
         "id": "karpathy/gpt2_1558M_final4_hf",
@@ -416,6 +378,22 @@
         ],
         "pipelineTag": "text-generation",
         "createdAt": "2024-07-12T18:35:46.000Z"
+      },
+      {
+        "id": "karpathy/gpt2_1558M_final2_hf",
+        "likes": 17,
+        "downloads": 91,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt2",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2024-07-02T16:25:28.000Z"
       },
       {
         "id": "karpathy/gpt2_1558M_final3_hf",
@@ -449,9 +427,32 @@
         ],
         "pipelineTag": "text-generation",
         "createdAt": "2024-06-14T17:25:59.000Z"
+      },
+      {
+        "id": "karpathy/tinyllamas",
+        "likes": 184,
+        "downloads": 0,
+        "tags": [
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2023-07-26T22:31:12.000Z"
+      },
+      {
+        "id": "karpathy/nanochat-d34",
+        "likes": 48,
+        "downloads": 0,
+        "tags": [
+          "license:mit",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2025-11-20T16:32:13.000Z"
       }
     ],
     "totalDownloads": 1845,
-    "totalLikes": 359
+    "totalLikes": 359,
+    "totalModels": 7
   }
 }

@@ -3,33 +3,6 @@
   "huggingface": {
     "models": [
       {
-        "id": "lysandre/onnx-bart",
-        "likes": 4,
-        "downloads": 0,
-        "tags": [
-          "onnx",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/tiny-vit-random",
-        "likes": 3,
-        "downloads": 1088,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "vit",
-          "image-classification",
-          "endpoints_compatible",
-          "deploy:azure",
-          "region:us"
-        ],
-        "pipelineTag": "image-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
         "id": "lysandre/arxiv-nlp",
         "likes": 2,
         "downloads": 4812,
@@ -45,514 +18,6 @@
           "region:us"
         ],
         "pipelineTag": "text-generation",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/nllb-lid218e",
-        "likes": 2,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2023-04-21T09:06:03.000Z"
-      },
-      {
-        "id": "lysandre/Rose-Brain",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/arxiv",
-        "likes": 0,
-        "downloads": 9,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "jax",
-          "gpt2",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/bidaf-elmo-model-2020.03.19",
-        "likes": 0,
-        "downloads": 3,
-        "tags": [
-          "allennlp",
-          "question-answering",
-          "region:us"
-        ],
-        "pipelineTag": "question-answering",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/brand-new-bert-model",
-        "likes": 0,
-        "downloads": 4,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "feature-extraction",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/brand-new-model",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/custom-model",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/dum",
-        "likes": 0,
-        "downloads": 9,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "text-classification",
-          "OpenCLIP",
-          "en",
-          "dataset:sst2",
-          "license:apache-2.0",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/dummy-hf-hub",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/dummy-model",
-        "likes": 0,
-        "downloads": 3,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "jax",
-          "bert",
-          "feature-extraction",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "deploy:azure",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/dummy-test",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "pytorch",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/dummy-test2",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/dummy",
-        "likes": 0,
-        "downloads": 7,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "text-classification",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/elmo-2x4096_512_2048cnn_2xhighway",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/elmo",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/lysandre",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/my-bert-model",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/my-cool-arxiv-model",
-        "likes": 0,
-        "downloads": 5,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "gpt2",
-          "text-generation",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/my-cool-arxiv-model2",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/ner-elmo.2021-02-12",
-        "likes": 0,
-        "downloads": 2,
-        "tags": [
-          "transformers",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/new-dummy-model",
-        "likes": 0,
-        "downloads": 8,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tf",
-          "distilbert",
-          "text-classification",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/pair-classification-roberta-mnli",
-        "likes": 0,
-        "downloads": 2,
-        "tags": [
-          "transformers",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/random-model",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/random",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/tapas-temporary-repo",
-        "likes": 0,
-        "downloads": 8,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tapas",
-          "table-question-answering",
-          "en",
-          "dataset:sqa",
-          "arxiv:2004.02349",
-          "arxiv:2010.00571",
-          "license:apache-2.0",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "table-question-answering",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/temp-bert2",
-        "likes": 0,
-        "downloads": 5,
-        "tags": [
-          "transformers",
-          "bert",
-          "fill-mask",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "fill-mask",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/test-bin-bug2",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/test-elmo-tiny",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/test-model",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/test-simple-tagger-tiny",
-        "likes": 0,
-        "downloads": 174,
-        "tags": [
-          "transformers",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/test",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/test_dynamic_model",
-        "likes": 0,
-        "downloads": 7,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "new-model",
-          "feature-extraction",
-          "custom_code",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/tests",
-        "likes": 0,
-        "downloads": 12,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tensorboard",
-          "distilbert",
-          "feature-extraction",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/text-files",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/tiny-bert-random",
-        "likes": 0,
-        "downloads": 690,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tf",
-          "jax",
-          "bert",
-          "pretraining",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/tiny-distil",
-        "likes": 0,
-        "downloads": 2,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "distilbert",
-          "feature-extraction",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/tiny-electra-random",
-        "likes": 0,
-        "downloads": 9,
-        "tags": [
-          "transformers",
-          "tf",
-          "electra",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/tiny-longformer-random",
-        "likes": 0,
-        "downloads": 11,
-        "tags": [
-          "transformers",
-          "tf",
-          "longformer",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/tiny-random-detr",
-        "likes": 0,
-        "downloads": 6,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "detr",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/tiny-roberta-random",
-        "likes": 0,
-        "downloads": 5,
-        "tags": [
-          "transformers",
-          "tf",
-          "roberta",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
@@ -586,159 +51,49 @@
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "lysandre/transformer-model",
-        "likes": 0,
-        "downloads": 0,
+        "id": "lysandre/tiny-vit-random",
+        "likes": 3,
+        "downloads": 1088,
         "tags": [
+          "transformers",
+          "pytorch",
+          "vit",
+          "image-classification",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "lysandre/tiny-bert-random",
+        "likes": 0,
+        "downloads": 690,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "jax",
+          "bert",
+          "pretraining",
+          "endpoints_compatible",
           "region:us"
         ],
         "pipelineTag": null,
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "lysandre/xlnet-base-cased",
+        "id": "lysandre/test-simple-tagger-tiny",
         "likes": 0,
-        "downloads": 0,
+        "downloads": 174,
         "tags": [
+          "transformers",
+          "endpoints_compatible",
           "region:us"
         ],
         "pipelineTag": null,
         "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "lysandre/okok",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-08T14:30:26.000Z"
-      },
-      {
-        "id": "lysandre/okok2",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-08T14:54:08.000Z"
-      },
-      {
-        "id": "lysandre/okok3",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-08T14:54:21.000Z"
-      },
-      {
-        "id": "lysandre/sharded-repo",
-        "likes": 0,
-        "downloads": 7,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "feature-extraction",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-23T14:16:11.000Z"
-      },
-      {
-        "id": "lysandre/test-bert-sharded",
-        "likes": 0,
-        "downloads": 8,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "feature-extraction",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-04-07T17:14:53.000Z"
-      },
-      {
-        "id": "lysandre/test-save-keras-sequential",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "keras",
-          "tf-keras",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-04-08T19:32:35.000Z"
-      },
-      {
-        "id": "lysandre/test-save-keras-sequential-seconsd-try",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "keras",
-          "tf-keras",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-04-08T20:01:59.000Z"
-      },
-      {
-        "id": "lysandre/test-bin-bug-4",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-04-08T20:05:01.000Z"
-      },
-      {
-        "id": "lysandre/test-dynamic-pipeline",
-        "likes": 0,
-        "downloads": 12,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "text-classification",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-07-12T14:19:47.000Z"
-      },
-      {
-        "id": "lysandre/branch-repo",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-07-26T08:47:34.000Z"
-      },
-      {
-        "id": "lysandre/test-upload-folder",
-        "likes": 0,
-        "downloads": 10,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "bert",
-          "feature-extraction",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-08-01T10:27:41.000Z"
       },
       {
         "id": "lysandre/CLIP-ViT-L-14-laion2B-s32B-b82K",
@@ -759,95 +114,52 @@
         "createdAt": "2022-12-16T20:40:28.000Z"
       },
       {
-        "id": "lysandre/text-to-speech-pipeline",
+        "id": "lysandre/bert-test",
         "likes": 0,
-        "downloads": 10,
+        "downloads": 15,
         "tags": [
           "transformers",
           "pytorch",
-          "speecht5",
-          "text-to-audio",
+          "bert",
+          "feature-extraction",
+          "arxiv:1910.09700",
           "endpoints_compatible",
           "region:us"
         ],
-        "pipelineTag": "text-to-audio",
-        "createdAt": "2023-04-17T19:14:48.000Z"
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2024-03-01T08:53:23.000Z"
       },
       {
-        "id": "lysandre/roast",
+        "id": "lysandre/tests",
         "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2023-09-05T18:44:10.000Z"
-      },
-      {
-        "id": "lysandre/folder-1",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2023-09-05T18:50:52.000Z"
-      },
-      {
-        "id": "lysandre/folder-2",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2023-09-05T18:53:17.000Z"
-      },
-      {
-        "id": "lysandre/testtest",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2023-11-23T11:40:01.000Z"
-      },
-      {
-        "id": "lysandre/test-trainer",
-        "likes": 0,
-        "downloads": 3,
+        "downloads": 12,
         "tags": [
           "transformers",
           "pytorch",
-          "safetensors",
-          "generated_from_trainer",
+          "tensorboard",
+          "distilbert",
+          "feature-extraction",
           "endpoints_compatible",
           "region:us"
         ],
-        "pipelineTag": null,
-        "createdAt": "2023-11-23T17:12:48.000Z"
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "lysandre/awesome-clm",
+        "id": "lysandre/test-dynamic-pipeline",
         "likes": 0,
-        "downloads": 3,
+        "downloads": 12,
         "tags": [
           "transformers",
           "pytorch",
-          "safetensors",
-          "gpt2",
-          "text-generation",
-          "generated_from_trainer",
-          "base_model:distilbert/distilgpt2",
-          "base_model:finetune:distilbert/distilgpt2",
-          "license:apache-2.0",
-          "text-generation-inference",
+          "bert",
+          "text-classification",
+          "text-embeddings-inference",
           "endpoints_compatible",
           "region:us"
         ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2023-11-24T15:59:19.000Z"
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-07-12T14:19:47.000Z"
       },
       {
         "id": "lysandre/my_awesome_eli5_clm-model",
@@ -871,66 +183,153 @@
         "createdAt": "2023-11-24T16:08:32.000Z"
       },
       {
-        "id": "lysandre/test-hub-mixin",
+        "id": "lysandre/tiny-longformer-random",
         "likes": 0,
-        "downloads": 5,
+        "downloads": 11,
         "tags": [
           "transformers",
-          "pytorch",
+          "tf",
+          "longformer",
           "endpoints_compatible",
           "region:us"
         ],
         "pipelineTag": null,
-        "createdAt": "2024-02-22T09:30:00.000Z"
+        "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "lysandre/my-awesome-model",
+        "id": "lysandre/test-upload-folder",
         "likes": 0,
-        "downloads": 5,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2024-02-22T09:46:15.000Z"
-      },
-      {
-        "id": "lysandre/bert-test",
-        "likes": 0,
-        "downloads": 15,
+        "downloads": 10,
         "tags": [
           "transformers",
           "pytorch",
           "bert",
           "feature-extraction",
-          "arxiv:1910.09700",
           "endpoints_compatible",
           "region:us"
         ],
         "pipelineTag": "feature-extraction",
-        "createdAt": "2024-03-01T08:53:23.000Z"
+        "createdAt": "2022-08-01T10:27:41.000Z"
       },
       {
-        "id": "lysandre/test-3",
+        "id": "lysandre/text-to-speech-pipeline",
         "likes": 0,
-        "downloads": 3,
+        "downloads": 10,
         "tags": [
           "transformers",
-          "safetensors",
+          "pytorch",
+          "speecht5",
+          "text-to-audio",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-audio",
+        "createdAt": "2023-04-17T19:14:48.000Z"
+      },
+      {
+        "id": "lysandre/arxiv",
+        "likes": 0,
+        "downloads": 9,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "jax",
+          "gpt2",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "lysandre/dum",
+        "likes": 0,
+        "downloads": 9,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "bert",
+          "text-classification",
+          "OpenCLIP",
+          "en",
+          "dataset:sst2",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "lysandre/tiny-electra-random",
+        "likes": 0,
+        "downloads": 9,
+        "tags": [
+          "transformers",
+          "tf",
+          "electra",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "lysandre/new-dummy-model",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "distilbert",
+          "text-classification",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "lysandre/tapas-temporary-repo",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tapas",
+          "table-question-answering",
+          "en",
+          "dataset:sqa",
+          "arxiv:2004.02349",
+          "arxiv:2010.00571",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "table-question-answering",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "lysandre/test-bert-sharded",
+        "likes": 0,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "pytorch",
           "bert",
           "feature-extraction",
-          "arxiv:1910.09700",
           "endpoints_compatible",
           "region:us"
         ],
         "pipelineTag": "feature-extraction",
-        "createdAt": "2024-08-13T05:57:16.000Z"
+        "createdAt": "2022-04-07T17:14:53.000Z"
       }
     ],
-    "totalDownloads": 11051,
-    "totalLikes": 11
+    "totalDownloads": 10974,
+    "totalLikes": 5,
+    "totalModels": 71
   },
   "imageUrl": null
 }

@@ -3,9 +3,39 @@
   "huggingface": {
     "models": [
       {
+        "id": "thomwolf/vqgan_imagenet_f16_1024",
+        "likes": 0,
+        "downloads": 17,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "vqgan_model",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
         "id": "thomwolf/codeparrot",
         "likes": 1,
         "downloads": 14,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "gpt2",
+          "text-generation",
+          "text-generation-inference",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "text-generation",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "thomwolf/codeparrot-small",
+        "likes": 0,
+        "downloads": 13,
         "tags": [
           "transformers",
           "pytorch",
@@ -29,40 +59,10 @@
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "thomwolf/codeparrot-small",
-        "likes": 0,
-        "downloads": 13,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "gpt2",
-          "text-generation",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
         "id": "thomwolf/test-model",
         "likes": 0,
         "downloads": 0,
         "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "thomwolf/vqgan_imagenet_f16_1024",
-        "likes": 0,
-        "downloads": 17,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "vqgan_model",
-          "endpoints_compatible",
           "region:us"
         ],
         "pipelineTag": null,
@@ -90,7 +90,8 @@
       }
     ],
     "totalDownloads": 44,
-    "totalLikes": 1
+    "totalLikes": 1,
+    "totalModels": 7
   },
   "imageUrl": null
 }

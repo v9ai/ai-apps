@@ -3,54 +3,59 @@
   "huggingface": {
     "models": [
       {
-        "id": "julien-c/hotdog-not-hotdog",
-        "likes": 36,
-        "downloads": 4392,
+        "id": "julien-c/dummy-unknown",
+        "likes": 1,
+        "downloads": 525617,
         "tags": [
           "transformers",
           "pytorch",
-          "tensorboard",
-          "coreml",
-          "vit",
-          "image-classification",
-          "huggingpics",
-          "model-index",
+          "tf",
+          "jax",
+          "roberta",
+          "fill-mask",
+          "ci",
           "endpoints_compatible",
+          "deploy:azure",
           "region:us"
         ],
-        "pipelineTag": "image-classification",
+        "pipelineTag": "fill-mask",
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "julien-c/wine-quality",
-        "likes": 20,
-        "downloads": 96,
+        "id": "julien-c/DPRNNTasNet-ks16_WHAM_sepclean",
+        "likes": 2,
+        "downloads": 24860,
         "tags": [
-          "sklearn",
-          "joblib",
-          "tabular-classification",
-          "dataset:wine-quality",
-          "dataset:lvwerra/red-wine",
-          "region:us"
-        ],
-        "pipelineTag": "tabular-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/voice-activity-detection",
-        "likes": 17,
-        "downloads": 0,
-        "tags": [
+          "asteroid",
           "pytorch",
-          "pyannote",
+          "audio-to-audio",
           "audio",
-          "voice-activity-detection",
-          "dataset:dihard",
-          "arxiv:1910.10655",
-          "license:mit",
+          "audio-source-separation",
+          "dataset:wham",
+          "dataset:sep_clean",
+          "arxiv:2005.04132",
+          "license:cc-by-sa-4.0",
           "region:us"
         ],
-        "pipelineTag": "voice-activity-detection",
+        "pipelineTag": "audio-to-audio",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "julien-c/bert-xsmall-dummy",
+        "likes": 0,
+        "downloads": 20391,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "jax",
+          "bert",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "fill-mask",
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
@@ -70,6 +75,159 @@
         ],
         "pipelineTag": "fill-mask",
         "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "julien-c/dummy-diff-tokenizer",
+        "likes": 0,
+        "downloads": 6769,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tf",
+          "jax",
+          "roberta",
+          "fill-mask",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipelineTag": "fill-mask",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "julien-c/hotdog-not-hotdog",
+        "likes": 36,
+        "downloads": 4392,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "tensorboard",
+          "coreml",
+          "vit",
+          "image-classification",
+          "huggingpics",
+          "model-index",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "image-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "julien-c/fasttext-language-id",
+        "likes": 4,
+        "downloads": 2298,
+        "tags": [
+          "fasttext",
+          "multilingual",
+          "dataset:wikipedia",
+          "dataset:tatoeba",
+          "dataset:setimes",
+          "arxiv:1607.01759",
+          "arxiv:1612.03651",
+          "license:cc-by-sa-4.0",
+          "region:us"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "julien-c/Qwen3.5-4B-uncensored-GGUF",
+        "likes": 2,
+        "downloads": 1726,
+        "tags": [
+          "gguf",
+          "qwen3_5",
+          "llama.cpp",
+          "unsloth",
+          "vision-language-model",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipelineTag": null,
+        "createdAt": "2026-03-18T17:48:14.000Z"
+      },
+      {
+        "id": "julien-c/wine-quality",
+        "likes": 20,
+        "downloads": 96,
+        "tags": [
+          "sklearn",
+          "joblib",
+          "tabular-classification",
+          "dataset:wine-quality",
+          "dataset:lvwerra/red-wine",
+          "region:us"
+        ],
+        "pipelineTag": "tabular-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "julien-c/EsperBERTo-small-pos",
+        "likes": 1,
+        "downloads": 46,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "jax",
+          "onnx",
+          "safetensors",
+          "roberta",
+          "token-classification",
+          "eo",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "julien-c/flair-ner",
+        "likes": 0,
+        "downloads": 22,
+        "tags": [
+          "flair",
+          "pytorch",
+          "token-classification",
+          "sequence-tagger-model",
+          "en",
+          "dataset:conll2003",
+          "region:us"
+        ],
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "julien-c/autotrain-dreambooth-marsupilami",
+        "likes": 1,
+        "downloads": 20,
+        "tags": [
+          "diffusers",
+          "safetensors",
+          "autotrain",
+          "stable-diffusion",
+          "text-to-image",
+          "dataset:julien-c/autotrain-dreambooth-marsupilami-data",
+          "co2_eq_emissions",
+          "region:us"
+        ],
+        "pipelineTag": "text-to-image",
+        "createdAt": "2022-12-09T15:11:34.000Z"
+      },
+      {
+        "id": "julien-c/skops-digits",
+        "likes": 0,
+        "downloads": 11,
+        "tags": [
+          "sklearn",
+          "joblib",
+          "tabular-classification",
+          "skops",
+          "region:us"
+        ],
+        "pipelineTag": "tabular-classification",
+        "createdAt": "2022-08-09T21:07:05.000Z"
       },
       {
         "id": "julien-c/Mistral-7B-Neural-Story-mix",
@@ -96,42 +254,6 @@
         "createdAt": "2024-01-03T11:20:43.000Z"
       },
       {
-        "id": "julien-c/fofr-sdxl-emoji",
-        "likes": 5,
-        "downloads": 0,
-        "tags": [
-          "diffusers",
-          "text-to-image",
-          "stable-diffusion",
-          "lora",
-          "base_model:stabilityai/stable-diffusion-xl-base-1.0",
-          "base_model:adapter:stabilityai/stable-diffusion-xl-base-1.0",
-          "license:creativeml-openrail-m",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-to-image",
-        "createdAt": "2024-06-25T11:52:47.000Z"
-      },
-      {
-        "id": "julien-c/fasttext-language-id",
-        "likes": 4,
-        "downloads": 2298,
-        "tags": [
-          "fasttext",
-          "multilingual",
-          "dataset:wikipedia",
-          "dataset:tatoeba",
-          "dataset:setimes",
-          "arxiv:1607.01759",
-          "arxiv:1612.03651",
-          "license:cc-by-sa-4.0",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
         "id": "julien-c/reactiongif-roberta",
         "likes": 3,
         "downloads": 9,
@@ -154,484 +276,6 @@
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "julien-c/DPRNNTasNet-ks16_WHAM_sepclean",
-        "likes": 2,
-        "downloads": 24860,
-        "tags": [
-          "asteroid",
-          "pytorch",
-          "audio-to-audio",
-          "audio",
-          "audio-source-separation",
-          "dataset:wham",
-          "dataset:sep_clean",
-          "arxiv:2005.04132",
-          "license:cc-by-sa-4.0",
-          "region:us"
-        ],
-        "pipelineTag": "audio-to-audio",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/distilbert-feature-extraction",
-        "likes": 2,
-        "downloads": 7,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "distilbert",
-          "feature-extraction",
-          "text-embeddings-inference",
-          "endpoints_compatible",
-          "deploy:azure",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/ljspeech_tts_train_tacotron2_raw_phn_tacotron_g2p_en_no_space_train",
-        "likes": 2,
-        "downloads": 4,
-        "tags": [
-          "espnet",
-          "audio",
-          "text-to-speech",
-          "en",
-          "dataset:ljspeech",
-          "arxiv:1804.00015",
-          "license:cc-by-4.0",
-          "region:us"
-        ],
-        "pipelineTag": "text-to-speech",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/tensorboard-traces",
-        "likes": 2,
-        "downloads": 0,
-        "tags": [
-          "tensorboard",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/Qwen3.5-4B-uncensored-GGUF",
-        "likes": 2,
-        "downloads": 1726,
-        "tags": [
-          "gguf",
-          "qwen3_5",
-          "llama.cpp",
-          "unsloth",
-          "vision-language-model",
-          "endpoints_compatible",
-          "region:us",
-          "conversational"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2026-03-18T17:48:14.000Z"
-      },
-      {
-        "id": "julien-c/EsperBERTo-small-pos",
-        "likes": 1,
-        "downloads": 46,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "jax",
-          "onnx",
-          "safetensors",
-          "roberta",
-          "token-classification",
-          "eo",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "token-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/dummy-for-flat",
-        "likes": 1,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/dummy-unknown",
-        "likes": 1,
-        "downloads": 525617,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tf",
-          "jax",
-          "roberta",
-          "fill-mask",
-          "ci",
-          "endpoints_compatible",
-          "deploy:azure",
-          "region:us"
-        ],
-        "pipelineTag": "fill-mask",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/roberta-threejs",
-        "likes": 1,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/pokemon-predict-hp",
-        "likes": 1,
-        "downloads": 0,
-        "tags": [
-          "mlconsole",
-          "tabular-regression",
-          "dataset:julien-c/kaggle-rounakbanik-pokemon",
-          "license:apache-2.0",
-          "model-index",
-          "region:us"
-        ],
-        "pipelineTag": "tabular-regression",
-        "createdAt": "2022-10-10T08:28:52.000Z"
-      },
-      {
-        "id": "julien-c/avocado-prices",
-        "likes": 1,
-        "downloads": 0,
-        "tags": [
-          "mlconsole",
-          "tabular-regression",
-          "dataset:nateraw/avocado-prices",
-          "license:apache-2.0",
-          "model-index",
-          "region:us"
-        ],
-        "pipelineTag": "tabular-regression",
-        "createdAt": "2022-10-13T08:34:56.000Z"
-      },
-      {
-        "id": "julien-c/autotrain-dreambooth-marsupilami",
-        "likes": 1,
-        "downloads": 20,
-        "tags": [
-          "diffusers",
-          "safetensors",
-          "autotrain",
-          "stable-diffusion",
-          "text-to-image",
-          "dataset:julien-c/autotrain-dreambooth-marsupilami-data",
-          "co2_eq_emissions",
-          "region:us"
-        ],
-        "pipelineTag": "text-to-image",
-        "createdAt": "2022-12-09T15:11:34.000Z"
-      },
-      {
-        "id": "julien-c/onnx-opus-mt-en-eo",
-        "likes": 1,
-        "downloads": 1,
-        "tags": [
-          "transformers.js",
-          "onnx",
-          "marian",
-          "text2text-generation",
-          "translation",
-          "license:apache-2.0",
-          "region:us"
-        ],
-        "pipelineTag": "translation",
-        "createdAt": "2023-06-29T09:26:17.000Z"
-      },
-      {
-        "id": "julien-c/Qwen3-4B",
-        "likes": 1,
-        "downloads": 4,
-        "tags": [
-          "transformers",
-          "safetensors",
-          "qwen3",
-          "text-generation",
-          "conversational",
-          "arxiv:2309.00071",
-          "arxiv:2505.09388",
-          "base_model:Qwen/Qwen3-4B-Base",
-          "base_model:finetune:Qwen/Qwen3-4B-Base",
-          "license:apache-2.0",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2025-09-24T17:15:54.000Z"
-      },
-      {
-        "id": "julien-c/ColabTest",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "pytorch",
-          "tf",
-          "license:mit",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/bert-xsmall-dummy",
-        "likes": 0,
-        "downloads": 20391,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tf",
-          "jax",
-          "bert",
-          "fill-mask",
-          "endpoints_compatible",
-          "region:us",
-          "deploy:azure"
-        ],
-        "pipelineTag": "fill-mask",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/distilbert-sagemaker-1609798709",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/distilbert-sagemaker-1609799155",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/distilbert-sagemaker-1609801242",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/distilbert-sagemaker-1609802168",
-        "likes": 0,
-        "downloads": 6,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "distilbert",
-          "text-classification",
-          "sagemaker",
-          "dataset:imdb",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/dummy-diff-tokenizer",
-        "likes": 0,
-        "downloads": 6769,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "tf",
-          "jax",
-          "roberta",
-          "fill-mask",
-          "endpoints_compatible",
-          "region:us",
-          "deploy:azure"
-        ],
-        "pipelineTag": "fill-mask",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/dummy-model-from-colab",
-        "likes": 0,
-        "downloads": 1,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "jax",
-          "roberta",
-          "fill-mask",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "fill-mask",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/flair-de-ner",
-        "likes": 0,
-        "downloads": 8,
-        "tags": [
-          "flair",
-          "pytorch",
-          "token-classification",
-          "sequence-tagger-model",
-          "de",
-          "dataset:conll2003",
-          "region:us"
-        ],
-        "pipelineTag": "token-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/flair-ner",
-        "likes": 0,
-        "downloads": 22,
-        "tags": [
-          "flair",
-          "pytorch",
-          "token-classification",
-          "sequence-tagger-model",
-          "en",
-          "dataset:conll2003",
-          "region:us"
-        ],
-        "pipelineTag": "token-classification",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/kan-bayashi-jsut_tts_train_tacotron2",
-        "likes": 0,
-        "downloads": 2,
-        "tags": [
-          "espnet",
-          "audio",
-          "text-to-speech",
-          "ja",
-          "dataset:jsut",
-          "arxiv:1804.00015",
-          "license:cc-by-4.0",
-          "region:us"
-        ],
-        "pipelineTag": "text-to-speech",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/kan-bayashi-jsut_tts_train_tacotron2_ja",
-        "likes": 0,
-        "downloads": 3,
-        "tags": [
-          "espnet",
-          "audio",
-          "text-to-speech",
-          "ja",
-          "dataset:jsut",
-          "arxiv:1804.00015",
-          "license:cc-by-4.0",
-          "region:us"
-        ],
-        "pipelineTag": "text-to-speech",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/kan-bayashi_csmsc_tacotron2",
-        "likes": 0,
-        "downloads": 3,
-        "tags": [
-          "espnet",
-          "audio",
-          "text-to-speech",
-          "zh",
-          "dataset:csmsc",
-          "arxiv:1804.00015",
-          "license:cc-by-4.0",
-          "region:us"
-        ],
-        "pipelineTag": "text-to-speech",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/mini_an4_asr_train_raw_bpe_valid",
-        "likes": 0,
-        "downloads": 6,
-        "tags": [
-          "espnet",
-          "audio",
-          "automatic-speech-recognition",
-          "en",
-          "dataset:ljspeech",
-          "arxiv:1804.00015",
-          "license:cc-by-4.0",
-          "region:us"
-        ],
-        "pipelineTag": "automatic-speech-recognition",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/policy-distilbert-7d",
-        "likes": 0,
-        "downloads": 2,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "distilbert",
-          "fill-mask",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "fill-mask",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/t5-3b-fork",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "pytorch",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
-        "id": "julien-c/t5-3b-fork2",
-        "likes": 0,
-        "downloads": 3,
-        "tags": [
-          "transformers",
-          "pytorch",
-          "t5",
-          "text-generation",
-          "text-generation-inference",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "text-generation",
-        "createdAt": "2022-03-02T23:29:05.000Z"
-      },
-      {
         "id": "julien-c/timm-dpn92",
         "likes": 0,
         "downloads": 9,
@@ -651,30 +295,56 @@
         "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
-        "id": "julien-c/gpt2-from-colab",
+        "id": "julien-c/Qwen3.5-0.8B",
         "likes": 0,
-        "downloads": 0,
+        "downloads": 9,
         "tags": [
-          "pytorch",
+          "transformers",
+          "safetensors",
+          "qwen3_5",
+          "image-text-to-text",
+          "conversational",
+          "base_model:Qwen/Qwen3.5-0.8B-Base",
+          "base_model:finetune:Qwen/Qwen3.5-0.8B-Base",
           "license:apache-2.0",
+          "endpoints_compatible",
           "region:us"
         ],
-        "pipelineTag": null,
-        "createdAt": "2022-04-21T20:07:38.000Z"
+        "pipelineTag": "image-text-to-text",
+        "createdAt": "2026-03-09T10:04:40.000Z"
       },
       {
-        "id": "julien-c/skops-digits",
+        "id": "julien-c/flair-de-ner",
         "likes": 0,
-        "downloads": 11,
+        "downloads": 8,
         "tags": [
-          "sklearn",
-          "joblib",
-          "tabular-classification",
-          "skops",
+          "flair",
+          "pytorch",
+          "token-classification",
+          "sequence-tagger-model",
+          "de",
+          "dataset:conll2003",
           "region:us"
         ],
-        "pipelineTag": "tabular-classification",
-        "createdAt": "2022-08-09T21:07:05.000Z"
+        "pipelineTag": "token-classification",
+        "createdAt": "2022-03-02T23:29:05.000Z"
+      },
+      {
+        "id": "julien-c/distilbert-feature-extraction",
+        "likes": 2,
+        "downloads": 7,
+        "tags": [
+          "transformers",
+          "pytorch",
+          "distilbert",
+          "feature-extraction",
+          "text-embeddings-inference",
+          "endpoints_compatible",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2022-03-02T23:29:05.000Z"
       },
       {
         "id": "julien-c/bert-base-uncased-duplicate",
@@ -702,122 +372,11 @@
         ],
         "pipelineTag": "fill-mask",
         "createdAt": "2023-08-23T15:42:41.000Z"
-      },
-      {
-        "id": "julien-c/test-upload-speed",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2023-08-29T09:48:35.000Z"
-      },
-      {
-        "id": "julien-c/git-theta-small-pytorch",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "pytorch",
-          "git-theta",
-          "license:apache-2.0",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2024-04-30T11:41:39.000Z"
-      },
-      {
-        "id": "julien-c/git-theta-safetensors",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "safetensors",
-          "git-theta",
-          "license:apache-2.0",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2024-04-30T12:22:35.000Z"
-      },
-      {
-        "id": "julien-c/huge-model",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2024-12-09T12:20:40.000Z"
-      },
-      {
-        "id": "julien-c/Llama-3.2-1B-Instruct",
-        "likes": 0,
-        "downloads": 3,
-        "tags": [
-          "llama",
-          "arxiv:2412.03187",
-          "arxiv:2408.07990",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2024-12-19T15:45:27.000Z"
-      },
-      {
-        "id": "julien-c/xet-feb14",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "safetensors",
-          "license:wtfpl",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2025-02-14T10:23:27.000Z"
-      },
-      {
-        "id": "julien-c/Qwen3.5-0.8B",
-        "likes": 0,
-        "downloads": 9,
-        "tags": [
-          "transformers",
-          "safetensors",
-          "qwen3_5",
-          "image-text-to-text",
-          "conversational",
-          "base_model:Qwen/Qwen3.5-0.8B-Base",
-          "base_model:finetune:Qwen/Qwen3.5-0.8B-Base",
-          "license:apache-2.0",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": "image-text-to-text",
-        "createdAt": "2026-03-09T10:04:40.000Z"
-      },
-      {
-        "id": "julien-c/unsloth_Qwen3.5-4B_1773854218",
-        "likes": 0,
-        "downloads": 0,
-        "tags": [
-          "transformers",
-          "safetensors",
-          "text-generation-inference",
-          "unsloth",
-          "qwen3_5",
-          "trl",
-          "lora",
-          "en",
-          "base_model:unsloth/Qwen3.5-4B",
-          "base_model:adapter:unsloth/Qwen3.5-4B",
-          "license:apache-2.0",
-          "endpoints_compatible",
-          "region:us"
-        ],
-        "pipelineTag": null,
-        "createdAt": "2026-03-18T17:35:34.000Z"
       }
     ],
-    "totalDownloads": 593652,
-    "totalLikes": 118
+    "totalDownloads": 593614,
+    "totalLikes": 86,
+    "totalModels": 51
   },
   "imageUrl": null
 }

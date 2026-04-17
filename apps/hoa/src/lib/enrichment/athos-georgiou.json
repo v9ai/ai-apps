@@ -500,6 +500,66 @@
         "createdAt": "2026-03-26T01:29:42.000Z"
       },
       {
+        "id": "athrael-soju/HydraQwen3.5-0.8B",
+        "likes": 0,
+        "downloads": 66,
+        "tags": [
+          "peft",
+          "safetensors",
+          "qwen3_5",
+          "colqwen",
+          "retrieval",
+          "late-interaction",
+          "multimodal",
+          "vidore",
+          "hydra",
+          "feature-extraction",
+          "en",
+          "fr",
+          "es",
+          "de",
+          "it",
+          "pt",
+          "arxiv:2603.28554",
+          "base_model:Qwen/Qwen3.5-0.8B",
+          "base_model:adapter:Qwen/Qwen3.5-0.8B",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "feature-extraction",
+        "createdAt": "2026-04-16T18:28:37.000Z"
+      },
+      {
+        "id": "athrael-soju/DualHead-GritLM-Qwen3.5-4B",
+        "likes": 0,
+        "downloads": 39,
+        "tags": [
+          "peft",
+          "safetensors",
+          "colpali",
+          "colbert",
+          "gritlm",
+          "dual-head",
+          "ablation",
+          "visual-document-retrieval",
+          "en",
+          "de",
+          "es",
+          "fr",
+          "it",
+          "dataset:vidore/colpali_train_set",
+          "dataset:openbmb/VisRAG-Ret-Train-Synthetic-data",
+          "dataset:openbmb/VisRAG-Ret-Train-In-domain-data",
+          "dataset:llamaindex/vdr-multilingual-train",
+          "base_model:Qwen/Qwen3.5-4B",
+          "base_model:adapter:Qwen/Qwen3.5-4B",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "visual-document-retrieval",
+        "createdAt": "2026-03-26T11:56:18.000Z"
+      },
+      {
         "id": "athrael-soju/HydraQwen2.5-Omni-3B",
         "likes": 1,
         "downloads": 0,
@@ -561,36 +621,6 @@
         "createdAt": "2026-04-10T16:50:35.000Z"
       },
       {
-        "id": "athrael-soju/DualHead-GritLM-Qwen3.5-4B",
-        "likes": 0,
-        "downloads": 39,
-        "tags": [
-          "peft",
-          "safetensors",
-          "colpali",
-          "colbert",
-          "gritlm",
-          "dual-head",
-          "ablation",
-          "visual-document-retrieval",
-          "en",
-          "de",
-          "es",
-          "fr",
-          "it",
-          "dataset:vidore/colpali_train_set",
-          "dataset:openbmb/VisRAG-Ret-Train-Synthetic-data",
-          "dataset:openbmb/VisRAG-Ret-Train-In-domain-data",
-          "dataset:llamaindex/vdr-multilingual-train",
-          "base_model:Qwen/Qwen3.5-4B",
-          "base_model:adapter:Qwen/Qwen3.5-4B",
-          "license:apache-2.0",
-          "region:us"
-        ],
-        "pipelineTag": "visual-document-retrieval",
-        "createdAt": "2026-03-26T11:56:18.000Z"
-      },
-      {
         "id": "athrael-soju/ColGemma4-E4B-IT-Base",
         "likes": 0,
         "downloads": 0,
@@ -623,40 +653,11 @@
         ],
         "pipelineTag": "visual-document-retrieval",
         "createdAt": "2026-04-11T01:35:36.000Z"
-      },
-      {
-        "id": "athrael-soju/HydraQwen3.5-0.8B",
-        "likes": 0,
-        "downloads": 66,
-        "tags": [
-          "peft",
-          "safetensors",
-          "qwen3_5",
-          "colqwen",
-          "retrieval",
-          "late-interaction",
-          "multimodal",
-          "vidore",
-          "hydra",
-          "feature-extraction",
-          "en",
-          "fr",
-          "es",
-          "de",
-          "it",
-          "pt",
-          "arxiv:2603.28554",
-          "base_model:Qwen/Qwen3.5-0.8B",
-          "base_model:adapter:Qwen/Qwen3.5-0.8B",
-          "license:apache-2.0",
-          "region:us"
-        ],
-        "pipelineTag": "feature-extraction",
-        "createdAt": "2026-04-16T18:28:37.000Z"
       }
     ],
     "totalDownloads": 49446,
-    "totalLikes": 10
+    "totalLikes": 10,
+    "totalModels": 8
   },
   "imageUrl": "https://www.london.gov.uk/sites/default/files/2024-05/Alessandro+Georgiou+headshot.jpg"
 }
