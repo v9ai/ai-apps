@@ -1,13 +1,14 @@
 /**
  * ML contact title classifier.
  *
- * Weighted keyword scoring for seniority and department classification.
- * Produces scored results rather than simple exact-match, enabling
- * confidence thresholds and downstream ranking.
+ * Two paths:
+ * 1. LLM: fine-tuned Qwen via local mlx_lm.server (classifyContactLLM)
+ * 2. Heuristic: weighted keyword scoring (classifyContactML)
  *
- * Upgrade path: replace keyword weights with BGE embedding + logistic
- * regression distillation.
+ * classifyContactHybrid() tries LLM first, falls back to heuristic.
  */
+
+import OpenAI from "openai";
 
 export interface ContactMLClassification {
   seniority: string;
@@ -194,4 +195,77 @@ export function classifyContactML(
     authorityScore,
     isDecisionMaker: authorityScore >= DM_THRESHOLD,
   };
+}
+
+// ── LLM-based classification (fine-tuned Qwen via mlx_lm.server) ────────
+
+const CONTACT_SYSTEM_PROMPT = `You classify B2B contact job titles into seniority level and department.
+
+Seniority levels: C-level, Founder, Partner, VP, Director, Manager, Senior, IC
+Departments: AI/ML, Research, Engineering, Product, Sales/BD, Marketing, HR/Recruiting, Finance, Operations, Other
+
+Also compute:
+- authorityScore (0.0-1.0): C-level=1.0, Founder=0.95, Partner=0.90, VP=0.85, Director=0.75, Manager=0.50, Senior=0.25, IC=0.10
+- isDecisionMaker (boolean): true if authorityScore >= 0.70
+- HR/Recruiting contacts get a 0.4x penalty on authorityScore (gatekeepers, not budget holders)
+
+Respond with ONLY valid JSON:
+{"seniority": "...", "department": "...", "authorityScore": 0.85, "isDecisionMaker": true}`;
+
+export async function classifyContactLLM(
+  position: string,
+): Promise<ContactMLClassification> {
+  const url = process.env.LLM_BASE_URL;
+  if (!url) throw new Error("LLM_BASE_URL not set");
+
+  const client = new OpenAI({ apiKey: "local", baseURL: url });
+  const model = process.env.LLM_MODEL_CONTACT ?? process.env.LLM_MODEL ?? "mlx-community/Qwen2.5-1.5B-Instruct-4bit";
+
+  const res = await client.chat.completions.create({
+    model,
+    messages: [
+      { role: "system", content: CONTACT_SYSTEM_PROMPT },
+      { role: "user", content: `Classify this job title: ${position}` },
+    ],
+    response_format: { type: "json_object" } as any,
+    temperature: 0.1,
+    max_tokens: 128,
+  });
+
+  const parsed = JSON.parse(res.choices?.[0]?.message?.content ?? "{}") as {
+    seniority?: string;
+    department?: string;
+    authorityScore?: number;
+    isDecisionMaker?: boolean;
+  };
+
+  const seniority = parsed.seniority ?? "IC";
+  const department = parsed.department ?? "Other";
+  const authorityScore = Math.max(0, Math.min(1, parsed.authorityScore ?? 0.1));
+
+  return {
+    seniority,
+    seniorityConfidence: 0.9,
+    department,
+    departmentConfidence: 0.9,
+    authorityScore: Math.round(authorityScore * 100) / 100,
+    isDecisionMaker: parsed.isDecisionMaker ?? authorityScore >= DM_THRESHOLD,
+  };
+}
+
+export async function classifyContactHybrid(
+  position: string,
+): Promise<ContactMLClassification> {
+  if (!position.trim()) return classifyContactML(position);
+
+  try {
+    return await Promise.race([
+      classifyContactLLM(position),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("LLM timeout")), 10_000),
+      ),
+    ]);
+  } catch {
+    return classifyContactML(position);
+  }
 }

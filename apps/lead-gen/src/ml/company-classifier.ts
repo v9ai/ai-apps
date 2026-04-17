@@ -1,17 +1,15 @@
 /**
  * Company vertical and AI tier classifier.
  *
- * Two implementations:
- * 1. Legacy: keyword-based heuristics using sequential `String.includes()` scans.
- * 2. Fast: Aho-Corasick automaton for single-pass multi-pattern matching.
+ * Three paths:
+ * 1. LLM: fine-tuned Qwen via local mlx_lm.server (classifyCompanyLLM)
+ * 2. Fast: Aho-Corasick automaton for single-pass matching (classifyCompanyFast)
+ * 3. Legacy: sequential String.includes() scans (classifyCompany)
  *
- * Both produce identical results. The fast path processes all pattern
- * dictionaries in O(n + m + z) where n = text length, m = total pattern
- * chars, z = number of matches, versus O(n * k) for the naive approach
- * where k = number of patterns.
- *
- * Upgrade path: replace internals with DeBERTa zero-shot NLI pipeline.
+ * classifyCompanyHybrid() tries LLM first, falls back to Aho-Corasick.
  */
+
+import OpenAI from "openai";
 
 // ── Aho-Corasick Automaton ───────────────────────────────────────────────
 
@@ -458,4 +456,104 @@ export function classifyBatch(
       reasons: result.reasons,
     };
   });
+}
+
+// ── LLM-based classification (fine-tuned Qwen via mlx_lm.server) ────────
+
+const COMPANY_SYSTEM_PROMPT = `You classify B2B companies by vertical and AI tier.
+
+Verticals:
+- AI-first product company
+- AI-native technology company
+- Non-AI software product company
+- IT consulting and services company
+- Staffing and recruitment agency
+- Marketing or creative agency
+- Enterprise SaaS platform
+- Developer tools and infrastructure
+
+AI tiers:
+- 0: Company does not use AI as a core product
+- 1: Company uses AI as a significant product feature
+- 2: Company is AI-first or AI-native
+
+Respond with ONLY valid JSON:
+{"vertical": "...", "aiTier": 0, "confidence": 0.85, "reasons": ["reason1", "reason2"]}`;
+
+export async function classifyCompanyLLM(
+  name: string,
+  description: string,
+  website?: string,
+): Promise<ClassificationResult> {
+  const url = process.env.LLM_BASE_URL;
+  if (!url) throw new Error("LLM_BASE_URL not set");
+
+  const client = new OpenAI({ apiKey: "local", baseURL: url });
+  const model = process.env.LLM_MODEL_COMPANY ?? process.env.LLM_MODEL ?? "mlx-community/Qwen2.5-3B-Instruct-4bit";
+
+  const userMsg = [
+    "Classify this company:",
+    `Name: ${name}`,
+    `Description: ${description}`,
+    `Website: ${website || "N/A"}`,
+  ].join("\n");
+
+  const res = await client.chat.completions.create({
+    model,
+    messages: [
+      { role: "system", content: COMPANY_SYSTEM_PROMPT },
+      { role: "user", content: userMsg },
+    ],
+    response_format: { type: "json_object" } as any,
+    temperature: 0.1,
+    max_tokens: 256,
+  });
+
+  const parsed = JSON.parse(res.choices?.[0]?.message?.content ?? "{}") as {
+    vertical?: string;
+    aiTier?: number;
+    confidence?: number;
+    reasons?: string[];
+  };
+
+  return {
+    vertical: parsed.vertical ?? "Non-AI software product company",
+    confidence: Math.max(0, Math.min(1, parsed.confidence ?? 0.5)),
+    aiTier: parsed.aiTier ?? 0,
+    reasons: parsed.reasons ?? [],
+  };
+}
+
+export async function classifyCompanyHybrid(
+  name: string,
+  description: string,
+  website?: string,
+): Promise<ClassificationResult> {
+  try {
+    return await Promise.race([
+      classifyCompanyLLM(name, description, website),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("LLM timeout")), 10_000),
+      ),
+    ]);
+  } catch {
+    const text = [name, description, website].filter(Boolean).join(" ");
+    const t = text.toLowerCase();
+    const hits = classificationAutomaton.search(t);
+    const result = computeClassification(
+      hits.get(L_AI_CORE) ?? 0,
+      hits.get(L_AI_FEATURE) ?? 0,
+      hits.get(L_CONSULTING) ?? 0,
+      hits.get(L_STAFFING) ?? 0,
+      hits.get(L_AGENCY) ?? 0,
+      hits.get(L_SAAS) ?? 0,
+      hits.get(L_DEVTOOLS) ?? 0,
+    );
+    return {
+      vertical: result.category,
+      confidence: result.confidence,
+      aiTier: result.ai_tier,
+      reasons: result.reasons,
+    };
+  }
 }

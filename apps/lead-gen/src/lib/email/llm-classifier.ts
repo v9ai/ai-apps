@@ -1,17 +1,23 @@
 /**
- * LLM-based reply classifier — uses DeepSeek for accurate email classification.
+ * LLM-based reply classifier.
  *
- * Primary classifier for inbound email replies. Falls back to logistic regression
- * (in reply-classifier.ts) when LLM is unavailable or errors.
+ * Tries local Qwen (mlx_lm.server) first, then DeepSeek API.
+ * Falls back to logistic regression (reply-classifier.ts) via classifyReplyHybrid().
  */
 
 import OpenAI from "openai";
 import { stripQuotedText, type ReplyClass, type ClassificationResult } from "./reply-classifier";
 import { CLASSIFICATION_SYSTEM_PROMPT, CLASSIFICATION_FEW_SHOT } from "./classification-prompts";
 
-function getClient() {
+function getLocalClient(): OpenAI | null {
+  const url = process.env.LLM_BASE_URL;
+  if (!url) return null;
+  return new OpenAI({ apiKey: "local", baseURL: url });
+}
+
+function getDeepSeekClient(): OpenAI | null {
   const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new Error("DEEPSEEK_API_KEY not set");
+  if (!apiKey) return null;
   return new OpenAI({
     apiKey,
     baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
@@ -22,35 +28,48 @@ const VALID_LABELS = new Set<ReplyClass>([
   "interested", "not_interested", "auto_reply", "bounced", "info_request", "unsubscribe",
 ]);
 
-/**
- * Classify a reply using DeepSeek LLM with structured JSON output.
- *
- * @param subject - Email subject line
- * @param body - Email body text (will be stripped of quoted text)
- * @param threadContext - Optional context from the original outbound email
- */
-export async function classifyReplyWithLLM(
+function buildMessages(
   subject: string,
   body: string,
   threadContext?: string,
-): Promise<ClassificationResult> {
-  const client = getClient();
-  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
-
+): OpenAI.Chat.ChatCompletionMessageParam[] {
   const stripped = stripQuotedText(body);
-
-  // Build user message with optional thread context
   let userMessage = `Subject: ${subject || "(no subject)"}\nBody: ${stripped}`;
   if (threadContext) {
     userMessage = `--- Original outbound email (for context) ---\n${threadContext}\n\n--- Inbound reply to classify ---\n${userMessage}`;
   }
-
-  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+  return [
     { role: "system", content: CLASSIFICATION_SYSTEM_PROMPT },
     ...CLASSIFICATION_FEW_SHOT,
     { role: "user", content: userMessage },
   ];
+}
 
+function parseResponse(content: string): ClassificationResult {
+  const parsed = JSON.parse(content) as {
+    label: string;
+    confidence: number;
+    reasoning?: string;
+  };
+
+  const label = (parsed.label?.toLowerCase() ?? "interested") as ReplyClass;
+  if (!VALID_LABELS.has(label)) {
+    throw new Error(`Invalid classification label from LLM: ${parsed.label}`);
+  }
+
+  const confidence = Math.max(0, Math.min(1, parsed.confidence ?? 0.5));
+  const scores = {} as Record<ReplyClass, number>;
+  for (const l of VALID_LABELS) {
+    scores[l] = l === label ? confidence : 0;
+  }
+  return { label, confidence, scores };
+}
+
+async function callLLM(
+  client: OpenAI,
+  model: string,
+  messages: OpenAI.Chat.ChatCompletionMessageParam[],
+): Promise<ClassificationResult> {
   const res = await client.chat.completions.create({
     model,
     messages,
@@ -58,29 +77,31 @@ export async function classifyReplyWithLLM(
     temperature: 0.1,
     max_tokens: 256,
   });
+  return parseResponse(res.choices?.[0]?.message?.content ?? "");
+}
 
-  const content = res.choices?.[0]?.message?.content ?? "";
+/**
+ * Classify using local Qwen first, then DeepSeek. Throws if both fail.
+ */
+export async function classifyReplyWithLLM(
+  subject: string,
+  body: string,
+  threadContext?: string,
+): Promise<ClassificationResult> {
+  const messages = buildMessages(subject, body, threadContext);
 
-  const parsed = JSON.parse(content) as {
-    label: string;
-    confidence: number;
-    reasoning?: string;
-  };
-
-  // Validate label
-  const label = (parsed.label?.toLowerCase() ?? "interested") as ReplyClass;
-  if (!VALID_LABELS.has(label)) {
-    throw new Error(`Invalid classification label from LLM: ${parsed.label}`);
+  const localClient = getLocalClient();
+  if (localClient) {
+    try {
+      const model = process.env.LLM_MODEL ?? "mlx-community/Qwen2.5-3B-Instruct-4bit";
+      return await callLLM(localClient, model, messages);
+    } catch {
+      // fall through to DeepSeek
+    }
   }
 
-  // Clamp confidence to [0, 1]
-  const confidence = Math.max(0, Math.min(1, parsed.confidence ?? 0.5));
-
-  // Build scores map (LLM gives single label, so set others to 0)
-  const scores = {} as Record<ReplyClass, number>;
-  for (const l of VALID_LABELS) {
-    scores[l] = l === label ? confidence : 0;
-  }
-
-  return { label, confidence, scores };
+  const dsClient = getDeepSeekClient();
+  if (!dsClient) throw new Error("No LLM available (LLM_BASE_URL and DEEPSEEK_API_KEY both unset)");
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+  return await callLLM(dsClient, model, messages);
 }
