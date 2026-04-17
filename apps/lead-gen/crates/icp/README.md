@@ -6,140 +6,30 @@ Ideal Customer Profile scoring engine for the B2B lead generation pipeline. Pure
 
 ```mermaid
 flowchart TD
-    subgraph DISCOVER["1 &middot; Discovery"]
-        DS[Discovery Scout]
-        DS -->|web search| SRC1[Company websites]
-        DS -->|directories| SRC2[Ashby / Lever boards]
-        DS -->|bulk| SRC3[Common Crawl]
-    end
-
-    subgraph ENRICH["2 &middot; Enrichment"]
-        ES[Enrichment Specialist]
-        ES --> E1[AI tier classification]
-        ES --> E2[Tech stack detection]
-        ES --> E3[GitHub activity scan]
-        ES --> E4[HuggingFace presence]
-        ES --> E5[BGE embeddings — 384-dim ONNX]
-    end
-
-    subgraph PARALLEL["3 &middot; Contacts + QA — parallel"]
-        direction LR
-        CH[Contact Hunter]
-        QA[QA Auditor]
-        CH --> C1[LinkedIn discovery]
-        CH --> C2[Email verification]
-        CH --> C3[Seniority / title parsing]
-        QA --> Q1[Dedup]
-        QA --> Q2[Completeness checks]
-        QA --> Q3[Score validation]
-    end
-
-    subgraph SCORE["4 &middot; ICP Scoring ← this crate"]
-        direction TB
-        IM[IcpMatcher populates ContactBatch]
-        IM --> CB["ContactBatch × 256<br/>industry · employee · seniority<br/>department · tech · email · recency<br/>+ semantic_icp_score from BGE"]
-        CB --> SP{Scoring path}
-        SP -->|keyword only| WS[compute_scores_fast]
-        SP -->|+ semantic| SS[compute_scores_semantic]
-        SP -->|trained model| LS[compute_scores_logistic_fast]
-        WS --> CAL[IsotonicCalibrator]
-        SS --> CAL
-        LS --> CAL
-        CAL --> TK[top_k — ranked output]
-    end
-
-    subgraph OUTREACH["5 &middot; Outreach"]
-        OC[Outreach Composer]
-        OC --> O1[Personalized email drafts]
-        O1 --> O2[Plan-approval gate]
-        O2 -->|approved| O3[Resend campaigns]
-    end
-
-    subgraph META["Coordination"]
-        PC[Pipeline Coordinator]
-        PC -.->|batch strategy| DISCOVER
-        PC -.->|ICP targeting| SCORE
-        PC -.->|phase detection| OUTREACH
-    end
-
-    DISCOVER -->|companies → Neon DB| ENRICH
-    ENRICH -->|enriched companies| PARALLEL
-    PARALLEL -->|verified contacts + features| SCORE
-    SCORE -->|top-scored contacts| OUTREACH
-    OUTREACH -->|delivery events| DB[(Neon PostgreSQL)]
-    DISCOVER -->|raw companies| DB
-    ENRICH -->|enrichment data| DB
-    PARALLEL -->|contacts| DB
-
-    style SCORE fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#fff
-    style CB fill:#0f3460,stroke:#e94560,color:#fff
+    D[Discover — web search, job boards, Common Crawl] --> E[Enrich — AI tier, tech stack, GitHub, BGE embeddings]
+    E --> C[Contacts — LinkedIn, email discovery, verification]
+    E --> Q[QA — dedup, completeness, deliverability]
+    C --> S[ICP Score — this crate]
+    Q --> S
+    S --> O[Outreach — personalized emails via Resend]
+    D & E & C & S & O --> DB[(Neon PostgreSQL)]
 ```
-
-### Stage breakdown
-
-| Stage | Agent | What happens | Storage |
-|---|---|---|---|
-| **Discovery** | Discovery Scout | Web search, directories, Ashby/Lever boards, Common Crawl bulk import | Raw companies → Neon |
-| **Enrichment** | Enrichment Specialist | AI tier, tech stack, GitHub repos, HF models, ATS detection, BGE embeddings (384-dim, ONNX Runtime, NEON SIMD) | Enrichment data → Neon |
-| **Contacts** | Contact Hunter | LinkedIn scraping, email discovery, catch-all detection, verification (parallel with QA) | Contacts → Neon |
-| **QA Audit** | QA Auditor | Dedup, completeness, deliverability, score validation (parallel with Contacts) | Flags → Neon |
-| **ICP Scoring** | `icp` crate (this) + `metal` | `IcpMatcher` populates `ContactBatch`, `metal` fills `semantic_icp_score` from BGE, scoring + calibration + top-k ranking | Scores → Neon |
-| **Outreach** | Outreach Composer | Personalized emails via Resend, requires plan-approval before sending | Campaigns → Neon |
 
 ### Data flow through this crate
 
 ```mermaid
 flowchart LR
-    subgraph INPUT["Inputs — from metal + Neon"]
-        RAW[Raw contact fields<br/>industry, title, tech stack,<br/>employee count, email status]
-        EMB[BGE embedding<br/>384-dim f32 vector]
-        ICP_P[ICP prototype vector]
-    end
-
-    subgraph ICP_CRATE["icp crate"]
-        direction TB
-        MATCH[IcpMatcher.populate_slot]
-        BATCH["ContactBatch<br/>#[repr(C, align(64))]<br/>256 slots"]
-        SCORE_FN["Scoring function<br/>keyword + semantic + logistic"]
-        CALIB["IsotonicCalibrator<br/>pool-adjacent-violators"]
-        TOPK["top_k_scored(k)"]
-        MATCH --> BATCH
-        BATCH --> SCORE_FN
-        SCORE_FN --> CALIB
-        CALIB --> TOPK
-    end
-
-    subgraph OUTPUT["Output"]
-        RANKED["Ranked (index, score) pairs<br/>ready for outreach"]
-    end
-
-    RAW --> MATCH
-    EMB -->|"cosine_sim(emb, prototype)"| SEM[semantic_icp_score]
-    ICP_P -->|"cosine_sim(emb, prototype)"| SEM
-    SEM -->|"batch.semantic_icp_score[i]"| BATCH
-    TOPK --> RANKED
-
-    style ICP_CRATE fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#fff
-    style BATCH fill:#0f3460,stroke:#e94560,color:#fff
+    F[Contact fields + BGE embedding] --> M[IcpMatcher] --> B[ContactBatch x256] --> SC[Score] --> CAL[Calibrate] --> TK[top_k]
 ```
 
 ### Crate dependency graph
 
 ```mermaid
 flowchart BT
-    ICP["icp<br/><i>pure scoring — serde only</i>"]
-    METAL["metal<br/><i>BGE embeddings, ONNX, SIMD</i>"]
-    GH["gh<br/><i>GitHub patterns, icp_bridge</i>"]
-    LEADGEN["leadgen<br/><i>pipeline orchestrator</i>"]
-    NEON[(Neon PostgreSQL)]
-
-    METAL -->|"features = [scoring, calibration, optim]"| ICP
-    GH -->|"contributor features"| ICP
-    LEADGEN --> METAL
-    LEADGEN --> GH
-    LEADGEN -->|"Drizzle ORM"| NEON
-
-    style ICP fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#fff
+    ICP[icp — pure scoring, serde only]
+    METAL[metal — BGE embeddings, ONNX, SIMD] --> ICP
+    GH[gh — GitHub patterns] --> ICP
+    LEADGEN[leadgen — orchestrator] --> METAL & GH
 ```
 
 ### Where this crate fits
