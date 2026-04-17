@@ -1,64 +1,49 @@
 import { NextResponse } from "next/server";
 import { getAllPersonalities } from "@/lib/personalities";
 import { getEnrichment } from "@/lib/enrichment";
-import type { EnrichedData, HFModel } from "@/lib/enrichment";
 
-function ghHeaders(): Record<string, string> {
-  const h: Record<string, string> = {
-    Accept: "application/vnd.github.v3+json",
-  };
-  const token = process.env.GITHUB_TOKEN;
-  if (token) h.Authorization = `Bearer ${token}`;
-  return h;
-}
+const GH_GQL = "https://api.github.com/graphql";
 
-async function ghFetch(url: string): Promise<Response> {
-  const res = await fetch(url, { headers: ghHeaders() });
-  if (res.status === 401 && process.env.GITHUB_TOKEN) {
-    return fetch(url, {
-      headers: { Accept: "application/vnd.github.v3+json" },
-    });
+const STARS_QUERY = `
+  query($login: String!) {
+    user(login: $login) {
+      followers { totalCount }
+      repositories(
+        first: 100
+        ownerAffiliations: OWNER
+        isFork: false
+        orderBy: { field: STARGAZERS, direction: DESC }
+      ) {
+        nodes { stargazerCount }
+      }
+    }
   }
-  return res;
-}
+`;
 
 async function fetchGitHubStats(
   username: string,
+  token: string,
 ): Promise<{ stars: number; followers: number } | null> {
   try {
-    const profileRes = await ghFetch(
-      `https://api.github.com/users/${username}`,
+    const res = await fetch(GH_GQL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: STARS_QUERY, variables: { login: username } }),
+    });
+    if (!res.ok) return null;
+
+    const json = await res.json();
+    const user = json.data?.user;
+    if (!user) return null;
+
+    const stars = (user.repositories.nodes as { stargazerCount: number }[]).reduce(
+      (sum, n) => sum + n.stargazerCount,
+      0,
     );
-    if (!profileRes.ok) return null;
-
-    const profile = await profileRes.json();
-    const followers = profile.followers ?? 0;
-
-    let totalStars = 0;
-    let page = 1;
-
-    while (page <= 5) {
-      const reposRes = await ghFetch(
-        `https://api.github.com/users/${username}/repos?sort=stars&per_page=100&page=${page}&type=owner`,
-      );
-      if (!reposRes.ok) return null;
-
-      const repos = await reposRes.json();
-      if (!Array.isArray(repos) || repos.length === 0) break;
-
-      totalStars += repos
-        .filter((r: Record<string, unknown>) => !r.fork)
-        .reduce(
-          (sum: number, r: Record<string, unknown>) =>
-            sum + ((r.stargazers_count as number) ?? 0),
-          0,
-        );
-
-      if (repos.length < 100) break;
-      page++;
-    }
-
-    return { stars: totalStars, followers };
+    return { stars, followers: user.followers.totalCount };
   } catch {
     return null;
   }
@@ -92,6 +77,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const ghToken = process.env.GITHUB_TOKEN;
   const personalities = getAllPersonalities();
   const drifted: {
     slug: string;
@@ -100,10 +86,10 @@ export async function GET(req: Request) {
     live: number;
   }[] = [];
   const errors: string[] = [];
+  const skipped: string[] = [];
 
   const batch = personalities.filter((p) => p.github || p.hfUsername);
-  const skipped: string[] = [];
-  const BATCH_SIZE = 3;
+  const BATCH_SIZE = 5;
 
   for (let i = 0; i < batch.length; i += BATCH_SIZE) {
     const chunk = batch.slice(i, i + BATCH_SIZE);
@@ -113,7 +99,9 @@ export async function GET(req: Request) {
           const enrichment = getEnrichment(p.slug);
 
           const [ghStats, hfStats] = await Promise.all([
-            p.github ? fetchGitHubStats(p.github) : Promise.resolve(null),
+            p.github && ghToken
+              ? fetchGitHubStats(p.github, ghToken)
+              : Promise.resolve(null),
             p.hfUsername ? fetchHFStats(p.hfUsername) : Promise.resolve(null),
           ]);
 
@@ -154,7 +142,6 @@ export async function GET(req: Request) {
     );
   }
 
-  // Trigger redeploy if significant drift detected
   const deployHookUrl = process.env.VERCEL_DEPLOY_HOOK;
   let redeployTriggered = false;
   if (drifted.length > 0 && deployHookUrl) {
@@ -168,6 +155,7 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     processed: batch.length,
+    githubAuth: !!ghToken,
     drifted: drifted.length,
     drift: drifted,
     skipped: skipped.length,

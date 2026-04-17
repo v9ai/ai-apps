@@ -287,47 +287,62 @@ def fetch_blog_post_content(url: str) -> str:
         return f"Fetch failed: {e}"
 
 
-def fetch_github_profile(username: str) -> str:
-    """Fetch GitHub profile metadata and top repositories for a username."""
-    if not username or username.strip() in ("", "unknown"):
-        return "(no username provided)"
-    lines = []
+_GH_GQL = "https://api.github.com/graphql"
+
+_GH_PROFILE_QUERY = """
+query($login: String!) {
+  user(login: $login) {
+    login name bio company location websiteUrl twitterUsername
+    publicRepositories: repositories(privacy: PUBLIC) { totalCount }
+    followers { totalCount }
+    repositories(first: 10, ownerAffiliations: OWNER, isFork: false,
+                 orderBy: {field: STARGAZERS, direction: DESC}) {
+      nodes { name stargazerCount primaryLanguage { name } description }
+    }
+  }
+}
+"""
+
+
+def _gh_gql(query: str, variables: dict) -> dict | None:
     token = os.environ.get("GITHUB_TOKEN", "")
-    headers: dict[str, str] = {"Accept": "application/vnd.github.v3+json"}
-    if token:
-        headers["Authorization"] = f"token {token}"
+    if not token:
+        return None
     try:
         with httpx.Client(timeout=_HTTP_TIMEOUT) as client:
-            resp = client.get(
-                f"https://api.github.com/users/{username}",
-                headers=headers,
+            resp = client.post(
+                _GH_GQL,
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                json={"query": query, "variables": variables},
             )
             if resp.status_code == 200:
-                d = resp.json()
-                for key in ("login", "name", "bio", "company", "location", "blog", "twitter_username"):
-                    lines.append(f"{key}: {d.get(key, '')}")
-                lines += [
-                    f"public_repos: {d.get('public_repos', 0)}",
-                    f"followers: {d.get('followers', 0)}",
-                    "",
-                ]
-            resp = client.get(
-                f"https://api.github.com/users/{username}/repos",
-                params={"sort": "stars", "direction": "desc", "per_page": 10},
-                headers=headers,
-            )
-            if resp.status_code == 200:
-                lines.append("Top repositories:")
-                for r in resp.json():
-                    if r.get("fork"):
-                        continue
-                    lines.append(
-                        f"  - {r['name']} ({r.get('stargazers_count', 0)} stars, "
-                        f"{r.get('language', '')}): {r.get('description', '') or ''}"
-                    )
-    except Exception as e:
-        lines.append(f"GitHub error: {e}")
-    return "\n".join(lines) if lines else "(no GitHub data)"
+                return resp.json().get("data")
+    except Exception:
+        pass
+    return None
+
+
+def fetch_github_profile(username: str) -> str:
+    """Fetch GitHub profile metadata and top repositories via GraphQL."""
+    if not username or username.strip() in ("", "unknown"):
+        return "(no username provided)"
+    data = _gh_gql(_GH_PROFILE_QUERY, {"login": username})
+    if not data or not data.get("user"):
+        return "(no GitHub data)"
+    u = data["user"]
+    lines = []
+    for key in ("login", "name", "bio", "company", "location", "websiteUrl", "twitterUsername"):
+        lines.append(f"{key}: {u.get(key, '')}")
+    lines += [
+        f"public_repos: {u['publicRepositories']['totalCount']}",
+        f"followers: {u['followers']['totalCount']}",
+        "",
+        "Top repositories:",
+    ]
+    for r in u["repositories"]["nodes"]:
+        lang = (r.get("primaryLanguage") or {}).get("name", "")
+        lines.append(f"  - {r['name']} ({r['stargazerCount']} stars, {lang}): {r.get('description') or ''}")
+    return "\n".join(lines)
 
 
 def fetch_orcid_profile(orcid_id: str) -> str:
@@ -646,40 +661,43 @@ def check_social_url(url: str) -> str:
         return f"URL check failed: {e}"
 
 
+_GH_REPOS_EXT_QUERY = """
+query($login: String!) {
+  user(login: $login) {
+    repositories(first: 100, ownerAffiliations: OWNER, isFork: false,
+                 orderBy: {field: STARGAZERS, direction: DESC}) {
+      nodes {
+        name stargazerCount createdAt
+        primaryLanguage { name }
+        repositoryTopics(first: 10) { nodes { topic { name } } }
+        description
+      }
+    }
+  }
+}
+"""
+
+
 def fetch_github_repos_extended(username: str) -> str:
-    """Fetch all significant repositories for a GitHub user with creation dates and topics."""
+    """Fetch all significant repositories via GraphQL with creation dates and topics."""
     if not username or username.strip() in ("", "unknown"):
         return "(no username provided)"
+    data = _gh_gql(_GH_REPOS_EXT_QUERY, {"login": username})
+    if not data or not data.get("user"):
+        return "(no repos found)"
     lines = []
-    headers = {"Accept": "application/vnd.github.v3+json"}
-    token = os.environ.get("GITHUB_TOKEN", "")
-    if token:
-        headers["Authorization"] = f"token {token}"
-    try:
-        with httpx.Client(timeout=_HTTP_TIMEOUT) as client:
-            for page in range(1, 4):
-                resp = client.get(
-                    f"https://api.github.com/users/{username}/repos",
-                    params={"sort": "stars", "direction": "desc", "per_page": 30, "page": page},
-                    headers=headers,
-                )
-                if resp.status_code != 200:
-                    break
-                repos = resp.json()
-                if not repos:
-                    break
-                for r in repos:
-                    if r.get("fork") or r.get("stargazers_count", 0) < 5:
-                        continue
-                    lines.append(
-                        f"- {r['name']} ({r.get('stargazers_count', 0)} stars)\n"
-                        f"  Created: {r.get('created_at', '')[:10]}\n"
-                        f"  Language: {r.get('language', 'N/A')}\n"
-                        f"  Topics: {', '.join(r.get('topics', []))}\n"
-                        f"  Description: {r.get('description', '') or ''}"
-                    )
-    except Exception as e:
-        lines.append(f"GitHub repos error: {e}")
+    for r in data["user"]["repositories"]["nodes"]:
+        if r["stargazerCount"] < 5:
+            continue
+        lang = (r.get("primaryLanguage") or {}).get("name", "N/A")
+        topics = ", ".join(t["topic"]["name"] for t in r.get("repositoryTopics", {}).get("nodes", []))
+        lines.append(
+            f"- {r['name']} ({r['stargazerCount']} stars)\n"
+            f"  Created: {(r.get('createdAt') or '')[:10]}\n"
+            f"  Language: {lang}\n"
+            f"  Topics: {topics}\n"
+            f"  Description: {r.get('description') or ''}"
+        )
     return "\n".join(lines) if lines else "(no repos found)"
 
 
