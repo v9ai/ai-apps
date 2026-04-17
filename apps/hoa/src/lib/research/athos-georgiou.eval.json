@@ -1,0 +1,29 @@
+{
+  "slug": "athos-georgiou",
+  "name": "Athos Georgiou",
+  "generated_at": "2026-04-17T15:45:41+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 8,
+      "reasoning": "The biography is specific and informative, providing a clear overview of Athos Georgiou's career trajectory and contributions. It includes details about his educational background, career milestones, and significant projects. However, it could benefit from more concrete evidence and specific achievements to further enhance its credibility."
+    },
+    "source_coverage": {
+      "score": 7,
+      "reasoning": "The sources are diverse and include links to personal websites, arXiv publications, and LinkedIn profiles. However, some entries in the timeline and contributions sections contain duplicate or redundant information, which reduces the overall quality and verifiability of the sources. Adding more varied and high-quality sources would improve this score."
+    },
+    "timeline_completeness": {
+      "score": 6,
+      "reasoning": "The timeline is detailed and covers a range of key events in Athos Georgiou's career. However, there are several duplicate entries for the same event, which makes the timeline less useful and harder to navigate. Additionally, some dates and events are marked as 'Not specified,' which indicates gaps in the information. Improving the clarity and removing duplicates would enhance the timeline's completeness."
+    },
+    "contributions_depth": {
+      "score": 9,
+      "reasoning": "The contributions are well-detailed and highlight significant technical achievements with clear descriptions and impacts. Each contribution is supported by a link to a relevant publication or project, which adds to the depth and credibility. The only improvement needed is to ensure that all contributions are unique and not repeated, as seen in the timeline section."
+    },
+    "name_disambiguation": {
+      "score": 10,
+      "reasoning": "The profile is clearly focused on Athos Georgiou, Founder & CEO of NCA. There are no ambiguities or confusions with other individuals, and the information consistently refers to the correct person. The inclusion of specific roles, projects, and publications helps to accurately identify and disambiguate Athos Georgiou."
+    },
+    "overall_score": 8,
+    "summary": "The research profile for Athos Georgiou is generally strong, with a well-crafted biography, detailed contributions, and clear name disambiguation. However, there are areas for improvement, particularly in the source coverage and timeline completeness. Removing duplicate entries, adding more varied and high-quality sources, and filling in missing dates and events would significantly enhance the profile's overall quality."
+  }
+}
