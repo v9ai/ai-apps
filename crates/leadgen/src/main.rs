@@ -58,6 +58,26 @@ async fn main() -> Result<()> {
     };
     info!(model = llm_client.model_name(), "LLM client configured");
 
+    // VLM client — optional; pipeline degrades gracefully without it
+    let vlm_client = if std::env::var("QWEN_VL_URL").is_ok() || std::env::var("VLLM_SERVER").is_ok() {
+        let url = std::env::var("QWEN_VL_URL")
+            .unwrap_or_else(|_| "http://localhost:8000/v1".to_string());
+        let client = qwen_vl::VlClient::new(&url, None);
+        match client.health().await {
+            Ok(true) => {
+                info!(url = %url, "VLM client connected");
+                Some(client)
+            }
+            _ => {
+                info!(url = %url, "VLM server unreachable, running without vision extraction");
+                None
+            }
+        }
+    } else {
+        info!("No VLM server configured (set QWEN_VL_URL), running text-only extraction");
+        None
+    };
+
     let fetcher = crawler::Fetcher::new(1000);
     let mx_checker = email::mx::MxChecker::new()?;
 
@@ -97,6 +117,7 @@ async fn main() -> Result<()> {
             let state = Arc::new(api::AppState {
                 db: database,
                 llm: llm_client,
+                vlm: vlm_client,
                 fetcher,
                 mx_checker,
                 search_index,
@@ -118,7 +139,7 @@ async fn main() -> Result<()> {
             let mut writer = index_writer;
 
             let result = crawler::process_domain(
-                domain, &fetcher, &llm_client, &database, &mut writer,
+                domain, &fetcher, vlm_client.as_ref(), &llm_client, &database, &mut writer,
             ).await?;
 
             search::commit(&mut writer)?;
@@ -194,7 +215,7 @@ async fn main() -> Result<()> {
             for (i, domain) in domains.iter().enumerate() {
                 let domain = domain.trim();
                 print!("[{}/{}] {} ... ", i + 1, domains.len(), domain);
-                match crawler::process_domain(domain, &fetcher, &llm_client, &database, &mut writer).await {
+                match crawler::process_domain(domain, &fetcher, vlm_client.as_ref(), &llm_client, &database, &mut writer).await {
                     Ok(result) => println!("{} pages, {} contacts", result.pages_fetched, result.contacts_found),
                     Err(e) => println!("ERROR: {}", e),
                 }
@@ -228,6 +249,7 @@ async fn main() -> Result<()> {
                 icp,
                 search_index,
                 config: pipeline::PipelineConfig::default(),
+                vlm: vlm_client,
             };
 
             let mut runner = pipeline::PipelineRunner::new()

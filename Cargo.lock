@@ -5143,6 +5143,7 @@ dependencies = [
  "hickory-resolver",
  "ndarray 0.16.1",
  "petgraph 0.6.5",
+ "qwen-vl",
  "regex",
  "reqwest 0.12.28",
  "scraper",

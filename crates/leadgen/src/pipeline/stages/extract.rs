@@ -181,6 +181,38 @@ impl PipelineStage for ExtractionStage {
                     }
                 }
 
+                // VLM deep enrichment: category, AI tier, tech stack, services
+                if let Some(ref vlm) = ctx.vlm {
+                    if !text.is_empty() {
+                        match vlm
+                            .extract_from_html::<qwen_vl::EnrichmentExtraction>(
+                                &text,
+                                qwen_vl::schema::ENRICHMENT_PROMPT,
+                            )
+                            .await
+                        {
+                            Ok(enrichment) => {
+                                if let Some(ref url) = cache_url {
+                                    if let Ok(json) = serde_json::to_string(&enrichment) {
+                                        let _ = db::cache_extraction(
+                                            &ctx.db, &format!("{url}#vlm-enrichment"), &json, "vlm-enrichment",
+                                        ).await;
+                                    }
+                                }
+                                signals.push(EvalSignal {
+                                    stage_name: "extract".into(),
+                                    metric_name: "vlm_enrichment".into(),
+                                    value: 1.0,
+                                    timestamp: now.clone(),
+                                });
+                            }
+                            Err(e) => {
+                                tracing::debug!(error = %e, "VLM enrichment failed");
+                            }
+                        }
+                    }
+                }
+
                 signals.push(EvalSignal {
                     stage_name: "extract".into(),
                     metric_name: "relations_found".into(),

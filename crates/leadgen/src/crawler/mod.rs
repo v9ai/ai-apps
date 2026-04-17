@@ -120,7 +120,7 @@ fn discovery_to_company_extraction(disc: &qwen_vl::DiscoveryExtraction) -> llm::
 }
 
 pub async fn process_domain(
-    domain: &str, fetcher: &Fetcher, llm: &llm::LlmClient,
+    domain: &str, fetcher: &Fetcher, vlm: Option<&qwen_vl::VlClient>, llm: &llm::LlmClient,
     database: &db::Db, index_writer: &mut tantivy::IndexWriter,
 ) -> Result<ProcessResult> {
     let job = CrawlJob::from_domain(domain);
@@ -151,7 +151,7 @@ pub async fn process_domain(
                 all_text.push(' ');
 
                 if content.body_text.len() > 200 {
-                    let (result, source) = extract_with_ner_fallback(&content.body_text, llm).await;
+                    let (result, source) = extract_with_cascade(&content.body_text, vlm, llm).await;
                     match result {
                         Ok(data) => {
                             contacts_found += data.key_people.len() as u32;
@@ -260,6 +260,7 @@ pub struct ProcessResult {
 pub async fn process_domain_smart(
     domain: &str,
     fetcher: &Fetcher,
+    vlm: Option<&qwen_vl::VlClient>,
     llm: &llm::LlmClient,
     database: &db::Db,
     index_writer: &mut tantivy::IndexWriter,
@@ -345,7 +346,7 @@ pub async fn process_domain_smart(
 
                 // Extract entities — NER first, LLM fallback
                 if content.body_text.len() > 200 {
-                    let (result, source) = extract_with_ner_fallback(&content.body_text, llm).await;
+                    let (result, source) = extract_with_cascade(&content.body_text, vlm, llm).await;
                     match result {
                         Ok(data) => {
                             let n = data.key_people.len() as u32;

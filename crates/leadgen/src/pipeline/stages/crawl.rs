@@ -165,6 +165,7 @@ impl PipelineStage for CrawlStage {
                     crawler::process_domain_smart(
                         domain,
                         &ctx.fetcher,
+                        ctx.vlm.as_ref(),
                         &ctx.llm,
                         &ctx.db,
                         &mut writer,
@@ -175,6 +176,7 @@ impl PipelineStage for CrawlStage {
                     crawler::process_domain(
                         domain,
                         &ctx.fetcher,
+                        ctx.vlm.as_ref(),
                         &ctx.llm,
                         &ctx.db,
                         &mut writer,

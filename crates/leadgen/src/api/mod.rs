@@ -5,7 +5,8 @@ use tokio::sync::Mutex;
 use crate::{crawler, db, email, eval, jobs, llm, matching, outreach, report, scoring, search, vector};
 
 pub struct AppState {
-    pub db: db::Db, pub llm: llm::LlmClient, pub fetcher: crawler::Fetcher,
+    pub db: db::Db, pub llm: llm::LlmClient, pub vlm: Option<qwen_vl::VlClient>,
+    pub fetcher: crawler::Fetcher,
     pub mx_checker: email::mx::MxChecker, pub search_index: tantivy::Index,
     pub index_writer: Mutex<tantivy::IndexWriter>, pub icp: scoring::IcpProfile,
     /// Cached cost summary from the most recent pipeline run (set by the
@@ -77,7 +78,7 @@ async fn list_contacts(State(s): State<Arc<AppState>>, Path(cid): Path<String>) 
 
 async fn enrich(State(s): State<Arc<AppState>>, Json(req): Json<EnrichReq>) -> impl IntoResponse {
     let mut w = s.index_writer.lock().await;
-    match crawler::process_domain(&req.domain, &s.fetcher, &s.llm, &s.db, &mut w).await {
+    match crawler::process_domain(&req.domain, &s.fetcher, s.vlm.as_ref(), &s.llm, &s.db, &mut w).await {
         Ok(r) => { let _ = search::commit(&mut w);
             axum::Json(serde_json::json!({"domain":r.domain,"pages":r.pages_fetched,"contacts":r.contacts_found,"emails":r.emails_discovered})).into_response() }
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(serde_json::json!({"error": e.to_string()}))).into_response(),

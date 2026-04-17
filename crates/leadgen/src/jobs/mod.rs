@@ -8,7 +8,7 @@ pub async fn recrawl_stale(database: &db::Db, fetcher: &crawler::Fetcher, llm: &
     let mut n = 0u32;
     for c in &stale {
         if let Some(ref d) = c.domain {
-            if crawler::process_domain(d, fetcher, llm, database, writer).await.is_ok() { n += 1; }
+            if crawler::process_domain(d, fetcher, None, llm, database, writer).await.is_ok() { n += 1; }
         }
     }
     search::commit(writer)?;
