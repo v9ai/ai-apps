@@ -16,7 +16,7 @@ import { css, cx } from "styled-system/css";
 import NavHeader from "@/app/_components/nav-header";
 import { ResearchQuestions } from "../_components/research-questions";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -45,8 +45,10 @@ export function generateStaticParams() {
     .map((p) => ({ slug: p.slug }));
 }
 
-export default async function QuestionsPage({ params }: Props) {
+export default async function QuestionsPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const sp = await searchParams;
+  const debug = sp.debug !== undefined;
   const person = getPersonalityBySlug(slug);
   if (!person) notFound();
 
@@ -146,7 +148,7 @@ export default async function QuestionsPage({ params }: Props) {
 
       {/* Questions content */}
       <div className={css({ maxW: "7xl", mx: "auto", px: { base: "5", sm: "6", lg: "8" }, pb: { base: "14", md: "20" } })}>
-        <ResearchQuestions research={research} />
+        <ResearchQuestions research={research} debug={debug} />
 
         {/* Footer */}
         <div className={css({ mt: { base: "14", md: "20" } })}>

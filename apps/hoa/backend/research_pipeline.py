@@ -1657,18 +1657,12 @@ DEFAULT_CATEGORIES: dict[str, str] = {
 PERSON_CATEGORIES: dict[str, dict[str, str]] = {
     "athos-georgiou": {
         "origin": "founding NCA, career transition from telescope control systems to AI, the spark that shifted focus from infrastructure to applied AI research",
-        "technical_depth": "Snappy architecture, ColPali/ColQwen late-interaction, patch-to-region relevance propagation, OCR integration decisions",
-        "philosophy": "responsible AI stance, 'raising AI' parent-child metaphor, whether GenAI alone is the answer, balancing capability with ethics",
-        "collaboration": "Claude Code ecosystem contributions, kimchi-cult plugin marketplace, Greek AI Startup Accelerator, open-source community dynamics",
-        "future": "enterprise AI adoption gap, AMD GPU scaling roadmap, vision-language retrieval becoming production-standard",
-        "vision_retrieval": "ColPali and ColQwen models, late-interaction retrieval, multimodal document understanding, Vidore benchmark participation",
-        "graph_rag": "Qdrant + Neo4j + Ollama pipeline, dynamic ontology for NLP GraphRAG, knowledge graph construction from video/images",
-        "gpu_optimization": "AMD Instinct MI325X benchmarks, 235B-1T parameter inference, dtype choices, batch size tuning, OOM survival strategies",
-        "observability": "Grafana Alloy stack, OpenTelemetry + Prometheus for Next.js, production monitoring philosophy for AI systems",
-        "responsible_ai": "AI rights and responsibilities, LLM consciousness debate, enterprise AI value gap, the 88% adoption vs 5% impact paradox",
-        "full_stack_ai": "RAG with Pinecone and Unstructured.io, vision RAG templates, Next.js AI integration, end-to-end production pipelines",
-        "model_training": "ColQwen3.5 v1/v2/v3 iteration, diminishing returns in benchmark optimization, fine-tuning decisions, when to stop optimizing",
-        "building_in_public": "blogging evolution from November 2023, open-source project growth, personal reflection posts, community building through technical writing",
+        "technical_depth": "Hydra dual-head architecture, ColPali/ColQwen late-interaction, patch-to-region relevance propagation, systems engineering meets ML",
+        "philosophy": "responsible AI stance, 'raising AI' parent-child metaphor, whether GenAI alone is the answer, enterprise AI value gap",
+        "collaboration": "Claude Code ecosystem contributions, open-source community dynamics, bridging research and production",
+        "future": "enterprise AI adoption gap, GPU inference scaling roadmap, vision-language retrieval becoming production-standard",
+        "vision_retrieval": "ColPali and ColQwen models, late-interaction retrieval, multimodal document understanding, ViDoRe benchmark results",
+        "gpu_optimization": "GPU inference benchmarking, large-parameter model inference, dtype choices, memory optimization strategies",
     },
 }
 
@@ -1676,18 +1670,12 @@ PERSON_CATEGORIES: dict[str, dict[str, str]] = {
 BLOG_QUERIES: dict[str, dict[str, list[str]]] = {
     "athos-georgiou": {
         "origin": ["career journey NCA founding", "telescope infrastructure transition AI", "doing stuff learning journey 2023"],
-        "technical_depth": ["Snappy vision retrieval ColPali OCR", "patch-to-region propagation document", "ColQwen architecture design"],
+        "technical_depth": ["Hydra dual-head retrieval generation", "patch-to-region propagation document", "ColQwen architecture design"],
         "philosophy": ["raising artificial intelligence responsibility", "generative AI answer everything limitations", "AI value gap enterprise adoption"],
-        "collaboration": ["Claude Code plugin kimchi-cult", "open source community contribution", "Greek AI accelerator startup"],
-        "future": ["enterprise AI adoption future", "AMD GPU inference scaling", "vision language retrieval production"],
+        "collaboration": ["Claude Code plugin kimchi-cult", "open source community contribution", "bridging research production"],
+        "future": ["enterprise AI adoption future", "GPU inference scaling roadmap", "vision language retrieval production"],
         "vision_retrieval": ["ColPali ColQwen vision retrieval document", "Vidore benchmark GPU VRAM", "spatially grounded document retrieval"],
-        "graph_rag": ["GraphRAG Qdrant Neo4j Ollama", "knowledge graph video detection BLIP", "dynamic ontology NLP graph"],
-        "gpu_optimization": ["AMD Instinct MI325X benchmark", "inference optimization GPU memory", "dtype batch size OOM"],
-        "observability": ["Grafana Alloy observability stack", "OpenTelemetry Prometheus Next.js telemetry", "monitoring setup production"],
-        "responsible_ai": ["raising AI rights responsibilities", "LLM intelligence consciousness", "AI value gap enterprise impact"],
-        "full_stack_ai": ["RAG Pinecone Unstructured production", "vision RAG ColPali Qdrant MinIO", "Next.js AI assistant streaming"],
-        "model_training": ["ColQwen3.5 diminishing returns optimization", "Vidore benchmark fine-tuning", "ColQwen FastAPI integration"],
-        "building_in_public": ["welcome blog athrael.net", "been doing stuff reflection", "love over now personal"],
+        "gpu_optimization": ["GPU inference benchmark optimization", "inference optimization GPU memory", "dtype batch size OOM strategies"],
     },
 }
 
@@ -1742,8 +1730,12 @@ async def question_generator(state: ResearchState) -> dict:
 
     console.print("\n[bold cyan]Phase 3c: Question Generator[/]")
 
-    # Get person-specific categories or default
+    # Get person-specific categories or default (cap at 7)
     categories = PERSON_CATEGORIES.get(slug, DEFAULT_CATEGORIES)
+    if len(categories) > 7:
+        core = dict(list(categories.items())[:5])
+        domain = dict(list(categories.items())[5:7])
+        categories = {**core, **domain}
     num_questions = len(categories) * 2
 
     console.print(f"  Categories: {len(categories)} ({', '.join(categories.keys())})")
@@ -1790,12 +1782,20 @@ async def question_generator(state: ResearchState) -> dict:
             "- 'Tell me about X' or 'What is X' — these are lazy prompts, not questions\n"
             "- Questions answerable with a single fact (yes/no, a date, a name)\n"
             "- Questions that could apply to any tech CEO without modification\n"
-            "- Duplicating topics the guest has already been asked on prior podcasts\n\n"
+            "- Duplicating topics the guest has already been asked on prior podcasts\n"
+            "- Do NOT embed specific numeric values (download counts, star counts, repo counts, percentages). "
+            "Use relative references: 'your most-downloaded model', 'your highest-starred repo', 'the benchmark you lead on'\n"
+            "- Do NOT invent comparisons or alternatives not in the source material "
+            "(e.g., don't say 'versus 64 or 256' unless sources explicitly discuss those values)\n"
+            "- Do NOT assume the answer space (e.g., 'What's the optimal batch size' presumes there is one)\n"
+            "- Do NOT assume current vendor/employer affiliation from papers — "
+            "a paper about AMD GPUs does not mean the person works exclusively on AMD\n\n"
             "Quality markers:\n"
             "- References a specific project, paper, decision, blog post title, or quote from the research\n"
             "- Creates productive tension (e.g., contrasting two positions the guest holds)\n"
             "- Invites a story or concrete example, not an abstract answer\n"
             "- Under 40 words — concise enough to deliver naturally on air\n"
+            "- Questions remain valid even if download counts, star counts, or affiliations change\n"
             "- When blog posts are available, directly reference blog post titles in questions (e.g., \"In your post 'Title'...\")"
         ),
         (
@@ -1808,7 +1808,15 @@ async def question_generator(state: ResearchState) -> dict:
             f"- Keep each question under 40 words\n"
             f"- For each question, explain WHY this question matters and what INSIGHT you expect it to reveal\n"
             f"- Check the person's prior podcast appearances and do NOT repeat questions they've likely been asked\n"
-            f"- When blog post titles are in the context, weave them into questions naturally\n\n"
+            f"- When blog post titles are in the context, weave them into questions naturally\n"
+            f"- Use AT LEAST 4 different question structures across your output:\n"
+            f"  * Open narrative: 'Walk me through...'\n"
+            f"  * Comparative: 'How does X compare to Y...'\n"
+            f"  * Counterfactual: 'If you had to rebuild X without Y...'\n"
+            f"  * Contrarian: 'Critics say X. Where are they wrong?'\n"
+            f"  * Surprise/failure: 'What surprised you most about...'\n"
+            f"  * Forward-looking: 'What would need to be true for...'\n"
+            f"- Do NOT use 'In your [artifact], you [claim]. What specific...' more than twice total\n\n"
             f"Output a JSON array of exactly {num_questions} objects:\n"
             f'{{"category": "{cat_names}", '
             f'"question": "the question text", '
@@ -2173,6 +2181,7 @@ def export_results(state: ResearchState) -> None:
                 "question": q.get("question", ""),
                 "why_this_question": q.get("why_this_question", ""),
                 "expected_insight": q.get("expected_insight", ""),
+                "last_verified": now,
             }
             for q in questions if isinstance(q, dict) and q.get("question")
         ],

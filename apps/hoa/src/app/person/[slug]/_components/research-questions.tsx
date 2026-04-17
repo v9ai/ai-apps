@@ -102,13 +102,18 @@ export function ResearchQuestions({ research, debug = false }: { research: Perso
                   <p className={css({ fontSize: 'md', color: '#F0F0F5', lineHeight: '1.85' })}>
                     {renderInline(q.question)}
                   </p>
-                  {q.why_this_question && (
+                  {q.last_verified && (
+                    <p className={css({ mt: '2.5', fontSize: 'xs', color: '#5A5A66' })}>
+                      Verified {formatDistanceToNow(new Date(q.last_verified))} ago
+                    </p>
+                  )}
+                  {debug && q.why_this_question && (
                     <p className={css({ mt: '3', fontSize: 'sm', color: '#9B9BA8', lineHeight: '1.75' })}>
                       <span className={css({ fontWeight: '600', color: '#B0B0BC' })}>Why this question: </span>
                       {renderInline(q.why_this_question)}
                     </p>
                   )}
-                  {q.expected_insight && (
+                  {debug && q.expected_insight && (
                     <p className={css({ mt: '1.5', fontSize: 'sm', color: '#9B9BA8', lineHeight: '1.75' })}>
                       <span className={css({ fontWeight: '600', color: '#B0B0BC' })}>Expected insight: </span>
                       {renderInline(q.expected_insight)}

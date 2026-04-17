@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import {
   Badge,
   Box,
@@ -556,17 +555,15 @@ function EmailTemplatesList() {
   );
 }
 
-function EmailsPageContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const tab = searchParams?.get("tab") ?? "inbox";
+export function EmailsPageContent() {
+  const [tab, setTab] = useState("inbox");
 
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
   const [loadingSubscribers, setLoadingSubscribers] = useState(false);
 
   const handleTabChange = (value: string) => {
-    router.push(`/admin/emails?tab=${value}`);
+    setTab(value);
   };
 
   const handleOpenBatchModal = async () => {

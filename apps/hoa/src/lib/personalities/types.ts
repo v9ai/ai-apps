@@ -80,7 +80,7 @@ export type PersonResearch = {
   technical_philosophy?: Record<string, unknown>;
   podcast_appearances?: Record<string, unknown>[];
   news?: Record<string, string>[];
-  questions?: { category: string; question: string; why_this_question?: string; expected_insight?: string }[];
+  questions?: { category: string; question: string; why_this_question?: string; expected_insight?: string; last_verified?: string }[];
 };
 
 export type Personality = {
