@@ -133,7 +133,9 @@ async def regenerate_questions(slug: str) -> list[dict]:
             "(e.g., don't say 'versus 64 or 256' unless sources explicitly discuss those values)\n"
             "- Do NOT assume the answer space (e.g., 'What's the optimal batch size' presumes there is one)\n"
             "- Do NOT assume current vendor/employer affiliation from papers — "
-            "a paper about AMD GPUs does not mean the person works exclusively on AMD\n\n"
+            "a paper about AMD GPUs does not mean the person works exclusively on AMD\n"
+            "- Do NOT name specific GPU vendors (AMD, NVIDIA, Intel) in questions unless "
+            "the person's identity is inseparable from that vendor. Use 'GPU inference' not 'AMD Instinct inference'\n\n"
             "Quality markers:\n"
             "- References a specific project, paper, decision, blog post title, or quote from the research\n"
             "- Creates productive tension (e.g., contrasting two positions the guest holds)\n"
@@ -161,7 +163,8 @@ async def regenerate_questions(slug: str) -> list[dict]:
             f"  * Contrarian: 'Critics say X. Where are they wrong?'\n"
             f"  * Surprise/failure: 'What surprised you most about...'\n"
             f"  * Forward-looking: 'What would need to be true for...'\n"
-            f"- Do NOT use 'In your [artifact], you [claim]. What specific...' more than twice total\n\n"
+            f"- Do NOT use 'In your [artifact], you [claim]. What specific...' more than twice total\n"
+            f"- No more than 3 questions may start with the same 2-word prefix (e.g., 'How does', 'What are')\n\n"
             f"Output a JSON array of exactly {num_questions} objects:\n"
             f'{{"category": "{cat_names}", '
             f'"question": "the question text", '
