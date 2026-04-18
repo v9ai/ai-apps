@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { css } from "styled-system/css";
 
 export type MotorChoice =
@@ -55,37 +55,36 @@ const MOTOR_OPTIONS: {
   },
 ];
 
-function storageKey(slug: string) {
-  return `bricks-motor-${slug}`;
+const MOTOR_TAG_RE = /^\s*#\s*bricks:motor\s*=\s*([a-z-]+)\s*$/;
+const VALID_CHOICES = new Set(MOTOR_OPTIONS.map((o) => o.value));
+
+export function detectActiveMotor(code: string): MotorChoice | null {
+  for (const line of code.split("\n")) {
+    const m = line.match(MOTOR_TAG_RE);
+    if (m && VALID_CHOICES.has(m[1] as MotorChoice)) {
+      return m[1] as MotorChoice;
+    }
+  }
+  return null;
 }
 
-export function useMotorChoice(
-  slug: string,
-  fallback: MotorChoice = "spike-medium",
-): [MotorChoice, (choice: MotorChoice) => void] {
-  const [choice, setChoice] = useState<MotorChoice>(fallback);
+export function setActiveMotor(code: string, motor: MotorChoice): string {
+  const lines = code.split("\n");
+  const tagLine = `# bricks:motor=${motor}`;
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey(slug));
-      if (stored && MOTOR_OPTIONS.some((o) => o.value === stored)) {
-        setChoice(stored as MotorChoice);
-      }
-    } catch {
-      // ignore
-    }
-  }, [slug]);
+  const existingIdx = lines.findIndex((l) => MOTOR_TAG_RE.test(l));
+  if (existingIdx >= 0) {
+    lines[existingIdx] = tagLine;
+    return lines.join("\n");
+  }
 
-  const update = (next: MotorChoice) => {
-    setChoice(next);
-    try {
-      localStorage.setItem(storageKey(slug), next);
-    } catch {
-      // ignore
-    }
-  };
+  const motorIdx = lines.findIndex((l) =>
+    /=\s*Motor\(Port\.[A-Z]/.test(l),
+  );
+  if (motorIdx < 0) return code;
 
-  return [choice, update];
+  lines.splice(motorIdx, 0, tagLine);
+  return lines.join("\n");
 }
 
 export function MotorPicker({
