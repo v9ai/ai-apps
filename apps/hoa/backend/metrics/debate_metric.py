@@ -138,10 +138,18 @@ class DebateMetric(BaseMetric):  # type: ignore[misc]
             rebuttal_c = await self._critic_rebut(critic_client, transcript)
             transcript += f"\n\nCRITIC: {rebuttal_c}"
 
-        # Jury verdict (parallel)
-        judgments = await asyncio.gather(*[
-            self._judge(j, input_text, output_text, transcript) for j in judges
-        ])
+        # Jury verdict (parallel) — per-juror temperature/seed for diversity
+        from regen_questions import _judge_sampling_for
+        total = len(judges)
+        coros = []
+        for idx, j in enumerate(judges):
+            temp, seed = _judge_sampling_for(idx, total)
+            coros.append(self._judge(
+                j, input_text, output_text, transcript,
+                temperature=temp, seed=seed,
+                judge_label=f"JUROR-{idx + 1}-OF-{total}",
+            ))
+        judgments = await asyncio.gather(*coros)
         aggregated = jury_aggregate(judgments)
 
         self.score = float(aggregated.get("overall_score", 0.0))
@@ -195,10 +203,14 @@ class DebateMetric(BaseMetric):  # type: ignore[misc]
 
     async def _judge(
         self, client, input_text: str, output_text: str, transcript: str,
+        *,
+        temperature: float | None = None,
+        seed: int | None = None,
+        judge_label: str = "JUDGE",
     ) -> dict:
         prompt = (
-            f"You are an impartial judge. Read the debate and decide how well "
-            f"the output meets the criteria.\n\n"
+            f"You are {judge_label}, ruling independently of any other juror. "
+            f"Read the debate and decide how well the output meets the criteria.\n\n"
             f"CRITERIA: {self.criteria}\n\n"
             f"INPUT:\n{input_text}\n\n"
             f"OUTPUT:\n{output_text}\n\n"
@@ -207,7 +219,13 @@ class DebateMetric(BaseMetric):  # type: ignore[misc]
             f"Treat the OUTPUT as a single item with index=1.\n\n"
             f"{JUDGE_JSON_INSTRUCTION}"
         )
-        raw = await _run_agent(client, JUDGE_SYSTEM, prompt)
+        extra: dict = {}
+        if seed is not None:
+            extra["seed"] = seed
+        raw = await _run_agent(
+            client, JUDGE_SYSTEM, prompt,
+            temperature=temperature, extra_kwargs=extra or None,
+        )
         parsed = _extract_json(raw)
         if isinstance(parsed, dict) and "overall_score" in parsed:
             return parsed

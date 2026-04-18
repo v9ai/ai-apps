@@ -905,6 +905,27 @@ async def _run_agent_bundle(
     return await _run_agent(client, bundle.system_prompt, task_prompt, tools)
 
 
+def _hf_or_mlx_client():
+    """Return (primary_client, fallback_client). Primary is HF if available, fallback is MLX."""
+    hf = _make_hf_client()
+    mlx = _make_client()
+    return (hf, mlx) if hf else (mlx, None)
+
+
+async def _run_with_hf_fallback(client, fallback_client, system_prompt: str, task: str, tools=None) -> str:
+    """Run agent on primary client; if 402/auth error, retry on fallback."""
+    try:
+        result = await _run_agent(client, system_prompt, task, tools)
+        if "(agent error:" in result and ("402" in result or "Payment Required" in result):
+            raise RuntimeError(result)
+        return result
+    except Exception as e:
+        if fallback_client and ("402" in str(e) or "Payment Required" in str(e)):
+            console.print(f"  [yellow]↻[/] HF 402 — falling back to MLX")
+            return await _run_agent(fallback_client, system_prompt, task, tools)
+        raise
+
+
 async def _run_agent(
     client,
     system_prompt: str,
@@ -1473,7 +1494,7 @@ async def phase2(state: ResearchState) -> dict:
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def phase3_eval(state: ResearchState) -> dict:
-    client = _make_hf_client() or _make_client()  # prefer HF 72B for synthesis
+    client, fallback = _hf_or_mlx_client()
     person = state["person"]
     ctx = f"{person.get('name', '')} ({person.get('role', '')} @ {person.get('org', '')})"
 
@@ -1517,7 +1538,7 @@ async def phase3_eval(state: ResearchState) -> dict:
 
 
 async def phase3_exec(state: ResearchState) -> dict:
-    client = _make_hf_client() or _make_client()  # prefer HF 72B for synthesis
+    client, fallback = _hf_or_mlx_client()
     person = state["person"]
     ctx = f"{person.get('name', '')} ({person.get('role', '')} @ {person.get('org', '')})"
 
