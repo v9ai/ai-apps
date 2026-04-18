@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth/server";
 import { isAdminEmail } from "@/lib/admin";
 import { db } from "@/db";
@@ -19,8 +19,7 @@ interface SetAliasRequest {
 function sanitizeAlias(raw: string): string {
   return raw
     .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, "")
+    .replace(/[^A-Za-z0-9._-]/g, "")
     .slice(0, 64);
 }
 
@@ -48,7 +47,7 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  if (RESERVED.has(alias)) {
+  if (RESERVED.has(alias.toLowerCase())) {
     return NextResponse.json(
       { success: false, error: `Alias '${alias}' is reserved` },
       { status: 400 },
@@ -73,7 +72,12 @@ export async function POST(request: NextRequest) {
   const [clash] = await db
     .select({ id: contacts.id })
     .from(contacts)
-    .where(and(eq(contacts.forwarding_alias, alias), ne(contacts.id, contactId)))
+    .where(
+      and(
+        sql`lower(${contacts.forwarding_alias}) = ${alias.toLowerCase()}`,
+        ne(contacts.id, contactId),
+      ),
+    )
     .limit(1);
   if (clash) {
     return NextResponse.json(

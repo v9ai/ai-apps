@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { contactEmails, contacts, receivedEmails } from "@/db/schema";
 import { classifyReplyHybrid } from "@/lib/email/reply-classifier";
@@ -88,7 +88,7 @@ export async function processReceivedEmail(
     const [aliasContact] = await db
       .select({ id: contacts.id, email: contacts.email })
       .from(contacts)
-      .where(eq(contacts.forwarding_alias, aliasLocal))
+      .where(sql`lower(${contacts.forwarding_alias}) = ${aliasLocal}`)
       .limit(1);
 
     if (aliasContact?.email) {
