@@ -201,6 +201,30 @@ export function Header() {
             ) : (
               <>
                 <a
+                  href="/login"
+                  className={css({
+                    fontSize: "sm",
+                    fontWeight: "700",
+                    fontFamily: "display",
+                    color: "ink.secondary",
+                    textDecoration: "none",
+                    bg: "transparent",
+                    border: "1.5px solid",
+                    borderColor: "plate.border",
+                    rounded: "brick",
+                    px: "4",
+                    py: "1.5",
+                    transition: "all 0.15s ease",
+                    _hover: {
+                      color: "ink.primary",
+                      borderColor: "plate.borderHover",
+                      bg: "plate.raised",
+                    },
+                  })}
+                >
+                  Sign In
+                </a>
+                <a
                   href="/signup"
                   className={css({
                     fontSize: "sm",
