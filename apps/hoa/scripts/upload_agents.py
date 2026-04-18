@@ -33,7 +33,7 @@ COURSE_PREFIX = "qwen-course-"
 def detect_family(bundle_dir: Path) -> str:
     """`course` if README says extracted from course-review, else `hoa`."""
     readme = bundle_dir / "README.md"
-    if readme.exists() and "crates/course-review" in readme.read_text():
+    if readme.exists() and "Extracted from `crates/course-review" in readme.read_text():
         return "course"
     return "hoa"
 

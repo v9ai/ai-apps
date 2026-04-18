@@ -219,6 +219,14 @@ export function ThreadInbox() {
     skip: viewMode === "unmatched",
   });
 
+  const { data: receivedData } = useGetReceivedEmailsQuery({
+    variables: { limit: 100, archived: false },
+    fetchPolicy: "cache-and-network",
+  });
+  const unmatchedCount = (receivedData?.receivedEmails?.emails ?? []).filter(
+    (e) => !e.matchedContactId,
+  ).length;
+
   const threads = data?.emailThreads?.threads ?? [];
   const totalCount = data?.emailThreads?.totalCount ?? 0;
 
@@ -254,7 +262,7 @@ export function ThreadInbox() {
             onClick={() => setViewMode("unmatched")}
             style={{ fontSize: "var(--font-size-1)", flex: 1 }}
           >
-            Unmatched
+            Unmatched{unmatchedCount > 0 ? ` (${unmatchedCount})` : ""}
           </button>
         </Flex>
 

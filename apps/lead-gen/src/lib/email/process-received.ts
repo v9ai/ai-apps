@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { contactEmails, contacts, messages, receivedEmails } from "@/db/schema";
+import { contactEmails, contacts, receivedEmails } from "@/db/schema";
 import { classifyReplyHybrid } from "@/lib/email/reply-classifier";
 import { matchContact, parseResendIdFromHeader } from "@/lib/email/contact-matcher";
 import { resend } from "@/lib/resend";
@@ -154,22 +154,6 @@ export async function processReceivedEmail(
         }
       }
     }
-  }
-
-  // Persist to messages table
-  if (contactMatch?.contactId) {
-    await db.insert(messages).values({
-      channel: "email",
-      direction: "inbound",
-      contact_id: contactMatch.contactId,
-      contact_email_id: contactMatch.outboundEmailId ?? null,
-      sender_name: from || null,
-      content: textBody || null,
-      subject: emailSubject || null,
-      sent_at: new Date().toISOString(),
-      classification: result.label,
-      classification_confidence: result.confidence,
-    });
   }
 
   // Side effects
