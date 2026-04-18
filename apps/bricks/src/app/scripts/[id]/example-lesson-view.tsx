@@ -1,20 +1,12 @@
 import { css } from "styled-system/css";
 import {
+  DEVICE_IMG_MAP,
   hubColor,
   hubDisplayName,
   ParsedScript,
 } from "@/lib/parser";
 import { LessonMarkdown } from "@/lib/render-lesson-markdown";
-
-const DEVICE_IMG_MAP: Record<string, string> = {
-  Motor: "/devices/pupdevice-motors.png",
-  DCMotor: "/devices/pupdevice-dcmotors.png",
-  Light: "/devices/pupdevice-light.png",
-  ColorSensor: "/devices/pupdevice-color.png",
-  ColorLightMatrix: "/devices/sensor_colorlightmatrix.png",
-  UltrasonicSensor: "/devices/pupdevice-ultrasonic.png",
-  ForceSensor: "/devices/pupdevice-force.png",
-};
+import { CodeViewer } from "@/components/code-viewer";
 
 export function ExampleLessonView({
   script,
@@ -252,53 +244,8 @@ export function ExampleLessonView({
         </div>
       )}
 
-      <div
-        className={css({
-          rounded: "brick",
-          border: "1.5px solid",
-          borderColor: "plate.border",
-          bg: "#0d0d12",
-          overflow: "hidden",
-          mb: "6",
-        })}
-      >
-        <div
-          className={css({
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            px: "4",
-            py: "2.5",
-            borderBottom: "1px solid",
-            borderColor: "plate.border",
-            bg: "plate.surface",
-          })}
-        >
-          <span
-            className={css({
-              fontSize: "xs",
-              fontWeight: "600",
-              color: "ink.muted",
-              fontFamily: "mono, monospace",
-            })}
-          >
-            {script.filename}
-          </span>
-        </div>
-        <pre
-          className={css({
-            p: "5",
-            fontSize: "sm",
-            lineHeight: "1.7",
-            color: "ink.primary",
-            fontFamily: "mono, monospace",
-            overflow: "auto",
-            m: "0",
-            whiteSpace: "pre",
-          })}
-        >
-          {script.code}
-        </pre>
+      <div className={css({ mb: "6" })}>
+        <CodeViewer code={script.code} filename={script.filename} />
       </div>
 
       {script.lessonSourceUrl && (
