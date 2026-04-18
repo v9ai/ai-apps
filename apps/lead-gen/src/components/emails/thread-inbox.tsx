@@ -3,10 +3,14 @@
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Badge, Box, Flex, Spinner, Text, TextField } from "@radix-ui/themes";
-import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import { MagnifyingGlassIcon, ArchiveIcon } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
-import { useGetEmailThreadsQuery, useGetReceivedEmailsQuery } from "@/__generated__/hooks";
+import {
+  useGetEmailThreadsQuery,
+  useGetReceivedEmailsQuery,
+  useArchiveEmailMutation,
+} from "@/__generated__/hooks";
 import { ThreadListItem } from "./thread-list-item";
 import { ThreadDetail } from "./thread-detail";
 
@@ -107,11 +111,18 @@ function UnmatchedRow({
   );
 }
 
-function UnmatchedEmailDetail({ emailId }: { emailId: number }) {
-  const { data, loading } = useGetReceivedEmailsQuery({
+function UnmatchedEmailDetail({
+  emailId,
+  onArchive,
+}: {
+  emailId: number;
+  onArchive?: () => void;
+}) {
+  const { data, loading, refetch } = useGetReceivedEmailsQuery({
     variables: { limit: 100, archived: false },
     fetchPolicy: "cache-and-network",
   });
+  const [archiveEmail, { loading: archiving }] = useArchiveEmailMutation();
 
   const email = (data?.receivedEmails?.emails ?? []).find((e) => e.id === emailId);
 
@@ -131,27 +142,43 @@ function UnmatchedEmailDetail({ emailId }: { emailId: number }) {
     );
   }
 
+  const handleArchive = async () => {
+    await archiveEmail({ variables: { id: emailId } });
+    await refetch();
+    onArchive?.();
+  };
+
   return (
     <Flex direction="column" style={{ height: "100%", overflow: "auto" }} p="5">
-      <Flex direction="column" gap="1" mb="4">
-        <Text size="4" weight="bold">{email.subject || "(no subject)"}</Text>
-        <Flex gap="2" align="center">
-          <Text size="2">From: <strong>{email.fromEmail}</strong></Text>
-          {email.classification && (
-            <Badge
-              size="1"
-              color={CLASSIFICATION_COLORS[email.classification] ?? "gray"}
-            >
-              {email.classification.replace("_", " ")}
-            </Badge>
-          )}
+      <Flex justify="between" align="start" gap="3" mb="4">
+        <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
+          <Text size="4" weight="bold">{email.subject || "(no subject)"}</Text>
+          <Flex gap="2" align="center">
+            <Text size="2">From: <strong>{email.fromEmail}</strong></Text>
+            {email.classification && (
+              <Badge
+                size="1"
+                color={CLASSIFICATION_COLORS[email.classification] ?? "gray"}
+              >
+                {email.classification.replace("_", " ")}
+              </Badge>
+            )}
+          </Flex>
+          <Text size="1" color="gray">
+            To: {email.toEmails?.join(", ")}
+          </Text>
+          <Text size="1" color="gray">
+            Received: {email.receivedAt ? new Date(email.receivedAt).toLocaleString() : "Unknown"}
+          </Text>
         </Flex>
-        <Text size="1" color="gray">
-          To: {email.toEmails?.join(", ")}
-        </Text>
-        <Text size="1" color="gray">
-          Received: {email.receivedAt ? new Date(email.receivedAt).toLocaleString() : "Unknown"}
-        </Text>
+        <button
+          className={button({ variant: "ghost", size: "sm" })}
+          onClick={handleArchive}
+          disabled={archiving}
+          style={{ flexShrink: 0 }}
+        >
+          <ArchiveIcon /> {archiving ? "Archiving…" : "Archive"}
+        </button>
       </Flex>
 
       <Box
@@ -368,7 +395,14 @@ export function ThreadInbox() {
       {/* Right panel */}
       <Box style={{ flex: 1, overflow: "hidden" }}>
         {selectedUnmatched ? (
-          <UnmatchedEmailDetail emailId={selectedUnmatched} />
+          <UnmatchedEmailDetail
+            emailId={selectedUnmatched}
+            onArchive={() => {
+              const params = new URLSearchParams(searchParams?.toString() || "");
+              params.delete("unmatched");
+              router.push(`/emails?${params.toString()}`);
+            }}
+          />
         ) : selectedThread ? (
           <ThreadDetail
             contactId={selectedThread}

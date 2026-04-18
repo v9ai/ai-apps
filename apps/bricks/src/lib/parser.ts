@@ -42,6 +42,14 @@ export interface ParsedScript {
   usesCarApi: boolean;
   colors: string[];
   code: string;
+  lesson: string | null;
+  lessonTitle: string | null;
+  heroImage: string | null;
+  lessonSourceUrl: string | null;
+}
+
+export function slugify(filename: string): string {
+  return filename.replace(/\.py$/, "").toLowerCase().replace(/_/g, "-");
 }
 
 const HUB_PATTERN =
@@ -219,6 +227,10 @@ export function parseScript(filename: string, code: string): ParsedScript {
     usesCarApi,
     colors,
     code,
+    lesson: null,
+    lessonTitle: null,
+    heroImage: null,
+    lessonSourceUrl: null,
   };
 }
 
