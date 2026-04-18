@@ -22,6 +22,7 @@ import {
   type HubChoice,
   type HubPickerLabels,
 } from "@/components/hub-picker";
+import { MotorPicker, useMotorChoice } from "@/components/motor-picker";
 import { useLanguage } from "@/lib/language";
 
 export function ExampleLessonView({
@@ -49,6 +50,7 @@ export function ExampleLessonView({
           saved: "Salvat ✓",
           saveError: "Eroare",
         } satisfies HubPickerLabels,
+        motorHeading: "Alege motorul tău",
       }
     : {
         scripts: "Scripts",
@@ -65,6 +67,7 @@ export function ExampleLessonView({
           saved: "Saved ✓",
           saveError: "Error",
         } satisfies HubPickerLabels,
+        motorHeading: "Choose your motor",
       };
 
   const initialHub = detectActiveHub(script.code);
@@ -79,6 +82,9 @@ export function ExampleLessonView({
     () => (supportsHubSwap ? setActiveHub(script.code, selectedHub) : script.code),
     [script.code, selectedHub, supportsHubSwap]
   );
+
+  const firstMotor = script.devices.find((d) => d.deviceType === "Motor");
+  const [motorChoice, setMotorChoice] = useMotorChoice(slug);
 
   const hubController = useHubController(code);
 
@@ -332,6 +338,16 @@ export function ExampleLessonView({
           dirty={selectedHub !== savedHub}
           onSave={saveHub}
           labels={t.hubLabels}
+        />
+      )}
+
+      {firstMotor && (
+        <MotorPicker
+          value={motorChoice}
+          onChange={setMotorChoice}
+          heading={t.motorHeading}
+          portLabel={t.port}
+          port={firstMotor.port}
         />
       )}
 
