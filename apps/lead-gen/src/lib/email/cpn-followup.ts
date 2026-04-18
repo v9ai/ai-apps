@@ -81,7 +81,7 @@ Your email is set up: {{alias_email}} → forwards to {{personal_email}}
 
 Use {{alias_email}} when you register for Anthropic Academy. Anthropic verifies completion by org domain, so this is important.
 
-Welcome video from Karl (Head of Partner Experience, Anthropic): https://youtu.be/O9yc_Qaj5Ns
+Welcome video featuring Karl (the one I mentioned before from Anthropic's partner team): https://youtu.be/O9yc_Qaj5Ns
 
 Direct link to the learning path: anthropic.skilljar.com/page/claude-partner-network-learning-path
 
