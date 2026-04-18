@@ -94,7 +94,9 @@ async function main() {
   const alreadySentRows = (await sql`
     SELECT DISTINCT ce.contact_id
     FROM contact_emails ce
-    WHERE ce.tags LIKE '%cpn-training-path%' AND ce.status = 'sent'
+    WHERE ce.tags LIKE '%cpn-training-path%'
+      AND ce.resend_id IS NOT NULL
+      AND ce.resend_id <> ''
   `) as unknown as { contact_id: number }[];
 
   console.log(`\n  CPN Training Path campaign`);
