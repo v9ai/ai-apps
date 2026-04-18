@@ -910,8 +910,20 @@ async def _run_agent(
     system_prompt: str,
     task: str,
     tools=None,
+    *,
+    temperature: float | None = None,
+    extra_kwargs: dict | None = None,
 ) -> str:
-    """Run a single ReAct agent with the given system prompt, task, and tools."""
+    """Run a single ReAct agent with the given system prompt, task, and tools.
+
+    `temperature` and `extra_kwargs` (e.g. {"seed": 7}) are forwarded to
+    `client.chat()`. Both clients accept arbitrary **kwargs; the HF backend
+    honours `seed`, MLX silently ignores it.
+    """
+    extra = dict(extra_kwargs or {})
+    if temperature is not None:
+        extra.setdefault("temperature", temperature)
+
     try:
         messages = [
             ChatMessage(role="system", content=system_prompt),
@@ -919,11 +931,11 @@ async def _run_agent(
         ]
 
         if not tools:
-            resp = await client.chat(messages)
+            resp = await client.chat(messages, **extra)
             return resp.choices[0].message.content or ""
 
         for _ in range(_MAX_REACT_ITERS):
-            resp = await client.chat(messages, tools=tools, tool_choice="auto")
+            resp = await client.chat(messages, tools=tools, tool_choice="auto", **extra)
             msg = resp.choices[0].message
 
             if not msg.tool_calls:
