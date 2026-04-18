@@ -1,5 +1,7 @@
 # Joc de pinball pentru Bogdan.
-# Apasa butonul verde de pe hub -> motorul se roteste si trimite bila.
+# La pornire motorul se roteste scurt (test).
+# Apoi apasa butonul verde -> motorul face inca o rotatie.
+# Ca sa oprestim programul: tine butonul apasat 2s (hub-ul se stinge).
 
 # Alege hub-ul tau: scoate # din fata randului potrivit si pune # la celelalte.
 # from pybricks.hubs import PrimeHub as Hub
@@ -15,19 +17,24 @@ from pybricks.tools import wait
 
 hub = Hub()
 
+# Pe CityHub butonul verde opreste programul by default.
+# Il dezactivam ca sa-l putem folosi ca trigger pentru motor.
+hub.system.set_stop_button(None)
+
 # Portul A: motorul care misca paleta
 # bricks:motor=spike-large
 launcher = Motor(Port.A, Direction.CLOCKWISE)
 
-# Numerele astea le poti schimba ca sa faci jocul mai surprinzator:
 LAUNCH_SPEED = 800   # cat de tare se invarte motorul
 LAUNCH_ANGLE = 360   # cat de mult se invarte (grade)
 
+# Test la pornire: rotatie scurta ca sa vezi ca motorul merge
+hub.light.on(Color.ORANGE)
+launcher.run_angle(400, 180)
 hub.light.on(Color.WHITE)
 
 
 while True:
-    # Apasa butonul verde ca sa lansezi bila
     if Button.CENTER in hub.buttons.pressed():
         hub.light.on(Color.RED)
         launcher.run_angle(LAUNCH_SPEED, LAUNCH_ANGLE)
