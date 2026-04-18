@@ -2,13 +2,20 @@
 # Motorul de pe portul A trage paleta si lanseaza bila.
 # Apasa butonul hub-ului, sau arata cartonasa verde senzorului de pe B.
 
-from pybricks.hubs import EssentialHub
+# Alege hub-ul tau: scoate # din fata randului potrivit si pune # la celelalte.
+from pybricks.hubs import EssentialHub as Hub
+# from pybricks.hubs import PrimeHub as Hub
+# from pybricks.hubs import InventorHub as Hub
+# from pybricks.hubs import TechnicHub as Hub
+# from pybricks.hubs import CityHub as Hub
+# from pybricks.hubs import MoveHub as Hub
+
 from pybricks.pupdevices import Motor, ColorSensor
 from pybricks.parameters import Port, Color, Direction, Button
 from pybricks.tools import wait
 from urandom import randint
 
-hub = EssentialHub()
+hub = Hub()
 
 # Portul A: motorul care misca paleta
 # Portul B: senzorul care vede cartonasele colorate
