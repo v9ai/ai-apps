@@ -174,27 +174,17 @@ export function MotorPicker({
                   : undefined
               }
             >
-              <div
+              <img
+                src={opt.image}
+                alt={opt.label}
+                loading="lazy"
+                referrerPolicy="no-referrer"
                 className={css({
                   w: "16",
                   h: "16",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  objectFit: "contain",
                 })}
-              >
-                <img
-                  src={opt.image}
-                  alt={opt.label}
-                  loading="lazy"
-                  className={css({
-                    maxW: "100%",
-                    maxH: "100%",
-                    objectFit: "contain",
-                  })}
-                  style={{ transform: `scale(${opt.scale})` }}
-                />
-              </div>
+              />
               <span
                 className={css({
                   fontSize: "xs",
