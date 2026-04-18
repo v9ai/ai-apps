@@ -57,16 +57,48 @@ research_pipeline._HF_TOKEN = _hf_token
 _FORCE_LOCAL = False
 
 
-def _make_client():
-    """Get best available client: HF 72B preferred, MLX fallback."""
+def _build_client(preference: str):
+    """Build a single client: 'hf' (72B remote) or 'mlx' (local 7B).
+    Falls back to MLX if HF requested but unavailable."""
     from research_pipeline import _make_hf_client, _make_client as _make_mlx
-    if not _FORCE_LOCAL:
+    pref = (preference or "").lower()
+    if pref == "hf" and not _FORCE_LOCAL:
         client = _make_hf_client()
         if client:
-            console.print("[bold magenta]Using HF 72B for debate[/]")
-            return client
-    console.print("[dim]Using local MLX (Qwen2.5-7B)[/]")
-    return _make_mlx()
+            return client, "hf"
+        console.print("[yellow]HF requested but token/client unavailable — falling back to MLX[/]")
+    return _make_mlx(), "mlx"
+
+
+def _make_clients(
+    advocate_model: str,
+    critic_model: str,
+    judge_model: str,
+    jury_size: int,
+) -> dict:
+    """Return one client per role. Jury reuses the same judge client when
+    only one judge model is configured (responses still differ via temperature
+    sampling at call time)."""
+    advocate, advocate_kind = _build_client(advocate_model)
+    critic, critic_kind = _build_client(critic_model)
+    judge, judge_kind = _build_client(judge_model)
+    judges = [judge] * max(1, jury_size)
+    console.print(
+        f"[dim]Roles → advocate:{advocate_kind} critic:{critic_kind} "
+        f"judge:{judge_kind} (jury={len(judges)})[/]"
+    )
+    return {"advocate": advocate, "critic": critic, "judges": judges,
+            "judge_kind": judge_kind}
+
+
+def _make_client():
+    """Backwards-compatible single-client builder (HF preferred, MLX fallback)."""
+    client, kind = _build_client("hf")
+    if kind == "hf":
+        console.print("[bold magenta]Using HF 72B for debate[/]")
+    else:
+        console.print("[dim]Using local MLX (Qwen2.5-7B)[/]")
+    return client
 
 
 def _ctx_block(label: str, text: str) -> str:
@@ -96,13 +128,18 @@ def _build_research_context(research: dict, slug: str, categories: dict) -> str:
 # Agent system prompts
 # ═══════════════════════════════════════════════════════════════════════════
 
-from hf_agent import load_agent
-
 # Personas live as HF model repos (v9ai/qwen-hoa-regen-{advocate,critic,judge});
 # loader prefers local `apps/hoa/agent-bundles/` for the dev loop.
-ADVOCATE_SYSTEM = load_agent("regen-advocate").system_prompt
-CRITIC_SYSTEM = load_agent("regen-critic").system_prompt
-JUDGE_SYSTEM = load_agent("regen-judge").system_prompt
+# Loaded once in metrics._debate_primitives and re-exported so the orchestrator
+# and the DeepEval BaseMetric wrapper share a single source of truth.
+from metrics._debate_primitives import (
+    ADVOCATE_SYSTEM,
+    CRITIC_SYSTEM,
+    JUDGE_SYSTEM,
+    JUDGE_JSON_INSTRUCTION,
+    jury_aggregate,
+    synthesise_critique_text,
+)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -210,39 +247,60 @@ async def _critic_review(
 async def _judge_rule(
     client, questions_json: str, critique: str, all_context: str,
     research: dict, num_questions: int, categories: dict, is_final: bool,
-) -> str:
-    cat_names = "|".join(categories.keys())
+) -> dict:
+    """Issue a structured JSON ruling (see JUDGE_JSON_INSTRUCTION).
 
-    final_instruction = ""
-    if is_final:
-        final_instruction = (
-            f"\n\nThis is the FINAL ROUND. You MUST produce the definitive question set.\n"
-            f"Output a JSON array of exactly {num_questions} final questions. "
-            f"For ACCEPTED questions, keep them verbatim. "
-            f"For REVISION REQUIRED, apply your own fix inline. "
-            f"For REJECTED, write a replacement yourself using the research context.\n\n"
-            f"Output format — JSON array of exactly {num_questions} objects:\n"
-            f'{{"category": "{cat_names}", '
-            f'"question": "the question text", '
-            f'"why_this_question": "specific to this person", '
-            f'"expected_insight": "what answer this draws out", '
-            f'"verdict": "ACCEPTED|REVISED|REPLACED"}}'
-        )
+    Returns a dict shaped per the contract; on parse failure returns a
+    permissive fallback so a single bad judge response doesn't crash the run.
+    """
+    cat_names = "|".join(categories.keys())
+    final_note = (
+        "\n\nThis is the FINAL ROUND — your verdicts and any `revised` blocks "
+        "will be saved verbatim. For REJECTED items, supply a replacement in "
+        "`revised` using the research context."
+        if is_final else ""
+    )
 
     task = (
         f"Evaluate this debate about interview questions for {research.get('name', '?')}.\n\n"
-        f"ADVOCATE'S QUESTIONS:\n{questions_json}\n\n"
+        f"ADVOCATE'S QUESTIONS (1-indexed):\n{questions_json}\n\n"
         f"CRITIC'S REVIEW:\n{critique}\n\n"
         f"RESEARCH CONTEXT (use this to independently verify claims):\n{all_context}\n\n"
-        f"For each question, issue a binding verdict:\n"
-        f"- ACCEPTED: passes all checks\n"
-        f"- REVISION REQUIRED: specify the exact fix needed\n"
-        f"- REJECTED: explain why and what kind of replacement is needed\n\n"
-        f"Also rule on structural issues the critic raised."
-        f"{final_instruction}"
+        f"Categories permitted: {cat_names}. Expected count: {num_questions}.\n"
+        f"For each question, issue a binding verdict, a 0..1 score, and a reason.\n"
+        f"Also score the set as a whole.{final_note}\n\n"
+        f"{JUDGE_JSON_INSTRUCTION}"
     )
 
-    return await _run_agent(client, JUDGE_SYSTEM, task)
+    raw = await _run_agent(client, JUDGE_SYSTEM, task)
+    parsed = _extract_json(raw)
+    if isinstance(parsed, dict) and isinstance(parsed.get("questions"), list):
+        return parsed
+
+    console.print("[yellow]Judge response was not valid JSON — using permissive fallback[/]")
+    return {
+        "questions": [],
+        "overall_score": 0.0,
+        "overall_reason": "judge response unparseable; raw output preserved",
+        "_raw": raw,
+    }
+
+
+async def _jury_judge(
+    judges: list, questions_json: str, critique: str, all_context: str,
+    research: dict, num_questions: int, categories: dict, is_final: bool,
+) -> dict:
+    """Run N judges in parallel and aggregate their structured verdicts."""
+    if not judges:
+        return {"questions": [], "overall_score": 0.0, "overall_reason": "no judges"}
+    judgments = await asyncio.gather(*[
+        _judge_rule(
+            j, questions_json, critique, all_context,
+            research, num_questions, categories, is_final,
+        )
+        for j in judges
+    ])
+    return jury_aggregate(judgments)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -309,7 +367,15 @@ def _validate_questions(questions: list[dict], research: dict, categories: dict)
 # Main debate orchestrator
 # ═══════════════════════════════════════════════════════════════════════════
 
-async def regenerate_questions(slug: str, rounds: int = 2, dry_run: bool = False) -> list[dict]:
+async def regenerate_questions(
+    slug: str,
+    rounds: int = 2,
+    dry_run: bool = False,
+    jury: int = 1,
+    advocate_model: str = "mlx",
+    critic_model: str = "mlx",
+    judge_model: str | None = None,
+) -> list[dict]:
     research_path = RESEARCH_DIR / f"{slug}.json"
     if not research_path.exists():
         console.print(f"[red]No research JSON for {slug}[/]")
@@ -319,7 +385,8 @@ async def regenerate_questions(slug: str, rounds: int = 2, dry_run: bool = False
     name = research.get("name", slug)
     console.print(Panel(
         f"[bold cyan]Adversarial debate: {name}[/]\n"
-        f"[dim]{rounds} round{'s' if rounds > 1 else ''} — advocate → critic → judge[/]",
+        f"[dim]{rounds} round{'s' if rounds > 1 else ''} — advocate → critic → "
+        f"jury({jury})[/]",
         title="Question Generation",
     ))
 
@@ -334,10 +401,18 @@ async def regenerate_questions(slug: str, rounds: int = 2, dry_run: bool = False
     console.print(f"  Target: {num_questions} questions\n")
 
     all_context = _build_research_context(research, slug, categories)
-    client = _make_client()
+
+    if judge_model is None:
+        judge_model = "hf" if (_hf_token and not _FORCE_LOCAL) else "mlx"
+    clients = _make_clients(advocate_model, critic_model, judge_model, jury)
+    advocate_client = clients["advocate"]
+    critic_client = clients["critic"]
+    judges = clients["judges"]
 
     prior_critique = None
-    final_questions = None
+    final_questions: list[dict] | None = None
+    final_ruling: dict | None = None
+    last_advocate_questions: list[dict] = []
 
     for round_num in range(1, rounds + 1):
         is_final = round_num == rounds
@@ -346,7 +421,7 @@ async def regenerate_questions(slug: str, rounds: int = 2, dry_run: bool = False
         # Advocate generates/revises
         console.print(f"  [blue]Advocate[/] {'revising' if prior_critique else 'generating'}...")
         advocate_output = await _advocate_generate(
-            client, research, all_context, categories,
+            advocate_client, research, all_context, categories,
             num_questions, prior_critique,
         )
         questions_raw = _extract_json(advocate_output)
@@ -355,42 +430,54 @@ async def regenerate_questions(slug: str, rounds: int = 2, dry_run: bool = False
             if round_num == 1:
                 return []
             break
+        last_advocate_questions = questions_raw
 
         questions_json = json.dumps(questions_raw, indent=2)
         console.print(f"  [blue]Advocate[/] produced {len(questions_raw)} questions")
 
         # Critic attacks
         console.print(f"  [red]Critic[/] reviewing...")
-        critique = await _critic_review(client, questions_json, all_context, research)
+        critique = await _critic_review(critic_client, questions_json, all_context, research)
 
         pass_count = critique.lower().count("pass")
         fail_count = critique.lower().count("fail")
         console.print(f"  [red]Critic[/] verdict: ~{pass_count} pass, ~{fail_count} fail")
 
-        # Judge rules
-        console.print(f"  [magenta]Judge[/] {'issuing final ruling' if is_final else 'evaluating'}...")
-        ruling = await _judge_rule(
-            client, questions_json, critique, all_context,
+        # Jury rules (1..N judges)
+        console.print(
+            f"  [magenta]Jury({len(judges)})[/] "
+            f"{'issuing final ruling' if is_final else 'evaluating'}..."
+        )
+        ruling = await _jury_judge(
+            judges, questions_json, critique, all_context,
             research, num_questions, categories, is_final,
+        )
+        console.print(
+            f"  [magenta]Jury[/] overall score: {ruling.get('overall_score', 0.0):.2f}"
         )
 
         if is_final:
-            final_questions = _extract_json(ruling)
-            if final_questions and isinstance(final_questions, list):
-                console.print(f"  [magenta]Judge[/] finalized {len(final_questions)} questions")
-            else:
-                console.print(f"  [yellow]Judge ruling had no JSON — using advocate's last set[/]")
-                final_questions = questions_raw
+            final_ruling = ruling
+            final_questions = _materialise_final_questions(
+                questions_raw, ruling, categories, num_questions,
+            )
         else:
-            prior_critique = f"CRITIC:\n{critique}\n\nJUDGE RULING:\n{ruling}"
+            prior_critique = (
+                f"CRITIC:\n{critique}\n\n"
+                f"JURY RULING:\n{synthesise_critique_text(ruling)}"
+            )
 
         console.print()
 
     if not final_questions:
-        console.print("[red]Debate produced no questions[/]")
-        return []
+        console.print("[yellow]No final ruling produced — falling back to last advocate set[/]")
+        final_questions = [
+            {**q, "verdict": "ACCEPTED", "judge_score": None, "judge_reason": ""}
+            for q in last_advocate_questions
+        ]
 
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    jury_size = len(judges)
 
     questions = [
         {
@@ -399,12 +486,16 @@ async def regenerate_questions(slug: str, rounds: int = 2, dry_run: bool = False
             "why_this_question": q.get("why_this_question", ""),
             "expected_insight": q.get("expected_insight", ""),
             "last_verified": now,
+            "verdict": q.get("verdict", "ACCEPTED"),
+            "judge_score": q.get("judge_score"),
+            "judge_reason": q.get("judge_reason", ""),
+            "jury_size": jury_size,
         }
         for q in final_questions
         if isinstance(q, dict) and q.get("question")
     ]
 
-    # Post-generation validation
+    # Post-generation validation (operates on user-facing fields only)
     issues = _validate_questions(questions, research, categories)
     if issues:
         console.print(Panel(
@@ -416,27 +507,71 @@ async def regenerate_questions(slug: str, rounds: int = 2, dry_run: bool = False
     table = Table(title="Final Questions (post-debate)", show_lines=True)
     table.add_column("#", width=3)
     table.add_column("Category", width=18)
-    table.add_column("Question", width=70)
+    table.add_column("Question", width=64)
     table.add_column("V", width=3)
+    table.add_column("Score", width=5, justify="right")
     for i, q in enumerate(questions, 1):
         verdict = q.get("verdict", "")
-        v_icon = {"ACCEPTED": "✓", "REVISED": "~", "REPLACED": "+"}.get(verdict, " ")
-        table.add_row(str(i), q["category"], q["question"], v_icon)
+        v_icon = {"ACCEPTED": "✓", "REVISION_REQUIRED": "~",
+                  "REJECTED": "+"}.get(verdict, " ")
+        score = q.get("judge_score")
+        score_str = f"{score:.2f}" if isinstance(score, (int, float)) else "—"
+        table.add_row(str(i), q["category"], q["question"], v_icon, score_str)
     console.print(table)
+
+    if final_ruling and final_ruling.get("overall_reason"):
+        console.print(Panel(
+            f"score {final_ruling.get('overall_score', 0.0):.2f}\n"
+            f"{final_ruling.get('overall_reason', '')}",
+            title="[magenta]Jury overall verdict[/]",
+        ))
 
     if dry_run:
         console.print("[dim]Dry run — not saving[/]")
         return questions
-
-    # Save
-    for q in questions:
-        q.pop("verdict", None)
 
     research["questions"] = questions
     research_path.write_text(json.dumps(research, indent=2, ensure_ascii=False) + "\n")
     console.print(f"  [green]✓[/] Saved to {research_path.relative_to(PROJECT_ROOT)}")
 
     return questions
+
+
+def _materialise_final_questions(
+    advocate_questions: list[dict],
+    ruling: dict,
+    categories: dict,
+    num_questions: int,
+) -> list[dict]:
+    """Combine the advocate's last set with the jury's per-question ruling.
+
+    For ACCEPTED: keep the advocate's text.
+    For REVISION_REQUIRED / REJECTED with a `revised` block: take the revision.
+    For REVISION_REQUIRED / REJECTED with no `revised` block: keep advocate's
+    text but tag the verdict so the audit trail records the disagreement.
+    """
+    by_index = {int(q.get("index", 0)): q for q in ruling.get("questions", [])}
+    out: list[dict] = []
+    for i, advocate_q in enumerate(advocate_questions, 1):
+        verdict_q = by_index.get(i, {})
+        verdict = verdict_q.get("verdict", "ACCEPTED")
+        score = verdict_q.get("score")
+        reason = verdict_q.get("reason", "")
+        revised = verdict_q.get("revised") if isinstance(verdict_q, dict) else None
+        chosen = revised if (verdict != "ACCEPTED" and isinstance(revised, dict)
+                              and revised.get("question")) else advocate_q
+        out.append({
+            "category": chosen.get("category", advocate_q.get("category", "")),
+            "question": chosen.get("question", advocate_q.get("question", "")),
+            "why_this_question": chosen.get("why_this_question",
+                                            advocate_q.get("why_this_question", "")),
+            "expected_insight": chosen.get("expected_insight",
+                                           advocate_q.get("expected_insight", "")),
+            "verdict": verdict,
+            "judge_score": float(score) if isinstance(score, (int, float)) else None,
+            "judge_reason": reason,
+        })
+    return out
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -463,6 +598,10 @@ async def regenerate_all(
     dry_run: bool = False,
     force: bool = False,
     concurrency: int = 3,
+    jury: int = 1,
+    advocate_model: str = "mlx",
+    critic_model: str = "mlx",
+    judge_model: str | None = None,
 ) -> None:
     slugs = _discover_slugs(force=force)
     total = len(slugs)
@@ -484,7 +623,15 @@ async def regenerate_all(
         async with semaphore:
             console.print(f"\n[bold]({idx}/{total}) {slug}[/]")
             try:
-                questions = await regenerate_questions(slug, rounds=rounds, dry_run=dry_run)
+                questions = await regenerate_questions(
+                    slug,
+                    rounds=rounds,
+                    dry_run=dry_run,
+                    jury=jury,
+                    advocate_model=advocate_model,
+                    critic_model=critic_model,
+                    judge_model=judge_model,
+                )
                 status = "ok" if questions else "empty"
                 results.append((slug, status, len(questions)))
             except Exception as e:
@@ -521,6 +668,14 @@ async def main():
     parser.add_argument("--force", action="store_true", help="Regenerate even if questions exist")
     parser.add_argument("--concurrency", type=int, default=3, help="Max concurrent debates (default: 3)")
     parser.add_argument("--local", action="store_true", help="Force local MLX model (skip HF API)")
+    parser.add_argument("--jury", type=int, default=1,
+                        help="Number of judges in the jury (default: 1)")
+    parser.add_argument("--advocate-model", choices=("mlx", "hf"), default="mlx",
+                        help="Model for the advocate role (default: mlx)")
+    parser.add_argument("--critic-model", choices=("mlx", "hf"), default="mlx",
+                        help="Model for the critic role (default: mlx)")
+    parser.add_argument("--judge-model", choices=("mlx", "hf"), default=None,
+                        help="Model for the judge role (default: hf if HF_TOKEN set, else mlx)")
     args = parser.parse_args()
 
     global _FORCE_LOCAL
@@ -533,9 +688,21 @@ async def main():
             dry_run=args.dry_run,
             force=args.force,
             concurrency=args.concurrency,
+            jury=args.jury,
+            advocate_model=args.advocate_model,
+            critic_model=args.critic_model,
+            judge_model=args.judge_model,
         )
     elif args.slug:
-        await regenerate_questions(args.slug, rounds=args.rounds, dry_run=args.dry_run)
+        await regenerate_questions(
+            args.slug,
+            rounds=args.rounds,
+            dry_run=args.dry_run,
+            jury=args.jury,
+            advocate_model=args.advocate_model,
+            critic_model=args.critic_model,
+            judge_model=args.judge_model,
+        )
     else:
         parser.error("Provide a slug or use --all")
 

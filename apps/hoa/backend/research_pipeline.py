@@ -873,6 +873,38 @@ class ResearchState(TypedDict, total=False):
 # Agent runner — ReAct loop via deepseek_client
 # ═══════════════════════════════════════════════════════════════════════════
 
+def _spec_from_bundle(
+    state_key: str,
+    task_prompt: str,
+    *,
+    bundle_slug: str | None = None,
+) -> tuple[str, str, str, list]:
+    """Build a phase1/phase2 spec tuple from an HF agent bundle.
+
+    `state_key` is the ResearchState dict key (e.g., "web_research", "bio").
+    `bundle_slug` overrides the bundle name when state_key diverges from slug.
+    """
+    from hf_agent import load_agent, resolve_tools
+
+    slug = bundle_slug or state_key.replace("_", "-")
+    bundle = load_agent(slug)
+    tools = resolve_tools(bundle, _TOOL_DEFS) if bundle.tools else []
+    return (state_key, bundle.system_prompt, task_prompt, tools)
+
+
+async def _run_agent_bundle(
+    client,
+    slug: str,
+    task_prompt: str,
+) -> str:
+    """Run a direct agent call (no state-key spec) from an HF bundle."""
+    from hf_agent import load_agent, resolve_tools
+
+    bundle = load_agent(slug)
+    tools = resolve_tools(bundle, _TOOL_DEFS) if bundle.tools else None
+    return await _run_agent(client, bundle.system_prompt, task_prompt, tools)
+
+
 async def _run_agent(
     client,
     system_prompt: str,
@@ -1059,206 +1091,118 @@ async def phase1(state: ResearchState) -> dict:
     tools_news = TOOLS_NEWS
     tools_academic = TOOLS_ACADEMIC
 
+    # Specs now load system prompts from HF agent bundles (see hf_agent.load_agent).
+    # Each spec: (state_key, system_prompt, task_prompt, tools) — system+tools come
+    # from the bundle; task is rendered here with per-request ctx vars.
     specs: list[tuple[str, str, str, list | None]] = [
-        # (state_key, system_prompt, task_prompt, tools)
-        (
+        _spec_from_bundle(
             "web_research",
-            (
-                "You are a master internet researcher specializing in AI/tech industry figures. "
-                "You craft precise search queries that cut through noise and find primary sources: "
-                "personal blogs, conference talks, technical interviews, and official announcements. "
-                "You ALWAYS include the person's role and org in every query to disambiguate them "
-                "from unrelated people with the same name."
-            ),
-            (
-                f"Research {ctx} using web search. Generate 8-10 diverse search queries covering: "
-                f"recent news, technical blog posts, conference talks, interviews, open-source "
-                f"projects, AI opinions, and career history. ALWAYS include the role or org "
-                f"('{role}', '{org}') in every query to disambiguate from other people named {name}. "
-                f"Run each query with web_search, then fetch the most promising URLs with fetch_url_content. "
-                f"Return a structured summary of findings organized by theme with source URLs."
-            ),
-            tools_search,
+            f"Research {ctx} using web search. Generate 8-10 diverse search queries covering: "
+            f"recent news, technical blog posts, conference talks, interviews, open-source "
+            f"projects, AI opinions, and career history. ALWAYS include the role or org "
+            f"('{role}', '{org}') in every query to disambiguate from other people named {name}. "
+            f"Run each query with web_search, then fetch the most promising URLs with fetch_url_content. "
+            f"Return a structured summary of findings organized by theme with source URLs.",
         ),
-        (
+        _spec_from_bundle(
             "github_data",
-            (
-                "You are an expert in reading GitHub profiles and understanding repository ecosystems. "
-                "You identify impactful open-source contributions by analyzing star counts, repo "
-                "descriptions, commit patterns, and community adoption. You recognize architectural "
-                "decisions and technical leadership from public signals."
-            ),
-            (
-                f"Fetch and analyze the GitHub profile for {ctx}. "
-                f"GitHub username: '{github or 'unknown — use web_search to find it first'}'. "
-                f"If the username is unknown, search for '{name} github' to find it. "
-                f"Analyze: bio, company, follower count, top repositories by stars, notable "
-                f"projects, and what they reveal about technical focus and community impact."
-            ),
-            [TOOL_GITHUB],
+            f"Fetch and analyze the GitHub profile for {ctx}. "
+            f"GitHub username: '{github or 'unknown — use web_search to find it first'}'. "
+            f"If the username is unknown, search for '{name} github' to find it. "
+            f"Analyze: bio, company, follower count, top repositories by stars, notable "
+            f"projects, and what they reveal about technical focus and community impact.",
         ),
-        (
+        _spec_from_bundle(
             "academic_data",
-            (
-                "You specialize in academic research profiles across multiple platforms: "
-                "ORCID, Academia.edu, Google Scholar, and ResearchGate. You extract meaningful "
-                "insight from publication lists, research interests, DOIs, and academic "
-                "affiliations — connecting academic output to real-world technical impact."
-            ),
-            (
-                f"Build a comprehensive academic profile for {ctx}.\n"
-                f"Available identifiers:\n"
-                f"  - ORCID iD: '{orcid or 'none'}'\n"
-                f"  - Academic profile URL: '{academic_url or 'none'}'\n\n"
-                f"Strategy:\n"
-                f"1. If an ORCID iD is provided, fetch it with fetch_orcid_profile.\n"
-                f"2. If an academic profile URL is provided (Academia.edu, ResearchGate, etc.), "
-                f"fetch it with fetch_academic_profile.\n"
-                f"3. If neither is provided, search the web for '{name} academia.edu OR "
-                f"researchgate OR google scholar site:scholar.google.com' to discover profiles, "
-                f"then fetch the best match with fetch_academic_profile.\n\n"
-                f"Summarize: researcher name, institution, research interests, bio, "
-                f"and list publications with year, title, and DOI where available."
-            ),
-            [TOOL_ORCID, TOOL_ACADEMIC, TOOL_WEB_SEARCH, TOOL_FETCH_URL],
+            f"Build a comprehensive academic profile for {ctx}.\n"
+            f"Available identifiers:\n"
+            f"  - ORCID iD: '{orcid or 'none'}'\n"
+            f"  - Academic profile URL: '{academic_url or 'none'}'\n\n"
+            f"Strategy:\n"
+            f"1. If an ORCID iD is provided, fetch it with fetch_orcid_profile.\n"
+            f"2. If an academic profile URL is provided (Academia.edu, ResearchGate, etc.), "
+            f"fetch it with fetch_academic_profile.\n"
+            f"3. If neither is provided, search the web for '{name} academia.edu OR "
+            f"researchgate OR google scholar site:scholar.google.com' to discover profiles, "
+            f"then fetch the best match with fetch_academic_profile.\n\n"
+            f"Summarize: researcher name, institution, research interests, bio, "
+            f"and list publications with year, title, and DOI where available.",
         ),
-        (
+        _spec_from_bundle(
             "arxiv_data",
-            (
-                "You are a bibliometric specialist who tracks academic impact through citation "
-                "networks, h-indices, and publication patterns. You use arXiv for preprints and "
-                "Semantic Scholar for citation graphs to build a complete picture of someone's "
-                "research output and influence. You distinguish between first-author work, "
-                "collaborative papers, and mentored student publications."
-            ),
-            (
-                f"Search arXiv and Semantic Scholar for papers by or about {ctx}. "
-                f"Search queries should include: '{name}' as author, '{name} {org}', "
-                f"and key technical terms associated with their work. "
-                f"From Semantic Scholar, extract: h-index, total citations, paper count, "
-                f"and their top-cited papers. From arXiv, find recent preprints. "
-                f"Identify their most influential papers by citation count."
-            ),
-            tools_academic,
+            f"Search arXiv and Semantic Scholar for papers by or about {ctx}. "
+            f"Search queries should include: '{name}' as author, '{name} {org}', "
+            f"and key technical terms associated with their work. "
+            f"From Semantic Scholar, extract: h-index, total citations, paper count, "
+            f"and their top-cited papers. From arXiv, find recent preprints. "
+            f"Identify their most influential papers by citation count.",
         ),
-        (
+        _spec_from_bundle(
             "podcast_data",
-            (
-                "You specialize in tracking AI/tech leaders across the podcast and media landscape. "
-                "You know every major tech podcast: Lex Fridman, Dwarkesh Podcast, No Priors, "
-                "Latent Space, This Week in Startups, All-In, Lenny's Podcast, and niche AI shows. "
-                "You find episode links, key discussion topics, and notable moments from each "
-                "appearance. You also track YouTube interviews, conference recordings, and panels."
-            ),
-            (
-                f"Find all podcast appearances and media interviews for {ctx}. "
-                f"Search for: '{name} podcast interview', '{name} {org} podcast', "
-                f"'{name} keynote talk', '{name} YouTube interview'. "
-                f"For each appearance, identify: show name, episode title, date, "
-                f"key topics discussed, and any notable quotes or moments. "
-                f"Check major AI podcasts: Lex Fridman, Dwarkesh Podcast, No Priors, "
-                f"Latent Space, All-In Podcast, This Week in Startups."
-            ),
-            tools_search,
+            f"Find all podcast appearances and media interviews for {ctx}. "
+            f"Search for: '{name} podcast interview', '{name} {org} podcast', "
+            f"'{name} keynote talk', '{name} YouTube interview'. "
+            f"For each appearance, identify: show name, episode title, date, "
+            f"key topics discussed, and any notable quotes or moments. "
+            f"Check major AI podcasts: Lex Fridman, Dwarkesh Podcast, No Priors, "
+            f"Latent Space, All-In Podcast, This Week in Startups.",
         ),
-        (
+        _spec_from_bundle(
             "news_data",
-            (
-                "You are a tech industry press analyst who monitors TechCrunch, The Verge, Wired, "
-                "VentureBeat, The Information, Bloomberg Technology, and AI-specific outlets. "
-                "You track product launches, funding announcements, executive moves, partnerships, "
-                "and controversy. You distinguish between primary reporting and aggregated coverage, "
-                "always preferring primary sources with direct quotes."
-            ),
-            (
-                f"Find all recent news and press coverage about {ctx} from the last 12 months. "
-                f"Search for: '{name} {org}', '{name} announcement', '{name} funding', "
-                f"'{name} launch', '{name} interview'. Use web_news_search for recent articles "
-                f"and web_search for deeper coverage. "
-                f"Categorize findings into: Product Launches, Funding/Business, "
-                f"Partnerships, Controversies, Industry Commentary."
-            ),
-            tools_news,
+            f"Find all recent news and press coverage about {ctx} from the last 12 months. "
+            f"Search for: '{name} {org}', '{name} announcement', '{name} funding', "
+            f"'{name} launch', '{name} interview'. Use web_news_search for recent articles "
+            f"and web_search for deeper coverage. "
+            f"Categorize findings into: Product Launches, Funding/Business, "
+            f"Partnerships, Controversies, Industry Commentary.",
         ),
-        (
+        _spec_from_bundle(
             "hf_data",
-            (
-                "You specialize in the AI model ecosystem — HuggingFace Hub, model cards, "
-                "datasets, and Spaces. You understand model architectures, training paradigms, "
-                "and the significance of download counts, likes, and community adoption. You "
-                "can assess whether someone is a model creator, fine-tuner, dataset curator, "
-                "or tooling builder from their HuggingFace activity."
-            ),
-            (
-                f"Analyze the HuggingFace presence for {ctx}. "
-                f"Try fetching HuggingFace data for username '{github or name.lower().replace(' ', '')}' "
-                f"and also try the organization name '{org.lower().replace(' ', '')}'. "
-                f"If the person doesn't have a HuggingFace presence, search for "
-                f"'{name} huggingface' to find their profile. "
-                f"Analyze: total models, downloads, likes, popular model architectures, "
-                f"datasets published, and Spaces created."
-            ),
-            [TOOL_HF, TOOL_WEB_SEARCH],
+            f"Analyze the HuggingFace presence for {ctx}. "
+            f"Try fetching HuggingFace data for username '{github or name.lower().replace(' ', '')}' "
+            f"and also try the organization name '{org.lower().replace(' ', '')}'. "
+            f"If the person doesn't have a HuggingFace presence, search for "
+            f"'{name} huggingface' to find their profile. "
+            f"Analyze: total models, downloads, likes, popular model architectures, "
+            f"datasets published, and Spaces created.",
         ),
-        (
+        _spec_from_bundle(
             "video_data",
-            (
-                "You are a video content researcher specializing in tracking AI/tech leaders "
-                "across YouTube, conference recordings, and video platforms. You find keynote "
-                "recordings, technical talks, panel discussions, interviews, and educational "
-                "content. You include videos where the person is a SPEAKER, GUEST, PRESENTER, "
-                "or INTERVIEWEE, as well as substantive videos prominently featuring their work. "
-                "You search thoroughly — if initial video_search returns few results, you fall "
-                "back to web_search with site:youtube.com."
-            ),
-            (
-                f"Find YouTube videos and other video content featuring {ctx}. "
-                f"Search strategy:\n"
-                f"(1) Use video_search for: '{name} {org}', '{name} talk', '{name} interview'\n"
-                f"(2) If few results, use web_search for: 'site:youtube.com \"{name}\"'\n"
-                f"(3) Use fetch_url_content on promising YouTube URLs to verify content\n"
-                f"For each video, identify: title, URL, platform (YouTube/Vimeo/etc), "
-                f"upload date, duration, channel/uploader, and a brief description. "
-                f"FILTERING RULES:\n"
-                f"- Include videos where {name} appears as speaker/guest/presenter\n"
-                f"- Include substantive videos prominently about {name}'s work or projects\n"
-                f"- EXCLUDE third-party tutorials not about {name} directly\n"
-                f"- EXCLUDE videos by other people with similar names\n\n"
-                f"Output a JSON array: "
-                f'[{{"title": "...", "url": "https://...", "platform": "YouTube", '
-                f'"date": "YYYY-MM-DD", "duration": "MM:SS", '
-                f'"channel": "...", "description": "..."}}]'
-            ),
-            TOOLS_VIDEO,
+            f"Find YouTube videos and other video content featuring {ctx}. "
+            f"Search strategy:\n"
+            f"(1) Use video_search for: '{name} {org}', '{name} talk', '{name} interview'\n"
+            f"(2) If few results, use web_search for: 'site:youtube.com \"{name}\"'\n"
+            f"(3) Use fetch_url_content on promising YouTube URLs to verify content\n"
+            f"For each video, identify: title, URL, platform (YouTube/Vimeo/etc), "
+            f"upload date, duration, channel/uploader, and a brief description. "
+            f"FILTERING RULES:\n"
+            f"- Include videos where {name} appears as speaker/guest/presenter\n"
+            f"- Include substantive videos prominently about {name}'s work or projects\n"
+            f"- EXCLUDE third-party tutorials not about {name} directly\n"
+            f"- EXCLUDE videos by other people with similar names\n\n"
+            f"Output a JSON array: "
+            f'[{{"title": "...", "url": "https://...", "platform": "YouTube", '
+            f'"date": "YYYY-MM-DD", "duration": "MM:SS", '
+            f'"channel": "...", "description": "..."}}]',
         ),
     ]
 
     # Blog agent — only if personality has a blog URL
     blog_url = person.get("blogUrl", "")
     if blog_url:
-        specs.append((
+        specs.append(_spec_from_bundle(
             "blog_data",
-            (
-                "You are a technical blog analyst who reads developer blogs systematically. "
-                "You identify key themes, technical opinions, project announcements, and "
-                "career milestones from blog post archives. You extract structured metadata "
-                "from each post: title, date, URL, and a one-sentence summary. You can "
-                "also deep-read the most important posts to extract quotes and insights."
-            ),
-            (
-                f"Analyze the personal blog of {ctx} at {blog_url}.\n"
-                f"Step 1: Fetch the blog's RSS feed using fetch_blog_rss with URL '{blog_url}'.\n"
-                f"Step 2: From the feed, identify ALL blog posts. For each post extract:\n"
-                f"  - title, date (YYYY-MM-DD), URL, and a 1-sentence summary from the description.\n"
-                f"Step 3: Deep-read the 5-8 most significant/recent posts using fetch_blog_post_content "
-                f"to extract richer summaries, key quotes, and technical opinions.\n"
-                f"Step 4: Tag each post with 1-3 topic tags (e.g. 'ai-tools', 'swift', 'agentic-engineering').\n\n"
-                f"Output a JSON object with two fields:\n"
-                f'  "posts": [{{"title": "...", "url": "https://...", "date": "YYYY-MM-DD", '
-                f'"summary": "one sentence", "tags": ["tag1", "tag2"]}}]\n'
-                f'  "themes": ["recurring theme 1", "recurring theme 2", ...]'
-            ),
-            TOOLS_BLOG,
+            f"Analyze the personal blog of {ctx} at {blog_url}.\n"
+            f"Step 1: Fetch the blog's RSS feed using fetch_blog_rss with URL '{blog_url}'.\n"
+            f"Step 2: From the feed, identify ALL blog posts. For each post extract:\n"
+            f"  - title, date (YYYY-MM-DD), URL, and a 1-sentence summary from the description.\n"
+            f"Step 3: Deep-read the 5-8 most significant/recent posts using fetch_blog_post_content "
+            f"to extract richer summaries, key quotes, and technical opinions.\n"
+            f"Step 4: Tag each post with 1-3 topic tags (e.g. 'ai-tools', 'swift', 'agentic-engineering').\n\n"
+            f"Output a JSON object with two fields:\n"
+            f'  "posts": [{{"title": "...", "url": "https://...", "date": "YYYY-MM-DD", '
+            f'"summary": "one sentence", "tags": ["tag1", "tag2"]}}]\n'
+            f'  "themes": ["recurring theme 1", "recurring theme 2", ...]',
         ))
 
     results = await _run_dual_lane(client, specs, phase_label="Phase 1")
@@ -1360,233 +1304,132 @@ async def phase2(state: ResearchState) -> dict:
         secondary=[("HuggingFace", "hf_data"), ("Deep-Fetched URLs", "deep_fetched_urls"), ("Blog Posts", "blog_data")],
     )
 
-    tools_search = TOOLS_SEARCH
-
     specs: list[tuple[str, str, str, list | None]] = [
-        (
+        _spec_from_bundle(
             "bio",
-            (
-                "You are an expert technical biographer who has profiled hundreds of AI/tech leaders. "
-                "You synthesize diverse sources into crisp, accurate narratives capturing what makes "
-                "someone unique — their founding moment, key insight, and current focus. You never "
-                "fabricate and always stay grounded in verifiable evidence."
-            ),
-            (
-                f"Write a precise 4-6 sentence biography for {ctx} synthesizing the following research:\n"
-                f"{bio_ctx}\n"
-                f"Focus on: career origin or founding story, key technical achievements, "
-                f"current role and impact, what makes them unique in AI/tech. "
-                f"Be specific — name actual projects, frameworks, papers, or companies. "
-                f"Every sentence must contain a verifiable, specific fact. "
-                f"If the person is less well-known, use web_search to find additional info."
-            ),
-            tools_search,
+            f"Write a precise 4-6 sentence biography for {ctx} synthesizing the following research:\n"
+            f"{bio_ctx}\n"
+            f"Focus on: career origin or founding story, key technical achievements, "
+            f"current role and impact, what makes them unique in AI/tech. "
+            f"Be specific — name actual projects, frameworks, papers, or companies. "
+            f"Every sentence must contain a verifiable, specific fact. "
+            f"If the person is less well-known, use web_search to find additional info.",
         ),
-        (
+        _spec_from_bundle(
             "timeline",
-            (
-                "You are obsessed with chronological accuracy. You reconstruct career histories "
-                "from scattered data: LinkedIn mentions, press releases, GitHub commit histories, "
-                "conference programs, Wikipedia articles, and funding announcements. Every event you "
-                "record has a verified date (YYYY-MM format) and a source URL. When information is "
-                "scarce, you search harder — trying alternative queries, fetching personal websites, "
-                "and checking Wikipedia for key dates."
-            ),
-            (
-                f"Build a chronological timeline of key career events for {ctx} "
-                f"using the following research:\n{timeline_ctx}\n"
-                f"Include: education milestones, job changes, major product/paper launches, "
-                f"funding rounds, conference keynotes, notable interviews, open-source releases, "
-                f"and GitHub repo creation dates. "
-                f"Each event requires: date (YYYY-MM format), description, source URL. "
-                f"Aim for at least 10-15 events covering the full career arc. "
-                f"If the context is thin, search for '{name} career history', '{name} biography', "
-                f"'{name} curriculum vitae', '{name} {org} founded' to find more dates.\n\n"
-                f'Output a JSON array: [{{"date": "YYYY-MM", "event": "description", "url": "https://..."}}]'
-            ),
-            [TOOL_WEB_SEARCH, TOOL_FETCH_URL, TOOL_WIKIPEDIA],
+            f"Build a chronological timeline of key career events for {ctx} "
+            f"using the following research:\n{timeline_ctx}\n"
+            f"Include: education milestones, job changes, major product/paper launches, "
+            f"funding rounds, conference keynotes, notable interviews, open-source releases, "
+            f"and GitHub repo creation dates. "
+            f"Each event requires: date (YYYY-MM format), description, source URL. "
+            f"Aim for at least 10-15 events covering the full career arc. "
+            f"If the context is thin, search for '{name} career history', '{name} biography', "
+            f"'{name} curriculum vitae', '{name} {org} founded' to find more dates.\n\n"
+            f'Output a JSON array: [{{"date": "YYYY-MM", "event": "description", "url": "https://..."}}]',
         ),
-        (
+        _spec_from_bundle(
             "contributions",
-            (
-                "You are a senior technical analyst evaluating the lasting impact of engineers "
-                "and researchers. You understand what makes a framework, paper, algorithm, or "
-                "product genuinely influential — adoption metrics, citations, derivative work, "
-                "industry shifts. You write precise contribution descriptions with verifiable URLs."
-            ),
-            (
-                f"Identify and describe the 3-6 most significant technical contributions of {ctx}. "
-                f"Based on this research:\n{contrib_ctx}\n"
-                f"For each: what is it, why does it matter, what impact has it had (adoption, "
-                f"citations, derivatives), who uses it, what numbers validate its importance.\n\n"
-                f'Output a JSON array: [{{"title": "name", "description": "2-3 sentences", "url": "https://..."}}]'
-            ),
-            tools_search,
+            f"Identify and describe the 3-6 most significant technical contributions of {ctx}. "
+            f"Based on this research:\n{contrib_ctx}\n"
+            f"For each: what is it, why does it matter, what impact has it had (adoption, "
+            f"citations, derivatives), who uses it, what numbers validate its importance.\n\n"
+            f'Output a JSON array: [{{"title": "name", "description": "2-3 sentences", "url": "https://..."}}]',
         ),
-        (
+        _spec_from_bundle(
             "quotes",
-            (
-                "You have an ear for authentic voice. You track down actual quotes from podcast "
-                "transcripts, blog posts, conference keynotes, and social posts. You NEVER "
-                "paraphrase or fabricate — if you cannot find the exact quote with a source URL, "
-                "you return an empty array. You search aggressively: fetching transcripts, blog "
-                "posts, and interview articles to find first-person statements."
-            ),
-            (
-                f"Find 3-5 authentic, verbatim quotes from {ctx} in interviews, podcasts, "
-                f"blog posts, or public talks. Based on this research:\n"
-                f"{quote_ctx}\n"
-                f"Strategy: "
-                f"(1) Search for '{name} quote' and '{name} transcript' "
-                f"(2) Fetch podcast show-notes and transcript URLs from the context above "
-                f"(3) Search for '{name} blog post' or '{name} \"I think\" OR \"I believe\" OR \"We need\"' "
-                f"(4) Use fetch_url_content on the most promising results to extract exact quotes. "
-                f"CRITICAL: Every quote MUST be exact text, not paraphrased. "
-                f"If you cannot find exact quotes with source URLs, return an empty array [].\n\n"
-                f'Output a JSON array: [{{"text": "verbatim quote", "source": "podcast/article name", "url": "https://..."}}]'
-            ),
-            tools_search,
+            f"Find 3-5 authentic, verbatim quotes from {ctx} in interviews, podcasts, "
+            f"blog posts, or public talks. Based on this research:\n"
+            f"{quote_ctx}\n"
+            f"Strategy: "
+            f"(1) Search for '{name} quote' and '{name} transcript' "
+            f"(2) Fetch podcast show-notes and transcript URLs from the context above "
+            f"(3) Search for '{name} blog post' or '{name} \"I think\" OR \"I believe\" OR \"We need\"' "
+            f"(4) Use fetch_url_content on the most promising results to extract exact quotes. "
+            f"CRITICAL: Every quote MUST be exact text, not paraphrased. "
+            f"If you cannot find exact quotes with source URLs, return an empty array [].\n\n"
+            f'Output a JSON array: [{{"text": "verbatim quote", "source": "podcast/article name", "url": "https://..."}}]',
         ),
-        (
+        _spec_from_bundle(
             "social",
-            (
-                "You specialize in digital identity mapping. You find GitHub, Twitter/X, LinkedIn, "
-                "personal websites, Substack, HuggingFace, and other platform presences. You "
-                "VERIFY every URL exists by using check_social_url before including it. You "
-                "systematically construct candidate URLs and test them."
-            ),
-            (
-                f"Map all verified public social profiles and online presence for {ctx}. "
-                f"Based on this research:\n{social_ctx}\n"
-                f"Strategy: "
-                f"(1) Check these candidate URLs with check_social_url:\n"
-                f"    - https://github.com/{person.get('github', name.lower().replace(' ', ''))}\n"
-                f"    - https://huggingface.co/{person.get('github', name.lower().replace(' ', ''))}\n"
-                f"    - https://www.linkedin.com/in/{name.lower().replace(' ', '-')}\n"
-                f"(2) Search: '{name} {org} site:substack.com OR site:medium.com OR site:twitter.com'\n"
-                f"(3) Search: '{name} personal website blog'\n"
-                f"Only include URLs confirmed with HTTP 200 via check_social_url.\n\n"
-                f'Output a JSON object: {{"github": "https://...", "twitter": "https://...", "website": "https://..."}}'
-            ),
-            [TOOL_WEB_SEARCH, TOOL_CHECK_URL, TOOL_FETCH_URL],
+            f"Map all verified public social profiles and online presence for {ctx}. "
+            f"Based on this research:\n{social_ctx}\n"
+            f"Strategy: "
+            f"(1) Check these candidate URLs with check_social_url:\n"
+            f"    - https://github.com/{person.get('github', name.lower().replace(' ', ''))}\n"
+            f"    - https://huggingface.co/{person.get('github', name.lower().replace(' ', ''))}\n"
+            f"    - https://www.linkedin.com/in/{name.lower().replace(' ', '-')}\n"
+            f"(2) Search: '{name} {org} site:substack.com OR site:medium.com OR site:twitter.com'\n"
+            f"(3) Search: '{name} personal website blog'\n"
+            f"Only include URLs confirmed with HTTP 200 via check_social_url.\n\n"
+            f'Output a JSON object: {{"github": "https://...", "twitter": "https://...", "website": "https://..."}}',
         ),
-        (
+        _spec_from_bundle(
             "topics",
-            (
-                "You are a knowledge taxonomy expert who maps people to their precise domain "
-                "expertise. You distinguish between surface-level buzzwords and deep expertise. "
-                "Your topic lists are specific ('RAG pipeline optimization', not 'AI') and "
-                "reflect the person's actual contributions and current focus areas."
-            ),
-            (
-                f"Extract 5-10 specific technical topics representing {ctx}'s core expertise "
-                f"based on all research gathered:\n{all_p1}\n"
-                f"Be specific (e.g. 'multi-agent AI systems', 'RAG pipeline architecture', "
-                f"'transformer inference optimization') not vague (e.g. 'AI', 'machine learning').\n\n"
-                f'Output a JSON array: ["topic1", "topic2", ...]'
-            ),
-            None,
+            f"Extract 5-10 specific technical topics representing {ctx}'s core expertise "
+            f"based on all research gathered:\n{all_p1}\n"
+            f"Be specific (e.g. 'multi-agent AI systems', 'RAG pipeline architecture', "
+            f"'transformer inference optimization') not vague (e.g. 'AI', 'machine learning').\n\n"
+            f'Output a JSON array: ["topic1", "topic2", ...]',
         ),
-        (
+        _spec_from_bundle(
             "competitive",
-            (
-                "You are an industry analyst who understands the competitive dynamics of AI/tech. "
-                "You map where a person's company or project sits in the ecosystem: who are the "
-                "direct competitors, what differentiates their approach, what market segments they "
-                "target, and how they compare on traction metrics."
-            ),
-            (
-                f"Analyze the competitive landscape around {ctx}. Based on:\n"
-                f"{_ctx_block('Web Research', state.get('web_research', ''))}"
-                f"{_ctx_block('GitHub Profile', state.get('github_data', ''))}"
-                f"{_ctx_block('News & Press', state.get('news_data', ''))}\n"
-                f"Identify: direct competitors, differentiators, market position, "
-                f"comparative traction metrics.\n\n"
-                f'Output a JSON object: {{"market_position": "leader/challenger/niche", '
-                f'"competitors": [{{"name": "...", "relationship": "...", "differentiation": "..."}}], '
-                f'"moats": ["..."], "ecosystem_role": "..."}}'
-            ),
-            tools_search,
+            f"Analyze the competitive landscape around {ctx}. Based on:\n"
+            f"{_ctx_block('Web Research', state.get('web_research', ''))}"
+            f"{_ctx_block('GitHub Profile', state.get('github_data', ''))}"
+            f"{_ctx_block('News & Press', state.get('news_data', ''))}\n"
+            f"Identify: direct competitors, differentiators, market position, "
+            f"comparative traction metrics.\n\n"
+            f'Output a JSON object: {{"market_position": "leader/challenger/niche", '
+            f'"competitors": [{{"name": "...", "relationship": "...", "differentiation": "..."}}], '
+            f'"moats": ["..."], "ecosystem_role": "..."}}',
         ),
-        (
+        _spec_from_bundle(
             "collaboration",
-            (
-                "You specialize in mapping professional networks in AI/tech. You identify "
-                "co-founders, co-authors on key papers, frequent collaborators, mentors, "
-                "mentees, and advisors. You trace intellectual lineages (PhD advisors, lab alumni networks)."
-            ),
-            (
-                f"Map the professional collaboration network of {ctx}. Based on:\n"
-                f"{_ctx_block('Web Research', state.get('web_research', ''))}"
-                f"{_ctx_block('arXiv & Semantic Scholar', state.get('arxiv_data', ''))}"
-                f"{_ctx_block('ORCID / Academic', state.get('orcid_data', ''))}\n"
-                f"Identify co-founders, co-authors, mentors, mentees, advisors.\n\n"
-                f'Output a JSON object: {{"co_founders": ["..."], "key_collaborators": '
-                f'[{{"name": "...", "relationship": "...", "context": "..."}}], '
-                f'"mentors": ["..."], "mentees": ["..."], "academic_lineage": "..."}}'
-            ),
-            None,
+            f"Map the professional collaboration network of {ctx}. Based on:\n"
+            f"{_ctx_block('Web Research', state.get('web_research', ''))}"
+            f"{_ctx_block('arXiv & Semantic Scholar', state.get('arxiv_data', ''))}"
+            f"{_ctx_block('ORCID / Academic', state.get('orcid_data', ''))}\n"
+            f"Identify co-founders, co-authors, mentors, mentees, advisors.\n\n"
+            f'Output a JSON object: {{"co_founders": ["..."], "key_collaborators": '
+            f'[{{"name": "...", "relationship": "...", "context": "..."}}], '
+            f'"mentors": ["..."], "mentees": ["..."], "academic_lineage": "..."}}',
         ),
-        (
+        _spec_from_bundle(
             "funding",
-            (
-                "You are a venture capital and startup intelligence analyst. You track funding "
-                "rounds from Seed to IPO, investor names, valuations, revenue milestones, and "
-                "key business events."
-            ),
-            (
-                f"Research the funding history and business milestones for {ctx}. Based on:\n"
-                f"{_ctx_block('Web Research', state.get('web_research', ''))}"
-                f"{_ctx_block('News & Press', state.get('news_data', ''))}\n"
-                f"For each funding round: date, amount, lead investors, valuation if known.\n\n"
-                f'Output a JSON object: {{"funding_rounds": [{{"date": "...", "round": "...", '
-                f'"amount": "...", "investors": "...", "valuation": "..."}}], '
-                f'"total_raised": "$...", "latest_valuation": "...", '
-                f'"business_milestones": [{{"date": "...", "event": "..."}}], '
-                f'"revenue_signals": "..."}}'
-            ),
-            tools_search,
+            f"Research the funding history and business milestones for {ctx}. Based on:\n"
+            f"{_ctx_block('Web Research', state.get('web_research', ''))}"
+            f"{_ctx_block('News & Press', state.get('news_data', ''))}\n"
+            f"For each funding round: date, amount, lead investors, valuation if known.\n\n"
+            f'Output a JSON object: {{"funding_rounds": [{{"date": "...", "round": "...", '
+            f'"amount": "...", "investors": "...", "valuation": "..."}}], '
+            f'"total_raised": "$...", "latest_valuation": "...", '
+            f'"business_milestones": [{{"date": "...", "event": "..."}}], '
+            f'"revenue_signals": "..."}}',
         ),
-        (
+        _spec_from_bundle(
             "conference",
-            (
-                "You track the AI conference circuit: NeurIPS, ICML, ICLR, AAAI, ACL, CVPR, "
-                "KDD, and industry events like AI Engineer Summit, Ray Summit, LangChain Days, "
-                "Google I/O, WWDC, AWS re:Invent, and startup demo days."
-            ),
-            (
-                f"Find all major conference talks, keynotes, and speaking engagements for {ctx}. Based on:\n"
-                f"{_ctx_block('Web Research', state.get('web_research', ''))}"
-                f"{_ctx_block('Podcast & Media', state.get('podcast_data', ''))}\n"
-                f"For each: event name, talk title, date, type (keynote/panel/workshop/demo).\n\n"
-                f'Output a JSON object: {{"speaking_tier": "thought-leader/regular/occasional/rare", '
-                f'"talks": [{{"event": "...", "title": "...", "date": "...", "type": "...", "url": "..."}}], '
-                f'"notable_moments": ["..."]}}'
-            ),
-            tools_search,
+            f"Find all major conference talks, keynotes, and speaking engagements for {ctx}. Based on:\n"
+            f"{_ctx_block('Web Research', state.get('web_research', ''))}"
+            f"{_ctx_block('Podcast & Media', state.get('podcast_data', ''))}\n"
+            f"For each: event name, talk title, date, type (keynote/panel/workshop/demo).\n\n"
+            f'Output a JSON object: {{"speaking_tier": "thought-leader/regular/occasional/rare", '
+            f'"talks": [{{"event": "...", "title": "...", "date": "...", "type": "...", "url": "..."}}], '
+            f'"notable_moments": ["..."]}}',
         ),
-        (
+        _spec_from_bundle(
             "philosophy",
-            (
-                "You are a technical thought analyst who identifies the deep convictions that "
-                "drive AI/tech leaders. You extract their positions on key debates: AGI timelines, "
-                "open vs closed source, safety vs acceleration, scaling laws, emergence, "
-                "architecture choices, and the future of programming."
-            ),
-            (
-                f"Analyze the technical philosophy and vision of {ctx}. Based on:\n"
-                f"{_ctx_block('Web Research', state.get('web_research', ''))}"
-                f"{_ctx_block('Blog Posts', state.get('blog_data', ''))}"
-                f"{_ctx_block('Podcast & Media', state.get('podcast_data', ''))}"
-                f"{_ctx_block('News & Press', state.get('news_data', ''))}\n"
-                f"Extract positions on: AGI timeline, open source vs proprietary, AI safety, "
-                f"scaling laws, architecture preferences, future of software development.\n\n"
-                f'Output a JSON object: {{"core_thesis": "...", '
-                f'"positions": {{"topic": {{"stance": "...", "evidence": "...", "source_url": "..."}}}}, '
-                f'"predictions": [{{"prediction": "...", "date_made": "...", "timeframe": "..."}}], '
-                f'"contrarian_takes": ["..."]}}'
-            ),
-            None,
+            f"Analyze the technical philosophy and vision of {ctx}. Based on:\n"
+            f"{_ctx_block('Web Research', state.get('web_research', ''))}"
+            f"{_ctx_block('Blog Posts', state.get('blog_data', ''))}"
+            f"{_ctx_block('Podcast & Media', state.get('podcast_data', ''))}"
+            f"{_ctx_block('News & Press', state.get('news_data', ''))}\n"
+            f"Extract positions on: AGI timeline, open source vs proprietary, AI safety, "
+            f"scaling laws, architecture preferences, future of software development.\n\n"
+            f'Output a JSON object: {{"core_thesis": "...", '
+            f'"positions": {{"topic": {{"stance": "...", "evidence": "...", "source_url": "..."}}}}, '
+            f'"predictions": [{{"prediction": "...", "date_made": "...", "timeframe": "..."}}], '
+            f'"contrarian_takes": ["..."]}}',
         ),
     ]
 
@@ -1619,30 +1462,23 @@ async def phase3_eval(state: ResearchState) -> dict:
         + _ctx_block("Technical Philosophy", state.get("philosophy", ""))
     )
 
-    result = await _run_agent(
+    result = await _run_agent_bundle(
         client,
-        (
-            "You are a rigorous research quality auditor. You evaluate profiles for bio "
-            "specificity, source diversity, timeline completeness, contribution depth, and "
-            "name disambiguation accuracy. You score each 1-10 with clear reasoning, "
-            "identify gaps, and provide an actionable improvement summary."
-        ),
-        (
-            f"Evaluate the research profile quality for {ctx} across 5 dimensions. "
-            f"Review the following research:\n{p2_context}\n"
-            f"Score each 1-10:\n"
-            f"1. bio_quality — Is the bio specific, evidence-based, informative?\n"
-            f"2. source_coverage — Are sources diverse, high-quality, verifiable?\n"
-            f"3. timeline_completeness — Is the timeline detailed and well-sourced?\n"
-            f"4. contributions_depth — Are contributions specific with real impact data?\n"
-            f"5. name_disambiguation — Is this clearly focused on the correct person?\n\n"
-            f'Output JSON: {{"bio_quality": {{"score": 8, "reasoning": "..."}}, '
-            f'"source_coverage": {{"score": 7, "reasoning": "..."}}, '
-            f'"timeline_completeness": {{"score": 6, "reasoning": "..."}}, '
-            f'"contributions_depth": {{"score": 9, "reasoning": "..."}}, '
-            f'"name_disambiguation": {{"score": 10, "reasoning": "..."}}, '
-            f'"overall_score": 8, "summary": "..."}}'
-        ),
+        "quality-evaluator",
+        f"Evaluate the research profile quality for {ctx} across 5 dimensions. "
+        f"Review the following research:\n{p2_context}\n"
+        f"Score each 1-10:\n"
+        f"1. bio_quality — Is the bio specific, evidence-based, informative?\n"
+        f"2. source_coverage — Are sources diverse, high-quality, verifiable?\n"
+        f"3. timeline_completeness — Is the timeline detailed and well-sourced?\n"
+        f"4. contributions_depth — Are contributions specific with real impact data?\n"
+        f"5. name_disambiguation — Is this clearly focused on the correct person?\n\n"
+        f'Output JSON: {{"bio_quality": {{"score": 8, "reasoning": "..."}}, '
+        f'"source_coverage": {{"score": 7, "reasoning": "..."}}, '
+        f'"timeline_completeness": {{"score": 6, "reasoning": "..."}}, '
+        f'"contributions_depth": {{"score": 9, "reasoning": "..."}}, '
+        f'"name_disambiguation": {{"score": 10, "reasoning": "..."}}, '
+        f'"overall_score": 8, "summary": "..."}}',
     )
 
     console.print(f"  [green]✓[/] eval ({len(result)} chars)")
@@ -1676,32 +1512,23 @@ async def phase3_exec(state: ResearchState) -> dict:
         + _ctx_block("Blog Posts", state.get("blog_data", ""))
     )
 
-    result = await _run_agent(
+    result = await _run_agent_bundle(
         client,
-        (
-            "You are an executive briefing specialist who distills complex multi-source "
-            "intelligence into actionable profiles. You identify the 3 most important things "
-            "to know about a person, their unique position in the industry, and what makes "
-            "them consequential. You resolve contradictions between sources, flag uncertainty, "
-            "and produce a profile that a CEO or investor could use to prepare for a meeting "
-            "in 5 minutes."
-        ),
-        (
-            f"Synthesize ALL research into a comprehensive executive profile for {ctx}:\n"
-            f"{all_context}\n"
-            f"Produce:\n"
-            f"1. One-liner: single sentence capturing who this person is\n"
-            f"2. Three key facts\n"
-            f"3. Career arc: 2-3 sentence narrative\n"
-            f"4. Current focus: what they're working on now\n"
-            f"5. Industry significance\n"
-            f"6. Risk factors\n"
-            f"7. Meeting prep: 3 conversation starters\n\n"
-            f'Output JSON: {{"one_liner": "...", "key_facts": ["...", "...", "..."], '
-            f'"career_arc": "...", "current_focus": "...", "industry_significance": "...", '
-            f'"risk_factors": ["..."], "meeting_prep": ["...", "...", "..."], '
-            f'"confidence_level": "high/medium/low with reasoning"}}'
-        ),
+        "executive-summary",
+        f"Synthesize ALL research into a comprehensive executive profile for {ctx}:\n"
+        f"{all_context}\n"
+        f"Produce:\n"
+        f"1. One-liner: single sentence capturing who this person is\n"
+        f"2. Three key facts\n"
+        f"3. Career arc: 2-3 sentence narrative\n"
+        f"4. Current focus: what they're working on now\n"
+        f"5. Industry significance\n"
+        f"6. Risk factors\n"
+        f"7. Meeting prep: 3 conversation starters\n\n"
+        f'Output JSON: {{"one_liner": "...", "key_facts": ["...", "...", "..."], '
+        f'"career_arc": "...", "current_focus": "...", "industry_significance": "...", '
+        f'"risk_factors": ["..."], "meeting_prep": ["...", "...", "..."], '
+        f'"confidence_level": "high/medium/low with reasoning"}}',
     )
 
     console.print(f"  [green]✓[/] executive ({len(result)} chars)")
@@ -1832,62 +1659,33 @@ async def question_generator(state: ResearchState) -> dict:
     )
     cat_names = "|".join(categories.keys())
 
-    result = await _run_agent(
+    result = await _run_agent_bundle(
         client,
-        (
-            "You are an expert podcast host and interviewer who specializes in deep technical "
-            "conversations with AI/tech leaders. You craft questions that reveal genuine insight — "
-            "referencing the person's specific work, intellectual tensions in their field, and "
-            "decisions they've made. You never ask generic or Wikipedia-level questions. Each "
-            "question opens a thread the guest hasn't been asked before.\n\n"
-            "Anti-patterns to avoid:\n"
-            "- 'Tell me about X' or 'What is X' — these are lazy prompts, not questions\n"
-            "- Questions answerable with a single fact (yes/no, a date, a name)\n"
-            "- Questions that could apply to any tech CEO without modification\n"
-            "- Duplicating topics the guest has already been asked on prior podcasts\n"
-            "- Do NOT embed specific numeric values (download counts, star counts, repo counts, percentages). "
-            "Use relative references: 'your most-downloaded model', 'your highest-starred repo', 'the benchmark you lead on'\n"
-            "- Do NOT invent comparisons or alternatives not in the source material "
-            "(e.g., don't say 'versus 64 or 256' unless sources explicitly discuss those values)\n"
-            "- Do NOT assume the answer space (e.g., 'What's the optimal batch size' presumes there is one)\n"
-            "- Do NOT assume current vendor/employer affiliation from papers — "
-            "a paper about AMD GPUs does not mean the person works exclusively on AMD\n"
-            "- Do NOT name specific GPU vendors (AMD, NVIDIA, Intel) in questions unless "
-            "the person's identity is inseparable from that vendor. Use 'GPU inference' not 'AMD Instinct inference'\n\n"
-            "Quality markers:\n"
-            "- References a specific project, paper, decision, blog post title, or quote from the research\n"
-            "- Creates productive tension (e.g., contrasting two positions the guest holds)\n"
-            "- Invites a story or concrete example, not an abstract answer\n"
-            "- Under 40 words — concise enough to deliver naturally on air\n"
-            "- Questions remain valid even if download counts, star counts, or affiliations change\n"
-            "- When blog posts are available, directly reference blog post titles in questions (e.g., \"In your post 'Title'...\")"
-        ),
-        (
-            f"Generate {num_questions} high-quality interview questions for a podcast episode featuring {ctx}.\n"
-            f"Use the following research to make questions specific and probing:\n{all_context}\n\n"
-            f"Question categories (exactly 2 per category):\n{cat_lines}\n\n"
-            f"Rules:\n"
-            f"- Reference actual project names, papers, quotes, blog post titles, or events from the research\n"
-            f"- Each question must be standalone (no follow-ups or 'building on the previous...')\n"
-            f"- Keep each question under 40 words\n"
-            f"- For each question, explain WHY this question matters and what INSIGHT you expect it to reveal\n"
-            f"- Check the person's prior podcast appearances and do NOT repeat questions they've likely been asked\n"
-            f"- When blog post titles are in the context, weave them into questions naturally\n"
-            f"- Use AT LEAST 4 different question structures across your output:\n"
-            f"  * Open narrative: 'Walk me through...'\n"
-            f"  * Comparative: 'How does X compare to Y...'\n"
-            f"  * Counterfactual: 'If you had to rebuild X without Y...'\n"
-            f"  * Contrarian: 'Critics say X. Where are they wrong?'\n"
-            f"  * Surprise/failure: 'What surprised you most about...'\n"
-            f"  * Forward-looking: 'What would need to be true for...'\n"
-            f"- Do NOT use 'In your [artifact], you [claim]. What specific...' more than twice total\n"
-            f"- No more than 3 questions may start with the same 2-word prefix (e.g., 'How does', 'What are')\n\n"
-            f"Output a JSON array of exactly {num_questions} objects:\n"
-            f'{{"category": "{cat_names}", '
-            f'"question": "the question text", '
-            f'"why_this_question": "1-sentence reason this question is worth asking", '
-            f'"expected_insight": "what kind of answer this should draw out"}}'
-        ),
+        "interview-questions",
+        f"Generate {num_questions} high-quality interview questions for a podcast episode featuring {ctx}.\n"
+        f"Use the following research to make questions specific and probing:\n{all_context}\n\n"
+        f"Question categories (exactly 2 per category):\n{cat_lines}\n\n"
+        f"Rules:\n"
+        f"- Reference actual project names, papers, quotes, blog post titles, or events from the research\n"
+        f"- Each question must be standalone (no follow-ups or 'building on the previous...')\n"
+        f"- Keep each question under 40 words\n"
+        f"- For each question, explain WHY this question matters and what INSIGHT you expect it to reveal\n"
+        f"- Check the person's prior podcast appearances and do NOT repeat questions they've likely been asked\n"
+        f"- When blog post titles are in the context, weave them into questions naturally\n"
+        f"- Use AT LEAST 4 different question structures across your output:\n"
+        f"  * Open narrative: 'Walk me through...'\n"
+        f"  * Comparative: 'How does X compare to Y...'\n"
+        f"  * Counterfactual: 'If you had to rebuild X without Y...'\n"
+        f"  * Contrarian: 'Critics say X. Where are they wrong?'\n"
+        f"  * Surprise/failure: 'What surprised you most about...'\n"
+        f"  * Forward-looking: 'What would need to be true for...'\n"
+        f"- Do NOT use 'In your [artifact], you [claim]. What specific...' more than twice total\n"
+        f"- No more than 3 questions may start with the same 2-word prefix (e.g., 'How does', 'What are')\n\n"
+        f"Output a JSON array of exactly {num_questions} objects:\n"
+        f'{{"category": "{cat_names}", '
+        f'"question": "the question text", '
+        f'"why_this_question": "1-sentence reason this question is worth asking", '
+        f'"expected_insight": "what kind of answer this should draw out"}}',
     )
 
     console.print(f"  [green]✓[/] questions ({len(result)} chars)")
@@ -1965,69 +1763,50 @@ async def reresearch(state: ResearchState) -> dict:
     tl_score = eval_data.get("timeline_completeness", {})
     if isinstance(tl_score, dict) and tl_score.get("score", 10) < 6:
         console.print("  [yellow]→[/] Re-researching timeline")
-        tasks.append(("timeline", _run_agent(client,
-            (
-                "You are a timeline recovery specialist. The previous timeline attempt was "
-                "incomplete. You try alternative search strategies: career history pages, "
-                "Wikipedia, CV/resume pages, personal websites, and GitHub repo dates."
-            ),
-            (
-                f"The previous timeline for {ctx} was incomplete. Try harder:\n"
-                f"Search for: '{name} career history', '{name} biography timeline', "
-                f"'{name} curriculum vitae', '{name} {org} founded when', "
-                f"'{name} education university'. "
-                f"Also try Wikipedia: fetch_wikipedia_summary for '{name}'. "
-                f"Previous research context:\n"
-                f"{_ctx_block('Web Research', state.get('web_research', ''))}"
-                f"{_ctx_block('Wikipedia', state.get('wikipedia_data', ''))}\n"
-                f"Previous timeline:\n{state.get('timeline', '')}\n"
-                f"Find MORE events with verified dates.\n\n"
-                f'Output a JSON array: [{{"date": "YYYY-MM", "event": "description", "url": "https://..."}}]'
-            ),
-            [TOOL_WEB_SEARCH, TOOL_FETCH_URL, TOOL_WIKIPEDIA],
+        tasks.append(("timeline", _run_agent_bundle(client,
+            "timeline-recovery",
+            f"The previous timeline for {ctx} was incomplete. Try harder:\n"
+            f"Search for: '{name} career history', '{name} biography timeline', "
+            f"'{name} curriculum vitae', '{name} {org} founded when', "
+            f"'{name} education university'. "
+            f"Also try Wikipedia: fetch_wikipedia_summary for '{name}'. "
+            f"Previous research context:\n"
+            f"{_ctx_block('Web Research', state.get('web_research', ''))}"
+            f"{_ctx_block('Wikipedia', state.get('wikipedia_data', ''))}\n"
+            f"Previous timeline:\n{state.get('timeline', '')}\n"
+            f"Find MORE events with verified dates.\n\n"
+            f'Output a JSON array: [{{"date": "YYYY-MM", "event": "description", "url": "https://..."}}]',
         )))
 
     # Re-research quotes if empty
     existing_quotes = _extract_json(state.get("quotes", "")) or []
     if not existing_quotes:
         console.print("  [yellow]→[/] Re-researching quotes")
-        tasks.append(("quotes", _run_agent(client,
-            (
-                "You are a quote recovery specialist. The first attempt found zero quotes. "
-                "You try harder: searching for blog posts, transcripts, tweets, and interviews."
-            ),
-            (
-                f"No quotes were found for {ctx} in the first pass. Try harder:\n"
-                f"Search for: '{name} transcript', '{name} blog post', "
-                f"'{name} \"said\" OR \"stated\" OR \"wrote\"', '{name} interview quote'. "
-                f"Fetch the top 3-5 results with fetch_url_content and extract exact quotes.\n"
-                f"If you still cannot find any, return [].\n\n"
-                f'Output a JSON array: [{{"text": "verbatim quote", "source": "name", "url": "https://..."}}]'
-            ),
-            TOOLS_SEARCH,
+        tasks.append(("quotes", _run_agent_bundle(client,
+            "quote-recovery",
+            f"No quotes were found for {ctx} in the first pass. Try harder:\n"
+            f"Search for: '{name} transcript', '{name} blog post', "
+            f"'{name} \"said\" OR \"stated\" OR \"wrote\"', '{name} interview quote'. "
+            f"Fetch the top 3-5 results with fetch_url_content and extract exact quotes.\n"
+            f"If you still cannot find any, return [].\n\n"
+            f'Output a JSON array: [{{"text": "verbatim quote", "source": "name", "url": "https://..."}}]',
         )))
 
     # Re-research social if empty
     existing_social = _extract_json(state.get("social", "")) or {}
     if not existing_social:
         console.print("  [yellow]→[/] Re-researching social links")
-        tasks.append(("social", _run_agent(client,
-            (
-                "You are a social link recovery specialist. You systematically check platform "
-                "URLs and verify with HTTP HEAD requests."
-            ),
-            (
-                f"No social links were found for {ctx}. Try harder:\n"
-                f"Check these URLs with check_social_url:\n"
-                f"  - https://github.com/{name.lower().replace(' ', '')}\n"
-                f"  - https://github.com/{name.lower().replace(' ', '-')}\n"
-                f"  - https://www.linkedin.com/in/{name.lower().replace(' ', '-')}\n"
-                f"  - https://www.linkedin.com/in/{name.lower().replace(' ', '')}\n"
-                f"Also search: '{name} {org} github OR twitter OR linkedin OR website'\n"
-                f"Only include URLs confirmed with HTTP 200.\n\n"
-                f'Output a JSON object: {{"github": "https://...", "linkedin": "https://...", ...}}'
-            ),
-            [TOOL_WEB_SEARCH, TOOL_CHECK_URL],
+        tasks.append(("social", _run_agent_bundle(client,
+            "social-recovery",
+            f"No social links were found for {ctx}. Try harder:\n"
+            f"Check these URLs with check_social_url:\n"
+            f"  - https://github.com/{name.lower().replace(' ', '')}\n"
+            f"  - https://github.com/{name.lower().replace(' ', '-')}\n"
+            f"  - https://www.linkedin.com/in/{name.lower().replace(' ', '-')}\n"
+            f"  - https://www.linkedin.com/in/{name.lower().replace(' ', '')}\n"
+            f"Also search: '{name} {org} github OR twitter OR linkedin OR website'\n"
+            f"Only include URLs confirmed with HTTP 200.\n\n"
+            f'Output a JSON object: {{"github": "https://...", "linkedin": "https://...", ...}}',
         )))
 
     if tasks:

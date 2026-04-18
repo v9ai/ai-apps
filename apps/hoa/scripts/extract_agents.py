@@ -132,7 +132,7 @@ def extract_pipeline_specs(source_path: Path) -> list[dict[str, Any]]:
         if not re.fullmatch(r"[a-z][a-z0-9_]*", slug):
             continue
         persona = _concat_str_expr(node.elts[1])
-        if persona is None or not persona.startswith(("You are", "You specialize")):
+        if persona is None or not persona.startswith("You "):
             continue
         if slug in seen_slugs:
             continue
