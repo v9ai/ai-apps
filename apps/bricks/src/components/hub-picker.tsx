@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { css } from "styled-system/css";
 
 export type HubChoice =
@@ -19,30 +20,122 @@ const HUB_OPTIONS: { value: HubChoice; label: string; image: string }[] = [
   { value: "MoveHub", label: "Move", image: "/hubs/hub-move.png" },
 ];
 
+export type HubPickerLabels = {
+  heading: string;
+  save: string;
+  saving: string;
+  saved: string;
+  saveError: string;
+};
+
 export function HubPicker({
   value,
   onChange,
-  label,
+  dirty = false,
+  onSave,
+  labels,
 }: {
   value: HubChoice;
   onChange: (hub: HubChoice) => void;
-  label: string;
+  dirty?: boolean;
+  onSave?: () => Promise<void>;
+  labels: HubPickerLabels;
 }) {
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+
+  const handleSave = async () => {
+    if (!onSave || saveState === "saving") return;
+    setSaveState("saving");
+    try {
+      await onSave();
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2000);
+    } catch {
+      setSaveState("error");
+      setTimeout(() => setSaveState("idle"), 3000);
+    }
+  };
+
+  const buttonLabel =
+    saveState === "saving"
+      ? labels.saving
+      : saveState === "saved"
+        ? labels.saved
+        : saveState === "error"
+          ? labels.saveError
+          : labels.save;
+
+  const saveVisible = onSave && (dirty || saveState !== "idle");
+
   return (
     <div className={css({ mb: "6" })}>
-      <h3
+      <div
         className={css({
-          fontSize: "sm",
-          fontWeight: "700",
-          fontFamily: "display",
-          color: "ink.muted",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           mb: "3",
+          gap: "3",
         })}
       >
-        {label}
-      </h3>
+        <h3
+          className={css({
+            fontSize: "sm",
+            fontWeight: "700",
+            fontFamily: "display",
+            color: "ink.muted",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          })}
+        >
+          {labels.heading}
+        </h3>
+        {saveVisible && (
+          <button
+            onClick={handleSave}
+            disabled={saveState === "saving" || !dirty}
+            className={css({
+              fontSize: "xs",
+              fontWeight: "700",
+              fontFamily: "display",
+              px: "3",
+              py: "1.5",
+              rounded: "full",
+              border: "1.5px solid",
+              cursor: "pointer",
+              transition: "all 0.15s",
+              _disabled: {
+                opacity: 0.6,
+                cursor: "default",
+              },
+            })}
+            style={{
+              backgroundColor:
+                saveState === "saved"
+                  ? "rgba(74, 222, 128, 0.15)"
+                  : saveState === "error"
+                    ? "rgba(248, 113, 113, 0.15)"
+                    : "rgba(254, 138, 24, 0.15)",
+              borderColor:
+                saveState === "saved"
+                  ? "#4ade80"
+                  : saveState === "error"
+                    ? "#f87171"
+                    : "#FE8A18",
+              color:
+                saveState === "saved"
+                  ? "#4ade80"
+                  : saveState === "error"
+                    ? "#f87171"
+                    : "#FE8A18",
+            }}
+          >
+            {buttonLabel}
+          </button>
+        )}
+      </div>
       <div
         role="radiogroup"
         className={css({

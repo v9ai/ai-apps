@@ -16,6 +16,7 @@ import {
   detectActiveHub,
   setActiveHub,
   type HubChoice,
+  type HubPickerLabels,
 } from "@/components/hub-picker";
 import { useLanguage } from "@/lib/language";
 
@@ -37,7 +38,13 @@ export function ExampleLessonView({
         deviceSingular: "dispozitiv",
         devicePlural: "dispozitive",
         basedOn: "Bazat pe lecția LEGO® Education",
-        chooseHub: "Alege hub-ul tău",
+        hubLabels: {
+          heading: "Alege hub-ul tău",
+          save: "Salvează",
+          saving: "Se salvează...",
+          saved: "Salvat ✓",
+          saveError: "Eroare",
+        } satisfies HubPickerLabels,
       }
     : {
         scripts: "Scripts",
@@ -47,17 +54,37 @@ export function ExampleLessonView({
         deviceSingular: "device",
         devicePlural: "devices",
         basedOn: "Based on the LEGO® Education lesson",
-        chooseHub: "Choose your hub",
+        hubLabels: {
+          heading: "Choose your hub",
+          save: "Save",
+          saving: "Saving...",
+          saved: "Saved ✓",
+          saveError: "Error",
+        } satisfies HubPickerLabels,
       };
 
-  const supportsHubSwap = detectActiveHub(script.code) !== null;
+  const initialHub = detectActiveHub(script.code);
+  const supportsHubSwap = initialHub !== null;
+  const [savedHub, setSavedHub] = useState<HubChoice>(
+    () => initialHub ?? "EssentialHub"
+  );
   const [selectedHub, setSelectedHub] = useState<HubChoice>(
-    () => detectActiveHub(script.code) ?? "EssentialHub"
+    () => initialHub ?? "EssentialHub"
   );
   const code = useMemo(
     () => (supportsHubSwap ? setActiveHub(script.code, selectedHub) : script.code),
     [script.code, selectedHub, supportsHubSwap]
   );
+
+  const saveHub = async () => {
+    const res = await fetch(`/api/scripts/file/${slug}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hub: selectedHub }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    setSavedHub(selectedHub);
+  };
   const color = hubColor(script.hubType);
   const fallbackTitle = script.filename.replace(/\.py$/, "").replace(/_/g, " ");
   const title = isRo
@@ -296,7 +323,9 @@ export function ExampleLessonView({
         <HubPicker
           value={selectedHub}
           onChange={setSelectedHub}
-          label={t.chooseHub}
+          dirty={selectedHub !== savedHub}
+          onSave={saveHub}
+          labels={t.hubLabels}
         />
       )}
 
