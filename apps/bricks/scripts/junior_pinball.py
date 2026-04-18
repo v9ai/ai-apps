@@ -1,11 +1,6 @@
-# LEGO Education SPIKE Essential — Unit 4 Lesson 6
-# Crazy Carnival Games: Junior Pinball
-#
-# Sofie's junior pinball game. Converts potential energy (stored in
-# the motor-cocked launcher) into kinetic energy (the ball).
-# Press the hub button or bring a color card near the sensor to launch.
-# Each launch uses a randomized power/duration so the game feels
-# unpredictable — just like a real pinball machine.
+# Joc de pinball pentru Bogdan.
+# Motorul de pe portul A trage paleta si lanseaza bila.
+# Apasa butonul hub-ului, sau arata cartonasa verde senzorului de pe B.
 
 from pybricks.hubs import EssentialHub
 from pybricks.pupdevices import Motor, ColorSensor
@@ -15,8 +10,8 @@ from urandom import randint
 
 hub = EssentialHub()
 
-# Port A: launcher motor (pulls back the flipper, then releases)
-# Port B: color sensor — a colored card triggers a launch
+# Portul A: motorul care misca paleta
+# Portul B: senzorul care vede cartonasele colorate
 launcher = Motor(Port.A, Direction.CLOCKWISE)
 sensor = None
 try:
@@ -25,21 +20,21 @@ try:
 except OSError:
     sensor = None
 
-# Launch tuning — students change these to modify behaviour
-COCK_ANGLE = 120           # how far the launcher is pulled back (degrees)
-MIN_LAUNCH_SPEED = 400     # minimum release speed (deg/s)
-MAX_LAUNCH_SPEED = 1100    # maximum release speed (deg/s)
-RESET_SPEED = 250          # speed to re-cock the launcher
+# Numerele astea le poti schimba ca sa faci jocul mai surprinzator:
+COCK_ANGLE = 120           # cat de mult trage paleta inapoi
+MIN_LAUNCH_SPEED = 400     # cel mai incet impinge paleta
+MAX_LAUNCH_SPEED = 1100    # cel mai tare impinge paleta
+RESET_SPEED = 250          # viteza cu care se intoarce paleta
 
 hub.light.on(Color.WHITE)
 
 
 def launch():
-    # Pull back to store potential energy
+    # Trage paleta inapoi
     launcher.run_angle(RESET_SPEED, -COCK_ANGLE)
     wait(200)
 
-    # Randomize the release → unpredictable kinetic energy transfer
+    # Alege o putere oricare intre minim si maxim - asa jocul te surprinde
     power = randint(MIN_LAUNCH_SPEED, MAX_LAUNCH_SPEED)
     hub.light.on(Color.RED)
     launcher.run_angle(power, COCK_ANGLE)
