@@ -25,7 +25,7 @@ import {
   PaperPlaneIcon,
 } from "@radix-ui/react-icons";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
-import { buildCpnFollowup, buildCpnWaitingReply } from "@/lib/email/cpn-followup";
+import { buildCpnFollowup, buildCpnTrainingPath, buildCpnWaitingReply } from "@/lib/email/cpn-followup";
 
 // ─── Templates ───────────────────────────────────────────────────────────────
 
@@ -45,6 +45,11 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     value: "cpn_waiting_reply",
     label: "CPN Waiting for Reply",
     build: (firstName) => buildCpnWaitingReply(firstName),
+  },
+  {
+    value: "cpn_training_path",
+    label: "CPN Training Path Live",
+    build: (firstName) => buildCpnTrainingPath(firstName),
   },
 ];
 

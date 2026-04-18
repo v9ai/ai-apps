@@ -25,7 +25,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 BUNDLES_DIR = REPO / "agent-bundles"
 
-HF_ORG = "v9ai"
+HF_ORG = "vadimnicolai"
 HOA_PREFIX = "qwen-hoa-"
 COURSE_PREFIX = "qwen-course-"
 

@@ -33,22 +33,31 @@ function parseLessonFile(raw: string): LessonData {
 }
 
 function attachLesson(script: ParsedScript): ParsedScript {
-  const mdPath = path.join(
-    LEGO_DIR,
-    script.filename.replace(/\.py$/, ".md"),
-  );
-  if (!fs.existsSync(mdPath)) return script;
+  const base = script.filename.replace(/\.py$/, "");
+  const mdPath = path.join(LEGO_DIR, `${base}.md`);
+  const roPath = path.join(LEGO_DIR, `${base}.ro.md`);
 
-  const { body, title, heroImage, source } = parseLessonFile(
-    fs.readFileSync(mdPath, "utf-8"),
-  );
-  return {
-    ...script,
-    lesson: body,
-    lessonTitle: title,
-    heroImage,
-    lessonSourceUrl: source,
-  };
+  let result = script;
+
+  if (fs.existsSync(mdPath)) {
+    const { body, title, heroImage, source } = parseLessonFile(
+      fs.readFileSync(mdPath, "utf-8"),
+    );
+    result = {
+      ...result,
+      lesson: body,
+      lessonTitle: title,
+      heroImage,
+      lessonSourceUrl: source,
+    };
+  }
+
+  if (fs.existsSync(roPath)) {
+    const { body, title } = parseLessonFile(fs.readFileSync(roPath, "utf-8"));
+    result = { ...result, lessonRo: body, lessonTitleRo: title };
+  }
+
+  return result;
 }
 
 export function getAllScripts(): ParsedScript[] {

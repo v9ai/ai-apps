@@ -49,6 +49,30 @@ vadim.blog`;
   return { subject, text };
 }
 
+export function buildCpnTrainingPath(firstNameStr: string) {
+  const subject = `Claude Partner Network - training path is live`;
+  const text = `Hi ${firstNameStr},
+
+Update: Anthropic's partner team confirmed our application and the training path is now live.
+
+Here's what's needed: complete 4 courses on Anthropic Academy to unlock the Claude Certified Architect certification:
+
+1. Introduction to agent skills
+2. Building with the Claude API
+3. Introduction to Model Context Protocol
+4. Claude Code in Action
+
+Start here: anthropic.com/learn
+
+One logistics thing: Anthropic requires all participants to register under the same organization domain. I can set up a @vadim.blog email that forwards to your personal inbox. Would you be ok with that?
+
+Just reply with a yes if you're in and I'll get your email set up.
+
+Vadim
+vadim.blog`;
+  return { subject, text };
+}
+
 export function buildCpnWaitingReply(firstNameStr: string) {
   const subject = `Re: Claude Partner Network — ${firstNameStr}`;
   const text = `Hi ${firstNameStr},

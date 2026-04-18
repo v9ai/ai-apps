@@ -1,0 +1,13 @@
+[package]
+name = "hf-agent"
+version = "0.1.0"
+edition = "2021"
+authors = ["Vadim Nicolai <v9ai>"]
+description = "Load Qwen agent bundles (system prompt + tools + generation config) from local dir or HuggingFace Hub"
+license = "MIT"
+
+[dependencies]
+hf-hub     = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }

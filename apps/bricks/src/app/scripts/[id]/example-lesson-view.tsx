@@ -1,3 +1,5 @@
+"use client";
+
 import { css } from "styled-system/css";
 import {
   DEVICE_IMG_MAP,
@@ -7,6 +9,7 @@ import {
 } from "@/lib/parser";
 import { LessonMarkdown } from "@/lib/render-lesson-markdown";
 import { CodeViewer } from "@/components/code-viewer";
+import { useLanguage } from "@/lib/language";
 
 export function ExampleLessonView({
   script,
@@ -15,9 +18,33 @@ export function ExampleLessonView({
   script: ParsedScript;
   slug: string;
 }) {
+  const { language } = useLanguage();
+  const isRo = language === "ro" && script.lessonRo !== null;
+  const t = isRo
+    ? {
+        scripts: "Scripturi",
+        devices: "Dispozitive",
+        port: "Portul",
+        remote: "Telecomandă",
+        deviceSingular: "dispozitiv",
+        devicePlural: "dispozitive",
+        basedOn: "Bazat pe lecția LEGO® Education",
+      }
+    : {
+        scripts: "Scripts",
+        devices: "Devices",
+        port: "Port",
+        remote: "Remote",
+        deviceSingular: "device",
+        devicePlural: "devices",
+        basedOn: "Based on the LEGO® Education lesson",
+      };
   const color = hubColor(script.hubType);
-  const title =
-    script.lessonTitle ?? script.filename.replace(/\.py$/, "").replace(/_/g, " ");
+  const fallbackTitle = script.filename.replace(/\.py$/, "").replace(/_/g, " ");
+  const title = isRo
+    ? script.lessonTitleRo ?? script.lessonTitle ?? fallbackTitle
+    : script.lessonTitle ?? fallbackTitle;
+  const lessonBody = isRo ? script.lessonRo : script.lesson;
 
   return (
     <div
@@ -45,7 +72,7 @@ export function ExampleLessonView({
             _hover: { color: "ink.secondary" },
           })}
         >
-          Scripts
+          {t.scripts}
         </a>
         <span className={css({ color: "ink.faint", fontSize: "sm" })}>/</span>
         <span
@@ -137,8 +164,8 @@ export function ExampleLessonView({
               border: "1px solid rgba(254, 138, 24, 0.25)",
             })}
           >
-            {script.devices.length} device
-            {script.devices.length !== 1 && "s"}
+            {script.devices.length}{" "}
+            {script.devices.length === 1 ? t.deviceSingular : t.devicePlural}
           </span>
         )}
         {script.hasRemote && (
@@ -154,7 +181,7 @@ export function ExampleLessonView({
               border: "1px solid rgba(167, 139, 250, 0.2)",
             })}
           >
-            Remote
+            {t.remote}
           </span>
         )}
       </div>
@@ -172,7 +199,7 @@ export function ExampleLessonView({
               mb: "3",
             })}
           >
-            Devices
+            {t.devices}
           </h2>
           <div
             className={css({
@@ -216,7 +243,7 @@ export function ExampleLessonView({
                       display: "block",
                     })}
                   >
-                    Port {d.port}
+                    {t.port} {d.port}
                   </span>
                   <span className={css({ fontSize: "xs", color: "ink.muted" })}>
                     {d.deviceType}
@@ -238,9 +265,9 @@ export function ExampleLessonView({
         </div>
       )}
 
-      {script.lesson && (
+      {lessonBody && (
         <div className={css({ mb: "10" })}>
-          <LessonMarkdown source={script.lesson} />
+          <LessonMarkdown source={lessonBody} />
         </div>
       )}
 

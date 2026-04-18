@@ -26,7 +26,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
-HF_ORG = os.environ.get("HF_AGENT_ORG", "v9ai")
+HF_ORG = os.environ.get("HF_AGENT_ORG", "vadimnicolai")
 HOA_PREFIX = "qwen-hoa-"
 COURSE_PREFIX = "qwen-course-"
 

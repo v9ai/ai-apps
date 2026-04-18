@@ -44,6 +44,8 @@ export interface ParsedScript {
   code: string;
   lesson: string | null;
   lessonTitle: string | null;
+  lessonRo: string | null;
+  lessonTitleRo: string | null;
   heroImage: string | null;
   lessonSourceUrl: string | null;
 }
@@ -239,6 +241,8 @@ export function parseScript(filename: string, code: string): ParsedScript {
     code,
     lesson: null,
     lessonTitle: null,
+    lessonRo: null,
+    lessonTitleRo: null,
     heroImage: null,
     lessonSourceUrl: null,
   };
