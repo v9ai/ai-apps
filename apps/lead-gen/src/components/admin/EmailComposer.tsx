@@ -34,32 +34,48 @@ import {
 
 // ─── Templates ───────────────────────────────────────────────────────────────
 
+interface TemplateContext {
+  firstName: string;
+  aliasEmail: string;
+  personalEmail: string;
+}
+
+interface TemplateResult {
+  subject: string;
+  text: string;
+  /** Override recipient address when the template requires sending to a specific inbox */
+  to?: string;
+}
+
 interface EmailTemplate {
   value: string;
   label: string;
-  build: (firstName: string) => { subject: string; text: string };
+  build: (ctx: TemplateContext) => TemplateResult;
 }
 
 const EMAIL_TEMPLATES: EmailTemplate[] = [
   {
     value: "cpn_followup",
     label: "CPN Followup",
-    build: (firstName) => buildCpnFollowup(firstName),
+    build: ({ firstName }) => buildCpnFollowup(firstName),
   },
   {
     value: "cpn_waiting_reply",
     label: "CPN Waiting for Reply",
-    build: (firstName) => buildCpnWaitingReply(firstName),
+    build: ({ firstName }) => buildCpnWaitingReply(firstName),
   },
   {
     value: "cpn_training_path",
     label: "CPN Training Path Live",
-    build: (firstName) => buildCpnTrainingPath(firstName),
+    build: ({ firstName }) => buildCpnTrainingPath(firstName),
   },
   {
     value: "cpn_email_ready",
     label: "CPN Email Ready - Start Courses",
-    build: (firstName) => buildCpnEmailReady(firstName),
+    build: ({ firstName, aliasEmail, personalEmail }) => ({
+      ...buildCpnEmailReady(firstName, aliasEmail, personalEmail),
+      to: aliasEmail,
+    }),
   },
 ];
 
@@ -72,6 +88,8 @@ export interface EmailComposerProps {
   to?: string;
   name?: string;
   companyName?: string;
+  /** Contact's `forwardingAlias` (without `@vadim.blog`) — enables alias-aware templates */
+  forwardingAlias?: string;
   subject?: string;
   /** Pre-filled body text — sets the body when the dialog opens */
   initialBody?: string;
@@ -97,6 +115,7 @@ export function EmailComposer({
   to: toProp = "",
   name: nameProp = "",
   companyName = "",
+  forwardingAlias,
   subject: subjectProp = "",
   initialBody: initialBodyProp = "",
   replyContext,
@@ -173,9 +192,12 @@ export function EmailComposer({
     const tmpl = EMAIL_TEMPLATES.find((t) => t.value === templateValue);
     if (!tmpl) return;
     const firstName = name.trim().split(/\s+/)[0] || "there";
-    const { subject: tmplSubject, text: tmplBody } = tmpl.build(firstName);
-    setSubject(tmplSubject);
-    setBody(tmplBody);
+    const aliasEmail = forwardingAlias ? `${forwardingAlias}@vadim.blog` : "";
+    const personalEmail = to;
+    const built = tmpl.build({ firstName, aliasEmail, personalEmail });
+    setSubject(built.subject);
+    setBody(built.text);
+    if (built.to) setTo(built.to);
   }
 
   async function handleGenerate() {

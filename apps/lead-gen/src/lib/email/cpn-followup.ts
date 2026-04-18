@@ -73,13 +73,17 @@ vadim.blog`;
   return { subject, text };
 }
 
-export function buildCpnEmailReady(firstNameStr: string) {
+export function buildCpnEmailReady(
+  firstNameStr: string,
+  aliasEmail: string,
+  personalEmail: string,
+) {
   const subject = `Your @vadim.blog email is ready - start the courses`;
   const text = `Hi ${firstNameStr},
 
-Your email is set up: bella.belgarokova@vadim.blog → forwards to bella.belgarokova@hotmail.com
+Your email is set up: ${aliasEmail} → forwards to ${personalEmail}
 
-Use bella.belgarokova@vadim.blog when you register for Anthropic Academy. Anthropic verifies completion by org domain, so this is important.
+Use ${aliasEmail} when you register for Anthropic Academy. Anthropic verifies completion by org domain, so this is important.
 
 Welcome video featuring Karl (the one I mentioned before from Anthropic's partner team): https://youtu.be/O9yc_Qaj5Ns
 
