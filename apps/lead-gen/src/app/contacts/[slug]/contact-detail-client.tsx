@@ -2014,6 +2014,26 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                 )}
               </Box>
 
+              {/* Forwarding alias (@vadim.blog) */}
+              {contact.forwardingAlias && (
+                <Box>
+                  <Text size="2" color="gray" weight="medium">
+                    Forwarding alias
+                  </Text>
+                  <Flex align="center" gap="2" mt="1">
+                    <EnvelopeClosedIcon />
+                    <RadixLink href={`mailto:${contact.forwardingAlias}@vadim.blog`} size="3">
+                      {contact.forwardingAlias}@vadim.blog
+                    </RadixLink>
+                    {contact.email && (
+                      <Text size="1" color="gray">
+                        → {contact.email}
+                      </Text>
+                    )}
+                  </Flex>
+                </Box>
+              )}
+
               {/* Additional emails */}
               {contact.emails && contact.emails.length > 0 && (
                 <Box>
