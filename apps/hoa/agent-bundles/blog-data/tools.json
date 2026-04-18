@@ -1,0 +1,6 @@
+[
+  "fetch_blog_rss",
+  "fetch_blog_post_content",
+  "web_search",
+  "fetch_url_content"
+]
