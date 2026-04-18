@@ -75,7 +75,8 @@ async function main() {
         SELECT 1 FROM contact_emails ce2
         WHERE ce2.contact_id = c.id
           AND ce2.tags LIKE '%cpn-training-path%'
-          AND ce2.status = 'sent'
+          AND ce2.resend_id IS NOT NULL
+          AND ce2.resend_id <> ''
       )
     ORDER BY c.email, c.first_name
   `) as unknown as Target[];

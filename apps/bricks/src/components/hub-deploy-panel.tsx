@@ -42,47 +42,77 @@ const LABELS = {
   },
 } as const;
 
-export function HubDeployPanel({ code }: { code: string }) {
-  const { language } = useLanguage();
-  const t = LABELS[language === "ro" ? "ro" : "en"];
+export interface HubController {
+  status: HubStatus;
+  name: string | null;
+  error: string | null;
+  output: string;
+  clearOutput: () => void;
+  connect: () => Promise<void>;
+  disconnect: () => Promise<void>;
+  deploy: () => Promise<void>;
+  stop: () => Promise<void>;
+}
 
+export function useHubController(code: string): HubController {
   const hubRef = useRef<PybricksHub | null>(null);
-  const [hubStatus, setHubStatus] = useState<HubStatus>("disconnected");
-  const [hubName, setHubName] = useState<string | null>(null);
-  const [hubError, setHubError] = useState<string | null>(null);
-  const [hubOutput, setHubOutput] = useState("");
+  const [status, setStatus] = useState<HubStatus>("disconnected");
+  const [name, setName] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [output, setOutput] = useState("");
 
   useEffect(() => {
     const h = createHub();
     h.onStatusChange = (s) => {
-      setHubStatus(s);
-      setHubName(h.name);
-      setHubError(h.error);
+      setStatus(s);
+      setName(h.name);
+      setError(h.error);
     };
-    h.onOutput = () => setHubOutput(h.output);
+    h.onOutput = () => setOutput(h.output);
     hubRef.current = h;
     return () => {
       h.disconnect();
     };
   }, []);
 
-  const connectHub = useCallback(async () => {
+  const connect = useCallback(async () => {
     await hubRef.current?.connect();
   }, []);
 
-  const disconnectHub = useCallback(async () => {
+  const disconnect = useCallback(async () => {
     await hubRef.current?.disconnect();
   }, []);
 
-  const deployToHub = useCallback(async () => {
+  const deploy = useCallback(async () => {
     if (!hubRef.current) return;
-    setHubOutput("");
+    setOutput("");
     await hubRef.current.deploy(code);
   }, [code]);
 
-  const stopHub = useCallback(async () => {
+  const stop = useCallback(async () => {
     await hubRef.current?.stop();
   }, []);
+
+  const clearOutput = useCallback(() => setOutput(""), []);
+
+  return { status, name, error, output, clearOutput, connect, disconnect, deploy, stop };
+}
+
+export function HubDeployPanel({ controller }: { controller: HubController }) {
+  const { language } = useLanguage();
+  const t = LABELS[language === "ro" ? "ro" : "en"];
+
+  const {
+    status: hubStatus,
+    name: hubName,
+    error: hubError,
+    output: hubOutput,
+    clearOutput,
+    connect: connectHub,
+    disconnect: disconnectHub,
+    deploy: deployToHub,
+    stop: stopHub,
+  } = controller;
 
   return (
     <div
@@ -338,7 +368,7 @@ export function HubDeployPanel({ code }: { code: string }) {
               {t.hubOutput}
             </span>
             <button
-              onClick={() => setHubOutput("")}
+              onClick={clearOutput}
               className={css({
                 fontSize: "xs",
                 color: "ink.faint",
@@ -368,6 +398,85 @@ export function HubDeployPanel({ code }: { code: string }) {
           </pre>
         </div>
       )}
+    </div>
+  );
+}
+
+export function HubDeployButton({ controller }: { controller: HubController }) {
+  const { language } = useLanguage();
+  const t = LABELS[language === "ro" ? "ro" : "en"];
+  const { status, deploy, connect, stop } = controller;
+
+  const label =
+    status === "disconnected" || status === "error"
+      ? t.connectHub
+      : status === "connecting"
+        ? t.waiting
+        : status === "deploying"
+          ? t.uploading
+          : status === "running"
+            ? t.stop
+            : t.deploy;
+
+  const onClick =
+    status === "disconnected" || status === "error"
+      ? connect
+      : status === "running"
+        ? stop
+        : deploy;
+
+  const disabled = status === "connecting" || status === "deploying";
+
+  const bg =
+    status === "running"
+      ? "#E3000B"
+      : status === "disconnected" || status === "error"
+        ? "#006CB7"
+        : "#00852B";
+  const shadow =
+    status === "running"
+      ? "#A30008"
+      : status === "disconnected" || status === "error"
+        ? "#004A7C"
+        : "#005C1F";
+
+  return (
+    <div
+      className={css({
+        mt: "8",
+        display: "flex",
+        justifyContent: "center",
+      })}
+    >
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={css({
+          fontSize: "md",
+          fontWeight: "800",
+          fontFamily: "display",
+          color: "white",
+          rounded: "brick",
+          px: "8",
+          py: "3",
+          cursor: "pointer",
+          border: "none",
+          transition: "all 0.15s ease",
+          _hover: {
+            transform: "translateY(-1px)",
+          },
+          _active: {
+            transform: "translateY(1px)",
+          },
+          _disabled: { opacity: 0.6, cursor: "default", transform: "none" },
+        })}
+        style={{
+          backgroundColor: bg,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.2), 0 3px 0 ${shadow}, 0 5px 10px rgba(0,0,0,0.3)`,
+        }}
+      >
+        {label}
+      </button>
     </div>
   );
 }

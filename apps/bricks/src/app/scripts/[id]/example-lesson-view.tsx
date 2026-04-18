@@ -10,7 +10,11 @@ import {
 } from "@/lib/parser";
 import { LessonMarkdown } from "@/lib/render-lesson-markdown";
 import { CodeViewer } from "@/components/code-viewer";
-import { HubDeployPanel } from "@/components/hub-deploy-panel";
+import {
+  HubDeployPanel,
+  HubDeployButton,
+  useHubController,
+} from "@/components/hub-deploy-panel";
 import {
   HubPicker,
   detectActiveHub,
@@ -75,6 +79,8 @@ export function ExampleLessonView({
     () => (supportsHubSwap ? setActiveHub(script.code, selectedHub) : script.code),
     [script.code, selectedHub, supportsHubSwap]
   );
+
+  const hubController = useHubController(code);
 
   const saveHub = async () => {
     const res = await fetch(`/api/scripts/file/${slug}`, {
@@ -170,7 +176,7 @@ export function ExampleLessonView({
         </div>
       )}
 
-      <HubDeployPanel code={code} />
+      <HubDeployPanel controller={hubController} />
 
       <div
         className={css({
@@ -332,6 +338,8 @@ export function ExampleLessonView({
       <div className={css({ mb: "6" })}>
         <CodeViewer code={code} filename={script.filename} />
       </div>
+
+      <HubDeployButton controller={hubController} />
 
       {script.lessonSourceUrl && (
         <p
