@@ -3729,6 +3729,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "hf-agent"
+version = "0.1.0"
+dependencies = [
+ "hf-hub",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "hf-hub"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

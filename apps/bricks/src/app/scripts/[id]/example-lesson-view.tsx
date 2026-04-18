@@ -284,7 +284,7 @@ export function ExampleLessonView({
             mt: "8",
           })}
         >
-          Based on the LEGO® Education lesson{" "}
+          {t.basedOn}{" "}
           <a
             href={script.lessonSourceUrl}
             target="_blank"
@@ -295,7 +295,7 @@ export function ExampleLessonView({
               _hover: { color: "#FF9F33" },
             })}
           >
-            {script.lessonTitle ?? title}
+            {title}
           </a>
         </p>
       )}
