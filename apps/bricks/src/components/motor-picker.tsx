@@ -7,7 +7,7 @@ export type MotorChoice =
   | "spike-small"
   | "spike-medium"
   | "spike-large"
-  | "technic-m"
+  | "mindstorms-large"
   | "technic-l"
   | "technic-xl";
 
@@ -16,49 +16,42 @@ const MOTOR_OPTIONS: {
   label: string;
   part: string;
   image: string;
-  scale: number;
 }[] = [
   {
     value: "spike-small",
     label: "SPIKE Small",
-    part: "45607",
-    image: "/devices/pupdevice-motors.png",
-    scale: 0.6,
+    part: "68488",
+    image: "https://cdn.rebrickable.com/media/parts/elements/6305270.jpg",
   },
   {
     value: "spike-medium",
     label: "SPIKE Medium",
-    part: "45603",
-    image: "/devices/pupdevice-motors.png",
-    scale: 0.8,
+    part: "54696",
+    image: "https://cdn.rebrickable.com/media/parts/elements/6359216.jpg",
   },
   {
     value: "spike-large",
     label: "SPIKE Large",
-    part: "45602",
-    image: "/devices/pupdevice-motors.png",
-    scale: 1.0,
+    part: "54675",
+    image: "https://cdn.rebrickable.com/media/parts/elements/6265698.jpg",
   },
   {
-    value: "technic-m",
-    label: "Technic M",
-    part: "88018",
-    image: "/devices/pupdevice-motors.png",
-    scale: 0.7,
+    value: "mindstorms-large",
+    label: "MINDSTORMS Large",
+    part: "69730",
+    image: "https://cdn.rebrickable.com/media/parts/elements/6317490.jpg",
   },
   {
     value: "technic-l",
     label: "Technic L",
-    part: "88008",
-    image: "/devices/pupdevice-motors.png",
-    scale: 0.9,
+    part: "22169",
+    image: "https://cdn.rebrickable.com/media/parts/elements/6214085.jpg",
   },
   {
     value: "technic-xl",
     label: "Technic XL",
-    part: "88011",
-    image: "/devices/pupdevice-motors.png",
-    scale: 1.1,
+    part: "22172",
+    image: "https://cdn.rebrickable.com/media/parts/elements/6214088.jpg",
   },
 ];
 
