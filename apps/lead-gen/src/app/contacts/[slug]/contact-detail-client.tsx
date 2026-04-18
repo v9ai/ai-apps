@@ -1441,7 +1441,7 @@ function ForwardingAliasDialog({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/cloudflare/email-alias", {
+      const res = await fetch("/api/contacts/forwarding-alias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contactId: contact.id, alias }),
@@ -1470,7 +1470,7 @@ function ForwardingAliasDialog({
       <Dialog.Trigger>
         <button className={button({ variant: "outline" })}>
           <EnvelopeClosedIcon />
-          {alreadyExists ? `${contact.forwardingAlias}@vadim.blog` : "Create @vadim.blog alias"}
+          {alreadyExists ? `${contact.forwardingAlias}@vadim.blog` : "Set @vadim.blog alias"}
         </button>
       </Dialog.Trigger>
 
@@ -1479,8 +1479,8 @@ function ForwardingAliasDialog({
           {alreadyExists ? "Update" : "Create"} @vadim.blog alias
         </Dialog.Title>
         <Dialog.Description size="2" color="gray" mb="4">
-          Adds a Cloudflare email-routing rule that forwards{" "}
-          <Code>{alias || "{alias}"}@vadim.blog</Code> → <Code>{contact.email ?? "(no email)"}</Code>
+          Incoming mail to <Code>{alias || "{alias}"}@vadim.blog</Code> will be forwarded to{" "}
+          <Code>{contact.email ?? "(no email)"}</Code> via Resend.
         </Dialog.Description>
 
         <Flex direction="column" gap="3">
@@ -1533,7 +1533,7 @@ function ForwardingAliasDialog({
                 onClick={handleSubmit}
                 disabled={submitting || !alias || !contact.email}
               >
-                {submitting ? "Creating…" : "Create rule"}
+                {submitting ? "Saving…" : alreadyExists ? "Update alias" : "Save alias"}
               </button>
             )}
           </Flex>

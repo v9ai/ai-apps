@@ -7,6 +7,31 @@ import { resend } from "@/lib/resend";
 
 const SENDER_EMAIL = "contact@vadim.blog";
 const NOTIFICATION_EMAIL = "nicolai.vadim@gmail.com";
+const ALIAS_DOMAIN = "vadim.blog";
+const RESERVED_LOCAL_PARTS = new Set([
+  "contact",
+  "postmaster",
+  "abuse",
+  "hostmaster",
+  "admin",
+  "noreply",
+  "no-reply",
+]);
+
+/**
+ * If any recipient is `{alias}@vadim.blog` where alias is not a reserved
+ * mailbox (contact, postmaster, etc.), return the alias. Otherwise null.
+ */
+function extractAlias(recipients: string[]): string | null {
+  for (const raw of recipients) {
+    const addr = raw.trim().toLowerCase();
+    if (!addr.endsWith(`@${ALIAS_DOMAIN}`)) continue;
+    const local = addr.slice(0, addr.length - ALIAS_DOMAIN.length - 1);
+    if (!local || RESERVED_LOCAL_PARTS.has(local)) continue;
+    return local;
+  }
+  return null;
+}
 
 export interface ProcessReceivedOptions {
   skipAutoDraft?: boolean;
@@ -53,6 +78,59 @@ export async function processReceivedEmail(
   }
 
   console.log(`[PROCESS_RECEIVED] persisted: ${emailId}`);
+
+  // Alias forwarding: if addressed to `{alias}@vadim.blog` (non-reserved),
+  // look up the owning contact and forward via Resend's forward() helper.
+  // These are transactional messages (verification, etc.) — not replies —
+  // so we skip classification, conversation state, and auto-draft.
+  const aliasLocal = extractAlias(to ?? []);
+  if (aliasLocal) {
+    const [aliasContact] = await db
+      .select({ id: contacts.id, email: contacts.email })
+      .from(contacts)
+      .where(eq(contacts.forwarding_alias, aliasLocal))
+      .limit(1);
+
+    if (aliasContact?.email) {
+      const fwdResult = await resend.instance.forwardReceivedEmail(
+        emailId,
+        aliasContact.email,
+        SENDER_EMAIL,
+      );
+
+      if (fwdResult.error) {
+        console.error(
+          `[PROCESS_RECEIVED] alias forward failed for ${aliasLocal}@${ALIAS_DOMAIN}:`,
+          fwdResult.error,
+        );
+      } else {
+        console.log(
+          `[PROCESS_RECEIVED] forwarded ${aliasLocal}@${ALIAS_DOMAIN} → ${aliasContact.email} (resend id: ${fwdResult.id})`,
+        );
+      }
+
+      await db
+        .update(receivedEmails)
+        .set({
+          classification: "alias_forward",
+          classification_confidence: 1.0,
+          classified_at: new Date().toISOString(),
+          matched_contact_id: aliasContact.id,
+          updated_at: new Date().toISOString(),
+        })
+        .where(eq(receivedEmails.resend_id, emailId));
+
+      return {
+        inserted: true,
+        contactId: aliasContact.id,
+        classification: "alias_forward",
+      };
+    }
+
+    console.warn(
+      `[PROCESS_RECEIVED] alias ${aliasLocal}@${ALIAS_DOMAIN} has no matching contact — falling through to normal classification`,
+    );
+  }
 
   // 1b. Fetch full email from Resend API for headers + content
   let fullEmail: Awaited<ReturnType<typeof resend.instance.getReceivedEmail>> = null;

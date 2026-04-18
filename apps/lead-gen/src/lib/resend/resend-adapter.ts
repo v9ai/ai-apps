@@ -300,6 +300,34 @@ export class ResendEmailAdapter {
     }
   }
 
+  /**
+   * Forward a received email to another address using Resend's helper.
+   * Preserves original content and attachments by default (passthrough: true).
+   * @see https://resend.com/docs/knowledge-base/forwarding-received-emails
+   */
+  async forwardReceivedEmail(
+    emailId: string,
+    to: string | string[],
+    from?: string,
+  ): Promise<{ id: string; error?: string }> {
+    try {
+      const { data, error } = await (this.resend.emails as any).receiving.forward({
+        emailId,
+        to: Array.isArray(to) ? to : [to],
+        from: from || this.defaultFrom,
+      });
+      if (error) {
+        return { id: "", error: error.message };
+      }
+      return { id: (data as { id?: string } | null)?.id || "" };
+    } catch (err) {
+      return {
+        id: "",
+        error: err instanceof Error ? err.message : "Unknown error",
+      };
+    }
+  }
+
   getDefaultFrom(): string {
     return this.defaultFrom;
   }
