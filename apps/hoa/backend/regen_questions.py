@@ -70,25 +70,76 @@ def _build_client(preference: str):
     return _make_mlx(), "mlx"
 
 
+_VALID_MODEL_KINDS = ("mlx", "hf")
+
+
+def _parse_judge_model_spec(spec: str | list[str] | None) -> list[str]:
+    """Normalise the --judge-model arg into a list of model kinds.
+
+    `spec` may be:
+      - None       → empty list (caller substitutes a default)
+      - "hf"       → ["hf"]
+      - "hf,mlx,hf"→ ["hf", "mlx", "hf"]
+      - ["hf","mlx"] → ["hf", "mlx"]
+    Unknown kinds raise ValueError.
+    """
+    if spec is None:
+        return []
+    if isinstance(spec, str):
+        parts = [p.strip().lower() for p in spec.split(",") if p.strip()]
+    else:
+        parts = [str(p).strip().lower() for p in spec if str(p).strip()]
+    for p in parts:
+        if p not in _VALID_MODEL_KINDS:
+            raise ValueError(
+                f"Invalid judge model {p!r}; expected one of {_VALID_MODEL_KINDS}"
+            )
+    return parts
+
+
 def _make_clients(
     advocate_model: str,
     critic_model: str,
-    judge_model: str,
+    judge_model: str | list[str],
     jury_size: int,
 ) -> dict:
-    """Return one client per role. Jury reuses the same judge client when
-    only one judge model is configured (responses still differ via temperature
-    sampling at call time)."""
+    """Return one client per role.
+
+    `judge_model` may be a single kind (jury_size copies of one client, with
+    per-juror temperature variance to decorrelate) or a list/comma-string of
+    distinct kinds (one client per kind; list length overrides jury_size).
+    Mixed-model juries are the strongest defence against correlated
+    single-model bias.
+    """
     advocate, advocate_kind = _build_client(advocate_model)
     critic, critic_kind = _build_client(critic_model)
-    judge, judge_kind = _build_client(judge_model)
-    judges = [judge] * max(1, jury_size)
+
+    judge_kinds = _parse_judge_model_spec(judge_model)
+    if len(judge_kinds) <= 1:
+        kind = judge_kinds[0] if judge_kinds else "mlx"
+        judge, judge_kind = _build_client(kind)
+        judges = [judge] * max(1, jury_size)
+        kinds_label = f"{judge_kind}×{len(judges)}"
+    else:
+        if jury_size and jury_size != len(judge_kinds):
+            console.print(
+                f"[yellow]--jury {jury_size} ignored: --judge-model list of "
+                f"{len(judge_kinds)} kinds determines jury size[/]"
+            )
+        judges = []
+        actual_kinds = []
+        for k in judge_kinds:
+            client, actual = _build_client(k)
+            judges.append(client)
+            actual_kinds.append(actual)
+        kinds_label = ",".join(actual_kinds)
+
     console.print(
         f"[dim]Roles → advocate:{advocate_kind} critic:{critic_kind} "
-        f"judge:{judge_kind} (jury={len(judges)})[/]"
+        f"judges:{kinds_label}[/]"
     )
     return {"advocate": advocate, "critic": critic, "judges": judges,
-            "judge_kind": judge_kind}
+            "judge_kinds": kinds_label}
 
 
 def _make_client():
@@ -712,8 +763,10 @@ async def main():
                         help="Model for the advocate role (default: mlx)")
     parser.add_argument("--critic-model", choices=("mlx", "hf"), default="mlx",
                         help="Model for the critic role (default: mlx)")
-    parser.add_argument("--judge-model", choices=("mlx", "hf"), default=None,
-                        help="Model for the judge role (default: hf if HF_TOKEN set, else mlx)")
+    parser.add_argument("--judge-model", type=str, default=None,
+                        help=("Model for the judge role. Single kind ('hf' or 'mlx') "
+                              "or comma-separated list ('hf,mlx,hf') for a mixed-model "
+                              "jury. Default: hf if HF_TOKEN set, else mlx."))
     args = parser.parse_args()
 
     global _FORCE_LOCAL

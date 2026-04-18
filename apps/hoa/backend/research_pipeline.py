@@ -896,12 +896,17 @@ async def _run_agent_bundle(
     client,
     slug: str,
     task_prompt: str,
+    *,
+    fallback_client=None,
 ) -> str:
-    """Run a direct agent call (no state-key spec) from an HF bundle."""
+    """Run a direct agent call (no state-key spec) from an HF bundle.
+    Falls back to fallback_client on 402/Payment Required errors."""
     from hf_agent import load_agent, resolve_tools
 
     bundle = load_agent(slug)
     tools = resolve_tools(bundle, _TOOL_DEFS) if bundle.tools else None
+    if fallback_client:
+        return await _run_with_hf_fallback(client, fallback_client, bundle.system_prompt, task_prompt, tools)
     return await _run_agent(client, bundle.system_prompt, task_prompt, tools)
 
 
@@ -1664,7 +1669,7 @@ def _get_blog_context(slug: str, categories: dict[str, str]) -> str:
 
 
 async def question_generator(state: ResearchState) -> dict:
-    client = _make_hf_client() or _make_client()  # prefer HF 72B for quality
+    client, fallback = _hf_or_mlx_client()
     person = state["person"]
     slug = person.get("slug", "")
     ctx = f"{person.get('name', '')} ({person.get('role', '')} @ {person.get('org', '')})"
