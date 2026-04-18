@@ -87,7 +87,7 @@ export function Header() {
                 className={css({
                   fontFamily: "display",
                   fontWeight: "900",
-                  fontSize: "xl",
+                  fontSize: "md",
                   letterSpacing: "-0.03em",
                   color: "ink.primary",
                   lineHeight: 1,
@@ -117,11 +117,11 @@ export function Header() {
                   className={css({
                     fontFamily: "display",
                     fontWeight: "700",
-                    fontSize: "sm",
+                    fontSize: "xs",
                     color: "ink.secondary",
                     textDecoration: "none",
-                    px: "3",
-                    py: "1.5",
+                    px: "2.5",
+                    py: "1",
                     rounded: "brick",
                     transition: "all 0.15s ease",
                     _hover: {
@@ -203,7 +203,7 @@ export function Header() {
                 <a
                   href="/login"
                   className={css({
-                    fontSize: "sm",
+                    fontSize: "xs",
                     fontWeight: "700",
                     fontFamily: "display",
                     color: "ink.secondary",
@@ -212,7 +212,7 @@ export function Header() {
                     border: "1.5px solid",
                     borderColor: "plate.border",
                     rounded: "brick",
-                    px: "4",
+                    px: "3",
                     py: "1.5",
                     transition: "all 0.15s ease",
                     _hover: {
@@ -227,14 +227,14 @@ export function Header() {
                 <a
                   href="/signup"
                   className={css({
-                    fontSize: "sm",
+                    fontSize: "xs",
                     fontWeight: "800",
                     fontFamily: "display",
                     color: "white",
                     textDecoration: "none",
                     bg: "lego.red",
                     rounded: "brick",
-                    px: "4",
+                    px: "3",
                     py: "1.5",
                     transition: "all 0.15s ease",
                     boxShadow:
