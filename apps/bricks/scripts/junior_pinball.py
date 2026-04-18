@@ -44,20 +44,20 @@ def launch():
 
 
 while True:
-    # Trigger 1 — center hub button
+    # Apasa butonul din mijlocul hub-ului ca sa lansezi bila
     if Button.CENTER in hub.buttons.pressed():
         launch()
-        # wait for release to avoid repeat triggers
+        # asteapta sa ridici degetul, ca sa nu lanseze iar si iar
         while Button.CENTER in hub.buttons.pressed():
             wait(20)
 
-    # Trigger 2 — a colored card near the sensor
+    # Sau arata o cartonasa senzorului
     if sensor is not None:
         color = sensor.color()
         if color == Color.GREEN:
             launch()
         elif color == Color.RED:
-            # Obstacle/tilt card — brief pause, no launch
+            # Cartonasa rosie = pauza. Hub-ul se face galben putin.
             hub.light.on(Color.YELLOW)
             wait(600)
             hub.light.on(Color.WHITE)
