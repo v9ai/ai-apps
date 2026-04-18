@@ -543,6 +543,7 @@ type EmailThread {
   contactName: String!
   contactEmail: String
   contactPosition: String
+  contactForwardingAlias: String
   companyName: String
   companyKey: String
   lastMessageAt: String!

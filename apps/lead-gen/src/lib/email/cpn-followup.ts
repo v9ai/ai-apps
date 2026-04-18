@@ -87,7 +87,7 @@ Use ${aliasEmail} when you register for Anthropic Academy. Anthropic verifies co
 
 Welcome video featuring Karl (the one I mentioned before from Anthropic's partner team): https://youtu.be/O9yc_Qaj5Ns
 
-Direct link to the learning path: anthropic.skilljar.com/page/claude-partner-network-learning-path
+Direct link to the learning path: https://anthropic.skilljar.com/page/claude-partner-network-learning-path
 
 4 courses to complete:
 1. Introduction to agent skills

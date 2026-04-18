@@ -762,6 +762,7 @@ type EmailThread {
   companyKey: String
   companyName: String
   contactEmail: String
+  contactForwardingAlias: String
   contactId: Int!
   contactName: String!
   contactPosition: String

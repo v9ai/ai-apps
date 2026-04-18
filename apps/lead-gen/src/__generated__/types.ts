@@ -835,6 +835,7 @@ export type EmailThread = {
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   contactEmail: Maybe<Scalars['String']['output']>;
+  contactForwardingAlias: Maybe<Scalars['String']['output']>;
   contactId: Scalars['Int']['output'];
   contactName: Scalars['String']['output'];
   contactPosition: Maybe<Scalars['String']['output']>;

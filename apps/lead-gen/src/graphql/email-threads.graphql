@@ -32,6 +32,7 @@ query GetEmailThread($contactId: Int!) {
     contactName
     contactEmail
     contactPosition
+    contactForwardingAlias
     companyName
     companyKey
     classification

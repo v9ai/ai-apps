@@ -341,6 +341,7 @@ export const emailThreadResolvers = {
           last_name: contacts.last_name,
           email: contacts.email,
           position: contacts.position,
+          forwarding_alias: contacts.forwarding_alias,
           company_name: companies.name,
           company_key: companies.key,
         })
@@ -431,6 +432,7 @@ export const emailThreadResolvers = {
         contactName: `${contact.first_name} ${contact.last_name}`.trim(),
         contactEmail: contact.email,
         contactPosition: contact.position,
+        contactForwardingAlias: contact.forwarding_alias,
         companyName: contact.company_name,
         companyKey: contact.company_key,
         lastMessageAt: messages[0]?.sentAt || "",

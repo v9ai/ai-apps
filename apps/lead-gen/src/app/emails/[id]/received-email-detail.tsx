@@ -272,6 +272,7 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
         receivedEmailId={emailId}
         to={email.replyToEmails?.[0] || email.fromEmail || ""}
         name={email.matchedContact?.firstName || email.fromEmail?.split("@")[0] || ""}
+        forwardingAlias={email.matchedContact?.forwardingAlias ?? undefined}
         subject={
           email.subject?.startsWith("Re:")
             ? email.subject
@@ -299,6 +300,7 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
             receivedEmailId={emailId}
             to={email.replyToEmails?.[0] || email.fromEmail || ""}
             name={contactName}
+            forwardingAlias={email.matchedContact?.forwardingAlias ?? undefined}
             subject={cpn.subject}
             initialBody={cpn.text}
             onSuccess={(toEmail) => {

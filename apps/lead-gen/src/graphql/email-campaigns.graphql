@@ -164,6 +164,7 @@ query GetReceivedEmail($id: Int!) {
       id
       firstName
       lastName
+      forwardingAlias
     }
     matchedOutboundId
     sentReplies {

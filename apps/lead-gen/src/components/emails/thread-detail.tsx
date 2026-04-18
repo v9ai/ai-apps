@@ -171,6 +171,7 @@ export function ThreadDetail({ contactId, onArchive }: ThreadDetailProps) {
         to={thread.contactEmail || latestInbound?.fromEmail || ""}
         name={thread.contactName}
         companyName={thread.companyName || undefined}
+        forwardingAlias={thread.contactForwardingAlias ?? undefined}
         subject={
           latestInbound?.subject?.startsWith("Re:")
             ? latestInbound.subject

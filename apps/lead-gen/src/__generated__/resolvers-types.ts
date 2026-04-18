@@ -838,6 +838,7 @@ export type EmailThread = {
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   contactEmail: Maybe<Scalars['String']['output']>;
+  contactForwardingAlias: Maybe<Scalars['String']['output']>;
   contactId: Scalars['Int']['output'];
   contactName: Scalars['String']['output'];
   contactPosition: Maybe<Scalars['String']['output']>;
@@ -4551,6 +4552,7 @@ export type EmailThreadResolvers<ContextType = GraphQLContext, ParentType extend
   companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   companyName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   contactEmail?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  contactForwardingAlias?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   contactName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   contactPosition?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

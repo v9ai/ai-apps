@@ -838,6 +838,7 @@ export type EmailThread = {
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   contactEmail: Maybe<Scalars['String']['output']>;
+  contactForwardingAlias: Maybe<Scalars['String']['output']>;
   contactId: Scalars['Int']['output'];
   contactName: Scalars['String']['output'];
   contactPosition: Maybe<Scalars['String']['output']>;
@@ -3864,7 +3865,7 @@ export type GetReceivedEmailQueryVariables = Exact<{
 }>;
 
 
-export type GetReceivedEmailQuery = { __typename?: 'Query', receivedEmail: { __typename?: 'ReceivedEmail', id: number, resendId: string | null, fromEmail: string | null, toEmails: Array<string>, ccEmails: Array<string>, replyToEmails: Array<string>, subject: string | null, messageId: string | null, htmlContent: string | null, textContent: string | null, attachments: any | null, receivedAt: string, archivedAt: string | null, classification: string | null, classificationConfidence: number | null, classifiedAt: string | null, matchedContactId: number | null, matchedOutboundId: number | null, createdAt: string, updatedAt: string, matchedContact: { __typename?: 'Contact', id: number, firstName: string, lastName: string } | null, sentReplies: Array<{ __typename?: 'SentReply', id: number, resendId: string | null, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, status: string, sentAt: string | null, createdAt: string }> } | null };
+export type GetReceivedEmailQuery = { __typename?: 'Query', receivedEmail: { __typename?: 'ReceivedEmail', id: number, resendId: string | null, fromEmail: string | null, toEmails: Array<string>, ccEmails: Array<string>, replyToEmails: Array<string>, subject: string | null, messageId: string | null, htmlContent: string | null, textContent: string | null, attachments: any | null, receivedAt: string, archivedAt: string | null, classification: string | null, classificationConfidence: number | null, classifiedAt: string | null, matchedContactId: number | null, matchedOutboundId: number | null, createdAt: string, updatedAt: string, matchedContact: { __typename?: 'Contact', id: number, firstName: string, lastName: string, forwardingAlias: string | null } | null, sentReplies: Array<{ __typename?: 'SentReply', id: number, resendId: string | null, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, status: string, sentAt: string | null, createdAt: string }> } | null };
 
 export type ArchiveEmailMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3965,7 +3966,7 @@ export type GetEmailThreadQueryVariables = Exact<{
 }>;
 
 
-export type GetEmailThreadQuery = { __typename?: 'Query', emailThread: { __typename?: 'EmailThread', contactId: number, contactSlug: string | null, contactName: string, contactEmail: string | null, contactPosition: string | null, companyName: string | null, companyKey: string | null, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, messages: Array<{ __typename?: 'ThreadMessage', id: number, direction: string, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, htmlContent: string | null, sentAt: string | null, status: string | null, sequenceType: string | null, sequenceNumber: string | null, classification: string | null, classificationConfidence: number | null }> } | null };
+export type GetEmailThreadQuery = { __typename?: 'Query', emailThread: { __typename?: 'EmailThread', contactId: number, contactSlug: string | null, contactName: string, contactEmail: string | null, contactPosition: string | null, contactForwardingAlias: string | null, companyName: string | null, companyKey: string | null, classification: string | null, classificationConfidence: number | null, totalMessages: number, hasReply: boolean, messages: Array<{ __typename?: 'ThreadMessage', id: number, direction: string, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, htmlContent: string | null, sentAt: string | null, status: string | null, sequenceType: string | null, sequenceNumber: string | null, classification: string | null, classificationConfidence: number | null }> } | null };
 
 export type GetLinkedInPostsQueryVariables = Exact<{
   type?: InputMaybe<LinkedInPostType>;
@@ -6743,6 +6744,7 @@ export const GetReceivedEmailDocument = gql`
       id
       firstName
       lastName
+      forwardingAlias
     }
     matchedOutboundId
     sentReplies {
@@ -7353,6 +7355,7 @@ export const GetEmailThreadDocument = gql`
     contactName
     contactEmail
     contactPosition
+    contactForwardingAlias
     companyName
     companyKey
     classification
