@@ -3,11 +3,11 @@
 # Apasa butonul hub-ului ca sa lansezi bila.
 
 # Alege hub-ul tau: scoate # din fata randului potrivit si pune # la celelalte.
-from pybricks.hubs import PrimeHub as Hub
+# from pybricks.hubs import PrimeHub as Hub
 # from pybricks.hubs import EssentialHub as Hub
 # from pybricks.hubs import InventorHub as Hub
 # from pybricks.hubs import TechnicHub as Hub
-# from pybricks.hubs import CityHub as Hub
+from pybricks.hubs import CityHub as Hub
 # from pybricks.hubs import MoveHub as Hub
 
 from pybricks.pupdevices import Motor
