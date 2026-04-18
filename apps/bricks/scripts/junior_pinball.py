@@ -1,16 +1,16 @@
 # Joc de pinball pentru Bogdan.
 # Motorul de pe portul A trage paleta si lanseaza bila.
-# Apasa butonul hub-ului, sau arata cartonasa verde senzorului de pe B.
+# Apasa butonul hub-ului ca sa lansezi bila.
 
 # Alege hub-ul tau: scoate # din fata randului potrivit si pune # la celelalte.
-from pybricks.hubs import EssentialHub as Hub
-# from pybricks.hubs import PrimeHub as Hub
+from pybricks.hubs import PrimeHub as Hub
+# from pybricks.hubs import EssentialHub as Hub
 # from pybricks.hubs import InventorHub as Hub
 # from pybricks.hubs import TechnicHub as Hub
 # from pybricks.hubs import CityHub as Hub
 # from pybricks.hubs import MoveHub as Hub
 
-from pybricks.pupdevices import Motor, ColorSensor
+from pybricks.pupdevices import Motor
 from pybricks.parameters import Port, Color, Direction, Button
 from pybricks.tools import wait
 from urandom import randint
@@ -18,14 +18,7 @@ from urandom import randint
 hub = Hub()
 
 # Portul A: motorul care misca paleta
-# Portul B: senzorul care vede cartonasele colorate
 launcher = Motor(Port.A, Direction.CLOCKWISE)
-sensor = None
-try:
-    sensor = ColorSensor(Port.B)
-    sensor.detectable_colors([Color.RED, Color.YELLOW, Color.GREEN, Color.NONE])
-except OSError:
-    sensor = None
 
 # Numerele astea le poti schimba ca sa faci jocul mai surprinzator:
 COCK_ANGLE = 120           # cat de mult trage paleta inapoi
@@ -57,16 +50,5 @@ while True:
         # asteapta sa ridici degetul, ca sa nu lanseze iar si iar
         while Button.CENTER in hub.buttons.pressed():
             wait(20)
-
-    # Sau arata o cartonasa senzorului
-    if sensor is not None:
-        color = sensor.color()
-        if color == Color.GREEN:
-            launch()
-        elif color == Color.RED:
-            # Cartonasa rosie = pauza. Hub-ul se face galben putin.
-            hub.light.on(Color.YELLOW)
-            wait(600)
-            hub.light.on(Color.WHITE)
 
     wait(30)
