@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Badge, Box, Flex, Spinner, Text, TextField } from "@radix-ui/themes";
 import { MagnifyingGlassIcon, ArchiveIcon } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
+import { compareDesc, parseISO, isValid } from "date-fns";
 import { button } from "@/recipes/button";
 import {
   useGetEmailThreadsQuery,
@@ -240,31 +241,38 @@ export function ThreadInbox() {
       )
     : unmatchedEmails;
 
+  const toDate = (s: string | null | undefined): Date | null => {
+    if (!s) return null;
+    const d = parseISO(s);
+    return isValid(d) ? d : null;
+  };
+  const EPOCH = new Date(0);
+
   type CombinedItem =
-    | { kind: "matched"; sortKey: number; thread: (typeof threads)[number] }
-    | { kind: "unmatched"; sortKey: number; email: (typeof unmatchedEmails)[number] };
+    | { kind: "matched"; date: Date; thread: (typeof threads)[number] }
+    | { kind: "unmatched"; date: Date; email: (typeof unmatchedEmails)[number] };
 
   const combined: CombinedItem[] = [
     ...threads.map((t): CombinedItem => ({
       kind: "matched",
-      sortKey: t.lastMessageAt ? new Date(t.lastMessageAt).getTime() : 0,
+      date: toDate(t.lastMessageAt) ?? EPOCH,
       thread: t,
     })),
     ...filteredUnmatched.map((e): CombinedItem => ({
       kind: "unmatched",
-      sortKey: e.receivedAt ? new Date(e.receivedAt).getTime() : 0,
+      date: toDate(e.receivedAt) ?? EPOCH,
       email: e,
     })),
   ];
 
-  if (sortBy === "recent") {
-    combined.sort((a, b) => b.sortKey - a.sortKey);
-  } else {
-    // priority: keep matched in server order first, unmatched by recency after
+  // Always sort chronologically (newest first). Priority mode promotes drafts to the top.
+  combined.sort((a, b) => compareDesc(a.date, b.date));
+
+  if (sortBy === "priority") {
     combined.sort((a, b) => {
-      if (a.kind !== b.kind) return a.kind === "matched" ? -1 : 1;
-      if (a.kind === "matched") return 0;
-      return b.sortKey - a.sortKey;
+      const aPriority = a.kind === "matched" && a.thread.hasPendingDraft ? 1 : 0;
+      const bPriority = b.kind === "matched" && b.thread.hasPendingDraft ? 1 : 0;
+      return bPriority - aPriority;
     });
   }
 

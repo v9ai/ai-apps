@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { css } from "styled-system/css";
-import { hubDisplayName, hubColor, hubPorts, HubType, DeviceType } from "@/lib/parser";
+import { hubDisplayName, hubColor, hubPorts, HubType, DeviceType, DEVICE_IMG_MAP } from "@/lib/parser";
 import { generateCode } from "@/lib/codegen";
 import {
   createHub,
@@ -28,16 +28,6 @@ const HUB_OPTIONS: { type: HubType; img: string }[] = [
   { type: "PrimeHub", img: "/hubs/hub-prime.png" },
   { type: "EssentialHub", img: "/hubs/hub-essential.png" },
 ];
-
-const DEVICE_IMG_MAP: Record<string, string> = {
-  Motor: "/devices/pupdevice-motors.png",
-  DCMotor: "/devices/pupdevice-dcmotors.png",
-  Light: "/devices/pupdevice-light.png",
-  ColorSensor: "/devices/pupdevice-color.png",
-  ColorLightMatrix: "/devices/sensor_colorlightmatrix.png",
-  UltrasonicSensor: "/devices/pupdevice-ultrasonic.png",
-  ForceSensor: "/devices/pupdevice-force.png",
-};
 
 export function ScriptEditor({ id }: { id: string }) {
   const [script, setScript] = useState<ScriptRow | null>(null);

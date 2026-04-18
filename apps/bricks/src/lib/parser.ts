@@ -52,6 +52,16 @@ export function slugify(filename: string): string {
   return filename.replace(/\.py$/, "").toLowerCase().replace(/_/g, "-");
 }
 
+export const DEVICE_IMG_MAP: Record<string, string> = {
+  Motor: "/devices/pupdevice-motors.png",
+  DCMotor: "/devices/pupdevice-dcmotors.png",
+  Light: "/devices/pupdevice-light.png",
+  ColorSensor: "/devices/pupdevice-color.png",
+  ColorLightMatrix: "/devices/sensor_colorlightmatrix.png",
+  UltrasonicSensor: "/devices/pupdevice-ultrasonic.png",
+  ForceSensor: "/devices/pupdevice-force.png",
+};
+
 const HUB_PATTERN =
   /(\w+)\s*=\s*(EssentialHub|TechnicHub|MoveHub|PrimeHub|CityHub)\(\)/;
 const DEVICE_PATTERN =
