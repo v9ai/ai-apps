@@ -38,15 +38,18 @@ export function PapersSection({ papers }: Props) {
       <div className={css({ display: 'flex', flexDir: 'column', gap: '5' })}>
         {papers.map((paper, i) => {
           const isArxiv = !!paper.arxiv;
+          const hasDoi = !!paper.doi;
           const href = isArxiv
             ? `https://arxiv.org/abs/${paper.arxiv}`
-            : `https://doi.org/${paper.doi}`;
-          const badge = isArxiv ? "arXiv" : "DOI";
-          const id = isArxiv ? paper.arxiv : paper.doi;
+            : hasDoi
+              ? `https://doi.org/${paper.doi}`
+              : paper.url ?? "#";
+          const badge = isArxiv ? "arXiv" : hasDoi ? "DOI" : "Link";
+          const id = isArxiv ? paper.arxiv : hasDoi ? paper.doi : new URL(paper.url ?? "https://example.com").hostname.replace(/^www\./, "");
 
           return (
             <a
-              key={paper.arxiv ?? paper.doi}
+              key={paper.arxiv ?? paper.doi ?? paper.url ?? paper.title}
               href={href}
               target="_blank"
               rel="noopener noreferrer"

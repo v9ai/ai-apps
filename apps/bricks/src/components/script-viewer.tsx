@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ParsedScript, hubColor, hubDisplayName, HubType } from "@/lib/parser";
+import Link from "next/link";
+import { ParsedScript, hubColor, hubDisplayName, HubType, slugify } from "@/lib/parser";
 import { HubDiagram } from "./hub-diagram";
 import { RemoteControl } from "./remote-control";
 import { ConstantsPanel } from "./constants-panel";
@@ -18,7 +19,7 @@ interface SavedScript {
 }
 
 export function ScriptViewer({ scripts }: { scripts: ParsedScript[] }) {
-  const [selected, setSelected] = useState(0);
+  const [selected] = useState(0);
   const script = scripts[selected];
   const [savedScripts, setSavedScripts] = useState<SavedScript[]>([]);
 
@@ -225,20 +226,21 @@ export function ScriptViewer({ scripts }: { scripts: ParsedScript[] }) {
           {scripts.map((s, i) => {
             const active = i === selected;
             const color = hubColor(s.hubType);
+            const slug = slugify(s.filename);
             return (
               <li key={s.filename}>
-                <button
-                  onClick={() => setSelected(i)}
+                <Link
+                  href={`/scripts/${slug}`}
                   className={css({
+                    display: "block",
                     w: "100%",
                     textAlign: "left",
                     px: "4",
                     py: "2.5",
                     transition: "colors",
                     cursor: "pointer",
-                    borderLeft: "2px solid",
-                    borderColor: "transparent",
-                    bg: "transparent",
+                    borderLeft: "2px solid transparent",
+                    textDecoration: "none",
                     _hover: { bg: "plate.hover" },
                   })}
                   style={
@@ -285,7 +287,7 @@ export function ScriptViewer({ scripts }: { scripts: ParsedScript[] }) {
                     {hubDisplayName(s.hubType)}
                     {s.hasRemote && " + Remote"}
                   </span>
-                </button>
+                </Link>
               </li>
             );
           })}
@@ -313,16 +315,39 @@ export function ScriptViewer({ scripts }: { scripts: ParsedScript[] }) {
         >
           {/* Title */}
           <div>
-            <h2
+            <div
               className={css({
-                fontSize: "2xl",
-                fontWeight: "800",
-                fontFamily: "display",
-                color: "ink.primary",
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                gap: "3",
+                flexWrap: "wrap",
               })}
             >
-              {script.filename.replace(".py", "")}
-            </h2>
+              <h2
+                className={css({
+                  fontSize: "2xl",
+                  fontWeight: "800",
+                  fontFamily: "display",
+                  color: "ink.primary",
+                })}
+              >
+                {script.filename.replace(".py", "")}
+              </h2>
+              <Link
+                href={`/scripts/${slugify(script.filename)}`}
+                className={css({
+                  fontSize: "sm",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  color: "lego.orange",
+                  textDecoration: "none",
+                  _hover: { color: "#FF9F33" },
+                })}
+              >
+                View full lesson →
+              </Link>
+            </div>
             <div
               className={css({
                 display: "flex",

@@ -2,6 +2,7 @@ export type Paper = {
   title: string;
   arxiv?: string; // arXiv ID e.g. "2603.10031"
   doi?: string;   // DOI e.g. "10.18429/jacow-icalepcs2023-tupdp044"
+  url?: string;   // fallback link for papers without arXiv/DOI (e.g. Academia.edu)
   date: string;   // YYYY-MM-DD
 };
 

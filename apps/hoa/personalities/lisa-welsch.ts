@@ -17,6 +17,16 @@ const personality: Personality = {
       doi: "10.5281/ZENODO.19635943",
       date: "2026-01-01",
     },
+    {
+      title: "Morphogenic Intelligence: Runtime Neural Development Beyond Static Architectures",
+      url: "https://independent.academia.edu/LisaWelsch",
+      date: "2026-01-01",
+    },
+    {
+      title: "TruthKeeper: A Curated Memory Architecture for Large Language Models with Dependency-Aware Truth Maintenance",
+      url: "https://independent.academia.edu/LisaWelsch",
+      date: "2025-01-01",
+    },
   ],
   knownFor: "AI agent memory, Cytopia, developer tooling",
   blogUrl: "https://www.lisawelsch.com",
