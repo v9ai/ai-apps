@@ -87,19 +87,62 @@ export function setActiveMotor(code: string, motor: MotorChoice): string {
   return lines.join("\n");
 }
 
+export type MotorPickerLabels = {
+  heading: string;
+  save: string;
+  saving: string;
+  saved: string;
+  saveError: string;
+};
+
 export function MotorPicker({
   value,
   onChange,
   heading,
   portLabel,
   port,
+  dirty = false,
+  onSave,
+  saveLabels,
 }: {
   value: MotorChoice;
   onChange: (motor: MotorChoice) => void;
   heading: string;
   portLabel: string;
   port: string;
+  dirty?: boolean;
+  onSave?: () => Promise<void>;
+  saveLabels?: Omit<MotorPickerLabels, "heading">;
 }) {
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+
+  const handleSave = async () => {
+    if (!onSave || saveState === "saving") return;
+    setSaveState("saving");
+    try {
+      await onSave();
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2000);
+    } catch {
+      setSaveState("error");
+      setTimeout(() => setSaveState("idle"), 3000);
+    }
+  };
+
+  const buttonLabel = saveLabels
+    ? saveState === "saving"
+      ? saveLabels.saving
+      : saveState === "saved"
+        ? saveLabels.saved
+        : saveState === "error"
+          ? saveLabels.saveError
+          : saveLabels.save
+    : "";
+
+  const saveVisible = onSave && saveLabels && (dirty || saveState !== "idle");
+
   return (
     <div className={css({ mb: "6" })}>
       <div
@@ -123,16 +166,60 @@ export function MotorPicker({
         >
           {heading}
         </h3>
-        <span
-          className={css({
-            fontSize: "xs",
-            fontWeight: "600",
-            color: "ink.faint",
-            fontFamily: "mono, monospace",
-          })}
+        <div
+          className={css({ display: "flex", alignItems: "center", gap: "3" })}
         >
-          {portLabel} {port}
-        </span>
+          {saveVisible && (
+            <button
+              onClick={handleSave}
+              disabled={saveState === "saving" || !dirty}
+              className={css({
+                fontSize: "xs",
+                fontWeight: "700",
+                fontFamily: "display",
+                px: "3",
+                py: "1.5",
+                rounded: "full",
+                border: "1.5px solid",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                _disabled: { opacity: 0.6, cursor: "default" },
+              })}
+              style={{
+                backgroundColor:
+                  saveState === "saved"
+                    ? "rgba(74, 222, 128, 0.15)"
+                    : saveState === "error"
+                      ? "rgba(248, 113, 113, 0.15)"
+                      : "rgba(254, 138, 24, 0.15)",
+                borderColor:
+                  saveState === "saved"
+                    ? "#4ade80"
+                    : saveState === "error"
+                      ? "#f87171"
+                      : "#FE8A18",
+                color:
+                  saveState === "saved"
+                    ? "#4ade80"
+                    : saveState === "error"
+                      ? "#f87171"
+                      : "#FE8A18",
+              }}
+            >
+              {buttonLabel}
+            </button>
+          )}
+          <span
+            className={css({
+              fontSize: "xs",
+              fontWeight: "600",
+              color: "ink.faint",
+              fontFamily: "mono, monospace",
+            })}
+          >
+            {portLabel} {port}
+          </span>
+        </div>
       </div>
       <div
         role="radiogroup"

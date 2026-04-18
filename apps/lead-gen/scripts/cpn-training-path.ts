@@ -11,6 +11,7 @@
  *   npx tsx scripts/cpn-training-path.ts              # interactive per-contact
  *   npx tsx scripts/cpn-training-path.ts --dry-run    # list only, send nothing
  *   npx tsx scripts/cpn-training-path.ts --auto       # send every target, no prompt
+ *   npx tsx scripts/cpn-training-path.ts --only-id N  # narrow pool to one contact_id
  */
 
 import { config } from "dotenv";
@@ -27,6 +28,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function flag(name: string): boolean {
   return process.argv.includes(`--${name}`);
+}
+
+function flagIntOrNull(name: string): number | null {
+  const idx = process.argv.indexOf(`--${name}`);
+  if (idx === -1) return null;
+  const raw = process.argv[idx + 1];
+  const n = raw ? parseInt(raw, 10) : NaN;
+  return Number.isFinite(n) ? n : null;
 }
 
 const sql = neon(process.env.NEON_DATABASE_URL!);
@@ -52,13 +61,14 @@ interface ThreadEvent {
 async function main() {
   const dryRun = flag("dry-run");
   const autoSend = flag("auto");
+  const onlyId = flagIntOrNull("only-id");
 
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q: string) => new Promise<string>((resolve) => rl.question(q, resolve));
 
   // Target pool: anyone who ever replied `interested` to a CPN outreach,
   // excluding Lisa and anyone already sent the training-path email.
-  const targets = (await sql`
+  const rawTargets = (await sql`
     SELECT DISTINCT ON (c.email)
       c.id           AS contact_id,
       c.first_name,
@@ -81,6 +91,10 @@ async function main() {
     ORDER BY c.email, c.first_name
   `) as unknown as Target[];
 
+  const targets = onlyId !== null
+    ? rawTargets.filter((t) => t.contact_id === onlyId)
+    : rawTargets;
+
   // Diagnostic counts (informational only — the targets list is already filtered).
   const lisaRows = (await sql`
     SELECT DISTINCT c.email
@@ -101,7 +115,7 @@ async function main() {
 
   console.log(`\n  CPN Training Path campaign`);
   console.log(`  ──────────────────────────────`);
-  console.log(`  Eligible targets:        ${targets.length}`);
+  console.log(`  Eligible targets:        ${targets.length}${onlyId !== null ? ` (filtered from ${rawTargets.length} by --only-id ${onlyId})` : ""}`);
   console.log(`  Excluded (first=Lisa):   ${lisaRows.length}`);
   console.log(`  Already sent previously: ${alreadySentRows.length}`);
   console.log(`  Mode:                    ${dryRun ? "DRY RUN" : autoSend ? "AUTO SEND" : "INTERACTIVE"}\n`);

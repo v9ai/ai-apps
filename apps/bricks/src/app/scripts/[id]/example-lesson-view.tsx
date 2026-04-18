@@ -22,7 +22,12 @@ import {
   type HubChoice,
   type HubPickerLabels,
 } from "@/components/hub-picker";
-import { MotorPicker, useMotorChoice } from "@/components/motor-picker";
+import {
+  MotorPicker,
+  detectActiveMotor,
+  type MotorChoice,
+  type MotorPickerLabels,
+} from "@/components/motor-picker";
 import { useLanguage } from "@/lib/language";
 
 export function ExampleLessonView({
@@ -50,7 +55,13 @@ export function ExampleLessonView({
           saved: "Salvat ✓",
           saveError: "Eroare",
         } satisfies HubPickerLabels,
-        motorHeading: "Alege motorul tău",
+        motorLabels: {
+          heading: "Alege motorul tău",
+          save: "Salvează",
+          saving: "Se salvează...",
+          saved: "Salvat ✓",
+          saveError: "Eroare",
+        } satisfies MotorPickerLabels,
       }
     : {
         scripts: "Scripts",
@@ -67,7 +78,13 @@ export function ExampleLessonView({
           saved: "Saved ✓",
           saveError: "Error",
         } satisfies HubPickerLabels,
-        motorHeading: "Choose your motor",
+        motorLabels: {
+          heading: "Choose your motor",
+          save: "Save",
+          saving: "Saving...",
+          saved: "Saved ✓",
+          saveError: "Error",
+        } satisfies MotorPickerLabels,
       };
 
   const initialHub = detectActiveHub(script.code);
@@ -84,7 +101,9 @@ export function ExampleLessonView({
   );
 
   const firstMotor = script.devices.find((d) => d.deviceType === "Motor");
-  const [motorChoice, setMotorChoice] = useMotorChoice(slug);
+  const initialMotor = detectActiveMotor(script.code) ?? "spike-medium";
+  const [savedMotor, setSavedMotor] = useState<MotorChoice>(initialMotor);
+  const [motorChoice, setMotorChoice] = useState<MotorChoice>(initialMotor);
 
   const hubController = useHubController(code);
 
@@ -96,6 +115,16 @@ export function ExampleLessonView({
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     setSavedHub(selectedHub);
+  };
+
+  const saveMotor = async () => {
+    const res = await fetch(`/api/scripts/file/${slug}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ motor: motorChoice }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    setSavedMotor(motorChoice);
   };
   const color = hubColor(script.hubType);
   const fallbackTitle = script.filename.replace(/\.py$/, "").replace(/_/g, " ");
@@ -345,9 +374,17 @@ export function ExampleLessonView({
         <MotorPicker
           value={motorChoice}
           onChange={setMotorChoice}
-          heading={t.motorHeading}
+          heading={t.motorLabels.heading}
           portLabel={t.port}
           port={firstMotor.port}
+          dirty={motorChoice !== savedMotor}
+          onSave={saveMotor}
+          saveLabels={{
+            save: t.motorLabels.save,
+            saving: t.motorLabels.saving,
+            saved: t.motorLabels.saved,
+            saveError: t.motorLabels.saveError,
+          }}
         />
       )}
 

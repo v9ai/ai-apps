@@ -18,6 +18,7 @@ from urandom import randint
 hub = Hub()
 
 # Portul A: motorul care misca paleta
+# bricks:motor=spike-large
 launcher = Motor(Port.A, Direction.CLOCKWISE)
 
 # Numerele astea le poti schimba ca sa faci jocul mai surprinzator:
