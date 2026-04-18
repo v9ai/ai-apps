@@ -1536,6 +1536,7 @@ async def phase3_eval(state: ResearchState) -> dict:
         f'"contributions_depth": {{"score": 9, "reasoning": "..."}}, '
         f'"name_disambiguation": {{"score": 10, "reasoning": "..."}}, '
         f'"overall_score": 8, "summary": "..."}}',
+        fallback_client=fallback,
     )
 
     console.print(f"  [green]✓[/] eval ({len(result)} chars)")
@@ -1586,6 +1587,7 @@ async def phase3_exec(state: ResearchState) -> dict:
         f'"career_arc": "...", "current_focus": "...", "industry_significance": "...", '
         f'"risk_factors": ["..."], "meeting_prep": ["...", "...", "..."], '
         f'"confidence_level": "high/medium/low with reasoning"}}',
+        fallback_client=fallback,
     )
 
     console.print(f"  [green]✓[/] executive ({len(result)} chars)")
@@ -1743,6 +1745,7 @@ async def question_generator(state: ResearchState) -> dict:
         f'"question": "the question text", '
         f'"why_this_question": "1-sentence reason this question is worth asking", '
         f'"expected_insight": "what kind of answer this should draw out"}}',
+        fallback_client=fallback,
     )
 
     console.print(f"  [green]✓[/] questions ({len(result)} chars)")

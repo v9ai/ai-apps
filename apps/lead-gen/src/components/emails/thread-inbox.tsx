@@ -20,105 +20,90 @@ const FILTER_OPTIONS = [
   { value: "unsubscribe", label: "Unsubscribe" },
 ] as const;
 
-function UnmatchedEmailList({
-  selectedId,
-  onSelect,
+const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "orange" | "blue" | "gray" | "purple"> = {
+  interested: "green",
+  not_interested: "red",
+  auto_reply: "gray",
+  bounced: "orange",
+  info_request: "blue",
+  unsubscribe: "purple",
+};
+
+type UnmatchedEmail = {
+  id: number;
+  fromEmail?: string | null;
+  subject?: string | null;
+  receivedAt?: string | null;
+  classification?: string | null;
+  matchedContactId?: number | null;
+  toEmails?: string[] | null;
+  htmlContent?: string | null;
+  textContent?: string | null;
+};
+
+function UnmatchedRow({
+  email,
+  selected,
+  onClick,
 }: {
-  selectedId: number | null;
-  onSelect: (id: number) => void;
+  email: UnmatchedEmail;
+  selected: boolean;
+  onClick: () => void;
 }) {
-  const { data, loading, error } = useGetReceivedEmailsQuery({
-    variables: { limit: 100, archived: false },
-    fetchPolicy: "cache-and-network",
-  });
-
-  const unmatched = (data?.receivedEmails?.emails ?? []).filter(
-    (e) => !e.matchedContactId,
-  );
-
-  if (loading && !data) {
-    return (
-      <Flex justify="center" py="8">
-        <Spinner size="3" />
-      </Flex>
-    );
-  }
-
-  if (error) {
-    return (
-      <Flex p="4">
-        <Text size="2" color="red">{error.message}</Text>
-      </Flex>
-    );
-  }
-
-  if (unmatched.length === 0) {
-    return (
-      <Flex p="4" justify="center">
-        <Text size="2" color="gray">No unmatched emails.</Text>
-      </Flex>
-    );
-  }
-
   return (
-    <>
-      <Flex px="3" py="2" style={{ borderBottom: "1px solid var(--gray-4)" }}>
-        <Text size="1" color="gray">
-          {unmatched.length} unmatched email{unmatched.length !== 1 ? "s" : ""}
-        </Text>
-      </Flex>
-      <Box style={{ flex: 1, overflowY: "auto" }}>
-        {unmatched.map((email) => (
-          <Box
-            key={email.id}
-            onClick={() => onSelect(email.id)}
-            className={css({
-              padding: "12px 16px",
-              cursor: "pointer",
-              borderBottom: "1px solid var(--gray-3)",
-              backgroundColor: selectedId === email.id ? "var(--accent-3)" : "transparent",
-              _hover: { backgroundColor: selectedId === email.id ? "var(--accent-3)" : "var(--gray-2)" },
-            })}
-          >
-            <Flex justify="between" align="start" gap="2">
-              <Text size="2" weight="medium" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {email.fromEmail || "Unknown sender"}
-              </Text>
-              <Text size="1" color="gray" style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
-                {email.receivedAt
-                  ? new Date(email.receivedAt).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : ""}
-              </Text>
-            </Flex>
-            <Text size="2" color="gray" style={{ display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {email.subject || "(no subject)"}
+    <Box
+      onClick={onClick}
+      className={css({
+        cursor: "pointer",
+        padding: "10px 12px",
+        borderLeft: selected ? "3px solid var(--accent-9)" : "3px solid transparent",
+        background: selected ? "var(--accent-3)" : "transparent",
+        _hover: { background: selected ? "var(--accent-3)" : "var(--gray-3)" },
+        transition: "background 0.15s ease",
+        borderBottom: "1px solid var(--gray-4)",
+      })}
+    >
+      <Flex justify="between" align="start" gap="2">
+        <Box style={{ minWidth: 0, flex: 1 }}>
+          <Flex gap="2" align="center" mb="1">
+            <Text
+              size="2"
+              weight="medium"
+              style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            >
+              {email.fromEmail || "Unknown sender"}
             </Text>
-            {email.classification && (
-              <Badge
-                size="1"
-                mt="1"
-                color={
-                  email.classification === "interested"
-                    ? "green"
-                    : email.classification === "info_request"
-                      ? "blue"
-                      : email.classification === "not_interested"
-                        ? "red"
-                        : "gray"
-                }
-              >
-                {email.classification.replace("_", " ")}
-              </Badge>
-            )}
-          </Box>
-        ))}
-      </Box>
-    </>
+            <Badge color="gray" size="1" variant="surface">inbox</Badge>
+          </Flex>
+          <Text
+            size="1"
+            color="gray"
+            style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          >
+            {email.subject || "(no subject)"}
+          </Text>
+        </Box>
+        <Flex direction="column" align="end" gap="1" flexShrink="0">
+          <Text size="1" color="gray">
+            {email.receivedAt
+              ? new Date(email.receivedAt).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })
+              : ""}
+          </Text>
+          {email.classification && (
+            <Badge
+              color={CLASSIFICATION_COLORS[email.classification] ?? "gray"}
+              size="1"
+              variant="soft"
+            >
+              {email.classification.replace("_", " ")}
+            </Badge>
+          )}
+        </Flex>
+      </Flex>
+    </Box>
   );
 }
 
@@ -155,15 +140,7 @@ function UnmatchedEmailDetail({ emailId }: { emailId: number }) {
           {email.classification && (
             <Badge
               size="1"
-              color={
-                email.classification === "interested"
-                  ? "green"
-                  : email.classification === "info_request"
-                    ? "blue"
-                    : email.classification === "not_interested"
-                      ? "red"
-                      : "gray"
-              }
+              color={CLASSIFICATION_COLORS[email.classification] ?? "gray"}
             >
               {email.classification.replace("_", " ")}
             </Badge>
@@ -201,12 +178,11 @@ export function ThreadInbox() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedThread = searchParams?.get("thread") ? parseInt(searchParams.get("thread")!) : null;
+  const selectedUnmatched = searchParams?.get("unmatched") ? parseInt(searchParams.get("unmatched")!) : null;
 
   const [classification, setClassification] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"priority" | "recent">("priority");
-  const [viewMode, setViewMode] = useState<"matched" | "unmatched">("matched");
-  const [selectedUnmatched, setSelectedUnmatched] = useState<number | null>(null);
 
   const { data, loading, error, refetch } = useGetEmailThreadsQuery({
     variables: {
@@ -216,23 +192,69 @@ export function ThreadInbox() {
       limit: 100,
     },
     fetchPolicy: "cache-and-network",
-    skip: viewMode === "unmatched",
   });
 
   const { data: receivedData } = useGetReceivedEmailsQuery({
-    variables: { limit: 100, archived: false },
+    variables: { limit: 100, archived: false, classification: classification || undefined },
     fetchPolicy: "cache-and-network",
   });
-  const unmatchedCount = (receivedData?.receivedEmails?.emails ?? []).filter(
-    (e) => !e.matchedContactId,
-  ).length;
 
   const threads = data?.emailThreads?.threads ?? [];
-  const totalCount = data?.emailThreads?.totalCount ?? 0;
+  const unmatchedEmails = (receivedData?.receivedEmails?.emails ?? []).filter(
+    (e) => !e.matchedContactId,
+  );
+
+  const searchLower = search.trim().toLowerCase();
+  const filteredUnmatched = searchLower
+    ? unmatchedEmails.filter(
+        (e) =>
+          (e.fromEmail?.toLowerCase() ?? "").includes(searchLower) ||
+          (e.subject?.toLowerCase() ?? "").includes(searchLower),
+      )
+    : unmatchedEmails;
+
+  type CombinedItem =
+    | { kind: "matched"; sortKey: number; thread: (typeof threads)[number] }
+    | { kind: "unmatched"; sortKey: number; email: (typeof unmatchedEmails)[number] };
+
+  const combined: CombinedItem[] = [
+    ...threads.map((t): CombinedItem => ({
+      kind: "matched",
+      sortKey: t.lastMessageAt ? new Date(t.lastMessageAt).getTime() : 0,
+      thread: t,
+    })),
+    ...filteredUnmatched.map((e): CombinedItem => ({
+      kind: "unmatched",
+      sortKey: e.receivedAt ? new Date(e.receivedAt).getTime() : 0,
+      email: e,
+    })),
+  ];
+
+  if (sortBy === "recent") {
+    combined.sort((a, b) => b.sortKey - a.sortKey);
+  } else {
+    // priority: keep matched in server order first, unmatched by recency after
+    combined.sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === "matched" ? -1 : 1;
+      if (a.kind === "matched") return 0;
+      return b.sortKey - a.sortKey;
+    });
+  }
+
+  const totalCount = combined.length;
+  const draftCount = threads.filter((t) => t.hasPendingDraft).length;
 
   const handleSelectThread = (contactId: number) => {
     const params = new URLSearchParams(searchParams?.toString() || "");
     params.set("thread", String(contactId));
+    params.delete("unmatched");
+    router.push(`/emails?${params.toString()}`);
+  };
+
+  const handleSelectUnmatched = (emailId: number) => {
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    params.set("unmatched", String(emailId));
+    params.delete("thread");
     router.push(`/emails?${params.toString()}`);
   };
 
@@ -248,124 +270,106 @@ export function ThreadInbox() {
           overflow: "hidden",
         })}
       >
-        {/* View mode toggle */}
-        <Flex gap="1" p="3" style={{ borderBottom: "1px solid var(--gray-4)" }}>
-          <button
-            className={button({ variant: viewMode === "matched" ? "solid" : "ghost", size: "sm" })}
-            onClick={() => { setViewMode("matched"); setSelectedUnmatched(null); }}
-            style={{ fontSize: "var(--font-size-1)", flex: 1 }}
+        {/* Search */}
+        <Box p="3" style={{ borderBottom: "1px solid var(--gray-4)" }}>
+          <TextField.Root
+            placeholder="Search contacts, companies, senders..."
+            size="2"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           >
-            Matched
-          </button>
-          <button
-            className={button({ variant: viewMode === "unmatched" ? "solid" : "ghost", size: "sm" })}
-            onClick={() => setViewMode("unmatched")}
-            style={{ fontSize: "var(--font-size-1)", flex: 1 }}
-          >
-            Unmatched{unmatchedCount > 0 ? ` (${unmatchedCount})` : ""}
-          </button>
+            <TextField.Slot>
+              <MagnifyingGlassIcon height="14" width="14" />
+            </TextField.Slot>
+          </TextField.Root>
+        </Box>
+
+        {/* Filter chips */}
+        <Flex gap="1" p="3" wrap="wrap" style={{ borderBottom: "1px solid var(--gray-4)" }}>
+          {FILTER_OPTIONS.map((opt) => (
+            <button
+              key={opt.label}
+              className={button({
+                variant: classification === opt.value ? "solid" : "ghost",
+                size: "sm",
+              })}
+              onClick={() => setClassification(opt.value)}
+              style={{ fontSize: "var(--font-size-1)" }}
+            >
+              {opt.label}
+            </button>
+          ))}
         </Flex>
 
-        {viewMode === "matched" ? (
-          <>
-            {/* Search */}
-            <Box p="3" style={{ borderBottom: "1px solid var(--gray-4)" }}>
-              <TextField.Root
-                placeholder="Search contacts, companies..."
-                size="2"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              >
-                <TextField.Slot>
-                  <MagnifyingGlassIcon height="14" width="14" />
-                </TextField.Slot>
-              </TextField.Root>
-            </Box>
+        {/* Count + Sort toggle */}
+        <Flex px="3" py="2" align="center" justify="between" style={{ borderBottom: "1px solid var(--gray-4)" }}>
+          <Text size="1" color="gray">
+            {totalCount} item{totalCount !== 1 ? "s" : ""}
+            {draftCount > 0 && (
+              <Badge size="1" color="green" ml="2">
+                {draftCount} drafts
+              </Badge>
+            )}
+          </Text>
+          <Flex gap="1">
+            <button
+              className={button({ variant: sortBy === "priority" ? "solid" : "ghost", size: "sm" })}
+              onClick={() => setSortBy("priority")}
+              style={{ fontSize: "var(--font-size-1)" }}
+            >
+              Priority
+            </button>
+            <button
+              className={button({ variant: sortBy === "recent" ? "solid" : "ghost", size: "sm" })}
+              onClick={() => setSortBy("recent")}
+              style={{ fontSize: "var(--font-size-1)" }}
+            >
+              Recent
+            </button>
+          </Flex>
+        </Flex>
 
-            {/* Filter chips */}
-            <Flex gap="1" p="3" wrap="wrap" style={{ borderBottom: "1px solid var(--gray-4)" }}>
-              {FILTER_OPTIONS.map((opt) => (
-                <button
-                  key={opt.label}
-                  className={button({
-                    variant: classification === opt.value ? "solid" : "ghost",
-                    size: "sm",
-                  })}
-                  onClick={() => setClassification(opt.value)}
-                  style={{ fontSize: "var(--font-size-1)" }}
-                >
-                  {opt.label}
-                </button>
-              ))}
+        {/* Thread list */}
+        <Box style={{ flex: 1, overflowY: "auto" }}>
+          {loading && !data ? (
+            <Flex justify="center" py="8">
+              <Spinner size="3" />
             </Flex>
-
-            {/* Count + Sort toggle */}
-            <Flex px="3" py="2" align="center" justify="between" style={{ borderBottom: "1px solid var(--gray-4)" }}>
-              <Text size="1" color="gray">
-                {totalCount} conversation{totalCount !== 1 ? "s" : ""}
-                {threads.filter((t) => t.hasPendingDraft).length > 0 && (
-                  <Badge size="1" color="green" ml="2">
-                    {threads.filter((t) => t.hasPendingDraft).length} drafts
-                  </Badge>
-                )}
-              </Text>
-              <Flex gap="1">
-                <button
-                  className={button({ variant: sortBy === "priority" ? "solid" : "ghost", size: "sm" })}
-                  onClick={() => setSortBy("priority")}
-                  style={{ fontSize: "var(--font-size-1)" }}
-                >
-                  Priority
-                </button>
-                <button
-                  className={button({ variant: sortBy === "recent" ? "solid" : "ghost", size: "sm" })}
-                  onClick={() => setSortBy("recent")}
-                  style={{ fontSize: "var(--font-size-1)" }}
-                >
-                  Recent
-                </button>
-              </Flex>
+          ) : error ? (
+            <Flex p="4">
+              <Text size="2" color="red">{error.message}</Text>
             </Flex>
-
-            {/* Thread list */}
-            <Box style={{ flex: 1, overflowY: "auto" }}>
-              {loading && !data ? (
-                <Flex justify="center" py="8">
-                  <Spinner size="3" />
-                </Flex>
-              ) : error ? (
-                <Flex p="4">
-                  <Text size="2" color="red">{error.message}</Text>
-                </Flex>
-              ) : threads.length === 0 ? (
-                <Flex p="4" justify="center">
-                  <Text size="2" color="gray">No conversations found.</Text>
-                </Flex>
+          ) : combined.length === 0 ? (
+            <Flex p="4" justify="center">
+              <Text size="2" color="gray">No emails found.</Text>
+            </Flex>
+          ) : (
+            combined.map((item) =>
+              item.kind === "matched" ? (
+                <ThreadListItem
+                  key={`t-${item.thread.contactId}`}
+                  thread={item.thread}
+                  selected={selectedThread === item.thread.contactId}
+                  onClick={() => handleSelectThread(item.thread.contactId)}
+                />
               ) : (
-                threads.map((thread) => (
-                  <ThreadListItem
-                    key={thread.contactId}
-                    thread={thread}
-                    selected={selectedThread === thread.contactId}
-                    onClick={() => handleSelectThread(thread.contactId)}
-                  />
-                ))
-              )}
-            </Box>
-          </>
-        ) : (
-          <UnmatchedEmailList
-            selectedId={selectedUnmatched}
-            onSelect={setSelectedUnmatched}
-          />
-        )}
+                <UnmatchedRow
+                  key={`u-${item.email.id}`}
+                  email={item.email}
+                  selected={selectedUnmatched === item.email.id}
+                  onClick={() => handleSelectUnmatched(item.email.id)}
+                />
+              ),
+            )
+          )}
+        </Box>
       </Flex>
 
-      {/* Right panel: thread detail or unmatched email detail */}
+      {/* Right panel */}
       <Box style={{ flex: 1, overflow: "hidden" }}>
-        {viewMode === "unmatched" && selectedUnmatched ? (
+        {selectedUnmatched ? (
           <UnmatchedEmailDetail emailId={selectedUnmatched} />
-        ) : viewMode === "matched" && selectedThread ? (
+        ) : selectedThread ? (
           <ThreadDetail
             contactId={selectedThread}
             onArchive={() => {
@@ -379,12 +383,10 @@ export function ThreadInbox() {
           <Flex justify="center" align="center" style={{ height: "100%" }}>
             <Flex direction="column" align="center" gap="2">
               <Text size="4" color="gray" weight="medium">
-                {viewMode === "unmatched" ? "Select an email" : "Select a conversation"}
+                Select a conversation
               </Text>
               <Text size="2" color="gray">
-                {viewMode === "unmatched"
-                  ? "Choose an unmatched email from the left to view its content"
-                  : "Choose a thread from the left to view the full conversation"}
+                Choose a thread from the left to view the full conversation
               </Text>
             </Flex>
           </Flex>
