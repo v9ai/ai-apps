@@ -1085,11 +1085,14 @@ async def _run_dual_lane(
     results.update(hf_results)
 
     if hf_fallback_specs:
-        console.print(f"  [bold yellow]Falling back:[/] {len(hf_fallback_specs)} agents → MLX local (HF credits exhausted)")
+        names = [s[0] for s in hf_fallback_specs]
+        console.print(f"  [bold yellow]Falling back:[/] {len(hf_fallback_specs)} agents → MLX local (HF credits exhausted): {', '.join(names)}")
         for key, sys_prompt, task_prompt, agent_tools in hf_fallback_specs:
+            console.print(f"  [dim]  → running {key} on MLX...[/]")
             try:
                 result = await _run_agent(mlx_client, sys_prompt, task_prompt, agent_tools)
             except Exception as e:
+                console.print(f"  [red]  → {key} fallback error: {e}[/]")
                 result = f"(agent error: {e})"
             results[key] = result
             console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← MLX fallback[/]")

@@ -1454,6 +1454,7 @@ dependencies = [
  "chrono",
  "clap",
  "futures",
+ "hf-agent",
  "hf-hub",
  "lancedb",
  "serde",

@@ -9,6 +9,7 @@ import {
 } from "@/lib/parser";
 import { LessonMarkdown } from "@/lib/render-lesson-markdown";
 import { CodeViewer } from "@/components/code-viewer";
+import { HubDeployPanel } from "@/components/hub-deploy-panel";
 import { useLanguage } from "@/lib/language";
 
 export function ExampleLessonView({
@@ -123,6 +124,8 @@ export function ExampleLessonView({
           />
         </div>
       )}
+
+      <HubDeployPanel code={script.code} />
 
       <div
         className={css({
