@@ -40,10 +40,13 @@ interface Target {
   company: string | null;
 }
 
-interface LatestReply {
+interface ThreadEvent {
+  direction: "sent" | "received";
+  at: string;
+  subject: string;
   text: string;
-  classification: string;
-  received_at: string;
+  classification?: string;
+  tags?: string;
 }
 
 async function main() {
@@ -115,55 +118,83 @@ async function main() {
     const name = `${t.first_name} ${t.last_name ?? ""}`.trim();
     const { subject, text } = buildCpnTrainingPath(t.first_name);
 
-    // Most recent CPN outbound id → parent threading.
-    const parentRows = (await sql`
-      SELECT id FROM contact_emails
+    // All outbound CPN emails to this contact (for threading + display).
+    const outboundRows = (await sql`
+      SELECT id, subject, text_content, tags, sent_at
+      FROM contact_emails
       WHERE contact_id = ${t.contact_id} AND tags LIKE '%cpn-outreach%'
-      ORDER BY id DESC
-      LIMIT 1
-    `) as unknown as { id: number }[];
-    const parentEmailId = parentRows[0]?.id ?? null;
+      ORDER BY id ASC
+    `) as unknown as {
+      id: number;
+      subject: string;
+      text_content: string | null;
+      tags: string | null;
+      sent_at: string | null;
+    }[];
+    const parentEmailId = outboundRows.length > 0 ? outboundRows[outboundRows.length - 1].id : null;
 
-    // Latest reply for human-readable context.
+    // All received replies.
     const replyRows = (await sql`
-      SELECT text_content, html_content, classification, received_at
+      SELECT subject, text_content, html_content, classification, received_at
       FROM received_emails
       WHERE matched_contact_id = ${t.contact_id}
-      ORDER BY received_at DESC
-      LIMIT 1
+      ORDER BY received_at ASC
     `) as unknown as {
+      subject: string | null;
       text_content: string | null;
       html_content: string | null;
       classification: string | null;
       received_at: string;
     }[];
-    const latest: LatestReply | null = replyRows[0]
-      ? {
-          text:
-            replyRows[0].text_content ||
-            replyRows[0].html_content?.replace(/<[^>]+>/g, "") ||
-            "",
-          classification: replyRows[0].classification ?? "unknown",
-          received_at: replyRows[0].received_at,
-        }
-      : null;
+
+    const thread: ThreadEvent[] = [];
+    for (const o of outboundRows) {
+      thread.push({
+        direction: "sent",
+        at: o.sent_at ?? "",
+        subject: o.subject,
+        text: o.text_content ?? "",
+        tags: o.tags ?? "",
+      });
+    }
+    for (const r of replyRows) {
+      thread.push({
+        direction: "received",
+        at: r.received_at,
+        subject: r.subject ?? "",
+        text: r.text_content || r.html_content?.replace(/<[^>]+>/g, "") || "",
+        classification: r.classification ?? "unknown",
+      });
+    }
+    thread.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
 
     console.log(`── [${i + 1}/${targets.length}] ──────────────────────────────`);
     console.log(`  Name:    ${name}`);
     console.log(`  Email:   ${t.email}`);
     if (t.company) console.log(`  Company: ${t.company}`);
-    if (latest) {
-      const stripped = stripQuotedText(latest.text).trim();
-      const lines = stripped.split("\n").slice(0, 6);
-      const date = new Date(latest.received_at).toLocaleDateString();
-      console.log(`\n  ── Latest reply (${date}, ${latest.classification}) ──`);
-      if (stripped) {
-        console.log(lines.map((l) => `  │ ${l}`).join("\n"));
-        if (stripped.split("\n").length > 6) {
-          console.log(`  │ ... (${stripped.split("\n").length - 6} more lines)`);
-        }
-      } else {
-        console.log(`  │ (no reply text captured)`);
+    console.log(`  Thread:  ${outboundRows.length} sent / ${replyRows.length} received`);
+
+    for (let j = 0; j < thread.length; j++) {
+      const ev = thread[j];
+      const date = ev.at ? new Date(ev.at).toLocaleDateString() : "?";
+      const arrow = ev.direction === "sent" ? "→ SENT" : "← REPLY";
+      const meta =
+        ev.direction === "sent"
+          ? ev.tags
+            ? ` [${ev.tags}]`
+            : ""
+          : ` (${ev.classification})`;
+      console.log(`\n  ── ${arrow} ${j + 1}/${thread.length} (${date})${meta} ──`);
+      console.log(`  Subject: ${ev.subject}`);
+      const body = ev.direction === "received" ? stripQuotedText(ev.text).trim() : ev.text.trim();
+      if (!body) {
+        console.log(`  │ (no text captured)`);
+        continue;
+      }
+      const lines = body.split("\n").slice(0, 10);
+      console.log(lines.map((l) => `  │ ${l}`).join("\n"));
+      if (body.split("\n").length > 10) {
+        console.log(`  │ ... (${body.split("\n").length - 10} more lines)`);
       }
     }
 
