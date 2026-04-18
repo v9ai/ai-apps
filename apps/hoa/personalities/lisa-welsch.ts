@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "lisa-welsch",
   podcasts: [],
   github: "SimplyLiz",
+  academicUrl: "https://independent.academia.edu/LisaWelsch",
   linkedinImage: "https://avatars.githubusercontent.com/SimplyLiz",
   papers: [
     {

@@ -93,6 +93,7 @@ export type Personality = {
   github?: string;
   hfUsername?: string;
   orcid?: string;
+  academicUrl?: string;
   linkedinImage?: string;
   papers?: Paper[];
   knownFor?: string;

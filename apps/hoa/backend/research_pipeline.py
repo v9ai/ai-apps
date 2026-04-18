@@ -14,7 +14,7 @@ Usage:
 Phase 1 — Intelligence Gathering (parallel):
     1.  Web Research Specialist       — multi-query DuckDuckGo search
     2.  GitHub & Open Source Analyst  — profile + top repos
-    3.  Academic Publications Analyst — ORCID record
+    3.  Academic Publications Analyst — ORCID / Academia.edu / Google Scholar / ResearchGate
     4.  arXiv & Semantic Scholar Analyst — papers, citations, h-index
     5.  Podcast & Media Analyst       — podcast appearances, media coverage
     6.  News & Press Analyst          — recent news, press releases
@@ -389,6 +389,22 @@ def fetch_orcid_profile(orcid_id: str) -> str:
     return "\n".join(lines) if lines else "(no ORCID data)"
 
 
+def fetch_academic_profile(url: str) -> str:
+    """Fetch an academic profile page (Academia.edu, ResearchGate, Google Scholar) and extract text."""
+    if not url or url.strip() in ("", "none"):
+        return "(no academic URL provided)"
+    try:
+        with httpx.Client(timeout=_HTTP_TIMEOUT, follow_redirects=True) as client:
+            resp = client.get(url, headers={"User-Agent": "Mozilla/5.0 (compatible; ResearchBot/1.0)"})
+            resp.raise_for_status()
+            text = re.sub(r"<script[^>]*>.*?</script>", " ", resp.text, flags=re.S | re.I)
+            text = re.sub(r"<style[^>]*>.*?</style>", " ", text, flags=re.S | re.I)
+            text = re.sub(r"<[^>]+>", " ", text)
+            return re.sub(r"\s+", " ", text).strip()[:6000]
+    except Exception as e:
+        return f"(error fetching academic profile: {e})"
+
+
 def search_arxiv(query: str) -> str:
     """Search arXiv for papers matching a query. Returns titles, authors, dates, and abstracts."""
     lines = []
@@ -721,6 +737,7 @@ _TOOL_FNS: dict[str, Any] = {
     "fetch_github_repos_extended": fetch_github_repos_extended,
     "fetch_blog_rss": fetch_blog_rss,
     "fetch_blog_post_content": fetch_blog_post_content,
+    "fetch_academic_profile": fetch_academic_profile,
 }
 
 def _tool_def(name: str, description: str, params: dict) -> FunctionTool:
@@ -736,6 +753,7 @@ TOOL_WEB_NEWS = _tool_def("web_news_search", "Search DuckDuckGo News for recent 
 TOOL_FETCH_URL = _tool_def("fetch_url_content", "Fetch and return plain-text content from a URL (strips HTML).", _SINGLE_URL)
 TOOL_GITHUB = _tool_def("fetch_github_profile", "Fetch GitHub profile metadata and top repositories for a username.", _SINGLE_USERNAME)
 TOOL_ORCID = _tool_def("fetch_orcid_profile", "Fetch ORCID academic profile and publications.", _SINGLE_ID)
+TOOL_ACADEMIC = _tool_def("fetch_academic_profile", "Fetch an academic profile page (Academia.edu, ResearchGate, Google Scholar URL).", _SINGLE_URL)
 TOOL_ARXIV = _tool_def("search_arxiv", "Search arXiv for papers matching a query.", _SINGLE_STR)
 TOOL_SEMANTIC = _tool_def("search_semantic_scholar", "Search Semantic Scholar for papers and author profiles.", _SINGLE_STR)
 TOOL_HF = _tool_def("fetch_hf_author", "Fetch HuggingFace models, datasets, and spaces for an author.", _SINGLE_USERNAME)
@@ -762,7 +780,7 @@ TOOLS_BLOG = [TOOL_BLOG_RSS, TOOL_BLOG_POST, TOOL_WEB_SEARCH, TOOL_FETCH_URL]
 def _parse_ts(path: Path) -> dict[str, str]:
     text = path.read_text()
     fields: dict[str, str] = {"slug": path.stem}
-    for key in ("name", "role", "org", "github", "orcid", "blogUrl"):
+    for key in ("name", "role", "org", "github", "orcid", "academicUrl", "blogUrl"):
         m = re.search(rf'{key}:\s*"([^"]+)"', text)
         if m:
             fields[key] = m.group(1)
@@ -781,11 +799,11 @@ def load_personalities() -> list[dict[str, str]]:
 def pick_person(people: list[dict[str, str]]) -> dict[str, str]:
     console.print("\n[bold cyan]Available personalities:[/]\n")
     for i, p in enumerate(people, 1):
-        orcid = f"  ORCID: {p['orcid']}" if p.get("orcid") else ""
+        academic = f"  ORCID: {p['orcid']}" if p.get("orcid") else (f"  Academic: {p['academicUrl']}" if p.get("academicUrl") else "")
         github = f"  GH: {p.get('github', '')}" if p.get("github") else ""
         console.print(
             f"  [yellow]{i:>2}[/]  {p['name']}  "
-            f"[dim]{p.get('role', '')} @ {p.get('org', '')}{github}{orcid}[/]"
+            f"[dim]{p.get('role', '')} @ {p.get('org', '')}{github}{academic}[/]"
         )
     console.print()
     choice = console.input("[bold]Pick a number: [/]").strip()
@@ -801,7 +819,7 @@ class ResearchState(TypedDict, total=False):
     # Phase 1
     web_research: str
     github_data: str
-    orcid_data: str
+    academic_data: str
     arxiv_data: str
     podcast_data: str
     news_data: str
@@ -1012,6 +1030,7 @@ async def phase1(state: ResearchState) -> dict:
     org = person.get("org", "")
     github = person.get("github", "")
     orcid = person.get("orcid", "")
+    academic_url = person.get("academicUrl", "")
     ctx = f"{name} ({role} @ {org})"
 
     console.print("\n[bold cyan]Phase 1: Intelligence Gathering (8 agents in parallel)[/]")
@@ -1059,21 +1078,29 @@ async def phase1(state: ResearchState) -> dict:
             [TOOL_GITHUB],
         ),
         (
-            "orcid_data",
+            "academic_data",
             (
-                "You specialize in academic research profiles, citation analysis, and publication "
-                "tracking. You understand the ORCID system deeply and extract meaningful insight "
-                "from publication lists, DOIs, and academic affiliations — connecting academic "
-                "output to real-world technical impact."
+                "You specialize in academic research profiles across multiple platforms: "
+                "ORCID, Academia.edu, Google Scholar, and ResearchGate. You extract meaningful "
+                "insight from publication lists, research interests, DOIs, and academic "
+                "affiliations — connecting academic output to real-world technical impact."
             ),
             (
-                f"Fetch and analyze the ORCID academic record for {ctx}. "
-                f"ORCID iD: '{orcid or 'none'}'. "
-                f"If no ORCID iD is provided, return '(no academic record available)'. "
-                f"Otherwise summarize: researcher name, biography, keywords, and list the "
-                f"top publications with year, title, and DOI."
+                f"Build a comprehensive academic profile for {ctx}.\n"
+                f"Available identifiers:\n"
+                f"  - ORCID iD: '{orcid or 'none'}'\n"
+                f"  - Academic profile URL: '{academic_url or 'none'}'\n\n"
+                f"Strategy:\n"
+                f"1. If an ORCID iD is provided, fetch it with fetch_orcid_profile.\n"
+                f"2. If an academic profile URL is provided (Academia.edu, ResearchGate, etc.), "
+                f"fetch it with fetch_academic_profile.\n"
+                f"3. If neither is provided, search the web for '{name} academia.edu OR "
+                f"researchgate OR google scholar site:scholar.google.com' to discover profiles, "
+                f"then fetch the best match with fetch_academic_profile.\n\n"
+                f"Summarize: researcher name, institution, research interests, bio, "
+                f"and list publications with year, title, and DOI where available."
             ),
-            [TOOL_ORCID],
+            [TOOL_ORCID, TOOL_ACADEMIC, TOOL_WEB_SEARCH, TOOL_FETCH_URL],
         ),
         (
             "arxiv_data",
@@ -1282,7 +1309,7 @@ async def phase2(state: ResearchState) -> dict:
         + _ctx_block("Wikipedia", state.get("wikipedia_data", ""))
         + _ctx_block("Deep-Fetched URLs", state.get("deep_fetched_urls", ""))
         + _ctx_block("GitHub Profile", state.get("github_data", ""))
-        + _ctx_block("ORCID / Academic", state.get("orcid_data", ""))
+        + _ctx_block("Academic Profiles", state.get("academic_data", ""))
         + _ctx_block("arXiv & Semantic Scholar", state.get("arxiv_data", ""))
         + _ctx_block("Podcast & Media", state.get("podcast_data", ""))
         + _ctx_block("News & Press", state.get("news_data", ""))
@@ -2267,7 +2294,8 @@ async def run_person(person: dict[str, str]) -> None:
 
     console.rule(f"[bold cyan]{name}[/]")
     console.print(f"  Role: {person.get('role', '')}  |  Org: {person.get('org', '')}")
-    console.print(f"  GitHub: {person.get('github', '—')}  |  ORCID: {person.get('orcid', '—')}\n")
+    academic_label = person.get('orcid') or person.get('academicUrl') or '—'
+    console.print(f"  GitHub: {person.get('github', '—')}  |  Academic: {academic_label}\n")
 
     graph = build_graph()
     final_state = await graph.ainvoke({"person": person})
@@ -2284,6 +2312,7 @@ async def main():
     parser.add_argument("--org", help="Organization")
     parser.add_argument("--github", help="GitHub username")
     parser.add_argument("--orcid", help="ORCID iD")
+    parser.add_argument("--academic-url", help="Academic profile URL (Academia.edu, ResearchGate, Google Scholar)")
     parser.add_argument("--model", help="MLX model ID (default: env MLX_MODEL or Qwen2.5-7B-Instruct-4bit)")
     parser.add_argument("--skip-agents", help="Comma-separated agent keys to skip (e.g. video_data)")
     args = parser.parse_args()
@@ -2318,9 +2347,11 @@ async def main():
                 "org": args.org or "",
                 "github": args.github or "",
                 "orcid": args.orcid or "",
+                "academicUrl": getattr(args, 'academic_url', '') or "",
             }
         for key, val in [("name", args.name), ("role", args.role), ("org", args.org),
-                          ("github", args.github), ("orcid", args.orcid)]:
+                          ("github", args.github), ("orcid", args.orcid),
+                          ("academicUrl", getattr(args, 'academic_url', None))]:
             if val:
                 person[key] = val
         await run_person(person)
