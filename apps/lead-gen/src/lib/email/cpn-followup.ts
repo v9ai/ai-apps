@@ -73,6 +73,30 @@ vadim.blog`;
   return { subject, text };
 }
 
+export function buildCpnEmailReady(firstNameStr: string) {
+  const subject = `Your @vadim.blog email is ready - start the courses`;
+  const text = `Hi ${firstNameStr},
+
+Your email is set up: {{alias_email}} → forwards to {{personal_email}}
+
+Use {{alias_email}} when you register for Anthropic Academy. Anthropic verifies completion by org domain, so this is important.
+
+Direct link to the learning path: anthropic.skilljar.com/page/claude-partner-network-learning-path
+
+4 courses to complete:
+1. Introduction to agent skills
+2. Building with the Claude API
+3. Introduction to Model Context Protocol
+4. Claude Code in Action
+
+Once all of us finish, I submit for verification and Anthropic unlocks the Claude Certified Architect Foundations (CCAF) exam for our org. No cost.
+
+Let me know when you're done.
+
+Vadim`;
+  return { subject, text };
+}
+
 export function buildCpnWaitingReply(firstNameStr: string) {
   const subject = `Re: Claude Partner Network — ${firstNameStr}`;
   const text = `Hi ${firstNameStr},
