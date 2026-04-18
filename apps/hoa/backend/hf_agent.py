@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
@@ -62,8 +63,14 @@ def _read_bundle(dir_path: Path, slug: str, source: str) -> AgentBundle:
     )
 
 
+@lru_cache(maxsize=128)
 def load_agent(slug: str, family: str = "hoa") -> AgentBundle:
-    """Load an agent bundle by slug. Tries local dir first, then HF Hub."""
+    """Load an agent bundle by slug. Tries local dir first, then HF Hub.
+
+    Slug uses hyphens (matches HF repo naming). Accept underscores as a
+    convenience — they're normalized to hyphens before lookup.
+    """
+    slug = slug.replace("_", "-")
     local = LOCAL_BUNDLES_DIR / slug
     if local.is_dir() and (local / "system_prompt.txt").is_file():
         return _read_bundle(local, slug, source=f"local:{local}")

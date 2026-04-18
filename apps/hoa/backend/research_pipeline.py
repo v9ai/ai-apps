@@ -772,6 +772,26 @@ TOOLS_ACADEMIC = [TOOL_ARXIV, TOOL_SEMANTIC, TOOL_OPENALEX]
 TOOLS_VIDEO = [TOOL_VIDEO, TOOL_WEB_SEARCH, TOOL_FETCH_URL]
 TOOLS_BLOG = [TOOL_BLOG_RSS, TOOL_BLOG_POST, TOOL_WEB_SEARCH, TOOL_FETCH_URL]
 
+# Name → FunctionTool registry for bundle-driven tool resolution.
+_TOOL_DEFS: dict[str, FunctionTool] = {
+    "web_search": TOOL_WEB_SEARCH,
+    "web_news_search": TOOL_WEB_NEWS,
+    "fetch_url_content": TOOL_FETCH_URL,
+    "fetch_github_profile": TOOL_GITHUB,
+    "fetch_github_repos_extended": TOOL_GITHUB_EXT,
+    "fetch_orcid_profile": TOOL_ORCID,
+    "fetch_academic_profile": TOOL_ACADEMIC,
+    "search_arxiv": TOOL_ARXIV,
+    "search_semantic_scholar": TOOL_SEMANTIC,
+    "fetch_hf_author": TOOL_HF,
+    "video_search": TOOL_VIDEO,
+    "fetch_wikipedia_summary": TOOL_WIKIPEDIA,
+    "search_openalex": TOOL_OPENALEX,
+    "check_social_url": TOOL_CHECK_URL,
+    "fetch_blog_rss": TOOL_BLOG_RSS,
+    "fetch_blog_post_content": TOOL_BLOG_POST,
+}
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Personality loader
