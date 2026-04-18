@@ -96,6 +96,9 @@ type Contact {
   telegramHandle: String
   doNotContact: Boolean!
   tags: [String!]!
+  # Cloudflare email routing: `{forwardingAlias}@vadim.blog` → email
+  forwardingAlias: String
+  forwardingAliasRuleId: String
   # ML-derived decision-maker fields
   seniority: String
   department: String

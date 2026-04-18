@@ -1403,6 +1403,146 @@ function DeleteContactDialog({
   );
 }
 
+// ─── Forwarding Alias Dialog (@vadim.blog) ───────────────────────────────────
+
+function ForwardingAliasDialog({
+  contact,
+  onCreated,
+}: {
+  contact: {
+    id: number;
+    firstName: string;
+    email?: string | null;
+    forwardingAlias?: string | null;
+  };
+  onCreated?: () => void;
+}) {
+  const initialAlias = (contact.forwardingAlias ?? contact.firstName ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, "");
+  const [open, setOpen] = useState(false);
+  const [alias, setAlias] = useState(initialAlias);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ aliasAddress: string; forwardsTo: string } | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setAlias(initialAlias);
+      setError(null);
+      setResult(null);
+    }
+  }, [open, initialAlias]);
+
+  const alreadyExists = Boolean(contact.forwardingAlias);
+
+  const handleSubmit = async () => {
+    if (!alias || !contact.email) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/cloudflare/email-alias", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId: contact.id, alias }),
+      });
+      const json = (await res.json()) as {
+        success: boolean;
+        error?: string;
+        aliasAddress?: string;
+        forwardsTo?: string;
+      };
+      if (json.success && json.aliasAddress && json.forwardsTo) {
+        setResult({ aliasAddress: json.aliasAddress, forwardsTo: json.forwardsTo });
+        onCreated?.();
+      } else {
+        setError(json.error ?? "Failed to create alias");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create alias");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger>
+        <button className={button({ variant: "outline" })}>
+          <EnvelopeClosedIcon />
+          {alreadyExists ? `${contact.forwardingAlias}@vadim.blog` : "Create @vadim.blog alias"}
+        </button>
+      </Dialog.Trigger>
+
+      <Dialog.Content maxWidth="460px">
+        <Dialog.Title>
+          {alreadyExists ? "Update" : "Create"} @vadim.blog alias
+        </Dialog.Title>
+        <Dialog.Description size="2" color="gray" mb="4">
+          Adds a Cloudflare email-routing rule that forwards{" "}
+          <Code>{alias || "{alias}"}@vadim.blog</Code> → <Code>{contact.email ?? "(no email)"}</Code>
+        </Dialog.Description>
+
+        <Flex direction="column" gap="3">
+          <Box>
+            <Text size="1" color="gray" weight="medium" mb="1" as="p">Alias</Text>
+            <Flex align="center" gap="2">
+              <TextField.Root
+                value={alias}
+                onChange={(e) => setAlias(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))}
+                placeholder="firstname"
+                disabled={submitting || Boolean(result)}
+                style={{ flex: 1 }}
+              />
+              <Text size="2" color="gray">@vadim.blog</Text>
+            </Flex>
+          </Box>
+
+          {!contact.email && (
+            <Callout.Root color="amber" size="1">
+              <Callout.Icon><ExclamationTriangleIcon /></Callout.Icon>
+              <Callout.Text>Contact has no email to forward to.</Callout.Text>
+            </Callout.Root>
+          )}
+
+          {error && (
+            <Callout.Root color="red" size="1">
+              <Callout.Icon><ExclamationTriangleIcon /></Callout.Icon>
+              <Callout.Text>{error}</Callout.Text>
+            </Callout.Root>
+          )}
+
+          {result && (
+            <Callout.Root color="green" size="1">
+              <Callout.Icon><CheckCircledIcon /></Callout.Icon>
+              <Callout.Text>
+                Created <Code>{result.aliasAddress}</Code> → <Code>{result.forwardsTo}</Code>
+              </Callout.Text>
+            </Callout.Root>
+          )}
+
+          <Flex justify="end" gap="2">
+            <Dialog.Close>
+              <button className={button({ variant: "ghost" })}>
+                {result ? "Close" : "Cancel"}
+              </button>
+            </Dialog.Close>
+            {!result && (
+              <button
+                className={button({ variant: "solidGreen" })}
+                onClick={handleSubmit}
+                disabled={submitting || !alias || !contact.email}
+              >
+                {submitting ? "Creating…" : "Create rule"}
+              </button>
+            )}
+          </Flex>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
+
 // ─── Email Card (inline, expandable) ─────────────────────────────────────────
 
 /** Strip quoted reply text (lines starting with > and the "On ... wrote:" preamble) */
@@ -1750,6 +1890,17 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                   <LinkedInLogoIcon />
                   {scraping ? "Scraping…" : "Scrape posts"}
                 </button>
+              )}
+              {contact.tags?.includes("cpn-outreach") && (
+                <ForwardingAliasDialog
+                  contact={{
+                    id: contact.id,
+                    firstName: contact.firstName,
+                    email: contact.email,
+                    forwardingAlias: contact.forwardingAlias,
+                  }}
+                  onCreated={() => refetch()}
+                />
               )}
               <EditContactDialog contact={contact} onUpdated={() => refetch()} />
               <DeleteContactDialog

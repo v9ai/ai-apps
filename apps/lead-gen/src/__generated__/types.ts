@@ -397,6 +397,8 @@ export type Contact = {
   emailVerified: Maybe<Scalars['Boolean']['output']>;
   emails: Array<Scalars['String']['output']>;
   firstName: Scalars['String']['output'];
+  forwardingAlias: Maybe<Scalars['String']['output']>;
+  forwardingAliasRuleId: Maybe<Scalars['String']['output']>;
   githubHandle: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   isDecisionMaker: Maybe<Scalars['Boolean']['output']>;

@@ -16,6 +16,8 @@ query GetContact($id: Int, $slug: String) {
     githubHandle
     telegramHandle
     tags
+    forwardingAlias
+    forwardingAliasRuleId
     nbStatus
     nbResult
     nbFlags

@@ -400,6 +400,8 @@ export type Contact = {
   emailVerified: Maybe<Scalars['Boolean']['output']>;
   emails: Array<Scalars['String']['output']>;
   firstName: Scalars['String']['output'];
+  forwardingAlias: Maybe<Scalars['String']['output']>;
+  forwardingAliasRuleId: Maybe<Scalars['String']['output']>;
   githubHandle: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   isDecisionMaker: Maybe<Scalars['Boolean']['output']>;
@@ -4236,6 +4238,8 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   emailVerified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   emails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  forwardingAlias?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  forwardingAliasRuleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   githubHandle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   isDecisionMaker?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;

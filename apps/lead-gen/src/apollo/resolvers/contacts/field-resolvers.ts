@@ -109,6 +109,12 @@ export const Contact = {
   telegramHandle(parent: DbContact) {
     return parent.telegram_handle ?? null;
   },
+  forwardingAlias(parent: DbContact) {
+    return parent.forwarding_alias ?? null;
+  },
+  forwardingAliasRuleId(parent: DbContact) {
+    return parent.forwarding_alias_rule_id ?? null;
+  },
   createdAt(parent: DbContact) {
     return parent.created_at;
   },

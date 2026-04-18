@@ -347,6 +347,8 @@ type Contact {
   emailVerified: Boolean
   emails: [String!]!
   firstName: String!
+  forwardingAlias: String
+  forwardingAliasRuleId: String
   githubHandle: String
   id: Int!
   isDecisionMaker: Boolean
