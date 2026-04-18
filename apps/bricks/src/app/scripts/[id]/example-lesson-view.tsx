@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { css } from "styled-system/css";
 import {
   DEVICE_IMG_MAP,
@@ -10,6 +11,12 @@ import {
 import { LessonMarkdown } from "@/lib/render-lesson-markdown";
 import { CodeViewer } from "@/components/code-viewer";
 import { HubDeployPanel } from "@/components/hub-deploy-panel";
+import {
+  HubPicker,
+  detectActiveHub,
+  setActiveHub,
+  type HubChoice,
+} from "@/components/hub-picker";
 import { useLanguage } from "@/lib/language";
 
 export function ExampleLessonView({
@@ -30,6 +37,7 @@ export function ExampleLessonView({
         deviceSingular: "dispozitiv",
         devicePlural: "dispozitive",
         basedOn: "Bazat pe lecția LEGO® Education",
+        chooseHub: "Alege hub-ul tău",
       }
     : {
         scripts: "Scripts",
@@ -39,7 +47,17 @@ export function ExampleLessonView({
         deviceSingular: "device",
         devicePlural: "devices",
         basedOn: "Based on the LEGO® Education lesson",
+        chooseHub: "Choose your hub",
       };
+
+  const supportsHubSwap = detectActiveHub(script.code) !== null;
+  const [selectedHub, setSelectedHub] = useState<HubChoice>(
+    () => detectActiveHub(script.code) ?? "EssentialHub"
+  );
+  const code = useMemo(
+    () => (supportsHubSwap ? setActiveHub(script.code, selectedHub) : script.code),
+    [script.code, selectedHub, supportsHubSwap]
+  );
   const color = hubColor(script.hubType);
   const fallbackTitle = script.filename.replace(/\.py$/, "").replace(/_/g, " ");
   const title = isRo
@@ -125,7 +143,7 @@ export function ExampleLessonView({
         </div>
       )}
 
-      <HubDeployPanel code={script.code} />
+      <HubDeployPanel code={code} />
 
       <div
         className={css({
@@ -274,8 +292,16 @@ export function ExampleLessonView({
         </div>
       )}
 
+      {supportsHubSwap && (
+        <HubPicker
+          value={selectedHub}
+          onChange={setSelectedHub}
+          label={t.chooseHub}
+        />
+      )}
+
       <div className={css({ mb: "6" })}>
-        <CodeViewer code={script.code} filename={script.filename} />
+        <CodeViewer code={code} filename={script.filename} />
       </div>
 
       {script.lessonSourceUrl && (
