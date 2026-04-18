@@ -1,49 +1,41 @@
 # Joc de pinball pentru Bogdan.
-# La pornire motorul se roteste scurt (test).
-# Apoi apasa butonul verde -> motorul face inca o rotatie.
-# Ca sa oprestim programul: tine butonul apasat 2s (hub-ul se stinge).
+# Press 1 pe butonul verde -> motorul porneste si tot merge.
+# Press 2 pe butonul verde -> motorul se opreste.
+# Ca sa iesi din program: tine butonul apasat 2s (hub-ul se stinge).
 
-# Alege hub-ul tau: scoate # din fata randului potrivit si pune # la celelalte.
-# from pybricks.hubs import PrimeHub as Hub
-# from pybricks.hubs import EssentialHub as Hub
-# from pybricks.hubs import InventorHub as Hub
-# from pybricks.hubs import TechnicHub as Hub
 from pybricks.hubs import CityHub as Hub
-# from pybricks.hubs import MoveHub as Hub
-
 from pybricks.pupdevices import Motor
-from pybricks.parameters import Port, Color, Direction, Button
+from pybricks.parameters import Port, Color, Button
 from pybricks.tools import wait
 
 hub = Hub()
 
-# Pe CityHub butonul verde opreste programul by default.
-# Il dezactivam ca sa-l putem folosi ca trigger pentru motor.
+# Pe CityHub (1 buton) butonul verde opreste programul by default.
+# Il dezactivam ca sa fie folosit ca trigger on/off pentru motor.
 hub.system.set_stop_button(None)
 
-# Portul A: motorul care misca paleta
 # bricks:motor=spike-large
-launcher = Motor(Port.A, Direction.CLOCKWISE)
+launcher = Motor(Port.A)
 
-LAUNCH_SPEED = 800   # cat de tare se invarte motorul
-LAUNCH_ANGLE = 360   # cat de mult se invarte (grade)
+LAUNCH_SPEED = 500
 
-# Test la pornire: rotatie scurta ca sa vezi ca motorul merge
-hub.light.on(Color.ORANGE)
-launcher.run_angle(400, 180)
 hub.light.on(Color.WHITE)
-
+motor_running = False
 
 while True:
     if Button.CENTER in hub.buttons.pressed():
-        hub.light.on(Color.RED)
-        launcher.run_angle(LAUNCH_SPEED, LAUNCH_ANGLE)
-        hub.light.on(Color.GREEN)
-        wait(300)
-        hub.light.on(Color.WHITE)
+        if motor_running:
+            launcher.stop()
+            motor_running = False
+            hub.light.on(Color.WHITE)
+        else:
+            launcher.run(LAUNCH_SPEED)
+            motor_running = True
+            hub.light.on(Color.RED)
 
-        # asteapta sa ridici degetul, ca sa nu lanseze iar si iar
+        # asteapta ridicarea degetului (debounce)
         while Button.CENTER in hub.buttons.pressed():
             wait(20)
+        wait(150)
 
     wait(30)

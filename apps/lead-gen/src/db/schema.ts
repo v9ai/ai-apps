@@ -242,6 +242,9 @@ export const contacts = pgTable(
     telegram_handle: text("telegram_handle"),
     do_not_contact: boolean("do_not_contact").default(false),
     tags: text("tags"), // JSON array
+    // Cloudflare email routing: `{alias}@vadim.blog` forwards to contact.email
+    forwarding_alias: text("forwarding_alias"),
+    forwarding_alias_rule_id: text("forwarding_alias_rule_id"),
     // ML-derived fields (populated by classifyContact / scoreContactsML)
     seniority: text("seniority"),
     department: text("department"),
