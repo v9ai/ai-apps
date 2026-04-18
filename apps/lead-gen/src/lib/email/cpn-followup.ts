@@ -77,9 +77,9 @@ export function buildCpnEmailReady(firstNameStr: string) {
   const subject = `Your @vadim.blog email is ready - start the courses`;
   const text = `Hi ${firstNameStr},
 
-Your email is set up: {{alias_email}} → forwards to {{personal_email}}
+Your email is set up: bella.belgarokova@vadim.blog → forwards to bella.belgarokova@hotmail.com
 
-Use {{alias_email}} when you register for Anthropic Academy. Anthropic verifies completion by org domain, so this is important.
+Use bella.belgarokova@vadim.blog when you register for Anthropic Academy. Anthropic verifies completion by org domain, so this is important.
 
 Welcome video featuring Karl (the one I mentioned before from Anthropic's partner team): https://youtu.be/O9yc_Qaj5Ns
 
