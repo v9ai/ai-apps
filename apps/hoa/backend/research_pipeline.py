@@ -966,7 +966,7 @@ async def _run_agent(
                 ))
 
         # Final call without tools to get summary
-        resp = await client.chat(messages)
+        resp = await client.chat(messages, **extra)
         return resp.choices[0].message.content or ""
     except Exception as e:
         console.print(f"[red]Agent error: {e}[/]")
@@ -1028,15 +1028,23 @@ async def _run_dual_lane(
             console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← MLX[/]")
         return lane_results
 
+    hf_fallback_specs: list[tuple[str, str, str, list | None]] = []
+
     async def _hf_lane() -> dict[str, str]:
-        """Concurrent execution on HF Inference API."""
+        """Concurrent execution on HF Inference API, with MLX fallback on 402/auth errors."""
         if not hf_client or not hf_specs:
             return {}
 
         async def _run_one(key: str, sys_prompt: str, task_prompt: str, agent_tools) -> tuple[str, str]:
             try:
                 result = await _run_agent(hf_client, sys_prompt, task_prompt, agent_tools)
+                if "(agent error:" in result and ("402" in result or "Payment Required" in result or "401" in result):
+                    raise RuntimeError(result)
             except Exception as e:
+                if "402" in str(e) or "Payment Required" in str(e) or "401" in str(e):
+                    console.print(f"  [yellow]↻[/] {key} — HF 402, queuing MLX fallback")
+                    hf_fallback_specs.append((key, sys_prompt, task_prompt, agent_tools))
+                    return key, ""
                 result = f"(agent error: {e})"
             console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← HF 72B[/]")
             return key, result
@@ -1049,6 +1057,17 @@ async def _run_dual_lane(
     mlx_results, hf_results = await asyncio.gather(_mlx_lane(), _hf_lane())
     results.update(mlx_results)
     results.update(hf_results)
+
+    if hf_fallback_specs:
+        console.print(f"  [bold yellow]Falling back:[/] {len(hf_fallback_specs)} agents → MLX local (HF credits exhausted)")
+        for key, sys_prompt, task_prompt, agent_tools in hf_fallback_specs:
+            try:
+                result = await _run_agent(mlx_client, sys_prompt, task_prompt, agent_tools)
+            except Exception as e:
+                result = f"(agent error: {e})"
+            results[key] = result
+            console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← MLX fallback[/]")
+
     return results
 
 

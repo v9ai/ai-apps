@@ -247,11 +247,18 @@ async def _critic_review(
 async def _judge_rule(
     client, questions_json: str, critique: str, all_context: str,
     research: dict, num_questions: int, categories: dict, is_final: bool,
+    *,
+    temperature: float | None = None,
+    seed: int | None = None,
+    judge_label: str = "JUDGE",
 ) -> dict:
     """Issue a structured JSON ruling (see JUDGE_JSON_INSTRUCTION).
 
     Returns a dict shaped per the contract; on parse failure returns a
     permissive fallback so a single bad judge response doesn't crash the run.
+    `temperature` and `seed` let callers vary jurors against the same model;
+    `judge_label` is injected into the persona so the LLM perceives itself
+    as a distinct juror (textual diversity even when sampler diversity is weak).
     """
     cat_names = "|".join(categories.keys())
     final_note = (
@@ -262,6 +269,7 @@ async def _judge_rule(
     )
 
     task = (
+        f"You are {judge_label}, ruling independently of any other juror.\n"
         f"Evaluate this debate about interview questions for {research.get('name', '?')}.\n\n"
         f"ADVOCATE'S QUESTIONS (1-indexed):\n{questions_json}\n\n"
         f"CRITIC'S REVIEW:\n{critique}\n\n"
@@ -272,12 +280,19 @@ async def _judge_rule(
         f"{JUDGE_JSON_INSTRUCTION}"
     )
 
-    raw = await _run_agent(client, JUDGE_SYSTEM, task)
+    extra: dict = {}
+    if seed is not None:
+        extra["seed"] = seed
+
+    raw = await _run_agent(
+        client, JUDGE_SYSTEM, task,
+        temperature=temperature, extra_kwargs=extra or None,
+    )
     parsed = _extract_json(raw)
     if isinstance(parsed, dict) and isinstance(parsed.get("questions"), list):
         return parsed
 
-    console.print("[yellow]Judge response was not valid JSON — using permissive fallback[/]")
+    console.print(f"[yellow]{judge_label} response was not valid JSON — fallback[/]")
     return {
         "questions": [],
         "overall_score": 0.0,
@@ -286,20 +301,43 @@ async def _judge_rule(
     }
 
 
+_JURY_BASE_TEMPERATURE = 0.3
+_JURY_TEMPERATURE_STEP = 0.15
+_JURY_TEMPERATURE_MAX = 0.9
+
+
+def _judge_sampling_for(idx: int, total: int) -> tuple[float, int]:
+    """Per-juror (temperature, seed). idx is 0-based. With one juror we use
+    the base temperature; multi-juror runs spread temperatures around the
+    base so independent samples stay decorrelated even on backends that
+    ignore `seed`."""
+    if total <= 1:
+        return _JURY_BASE_TEMPERATURE, 17
+    temp = min(
+        _JURY_TEMPERATURE_MAX,
+        _JURY_BASE_TEMPERATURE + _JURY_TEMPERATURE_STEP * idx,
+    )
+    return temp, 17 + idx * 101
+
+
 async def _jury_judge(
     judges: list, questions_json: str, critique: str, all_context: str,
     research: dict, num_questions: int, categories: dict, is_final: bool,
 ) -> dict:
-    """Run N judges in parallel and aggregate their structured verdicts."""
+    """Run N judges in parallel with per-juror temperature/seed and aggregate."""
     if not judges:
         return {"questions": [], "overall_score": 0.0, "overall_reason": "no judges"}
-    judgments = await asyncio.gather(*[
-        _judge_rule(
+    total = len(judges)
+    coros = []
+    for idx, j in enumerate(judges):
+        temp, seed = _judge_sampling_for(idx, total)
+        coros.append(_judge_rule(
             j, questions_json, critique, all_context,
             research, num_questions, categories, is_final,
-        )
-        for j in judges
-    ])
+            temperature=temp, seed=seed,
+            judge_label=f"JUROR-{idx + 1}-OF-{total}",
+        ))
+    judgments = await asyncio.gather(*coros)
     return jury_aggregate(judgments)
 
 
