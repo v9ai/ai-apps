@@ -139,7 +139,7 @@ export function MotorPicker({
         role="radiogroup"
         className={css({
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
           gap: "3",
         })}
       >
@@ -180,8 +180,8 @@ export function MotorPicker({
                 loading="lazy"
                 referrerPolicy="no-referrer"
                 className={css({
-                  w: "16",
-                  h: "16",
+                  w: "32",
+                  h: "32",
                   objectFit: "contain",
                 })}
               />
