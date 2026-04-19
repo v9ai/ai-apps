@@ -13,7 +13,7 @@ hub.light.on(Color.GREEN)
 # bricks:motor=spike-large
 launcher = Motor(Port.A, Direction.CLOCKWISE)
 
-SPEED = 150   # incet si constant
+SPEED = 500   # mai rapid
 launcher.run(SPEED)
 
 # Ruleaza la nesfarsit - hub.system il tine pornit
