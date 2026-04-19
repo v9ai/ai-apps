@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { eq, sql, or } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, contactEmails, companies } from "@/db/schema";
+import { resend } from "./resend-adapter";
 
 export type ResendStatus =
   | "sent"
@@ -182,12 +183,25 @@ export class ResendSyncService {
         const match = await this.findContactAndCompany(recipientEmail);
         if (!match.contactId) return { action: "skipped" }; // Skip emails without matching contacts
 
+        // List API returns only metadata — fetch full email for html/text body.
+        let html: string | null = null;
+        let text: string | null = null;
+        try {
+          const full = await resend.instance.getEmail(email.id);
+          html = full?.html ?? null;
+          text = full?.text ?? null;
+        } catch (err) {
+          console.error(`[sync] getEmail failed for ${email.id}:`, err);
+        }
+
         await db.insert(contactEmails).values({
           contact_id: match.contactId,
           resend_id: email.id,
           from_email: email.from || "unknown@resend.dev",
           to_emails: JSON.stringify(Array.isArray(email.to) ? email.to : [email.to]),
           subject: email.subject || "No Subject",
+          html_content: html,
+          text_content: text,
           status,
           sent_at: email.created_at,
           delivered_at: status === "delivered" ? new Date().toISOString() : null,

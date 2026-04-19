@@ -1,12 +1,13 @@
 # Joc de pinball pentru Bogdan.
-# Motorul ruleaza continuu pe Port A.
-# Senzor de culoare pe Port B: rosu = comuta intre viteza incet/maxim.
-# Ca sa oprim programul: tinem butonul verde apasat 2s (hub-ul se stinge).
+# Motor pe Port A. Senzor culoare pe Port B.
+# Rosu = comuta intre FAST(1000) si SLOW(400). Start la 150.
+# Bateria se afiseaza periodic in consola.
+# Stop: tinem butonul verde apasat 2s.
 
 from pybricks.hubs import CityHub as Hub
 from pybricks.pupdevices import Motor, ColorSensor
 from pybricks.parameters import Port, Color, Direction
-from pybricks.tools import wait
+from pybricks.tools import wait, StopWatch
 
 hub = Hub()
 hub.light.on(Color.GREEN)
@@ -23,12 +24,26 @@ FAST = 1000
 speed = START
 launcher.run(speed)
 
+# CityHub: 6xAAA, ~9000mV plin, brownout sub ~6000mV.
+print("boot battery:", hub.battery.voltage(), "mV current:", hub.battery.current(), "mA")
+
+watch = StopWatch()
+last_print = 0
+
 while True:
     if sensor.color() == Color.RED:
         speed = SLOW if speed == FAST else FAST
         launcher.run(speed)
         hub.light.on(Color.RED if speed == FAST else Color.GREEN)
-        # debounce: asteapta sa nu mai fie rosu
         while sensor.color() == Color.RED:
             wait(50)
+
+    if watch.time() - last_print > 2000:
+        v = hub.battery.voltage()
+        i = hub.battery.current()
+        print("v=", v, "mV i=", i, "mA speed=", speed)
+        if v < 6200:
+            hub.light.on(Color.YELLOW)
+        last_print = watch.time()
+
     wait(50)
