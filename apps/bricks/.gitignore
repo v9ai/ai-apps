@@ -1,5 +1,8 @@
 .vercel
 
+# User-uploaded video clips (too large for git / Vercel)
+public/clips/
+
 # .gitignore
 
 # GGUF model files
