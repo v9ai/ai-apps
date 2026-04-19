@@ -31,6 +31,8 @@ target
 apps/lead-gen/consultancies
 apps/lead-gen/leadgen-metal
 apps/lead-gen/mlx-training
+apps/bricks/public/clips
+apps/bricks/*.gguf
 
 # Common exclusions (use specific paths, not 'dist' to preserve packages/ui/dist)
 node_modules

@@ -4,19 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import { css } from "styled-system/css";
 import type { FFmpeg } from "@ffmpeg/ffmpeg";
 
-type Clip = {
-  file: File;
-  url: string;
-};
+type Clip =
+  | { kind: "file"; name: string; previewUrl: string; size: number; source: File }
+  | { kind: "remote"; name: string; previewUrl: string; size: number; source: string };
+
+type LocalClip = { name: string; url: string; size: number };
 
 type Stage = "idle" | "loading-core" | "stitching" | "done";
 
 const CORE_VERSION = "0.12.10";
 const CORE_BASE_URL = `https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/umd`;
+const WASM_SIZE_WARN = 1.5 * 1024 * 1024 * 1024; // 1.5 GB — single-threaded wasm starts OOM-ing around here
 
 export function VideoStitcher() {
   const [clipA, setClipA] = useState<Clip | null>(null);
   const [clipB, setClipB] = useState<Clip | null>(null);
+  const [localClips, setLocalClips] = useState<LocalClip[]>([]);
   const [stage, setStage] = useState<Stage>("idle");
   const [progress, setProgress] = useState(0);
   const [log, setLog] = useState<string>("");
@@ -25,9 +28,16 @@ export function VideoStitcher() {
   const ffmpegRef = useRef<FFmpeg | null>(null);
 
   useEffect(() => {
+    fetch("/api/clips")
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((data: { items: LocalClip[] }) => setLocalClips(data.items ?? []))
+      .catch(() => setLocalClips([]));
+  }, []);
+
+  useEffect(() => {
     return () => {
-      if (clipA) URL.revokeObjectURL(clipA.url);
-      if (clipB) URL.revokeObjectURL(clipB.url);
+      if (clipA?.kind === "file") URL.revokeObjectURL(clipA.previewUrl);
+      if (clipB?.kind === "file") URL.revokeObjectURL(clipB.previewUrl);
       if (outputUrl) URL.revokeObjectURL(outputUrl);
     };
   }, [clipA, clipB, outputUrl]);
@@ -50,26 +60,40 @@ export function VideoStitcher() {
     return ff;
   }
 
+  function setSlot(slot: "A" | "B", next: Clip | null) {
+    const prev = slot === "A" ? clipA : clipB;
+    if (prev?.kind === "file") URL.revokeObjectURL(prev.previewUrl);
+    (slot === "A" ? setClipA : setClipB)(next);
+    setOutputUrl((u) => {
+      if (u) URL.revokeObjectURL(u);
+      return null;
+    });
+    setStage("idle");
+    setError(null);
+  }
+
   function pickClip(slot: "A" | "B") {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      const url = URL.createObjectURL(file);
-      const next = { file, url };
-      if (slot === "A") {
-        if (clipA) URL.revokeObjectURL(clipA.url);
-        setClipA(next);
-      } else {
-        if (clipB) URL.revokeObjectURL(clipB.url);
-        setClipB(next);
-      }
-      setOutputUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
+      setSlot(slot, {
+        kind: "file",
+        name: file.name,
+        size: file.size,
+        previewUrl: URL.createObjectURL(file),
+        source: file,
       });
-      setStage("idle");
-      setError(null);
     };
+  }
+
+  function loadLocalClip(slot: "A" | "B", c: LocalClip) {
+    setSlot(slot, {
+      kind: "remote",
+      name: c.name,
+      size: c.size,
+      previewUrl: c.url,
+      source: c.url,
+    });
   }
 
   function swap() {
@@ -91,14 +115,12 @@ export function VideoStitcher() {
       setStage("stitching");
 
       const { fetchFile } = await import("@ffmpeg/util");
-      const nameA = `a.${extOf(clipA.file.name)}`;
-      const nameB = `b.${extOf(clipB.file.name)}`;
+      const nameA = `a.${extOf(clipA.name)}`;
+      const nameB = `b.${extOf(clipB.name)}`;
 
-      await ff.writeFile(nameA, await fetchFile(clipA.file));
-      await ff.writeFile(nameB, await fetchFile(clipB.file));
+      await ff.writeFile(nameA, await fetchFile(clipA.source));
+      await ff.writeFile(nameB, await fetchFile(clipB.source));
 
-      // Attempt 1: fast concat demuxer with stream copy.
-      // Works only when both inputs share codec, resolution, fps, and timebase.
       const listText = `file '${nameA}'\nfile '${nameB}'\n`;
       await ff.writeFile("list.txt", new TextEncoder().encode(listText));
 
@@ -112,7 +134,6 @@ export function VideoStitcher() {
       ]);
 
       if (code !== 0) {
-        // Attempt 2: re-encode with concat filter. Assumes both have audio.
         code = await ff.exec([
           "-y",
           "-i", nameA,
@@ -131,7 +152,6 @@ export function VideoStitcher() {
       }
 
       if (code !== 0) {
-        // Attempt 3: re-encode, video only (in case a clip has no audio).
         code = await ff.exec([
           "-y",
           "-i", nameA,
@@ -170,6 +190,8 @@ export function VideoStitcher() {
   }
 
   const canStitch = !!clipA && !!clipB && stage !== "stitching" && stage !== "loading-core";
+  const oversizeWarning =
+    (clipA && clipA.size > WASM_SIZE_WARN) || (clipB && clipB.size > WASM_SIZE_WARN);
 
   return (
     <section className={css({ mt: "10" })}>
@@ -220,6 +242,87 @@ export function VideoStitcher() {
               : "Stitch videos"}
         </button>
       </div>
+
+      {oversizeWarning && (
+        <p
+          className={css({
+            mt: "3",
+            fontSize: "xs",
+            color: "#FFB84D",
+            fontWeight: "600",
+          })}
+        >
+          ⚠ One of your clips is larger than ~1.5 GB. The in-browser engine may run out of memory.
+          Consider downscaling first, or stitching via system ffmpeg.
+        </p>
+      )}
+
+      {localClips.length > 0 && (
+        <div className={css({ mt: "6" })}>
+          <h3
+            className={css({
+              fontSize: "xs",
+              fontWeight: "800",
+              fontFamily: "display",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: "ink.muted",
+              mb: "2",
+            })}
+          >
+            From public/clips
+          </h3>
+          <div className={css({ display: "flex", flexDir: "column", gap: "2" })}>
+            {localClips.map((c) => (
+              <div
+                key={c.name}
+                className={css({
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "3",
+                  bg: "plate.surface",
+                  border: "2px solid",
+                  borderColor: "plate.border",
+                  rounded: "brick",
+                  px: "4",
+                  py: "3",
+                })}
+              >
+                <div className={css({ flex: 1, minW: 0 })}>
+                  <p
+                    className={css({
+                      fontSize: "sm",
+                      fontWeight: "700",
+                      fontFamily: "display",
+                      color: "ink.primary",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    })}
+                  >
+                    {c.name}
+                  </p>
+                  <span className={css({ fontSize: "xs", color: "ink.faint" })}>
+                    {formatBytes(c.size)}
+                  </span>
+                </div>
+                <button
+                  onClick={() => loadLocalClip("A", c)}
+                  className={secondaryBtn}
+                >
+                  → A
+                </button>
+                <button
+                  onClick={() => loadLocalClip("B", c)}
+                  className={secondaryBtn}
+                >
+                  → B
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {(stage === "loading-core" || stage === "stitching") && (
         <div className={css({ mt: "4" })}>
@@ -356,6 +459,7 @@ function ClipSlot({
           justifyContent: "space-between",
           alignItems: "center",
           mb: "2",
+          gap: "2",
         })}
       >
         <span
@@ -370,14 +474,24 @@ function ClipSlot({
         >
           {label}
         </span>
-        <span className={css({ fontSize: "xs", color: "ink.faint" })}>
-          {clip ? truncate(clip.file.name, 28) : "Choose file"}
+        <span
+          className={css({
+            fontSize: "xs",
+            color: "ink.faint",
+            minW: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          })}
+        >
+          {clip ? `${truncate(clip.name, 24)} · ${formatBytes(clip.size)}` : "Choose file"}
         </span>
       </div>
       {clip ? (
         <video
-          src={clip.url}
+          src={clip.previewUrl}
           controls
+          preload="metadata"
           className={css({
             w: "full",
             aspectRatio: "16/9",
@@ -421,6 +535,18 @@ function extOf(name: string): string {
 
 function truncate(s: string, n: number): string {
   return s.length <= n ? s : s.slice(0, n - 1) + "…";
+}
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let v = n / 1024;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v.toFixed(v >= 10 ? 0 : 1)} ${units[i]}`;
 }
 
 const primaryBtn = css({
