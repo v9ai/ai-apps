@@ -387,6 +387,8 @@ apps/knowledge/
 │   ├── anthropic/page.tsx  # Claude Partner Network learning path (static)
 │   ├── anthropic/agent-skills/page.tsx       # "Introduction to agent skills" course overview
 │   ├── anthropic/agent-skills/[lesson]/page.tsx  # Per-lesson view (static, sourced from lessons.ts)
+│   ├── anthropic/claude-api/page.tsx         # "Building with the Claude API" course overview
+│   ├── anthropic/claude-api/[lesson]/page.tsx    # Per-lesson view (static, sourced from lessons.ts)
 │   ├── api/chat/           # Streaming chat endpoint
 │   ├── api/research/       # Research endpoints
 │   ├── api/course-review/[id]/  # GET fetch review · POST upsert AI review

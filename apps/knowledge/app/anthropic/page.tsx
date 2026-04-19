@@ -27,9 +27,10 @@ const COURSES: Course[] = [
   {
     title: "Building with the Claude API",
     description:
-      "This comprehensive course covers the full spectrum of working with Anthropic models using the Claude API.",
-    url: "https://anthropic.skilljar.com/claude-api-fundamentals",
+      "This comprehensive course covers the full spectrum of working with Anthropic models using the Claude API — requests, tools, RAG, MCP, prompt caching, and agent workflows.",
+    url: "/anthropic/claude-api",
     icon: "🔌",
+    internal: true,
   },
   {
     title: "Introduction to Model Context Protocol",
