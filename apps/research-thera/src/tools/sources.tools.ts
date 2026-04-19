@@ -834,6 +834,105 @@ export async function searchDataCite(
 }
 
 /**
+ * Search CORE (https://core.ac.uk) — open-access papers aggregated from repositories.
+ * Requires CORE_API_KEY (register free at https://core.ac.uk/services/api).
+ */
+export async function searchCore(
+  query: string,
+  limit: number = 10,
+): Promise<PaperCandidate[]> {
+  try {
+    const apiKey = process.env.CORE_API_KEY;
+    if (!apiKey) {
+      console.warn("CORE_API_KEY not set, skipping CORE");
+      return [];
+    }
+
+    const url = new URL("https://api.core.ac.uk/v3/search/works");
+    url.searchParams.set("q", query);
+    url.searchParams.set("limit", limit.toString());
+
+    const response = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+
+    if (!response.ok) {
+      console.error(`CORE API error: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    const results = data.results || [];
+
+    return results.map((work: any) => ({
+      title: work.title || "Untitled",
+      doi: work.doi?.replace(/^https?:\/\/doi\.org\//, ""),
+      url:
+        work.downloadUrl ||
+        work.sourceFulltextUrls?.[0] ||
+        (work.doi ? `https://doi.org/${work.doi}` : undefined),
+      year: work.yearPublished,
+      source: "core",
+      authors: (work.authors || [])
+        .map((a: any) => a?.name)
+        .filter(Boolean),
+      abstract: work.abstract,
+      journal: work.publisher,
+    }));
+  } catch (error) {
+    console.error("Error searching CORE:", error);
+    return [];
+  }
+}
+
+/**
+ * Search Zenodo (https://zenodo.org) — open research outputs (preprints, datasets, software).
+ * Public API; ZENODO_TOKEN optional to lift the 60/min anonymous rate limit.
+ */
+export async function searchZenodo(
+  query: string,
+  limit: number = 10,
+): Promise<PaperCandidate[]> {
+  try {
+    const url = new URL("https://zenodo.org/api/records");
+    url.searchParams.set("q", query);
+    url.searchParams.set("size", limit.toString());
+
+    const token = process.env.ZENODO_TOKEN;
+    const response = await fetch(url.toString(), {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+
+    if (!response.ok) {
+      console.error(`Zenodo API error: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    const hits = data.hits?.hits || [];
+
+    return hits.map((record: any) => {
+      const meta = record.metadata || {};
+      return {
+        title: meta.title || "Untitled",
+        doi: meta.doi || record.doi,
+        url: record.links?.html || (meta.doi ? `https://doi.org/${meta.doi}` : undefined),
+        year: meta.publication_date ? parseInt(meta.publication_date.slice(0, 4)) : undefined,
+        source: "zenodo",
+        authors: (meta.creators || [])
+          .map((c: any) => c?.name)
+          .filter(Boolean),
+        abstract: stripJats(meta.description || ""),
+        journal: meta.journal?.title || meta.resource_type?.title,
+      };
+    });
+  } catch (error) {
+    console.error("Error searching Zenodo:", error);
+    return [];
+  }
+}
+
+/**
  * Get Open Access full-text URL via Unpaywall
  * Requires UNPAYWALL_EMAIL environment variable
  */
@@ -1309,6 +1408,8 @@ export const sourceTools = {
   searchArxiv,
   searchEuropePmc,
   searchDataCite,
+  searchCore,
+  searchZenodo,
 
   // Semantic Scholar extended API
   getSemanticScholarPaper,

@@ -14,7 +14,7 @@
     "mastra-dev": "mastra dev --dir src/mastra-core",
     "mastra-dev-tts": "mastra dev --dir src/mastra-tts",
     "mastra-build-core": "mastra build --dir src/mastra-core && node scripts/stub-worker-chunks.mjs",
-    "mastra-build-tts": "mastra build --dir src/mastra-tts",
+    "mastra-build-tts": "mastra build --dir src/mastra-tts && node scripts/stub-worker-chunks.mjs",
     "mastra-deploy-core": "pnpm mastra-build-core && wrangler deploy --cwd .mastra/output",
     "mastra-deploy-tts": "pnpm mastra-build-tts && wrangler deploy --cwd .mastra/output",
     "mastra-deploy-all": "pnpm mastra-deploy-core && pnpm mastra-deploy-tts",

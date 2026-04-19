@@ -321,16 +321,17 @@ async function search<T extends {
         "child psychology therapeutic techniques",
       ];
 
-  const pubmedQueries = ctx.pubmedQueries?.length
-    ? ctx.pubmedQueries.slice(0, 12)
-    : [
-        "behavioral intervention children[MeSH] school",
-        "CBT anxiety children school-based treatment",
-      ];
+  // Generic queries reused for OpenAlex / CORE / Zenodo / arXiv — these providers
+  // take free-text search, so the Crossref plan works well for them.
+  const generalQueries = crossrefQueries.slice(0, 10);
+  const arxivQueries = semanticQueries.slice(0, 10);
 
   console.log(`  Crossref: ${crossrefQueries.length} queries`);
   console.log(`  Semantic Scholar: ${semanticQueries.length} queries`);
-  console.log(`  PubMed: ${pubmedQueries.length} queries`);
+  console.log(`  arXiv: ${arxivQueries.length} queries`);
+  console.log(`  OpenAlex: ${generalQueries.length} queries`);
+  console.log(`  CORE: ${generalQueries.length} queries`);
+  console.log(`  Zenodo: ${generalQueries.length} queries`);
 
   console.log("Fetching Crossref results...");
   const crossrefBatches: any[][] = [];
@@ -339,19 +340,40 @@ async function search<T extends {
     await delay(500);
   }
 
-  console.log("Fetching PubMed results...");
-  const pubmedBatches: any[][] = [];
-  for (const q of pubmedQueries) {
-    pubmedBatches.push(await sourceTools.searchPubMed(q, PER_QUERY));
-    await delay(1000);
-  }
-
   console.log("Fetching Semantic Scholar results...");
   const semanticBatches: any[][] = [];
   const s2Delay = process.env.SEMANTIC_SCHOLAR_API_KEY ? 1100 : 200;
   for (const q of semanticQueries) {
     semanticBatches.push(await sourceTools.searchSemanticScholar(q, PER_QUERY));
     await delay(s2Delay);
+  }
+
+  console.log("Fetching arXiv results...");
+  const arxivBatches: any[][] = [];
+  for (const q of arxivQueries) {
+    arxivBatches.push(await sourceTools.searchArxiv(q, PER_QUERY));
+    await delay(500);
+  }
+
+  console.log("Fetching OpenAlex results...");
+  const openAlexBatches: any[][] = [];
+  for (const q of generalQueries) {
+    openAlexBatches.push(await sourceTools.searchOpenAlex(q, PER_QUERY));
+    await delay(200);
+  }
+
+  console.log("Fetching CORE results...");
+  const coreBatches: any[][] = [];
+  for (const q of generalQueries) {
+    coreBatches.push(await sourceTools.searchCore(q, PER_QUERY));
+    await delay(1000);
+  }
+
+  console.log("Fetching Zenodo results...");
+  const zenodoBatches: any[][] = [];
+  for (const q of generalQueries) {
+    zenodoBatches.push(await sourceTools.searchZenodo(q, PER_QUERY));
+    await delay(1100);
   }
 
   const s2Results = semanticBatches.flat();
@@ -368,13 +390,16 @@ async function search<T extends {
 
   const combined = [
     ...crossrefBatches.flat(),
-    ...pubmedBatches.flat(),
     ...s2Results,
+    ...arxivBatches.flat(),
+    ...openAlexBatches.flat(),
+    ...coreBatches.flat(),
+    ...zenodoBatches.flat(),
     ...recommendationResults,
   ];
 
   console.log(
-    `Raw results: Crossref(${crossrefBatches.flat().length}), PubMed(${pubmedBatches.flat().length}), Semantic(${s2Results.length}), S2 Recs(${recommendationResults.length})`,
+    `Raw results: Crossref(${crossrefBatches.flat().length}), Semantic(${s2Results.length}), arXiv(${arxivBatches.flat().length}), OpenAlex(${openAlexBatches.flat().length}), CORE(${coreBatches.flat().length}), Zenodo(${zenodoBatches.flat().length}), S2 Recs(${recommendationResults.length})`,
   );
 
   const staticBadTerms = [
