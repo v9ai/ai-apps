@@ -1,6 +1,7 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
 import { runGraphAndWait } from "@/src/lib/langgraph-client";
+import { isRoGoal } from "@/src/lib/ro";
 
 export const generateDeepIssueAnalysis: NonNullable<MutationResolvers['generateDeepIssueAnalysis']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -19,12 +20,15 @@ export const generateDeepIssueAnalysis: NonNullable<MutationResolvers['generateD
   const jobId = crypto.randomUUID();
   await db.createGenerationJob(jobId, userEmail, "DEEP_ANALYSIS");
 
+  const isRo = await isRoGoal({ familyMemberId, issueId: triggerIssueId });
+
   // Fire-and-forget — call LangGraph deep_analysis graph
   runGraphAndWait("deep_analysis", {
     input: {
       family_member_id: familyMemberId,
       trigger_issue_id: triggerIssueId ?? null,
       user_email: userEmail,
+      language: isRo ? "ro" : "en",
     },
   }).then(async (r) => {
     const analysisId = r?.analysis_id as number | undefined;

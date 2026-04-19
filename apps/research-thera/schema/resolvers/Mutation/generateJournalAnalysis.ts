@@ -14,7 +14,7 @@ import {
 } from "@/src/db";
 import { sql as neonSql } from "@/src/db/neon";
 import { generateObject } from "@/src/lib/deepseek";
-import { isSexTherapyGoal, withRo } from "@/src/lib/ro";
+import { isRoGoal, withRo } from "@/src/lib/ro";
 import { z } from "zod";
 
 const analysisSchema = z.object({
@@ -288,7 +288,7 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
   // Delete any existing analysis for this entry
   await db.deleteJournalAnalysis(journalEntryId, userEmail);
 
-  const isRo = await isSexTherapyGoal({ journalEntryId });
+  const isRo = await isRoGoal({ journalEntryId });
 
   const { object } = await generateObject({
     schema: analysisSchema,

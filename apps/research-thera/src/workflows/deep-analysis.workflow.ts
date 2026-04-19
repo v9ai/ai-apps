@@ -3,11 +3,13 @@ import { z } from "zod";
 import { sql as neonSql } from "@/src/db/neon";
 import { createDeepIssueAnalysis } from "@/src/db";
 import { generateObject } from "@/src/lib/deepseek";
+import { ROMANIAN_INSTRUCTION } from "@/src/lib/ro";
 
 const inputSchema = z.object({
   family_member_id: z.number().int(),
   trigger_issue_id: z.number().int().nullable().optional(),
   user_email: z.string().email(),
+  language: z.enum(["en", "ro"]).default("en"),
 });
 
 const outputSchema = z.object({
@@ -464,6 +466,10 @@ IMPORTANT: Every field annotated as "array of" MUST be a JSON array, even when t
 
 Write the analysis in the same language as the majority of the input data.`;
     sections.push(instructionsTrigger);
+
+    if (inputData.language === "ro") {
+      sections.unshift(ROMANIAN_INSTRUCTION);
+    }
 
     const prompt = sections.join("\n\n");
 

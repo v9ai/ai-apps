@@ -3,12 +3,14 @@ import { z } from "zod";
 import { sql as neonSql } from "@/src/db/neon";
 import { createHabit } from "@/src/db";
 import { generateObject } from "@/src/lib/deepseek";
+import { ROMANIAN_INSTRUCTION } from "@/src/lib/ro";
 
 const habitInputSchema = z.object({
   family_member_id: z.number().int().optional(),
   issue_id: z.number().int().optional(),
   user_email: z.string().email(),
   count: z.number().int().min(1).max(20).default(5),
+  language: z.enum(["en", "ro"]).default("en"),
 });
 
 const habitSchema = z.object({
@@ -221,6 +223,10 @@ const collectData = createStep({
       "",
       "Keep titles concise (3-6 words). Descriptions explain the therapeutic benefit (1-2 sentences).",
     );
+
+    if (inputData.language === "ro") {
+      parts.unshift(ROMANIAN_INSTRUCTION, "");
+    }
 
     return {
       prompt: parts.join("\n"),

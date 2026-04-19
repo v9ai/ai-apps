@@ -1,12 +1,15 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
 import { urlForGraph } from "@/src/lib/langgraph-client";
+import { isRoGoal } from "@/src/lib/ro";
 
 export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['generateHabitsForFamilyMember']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) throw new Error("Authentication required");
 
   const { familyMemberId, count = 5 } = args;
+
+  const isRo = await isRoGoal({ familyMemberId });
 
   const response = await fetch(`${urlForGraph("habits")}/runs/wait`, {
     method: "POST",
@@ -18,6 +21,7 @@ export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['gener
         family_member_id: familyMemberId,
         user_email: userEmail,
         count,
+        language: isRo ? "ro" : "en",
       },
     }),
   });

@@ -1,6 +1,7 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
 import { urlForGraph } from "@/src/lib/langgraph-client";
+import { isRoGoal } from "@/src/lib/ro";
 
 export const generateHabitsFromIssue: NonNullable<MutationResolvers['generateHabitsFromIssue']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -10,6 +11,8 @@ export const generateHabitsFromIssue: NonNullable<MutationResolvers['generateHab
 
   const issue = await db.getIssue(issueId, userEmail);
   if (!issue) throw new Error("Issue not found");
+
+  const isRo = await isRoGoal({ issueId, familyMemberId: issue.familyMemberId });
 
   const response = await fetch(`${urlForGraph("habits")}/runs/wait`, {
     method: "POST",
@@ -22,6 +25,7 @@ export const generateHabitsFromIssue: NonNullable<MutationResolvers['generateHab
         user_email: userEmail,
         count,
         issue_id: issueId,
+        language: isRo ? "ro" : "en",
       },
     }),
   });

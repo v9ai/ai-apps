@@ -1,6 +1,7 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { getGoal, getIssue, getContactFeedback, createGenerationJob, updateGenerationJob } from "@/src/db";
 import { runGraphAndWait } from "@/src/lib/langgraph-client";
+import { isRoGoal } from "@/src/lib/ro";
 
 export const generateLongFormText: NonNullable<MutationResolvers['generateLongFormText']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -35,6 +36,9 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
   const jobId = crypto.randomUUID();
   await createGenerationJob(jobId, userEmail, "LONGFORM", goalId ?? null);
 
+  const isRo = await isRoGoal({ goalId, issueId, journalEntryId, familyMemberId });
+  const resolvedLanguage = isRo ? "Romanian" : (args.language ?? "English");
+
   // Fire-and-forget — update the job when done
   runGraphAndWait("story", {
     input: {
@@ -44,7 +48,7 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
       journal_entry_id: journalEntryId ?? null,
       family_member_id: familyMemberId ?? null,
       user_context: userContext ?? null,
-      language: args.language ?? "English",
+      language: resolvedLanguage,
       minutes: args.minutes ?? 10,
       user_email: userEmail,
       user_name: userName ?? null,
