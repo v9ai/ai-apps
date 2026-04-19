@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { css } from "styled-system/css";
 import { useSession } from "@/lib/auth-client";
@@ -141,7 +141,15 @@ function defaultVarName(device: DeviceType, port: string): string {
 
 /* ── Component ─────────────────────────────────────────────────── */
 
-export default function WizardPage() {
+export default function WizardPageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <WizardPage />
+    </Suspense>
+  );
+}
+
+function WizardPage() {
   const [step, setStep] = useState(0);
   const [hub, setHub] = useState<HubType | null>(null);
   const [template, setTemplate] = useState<TemplateId | null>(null);

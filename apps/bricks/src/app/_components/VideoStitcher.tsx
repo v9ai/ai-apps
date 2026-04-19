@@ -10,7 +10,7 @@ type Clip =
 
 type LocalClip = { name: string; url: string; size: number };
 
-type Stage = "idle" | "loading-core" | "stitching" | "done";
+type Stage = "idle" | "loading-core" | "stitching" | "server-stitching" | "done";
 
 const CORE_VERSION = "0.12.10";
 const CORE_BASE_URL = `https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/umd`;
@@ -189,7 +189,39 @@ export function VideoStitcher() {
     }
   }
 
-  const canStitch = !!clipA && !!clipB && stage !== "stitching" && stage !== "loading-core";
+  async function stitchServer() {
+    if (!clipA || !clipB) return;
+    if (clipA.kind !== "remote" || clipB.kind !== "remote") {
+      setError("Server stitch only supports clips from public/clips.");
+      return;
+    }
+    setError(null);
+    setProgress(0);
+    setOutputUrl((prev) => {
+      if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setStage("server-stitching");
+    try {
+      const res = await fetch("/api/stitch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ a: clipA.name, b: clipB.name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Server stitch failed");
+      setOutputUrl(data.url);
+      setStage("done");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Server stitch failed");
+      setStage("idle");
+    }
+  }
+
+  const busy = stage === "stitching" || stage === "loading-core" || stage === "server-stitching";
+  const canStitch = !!clipA && !!clipB && !busy;
+  const canServerStitch =
+    !!clipA && !!clipB && clipA.kind === "remote" && clipB.kind === "remote" && !busy;
   const oversizeWarning =
     (clipA && clipA.size > WASM_SIZE_WARN) || (clipB && clipB.size > WASM_SIZE_WARN);
 
@@ -239,7 +271,19 @@ export function VideoStitcher() {
             ? "Loading engine..."
             : stage === "stitching"
               ? `Stitching ${Math.round(progress * 100)}%`
-              : "Stitch videos"}
+              : "Stitch in browser"}
+        </button>
+        <button
+          onClick={stitchServer}
+          disabled={!canServerStitch}
+          className={primaryBtn}
+          title={
+            canServerStitch
+              ? "Use local Python + system ffmpeg (fast, handles large files)"
+              : "Both clips must come from public/clips"
+          }
+        >
+          {stage === "server-stitching" ? "Stitching on server..." : "Stitch with Python"}
         </button>
       </div>
 
@@ -324,7 +368,7 @@ export function VideoStitcher() {
         </div>
       )}
 
-      {(stage === "loading-core" || stage === "stitching") && (
+      {busy && (
         <div className={css({ mt: "4" })}>
           <div
             className={css({
@@ -344,7 +388,10 @@ export function VideoStitcher() {
                 h: "full",
                 bg: "lego.red",
                 transition: "width 0.2s ease",
-                animation: stage === "loading-core" ? "pulse 1.2s infinite" : undefined,
+                animation:
+                  stage === "loading-core" || stage === "server-stitching"
+                    ? "pulse 1.2s infinite"
+                    : undefined,
               })}
             />
           </div>
