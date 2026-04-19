@@ -86,6 +86,10 @@ def rotate(src: Path, dst: Path, deg: int) -> None:
         "-vf", vf_for(deg),
         "-metadata:s:v:0", "rotate=0",
         *enc_args,
+        # Force standard MPEG timebase so later concat-demuxer stream-copy
+        # works against clips that use 1/90000 (see boundary PTS bug when
+        # mixing 1/15360 output from videotoolbox with 1/90000 inputs).
+        "-video_track_timescale", "90000",
         "-c:a", "copy",
         str(dst),
     ]
