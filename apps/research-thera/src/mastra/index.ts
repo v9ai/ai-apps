@@ -3,11 +3,17 @@ import { CloudflareDeployer } from "@mastra/deployer-cloudflare";
 import { habitsWorkflow } from "@/src/workflows/habits.workflow";
 import { parentAdviceWorkflow } from "@/src/workflows/parent-advice.workflow";
 import { deepAnalysisWorkflow } from "@/src/workflows/deep-analysis.workflow";
+import { storyWorkflow } from "@/src/workflows/story.workflow";
+import { researchWorkflow } from "@/src/workflows/research.workflow";
+import { ttsWorkflow } from "@/src/workflows/tts.workflow";
 
 const PORTED_WORKFLOWS = {
   habits: habitsWorkflow,
   parent_advice: parentAdviceWorkflow,
   deep_analysis: deepAnalysisWorkflow,
+  story: storyWorkflow,
+  research: researchWorkflow,
+  tts: ttsWorkflow,
 } as const;
 
 type PortedAssistantId = keyof typeof PORTED_WORKFLOWS;
