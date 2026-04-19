@@ -11,6 +11,7 @@ import {
 } from "@/src/db";
 import { sql as neonSql } from "@/src/db/neon";
 import { generateObject } from "@/src/lib/deepseek";
+import { isSexTherapyGoal, withRo } from "@/src/lib/ro";
 import { z } from "zod";
 
 export const generateTherapeuticQuestions: NonNullable<MutationResolvers['generateTherapeuticQuestions']> = async (_parent, args, ctx) => {
@@ -194,10 +195,11 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
     `Provide a rationale explaining why the question matters and how the person's profile informs it.`,
   ].join("\n");
 
-  const { object } = await generateObject({
+  const isRo = await isSexTherapyGoal({ goalId, issueId, journalEntryId });
 
+  const { object } = await generateObject({
     schema: questionSchema,
-    prompt,
+    prompt: withRo(prompt, isRo),
   });
 
   // Persist to DB

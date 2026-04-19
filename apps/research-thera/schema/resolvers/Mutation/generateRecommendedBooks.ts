@@ -6,6 +6,7 @@ import {
   getIssuesForFamilyMember,
 } from "@/src/db";
 import { generateObject } from "@/src/lib/deepseek";
+import { isSexTherapyGoal, withRo } from "@/src/lib/ro";
 import { z } from "zod";
 
 export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRecommendedBooks']> = async (_parent, args, ctx) => {
@@ -115,9 +116,11 @@ export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRe
     `Prioritize evidence-based, well-reviewed books from recognized experts in the field.`,
   ].join("\n");
 
+  const isRo = await isSexTherapyGoal({ goalId });
+
   const { object } = await generateObject({
     schema: bookSchema,
-    prompt,
+    prompt: withRo(prompt, isRo),
   });
 
   const saved = await insertRecommendedBooks(

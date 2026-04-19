@@ -12,6 +12,7 @@ import {
 } from "@/src/db";
 import { sql as neonSql } from "@/src/db/neon";
 import { generateObject } from "@/src/lib/deepseek";
+import { isSexTherapyGoal, withRo } from "@/src/lib/ro";
 import { z } from "zod";
 
 const discussionGuideSchema = z.object({
@@ -249,9 +250,11 @@ export const generateDiscussionGuide: NonNullable<MutationResolvers['generateDis
   // Delete existing guide
   await db.deleteDiscussionGuide(journalEntryId, userEmail);
 
+  const isRo = await isSexTherapyGoal({ journalEntryId });
+
   const { object } = await generateObject({
     schema: discussionGuideSchema,
-    prompt,
+    prompt: withRo(prompt, isRo),
     temperature: 0.3,
     max_tokens: 8192,
   });

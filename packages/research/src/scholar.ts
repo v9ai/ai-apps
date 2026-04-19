@@ -120,6 +120,25 @@ export class SemanticScholarClient {
     );
   }
 
+  /** Batch-fetch up to 500 papers by ID in a single request. */
+  async batch(
+    ids: string[],
+    fields: string = SCHOLAR_PAPER_FIELDS_FULL,
+  ): Promise<ScholarPaper[]> {
+    if (ids.length === 0) return [];
+    const resp = await fetch(`${this.baseUrl}/graph/v1/paper/batch?fields=${encodeURIComponent(fields)}`, {
+      method: "POST",
+      headers: { ...this.headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    if (!resp.ok) {
+      const body = await resp.text().catch(() => "");
+      throw new Error(`SemanticScholar batch HTTP ${resp.status}: ${body.slice(0, 200)}`);
+    }
+    const data = (await resp.json()) as (ScholarPaper | null)[];
+    return data.filter((p): p is ScholarPaper => !!p);
+  }
+
   /** Recommendations API — SPECTER2-based similar papers. */
   async getRecommendations(
     paperId: string,

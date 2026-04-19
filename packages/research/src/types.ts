@@ -254,6 +254,159 @@ export interface ZenodoSearchResponse {
   };
 }
 
+// ─── PubMed (NCBI E-utilities) ───────────────────────────────────────────────
+
+export interface PubMedAuthor {
+  name?: string;
+}
+
+export interface PubMedSummary {
+  uid?: string;
+  title?: string;
+  pubdate?: string;
+  authors?: PubMedAuthor[];
+  fulljournalname?: string;
+  source?: string;
+  elocationid?: string;
+  articleids?: Array<{ idtype?: string; value?: string }>;
+}
+
+export interface PubMedESearchResponse {
+  esearchresult?: { idlist?: string[]; count?: string };
+}
+
+export interface PubMedESummaryResponse {
+  result?: Record<string, PubMedSummary | string[]>;
+}
+
+// ─── Europe PMC ──────────────────────────────────────────────────────────────
+
+export interface EuropePmcResult {
+  id?: string;
+  pmid?: string;
+  doi?: string;
+  title?: string;
+  authorString?: string;
+  journalTitle?: string;
+  pubYear?: string;
+  abstractText?: string;
+}
+
+export interface EuropePmcResponse {
+  hitCount?: number;
+  resultList?: { result?: EuropePmcResult[] };
+}
+
+// ─── DataCite ────────────────────────────────────────────────────────────────
+
+export interface DataCiteCreator {
+  name?: string;
+  givenName?: string;
+  familyName?: string;
+}
+
+export interface DataCiteDescription {
+  description?: string;
+  descriptionType?: string;
+}
+
+export interface DataCiteAttributes {
+  doi?: string;
+  url?: string;
+  publicationYear?: number;
+  titles?: Array<{ title?: string }>;
+  creators?: DataCiteCreator[];
+  descriptions?: DataCiteDescription[];
+  publisher?: string;
+  container?: { title?: string };
+}
+
+export interface DataCiteItem {
+  id?: string;
+  attributes?: DataCiteAttributes;
+}
+
+export interface DataCiteResponse {
+  data?: DataCiteItem[];
+}
+
+// ─── Unpaywall ───────────────────────────────────────────────────────────────
+
+export interface UnpaywallLocation {
+  url?: string;
+  url_for_pdf?: string;
+  host_type?: string;
+  version?: string;
+}
+
+export interface UnpaywallResponse {
+  doi?: string;
+  oa_status?: string;
+  is_oa?: boolean;
+  best_oa_location?: UnpaywallLocation;
+}
+
+// ─── CSL-JSON (DOI content negotiation) ──────────────────────────────────────
+
+export interface CslJsonAuthor {
+  given?: string;
+  family?: string;
+  name?: string;
+}
+
+export interface CslJsonResponse {
+  DOI?: string;
+  URL?: string;
+  title?: string;
+  "title-short"?: string;
+  author?: CslJsonAuthor[];
+  issued?: CrossrefDateParts;
+  published?: CrossrefDateParts;
+  abstract?: string;
+  "container-title"?: string;
+  publisher?: string;
+}
+
+// ─── Candidate / Details (richer search-layer shape) ─────────────────────────
+
+export type CandidateSource =
+  | "crossref"
+  | "pubmed"
+  | "semantic_scholar"
+  | "openalex"
+  | "arxiv"
+  | "europepmc"
+  | "datacite"
+  | "core"
+  | "zenodo";
+
+export interface PaperCandidate {
+  title: string;
+  doi?: string;
+  url?: string;
+  year?: number;
+  source: CandidateSource;
+  authors?: string[];
+  abstract?: string;
+  journal?: string;
+  publicationType?: string;
+  tldr?: string;
+  citationCount?: number;
+  influentialCitationCount?: number;
+  fieldsOfStudy?: string[];
+  isOpenAccess?: boolean;
+  openAccessPdfUrl?: string;
+  s2PaperId?: string;
+  [key: string]: unknown;
+}
+
+export interface PaperDetails extends PaperCandidate {
+  abstract: string;
+  authors: string[];
+  oaUrl?: string;
+  oaStatus?: string;
+}
+
 // ─── LLM Provider ────────────────────────────────────────────────────────────
 
 export type LlmProvider =
