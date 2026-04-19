@@ -7,7 +7,7 @@ import 'stream';
 import 'crypto';
 import 'fs';
 import 'process';
-import './index2.mjs';
+import './provider-registry-7BH6TXBL.mjs';
 import 'stream/web';
 import 'child_process';
 import 'module';
@@ -15,15 +15,6 @@ import 'util';
 import 'os';
 import 'buffer';
 import 'async_hooks';
-import 'node:fs/promises';
-import 'node:zlib';
-import 'node:stream';
-import 'node:fs';
-import 'http';
-import 'https';
-import 'node:os';
-import 'node:process';
-import 'node:path';
 
 function convertJSONSchemaToOpenAPISchema(jsonSchema) {
   if (isEmptyObjectSchema(jsonSchema)) {

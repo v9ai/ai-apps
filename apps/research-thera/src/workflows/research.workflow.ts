@@ -24,7 +24,7 @@ const outputSchema = z.object({
 
 const RESEARCH_PREAMBLE = `You are a clinical research specialist for a therapeutic platform supporting children and families.
 You have access to academic paper search via search_papers and get_paper_detail.
-The search tool uses OpenAlex as the primary source (no rate limits), falling back to Semantic Scholar for rich metadata.
+The search tool fans out across 6 providers in parallel — OpenAlex, Crossref, Semantic Scholar, arXiv, CORE, and Zenodo — deduplicates by DOI/title, and reranks by semantic relevance.
 
 CRITICAL WORKFLOW — follow this exact order:
 1. Run exactly 3 search_papers calls with different query terms; set limit=10 on each call
@@ -119,6 +119,178 @@ async function searchOpenAlex(query: string, limit: number): Promise<PaperResult
       citation_count: (it.cited_by_count as number | null) ?? null,
     };
   });
+}
+
+async function searchCrossref(query: string, limit: number): Promise<PaperResult[]> {
+  const url = new URL("https://api.crossref.org/works");
+  url.searchParams.set("query", query);
+  url.searchParams.set("rows", String(Math.max(1, Math.min(limit, 50))));
+  try {
+    const resp = await fetch(url.toString());
+    if (!resp.ok) return [];
+    const data = (await resp.json()) as { message?: { items?: any[] } };
+    const items = data.message?.items ?? [];
+    return items.map((it) => {
+      const title = Array.isArray(it.title) ? it.title[0] || "Untitled" : "Untitled";
+      const authors = (it.author || [])
+        .map((a: any) => [a.given, a.family].filter(Boolean).join(" "))
+        .filter((n: string) => n);
+      const year: number | null =
+        it?.issued?.["date-parts"]?.[0]?.[0] ??
+        it?.published?.["date-parts"]?.[0]?.[0] ??
+        null;
+      return {
+        title,
+        authors,
+        year,
+        abstract: (it.abstract as string | null) ?? null,
+        doi: (it.DOI as string | null) ?? null,
+        url: (it.URL as string | null) ?? null,
+        citation_count: (it["is-referenced-by-count"] as number | null) ?? null,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function searchSemanticScholar(query: string, limit: number): Promise<PaperResult[]> {
+  const headers: Record<string, string> = {};
+  const key = process.env.SEMANTIC_SCHOLAR_API_KEY;
+  if (key) headers["x-api-key"] = key;
+  const url = new URL("https://api.semanticscholar.org/graph/v1/paper/search");
+  url.searchParams.set("query", query);
+  url.searchParams.set("limit", String(Math.max(1, Math.min(limit, 50))));
+  url.searchParams.set(
+    "fields",
+    "title,authors,year,abstract,externalIds,citationCount,openAccessPdf",
+  );
+  try {
+    const resp = await fetch(url.toString(), { headers });
+    if (!resp.ok) return [];
+    const data = (await resp.json()) as { data?: any[] };
+    return (data.data ?? []).map((p: any) => ({
+      title: p.title || "Untitled",
+      authors: (p.authors || []).map((a: any) => a.name).filter(Boolean),
+      year: p.year ?? null,
+      abstract: p.abstract ?? null,
+      doi: p.externalIds?.DOI ?? null,
+      url: p.openAccessPdf?.url ?? (p.externalIds?.DOI ? `https://doi.org/${p.externalIds.DOI}` : null),
+      citation_count: p.citationCount ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function searchArxiv(query: string, limit: number): Promise<PaperResult[]> {
+  try {
+    const url = new URL("http://export.arxiv.org/api/query");
+    url.searchParams.set("search_query", `all:${query}`);
+    url.searchParams.set("start", "0");
+    url.searchParams.set("max_results", String(Math.max(1, Math.min(limit, 50))));
+    const resp = await fetch(url.toString());
+    if (!resp.ok) return [];
+    const xml = await resp.text();
+    const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)];
+    return entries.map((m) => {
+      const body = m[1];
+      const title = body.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.replace(/\s+/g, " ").trim() || "Untitled";
+      const abstract = body.match(/<summary>([\s\S]*?)<\/summary>/)?.[1]?.replace(/\s+/g, " ").trim() || null;
+      const year = body.match(/<published>(\d{4})/)?.[1];
+      const id = body.match(/<id>([^<]+)<\/id>/)?.[1]?.trim() || null;
+      const doi = body.match(/<arxiv:doi[^>]*>([^<]+)<\/arxiv:doi>/)?.[1]?.trim() || null;
+      const authors = [...body.matchAll(/<author>\s*<name>([^<]+)<\/name>/g)].map((a) => a[1].trim());
+      return {
+        title,
+        authors,
+        year: year ? parseInt(year, 10) : null,
+        abstract,
+        doi,
+        url: id,
+        citation_count: null,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function searchCore(query: string, limit: number): Promise<PaperResult[]> {
+  const apiKey = process.env.CORE_API_KEY;
+  if (!apiKey) return [];
+  try {
+    const url = new URL("https://api.core.ac.uk/v3/search/works");
+    url.searchParams.set("q", query);
+    url.searchParams.set("limit", String(Math.max(1, Math.min(limit, 50))));
+    const resp = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!resp.ok) return [];
+    const data = (await resp.json()) as { results?: any[] };
+    return (data.results ?? []).map((w: any) => ({
+      title: w.title || "Untitled",
+      authors: (w.authors || []).map((a: any) => a?.name).filter(Boolean),
+      year: w.yearPublished ?? null,
+      abstract: w.abstract ?? null,
+      doi: typeof w.doi === "string" ? w.doi.replace(/^https?:\/\/doi\.org\//, "") : null,
+      url:
+        w.downloadUrl ||
+        w.sourceFulltextUrls?.[0] ||
+        (w.doi ? `https://doi.org/${w.doi}` : null),
+      citation_count: null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function searchZenodo(query: string, limit: number): Promise<PaperResult[]> {
+  try {
+    const url = new URL("https://zenodo.org/api/records");
+    url.searchParams.set("q", query);
+    url.searchParams.set("size", String(Math.max(1, Math.min(limit, 50))));
+    const token = process.env.ZENODO_ACCESS_TOKEN || process.env.ZENODO_TOKEN;
+    const resp = await fetch(url.toString(), {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!resp.ok) return [];
+    const data = (await resp.json()) as { hits?: { hits?: any[] } };
+    return (data.hits?.hits ?? []).map((rec: any) => {
+      const meta = rec.metadata || {};
+      const description = (meta.description || "").replace(/<[^>]+>/g, "").trim();
+      const doi = meta.doi || rec.doi || null;
+      const year = meta.publication_date
+        ? parseInt(String(meta.publication_date).slice(0, 4), 10)
+        : null;
+      return {
+        title: meta.title || "Untitled",
+        authors: (meta.creators || []).map((c: any) => c?.name).filter(Boolean),
+        year: Number.isFinite(year) ? year : null,
+        abstract: description || null,
+        doi,
+        url: rec.links?.html || (doi ? `https://doi.org/${doi}` : null),
+        citation_count: null,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+function dedupePapers(papers: PaperResult[]): PaperResult[] {
+  const seen = new Set<string>();
+  const out: PaperResult[] = [];
+  for (const p of papers) {
+    const doiKey = p.doi ? `doi:${p.doi.toLowerCase()}` : "";
+    const titleKey = `t:${(p.title || "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 120)}`;
+    const key = doiKey || titleKey;
+    if (!key || seen.has(key)) continue;
+    if (doiKey) seen.add(doiKey);
+    seen.add(titleKey);
+    out.push(p);
+  }
+  return out;
 }
 
 async function getS2PaperDetail(paperId: string): Promise<Record<string, unknown> | null> {
@@ -216,9 +388,19 @@ function formatSearchResults(query: string, papers: PaperResult[]): string {
 
 async function toolSearchPapers(args: { query: string; limit?: number }): Promise<string> {
   const limit = args.limit ?? 10;
-  const pool = await searchOpenAlex(args.query, limit * 3);
-  if (pool.length === 0) return `No results found for query: ${args.query}`;
-  const ranked = await deepseekRerank(args.query, pool, limit);
+  const perProvider = Math.max(5, limit * 2);
+  const results = await Promise.allSettled([
+    searchOpenAlex(args.query, perProvider),
+    searchCrossref(args.query, perProvider),
+    searchSemanticScholar(args.query, perProvider),
+    searchArxiv(args.query, perProvider),
+    searchCore(args.query, perProvider),
+    searchZenodo(args.query, perProvider),
+  ]);
+  const pool = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+  const deduped = dedupePapers(pool);
+  if (deduped.length === 0) return `No results found for query: ${args.query}`;
+  const ranked = await deepseekRerank(args.query, deduped, limit);
   return formatSearchResults(args.query, ranked);
 }
 
@@ -355,7 +537,7 @@ const TOOL_DEFS = [
     function: {
       name: "search_papers",
       description:
-        "Search academic papers on OpenAlex for therapeutic, psychological, and clinical research. Returns titles, authors, citation counts, abstracts, and DOIs, reranked for semantic relevance. Call multiple times with different query terms to cover the topic.",
+        "Search academic papers across 6 providers in parallel (OpenAlex, Crossref, Semantic Scholar, arXiv, CORE, Zenodo). Returns titles, authors, citation counts, abstracts, and DOIs — deduplicated by DOI/title and reranked for semantic relevance. Call multiple times with different query terms to cover the topic.",
       parameters: {
         type: "object",
         properties: {

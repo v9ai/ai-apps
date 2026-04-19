@@ -55,7 +55,7 @@ async function main() {
         SELECT id, tags
         FROM goals
         WHERE (COALESCE(title,'') || ' ' || COALESCE(description,'') || ' ' || COALESCE(therapeutic_text,'')) ~* ${REGEX}
-      ` as Promise<Row[]>,
+      ` as unknown as Promise<Row[]>,
     (id, tagsJson) =>
       sql`UPDATE goals SET tags = ${tagsJson} WHERE id = ${id}`,
   );
@@ -67,7 +67,7 @@ async function main() {
         SELECT id, tags
         FROM notes
         WHERE (COALESCE(title,'') || ' ' || COALESCE(content,'')) ~* ${REGEX}
-      ` as Promise<Row[]>,
+      ` as unknown as Promise<Row[]>,
     (id, tagsJson) =>
       sql`UPDATE notes SET tags = ${tagsJson} WHERE id = ${id}`,
   );
@@ -79,7 +79,7 @@ async function main() {
         SELECT id, tags
         FROM journal_entries
         WHERE (COALESCE(title,'') || ' ' || COALESCE(content,'')) ~* ${REGEX}
-      ` as Promise<Row[]>,
+      ` as unknown as Promise<Row[]>,
     (id, tagsJson) =>
       sql`UPDATE journal_entries SET tags = ${tagsJson} WHERE id = ${id}`,
   );
@@ -91,7 +91,7 @@ async function main() {
         SELECT id, tags
         FROM teacher_feedbacks
         WHERE (COALESCE(subject,'') || ' ' || COALESCE(content,'')) ~* ${REGEX}
-      ` as Promise<Row[]>,
+      ` as unknown as Promise<Row[]>,
     (id, tagsJson) =>
       sql`UPDATE teacher_feedbacks SET tags = ${tagsJson} WHERE id = ${id}`,
   );
@@ -103,7 +103,7 @@ async function main() {
         SELECT id, tags
         FROM contact_feedbacks
         WHERE (COALESCE(subject,'') || ' ' || COALESCE(content,'')) ~* ${REGEX}
-      ` as Promise<Row[]>,
+      ` as unknown as Promise<Row[]>,
     (id, tagsJson) =>
       sql`UPDATE contact_feedbacks SET tags = ${tagsJson} WHERE id = ${id}`,
   );
