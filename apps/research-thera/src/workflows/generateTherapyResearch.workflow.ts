@@ -121,6 +121,7 @@ async function loadContext(input: Input) {
       issueId: input.issueId,
       feedbackId: input.feedbackId,
       goal: { id: goal.id, title: goal.title, description: goal.description },
+      goalTags: (goal as any).tags ?? [],
       notes: notes.map((n: any) => ({ id: n.id, content: n.content })),
       familyMemberName,
       familyMemberAge,
@@ -292,6 +293,7 @@ async function search<T extends {
   crossrefQueries?: string[];
   pubmedQueries?: string[];
   excludedTopics?: string[];
+  goalTags?: string[];
   [key: string]: any;
 }>(ctx: T) {
   if (ctx.jobId) {
@@ -402,13 +404,22 @@ async function search<T extends {
     `Raw results: Crossref(${crossrefBatches.flat().length}), Semantic(${s2Results.length}), arXiv(${arxivBatches.flat().length}), OpenAlex(${openAlexBatches.flat().length}), CORE(${coreBatches.flat().length}), Zenodo(${zenodoBatches.flat().length}), S2 Recs(${recommendationResults.length})`,
   );
 
-  const staticBadTerms = [
-    "forensic", "witness", "court", "police", "legal", "pre-admission",
-    "homework completion", "homework adherence", "homework refusal",
-    "dating violence", "teen dating", "cybersex", "internet pornography",
-    "weight control", "obesity intervention", "gang-affiliated",
-    "delinquency", "marital therapy", "marriage therapy", "couples therapy",
-  ];
+  const isSexTherapy = (ctx.goalTags ?? []).includes("sex-therapy");
+  const staticBadTerms = isSexTherapy
+    ? [
+        "forensic", "witness", "court", "police", "legal", "pre-admission",
+        "homework completion", "homework adherence", "homework refusal",
+        "teen dating",
+        "weight control", "obesity intervention", "gang-affiliated",
+        "delinquency",
+      ]
+    : [
+        "forensic", "witness", "court", "police", "legal", "pre-admission",
+        "homework completion", "homework adherence", "homework refusal",
+        "dating violence", "teen dating", "cybersex", "internet pornography",
+        "weight control", "obesity intervention", "gang-affiliated",
+        "delinquency", "marital therapy", "marriage therapy", "couples therapy",
+      ];
 
   const dynamicBadTerms: string[] = ctx.excludedTopics ?? [];
   const allBadTerms = [...staticBadTerms, ...dynamicBadTerms];
