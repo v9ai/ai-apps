@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { css } from "styled-system/css";
+import SpikeLightMatrixInfoRO from "./SpikeLightMatrixInfoRO";
 
 interface PartColor {
   id: number;
@@ -377,6 +378,9 @@ export default function PartPage() {
           </a>
         </div>
       </div>
+
+      {/* Romanian info for special Pybricks parts */}
+      {part.partNum === "45608" && <SpikeLightMatrixInfoRO />}
 
       {/* Colors section */}
       {part.colors.length > 0 && (
