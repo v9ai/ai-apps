@@ -79,6 +79,25 @@ export async function processReceivedEmail(
 
   console.log(`[PROCESS_RECEIVED] persisted: ${emailId}`);
 
+  // 1b. Fetch full email from Resend API for headers + content.
+  // Runs before the alias branch so alias-forwarded rows also get body content.
+  let fullEmail: Awaited<ReturnType<typeof resend.instance.getReceivedEmail>> = null;
+  try {
+    fullEmail = await resend.instance.getReceivedEmail(emailId);
+    if (fullEmail && !html && !text && (fullEmail.html || fullEmail.text)) {
+      await db
+        .update(receivedEmails)
+        .set({
+          html_content: fullEmail.html ?? null,
+          text_content: fullEmail.text ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        .where(eq(receivedEmails.resend_id, emailId));
+    }
+  } catch (err) {
+    console.error(`[PROCESS_RECEIVED] failed to fetch full email ${emailId}:`, err);
+  }
+
   // Alias forwarding: if addressed to `{alias}@vadim.blog` (non-reserved),
   // look up the owning contact and forward via Resend's forward() helper.
   // These are transactional messages (verification, etc.) — not replies —
@@ -130,24 +149,6 @@ export async function processReceivedEmail(
     console.warn(
       `[PROCESS_RECEIVED] alias ${aliasLocal}@${ALIAS_DOMAIN} has no matching contact — falling through to normal classification`,
     );
-  }
-
-  // 1b. Fetch full email from Resend API for headers + content
-  let fullEmail: Awaited<ReturnType<typeof resend.instance.getReceivedEmail>> = null;
-  try {
-    fullEmail = await resend.instance.getReceivedEmail(emailId);
-    if (fullEmail && !html && !text && (fullEmail.html || fullEmail.text)) {
-      await db
-        .update(receivedEmails)
-        .set({
-          html_content: fullEmail.html ?? null,
-          text_content: fullEmail.text ?? null,
-          updated_at: new Date().toISOString(),
-        })
-        .where(eq(receivedEmails.resend_id, emailId));
-    }
-  } catch (err) {
-    console.error(`[PROCESS_RECEIVED] failed to fetch full email ${emailId}:`, err);
   }
 
   // 2. Classify reply and match to contact
