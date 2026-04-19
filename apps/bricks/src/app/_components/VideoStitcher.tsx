@@ -16,9 +16,13 @@ const CORE_VERSION = "0.12.10";
 const CORE_BASE_URL = `https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/umd`;
 const WASM_SIZE_WARN = 1.5 * 1024 * 1024 * 1024; // 1.5 GB — single-threaded wasm starts OOM-ing around here
 
+type Rotation = 0 | 90 | 180 | 270;
+
 export function VideoStitcher() {
   const [clipA, setClipA] = useState<Clip | null>(null);
   const [clipB, setClipB] = useState<Clip | null>(null);
+  const [rotA, setRotA] = useState<Rotation>(0);
+  const [rotB, setRotB] = useState<Rotation>(0);
   const [localClips, setLocalClips] = useState<LocalClip[]>([]);
   const [stage, setStage] = useState<Stage>("idle");
   const [progress, setProgress] = useState(0);
@@ -206,7 +210,12 @@ export function VideoStitcher() {
       const res = await fetch("/api/stitch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ a: clipA.name, b: clipB.name }),
+        body: JSON.stringify({
+          a: clipA.name,
+          b: clipB.name,
+          rotateA: rotA,
+          rotateB: rotB,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Server stitch failed");
@@ -250,8 +259,20 @@ export function VideoStitcher() {
           gap: "3",
         })}
       >
-        <ClipSlot label="Clip A" clip={clipA} onChange={pickClip("A")} />
-        <ClipSlot label="Clip B" clip={clipB} onChange={pickClip("B")} />
+        <ClipSlot
+          label="Clip A"
+          clip={clipA}
+          rotation={rotA}
+          onRotate={() => setRotA((r) => nextRotation(r))}
+          onChange={pickClip("A")}
+        />
+        <ClipSlot
+          label="Clip B"
+          clip={clipB}
+          rotation={rotB}
+          onRotate={() => setRotB((r) => nextRotation(r))}
+          onChange={pickClip("B")}
+        />
       </div>
 
       <div className={css({ display: "flex", gap: "2", mt: "4", flexWrap: "wrap" })}>
@@ -477,13 +498,21 @@ export function VideoStitcher() {
   );
 }
 
+function nextRotation(r: Rotation): Rotation {
+  return (((r + 90) % 360) as Rotation);
+}
+
 function ClipSlot({
   label,
   clip,
+  rotation,
+  onRotate,
   onChange,
 }: {
   label: string;
   clip: Clip | null;
+  rotation: Rotation;
+  onRotate: () => void;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
@@ -521,29 +550,58 @@ function ClipSlot({
         >
           {label}
         </span>
-        <span
-          className={css({
-            fontSize: "xs",
-            color: "ink.faint",
-            minW: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          })}
-        >
-          {clip ? `${truncate(clip.name, 24)} · ${formatBytes(clip.size)}` : "Choose file"}
-        </span>
+        <div className={css({ display: "flex", alignItems: "center", gap: "2", minW: 0 })}>
+          <span
+            className={css({
+              fontSize: "xs",
+              color: "ink.faint",
+              minW: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            })}
+          >
+            {clip ? `${truncate(clip.name, 20)} · ${formatBytes(clip.size)}` : "Choose file"}
+          </span>
+          {clip && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                onRotate();
+              }}
+              className={css({
+                fontSize: "xs",
+                fontWeight: "700",
+                fontFamily: "display",
+                bg: rotation === 0 ? "transparent" : "lego.red",
+                color: rotation === 0 ? "ink.secondary" : "white",
+                border: "1.5px solid",
+                borderColor: rotation === 0 ? "plate.border" : "lego.red",
+                rounded: "brick",
+                px: "2",
+                py: "0.5",
+                cursor: "pointer",
+                flexShrink: 0,
+              })}
+            >
+              ↻ {rotation}°
+            </button>
+          )}
+        </div>
       </div>
       {clip ? (
         <video
           src={clip.previewUrl}
           controls
           preload="metadata"
+          style={{ transform: `rotate(${rotation}deg)` }}
           className={css({
             w: "full",
             aspectRatio: "16/9",
             rounded: "lg",
             bg: "black",
+            transition: "transform 0.2s ease",
           })}
         />
       ) : (

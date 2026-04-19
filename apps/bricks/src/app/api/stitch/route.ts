@@ -13,13 +13,18 @@ function sanitize(name: string): string | null {
   return name;
 }
 
+const VALID_ROT = new Set([0, 90, 180, 270]);
+
 export async function POST(req: NextRequest) {
-  const { a, b } = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => ({}));
+  const { a, b, rotateA, rotateB } = body ?? {};
   const safeA = typeof a === "string" ? sanitize(a) : null;
   const safeB = typeof b === "string" ? sanitize(b) : null;
   if (!safeA || !safeB) {
     return NextResponse.json({ error: "Invalid clip names" }, { status: 400 });
   }
+  const rotA = typeof rotateA === "number" && VALID_ROT.has(rotateA) ? rotateA : 0;
+  const rotB = typeof rotateB === "number" && VALID_ROT.has(rotateB) ? rotateB : 0;
 
   const root = process.cwd();
   const clipsDir = path.join(root, "public", "clips");
@@ -39,9 +44,18 @@ export async function POST(req: NextRequest) {
   const script = path.join(root, "scripts", "stitch_videos.py");
 
   const { code, stderr } = await new Promise<{ code: number; stderr: string }>((resolve) => {
-    const child = spawn("python3", [script, "--a", pathA, "--b", pathB, "--out", outPath], {
-      cwd: root,
-    });
+    const child = spawn(
+      "python3",
+      [
+        script,
+        "--a", pathA,
+        "--b", pathB,
+        "--out", outPath,
+        "--rotate-a", String(rotA),
+        "--rotate-b", String(rotB),
+      ],
+      { cwd: root },
+    );
     let err = "";
     child.stderr.on("data", (d) => (err += d.toString()));
     child.on("close", (c) => resolve({ code: c ?? 1, stderr: err }));
