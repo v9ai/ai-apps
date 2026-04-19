@@ -13,7 +13,7 @@ packages/logger
 # Exclude Rust/Python/other build artifacts
 crates
 langgraph
-scripts
+/scripts
 target
 
 # Large binary files

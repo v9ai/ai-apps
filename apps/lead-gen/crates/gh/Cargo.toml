@@ -67,5 +67,10 @@ name = "search_candidates"
 path = "src/bin/search_candidates.rs"
 required-features = ["lance", "neon"]
 
+[[bin]]
+name = "search_brasov"
+path = "src/bin/search_brasov.rs"
+required-features = ["lance"]
+
 [dev-dependencies]
 tokio = { workspace = true }

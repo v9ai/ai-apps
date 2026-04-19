@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/scripts": ["./scripts/**/*"],
+    "/scripts/[id]": ["./scripts/**/*"],
+    "/scripts/new": ["./scripts/**/*"],
+  },
   rewrites: async () => [
     {
       source: "/backend/:path*",
