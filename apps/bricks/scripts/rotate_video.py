@@ -31,6 +31,41 @@ def vf_for(deg: int) -> str:
     raise ValueError(f"Unsupported rotation: {deg}")
 
 
+def _detect_video_codec(src: Path) -> str:
+    proc = subprocess.run(
+        [
+            "ffprobe", "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "stream=codec_name",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            str(src),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    return proc.stdout.strip().lower() if proc.returncode == 0 else ""
+
+
+def _encoder_for(codec: str) -> tuple[list[str], str]:
+    """Pick a hardware encoder where possible. Returns (args, label)."""
+    if codec == "hevc":
+        return (
+            [
+                "-c:v", "hevc_videotoolbox",
+                "-tag:v", "hvc1",
+                "-q:v", "55",  # roughly visually-lossless at 4K
+            ],
+            "hevc_videotoolbox",
+        )
+    return (
+        [
+            "-c:v", "h264_videotoolbox",
+            "-q:v", "55",
+        ],
+        "h264_videotoolbox",
+    )
+
+
 def rotate(src: Path, dst: Path, deg: int) -> None:
     if not src.is_file():
         raise FileNotFoundError(src)
@@ -38,8 +73,10 @@ def rotate(src: Path, dst: Path, deg: int) -> None:
         raise ValueError("Rotation must be 90, 180, or 270")
 
     dst.parent.mkdir(parents=True, exist_ok=True)
+    codec = _detect_video_codec(src)
+    enc_args, enc_label = _encoder_for(codec)
 
-    cmd = [
+    base = [
         "ffmpeg",
         "-hide_banner",
         "-loglevel", "error",
@@ -48,19 +85,31 @@ def rotate(src: Path, dst: Path, deg: int) -> None:
         "-i", str(src),
         "-vf", vf_for(deg),
         "-metadata:s:v:0", "rotate=0",
-        "-c:v", "libx264",
-        "-preset", "veryfast",
-        "-crf", "20",
+        *enc_args,
         "-c:a", "copy",
         str(dst),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+
+    print(f"[rotate] encoder={enc_label} src-codec={codec or 'unknown'}")
+    proc = subprocess.run(base, capture_output=True, text=True)
     if proc.returncode != 0:
-        # Retry with audio re-encode in case stream copy fails.
-        cmd_reenc = cmd[:-2] + ["-c:a", "aac", "-b:a", "192k", str(dst)]
-        proc = subprocess.run(cmd_reenc, capture_output=True, text=True)
+        # Retry with audio re-encode in case copy failed.
+        retry = base[:-2] + ["-c:a", "aac", "-b:a", "192k", str(dst)]
+        proc = subprocess.run(retry, capture_output=True, text=True)
         if proc.returncode != 0:
-            raise RuntimeError(f"ffmpeg failed:\n{proc.stderr}")
+            # Last resort: software libx264 with audio copy.
+            sw = [
+                "ffmpeg", "-hide_banner", "-loglevel", "error", "-stats", "-y",
+                "-i", str(src),
+                "-vf", vf_for(deg),
+                "-metadata:s:v:0", "rotate=0",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+                "-c:a", "aac", "-b:a", "192k",
+                str(dst),
+            ]
+            proc = subprocess.run(sw, capture_output=True, text=True)
+            if proc.returncode != 0:
+                raise RuntimeError(f"ffmpeg failed:\n{proc.stderr}")
     print(f"[rotate] {deg}° → {dst}")
 
 
