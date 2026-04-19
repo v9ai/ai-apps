@@ -1,6 +1,6 @@
-import { scoreTraces, scoreTracesWorkflow } from '@mastra/core/evals/scoreTraces';
+import '#polyfills';
+import { scoreTracesWorkflow, scoreTraces } from '@mastra/core/evals/scoreTraces';
 import { Mastra } from '@mastra/core';
-import { CloudflareDeployer } from '@mastra/deployer-cloudflare';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import z$2, { z } from 'zod';
 import { neon } from '@neondatabase/serverless';
@@ -49,8 +49,23 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { timeout } from 'hono/timeout';
 import { HTTPException as HTTPException$2 } from 'hono/http-exception';
-import { tools } from '#tools';
 import { AsyncLocalStorage } from 'async_hooks';
+
+var _virtual__entry = {
+      fetch: async (request, env, context) => {
+        const { mastra } = await Promise.resolve().then(function () { return index$1; });
+        const { tools } = await import('#tools');
+        const {createHonoServer, getToolExports} = await Promise.resolve().then(function () { return index; });
+        const _mastra = mastra();
+
+        if (_mastra.getStorage()) {
+          _mastra.__registerInternalWorkflow(scoreTracesWorkflow);
+        }
+
+        const app = await createHonoServer(_mastra, { tools: getToolExports(tools) });
+        return app.fetch(request, env, context);
+      }
+    };
 
 "use strict";
 const sql = neon(process.env.NEON_DATABASE_URL);
@@ -3002,56 +3017,58 @@ const PORTED_WORKFLOWS = {
 };
 const mastra = new Mastra({
   workflows: PORTED_WORKFLOWS,
-  deployer: new CloudflareDeployer({
-    name: "research-thera-mastra",
-    vars: { NODE_ENV: "production" }
-  }),
   server: {
-    apiRoutes: [
-      {
-        path: "/runs/wait",
-        method: "POST",
-        handler: async (c) => {
-          const body = await c.req.json();
-          const assistantId = body.assistant_id;
-          if (!assistantId) {
-            return c.json({ error: "assistant_id required" }, 400);
-          }
-          if (!(assistantId in PORTED_WORKFLOWS)) {
-            const fallback = process.env.LANGGRAPH_FALLBACK_URL;
-            if (!fallback) {
-              return c.json(
-                { error: `workflow "${assistantId}" not ported and no LANGGRAPH_FALLBACK_URL set` },
-                404
-              );
-            }
-            const resp = await fetch(`${fallback}/runs/wait`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(body)
-            });
-            return new Response(resp.body, {
-              status: resp.status,
-              headers: resp.headers
-            });
-          }
-          const workflow = PORTED_WORKFLOWS[assistantId];
-          const run = await workflow.createRun();
-          const result = await run.start({ inputData: body.input ?? {} });
-          if (result.status === "success") {
-            return c.json(result.result);
-          }
-          return c.json(
-            { error: `workflow ${assistantId} finished with status ${result.status}`, details: result },
-            500
-          );
+    apiRoutes: [{
+      path: "/runs/wait",
+      method: "POST",
+      handler: async (c) => {
+        const body = await c.req.json();
+        const assistantId = body.assistant_id;
+        if (!assistantId) {
+          return c.json({
+            error: "assistant_id required"
+          }, 400);
         }
+        if (!(assistantId in PORTED_WORKFLOWS)) {
+          const fallback = process.env.LANGGRAPH_FALLBACK_URL;
+          if (!fallback) {
+            return c.json({
+              error: `workflow "${assistantId}" not ported and no LANGGRAPH_FALLBACK_URL set`
+            }, 404);
+          }
+          const resp = await fetch(`${fallback}/runs/wait`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+          });
+          return new Response(resp.body, {
+            status: resp.status,
+            headers: resp.headers
+          });
+        }
+        const workflow = PORTED_WORKFLOWS[assistantId];
+        const run = await workflow.createRun();
+        const result = await run.start({
+          inputData: body.input ?? {}
+        });
+        if (result.status === "success") {
+          return c.json(result.result);
+        }
+        return c.json({
+          error: `workflow ${assistantId} finished with status ${result.status}`,
+          details: result
+        }, 500);
       }
-    ]
+    }]
   }
 });
 
-"use strict";
+var index$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    mastra: mastra
+});
 
 // src/build/utils.ts
 function getNodeResolveOptions(platform) {
@@ -86094,16 +86111,12 @@ async function createNodeServer(mastra, options = { tools: {} }) {
   return server;
 }
 
-// @ts-expect-error
-    await createNodeServer(mastra, { tools: getToolExports(tools), studio: false });
-
-    const storage = mastra.getStorage();
-    if (storage) {
-      if (!storage.disableInit) {
-        storage.init();
-      }
-      mastra.__registerInternalWorkflow(scoreTracesWorkflow);
-    }
+var index = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    createHonoServer: createHonoServer,
+    createNodeServer: createNodeServer,
+    getToolExports: getToolExports
+});
 
 // ../../node_modules/.pnpm/ms@2.0.0/node_modules/ms/index.js
 var require_ms = __commonJS$3({
@@ -95912,8 +95925,8 @@ var require_probe_image_size = __commonJS$3({
 var probeImageSizeM5NYSF5D = require_probe_image_size();
 
 var probeImageSizeM5NYSF5D$1 = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  default: probeImageSizeM5NYSF5D
+    __proto__: null,
+    default: probeImageSizeM5NYSF5D
 });
 
 // ../memory/dist/chunk-3PUO6DLX.js
@@ -96354,8 +96367,8 @@ var require_token_util$2 = __commonJS$1({
 var tokenUtilRMHT2CPJ$2 = require_token_util$2();
 
 var tokenUtilRMHT2CPJWJZ2SYARCFO4FSTH = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  default: tokenUtilRMHT2CPJ$2
+    __proto__: null,
+    default: tokenUtilRMHT2CPJ$2
 });
 
 // ../memory/dist/token-APYSY3BW-YTVQELJT.js
@@ -96414,8 +96427,8 @@ var require_token$2 = __commonJS$1({
 var tokenAPYSY3BW$2 = require_token$2();
 
 var tokenAPYSY3BWYTVQELJTQZMDAHMZ = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  default: tokenAPYSY3BW$2
+    __proto__: null,
+    default: tokenAPYSY3BW$2
 });
 
 // ../memory/dist/chunk-EQ4M72KU.js
@@ -96856,8 +96869,8 @@ var require_token_util$1 = __commonJS({
 var tokenUtilRMHT2CPJ$1 = require_token_util$1();
 
 var tokenUtilRMHT2CPJRJEA3FANQWMGWKPO = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  default: tokenUtilRMHT2CPJ$1
+    __proto__: null,
+    default: tokenUtilRMHT2CPJ$1
 });
 
 // ../memory/dist/token-APYSY3BW-2DN6RAUY.js
@@ -96916,54 +96929,54 @@ var require_token$1 = __commonJS({
 var tokenAPYSY3BW$1 = require_token$1();
 
 var tokenAPYSY3BW2DN6RAUY6HYAXQSH = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  default: tokenAPYSY3BW$1
+    __proto__: null,
+    default: tokenAPYSY3BW$1
 });
 
 var constantsBDOITAO3PCCYSQXK = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  OBSERVATIONAL_MEMORY_DEFAULTS: OBSERVATIONAL_MEMORY_DEFAULTS,
-  OBSERVATION_CONTEXT_INSTRUCTIONS: OBSERVATION_CONTEXT_INSTRUCTIONS,
-  OBSERVATION_CONTEXT_PROMPT: OBSERVATION_CONTEXT_PROMPT,
-  OBSERVATION_CONTINUATION_HINT: OBSERVATION_CONTINUATION_HINT,
-  OBSERVATION_RETRIEVAL_INSTRUCTIONS: OBSERVATION_RETRIEVAL_INSTRUCTIONS
+    __proto__: null,
+    OBSERVATIONAL_MEMORY_DEFAULTS: OBSERVATIONAL_MEMORY_DEFAULTS,
+    OBSERVATION_CONTEXT_INSTRUCTIONS: OBSERVATION_CONTEXT_INSTRUCTIONS,
+    OBSERVATION_CONTEXT_PROMPT: OBSERVATION_CONTEXT_PROMPT,
+    OBSERVATION_CONTINUATION_HINT: OBSERVATION_CONTINUATION_HINT,
+    OBSERVATION_RETRIEVAL_INSTRUCTIONS: OBSERVATION_RETRIEVAL_INSTRUCTIONS
 });
 
 var observationalMemory4TDIBXK6H3GGM2SP = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  ModelByInputTokens: ModelByInputTokens,
-  OBSERVATIONAL_MEMORY_DEFAULTS: OBSERVATIONAL_MEMORY_DEFAULTS,
-  OBSERVATION_CONTEXT_INSTRUCTIONS: OBSERVATION_CONTEXT_INSTRUCTIONS,
-  OBSERVATION_CONTEXT_PROMPT: OBSERVATION_CONTEXT_PROMPT,
-  OBSERVATION_CONTINUATION_HINT: OBSERVATION_CONTINUATION_HINT,
-  OBSERVER_SYSTEM_PROMPT: OBSERVER_SYSTEM_PROMPT,
-  ObservationalMemory: ObservationalMemory,
-  ObservationalMemoryProcessor: ObservationalMemoryProcessor,
-  TokenCounter: TokenCounter,
-  buildObserverPrompt: buildObserverPrompt,
-  buildObserverSystemPrompt: buildObserverSystemPrompt,
-  combineObservationGroupRanges: combineObservationGroupRanges,
-  deriveObservationGroupProvenance: deriveObservationGroupProvenance,
-  extractCurrentTask: extractCurrentTask,
-  formatMessagesForObserver: formatMessagesForObserver,
-  getObservationsAsOf: getObservationsAsOf,
-  hasCurrentTaskSection: hasCurrentTaskSection,
-  injectAnchorIds: injectAnchorIds,
-  optimizeObservationsForContext: optimizeObservationsForContext,
-  parseAnchorId: parseAnchorId,
-  parseObservationGroups: parseObservationGroups,
-  parseObserverOutput: parseObserverOutput,
-  reconcileObservationGroupsFromReflection: reconcileObservationGroupsFromReflection,
-  renderObservationGroupsForReflection: renderObservationGroupsForReflection,
-  stripEphemeralAnchorIds: stripEphemeralAnchorIds,
-  stripObservationGroups: stripObservationGroups,
-  wrapInObservationGroup: wrapInObservationGroup
+    __proto__: null,
+    ModelByInputTokens: ModelByInputTokens,
+    OBSERVATIONAL_MEMORY_DEFAULTS: OBSERVATIONAL_MEMORY_DEFAULTS,
+    OBSERVATION_CONTEXT_INSTRUCTIONS: OBSERVATION_CONTEXT_INSTRUCTIONS,
+    OBSERVATION_CONTEXT_PROMPT: OBSERVATION_CONTEXT_PROMPT,
+    OBSERVATION_CONTINUATION_HINT: OBSERVATION_CONTINUATION_HINT,
+    OBSERVER_SYSTEM_PROMPT: OBSERVER_SYSTEM_PROMPT,
+    ObservationalMemory: ObservationalMemory,
+    ObservationalMemoryProcessor: ObservationalMemoryProcessor,
+    TokenCounter: TokenCounter,
+    buildObserverPrompt: buildObserverPrompt,
+    buildObserverSystemPrompt: buildObserverSystemPrompt,
+    combineObservationGroupRanges: combineObservationGroupRanges,
+    deriveObservationGroupProvenance: deriveObservationGroupProvenance,
+    extractCurrentTask: extractCurrentTask,
+    formatMessagesForObserver: formatMessagesForObserver,
+    getObservationsAsOf: getObservationsAsOf,
+    hasCurrentTaskSection: hasCurrentTaskSection,
+    injectAnchorIds: injectAnchorIds,
+    optimizeObservationsForContext: optimizeObservationsForContext,
+    parseAnchorId: parseAnchorId,
+    parseObservationGroups: parseObservationGroups,
+    parseObserverOutput: parseObserverOutput,
+    reconcileObservationGroupsFromReflection: reconcileObservationGroupsFromReflection,
+    renderObservationGroupsForReflection: renderObservationGroupsForReflection,
+    stripEphemeralAnchorIds: stripEphemeralAnchorIds,
+    stripObservationGroups: stripObservationGroups,
+    wrapInObservationGroup: wrapInObservationGroup
 });
 
 var distKEJZY3UJ = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  createOpenAI: createOpenAI,
-  openai: openai
+    __proto__: null,
+    createOpenAI: createOpenAI,
+    openai: openai
 });
 
 var anthropicErrorDataSchema = z.object({
@@ -98108,9 +98121,9 @@ function createAnthropic(options = {}) {
 var anthropic = createAnthropic();
 
 var distBSWYTOHE = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  anthropic: anthropic,
-  createAnthropic: createAnthropic
+    __proto__: null,
+    anthropic: anthropic,
+    createAnthropic: createAnthropic
 });
 
 function convertToGroqChatMessages(prompt) {
@@ -98869,9 +98882,9 @@ function createGroq(options = {}) {
 var groq = createGroq();
 
 var distGKNLMW5G = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  createGroq: createGroq,
-  groq: groq
+    __proto__: null,
+    createGroq: createGroq,
+    groq: groq
 });
 
 function getOpenAIMetadata(message) {
@@ -99794,9 +99807,9 @@ function createXai(options = {}) {
 var xai = createXai();
 
 var distRVKG65AN = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  createXai: createXai,
-  xai: xai
+    __proto__: null,
+    createXai: createXai,
+    xai: xai
 });
 
 function convertJSONSchemaToOpenAPISchema(jsonSchema) {
@@ -100731,9 +100744,9 @@ function createGoogleGenerativeAI(options = {}) {
 var google = createGoogleGenerativeAI();
 
 var dist47C5ZLC7 = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  createGoogleGenerativeAI: createGoogleGenerativeAI,
-  google: google
+    __proto__: null,
+    createGoogleGenerativeAI: createGoogleGenerativeAI,
+    google: google
 });
 
 // ../agent-builder/dist/chunk-XAK5QGHN.js
@@ -101174,8 +101187,8 @@ var require_token_util = __commonJS$2({
 var tokenUtilRMHT2CPJ = require_token_util();
 
 var tokenUtilRMHT2CPJZ4NYHFEISHFH4TVB = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  default: tokenUtilRMHT2CPJ
+    __proto__: null,
+    default: tokenUtilRMHT2CPJ
 });
 
 // ../agent-builder/dist/token-APYSY3BW-IQ2CXU3Y.js
@@ -101234,6 +101247,8 @@ var require_token = __commonJS$2({
 var tokenAPYSY3BW = require_token();
 
 var tokenAPYSY3BWIQ2CXU3YEMNLFKSZ = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  default: tokenAPYSY3BW
+    __proto__: null,
+    default: tokenAPYSY3BW
 });
+
+export { _virtual__entry as default };
