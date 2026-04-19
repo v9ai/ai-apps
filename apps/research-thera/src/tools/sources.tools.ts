@@ -898,7 +898,7 @@ export async function searchZenodo(
     url.searchParams.set("q", query);
     url.searchParams.set("size", limit.toString());
 
-    const token = process.env.ZENODO_TOKEN;
+    const token = process.env.ZENODO_ACCESS_TOKEN || process.env.ZENODO_TOKEN;
     const response = await fetch(url.toString(), {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
