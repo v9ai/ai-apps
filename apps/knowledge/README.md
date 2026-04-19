@@ -22,7 +22,7 @@ graph TD
     end
 
     subgraph Next.js["Next.js App (Port 3006)"]
-        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses\n/coursework"]
+        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses\n/coursework\n/anthropic"]
         API["API Routes\n/api/chat\n/api/research\n/api/course-review/[id]\n/api/learners\n/api/coursework"]
         SA["Server Actions\nsearch · analytics"]
         MW["Middleware\nURL redirects"]
@@ -384,6 +384,9 @@ apps/knowledge/
 │   ├── [slug]/page.tsx     # Lesson pages (SSG) — non-AWS slugs only
 │   ├── aws/page.tsx        # AWS hub page (/aws)
 │   ├── aws/[slug]/page.tsx # AWS deep-dive pages (/aws/lambda-serverless, etc.)
+│   ├── anthropic/page.tsx  # Claude Partner Network learning path (static)
+│   ├── anthropic/agent-skills/page.tsx       # "Introduction to agent skills" course overview
+│   ├── anthropic/agent-skills/[lesson]/page.tsx  # Per-lesson view (static, sourced from lessons.ts)
 │   ├── api/chat/           # Streaming chat endpoint
 │   ├── api/research/       # Research endpoints
 │   ├── api/course-review/[id]/  # GET fetch review · POST upsert AI review
