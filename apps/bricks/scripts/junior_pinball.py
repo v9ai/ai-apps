@@ -16,15 +16,16 @@ launcher = Motor(Port.A, Direction.CLOCKWISE)
 # bricks:sensor=color
 sensor = ColorSensor(Port.B)
 
+START = 150
 SLOW = 400
 FAST = 1000
 
-speed = SLOW
+speed = START
 launcher.run(speed)
 
 while True:
     if sensor.color() == Color.RED:
-        speed = FAST if speed == SLOW else SLOW
+        speed = SLOW if speed == FAST else FAST
         launcher.run(speed)
         hub.light.on(Color.RED if speed == FAST else Color.GREEN)
         # debounce: asteapta sa nu mai fie rosu
