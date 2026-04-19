@@ -1,0 +1,432 @@
+import { createOpenAI } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+"use strict";
+const DEEPSEEK_API_BASE_URL = "https://api.deepseek.com";
+const DEEPSEEK_MODELS = {
+  CHAT: "deepseek-chat",
+  REASONER: "deepseek-reasoner"
+};
+class DeepSeekClient {
+  constructor() {
+    this.apiKey = process.env.DEEPSEEK_API_KEY || "";
+    if (!this.apiKey)
+      throw new Error("DEEPSEEK_API_KEY environment variable is required");
+    this.baseURL = DEEPSEEK_API_BASE_URL;
+  }
+  async chat(request) {
+    const resp = await fetch(`${this.baseURL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({ ...request, stream: false })
+    });
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      throw new Error(
+        body.error?.message || `DeepSeek HTTP ${resp.status}`
+      );
+    }
+    return body;
+  }
+}
+let _client = null;
+function getDefaultClient() {
+  if (!_client) _client = new DeepSeekClient();
+  return _client;
+}
+const _provider = createOpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: "https://api.deepseek.com/v1"
+});
+const deepseekModel = (model = DEEPSEEK_MODELS.CHAT) => _provider(model);
+async function generateObject({
+  schema,
+  prompt,
+  model = DEEPSEEK_MODELS.CHAT,
+  temperature,
+  max_tokens
+}) {
+  const response = await getDefaultClient().chat({
+    model,
+    messages: [
+      { role: "system", content: "Respond with valid JSON." },
+      { role: "user", content: prompt }
+    ],
+    response_format: { type: "json_object" },
+    temperature,
+    max_tokens
+  });
+  if (!response.choices?.length) {
+    throw new Error(`DeepSeek returned no choices: ${JSON.stringify(response).slice(0, 300)}`);
+  }
+  const content = response.choices[0]?.message?.content ?? "{}";
+  const parsed = JSON.parse(content);
+  return { object: schema.parse(parsed) };
+}
+
+"use strict";
+const PlanSchema = z.object({
+  goalType: z.string().describe(
+    "Type of therapeutic/psychological goal (e.g., 'anxiety_reduction', 'denial_coping', 'behavioral_change')"
+  ),
+  keywords: z.array(z.string()).min(3),
+  inclusion: z.array(z.string()).default([]),
+  exclusion: z.array(z.string()).default([]),
+  // Query pack (key for recall/volume)
+  semanticScholarQueries: z.array(z.string()).min(2),
+  crossrefQueries: z.array(z.string()).min(2),
+  pubmedQueries: z.array(z.string()).min(1)
+});
+const ResearchExtractionSchema = z.object({
+  domain: z.enum([
+    "cbt",
+    "act",
+    "dbt",
+    "behavioral",
+    "psychodynamic",
+    "somatic",
+    "humanistic",
+    // Pediatric / neurodevelopmental domains added based on clinical review
+    "speech_language",
+    "play_therapy",
+    "aba",
+    "parent_mediated",
+    "neurodevelopmental",
+    "other"
+  ]),
+  paperMeta: z.object({
+    title: z.string(),
+    authors: z.array(z.string()),
+    year: z.number().int().nullable(),
+    venue: z.string().nullable(),
+    doi: z.string().nullable(),
+    url: z.string().nullable()
+  }),
+  studyType: z.enum([
+    "meta-analysis",
+    "RCT",
+    "field study",
+    "lab study",
+    "quasi-experimental",
+    "review",
+    "other"
+  ]),
+  populationContext: z.string().nullable(),
+  interventionOrSkill: z.string().nullable(),
+  keyFindings: z.array(z.string()),
+  evidenceSnippets: z.array(
+    z.object({
+      findingIndex: z.number().int(),
+      snippet: z.string()
+    })
+  ),
+  practicalTakeaways: z.array(z.string()),
+  relevanceScore: z.number().min(0).max(1),
+  confidence: z.number().min(0).max(1),
+  rejectReason: z.string().nullable()
+});
+const TherapyResearchSchema = z.object({
+  therapeuticGoalType: z.string().describe(
+    "Type of therapeutic goal (e.g., 'anxiety reduction', 'depression management')"
+  ),
+  title: z.string().describe("Paper title"),
+  authors: z.array(z.string()).describe("Author names"),
+  year: z.number().int().nullable().describe("Publication year"),
+  journal: z.string().nullable().describe("Journal name"),
+  doi: z.string().nullable().describe("DOI"),
+  url: z.string().nullable().describe("URL"),
+  abstract: z.string().nullable().describe("Abstract text"),
+  keyFindings: z.array(z.string()).describe("Key findings relevant to the therapeutic goal (3-5 findings)"),
+  therapeuticTechniques: z.array(z.string()).describe(
+    "Specific therapeutic techniques mentioned (e.g., 'CBT', 'exposure therapy')"
+  ),
+  evidenceLevel: z.string().nullable().describe(
+    "Evidence level: 'meta-analysis', 'RCT', 'cohort', 'case-study', or 'review'"
+  ),
+  relevanceScore: z.number().min(0).max(1).describe("Relevance to goal (0-1)"),
+  extractedBy: z.string().describe("Extraction source identifier"),
+  extractionConfidence: z.number().min(0).max(1).describe("Confidence in extraction (0-1)")
+});
+function convertLegacyToResearchSchema(legacy) {
+  return {
+    domain: "other",
+    // default domain for legacy conversions
+    paperMeta: {
+      title: legacy.title,
+      authors: legacy.authors,
+      year: legacy.year,
+      venue: legacy.journal,
+      doi: legacy.doi,
+      url: legacy.url
+    },
+    studyType: legacy.evidenceLevel ?? "other",
+    populationContext: null,
+    interventionOrSkill: legacy.therapeuticTechniques?.join(", ") ?? null,
+    keyFindings: legacy.keyFindings,
+    evidenceSnippets: legacy.keyFindings.map((finding, idx) => ({
+      findingIndex: idx,
+      snippet: finding
+    })),
+    practicalTakeaways: legacy.therapeuticTechniques ?? [],
+    relevanceScore: legacy.relevanceScore,
+    confidence: legacy.extractionConfidence,
+    rejectReason: legacy.relevanceScore < 0.5 ? "below_relevance_threshold" : null
+  };
+}
+async function planResearchQuery(params) {
+  const { title, description, notes } = params;
+  const { object } = await generateObject({
+    schema: PlanSchema,
+    prompt: `Plan a research query strategy for this therapeutic/psychological goal.
+
+Goal: ${title}
+Description: ${description}
+Notes: ${notes.join("\n- ")}
+${params.clinicalDomain ? `
+Clinical Domain: ${params.clinicalDomain}` : ""}
+${params.behaviorDirection ? `Behavior Direction: ${params.behaviorDirection}` : ""}
+${params.developmentalTier ? `Developmental Tier: ${params.developmentalTier}` : ""}
+${params.requiredKeywords?.length ? `Required Keywords (MUST appear in relevant papers): ${params.requiredKeywords.join(", ")}` : ""}
+${params.excludedTopics?.length ? `Excluded Topics (do NOT search for these): ${params.excludedTopics.join(", ")}` : ""}
+
+Generate MULTIPLE diverse queries to maximize recall from different psychological/therapy databases.
+
+QUERY STRATEGY:
+1. Semantic Scholar queries (min 2): Mix broad + specific, use synonyms and related constructs
+2. Crossref queries (min 2): Use natural language phrases common in therapy/psychology literature
+3. PubMed queries (min 1): Use MeSH terms and clinical psychology terminology
+
+Focus on finding psychological research relevant to the specific therapeutic goal.
+Include queries about: therapeutic interventions, mechanisms, evidence-based treatments, coping strategies.
+${params.requiredKeywords?.length ? `
+IMPORTANT: At least half of all generated queries MUST include one or more of these required keywords: ${params.requiredKeywords.join(", ")}` : ""}
+${params.excludedTopics?.length ? `IMPORTANT: No query should target these excluded topics: ${params.excludedTopics.join(", ")}` : ""}`
+  });
+  return {
+    ...object,
+    inclusion: object.inclusion ?? [],
+    exclusion: object.exclusion ?? []
+  };
+}
+async function extractResearch(params) {
+  const { goalTitle, goalDescription, goalType, paper } = params;
+  const compiledPrompt = `Extract therapeutic research information from this paper.
+
+Therapeutic Goal: ${goalTitle}
+Goal Description: ${goalDescription}
+Goal Type: ${goalType}
+${params.patientAge ? `Target Patient Age: ${params.patientAge} years old` : ""}
+${params.developmentalTier ? `Developmental Tier: ${params.developmentalTier}` : ""}
+
+Paper:
+Title: ${paper.title ?? ""}
+Authors: ${(paper.authors ?? []).join(", ") || "Unknown"}
+Year: ${paper.year ?? "Unknown"}
+Journal: ${paper.journal ?? "Unknown"}
+DOI: ${paper.doi ?? "None"}
+URL: ${paper.url ?? ""}
+Abstract: ${paper.abstract ?? ""}
+
+Extract the following fields for the therapeutic research:
+- domain: the therapy domain (cbt, act, dbt, behavioral, psychodynamic, somatic, humanistic, speech_language, play_therapy, aba, parent_mediated, neurodevelopmental, or other)
+- paperMeta: title, authors, year, venue, doi, url
+- studyType: meta-analysis, RCT, field study, lab study, quasi-experimental, review, or other
+- populationContext: who was studied (null if not specified)
+- interventionOrSkill: specific therapy technique or intervention studied (null if not specified)
+- keyFindings: 3-5 findings directly from the abstract
+- evidenceSnippets: array of {findingIndex, snippet}
+- practicalTakeaways: 2-4 actionable insights for therapists/clients
+- relevanceScore: 0-1 (how relevant to the therapeutic goal)
+- confidence: 0-1 (confidence in extraction quality)
+- rejectReason: reason for rejection or null
+
+RELEVANCE SCORING RUBRIC (be strict):
+- 1.0: Directly studies the exact behavior/condition in the therapeutic goal in the same population
+- 0.8: Studies the same condition in a closely related population
+- 0.6: Studies an adjacent condition using the same modality for the goal's population
+- 0.4: Same modality but different condition or population
+- 0.2: General clinical psychology with no specific relevance to this goal
+- 0.1 or below: NOT about the specific clinical domain of this goal
+
+STRICT FILTERING:
+- Score 0.1 or lower if paper is about: forensic interviews, legal proceedings, homework completion, academic achievement, adult populations (when goal is for a child)
+- Population mismatch: reduce score by 0.3 if study population age does not match ${params.patientAge ? `patient age (${params.patientAge} years, ${params.developmentalTier ?? "unknown"} tier)` : "the target population"}
+- If abstract is missing or fewer than 300 characters, return relevanceScore=0, confidence=0, rejectReason='insufficient_abstract'
+- Only extract findings EXPLICITLY stated in the abstract`;
+  const schemaInstructions = `
+
+REQUIRED JSON OUTPUT FORMAT:
+{
+  "domain": "cbt" | "act" | "dbt" | "behavioral" | "psychodynamic" | "somatic" | "humanistic" | "other",
+  "paperMeta": {
+    "title": "string",
+    "authors": ["string"],
+    "year": number | null,
+    "venue": "string" | null,
+    "doi": "string" | null,
+    "url": "string" | null
+  },
+  "studyType": "meta-analysis" | "RCT" | "field study" | "lab study" | "quasi-experimental" | "review" | "other",
+  "populationContext": "string" | null,
+  "interventionOrSkill": "string" | null,
+  "keyFindings": ["string"],
+  "evidenceSnippets": [{ "findingIndex": number, "snippet": "string" }],
+  "practicalTakeaways": ["string"],
+  "relevanceScore": number (0-1),
+  "confidence": number (0-1),
+  "rejectReason": "string" | null
+}
+
+CRITICAL: Return VALID JSON ONLY. No markdown, no code blocks, no extra text.`;
+  try {
+    const { object } = await generateObject({
+      schema: ResearchExtractionSchema,
+      prompt: compiledPrompt + schemaInstructions
+    });
+    return object;
+  } catch (err) {
+    console.error(
+      `\u26A0\uFE0F Schema validation failed for "${paper.title}". Falling back to legacy extraction.`
+    );
+    const legacyResult = await extractResearchLegacy({
+      therapeuticGoalType: goalType,
+      goalTitle,
+      goalDescription,
+      paper
+    });
+    return convertLegacyToResearchSchema(legacyResult);
+  }
+}
+async function extractResearchLegacy(params) {
+  const { therapeuticGoalType, goalTitle, goalDescription, paper } = params;
+  const { object } = await generateObject({
+    schema: TherapyResearchSchema,
+    prompt: `Extract therapeutic research information from this paper.
+
+Therapeutic Goal: ${goalTitle}
+Goal Description: ${goalDescription}
+Goal Type: ${therapeuticGoalType}
+
+Paper:
+Title: ${paper.title}
+Authors: ${paper.authors?.join(", ") || "Unknown"}
+Year: ${paper.year || "Unknown"}
+Journal: ${paper.journal || "Unknown"}
+DOI: ${paper.doi || "None"}
+Abstract: ${paper.abstract}
+
+CRITICAL: This should be THERAPEUTIC/PSYCHOLOGICAL research for clinical/counseling applications.
+
+Extract:
+1. Key findings (3-5) that are DIRECTLY relevant to the therapeutic goal
+2. Specific therapeutic techniques mentioned (e.g., CBT, exposure therapy, mindfulness)
+3. Evidence level (meta-analysis > RCT > cohort > case-study > review)
+4. Relevance score (0-1) based on how well it addresses the THERAPEUTIC goal
+
+RELEVANCE SCORING RUBRIC (be strict):
+- 1.0: Directly studies the exact behavior/condition in the therapeutic goal in the same population
+- 0.8: Studies the same condition in a closely related population
+- 0.6: Studies an adjacent condition using the same modality for the goal's population
+- 0.4: Same modality but different condition or population
+- 0.2: General clinical psychology with no specific relevance to this goal
+- 0.1 or below: NOT about the specific clinical domain of this goal
+
+STRICT FILTERING:
+- Score 0.1 or lower if paper is about: forensic interviews, legal proceedings, homework completion, academic achievement, adult populations (when goal is for a child), family therapy engagement (unless directly relevant)
+- Score 0.1 or lower if NOT about the specific clinical domain of the therapeutic goal
+- Score 0.8+ ONLY if directly studying the specific intervention for the goal type and population
+- Population mismatch: reduce score by 0.3 if study population age does not match patient age
+- Only extract findings EXPLICITLY stated in the abstract
+- Do not infer or extrapolate beyond what is written
+- Rate your extraction confidence honestly`
+  });
+  return {
+    ...object,
+    extractedBy: "pipeline:deepseek:v1"
+  };
+}
+async function repairResearch(params) {
+  const { extracted, abstract, feedback } = params;
+  const { object } = await generateObject({
+    schema: TherapyResearchSchema,
+    prompt: `Repair this research extraction based on feedback.
+
+Original Extraction:
+${JSON.stringify(extracted, null, 2)}
+
+Abstract:
+${abstract}
+
+Feedback:
+${feedback}
+
+Instructions:
+- Remove or rewrite any unsupported claims
+- Ensure every finding is directly supported by the abstract
+- Be more conservative in claims
+- Lower confidence if uncertain
+- Keep only well-supported findings`
+  });
+  return {
+    ...object,
+    extractedBy: "pipeline:deepseek:v1-repaired"
+  };
+}
+async function planResearchQueryLegacy(params) {
+  const { title, description, notes } = params;
+  const { object } = await generateObject({
+    temperature: 1.5,
+    schema: z.object({
+      therapeuticGoalType: z.string().describe("Type of therapeutic goal"),
+      keywords: z.array(z.string()).describe("Core search keywords (5-8 terms)"),
+      semanticScholarQueries: z.array(z.string()).describe("20-40 diverse queries for Semantic Scholar"),
+      crossrefQueries: z.array(z.string()).describe("20-45 queries for Crossref"),
+      pubmedQueries: z.array(z.string()).describe("20-40 MeSH-friendly queries for PubMed"),
+      inclusion: z.array(z.string()).describe("Inclusion criteria"),
+      exclusion: z.array(z.string()).describe("Exclusion criteria")
+    }),
+    prompt: `Plan a research query strategy for this therapeutic/psychological goal.
+
+Goal: ${title}
+Description: ${description}
+Notes: ${notes.join("\n- ")}
+
+Generate MULTIPLE diverse queries to maximize recall from different psychological/therapy databases.
+
+QUERY STRATEGY:
+1. Semantic Scholar queries (20-40): Mix broad + specific, use synonyms and related constructs
+2. Crossref queries (20-45): Use natural language phrases common in therapy/psychology literature
+3. PubMed queries (20-40): Use MeSH terms and clinical psychology terminology
+
+Focus on finding psychological research relevant to the specific therapeutic goal.
+Include queries about: therapeutic interventions, mechanisms, evidence-based treatments, coping strategies.
+
+Return 40-87 total queries across all sources for maximum recall.`
+  });
+  return object;
+}
+function sanitizePlan(plan) {
+  return {
+    ...plan,
+    keywords: plan.keywords ?? [],
+    semanticScholarQueries: plan.semanticScholarQueries ?? [],
+    crossrefQueries: plan.crossrefQueries ?? [],
+    pubmedQueries: plan.pubmedQueries ?? [],
+    inclusion: plan.inclusion ?? [],
+    exclusion: plan.exclusion ?? []
+  };
+}
+const extractorTools = {
+  extract: extractResearch,
+  plan: planResearchQuery,
+  repair: repairResearch,
+  sanitize: sanitizePlan,
+  // Legacy exports
+  extractLegacy: extractResearchLegacy,
+  planLegacy: planResearchQueryLegacy
+};
+
+export { extractResearch, extractResearchLegacy, extractorTools, planResearchQuery, planResearchQueryLegacy, repairResearch, sanitizePlan };

@@ -1,0 +1,25 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node ./index.mjs"
+  },
+  "author": "Mastra",
+  "license": "ISC",
+  "dependencies": {
+    "@mastra/core": "1.25.0",
+    "@mastra/deployer-cloudflare": "1.1.23",
+    "zod": "3.25.76",
+    "@neondatabase/serverless": "0.10.4",
+    "@ai-sdk/openai": "2.0.98",
+    "hono": "4.12.14",
+    "typescript": "5.9.3",
+    "openai": "6.27.0"
+  },
+  "pnpm": {
+    "neverBuiltDependencies": []
+  }
+}
