@@ -10,7 +10,14 @@ type Clip =
 
 type LocalClip = { name: string; url: string; size: number };
 
-type Stage = "idle" | "loading-core" | "stitching" | "server-stitching" | "done";
+type Stage =
+  | "idle"
+  | "loading-core"
+  | "stitching"
+  | "server-stitching"
+  | "rotating-a"
+  | "rotating-b"
+  | "done";
 
 const CORE_VERSION = "0.12.10";
 const CORE_BASE_URL = `https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/umd`;
@@ -193,6 +200,45 @@ export function VideoStitcher() {
     }
   }
 
+  async function applyRotation(slot: "A" | "B") {
+    const clip = slot === "A" ? clipA : clipB;
+    const rot = slot === "A" ? rotA : rotB;
+    if (!clip || rot === 0) return;
+    if (clip.kind !== "remote") {
+      setError("Rotation is only available for clips in public/clips.");
+      return;
+    }
+    setError(null);
+    setStage(slot === "A" ? "rotating-a" : "rotating-b");
+    try {
+      const res = await fetch("/api/rotate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: clip.name, degrees: rot }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Rotate failed");
+      const next: Clip = {
+        kind: "remote",
+        name: data.name,
+        size: data.size,
+        previewUrl: data.url,
+        source: data.url,
+      };
+      (slot === "A" ? setClipA : setClipB)(next);
+      (slot === "A" ? setRotA : setRotB)(0);
+      // Refresh the clips list so the new rotated file shows up.
+      fetch("/api/clips")
+        .then((r) => (r.ok ? r.json() : { items: [] }))
+        .then((d: { items: LocalClip[] }) => setLocalClips(d.items ?? []))
+        .catch(() => {});
+      setStage("idle");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Rotate failed");
+      setStage("idle");
+    }
+  }
+
   async function stitchServer() {
     if (!clipA || !clipB) return;
     if (clipA.kind !== "remote" || clipB.kind !== "remote") {
@@ -227,7 +273,12 @@ export function VideoStitcher() {
     }
   }
 
-  const busy = stage === "stitching" || stage === "loading-core" || stage === "server-stitching";
+  const busy =
+    stage === "stitching" ||
+    stage === "loading-core" ||
+    stage === "server-stitching" ||
+    stage === "rotating-a" ||
+    stage === "rotating-b";
   const canStitch = !!clipA && !!clipB && !busy;
   const canServerStitch =
     !!clipA && !!clipB && clipA.kind === "remote" && clipB.kind === "remote" && !busy;
@@ -264,6 +315,9 @@ export function VideoStitcher() {
           clip={clipA}
           rotation={rotA}
           onRotate={() => setRotA((r) => nextRotation(r))}
+          onApplyRotation={() => applyRotation("A")}
+          applying={stage === "rotating-a"}
+          disabled={busy}
           onChange={pickClip("A")}
         />
         <ClipSlot
@@ -271,6 +325,9 @@ export function VideoStitcher() {
           clip={clipB}
           rotation={rotB}
           onRotate={() => setRotB((r) => nextRotation(r))}
+          onApplyRotation={() => applyRotation("B")}
+          applying={stage === "rotating-b"}
+          disabled={busy}
           onChange={pickClip("B")}
         />
       </div>
@@ -507,14 +564,21 @@ function ClipSlot({
   clip,
   rotation,
   onRotate,
+  onApplyRotation,
+  applying,
+  disabled,
   onChange,
 }: {
   label: string;
   clip: Clip | null;
   rotation: Rotation;
   onRotate: () => void;
+  onApplyRotation: () => void;
+  applying: boolean;
+  disabled: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
+  const canApply = !!clip && clip.kind === "remote" && rotation !== 0 && !disabled;
   return (
     <label
       className={css({
@@ -564,29 +628,65 @@ function ClipSlot({
             {clip ? `${truncate(clip.name, 20)} · ${formatBytes(clip.size)}` : "Choose file"}
           </span>
           {clip && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                onRotate();
-              }}
-              className={css({
-                fontSize: "xs",
-                fontWeight: "700",
-                fontFamily: "display",
-                bg: rotation === 0 ? "transparent" : "lego.red",
-                color: rotation === 0 ? "ink.secondary" : "white",
-                border: "1.5px solid",
-                borderColor: rotation === 0 ? "plate.border" : "lego.red",
-                rounded: "brick",
-                px: "2",
-                py: "0.5",
-                cursor: "pointer",
-                flexShrink: 0,
-              })}
-            >
-              ↻ {rotation}°
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onRotate();
+                }}
+                disabled={disabled}
+                className={css({
+                  fontSize: "xs",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  bg: rotation === 0 ? "transparent" : "lego.red",
+                  color: rotation === 0 ? "ink.secondary" : "white",
+                  border: "1.5px solid",
+                  borderColor: rotation === 0 ? "plate.border" : "lego.red",
+                  rounded: "brick",
+                  px: "2",
+                  py: "0.5",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  _disabled: { opacity: 0.4, cursor: "not-allowed" },
+                })}
+              >
+                ↻ {rotation}°
+              </button>
+              {rotation !== 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onApplyRotation();
+                  }}
+                  disabled={!canApply}
+                  className={css({
+                    fontSize: "xs",
+                    fontWeight: "800",
+                    fontFamily: "display",
+                    bg: "lego.red",
+                    color: "white",
+                    border: "1.5px solid",
+                    borderColor: "lego.red",
+                    rounded: "brick",
+                    px: "2",
+                    py: "0.5",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    _disabled: { opacity: 0.4, cursor: "not-allowed" },
+                  })}
+                  title={
+                    clip?.kind === "remote"
+                      ? `Re-encode with ${rotation}° rotation`
+                      : "Only available for public/clips files"
+                  }
+                >
+                  {applying ? "Applying..." : "Apply"}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
