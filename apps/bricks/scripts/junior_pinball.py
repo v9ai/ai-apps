@@ -16,7 +16,7 @@ launcher = Motor(Port.A, Direction.CLOCKWISE)
 # bricks:sensor=color
 sensor = ColorSensor(Port.B)
 
-SLOW = 150
+SLOW = 400
 FAST = 1000
 
 speed = SLOW

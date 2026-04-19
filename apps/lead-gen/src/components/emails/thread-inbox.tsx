@@ -193,7 +193,11 @@ function UnmatchedEmailDetail({
         })}
       >
         {email.htmlContent ? (
-          <div dangerouslySetInnerHTML={{ __html: email.htmlContent }} />
+          <div
+            translate="no"
+            className="notranslate"
+            dangerouslySetInnerHTML={{ __html: email.htmlContent }}
+          />
         ) : (
           <Text style={{ whiteSpace: "pre-wrap" }}>{email.textContent || "(empty)"}</Text>
         )}
