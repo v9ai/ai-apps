@@ -9,23 +9,22 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
-import { eq, and, isNull } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
-import * as schema from "../src/db/schema";
-import { resend } from "../src/lib/resend";
-
-const { receivedEmails } = schema;
-
-const neonUrl = process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL;
-if (!neonUrl) {
-  console.error("NEON_DATABASE_URL not set");
-  process.exit(1);
-}
-const sqlClient = neon(neonUrl);
-const db = drizzle(sqlClient, { schema });
-
 async function main() {
+  const { eq, and, isNull } = await import("drizzle-orm");
+  const { drizzle } = await import("drizzle-orm/neon-http");
+  const { neon } = await import("@neondatabase/serverless");
+  const schema = await import("../src/db/schema");
+  const { resend } = await import("../src/lib/resend");
+
+  const { receivedEmails } = schema;
+  const neonUrl = process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL;
+  if (!neonUrl) {
+    console.error("NEON_DATABASE_URL not set");
+    process.exit(1);
+  }
+  const sqlClient = neon(neonUrl);
+  const db = drizzle(sqlClient, { schema });
+
   const rows = await db
     .select({
       id: receivedEmails.id,
