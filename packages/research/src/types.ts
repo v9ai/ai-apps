@@ -369,7 +369,7 @@ export interface CslJsonResponse {
 
 // ─── Candidate / Details (richer search-layer shape) ─────────────────────────
 
-export type CandidateSource =
+export type CandidateSourceBase =
   | "crossref"
   | "pubmed"
   | "semantic_scholar"
@@ -379,6 +379,9 @@ export type CandidateSource =
   | "datacite"
   | "core"
   | "zenodo";
+
+/** Canonical sources plus callers' custom labels (e.g. "linked", "doi"). */
+export type CandidateSource = CandidateSourceBase | (string & {});
 
 export interface PaperCandidate {
   title: string;
