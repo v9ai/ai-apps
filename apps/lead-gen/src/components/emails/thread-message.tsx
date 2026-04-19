@@ -139,6 +139,8 @@ export function ThreadMessage({ message, contactName }: ThreadMessageProps) {
         {/* Body */}
         {message.htmlContent ? (
           <Box
+            translate="no"
+            className="notranslate"
             style={{
               fontSize: "var(--font-size-2)",
               lineHeight: "var(--line-height-2)",
