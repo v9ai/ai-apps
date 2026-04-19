@@ -1,4 +1,3 @@
-import type { Context } from "hono";
 import type { AnyWorkflow } from "@mastra/core/workflows";
 
 type WorkflowRecord = Record<string, AnyWorkflow>;
@@ -8,8 +7,13 @@ type RequestBody = {
   input?: Record<string, unknown>;
 };
 
+type HonoCtx = {
+  req: { json: () => Promise<unknown> };
+  json: (body: unknown, status?: number) => Response;
+};
+
 export function makeRunsWaitHandler(workflows: WorkflowRecord) {
-  return async (c: Context) => {
+  return async (c: HonoCtx) => {
     const body = (await c.req.json()) as RequestBody;
     const assistantId = body.assistant_id;
     if (!assistantId) {
