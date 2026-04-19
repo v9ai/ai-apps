@@ -8,7 +8,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { e as saveScorePayloadSchema } from './evals.mjs';
 import { E as EntityType } from './chunk-OSVQQ7QZ.mjs';
 import { M as MastraError } from './error.mjs';
-import pMap from './index.mjs';
+import pMap from './index2.mjs';
 import { R as RequestContext } from './request-context.mjs';
 import { i as isZodType } from './chunk-L43DNVPR.mjs';
 import { z as zodToJsonSchema } from './zod-to-json.mjs';
@@ -1172,7 +1172,7 @@ async function runExperiment(mastra, config) {
   const PROGRESS_UPDATE_INTERVAL = 2e3;
   let lastProgressUpdate = 0;
   try {
-    const pMap = (await import('./index.mjs')).default;
+    const pMap = (await import('./index2.mjs')).default;
     await pMap(
       items.map((item, idx) => ({ item, idx })),
       async ({ item, idx }) => {

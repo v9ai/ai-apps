@@ -1,9 +1,8 @@
 import { b as __require, c as convertToCoreMessages, i as isToolUIPart$1 } from './chunk-SFTERBTR.mjs';
-import { y as safeParseAsync, o as object$1, b as array, h as unknown, n as number, r as record, s as string, l as literal, u as union, B as _instanceof, C as custom, z as lazy, D as _null, e as boolean, A as discriminatedUnion, a as any, _ as _enum } from './schemas.mjs';
+import { D as safeParseAsync, o as object$1, b as array, h as unknown, n as number, r as record, s as string, l as literal, u as union, z as _instanceof, A as custom, B as lazy, C as _null, e as boolean, y as discriminatedUnion, a as any, _ as _enum } from './schemas.mjs';
 import { t as toJSONSchema } from './to-json-schema.mjs';
 import { Z as ZodFirstPartyTypeKind, o as objectType, n as numberType, s as stringType, a as arrayType, e as enumType, u as unionType } from './types.mjs';
 import { M as MastraError } from './error.mjs';
-import { I as InvalidArgumentError$1 } from './index2.mjs';
 import { f as listTracesArgsSchema, h as toTraceSpans } from './evals.mjs';
 import { d as deepEqual, j as jsonSchemaToZod } from './chunk-L43DNVPR.mjs';
 import { E as EntityType, l as listMetricsArgsSchema, a as listLogsArgsSchema, b as listScoresArgsSchema, c as listFeedbackArgsSchema } from './chunk-OSVQQ7QZ.mjs';
@@ -89,11 +88,11 @@ var require_token_error = __commonJS({
 });
 
 // ../_vendored/ai_v5/dist/chunk-JEZ5C2JO.js
-var marker$1 = "vercel.ai.error";
-var symbol$1 = Symbol.for(marker$1);
-var _a$1;
-var _b$1;
-var AISDKError = class _AISDKError extends (_b$1 = Error, _a$1 = symbol$1, _b$1) {
+var marker$2 = "vercel.ai.error";
+var symbol$2 = Symbol.for(marker$2);
+var _a$2;
+var _b$2;
+var AISDKError$1 = class _AISDKError extends (_b$2 = Error, _a$2 = symbol$2, _b$2) {
   /**
    * Creates an AI SDK Error.
    *
@@ -108,7 +107,7 @@ var AISDKError = class _AISDKError extends (_b$1 = Error, _a$1 = symbol$1, _b$1)
     cause
   }) {
     super(message);
-    this[_a$1] = true;
+    this[_a$2] = true;
     this.name = name142;
     this.cause = cause;
   }
@@ -118,7 +117,7 @@ var AISDKError = class _AISDKError extends (_b$1 = Error, _a$1 = symbol$1, _b$1)
    * @returns {boolean} True if the error is an AI SDK Error, false otherwise.
    */
   static isInstance(error) {
-    return _AISDKError.hasMarker(error, marker$1);
+    return _AISDKError.hasMarker(error, marker$2);
   }
   static hasMarker(error, marker152) {
     const markerSymbol = Symbol.for(marker152);
@@ -130,7 +129,7 @@ var marker2$1 = `vercel.ai.error.${name$1}`;
 var symbol2$1 = Symbol.for(marker2$1);
 var _a2$1;
 var _b2$1;
-var APICallError = class extends (_b2$1 = AISDKError, _a2$1 = symbol2$1, _b2$1) {
+var APICallError = class extends (_b2$1 = AISDKError$1, _a2$1 = symbol2$1, _b2$1) {
   constructor({
     message,
     url,
@@ -157,7 +156,7 @@ var APICallError = class extends (_b2$1 = AISDKError, _a2$1 = symbol2$1, _b2$1) 
     this.data = data;
   }
   static isInstance(error) {
-    return AISDKError.hasMarker(error, marker2$1);
+    return AISDKError$1.hasMarker(error, marker2$1);
   }
 };
 var name2$1 = "AI_EmptyResponseBodyError";
@@ -165,14 +164,14 @@ var marker3$1 = `vercel.ai.error.${name2$1}`;
 var symbol3$1 = Symbol.for(marker3$1);
 var _a3$1;
 var _b3$1;
-var EmptyResponseBodyError = class extends (_b3$1 = AISDKError, _a3$1 = symbol3$1, _b3$1) {
+var EmptyResponseBodyError = class extends (_b3$1 = AISDKError$1, _a3$1 = symbol3$1, _b3$1) {
   // used in isInstance
   constructor({ message = "Empty response body" } = {}) {
     super({ name: name2$1, message });
     this[_a3$1] = true;
   }
   static isInstance(error) {
-    return AISDKError.hasMarker(error, marker3$1);
+    return AISDKError$1.hasMarker(error, marker3$1);
   }
 };
 function getErrorMessage(error) {
@@ -187,23 +186,23 @@ function getErrorMessage(error) {
   }
   return JSON.stringify(error);
 }
-var name3$1 = "AI_InvalidArgumentError";
-var marker4$1 = `vercel.ai.error.${name3$1}`;
-var symbol4$1 = Symbol.for(marker4$1);
-var _a4$1;
-var _b4$1;
-var InvalidArgumentError = class extends (_b4$1 = AISDKError, _a4$1 = symbol4$1, _b4$1) {
+var name3$2 = "AI_InvalidArgumentError";
+var marker4$2 = `vercel.ai.error.${name3$2}`;
+var symbol4$2 = Symbol.for(marker4$2);
+var _a4$2;
+var _b4$2;
+var InvalidArgumentError$1 = class InvalidArgumentError extends (_b4$2 = AISDKError$1, _a4$2 = symbol4$2, _b4$2) {
   constructor({
     message,
     cause,
     argument
   }) {
-    super({ name: name3$1, message, cause });
-    this[_a4$1] = true;
+    super({ name: name3$2, message, cause });
+    this[_a4$2] = true;
     this.argument = argument;
   }
   static isInstance(error) {
-    return AISDKError.hasMarker(error, marker4$1);
+    return AISDKError$1.hasMarker(error, marker4$2);
   }
 };
 var name6$1 = "AI_JSONParseError";
@@ -211,7 +210,7 @@ var marker7$1 = `vercel.ai.error.${name6$1}`;
 var symbol7$1 = Symbol.for(marker7$1);
 var _a7$1;
 var _b7$1;
-var JSONParseError = class extends (_b7$1 = AISDKError, _a7$1 = symbol7$1, _b7$1) {
+var JSONParseError = class extends (_b7$1 = AISDKError$1, _a7$1 = symbol7$1, _b7$1) {
   constructor({ text, cause }) {
     super({
       name: name6$1,
@@ -223,7 +222,7 @@ Error message: ${getErrorMessage(cause)}`,
     this.text = text;
   }
   static isInstance(error) {
-    return AISDKError.hasMarker(error, marker7$1);
+    return AISDKError$1.hasMarker(error, marker7$1);
   }
 };
 var name12$1 = "AI_TypeValidationError";
@@ -231,7 +230,7 @@ var marker13 = `vercel.ai.error.${name12$1}`;
 var symbol13 = Symbol.for(marker13);
 var _a13;
 var _b13;
-var TypeValidationError = class _TypeValidationError extends (_b13 = AISDKError, _a13 = symbol13, _b13) {
+var TypeValidationError = class _TypeValidationError extends (_b13 = AISDKError$1, _a13 = symbol13, _b13) {
   constructor({ value, cause }) {
     super({
       name: name12$1,
@@ -243,7 +242,7 @@ Error message: ${getErrorMessage(cause)}`,
     this.value = value;
   }
   static isInstance(error) {
-    return AISDKError.hasMarker(error, marker13);
+    return AISDKError$1.hasMarker(error, marker13);
   }
   /**
    * Wraps an error into a TypeValidationError.
@@ -415,7 +414,7 @@ var createIdGenerator$1 = ({
     return generator;
   }
   if (alphabet.includes(separator)) {
-    throw new InvalidArgumentError({
+    throw new InvalidArgumentError$1({
       argument: "separator",
       message: `The separator "${separator}" must not be part of the alphabet "${alphabet}".`
     });
@@ -2292,18 +2291,18 @@ var require_dist = __commonJS({
 });
 var import_oidc = __toESM(require_dist(), 1);
 var import_oidc2 = __toESM(require_dist(), 1);
-var marker = "vercel.ai.gateway.error";
-var symbol = Symbol.for(marker);
-var _a;
-var _b;
-var GatewayError = class _GatewayError extends (_b = Error, _a = symbol, _b) {
+var marker$1 = "vercel.ai.gateway.error";
+var symbol$1 = Symbol.for(marker$1);
+var _a$1;
+var _b$1;
+var GatewayError = class _GatewayError extends (_b$1 = Error, _a$1 = symbol$1, _b$1) {
   constructor({
     message,
     statusCode = 500,
     cause
   }) {
     super(message);
-    this[_a] = true;
+    this[_a$1] = true;
     this.statusCode = statusCode;
     this.cause = cause;
   }
@@ -2316,7 +2315,7 @@ var GatewayError = class _GatewayError extends (_b = Error, _a = symbol, _b) {
     return _GatewayError.hasMarker(error);
   }
   static hasMarker(error) {
-    return typeof error === "object" && error !== null && symbol in error && error[symbol] === true;
+    return typeof error === "object" && error !== null && symbol$1 in error && error[symbol$1] === true;
   }
 };
 var name = "GatewayAuthenticationError";
@@ -2398,24 +2397,24 @@ var GatewayInvalidRequestError = class extends (_b3 = GatewayError, _a3 = symbol
     return GatewayError.hasMarker(error) && symbol3 in error;
   }
 };
-var name3 = "GatewayRateLimitError";
-var marker4 = `vercel.ai.gateway.error.${name3}`;
-var symbol4 = Symbol.for(marker4);
-var _a4;
-var _b4;
-var GatewayRateLimitError = class extends (_b4 = GatewayError, _a4 = symbol4, _b4) {
+var name3$1 = "GatewayRateLimitError";
+var marker4$1 = `vercel.ai.gateway.error.${name3$1}`;
+var symbol4$1 = Symbol.for(marker4$1);
+var _a4$1;
+var _b4$1;
+var GatewayRateLimitError = class extends (_b4$1 = GatewayError, _a4$1 = symbol4$1, _b4$1) {
   constructor({
     message = "Rate limit exceeded",
     statusCode = 429,
     cause
   } = {}) {
     super({ message, statusCode, cause });
-    this[_a4] = true;
-    this.name = name3;
+    this[_a4$1] = true;
+    this.name = name3$1;
     this.type = "rate_limit_exceeded";
   }
   static isInstance(error) {
-    return GatewayError.hasMarker(error) && symbol4 in error;
+    return GatewayError.hasMarker(error) && symbol4$1 in error;
   }
 };
 var name4 = "GatewayModelNotFoundError";
@@ -4121,7 +4120,7 @@ var name62 = "AI_NoObjectGeneratedError";
 var marker62 = `vercel.ai.error.${name62}`;
 var symbol62 = Symbol.for(marker62);
 var _a62;
-var NoObjectGeneratedError = class extends AISDKError {
+var NoObjectGeneratedError = class extends AISDKError$1 {
   constructor({
     message = "No object generated.",
     cause,
@@ -4138,7 +4137,7 @@ var NoObjectGeneratedError = class extends AISDKError {
     this.finishReason = finishReason;
   }
   static isInstance(error) {
-    return AISDKError.hasMarker(error, marker62);
+    return AISDKError$1.hasMarker(error, marker62);
   }
 };
 _a62 = symbol62;
@@ -4146,7 +4145,7 @@ var name12 = "AI_MessageConversionError";
 var marker12 = `vercel.ai.error.${name12}`;
 var symbol12 = Symbol.for(marker12);
 var _a12;
-var MessageConversionError = class extends AISDKError {
+var MessageConversionError = class extends AISDKError$1 {
   constructor({
     originalMessage,
     message
@@ -4156,7 +4155,7 @@ var MessageConversionError = class extends AISDKError {
     this.originalMessage = originalMessage;
   }
   static isInstance(error) {
-    return AISDKError.hasMarker(error, marker12);
+    return AISDKError$1.hasMarker(error, marker12);
   }
 };
 _a12 = symbol12;
@@ -5013,6 +5012,63 @@ function v4() {
 	return out;
 }
 
+// src/errors/ai-sdk-error.ts
+var marker = "vercel.ai.error";
+var symbol = Symbol.for(marker);
+var _a, _b;
+var AISDKError = class _AISDKError extends (_b = Error, _a = symbol, _b) {
+  /**
+   * Creates an AI SDK Error.
+   *
+   * @param {Object} params - The parameters for creating the error.
+   * @param {string} params.name - The name of the error.
+   * @param {string} params.message - The error message.
+   * @param {unknown} [params.cause] - The underlying cause of the error.
+   */
+  constructor({
+    name: name14,
+    message,
+    cause
+  }) {
+    super(message);
+    this[_a] = true;
+    this.name = name14;
+    this.cause = cause;
+  }
+  /**
+   * Checks if the given error is an AI SDK Error.
+   * @param {unknown} error - The error to check.
+   * @returns {boolean} True if the error is an AI SDK Error, false otherwise.
+   */
+  static isInstance(error) {
+    return _AISDKError.hasMarker(error, marker);
+  }
+  static hasMarker(error, marker15) {
+    const markerSymbol = Symbol.for(marker15);
+    return error != null && typeof error === "object" && markerSymbol in error && typeof error[markerSymbol] === "boolean" && error[markerSymbol] === true;
+  }
+};
+
+// src/errors/invalid-argument-error.ts
+var name3 = "AI_InvalidArgumentError";
+var marker4 = `vercel.ai.error.${name3}`;
+var symbol4 = Symbol.for(marker4);
+var _a4, _b4;
+var InvalidArgumentError = class extends (_b4 = AISDKError, _a4 = symbol4, _b4) {
+  constructor({
+    message,
+    cause,
+    argument
+  }) {
+    super({ name: name3, message, cause });
+    this[_a4] = true;
+    this.argument = argument;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker4);
+  }
+};
+
 // src/combine-headers.ts
 var createIdGenerator = ({
   prefix,
@@ -5032,7 +5088,7 @@ var createIdGenerator = ({
     return generator;
   }
   if (alphabet.includes(separator)) {
-    throw new InvalidArgumentError$1({
+    throw new InvalidArgumentError({
       argument: "separator",
       message: `The separator "${separator}" must not be part of the alphabet "${alphabet}".`
     });
@@ -8699,7 +8755,7 @@ async function downloadAssetsFromMessages({
   downloadRetries = 3,
   supportedUrls
 }) {
-  const pMap = (await import('./index.mjs')).default;
+  const pMap = (await import('./index2.mjs')).default;
   const filesToDownload = messages.filter((message) => message.role === "user").map((message) => message.content).filter((content) => Array.isArray(content)).flat().filter((part) => part.type === "image" || part.type === "file").map((part) => {
     const mediaType = part.mediaType ?? (part.type === "image" ? "image/*" : void 0);
     let data = part.type === "image" ? part.image : part.data;
