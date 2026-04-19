@@ -1,6 +1,9 @@
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
-import { sql } from "../src/db/neon";
+
+import { neon } from "@neondatabase/serverless";
+
+const sql = neon(process.env.NEON_DATABASE_URL!);
 
 const REGEX =
   "(sex|sexual|sexuality|libido|intimacy|intimate|erotic|desire|arousal|orgasm|porn|masturbat|couples therapy|partner sex|relational sex)";
