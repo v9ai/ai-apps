@@ -1,7 +1,7 @@
 "use client";
 
 import { css } from "styled-system/css";
-import { SavedVideos } from "../_components/SavedVideos";
+import { VideoStitcher } from "../_components/VideoStitcher";
 
 export default function VideosPage() {
   return (
@@ -13,7 +13,7 @@ export default function VideosPage() {
         py: "12",
       })}
     >
-      <SavedVideos />
+      <VideoStitcher />
     </main>
   );
 }

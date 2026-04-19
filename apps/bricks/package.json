@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@neondatabase/serverless": "^1.0.2",
     "@xyflow/react": "^12.10.1",
     "drizzle-orm": "^0.45.1",

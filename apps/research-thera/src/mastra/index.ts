@@ -1,9 +1,13 @@
 import { Mastra } from "@mastra/core";
 import { CloudflareDeployer } from "@mastra/deployer-cloudflare";
 import { habitsWorkflow } from "@/src/workflows/habits.workflow";
+import { parentAdviceWorkflow } from "@/src/workflows/parent-advice.workflow";
+import { deepAnalysisWorkflow } from "@/src/workflows/deep-analysis.workflow";
 
 const PORTED_WORKFLOWS = {
   habits: habitsWorkflow,
+  parent_advice: parentAdviceWorkflow,
+  deep_analysis: deepAnalysisWorkflow,
 } as const;
 
 type PortedAssistantId = keyof typeof PORTED_WORKFLOWS;
