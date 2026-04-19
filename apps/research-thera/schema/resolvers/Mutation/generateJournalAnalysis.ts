@@ -288,7 +288,7 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
   // Delete any existing analysis for this entry
   await db.deleteJournalAnalysis(journalEntryId, userEmail);
 
-  const isRo = await isRoGoal({ journalEntryId });
+  const isRo = await isRoGoal({ userEmail, journalEntryId });
 
   const { object } = await generateObject({
     schema: analysisSchema,

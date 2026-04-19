@@ -36,7 +36,7 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
   const jobId = crypto.randomUUID();
   await createGenerationJob(jobId, userEmail, "LONGFORM", goalId ?? null);
 
-  const isRo = await isRoGoal({ goalId, issueId, journalEntryId, familyMemberId });
+  const isRo = await isRoGoal({ userEmail, goalId, issueId, journalEntryId, familyMemberId });
   const resolvedLanguage = isRo ? "Romanian" : (args.language ?? "English");
 
   // Fire-and-forget — update the job when done

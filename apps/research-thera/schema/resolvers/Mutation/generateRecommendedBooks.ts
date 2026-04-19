@@ -116,7 +116,7 @@ export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRe
     `Prioritize evidence-based, well-reviewed books from recognized experts in the field.`,
   ].join("\n");
 
-  const isRo = await isRoGoal({ goalId });
+  const isRo = await isRoGoal({ userEmail, goalId });
 
   const { object } = await generateObject({
     schema: bookSchema,

@@ -113,6 +113,7 @@ type Documents = {
     "mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {\n  logHabit(\n    habitId: $habitId\n    loggedDate: $loggedDate\n    count: $count\n    notes: $notes\n  ) {\n    id\n    habitId\n    loggedDate\n    count\n    notes\n    createdAt\n  }\n}": typeof types.LogHabitDocument,
     "mutation SendConversationMessage($conversationId: Int!, $message: String!) {\n  sendConversationMessage(conversationId: $conversationId, message: $message) {\n    id\n    issueId\n    userId\n    title\n    createdAt\n    updatedAt\n    messages {\n      id\n      conversationId\n      role\n      content\n      createdAt\n    }\n  }\n}": typeof types.SendConversationMessageDocument,
     "mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}": typeof types.ShareFamilyMemberDocument,
+    "query TagLanguage($tag: String!) {\n  tagLanguage(tag: $tag)\n}\n\nmutation SetTagLanguage($tag: String!, $language: String!) {\n  setTagLanguage(tag: $tag, language: $language)\n}": typeof types.TagLanguageDocument,
     "mutation UnlinkContactFromIssue($issueId: Int!, $contactId: Int!) {\n  unlinkContactFromIssue(issueId: $issueId, contactId: $contactId) {\n    success\n  }\n}": typeof types.UnlinkContactFromIssueDocument,
     "mutation UnlinkGoalFamilyMember($id: Int!) {\n  unlinkGoalFamilyMember(id: $id) {\n    id\n    familyMemberId\n    familyMember {\n      id\n      firstName\n      name\n      relationship\n    }\n  }\n}": typeof types.UnlinkGoalFamilyMemberDocument,
     "mutation UnlinkIssues($issueId: Int!, $linkedIssueId: Int!) {\n  unlinkIssues(issueId: $issueId, linkedIssueId: $linkedIssueId) {\n    success\n  }\n}": typeof types.UnlinkIssuesDocument,
@@ -232,6 +233,7 @@ const documents: Documents = {
     "mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {\n  logHabit(\n    habitId: $habitId\n    loggedDate: $loggedDate\n    count: $count\n    notes: $notes\n  ) {\n    id\n    habitId\n    loggedDate\n    count\n    notes\n    createdAt\n  }\n}": types.LogHabitDocument,
     "mutation SendConversationMessage($conversationId: Int!, $message: String!) {\n  sendConversationMessage(conversationId: $conversationId, message: $message) {\n    id\n    issueId\n    userId\n    title\n    createdAt\n    updatedAt\n    messages {\n      id\n      conversationId\n      role\n      content\n      createdAt\n    }\n  }\n}": types.SendConversationMessageDocument,
     "mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}": types.ShareFamilyMemberDocument,
+    "query TagLanguage($tag: String!) {\n  tagLanguage(tag: $tag)\n}\n\nmutation SetTagLanguage($tag: String!, $language: String!) {\n  setTagLanguage(tag: $tag, language: $language)\n}": types.TagLanguageDocument,
     "mutation UnlinkContactFromIssue($issueId: Int!, $contactId: Int!) {\n  unlinkContactFromIssue(issueId: $issueId, contactId: $contactId) {\n    success\n  }\n}": types.UnlinkContactFromIssueDocument,
     "mutation UnlinkGoalFamilyMember($id: Int!) {\n  unlinkGoalFamilyMember(id: $id) {\n    id\n    familyMemberId\n    familyMember {\n      id\n      firstName\n      name\n      relationship\n    }\n  }\n}": types.UnlinkGoalFamilyMemberDocument,
     "mutation UnlinkIssues($issueId: Int!, $linkedIssueId: Int!) {\n  unlinkIssues(issueId: $issueId, linkedIssueId: $linkedIssueId) {\n    success\n  }\n}": types.UnlinkIssuesDocument,
@@ -662,6 +664,10 @@ export function gql(source: "mutation SendConversationMessage($conversationId: I
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}"): (typeof documents)["mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "query TagLanguage($tag: String!) {\n  tagLanguage(tag: $tag)\n}\n\nmutation SetTagLanguage($tag: String!, $language: String!) {\n  setTagLanguage(tag: $tag, language: $language)\n}"): (typeof documents)["query TagLanguage($tag: String!) {\n  tagLanguage(tag: $tag)\n}\n\nmutation SetTagLanguage($tag: String!, $language: String!) {\n  setTagLanguage(tag: $tag, language: $language)\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

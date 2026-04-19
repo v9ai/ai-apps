@@ -1075,6 +1075,7 @@ export type Mutation = {
   refreshClaimCard: ClaimCard;
   sendConversationMessage: Conversation;
   setNoteVisibility: Note;
+  setTagLanguage: Scalars['Boolean']['output'];
   shareFamilyMember: FamilyMemberShare;
   shareNote: NoteShare;
   unlinkContactFromIssue: UnlinkContactResult;
@@ -1445,6 +1446,12 @@ export type MutationsetNoteVisibilityArgs = {
 };
 
 
+export type MutationsetTagLanguageArgs = {
+  language: Scalars['String']['input'];
+  tag: Scalars['String']['input'];
+};
+
+
 export type MutationshareFamilyMemberArgs = {
   email: Scalars['String']['input'];
   familyMemberId: Scalars['Int']['input'];
@@ -1766,6 +1773,7 @@ export type Query = {
   research: Array<Research>;
   stories: Array<Story>;
   story?: Maybe<Story>;
+  tagLanguage?: Maybe<Scalars['String']['output']>;
   teacherFeedback?: Maybe<TeacherFeedback>;
   teacherFeedbacks: Array<TeacherFeedback>;
   therapeuticQuestions: Array<TherapeuticQuestion>;
@@ -1961,6 +1969,11 @@ export type QuerystoriesArgs = {
 
 export type QuerystoryArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QuerytagLanguageArgs = {
+  tag: Scalars['String']['input'];
 };
 
 
@@ -3467,6 +3480,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   refreshClaimCard?: Resolver<ResolversTypes['ClaimCard'], ParentType, ContextType, RequireFields<MutationrefreshClaimCardArgs, 'id'>>;
   sendConversationMessage?: Resolver<ResolversTypes['Conversation'], ParentType, ContextType, RequireFields<MutationsendConversationMessageArgs, 'conversationId' | 'message'>>;
   setNoteVisibility?: Resolver<ResolversTypes['Note'], ParentType, ContextType, RequireFields<MutationsetNoteVisibilityArgs, 'noteId' | 'visibility'>>;
+  setTagLanguage?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationsetTagLanguageArgs, 'language' | 'tag'>>;
   shareFamilyMember?: Resolver<ResolversTypes['FamilyMemberShare'], ParentType, ContextType, RequireFields<MutationshareFamilyMemberArgs, 'email' | 'familyMemberId'>>;
   shareNote?: Resolver<ResolversTypes['NoteShare'], ParentType, ContextType, RequireFields<MutationshareNoteArgs, 'email' | 'noteId'>>;
   unlinkContactFromIssue?: Resolver<ResolversTypes['UnlinkContactResult'], ParentType, ContextType, RequireFields<MutationunlinkContactFromIssueArgs, 'contactId' | 'issueId'>>;
@@ -3645,6 +3659,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   research?: Resolver<Array<ResolversTypes['Research']>, ParentType, ContextType, Partial<QueryresearchArgs>>;
   stories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType, RequireFields<QuerystoriesArgs, 'goalId'>>;
   story?: Resolver<Maybe<ResolversTypes['Story']>, ParentType, ContextType, RequireFields<QuerystoryArgs, 'id'>>;
+  tagLanguage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<QuerytagLanguageArgs, 'tag'>>;
   teacherFeedback?: Resolver<Maybe<ResolversTypes['TeacherFeedback']>, ParentType, ContextType, RequireFields<QueryteacherFeedbackArgs, 'id'>>;
   teacherFeedbacks?: Resolver<Array<ResolversTypes['TeacherFeedback']>, ParentType, ContextType, RequireFields<QueryteacherFeedbacksArgs, 'familyMemberId'>>;
   therapeuticQuestions?: Resolver<Array<ResolversTypes['TherapeuticQuestion']>, ParentType, ContextType, Partial<QuerytherapeuticQuestionsArgs>>;

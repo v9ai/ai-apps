@@ -12,7 +12,7 @@ export const generateHabitsFromIssue: NonNullable<MutationResolvers['generateHab
   const issue = await db.getIssue(issueId, userEmail);
   if (!issue) throw new Error("Issue not found");
 
-  const isRo = await isRoGoal({ issueId, familyMemberId: issue.familyMemberId });
+  const isRo = await isRoGoal({ userEmail, issueId, familyMemberId: issue.familyMemberId });
 
   const response = await fetch(`${urlForGraph("habits")}/runs/wait`, {
     method: "POST",

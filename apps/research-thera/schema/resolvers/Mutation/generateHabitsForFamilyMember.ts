@@ -9,7 +9,7 @@ export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['gener
 
   const { familyMemberId, count = 5 } = args;
 
-  const isRo = await isRoGoal({ familyMemberId });
+  const isRo = await isRoGoal({ userEmail, familyMemberId });
 
   const response = await fetch(`${urlForGraph("habits")}/runs/wait`, {
     method: "POST",

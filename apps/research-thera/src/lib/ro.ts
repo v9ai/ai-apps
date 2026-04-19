@@ -18,8 +18,10 @@ function parseTags(raw: unknown): string[] {
   }
 }
 
-async function loadTagRules(): Promise<Map<string, string>> {
-  const rows = await neonSql`SELECT tag, language FROM tag_language_rules`;
+async function loadTagRules(userEmail: string): Promise<Map<string, string>> {
+  const rows = await neonSql`
+    SELECT tag, language FROM tag_language_rules WHERE user_id = ${userEmail}
+  `;
   const map = new Map<string, string>();
   for (const r of rows as Array<{ tag: string; language: string }>) {
     map.set(r.tag, r.language);
@@ -36,13 +38,16 @@ function languageForTags(tags: unknown, rules: Map<string, string>): string | nu
 }
 
 export async function resolveGoalLanguage(input: {
+  userEmail: string;
   goalId?: number | null;
   issueId?: number | null;
   journalEntryId?: number | null;
   familyMemberId?: number | null;
 }): Promise<string> {
-  const { goalId, issueId, journalEntryId, familyMemberId } = input;
-  const rules = await loadTagRules();
+  const { userEmail, goalId, issueId, journalEntryId, familyMemberId } = input;
+  if (!userEmail) return "en";
+
+  const rules = await loadTagRules(userEmail);
   if (rules.size === 0) return "en";
 
   if (goalId) {
@@ -90,6 +95,7 @@ export async function resolveGoalLanguage(input: {
 }
 
 export async function isRoGoal(input: {
+  userEmail: string;
   goalId?: number | null;
   issueId?: number | null;
   journalEntryId?: number | null;

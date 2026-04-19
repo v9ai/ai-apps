@@ -23,13 +23,23 @@ export const familyMembers = pgTable("family_members", {
     .default(sql`NOW()`),
 });
 
-export const tagLanguageRules = pgTable("tag_language_rules", {
-  tag: text("tag").primaryKey(),
-  language: text("language").notNull(),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`NOW()`),
-});
+export const tagLanguageRules = pgTable(
+  "tag_language_rules",
+  {
+    tag: text("tag").notNull(),
+    userId: text("user_id").notNull(),
+    language: text("language").notNull(),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`NOW()`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`NOW()`),
+  },
+  (t) => ({
+    pk: sql`PRIMARY KEY (${t.tag}, ${t.userId})`,
+  }),
+);
 
 export const familyMemberShares = pgTable("family_member_shares", {
   familyMemberId: integer("family_member_id")

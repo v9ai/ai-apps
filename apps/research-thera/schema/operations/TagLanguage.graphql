@@ -1,0 +1,7 @@
+query TagLanguage($tag: String!) {
+  tagLanguage(tag: $tag)
+}
+
+mutation SetTagLanguage($tag: String!, $language: String!) {
+  setTagLanguage(tag: $tag, language: $language)
+}

@@ -151,6 +151,9 @@ type Query {
 
   # Public (no auth required)
   publicDiscussionGuide(journalEntryId: Int!): PublicDiscussionGuideResult
+
+  # Tag language rules (per-user override for AI-generated content language)
+  tagLanguage(tag: String!): String
 }
 
 type Mutation {
@@ -298,6 +301,9 @@ type Mutation {
   createAffirmation(input: CreateAffirmationInput!): Affirmation!
   updateAffirmation(id: Int!, input: UpdateAffirmationInput!): Affirmation!
   deleteAffirmation(id: Int!): DeleteAffirmationResult!
+
+  # Tag language rules
+  setTagLanguage(tag: String!, language: String!): Boolean!
 }
 
 type Subscription {

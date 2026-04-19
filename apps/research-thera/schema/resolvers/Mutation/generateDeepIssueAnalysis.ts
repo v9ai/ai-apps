@@ -20,7 +20,7 @@ export const generateDeepIssueAnalysis: NonNullable<MutationResolvers['generateD
   const jobId = crypto.randomUUID();
   await db.createGenerationJob(jobId, userEmail, "DEEP_ANALYSIS");
 
-  const isRo = await isRoGoal({ familyMemberId, issueId: triggerIssueId });
+  const isRo = await isRoGoal({ userEmail, familyMemberId, issueId: triggerIssueId });
 
   // Fire-and-forget — call LangGraph deep_analysis graph
   runGraphAndWait("deep_analysis", {

@@ -250,7 +250,7 @@ export const generateDiscussionGuide: NonNullable<MutationResolvers['generateDis
   // Delete existing guide
   await db.deleteDiscussionGuide(journalEntryId, userEmail);
 
-  const isRo = await isRoGoal({ journalEntryId });
+  const isRo = await isRoGoal({ userEmail, journalEntryId });
 
   const { object } = await generateObject({
     schema: discussionGuideSchema,

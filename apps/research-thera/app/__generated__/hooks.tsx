@@ -1085,6 +1085,7 @@ export type Mutation = {
   refreshClaimCard: ClaimCard;
   sendConversationMessage: Conversation;
   setNoteVisibility: Note;
+  setTagLanguage: Scalars['Boolean']['output'];
   shareFamilyMember: FamilyMemberShare;
   shareNote: NoteShare;
   unlinkContactFromIssue: UnlinkContactResult;
@@ -1455,6 +1456,12 @@ export type MutationSetNoteVisibilityArgs = {
 };
 
 
+export type MutationSetTagLanguageArgs = {
+  language: Scalars['String']['input'];
+  tag: Scalars['String']['input'];
+};
+
+
 export type MutationShareFamilyMemberArgs = {
   email: Scalars['String']['input'];
   familyMemberId: Scalars['Int']['input'];
@@ -1783,6 +1790,7 @@ export type Query = {
   research: Array<Research>;
   stories: Array<Story>;
   story?: Maybe<Story>;
+  tagLanguage?: Maybe<Scalars['String']['output']>;
   teacherFeedback?: Maybe<TeacherFeedback>;
   teacherFeedbacks: Array<TeacherFeedback>;
   therapeuticQuestions: Array<TherapeuticQuestion>;
@@ -1978,6 +1986,11 @@ export type QueryStoriesArgs = {
 
 export type QueryStoryArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QueryTagLanguageArgs = {
+  tag: Scalars['String']['input'];
 };
 
 
@@ -3097,6 +3110,21 @@ export type ShareFamilyMemberMutationVariables = Exact<{
 
 
 export type ShareFamilyMemberMutation = { __typename?: 'Mutation', shareFamilyMember: { __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string } };
+
+export type TagLanguageQueryVariables = Exact<{
+  tag: Scalars['String']['input'];
+}>;
+
+
+export type TagLanguageQuery = { __typename?: 'Query', tagLanguage?: string | null };
+
+export type SetTagLanguageMutationVariables = Exact<{
+  tag: Scalars['String']['input'];
+  language: Scalars['String']['input'];
+}>;
+
+
+export type SetTagLanguageMutation = { __typename?: 'Mutation', setTagLanguage: boolean };
 
 export type UnlinkContactFromIssueMutationVariables = Exact<{
   issueId: Scalars['Int']['input'];
@@ -8848,6 +8876,79 @@ export function useShareFamilyMemberMutation(baseOptions?: Apollo.MutationHookOp
 export type ShareFamilyMemberMutationHookResult = ReturnType<typeof useShareFamilyMemberMutation>;
 export type ShareFamilyMemberMutationResult = Apollo.MutationResult<ShareFamilyMemberMutation>;
 export type ShareFamilyMemberMutationOptions = Apollo.BaseMutationOptions<ShareFamilyMemberMutation, ShareFamilyMemberMutationVariables>;
+export const TagLanguageDocument = gql`
+    query TagLanguage($tag: String!) {
+  tagLanguage(tag: $tag)
+}
+    `;
+
+/**
+ * __useTagLanguageQuery__
+ *
+ * To run a query within a React component, call `useTagLanguageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTagLanguageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTagLanguageQuery({
+ *   variables: {
+ *      tag: // value for 'tag'
+ *   },
+ * });
+ */
+export function useTagLanguageQuery(baseOptions: Apollo.QueryHookOptions<TagLanguageQuery, TagLanguageQueryVariables> & ({ variables: TagLanguageQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TagLanguageQuery, TagLanguageQueryVariables>(TagLanguageDocument, options);
+      }
+export function useTagLanguageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TagLanguageQuery, TagLanguageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TagLanguageQuery, TagLanguageQueryVariables>(TagLanguageDocument, options);
+        }
+// @ts-ignore
+export function useTagLanguageSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<TagLanguageQuery, TagLanguageQueryVariables>): Apollo.UseSuspenseQueryResult<TagLanguageQuery, TagLanguageQueryVariables>;
+export function useTagLanguageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TagLanguageQuery, TagLanguageQueryVariables>): Apollo.UseSuspenseQueryResult<TagLanguageQuery | undefined, TagLanguageQueryVariables>;
+export function useTagLanguageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TagLanguageQuery, TagLanguageQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TagLanguageQuery, TagLanguageQueryVariables>(TagLanguageDocument, options);
+        }
+export type TagLanguageQueryHookResult = ReturnType<typeof useTagLanguageQuery>;
+export type TagLanguageLazyQueryHookResult = ReturnType<typeof useTagLanguageLazyQuery>;
+export type TagLanguageSuspenseQueryHookResult = ReturnType<typeof useTagLanguageSuspenseQuery>;
+export type TagLanguageQueryResult = Apollo.QueryResult<TagLanguageQuery, TagLanguageQueryVariables>;
+export const SetTagLanguageDocument = gql`
+    mutation SetTagLanguage($tag: String!, $language: String!) {
+  setTagLanguage(tag: $tag, language: $language)
+}
+    `;
+export type SetTagLanguageMutationFn = Apollo.MutationFunction<SetTagLanguageMutation, SetTagLanguageMutationVariables>;
+
+/**
+ * __useSetTagLanguageMutation__
+ *
+ * To run a mutation, you first call `useSetTagLanguageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetTagLanguageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setTagLanguageMutation, { data, loading, error }] = useSetTagLanguageMutation({
+ *   variables: {
+ *      tag: // value for 'tag'
+ *      language: // value for 'language'
+ *   },
+ * });
+ */
+export function useSetTagLanguageMutation(baseOptions?: Apollo.MutationHookOptions<SetTagLanguageMutation, SetTagLanguageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetTagLanguageMutation, SetTagLanguageMutationVariables>(SetTagLanguageDocument, options);
+      }
+export type SetTagLanguageMutationHookResult = ReturnType<typeof useSetTagLanguageMutation>;
+export type SetTagLanguageMutationResult = Apollo.MutationResult<SetTagLanguageMutation>;
+export type SetTagLanguageMutationOptions = Apollo.BaseMutationOptions<SetTagLanguageMutation, SetTagLanguageMutationVariables>;
 export const UnlinkContactFromIssueDocument = gql`
     mutation UnlinkContactFromIssue($issueId: Int!, $contactId: Int!) {
   unlinkContactFromIssue(issueId: $issueId, contactId: $contactId) {

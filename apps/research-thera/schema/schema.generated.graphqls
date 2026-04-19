@@ -983,6 +983,7 @@ type Mutation {
   refreshClaimCard(id: ID!): ClaimCard!
   sendConversationMessage(conversationId: Int!, message: String!): Conversation!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
+  setTagLanguage(language: String!, tag: String!): Boolean!
   shareFamilyMember(email: String!, familyMemberId: Int!, role: FamilyMemberShareRole): FamilyMemberShare!
   shareNote(email: String!, noteId: Int!, role: NoteShareRole): NoteShare!
   unlinkContactFromIssue(contactId: Int!, issueId: Int!): UnlinkContactResult!
@@ -1198,6 +1199,7 @@ type Query {
   research(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): [Research!]!
   stories(goalId: Int!): [Story!]!
   story(id: Int!): Story
+  tagLanguage(tag: String!): String
   teacherFeedback(id: Int!): TeacherFeedback
   teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!

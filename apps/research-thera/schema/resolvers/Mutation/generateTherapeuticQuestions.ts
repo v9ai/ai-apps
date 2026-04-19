@@ -195,7 +195,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
     `Provide a rationale explaining why the question matters and how the person's profile informs it.`,
   ].join("\n");
 
-  const isRo = await isRoGoal({ goalId, issueId, journalEntryId });
+  const isRo = await isRoGoal({ userEmail, goalId, issueId, journalEntryId });
 
   const { object } = await generateObject({
     schema: questionSchema,

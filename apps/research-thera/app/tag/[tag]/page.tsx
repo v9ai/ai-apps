@@ -21,6 +21,7 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { AuthGate } from "@/app/components/AuthGate";
+import { TagLanguageControl } from "./TagLanguageControl";
 
 const moodColor = (mood: string) =>
   (
@@ -89,12 +90,15 @@ function TagPageContent() {
 
   return (
     <Flex direction="column" gap="5">
-      <Heading size="5">
-        {totalCount} {totalCount === 1 ? "item" : "items"} tagged{" "}
-        <Badge variant="soft" size="2">
-          {tag}
-        </Badge>
-      </Heading>
+      <Flex justify="between" align="center" gap="3" wrap="wrap">
+        <Heading size="5">
+          {totalCount} {totalCount === 1 ? "item" : "items"} tagged{" "}
+          <Badge variant="soft" size="2">
+            {tag}
+          </Badge>
+        </Heading>
+        <TagLanguageControl tag={tag} />
+      </Flex>
 
       {/* Goals section */}
       {goals.length > 0 && (
