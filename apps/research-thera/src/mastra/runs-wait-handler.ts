@@ -1,7 +1,7 @@
 import type { Context } from "hono";
-import type { Workflow } from "@mastra/core/workflows";
+import type { AnyWorkflow } from "@mastra/core/workflows";
 
-type WorkflowRecord = Record<string, Workflow>;
+type WorkflowRecord = Record<string, AnyWorkflow>;
 
 type RequestBody = {
   assistant_id?: string;

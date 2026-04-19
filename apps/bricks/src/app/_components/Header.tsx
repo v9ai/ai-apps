@@ -107,6 +107,7 @@ export function Header() {
                 { label: "Stores", href: "/stores" },
                 { label: "Scripts", href: "/scripts" },
                 { label: "Favorites", href: "/favorites" },
+                { label: "Videos", href: "/videos" },
                 { label: "Firmware", href: "/firmware" },
                 { label: "How It Works", href: "/how-it-works" },
                 { label: "Settings", href: "/settings" },
