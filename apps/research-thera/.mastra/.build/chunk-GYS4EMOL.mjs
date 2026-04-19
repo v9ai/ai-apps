@@ -13513,7 +13513,7 @@ You don't need to format your response as JSON unless the user asks you to. Just
       try {
         const filteredModelSettings = omit(modelSettings || {}, ["maxRetries", "headers"]);
         const abortSignal = options?.abortSignal;
-        const pRetry = await import('./index3.mjs');
+        const pRetry = await import('./index6.mjs');
         return await pRetry.default(
           async () => {
             const fn = (methodType === "stream" ? model.doStream : model.doGenerate).bind(model);
@@ -22756,7 +22756,7 @@ ${errorMessages}`,
               toolCallId,
               messages: sanitizedMessages
             };
-            const slugify = await import('./index4.mjs');
+            const slugify = await import('./index10.mjs');
             const subAgentThreadId = inputData.threadId ? `${inputData.threadId}-${randomUUID()}` : context?.mastra?.generateId({
               idType: "thread",
               source: "agent",

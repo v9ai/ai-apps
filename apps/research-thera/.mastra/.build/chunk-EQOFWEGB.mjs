@@ -3,7 +3,7 @@ import { y as safeParseAsync, o as object$1, b as array, h as unknown, n as numb
 import { t as toJSONSchema } from './to-json-schema.mjs';
 import { Z as ZodFirstPartyTypeKind, o as objectType, n as numberType, s as stringType, a as arrayType, e as enumType, u as unionType } from './types.mjs';
 import { M as MastraError } from './error.mjs';
-import { I as InvalidArgumentError$1 } from './index2.mjs';
+import { I as InvalidArgumentError$1 } from './index3.mjs';
 import { f as listTracesArgsSchema, h as toTraceSpans } from './evals.mjs';
 import { d as deepEqual, j as jsonSchemaToZod } from './chunk-L43DNVPR.mjs';
 import { E as EntityType, l as listMetricsArgsSchema, a as listLogsArgsSchema, b as listScoresArgsSchema, c as listFeedbackArgsSchema } from './chunk-OSVQQ7QZ.mjs';
@@ -8699,7 +8699,7 @@ async function downloadAssetsFromMessages({
   downloadRetries = 3,
   supportedUrls
 }) {
-  const pMap = (await import('./index.mjs')).default;
+  const pMap = (await import('./index2.mjs')).default;
   const filesToDownload = messages.filter((message) => message.role === "user").map((message) => message.content).filter((content) => Array.isArray(content)).flat().filter((part) => part.type === "image" || part.type === "file").map((part) => {
     const mediaType = part.mediaType ?? (part.type === "image" ? "image/*" : void 0);
     let data = part.type === "image" ? part.image : part.data;

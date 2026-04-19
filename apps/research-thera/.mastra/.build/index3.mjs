@@ -1,272 +1,279 @@
-const objectToString = Object.prototype.toString;
+// src/errors/ai-sdk-error.ts
+var marker = "vercel.ai.error";
+var symbol = Symbol.for(marker);
+var _a, _b;
+var AISDKError = class _AISDKError extends (_b = Error, _a = symbol, _b) {
+  /**
+   * Creates an AI SDK Error.
+   *
+   * @param {Object} params - The parameters for creating the error.
+   * @param {string} params.name - The name of the error.
+   * @param {string} params.message - The error message.
+   * @param {unknown} [params.cause] - The underlying cause of the error.
+   */
+  constructor({
+    name: name14,
+    message,
+    cause
+  }) {
+    super(message);
+    this[_a] = true;
+    this.name = name14;
+    this.cause = cause;
+  }
+  /**
+   * Checks if the given error is an AI SDK Error.
+   * @param {unknown} error - The error to check.
+   * @returns {boolean} True if the error is an AI SDK Error, false otherwise.
+   */
+  static isInstance(error) {
+    return _AISDKError.hasMarker(error, marker);
+  }
+  static hasMarker(error, marker15) {
+    const markerSymbol = Symbol.for(marker15);
+    return error != null && typeof error === "object" && markerSymbol in error && typeof error[markerSymbol] === "boolean" && error[markerSymbol] === true;
+  }
+};
 
-const isError = value => objectToString.call(value) === '[object Error]';
+// src/errors/api-call-error.ts
+var name = "AI_APICallError";
+var marker2 = `vercel.ai.error.${name}`;
+var symbol2 = Symbol.for(marker2);
+var _a2, _b2;
+var APICallError = class extends (_b2 = AISDKError, _a2 = symbol2, _b2) {
+  constructor({
+    message,
+    url,
+    requestBodyValues,
+    statusCode,
+    responseHeaders,
+    responseBody,
+    cause,
+    isRetryable = statusCode != null && (statusCode === 408 || // request timeout
+    statusCode === 409 || // conflict
+    statusCode === 429 || // too many requests
+    statusCode >= 500),
+    // server error
+    data
+  }) {
+    super({ name, message, cause });
+    this[_a2] = true;
+    this.url = url;
+    this.requestBodyValues = requestBodyValues;
+    this.statusCode = statusCode;
+    this.responseHeaders = responseHeaders;
+    this.responseBody = responseBody;
+    this.isRetryable = isRetryable;
+    this.data = data;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker2);
+  }
+};
 
-const errorMessages = new Set([
-	'network error', // Chrome
-	'NetworkError when attempting to fetch resource.', // Firefox
-	'The Internet connection appears to be offline.', // Safari 16
-	'Network request failed', // `cross-fetch`
-	'fetch failed', // Undici (Node.js)
-	'terminated', // Undici (Node.js)
-	' A network error occurred.', // Bun (WebKit)
-	'Network connection lost', // Cloudflare Workers (fetch)
-]);
+// src/errors/empty-response-body-error.ts
+var name2 = "AI_EmptyResponseBodyError";
+var marker3 = `vercel.ai.error.${name2}`;
+var symbol3 = Symbol.for(marker3);
+var _a3, _b3;
+var EmptyResponseBodyError = class extends (_b3 = AISDKError, _a3 = symbol3, _b3) {
+  // used in isInstance
+  constructor({ message = "Empty response body" } = {}) {
+    super({ name: name2, message });
+    this[_a3] = true;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker3);
+  }
+};
 
-function isNetworkError(error) {
-	const isValid = error
-		&& isError(error)
-		&& error.name === 'TypeError'
-		&& typeof error.message === 'string';
-
-	if (!isValid) {
-		return false;
-	}
-
-	const {message, stack} = error;
-
-	// Safari 17+ has generic message but no stack for network errors
-	if (message === 'Load failed') {
-		return stack === undefined
-			// Sentry adds its own stack trace to the fetch error, so also check for that
-			|| '__sentry_captured__' in error;
-	}
-
-	// Deno network errors start with specific text
-	if (message.startsWith('error sending request for url')) {
-		return true;
-	}
-
-	// Chrome: exact "Failed to fetch" or with hostname: "Failed to fetch (example.com)"
-	if (message === 'Failed to fetch' || (message.startsWith('Failed to fetch (') && message.endsWith(')'))) {
-		return true;
-	}
-
-	// Standard network error messages
-	return errorMessages.has(message);
+// src/errors/get-error-message.ts
+function getErrorMessage(error) {
+  if (error == null) {
+    return "unknown error";
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return JSON.stringify(error);
 }
 
-function validateRetries(retries) {
-	if (typeof retries === 'number') {
-		if (retries < 0) {
-			throw new TypeError('Expected `retries` to be a non-negative number.');
-		}
+// src/errors/invalid-argument-error.ts
+var name3 = "AI_InvalidArgumentError";
+var marker4 = `vercel.ai.error.${name3}`;
+var symbol4 = Symbol.for(marker4);
+var _a4, _b4;
+var InvalidArgumentError = class extends (_b4 = AISDKError, _a4 = symbol4, _b4) {
+  constructor({
+    message,
+    cause,
+    argument
+  }) {
+    super({ name: name3, message, cause });
+    this[_a4] = true;
+    this.argument = argument;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker4);
+  }
+};
 
-		if (Number.isNaN(retries)) {
-			throw new TypeError('Expected `retries` to be a valid number or Infinity, got NaN.');
-		}
-	} else if (retries !== undefined) {
-		throw new TypeError('Expected `retries` to be a number or Infinity.');
-	}
-}
+// src/errors/invalid-prompt-error.ts
+var name4 = "AI_InvalidPromptError";
+var marker5 = `vercel.ai.error.${name4}`;
+var symbol5 = Symbol.for(marker5);
+var _a5, _b5;
+var InvalidPromptError = class extends (_b5 = AISDKError, _a5 = symbol5, _b5) {
+  constructor({
+    prompt,
+    message,
+    cause
+  }) {
+    super({ name: name4, message: `Invalid prompt: ${message}`, cause });
+    this[_a5] = true;
+    this.prompt = prompt;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker5);
+  }
+};
 
-function validateNumberOption(name, value, {min = 0, allowInfinity = false} = {}) {
-	if (value === undefined) {
-		return;
-	}
+// src/errors/invalid-response-data-error.ts
+var name5 = "AI_InvalidResponseDataError";
+var marker6 = `vercel.ai.error.${name5}`;
+var symbol6 = Symbol.for(marker6);
+var _a6, _b6;
+var InvalidResponseDataError = class extends (_b6 = AISDKError, _a6 = symbol6, _b6) {
+  constructor({
+    data,
+    message = `Invalid response data: ${JSON.stringify(data)}.`
+  }) {
+    super({ name: name5, message });
+    this[_a6] = true;
+    this.data = data;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker6);
+  }
+};
 
-	if (typeof value !== 'number' || Number.isNaN(value)) {
-		throw new TypeError(`Expected \`${name}\` to be a number${allowInfinity ? ' or Infinity' : ''}.`);
-	}
+// src/errors/json-parse-error.ts
+var name6 = "AI_JSONParseError";
+var marker7 = `vercel.ai.error.${name6}`;
+var symbol7 = Symbol.for(marker7);
+var _a7, _b7;
+var JSONParseError = class extends (_b7 = AISDKError, _a7 = symbol7, _b7) {
+  constructor({ text, cause }) {
+    super({
+      name: name6,
+      message: `JSON parsing failed: Text: ${text}.
+Error message: ${getErrorMessage(cause)}`,
+      cause
+    });
+    this[_a7] = true;
+    this.text = text;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker7);
+  }
+};
 
-	if (!allowInfinity && !Number.isFinite(value)) {
-		throw new TypeError(`Expected \`${name}\` to be a finite number.`);
-	}
+// src/errors/load-api-key-error.ts
+var name7 = "AI_LoadAPIKeyError";
+var marker8 = `vercel.ai.error.${name7}`;
+var symbol8 = Symbol.for(marker8);
+var _a8, _b8;
+var LoadAPIKeyError = class extends (_b8 = AISDKError, _a8 = symbol8, _b8) {
+  // used in isInstance
+  constructor({ message }) {
+    super({ name: name7, message });
+    this[_a8] = true;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker8);
+  }
+};
 
-	if (value < min) {
-		throw new TypeError(`Expected \`${name}\` to be \u2265 ${min}.`);
-	}
-}
+// src/errors/too-many-embedding-values-for-call-error.ts
+var name11 = "AI_TooManyEmbeddingValuesForCallError";
+var marker12 = `vercel.ai.error.${name11}`;
+var symbol12 = Symbol.for(marker12);
+var _a12, _b12;
+var TooManyEmbeddingValuesForCallError = class extends (_b12 = AISDKError, _a12 = symbol12, _b12) {
+  constructor(options) {
+    super({
+      name: name11,
+      message: `Too many values for a single embedding call. The ${options.provider} model "${options.modelId}" can only embed up to ${options.maxEmbeddingsPerCall} values per call, but ${options.values.length} values were provided.`
+    });
+    this[_a12] = true;
+    this.provider = options.provider;
+    this.modelId = options.modelId;
+    this.maxEmbeddingsPerCall = options.maxEmbeddingsPerCall;
+    this.values = options.values;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker12);
+  }
+};
 
-class AbortError extends Error {
-	constructor(message) {
-		super();
+// src/errors/type-validation-error.ts
+var name12 = "AI_TypeValidationError";
+var marker13 = `vercel.ai.error.${name12}`;
+var symbol13 = Symbol.for(marker13);
+var _a13, _b13;
+var TypeValidationError = class _TypeValidationError extends (_b13 = AISDKError, _a13 = symbol13, _b13) {
+  constructor({ value, cause }) {
+    super({
+      name: name12,
+      message: `Type validation failed: Value: ${JSON.stringify(value)}.
+Error message: ${getErrorMessage(cause)}`,
+      cause
+    });
+    this[_a13] = true;
+    this.value = value;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker13);
+  }
+  /**
+   * Wraps an error into a TypeValidationError.
+   * If the cause is already a TypeValidationError with the same value, it returns the cause.
+   * Otherwise, it creates a new TypeValidationError.
+   *
+   * @param {Object} params - The parameters for wrapping the error.
+   * @param {unknown} params.value - The value that failed validation.
+   * @param {unknown} params.cause - The original error or cause of the validation failure.
+   * @returns {TypeValidationError} A TypeValidationError instance.
+   */
+  static wrap({
+    value,
+    cause
+  }) {
+    return _TypeValidationError.isInstance(cause) && cause.value === value ? cause : new _TypeValidationError({ value, cause });
+  }
+};
 
-		if (message instanceof Error) {
-			this.originalError = message;
-			({message} = message);
-		} else {
-			this.originalError = new Error(message);
-			this.originalError.stack = this.stack;
-		}
+// src/errors/unsupported-functionality-error.ts
+var name13 = "AI_UnsupportedFunctionalityError";
+var marker14 = `vercel.ai.error.${name13}`;
+var symbol14 = Symbol.for(marker14);
+var _a14, _b14;
+var UnsupportedFunctionalityError = class extends (_b14 = AISDKError, _a14 = symbol14, _b14) {
+  constructor({
+    functionality,
+    message = `'${functionality}' functionality not supported.`
+  }) {
+    super({ name: name13, message });
+    this[_a14] = true;
+    this.functionality = functionality;
+  }
+  static isInstance(error) {
+    return AISDKError.hasMarker(error, marker14);
+  }
+};
 
-		this.name = 'AbortError';
-		this.message = message;
-	}
-}
-
-function calculateDelay(retriesConsumed, options) {
-	const attempt = Math.max(1, retriesConsumed + 1);
-	const random = options.randomize ? (Math.random() + 1) : 1;
-
-	let timeout = Math.round(random * options.minTimeout * (options.factor ** (attempt - 1)));
-	timeout = Math.min(timeout, options.maxTimeout);
-
-	return timeout;
-}
-
-function calculateRemainingTime(start, max) {
-	if (!Number.isFinite(max)) {
-		return max;
-	}
-
-	return max - (performance.now() - start);
-}
-
-async function onAttemptFailure({error, attemptNumber, retriesConsumed, startTime, options}) {
-	const normalizedError = error instanceof Error
-		? error
-		: new TypeError(`Non-error was thrown: "${error}". You should only throw errors.`);
-
-	if (normalizedError instanceof AbortError) {
-		throw normalizedError.originalError;
-	}
-
-	const retriesLeft = Number.isFinite(options.retries)
-		? Math.max(0, options.retries - retriesConsumed)
-		: options.retries;
-
-	const maxRetryTime = options.maxRetryTime ?? Number.POSITIVE_INFINITY;
-
-	const context = Object.freeze({
-		error: normalizedError,
-		attemptNumber,
-		retriesLeft,
-		retriesConsumed,
-	});
-
-	await options.onFailedAttempt(context);
-
-	if (calculateRemainingTime(startTime, maxRetryTime) <= 0) {
-		throw normalizedError;
-	}
-
-	const consumeRetry = await options.shouldConsumeRetry(context);
-
-	const remainingTime = calculateRemainingTime(startTime, maxRetryTime);
-
-	if (remainingTime <= 0 || retriesLeft <= 0) {
-		throw normalizedError;
-	}
-
-	if (normalizedError instanceof TypeError && !isNetworkError(normalizedError)) {
-		if (consumeRetry) {
-			throw normalizedError;
-		}
-
-		options.signal?.throwIfAborted();
-		return false;
-	}
-
-	if (!await options.shouldRetry(context)) {
-		throw normalizedError;
-	}
-
-	if (!consumeRetry) {
-		options.signal?.throwIfAborted();
-		return false;
-	}
-
-	const delayTime = calculateDelay(retriesConsumed, options);
-	const finalDelay = Math.min(delayTime, remainingTime);
-
-	options.signal?.throwIfAborted();
-
-	if (finalDelay > 0) {
-		await new Promise((resolve, reject) => {
-			const onAbort = () => {
-				clearTimeout(timeoutToken);
-				options.signal?.removeEventListener('abort', onAbort);
-				reject(options.signal.reason);
-			};
-
-			const timeoutToken = setTimeout(() => {
-				options.signal?.removeEventListener('abort', onAbort);
-				resolve();
-			}, finalDelay);
-
-			if (options.unref) {
-				timeoutToken.unref?.();
-			}
-
-			options.signal?.addEventListener('abort', onAbort, {once: true});
-		});
-	}
-
-	options.signal?.throwIfAborted();
-
-	return true;
-}
-
-async function pRetry(input, options = {}) {
-	options = {...options};
-
-	validateRetries(options.retries);
-
-	if (Object.hasOwn(options, 'forever')) {
-		throw new Error('The `forever` option is no longer supported. For many use-cases, you can set `retries: Infinity` instead.');
-	}
-
-	options.retries ??= 10;
-	options.factor ??= 2;
-	options.minTimeout ??= 1000;
-	options.maxTimeout ??= Number.POSITIVE_INFINITY;
-	options.maxRetryTime ??= Number.POSITIVE_INFINITY;
-	options.randomize ??= false;
-	options.onFailedAttempt ??= () => {};
-	options.shouldRetry ??= () => true;
-	options.shouldConsumeRetry ??= () => true;
-
-	// Validate numeric options and normalize edge cases
-	validateNumberOption('factor', options.factor, {min: 0, allowInfinity: false});
-	validateNumberOption('minTimeout', options.minTimeout, {min: 0, allowInfinity: false});
-	validateNumberOption('maxTimeout', options.maxTimeout, {min: 0, allowInfinity: true});
-	validateNumberOption('maxRetryTime', options.maxRetryTime, {min: 0, allowInfinity: true});
-
-	// Treat non-positive factor as 1 to avoid zero backoff or negative behavior
-	if (!(options.factor > 0)) {
-		options.factor = 1;
-	}
-
-	options.signal?.throwIfAborted();
-
-	let attemptNumber = 0;
-	let retriesConsumed = 0;
-	const startTime = performance.now();
-
-	while (Number.isFinite(options.retries) ? retriesConsumed <= options.retries : true) {
-		attemptNumber++;
-
-		try {
-			options.signal?.throwIfAborted();
-
-			const result = await input(attemptNumber);
-
-			options.signal?.throwIfAborted();
-
-			return result;
-		} catch (error) {
-			if (await onAttemptFailure({
-				error,
-				attemptNumber,
-				retriesConsumed,
-				startTime,
-				options,
-			})) {
-				retriesConsumed++;
-			}
-		}
-	}
-
-	// Should not reach here, but in case it does, throw an error
-	throw new Error('Retry attempts exhausted without throwing an error.');
-}
-
-function makeRetriable(function_, options) {
-	return function (...arguments_) {
-		return pRetry(() => function_.apply(this, arguments_), options);
-	};
-}
-
-export { AbortError, pRetry as default, makeRetriable };
+export { APICallError as A, EmptyResponseBodyError as E, InvalidArgumentError as I, JSONParseError as J, LoadAPIKeyError as L, TypeValidationError as T, UnsupportedFunctionalityError as U, InvalidResponseDataError as a, TooManyEmbeddingValuesForCallError as b, InvalidPromptError as c };
 //# sourceMappingURL=index3.mjs.map
