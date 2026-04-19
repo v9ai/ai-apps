@@ -15,7 +15,7 @@ export const createJournalEntry: NonNullable<MutationResolvers['createJournalEnt
     userId: userEmail,
     familyMemberId: args.input.familyMemberId ?? null,
     title: args.input.title ?? null,
-    content: args.input.content,
+    content: args.input.content ?? "",
     mood: args.input.mood ?? null,
     moodScore: args.input.moodScore ?? null,
     tags: args.input.tags || [],

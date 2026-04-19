@@ -121,11 +121,6 @@ export default function AddJournalEntryButton({
       return;
     }
 
-    if (!form.content.trim()) {
-      setError("Please enter some content for your journal entry");
-      return;
-    }
-
     if (!form.entryDate) {
       setError("Please select an entry date");
       return;
@@ -250,14 +245,13 @@ export default function AddJournalEntryButton({
 
             <label>
               <Text as="div" size="2" mb="1" weight="medium">
-                Content *
+                Content
               </Text>
               <TextArea
                 placeholder="Write your thoughts, reflections, or observations..."
                 value={form.content}
                 onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
                 rows={6}
-                required
                 disabled={loading}
               />
             </label>

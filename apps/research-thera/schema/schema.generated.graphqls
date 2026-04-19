@@ -301,7 +301,7 @@ input CreateIssueInput {
 }
 
 input CreateJournalEntryInput {
-  content: String!
+  content: String
   entryDate: String!
   familyMemberId: Int
   goalId: Int

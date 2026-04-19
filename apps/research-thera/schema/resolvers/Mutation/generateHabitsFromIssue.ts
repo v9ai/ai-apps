@@ -1,5 +1,6 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
+import { urlForGraph } from "@/src/lib/langgraph-client";
 
 export const generateHabitsFromIssue: NonNullable<MutationResolvers['generateHabitsFromIssue']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -10,10 +11,7 @@ export const generateHabitsFromIssue: NonNullable<MutationResolvers['generateHab
   const issue = await db.getIssue(issueId, userEmail);
   if (!issue) throw new Error("Issue not found");
 
-  const LANGGRAPH_URL =
-    process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
-
-  const response = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
+  const response = await fetch(`${urlForGraph("habits")}/runs/wait`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     signal: AbortSignal.timeout(180_000),

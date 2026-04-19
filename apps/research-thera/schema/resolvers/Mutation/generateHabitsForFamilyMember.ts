@@ -1,5 +1,6 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
+import { urlForGraph } from "@/src/lib/langgraph-client";
 
 export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['generateHabitsForFamilyMember']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -7,10 +8,7 @@ export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['gener
 
   const { familyMemberId, count = 5 } = args;
 
-  const LANGGRAPH_URL =
-    process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
-
-  const response = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
+  const response = await fetch(`${urlForGraph("habits")}/runs/wait`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     signal: AbortSignal.timeout(180_000),

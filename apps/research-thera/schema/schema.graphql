@@ -1025,7 +1025,7 @@ type JournalEntry {
 input CreateJournalEntryInput {
   familyMemberId: Int
   title: String
-  content: String!
+  content: String
   mood: String
   moodScore: Int
   tags: [String!]

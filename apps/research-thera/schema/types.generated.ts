@@ -337,7 +337,7 @@ export type CreateIssueInput = {
 };
 
 export type CreateJournalEntryInput = {
-  content: Scalars['String']['input'];
+  content?: InputMaybe<Scalars['String']['input']>;
   entryDate: Scalars['String']['input'];
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
