@@ -2760,11 +2760,94 @@ async function generateObject({
 }
 
 "use strict";
+const ROMANIAN_INSTRUCTION = "IMPORTANT: Respond entirely in Romanian. Every string field in your JSON output must be written in natural, fluent Romanian. Do not translate proper nouns, people's names, or citation identifiers.";
+function withRo(prompt, isRo) {
+  return isRo ? `${ROMANIAN_INSTRUCTION}
+
+${prompt}` : prompt;
+}
+function parseTags(raw) {
+  if (Array.isArray(raw)) return raw.filter((t) => typeof t === "string");
+  if (typeof raw !== "string") return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((t) => typeof t === "string") : [];
+  } catch {
+    return [];
+  }
+}
+async function loadTagRules(userEmail) {
+  const rows = await sql`
+    SELECT tag, language FROM tag_language_rules WHERE user_id = ${userEmail}
+  `;
+  const map = /* @__PURE__ */ new Map();
+  for (const r of rows) {
+    map.set(r.tag, r.language);
+  }
+  return map;
+}
+function languageForTags(tags, rules) {
+  for (const tag of parseTags(tags)) {
+    const lang = rules.get(tag);
+    if (lang) return lang;
+  }
+  return null;
+}
+async function resolveGoalLanguage(input) {
+  const { userEmail, goalId, issueId, journalEntryId, familyMemberId } = input;
+  if (!userEmail) return "en";
+  const rules = await loadTagRules(userEmail);
+  if (rules.size === 0) return "en";
+  if (goalId) {
+    const rows = await sql`SELECT tags FROM goals WHERE id = ${goalId} LIMIT 1`;
+    const lang = rows[0] ? languageForTags(rows[0].tags, rules) : null;
+    if (lang) return lang;
+  }
+  if (journalEntryId) {
+    const rows = await sql`
+      SELECT je.tags AS entry_tags, g.tags AS goal_tags
+      FROM journal_entries je
+      LEFT JOIN goals g ON g.id = je.goal_id
+      WHERE je.id = ${journalEntryId}
+      LIMIT 1
+    `;
+    if (rows[0]) {
+      const lang = languageForTags(rows[0].entry_tags, rules) ?? languageForTags(rows[0].goal_tags, rules);
+      if (lang) return lang;
+    }
+  }
+  if (issueId) {
+    const rows = await sql`
+      SELECT g.tags AS goal_tags
+      FROM issues i
+      LEFT JOIN goals g ON g.family_member_id = i.family_member_id
+      WHERE i.id = ${issueId}
+    `;
+    for (const r of rows) {
+      const lang = languageForTags(r.goal_tags, rules);
+      if (lang) return lang;
+    }
+  }
+  if (familyMemberId) {
+    const rows = await sql`SELECT tags FROM goals WHERE family_member_id = ${familyMemberId}`;
+    for (const r of rows) {
+      const lang = languageForTags(r.tags, rules);
+      if (lang) return lang;
+    }
+  }
+  return "en";
+}
+async function isRoGoal(input) {
+  return await resolveGoalLanguage(input) === "ro";
+}
+
+"use strict";
 const habitInputSchema = z.object({
   family_member_id: z.number().int().optional(),
   issue_id: z.number().int().optional(),
   user_email: z.string().email(),
-  count: z.number().int().min(1).max(20).default(5)
+  count: z.number().int().min(1).max(20).default(5),
+  language: z.enum(["en", "ro"]).default("en")
 });
 const habitSchema = z.object({
   title: z.string().max(120),
@@ -2946,6 +3029,9 @@ const collectData$2 = createStep({
       "",
       "Keep titles concise (3-6 words). Descriptions explain the therapeutic benefit (1-2 sentences)."
     );
+    if (inputData.language === "ro") {
+      parts.unshift(ROMANIAN_INSTRUCTION, "");
+    }
     return {
       prompt: parts.join("\n"),
       resolvedFamilyMemberId,
@@ -3257,7 +3343,8 @@ const parentAdviceWorkflow = createWorkflow({
 const inputSchema$2 = z.object({
   family_member_id: z.number().int(),
   trigger_issue_id: z.number().int().nullable().optional(),
-  user_email: z.string().email()
+  user_email: z.string().email(),
+  language: z.enum(["en", "ro"]).default("en")
 });
 const outputSchema$3 = z.object({
   analysis_id: z.number().int().optional(),
@@ -3641,6 +3728,9 @@ IMPORTANT: Every field annotated as "array of" MUST be a JSON array, even when t
 
 Write the analysis in the same language as the majority of the input data.`;
     sections.push(instructionsTrigger);
+    if (inputData.language === "ro") {
+      sections.unshift(ROMANIAN_INSTRUCTION);
+    }
     const prompt = sections.join("\n\n");
     const dataSnapshot = {
       issueCount: issues.length,
