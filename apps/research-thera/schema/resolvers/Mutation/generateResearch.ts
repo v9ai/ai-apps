@@ -143,6 +143,15 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
           memberContext = `Person: ${memberLabel(fm)}`;
         }
       } catch { /* non-fatal */ }
+    } else {
+      // Journal entry isn't linked to a specific family member — fall back to the
+      // user's own "self" profile so age-appropriate research still gets returned.
+      try {
+        const self = await db.getSelfFamilyMember(userEmail);
+        if (self) {
+          memberContext = `Person: ${memberLabel(self)}`;
+        }
+      } catch { /* non-fatal */ }
     }
     const contextLines = [
       `journal_entry_id: ${journalEntryId}`,
@@ -179,6 +188,13 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
         const fm = await db.getFamilyMember(goal.familyMemberId);
         if (fm) {
           memberContext = `Patient: ${memberLabel(fm)}`;
+        }
+      } catch { /* non-fatal */ }
+    } else {
+      try {
+        const self = await db.getSelfFamilyMember(userEmail);
+        if (self) {
+          memberContext = `Patient: ${memberLabel(self)}`;
         }
       } catch { /* non-fatal */ }
     }
