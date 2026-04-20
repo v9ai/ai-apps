@@ -15,6 +15,23 @@ type Course = {
   internal?: boolean;
 };
 
+type Finisher = {
+  rank: number;
+  name: string;
+  completedAt: string;
+  url?: string;
+};
+
+const FINISHERS: Finisher[] = [
+  { rank: 1, name: "Lucas Valbuena", completedAt: "Apr 19, 2026" },
+  {
+    rank: 2,
+    name: "Jonatas Soares",
+    completedAt: "Apr 19, 2026",
+    url: "http://jonatassoares.com",
+  },
+];
+
 const COURSES: Course[] = [
   {
     title: "Introduction to agent skills",
@@ -77,6 +94,32 @@ function CourseCard({ course }: { course: Course }) {
   );
 }
 
+function FinisherCard({ finisher }: { finisher: Finisher }) {
+  const inner = (
+    <>
+      <div className="course-card-header">
+        <span className="course-provider-icon">{finisher.rank}</span>
+        <span className="course-provider-name">{finisher.completedAt}</span>
+      </div>
+      <div className="course-card-title">{finisher.name}</div>
+      <p className="course-card-desc">Completed all 4 courses</p>
+    </>
+  );
+  if (finisher.url) {
+    return (
+      <a
+        href={finisher.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="course-card"
+      >
+        {inner}
+      </a>
+    );
+  }
+  return <div className="course-card">{inner}</div>;
+}
+
 export default function AnthropicLearningPathPage() {
   return (
     <>
@@ -113,6 +156,18 @@ export default function AnthropicLearningPathPage() {
           <div className="courses-group-grid">
             {COURSES.map((c) => (
               <CourseCard key={c.title} course={c} />
+            ))}
+          </div>
+        </section>
+
+        <section className="courses-group">
+          <div className="courses-group-header">
+            <h2 className="courses-group-title">🏆 Finishers</h2>
+            <span className="courses-group-count">{FINISHERS.length}</span>
+          </div>
+          <div className="courses-group-grid">
+            {FINISHERS.map((f) => (
+              <FinisherCard key={f.rank} finisher={f} />
             ))}
           </div>
         </section>

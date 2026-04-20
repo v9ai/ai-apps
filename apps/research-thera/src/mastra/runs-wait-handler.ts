@@ -10,7 +10,10 @@ type RequestBody = {
 type HonoCtx = {
   req: { json: () => Promise<unknown> };
   json: (body: unknown, status?: number) => Response;
+  executionCtx?: { waitUntil: (promise: Promise<unknown>) => void };
 };
+
+const ASYNC_WORKFLOWS = new Set<string>(["research"]);
 
 export function makeRunsWaitHandler(workflows: WorkflowRecord) {
   return async (c: HonoCtx) => {
@@ -37,6 +40,21 @@ export function makeRunsWaitHandler(workflows: WorkflowRecord) {
     }
 
     const workflow = workflows[assistantId];
+
+    if (ASYNC_WORKFLOWS.has(assistantId) && c.executionCtx?.waitUntil) {
+      const input = (body.input ?? {}) as never;
+      const promise = (async () => {
+        try {
+          const run = await workflow.createRun();
+          await run.start({ inputData: input });
+        } catch (err) {
+          console.error(`[runs/wait] async workflow "${assistantId}" failed:`, err);
+        }
+      })();
+      c.executionCtx.waitUntil(promise);
+      return c.json({ accepted: true, assistant_id: assistantId }, 202);
+    }
+
     const run = await workflow.createRun();
     const result = await run.start({ inputData: (body.input ?? {}) as never });
 

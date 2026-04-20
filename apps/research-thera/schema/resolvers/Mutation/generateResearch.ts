@@ -1,35 +1,6 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
-import { sql as neonSql } from "@/src/db/neon";
 import { runGraphAndWait } from "@/src/lib/langgraph-client";
-import { generateObject } from "@/src/lib/deepseek";
-import { z } from "zod";
-
-const EVIDENCE_WEIGHTS: Record<string, number> = {
-  "meta-analysis": 1.0,
-  meta_analysis: 1.0,
-  systematic_review: 0.9,
-  "systematic-review": 0.9,
-  rct: 0.8,
-  cohort: 0.6,
-  case_control: 0.5,
-  "case-control": 0.5,
-  case_series: 0.35,
-  "case-series": 0.35,
-  case_study: 0.2,
-  "case-study": 0.2,
-  expert_opinion: 0.1,
-};
-
-function parseJsonField(value: unknown): string[] {
-  if (!value) return [];
-  try {
-    const parsed = typeof value === "string" ? JSON.parse(value) : value;
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
 
 function resolveAge(member: { ageYears?: number | null; dateOfBirth?: string | null }): number | null {
   if (member.ageYears) return member.ageYears;
@@ -73,105 +44,6 @@ function buildSiblingIssuesSection(
   ].join("\n");
 }
 
-async function runResearchEvals(
-  issueId: number | undefined,
-  feedbackId: number | undefined,
-  goalId: number | undefined,
-  prompt: string,
-  hasRelatedMember: boolean,
-  journalEntryId?: number | undefined,
-): Promise<Record<string, number | string>> {
-  const rows = journalEntryId
-    ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE journal_entry_id = ${journalEntryId} ORDER BY relevance_score DESC LIMIT 10`
-    : issueId
-      ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE issue_id = ${issueId} ORDER BY relevance_score DESC LIMIT 10`
-      : feedbackId
-        ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE feedback_id = ${feedbackId} ORDER BY relevance_score DESC LIMIT 10`
-        : await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE goal_id = ${goalId} ORDER BY relevance_score DESC LIMIT 10`;
-
-  if (!rows.length) return { error: "no papers found" };
-
-  // Deterministic evidence quality score
-  const evidenceQuality =
-    rows.reduce((sum, r) => sum + (EVIDENCE_WEIGHTS[r.evidence_level as string] ?? 0.3), 0) /
-    rows.length;
-
-  // LLM-based relevance, actionability, and family dynamics scoring
-  const papersText = rows
-    .map((r, i) => {
-      const kf = parseJsonField(r.key_findings).slice(0, 3).join("; ");
-      const tt = parseJsonField(r.therapeutic_techniques).slice(0, 3).join("; ");
-      const abstract = ((r.abstract as string) || "").slice(0, 200);
-      return `[${i + 1}] ${r.title}\nAbstract: ${abstract}\nKey findings: ${kf}\nTechniques: ${tt}`;
-    })
-    .join("\n\n");
-
-  const evalSchema = z.object({
-    relevance: z
-      .number()
-      .min(0)
-      .max(1)
-      .describe("How relevant are the papers to the clinical topic (0-1)"),
-    actionability: z
-      .number()
-      .min(0)
-      .max(1)
-      .describe("How actionable are the therapeutic techniques for a practicing therapist (0-1)"),
-    familyDynamicsCoverage: z
-      .number()
-      .min(0)
-      .max(1)
-      .describe("How well do the papers address family and relational dynamics (0-1)"),
-    rationale: z.string().describe("2-3 sentence summary of the evaluation"),
-  });
-
-  const evalPrompt = [
-    `You are evaluating research papers curated for a therapy case.`,
-    ``,
-    `## Clinical Context`,
-    prompt.slice(0, 800),
-    ``,
-    `## Papers Found (${rows.length})`,
-    papersText,
-    ``,
-    `Score this research collection (0-1 each):`,
-    `- relevance: how well papers match the clinical topic`,
-    `- actionability: how actionable the techniques are for a practicing therapist`,
-    hasRelatedMember
-      ? `- familyDynamicsCoverage: how well papers address family and relational dynamics (important: a related family member is involved)`
-      : `- familyDynamicsCoverage: set to 0 since no related family member is involved`,
-    `- rationale: brief 2-3 sentence summary`,
-    ``,
-    `Be honest: if papers are tangential, score low. If evidence is strong and directly applicable, score high.`,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const { object } = await generateObject({
-
-    schema: evalSchema,
-    prompt: evalPrompt,
-  });
-
-  const components = [object.relevance, object.actionability, evidenceQuality];
-  if (hasRelatedMember) components.push(object.familyDynamicsCoverage);
-  const overall = components.reduce((a, b) => a + b, 0) / components.length;
-
-  const scores: Record<string, number | string> = {
-    relevance: Math.round(object.relevance * 100) / 100,
-    actionability: Math.round(object.actionability * 100) / 100,
-    evidenceQuality: Math.round(evidenceQuality * 100) / 100,
-    overall: Math.round(overall * 100) / 100,
-    rationale: object.rationale,
-    paperCount: rows.length,
-  };
-  if (hasRelatedMember) {
-    scores.familyDynamicsCoverage = Math.round(object.familyDynamicsCoverage * 100) / 100;
-  }
-
-  return scores;
-}
-
 export const generateResearch: NonNullable<MutationResolvers['generateResearch']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) {
@@ -183,20 +55,17 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
   const feedbackId = args.feedbackId ?? undefined;
   const journalEntryId = args.journalEntryId ?? undefined;
 
-  // Verify the goal exists and belongs to the user (only when goalId is provided)
   if (goalId) {
     await db.getGoal(goalId, userEmail);
   }
 
-  // Clean up any stale RUNNING jobs (stuck > 15 min) before creating a new one
   await db.cleanupStaleJobs(15);
 
-  // Create a tracking job (inserted with status='RUNNING')
   const jobId = crypto.randomUUID();
   await db.createGenerationJob(jobId, userEmail, "RESEARCH", goalId);
 
-  // Build prompt from goal, issue, or feedback context
   let prompt: string;
+  let evalPromptContext: string;
   let relatedFamilyMember: Awaited<ReturnType<typeof db.getFamilyMember>> | null = null;
   if (feedbackId) {
     const feedback = await db.getContactFeedback(feedbackId, userEmail);
@@ -206,20 +75,24 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       const allIssues = await db.getIssuesForFamilyMember(feedback.familyMemberId, undefined, userEmail);
       feedbackSiblingSection = buildSiblingIssuesSection(allIssues);
     }
-    prompt = [
-      `Find evidence-based therapeutic research for the following clinical feedback:`,
-      ``,
+    const contextLines = [
       `feedback_id: ${feedbackId}`,
       `Subject: ${feedback.subject}`,
       `Content: ${feedback.content}`,
       feedback.tags ? `Tags: ${feedback.tags}` : "",
       feedbackSiblingSection,
+    ].filter(Boolean);
+    evalPromptContext = contextLines.join("\n");
+    prompt = [
+      `Find evidence-based therapeutic research for the following clinical feedback:`,
+      ``,
+      ...contextLines,
       ``,
       `Search for academic papers that address the issues described.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
       ``,
       `IMPORTANT: When calling save_research_papers, use feedback_id: ${feedbackId} — do NOT use issue_id.`,
-    ].filter(Boolean).join("\n");
+    ].join("\n");
   } else if (issueId) {
     const issue = await db.getIssue(issueId, userEmail);
     if (!issue) throw new Error("Issue not found");
@@ -233,29 +106,28 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
     const allIssues = await db.getIssuesForFamilyMember(issue.familyMemberId, undefined, userEmail);
     const issueSiblingSection = buildSiblingIssuesSection(allIssues, issueId);
 
-    prompt = [
-      `Find evidence-based therapeutic research for the following clinical issue:`,
-      ``,
+    const contextLines = [
       `issue_id: ${issueId}`,
       `Title: ${issue.title}`,
       `Category: ${issue.category}`,
       `Severity: ${issue.severity}`,
       issue.description ? `Description: ${issue.description}` : "",
       issue.recommendations ? `Recommendations: ${issue.recommendations}` : "",
-      ``,
-      primaryMember
-        ? `Primary person: ${memberLabel(primaryMember)}`
-        : "",
-      relatedMember
-        ? `Also involves: ${memberLabel(relatedMember)}`
-        : "",
+      primaryMember ? `Primary person: ${memberLabel(primaryMember)}` : "",
+      relatedMember ? `Also involves: ${memberLabel(relatedMember)}` : "",
       issueSiblingSection,
+    ].filter(Boolean);
+    evalPromptContext = contextLines.join("\n");
+    prompt = [
+      `Find evidence-based therapeutic research for the following clinical issue:`,
+      ``,
+      ...contextLines,
       ``,
       `Search for academic papers that address this issue, considering the relational and family dynamics involved.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
       ``,
       `IMPORTANT: When calling save_research_papers, use issue_id: ${issueId} — do NOT use feedback_id.`,
-    ].filter(Boolean).join("\n");
+    ].join("\n");
   } else if (journalEntryId) {
     const entry = await db.getJournalEntry(journalEntryId, userEmail);
     if (!entry) throw new Error("Journal entry not found");
@@ -272,26 +144,30 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
         }
       } catch { /* non-fatal */ }
     }
-    prompt = [
-      `Find evidence-based therapeutic research for the following journal entry:`,
-      ``,
+    const contextLines = [
       `journal_entry_id: ${journalEntryId}`,
       entry.title ? `Title: ${entry.title}` : "",
       `Content: ${entry.content}`,
       entry.mood ? `Mood: ${entry.mood}${entry.moodScore ? ` (${entry.moodScore}/10)` : ""}` : "",
       entry.tags?.length ? `Tags: ${entry.tags.join(", ")}` : "",
       memberContext,
+      journalSiblingSection,
+    ].filter(Boolean);
+    evalPromptContext = contextLines.join("\n");
+    prompt = [
+      `Find evidence-based therapeutic research for the following journal entry:`,
+      ``,
+      ...contextLines,
       ``,
       `IMPORTANT: If the journal content is NOT in English, first translate it to English before searching.`,
       `Use the TRANSLATED English terms as your search queries.`,
-      journalSiblingSection,
       ``,
       `Search for academic papers that address the themes and concerns described in this journal entry.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
       `Only save papers with real abstracts (not "None", "...", or empty). Skip papers lacking abstracts.`,
       ``,
       `IMPORTANT: When calling save_research_papers, use journal_entry_id: ${journalEntryId} — do NOT use goal_id, issue_id, or feedback_id.`,
-    ].filter(Boolean).join("\n");
+    ].join("\n");
   } else if (goalId) {
     const goal = await db.getGoal(goalId, userEmail);
     let goalSiblingSection = "";
@@ -306,103 +182,60 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
         }
       } catch { /* non-fatal */ }
     }
-    prompt = [
-      `Find evidence-based therapeutic research for the following goal:`,
-      ``,
+    const contextLines = [
       `goal_id: ${goalId}`,
       `Title: ${goal.title}`,
       goal.description ? `Description: ${goal.description}` : "",
       memberContext,
+      goalSiblingSection,
+    ].filter(Boolean);
+    evalPromptContext = contextLines.join("\n");
+    prompt = [
+      `Find evidence-based therapeutic research for the following goal:`,
+      ``,
+      ...contextLines,
       ``,
       `IMPORTANT: If the goal title is NOT in English, first translate it to English before searching.`,
       `For example, "Creste rezistenta la frustrare" (Romanian) = "Increase frustration tolerance".`,
       `Use the TRANSLATED English terms as your search queries.`,
-      goalSiblingSection,
       ``,
       `Search for academic papers that support this therapeutic goal.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
       `Only save papers with real abstracts (not "None", "...", or empty). Skip papers lacking abstracts.`,
       ``,
       `IMPORTANT: When calling save_research_papers, use goal_id: ${goalId} — do NOT use issue_id or feedback_id.`,
-    ].filter(Boolean).join("\n");
+    ].join("\n");
   } else {
     throw new Error("Either goalId, issueId, feedbackId, or journalEntryId is required");
   }
 
   const hasRelatedMember = relatedFamilyMember !== null;
 
-  // Fire-and-forget: run LangGraph agent in background, update job on completion
+  // Fire-and-forget: CF Worker accepts request via ctx.waitUntil and updates the job row itself when done.
   runGraphAndWait("research", {
     input: {
       messages: [{ role: "user", content: prompt }],
+      jobId,
+      userEmail,
+      goalId: goalId ?? null,
+      issueId: issueId ?? null,
+      feedbackId: feedbackId ?? null,
+      journalEntryId: journalEntryId ?? null,
+      hasRelatedMember,
+      evalPromptContext,
     },
-  }).then(async (result) => {
-    const messages = result?.messages as
-      | Array<{ content: string; type?: string }>
-      | undefined;
-
-    console.log("[generateResearch] LangGraph response:", JSON.stringify({
-      messageCount: (messages as unknown[])?.length ?? 0,
-      messageTypes: messages?.map(m => m.type) ?? [],
-      keys: Object.keys(result ?? {}),
-    }));
-
-    const lastAiMessage = messages
-      ?.filter((m) => m.type === "ai" && m.content)
-      .pop();
-    const output = lastAiMessage?.content || "";
-    const count = messages?.filter((m) => m.type === "ai").length ?? 0;
-
-    if (count === 0) {
-      console.error("[generateResearch] Agent returned no AI messages — LLM call likely failed");
-      await db.updateGenerationJob(jobId, {
-        status: "FAILED",
-        error: JSON.stringify({
-          message: "Research agent produced no results. The language model may be unavailable — please try again.",
-          code: "EMPTY_AGENT_RESPONSE",
-          details: `Raw message count: ${messages?.length ?? 0}, types: ${JSON.stringify(messages?.map(m => m.type) ?? [])}`,
-        }),
-      });
-      return;
-    }
-
-    let evals: Record<string, number | string> | undefined;
-    try {
-      evals = await runResearchEvals(issueId, feedbackId, goalId, prompt, hasRelatedMember, journalEntryId);
-    } catch (evalErr) {
-      console.error("[generateResearch] Eval error:", evalErr);
-    }
-
-    const noPapersSaved = evals && evals.error === "no papers found";
-    const finalStatus = noPapersSaved ? "FAILED" : "SUCCEEDED";
-
-    if (noPapersSaved) {
-      console.error("[generateResearch] Agent ran but no papers were persisted to DB");
-    }
-
-    await db.updateGenerationJob(jobId, {
-      status: finalStatus,
-      progress: 100,
-      result: JSON.stringify({ count, output, ...(evals ? { evals } : {}) }),
-      ...(noPapersSaved ? {
-        error: JSON.stringify({
-          message: "Research agent completed but found no suitable papers. Try rephrasing the journal entry or try again later.",
-          code: "NO_PAPERS_SAVED",
-        }),
-      } : {}),
-    });
   }).catch(async (err) => {
-    const message = err instanceof Error ? err.message : "LangGraph agent failed";
-    console.error("[generateResearch] LangGraph error:", message);
+    const message = err instanceof Error ? err.message : "LangGraph dispatch failed";
+    console.error("[generateResearch] dispatch error:", message);
     await db.updateGenerationJob(jobId, {
       status: "FAILED",
-      error: JSON.stringify({ message }),
+      error: JSON.stringify({ message, code: "DISPATCH_FAILED" }),
     });
   });
 
   return {
     success: true,
-    message: "Research generation started via LangGraph",
+    message: "Research generation started",
     jobId,
   };
 };

@@ -4491,7 +4491,15 @@ const messageSchema$2 = z.object({
   content: z.string()
 });
 const inputSchema = z.object({
-  messages: z.array(messageSchema$2)
+  messages: z.array(messageSchema$2),
+  jobId: z.string().optional(),
+  userEmail: z.string().optional(),
+  goalId: z.number().nullable().optional(),
+  issueId: z.number().nullable().optional(),
+  feedbackId: z.number().nullable().optional(),
+  journalEntryId: z.number().nullable().optional(),
+  hasRelatedMember: z.boolean().optional(),
+  evalPromptContext: z.string().optional()
 });
 const outputMessageSchema = z.object({
   type: z.string(),
@@ -5059,6 +5067,135 @@ async function runResearchAgent(userPrompt, userEmail) {
   }
   return "Research agent terminated without final summary (max turns reached).";
 }
+const EVIDENCE_WEIGHTS = {
+  "meta-analysis": 1,
+  meta_analysis: 1,
+  systematic_review: 0.9,
+  "systematic-review": 0.9,
+  rct: 0.8,
+  cohort: 0.6,
+  case_control: 0.5,
+  "case-control": 0.5,
+  case_series: 0.35,
+  "case-series": 0.35,
+  case_study: 0.2,
+  "case-study": 0.2,
+  expert_opinion: 0.1
+};
+function parseJsonField(value) {
+  if (!value) return [];
+  try {
+    const parsed = typeof value === "string" ? JSON.parse(value) : value;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+async function deepseekJson(prompt) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const resp = await fetch(DEEPSEEK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: "Respond with valid JSON." },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0,
+        stream: false
+      })
+    });
+    if (!resp.ok) return null;
+    const body = await resp.json();
+    const content = body.choices?.[0]?.message?.content ?? "{}";
+    return JSON.parse(content);
+  } catch {
+    return null;
+  }
+}
+async function runResearchEvals(ids, promptContext, hasRelatedMember) {
+  const rows = ids.journalEntryId ? await sql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE journal_entry_id = ${ids.journalEntryId} ORDER BY relevance_score DESC LIMIT 10` : ids.issueId ? await sql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE issue_id = ${ids.issueId} ORDER BY relevance_score DESC LIMIT 10` : ids.feedbackId ? await sql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE feedback_id = ${ids.feedbackId} ORDER BY relevance_score DESC LIMIT 10` : ids.goalId ? await sql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE goal_id = ${ids.goalId} ORDER BY relevance_score DESC LIMIT 10` : [];
+  if (!rows.length) {
+    return {
+      relevance: 0,
+      actionability: 0,
+      evidenceQuality: 0,
+      overall: 0,
+      rationale: "no papers found",
+      paperCount: 0,
+      error: "no papers found"
+    };
+  }
+  const evidenceQuality = rows.reduce(
+    (sum, r) => sum + (EVIDENCE_WEIGHTS[r.evidence_level] ?? 0.3),
+    0
+  ) / rows.length;
+  const papersText = rows.map((r, i) => {
+    const kf = parseJsonField(r.key_findings).slice(0, 3).join("; ");
+    const tt = parseJsonField(r.therapeutic_techniques).slice(0, 3).join("; ");
+    const abstract = (r.abstract || "").slice(0, 200);
+    return `[${i + 1}] ${r.title}
+Abstract: ${abstract}
+Key findings: ${kf}
+Techniques: ${tt}`;
+  }).join("\n\n");
+  const evalPrompt = [
+    `You are evaluating research papers curated for a therapy case.`,
+    ``,
+    `## Clinical Context`,
+    promptContext.slice(0, 800),
+    ``,
+    `## Papers Found (${rows.length})`,
+    papersText,
+    ``,
+    `Return JSON: {"relevance": 0-1, "actionability": 0-1, "familyDynamicsCoverage": 0-1, "rationale": "..."}`,
+    `- relevance: how well papers match the clinical topic`,
+    `- actionability: how actionable the techniques are for a practicing therapist`,
+    hasRelatedMember ? `- familyDynamicsCoverage: how well papers address family and relational dynamics (important: a related family member is involved)` : `- familyDynamicsCoverage: set to 0 since no related family member is involved`,
+    `- rationale: brief 2-3 sentence summary`
+  ].join("\n");
+  const parsed = await deepseekJson(evalPrompt);
+  const relevance = clamp01(parsed?.relevance);
+  const actionability = clamp01(parsed?.actionability);
+  const familyDynamicsCoverage = clamp01(parsed?.familyDynamicsCoverage);
+  const rationale = parsed?.rationale ?? "";
+  const components = [relevance, actionability, evidenceQuality];
+  if (hasRelatedMember) components.push(familyDynamicsCoverage);
+  const overall = components.reduce((a, b) => a + b, 0) / components.length;
+  const out = {
+    relevance: round2(relevance),
+    actionability: round2(actionability),
+    evidenceQuality: round2(evidenceQuality),
+    overall: round2(overall),
+    rationale,
+    paperCount: rows.length
+  };
+  if (hasRelatedMember) out.familyDynamicsCoverage = round2(familyDynamicsCoverage);
+  return out;
+}
+function clamp01(v) {
+  const n = typeof v === "number" ? v : 0;
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(1, Math.max(0, n));
+}
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+async function updateJobSucceeded(jobId, payload) {
+  const result = JSON.stringify(payload);
+  await sql`UPDATE generation_jobs SET status = 'SUCCEEDED', progress = 100, result = ${result}, updated_at = NOW() WHERE id = ${jobId}`;
+}
+async function updateJobFailed(jobId, error) {
+  const errJson = JSON.stringify(error);
+  await sql`UPDATE generation_jobs SET status = 'FAILED', error = ${errJson}, updated_at = NOW() WHERE id = ${jobId}`;
+}
 const runAgent = createStep({
   id: "run_agent",
   inputSchema,
@@ -5066,26 +5203,56 @@ const runAgent = createStep({
   execute: async ({ inputData }) => {
     const msgs = inputData.messages;
     const userMsg = [...msgs].reverse().find((m) => m.role === "user");
+    const jobId = inputData.jobId;
+    const trackJob = typeof jobId === "string" && jobId.length > 0;
     if (!userMsg) {
-      return {
-        messages: [
-          { type: "ai", content: "Error: no user message in input" }
-        ]
-      };
+      const content = "Error: no user message in input";
+      if (trackJob) {
+        await updateJobFailed(jobId, { message: content, code: "NO_USER_MESSAGE" });
+      }
+      return { messages: [{ type: "ai", content }] };
     }
-    const userEmail = process.env.MASTRA_RESEARCH_USER_EMAIL || "system";
+    const userEmail = inputData.userEmail || process.env.MASTRA_RESEARCH_USER_EMAIL || "system";
     try {
       const summary = await runResearchAgent(userMsg.content, userEmail);
-      return {
-        messages: [{ type: "ai", content: summary || "" }]
-      };
+      if (trackJob) {
+        let evals;
+        try {
+          evals = await runResearchEvals(
+            {
+              goalId: inputData.goalId ?? null,
+              issueId: inputData.issueId ?? null,
+              feedbackId: inputData.feedbackId ?? null,
+              journalEntryId: inputData.journalEntryId ?? null
+            },
+            inputData.evalPromptContext ?? userMsg.content,
+            inputData.hasRelatedMember ?? false
+          );
+        } catch (evalErr) {
+          console.error("[research.workflow] eval error:", evalErr);
+        }
+        if (evals?.error === "no papers found") {
+          await updateJobFailed(jobId, {
+            message: "Research agent completed but found no suitable papers. Try rephrasing or try again later.",
+            code: "NO_PAPERS_SAVED"
+          });
+        } else {
+          await updateJobSucceeded(jobId, {
+            count: 1,
+            output: summary || "",
+            evals
+          });
+        }
+      }
+      return { messages: [{ type: "ai", content: summary || "" }] };
     } catch (exc) {
       const m = exc instanceof Error ? exc.message : String(exc);
       console.error("[research.workflow] agent failed:", m);
+      if (trackJob) {
+        await updateJobFailed(jobId, { message: m, code: "AGENT_FAILED" });
+      }
       return {
-        messages: [
-          { type: "ai", content: `Research agent error: ${m}` }
-        ]
+        messages: [{ type: "ai", content: `Research agent error: ${m}` }]
       };
     }
   }
@@ -5097,6 +5264,7 @@ const researchWorkflow = createWorkflow({
 }).then(runAgent).commit();
 
 "use strict";
+const ASYNC_WORKFLOWS = /* @__PURE__ */ new Set(["research"]);
 function makeRunsWaitHandler(workflows) {
   return async (c) => {
     const body = await c.req.json();
@@ -5120,6 +5288,19 @@ function makeRunsWaitHandler(workflows) {
       return new Response(resp.body, { status: resp.status, headers: resp.headers });
     }
     const workflow = workflows[assistantId];
+    if (ASYNC_WORKFLOWS.has(assistantId) && c.executionCtx?.waitUntil) {
+      const input = body.input ?? {};
+      const promise = (async () => {
+        try {
+          const run2 = await workflow.createRun();
+          await run2.start({ inputData: input });
+        } catch (err) {
+          console.error(`[runs/wait] async workflow "${assistantId}" failed:`, err);
+        }
+      })();
+      c.executionCtx.waitUntil(promise);
+      return c.json({ accepted: true, assistant_id: assistantId }, 202);
+    }
     const run = await workflow.createRun();
     const result = await run.start({ inputData: body.input ?? {} });
     if (result.status === "success") {

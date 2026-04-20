@@ -1,6 +1,7 @@
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 import { upsertTherapyResearch } from "@/src/db";
+import { sql as neonSql } from "@/src/db/neon";
 
 const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
 
@@ -11,6 +12,14 @@ const messageSchema = z.object({
 
 const inputSchema = z.object({
   messages: z.array(messageSchema),
+  jobId: z.string().optional(),
+  userEmail: z.string().optional(),
+  goalId: z.number().nullable().optional(),
+  issueId: z.number().nullable().optional(),
+  feedbackId: z.number().nullable().optional(),
+  journalEntryId: z.number().nullable().optional(),
+  hasRelatedMember: z.boolean().optional(),
+  evalPromptContext: z.string().optional(),
 });
 
 const outputMessageSchema = z.object({
@@ -689,6 +698,194 @@ async function runResearchAgent(
   return "Research agent terminated without final summary (max turns reached).";
 }
 
+const EVIDENCE_WEIGHTS: Record<string, number> = {
+  "meta-analysis": 1.0,
+  meta_analysis: 1.0,
+  systematic_review: 0.9,
+  "systematic-review": 0.9,
+  rct: 0.8,
+  cohort: 0.6,
+  case_control: 0.5,
+  "case-control": 0.5,
+  case_series: 0.35,
+  "case-series": 0.35,
+  case_study: 0.2,
+  "case-study": 0.2,
+  expert_opinion: 0.1,
+};
+
+function parseJsonField(value: unknown): string[] {
+  if (!value) return [];
+  try {
+    const parsed = typeof value === "string" ? JSON.parse(value) : value;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function deepseekJson<T>(prompt: string): Promise<T | null> {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const resp = await fetch(DEEPSEEK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: "Respond with valid JSON." },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0,
+        stream: false,
+      }),
+    });
+    if (!resp.ok) return null;
+    const body = (await resp.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const content = body.choices?.[0]?.message?.content ?? "{}";
+    return JSON.parse(content) as T;
+  } catch {
+    return null;
+  }
+}
+
+type EvalScores = {
+  relevance: number;
+  actionability: number;
+  evidenceQuality: number;
+  overall: number;
+  rationale: string;
+  paperCount: number;
+  familyDynamicsCoverage?: number;
+  error?: string;
+};
+
+async function runResearchEvals(
+  ids: {
+    goalId?: number | null;
+    issueId?: number | null;
+    feedbackId?: number | null;
+    journalEntryId?: number | null;
+  },
+  promptContext: string,
+  hasRelatedMember: boolean,
+): Promise<EvalScores> {
+  const rows = ids.journalEntryId
+    ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE journal_entry_id = ${ids.journalEntryId} ORDER BY relevance_score DESC LIMIT 10`
+    : ids.issueId
+      ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE issue_id = ${ids.issueId} ORDER BY relevance_score DESC LIMIT 10`
+      : ids.feedbackId
+        ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE feedback_id = ${ids.feedbackId} ORDER BY relevance_score DESC LIMIT 10`
+        : ids.goalId
+          ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE goal_id = ${ids.goalId} ORDER BY relevance_score DESC LIMIT 10`
+          : [];
+
+  if (!rows.length) {
+    return {
+      relevance: 0,
+      actionability: 0,
+      evidenceQuality: 0,
+      overall: 0,
+      rationale: "no papers found",
+      paperCount: 0,
+      error: "no papers found",
+    };
+  }
+
+  const evidenceQuality =
+    rows.reduce(
+      (sum, r) => sum + (EVIDENCE_WEIGHTS[r.evidence_level as string] ?? 0.3),
+      0,
+    ) / rows.length;
+
+  const papersText = rows
+    .map((r, i) => {
+      const kf = parseJsonField(r.key_findings).slice(0, 3).join("; ");
+      const tt = parseJsonField(r.therapeutic_techniques).slice(0, 3).join("; ");
+      const abstract = ((r.abstract as string) || "").slice(0, 200);
+      return `[${i + 1}] ${r.title}\nAbstract: ${abstract}\nKey findings: ${kf}\nTechniques: ${tt}`;
+    })
+    .join("\n\n");
+
+  const evalPrompt = [
+    `You are evaluating research papers curated for a therapy case.`,
+    ``,
+    `## Clinical Context`,
+    promptContext.slice(0, 800),
+    ``,
+    `## Papers Found (${rows.length})`,
+    papersText,
+    ``,
+    `Return JSON: {"relevance": 0-1, "actionability": 0-1, "familyDynamicsCoverage": 0-1, "rationale": "..."}`,
+    `- relevance: how well papers match the clinical topic`,
+    `- actionability: how actionable the techniques are for a practicing therapist`,
+    hasRelatedMember
+      ? `- familyDynamicsCoverage: how well papers address family and relational dynamics (important: a related family member is involved)`
+      : `- familyDynamicsCoverage: set to 0 since no related family member is involved`,
+    `- rationale: brief 2-3 sentence summary`,
+  ].join("\n");
+
+  const parsed = await deepseekJson<{
+    relevance?: number;
+    actionability?: number;
+    familyDynamicsCoverage?: number;
+    rationale?: string;
+  }>(evalPrompt);
+
+  const relevance = clamp01(parsed?.relevance);
+  const actionability = clamp01(parsed?.actionability);
+  const familyDynamicsCoverage = clamp01(parsed?.familyDynamicsCoverage);
+  const rationale = parsed?.rationale ?? "";
+
+  const components = [relevance, actionability, evidenceQuality];
+  if (hasRelatedMember) components.push(familyDynamicsCoverage);
+  const overall = components.reduce((a, b) => a + b, 0) / components.length;
+
+  const out: EvalScores = {
+    relevance: round2(relevance),
+    actionability: round2(actionability),
+    evidenceQuality: round2(evidenceQuality),
+    overall: round2(overall),
+    rationale,
+    paperCount: rows.length,
+  };
+  if (hasRelatedMember) out.familyDynamicsCoverage = round2(familyDynamicsCoverage);
+  return out;
+}
+
+function clamp01(v: unknown): number {
+  const n = typeof v === "number" ? v : 0;
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(1, Math.max(0, n));
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+async function updateJobSucceeded(
+  jobId: string,
+  payload: { count: number; output: string; evals?: EvalScores },
+) {
+  const result = JSON.stringify(payload);
+  await neonSql`UPDATE generation_jobs SET status = 'SUCCEEDED', progress = 100, result = ${result}, updated_at = NOW() WHERE id = ${jobId}`;
+}
+
+async function updateJobFailed(
+  jobId: string,
+  error: { message: string; code?: string; details?: string },
+) {
+  const errJson = JSON.stringify(error);
+  await neonSql`UPDATE generation_jobs SET status = 'FAILED', error = ${errJson}, updated_at = NOW() WHERE id = ${jobId}`;
+}
+
 const runAgent = createStep({
   id: "run_agent",
   inputSchema,
@@ -696,26 +893,66 @@ const runAgent = createStep({
   execute: async ({ inputData }) => {
     const msgs = inputData.messages;
     const userMsg = [...msgs].reverse().find((m) => m.role === "user");
+    const jobId = inputData.jobId;
+    const trackJob = typeof jobId === "string" && jobId.length > 0;
+
     if (!userMsg) {
-      return {
-        messages: [
-          { type: "ai", content: "Error: no user message in input" },
-        ],
-      };
+      const content = "Error: no user message in input";
+      if (trackJob) {
+        await updateJobFailed(jobId!, { message: content, code: "NO_USER_MESSAGE" });
+      }
+      return { messages: [{ type: "ai", content }] };
     }
-    const userEmail = process.env.MASTRA_RESEARCH_USER_EMAIL || "system";
+
+    const userEmail =
+      inputData.userEmail ||
+      process.env.MASTRA_RESEARCH_USER_EMAIL ||
+      "system";
+
     try {
       const summary = await runResearchAgent(userMsg.content, userEmail);
-      return {
-        messages: [{ type: "ai", content: summary || "" }],
-      };
+
+      if (trackJob) {
+        let evals: EvalScores | undefined;
+        try {
+          evals = await runResearchEvals(
+            {
+              goalId: inputData.goalId ?? null,
+              issueId: inputData.issueId ?? null,
+              feedbackId: inputData.feedbackId ?? null,
+              journalEntryId: inputData.journalEntryId ?? null,
+            },
+            inputData.evalPromptContext ?? userMsg.content,
+            inputData.hasRelatedMember ?? false,
+          );
+        } catch (evalErr) {
+          console.error("[research.workflow] eval error:", evalErr);
+        }
+
+        if (evals?.error === "no papers found") {
+          await updateJobFailed(jobId!, {
+            message:
+              "Research agent completed but found no suitable papers. Try rephrasing or try again later.",
+            code: "NO_PAPERS_SAVED",
+          });
+        } else {
+          await updateJobSucceeded(jobId!, {
+            count: 1,
+            output: summary || "",
+            evals,
+          });
+        }
+      }
+
+      return { messages: [{ type: "ai", content: summary || "" }] };
     } catch (exc) {
       const m = exc instanceof Error ? exc.message : String(exc);
       console.error("[research.workflow] agent failed:", m);
+      if (trackJob) {
+        await updateJobFailed(jobId!, { message: m, code: "AGENT_FAILED" });
+      }
       return {
-        messages: [
-          { type: "ai", content: `Research agent error: ${m}` },
-        ],
+        messages: [{ type: "ai", content: `Research agent error: ${m}` }],
       };
     }
   },
