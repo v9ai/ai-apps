@@ -4780,15 +4780,32 @@ function extractKeyPhrase(userPrompt) {
   const prose = lines.find((l) => l.length > 20 && !/^[#*\-•]/.test(l) && !/_id:/.test(l));
   return (prose ?? userPrompt).slice(0, 140);
 }
+function extractAgeContext(userPrompt) {
+  const lines = userPrompt.split("\n").map((l) => l.trim()).filter(Boolean);
+  const memberLine = lines.find((l) => /^(Person|Patient|Primary person|Also involves):/i.test(l));
+  if (!memberLine) return "";
+  const ageMatch = memberLine.match(/age\s+(\d+)/i);
+  if (!ageMatch) return "";
+  const age = parseInt(ageMatch[1], 10);
+  if (!Number.isFinite(age) || age < 0 || age > 120) return "";
+  if (age < 3) return "infant";
+  if (age < 6) return "preschool children";
+  if (age < 13) return `children age ${age}`;
+  if (age < 18) return `adolescents age ${age}`;
+  if (age < 25) return "young adults";
+  if (age < 65) return "adults";
+  return "older adults";
+}
 async function phasePlanQueries(userPrompt) {
-  const core = extractKeyPhrase(userPrompt);
-  const kept = core.trim();
-  if (!kept) {
+  const core = extractKeyPhrase(userPrompt).trim();
+  const ageCtx = extractAgeContext(userPrompt);
+  if (!core) {
     return ["evidence-based psychotherapy", "therapeutic interventions outcomes", "clinical therapy"];
   }
-  const queries = [kept];
-  queries.push(`${kept} intervention therapy`.slice(0, 200));
-  queries.push(`${kept} outcomes evidence-based`.slice(0, 200));
+  const withAge = ageCtx ? `${ageCtx} ${core}` : core;
+  const queries = [withAge.slice(0, 200)];
+  queries.push(`${withAge} intervention therapy`.slice(0, 200));
+  queries.push(`${withAge} outcomes evidence-based`.slice(0, 200));
   return queries;
 }
 async function phaseSearchAll(queries) {
