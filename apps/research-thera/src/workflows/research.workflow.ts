@@ -396,12 +396,12 @@ async function phaseRankAndExtract(
   pool: PaperResult[],
 ): Promise<CuratedPaper[]> {
   if (pool.length === 0) return [];
-  const candidates = pool.slice(0, 40);
+  const candidates = pool.slice(0, 25);
 
   const listed = candidates
     .map((p, i) => {
-      const abs = (p.abstract || "").slice(0, 400);
-      const auth = p.authors.slice(0, 3).join(", ");
+      const abs = (p.abstract || "").slice(0, 220);
+      const auth = p.authors.slice(0, 2).join(", ");
       return `[${i}] ${p.title} (${p.year ?? "n.d."}) — ${auth}\n  ${abs}`;
     })
     .join("\n\n");

@@ -19,7 +19,8 @@ type Finisher = {
   rank: number;
   name: string;
   completedAt: string;
-  url?: string;
+  github?: string;
+  website?: string;
 };
 
 const FINISHERS: Finisher[] = [
@@ -27,13 +28,15 @@ const FINISHERS: Finisher[] = [
     rank: 1,
     name: "Lucas Valbuena",
     completedAt: "Apr 19, 2026",
-    url: "https://github.com/x1xhlol",
+    github: "https://github.com/x1xhlol",
+    website: "https://lucasvalbuena.com",
   },
   {
     rank: 2,
     name: "Jonatas Soares",
     completedAt: "Apr 19, 2026",
-    url: "https://github.com/jxnxts",
+    github: "https://github.com/jxnxts",
+    website: "http://jonatassoares.com",
   },
 ];
 
@@ -100,29 +103,51 @@ function CourseCard({ course }: { course: Course }) {
 }
 
 function FinisherCard({ finisher }: { finisher: Finisher }) {
-  const inner = (
-    <>
+  const linkStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    fontSize: "0.8125rem",
+    color: "var(--gray-11)",
+    textDecoration: "none",
+  };
+  return (
+    <div className="course-card">
       <div className="course-card-header">
         <span className="course-provider-icon">{finisher.rank}</span>
         <span className="course-provider-name">{finisher.completedAt}</span>
       </div>
       <div className="course-card-title">{finisher.name}</div>
       <p className="course-card-desc">Completed all 4 courses</p>
-    </>
+      {(finisher.github || finisher.website) && (
+        <div
+          className="course-card-footer"
+          style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}
+        >
+          {finisher.github && (
+            <a
+              href={finisher.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={linkStyle}
+            >
+              🐙 GitHub
+            </a>
+          )}
+          {finisher.website && (
+            <a
+              href={finisher.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={linkStyle}
+            >
+              🌐 Website
+            </a>
+          )}
+        </div>
+      )}
+    </div>
   );
-  if (finisher.url) {
-    return (
-      <a
-        href={finisher.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="course-card"
-      >
-        {inner}
-      </a>
-    );
-  }
-  return <div className="course-card">{inner}</div>;
 }
 
 export default function AnthropicLearningPathPage() {

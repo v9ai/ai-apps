@@ -4508,35 +4508,6 @@ const outputMessageSchema = z.object({
 const outputSchema$1 = z.object({
   messages: z.array(outputMessageSchema)
 });
-const RESEARCH_PREAMBLE = `You are a clinical research specialist for a therapeutic platform supporting children and families.
-You have access to academic paper search via search_papers and get_paper_detail.
-The search tool fans out across 6 providers in parallel \u2014 OpenAlex, Crossref, Semantic Scholar, arXiv, CORE, and Zenodo \u2014 deduplicates by DOI/title, and reranks by semantic relevance.
-
-CRITICAL WORKFLOW \u2014 follow this exact order:
-1. Run exactly 3 search_papers calls with different query terms; set limit=10 on each call
-2. Call get_paper_detail on at most 2 papers for full abstracts
-3. Select the TOP 10 most relevant papers \u2014 quality over quantity
-4. IMMEDIATELY call save_research_papers with the curated papers JSON \u2014 do this BEFORE writing any summary
-5. After save_research_papers succeeds, write a brief summary (under 500 words)
-
-IMPORTANT RULES:
-- You MUST call save_research_papers. Do NOT skip this step or just describe what you would save.
-- Do NOT write a long narrative before calling save_research_papers \u2014 the tool call must come first.
-- The goal_id, feedback_id, issue_id, or journal_entry_id will be provided in the user message \u2014 include whichever is given in the save_research_papers call.
-- Weight evidence level: meta-analysis > systematic review > RCT > cohort > case study
-- Extract concrete therapeutic techniques from each paper
-- Identify outcome measures and their effect sizes when available
-- Report confidence honestly \u2014 say 'insufficient evidence' if the literature is sparse
-
-Evidence levels:
-- meta-analysis: pooled analysis of multiple studies
-- systematic_review: structured review of literature
-- rct: randomized controlled trial
-- cohort: prospective observational study
-- case_control: retrospective comparison
-- case_series: multiple case reports
-- case_study: single case report
-- expert_opinion: clinical consensus without empirical data`;
 function reconstructAbstract(index) {
   if (!index) return null;
   const words = [];
@@ -4555,37 +4526,41 @@ async function searchOpenAlex(query, limit) {
     "select",
     "id,title,authorships,publication_year,abstract_inverted_index,doi,primary_location,cited_by_count"
   );
-  const resp = await fetch(url.toString(), {
-    headers: { "User-Agent": `research-thera-mastra (mailto:${mailto})` }
-  });
-  if (!resp.ok) return [];
-  const data = await resp.json();
-  return (data.results || []).map((item) => {
-    const it = item;
-    const authorships = it.authorships || [];
-    const authors = authorships.map((a) => {
-      const author = a.author;
-      return author?.display_name;
-    }).filter((n) => typeof n === "string");
-    const doiRaw = it.doi || "";
-    const doi = doiRaw.replace("https://doi.org/", "") || null;
-    const abstract = reconstructAbstract(
-      it.abstract_inverted_index
-    );
-    const loc = it.primary_location || {};
-    const url2 = loc.landing_page_url || null;
-    const titleRaw = it.title;
-    const title = Array.isArray(titleRaw) ? titleRaw[0] || "Untitled" : titleRaw || "Untitled";
-    return {
-      title,
-      authors,
-      year: it.publication_year ?? null,
-      abstract,
-      doi,
-      url: url2,
-      citation_count: it.cited_by_count ?? null
-    };
-  });
+  try {
+    const resp = await fetch(url.toString(), {
+      headers: { "User-Agent": `research-thera-mastra (mailto:${mailto})` }
+    });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return (data.results || []).map((item) => {
+      const it = item;
+      const authorships = it.authorships || [];
+      const authors = authorships.map((a) => {
+        const author = a.author;
+        return author?.display_name;
+      }).filter((n) => typeof n === "string");
+      const doiRaw = it.doi || "";
+      const doi = doiRaw.replace("https://doi.org/", "") || null;
+      const abstract = reconstructAbstract(
+        it.abstract_inverted_index
+      );
+      const loc = it.primary_location || {};
+      const u = loc.landing_page_url || null;
+      const titleRaw = it.title;
+      const title = Array.isArray(titleRaw) ? titleRaw[0] || "Untitled" : titleRaw || "Untitled";
+      return {
+        title,
+        authors,
+        year: it.publication_year ?? null,
+        abstract,
+        doi,
+        url: u,
+        citation_count: it.cited_by_count ?? null
+      };
+    });
+  } catch {
+    return [];
+  }
 }
 async function searchCrossref(query, limit) {
   const url = new URL("https://api.crossref.org/works");
@@ -4762,21 +4737,9 @@ async function getS2PaperDetail(paperId) {
     return null;
   }
 }
-async function deepseekRerank(query, papers, topK) {
-  if (papers.length <= topK) return papers;
+async function deepseekJson(prompt, systemPrompt) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return papers.slice(0, topK);
-  const listed = papers.map((p, i) => {
-    const abs = (p.abstract || "").slice(0, 300);
-    return `[${i}] ${p.title} (${p.year ?? "n.d."})
-${abs}`;
-  }).join("\n\n");
-  const prompt = `Rank these academic papers by relevance to the query: "${query}"
-
-Return JSON of the form {"rankedIds": [<integer indices>]} with exactly ${topK} indices, best first.
-
-Papers:
-${listed}`;
+  if (!apiKey) return null;
   try {
     const resp = await fetch(DEEPSEEK_URL, {
       method: "POST",
@@ -4787,7 +4750,7 @@ ${listed}`;
       body: JSON.stringify({
         model: "deepseek-chat",
         messages: [
-          { role: "system", content: "Respond with valid JSON." },
+          { role: "system", content: systemPrompt || "Respond with valid JSON." },
           { role: "user", content: prompt }
         ],
         response_format: { type: "json_object" },
@@ -4795,146 +4758,147 @@ ${listed}`;
         stream: false
       })
     });
-    if (!resp.ok) return papers.slice(0, topK);
+    if (!resp.ok) return null;
     const body = await resp.json();
     const content = body.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content);
-    const ids = Array.isArray(parsed.rankedIds) ? parsed.rankedIds : [];
-    const seen = /* @__PURE__ */ new Set();
-    const out = [];
-    for (const raw of ids) {
-      const idx = typeof raw === "number" ? raw : Number(raw);
-      if (!Number.isInteger(idx) || idx < 0 || idx >= papers.length) continue;
-      if (seen.has(idx)) continue;
-      seen.add(idx);
-      out.push(papers[idx]);
-      if (out.length === topK) break;
-    }
-    if (out.length === 0) return papers.slice(0, topK);
-    return out;
+    return JSON.parse(content);
   } catch {
-    return papers.slice(0, topK);
+    return null;
   }
 }
-function formatSearchResults(query, papers) {
-  if (papers.length === 0) return `No results found for query: ${query}`;
-  const lines = [`Search results for: ${query} (reranked by semantic relevance)`, ""];
-  papers.forEach((p, i) => {
-    const authors = p.authors.join(", ");
-    const abstract = (p.abstract || "").slice(0, 150);
-    lines.push(
-      `[${i + 1}] ${p.title} (${p.year ?? "n.d."})
-  Authors: ${authors}
-  Abstract: ${abstract}...
-  DOI: ${p.doi || ""}
-`
-    );
-  });
-  return lines.join("\n");
+async function phasePlanQueries(userPrompt) {
+  const planPrompt = [
+    `You are planning academic search queries for a clinical research task.`,
+    ``,
+    `## Clinical context`,
+    userPrompt.slice(0, 2e3),
+    ``,
+    `Return JSON: {"queries": ["q1", "q2", "q3"]}`,
+    `- Each query should be in English (translate if the context is in another language).`,
+    `- Queries should be complementary: one on the core condition, one on specific interventions/techniques, one on outcome measures or family/relational aspects.`,
+    `- Each query must be concise (5-12 words) and use clinical terminology.`
+  ].join("\n");
+  const parsed = await deepseekJson(planPrompt);
+  const q = Array.isArray(parsed?.queries) ? parsed.queries : [];
+  const queries = q.filter((s) => typeof s === "string" && s.trim().length > 0).slice(0, 3);
+  if (queries.length === 0) {
+    return [userPrompt.slice(0, 100), "evidence-based psychotherapy", "therapeutic interventions outcomes"];
+  }
+  while (queries.length < 3) {
+    queries.push(queries[queries.length - 1]);
+  }
+  return queries;
 }
-async function toolSearchPapers(args) {
-  const limit = args.limit ?? 10;
-  const perProvider = Math.max(5, limit * 2);
-  const results = await Promise.allSettled([
-    searchOpenAlex(args.query, perProvider),
-    searchCrossref(args.query, perProvider),
-    searchSemanticScholar(args.query, perProvider),
-    searchArxiv(args.query, perProvider),
-    searchCore(args.query, perProvider),
-    searchZenodo(args.query, perProvider)
-  ]);
+async function phaseSearchAll(queries) {
+  const perProvider = 10;
+  const tasks = [];
+  for (const q of queries) {
+    tasks.push(searchOpenAlex(q, perProvider));
+    tasks.push(searchCrossref(q, perProvider));
+    tasks.push(searchSemanticScholar(q, perProvider));
+    tasks.push(searchArxiv(q, perProvider));
+    tasks.push(searchCore(q, perProvider));
+    tasks.push(searchZenodo(q, perProvider));
+  }
+  const results = await Promise.allSettled(tasks);
   const pool = results.flatMap((r) => r.status === "fulfilled" ? r.value : []);
-  const deduped = dedupePapers(pool);
-  if (deduped.length === 0) return `No results found for query: ${args.query}`;
-  const ranked = await deepseekRerank(args.query, deduped, limit);
-  return formatSearchResults(args.query, ranked);
+  const filtered = pool.filter((p) => {
+    const a = (p.abstract || "").trim().toLowerCase();
+    return a.length >= 50 && a !== "none" && a !== "..." && a !== "n/a" && a !== "no abstract available";
+  });
+  return dedupePapers(filtered);
 }
-async function toolGetPaperDetail(args) {
-  const id = args.doi_or_title;
-  if (id.startsWith("10.")) {
-    const detail = await getS2PaperDetail(`DOI:${id}`);
-    if (detail) {
-      const authors = detail.authors || [];
-      const authorsStr = authors.map((a) => a.name || "").filter(Boolean).join(", ");
-      const tldr = (detail.tldr || {}).text || "";
-      return [
-        `Title: ${detail.title || ""}`,
-        `Authors: ${authorsStr}`,
-        `Year: ${detail.year ?? "n.d."}`,
-        `Abstract: ${detail.abstract || ""}`,
-        `TLDR: ${tldr}`,
-        `Citations: ${detail.citationCount ?? 0}`
-      ].join("\n");
-    }
+async function phaseRankAndExtract(userPrompt, pool) {
+  if (pool.length === 0) return [];
+  const candidates = pool.slice(0, 40);
+  const listed = candidates.map((p, i) => {
+    const abs = (p.abstract || "").slice(0, 400);
+    const auth = p.authors.slice(0, 3).join(", ");
+    return `[${i}] ${p.title} (${p.year ?? "n.d."}) \u2014 ${auth}
+  ${abs}`;
+  }).join("\n\n");
+  const rankPrompt = [
+    `You are curating academic research papers for a therapy case.`,
+    ``,
+    `## Clinical context`,
+    userPrompt.slice(0, 1500),
+    ``,
+    `## Candidate papers (${candidates.length})`,
+    listed,
+    ``,
+    `Pick the TOP 10 most relevant papers. For each, extract clinical metadata.`,
+    ``,
+    `Return JSON: {"selected": [{"index": <int>, "key_findings": [string, 2-3 items], "therapeutic_techniques": [string, 2-3 items], "evidence_level": "meta-analysis|systematic_review|rct|cohort|case_control|case_series|case_study|expert_opinion", "relevance_score": <0-1 float>}]}`,
+    ``,
+    `Weight higher: meta-analysis > systematic_review > rct > cohort > case_*. Be honest about evidence_level based on the abstract.`
+  ].join("\n");
+  const parsed = await deepseekJson(rankPrompt);
+  const selected = Array.isArray(parsed?.selected) ? parsed.selected : [];
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const s of selected) {
+    const idx = typeof s.index === "number" ? s.index : -1;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= candidates.length || seen.has(idx)) continue;
+    seen.add(idx);
+    const base = candidates[idx];
+    const kf = Array.isArray(s.key_findings) ? s.key_findings.filter((x) => typeof x === "string").slice(0, 5) : [];
+    const tt = Array.isArray(s.therapeutic_techniques) ? s.therapeutic_techniques.filter((x) => typeof x === "string").slice(0, 5) : [];
+    const rs = typeof s.relevance_score === "number" && Number.isFinite(s.relevance_score) ? Math.min(1, Math.max(0, s.relevance_score)) : 0.5;
+    out.push({
+      ...base,
+      key_findings: kf,
+      therapeutic_techniques: tt,
+      evidence_level: s.evidence_level || null,
+      relevance_score: rs
+    });
+    if (out.length === 10) break;
   }
-  const fallback = await searchOpenAlex(id, 1);
-  if (fallback.length > 0) {
-    const p = fallback[0];
-    return [
-      `Title: ${p.title}`,
-      `Authors: ${p.authors.join(", ")}`,
-      `Year: ${p.year ?? "n.d."}`,
-      `Abstract: ${p.abstract || "No abstract available"}`,
-      `DOI: ${p.doi || ""}`
-    ].join("\n");
+  const enrichTargets = out.slice(0, 2).map((p) => p.doi).filter((d) => !!d);
+  if (enrichTargets.length > 0) {
+    const details = await Promise.allSettled(
+      enrichTargets.map((doi) => getS2PaperDetail(`DOI:${doi}`))
+    );
+    details.forEach((r, i) => {
+      if (r.status !== "fulfilled" || !r.value) return;
+      const det = r.value;
+      const paper = out[i];
+      const betterAbstract = det.abstract || paper.abstract;
+      if (betterAbstract && betterAbstract.length > (paper.abstract?.length ?? 0)) {
+        paper.abstract = betterAbstract;
+      }
+    });
   }
-  return `No details found for: ${id}`;
+  return out;
 }
-async function toolSaveResearchPapers(args, userEmail) {
-  let data;
-  try {
-    data = JSON.parse(args.papers_json);
-  } catch (exc) {
-    const msg = exc instanceof Error ? exc.message : String(exc);
-    return `Invalid JSON: ${msg}`;
-  }
-  const feedbackId = data.feedback_id ?? null;
-  const issueId = data.issue_id ?? null;
-  const goalId = data.goal_id ?? null;
-  const journalEntryId = data.journal_entry_id ?? null;
-  if (!feedbackId && !issueId && !goalId && !journalEntryId) {
-    return "Error: one of goal_id, feedback_id, issue_id, or journal_entry_id is required";
-  }
-  const therapeuticGoalType = (data.therapeutic_goal_type || "").toString();
-  const papers = (data.papers || []).slice(0, 10);
-  if (papers.length === 0) return "No papers to save";
+async function phaseSave(papers, userEmail, ids) {
   let saved = 0;
   let skipped = 0;
   let failed = 0;
   for (const paper of papers) {
-    const abstractRaw = paper.abstract || "";
-    const abstract = abstractRaw.trim();
+    const abstract = (paper.abstract || "").trim();
     const lowered = abstract.toLowerCase();
     if (!abstract || lowered === "none" || lowered === "..." || lowered === "n/a" || lowered === "no abstract available" || abstract.length < 50) {
       skipped += 1;
       continue;
     }
     try {
-      const rawAuthors = paper.authors;
-      const authors = Array.isArray(rawAuthors) ? rawAuthors.filter((a) => typeof a === "string") : [];
-      const rawFindings = paper.key_findings;
-      const keyFindings = Array.isArray(rawFindings) ? rawFindings.filter((f) => typeof f === "string") : [];
-      const rawTechniques = paper.therapeutic_techniques;
-      const therapeuticTechniques = Array.isArray(rawTechniques) ? rawTechniques.filter((t) => typeof t === "string") : [];
-      const relevanceRaw = Number(paper.relevance_score ?? 0);
-      const relevanceScore = Number.isFinite(relevanceRaw) ? relevanceRaw : 0;
-      await upsertTherapyResearch(goalId, userEmail, {
-        feedbackId,
-        issueId,
-        journalEntryId,
-        therapeuticGoalType,
-        title: paper.title || "",
-        authors,
-        year: paper.year ?? null,
-        doi: paper.doi ?? null,
-        url: paper.url ?? null,
+      await upsertTherapyResearch(ids.goalId ?? null, userEmail, {
+        feedbackId: ids.feedbackId ?? null,
+        issueId: ids.issueId ?? null,
+        journalEntryId: ids.journalEntryId ?? null,
+        therapeuticGoalType: "",
+        title: paper.title,
+        authors: paper.authors,
+        year: paper.year,
+        doi: paper.doi,
+        url: paper.url,
         abstract,
-        keyFindings,
-        therapeuticTechniques,
-        evidenceLevel: paper.evidence_level ?? null,
-        relevanceScore,
-        extractedBy: "mastra:deepseek-chat:v1",
-        extractionConfidence: 0.8
+        keyFindings: paper.key_findings,
+        therapeuticTechniques: paper.therapeutic_techniques,
+        evidenceLevel: paper.evidence_level,
+        relevanceScore: paper.relevance_score,
+        extractedBy: "mastra:deepseek-chat:pipeline-v1",
+        extractionConfidence: 0.85
       });
       saved += 1;
     } catch (exc) {
@@ -4943,129 +4907,7 @@ async function toolSaveResearchPapers(args, userEmail) {
       console.error("[research.save] Error saving paper:", msg);
     }
   }
-  const parts = [`Saved ${saved} papers to database`];
-  if (skipped) parts.push(`${skipped} skipped (no abstract)`);
-  if (failed) parts.push(`${failed} failed`);
-  return parts.join(", ");
-}
-const TOOL_DEFS = [
-  {
-    type: "function",
-    function: {
-      name: "search_papers",
-      description: "Search academic papers across 6 providers in parallel (OpenAlex, Crossref, Semantic Scholar, arXiv, CORE, Zenodo). Returns titles, authors, citation counts, abstracts, and DOIs \u2014 deduplicated by DOI/title and reranked for semantic relevance. Call multiple times with different query terms to cover the topic.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: { type: "string", description: "Search query" },
-          limit: { type: "integer", description: "Number of results", default: 10 }
-        },
-        required: ["query"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_paper_detail",
-      description: "Get full details for a specific paper: complete abstract, AI-generated TLDR, all authors, venue, citation context. Use on the most relevant papers to extract therapeutic techniques and evidence level.",
-      parameters: {
-        type: "object",
-        properties: {
-          doi_or_title: { type: "string", description: "DOI (10.xxx) or paper title" }
-        },
-        required: ["doi_or_title"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "save_research_papers",
-      description: 'Save the final curated research papers to the database. Call this ONCE at the end with a JSON string: {"goal_id": <int> OR "feedback_id" OR "issue_id" OR "journal_entry_id", "therapeutic_goal_type": "<string>", "papers": [{"title","authors","year","doi","url","abstract","key_findings","therapeutic_techniques","evidence_level","relevance_score"}]}',
-      parameters: {
-        type: "object",
-        properties: {
-          papers_json: { type: "string", description: "JSON string of papers payload" }
-        },
-        required: ["papers_json"]
-      }
-    }
-  }
-];
-const MAX_TURNS = 12;
-async function runResearchAgent(userPrompt, userEmail) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new Error("DEEPSEEK_API_KEY not set");
-  const chat = [
-    { role: "system", content: RESEARCH_PREAMBLE },
-    { role: "user", content: userPrompt }
-  ];
-  for (let turn = 0; turn < MAX_TURNS; turn += 1) {
-    const resp = await fetch(DEEPSEEK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: chat,
-        tools: TOOL_DEFS,
-        temperature: 0,
-        stream: false
-      })
-    });
-    if (!resp.ok) {
-      const body = await resp.text().catch(() => "");
-      throw new Error(`DeepSeek HTTP ${resp.status}: ${body.slice(0, 400)}`);
-    }
-    const data = await resp.json();
-    const msg = data.choices?.[0]?.message;
-    if (!msg) throw new Error("DeepSeek returned no message");
-    chat.push({
-      role: "assistant",
-      content: msg.content ?? null,
-      tool_calls: msg.tool_calls
-    });
-    const toolCalls = msg.tool_calls;
-    if (!toolCalls || toolCalls.length === 0) {
-      return msg.content ?? "";
-    }
-    for (const tc of toolCalls) {
-      let result;
-      try {
-        const parsed = JSON.parse(tc.function.arguments || "{}");
-        if (tc.function.name === "search_papers") {
-          result = await toolSearchPapers({
-            query: String(parsed.query ?? ""),
-            limit: typeof parsed.limit === "number" ? parsed.limit : void 0
-          });
-        } else if (tc.function.name === "get_paper_detail") {
-          result = await toolGetPaperDetail({
-            doi_or_title: String(parsed.doi_or_title ?? "")
-          });
-        } else if (tc.function.name === "save_research_papers") {
-          result = await toolSaveResearchPapers(
-            { papers_json: String(parsed.papers_json ?? "{}") },
-            userEmail
-          );
-        } else {
-          result = `Unknown tool: ${tc.function.name}`;
-        }
-      } catch (exc) {
-        const m = exc instanceof Error ? exc.message : String(exc);
-        result = `Tool error: ${m}`;
-      }
-      chat.push({
-        role: "tool",
-        tool_call_id: tc.id,
-        name: tc.function.name,
-        content: result
-      });
-    }
-  }
-  return "Research agent terminated without final summary (max turns reached).";
+  return { saved, skipped, failed };
 }
 const EVIDENCE_WEIGHTS = {
   "meta-analysis": 1,
@@ -5091,34 +4933,13 @@ function parseJsonField(value) {
     return [];
   }
 }
-async function deepseekJson(prompt) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return null;
-  try {
-    const resp = await fetch(DEEPSEEK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          { role: "system", content: "Respond with valid JSON." },
-          { role: "user", content: prompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0,
-        stream: false
-      })
-    });
-    if (!resp.ok) return null;
-    const body = await resp.json();
-    const content = body.choices?.[0]?.message?.content ?? "{}";
-    return JSON.parse(content);
-  } catch {
-    return null;
-  }
+function clamp01(v) {
+  const n = typeof v === "number" ? v : 0;
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(1, Math.max(0, n));
+}
+function round2(n) {
+  return Math.round(n * 100) / 100;
 }
 async function runResearchEvals(ids, promptContext, hasRelatedMember) {
   const rows = ids.journalEntryId ? await sql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE journal_entry_id = ${ids.journalEntryId} ORDER BY relevance_score DESC LIMIT 10` : ids.issueId ? await sql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE issue_id = ${ids.issueId} ORDER BY relevance_score DESC LIMIT 10` : ids.feedbackId ? await sql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE feedback_id = ${ids.feedbackId} ORDER BY relevance_score DESC LIMIT 10` : ids.goalId ? await sql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE goal_id = ${ids.goalId} ORDER BY relevance_score DESC LIMIT 10` : [];
@@ -5180,14 +5001,6 @@ Techniques: ${tt}`;
   if (hasRelatedMember) out.familyDynamicsCoverage = round2(familyDynamicsCoverage);
   return out;
 }
-function clamp01(v) {
-  const n = typeof v === "number" ? v : 0;
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(1, Math.max(0, n));
-}
-function round2(n) {
-  return Math.round(n * 100) / 100;
-}
 async function updateJobSucceeded(jobId, payload) {
   const result = JSON.stringify(payload);
   await sql`UPDATE generation_jobs SET status = 'SUCCEEDED', progress = 100, result = ${result}, updated_at = NOW() WHERE id = ${jobId}`;
@@ -5196,8 +5009,14 @@ async function updateJobFailed(jobId, error) {
   const errJson = JSON.stringify(error);
   await sql`UPDATE generation_jobs SET status = 'FAILED', error = ${errJson}, updated_at = NOW() WHERE id = ${jobId}`;
 }
-const runAgent = createStep({
-  id: "run_agent",
+async function updateJobProgress(jobId, progress) {
+  try {
+    await sql`UPDATE generation_jobs SET progress = ${progress}, updated_at = NOW() WHERE id = ${jobId}`;
+  } catch {
+  }
+}
+const runPipeline = createStep({
+  id: "run_pipeline",
   inputSchema,
   outputSchema: outputSchema$1,
   execute: async ({ inputData }) => {
@@ -5213,46 +5032,63 @@ const runAgent = createStep({
       return { messages: [{ type: "ai", content }] };
     }
     const userEmail = inputData.userEmail || process.env.MASTRA_RESEARCH_USER_EMAIL || "system";
+    const ids = {
+      goalId: inputData.goalId ?? null,
+      issueId: inputData.issueId ?? null,
+      feedbackId: inputData.feedbackId ?? null,
+      journalEntryId: inputData.journalEntryId ?? null
+    };
     try {
-      const summary = await runResearchAgent(userMsg.content, userEmail);
+      const t0 = Date.now();
+      const queries = await phasePlanQueries(userMsg.content);
+      console.log(`[research.workflow] phase=plan_queries queries=${JSON.stringify(queries)} elapsed=${Date.now() - t0}ms`);
+      if (trackJob) await updateJobProgress(jobId, 20);
+      const t1 = Date.now();
+      const pool = await phaseSearchAll(queries);
+      console.log(`[research.workflow] phase=search_all pool=${pool.length} elapsed=${Date.now() - t1}ms`);
+      if (trackJob) await updateJobProgress(jobId, 50);
+      const t2 = Date.now();
+      const curated = await phaseRankAndExtract(userMsg.content, pool);
+      console.log(`[research.workflow] phase=rank_and_extract curated=${curated.length} elapsed=${Date.now() - t2}ms`);
+      if (trackJob) await updateJobProgress(jobId, 75);
+      const t3 = Date.now();
+      const saveStats = await phaseSave(curated, userEmail, ids);
+      console.log(`[research.workflow] phase=save saved=${saveStats.saved} skipped=${saveStats.skipped} failed=${saveStats.failed} elapsed=${Date.now() - t3}ms`);
+      if (trackJob) await updateJobProgress(jobId, 90);
+      const summary = `Curated ${saveStats.saved} papers from ${pool.length} candidates (${saveStats.skipped} skipped, ${saveStats.failed} failed).`;
       if (trackJob) {
         let evals;
         try {
           evals = await runResearchEvals(
-            {
-              goalId: inputData.goalId ?? null,
-              issueId: inputData.issueId ?? null,
-              feedbackId: inputData.feedbackId ?? null,
-              journalEntryId: inputData.journalEntryId ?? null
-            },
+            ids,
             inputData.evalPromptContext ?? userMsg.content,
             inputData.hasRelatedMember ?? false
           );
         } catch (evalErr) {
           console.error("[research.workflow] eval error:", evalErr);
         }
-        if (evals?.error === "no papers found") {
+        if (saveStats.saved === 0 || evals?.error === "no papers found") {
           await updateJobFailed(jobId, {
-            message: "Research agent completed but found no suitable papers. Try rephrasing or try again later.",
+            message: "Research pipeline completed but no papers could be saved. Try rephrasing or try again later.",
             code: "NO_PAPERS_SAVED"
           });
         } else {
           await updateJobSucceeded(jobId, {
-            count: 1,
-            output: summary || "",
+            count: saveStats.saved,
+            output: summary,
             evals
           });
         }
       }
-      return { messages: [{ type: "ai", content: summary || "" }] };
+      return { messages: [{ type: "ai", content: summary }] };
     } catch (exc) {
       const m = exc instanceof Error ? exc.message : String(exc);
-      console.error("[research.workflow] agent failed:", m);
+      console.error("[research.workflow] pipeline failed:", m);
       if (trackJob) {
-        await updateJobFailed(jobId, { message: m, code: "AGENT_FAILED" });
+        await updateJobFailed(jobId, { message: m, code: "PIPELINE_FAILED" });
       }
       return {
-        messages: [{ type: "ai", content: `Research agent error: ${m}` }]
+        messages: [{ type: "ai", content: `Research pipeline error: ${m}` }]
       };
     }
   }
@@ -5261,7 +5097,7 @@ const researchWorkflow = createWorkflow({
   id: "research",
   inputSchema,
   outputSchema: outputSchema$1
-}).then(runAgent).commit();
+}).then(runPipeline).commit();
 
 "use strict";
 const ASYNC_WORKFLOWS = /* @__PURE__ */ new Set(["research"]);
