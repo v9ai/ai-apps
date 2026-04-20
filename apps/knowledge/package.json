@@ -42,6 +42,8 @@
     "generate:missing": "cd ../knowledge-mastra && pnpm generate:missing",
     "generate:batch": "cd ../knowledge-mastra && pnpm generate:batch",
     "generate:graph": "cd ../knowledge-mastra && pnpm generate:graph",
+    "review:courses": "cd ../knowledge-mastra && pnpm review:courses",
+    "review:courses:dry": "cd ../knowledge-mastra && pnpm review:courses:dry",
     "seed:courses": "node --import tsx src/seed/seed-courses.ts",
     "scrape:udemy": "tsx --env-file=.env.local scripts/scrape-udemy-courses.ts"
   },

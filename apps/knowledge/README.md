@@ -423,7 +423,7 @@ apps/knowledge/
 ├── scripts/seed.ts              # DB seeder (lessons from markdown)
 ├── scripts/seed-courses.ts      # Class Central course catalog seeder
 ├── scripts/scrape-udemy-courses.ts  # Playwright scraper — deep-scrapes Udemy topic pages into external_courses
-├── scripts/review_courses.py    # Batch course review runner — fetches unreviewed external_courses, invokes 10-expert LangGraph pipeline, upserts to course_reviews
+├── scripts/review_courses.py    # [Deprecated — superseded by apps/knowledge-mastra/src/cli-review-courses.ts]
 ├── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
 └── sql/add_course_reviews.sql  # course_reviews table (10-expert scores, verdict, aggregate)
 ```
@@ -446,11 +446,11 @@ pnpm generate:graph                        # print workflow as Mermaid
 pnpm eval         # run all evals
 pnpm eval:agent   # test agent behavior only
 
-# Batch-review unreviewed courses (run from apps/knowledge):
-uv run --project evals scripts/review_courses.py            # review up to 5 courses
-uv run --project evals scripts/review_courses.py --limit 10
-uv run --project evals scripts/review_courses.py --provider "DeepLearning.AI"
-uv run --project evals scripts/review_courses.py --dry-run
+# Batch-review unreviewed courses (delegates to apps/knowledge-mastra):
+pnpm review:courses                             # review up to 5 courses
+pnpm review:courses --limit=10
+pnpm review:courses --provider="DeepLearning.AI"
+pnpm review:courses:dry                         # preview without calling the pipeline
 ```
 
 ### Environment
