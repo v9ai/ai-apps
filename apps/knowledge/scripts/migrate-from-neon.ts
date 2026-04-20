@@ -39,7 +39,17 @@ async function migrateTable(
   insertSql: string,
   transform?: (row: Record<string, unknown>) => unknown[],
 ) {
-  const rows = await pg(query);
+  let rows: Record<string, unknown>[];
+  try {
+    rows = (await pg(query)) as Record<string, unknown>[];
+  } catch (err) {
+    const code = (err as { code?: string })?.code;
+    if (code === "42P01") {
+      console.log(`  ${tableName}: skipped (not in Neon)`);
+      return;
+    }
+    throw err;
+  }
   if (rows.length === 0) {
     console.log(`  ${tableName}: 0 rows (empty)`);
     return;
