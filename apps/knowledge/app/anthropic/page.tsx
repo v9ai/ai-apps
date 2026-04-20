@@ -120,10 +120,7 @@ function FinisherCard({ finisher }: { finisher: Finisher }) {
       <div className="course-card-title">{finisher.name}</div>
       <p className="course-card-desc">Completed all 4 courses</p>
       {(finisher.github || finisher.website) && (
-        <div
-          className="course-card-footer"
-          style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}
-        >
+        <div className="course-card-footer">
           {finisher.github && (
             <a
               href={finisher.github}

@@ -391,73 +391,110 @@ type CuratedPaper = PaperResult & {
   relevance_score: number;
 };
 
+const EVIDENCE_PATTERNS: Array<{ pattern: RegExp; level: string; weight: number }> = [
+  { pattern: /\bmeta-?analys(is|es)\b/i, level: "meta-analysis", weight: 1.0 },
+  { pattern: /\bsystematic\s+review\b/i, level: "systematic_review", weight: 0.9 },
+  { pattern: /\brandomi[sz]ed\s+controlled\s+trial|\brct\b/i, level: "rct", weight: 0.8 },
+  { pattern: /\bcohort\s+stud(y|ies)\b/i, level: "cohort", weight: 0.6 },
+  { pattern: /\bcase[\s-]control\b/i, level: "case_control", weight: 0.5 },
+  { pattern: /\bcase\s+series\b/i, level: "case_series", weight: 0.35 },
+  { pattern: /\bcase\s+(study|report)\b/i, level: "case_study", weight: 0.3 },
+];
+
+function detectEvidenceLevel(text: string): { level: string | null; weight: number } {
+  for (const { pattern, level, weight } of EVIDENCE_PATTERNS) {
+    if (pattern.test(text)) return { level, weight };
+  }
+  return { level: null, weight: 0.3 };
+}
+
+function tokenize(s: string): string[] {
+  return (s.toLowerCase().match(/[a-z][a-z0-9-]+/g) ?? []).filter((t) => t.length >= 3);
+}
+
+const STOP_WORDS = new Set([
+  "the","and","for","with","this","that","from","into","have","has","been","are","was","were","but","not","will","can","may","its","about","their","which","who","whom","whose","what","when","where","how","than","then","also","such","some","any","all","one","two","three","more","most","other","more","only","very","much","many","few","found","research","paper","study","studies","using","used","new","data","we","our","us","they","them","it","is","an","of","in","to","a","on","as","by","be","or","if","at","so","no","yes",
+]);
+
+function scoreAgainstQuery(text: string, queryTerms: Set<string>): number {
+  if (queryTerms.size === 0) return 0;
+  const tokens = tokenize(text);
+  if (tokens.length === 0) return 0;
+  let hits = 0;
+  for (const t of tokens) {
+    if (queryTerms.has(t)) hits += 1;
+  }
+  return hits / Math.sqrt(tokens.length);
+}
+
 async function phaseRankAndExtract(
   userPrompt: string,
   pool: PaperResult[],
 ): Promise<CuratedPaper[]> {
   if (pool.length === 0) return [];
-  const candidates = pool.slice(0, 25);
 
-  const listed = candidates
-    .map((p, i) => {
-      const abs = (p.abstract || "").slice(0, 220);
-      const auth = p.authors.slice(0, 2).join(", ");
-      return `[${i}] ${p.title} (${p.year ?? "n.d."}) — ${auth}\n  ${abs}`;
+  // Deterministic reranking — no LLM call.
+  const queryTerms = new Set(tokenize(userPrompt).filter((t) => !STOP_WORDS.has(t)));
+  const currentYear = new Date().getFullYear();
+
+  const scored = pool.map((p, origIdx) => {
+    const blob = `${p.title ?? ""} ${p.abstract ?? ""}`;
+    const textScore = scoreAgainstQuery(blob, queryTerms);
+    const { level, weight: evWeight } = detectEvidenceLevel(blob);
+    const yearBoost = p.year ? Math.max(0, 1 - (currentYear - p.year) / 20) : 0.3;
+    const score = textScore * 0.55 + evWeight * 0.35 + yearBoost * 0.1;
+    return { paper: p, score, evidence_level: level, origIdx };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const top = scored.slice(0, 10);
+
+  // Single compact DeepSeek call to extract key_findings + therapeutic_techniques
+  // for the 10 already-selected papers. Much smaller payload than full rerank.
+  const listed = top
+    .map((s, i) => {
+      const abs = (s.paper.abstract || "").slice(0, 240);
+      return `[${i}] ${s.paper.title}\n  ${abs}`;
     })
     .join("\n\n");
 
-  const rankPrompt = [
-    `You are curating academic research papers for a therapy case.`,
+  const extractPrompt = [
+    `Extract clinical metadata for each paper below.`,
     ``,
-    `## Clinical context`,
-    userPrompt.slice(0, 1500),
-    ``,
-    `## Candidate papers (${candidates.length})`,
     listed,
     ``,
-    `Pick the TOP 10 most relevant papers. For each, extract clinical metadata.`,
-    ``,
-    `Return JSON: {"selected": [{"index": <int>, "key_findings": [string, 2-3 items], "therapeutic_techniques": [string, 2-3 items], "evidence_level": "meta-analysis|systematic_review|rct|cohort|case_control|case_series|case_study|expert_opinion", "relevance_score": <0-1 float>}]}`,
-    ``,
-    `Weight higher: meta-analysis > systematic_review > rct > cohort > case_*. Be honest about evidence_level based on the abstract.`,
+    `Return JSON: {"items": [{"index": <int>, "key_findings": [string, 2 items], "therapeutic_techniques": [string, 2 items]}]} — one entry per paper.`,
   ].join("\n");
 
-  const parsed = await deepseekJson<{
-    selected?: Array<{
-      index?: number;
-      key_findings?: unknown;
-      therapeutic_techniques?: unknown;
-      evidence_level?: string;
-      relevance_score?: number;
-    }>;
-  }>(rankPrompt);
+  type ExtractItem = { index?: number; key_findings?: unknown; therapeutic_techniques?: unknown };
+  const parsed = await deepseekJson<{ items?: ExtractItem[] }>(extractPrompt);
+  const items = Array.isArray(parsed?.items) ? parsed!.items! : [];
+  const byIndex = new Map<number, ExtractItem>();
+  for (const it of items) {
+    if (typeof it.index === "number") byIndex.set(it.index, it);
+  }
 
-  const selected = Array.isArray(parsed?.selected) ? parsed!.selected! : [];
-  const seen = new Set<number>();
-  const out: CuratedPaper[] = [];
-  for (const s of selected) {
-    const idx = typeof s.index === "number" ? s.index : -1;
-    if (!Number.isInteger(idx) || idx < 0 || idx >= candidates.length || seen.has(idx)) continue;
-    seen.add(idx);
-    const base = candidates[idx];
-    const kf = Array.isArray(s.key_findings)
-      ? s.key_findings.filter((x): x is string => typeof x === "string").slice(0, 5)
+  const maxScore = top[0]?.score || 1;
+  const out: CuratedPaper[] = top.map((s, i) => {
+    const it = byIndex.get(i);
+    const kf = Array.isArray(it?.key_findings)
+      ? (it!.key_findings as unknown[])
+          .filter((x): x is string => typeof x === "string")
+          .slice(0, 5)
       : [];
-    const tt = Array.isArray(s.therapeutic_techniques)
-      ? s.therapeutic_techniques.filter((x): x is string => typeof x === "string").slice(0, 5)
+    const tt = Array.isArray(it?.therapeutic_techniques)
+      ? (it!.therapeutic_techniques as unknown[])
+          .filter((x): x is string => typeof x === "string")
+          .slice(0, 5)
       : [];
-    const rs = typeof s.relevance_score === "number" && Number.isFinite(s.relevance_score)
-      ? Math.min(1, Math.max(0, s.relevance_score))
-      : 0.5;
-    out.push({
-      ...base,
+    return {
+      ...s.paper,
       key_findings: kf,
       therapeutic_techniques: tt,
-      evidence_level: s.evidence_level || null,
-      relevance_score: rs,
-    });
-    if (out.length === 10) break;
-  }
+      evidence_level: s.evidence_level,
+      relevance_score: Math.min(1, s.score / Math.max(maxScore, 0.001)),
+    };
+  });
 
   return out;
 }
