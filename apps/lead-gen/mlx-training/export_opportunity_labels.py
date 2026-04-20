@@ -370,6 +370,11 @@ def export(
             print(f"  {k}: {v}")
         print(f"Reward_usd derivable on: {rewards} / {len(seeds)}")
         print(f"Remote policy pre-resolved: {rp_counts} (rest → teacher)")
+        # Preview post-balance totals (3x-downsample-negatives)
+        positives = buckets["61-80"] + buckets["81-100"]
+        cap = 3 * positives
+        balanced_total = positives + min(buckets["0-20"], cap) + min(buckets["21-40"], cap) + min(buckets["41-60"], cap)
+        print(f"After 3x balance: ~{balanced_total} training rows ({positives} pos, cap={cap}/bucket)")
         print(f"Teacher: {teacher_model} @ {teacher_url}")
         return
 
@@ -399,18 +404,37 @@ def export(
 
     print(f"Labeled: {len(labeled)} rows (teacher took {time.time() - t0:.1f}s)")
 
-    # Stratified 90/10 split over derived score buckets — keeps all bins in val
+    # ── Rebalance: 3x-downsample-negatives ─────────────────────────────────
+    # Positives (score >= 60) are scarce (~66 in 1800). Cap each lower bucket
+    # at 3x the positive count so the student sees a ~25% positive rate.
     random.seed(42)
     def bucket(score: int) -> int:
         return min(4, score // 20)
+
     by_bucket: dict[int, list[tuple[dict[str, Any], dict[str, Any]]]] = {}
     for pair in labeled:
         by_bucket.setdefault(bucket(pair[1]["score"]), []).append(pair)
+    for b in by_bucket:
+        random.shuffle(by_bucket[b])
+
+    positive_count = sum(len(rows) for b, rows in by_bucket.items() if b >= 3)
+    cap = max(3 * positive_count, 1)
+    balanced: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    for b, rows in sorted(by_bucket.items()):
+        keep = rows if b >= 3 else rows[:cap]
+        balanced.extend(keep)
+        print(f"  bucket {b * 20}-{b * 20 + 19}: {len(rows)} → {len(keep)}")
+    print(f"Balanced: {len(balanced)} rows")
+
+    # Stratified 90/10 split over buckets — keeps all bins in val
+    by_bucket_balanced: dict[int, list[tuple[dict[str, Any], dict[str, Any]]]] = {}
+    for pair in balanced:
+        by_bucket_balanced.setdefault(bucket(pair[1]["score"]), []).append(pair)
     train: list[tuple[dict[str, Any], dict[str, Any]]] = []
     valid: list[tuple[dict[str, Any], dict[str, Any]]] = []
-    for b, rows in by_bucket.items():
+    for b, rows in by_bucket_balanced.items():
         random.shuffle(rows)
-        cut = int(len(rows) * 0.9)
+        cut = max(int(len(rows) * 0.9), len(rows) - max(1, len(rows) // 10))
         train.extend(rows[:cut])
         valid.extend(rows[cut:])
     random.shuffle(train)
