@@ -4737,9 +4737,11 @@ async function getS2PaperDetail(paperId) {
     return null;
   }
 }
-async function deepseekJson(prompt, systemPrompt) {
+async function deepseekJson(prompt, systemPrompt, timeoutMs = 2e4) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const resp = await fetch(DEEPSEEK_URL, {
       method: "POST",
@@ -4756,7 +4758,8 @@ async function deepseekJson(prompt, systemPrompt) {
         response_format: { type: "json_object" },
         temperature: 0,
         stream: false
-      })
+      }),
+      signal: controller.signal
     });
     if (!resp.ok) return null;
     const body = await resp.json();
@@ -4764,6 +4767,8 @@ async function deepseekJson(prompt, systemPrompt) {
     return JSON.parse(content);
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 async function phasePlanQueries(userPrompt) {
@@ -4932,9 +4937,21 @@ async function phaseRankAndExtract(userPrompt, pool) {
   });
   scored.sort((a, b) => b.score - a.score);
   const top = scored.slice(0, 10);
-  const listed = top.map((s, i) => {
-    const abs = (s.paper.abstract || "").slice(0, 240);
-    return `[${i}] ${s.paper.title}
+  const maxScore = top[0]?.score || 1;
+  const out = top.map((s) => ({
+    ...s.paper,
+    key_findings: [],
+    therapeutic_techniques: [],
+    evidence_level: s.evidence_level,
+    relevance_score: Math.min(1, s.score / Math.max(maxScore, 1e-3))
+  }));
+  return out;
+}
+async function enrichWithExtraction(papers) {
+  if (papers.length === 0) return;
+  const listed = papers.map((p, i) => {
+    const abs = (p.abstract || "").slice(0, 240);
+    return `[${i}] ${p.title}
   ${abs}`;
   }).join("\n\n");
   const extractPrompt = [
@@ -4942,28 +4959,21 @@ async function phaseRankAndExtract(userPrompt, pool) {
     ``,
     listed,
     ``,
-    `Return JSON: {"items": [{"index": <int>, "key_findings": [string, 2 items], "therapeutic_techniques": [string, 2 items]}]} \u2014 one entry per paper.`
+    `Return JSON: {"items": [{"index": <int>, "key_findings": [string, 2 items], "therapeutic_techniques": [string, 2 items]}]}`
   ].join("\n");
-  const parsed = await deepseekJson(extractPrompt);
-  const items = Array.isArray(parsed?.items) ? parsed.items : [];
-  const byIndex = /* @__PURE__ */ new Map();
+  const parsed = await deepseekJson(extractPrompt, void 0, 1e4);
+  if (!parsed) return;
+  const items = Array.isArray(parsed.items) ? parsed.items : [];
   for (const it of items) {
-    if (typeof it.index === "number") byIndex.set(it.index, it);
+    const idx = typeof it.index === "number" ? it.index : -1;
+    if (idx < 0 || idx >= papers.length) continue;
+    if (Array.isArray(it.key_findings)) {
+      papers[idx].key_findings = it.key_findings.filter((x) => typeof x === "string").slice(0, 5);
+    }
+    if (Array.isArray(it.therapeutic_techniques)) {
+      papers[idx].therapeutic_techniques = it.therapeutic_techniques.filter((x) => typeof x === "string").slice(0, 5);
+    }
   }
-  const maxScore = top[0]?.score || 1;
-  const out = top.map((s, i) => {
-    const it = byIndex.get(i);
-    const kf = Array.isArray(it?.key_findings) ? it.key_findings.filter((x) => typeof x === "string").slice(0, 5) : [];
-    const tt = Array.isArray(it?.therapeutic_techniques) ? it.therapeutic_techniques.filter((x) => typeof x === "string").slice(0, 5) : [];
-    return {
-      ...s.paper,
-      key_findings: kf,
-      therapeutic_techniques: tt,
-      evidence_level: s.evidence_level,
-      relevance_score: Math.min(1, s.score / Math.max(maxScore, 1e-3))
-    };
-  });
-  return out;
 }
 async function phaseSave(papers, userEmail, ids) {
   let saved = 0;
@@ -5144,11 +5154,15 @@ const runPipeline = createStep({
       if (trackJob) await updateJobProgress(jobId, 50);
       const t2 = Date.now();
       const curated = await phaseRankAndExtract(userMsg.content, pool);
-      console.log(`[research.workflow] phase=rank_and_extract curated=${curated.length} elapsed=${Date.now() - t2}ms`);
+      console.log(`[research.workflow] phase=rank curated=${curated.length} elapsed=${Date.now() - t2}ms`);
       if (trackJob) await updateJobProgress(jobId, 75);
       const t3 = Date.now();
+      const extractPromise = enrichWithExtraction(curated);
+      await extractPromise;
+      console.log(`[research.workflow] phase=extract elapsed=${Date.now() - t3}ms`);
+      const t4 = Date.now();
       const saveStats = await phaseSave(curated, userEmail, ids);
-      console.log(`[research.workflow] phase=save saved=${saveStats.saved} skipped=${saveStats.skipped} failed=${saveStats.failed} elapsed=${Date.now() - t3}ms`);
+      console.log(`[research.workflow] phase=save saved=${saveStats.saved} skipped=${saveStats.skipped} failed=${saveStats.failed} elapsed=${Date.now() - t4}ms`);
       if (trackJob) await updateJobProgress(jobId, 90);
       const summary = `Curated ${saveStats.saved} papers from ${pool.length} candidates (${saveStats.skipped} skipped, ${saveStats.failed} failed).`;
       if (trackJob) {
@@ -5162,13 +5176,13 @@ const runPipeline = createStep({
             count: saveStats.saved,
             output: summary
           });
-          const t4 = Date.now();
+          const t42 = Date.now();
           runResearchEvals(
             ids,
             inputData.evalPromptContext ?? userMsg.content,
             inputData.hasRelatedMember ?? false
           ).then(async (evals) => {
-            console.log(`[research.workflow] phase=eval elapsed=${Date.now() - t4}ms`);
+            console.log(`[research.workflow] phase=eval elapsed=${Date.now() - t42}ms`);
             try {
               await updateJobSucceeded(jobId, {
                 count: saveStats.saved,

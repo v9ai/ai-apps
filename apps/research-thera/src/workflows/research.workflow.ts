@@ -303,9 +303,15 @@ async function getS2PaperDetail(paperId: string): Promise<Record<string, unknown
 // DeepSeek JSON helper
 // ---------------------------------------------------------------------------
 
-async function deepseekJson<T>(prompt: string, systemPrompt?: string): Promise<T | null> {
+async function deepseekJson<T>(
+  prompt: string,
+  systemPrompt?: string,
+  timeoutMs = 20000,
+): Promise<T | null> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const resp = await fetch(DEEPSEEK_URL, {
       method: "POST",
@@ -323,6 +329,7 @@ async function deepseekJson<T>(prompt: string, systemPrompt?: string): Promise<T
         temperature: 0,
         stream: false,
       }),
+      signal: controller.signal,
     });
     if (!resp.ok) return null;
     const body = (await resp.json()) as {
@@ -332,6 +339,8 @@ async function deepseekJson<T>(prompt: string, systemPrompt?: string): Promise<T
     return JSON.parse(content) as T;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -449,12 +458,24 @@ async function phaseRankAndExtract(
   scored.sort((a, b) => b.score - a.score);
   const top = scored.slice(0, 10);
 
-  // Single compact DeepSeek call to extract key_findings + therapeutic_techniques
-  // for the 10 already-selected papers. Much smaller payload than full rerank.
-  const listed = top
-    .map((s, i) => {
-      const abs = (s.paper.abstract || "").slice(0, 240);
-      return `[${i}] ${s.paper.title}\n  ${abs}`;
+  const maxScore = top[0]?.score || 1;
+  const out: CuratedPaper[] = top.map((s) => ({
+    ...s.paper,
+    key_findings: [],
+    therapeutic_techniques: [],
+    evidence_level: s.evidence_level,
+    relevance_score: Math.min(1, s.score / Math.max(maxScore, 0.001)),
+  }));
+
+  return out;
+}
+
+async function enrichWithExtraction(papers: CuratedPaper[]): Promise<void> {
+  if (papers.length === 0) return;
+  const listed = papers
+    .map((p, i) => {
+      const abs = (p.abstract || "").slice(0, 240);
+      return `[${i}] ${p.title}\n  ${abs}`;
     })
     .join("\n\n");
 
@@ -463,40 +484,27 @@ async function phaseRankAndExtract(
     ``,
     listed,
     ``,
-    `Return JSON: {"items": [{"index": <int>, "key_findings": [string, 2 items], "therapeutic_techniques": [string, 2 items]}]} — one entry per paper.`,
+    `Return JSON: {"items": [{"index": <int>, "key_findings": [string, 2 items], "therapeutic_techniques": [string, 2 items]}]}`,
   ].join("\n");
 
   type ExtractItem = { index?: number; key_findings?: unknown; therapeutic_techniques?: unknown };
-  const parsed = await deepseekJson<{ items?: ExtractItem[] }>(extractPrompt);
-  const items = Array.isArray(parsed?.items) ? parsed!.items! : [];
-  const byIndex = new Map<number, ExtractItem>();
+  const parsed = await deepseekJson<{ items?: ExtractItem[] }>(extractPrompt, undefined, 10000);
+  if (!parsed) return;
+  const items = Array.isArray(parsed.items) ? parsed.items : [];
   for (const it of items) {
-    if (typeof it.index === "number") byIndex.set(it.index, it);
+    const idx = typeof it.index === "number" ? it.index : -1;
+    if (idx < 0 || idx >= papers.length) continue;
+    if (Array.isArray(it.key_findings)) {
+      papers[idx].key_findings = (it.key_findings as unknown[])
+        .filter((x): x is string => typeof x === "string")
+        .slice(0, 5);
+    }
+    if (Array.isArray(it.therapeutic_techniques)) {
+      papers[idx].therapeutic_techniques = (it.therapeutic_techniques as unknown[])
+        .filter((x): x is string => typeof x === "string")
+        .slice(0, 5);
+    }
   }
-
-  const maxScore = top[0]?.score || 1;
-  const out: CuratedPaper[] = top.map((s, i) => {
-    const it = byIndex.get(i);
-    const kf = Array.isArray(it?.key_findings)
-      ? (it!.key_findings as unknown[])
-          .filter((x): x is string => typeof x === "string")
-          .slice(0, 5)
-      : [];
-    const tt = Array.isArray(it?.therapeutic_techniques)
-      ? (it!.therapeutic_techniques as unknown[])
-          .filter((x): x is string => typeof x === "string")
-          .slice(0, 5)
-      : [];
-    return {
-      ...s.paper,
-      key_findings: kf,
-      therapeutic_techniques: tt,
-      evidence_level: s.evidence_level,
-      relevance_score: Math.min(1, s.score / Math.max(maxScore, 0.001)),
-    };
-  });
-
-  return out;
 }
 
 async function phaseSave(
@@ -769,16 +777,23 @@ const runPipeline = createStep({
       console.log(`[research.workflow] phase=search_all pool=${pool.length} elapsed=${Date.now() - t1}ms`);
       if (trackJob) await updateJobProgress(jobId!, 50);
 
-      // Phase 3: rank + extract
+      // Phase 3: rank (deterministic, no LLM)
       const t2 = Date.now();
       const curated = await phaseRankAndExtract(userMsg.content, pool);
-      console.log(`[research.workflow] phase=rank_and_extract curated=${curated.length} elapsed=${Date.now() - t2}ms`);
+      console.log(`[research.workflow] phase=rank curated=${curated.length} elapsed=${Date.now() - t2}ms`);
       if (trackJob) await updateJobProgress(jobId!, 75);
 
-      // Phase 4: save
+      // Phase 4a + 4b: run LLM extraction in parallel with first save pass
       const t3 = Date.now();
+      const extractPromise = enrichWithExtraction(curated);
+      // Wait for extract (with its 10s internal timeout) before saving, so saved rows
+      // have findings/techniques when possible. If extraction times out, fields are [].
+      await extractPromise;
+      console.log(`[research.workflow] phase=extract elapsed=${Date.now() - t3}ms`);
+
+      const t4 = Date.now();
       const saveStats = await phaseSave(curated, userEmail, ids);
-      console.log(`[research.workflow] phase=save saved=${saveStats.saved} skipped=${saveStats.skipped} failed=${saveStats.failed} elapsed=${Date.now() - t3}ms`);
+      console.log(`[research.workflow] phase=save saved=${saveStats.saved} skipped=${saveStats.skipped} failed=${saveStats.failed} elapsed=${Date.now() - t4}ms`);
       if (trackJob) await updateJobProgress(jobId!, 90);
 
       const summary = `Curated ${saveStats.saved} papers from ${pool.length} candidates (${saveStats.skipped} skipped, ${saveStats.failed} failed).`;
