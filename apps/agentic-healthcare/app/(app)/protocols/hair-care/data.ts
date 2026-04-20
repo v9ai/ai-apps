@@ -49,6 +49,24 @@ export type RetestEntry = {
   notes?: string;
 };
 
+export type LifestylePractice = {
+  practice: string;
+  detail: string;
+};
+
+export type LifestyleCategory = {
+  category: string;
+  icon: string;
+  practices: LifestylePractice[];
+};
+
+export type TrackingMethod = {
+  method: string;
+  frequency: string;
+  description: string;
+  escalation?: string;
+};
+
 // ── Nutritional Markers ──────────────────────────────────────────
 
 export const NUTRITIONAL_MARKERS: BloodMarker[] = [
@@ -379,6 +397,197 @@ export const DAILY_STACK: StackGroup[] = [
   },
 ];
 
+// ── Stress / Cortisol Markers ────────────────────────────────────
+
+export const STRESS_MARKERS: BloodMarker[] = [
+  {
+    name: "Cortisol (AM serum)",
+    threshold: "Above 20 µg/dL AM or flattened diurnal curve",
+    treatments: [
+      {
+        name: "Ashwagandha (KSM-66)",
+        dosage: "600 mg/day",
+        timing: "Split AM/PM with food",
+        notes: "Avoid with hyperthyroid or pregnancy",
+      },
+      {
+        name: "Phosphatidylserine",
+        dosage: "300 mg/day",
+        timing: "Evening",
+        notes: "Blunts elevated evening cortisol",
+      },
+      {
+        name: "Rhodiola rosea",
+        dosage: "200\u2013400 mg",
+        timing: "Morning, empty stomach",
+      },
+    ],
+    retestInterval: "Every 3 months if elevated",
+    clinicalNotes: [
+      "Stress-driven telogen effluvium typically sheds 2\u20133 months after the trigger.",
+      "Prioritize 7\u20139 hours sleep, daily resistance training, and protein at each meal.",
+      "Consider 4-point salivary cortisol panel if diurnal pattern is suspect.",
+    ],
+  },
+  {
+    name: "DHEA-S",
+    threshold: "Out of age-matched range (high or low)",
+    treatments: [],
+    retestInterval: "Every 3\u20136 months",
+    clinicalNotes: [
+      "Adrenal-axis marker \u2014 interpret alongside cortisol.",
+      "High DHEA-S in women can drive androgenic shedding (overlap with PCOS).",
+      "Low DHEA-S suggests adrenal fatigue/insufficiency \u2014 refer to endocrinology, do not self-supplement.",
+    ],
+  },
+];
+
+// ── Female Hormone Panel ─────────────────────────────────────────
+
+export const FEMALE_HORMONE_MARKERS: BloodMarker[] = [
+  {
+    name: "Total / Free Testosterone (women)",
+    threshold: "Free T above reference or symptoms of hyperandrogenism",
+    treatments: [
+      {
+        name: "Spironolactone",
+        dosage: "Per prescription (50\u2013200 mg/day typical)",
+        timing: "Dermatologist or gynecologist prescribed",
+        notes: "Contraindicated in pregnancy \u2014 requires contraception",
+      },
+    ],
+    retestInterval: "Every 6 months or per gynecologist",
+    clinicalNotes: [
+      "Rule out PCOS: pair with SHBG, DHEA-S, and ultrasound if indicated.",
+      "Pre-check ferritin and thyroid before attributing loss to androgens.",
+      "Diffuse thinning with widening part and frontal accentuation = female pattern hair loss.",
+    ],
+  },
+  {
+    name: "SHBG",
+    threshold: "Below 30 nmol/L",
+    treatments: [
+      {
+        name: "Inositol (myo + D-chiro, 40:1)",
+        dosage: "2\u20134 g/day",
+        timing: "Split with meals",
+        notes: "Improves insulin sensitivity, raises SHBG over 3\u20136 months",
+      },
+    ],
+    retestInterval: "After 3\u20136 months",
+    clinicalNotes: [
+      "Low SHBG raises bioavailable (free) androgens even when total testosterone is normal.",
+      "Insulin resistance is the dominant driver \u2014 address diet and body composition first.",
+    ],
+  },
+  {
+    name: "Estradiol / Progesterone",
+    threshold: "Perimenopausal decline or luteal-phase insufficiency",
+    treatments: [],
+    retestInterval: "Per gynecologist (cycle-day dependent)",
+    clinicalNotes: [
+      "Postpartum shedding peaks at 3\u20134 months \u2014 usually self-resolves by month 9\u201312.",
+      "Perimenopausal thinning overlaps with androgenetic pattern; consider HRT consultation.",
+      "Draw progesterone mid-luteal (day 21 of a 28-day cycle) for accurate reading.",
+    ],
+  },
+];
+
+// ── Scalp Care & Lifestyle ───────────────────────────────────────
+
+export const LIFESTYLE_PRACTICES: LifestyleCategory[] = [
+  {
+    category: "Washing & shampoo",
+    icon: "\u{1F9F4}",
+    practices: [
+      { practice: "Use sulfate-free, pH 4.5\u20135.5 shampoo", detail: "Lower pH preserves the cuticle and reduces frizz." },
+      { practice: "Clarify monthly", detail: "A chelating shampoo clears product + mineral buildup that blocks minoxidil absorption." },
+      { practice: "Avoid daily hot-water washes", detail: "Wash 2\u20134x/week with lukewarm water; rinse cool to seal the cuticle." },
+    ],
+  },
+  {
+    category: "Scalp hygiene",
+    icon: "\u2728",
+    practices: [
+      { practice: "Exfoliate 1x/week", detail: "Silicone scrubber or salicylic-acid scalp scrub to lift sebum and flakes." },
+      { practice: "Massage minoxidil in for 1\u20132 min", detail: "Silicone scrubber boosts microcirculation and absorption." },
+      { practice: "Treat seborrheic dermatitis", detail: "Ketoconazole 2% shampoo 2x/week \u2014 reduces inflammation and has mild DHT-lowering effect." },
+    ],
+  },
+  {
+    category: "Water quality",
+    icon: "\u{1F4A7}",
+    practices: [
+      { practice: "Filter chlorine / hard water", detail: "Shower-head KDF filter if water is chlorinated or >7 grains hardness." },
+      { practice: "Rinse cool to close cuticle", detail: "Final 10\u201320 second cool rinse after conditioner." },
+    ],
+  },
+  {
+    category: "Heat & styling",
+    icon: "\u{1F525}",
+    practices: [
+      { practice: "Keep heat tools \u2264180 \u00B0C / 356 \u00B0F", detail: "Higher temperatures denature keratin and worsen breakage." },
+      { practice: "Always apply heat protectant", detail: "Silicone + protein spray before any blow-dry or flat iron." },
+      { practice: "Avoid tight styles", detail: "Tight ponytails, buns, braids, and extensions cause traction alopecia at the hairline." },
+    ],
+  },
+  {
+    category: "Protein & diet",
+    icon: "\u{1F957}",
+    practices: [
+      { practice: "Hit 1.2\u20131.6 g/kg/day protein", detail: "Hair shaft is ~95% keratin \u2014 chronic protein deficit causes diffuse shedding." },
+      { practice: "Optional collagen peptides 10\u201320 g/day", detail: "Evidence for nail/skin is stronger than hair, but it's a cheap trial." },
+      { practice: "Prioritize whole-food iron, zinc, B12 sources", detail: "Red meat, eggs, oysters, leafy greens \u2014 supplements are rescue, not replacement." },
+    ],
+  },
+  {
+    category: "Sleep & recovery",
+    icon: "\u{1F319}",
+    practices: [
+      { practice: "7\u20139 h sleep with consistent schedule", detail: "Hair matrix cells divide fastest during deep sleep; cortisol resets overnight." },
+      { practice: "Silk or satin pillowcase", detail: "Reduces friction-driven breakage, especially for fragile or treated hair." },
+      { practice: "Dim lights 1 h before bed", detail: "Melatonin is also a scalp antioxidant \u2014 preserve your natural rhythm." },
+    ],
+  },
+];
+
+// ── Progress Tracking & Escalation ───────────────────────────────
+
+export const PROGRESS_TRACKING: TrackingMethod[] = [
+  {
+    method: "Standardized scalp photos",
+    frequency: "Monthly",
+    description: "Same lighting, same angles (crown, hairline, part), same camera. Compare side-by-side at months 3, 6, and 12 \u2014 not week-to-week.",
+  },
+  {
+    method: "Pull test",
+    frequency: "Weekly",
+    description: "Gently pull ~60 hairs from four scalp regions. \u22646 hairs per pull is normal; >10 suggests active shedding.",
+  },
+  {
+    method: "Shedding count (wet)",
+    frequency: "Weekly",
+    description: "Count hairs collected in the shower drain + brush on wash day. 50\u2013100/day is normal.",
+    escalation: "Sustained >150 hairs/day for 4+ weeks \u2192 see a dermatologist.",
+  },
+  {
+    method: "Hair-strand diameter check",
+    frequency: "Every 3 months",
+    description: "Compare strand caliber at the crown vs. the nape (hormone-insensitive zone). Thinning caliber indicates miniaturization.",
+  },
+  {
+    method: "Symptom journal",
+    frequency: "Ongoing",
+    description: "Log minoxidil/finasteride side effects, menstrual cycle, stress events, sleep, and any new meds. Correlations only show up over weeks.",
+  },
+  {
+    method: "Dermatologist escalation triggers",
+    frequency: "As-needed",
+    description: "Reference list of findings that warrant a specialist visit before continuing self-directed protocol.",
+    escalation: "Sudden patchy loss, scalp pain/burning/itching, visible scarring, or no response after 6 months of consistent protocol.",
+  },
+];
+
 // ── Retesting Schedule ───────────────────────────────────────────
 
 export const RETEST_SCHEDULE: RetestEntry[] = [
@@ -390,5 +599,8 @@ export const RETEST_SCHEDULE: RetestEntry[] = [
   { marker: "Hormones (DHT)", interval: "At 3 and 6 months after starting treatment" },
   { marker: "Thyroid", interval: "Per endocrinologist" },
   { marker: "Insulin / Glucose", interval: "Every 3 months", notes: "Until stable" },
+  { marker: "Cortisol (AM)", interval: "Every 3 months", notes: "If elevated or diurnal curve off" },
+  { marker: "DHEA-S", interval: "Every 3\u20136 months" },
+  { marker: "Female hormones (T, SHBG, E2, P4)", interval: "Every 6 months or per gynecologist" },
   { marker: "Full panel", interval: "Every 6 months once stable" },
 ];

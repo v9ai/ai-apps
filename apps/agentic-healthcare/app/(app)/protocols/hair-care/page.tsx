@@ -1,6 +1,6 @@
 import { Box, Badge, Card, Callout, Flex, Heading, Separator, Text } from "@radix-ui/themes";
 import Link from "next/link";
-import { Sparkles, AlertTriangle, Clock, Pill, FlaskConical, Shield, BookOpen, FileText, ExternalLink } from "lucide-react";
+import { Sparkles, AlertTriangle, Clock, Pill, FlaskConical, Shield, BookOpen, FileText, ExternalLink, Flame, HeartPulse, Droplets, LineChart } from "lucide-react";
 import { css } from "styled-system/css";
 import { db } from "@/lib/db";
 import { researches } from "@/lib/db/schema";
@@ -12,6 +12,10 @@ import {
   DHT_TIMELINE,
   ENDOCRINE_MARKERS,
   AUTOIMMUNE_MARKERS,
+  STRESS_MARKERS,
+  FEMALE_HORMONE_MARKERS,
+  LIFESTYLE_PRACTICES,
+  PROGRESS_TRACKING,
   DAILY_STACK,
   RETEST_SCHEDULE,
   HAIR_CARE_PROTOCOL_ID,
@@ -64,6 +68,14 @@ const timelineCardClass = css({
   borderLeft: "3px solid var(--indigo-9)",
 });
 
+const lifestyleCardClass = css({
+  borderLeft: "3px solid var(--teal-9)",
+});
+
+const trackingCardClass = css({
+  borderLeft: "3px solid var(--cyan-9)",
+});
+
 const stackGroupClass = css({
   padding: "var(--space-3) var(--space-4)",
   borderTop: "1px solid var(--gray-a4)",
@@ -94,7 +106,7 @@ const retestRowClass = css({
 
 // ── Components ───────────────────────────────────────────────────
 
-function MarkerCard({ marker, color }: { marker: BloodMarker; color: "green" | "amber" | "violet" | "red" }) {
+function MarkerCard({ marker, color }: { marker: BloodMarker; color: "green" | "amber" | "violet" | "red" | "orange" | "pink" }) {
   return (
     <Card variant="surface">
       <Flex direction="column" gap="2">
@@ -385,10 +397,14 @@ export default function HairCareProtocolPage() {
 
             {/* Quick-reference anchors */}
             <Flex gap="2" wrap="wrap">
-              <a href="#nutritional"><Badge color="green" variant="soft" size="2">Nutritional (6)</Badge></a>
+              <a href="#nutritional"><Badge color="green" variant="soft" size="2">Nutritional ({NUTRITIONAL_MARKERS.length})</Badge></a>
               <a href="#dht"><Badge color="amber" variant="soft" size="2">DHT / Hormonal</Badge></a>
-              <a href="#endocrine"><Badge color="violet" variant="soft" size="2">Endocrine (3)</Badge></a>
+              <a href="#endocrine"><Badge color="violet" variant="soft" size="2">Endocrine ({ENDOCRINE_MARKERS.length})</Badge></a>
               <a href="#autoimmune"><Badge color="red" variant="soft" size="2">Autoimmune</Badge></a>
+              <a href="#stress"><Badge color="orange" variant="soft" size="2">Stress ({STRESS_MARKERS.length})</Badge></a>
+              <a href="#female"><Badge color="pink" variant="soft" size="2">Female hormones ({FEMALE_HORMONE_MARKERS.length})</Badge></a>
+              <a href="#lifestyle"><Badge color="teal" variant="soft" size="2">Scalp care</Badge></a>
+              <a href="#tracking"><Badge color="cyan" variant="soft" size="2">Progress tracking</Badge></a>
             </Flex>
 
             <Separator size="4" />
@@ -498,6 +514,101 @@ export default function HairCareProtocolPage() {
                     <MarkerCard key={m.name} marker={m} color="red" />
                   ))}
                 </div>
+              </div>
+            </details>
+
+            {/* ── Stress / Cortisol ───────────────────────── */}
+            <details id="stress">
+              <summary className={summaryClass}>
+                <Flame size={16} style={{ color: "var(--orange-11)" }} />
+                Stress / Cortisol
+                <Badge color="orange" variant="soft" size="1">{STRESS_MARKERS.length}</Badge>
+              </summary>
+              <div className={detailsContentClass}>
+                <div className={markerGridClass}>
+                  {STRESS_MARKERS.map((m) => (
+                    <MarkerCard key={m.name} marker={m} color="orange" />
+                  ))}
+                </div>
+              </div>
+            </details>
+
+            {/* ── Female Hormone Panel ────────────────────── */}
+            <details id="female">
+              <summary className={summaryClass}>
+                <HeartPulse size={16} style={{ color: "var(--pink-11)" }} />
+                Female Hormone Panel
+                <Badge color="pink" variant="soft" size="1">{FEMALE_HORMONE_MARKERS.length}</Badge>
+              </summary>
+              <div className={detailsContentClass}>
+                <div className={markerGridClass}>
+                  {FEMALE_HORMONE_MARKERS.map((m) => (
+                    <MarkerCard key={m.name} marker={m} color="pink" />
+                  ))}
+                </div>
+              </div>
+            </details>
+
+            {/* ── Scalp Care & Lifestyle ──────────────────── */}
+            <details id="lifestyle">
+              <summary className={summaryClass}>
+                <Droplets size={16} style={{ color: "var(--teal-11)" }} />
+                Scalp Care & Lifestyle
+                <Badge color="teal" variant="soft" size="1">{LIFESTYLE_PRACTICES.length}</Badge>
+              </summary>
+              <div className={detailsContentClass}>
+                <Flex direction="column" gap="3">
+                  {LIFESTYLE_PRACTICES.map((cat) => (
+                    <Card key={cat.category} variant="surface" className={lifestyleCardClass}>
+                      <Flex direction="column" gap="2">
+                        <Flex align="center" gap="2">
+                          <span>{cat.icon}</span>
+                          <Text size="2" weight="bold">{cat.category}</Text>
+                        </Flex>
+                        <Flex direction="column" gap="1">
+                          {cat.practices.map((p, i) => (
+                            <Flex key={i} direction="column" gap="0">
+                              <Text size="2" weight="medium" color="teal">&bull; {p.practice}</Text>
+                              <Text size="1" color="gray" style={{ lineHeight: 1.5, paddingLeft: 14 }}>{p.detail}</Text>
+                            </Flex>
+                          ))}
+                        </Flex>
+                      </Flex>
+                    </Card>
+                  ))}
+                </Flex>
+              </div>
+            </details>
+
+            {/* ── Progress Tracking ───────────────────────── */}
+            <details id="tracking">
+              <summary className={summaryClass}>
+                <LineChart size={16} style={{ color: "var(--cyan-11)" }} />
+                Progress Tracking & Escalation
+                <Badge color="cyan" variant="soft" size="1">{PROGRESS_TRACKING.length}</Badge>
+              </summary>
+              <div className={detailsContentClass}>
+                <Flex direction="column" gap="3">
+                  {PROGRESS_TRACKING.map((t) => (
+                    <Card key={t.method} variant="surface" className={trackingCardClass}>
+                      <Flex direction="column" gap="2">
+                        <Flex align="center" gap="2" wrap="wrap">
+                          <Text size="2" weight="bold">{t.method}</Text>
+                          <Badge color="cyan" variant="soft" size="1">{t.frequency}</Badge>
+                        </Flex>
+                        <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>{t.description}</Text>
+                        {t.escalation && (
+                          <Callout.Root color="red" size="1">
+                            <Callout.Icon>
+                              <AlertTriangle size={14} />
+                            </Callout.Icon>
+                            <Callout.Text>{t.escalation}</Callout.Text>
+                          </Callout.Root>
+                        )}
+                      </Flex>
+                    </Card>
+                  ))}
+                </Flex>
               </div>
             </details>
 
