@@ -4771,27 +4771,24 @@ async function deepseekJson(prompt, systemPrompt, timeoutMs = 2e4) {
     clearTimeout(timer);
   }
 }
+function extractKeyPhrase(userPrompt) {
+  const lines = userPrompt.split("\n").map((l) => l.trim()).filter(Boolean);
+  const titleLine = lines.find((l) => /^(Title|Content|Description):/i.test(l));
+  if (titleLine) {
+    return titleLine.replace(/^[^:]+:\s*/, "").slice(0, 140);
+  }
+  const prose = lines.find((l) => l.length > 20 && !/^[#*\-•]/.test(l) && !/_id:/.test(l));
+  return (prose ?? userPrompt).slice(0, 140);
+}
 async function phasePlanQueries(userPrompt) {
-  const planPrompt = [
-    `You are planning academic search queries for a clinical research task.`,
-    ``,
-    `## Clinical context`,
-    userPrompt.slice(0, 2e3),
-    ``,
-    `Return JSON: {"queries": ["q1", "q2", "q3"]}`,
-    `- Each query should be in English (translate if the context is in another language).`,
-    `- Queries should be complementary: one on the core condition, one on specific interventions/techniques, one on outcome measures or family/relational aspects.`,
-    `- Each query must be concise (5-12 words) and use clinical terminology.`
-  ].join("\n");
-  const parsed = await deepseekJson(planPrompt);
-  const q = Array.isArray(parsed?.queries) ? parsed.queries : [];
-  const queries = q.filter((s) => typeof s === "string" && s.trim().length > 0).slice(0, 3);
-  if (queries.length === 0) {
-    return [userPrompt.slice(0, 100), "evidence-based psychotherapy", "therapeutic interventions outcomes"];
+  const core = extractKeyPhrase(userPrompt);
+  const kept = core.trim();
+  if (!kept) {
+    return ["evidence-based psychotherapy", "therapeutic interventions outcomes", "clinical therapy"];
   }
-  while (queries.length < 3) {
-    queries.push(queries[queries.length - 1]);
-  }
+  const queries = [kept];
+  queries.push(`${kept} intervention therapy`.slice(0, 200));
+  queries.push(`${kept} outcomes evidence-based`.slice(0, 200));
   return queries;
 }
 async function phaseSearchAll(queries) {
@@ -4946,34 +4943,6 @@ async function phaseRankAndExtract(userPrompt, pool) {
     relevance_score: Math.min(1, s.score / Math.max(maxScore, 1e-3))
   }));
   return out;
-}
-async function enrichWithExtraction(papers) {
-  if (papers.length === 0) return;
-  const listed = papers.map((p, i) => {
-    const abs = (p.abstract || "").slice(0, 240);
-    return `[${i}] ${p.title}
-  ${abs}`;
-  }).join("\n\n");
-  const extractPrompt = [
-    `Extract clinical metadata for each paper below.`,
-    ``,
-    listed,
-    ``,
-    `Return JSON: {"items": [{"index": <int>, "key_findings": [string, 2 items], "therapeutic_techniques": [string, 2 items]}]}`
-  ].join("\n");
-  const parsed = await deepseekJson(extractPrompt, void 0, 1e4);
-  if (!parsed) return;
-  const items = Array.isArray(parsed.items) ? parsed.items : [];
-  for (const it of items) {
-    const idx = typeof it.index === "number" ? it.index : -1;
-    if (idx < 0 || idx >= papers.length) continue;
-    if (Array.isArray(it.key_findings)) {
-      papers[idx].key_findings = it.key_findings.filter((x) => typeof x === "string").slice(0, 5);
-    }
-    if (Array.isArray(it.therapeutic_techniques)) {
-      papers[idx].therapeutic_techniques = it.therapeutic_techniques.filter((x) => typeof x === "string").slice(0, 5);
-    }
-  }
 }
 async function phaseSave(papers, userEmail, ids) {
   let saved = 0;
@@ -5156,10 +5125,6 @@ const runPipeline = createStep({
       const curated = await phaseRankAndExtract(userMsg.content, pool);
       console.log(`[research.workflow] phase=rank curated=${curated.length} elapsed=${Date.now() - t2}ms`);
       if (trackJob) await updateJobProgress(jobId, 75);
-      const t3 = Date.now();
-      const extractPromise = enrichWithExtraction(curated);
-      await extractPromise;
-      console.log(`[research.workflow] phase=extract elapsed=${Date.now() - t3}ms`);
       const t4 = Date.now();
       const saveStats = await phaseSave(curated, userEmail, ids);
       console.log(`[research.workflow] phase=save saved=${saveStats.saved} skipped=${saveStats.skipped} failed=${saveStats.failed} elapsed=${Date.now() - t4}ms`);
