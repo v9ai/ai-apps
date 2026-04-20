@@ -1,6 +1,40 @@
 import type { MutationResolvers } from "./../../types.generated";
+import { z } from "zod";
 import { db } from "@/src/db";
 import { runGraphAndWait } from "@/src/lib/langgraph-client";
+import { generateObject } from "@/src/lib/deepseek";
+
+const PLANNER_SYSTEM_PROMPT = [
+  "You are a clinical research librarian. Given a therapist's note (journal/goal/issue with title, content, age, and any related-person context), output 3 PubMed-style search queries that capture SEMANTIC intent, not literal keywords.",
+  "For metaphorical language (e.g., \"distraction\" meaning career regret), translate to clinical concepts (\"career decision regret\", \"counterfactual rumination\", \"midlife occupational transition\").",
+  "Each query must be age-appropriate — prefix with the age bucket when provided (e.g., \"adults: career decision regret\").",
+  "Queries should be complementary, not redundant.",
+  "Output ONLY JSON: {\"queries\":[q1,q2,q3]}",
+].join(" ");
+
+const plannerSchema = z.object({
+  queries: z.array(z.string().min(1).max(200)).length(3),
+});
+
+async function planQueries(userPrompt: string): Promise<string[] | null> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+    try {
+      const { object } = await generateObject({
+        schema: plannerSchema,
+        prompt: `${PLANNER_SYSTEM_PROMPT}\n\n${userPrompt}`,
+        temperature: 0,
+      });
+      return object.queries.map((q) => q.trim().slice(0, 200));
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch (err) {
+    console.warn("[generateResearch] planner failed, falling back:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
 
 function resolveAge(member: { ageYears?: number | null; dateOfBirth?: string | null }): number | null {
   if (member.ageYears) return member.ageYears;
@@ -227,6 +261,8 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
 
   const hasRelatedMember = relatedFamilyMember !== null;
 
+  const plannedQueries = await planQueries(prompt);
+
   // Fire-and-forget: CF Worker accepts request via ctx.waitUntil and updates the job row itself when done.
   runGraphAndWait("research", {
     input: {
@@ -239,6 +275,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       journalEntryId: journalEntryId ?? null,
       hasRelatedMember,
       evalPromptContext,
+      plannedQueries: plannedQueries ?? undefined,
     },
   }).catch(async (err) => {
     const message = err instanceof Error ? err.message : "LangGraph dispatch failed";

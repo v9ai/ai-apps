@@ -4499,7 +4499,8 @@ const inputSchema = z.object({
   feedbackId: z.number().nullable().optional(),
   journalEntryId: z.number().nullable().optional(),
   hasRelatedMember: z.boolean().optional(),
-  evalPromptContext: z.string().optional()
+  evalPromptContext: z.string().optional(),
+  plannedQueries: z.array(z.string()).optional()
 });
 const outputMessageSchema = z.object({
   type: z.string(),
@@ -4739,7 +4740,10 @@ async function getS2PaperDetail(paperId) {
 }
 async function deepseekJson(prompt, systemPrompt, timeoutMs = 2e4) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.warn("[deepseekJson] DEEPSEEK_API_KEY not set");
+    return null;
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -4761,11 +4765,22 @@ async function deepseekJson(prompt, systemPrompt, timeoutMs = 2e4) {
       }),
       signal: controller.signal
     });
-    if (!resp.ok) return null;
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => "");
+      console.warn(`[deepseekJson] HTTP ${resp.status}: ${errBody.slice(0, 200)}`);
+      return null;
+    }
     const body = await resp.json();
     const content = body.choices?.[0]?.message?.content ?? "{}";
-    return JSON.parse(content);
-  } catch {
+    try {
+      return JSON.parse(content);
+    } catch (parseErr) {
+      console.warn(`[deepseekJson] JSON parse failed: ${content.slice(0, 200)}`);
+      return null;
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[deepseekJson] fetch error: ${msg}`);
     return null;
   } finally {
     clearTimeout(timer);
@@ -4796,7 +4811,7 @@ function extractAgeContext(userPrompt) {
   if (age < 65) return "adults";
   return "older adults";
 }
-async function phasePlanQueries(userPrompt) {
+function deterministicPlanQueries(userPrompt) {
   const core = extractKeyPhrase(userPrompt).trim();
   const ageCtx = extractAgeContext(userPrompt);
   if (!core) {
@@ -4807,6 +4822,18 @@ async function phasePlanQueries(userPrompt) {
   queries.push(`${withAge} intervention therapy`.slice(0, 200));
   queries.push(`${withAge} outcomes evidence-based`.slice(0, 200));
   return queries;
+}
+function phasePlanQueries(userPrompt, plannedQueries) {
+  if (plannedQueries && plannedQueries.length >= 3) {
+    const cleaned = plannedQueries.slice(0, 3).map((q) => typeof q === "string" ? q.trim() : "").filter((q) => q.length > 0).map((q) => q.slice(0, 200));
+    if (cleaned.length === 3) {
+      console.log(`[research.workflow] planner=resolver-llm queries=${JSON.stringify(cleaned)}`);
+      return cleaned;
+    }
+  }
+  const fallback = deterministicPlanQueries(userPrompt);
+  console.log(`[research.workflow] planner=fallback queries=${JSON.stringify(fallback)}`);
+  return fallback;
 }
 async function phaseSearchAll(queries) {
   const perProvider = 10;
@@ -5130,7 +5157,7 @@ const runPipeline = createStep({
     };
     try {
       const t0 = Date.now();
-      const queries = await phasePlanQueries(userMsg.content);
+      const queries = phasePlanQueries(userMsg.content, inputData.plannedQueries);
       console.log(`[research.workflow] phase=plan_queries queries=${JSON.stringify(queries)} elapsed=${Date.now() - t0}ms`);
       const t1 = Date.now();
       const pool = await phaseSearchAll(queries);

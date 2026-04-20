@@ -20,6 +20,7 @@ const inputSchema = z.object({
   journalEntryId: z.number().nullable().optional(),
   hasRelatedMember: z.boolean().optional(),
   evalPromptContext: z.string().optional(),
+  plannedQueries: z.array(z.string()).optional(),
 });
 
 const outputMessageSchema = z.object({
@@ -309,7 +310,10 @@ async function deepseekJson<T>(
   timeoutMs = 20000,
 ): Promise<T | null> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.warn("[deepseekJson] DEEPSEEK_API_KEY not set");
+    return null;
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -331,13 +335,24 @@ async function deepseekJson<T>(
       }),
       signal: controller.signal,
     });
-    if (!resp.ok) return null;
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => "");
+      console.warn(`[deepseekJson] HTTP ${resp.status}: ${errBody.slice(0, 200)}`);
+      return null;
+    }
     const body = (await resp.json()) as {
       choices?: Array<{ message?: { content?: string } }>;
     };
     const content = body.choices?.[0]?.message?.content ?? "{}";
-    return JSON.parse(content) as T;
-  } catch {
+    try {
+      return JSON.parse(content) as T;
+    } catch (parseErr) {
+      console.warn(`[deepseekJson] JSON parse failed: ${content.slice(0, 200)}`);
+      return null;
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[deepseekJson] fetch error: ${msg}`);
     return null;
   } finally {
     clearTimeout(timer);
@@ -393,30 +408,21 @@ function deterministicPlanQueries(userPrompt: string): string[] {
   return queries;
 }
 
-const PLANNER_SYSTEM_PROMPT = [
-  "You are a clinical research librarian. Given a therapist's note (journal/goal/issue with title, content, age, and any related-person context), output 3 PubMed-style search queries that capture SEMANTIC intent, not literal keywords.",
-  "For metaphorical language (e.g., \"distraction\" meaning career regret), translate to clinical concepts (\"career decision regret\", \"counterfactual rumination\", \"midlife occupational transition\").",
-  "Each query must be age-appropriate — prefix with the age bucket when provided (e.g., \"adults: career decision regret\").",
-  "Queries should be complementary, not redundant.",
-  "Output ONLY JSON: {\"queries\":[q1,q2,q3]}",
-].join(" ");
-
-async function phasePlanQueries(userPrompt: string): Promise<string[]> {
-  const parsed = await deepseekJson<{ queries?: unknown }>(
-    userPrompt,
-    PLANNER_SYSTEM_PROMPT,
-    8000,
-  );
-  const raw = parsed?.queries;
-  if (Array.isArray(raw) && raw.length >= 3) {
-    const cleaned = raw
+function phasePlanQueries(userPrompt: string, plannedQueries?: string[]): string[] {
+  if (plannedQueries && plannedQueries.length >= 3) {
+    const cleaned = plannedQueries
       .slice(0, 3)
       .map((q) => (typeof q === "string" ? q.trim() : ""))
       .filter((q) => q.length > 0)
       .map((q) => q.slice(0, 200));
-    if (cleaned.length === 3) return cleaned;
+    if (cleaned.length === 3) {
+      console.log(`[research.workflow] planner=resolver-llm queries=${JSON.stringify(cleaned)}`);
+      return cleaned;
+    }
   }
-  return deterministicPlanQueries(userPrompt);
+  const fallback = deterministicPlanQueries(userPrompt);
+  console.log(`[research.workflow] planner=fallback queries=${JSON.stringify(fallback)}`);
+  return fallback;
 }
 
 
@@ -776,9 +782,9 @@ const runPipeline = createStep({
     };
 
     try {
-      // Phase 1: plan queries (deterministic)
+      // Phase 1: plan queries (resolver-provided LLM queries, or deterministic fallback)
       const t0 = Date.now();
-      const queries = await phasePlanQueries(userMsg.content);
+      const queries = phasePlanQueries(userMsg.content, inputData.plannedQueries);
       console.log(`[research.workflow] phase=plan_queries queries=${JSON.stringify(queries)} elapsed=${Date.now() - t0}ms`);
 
       // Phase 2: search all
