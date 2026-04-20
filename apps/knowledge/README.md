@@ -9,7 +9,7 @@ AI engineering educational platform — 88 lessons across 14 categories with sea
 - **ORM**: Drizzle ORM
 - **UI**: Radix UI Themes
 - **AI**: OpenAI, DeepSeek
-- **Content Generation**: LangGraph (Python backend) — being ported to Mastra
+- **Content Generation**: Mastra workflow (TypeScript) in sibling app `apps/knowledge-mastra/` — replaces the previous Python LangGraph pipeline
 - **Agent runtime**: Mastra on Cloudflare Workers (sibling app `apps/knowledge-mastra/`, in migration) — workflow state persisted to Neon `mastra` schema (same DB)
 - **File Storage**: Cloudflare R2
 - **Deployment**: Vercel (Next.js) + Cloudflare Workers (Mastra)
@@ -307,9 +307,9 @@ graph TD
     style evaluate fill:#ff9,stroke:#333
 ```
 
-### Content Generation Pipeline
+### Content Generation Pipeline (Mastra)
 
-Sequential graph that generates knowledge base articles from a topic slug. Uses DeepSeek Reasoner (local or remote) through four LLM passes.
+Mastra workflow (`apps/knowledge-mastra/src/mastra/workflows/generate-article.ts`) generating knowledge base articles from a topic slug. Uses DeepSeek through five LLM passes, with a `.dowhile()` revision loop (max 2) gated by quality checks (word count, code blocks, cross-refs).
 
 ```mermaid
 graph TD
@@ -317,13 +317,18 @@ graph TD
     research --> outline
     outline --> draft
     draft --> review
-    review --> save
+    review --> revise_loop{quality OK?}
+    revise_loop -->|"yes"| save
+    revise_loop -->|"no, <2 revs"| revise
+    revise --> revise_loop
     save --> END((End))
 
     style research fill:#9cf,stroke:#333
     style outline fill:#ff9,stroke:#333
     style draft fill:#bbf,stroke:#333
     style review fill:#fbb,stroke:#333
+    style revise_loop fill:#f9f,stroke:#333
+    style revise fill:#fcb,stroke:#333
     style save fill:#bfb,stroke:#333
 ```
 
@@ -412,9 +417,6 @@ apps/knowledge/
 │   ├── db/queries.ts       # DB query layer
 │   ├── r2.ts               # Cloudflare R2 upload/delete helpers
 │   └── actions/            # Server actions
-├── backend/                # LangGraph content generation (Python)
-│   ├── graph/              # research → outline → draft → review → quality_check [→ revise] → save
-│   └── tests/              # 33 pytest tests
 ├── evals/                  # Python eval suite (DeepEval)
 │   ├── editorial/          # LangGraph journalism pipeline (build_journalism_graph)
 │   └── course_review/      # LangGraph 10-expert course review pipeline (build_course_review_graph)
@@ -435,12 +437,12 @@ pnpm db:studio    # open Drizzle Studio
 pnpm seed         # seed DB from markdown files
 pnpm seed:courses # seed Class Central course catalog
 pnpm scrape:udemy # scrape 20+ AI/ML Udemy topics → external_courses (with topic_group classification)
-pnpm generate -- prompt-caching            # generate article via LangGraph
-pnpm generate:dry -- prompt-caching        # preview without saving
-pnpm generate -- prompt-caching --model deepseek-reasoner  # use specific model
+pnpm generate prompt-caching               # generate article via Mastra (delegates to apps/knowledge-mastra)
+pnpm generate:dry prompt-caching           # preview without saving
+pnpm generate prompt-caching --model deepseek-reasoner  # use specific model
 pnpm generate:missing                      # list articles without content files
 pnpm generate:batch                        # generate all missing articles
-pnpm generate:test                         # run backend pytest suite (33 tests)
+pnpm generate:graph                        # print workflow as Mermaid
 pnpm eval         # run all evals
 pnpm eval:agent   # test agent behavior only
 

@@ -9,7 +9,12 @@
     "dev": "mastra dev",
     "build": "mastra build",
     "deploy": "mastra deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate": "tsx --env-file=../knowledge/.env.local src/cli.ts",
+    "generate:dry": "tsx --env-file=../knowledge/.env.local src/cli.ts --dry-run",
+    "generate:missing": "tsx --env-file=../knowledge/.env.local src/cli.ts --list-missing",
+    "generate:batch": "tsx --env-file=../knowledge/.env.local src/cli.ts --batch",
+    "generate:graph": "tsx src/cli.ts --graph"
   },
   "dependencies": {
     "@mastra/core": "latest",
@@ -21,6 +26,7 @@
   },
   "devDependencies": {
     "mastra": "latest",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "wrangler": "latest",
     "@types/node": "^22"

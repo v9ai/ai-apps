@@ -1,6 +1,7 @@
 import { Mastra } from '@mastra/core'
 import { CloudflareDeployer } from '@mastra/deployer-cloudflare'
 import { PostgresStore } from '@mastra/pg'
+import { generateArticle } from './workflows/generate-article'
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) throw new Error('DATABASE_URL is required')
@@ -18,5 +19,5 @@ export const mastra = new Mastra({
     },
   }),
   agents: {},
-  workflows: {},
+  workflows: { generateArticle },
 })
