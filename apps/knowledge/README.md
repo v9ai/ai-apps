@@ -221,93 +221,9 @@ graph LR
     A5 -->|related| A7
 ```
 
-## Eval Pipeline
+## Mastra Pipelines
 
-```mermaid
-graph LR
-    subgraph evals/
-        A[run_eval.py]
-        B[test_articles.py]
-        C[test_agent.py]
-        D[test_editorial.py]
-        E[test_llm_judge.py]
-    end
-
-    subgraph Judges
-        F[DeepEval\nmetrics]
-        G[LangGraph\nagent]
-        H[LLM Judge\nconsistency]
-    end
-
-    A --> B & C & D & E
-    B --> F
-    C --> G
-    D --> F
-    E --> H
-    F & G & H --> I[eval-results.json]
-```
-
-## LangGraph Pipelines
-
-Three LangGraph StateGraphs power the eval and content generation layer.
-
-### Editorial Pipeline
-
-Fan-out research to three specialists in parallel, fan-in to writer, then editor revision loop (max 2 rounds). Supports optional MemorySaver checkpointing for resumable runs.
-
-```mermaid
-graph TD
-    START((Start)) --> research_entry
-    research_entry --> researcher
-    research_entry --> seo
-    research_entry --> intro_strategist
-    researcher --> writer
-    seo --> writer
-    intro_strategist --> writer
-    writer --> editor
-    editor -->|APPROVE or max rounds| END((End))
-    editor -->|REVISE| writer
-
-    style research_entry fill:#f9f,stroke:#333
-    style writer fill:#bbf,stroke:#333
-    style editor fill:#fbb,stroke:#333
-```
-
-### Red-Team Orchestrator
-
-Plans attacks from a profile, fans out via `Send()` to parallel workers with retry, collects results via `operator.add` reducer, and generates a report.
-
-```mermaid
-graph TD
-    START((Start)) --> plan_attacks
-    plan_attacks -->|"Send() per attack"| attack_worker_1[attack_worker]
-    plan_attacks -->|"Send() per attack"| attack_worker_2[attack_worker]
-    plan_attacks -->|"Send() per attack"| attack_worker_n[attack_worker ...]
-    attack_worker_1 --> report
-    attack_worker_2 --> report
-    attack_worker_n --> report
-    report --> END((End))
-
-    style plan_attacks fill:#f9f,stroke:#333
-    style report fill:#bfb,stroke:#333
-```
-
-### Crescendo Multi-Turn Attack
-
-Cyclic graph for escalating multi-turn attacks. Sends progressively adversarial prompts and evaluates after each turn.
-
-```mermaid
-graph TD
-    START((Start)) --> send_turn
-    send_turn --> evaluate
-    evaluate -->|"goal achieved or max turns"| END((End))
-    evaluate -->|"continue escalation"| send_turn
-
-    style send_turn fill:#fbb,stroke:#333
-    style evaluate fill:#ff9,stroke:#333
-```
-
-### Content Generation Pipeline (Mastra)
+### Content Generation Pipeline
 
 Mastra workflow (`apps/knowledge-mastra/src/mastra/workflows/generate-article.ts`) generating knowledge base articles from a topic slug. Uses DeepSeek through five LLM passes, with a `.dowhile()` revision loop (max 2) gated by quality checks (word count, code blocks, cross-refs).
 
@@ -351,35 +267,16 @@ graph TD
 
 ### Course Review Pipeline
 
-Ten expert nodes run in parallel (pedagogy, technical accuracy, content depth, practical application, instructor clarity, curriculum fit, prerequisites, AI domain relevance, community health, value proposition), then an aggregator computes a weighted score and verdict.
+Mastra workflow (`apps/knowledge-mastra/src/mastra/workflows/review-course.ts`) running ten expert evaluators concurrently via `Promise.all` (pedagogy, technical accuracy, content depth, practical application, instructor clarity, curriculum fit, prerequisites, AI domain relevance, community health, value proposition), then an aggregator step computes a weighted score and verdict.
 
 ```mermaid
 graph TD
-    START((Start)) --> fan_out
-    fan_out --> pedagogy_node
-    fan_out --> technical_accuracy_node
-    fan_out --> content_depth_node
-    fan_out --> practical_application_node
-    fan_out --> instructor_clarity_node
-    fan_out --> curriculum_fit_node
-    fan_out --> prerequisites_node
-    fan_out --> ai_domain_relevance_node
-    fan_out --> community_health_node
-    fan_out --> value_proposition_node
-    pedagogy_node --> aggregator_node
-    technical_accuracy_node --> aggregator_node
-    content_depth_node --> aggregator_node
-    practical_application_node --> aggregator_node
-    instructor_clarity_node --> aggregator_node
-    curriculum_fit_node --> aggregator_node
-    prerequisites_node --> aggregator_node
-    ai_domain_relevance_node --> aggregator_node
-    community_health_node --> aggregator_node
-    value_proposition_node --> aggregator_node
-    aggregator_node --> END((End))
+    START((Start)) --> experts
+    experts --> aggregator
+    aggregator --> END((End))
 
-    style fan_out fill:#f9f,stroke:#333
-    style aggregator_node fill:#bfb,stroke:#333
+    style experts fill:#f9f,stroke:#333
+    style aggregator fill:#bfb,stroke:#333
 ```
 
 ## Directory Structure
@@ -417,13 +314,9 @@ apps/knowledge/
 │   ├── db/queries.ts       # DB query layer
 │   ├── r2.ts               # Cloudflare R2 upload/delete helpers
 │   └── actions/            # Server actions
-├── evals/                  # Python eval suite (DeepEval)
-│   ├── editorial/          # LangGraph journalism pipeline (build_journalism_graph)
-│   └── course_review/      # [Ported to Mastra] 10-expert course review pipeline now in apps/knowledge-mastra/src/mastra/workflows/review-course.ts
 ├── scripts/seed.ts              # DB seeder (lessons from markdown)
 ├── scripts/seed-courses.ts      # Class Central course catalog seeder
 ├── scripts/scrape-udemy-courses.ts  # Playwright scraper — deep-scrapes Udemy topic pages into external_courses
-├── scripts/review_courses.py    # [Deprecated — superseded by apps/knowledge-mastra/src/cli-review-courses.ts]
 ├── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
 └── sql/add_course_reviews.sql  # course_reviews table (10-expert scores, verdict, aggregate)
 ```
@@ -443,8 +336,6 @@ pnpm generate prompt-caching --model deepseek-reasoner  # use specific model
 pnpm generate:missing                      # list articles without content files
 pnpm generate:batch                        # generate all missing articles
 pnpm generate:graph                        # print workflow as Mermaid
-pnpm eval         # run all evals
-pnpm eval:agent   # test agent behavior only
 
 # Batch-review unreviewed courses (delegates to apps/knowledge-mastra):
 pnpm review:courses                             # review up to 5 courses

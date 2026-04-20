@@ -1,20 +1,6 @@
 .vercel
 .env*.local
 
-# evals
-evals/.venv/
-evals/__pycache__/
-evals/.pytest_cache/
-evals/eval-results.json
-*.pyc
-
-# backend
-backend/.venv/
-backend/__pycache__/
-backend/graph/__pycache__/
-backend/tests/__pycache__/
-backend/.pytest_cache/
-
 # SQLite content DB
 data/knowledge.db
 data/knowledge.db-wal
