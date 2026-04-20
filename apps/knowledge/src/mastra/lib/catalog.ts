@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 export const KNOWLEDGE_APP_DIR = path.resolve(
-  process.env.KNOWLEDGE_APP_DIR ?? path.join(process.cwd(), "../knowledge"),
+  process.env.KNOWLEDGE_APP_DIR ?? process.cwd(),
 );
 export const CONTENT_DIR = path.join(KNOWLEDGE_APP_DIR, "content");
 const ARTICLES_TS = path.join(KNOWLEDGE_APP_DIR, "lib/articles.ts");

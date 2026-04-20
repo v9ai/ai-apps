@@ -210,7 +210,7 @@ async function main() {
     return;
   }
 
-  const { mastra } = await import("./mastra");
+  const { mastra } = await import("../src/mastra");
   const workflow = mastra.getWorkflow("reviewCourse");
 
   for (let i = 0; i < courses.length; i++) {

@@ -251,6 +251,9 @@ importers:
       '@ai-apps/db-backup':
         specifier: workspace:*
         version: link:../../packages/db-backup
+      '@ai-apps/deepseek':
+        specifier: workspace:*
+        version: link:../../packages/deepseek
       '@ai-apps/resume':
         specifier: workspace:*
         version: link:../../packages/resume
@@ -259,19 +262,28 @@ importers:
         version: 5.4.0(graphql@16.13.2)
       '@as-integrations/next':
         specifier: ^4.1.0
-        version: 4.1.0(@apollo/server@5.4.0(graphql@16.13.2))(next@16.2.4(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
+        version: 4.1.0(@apollo/server@5.4.0(graphql@16.13.2))(next@16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
       '@aws-sdk/client-s3':
         specifier: ^3.1029.0
         version: 3.1029.0
       '@graphql-tools/schema':
         specifier: ^10.0.31
         version: 10.0.31(graphql@16.13.2)
+      '@mastra/core':
+        specifier: latest
+        version: 1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76)
+      '@mastra/deployer-cloudflare':
+        specifier: latest
+        version: 1.1.23(@hono/node-server@1.19.11(hono@4.12.14))(@mastra/core@1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(encoding@0.1.13)(esbuild@0.27.7)(typescript@5.9.3)(wrangler@4.84.0)(zod@3.25.76)
+      '@mastra/pg':
+        specifier: latest
+        version: 1.9.1(@mastra/core@1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))
       '@neondatabase/serverless':
         specifier: ^0.10.4
         version: 0.10.4
       '@posthog/next':
         specifier: ^0.1.0
-        version: 0.1.0(next@16.2.4(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rxjs@7.8.2)
+        version: 0.1.0(next@16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rxjs@7.8.2)
       '@radix-ui/react-icons':
         specifier: ^1.3.2
         version: 1.3.2(react@19.1.1)
@@ -289,7 +301,7 @@ importers:
         version: 12.6.2
       drizzle-orm:
         specifier: ^0.45.1
-        version: 0.45.1(@cloudflare/workers-types@4.20260307.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.11.6)(better-sqlite3@12.6.2)(gel@2.2.0)(kysely@0.28.16)(pg@8.20.0)
+        version: 0.45.1(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.11.6)(better-sqlite3@12.6.2)(gel@2.2.0)(kysely@0.28.16)(pg@8.20.0)
       graphql:
         specifier: ^16.13.2
         version: 16.13.2
@@ -311,6 +323,9 @@ importers:
       unist-util-visit:
         specifier: ^5.1.0
         version: 5.1.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
       '@types/better-sqlite3':
         specifier: ^7.6.12
@@ -330,6 +345,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.9
         version: 0.31.9
+      mastra:
+        specifier: latest
+        version: 1.6.0(@hono/node-server@1.19.11(hono@4.12.14))(@mastra/core@1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(typescript@5.9.3)(zod@3.25.76)
       playwright:
         specifier: ^1.52.0
         version: 1.58.2
@@ -339,46 +357,9 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
-
-  apps/knowledge-mastra:
-    dependencies:
-      '@ai-apps/deepseek':
-        specifier: workspace:*
-        version: link:../../packages/deepseek
-      '@mastra/core':
-        specifier: latest
-        version: 1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76)
-      '@mastra/deployer-cloudflare':
-        specifier: latest
-        version: 1.1.23(@hono/node-server@1.19.11(hono@4.12.14))(@mastra/core@1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(encoding@0.1.13)(esbuild@0.27.7)(typescript@5.9.3)(wrangler@4.83.0)(zod@3.25.76)
-      '@mastra/pg':
-        specifier: latest
-        version: 1.9.1(@mastra/core@1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))
-      '@neondatabase/serverless':
-        specifier: ^0.10.4
-        version: 0.10.4
-      drizzle-orm:
-        specifier: ^0.45.1
-        version: 0.45.1(@cloudflare/workers-types@4.20260307.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.11.6)(better-sqlite3@12.6.2)(gel@2.2.0)(kysely@0.28.16)(pg@8.20.0)
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-    devDependencies:
-      '@types/node':
-        specifier: ^22
-        version: 22.19.7
-      mastra:
-        specifier: latest
-        version: 1.6.0(@hono/node-server@1.19.11(hono@4.12.14))(@mastra/core@1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(typescript@5.9.3)(zod@3.25.76)
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
-      typescript:
-        specifier: ^5
-        version: 5.9.3
       wrangler:
         specifier: latest
-        version: 4.83.0
+        version: 4.84.0
 
   apps/law-adversarial:
     dependencies:
@@ -1372,10 +1353,10 @@ importers:
     dependencies:
       jest:
         specifier: ^30.2.0
-        version: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3))
+        version: 30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
       ts-jest:
         specifier: ^29.4.6
-        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.7)(jest-util@30.2.0)(jest@30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3)))(typescript@5.9.3)
+        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.7)(jest-util@30.2.0)(jest@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)))(typescript@5.9.3)
     devDependencies:
       jest-environment-jsdom:
         specifier: ^30.2.0
@@ -2979,8 +2960,20 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@cloudflare/workerd-darwin-64@1.20260420.1':
+    resolution: {integrity: sha512-Y6HtAY+pS5INiD9HyO1JvvujZO24mD3eqRwPZlLXBkcT+wW8bTOve/8mVKErEzEtZ5LkuT3tJqG9py8TxQEBgw==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
   '@cloudflare/workerd-darwin-arm64@1.20260415.1':
     resolution: {integrity: sha512-+JgSgVA49KyKteHRA1SnonE4Zn5Ei5zdAp5FQMxFmXI8qulZw4Hl7safXxRyK4i9sTO8gl7TFOKO5Q64VPvSDQ==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20260420.1':
+    resolution: {integrity: sha512-7aiRtZTc5S4aKcL6uIx+B3tCzb/bULjQmE67/03k0HtaDNzP20GnYmYpFCqleFqsdmIb4Tx8PkKPmsXI3AJLvQ==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
@@ -2991,14 +2984,32 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-64@1.20260420.1':
+    resolution: {integrity: sha512-J/DW149FPmug1wSM32zBF7My14xg+inIYwzS4bSAxyXR6tBiTxbhgFWQQz99nt08ZMstdKHRD6f6C/KQaleQcA==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
   '@cloudflare/workerd-linux-arm64@1.20260415.1':
     resolution: {integrity: sha512-bR9uITnV19r5NQ14xnypi2xHXu2iQvfYV8cVgx0JouFUmWwTEEAwFVojDdssGq93VHX9hr/pi2IRUZeegbYBog==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-arm64@1.20260420.1':
+    resolution: {integrity: sha512-a5I147McRM/L4YHu9EwOsoAyIExZndPRQoLx/33dbw/yUEnO825gvn5QZkCGXBVL2JwsPAyowB0Xliqrj+71Sw==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
   '@cloudflare/workerd-windows-64@1.20260415.1':
     resolution: {integrity: sha512-4NuMLlerI0Ijua3Ir8HXQ+qyNvCUDEG5gDco5Om+sAiK6rnWiz+aGoSlbB8W16yW9QAgzCstbmXLiVknUBflfQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
+
+  '@cloudflare/workerd-windows-64@1.20260420.1':
+    resolution: {integrity: sha512-ZrHqlHbJNU8P24EAOBaZ6B44G9P+po2z0DBwbAr8965aWR+vohy3cfmgE9uzNPAQfKNmvq7fmc4VwsRpERkg0w==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -14545,6 +14556,11 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  miniflare@4.20260420.0:
+    resolution: {integrity: sha512-w8s3eh2W7EEsFh2uGdddZLkbTwiPI8MCSMXKtuLSA9btW8xmQsVVSkrFuLXFyTKcX0QkstS5dhcWjQPQRJ2WKg==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   minimalistic-assert@1.0.1:
     resolution: {integrity: sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==}
 
@@ -18454,12 +18470,27 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
+  workerd@1.20260420.1:
+    resolution: {integrity: sha512-1AOJgng169u4fiFrEd5WjrAGpdwd3A4ZJtP8PMvf+RF9NUKy+mdwrKdz4qPZ6Tt/Bya99vsLn6UX33fjAEVoaA==}
+    engines: {node: '>=16'}
+    hasBin: true
+
   wrangler@4.83.0:
     resolution: {integrity: sha512-gw5g3LCiuAqVWxaoKY6+quE0HzAUEFb/FV3oAlNkE1ttd4XP3FiV91XDkkzUCcdqxS4WjhQvPhIDBNdhEi8P0A==}
     engines: {node: '>=20.3.0'}
     hasBin: true
     peerDependencies:
       '@cloudflare/workers-types': ^4.20260415.1
+    peerDependenciesMeta:
+      '@cloudflare/workers-types':
+        optional: true
+
+  wrangler@4.84.0:
+    resolution: {integrity: sha512-lYScYXeHZ385rDzbTF7QfP4FWu2vQuD7uDQRUjDZuutyq5fZVCR6ZxLLsySbqFiFjvKsF5RoxVPeJtI78blz4w==}
+    engines: {node: '>=20.3.0'}
+    hasBin: true
+    peerDependencies:
+      '@cloudflare/workers-types': ^4.20260420.1
     peerDependenciesMeta:
       '@cloudflare/workers-types':
         optional: true
@@ -19127,10 +19158,10 @@ snapshots:
       '@apollo/server': 5.4.0(graphql@16.13.1)
       next: 16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
 
-  '@as-integrations/next@4.1.0(@apollo/server@5.4.0(graphql@16.13.2))(next@16.2.4(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))':
+  '@as-integrations/next@4.1.0(@apollo/server@5.4.0(graphql@16.13.2))(next@16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))':
     dependencies:
       '@apollo/server': 5.4.0(graphql@16.13.2)
-      next: 16.2.4(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
 
   '@asamuzakjp/css-color@3.2.0':
     dependencies:
@@ -20862,19 +20893,40 @@ snapshots:
     optionalDependencies:
       workerd: 1.20260415.1
 
+  '@cloudflare/unenv-preset@2.16.0(unenv@2.0.0-rc.24)(workerd@1.20260420.1)':
+    dependencies:
+      unenv: 2.0.0-rc.24
+    optionalDependencies:
+      workerd: 1.20260420.1
+
   '@cloudflare/workerd-darwin-64@1.20260415.1':
+    optional: true
+
+  '@cloudflare/workerd-darwin-64@1.20260420.1':
     optional: true
 
   '@cloudflare/workerd-darwin-arm64@1.20260415.1':
     optional: true
 
+  '@cloudflare/workerd-darwin-arm64@1.20260420.1':
+    optional: true
+
   '@cloudflare/workerd-linux-64@1.20260415.1':
+    optional: true
+
+  '@cloudflare/workerd-linux-64@1.20260420.1':
     optional: true
 
   '@cloudflare/workerd-linux-arm64@1.20260415.1':
     optional: true
 
+  '@cloudflare/workerd-linux-arm64@1.20260420.1':
+    optional: true
+
   '@cloudflare/workerd-windows-64@1.20260415.1':
+    optional: true
+
+  '@cloudflare/workerd-windows-64@1.20260420.1':
     optional: true
 
   '@cloudflare/workers-types@4.20260307.1':
@@ -23778,6 +23830,42 @@ snapshots:
       - supports-color
       - ts-node
 
+  '@jest/core@30.2.0(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))':
+    dependencies:
+      '@jest/console': 30.2.0
+      '@jest/pattern': 30.0.1
+      '@jest/reporters': 30.2.0
+      '@jest/test-result': 30.2.0
+      '@jest/transform': 30.2.0
+      '@jest/types': 30.2.0
+      '@types/node': 22.19.7
+      ansi-escapes: 4.3.2
+      chalk: 4.1.2
+      ci-info: 4.4.0
+      exit-x: 0.2.2
+      graceful-fs: 4.2.11
+      jest-changed-files: 30.2.0
+      jest-config: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
+      jest-haste-map: 30.2.0
+      jest-message-util: 30.2.0
+      jest-regex-util: 30.0.1
+      jest-resolve: 30.2.0
+      jest-resolve-dependencies: 30.2.0
+      jest-runner: 30.2.0
+      jest-runtime: 30.2.0
+      jest-snapshot: 30.2.0
+      jest-util: 30.2.0
+      jest-validate: 30.2.0
+      jest-watcher: 30.2.0
+      micromatch: 4.0.8
+      pretty-format: 30.2.0
+      slash: 3.0.0
+    transitivePeerDependencies:
+      - babel-plugin-macros
+      - esbuild-register
+      - supports-color
+      - ts-node
+
   '@jest/diff-sequences@30.0.1': {}
 
   '@jest/environment-jsdom-abstract@30.2.0(jsdom@26.1.0)':
@@ -24294,6 +24382,27 @@ snapshots:
       zod: 3.25.76
     optionalDependencies:
       wrangler: 4.83.0
+    transitivePeerDependencies:
+      - '@hono/node-server'
+      - bufferutil
+      - encoding
+      - esbuild
+      - supports-color
+      - typescript
+      - utf-8-validate
+
+  '@mastra/deployer-cloudflare@1.1.23(@hono/node-server@1.19.11(hono@4.12.14))(@mastra/core@1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(encoding@0.1.13)(esbuild@0.27.7)(typescript@5.9.3)(wrangler@4.84.0)(zod@3.25.76)':
+    dependencies:
+      '@babel/core': 7.29.0
+      '@mastra/core': 1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76)
+      '@mastra/deployer': 1.25.0(@hono/node-server@1.19.11(hono@4.12.14))(@mastra/core@1.25.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(typescript@5.9.3)(zod@3.25.76)
+      '@rollup/plugin-virtual': 3.0.2(rollup@4.59.0)
+      cloudflare: 5.2.0(encoding@0.1.13)
+      rollup: 4.59.0
+      rollup-plugin-esbuild: 6.2.1(esbuild@0.27.7)(rollup@4.59.0)
+      zod: 3.25.76
+    optionalDependencies:
+      wrangler: 4.84.0
     transitivePeerDependencies:
       - '@hono/node-server'
       - bufferutil
@@ -25283,10 +25392,10 @@ snapshots:
     dependencies:
       cross-spawn: 7.0.6
 
-  '@posthog/next@0.1.0(next@16.2.4(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rxjs@7.8.2)':
+  '@posthog/next@0.1.0(next@16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rxjs@7.8.2)':
     dependencies:
       '@posthog/core': 1.23.2
-      next: 16.2.4(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       posthog-js: 1.359.1
       posthog-node: 5.28.0(rxjs@7.8.2)
       react: 19.1.1
@@ -32157,18 +32266,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260307.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.11.6)(better-sqlite3@12.6.2)(gel@2.2.0)(kysely@0.28.16)(pg@8.20.0):
-    optionalDependencies:
-      '@cloudflare/workers-types': 4.20260307.1
-      '@neondatabase/serverless': 0.10.4
-      '@opentelemetry/api': 1.9.0
-      '@types/better-sqlite3': 7.6.13
-      '@types/pg': 8.11.6
-      better-sqlite3: 12.6.2
-      gel: 2.2.0
-      kysely: 0.28.16
-      pg: 8.20.0
-
   drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260307.1)(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.11.6)(better-sqlite3@12.6.2)(gel@2.2.0)(kysely@0.28.16)(pg@8.20.0):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20260307.1
@@ -32190,6 +32287,17 @@ snapshots:
       better-sqlite3: 12.6.2
       gel: 2.2.0
       kysely: 0.28.11
+      pg: 8.20.0
+
+  drizzle-orm@0.45.1(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.11.6)(better-sqlite3@12.6.2)(gel@2.2.0)(kysely@0.28.16)(pg@8.20.0):
+    optionalDependencies:
+      '@neondatabase/serverless': 0.10.4
+      '@opentelemetry/api': 1.9.0
+      '@types/better-sqlite3': 7.6.13
+      '@types/pg': 8.11.6
+      better-sqlite3: 12.6.2
+      gel: 2.2.0
+      kysely: 0.28.16
       pg: 8.20.0
 
   duck@0.1.12:
@@ -34591,6 +34699,25 @@ snapshots:
       - supports-color
       - ts-node
 
+  jest-cli@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)):
+    dependencies:
+      '@jest/core': 30.2.0(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
+      '@jest/test-result': 30.2.0
+      '@jest/types': 30.2.0
+      chalk: 4.1.2
+      exit-x: 0.2.2
+      import-local: 3.2.0
+      jest-config: 30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
+      jest-util: 30.2.0
+      jest-validate: 30.2.0
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - '@types/node'
+      - babel-plugin-macros
+      - esbuild-register
+      - supports-color
+      - ts-node
+
   jest-config@30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3)):
     dependencies:
       '@babel/core': 7.29.0
@@ -34621,6 +34748,74 @@ snapshots:
       '@types/node': 22.19.7
       esbuild-register: 3.6.0(esbuild@0.27.7)
       ts-node: 10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3)
+    transitivePeerDependencies:
+      - babel-plugin-macros
+      - supports-color
+
+  jest-config@30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)):
+    dependencies:
+      '@babel/core': 7.29.0
+      '@jest/get-type': 30.1.0
+      '@jest/pattern': 30.0.1
+      '@jest/test-sequencer': 30.2.0
+      '@jest/types': 30.2.0
+      babel-jest: 30.2.0(@babel/core@7.29.0)
+      chalk: 4.1.2
+      ci-info: 4.4.0
+      deepmerge: 4.3.1
+      glob: 10.4.5
+      graceful-fs: 4.2.11
+      jest-circus: 30.2.0
+      jest-docblock: 30.2.0
+      jest-environment-node: 30.2.0
+      jest-regex-util: 30.0.1
+      jest-resolve: 30.2.0
+      jest-runner: 30.2.0
+      jest-util: 30.2.0
+      jest-validate: 30.2.0
+      micromatch: 4.0.8
+      parse-json: 5.2.0
+      pretty-format: 30.2.0
+      slash: 3.0.0
+      strip-json-comments: 3.1.1
+    optionalDependencies:
+      '@types/node': 22.19.7
+      esbuild-register: 3.6.0(esbuild@0.27.7)
+      ts-node: 10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)
+    transitivePeerDependencies:
+      - babel-plugin-macros
+      - supports-color
+
+  jest-config@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)):
+    dependencies:
+      '@babel/core': 7.29.0
+      '@jest/get-type': 30.1.0
+      '@jest/pattern': 30.0.1
+      '@jest/test-sequencer': 30.2.0
+      '@jest/types': 30.2.0
+      babel-jest: 30.2.0(@babel/core@7.29.0)
+      chalk: 4.1.2
+      ci-info: 4.4.0
+      deepmerge: 4.3.1
+      glob: 10.4.5
+      graceful-fs: 4.2.11
+      jest-circus: 30.2.0
+      jest-docblock: 30.2.0
+      jest-environment-node: 30.2.0
+      jest-regex-util: 30.0.1
+      jest-resolve: 30.2.0
+      jest-runner: 30.2.0
+      jest-util: 30.2.0
+      jest-validate: 30.2.0
+      micromatch: 4.0.8
+      parse-json: 5.2.0
+      pretty-format: 30.2.0
+      slash: 3.0.0
+      strip-json-comments: 3.1.1
+    optionalDependencies:
+      '@types/node': 24.12.0
+      esbuild-register: 3.6.0(esbuild@0.27.7)
+      ts-node: 10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -34880,6 +35075,19 @@ snapshots:
       '@jest/types': 30.2.0
       import-local: 3.2.0
       jest-cli: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3))
+    transitivePeerDependencies:
+      - '@types/node'
+      - babel-plugin-macros
+      - esbuild-register
+      - supports-color
+      - ts-node
+
+  jest@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)):
+    dependencies:
+      '@jest/core': 30.2.0(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
+      '@jest/types': 30.2.0
+      import-local: 3.2.0
+      jest-cli: 30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -36117,6 +36325,18 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  miniflare@4.20260420.0:
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      sharp: 0.34.5
+      undici: 7.24.8
+      workerd: 1.20260420.1
+      ws: 8.18.0
+      youch: 4.1.0-beta.10
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   minimalistic-assert@1.0.1: {}
 
   minimatch@10.1.1:
@@ -36354,6 +36574,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
+    optional: true
 
   no-case@3.0.4:
     dependencies:
@@ -39645,12 +39866,12 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.7)(jest-util@30.2.0)(jest@30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3)))(typescript@5.9.3):
+  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.7)(jest-util@30.2.0)(jest@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)))(typescript@5.9.3):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       handlebars: 4.7.8
-      jest: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3))
+      jest: 30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.7))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
@@ -40890,6 +41111,14 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260415.1
       '@cloudflare/workerd-windows-64': 1.20260415.1
 
+  workerd@1.20260420.1:
+    optionalDependencies:
+      '@cloudflare/workerd-darwin-64': 1.20260420.1
+      '@cloudflare/workerd-darwin-arm64': 1.20260420.1
+      '@cloudflare/workerd-linux-64': 1.20260420.1
+      '@cloudflare/workerd-linux-arm64': 1.20260420.1
+      '@cloudflare/workerd-windows-64': 1.20260420.1
+
   wrangler@4.83.0:
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
@@ -40900,6 +41129,22 @@ snapshots:
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.24
       workerd: 1.20260415.1
+    optionalDependencies:
+      fsevents: 2.3.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  wrangler@4.84.0:
+    dependencies:
+      '@cloudflare/kv-asset-handler': 0.4.2
+      '@cloudflare/unenv-preset': 2.16.0(unenv@2.0.0-rc.24)(workerd@1.20260420.1)
+      blake3-wasm: 2.1.5
+      esbuild: 0.27.3
+      miniflare: 4.20260420.0
+      path-to-regexp: 6.3.0
+      unenv: 2.0.0-rc.24
+      workerd: 1.20260420.1
     optionalDependencies:
       fsevents: 2.3.3
     transitivePeerDependencies:

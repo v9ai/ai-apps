@@ -1,7 +1,7 @@
 import { parseArgs } from "node:util";
 import path from "node:path";
 import fs from "node:fs";
-import { CONTENT_DIR, getMissingSlugs } from "./mastra/lib/catalog";
+import { CONTENT_DIR, getMissingSlugs } from "../src/mastra/lib/catalog";
 
 interface Args {
   slug?: string;
@@ -45,7 +45,7 @@ async function runSingle(
   topic: string,
   dryRun: boolean,
 ): Promise<{ wordCount: number; revisions: number; totalTokens: number }> {
-  const { mastra } = await import("./mastra");
+  const { mastra } = await import("../src/mastra");
   const workflow = mastra.getWorkflow("generateArticle");
   const run = await workflow.createRun();
   const result = await run.start({

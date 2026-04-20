@@ -9,8 +9,8 @@ AI engineering educational platform — 88 lessons across 14 categories with sea
 - **ORM**: Drizzle ORM
 - **UI**: Radix UI Themes
 - **AI**: OpenAI, DeepSeek
-- **Content Generation**: Mastra workflow (TypeScript) in sibling app `apps/knowledge-mastra/` — replaces the previous Python LangGraph pipeline
-- **Agent runtime**: Mastra on Cloudflare Workers (sibling app `apps/knowledge-mastra/`, in migration) — workflow state persisted to Neon `mastra` schema (same DB)
+- **Content Generation**: Mastra workflow (TypeScript) under `src/mastra/workflows/` — replaces the previous Python LangGraph pipeline
+- **Agent runtime**: Mastra on Cloudflare Workers (`src/mastra/index.ts`, in migration) — workflow state persisted to Neon `mastra` schema (same DB)
 - **File Storage**: Cloudflare R2
 - **Deployment**: Vercel (Next.js) + Cloudflare Workers (Mastra)
 
@@ -225,7 +225,7 @@ graph LR
 
 ### Content Generation Pipeline
 
-Mastra workflow (`apps/knowledge-mastra/src/mastra/workflows/generate-article.ts`) generating knowledge base articles from a topic slug. Uses DeepSeek through five LLM passes, with a `.dowhile()` revision loop (max 2) gated by quality checks (word count, code blocks, cross-refs).
+Mastra workflow (`src/mastra/workflows/generate-article.ts`) generating knowledge base articles from a topic slug. Uses DeepSeek through five LLM passes, with a `.dowhile()` revision loop (max 2) gated by quality checks (word count, code blocks, cross-refs).
 
 ```mermaid
 graph TD
@@ -267,7 +267,7 @@ graph TD
 
 ### Course Review Pipeline
 
-Mastra workflow (`apps/knowledge-mastra/src/mastra/workflows/review-course.ts`) running ten expert evaluators concurrently via `Promise.all` (pedagogy, technical accuracy, content depth, practical application, instructor clarity, curriculum fit, prerequisites, AI domain relevance, community health, value proposition), then an aggregator step computes a weighted score and verdict.
+Mastra workflow (`src/mastra/workflows/review-course.ts`) running ten expert evaluators concurrently via `Promise.all` (pedagogy, technical accuracy, content depth, practical application, instructor clarity, curriculum fit, prerequisites, AI domain relevance, community health, value proposition), then an aggregator step computes a weighted score and verdict.
 
 ```mermaid
 graph TD
@@ -307,6 +307,11 @@ apps/knowledge/
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (22 tables, incl. learners, coursework, external_courses[+topic_group], lesson_courses, course_reviews)
+├── src/mastra/             # Mastra runtime (Cloudflare Workers deploy)
+│   ├── index.ts            # Mastra instance (PostgresStore + CloudflareDeployer)
+│   ├── workflows/generate-article.ts  # Article generation pipeline (ported from backend/ LangGraph)
+│   ├── workflows/review-course.ts     # 10-expert course review pipeline
+│   └── lib/                # catalog, prompts, deepseek, quality
 ├── lib/
 │   ├── articles.ts         # Lesson data layer — Lesson interface includes url field;
 │   │                       # exports AWS_DEEP_DIVE_SLUGS and getUrlPath()
@@ -314,9 +319,11 @@ apps/knowledge/
 │   ├── db/queries.ts       # DB query layer
 │   ├── r2.ts               # Cloudflare R2 upload/delete helpers
 │   └── actions/            # Server actions
-├── scripts/seed.ts              # DB seeder (lessons from markdown)
-├── scripts/seed-courses.ts      # Class Central course catalog seeder
-├── scripts/scrape-udemy-courses.ts  # Playwright scraper — deep-scrapes Udemy topic pages into external_courses
+├── scripts/seed.ts                 # DB seeder (lessons from markdown)
+├── scripts/seed-courses.ts         # Class Central course catalog seeder
+├── scripts/scrape-udemy-courses.ts # Playwright scraper — deep-scrapes Udemy topic pages into external_courses
+├── scripts/generate-article.ts     # Mastra article generator CLI
+├── scripts/review-courses.ts       # Mastra 10-expert course reviewer CLI
 ├── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
 └── sql/add_course_reviews.sql  # course_reviews table (10-expert scores, verdict, aggregate)
 ```
@@ -330,14 +337,14 @@ pnpm db:studio    # open Drizzle Studio
 pnpm seed         # seed DB from markdown files
 pnpm seed:courses # seed Class Central course catalog
 pnpm scrape:udemy # scrape 20+ AI/ML Udemy topics → external_courses (with topic_group classification)
-pnpm generate prompt-caching               # generate article via Mastra (delegates to apps/knowledge-mastra)
+pnpm generate prompt-caching               # generate article via Mastra (src/mastra/)
 pnpm generate:dry prompt-caching           # preview without saving
 pnpm generate prompt-caching --model deepseek-reasoner  # use specific model
 pnpm generate:missing                      # list articles without content files
 pnpm generate:batch                        # generate all missing articles
 pnpm generate:graph                        # print workflow as Mermaid
 
-# Batch-review unreviewed courses (delegates to apps/knowledge-mastra):
+# Batch-review unreviewed courses (Mastra workflow in src/mastra/):
 pnpm review:courses                             # review up to 5 courses
 pnpm review:courses --limit=10
 pnpm review:courses --provider="DeepLearning.AI"

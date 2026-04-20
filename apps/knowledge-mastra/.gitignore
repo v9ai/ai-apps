@@ -1,7 +1,0 @@
-node_modules
-.mastra
-.wrangler
-dist
-.env
-.env.local
-.dev.vars
