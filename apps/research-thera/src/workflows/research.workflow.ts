@@ -348,30 +348,37 @@ async function deepseekJson<T>(
 // Pipeline phases
 // ---------------------------------------------------------------------------
 
-async function phasePlanQueries(userPrompt: string): Promise<string[]> {
-  const planPrompt = [
-    `You are planning academic search queries for a clinical research task.`,
-    ``,
-    `## Clinical context`,
-    userPrompt.slice(0, 2000),
-    ``,
-    `Return JSON: {"queries": ["q1", "q2", "q3"]}`,
-    `- Each query should be in English (translate if the context is in another language).`,
-    `- Queries should be complementary: one on the core condition, one on specific interventions/techniques, one on outcome measures or family/relational aspects.`,
-    `- Each query must be concise (5-12 words) and use clinical terminology.`,
-  ].join("\n");
+function extractKeyPhrase(userPrompt: string): string {
+  // Look for Title:, Content:, or description lines
+  const lines = userPrompt.split("\n").map((l) => l.trim()).filter(Boolean);
+  const titleLine = lines.find((l) => /^(Title|Content|Description):/i.test(l));
+  if (titleLine) {
+    return titleLine.replace(/^[^:]+:\s*/, "").slice(0, 140);
+  }
+  // Fallback: first non-empty line that looks like prose
+  const prose = lines.find((l) => l.length > 20 && !/^[#*\-•]/.test(l) && !/_id:/.test(l));
+  return (prose ?? userPrompt).slice(0, 140);
+}
 
-  const parsed = await deepseekJson<{ queries?: unknown }>(planPrompt);
-  const q = Array.isArray(parsed?.queries) ? parsed!.queries : [];
-  const queries = q.filter((s): s is string => typeof s === "string" && s.trim().length > 0).slice(0, 3);
-  if (queries.length === 0) {
-    return [userPrompt.slice(0, 100), "evidence-based psychotherapy", "therapeutic interventions outcomes"];
+async function phasePlanQueries(userPrompt: string): Promise<string[]> {
+  // Deterministic query planning — no LLM call.
+  // Use the strongest signal (Title / Content) as the primary query,
+  // then derive two complementary variants.
+  const core = extractKeyPhrase(userPrompt);
+  const kept = core.trim();
+  if (!kept) {
+    return ["evidence-based psychotherapy", "therapeutic interventions outcomes", "clinical therapy"];
   }
-  while (queries.length < 3) {
-    queries.push(queries[queries.length - 1]);
-  }
+  const queries: string[] = [kept];
+
+  // Second query: "<core> intervention therapy"
+  queries.push(`${kept} intervention therapy`.slice(0, 200));
+  // Third query: "<core> outcomes evidence-based"
+  queries.push(`${kept} outcomes evidence-based`.slice(0, 200));
+
   return queries;
 }
+
 
 async function phaseSearchAll(queries: string[]): Promise<PaperResult[]> {
   const perProvider = 10;
@@ -468,43 +475,6 @@ async function phaseRankAndExtract(
   }));
 
   return out;
-}
-
-async function enrichWithExtraction(papers: CuratedPaper[]): Promise<void> {
-  if (papers.length === 0) return;
-  const listed = papers
-    .map((p, i) => {
-      const abs = (p.abstract || "").slice(0, 240);
-      return `[${i}] ${p.title}\n  ${abs}`;
-    })
-    .join("\n\n");
-
-  const extractPrompt = [
-    `Extract clinical metadata for each paper below.`,
-    ``,
-    listed,
-    ``,
-    `Return JSON: {"items": [{"index": <int>, "key_findings": [string, 2 items], "therapeutic_techniques": [string, 2 items]}]}`,
-  ].join("\n");
-
-  type ExtractItem = { index?: number; key_findings?: unknown; therapeutic_techniques?: unknown };
-  const parsed = await deepseekJson<{ items?: ExtractItem[] }>(extractPrompt, undefined, 10000);
-  if (!parsed) return;
-  const items = Array.isArray(parsed.items) ? parsed.items : [];
-  for (const it of items) {
-    const idx = typeof it.index === "number" ? it.index : -1;
-    if (idx < 0 || idx >= papers.length) continue;
-    if (Array.isArray(it.key_findings)) {
-      papers[idx].key_findings = (it.key_findings as unknown[])
-        .filter((x): x is string => typeof x === "string")
-        .slice(0, 5);
-    }
-    if (Array.isArray(it.therapeutic_techniques)) {
-      papers[idx].therapeutic_techniques = (it.therapeutic_techniques as unknown[])
-        .filter((x): x is string => typeof x === "string")
-        .slice(0, 5);
-    }
-  }
 }
 
 async function phaseSave(
@@ -783,14 +753,8 @@ const runPipeline = createStep({
       console.log(`[research.workflow] phase=rank curated=${curated.length} elapsed=${Date.now() - t2}ms`);
       if (trackJob) await updateJobProgress(jobId!, 75);
 
-      // Phase 4a + 4b: run LLM extraction in parallel with first save pass
-      const t3 = Date.now();
-      const extractPromise = enrichWithExtraction(curated);
-      // Wait for extract (with its 10s internal timeout) before saving, so saved rows
-      // have findings/techniques when possible. If extraction times out, fields are [].
-      await extractPromise;
-      console.log(`[research.workflow] phase=extract elapsed=${Date.now() - t3}ms`);
-
+      // Phase 4: save papers immediately without waiting for LLM metadata.
+      // Extraction runs after the job is already SUCCEEDED; metadata is a nice-to-have.
       const t4 = Date.now();
       const saveStats = await phaseSave(curated, userEmail, ids);
       console.log(`[research.workflow] phase=save saved=${saveStats.saved} skipped=${saveStats.skipped} failed=${saveStats.failed} elapsed=${Date.now() - t4}ms`);
