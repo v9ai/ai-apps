@@ -55,7 +55,7 @@ impl HfClient {
         }
 
         let client = Client::builder()
-            .timeout(std::time::Duration::from_secs(300))
+            .timeout(std::time::Duration::from_secs(600))
             .build()
             .ok()?;
 
@@ -116,7 +116,12 @@ impl HfClient {
             )));
         }
 
-        let chat_resp: ChatResponse = resp.json().await.map_err(PipelineError::Http)?;
+        // Read body as text first so truncation/decode errors surface with context
+        let body = resp.text().await.map_err(PipelineError::Http)?;
+        let chat_resp: ChatResponse = serde_json::from_str(&body).map_err(|e| {
+            let tail = &body[body.len().saturating_sub(200)..];
+            PipelineError::Other(format!("DeepSeek JSON parse: {e} (tail: {tail:?})"))
+        })?;
 
         chat_resp
             .choices
