@@ -12,6 +12,7 @@
     "dev:re": "turbo run dev --filter=real-estate & cd apps/real-estate/analyzer && uv run uvicorn server:app --port 8005 --reload",
     "dev:k": "turbo run dev --filter=knowledge",
     "dev:t": "turbo run dev --filter=todo",
+    "dev:c": "turbo run dev --filter=my-car",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "lint": "turbo run lint",
@@ -30,6 +31,7 @@
     "dev:br": "turbo run dev --filter=bricks",
     "dev:tr": "turbo run dev --filter=travel",
     "deploy:tr": "VERCEL_PROJECT_ID=prj_kVmaliWhzFSMh15zVdV6qfLlZYsA VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod --cwd apps/travel",
+    "deploy:c": "vercel deploy --prod --cwd apps/my-car",
     "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:re && pnpm deploy:blog && pnpm deploy:p && pnpm deploy:tr"
   },
   "devDependencies": {
