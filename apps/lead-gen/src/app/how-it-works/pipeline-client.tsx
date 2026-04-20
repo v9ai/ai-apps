@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { Badge, Flex, Heading, Text, Card, Code, Separator } from "@radix-ui/themes";
 import { LayersIcon } from "@radix-ui/react-icons";
+import Link from "next/link";
 import { papers, extraSections, technicalDetails } from "./data";
 
 // ── Custom Node Components ───────────────────────────────────────────────────
@@ -1217,6 +1218,14 @@ export function PipelineClient() {
       <Flex align="center" gap="2" mb="2">
         <LayersIcon width={22} height={22} style={{ color: "var(--violet-9)" }} />
         <Heading size="7">How It Works</Heading>
+        <Link
+          href="/how-it-works/recruitment"
+          style={{ marginLeft: "auto", textDecoration: "none" }}
+        >
+          <Badge color="violet" variant="soft" size="2" style={{ cursor: "pointer" }}>
+            Recruitment pipeline →
+          </Badge>
+        </Link>
       </Flex>
       <Text size="3" color="gray" as="p" mb="4" style={{ maxWidth: 720, lineHeight: 1.7 }}>
         Every lead flows through five stages: companies are discovered from web crawls, CSV imports, and live search,
