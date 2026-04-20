@@ -419,7 +419,7 @@ apps/knowledge/
 │   └── actions/            # Server actions
 ├── evals/                  # Python eval suite (DeepEval)
 │   ├── editorial/          # LangGraph journalism pipeline (build_journalism_graph)
-│   └── course_review/      # LangGraph 10-expert course review pipeline (build_course_review_graph)
+│   └── course_review/      # [Ported to Mastra] 10-expert course review pipeline now in apps/knowledge-mastra/src/mastra/workflows/review-course.ts
 ├── scripts/seed.ts              # DB seeder (lessons from markdown)
 ├── scripts/seed-courses.ts      # Class Central course catalog seeder
 ├── scripts/scrape-udemy-courses.ts  # Playwright scraper — deep-scrapes Udemy topic pages into external_courses

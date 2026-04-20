@@ -14,9 +14,12 @@
     "generate:dry": "tsx --env-file=../knowledge/.env.local src/cli.ts --dry-run",
     "generate:missing": "tsx --env-file=../knowledge/.env.local src/cli.ts --list-missing",
     "generate:batch": "tsx --env-file=../knowledge/.env.local src/cli.ts --batch",
-    "generate:graph": "tsx src/cli.ts --graph"
+    "generate:graph": "tsx src/cli.ts --graph",
+    "review:courses": "tsx --env-file=../knowledge/.env.local src/cli-review-courses.ts",
+    "review:courses:dry": "tsx --env-file=../knowledge/.env.local src/cli-review-courses.ts --dry-run"
   },
   "dependencies": {
+    "@ai-apps/deepseek": "workspace:*",
     "@mastra/core": "latest",
     "@mastra/deployer-cloudflare": "latest",
     "@mastra/pg": "latest",
