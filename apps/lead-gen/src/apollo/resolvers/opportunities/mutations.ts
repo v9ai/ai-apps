@@ -1,6 +1,10 @@
 import { eq, or } from "drizzle-orm";
 import { isAdminEmail } from "@/lib/admin";
 import { opportunities } from "@/db/schema";
+import {
+  classifyOpportunityLLM,
+  type OpportunityClassification,
+} from "@/ml/opportunity-classifier";
 import type { GraphQLContext } from "../../context";
 import type {
   MutationCreateOpportunityArgs,
@@ -18,6 +22,31 @@ function generateOpportunityId(): string {
   const ts = Date.now();
   const rand = Math.random().toString(36).slice(2, 10);
   return `opp_${ts}_${rand}`;
+}
+
+const CLASSIFY_TIMEOUT_MS = 8_000;
+
+// Bounded race so a slow or down mlx_lm.server never blocks the save path.
+async function tryClassify(input: {
+  title: string;
+  rawContext: string;
+  companyName?: string | null;
+  location?: string | null;
+  url?: string | null;
+}): Promise<OpportunityClassification | null> {
+  if (!process.env.LLM_BASE_URL) return null;
+  if (!input.rawContext || input.rawContext.length < 80) return null;
+  try {
+    return await Promise.race([
+      classifyOpportunityLLM(input),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("classify timeout")), CLASSIFY_TIMEOUT_MS),
+      ),
+    ]);
+  } catch (err) {
+    console.warn("[opportunity-classifier] skipped:", err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 export const opportunityMutations = {
@@ -50,6 +79,40 @@ export const opportunityMutations = {
     const input = args.input;
     const now = new Date().toISOString();
 
+    // Parse any caller-provided metadata so the classifier can enrich without clobbering it.
+    let userMeta: Record<string, unknown> = {};
+    if (input.metadata) {
+      try {
+        const parsed = JSON.parse(input.metadata);
+        if (parsed && typeof parsed === "object") userMeta = parsed as Record<string, unknown>;
+      } catch {
+        // Legacy non-JSON metadata — preserve as raw field.
+        userMeta = { _raw: input.metadata };
+      }
+    }
+
+    const location = typeof userMeta.location === "string" ? (userMeta.location as string) : null;
+    const classification = await tryClassify({
+      title: input.title,
+      rawContext: input.rawContext ?? "",
+      location,
+      url: input.url,
+    });
+
+    const userTags = input.tags ?? [];
+    const mergedTags = classification
+      ? Array.from(new Set([...userTags, ...classification.tags]))
+      : userTags;
+
+    const mergedMetadata = classification
+      ? { ...userMeta, classifier: {
+          seniority: classification.seniority,
+          tech_stack: classification.tech_stack,
+          remote_policy: classification.remote_policy,
+          tldr: classification.tldr,
+        } }
+      : userMeta;
+
     const rows = await context.db
       .insert(opportunities)
       .values({
@@ -59,11 +122,13 @@ export const opportunityMutations = {
         source: input.source ?? undefined,
         status: input.status ?? "open",
         reward_text: input.rewardText ?? undefined,
+        reward_usd: classification?.reward_usd ?? undefined,
+        score: classification?.score ?? undefined,
         raw_context: input.rawContext ?? undefined,
-        metadata: input.metadata ?? undefined,
+        metadata: Object.keys(mergedMetadata).length > 0 ? JSON.stringify(mergedMetadata) : undefined,
         applied: input.applied ?? false,
         applied_at: input.appliedAt ?? undefined,
-        tags: input.tags ? JSON.stringify(input.tags) : "[]",
+        tags: JSON.stringify(mergedTags),
         company_id: input.companyId ?? undefined,
         contact_id: input.contactId ?? undefined,
         first_seen: now,

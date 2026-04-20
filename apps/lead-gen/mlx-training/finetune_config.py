@@ -144,6 +144,25 @@ CONFIGS = {
         epochs=5,
         lora=LoRAConfig(rank=8, alpha=16.0, dropout=0.1),
     ),
+    "opportunity-score": TrainConfig(
+        # Structured extraction from opportunity.raw_context (full job description)
+        # → {score, tags, seniority, tech_stack, remote_policy, reward_usd, tldr}.
+        # Same shape as intent-signal (multi-field JSON), student = Qwen2.5-3B.
+        data_dir="mlx-training/data/opportunity-score",
+        adapter_path="mlx-training/models/opportunity-score",
+        # JDs can be long. 1536 covers ~95% of LinkedIn posts + ATS descriptions;
+        # MLX pads to batch-max so unused headroom is free.
+        max_seq_length=1536,
+        batch_size=4,
+        grad_accumulation_steps=4,
+        # Same memory profile as intent-signal at this seq length on M1 16GB.
+        grad_checkpoint=True,
+        learning_rate=5e-5,
+        epochs=8,
+        # Rank 8 for structured-output tasks (not creative generation).
+        lora=LoRAConfig(rank=8, alpha=16.0, dropout=0.1),
+        warmup_steps=9,
+    ),
     "intent-signal": TrainConfig(
         data_dir="mlx-training/data/intent-signal",
         adapter_path="mlx-training/models/intent-signal",
