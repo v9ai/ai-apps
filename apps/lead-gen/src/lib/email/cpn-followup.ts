@@ -95,7 +95,7 @@ Direct link to the learning path: https://anthropic.skilljar.com/page/claude-par
 3. Introduction to Model Context Protocol
 4. Claude Code in Action
 
-Once all of us finish, I submit for verification and Anthropic unlocks the Claude Certified Architect Foundations (CCAF) exam for our org. No cost.
+Once all of us finish, I submit for verification and Anthropic unlocks the Claude Certified Architect Foundations (CCAF) exam.
 
 Let me know when you're done.
 
