@@ -5,7 +5,7 @@ import { stat } from "fs/promises";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 600;
+export const maxDuration = 300;
 
 const VALID_ROT = new Set([90, 180, 270]);
 
