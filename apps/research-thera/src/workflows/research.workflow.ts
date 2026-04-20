@@ -378,8 +378,7 @@ function extractAgeContext(userPrompt: string): string {
   return "older adults";
 }
 
-async function phasePlanQueries(userPrompt: string): Promise<string[]> {
-  // Deterministic query planning — no LLM call.
+function deterministicPlanQueries(userPrompt: string): string[] {
   const core = extractKeyPhrase(userPrompt).trim();
   const ageCtx = extractAgeContext(userPrompt);
 
@@ -392,6 +391,32 @@ async function phasePlanQueries(userPrompt: string): Promise<string[]> {
   queries.push(`${withAge} intervention therapy`.slice(0, 200));
   queries.push(`${withAge} outcomes evidence-based`.slice(0, 200));
   return queries;
+}
+
+const PLANNER_SYSTEM_PROMPT = [
+  "You are a clinical research librarian. Given a therapist's note (journal/goal/issue with title, content, age, and any related-person context), output 3 PubMed-style search queries that capture SEMANTIC intent, not literal keywords.",
+  "For metaphorical language (e.g., \"distraction\" meaning career regret), translate to clinical concepts (\"career decision regret\", \"counterfactual rumination\", \"midlife occupational transition\").",
+  "Each query must be age-appropriate — prefix with the age bucket when provided (e.g., \"adults: career decision regret\").",
+  "Queries should be complementary, not redundant.",
+  "Output ONLY JSON: {\"queries\":[q1,q2,q3]}",
+].join(" ");
+
+async function phasePlanQueries(userPrompt: string): Promise<string[]> {
+  const parsed = await deepseekJson<{ queries?: unknown }>(
+    userPrompt,
+    PLANNER_SYSTEM_PROMPT,
+    8000,
+  );
+  const raw = parsed?.queries;
+  if (Array.isArray(raw) && raw.length >= 3) {
+    const cleaned = raw
+      .slice(0, 3)
+      .map((q) => (typeof q === "string" ? q.trim() : ""))
+      .filter((q) => q.length > 0)
+      .map((q) => q.slice(0, 200));
+    if (cleaned.length === 3) return cleaned;
+  }
+  return deterministicPlanQueries(userPrompt);
 }
 
 
