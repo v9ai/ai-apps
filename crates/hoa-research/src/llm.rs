@@ -9,8 +9,8 @@ use tokenizers::Tokenizer;
 
 use crate::error::{PipelineError, Result};
 
-const DEFAULT_REPO: &str = "Qwen/Qwen2.5-7B-Instruct-GGUF";
-const DEFAULT_FILE: &str = "qwen2.5-7b-instruct-q4_k_m.gguf";
+const DEFAULT_REPO: &str = "bartowski/Qwen2.5-7B-Instruct-GGUF";
+const DEFAULT_FILE: &str = "Qwen2.5-7B-Instruct-Q4_K_M.gguf";
 const TOKENIZER_REPO: &str = "Qwen/Qwen2.5-7B-Instruct";
 
 /// Select best available compute device (Metal GPU on macOS).
