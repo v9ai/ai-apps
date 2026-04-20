@@ -355,41 +355,57 @@ function extractKeyPhrase(userPrompt: string): string {
   if (titleLine) {
     return titleLine.replace(/^[^:]+:\s*/, "").slice(0, 140);
   }
-  // Fallback: first non-empty line that looks like prose
   const prose = lines.find((l) => l.length > 20 && !/^[#*\-•]/.test(l) && !/_id:/.test(l));
   return (prose ?? userPrompt).slice(0, 140);
 }
 
+function extractAgeContext(userPrompt: string): string {
+  // Pull "age X" from the Person/Patient/Primary person/Also involves lines so
+  // search queries produce age-appropriate results.
+  const lines = userPrompt.split("\n").map((l) => l.trim()).filter(Boolean);
+  const memberLine = lines.find((l) => /^(Person|Patient|Primary person|Also involves):/i.test(l));
+  if (!memberLine) return "";
+  const ageMatch = memberLine.match(/age\s+(\d+)/i);
+  if (!ageMatch) return "";
+  const age = parseInt(ageMatch[1], 10);
+  if (!Number.isFinite(age) || age < 0 || age > 120) return "";
+  if (age < 3) return "infant";
+  if (age < 6) return "preschool children";
+  if (age < 13) return `children age ${age}`;
+  if (age < 18) return `adolescents age ${age}`;
+  if (age < 25) return "young adults";
+  if (age < 65) return "adults";
+  return "older adults";
+}
+
 async function phasePlanQueries(userPrompt: string): Promise<string[]> {
   // Deterministic query planning — no LLM call.
-  // Use the strongest signal (Title / Content) as the primary query,
-  // then derive two complementary variants.
-  const core = extractKeyPhrase(userPrompt);
-  const kept = core.trim();
-  if (!kept) {
+  const core = extractKeyPhrase(userPrompt).trim();
+  const ageCtx = extractAgeContext(userPrompt);
+
+  if (!core) {
     return ["evidence-based psychotherapy", "therapeutic interventions outcomes", "clinical therapy"];
   }
-  const queries: string[] = [kept];
 
-  // Second query: "<core> intervention therapy"
-  queries.push(`${kept} intervention therapy`.slice(0, 200));
-  // Third query: "<core> outcomes evidence-based"
-  queries.push(`${kept} outcomes evidence-based`.slice(0, 200));
-
+  const withAge = ageCtx ? `${ageCtx} ${core}` : core;
+  const queries: string[] = [withAge.slice(0, 200)];
+  queries.push(`${withAge} intervention therapy`.slice(0, 200));
+  queries.push(`${withAge} outcomes evidence-based`.slice(0, 200));
   return queries;
 }
 
 
 async function phaseSearchAll(queries: string[]): Promise<PaperResult[]> {
   const perProvider = 10;
+  // Cap to 2 queries × 4 highest-yield providers = 8 subrequests max.
+  // Stays well under CF's 50/invocation subrequest budget to leave room for save.
+  const usedQueries = queries.slice(0, 2);
   const tasks: Array<Promise<PaperResult[]>> = [];
-  for (const q of queries) {
+  for (const q of usedQueries) {
     tasks.push(searchOpenAlex(q, perProvider));
     tasks.push(searchCrossref(q, perProvider));
     tasks.push(searchSemanticScholar(q, perProvider));
     tasks.push(searchArxiv(q, perProvider));
-    tasks.push(searchCore(q, perProvider));
-    tasks.push(searchZenodo(q, perProvider));
   }
   const results = await Promise.allSettled(tasks);
   const pool = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
@@ -735,30 +751,26 @@ const runPipeline = createStep({
     };
 
     try {
-      // Phase 1: plan queries
+      // Phase 1: plan queries (deterministic)
       const t0 = Date.now();
       const queries = await phasePlanQueries(userMsg.content);
       console.log(`[research.workflow] phase=plan_queries queries=${JSON.stringify(queries)} elapsed=${Date.now() - t0}ms`);
-      if (trackJob) await updateJobProgress(jobId!, 20);
 
       // Phase 2: search all
       const t1 = Date.now();
       const pool = await phaseSearchAll(queries);
       console.log(`[research.workflow] phase=search_all pool=${pool.length} elapsed=${Date.now() - t1}ms`);
-      if (trackJob) await updateJobProgress(jobId!, 50);
 
       // Phase 3: rank (deterministic, no LLM)
       const t2 = Date.now();
       const curated = await phaseRankAndExtract(userMsg.content, pool);
       console.log(`[research.workflow] phase=rank curated=${curated.length} elapsed=${Date.now() - t2}ms`);
-      if (trackJob) await updateJobProgress(jobId!, 75);
 
-      // Phase 4: save papers immediately without waiting for LLM metadata.
-      // Extraction runs after the job is already SUCCEEDED; metadata is a nice-to-have.
+      // Phase 4: save. Every subrequest counts toward CF's 50/1000 limit, so we
+      // avoid intermediate progress updates here.
       const t4 = Date.now();
       const saveStats = await phaseSave(curated, userEmail, ids);
       console.log(`[research.workflow] phase=save saved=${saveStats.saved} skipped=${saveStats.skipped} failed=${saveStats.failed} elapsed=${Date.now() - t4}ms`);
-      if (trackJob) await updateJobProgress(jobId!, 90);
 
       const summary = `Curated ${saveStats.saved} papers from ${pool.length} candidates (${saveStats.skipped} skipped, ${saveStats.failed} failed).`;
 

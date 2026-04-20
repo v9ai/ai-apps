@@ -4793,14 +4793,13 @@ async function phasePlanQueries(userPrompt) {
 }
 async function phaseSearchAll(queries) {
   const perProvider = 10;
+  const usedQueries = queries.slice(0, 2);
   const tasks = [];
-  for (const q of queries) {
+  for (const q of usedQueries) {
     tasks.push(searchOpenAlex(q, perProvider));
     tasks.push(searchCrossref(q, perProvider));
     tasks.push(searchSemanticScholar(q, perProvider));
     tasks.push(searchArxiv(q, perProvider));
-    tasks.push(searchCore(q, perProvider));
-    tasks.push(searchZenodo(q, perProvider));
   }
   const results = await Promise.allSettled(tasks);
   const pool = results.flatMap((r) => r.status === "fulfilled" ? r.value : []);
@@ -5116,19 +5115,15 @@ const runPipeline = createStep({
       const t0 = Date.now();
       const queries = await phasePlanQueries(userMsg.content);
       console.log(`[research.workflow] phase=plan_queries queries=${JSON.stringify(queries)} elapsed=${Date.now() - t0}ms`);
-      if (trackJob) await updateJobProgress(jobId, 20);
       const t1 = Date.now();
       const pool = await phaseSearchAll(queries);
       console.log(`[research.workflow] phase=search_all pool=${pool.length} elapsed=${Date.now() - t1}ms`);
-      if (trackJob) await updateJobProgress(jobId, 50);
       const t2 = Date.now();
       const curated = await phaseRankAndExtract(userMsg.content, pool);
       console.log(`[research.workflow] phase=rank curated=${curated.length} elapsed=${Date.now() - t2}ms`);
-      if (trackJob) await updateJobProgress(jobId, 75);
       const t4 = Date.now();
       const saveStats = await phaseSave(curated, userEmail, ids);
       console.log(`[research.workflow] phase=save saved=${saveStats.saved} skipped=${saveStats.skipped} failed=${saveStats.failed} elapsed=${Date.now() - t4}ms`);
-      if (trackJob) await updateJobProgress(jobId, 90);
       const summary = `Curated ${saveStats.saved} papers from ${pool.length} candidates (${saveStats.skipped} skipped, ${saveStats.failed} failed).`;
       if (trackJob) {
         if (saveStats.saved === 0) {
