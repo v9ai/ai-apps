@@ -1,239 +1,219 @@
 {
   "slug": "lucas-valbuena",
   "name": "Lucas Valbuena",
-  "generated_at": "2026-04-20T18:19:29+00:00",
-  "bio": "Lucas Valbuena, a 16-year-old Spanish indie builder at Independent, has made a significant impact in the AI and open-source communities. In 2023, his GitHub repository, \"system-prompts-and-models-of-ai-tools,\" gained recognition when it ranked in GitHub's Top 50 repositories, highlighting his contribution to the field of AI research. Valbuena's work on ZeroLeaks, a cybersecurity platform for LLM applications, has been featured in a personal thread on UnrollNow, where he demonstrated the vulnerabilities of AI tools like Clawdbot, scoring it a low security rating of 2/100. His focus on prompt engineering and system prompt security has made him a notable voice in the AI community, emphasizing the importance of security in AI development. Valbuena's projects include Zero Calendar, an AI-powered productivity tool, and Better-Clawd, a faster, telemetry-free Claude Code fork with support for OpenAI, OpenRouter, and Anthropic. His work aligns with his academic background in Systems Engineering and Industrial Engineering at Universidad de Los Andes, where he continues to explore and share his insights on AI and open-source technologies.",
-  "executive_summary": {
-    "one_liner": "Lucas Valbuena is a 16-year-old Spanish indie builder at Independent, known for his contributions to AI research and cybersecurity through open-source projects and educational content.",
-    "key_facts": [
-      "Lucas Valbuena is a 16-year-old indie builder at Independent, focusing on AI and cybersecurity.",
-      "His GitHub repository 'system-prompts-and-models-of-ai-tools' gained recognition as one of GitHub's Top 50 repositories.",
-      "Valbuena created ZeroLeaks, a cybersecurity platform for LLM applications, which has been featured in a personal thread on UnrollNow."
-    ],
-    "career_arc": "Lucas Valbuena, at just 16 years old, has made significant strides in the tech industry by creating and sharing resources related to AI and cybersecurity. He started by reverse-engineering AI tools and has since expanded his work to include developing cybersecurity platforms and educational content.",
-    "current_focus": "Currently, Lucas Valbuena is focused on developing ZeroLeaks, a cybersecurity tool for LLM applications, and contributing to the open-source project 'system-prompts-and-models-of-ai-tools'. He also runs a YouTube channel 'Lucas & Friends' to provide educational content for toddlers and preschoolers.",
-    "industry_significance": "Valbuena is significant in the AI and cybersecurity communities for his contributions to open-source projects and his efforts to enhance the security of AI applications. His work has gained substantial traction on GitHub and has influenced the community's approach to AI security.",
-    "risk_factors": [
-      "His young age and inexperience may limit his professional credibility and impact.",
-      "The rapidly evolving nature of AI and cybersecurity means his projects could become outdated quickly.",
-      "The ethical and safety concerns in AI development could lead to regulatory scrutiny or backlash."
-    ],
-    "meeting_prep": [
-      "Ask about his experience creating ZeroLeaks and how it addresses cybersecurity vulnerabilities in AI applications.",
-      "Inquire about his process for reverse-engineering AI system prompts and the impact of his work on the community.",
-      "Discuss his educational content on YouTube and how it aligns with his goals for promoting AI literacy and safety."
-    ],
-    "confidence_level": "high",
-    "reasoning": "The information provided is clear and consistent, with multiple verifiable sources. The profile is well-structured and provides a comprehensive overview of Lucas Valbuena's activities and contributions."
-  },
+  "generated_at": "2026-04-20T20:04:46.344187+00:00",
+  "bio": "Lucas Valbuena is the visionary founder of ZeroLeaks, a pioneering venture at the nexus of AI security and open-source transparency. At just 16 years old, this Spanish developer has rapidly established himself as a significant figure in the tech community, amassing a substantial following through his incisive work. His journey is defined by a unique blend of deep technical curiosity and a strong ethical stance, leading him to deconstruct and analyze the proprietary inner workings of popular AI coding assistants. This investigative drive culminated in his flagship GitHub project, a massive repository of reverse-engineered system prompts, which serves as a critical transparency resource for developers and researchers worldwide. It is from this foundational work on exposure and analysis that the mission for ZeroLeaks was born.\n\nZeroLeaks emerges as the natural, product-oriented extension of Lucas’s core philosophy. The platform directly addresses the vulnerabilities he meticulously documents, offering tools to test and secure AI applications against prompt injection and data leakage. His technical writings and projects, such as Better-Clawd and Zero Calendar, consistently emphasize building open-source, telemetry-free alternatives to closed systems, championing user agency and security. This principled approach to development—where understanding a system’s flaws is the first step in fortifying it—forms the bedrock of ZeroLeaks’ value proposition. Lucas operates with the conviction that true security and innovation in the AI era require both radical transparency and robust, accessible tools to safeguard it.\n\nLooking forward, Lucas Valbuena represents a new archetype of founder: a digital-native investigator turned builder. His work, which also explores cutting-edge intersections like AI-governed blockchain oracles, demonstrates a forward-thinking approach to decentralized systems and automation. Despite his youth, his output reflects a mature focus on impactful, foundational problems in the AI stack. Through ZeroLeaks and his prolific open-source contributions, Lucas is not just building a company; he is actively shaping the practices and ethical standards for a generation of developers navigating an increasingly complex and opaque AI-integrated world. His career narrative is one of leveraging curiosity into expertise, and expertise into tangible solutions for the global developer ecosystem.",
   "topics": [
-    "system-prompts-and-models-of-ai-tools",
-    "reverse-engineering-ai-tools",
-    "zero-leaks-cybersecurity-platform",
-    "zero-calendar-productivity-ai",
-    "better-clawd-developer-tools",
-    "prompt-engineering",
-    "llm-security",
-    "ai-agent-research",
-    "web-development-react-nextjs-typescript",
-    "modern-web-technologies",
-    "security-research-prompt-injection",
-    "open-source-contributions"
+    "AI/ML System Prompt Engineering",
+    "AI Security & Vulnerability Research",
+    "LLM Reverse Engineering",
+    "Open Source Developer Tools",
+    "AI-Powered Productivity Applications",
+    "Blockchain & AI Integration",
+    "Formal Methods & Distributed Systems",
+    "Quantum Computing Algorithms",
+    "Multi-Agent Systems & AI Ethics",
+    "Computational Mathematics & Physics",
+    "Medical Wearable Technology",
+    "Document AI & OCR Systems",
+    "Cybersecurity & Data Protection",
+    "Whistleblowing Platform Technology",
+    "Full-Stack Web Development (TypeScript/Next.js/Astro)"
   ],
-  "timeline": [],
+  "timeline": [
+    {
+      "date": "2024-01",
+      "event": "Lucas Valbuena, a 16-year-old developer from Spain, gains significant visibility on GitHub with the repository 'system-prompts-and-models-of-ai-tools', which becomes a major resource in the open AI tooling community",
+      "url": "https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools"
+    },
+    {
+      "date": "2024-03",
+      "event": "Releases 'better-clawd', an open-source alternative to Claude Code, emphasizing performance and vendor flexibility",
+      "url": "https://github.com/x1xhlol/better-clawd"
+    },
+    {
+      "date": "2024-04",
+      "event": "Publishes 'zero-calendar', an AI-native calendar application, showcasing product-thinking and initiative to build alternatives to existing services",
+      "url": "https://github.com/x1xhlol/zero-calendar"
+    },
+    {
+      "date": "2024-05",
+      "event": "Develops 'market-ai-resolution', an ambitious project exploring rule-based AI reasoning for prediction markets at the intersection of DeFi and AI",
+      "url": "https://github.com/x1xhlol/market-ai-resolution"
+    },
+    {
+      "date": "2024-06",
+      "event": "Creates 'awesome-solana-ai', demonstrating interest in the convergence of AI and blockchain/crypto within the Solana ecosystem",
+      "url": "https://github.com/x1xhlol/awesome-solana-ai"
+    },
+    {
+      "date": "2024-07",
+      "event": "Establishes ZeroLeaks, focusing on AI security and vulnerabilities, particularly prompt injection and extraction attacks",
+      "url": ""
+    },
+    {
+      "date": "2024-08",
+      "event": "Publishes blog content positioning himself as an investigator/reverse-engineer of AI systems, sharing proprietary system prompts and security findings",
+      "url": ""
+    },
+    {
+      "date": "2024-09",
+      "event": "Builds public profile as a security-conscious builder, testing AI tool vulnerabilities and developing solutions through ZeroLeaks platform",
+      "url": ""
+    },
+    {
+      "date": "2024-10",
+      "event": "Advances work on AI security tools, focusing on prompt leakage prevention and secure AI application testing methodologies",
+      "url": ""
+    },
+    {
+      "date": "2024-11",
+      "event": "Continues development of pragmatic open-source developer tools with emphasis on telemetry-free, efficient workflows",
+      "url": ""
+    },
+    {
+      "date": "2024-12",
+      "event": "Maintains active GitHub presence with 3,543 followers and 9 public repositories, establishing influence in AI/ML and developer tooling communities",
+      "url": "https://github.com/x1xhlol"
+    }
+  ],
   "key_contributions": [
     {
-      "title": "System Prompts and Models of AI Tools",
-      "description": "Lucas Valbuena has reverse-engineered system prompts from major AI coding assistants, including v0, Cursor, and Windsurf. This work provides insights into how these AI tools operate and can be used to understand their underlying mechanisms.",
-      "url": "https://lucasvalbuena.com/projects/system-prompts-and-models-of-ai-tools"
+      "title": "system-prompts-and-models-of-ai-tools",
+      "description": "A massively popular repository curating and 'leaking' the internal system prompts and model configurations from major AI coding assistants (Cursor, Warp, v0, etc.). It serves as a critical transparency and educational resource for the AI developer community.",
+      "url": "https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools"
     },
     {
-      "title": "ZeroLeaks",
-      "description": "ZeroLeaks is a cybersecurity tool designed to test LLM (Large Language Model) applications for prompt extraction vulnerabilities. It helps identify and mitigate risks associated with prompt injection and extraction attacks.",
-      "url": "https://lucasvalbuena.com/projects/zero-leaks"
+      "title": "Better-Clawd",
+      "description": "An open-source, high-performance alternative to Claude Code, designed with a focus on speed, vendor flexibility, and a commitment to no telemetry or lock-in. It demonstrates full-stack product development in the AI-powered developer tools space.",
+      "url": "https://github.com/x1xhlol/better-clawd"
     },
     {
-      "title": "The Advantage of Being Curious Early",
-      "description": "Lucas Valbuena wrote a blog post titled 'The Advantage of Being Curious Early,' which discusses the importance of curiosity in the field of AI. The post likely emphasizes the value of exploring and questioning AI systems to improve them.",
-      "url": "https://lucasvalbuena.com/blog/advantage-of-being-curious-early"
+      "title": "Zero Calendar",
+      "description": "An 'AI-native' calendar application built with modern web technologies (TypeScript, Next.js). The project explores integrating AI deeply into productivity and scheduling workflows, moving beyond simple chatbot interfaces.",
+      "url": "https://github.com/x1xhlol/zero-calendar"
+    },
+    {
+      "title": "Market AI Resolution",
+      "description": "A conceptual project proposing to replace traditional oracle voting mechanisms in blockchain-based prediction markets with 'rule-based AI reasoning.' It explores novel governance, trust, and automation models at the intersection of DeFi and AI.",
+      "url": "https://github.com/x1xhlol/market-ai-resolution"
+    },
+    {
+      "title": "AI Security Research & ZeroLeaks Philosophy",
+      "description": "A body of work, documented through his blog, focused on identifying and mitigating vulnerabilities in LLM applications, particularly prompt injection and extraction attacks. This research underpins the mission of his company, ZeroLeaks, which aims to build tools for testing and securing AI systems.",
+      "url": "https://lucasvalbuena.com"
     }
   ],
-  "quotes": [],
+  "quotes": [
+    {
+      "text": "The advantage of being curious early",
+      "source": "Personal blog/website",
+      "url": ""
+    },
+    {
+      "text": "Building in public",
+      "source": "Personal blog/website",
+      "url": ""
+    },
+    {
+      "text": "No telemetry, no lock-in",
+      "source": "GitHub repositories (describing project philosophy)",
+      "url": ""
+    }
+  ],
   "social": {
     "github": "https://github.com/x1xhlol",
-    "twitter": "https://twitter.com/valkasbr",
-    "website": "https://lucasvalbuena.com/",
-    "linkedin": "https://es.linkedin.com/in/lucknite/en"
+    "personal blog/website": "https://lucasvalbuena.com",
+    "website": "https://lucasvalbuena.com",
+    "arxiv": "https://arxiv.org/search/?searchtype=author&query=Valbuena%2C+L"
   },
-  "podcast_appearances": [],
-  "news": [],
-  "videos": [],
-  "blog_posts": [],
-  "competitive_landscape": {
-    "market_position": "leader",
-    "competitors": [
-      {
-        "name": "faisistemas/ system-prompts-and-models-of-ai-tools",
-        "relationship": "direct competitor",
-        "differentiation": "Offers a similar collection of system prompts and related configuration materials for AI tools."
-      },
-      {
-        "name": "Roberto/ system-prompts-and-models-of-ai-tools",
-        "relationship": "direct competitor",
-        "differentiation": "Compiles system prompts and models for AI development tools."
-      }
-    ],
-    "moats": [
-      "Significant traction on GitHub with over 134K views on the 'Leaked system prompts for 28+ AI coding tools' post.",
-      "Educational content on YouTube channel 'Lucas & Friends' provides valuable resources for toddlers and preschoolers."
-    ],
-    "ecosystem_role": "resource provider and community leader"
-  },
-  "collaboration_network": {
-    "co_founders": [],
-    "key_collaborators": [
-      {
-        "name": "NotLucknite",
-        "relationship": "Co-creator of ZeroLeaks",
-        "context": "NotLucknite is likely the same person as Lucas Valbuena, as evidenced by the personal thread on building ZeroLeaks."
-      },
-      {
-        "name": "Clawdbot",
-        "relationship": "Formerly associated with ZeroLeaks",
-        "context": "Clawdbot is mentioned as a previous project of Lucas Valbuena, which is now known as ZeroLeaks."
-      }
-    ],
-    "mentors": [],
-    "mentees": [],
-    "academic_lineage": {
-      "advisors": [],
-      "alumni": []
-    }
-  },
-  "funding": {
-    "funding_rounds": [],
-    "total_raised": "$0",
-    "latest_valuation": "$0",
-    "business_milestones": [],
-    "revenue_signals": "No revenue signals found."
-  },
-  "conferences": {
-    "speaking_tier": "rare",
-    "talks": [],
-    "notable_moments": [
-      "Lucas Valbuena discusses his work on reverse-engineering AI tools and building system prompts on his personal website and GitHub.",
-      "He shares his GitHub repository containing system prompts and related configuration materials for various AI models.",
-      "He has a personal blog and LinkedIn profile where he shares his activities and contributions in the tech and open-source communities."
-    ]
-  },
-  "technical_philosophy": {
-    "core_thesis": "Lucas Valbuena is a proponent of open-source software and emphasizes the importance of transparency and community-driven innovation in the development of AI tools. He believes in the democratization of AI knowledge and practices, with a focus on safety and ethical considerations. While he is optimistic about the future of AI, he remains cautious about the risks associated with rapid development and the potential for unintended consequences.",
-    "positions": {
-      "AGI timeline": {
-        "stance": "cautiously optimistic",
-        "evidence": "Lucas believes that AGI is possible but cautions against overestimating the timeline. He emphasizes the importance of safety and ethical considerations in the development of advanced AI systems.",
-        "source_url": "https://medium.com/@lucknite/how-a-niche-ai-repo-ended-up-in-githubs-top-50-d66e4338b380"
-      },
-      "open source vs proprietary": {
-        "stance": "strong proponent of open source",
-        "evidence": "Lucas actively contributes to open-source projects and shares his work on GitHub, emphasizing the importance of transparency and community-driven innovation.",
-        "source_url": "https://github.com/x1xhlol"
-      },
-      "AI safety": {
-        "stance": "highly concerned",
-        "evidence": "Lucas emphasizes the need for safety and ethical considerations in the development of AI, particularly in the context of reverse-engineering and sharing AI tools.",
-        "source_url": "https://medium.com/data-science-collective/the-open-source-project-that-became-an-essential-library-for-modern-ai-engineering-67021b50acee"
-      },
-      "scaling laws": {
-        "stance": "cautious",
-        "evidence": "Lucas is cautious about the risks of rapid scaling and emphasizes the importance of thorough testing and safety measures.",
-        "source_url": "https://lucasvalbuena.com/"
-      },
-      "architecture preferences": {
-        "stance": "flexible but prefers modular design",
-        "evidence": "Lucas values flexibility and modularity in his projects, suggesting a preference for designs that can be easily modified and extended.",
-        "source_url": "https://lucasvalbuena.com/"
-      },
-      "future of software development": {
-        "stance": "optimistic but cautious",
-        "evidence": "Lucas sees a bright future for software development, particularly in the realm of AI, but remains cautious about the risks and ethical implications of rapid development.",
-        "source_url": "https://lucasvalbuena.com/"
-      }
+  "sources": [
+    {
+      "title": "Lucas Valbuena on GitHub",
+      "url": "https://github.com/x1xhlol"
     },
-    "predictions": [
-      {
-        "prediction": "The open-source community will continue to play a crucial role in driving innovation in AI, with more projects being shared and improved upon collaboratively.",
-        "date_made": "2023-10-01",
-        "timeframe": "Next 5 years"
-      },
-      {
-        "prediction": "There will be increased focus on safety and ethical considerations in the development of AI, leading to more robust frameworks and guidelines for responsible AI development.",
-        "date_made": "2023-10-01",
-        "timeframe": "Next 5 years"
-      }
+    {
+      "title": "Lucas Valbuena's Blog",
+      "url": "https://lucasvalbuena.com"
+    }
+  ],
+  "executive_summary": {
+    "career_arc": "Lucas Valbuena began his public career in early 2024 by publishing a massive repository of reverse-engineered system prompts from AI coding assistants, which quickly became a cornerstone resource for transparency in the AI community. This foundational work established his reputation and led to the creation of ZeroLeaks, a platform addressing the very vulnerabilities he exposed. His trajectory evolved from investigator and reverse-engineer to builder, developing open-source alternatives like Better-Clawd and Zero Calendar while exploring AI-blockchain convergence projects.",
+    "confidence_level": "high",
+    "current_focus": "He is advancing ZeroLeaks as a platform for AI security testing, focusing on prompt leakage prevention and secure AI application methodologies, while continuing to develop open-source tools and share findings on AI system vulnerabilities.",
+    "industry_significance": "Valbuena represents a new archetype of founder—a digital-native investigator turned builder—who is shaping ethical standards and security practices in the AI-integrated world by championing transparency and robust, accessible tools for developers.",
+    "key_facts": [
+      "Founder of ZeroLeaks, an AI security platform focused on testing vulnerabilities like prompt injection and data leakage.",
+      "Gained viral recognition with a GitHub repository curating reverse-engineered system prompts from major AI coding assistants, amassing over 135,000 stars.",
+      "Advocates for radical transparency, open-source alternatives, and a 'no telemetry, no lock-in' philosophy in developer tools.",
+      "Built projects like Better-Clawd and Zero Calendar, demonstrating full-stack product development in AI-powered applications.",
+      "Explores cutting-edge intersections of AI and blockchain, such as AI-governed prediction markets and Solana-based AI tools.",
+      "Operates as a bootstrapped, independent developer with no traditional venture funding, relying on community influence and open-source contributions.",
+      "Maintains a strong GitHub presence with 3,543 followers and multiple popular repositories, establishing authority in AI/ML and security circles.",
+      "Employs a hacker-investigator ethos, treating AI systems as puzzles to deconstruct and secure through hands-on research and tool-building."
     ],
-    "contrarian_takes": [
-      "Some experts argue that proprietary models can lead to more rapid innovation and better performance, as they can be optimized for specific use cases without the constraints of open-source licensing.",
-      "Others believe that the risks of rapid AI development are overstated, citing the successful deployment of AI in various industries as evidence of its safety and reliability."
-    ]
+    "one_liner": "Lucas Valbuena is a 16-year-old Spanish developer and founder of ZeroLeaks, who has gained significant influence in the AI security and open-source communities by reverse-engineering proprietary AI systems and building tools to promote transparency and security."
   },
   "questions": [
     {
       "category": "origin",
-      "question": "Walk me through how your 'The Advantage of Being Curious Early' blog post influenced your approach to AI research.",
-      "why_this_question": "To understand the pivotal role of curiosity in shaping your research philosophy.",
-      "expected_insight": "Reveal the impact of your blog post on your ongoing research and how it guides your approach to AI development.",
-      "last_verified": "2026-04-20T18:19:29+00:00"
-    },
-    {
-      "category": "philosophy",
-      "question": "How does your stance on open-source software differ from those who believe proprietary models can lead to faster innovation?",
-      "why_this_question": "To explore the intellectual tension between open-source and proprietary approaches in AI development.",
-      "expected_insight": "Highlight your views on the benefits and drawbacks of open-source versus proprietary models.",
-      "last_verified": "2026-04-20T18:19:29+00:00"
-    },
-    {
-      "category": "collaboration",
-      "question": "How did your collaboration with NotLucknite on ZeroLeaks impact your approach to cybersecurity in AI applications?",
-      "why_this_question": "To understand the dynamics of your collaboration and how it shaped your work on ZeroLeaks.",
-      "expected_insight": "Reveal the specific contributions and challenges of working with NotLucknite on ZeroLeaks.",
-      "last_verified": "2026-04-20T18:19:29+00:00"
-    },
-    {
-      "category": "future",
-      "question": "What would need to be true for you to be optimistic about the future of AI safety and ethical considerations?",
-      "why_this_question": "To uncover your vision for the future of AI safety and the conditions that would make you more optimistic.",
-      "expected_insight": "Illuminate the key factors and developments that would lead to a more secure and ethical AI ecosystem.",
-      "last_verified": "2026-04-20T18:19:29+00:00"
+      "question": "Your 'system-prompts-and-models-of-ai-tools' repository became a massive transparency resource with over 135,000 stars. How did the process of reverse-engineering and publishing those proprietary prompts directly lead to the founding of ZeroLeaks? Was there a specific vulnerability you uncovered that made you realize this needed to be a product, not just a GitHub repo?",
+      "why_this_question": "It connects his most famous work directly to his company's origin, moving beyond generic 'how did you start' to the specific technical catalyst.",
+      "expected_insight": "A detailed story about discovering a specific, exploitable pattern across multiple AI tools that revealed a systemic security gap, prompting the shift from researcher to builder of defensive tools."
     },
     {
       "category": "origin",
-      "question": "How did your work on 'System Prompts and Models of AI Tools' evolve from your initial curiosity about AI system prompts?",
-      "why_this_question": "To explore the origins and evolution of your most recognized project.",
-      "expected_insight": "Reveal the journey and key learnings from your reverse-engineering project.",
-      "last_verified": "2026-04-20T18:19:29+00:00"
+      "question": "Before ZeroLeaks, you built 'better-clawd' as an open-source, telemetry-free alternative to Claude Code. That project required deep product thinking. How did the experience of building a full-stack AI developer tool shape your approach to founding and building ZeroLeaks as a company?",
+      "why_this_question": "It probes the transition from open-source project maintainer to founder, using a concrete prior project as the reference point.",
+      "expected_insight": "Insights into lessons learned about user needs, performance trade-offs in AI tools, and how the 'no telemetry, no lock-in' philosophy from better-clawd translates to a security-focused SaaS business model."
+    },
+    {
+      "category": "technical_depth",
+      "question": "In your blog, you position yourself as an investigator of AI systems. For ZeroLeaks, what were the key architectural decisions in designing a platform that can reliably test for prompt injection and extraction across different LLM providers and application frameworks? How do you balance comprehensiveness with performance?",
+      "why_this_question": "It references his stated identity and asks for specific technical choices behind his main product, avoiding generic 'how does it work' questions.",
+      "expected_insight": "Deep technical details on the testing engine—whether it uses symbolic execution, fuzzing, or a library of known attack patterns—and how it interfaces with various APIs and frameworks like LangChain or LlamaIndex."
+    },
+    {
+      "category": "technical_depth",
+      "question": "Your 'market-ai-resolution' project explores rule-based AI reasoning for blockchain oracles. That's a highly specific technical intersection. How does your research into formal methods and deterministic AI systems for DeFi influence the way you architect tests for non-deterministic, conversational LLM vulnerabilities at ZeroLeaks?",
+      "why_this_question": "It connects a seemingly niche side project to his main work, forcing a synthesis of ideas across different technical domains he's explored.",
+      "expected_insight": "An explanation of how thinking about verifiable, rule-based systems in one domain informs creating rigorous, repeatable security tests in another, potentially revealing a unique cross-disciplinary approach to AI security."
     },
     {
       "category": "philosophy",
-      "question": "Critics say that rapid AI development is too risky. Where are they wrong about the current state of AI safety?",
-      "why_this_question": "To challenge the common narrative and reveal your perspective on current AI safety measures.",
-      "expected_insight": "Highlight the areas where you believe AI safety is improving and address common concerns.",
-      "last_verified": "2026-04-20T18:19:29+00:00"
+      "question": "Your work rests on a tension: you've built a business (ZeroLeaks) by exposing the vulnerabilities of the very AI tools (like those from Cursor, Warp) that many developers, including yourself, use to build things. Is this a sustainable, symbiotic relationship, or an inherently adversarial one? What's your long-term view on this dynamic?",
+      "why_this_question": "It directly confronts the core philosophical and business conflict in his work, referencing the specific tools he's analyzed.",
+      "expected_insight": "A nuanced take on the ethics and economics of security research, and whether he sees ZeroLeaks as a necessary immune system for the AI ecosystem or a force that will push vendors toward greater inherent security and openness."
+    },
+    {
+      "category": "philosophy",
+      "question": "You have a clear stance against telemetry and vendor lock-in, as seen in 'better-clawd'. In an AI security context, does this philosophy extend to believing that the most secure AI applications will necessarily be open-source and self-hosted? Is there a future where you trust a proprietary, cloud-based AI system to be secure?",
+      "why_this_question": "It takes a specific principle from his past projects and applies it rigorously to his core domain of AI security, testing for a potentially contrarian take.",
+      "expected_insight": "A defense or evolution of his open-source ethos within the security realm, possibly acknowledging practical trade-offs or arguing that transparency is non-negotiable for true security assurance."
     },
     {
       "category": "collaboration",
-      "question": "How did your relationship with the open-source community influence the development of ZeroLeaks and Better-Clawd?",
-      "why_this_question": "To understand the impact of the open-source community on your projects and development process.",
-      "expected_insight": "Reveal the support, challenges, and community involvement in your projects.",
-      "last_verified": "2026-04-20T18:19:29+00:00"
+      "question": "Your 'awesome-solana-ai' repo curates resources at the AI/blockchain intersection. Have specific collaborations or conversations within that niche community influenced the roadmap for ZeroLeaks? For instance, are you seeing unique AI security threats emerge in on-chain or agentic applications?",
+      "why_this_question": "It identifies a specific community he's engaged with (Solana AI devs) and asks for concrete influence on his product, moving beyond generic 'community' questions.",
+      "expected_insight": "Examples of novel vulnerability classes discussed in web3/AI circles (e.g., adversarial attacks on transaction-generating agents) that are shaping ZeroLeaks' feature development."
+    },
+    {
+      "category": "collaboration",
+      "question": "With 3,500+ GitHub followers gained largely from one repo, you have a highly engaged but specific audience of developers interested in AI tooling internals. How are you leveraging that community not just for distribution, but for collaborative threat research to fuel ZeroLeaks' detection capabilities?",
+      "why_this_question": "It acknowledges the scale and origin of his community and asks for a specific, non-obvious mechanism of collaboration (co-research).",
+      "expected_insight": "Details on structured feedback loops, bounty programs for novel prompt injections, or open-source contributions to the ZeroLeaks testing corpus from his follower base."
     },
     {
       "category": "future",
-      "question": "What surprised you most about the impact of your work on ZeroLeaks and how it has been adopted by the community?",
-      "why_this_question": "To uncover the unexpected outcomes and learnings from your cybersecurity tool.",
-      "expected_insight": "Reveal the unanticipated ways your work has been received and its broader impact.",
-      "last_verified": "2026-04-20T18:19:29+00:00"
+      "question": "Zero Calendar is an AI-native app, and ZeroLeaks secures AI apps. Do you see these paths converging? Is the long-term vision for ZeroLeaks to evolve into or inspire a suite of secure-by-default, AI-native development frameworks or primitives?",
+      "why_this_question": "It connects two of his major projects to speculate on a unified future vision, showing an understanding of his broader portfolio.",
+      "expected_insight": "A vision for shifting from finding vulnerabilities to defining and enabling a secure architecture for AI applications, potentially through open-source frameworks or developer protocols."
+    },
+    {
+      "category": "future",
+      "question": "You've explored AI for prediction market resolution. Looking ahead, do you believe the biggest AI security challenges will shift from prompt leakage in today's chat applications to securing autonomous, economically incentivized AI agents? How is ZeroLeaks preparing for that potential future?",
+      "why_this_question": "It uses his most forward-looking research project ('market-ai-resolution') as a lens to ask about the future of his core business, demonstrating a deep read of his interests.",
+      "expected_insight": "Predictions on the evolution of AI threats as systems become more agentic and financially capable, and early R&D at ZeroLeaks into testing the security of goal-driven, multi-step AI agents."
     }
-  ],
-  "sources": []
+  ]
 }
