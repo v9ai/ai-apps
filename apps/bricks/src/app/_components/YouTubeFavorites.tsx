@@ -1,64 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { css } from "styled-system/css";
+import { useSession } from "@/lib/auth-client";
 import { VideoEmbed } from "./VideoEmbed";
 
-type YTFav = {
-  id: string;
+interface SavedVideo {
+  id: number;
+  videoId: string;
   title: string;
-  note?: string;
-};
-
-const INITIAL_FAVS: YTFav[] = [
-  {
-    id: "1_pJn4mcPzY",
-    title: "Saved video",
-    note: "https://youtu.be/1_pJn4mcPzY",
-  },
-];
-
-const YT_ID_RE = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/;
-
-function parseYouTubeId(input: string): string | null {
-  const trimmed = input.trim();
-  if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) return trimmed;
-  const m = trimmed.match(YT_ID_RE);
-  return m ? m[1] : null;
+  channelName: string;
+  thumbnailUrl: string | null;
+  url: string;
+  createdAt: string;
 }
 
+const SAMPLE_URL = "https://youtu.be/1_pJn4mcPzY";
+
 export function YouTubeFavorites() {
-  const [favs, setFavs] = useState<YTFav[]>(INITIAL_FAVS);
-  const [selectedId, setSelectedId] = useState<string>(INITIAL_FAVS[0]?.id ?? "");
-  const [input, setInput] = useState("");
+  const { data: session, isPending } = useSession();
+  const [items, setItems] = useState<SavedVideo[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
-  const selected = favs.find((f) => f.id === selectedId) ?? favs[0];
+  const load = useCallback(async () => {
+    const res = await fetch("/api/videos");
+    if (res.ok) {
+      const data = await res.json();
+      const list: SavedVideo[] = data.items ?? [];
+      setItems(list);
+      setSelectedId((cur) => cur ?? list[0]?.videoId ?? null);
+    }
+    setLoaded(true);
+  }, []);
 
-  function handleAdd() {
-    const id = parseYouTubeId(input);
-    if (!id) {
-      setError("Paste a YouTube URL or 11-char ID.");
-      return;
-    }
-    if (favs.some((f) => f.id === id)) {
-      setError("Already in favorites.");
-      return;
-    }
-    const next: YTFav = { id, title: "Saved video", note: input.trim() };
-    setFavs((prev) => [next, ...prev]);
-    setSelectedId(id);
-    setInput("");
+  useEffect(() => {
+    if (session) load();
+  }, [session, load]);
+
+  async function handleAdd(overrideUrl?: string) {
+    const toAdd = (overrideUrl ?? url).trim();
+    if (!toAdd) return;
+    setAdding(true);
     setError(null);
+    try {
+      const res = await fetch("/api/videos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: toAdd }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to save");
+      } else {
+        if (!overrideUrl) setUrl("");
+        if (data.item?.videoId) setSelectedId(data.item.videoId);
+        load();
+      }
+    } catch {
+      setError("Network error");
+    } finally {
+      setAdding(false);
+    }
   }
 
-  function handleRemove(id: string) {
-    setFavs((prev) => {
-      const next = prev.filter((f) => f.id !== id);
-      if (id === selectedId) setSelectedId(next[0]?.id ?? "");
-      return next;
+  async function handleRemove(videoId: string) {
+    await fetch("/api/videos", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ videoId }),
     });
+    if (selectedId === videoId) setSelectedId(null);
+    load();
   }
+
+  if (isPending) {
+    return (
+      <p className={css({ fontSize: "sm", color: "ink.muted", mt: "6" })}>
+        Loading…
+      </p>
+    );
+  }
+
+  if (!session) {
+    return (
+      <p className={css({ fontSize: "sm", color: "ink.muted", mt: "6" })}>
+        Sign in to save favorite videos.
+      </p>
+    );
+  }
+
+  const selected = items.find((v) => v.videoId === selectedId) ?? items[0];
 
   return (
     <section className={css({ mt: "2" })}>
@@ -75,12 +110,12 @@ export function YouTubeFavorites() {
         YouTube Favorites
       </h2>
       <p className={css({ fontSize: "sm", color: "ink.muted", mb: "5" })}>
-        Paste any YouTube URL and save it. Click a row to play it above.
+        Paste any YouTube URL — saved to your account. Click a row to play it above.
       </p>
 
       {selected && (
         <div className={css({ mb: "5" })}>
-          <VideoEmbed videoId={selected.id} />
+          <VideoEmbed videoId={selected.videoId} />
         </div>
       )}
 
@@ -102,10 +137,11 @@ export function YouTubeFavorites() {
       >
         <input
           type="url"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           placeholder="https://youtu.be/…"
+          disabled={adding}
           className={css({
             flex: 1,
             bg: "transparent",
@@ -119,8 +155,8 @@ export function YouTubeFavorites() {
           })}
         />
         <button
-          onClick={handleAdd}
-          disabled={!input.trim()}
+          onClick={() => handleAdd()}
+          disabled={adding || !url.trim()}
           className={css({
             rounded: "lg",
             bg: "lego.blue",
@@ -139,7 +175,7 @@ export function YouTubeFavorites() {
             _disabled: { opacity: 0.5, cursor: "not-allowed", transform: "none" },
           })}
         >
-          Add
+          {adding ? "Saving…" : "Add"}
         </button>
       </div>
 
@@ -157,16 +193,53 @@ export function YouTubeFavorites() {
       )}
 
       <div className={css({ mt: "4", display: "flex", flexDir: "column", gap: "2" })}>
-        {favs.length === 0 && (
-          <p className={css({ fontSize: "sm", color: "ink.faint" })}>
-            No favorites yet. Paste a YouTube URL above.
-          </p>
+        {loaded && items.length === 0 && (
+          <div
+            className={css({
+              bg: "plate.surface",
+              rounded: "brick",
+              border: "2px dashed",
+              borderColor: "plate.border",
+              px: "4",
+              py: "5",
+              display: "flex",
+              flexDir: "column",
+              gap: "3",
+              alignItems: "flex-start",
+            })}
+          >
+            <p className={css({ fontSize: "sm", color: "ink.faint" })}>
+              No favorites yet. Paste a YouTube URL above, or add the sample:
+            </p>
+            <button
+              onClick={() => handleAdd(SAMPLE_URL)}
+              disabled={adding}
+              className={css({
+                fontSize: "xs",
+                fontWeight: "700",
+                fontFamily: "display",
+                color: "ink.primary",
+                bg: "transparent",
+                border: "1.5px solid",
+                borderColor: "plate.border",
+                cursor: "pointer",
+                px: "3",
+                py: "1.5",
+                rounded: "brick",
+                transition: "all 0.15s ease",
+                _hover: { borderColor: "plate.borderHover" },
+                _disabled: { opacity: 0.5, cursor: "not-allowed" },
+              })}
+            >
+              + Add {SAMPLE_URL}
+            </button>
+          </div>
         )}
-        {favs.map((fav) => {
-          const active = fav.id === selectedId;
+        {items.map((vid) => {
+          const active = vid.videoId === (selected?.videoId ?? null);
           return (
             <div
-              key={fav.id}
+              key={vid.id}
               className={css({
                 display: "flex",
                 alignItems: "center",
@@ -185,7 +258,7 @@ export function YouTubeFavorites() {
               })}
             >
               <button
-                onClick={() => setSelectedId(fav.id)}
+                onClick={() => setSelectedId(vid.videoId)}
                 className={css({
                   flexShrink: 0,
                   p: 0,
@@ -197,8 +270,8 @@ export function YouTubeFavorites() {
                 })}
               >
                 <img
-                  src={`https://i.ytimg.com/vi/${fav.id}/mqdefault.jpg`}
-                  alt={fav.title}
+                  src={vid.thumbnailUrl ?? `https://i.ytimg.com/vi/${vid.videoId}/mqdefault.jpg`}
+                  alt={vid.title}
                   className={css({
                     w: "28",
                     h: "16",
@@ -212,7 +285,7 @@ export function YouTubeFavorites() {
               </button>
 
               <button
-                onClick={() => setSelectedId(fav.id)}
+                onClick={() => setSelectedId(vid.videoId)}
                 className={css({
                   flex: 1,
                   minW: 0,
@@ -235,21 +308,20 @@ export function YouTubeFavorites() {
                     whiteSpace: "nowrap",
                   })}
                 >
-                  {fav.title}
+                  {vid.title}
                 </span>
                 <span
                   className={css({
                     fontSize: "xs",
                     color: "ink.muted",
-                    fontFamily: "mono",
                   })}
                 >
-                  {fav.note ?? `youtu.be/${fav.id}`}
+                  {vid.channelName || `youtu.be/${vid.videoId}`}
                 </span>
               </button>
 
               <a
-                href={`https://youtu.be/${fav.id}`}
+                href={vid.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={css({
@@ -272,7 +344,7 @@ export function YouTubeFavorites() {
                 Open
               </a>
               <button
-                onClick={() => handleRemove(fav.id)}
+                onClick={() => handleRemove(vid.videoId)}
                 className={css({
                   fontSize: "xs",
                   fontWeight: "700",
