@@ -23,12 +23,17 @@ type Finisher = {
 };
 
 const FINISHERS: Finisher[] = [
-  { rank: 1, name: "Lucas Valbuena", completedAt: "Apr 19, 2026" },
+  {
+    rank: 1,
+    name: "Lucas Valbuena",
+    completedAt: "Apr 19, 2026",
+    url: "https://github.com/x1xhlol",
+  },
   {
     rank: 2,
     name: "Jonatas Soares",
     completedAt: "Apr 19, 2026",
-    url: "http://jonatassoares.com",
+    url: "https://github.com/jxnxts",
   },
 ];
 
