@@ -4810,10 +4810,10 @@ async function phaseSearchAll(queries) {
 }
 async function phaseRankAndExtract(userPrompt, pool) {
   if (pool.length === 0) return [];
-  const candidates = pool.slice(0, 40);
+  const candidates = pool.slice(0, 25);
   const listed = candidates.map((p, i) => {
-    const abs = (p.abstract || "").slice(0, 400);
-    const auth = p.authors.slice(0, 3).join(", ");
+    const abs = (p.abstract || "").slice(0, 220);
+    const auth = p.authors.slice(0, 2).join(", ");
     return `[${i}] ${p.title} (${p.year ?? "n.d."}) \u2014 ${auth}
   ${abs}`;
   }).join("\n\n");
@@ -4852,21 +4852,6 @@ async function phaseRankAndExtract(userPrompt, pool) {
       relevance_score: rs
     });
     if (out.length === 10) break;
-  }
-  const enrichTargets = out.slice(0, 2).map((p) => p.doi).filter((d) => !!d);
-  if (enrichTargets.length > 0) {
-    const details = await Promise.allSettled(
-      enrichTargets.map((doi) => getS2PaperDetail(`DOI:${doi}`))
-    );
-    details.forEach((r, i) => {
-      if (r.status !== "fulfilled" || !r.value) return;
-      const det = r.value;
-      const paper = out[i];
-      const betterAbstract = det.abstract || paper.abstract;
-      if (betterAbstract && betterAbstract.length > (paper.abstract?.length ?? 0)) {
-        paper.abstract = betterAbstract;
-      }
-    });
   }
   return out;
 }
@@ -5057,17 +5042,7 @@ const runPipeline = createStep({
       if (trackJob) await updateJobProgress(jobId, 90);
       const summary = `Curated ${saveStats.saved} papers from ${pool.length} candidates (${saveStats.skipped} skipped, ${saveStats.failed} failed).`;
       if (trackJob) {
-        let evals;
-        try {
-          evals = await runResearchEvals(
-            ids,
-            inputData.evalPromptContext ?? userMsg.content,
-            inputData.hasRelatedMember ?? false
-          );
-        } catch (evalErr) {
-          console.error("[research.workflow] eval error:", evalErr);
-        }
-        if (saveStats.saved === 0 || evals?.error === "no papers found") {
+        if (saveStats.saved === 0) {
           await updateJobFailed(jobId, {
             message: "Research pipeline completed but no papers could be saved. Try rephrasing or try again later.",
             code: "NO_PAPERS_SAVED"
@@ -5075,8 +5050,26 @@ const runPipeline = createStep({
         } else {
           await updateJobSucceeded(jobId, {
             count: saveStats.saved,
-            output: summary,
-            evals
+            output: summary
+          });
+          const t4 = Date.now();
+          runResearchEvals(
+            ids,
+            inputData.evalPromptContext ?? userMsg.content,
+            inputData.hasRelatedMember ?? false
+          ).then(async (evals) => {
+            console.log(`[research.workflow] phase=eval elapsed=${Date.now() - t4}ms`);
+            try {
+              await updateJobSucceeded(jobId, {
+                count: saveStats.saved,
+                output: summary,
+                evals
+              });
+            } catch (updErr) {
+              console.error("[research.workflow] eval result write failed:", updErr);
+            }
+          }).catch((evalErr) => {
+            console.error("[research.workflow] eval error:", evalErr);
           });
         }
       }

@@ -459,23 +459,6 @@ async function phaseRankAndExtract(
     if (out.length === 10) break;
   }
 
-  // Enrich top 2 with S2 detail in parallel (optional abstract upgrade)
-  const enrichTargets = out.slice(0, 2).map((p) => p.doi).filter((d): d is string => !!d);
-  if (enrichTargets.length > 0) {
-    const details = await Promise.allSettled(
-      enrichTargets.map((doi) => getS2PaperDetail(`DOI:${doi}`)),
-    );
-    details.forEach((r, i) => {
-      if (r.status !== "fulfilled" || !r.value) return;
-      const det = r.value;
-      const paper = out[i];
-      const betterAbstract = (det.abstract as string | undefined) || paper.abstract;
-      if (betterAbstract && betterAbstract.length > (paper.abstract?.length ?? 0)) {
-        paper.abstract = betterAbstract;
-      }
-    });
-  }
-
   return out;
 }
 
@@ -764,29 +747,39 @@ const runPipeline = createStep({
       const summary = `Curated ${saveStats.saved} papers from ${pool.length} candidates (${saveStats.skipped} skipped, ${saveStats.failed} failed).`;
 
       if (trackJob) {
-        let evals: EvalScores | undefined;
-        try {
-          evals = await runResearchEvals(
-            ids,
-            inputData.evalPromptContext ?? userMsg.content,
-            inputData.hasRelatedMember ?? false,
-          );
-        } catch (evalErr) {
-          console.error("[research.workflow] eval error:", evalErr);
-        }
-
-        if (saveStats.saved === 0 || evals?.error === "no papers found") {
+        if (saveStats.saved === 0) {
           await updateJobFailed(jobId!, {
             message:
               "Research pipeline completed but no papers could be saved. Try rephrasing or try again later.",
             code: "NO_PAPERS_SAVED",
           });
         } else {
+          // Mark SUCCEEDED immediately so the UI can unblock; evals are best-effort.
           await updateJobSucceeded(jobId!, {
             count: saveStats.saved,
             output: summary,
-            evals,
           });
+          const t4 = Date.now();
+          runResearchEvals(
+            ids,
+            inputData.evalPromptContext ?? userMsg.content,
+            inputData.hasRelatedMember ?? false,
+          )
+            .then(async (evals) => {
+              console.log(`[research.workflow] phase=eval elapsed=${Date.now() - t4}ms`);
+              try {
+                await updateJobSucceeded(jobId!, {
+                  count: saveStats.saved,
+                  output: summary,
+                  evals,
+                });
+              } catch (updErr) {
+                console.error("[research.workflow] eval result write failed:", updErr);
+              }
+            })
+            .catch((evalErr) => {
+              console.error("[research.workflow] eval error:", evalErr);
+            });
         }
       }
 
