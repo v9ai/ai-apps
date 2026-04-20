@@ -9,9 +9,10 @@ AI engineering educational platform — 88 lessons across 14 categories with sea
 - **ORM**: Drizzle ORM
 - **UI**: Radix UI Themes
 - **AI**: OpenAI, DeepSeek
-- **Content Generation**: LangGraph (Python backend)
+- **Content Generation**: LangGraph (Python backend) — being ported to Mastra
+- **Agent runtime**: Mastra on Cloudflare Workers (sibling app `apps/knowledge-mastra/`, in migration) — workflow state persisted to Neon `mastra` schema (same DB)
 - **File Storage**: Cloudflare R2
-- **Deployment**: Vercel
+- **Deployment**: Vercel (Next.js) + Cloudflare Workers (Mastra)
 
 ## Architecture
 
