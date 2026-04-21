@@ -59,6 +59,22 @@ db-migrate:
 db-studio:
 	pnpm db:studio
 
+# ── Tunnel (expose local backend to Vercel-deployed frontend) ──
+#
+# Pair with `pnpm backend-dev`. Set LANGGRAPH_AUTH_TOKEN in both
+# backend/.env and Vercel production env so the tunnel isn't open.
+# See backend/README.md for the full workflow.
+
+.PHONY: tunnel tunnel-quick tunnel-named
+
+tunnel: tunnel-quick ## Default: random ephemeral URL (quick tunnel)
+
+tunnel-quick: ## Start a Cloudflare quick tunnel on :8002 (random *.trycloudflare.com URL)
+	cloudflared tunnel --url http://localhost:8002
+
+tunnel-named: ## Run a pre-created named tunnel (stable hostname). Bootstrap: see backend/README.md
+	cloudflared tunnel run leadgen-backend
+
 # ── Contact Cleanup ──────────────────────────────────────────
 
 .PHONY: clean-contacts

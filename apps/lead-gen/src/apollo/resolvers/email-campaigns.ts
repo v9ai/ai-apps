@@ -1074,28 +1074,14 @@ export const emailCampaignResolvers = {
       }
 
       try {
-        const res = await fetch(
-          `${process.env.LANGGRAPH_API_URL || "http://localhost:8002"}/email-outreach`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              recipient_name: recipientName || "",
-              recipient_role: recipientRole || "",
-              recipient_email: recipientEmail,
-              post_text: (postText || "").slice(0, 2000),
-              post_url: postUrl || "",
-              tone: tone || "professional and friendly",
-            }),
-          },
-        );
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
-          throw new Error(err.detail || `Pipeline failed (${res.status})`);
-        }
-
-        const generated = (await res.json()) as { subject: string; html: string; text: string };
+        const generated = await emailOutreach({
+          recipientName: recipientName || "",
+          recipientRole: recipientRole || "",
+          recipientEmail,
+          postText: (postText || "").slice(0, 2000),
+          postUrl: postUrl || "",
+          tone: tone || "professional and friendly",
+        });
 
         const result = await resend.instance.send({
           to: recipientEmail,
