@@ -15,6 +15,13 @@
       "when": 1776190226377,
       "tag": "0001_new_alice",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776792474289,
+      "tag": "0002_melted_zarek",
+      "breakpoints": true
     }
   ]
 }
