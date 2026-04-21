@@ -1,5 +1,18 @@
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
+import {
+  searchOpenAlex as pkgSearchOpenAlex,
+  searchCrossref as pkgSearchCrossref,
+  searchSemanticScholar as pkgSearchSemanticScholar,
+  searchArxiv as pkgSearchArxiv,
+  searchPubMed as pkgSearchPubMed,
+  searchEuropePmc as pkgSearchEuropePmc,
+  searchDataCite as pkgSearchDataCite,
+  searchCore as pkgSearchCore,
+  searchZenodo as pkgSearchZenodo,
+  dedupeCandidates,
+  type PaperCandidate,
+} from "@ai-apps/research";
 import { upsertTherapyResearch } from "@/src/db";
 import { sql as neonSql } from "@/src/db/neon";
 

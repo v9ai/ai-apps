@@ -26,6 +26,7 @@ candle-nn           = "0.9"
 candle-transformers = "0.9"
 hf-hub              = "0.4"
 tokenizers          = "0.21"
+mistralrs           = { version = "0.8", features = ["metal"] }
 lancedb             = "0.27"
 arrow-array         = "57"
 arrow-schema        = "57"
