@@ -1963,6 +1963,7 @@ export type Product = {
   domain: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   url: Scalars['URL']['output'];
 };
@@ -2024,6 +2025,7 @@ export type Query = {
   mlStats: MlStats;
   opportunityByUrl: Maybe<Opportunity>;
   product: Maybe<Product>;
+  productBySlug: Maybe<Product>;
   products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
@@ -2293,6 +2295,11 @@ export type QueryOpportunityByUrlArgs = {
 
 export type QueryProductArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QueryProductBySlugArgs = {
+  slug: Scalars['String']['input'];
 };
 
 
@@ -5231,6 +5238,7 @@ export type ProductResolvers<ContextType = GraphQLContext, ParentType extends Re
   domain?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['URL'], ParentType, ContextType>;
 };
@@ -5282,6 +5290,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   mlStats?: Resolver<ResolversTypes['MLStats'], ParentType, ContextType>;
   opportunityByUrl?: Resolver<Maybe<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryOpportunityByUrlArgs, 'url'>>;
   product?: Resolver<Maybe<ResolversTypes['Product']>, ParentType, ContextType, RequireFields<QueryProductArgs, 'id'>>;
+  productBySlug?: Resolver<Maybe<ResolversTypes['Product']>, ParentType, ContextType, RequireFields<QueryProductBySlugArgs, 'slug'>>;
   products?: Resolver<Array<ResolversTypes['Product']>, ParentType, ContextType, Partial<QueryProductsArgs>>;
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;

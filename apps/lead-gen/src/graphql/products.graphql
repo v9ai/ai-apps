@@ -1,5 +1,6 @@
 fragment ProductCore on Product {
   id
+  slug
   name
   url
   domain
@@ -17,6 +18,12 @@ query Products {
 
 query Product($id: Int!) {
   product(id: $id) {
+    ...ProductCore
+  }
+}
+
+query ProductBySlug($slug: String!) {
+  productBySlug(slug: $slug) {
     ...ProductCore
   }
 }

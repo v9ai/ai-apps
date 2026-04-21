@@ -1960,6 +1960,7 @@ export type Product = {
   domain: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   url: Scalars['URL']['output'];
 };
@@ -2021,6 +2022,7 @@ export type Query = {
   mlStats: MlStats;
   opportunityByUrl: Maybe<Opportunity>;
   product: Maybe<Product>;
+  productBySlug: Maybe<Product>;
   products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
@@ -2290,6 +2292,11 @@ export type QueryOpportunityByUrlArgs = {
 
 export type QueryProductArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QueryProductBySlugArgs = {
+  slug: Scalars['String']['input'];
 };
 
 

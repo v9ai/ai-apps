@@ -1383,6 +1383,7 @@ type Product {
   domain: String
   id: Int!
   name: String!
+  slug: String!
   updatedAt: DateTime!
   url: URL!
 }
@@ -1442,6 +1443,7 @@ type Query {
   mlStats: MLStats!
   opportunityByUrl(url: String!): Opportunity
   product(id: Int!): Product
+  productBySlug(slug: String!): Product
   products(limit: Int, offset: Int): [Product!]!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, classification: String, limit: Int, offset: Int): ReceivedEmailsResult!
