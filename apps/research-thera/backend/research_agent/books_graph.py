@@ -35,6 +35,7 @@ class BooksState(TypedDict, total=False):
     _prompt: str
     _research_count: int
     _skip_persist: bool
+    _books_raw: list[dict]
     # Output
     success: bool
     message: str
