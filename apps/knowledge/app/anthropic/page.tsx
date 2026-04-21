@@ -116,38 +116,62 @@ function FinisherCard({ finisher }: { finisher: Finisher }) {
     fontSize: "0.8125rem",
     color: "var(--gray-11)",
     textDecoration: "none",
+    whiteSpace: "nowrap",
   };
   return (
-    <div className="course-card">
-      <div className="course-card-header">
-        <span className="course-provider-icon">{finisher.rank}</span>
-        <span className="course-provider-name">{finisher.completedAt}</span>
-      </div>
-      <div className="course-card-title">{finisher.name}</div>
-      <p className="course-card-desc">Completed all 4 courses</p>
-      {(finisher.github || finisher.website) && (
-        <div className="course-card-footer">
-          {finisher.github && (
-            <a
-              href={finisher.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={linkStyle}
-            >
-              🐙 GitHub
-            </a>
-          )}
-          {finisher.website && (
-            <a
-              href={finisher.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={linkStyle}
-            >
-              🌐 Website
-            </a>
-          )}
-        </div>
+    <div
+      className="course-card"
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 16,
+        flexWrap: "nowrap",
+        overflowX: "auto",
+      }}
+    >
+      <span
+        className="course-provider-icon"
+        style={{ flexShrink: 0 }}
+      >
+        {finisher.rank}
+      </span>
+      <span
+        className="course-provider-name"
+        style={{ flexShrink: 0, whiteSpace: "nowrap" }}
+      >
+        {finisher.completedAt}
+      </span>
+      <span
+        className="course-card-title"
+        style={{ flexShrink: 0, whiteSpace: "nowrap", margin: 0 }}
+      >
+        {finisher.name}
+      </span>
+      <span
+        className="course-card-desc"
+        style={{ flexShrink: 0, whiteSpace: "nowrap", margin: 0 }}
+      >
+        Completed all 4 courses
+      </span>
+      {finisher.github && (
+        <a
+          href={finisher.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...linkStyle, flexShrink: 0, marginLeft: "auto" }}
+        >
+          🐙 GitHub
+        </a>
+      )}
+      {finisher.website && (
+        <a
+          href={finisher.website}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...linkStyle, flexShrink: 0 }}
+        >
+          🌐 Website
+        </a>
       )}
     </div>
   );

@@ -11,14 +11,14 @@ const REQUIRED_COURSES = [
   "Claude Code in Action",
 ];
 
-// Cohort = anyone who received a CPN training-path email OR was assigned a @vadim.blog alias
+// Active cohort = contacts we sent the "email ready — start courses" message to.
+// That's the opt-in signal: they said yes, we set up their alias, they can start.
 const cohort = (await sql`
-  SELECT DISTINCT c.id, c.first_name, c.last_name, c.email, c.alias_email
+  SELECT DISTINCT c.id, c.first_name, c.last_name, c.email, c.forwarding_alias AS alias_email
   FROM contacts c
-  LEFT JOIN contact_emails ce ON ce.contact_id = c.id
-  WHERE c.alias_email IS NOT NULL
-     OR ce.tags LIKE '%cpn-training-path%'
-     OR ce.tags LIKE '%cpn-email-ready%'
+  JOIN contact_emails ce ON ce.contact_id = c.id
+  WHERE ce.subject = 'Your @vadim.blog email is ready - start the courses'
+    AND ce.resend_id IS NOT NULL AND ce.resend_id <> ''
   ORDER BY c.first_name
 `) as Array<{
   id: number;

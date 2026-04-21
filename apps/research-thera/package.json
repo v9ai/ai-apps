@@ -24,6 +24,7 @@
     "codegen": "graphql-codegen"
   },
   "dependencies": {
+    "@ai-apps/research": "workspace:*",
     "@ai-sdk/openai": "^2.0.91",
     "@ai-sdk/openai-compatible": "^2.0.41",
     "@apollo/client": "^3.11.0",
