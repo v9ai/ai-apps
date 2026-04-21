@@ -20,18 +20,13 @@ from typing import Any
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
+from .icp_schemas import WEIGHTS, DeepICPOutput, GraphMeta
 from .llm import ainvoke_json, make_llm
 from .state import DeepICPState
 
-# 5-dimension weights. Sum == 1.0. If tuning, also update
-# `config/scoring/product-icp-weights.json` (Next.js side) to keep parity.
-WEIGHTS: dict[str, float] = {
-    "segment_clarity": 0.25,
-    "buyer_persona_specificity": 0.25,
-    "pain_solution_fit": 0.20,
-    "distribution_gtm_signal": 0.15,
-    "anti_icp_clarity": 0.15,
-}
+# WEIGHTS live in icp_schemas so the Pydantic layer can hash them into
+# graph_meta. If tuning, update the dict there (single source of truth) and
+# also `config/scoring/product-icp-weights.json` (Next.js side) to keep parity.
 
 CRITERION_DESCRIPTIONS: dict[str, str] = {
     "segment_clarity": "How sharp and addressable the target segment is (industry, vertical, stage, geography).",
@@ -291,14 +286,19 @@ async def synthesize(state: DeepICPState) -> dict:
         # the "not-for" section; a deterministic eval metric also requires >= 1.
         anti_icp = ["Unknown — analyst could not articulate an anti-ICP from the brief."]
 
-    return {
-        "criteria_scores": state.get("criteria_scores") or {},
-        "weighted_total": weighted_total,
-        "segments": segments,
-        "personas": personas,
-        "anti_icp": anti_icp,
-        "deal_breakers": state.get("deal_breakers") or [],
-    }
+    model_name = os.environ.get("LLM_MODEL", "")
+    validated = DeepICPOutput.model_validate(
+        {
+            "criteria_scores": state.get("criteria_scores") or {},
+            "weighted_total": weighted_total,
+            "segments": segments,
+            "personas": personas,
+            "anti_icp": anti_icp,
+            "deal_breakers": state.get("deal_breakers") or [],
+            "graph_meta": GraphMeta(model=model_name),
+        }
+    )
+    return validated.model_dump()
 
 
 def build_graph(checkpointer: Any = None) -> Any:

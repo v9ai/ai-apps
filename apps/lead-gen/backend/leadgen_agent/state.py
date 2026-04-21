@@ -98,10 +98,11 @@ class DeepICPState(TypedDict, total=False):
     product: dict[str, Any]
     market_research: dict[str, Any]
     criterion_analyses: dict[str, dict[str, Any]]
-    # output
+    # output — see DeepICPOutput in icp_schemas.py for the Pydantic contract
     criteria_scores: dict[str, dict[str, Any]]
     weighted_total: float
     segments: list[dict[str, Any]]
     personas: list[dict[str, Any]]
     anti_icp: list[str]
     deal_breakers: list[dict[str, Any]]
+    graph_meta: dict[str, Any]
