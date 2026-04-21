@@ -1,10 +1,15 @@
-"""Admin chat graph: ReAct agent with read-only DB tools.
+"""Admin chat graph: prompt-driven tool router over read-only DB tools.
 
 Input: {prompt, system}. Output: {response}.
 
-Tools run SELECT-only queries against NEON_DATABASE_URL. Tool calls are safe by
-construction: `count_rows` and `inspect_schema` don't take free-form SQL, and
-`query_db` enforces a `SELECT` prefix + LIMIT cap.
+Why not `create_react_agent`: local `mlx_lm.server` (default target per
+`project_mlx_local_inference.md`) lacks vLLM's `--tool-call-parser hermes`
+equivalent, so native tool calls degrade to plain text. Instead, each step
+asks the LLM to emit `{"tool": ..., "args": ...}` or `{"answer": ...}` JSON,
+which `ainvoke_json()` parses reliably even when the model wraps output in
+code fences or `<think>` tags.
+
+Tools (all read-only): count_rows(table), inspect_schema(table), query_db(sql).
 """
 
 from __future__ import annotations
@@ -13,30 +18,40 @@ import os
 from typing import Any
 
 import psycopg
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.tools import tool
 from langgraph.graph import END, START, StateGraph
-from langgraph.prebuilt import create_react_agent
 
-from .llm import make_llm
+from .llm import ainvoke_json, make_llm
 from .state import AdminChatState
 
 DEFAULT_SYSTEM = (
-    "You are the lead-gen ops assistant. Answer questions about the database using "
-    "the provided tools. Prefer count_rows and inspect_schema for simple questions; "
-    "use query_db only when a specific SELECT is needed. Be concise."
+    "You are the lead-gen ops assistant. Answer database questions using the available tools. "
+    "Prefer count_rows and inspect_schema for simple questions; use query_db only when a "
+    "specific SELECT is needed. Be concise."
 )
 
 MAX_ROWS = 50
+MAX_STEPS = 6
+
+TOOLS_DOC = (
+    "Available tools (call one per step):\n"
+    "- count_rows(table: str) — approximate row count. Use for 'how many X' questions.\n"
+    "- inspect_schema(table: str) — column names and types. Use to discover schema.\n"
+    "- query_db(sql: str) — execute a SELECT (max 50 rows). Rejects non-SELECT.\n"
+)
+
+STEP_INSTRUCTION = (
+    "Return JSON only, one of two shapes:\n"
+    '  {"tool": "count_rows"|"inspect_schema"|"query_db", "args": {"table": "..."} or {"sql": "..."}}\n'
+    '  {"answer": "<final response to the user>"}\n'
+    "Emit `answer` as soon as you have enough evidence — don't call more tools than needed."
+)
 
 
 def _dsn() -> str:
     return os.environ.get("NEON_DATABASE_URL", "").strip()
 
 
-@tool
-def count_rows(table: str) -> str:
-    """Return the approximate row count for a table. Use for 'how many X' questions."""
+def _count_rows(table: str) -> str:
     if not table.replace("_", "").isalnum():
         return "Error: invalid table name."
     dsn = _dsn()
@@ -51,9 +66,7 @@ def count_rows(table: str) -> str:
         return f"Error: {exc}"
 
 
-@tool
-def inspect_schema(table: str) -> str:
-    """Return column names and types for a table. Use to discover schema before writing a query."""
+def _inspect_schema(table: str) -> str:
     if not table.replace("_", "").isalnum():
         return "Error: invalid table name."
     dsn = _dsn()
@@ -75,9 +88,7 @@ def inspect_schema(table: str) -> str:
         return f"Error: {exc}"
 
 
-@tool
-def query_db(sql: str) -> str:
-    """Execute a read-only SELECT query. Rejects anything that isn't a SELECT. Results capped at 50 rows."""
+def _query_db(sql: str) -> str:
     lowered = sql.strip().lower()
     if not lowered.startswith("select"):
         return "Error: only SELECT queries are allowed."
@@ -102,15 +113,14 @@ def query_db(sql: str) -> str:
         return f"Error: {exc}"
 
 
-TOOLS = [count_rows, inspect_schema, query_db]
-
-
-def _react():
-    # Built once at module import so `langgraph dev` picks up the compiled agent.
-    return create_react_agent(make_llm(), TOOLS)
-
-
-REACT_AGENT = _react()
+def _dispatch(tool: str, args: dict[str, Any]) -> str:
+    if tool == "count_rows":
+        return _count_rows(str(args.get("table", "")))
+    if tool == "inspect_schema":
+        return _inspect_schema(str(args.get("table", "")))
+    if tool == "query_db":
+        return _query_db(str(args.get("sql", "")))
+    return f"Error: unknown tool '{tool}'."
 
 
 async def chat(state: AdminChatState) -> dict:
@@ -118,14 +128,31 @@ async def chat(state: AdminChatState) -> dict:
     prompt = (state.get("prompt") or "").strip()
     if not prompt:
         return {"response": ""}
-    messages: list[Any] = [SystemMessage(content=system), HumanMessage(content=prompt)]
-    result = await REACT_AGENT.ainvoke({"messages": messages})
-    out_messages = result.get("messages", []) if isinstance(result, dict) else []
-    # Last AIMessage content is the final answer.
-    for msg in reversed(out_messages):
-        if isinstance(msg, AIMessage) and msg.content:
-            return {"response": str(msg.content)}
-    return {"response": ""}
+
+    llm = make_llm()
+    transcript: list[str] = [f"User question: {prompt}"]
+
+    for _ in range(MAX_STEPS):
+        result = await ainvoke_json(
+            llm,
+            [
+                {"role": "system", "content": f"{system}\n\n{TOOLS_DOC}\n{STEP_INSTRUCTION}"},
+                {"role": "user", "content": "\n\n".join(transcript)},
+            ],
+        )
+        if not isinstance(result, dict):
+            return {"response": str(result)}
+        if "answer" in result:
+            return {"response": str(result["answer"])}
+        tool = str(result.get("tool", ""))
+        args = result.get("args", {}) or {}
+        if not isinstance(args, dict):
+            args = {}
+        observation = _dispatch(tool, args)
+        transcript.append(f"Tool {tool}({args}) returned:\n{observation}")
+
+    # Ran out of steps — return the last observation as a best-effort answer.
+    return {"response": transcript[-1] if transcript else ""}
 
 
 def _build() -> Any:
