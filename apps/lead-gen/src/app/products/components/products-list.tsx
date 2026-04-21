@@ -40,9 +40,22 @@ export function ProductsList() {
 
   return (
     <Container size="4" p="6">
-      <Heading size="6" mb="5">
-        Products
-      </Heading>
+      <Flex align="center" gap="3" mb="5">
+        <span
+          className={css({
+            color: "accent.11",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bg: "accent.3",
+            borderRadius: "md",
+            p: "2",
+          })}
+        >
+          <CubeIcon width="20" height="20" />
+        </span>
+        <Heading size="6">Products</Heading>
+      </Flex>
 
       {error && (
         <Text color="red" as="p" mb="3">
@@ -53,10 +66,16 @@ export function ProductsList() {
       {loading && rows.length === 0 && <Text color="gray">Loading…</Text>}
 
       {!loading && rows.length === 0 && (
-        <Text color="gray">No products yet — add one above.</Text>
+        <Text color="gray">No products yet.</Text>
       )}
 
-      <Flex direction="column" gap="3">
+      <div
+        className={css({
+          display: "grid",
+          gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+          gap: "3",
+        })}
+      >
         {rows.map((p) => (
           <div
             key={p.id}
@@ -66,17 +85,35 @@ export function ProductsList() {
               borderColor: "ui.border",
               borderRadius: "md",
               p: "4",
+              transition: "border-color 150ms, transform 150ms",
+              _hover: { borderColor: "accent.8", transform: "translateY(-1px)" },
             })}
           >
             <Flex justify="between" align="start" gap="3">
-              <Flex direction="column" gap="1" className={css({ flex: 1, minWidth: 0 })}>
+              <Flex direction="column" gap="2" className={css({ flex: 1, minWidth: 0 })}>
                 <Link
                   href={`/products/${p.slug}`}
-                  className={css({ color: "inherit", textDecoration: "none" })}
+                  className={css({
+                    color: "inherit",
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "2",
+                  })}
                 >
-                  <Text weight="bold" size="4" className={css({ _hover: { textDecoration: "underline" } })}>
+                  <span className={css({ color: "accent.11" })}>
+                    <CubeIcon />
+                  </span>
+                  <Text
+                    weight="bold"
+                    size="4"
+                    className={css({ _hover: { textDecoration: "underline" } })}
+                  >
                     {p.name}
                   </Text>
+                  <span className={css({ color: "gray.10", ml: "1" })}>
+                    <ArrowRightIcon />
+                  </span>
                 </Link>
                 <a
                   href={p.url}
@@ -86,13 +123,29 @@ export function ProductsList() {
                     color: "gray.11",
                     fontSize: "sm",
                     textDecoration: "none",
-                    _hover: { textDecoration: "underline" },
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "1",
+                    _hover: { textDecoration: "underline", color: "accent.11" },
                   })}
                 >
-                  {p.url}
+                  <ExternalLinkIcon />
+                  <span
+                    className={css({
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    })}
+                  >
+                    {p.domain ?? p.url}
+                  </span>
                 </a>
                 {p.description && (
-                  <Text color="gray" size="2" mt="1">
+                  <Text
+                    color="gray"
+                    size="2"
+                    className={css({ lineHeight: "1.5" })}
+                  >
                     {p.description}
                   </Text>
                 )}
@@ -112,7 +165,7 @@ export function ProductsList() {
             </Flex>
           </div>
         ))}
-      </Flex>
+      </div>
     </Container>
   );
 }

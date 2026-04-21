@@ -2,7 +2,25 @@
 
 import Link from "next/link";
 import { Container, Flex, Heading, Text } from "@radix-ui/themes";
-import { ArrowLeftIcon, ExternalLinkIcon, CheckIcon } from "@radix-ui/react-icons";
+import {
+  ArrowLeftIcon,
+  ExternalLinkIcon,
+  CheckIcon,
+  CubeIcon,
+  LightningBoltIcon,
+  GearIcon,
+  Link2Icon,
+  LockClosedIcon,
+  RocketIcon,
+  LayersIcon,
+  MagicWandIcon,
+  ComponentInstanceIcon,
+  BarChartIcon,
+  GlobeIcon,
+  CodeIcon,
+  ReaderIcon,
+  StarIcon,
+} from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import { useProductBySlugQuery } from "@/__generated__/hooks";
@@ -19,6 +37,19 @@ type Highlights = {
   pipeline?: PipelineStage[];
   sections?: Section[];
 };
+
+function sectionIcon(title: string) {
+  const t = title.toLowerCase();
+  if (t.includes("core")) return <LightningBoltIcon />;
+  if (t.includes("production") || t.includes("deploy")) return <RocketIcon />;
+  if (t.includes("integration")) return <Link2Icon />;
+  if (t.includes("compliance") || t.includes("security")) return <LockClosedIcon />;
+  if (t.includes("review") || t.includes("mode")) return <ReaderIcon />;
+  if (t.includes("knowledge") || t.includes("ckb") || t.includes("axiom")) return <LayersIcon />;
+  if (t.includes("repetition") || t.includes("learn")) return <MagicWandIcon />;
+  if (t.includes("capab") || t.includes("feature")) return <StarIcon />;
+  return <ComponentInstanceIcon />;
+}
 
 export function ProductDetail({ slug }: { slug: string }) {
   const { user } = useAuth();
@@ -80,7 +111,22 @@ export function ProductDetail({ slug }: { slug: string }) {
       </Flex>
 
       <Flex direction="column" gap="3">
-        <Heading size="8">{product.name}</Heading>
+        <Flex align="center" gap="3">
+          <span
+            className={css({
+              color: "accent.11",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bg: "accent.3",
+              borderRadius: "md",
+              p: "3",
+            })}
+          >
+            <CubeIcon width="24" height="24" />
+          </span>
+          <Heading size="8">{product.name}</Heading>
+        </Flex>
 
         {highlights?.tagline && (
           <Text as="p" size="5" className={css({ lineHeight: "1.5", color: "gray.12" })}>
@@ -108,7 +154,9 @@ export function ProductDetail({ slug }: { slug: string }) {
             _hover: { textDecoration: "underline" },
           })}
         >
-          {product.url} <ExternalLinkIcon />
+          <GlobeIcon />
+          {product.url}
+          <ExternalLinkIcon />
         </a>
 
         {product.description && !highlights?.tagline && (
@@ -137,10 +185,15 @@ export function ProductDetail({ slug }: { slug: string }) {
                   p: "4",
                 })}
               >
-                <Text size="5" weight="bold" as="div" className={css({ color: "accent.11" })}>
-                  {s.value}
-                </Text>
-                <Text size="2" color="gray" as="div" mt="1">
+                <Flex align="center" gap="2" mb="1">
+                  <span className={css({ color: "accent.11" })}>
+                    <BarChartIcon />
+                  </span>
+                  <Text size="5" weight="bold" className={css({ color: "accent.11" })}>
+                    {s.value}
+                  </Text>
+                </Flex>
+                <Text size="2" color="gray" as="div">
                   {s.label}
                 </Text>
               </div>
@@ -150,9 +203,12 @@ export function ProductDetail({ slug }: { slug: string }) {
 
         {highlights?.pipeline && highlights.pipeline.length > 0 && (
           <div className={css({ mt: "5" })}>
-            <Heading size="5" mb="3">
-              Pipeline
-            </Heading>
+            <Flex align="center" gap="2" mb="3">
+              <span className={css({ color: "accent.11" })}>
+                <GearIcon width="20" height="20" />
+              </span>
+              <Heading size="5">Pipeline</Heading>
+            </Flex>
             <div
               className={css({
                 display: "grid",
@@ -218,9 +274,12 @@ export function ProductDetail({ slug }: { slug: string }) {
                   p: "4",
                 })}
               >
-                <Heading size="4" mb="3">
-                  {section.title}
-                </Heading>
+                <Flex align="center" gap="2" mb="3">
+                  <span className={css({ color: "accent.11" })}>
+                    {sectionIcon(section.title)}
+                  </span>
+                  <Heading size="4">{section.title}</Heading>
+                </Flex>
                 <Flex direction="column" gap="2" asChild>
                   <ul className={css({ listStyle: "none", p: 0, m: 0 })}>
                     {section.items.map((item) => (
@@ -261,20 +320,35 @@ export function ProductDetail({ slug }: { slug: string }) {
             borderColor: "ui.border",
           })}
         >
-          <Flex direction="column" gap="1">
+          <Flex direction="column" gap="2">
             {product.domain && (
-              <Text size="2" color="gray">
-                Domain: {product.domain}
-              </Text>
+              <Flex align="center" gap="2">
+                <span className={css({ color: "gray.10" })}>
+                  <GlobeIcon />
+                </span>
+                <Text size="2" color="gray">
+                  {product.domain}
+                </Text>
+              </Flex>
             )}
             {product.createdBy && (
-              <Text size="2" color="gray">
-                Created by: {product.createdBy}
-              </Text>
+              <Flex align="center" gap="2">
+                <span className={css({ color: "gray.10" })}>
+                  <CodeIcon />
+                </span>
+                <Text size="2" color="gray">
+                  Created by {product.createdBy}
+                </Text>
+              </Flex>
             )}
-            <Text size="2" color="gray">
-              Created: {new Date(product.createdAt).toLocaleString()}
-            </Text>
+            <Flex align="center" gap="2">
+              <span className={css({ color: "gray.10" })}>
+                <ReaderIcon />
+              </span>
+              <Text size="2" color="gray">
+                {new Date(product.createdAt).toLocaleString()}
+              </Text>
+            </Flex>
           </Flex>
         </div>
       </Flex>
