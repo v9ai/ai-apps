@@ -25,7 +25,6 @@ import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import { useProductBySlugQuery } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
-import { ADMIN_EMAIL } from "@/lib/constants";
 
 type Stat = { label: string; value: string };
 type PipelineStage = { stage: string; description: string };
@@ -52,19 +51,26 @@ function sectionIcon(title: string) {
 }
 
 export function ProductDetail({ slug }: { slug: string }) {
-  const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const { user, loading: authLoading } = useAuth();
 
   const { data, loading, error } = useProductBySlugQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
-    skip: !isAdmin,
+    skip: !user,
   });
 
-  if (!isAdmin) {
+  if (authLoading) {
+    return (
+      <Container size="4" p="6">
+        <Text color="gray">Loading…</Text>
+      </Container>
+    );
+  }
+
+  if (!user) {
     return (
       <Container size="3" p="8">
-        <Text color="red">Admin access required.</Text>
+        <Text color="gray">Please sign in to view this product.</Text>
       </Container>
     );
   }

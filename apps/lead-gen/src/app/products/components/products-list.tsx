@@ -18,20 +18,28 @@ import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
 export function ProductsList() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const { data, loading, error, refetch } = useProductsQuery({
     fetchPolicy: "cache-and-network",
-    skip: !isAdmin,
+    skip: !user,
   });
 
   const [deleteProduct] = useDeleteProductMutation();
 
-  if (!isAdmin) {
+  if (authLoading) {
     return (
       <Container size="3" p="8">
-        <Text color="red">Admin access required.</Text>
+        <Text color="gray">Loading…</Text>
+      </Container>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Container size="3" p="8">
+        <Text color="gray">Please sign in to view products.</Text>
       </Container>
     );
   }
@@ -150,18 +158,20 @@ export function ProductsList() {
                   </Text>
                 )}
               </Flex>
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!window.confirm(`Delete product "${p.name}"?`)) return;
-                  await deleteProduct({ variables: { id: p.id } });
-                  await refetch();
-                }}
-                className={button({ variant: "ghost", size: "sm" })}
-                aria-label="Delete product"
-              >
-                <TrashIcon />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!window.confirm(`Delete product "${p.name}"?`)) return;
+                    await deleteProduct({ variables: { id: p.id } });
+                    await refetch();
+                  }}
+                  className={button({ variant: "ghost", size: "sm" })}
+                  aria-label="Delete product"
+                >
+                  <TrashIcon />
+                </button>
+              )}
             </Flex>
           </div>
         ))}
