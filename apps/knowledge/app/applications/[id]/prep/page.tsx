@@ -441,7 +441,7 @@ function PrepPageInner() {
       </Box>
     ),
     h3: ({ children }: { children: React.ReactNode }) => (
-      <Box mt="5" mb="2" p="3" style={{ backgroundColor: "var(--violet-2)", borderLeft: "3px solid var(--violet-8)", borderRadius: 0 }}>
+      <Box mt="5" mb="2" p="3" style={{ borderLeft: "3px solid var(--violet-8)", borderRadius: 0 }}>
         <Heading size="4">{children}</Heading>
       </Box>
     ),
@@ -479,7 +479,7 @@ function PrepPageInner() {
       <li style={{ lineHeight: 1.8, marginBottom: 6, fontSize: "var(--font-size-2)" }}>{children}</li>
     ),
     blockquote: ({ children }: { children: React.ReactNode }) => (
-      <Box mb="4" pl="4" py="2" style={{ borderLeft: "3px solid var(--violet-6)", backgroundColor: "var(--violet-2)", borderRadius: "0 var(--radius-2) var(--radius-2) 0" }}>
+      <Box mb="4" pl="4" py="2" style={{ borderLeft: "3px solid var(--violet-6)", borderRadius: "0 var(--radius-2) var(--radius-2) 0" }}>
         {children}
       </Box>
     ),
@@ -491,7 +491,7 @@ function PrepPageInner() {
       </Box>
     ),
     thead: ({ children }: { children: React.ReactNode }) => (
-      <thead style={{ backgroundColor: "var(--violet-2)" }}>{children}</thead>
+      <thead>{children}</thead>
     ),
     th: ({ children }: { children: React.ReactNode }) => (
       <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid var(--violet-6)" }}>{children}</th>

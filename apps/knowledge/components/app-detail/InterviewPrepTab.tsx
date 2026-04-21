@@ -130,7 +130,7 @@ export function InterviewPrepTab({ app, isAdmin }: TabBaseProps) {
               </Box>
             ),
             h3: ({ children }) => (
-              <Box mt="4" mb="2" p="3" style={{ backgroundColor: "var(--violet-2)", borderLeft: "3px solid var(--violet-8)", borderRadius: 0 }}>
+              <Box mt="4" mb="2" p="3" style={{ borderLeft: "3px solid var(--violet-8)", borderRadius: 0 }}>
                 <Heading size="3">{children}</Heading>
               </Box>
             ),

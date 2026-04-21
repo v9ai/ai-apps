@@ -126,7 +126,7 @@ export function JobDescriptionTab({
                   </Box>
                 ),
                 h3: ({ children }) => (
-                  <Box mt="4" mb="2" p="3" style={{ backgroundColor: "var(--violet-2)", borderRadius: "var(--radius-2)" }}>
+                  <Box mt="4" mb="2" p="3" style={{ borderRadius: "var(--radius-2)" }}>
                     <Heading size="3">{children}</Heading>
                   </Box>
                 ),
