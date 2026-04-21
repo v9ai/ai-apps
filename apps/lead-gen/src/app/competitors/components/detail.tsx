@@ -11,7 +11,6 @@ import {
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { useTenant } from "@/components/tenant-provider";
 
 const STATUS_COLORS: Record<string, "gray" | "blue" | "green" | "red" | "orange"> = {
   pending_approval: "orange",
@@ -55,13 +54,11 @@ type Competitor = {
 
 export function CompetitorAnalysisDetail({ analysisId }: { analysisId: number }) {
   const { user } = useAuth();
-  const { tenant } = useTenant();
   const isAdmin = user?.email === ADMIN_EMAIL;
-  const isNyx = tenant === "nyx";
 
   const { data, loading, error } = useCompetitorAnalysisQuery({
     variables: { id: analysisId },
-    skip: Number.isNaN(analysisId) || !isNyx,
+    skip: Number.isNaN(analysisId),
     fetchPolicy: "cache-and-network",
     pollInterval: 5000,
   });

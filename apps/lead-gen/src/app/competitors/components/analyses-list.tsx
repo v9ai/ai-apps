@@ -10,7 +10,6 @@ import {
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { useTenant } from "@/components/tenant-provider";
 
 const STATUS_COLORS: Record<string, "gray" | "blue" | "green" | "red" | "orange"> = {
   pending_approval: "orange",
@@ -21,25 +20,15 @@ const STATUS_COLORS: Record<string, "gray" | "blue" | "green" | "red" | "orange"
 
 export function CompetitorAnalysesList() {
   const { user } = useAuth();
-  const { tenant } = useTenant();
   const isAdmin = user?.email === ADMIN_EMAIL;
-  const isNyx = tenant === "nyx";
 
   const { data, loading, error, refetch } = useCompetitorAnalysesQuery({
     fetchPolicy: "cache-and-network",
     pollInterval: 8000,
-    skip: !isAdmin || !isNyx,
+    skip: !isAdmin,
   });
 
   const [deleteAnalysis] = useDeleteCompetitorAnalysisMutation();
-
-  if (!isNyx) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Competitor analysis is only available for the NYX tenant.</Text>
-      </Container>
-    );
-  }
 
   if (!isAdmin) {
     return (

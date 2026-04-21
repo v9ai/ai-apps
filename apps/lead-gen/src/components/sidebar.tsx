@@ -78,7 +78,7 @@ export function Sidebar() {
 
         {/* nav links */}
         <Flex direction="column" gap="1" pt="4" pb="2" style={{ flex: 1, overflowY: "auto" }}>
-          {visibleNavItems.map(({ href, label, icon: Icon }) => {
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = pathname.startsWith(href);
             return (
               <Link
