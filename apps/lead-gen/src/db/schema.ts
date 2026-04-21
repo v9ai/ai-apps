@@ -1056,6 +1056,34 @@ export const webhookEvents = pgTable("webhook_events", {
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
 export type NewWebhookEvent = typeof webhookEvents.$inferInsert;
 
+// ── Products ──
+
+export const products = pgTable(
+  "products",
+  {
+    id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
+    name: text("name").notNull(),
+    url: text("url").notNull(),
+    domain: text("domain"),
+    description: text("description"),
+    created_by: text("created_by"),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+    updated_at: text("updated_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    uniqueIndex("idx_products_tenant_url").on(table.tenant_id, table.url),
+    index("idx_products_tenant_id").on(table.tenant_id),
+  ],
+);
+
+export type Product = typeof products.$inferSelect;
+export type NewProduct = typeof products.$inferInsert;
+
 // ── Competitor Analysis ──
 
 export const competitorAnalyses = pgTable(
@@ -1063,8 +1091,9 @@ export const competitorAnalyses = pgTable(
   {
     id: serial("id").primaryKey(),
     tenant_id: tenantIdColumn(),
-    seed_product_name: text("seed_product_name").notNull(),
-    seed_product_url: text("seed_product_url").notNull(),
+    product_id: integer("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
     status: text("status", {
       enum: ["pending_approval", "scraping", "done", "failed"],
     }).notNull().default("pending_approval"),
@@ -1080,6 +1109,7 @@ export const competitorAnalyses = pgTable(
   (table) => [
     index("idx_competitor_analyses_status").on(table.status),
     index("idx_competitor_analyses_created_at").on(table.created_at),
+    index("idx_competitor_analyses_product_id").on(table.product_id),
   ],
 );
 
@@ -1198,7 +1228,15 @@ export const competitorIntegrations = pgTable(
 export type CompetitorIntegration = typeof competitorIntegrations.$inferSelect;
 export type NewCompetitorIntegration = typeof competitorIntegrations.$inferInsert;
 
-export const competitorAnalysesRelations = relations(competitorAnalyses, ({ many }) => ({
+export const productsRelations = relations(products, ({ many }) => ({
+  analyses: many(competitorAnalyses),
+}));
+
+export const competitorAnalysesRelations = relations(competitorAnalyses, ({ one, many }) => ({
+  product: one(products, {
+    fields: [competitorAnalyses.product_id],
+    references: [products.id],
+  }),
   competitors: many(competitors),
 }));
 

@@ -73,6 +73,18 @@ Custom scalars: `DateTime`/`URL`/`EmailAddress` → `string`, `Upload` → `File
 
 GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s max duration (`vercel.json`).
 
+### LangGraph backend (`backend/`) — run modes
+
+5 graphs (`email_compose`, `email_reply`, `email_outreach`, `admin_chat`, `text_to_sql`) served by `langgraph dev` on port 8002. All Next.js → backend calls funnel through `runGraph()` in `src/lib/langgraph-client.ts`, which hits `POST ${LANGGRAPH_URL}/runs/wait`.
+
+| Mode | `LANGGRAPH_URL` | `LANGGRAPH_AUTH_TOKEN` | Start |
+|---|---|---|---|
+| Local-only | `http://127.0.0.1:8002` (default) | unset | `pnpm backend-dev` |
+| Tunnel, dev | `https://*.trycloudflare.com` (random) | unset | `pnpm backend-dev` + `make tunnel` |
+| Tunnel, stable | `https://<host>.<your-domain>` | set (shared secret) | `pnpm backend-dev` + `make tunnel-named` |
+
+When `LANGGRAPH_AUTH_TOKEN` is set, the bearer-token middleware in `backend/leadgen_agent/custom_app.py` (wired in via `http.app` in `langgraph.json`) requires `Authorization: Bearer <token>` on every non-health request; the client forwards it automatically from the env var. Full setup in `backend/README.md`.
+
 ---
 
 ## Tech stack
