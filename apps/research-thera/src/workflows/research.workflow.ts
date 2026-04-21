@@ -46,7 +46,7 @@ const outputSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Provider search helpers
+// Provider search helpers — thin adapters over @ai-apps/research
 // ---------------------------------------------------------------------------
 
 type PaperResult = {
@@ -59,259 +59,47 @@ type PaperResult = {
   citation_count: number | null;
 };
 
-function reconstructAbstract(
-  index: Record<string, number[]> | null | undefined,
-): string | null {
-  if (!index) return null;
-  const words: Array<[number, string]> = [];
-  for (const [word, positions] of Object.entries(index)) {
-    for (const pos of positions) words.push([pos, word]);
-  }
-  if (words.length === 0) return null;
-  return words.sort((a, b) => a[0] - b[0]).map(([, w]) => w).join(" ");
+function candidateToPaperResult(c: PaperCandidate): PaperResult {
+  return {
+    title: c.title || "Untitled",
+    authors: c.authors ?? [],
+    year: typeof c.year === "number" ? c.year : null,
+    abstract: c.abstract ?? null,
+    doi: c.doi ?? null,
+    url: c.url ?? (c.doi ? `https://doi.org/${c.doi}` : null),
+    citation_count: typeof c.citationCount === "number" ? c.citationCount : null,
+  };
 }
 
-async function searchOpenAlex(query: string, limit: number): Promise<PaperResult[]> {
-  const mailto = process.env.UNPAYWALL_EMAIL || "research@example.com";
-  const url = new URL("https://api.openalex.org/works");
-  url.searchParams.set("search", query);
-  url.searchParams.set("per-page", String(Math.max(1, Math.min(limit, 50))));
-  url.searchParams.set(
-    "select",
-    "id,title,authorships,publication_year,abstract_inverted_index,doi,primary_location,cited_by_count",
-  );
+async function runProvider(
+  name: string,
+  fn: (q: string, limit: number) => Promise<PaperCandidate[]>,
+  query: string,
+  limit: number,
+): Promise<PaperResult[]> {
   try {
-    const resp = await fetch(url.toString(), {
-      headers: { "User-Agent": `research-thera-mastra (mailto:${mailto})` },
-    });
-    if (!resp.ok) return [];
-    const data = (await resp.json()) as { results?: unknown[] };
-    return (data.results || []).map((item) => {
-      const it = item as Record<string, unknown>;
-      const authorships = (it.authorships as Array<Record<string, unknown>>) || [];
-      const authors = authorships
-        .map((a) => {
-          const author = a.author as Record<string, unknown> | undefined;
-          return author?.display_name as string | undefined;
-        })
-        .filter((n): n is string => typeof n === "string");
-      const doiRaw = (it.doi as string | null) || "";
-      const doi = doiRaw.replace("https://doi.org/", "") || null;
-      const abstract = reconstructAbstract(
-        it.abstract_inverted_index as Record<string, number[]> | undefined,
-      );
-      const loc = (it.primary_location as Record<string, unknown>) || {};
-      const u = (loc.landing_page_url as string) || null;
-      const titleRaw = it.title;
-      const title = Array.isArray(titleRaw)
-        ? (titleRaw[0] as string) || "Untitled"
-        : (titleRaw as string) || "Untitled";
-      return {
-        title,
-        authors,
-        year: (it.publication_year as number | null) ?? null,
-        abstract,
-        doi,
-        url: u,
-        citation_count: (it.cited_by_count as number | null) ?? null,
-      };
-    });
-  } catch {
+    const rows = await fn(query, limit);
+    return rows.map(candidateToPaperResult);
+  } catch (err) {
+    console.warn(`[research.search] ${name} failed: ${err instanceof Error ? err.message : err}`);
     return [];
   }
 }
 
-async function searchCrossref(query: string, limit: number): Promise<PaperResult[]> {
-  const url = new URL("https://api.crossref.org/works");
-  url.searchParams.set("query", query);
-  url.searchParams.set("rows", String(Math.max(1, Math.min(limit, 50))));
-  try {
-    const resp = await fetch(url.toString());
-    if (!resp.ok) return [];
-    const data = (await resp.json()) as { message?: { items?: any[] } };
-    const items = data.message?.items ?? [];
-    return items.map((it) => {
-      const title = Array.isArray(it.title) ? it.title[0] || "Untitled" : "Untitled";
-      const authors = (it.author || [])
-        .map((a: any) => [a.given, a.family].filter(Boolean).join(" "))
-        .filter((n: string) => n);
-      const year: number | null =
-        it?.issued?.["date-parts"]?.[0]?.[0] ??
-        it?.published?.["date-parts"]?.[0]?.[0] ??
-        null;
-      return {
-        title,
-        authors,
-        year,
-        abstract: (it.abstract as string | null) ?? null,
-        doi: (it.DOI as string | null) ?? null,
-        url: (it.URL as string | null) ?? null,
-        citation_count: (it["is-referenced-by-count"] as number | null) ?? null,
-      };
-    });
-  } catch {
-    return [];
-  }
-}
-
-async function searchSemanticScholar(query: string, limit: number): Promise<PaperResult[]> {
-  const headers: Record<string, string> = {};
-  const key = process.env.SEMANTIC_SCHOLAR_API_KEY;
-  if (key) headers["x-api-key"] = key;
-  const url = new URL("https://api.semanticscholar.org/graph/v1/paper/search");
-  url.searchParams.set("query", query);
-  url.searchParams.set("limit", String(Math.max(1, Math.min(limit, 50))));
-  url.searchParams.set(
-    "fields",
-    "title,authors,year,abstract,externalIds,citationCount,openAccessPdf",
-  );
-  try {
-    const resp = await fetch(url.toString(), { headers });
-    if (!resp.ok) return [];
-    const data = (await resp.json()) as { data?: any[] };
-    return (data.data ?? []).map((p: any) => ({
-      title: p.title || "Untitled",
-      authors: (p.authors || []).map((a: any) => a.name).filter(Boolean),
-      year: p.year ?? null,
-      abstract: p.abstract ?? null,
-      doi: p.externalIds?.DOI ?? null,
-      url: p.openAccessPdf?.url ?? (p.externalIds?.DOI ? `https://doi.org/${p.externalIds.DOI}` : null),
-      citation_count: p.citationCount ?? null,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-async function searchArxiv(query: string, limit: number): Promise<PaperResult[]> {
-  try {
-    const url = new URL("http://export.arxiv.org/api/query");
-    url.searchParams.set("search_query", `all:${query}`);
-    url.searchParams.set("start", "0");
-    url.searchParams.set("max_results", String(Math.max(1, Math.min(limit, 50))));
-    const resp = await fetch(url.toString());
-    if (!resp.ok) return [];
-    const xml = await resp.text();
-    const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)];
-    return entries.map((m) => {
-      const body = m[1];
-      const title = body.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.replace(/\s+/g, " ").trim() || "Untitled";
-      const abstract = body.match(/<summary>([\s\S]*?)<\/summary>/)?.[1]?.replace(/\s+/g, " ").trim() || null;
-      const year = body.match(/<published>(\d{4})/)?.[1];
-      const id = body.match(/<id>([^<]+)<\/id>/)?.[1]?.trim() || null;
-      const doi = body.match(/<arxiv:doi[^>]*>([^<]+)<\/arxiv:doi>/)?.[1]?.trim() || null;
-      const authors = [...body.matchAll(/<author>\s*<name>([^<]+)<\/name>/g)].map((a) => a[1].trim());
-      return {
-        title,
-        authors,
-        year: year ? parseInt(year, 10) : null,
-        abstract,
-        doi,
-        url: id,
-        citation_count: null,
-      };
-    });
-  } catch {
-    return [];
-  }
-}
-
-async function searchCore(query: string, limit: number): Promise<PaperResult[]> {
-  const apiKey = process.env.CORE_API_KEY;
-  if (!apiKey) return [];
-  try {
-    const url = new URL("https://api.core.ac.uk/v3/search/works");
-    url.searchParams.set("q", query);
-    url.searchParams.set("limit", String(Math.max(1, Math.min(limit, 50))));
-    const resp = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    if (!resp.ok) return [];
-    const data = (await resp.json()) as { results?: any[] };
-    return (data.results ?? []).map((w: any) => ({
-      title: w.title || "Untitled",
-      authors: (w.authors || []).map((a: any) => a?.name).filter(Boolean),
-      year: w.yearPublished ?? null,
-      abstract: w.abstract ?? null,
-      doi: typeof w.doi === "string" ? w.doi.replace(/^https?:\/\/doi\.org\//, "") : null,
-      url:
-        w.downloadUrl ||
-        w.sourceFulltextUrls?.[0] ||
-        (w.doi ? `https://doi.org/${w.doi}` : null),
-      citation_count: null,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-async function searchZenodo(query: string, limit: number): Promise<PaperResult[]> {
-  try {
-    const url = new URL("https://zenodo.org/api/records");
-    url.searchParams.set("q", query);
-    url.searchParams.set("size", String(Math.max(1, Math.min(limit, 50))));
-    const token = process.env.ZENODO_ACCESS_TOKEN || process.env.ZENODO_TOKEN;
-    const resp = await fetch(url.toString(), {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
-    if (!resp.ok) return [];
-    const data = (await resp.json()) as { hits?: { hits?: any[] } };
-    return (data.hits?.hits ?? []).map((rec: any) => {
-      const meta = rec.metadata || {};
-      const description = (meta.description || "").replace(/<[^>]+>/g, "").trim();
-      const doi = meta.doi || rec.doi || null;
-      const year = meta.publication_date
-        ? parseInt(String(meta.publication_date).slice(0, 4), 10)
-        : null;
-      return {
-        title: meta.title || "Untitled",
-        authors: (meta.creators || []).map((c: any) => c?.name).filter(Boolean),
-        year: Number.isFinite(year) ? year : null,
-        abstract: description || null,
-        doi,
-        url: rec.links?.html || (doi ? `https://doi.org/${doi}` : null),
-        citation_count: null,
-      };
-    });
-  } catch {
-    return [];
-  }
-}
-
-function dedupePapers(papers: PaperResult[]): PaperResult[] {
-  const seen = new Set<string>();
-  const out: PaperResult[] = [];
-  for (const p of papers) {
-    const doiKey = p.doi ? `doi:${p.doi.toLowerCase()}` : "";
-    const titleKey = `t:${(p.title || "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 120)}`;
-    const key = doiKey || titleKey;
-    if (!key || seen.has(key)) continue;
-    if (doiKey) seen.add(doiKey);
-    seen.add(titleKey);
-    out.push(p);
-  }
-  return out;
-}
-
-async function getS2PaperDetail(paperId: string): Promise<Record<string, unknown> | null> {
-  const headers: Record<string, string> = {};
-  const key = process.env.SEMANTIC_SCHOLAR_API_KEY;
-  if (key) headers["x-api-key"] = key;
-  const url = new URL(
-    `https://api.semanticscholar.org/graph/v1/paper/${encodeURIComponent(paperId)}`,
-  );
-  url.searchParams.set(
-    "fields",
-    "title,authors,year,abstract,tldr,externalIds,citationCount,fieldsOfStudy,venue,openAccessPdf",
-  );
-  try {
-    const resp = await fetch(url.toString(), { headers });
-    if (resp.status !== 200) return null;
-    return (await resp.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
+const PROVIDERS: Array<{
+  name: string;
+  fn: (q: string, limit: number) => Promise<PaperCandidate[]>;
+}> = [
+  { name: "openalex", fn: pkgSearchOpenAlex },
+  { name: "crossref", fn: pkgSearchCrossref },
+  { name: "semanticscholar", fn: pkgSearchSemanticScholar },
+  { name: "arxiv", fn: pkgSearchArxiv },
+  { name: "pubmed", fn: pkgSearchPubMed },
+  { name: "europepmc", fn: pkgSearchEuropePmc },
+  { name: "datacite", fn: pkgSearchDataCite },
+  { name: "core", fn: pkgSearchCore },
+  { name: "zenodo", fn: pkgSearchZenodo },
+];
 
 // ---------------------------------------------------------------------------
 // DeepSeek JSON helper
