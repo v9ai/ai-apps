@@ -71,12 +71,22 @@ QUERIES = [
     'AI pipeline generation tool B2B',
     '"revenue intelligence" AI platform',
     # Tier 3: Specific niches
-    'AI sales automation startup funding 2025',
     '"AI outreach" platform email',
     '"AI-native" sales engagement platform',
     'AI-powered B2B prospecting companies',
-    '"AI sales" tools category list 2025',
 ]
+
+# Reject result titles that look like listicle / article headlines instead of
+# a company name. Applied in extract_companies — see delightful-hopping-zephyr plan.
+LISTICLE_NAME_RE = re.compile(
+    r"^\s*(the\s+)?\d+\s+"
+    r"|\bbest\s+ai\b|\btop\s+ai\b"
+    r"|\bbest\s+(sales|sdr|outreach|prospect|lead\s+gen)"
+    r"|\b(in|for)\s+20(2[4-9]|3[0-9])\b"
+    r"|\b(guide|review|comparison|listicle|tutorial)\b"
+    r"|\b(sales|sdr|outreach|prospecting)\s+tools?\b",
+    re.IGNORECASE,
+)
 
 # Domains to skip (aggregators, social media, content sites)
 SKIP_DOMAINS = {
@@ -88,6 +98,12 @@ SKIP_DOMAINS = {
     "softwareadvice.com", "trustradius.com", "sourceforge.net",
     "techcrunch.com", "forbes.com", "businessinsider.com",
     "hubspot.com", "salesforce.com",  # incumbent, not AI-native
+    # Off-ICP content sites / non-sales-tools vendors observed in prior polluted ingest
+    "elfsight.com", "goconsensus.com", "guideflow.com", "scopicstudios.com",
+    "skaled.com", "42dm.net", "oreateai.com", "retreva.com", "foundersgtm.com",
+    "coldiq.com", "signalfire.com", "assemblyai.com", "research.aimultiple.com",
+    "pipeline.zoominfo.com", "renewator.com", "knock-ai.com", "spotio.com",
+    "heysam.ai", "dealcode.ai",
 }
 
 
