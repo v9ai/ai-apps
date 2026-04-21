@@ -5,6 +5,7 @@ type Product {
   url: URL!
   domain: String
   description: String
+  highlights: JSON
   createdBy: String
   createdAt: DateTime!
   updatedAt: DateTime!

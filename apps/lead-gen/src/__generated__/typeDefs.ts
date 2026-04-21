@@ -1381,6 +1381,7 @@ type Product {
   createdBy: String
   description: String
   domain: String
+  highlights: JSON
   id: Int!
   name: String!
   slug: String!

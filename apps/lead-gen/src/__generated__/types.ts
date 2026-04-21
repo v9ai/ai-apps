@@ -1958,6 +1958,7 @@ export type Product = {
   createdBy: Maybe<Scalars['String']['output']>;
   description: Maybe<Scalars['String']['output']>;
   domain: Maybe<Scalars['String']['output']>;
+  highlights: Maybe<Scalars['JSON']['output']>;
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   slug: Scalars['String']['output'];

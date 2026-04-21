@@ -8,4 +8,5 @@ export const ProductField = {
   updatedAt: (p: DbProduct) => p.updated_at,
   domain: (p: DbProduct) => p.domain ?? null,
   description: (p: DbProduct) => p.description ?? null,
+  highlights: (p: DbProduct) => p.highlights ?? null,
 };

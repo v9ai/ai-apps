@@ -1961,6 +1961,7 @@ export type Product = {
   createdBy: Maybe<Scalars['String']['output']>;
   description: Maybe<Scalars['String']['output']>;
   domain: Maybe<Scalars['String']['output']>;
+  highlights: Maybe<Scalars['JSON']['output']>;
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   slug: Scalars['String']['output'];
@@ -3785,26 +3786,26 @@ export type CompetitorCoreFragment = { __typename?: 'Competitor', id: number, an
 
 export type CompetitorFullFragment = { __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> };
 
-export type CompetitorAnalysisCoreFragment = { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } };
+export type CompetitorAnalysisCoreFragment = { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string } };
 
 export type CompetitorAnalysesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CompetitorAnalysesQuery = { __typename?: 'Query', competitorAnalyses: Array<{ __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, name: string, status: CompetitorStatus }>, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } }> };
+export type CompetitorAnalysesQuery = { __typename?: 'Query', competitorAnalyses: Array<{ __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, name: string, status: CompetitorStatus }>, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string } }> };
 
 export type CompetitorAnalysisQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type CompetitorAnalysisQuery = { __typename?: 'Query', competitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> }>, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } } | null };
+export type CompetitorAnalysisQuery = { __typename?: 'Query', competitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> }>, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string } } | null };
 
 export type CreateCompetitorAnalysisMutationVariables = Exact<{
   productId: Scalars['Int']['input'];
 }>;
 
 
-export type CreateCompetitorAnalysisMutation = { __typename?: 'Mutation', createCompetitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }>, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } } };
+export type CreateCompetitorAnalysisMutation = { __typename?: 'Mutation', createCompetitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }>, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string } } };
 
 export type ApproveCompetitorsMutationVariables = Exact<{
   analysisId: Scalars['Int']['input'];
@@ -3812,7 +3813,7 @@ export type ApproveCompetitorsMutationVariables = Exact<{
 }>;
 
 
-export type ApproveCompetitorsMutation = { __typename?: 'Mutation', approveCompetitors: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }>, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } } };
+export type ApproveCompetitorsMutation = { __typename?: 'Mutation', approveCompetitors: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }>, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string } } };
 
 export type RescrapeCompetitorMutationVariables = Exact<{
   competitorId: Scalars['Int']['input'];
@@ -4216,33 +4217,33 @@ export type AnalyzeLinkedInPostsMutationVariables = Exact<{
 
 export type AnalyzeLinkedInPostsMutation = { __typename?: 'Mutation', analyzeLinkedInPosts: { __typename?: 'AnalyzePostsResult', success: boolean, analyzed: number, failed: number, errors: Array<string> } };
 
-export type ProductCoreFragment = { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string };
+export type ProductCoreFragment = { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string };
 
 export type ProductsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ProductsQuery = { __typename?: 'Query', products: Array<{ __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string }> };
+export type ProductsQuery = { __typename?: 'Query', products: Array<{ __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string }> };
 
 export type ProductQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type ProductQuery = { __typename?: 'Query', product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } | null };
+export type ProductQuery = { __typename?: 'Query', product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string } | null };
 
 export type ProductBySlugQueryVariables = Exact<{
   slug: Scalars['String']['input'];
 }>;
 
 
-export type ProductBySlugQuery = { __typename?: 'Query', productBySlug: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } | null };
+export type ProductBySlugQuery = { __typename?: 'Query', productBySlug: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string } | null };
 
 export type UpsertProductMutationVariables = Exact<{
   input: ProductInput;
 }>;
 
 
-export type UpsertProductMutation = { __typename?: 'Mutation', upsertProduct: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } };
+export type UpsertProductMutation = { __typename?: 'Mutation', upsertProduct: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, createdBy: string | null, createdAt: string, updatedAt: string } };
 
 export type DeleteProductMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -4550,6 +4551,7 @@ export const ProductCoreFragmentDoc = gql`
   url
   domain
   description
+  highlights
   createdBy
   createdAt
   updatedAt

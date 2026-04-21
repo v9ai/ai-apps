@@ -5,6 +5,7 @@ fragment ProductCore on Product {
   url
   domain
   description
+  highlights
   createdBy
   createdAt
   updatedAt

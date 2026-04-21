@@ -1067,6 +1067,7 @@ export const products = pgTable(
     url: text("url").notNull(),
     domain: text("domain"),
     description: text("description"),
+    highlights: jsonb("highlights"),
     created_by: text("created_by"),
     created_at: text("created_at")
       .notNull()
