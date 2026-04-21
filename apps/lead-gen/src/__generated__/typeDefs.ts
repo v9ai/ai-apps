@@ -1240,6 +1240,7 @@ type Mutation {
   add_company_facts(company_id: Int!, facts: [CompanyFactInput!]!): [CompanyFact!]!
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   analyzeLinkedInPosts(limit: Int, postIds: [Int!]): AnalyzePostsResult!
+  analyzeProductICP(id: Int!): Product!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   approveAllDrafts(draftIds: [Int!]!): BatchSendDraftResult!
   approveAndSendDraft(draftId: Int!, editedBody: String, editedSubject: String): SendDraftResult!
@@ -1401,6 +1402,8 @@ type Product {
   description: String
   domain: String
   highlights: JSON
+  icpAnalysis: JSON
+  icpAnalyzedAt: DateTime
   id: Int!
   name: String!
   slug: String!

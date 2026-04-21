@@ -1075,6 +1075,8 @@ export const products = pgTable(
     domain: text("domain"),
     description: text("description"),
     highlights: jsonb("highlights"),
+    icp_analysis: jsonb("icp_analysis"),
+    icp_analyzed_at: text("icp_analyzed_at"),
     created_by: text("created_by"),
     created_at: text("created_at")
       .notNull()

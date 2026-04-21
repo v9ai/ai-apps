@@ -1347,6 +1347,7 @@ export type Mutation = {
   add_company_facts: Array<CompanyFact>;
   analyzeCompany: AnalyzeCompanyResponse;
   analyzeLinkedInPosts: AnalyzePostsResult;
+  analyzeProductICP: Product;
   applyEmailPattern: ApplyEmailPatternResult;
   approveAllDrafts: BatchSendDraftResult;
   approveAndSendDraft: SendDraftResult;
@@ -1469,6 +1470,11 @@ export type MutationAnalyzeCompanyArgs = {
 export type MutationAnalyzeLinkedInPostsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   postIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
+
+export type MutationAnalyzeProductIcpArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -1991,6 +1997,8 @@ export type Product = {
   description: Maybe<Scalars['String']['output']>;
   domain: Maybe<Scalars['String']['output']>;
   highlights: Maybe<Scalars['JSON']['output']>;
+  icpAnalysis: Maybe<Scalars['JSON']['output']>;
+  icpAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   slug: Scalars['String']['output'];

@@ -1350,6 +1350,7 @@ export type Mutation = {
   add_company_facts: Array<CompanyFact>;
   analyzeCompany: AnalyzeCompanyResponse;
   analyzeLinkedInPosts: AnalyzePostsResult;
+  analyzeProductICP: Product;
   applyEmailPattern: ApplyEmailPatternResult;
   approveAllDrafts: BatchSendDraftResult;
   approveAndSendDraft: SendDraftResult;
@@ -1472,6 +1473,11 @@ export type MutationAnalyzeCompanyArgs = {
 export type MutationAnalyzeLinkedInPostsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   postIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
+
+export type MutationAnalyzeProductIcpArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -1994,6 +2000,8 @@ export type Product = {
   description: Maybe<Scalars['String']['output']>;
   domain: Maybe<Scalars['String']['output']>;
   highlights: Maybe<Scalars['JSON']['output']>;
+  icpAnalysis: Maybe<Scalars['JSON']['output']>;
+  icpAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   slug: Scalars['String']['output'];
@@ -5167,6 +5175,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   add_company_facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, RequireFields<MutationAdd_Company_FactsArgs, 'company_id' | 'facts'>>;
   analyzeCompany?: Resolver<ResolversTypes['AnalyzeCompanyResponse'], ParentType, ContextType, Partial<MutationAnalyzeCompanyArgs>>;
   analyzeLinkedInPosts?: Resolver<ResolversTypes['AnalyzePostsResult'], ParentType, ContextType, Partial<MutationAnalyzeLinkedInPostsArgs>>;
+  analyzeProductICP?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationAnalyzeProductIcpArgs, 'id'>>;
   applyEmailPattern?: Resolver<ResolversTypes['ApplyEmailPatternResult'], ParentType, ContextType, RequireFields<MutationApplyEmailPatternArgs, 'companyId'>>;
   approveAllDrafts?: Resolver<ResolversTypes['BatchSendDraftResult'], ParentType, ContextType, RequireFields<MutationApproveAllDraftsArgs, 'draftIds'>>;
   approveAndSendDraft?: Resolver<ResolversTypes['SendDraftResult'], ParentType, ContextType, RequireFields<MutationApproveAndSendDraftArgs, 'draftId'>>;
@@ -5304,6 +5313,8 @@ export type ProductResolvers<ContextType = GraphQLContext, ParentType extends Re
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   domain?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   highlights?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  icpAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  icpAnalyzedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

@@ -6,6 +6,8 @@ fragment ProductCore on Product {
   domain
   description
   highlights
+  icpAnalysis
+  icpAnalyzedAt
   createdBy
   createdAt
   updatedAt
@@ -37,4 +39,10 @@ mutation UpsertProduct($input: ProductInput!) {
 
 mutation DeleteProduct($id: Int!) {
   deleteProduct(id: $id)
+}
+
+mutation AnalyzeProductICP($id: Int!) {
+  analyzeProductICP(id: $id) {
+    ...ProductCore
+  }
 }

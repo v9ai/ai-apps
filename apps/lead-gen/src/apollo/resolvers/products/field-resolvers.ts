@@ -9,4 +9,6 @@ export const ProductField = {
   domain: (p: DbProduct) => p.domain ?? null,
   description: (p: DbProduct) => p.description ?? null,
   highlights: (p: DbProduct) => p.highlights ?? null,
+  icpAnalysis: (p: DbProduct) => p.icp_analysis ?? null,
+  icpAnalyzedAt: (p: DbProduct) => p.icp_analyzed_at ?? null,
 };

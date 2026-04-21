@@ -78,6 +78,45 @@ export interface ScoreContactLoraResult {
   reasons: string[];
 }
 
+export interface DeepICPCriterion {
+  score: number;
+  confidence: number;
+  justification: string;
+  evidence: string[];
+}
+
+export interface DeepICPSegment {
+  name: string;
+  industry: string;
+  stage: string;
+  geo: string;
+  fit: number;
+  reasoning: string;
+}
+
+export interface DeepICPPersona {
+  title: string;
+  seniority: string;
+  department: string;
+  pain: string;
+  channel: string;
+}
+
+export interface DeepICPDealBreaker {
+  name: string;
+  severity: "low" | "medium" | "high";
+  reason: string;
+}
+
+export interface DeepICPResult {
+  criteria_scores: Record<string, DeepICPCriterion>;
+  weighted_total: number;
+  segments: DeepICPSegment[];
+  personas: DeepICPPersona[];
+  anti_icp: string[];
+  deal_breakers: DeepICPDealBreaker[];
+}
+
 // ── Typed wrappers ─────────────────────────────────────────
 
 export function textToSql(
@@ -179,4 +218,23 @@ export function scoreContactLora(input: {
     contact_id: input.contactId ?? null,
     profile: input.profile ?? "",
   });
+}
+
+/**
+ * Run the deep product-market ICP analysis graph for a product.
+ *
+ * Loads the row from Neon, then scores 5 weighted criteria (segment clarity,
+ * buyer persona specificity, pain-solution fit, GTM signal, anti-ICP clarity)
+ * and emits structured segments, personas, anti-ICP, and deal-breakers. See
+ * `backend/leadgen_agent/deep_icp_graph.py` for the server side.
+ */
+export function analyzeProductICP(input: {
+  productId: number;
+}): Promise<DeepICPResult> {
+  return runGraph<DeepICPResult>(
+    "deep_icp",
+    { product_id: input.productId },
+    // ICP runs two LLM calls; the default 60s can be tight on a cold container.
+    { timeoutMs: 120_000 },
+  );
 }

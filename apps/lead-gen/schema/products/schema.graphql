@@ -6,6 +6,8 @@ type Product {
   domain: String
   description: String
   highlights: JSON
+  icpAnalysis: JSON
+  icpAnalyzedAt: DateTime
   createdBy: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -26,4 +28,5 @@ extend type Query {
 extend type Mutation {
   upsertProduct(input: ProductInput!): Product!
   deleteProduct(id: Int!): Boolean!
+  analyzeProductICP(id: Int!): Product!
 }

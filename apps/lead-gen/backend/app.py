@@ -32,6 +32,7 @@ from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from leadgen_agent.admin_chat_graph import build_graph as build_admin_chat
+from leadgen_agent.deep_icp_graph import build_graph as build_deep_icp
 from leadgen_agent.email_compose_graph import build_graph as build_email_compose
 from leadgen_agent.email_outreach_graph import build_graph as build_email_outreach
 from leadgen_agent.email_reply_graph import build_graph as build_email_reply
@@ -73,6 +74,7 @@ async def lifespan(app: FastAPI):
         await checkpointer.setup()
         app.state.graphs = {
             "admin_chat": build_admin_chat(checkpointer),
+            "deep_icp": build_deep_icp(checkpointer),
             "email_compose": build_email_compose(checkpointer),
             "email_outreach": build_email_outreach(checkpointer),
             "email_reply": build_email_reply(checkpointer),
