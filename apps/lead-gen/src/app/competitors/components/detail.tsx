@@ -74,14 +74,6 @@ export function CompetitorAnalysisDetail({ analysisId }: { analysisId: number })
   const tierMatrix = useMemo(() => buildTierMatrix(competitors), [competitors]);
   const featureMatrix = useMemo(() => buildFeatureMatrix(competitors), [competitors]);
 
-  if (!isNyx) {
-    return (
-      <Container size="4" p="8">
-        <Text color="gray">Competitor analysis is only available for the NYX tenant.</Text>
-      </Container>
-    );
-  }
-
   if (!isAdmin) {
     return (
       <Container size="4" p="8">
