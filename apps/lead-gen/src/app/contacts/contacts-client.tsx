@@ -6,8 +6,6 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useGetContactsQuery } from "@/__generated__/hooks";
 import type { GetContactsQuery } from "@/__generated__/hooks";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-hooks";
-import { ADMIN_EMAIL } from "@/lib/constants";
 import { button } from "@/recipes/button";
 import {
   Badge,
@@ -38,9 +36,6 @@ type Contact = NonNullable<
 const PAGE_SIZE = 50;
 
 export function ContactsClient() {
-  const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
-
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -73,22 +68,8 @@ export function ContactsClient() {
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
     },
-    skip: !isAdmin,
     fetchPolicy: "cache-and-network",
   });
-
-  if (!isAdmin) {
-    return (
-      <Container size="3" p="8">
-        <Callout.Root color="red">
-          <Callout.Icon>
-            <ExclamationTriangleIcon />
-          </Callout.Icon>
-          <Callout.Text>Access denied. Admin only.</Callout.Text>
-        </Callout.Root>
-      </Container>
-    );
-  }
 
   const contactsList = data?.contacts?.contacts ?? [];
   const totalCount = data?.contacts?.totalCount ?? 0;

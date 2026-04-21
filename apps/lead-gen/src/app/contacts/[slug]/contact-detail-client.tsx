@@ -1627,7 +1627,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
 
   const { data, loading, refetch } = useGetContactQuery({
     variables: contactId ? { id: contactId } : { slug: contactSlug },
-    skip: (!contactId && !contactSlug) || !isAdmin,
+    skip: !contactId && !contactSlug,
   });
 
   const contact = data?.contact;
@@ -1639,7 +1639,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
     refetch: refetchEmails,
   } = useGetContactEmailsQuery({
     variables: { contactId: resolvedId! },
-    skip: !resolvedId || !isAdmin,
+    skip: !resolvedId,
   });
 
   const {
@@ -1647,7 +1647,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
     loading: opportunitiesLoading,
   } = useGetContactOpportunitiesQuery({
     variables: { contactId: resolvedId! },
-    skip: !resolvedId || !isAdmin,
+    skip: !resolvedId,
   });
 
   const [findEmail, { loading: finding }] = useFindContactEmailMutation();
@@ -1668,7 +1668,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
   // Background Resend sync — fetch latest emails after initial load
   const [resendSynced, setResendSynced] = useState(false);
   useEffect(() => {
-    if (!resolvedId || !isAdmin || resendSynced) return;
+    if (!resolvedId || !isAdmin || resendSynced) return; // resend sync stays admin-only
     setResendSynced(true);
     importResendEmails({ variables: { maxEmails: 50 } }).then(() => {
       refetchEmails();
@@ -1800,19 +1800,6 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
       document.title = `${contact.firstName} ${contact.lastName}`;
     }
   }, [contact]);
-
-  if (!isAdmin) {
-    return (
-      <Container size="3" p="8">
-        <Callout.Root color="red">
-          <Callout.Icon>
-            <ExclamationTriangleIcon />
-          </Callout.Icon>
-          <Callout.Text>Access denied. Admin only.</Callout.Text>
-        </Callout.Root>
-      </Container>
-    );
-  }
 
   if (loading) {
     return (
