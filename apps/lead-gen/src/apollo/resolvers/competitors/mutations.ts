@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import {
   competitorAnalyses,
   competitors,
+  products,
   type NewCompetitor,
 } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
@@ -57,12 +58,19 @@ export const competitorMutations = {
   ) {
     requireAdmin(context);
 
+    const [product] = await context.db
+      .select()
+      .from(products)
+      .where(eq(products.id, args.productId));
+    if (!product) {
+      throw new GraphQLError("Product not found", { extensions: { code: "NOT_FOUND" } });
+    }
+
     const now = new Date().toISOString();
     const [analysis] = await context.db
       .insert(competitorAnalyses)
       .values({
-        seed_product_name: args.productName,
-        seed_product_url: args.productUrl,
+        product_id: product.id,
         status: "pending_approval",
         created_by: context.userEmail ?? null,
         created_at: now,
@@ -71,7 +79,7 @@ export const competitorMutations = {
       .returning();
 
     try {
-      const suggestions = await suggestCompetitors(args.productName, args.productUrl);
+      const suggestions = await suggestCompetitors(product.name, product.url);
       if (suggestions.length > 0) {
         await context.db.insert(competitors).values(
           suggestions.map<NewCompetitor>((s) => ({

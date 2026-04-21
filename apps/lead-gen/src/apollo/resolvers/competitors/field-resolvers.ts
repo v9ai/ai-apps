@@ -8,11 +8,12 @@ import type {
 import type { GraphQLContext } from "../../context";
 
 export const CompetitorAnalysisField = {
-  seedProductName: (p: DbCompetitorAnalysis) => p.seed_product_name,
-  seedProductUrl: (p: DbCompetitorAnalysis) => p.seed_product_url,
   createdBy: (p: DbCompetitorAnalysis) => p.created_by ?? null,
   createdAt: (p: DbCompetitorAnalysis) => p.created_at,
   updatedAt: (p: DbCompetitorAnalysis) => p.updated_at,
+  async product(p: DbCompetitorAnalysis, _a: unknown, ctx: GraphQLContext) {
+    return ctx.loaders.productsById.load(p.product_id);
+  },
   async competitors(p: DbCompetitorAnalysis, _a: unknown, ctx: GraphQLContext) {
     return ctx.loaders.competitorsByAnalysis.load(p.id);
   },

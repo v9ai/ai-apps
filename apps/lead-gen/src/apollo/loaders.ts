@@ -17,6 +17,7 @@ import {
   competitorPricingTiers,
   competitorFeatures,
   competitorIntegrations,
+  products,
 } from "@/db/schema";
 import type {
   Company,
@@ -34,6 +35,7 @@ import type {
   CompetitorPricingTier,
   CompetitorFeature,
   CompetitorIntegration,
+  Product,
 } from "@/db/schema";
 
 // ── Batch size tuning per entity access pattern ────────────────────────
@@ -390,6 +392,18 @@ export function createLoaders(db: DbInstance) {
           else byCompetitor.set(row.competitor_id, [row]);
         }
         return competitorIds.map((id) => byCompetitor.get(id) ?? []);
+      },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
+    ),
+
+    productsById: new DataLoader<number, Product | null>(
+      async (productIds) => {
+        const rows = await db
+          .select()
+          .from(products)
+          .where(inArray(products.id, [...productIds]));
+        const byId = new Map(rows.map((r) => [r.id, r]));
+        return productIds.map((id) => byId.get(id) ?? null);
       },
       { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),
