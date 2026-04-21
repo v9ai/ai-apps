@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Container, Flex, Heading, Text, TextField, TextArea } from "@radix-ui/themes";
 import { TrashIcon } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
@@ -141,9 +142,14 @@ export function ProductsList() {
           >
             <Flex justify="between" align="start" gap="3">
               <Flex direction="column" gap="1" className={css({ flex: 1, minWidth: 0 })}>
-                <Text weight="bold" size="4">
-                  {p.name}
-                </Text>
+                <Link
+                  href={`/products/${p.slug}`}
+                  className={css({ color: "inherit", textDecoration: "none" })}
+                >
+                  <Text weight="bold" size="4" className={css({ _hover: { textDecoration: "underline" } })}>
+                    {p.name}
+                  </Text>
+                </Link>
                 <a
                   href={p.url}
                   target="_blank"
