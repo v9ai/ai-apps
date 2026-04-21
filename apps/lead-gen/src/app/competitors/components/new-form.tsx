@@ -12,13 +12,16 @@ import {
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
+import { useTenant } from "@/components/tenant-provider";
 
 type EditableCompetitor = { name: string; url: string };
 
 export function NewCompetitorAnalysisForm() {
   const router = useRouter();
   const { user } = useAuth();
+  const { tenant } = useTenant();
   const isAdmin = user?.email === ADMIN_EMAIL;
+  const isNyx = tenant === "nyx";
 
   const [productName, setProductName] = useState("");
   const [productUrl, setProductUrl] = useState("");
@@ -28,6 +31,14 @@ export function NewCompetitorAnalysisForm() {
 
   const [createAnalysis, { loading: creating }] = useCreateCompetitorAnalysisMutation();
   const [approve, { loading: approving }] = useApproveCompetitorsMutation();
+
+  if (!isNyx) {
+    return (
+      <Container size="3" p="8">
+        <Text color="gray">Competitor analysis is only available for the NYX tenant.</Text>
+      </Container>
+    );
+  }
 
   if (!isAdmin) {
     return (

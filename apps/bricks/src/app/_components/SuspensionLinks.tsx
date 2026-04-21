@@ -37,9 +37,8 @@ const SECTIONS: Section[] = [
         title:
           "LEGO Ultra-Compact Driveable Christie Suspension for Tracked Vehicles [WITH INSTRUCTIONS]",
         channel: "Sariel's Bricks & Pets",
-        note: "Original ID was unavailable — falls back to a YouTube search.",
-        searchQuery:
-          "Sariel Ultra-Compact Driveable Christie Suspension Tracked Vehicles",
+        note: "Canonical driveable Christie with free instructions.",
+        videoId: "W7zK_9GWqkY",
       },
       {
         title: "Lego Technic Christie Suspension Tutorial (Compact)",

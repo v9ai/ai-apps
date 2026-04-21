@@ -11,6 +11,7 @@ import {
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
+import { useTenant } from "@/components/tenant-provider";
 
 const STATUS_COLORS: Record<string, "gray" | "blue" | "green" | "red" | "orange"> = {
   pending_approval: "orange",
@@ -54,11 +55,13 @@ type Competitor = {
 
 export function CompetitorAnalysisDetail({ analysisId }: { analysisId: number }) {
   const { user } = useAuth();
+  const { tenant } = useTenant();
   const isAdmin = user?.email === ADMIN_EMAIL;
+  const isNyx = tenant === "nyx";
 
   const { data, loading, error } = useCompetitorAnalysisQuery({
     variables: { id: analysisId },
-    skip: Number.isNaN(analysisId),
+    skip: Number.isNaN(analysisId) || !isNyx,
     fetchPolicy: "cache-and-network",
     pollInterval: 5000,
   });
@@ -73,6 +76,14 @@ export function CompetitorAnalysisDetail({ analysisId }: { analysisId: number })
 
   const tierMatrix = useMemo(() => buildTierMatrix(competitors), [competitors]);
   const featureMatrix = useMemo(() => buildFeatureMatrix(competitors), [competitors]);
+
+  if (!isNyx) {
+    return (
+      <Container size="4" p="8">
+        <Text color="gray">Competitor analysis is only available for the NYX tenant.</Text>
+      </Container>
+    );
+  }
 
   if (!isAdmin) {
     return (

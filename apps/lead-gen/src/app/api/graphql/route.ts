@@ -6,7 +6,9 @@ import { schema } from "@/apollo/schema";
 import { GraphQLContext } from "@/apollo/context";
 import { auth } from "@/lib/auth/server";
 import { db } from "@/db";
+import { withTenantDb, getTenantDb } from "@/db/with-tenant";
 import { createLoaders } from "@/apollo/loaders";
+import { DEFAULT_TENANT, TENANT_COOKIE, isTenantKey, type TenantKey } from "@/lib/tenants";
 
 const MAX_DEPTH = 10;
 
@@ -154,12 +156,14 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
   {
     context: async (req) => {
       try {
-        const loaders = createLoaders(db);
+        // Inside withTenantDb this returns the tx-bound db; otherwise the http db.
+        const scopedDb = getTenantDb();
+        const loaders = createLoaders(scopedDb);
         const session = await resolveSession(req);
         return {
           userId: session?.id ?? null,
           userEmail: session?.email ?? null,
-          db,
+          db: scopedDb,
           loaders,
         };
       } catch (error) {
@@ -172,6 +176,11 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
     },
   },
 );
+
+function resolveTenant(request: NextRequest): TenantKey {
+  const raw = request.cookies.get(TENANT_COOKIE)?.value;
+  return isTenantKey(raw) ? raw : DEFAULT_TENANT;
+}
 
 async function getRateLimitIdentifier(request: NextRequest): Promise<string> {
   if (process.env.NODE_ENV === "development") {
@@ -216,7 +225,8 @@ export async function GET(request: NextRequest) {
     return withCorsHeaders(response, request);
   }
 
-  const response = await handler(request);
+  const tenant = resolveTenant(request);
+  const response = await withTenantDb(tenant, async () => handler(request));
   return withCorsHeaders(response as NextResponse, request);
 }
 
@@ -242,6 +252,7 @@ export async function POST(request: NextRequest) {
     return withCorsHeaders(response, request);
   }
 
-  const response = await handler(request);
+  const tenant = resolveTenant(request);
+  const response = await withTenantDb(tenant, async () => handler(request));
   return withCorsHeaders(response as NextResponse, request);
 }
