@@ -38,6 +38,12 @@ const FINISHERS: Finisher[] = [
     github: "https://github.com/jxnxts",
     website: "http://jonatassoares.com",
   },
+  {
+    rank: 3,
+    name: "Guilherme Inácio",
+    completedAt: "Apr 21, 2026",
+    github: "https://github.com/guinacio",
+  },
 ];
 
 const COURSES: Course[] = [
