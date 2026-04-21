@@ -9,6 +9,116 @@ import { generateObject } from "@/src/lib/deepseek";
 import { isRoGoal, withRo } from "@/src/lib/ro";
 import { z } from "zod";
 
+const VALID_CATEGORIES = [
+  "parenting",
+  "therapy",
+  "self-help",
+  "child development",
+  "education",
+  "psychology",
+  "neuroscience",
+] as const;
+
+const bookItemSchema = z.object({
+  title: z.string(),
+  authors: z.preprocess(
+    (v) => {
+      if (Array.isArray(v)) return v.map((x) => String(x).trim()).filter(Boolean);
+      if (typeof v === "string") return v.split(",").map((s) => s.trim()).filter(Boolean);
+      return [];
+    },
+    z.array(z.string()),
+  ),
+  year: z.preprocess((v) => {
+    if (typeof v === "number") return v;
+    if (typeof v === "string" && /^\d{4}$/.test(v)) return Number(v);
+    return undefined;
+  }, z.number().optional()),
+  isbn: z.string().optional(),
+  description: z.string().default(""),
+  whyRecommended: z
+    .string()
+    .or(z.string().optional())
+    .transform((v) => v ?? ""),
+  category: z
+    .string()
+    .transform((v) => (VALID_CATEGORIES.includes(v as (typeof VALID_CATEGORIES)[number]) ? v : "self-help")),
+});
+
+// Accept the preferred `{books: [...]}` shape AND common variants DeepSeek
+// sometimes emits (bare array, aliased key, single-object). The previous
+// strict `z.object({books: z.array(...)})` rejected all of these and surfaced
+// `invalid_type: books required`.
+const BOOK_ARRAY_KEYS = ["books", "recommendations", "results", "items", "data"] as const;
+
+function extractBooksArray(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    for (const key of BOOK_ARRAY_KEYS) {
+      const val = obj[key];
+      if (Array.isArray(val)) return val;
+    }
+    if (typeof obj.title === "string" && "authors" in obj) return [obj];
+    for (const val of Object.values(obj)) {
+      if (Array.isArray(val) && val.length && val[0] && typeof val[0] === "object") {
+        return val;
+      }
+    }
+  }
+  return [];
+}
+
+const bookResponseSchema = z
+  .unknown()
+  .transform((raw) => ({ books: extractBooksArray(raw).slice(0, 8) }))
+  .pipe(z.object({ books: z.array(bookItemSchema) }));
+
+type BookResult = {
+  id: number;
+  goalId: number | null;
+  title: string;
+  authors: string[];
+  year: number | null;
+  isbn: string | null;
+  description: string;
+  whyRecommended: string;
+  category: string;
+  amazonUrl: string | null;
+  generatedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+async function generateViaContainer(
+  url: string,
+  goalId: number,
+  userEmail: string,
+): Promise<{ success: boolean; message: string; books: BookResult[] } | null> {
+  const resp = await fetch(`${url}/runs/wait`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      assistant_id: "books",
+      input: { goal_id: goalId, user_email: userEmail },
+    }),
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => "");
+    throw new Error(`Books container failed (${resp.status}): ${text.slice(0, 300)}`);
+  }
+  const body = (await resp.json()) as {
+    success?: boolean;
+    message?: string;
+    books?: BookResult[];
+  };
+  return {
+    success: Boolean(body.success),
+    message: body.message ?? "",
+    books: body.books ?? [],
+  };
+}
+
 export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRecommendedBooks']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) {
@@ -16,15 +126,21 @@ export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRe
   }
 
   const goalId = args.goalId;
+
+  // If a books-specific CF Container URL is configured, delegate to it.
+  const containerUrl = process.env.LANGGRAPH_URL_BOOKS;
+  if (containerUrl) {
+    const result = await generateViaContainer(containerUrl, goalId, userEmail);
+    if (result) return result;
+  }
+
   const goal = await db.getGoal(goalId, userEmail);
 
-  // Build goal context
   const contextText = [
     `Goal: ${goal.title}`,
     goal.description ? `Description: ${goal.description}` : "",
   ].filter(Boolean).join("\n");
 
-  // Build family member context
   let familyContextText = "";
   if (goal.familyMemberId) {
     const [member, allIssues] = await Promise.all([
@@ -51,7 +167,6 @@ export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRe
     }
   }
 
-  // Fetch research
   const research = await listTherapyResearch(goalId);
   if (!research.length) {
     return {
@@ -61,7 +176,6 @@ export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRe
     };
   }
 
-  // Build research summary
   const researchSummary = research
     .slice(0, 10)
     .map((r, i) => {
@@ -76,18 +190,6 @@ export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRe
       ].filter(Boolean).join("\n");
     })
     .join("\n\n");
-
-  const bookSchema = z.object({
-    books: z.array(z.object({
-      title: z.string().describe("Exact book title"),
-      authors: z.array(z.string()).describe("Author full names"),
-      year: z.number().optional().describe("Publication year"),
-      isbn: z.string().optional().describe("ISBN-13 if known"),
-      description: z.string().describe("Brief description of the book's content and therapeutic approach"),
-      whyRecommended: z.string().describe("Personalized rationale linking this book to the goal, research findings, and family context"),
-      category: z.enum(["parenting", "therapy", "self-help", "child development", "education", "psychology", "neuroscience"]).describe("Book category"),
-    })).min(3).max(8),
-  });
 
   const prompt = [
     `You are a clinical bibliotherapist. Based on the therapeutic goal, family context, and academic research papers below, recommend 4-6 real, published books that would be most helpful.`,
@@ -111,20 +213,32 @@ export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRe
     `- Provide the exact title and author(s)`,
     `- Write a brief description of the book's content`,
     `- Write a personalized "why recommended" rationale that connects the book to this specific goal, the research evidence, and the family member's context`,
-    `- Classify into one category`,
+    `- Classify into one category (parenting | therapy | self-help | child development | education | psychology | neuroscience)`,
     ``,
     `Prioritize evidence-based, well-reviewed books from recognized experts in the field.`,
+    ``,
+    `Respond with a JSON object of the exact shape {"books": [ {"title": "...", "authors": ["..."], "year": 2020, "isbn": "...", "description": "...", "whyRecommended": "...", "category": "..."}, ... ]}. The top-level key MUST be "books" and its value MUST be a JSON array.`,
   ].join("\n");
 
   const isRo = await isRoGoal({ userEmail, goalId });
 
   const { object } = await generateObject({
-    schema: bookSchema,
+    schema: bookResponseSchema,
     prompt: withRo(prompt, isRo),
   });
 
+  if (!object.books.length) {
+    return {
+      success: false,
+      message: "DeepSeek returned no valid books. Please try again.",
+      books: [],
+    };
+  }
+
+  type ParsedBook = z.infer<typeof bookItemSchema>;
+  const parsedBooks = object.books as ParsedBook[];
   const saved = await insertRecommendedBooks(
-    object.books.map((b) => ({
+    parsedBooks.map((b) => ({
       goalId,
       title: b.title,
       authors: b.authors,
