@@ -431,7 +431,7 @@ export const resumes = sqliteTable(
 export type Resume = typeof resumes.$inferSelect;
 export type NewResume = typeof resumes.$inferInsert;
 
-// ── External Courses (Class Central) ────────────────────────────────
+// ── External Courses ────────────────────────────────────────────────
 
 export const externalCourses = sqliteTable(
   "external_courses",
@@ -439,7 +439,6 @@ export const externalCourses = sqliteTable(
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    classcentralId: integer("classcentral_id").unique(),
     title: text("title").notNull(),
     url: text("url").notNull().unique(),
     provider: text("provider").notNull(),

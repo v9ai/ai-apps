@@ -471,13 +471,12 @@ export const resumes = pgTable("resumes", {
 export type Resume = typeof resumes.$inferSelect;
 export type NewResume = typeof resumes.$inferInsert;
 
-// ── External Courses (Class Central) ─────────────────────────────
+// ── External Courses ─────────────────────────────────────────────
 
 export const externalCourses = pgTable(
   "external_courses",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    classcentralId: integer("classcentral_id").unique(),
     title: text("title").notNull(),
     url: text("url").notNull().unique(),
     provider: text("provider").notNull(),

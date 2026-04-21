@@ -85,17 +85,17 @@ async function main() {
   // External courses
   await migrateTable(
     "external_courses",
-    `SELECT id, classcentral_id, title, url, provider, description, level,
+    `SELECT id, title, url, provider, description, level,
             rating, review_count, duration_hours, is_free, enrolled, image_url,
             language, topic_group, metadata, created_at, updated_at
      FROM external_courses`,
     `INSERT OR IGNORE INTO external_courses
-     (id, classcentral_id, title, url, provider, description, level,
+     (id, title, url, provider, description, level,
       rating, review_count, duration_hours, is_free, enrolled, image_url,
       language, topic_group, metadata, created_at, updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     (r) => [
-      r.id, r.classcentral_id, r.title, r.url, r.provider, r.description, r.level,
+      r.id, r.title, r.url, r.provider, r.description, r.level,
       r.rating, r.review_count, r.duration_hours, r.is_free ? 1 : 0, r.enrolled,
       r.image_url, r.language, r.topic_group,
       typeof r.metadata === "string" ? r.metadata : JSON.stringify(r.metadata ?? {}),

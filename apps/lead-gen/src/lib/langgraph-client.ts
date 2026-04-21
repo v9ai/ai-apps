@@ -109,6 +109,13 @@ export interface DeepICPDealBreaker {
   reason: string;
 }
 
+export interface DeepICPGraphMeta {
+  version: string;
+  weights_hash: string;
+  run_at: string;
+  model: string;
+}
+
 export interface DeepICPResult {
   criteria_scores: Record<string, DeepICPCriterion>;
   weighted_total: number;
@@ -116,6 +123,7 @@ export interface DeepICPResult {
   personas: DeepICPPersona[];
   anti_icp: string[];
   deal_breakers: DeepICPDealBreaker[];
+  graph_meta?: DeepICPGraphMeta;
 }
 
 // ── Typed wrappers ─────────────────────────────────────────

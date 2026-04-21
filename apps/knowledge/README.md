@@ -320,7 +320,7 @@ apps/knowledge/
 │   ├── r2.ts               # Cloudflare R2 upload/delete helpers
 │   └── actions/            # Server actions
 ├── scripts/seed.ts                 # DB seeder (lessons from markdown)
-├── scripts/seed-courses.ts         # Class Central course catalog seeder
+├── scripts/seed-courses.ts         # Udemy course catalog seeder
 ├── scripts/scrape-udemy-courses.ts # Playwright scraper — deep-scrapes Udemy topic pages into external_courses
 ├── scripts/generate-article.ts     # Mastra article generator CLI
 ├── scripts/review-courses.ts       # Mastra 10-expert course reviewer CLI
@@ -335,7 +335,7 @@ pnpm dev          # start on :3006
 pnpm db:push      # sync schema to Neon
 pnpm db:studio    # open Drizzle Studio
 pnpm seed         # seed DB from markdown files
-pnpm seed:courses # seed Class Central course catalog
+pnpm seed:courses # seed Udemy course catalog
 pnpm scrape:udemy # scrape 20+ AI/ML Udemy topics → external_courses (with topic_group classification)
 pnpm generate prompt-caching               # generate article via Mastra (src/mastra/)
 pnpm generate:dry prompt-caching           # preview without saving

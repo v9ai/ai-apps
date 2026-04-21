@@ -508,7 +508,6 @@ function createTables() {
 
     CREATE TABLE IF NOT EXISTS external_courses (
       id TEXT PRIMARY KEY,
-      classcentral_id INTEGER UNIQUE,
       title TEXT NOT NULL,
       url TEXT NOT NULL UNIQUE,
       provider TEXT NOT NULL,
