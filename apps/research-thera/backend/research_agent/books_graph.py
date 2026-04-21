@@ -239,19 +239,33 @@ async def generate(state: dict) -> dict:
     base_url = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com")
     api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY") or ""
     model = os.environ.get("LLM_MODEL", "deepseek-chat")
+    # DeepSeek's JSON mode occasionally emits malformed JSON under load; one
+    # retry cuts the flake rate without adding meaningful cost.
+    parsed = None
+    last_exc: Optional[Exception] = None
     try:
         client = AsyncOpenAI(base_url=base_url, api_key=api_key, timeout=180.0)
-        resp = await client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.4,
-            max_tokens=8192,
-            response_format={"type": "json_object"},
-        )
-        content = resp.choices[0].message.content
-        parsed = json.loads(content)
     except Exception as exc:
-        return {"error": f"generate failed: {exc}"}
+        return {"error": f"generate failed (client init): {exc}"}
+    for attempt in range(2):
+        try:
+            resp = await client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.4,
+                max_tokens=8192,
+                response_format={"type": "json_object"},
+            )
+            content = resp.choices[0].message.content
+            parsed = json.loads(content)
+            break
+        except json.JSONDecodeError as exc:
+            last_exc = exc
+            continue
+        except Exception as exc:
+            return {"error": f"generate failed: {exc}"}
+    if parsed is None:
+        return {"error": f"generate failed: {last_exc}"}
 
     raw_books = _normalize_books(parsed)
     books: list[dict] = []
