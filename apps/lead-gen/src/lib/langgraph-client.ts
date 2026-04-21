@@ -1,29 +1,32 @@
 /**
- * Typed HTTP client for the LangGraph Python server.
+ * Typed HTTP client for the LangGraph backend.
  *
- * All LLM orchestration runs in the Python LangGraph server (default: :8002).
- * This client provides typed wrappers for each endpoint.
+ * Calls the standard LangGraph REST API (`POST /runs/wait`) exposed by
+ * `langgraph dev` from `apps/lead-gen/backend/`. Start it with `pnpm backend-dev`.
+ *
+ * The 5 wrappers below route to the 5 graphs declared in `backend/langgraph.json`.
  */
 
 const LANGGRAPH_URL =
-  process.env.LANGGRAPH_URL || "http://localhost:8002";
+  process.env.LANGGRAPH_URL || "http://127.0.0.1:8002";
 
-async function callLangGraph<T>(
-  endpoint: string,
-  body: Record<string, unknown>,
+async function runGraph<T>(
+  assistantId: string,
+  input: Record<string, unknown>,
 ): Promise<T> {
-  const res = await fetch(`${LANGGRAPH_URL}${endpoint}`, {
+  const res = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(30_000),
+    body: JSON.stringify({ assistant_id: assistantId, input }),
+    signal: AbortSignal.timeout(60_000),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(
-      `LangGraph ${endpoint} failed (${res.status}): ${text}`,
+      `LangGraph ${assistantId} failed (${res.status}): ${text}`,
     );
   }
+  // /runs/wait returns the final graph state as a flat JSON object.
   return res.json() as Promise<T>;
 }
 
@@ -66,7 +69,7 @@ export function textToSql(
   if (question.length > 4_000) {
     return Promise.reject(new Error("textToSql: question exceeds 4000 character limit"));
   }
-  return callLangGraph<TextToSqlResult>("/text-to-sql", {
+  return runGraph<TextToSqlResult>("text_to_sql", {
     question,
     database_schema: databaseSchema ?? "",
   });
@@ -81,7 +84,7 @@ export function generateEmailReply(input: {
   includeCalendly?: boolean;
   additionalDetails?: string;
 }): Promise<EmailReplyResult> {
-  return callLangGraph<EmailReplyResult>("/email-reply", {
+  return runGraph<EmailReplyResult>("email_reply", {
     original_email: input.originalEmail,
     sender: input.sender,
     instructions: input.instructions ?? "",
@@ -96,7 +99,7 @@ export function adminChat(
   prompt: string,
   system?: string,
 ): Promise<AdminChatResult> {
-  return callLangGraph<AdminChatResult>("/admin-chat", {
+  return runGraph<AdminChatResult>("admin_chat", {
     prompt,
     system: system ?? "",
   });
@@ -109,7 +112,7 @@ export function composeEmail(input: {
   recipientContext?: string;
   linkedinPostContent?: string;
 }): Promise<EmailComposeResult> {
-  return callLangGraph<EmailComposeResult>("/email-compose", {
+  return runGraph<EmailComposeResult>("email_compose", {
     recipient_name: input.recipientName,
     company_name: input.companyName ?? "",
     instructions: input.instructions ?? "",
@@ -126,7 +129,7 @@ export function emailOutreach(input: {
   postUrl?: string;
   tone?: string;
 }): Promise<EmailOutreachResult> {
-  return callLangGraph<EmailOutreachResult>("/email-outreach", {
+  return runGraph<EmailOutreachResult>("email_outreach", {
     recipient_name: input.recipientName,
     recipient_role: input.recipientRole ?? "",
     recipient_email: input.recipientEmail,

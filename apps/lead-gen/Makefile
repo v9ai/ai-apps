@@ -30,10 +30,13 @@ hooks-status:
 
 # ── App ────────────────────────────────────────────────────────
 
-.PHONY: dev build lint codegen deploy db-generate db-migrate db-studio
+.PHONY: dev backend-dev build lint codegen deploy db-generate db-migrate db-studio
 
 dev:
 	pnpm dev
+
+backend-dev:
+	pnpm backend-dev
 
 build:
 	pnpm build
