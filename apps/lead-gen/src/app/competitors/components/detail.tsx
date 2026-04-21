@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import type { CompetitorAnalysisQuery } from "@/__generated__/hooks";
 import { Badge, Container, Flex, Heading, Text } from "@radix-ui/themes";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
@@ -66,7 +67,10 @@ export function CompetitorAnalysisDetail({ analysisId }: { analysisId: number })
   const [rescrape] = useRescrapeCompetitorMutation();
 
   const analysis = data?.competitorAnalysis;
-  const competitors = (analysis?.competitors ?? []) as unknown as Competitor[];
+  const competitors = useMemo<Competitor[]>(
+    () => (analysis?.competitors ?? []) as unknown as Competitor[],
+    [analysis?.competitors],
+  );
 
   const tierMatrix = useMemo(() => buildTierMatrix(competitors), [competitors]);
   const featureMatrix = useMemo(() => buildFeatureMatrix(competitors), [competitors]);
