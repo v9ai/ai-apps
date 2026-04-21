@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lead-gen-langgraph",
+  "main": "src/index.js",
+  "compatibility_date": "2026-04-01",
+  "observability": { "enabled": true },
+  "vars": {
+    "LLM_BASE_URL": "https://api.deepseek.com",
+    "LLM_MODEL": "deepseek-chat"
+  },
+  "containers": [
+    {
+      "class_name": "LeadgenContainer",
+      "image": "./Dockerfile",
+      "max_instances": 1,
+      "instance_type": "standard-1"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "CONTAINER", "class_name": "LeadgenContainer" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["LeadgenContainer"] }
+  ]
+}
