@@ -8,7 +8,7 @@ import type {
   MutationUpdateCampaignArgs,
 } from "@/__generated__/resolvers-types";
 import { resend } from "@/lib/resend";
-import { composeEmail } from "@/lib/langgraph-client";
+import { composeEmail, emailOutreach } from "@/lib/langgraph-client";
 import {
   buildSchedule,
   getSchedulePreview,
