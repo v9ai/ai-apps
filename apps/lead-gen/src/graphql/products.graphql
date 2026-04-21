@@ -1,0 +1,32 @@
+fragment ProductCore on Product {
+  id
+  name
+  url
+  domain
+  description
+  createdBy
+  createdAt
+  updatedAt
+}
+
+query Products {
+  products {
+    ...ProductCore
+  }
+}
+
+query Product($id: Int!) {
+  product(id: $id) {
+    ...ProductCore
+  }
+}
+
+mutation UpsertProduct($input: ProductInput!) {
+  upsertProduct(input: $input) {
+    ...ProductCore
+  }
+}
+
+mutation DeleteProduct($id: Int!) {
+  deleteProduct(id: $id)
+}

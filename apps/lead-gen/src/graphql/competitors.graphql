@@ -56,8 +56,9 @@ fragment CompetitorFull on Competitor {
 
 fragment CompetitorAnalysisCore on CompetitorAnalysis {
   id
-  seedProductName
-  seedProductUrl
+  product {
+    ...ProductCore
+  }
   status
   createdBy
   error
@@ -85,8 +86,8 @@ query CompetitorAnalysis($id: Int!) {
   }
 }
 
-mutation CreateCompetitorAnalysis($productName: String!, $productUrl: String!) {
-  createCompetitorAnalysis(productName: $productName, productUrl: $productUrl) {
+mutation CreateCompetitorAnalysis($productId: Int!) {
+  createCompetitorAnalysis(productId: $productId) {
     ...CompetitorAnalysisCore
     competitors {
       ...CompetitorCore

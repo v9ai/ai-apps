@@ -15,8 +15,7 @@ enum CompetitorStatus {
 
 type CompetitorAnalysis {
   id: Int!
-  seedProductName: String!
-  seedProductUrl: String!
+  product: Product!
   status: CompetitorAnalysisStatus!
   createdBy: String
   error: String
@@ -82,7 +81,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  createCompetitorAnalysis(productName: String!, productUrl: String!): CompetitorAnalysis!
+  createCompetitorAnalysis(productId: Int!): CompetitorAnalysis!
   approveCompetitors(analysisId: Int!, competitors: [CompetitorInput!]!): CompetitorAnalysis!
   rescrapeCompetitor(competitorId: Int!): Competitor!
   deleteCompetitorAnalysis(id: Int!): Boolean!
