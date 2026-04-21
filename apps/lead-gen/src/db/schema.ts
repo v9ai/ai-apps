@@ -8,6 +8,7 @@ import {
   serial,
   boolean,
   vector,
+  jsonb,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
@@ -1032,3 +1033,175 @@ export const webhookEvents = pgTable("webhook_events", {
 
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
 export type NewWebhookEvent = typeof webhookEvents.$inferInsert;
+
+// ── Competitor Analysis ──
+
+export const competitorAnalyses = pgTable(
+  "competitor_analyses",
+  {
+    id: serial("id").primaryKey(),
+    seed_product_name: text("seed_product_name").notNull(),
+    seed_product_url: text("seed_product_url").notNull(),
+    status: text("status", {
+      enum: ["pending_approval", "scraping", "done", "failed"],
+    }).notNull().default("pending_approval"),
+    created_by: text("created_by"),
+    error: text("error"),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+    updated_at: text("updated_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    index("idx_competitor_analyses_status").on(table.status),
+    index("idx_competitor_analyses_created_at").on(table.created_at),
+  ],
+);
+
+export type CompetitorAnalysis = typeof competitorAnalyses.$inferSelect;
+export type NewCompetitorAnalysis = typeof competitorAnalyses.$inferInsert;
+
+export const competitors = pgTable(
+  "competitors",
+  {
+    id: serial("id").primaryKey(),
+    analysis_id: integer("analysis_id")
+      .notNull()
+      .references(() => competitorAnalyses.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    url: text("url").notNull(),
+    domain: text("domain"),
+    logo_url: text("logo_url"),
+    description: text("description"),
+    positioning_headline: text("positioning_headline"),
+    positioning_tagline: text("positioning_tagline"),
+    target_audience: text("target_audience"),
+    status: text("status", {
+      enum: ["suggested", "approved", "scraping", "done", "failed"],
+    }).notNull().default("suggested"),
+    scraped_at: text("scraped_at"),
+    scrape_error: text("scrape_error"),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+    updated_at: text("updated_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    index("idx_competitors_analysis_id").on(table.analysis_id),
+    index("idx_competitors_status").on(table.status),
+  ],
+);
+
+export type Competitor = typeof competitors.$inferSelect;
+export type NewCompetitor = typeof competitors.$inferInsert;
+
+export const competitorPricingTiers = pgTable(
+  "competitor_pricing_tiers",
+  {
+    id: serial("id").primaryKey(),
+    competitor_id: integer("competitor_id")
+      .notNull()
+      .references(() => competitors.id, { onDelete: "cascade" }),
+    tier_name: text("tier_name").notNull(),
+    monthly_price_usd: real("monthly_price_usd"),
+    annual_price_usd: real("annual_price_usd"),
+    seat_price_usd: real("seat_price_usd"),
+    currency: text("currency").notNull().default("USD"),
+    included_limits: jsonb("included_limits"),
+    is_custom_quote: boolean("is_custom_quote").notNull().default(false),
+    sort_order: integer("sort_order").notNull().default(0),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    index("idx_competitor_pricing_tiers_competitor_id").on(table.competitor_id),
+  ],
+);
+
+export type CompetitorPricingTier = typeof competitorPricingTiers.$inferSelect;
+export type NewCompetitorPricingTier = typeof competitorPricingTiers.$inferInsert;
+
+export const competitorFeatures = pgTable(
+  "competitor_features",
+  {
+    id: serial("id").primaryKey(),
+    competitor_id: integer("competitor_id")
+      .notNull()
+      .references(() => competitors.id, { onDelete: "cascade" }),
+    tier_name: text("tier_name"),
+    feature_text: text("feature_text").notNull(),
+    category: text("category"),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    index("idx_competitor_features_competitor_id").on(table.competitor_id),
+    index("idx_competitor_features_category").on(table.category),
+  ],
+);
+
+export type CompetitorFeature = typeof competitorFeatures.$inferSelect;
+export type NewCompetitorFeature = typeof competitorFeatures.$inferInsert;
+
+export const competitorIntegrations = pgTable(
+  "competitor_integrations",
+  {
+    id: serial("id").primaryKey(),
+    competitor_id: integer("competitor_id")
+      .notNull()
+      .references(() => competitors.id, { onDelete: "cascade" }),
+    integration_name: text("integration_name").notNull(),
+    integration_url: text("integration_url"),
+    category: text("category"),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    index("idx_competitor_integrations_competitor_id").on(table.competitor_id),
+  ],
+);
+
+export type CompetitorIntegration = typeof competitorIntegrations.$inferSelect;
+export type NewCompetitorIntegration = typeof competitorIntegrations.$inferInsert;
+
+export const competitorAnalysesRelations = relations(competitorAnalyses, ({ many }) => ({
+  competitors: many(competitors),
+}));
+
+export const competitorsRelations = relations(competitors, ({ one, many }) => ({
+  analysis: one(competitorAnalyses, {
+    fields: [competitors.analysis_id],
+    references: [competitorAnalyses.id],
+  }),
+  pricingTiers: many(competitorPricingTiers),
+  features: many(competitorFeatures),
+  integrations: many(competitorIntegrations),
+}));
+
+export const competitorPricingTiersRelations = relations(competitorPricingTiers, ({ one }) => ({
+  competitor: one(competitors, {
+    fields: [competitorPricingTiers.competitor_id],
+    references: [competitors.id],
+  }),
+}));
+
+export const competitorFeaturesRelations = relations(competitorFeatures, ({ one }) => ({
+  competitor: one(competitors, {
+    fields: [competitorFeatures.competitor_id],
+    references: [competitors.id],
+  }),
+}));
+
+export const competitorIntegrationsRelations = relations(competitorIntegrations, ({ one }) => ({
+  competitor: one(competitors, {
+    fields: [competitorIntegrations.competitor_id],
+    references: [competitors.id],
+  }),
+}));
