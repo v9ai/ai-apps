@@ -57,9 +57,9 @@ async function main() {
         WHERE ce.contact_id = c.id
           AND (ce.text_content ILIKE '%@vadim.blog%'
                OR ce.subject ILIKE '%@vadim.blog%')) AS vadim_blog_mentions,
-      (SELECT LEFT(regexp_replace(re.body_text, '\\s+', ' ', 'g'), 140)
+      (SELECT LEFT(regexp_replace(re.text_content, '\\s+', ' ', 'g'), 140)
         FROM received_emails re
-        JOIN contact_emails ce ON ce.reply_received_email_id = re.id
+        JOIN contact_emails ce ON ce.in_reply_to_received_id = re.id
         WHERE ce.contact_id = c.id
           AND ce.reply_classification ILIKE 'interested%'
         ORDER BY ce.id DESC LIMIT 1) AS classify_excerpt

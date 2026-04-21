@@ -79,3 +79,13 @@ class TextToSqlState(TypedDict, total=False):
     explanation: str
     confidence: float
     tables_used: list[str]
+
+
+class ScoreContactState(TypedDict, total=False):
+    # input — either a raw profile blob or a DB id to load+serialize
+    profile: str
+    contact_id: int | None
+    # output
+    tier: str  # "A" | "B" | "C" | "D"
+    score: float
+    reasons: list[str]

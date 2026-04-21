@@ -70,6 +70,14 @@ export interface EmailOutreachResult {
   contact_id: number | null;
 }
 
+export type ContactLoraTier = "A" | "B" | "C" | "D";
+
+export interface ScoreContactLoraResult {
+  tier: ContactLoraTier;
+  score: number;
+  reasons: string[];
+}
+
 // ── Typed wrappers ─────────────────────────────────────────
 
 export function textToSql(
@@ -146,5 +154,29 @@ export function emailOutreach(input: {
     post_text: input.postText,
     post_url: input.postUrl ?? "",
     tone: input.tone ?? "professional and friendly",
+  });
+}
+
+/**
+ * Score a contact via the Llama-3.1-8B-Instruct LoRA on Cloudflare Workers AI.
+ *
+ * Two input modes:
+ * - Pass `contactId` to have the backend load + serialize the profile from Neon.
+ * - Pass `profile` (pre-serialized text) when the caller already has the blob.
+ *
+ * Returns tier A/B/C/D + confidence score + rationale bullets.
+ */
+export function scoreContactLora(input: {
+  contactId?: number;
+  profile?: string;
+}): Promise<ScoreContactLoraResult> {
+  if (input.contactId === undefined && !input.profile) {
+    return Promise.reject(
+      new Error("scoreContactLora: provide either contactId or profile"),
+    );
+  }
+  return runGraph<ScoreContactLoraResult>("score_contact", {
+    contact_id: input.contactId ?? null,
+    profile: input.profile ?? "",
   });
 }

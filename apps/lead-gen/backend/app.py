@@ -35,6 +35,7 @@ from leadgen_agent.admin_chat_graph import build_graph as build_admin_chat
 from leadgen_agent.email_compose_graph import build_graph as build_email_compose
 from leadgen_agent.email_outreach_graph import build_graph as build_email_outreach
 from leadgen_agent.email_reply_graph import build_graph as build_email_reply
+from leadgen_agent.score_contact_graph import build_graph as build_score_contact
 from leadgen_agent.text_to_sql_graph import build_graph as build_text_to_sql
 
 log = logging.getLogger("leadgen_agent")
@@ -75,6 +76,7 @@ async def lifespan(app: FastAPI):
             "email_compose": build_email_compose(checkpointer),
             "email_outreach": build_email_outreach(checkpointer),
             "email_reply": build_email_reply(checkpointer),
+            "score_contact": build_score_contact(checkpointer),
             "text_to_sql": build_text_to_sql(checkpointer),
         }
         log.info("Graphs compiled with AsyncPostgresSaver: %s", list(app.state.graphs))
