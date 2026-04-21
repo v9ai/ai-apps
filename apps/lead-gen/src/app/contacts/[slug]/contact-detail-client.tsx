@@ -1685,7 +1685,6 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
     setScrapeStatus("Starting...");
 
     // Listen for progress updates from extension (relayed via webapp-bridge)
-    const contactFullName = `${contact.firstName} ${contact.lastName}`.trim();
     const handler = (e: MessageEvent) => {
       if (e.data?.source !== "lead-gen-bg" || e.data?.action !== "postScrapingProgress") return;
       if (e.data.error) {
@@ -2470,7 +2469,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                           )}
                           <ReplyEmailDialog
                             contact={contact}
-                            receivedEmail={{ id: re.id, fromEmail: re.fromEmail, subject: re.subject ?? null, textContent: re.textContent ?? null }}
+                            receivedEmail={{ id: re.id, fromEmail: re.fromEmail ?? "", subject: re.subject ?? null, textContent: re.textContent ?? null }}
                             onSent={() => refetchEmails()}
                           />
                         </Box>
@@ -2531,7 +2530,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                             )}
                             <ReplyEmailDialog
                               contact={contact}
-                              receivedEmail={{ id: item.received.id, fromEmail: item.received.fromEmail, subject: item.received.subject ?? null, textContent: item.received.textContent ?? null }}
+                              receivedEmail={{ id: item.received.id, fromEmail: item.received.fromEmail ?? "", subject: item.received.subject ?? null, textContent: item.received.textContent ?? null }}
                               onSent={() => refetchEmails()}
                             />
                           </Box>

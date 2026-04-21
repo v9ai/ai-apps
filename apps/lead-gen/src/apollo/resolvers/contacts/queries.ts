@@ -2,7 +2,7 @@
  * Contact query resolvers.
  */
 
-import { contacts, companies, contactEmails, messages, receivedEmails } from "@/db/schema";
+import { contacts, contactEmails, messages, receivedEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";
 import { eq, and, like, or, count, desc, asc, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";

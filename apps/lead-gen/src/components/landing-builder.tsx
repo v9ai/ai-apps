@@ -238,7 +238,6 @@ export function LandingBuilder() {
                       backgroundClip: "text",
                       background:
                         "linear-gradient(135deg, {colors.ui.heading} 0%, {colors.accent.primary} 100%)",
-                      WebkitBackgroundClip: "text",
                     })}
                   >
                     So I built autonomous agents that do it better

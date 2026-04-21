@@ -11,7 +11,7 @@ import {
   useMergeDuplicateCompaniesMutation,
   useImportCompanyWithContactsMutation,
 } from "@/__generated__/hooks";
-import type { SearchCompaniesQuery, CompanyOrderBy, CompanyFilterInput, CompanyCategory } from "@/__generated__/graphql";
+import type { CompanyOrderBy, CompanyFilterInput, CompanyCategory } from "@/__generated__/graphql";
 import { useAuth } from "@/lib/auth-hooks";
 import {
   Box,
@@ -31,8 +31,6 @@ import { css } from "styled-system/css";
 import { TrashIcon, PlusIcon, MixIcon, UploadIcon } from "@radix-ui/react-icons";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
-type Company = SearchCompaniesQuery["companies"]["companies"][number];
-
 export function CompaniesList() {
   const router = useRouter();
   const pathname = usePathname();
@@ -50,7 +48,7 @@ export function CompaniesList() {
     if (minTier !== "all") params.set("tier", minTier);
     const qs = params.toString();
     router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
-  }, [searchTerm, category, sortBy, minTier, router, pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm, category, sortBy, minTier, router, pathname]);  
   const observerRef = useRef<IntersectionObserver | null>(null);
   const { user } = useAuth();
   const [deleteCompanyMutation] = useDeleteCompanyMutation();
@@ -128,16 +126,6 @@ export function CompaniesList() {
     }
   };
 
-  // Toggle company selection
-  const toggleCompany = (id: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const next = new Set(selectedCompanies);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelectedCompanies(next);
-  };
-
   // Bulk delete
   const handleBulkDelete = async () => {
     if (selectedCompanies.size === 0) return;
@@ -185,16 +173,17 @@ export function CompaniesList() {
         await importCompanyWithContactsMutation({
           variables: {
             input: {
-              name: item.name,
+              companyName: item.name,
               website: item.website,
               linkedinUrl: item.linkedin_url || item.linkedinUrl,
-              location: item.location,
               contacts: (item.contacts || []).map((c: Record<string, string>) => ({
-                firstName: c.firstName || c.first_name,
-                lastName: c.lastName || c.last_name,
-                email: c.email,
-                position: c.position,
+                name: [c.firstName || c.first_name, c.lastName || c.last_name]
+                  .filter(Boolean)
+                  .join(" ")
+                  .trim(),
                 linkedinUrl: c.linkedinUrl || c.linkedin_url,
+                workEmail: c.email,
+                headline: c.position,
               })),
             },
           },
@@ -415,16 +404,16 @@ export function CompaniesList() {
 
       {/* filter bar */}
       <Flex gap="3" align="center" mb="2" wrap="wrap">
-        <Select.Root value={sortBy} onValueChange={setSortBy}>
-          <Select.Trigger variant="ghost" size="1" style={{ fontSize: 12 }} />
+        <Select.Root value={sortBy} onValueChange={setSortBy} size="1">
+          <Select.Trigger variant="ghost" style={{ fontSize: 12 }} />
           <Select.Content>
             <Select.Item value="name">Sort: Name</Select.Item>
             <Select.Item value="score">Sort: Score</Select.Item>
           </Select.Content>
         </Select.Root>
 
-        <Select.Root value={minTier} onValueChange={setMinTier}>
-          <Select.Trigger variant="ghost" size="1" style={{ fontSize: 12 }} />
+        <Select.Root value={minTier} onValueChange={setMinTier} size="1">
+          <Select.Trigger variant="ghost" style={{ fontSize: 12 }} />
           <Select.Content>
             <Select.Item value="all">Any AI tier</Select.Item>
             <Select.Item value="1">AI tier 1+</Select.Item>
@@ -516,6 +505,7 @@ export function CompaniesList() {
 
             {/* logo thumbnail */}
             {company.logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element -- arbitrary external logo URLs; next/image would require whitelisting every domain
               <img
                 src={company.logo_url}
                 alt=""

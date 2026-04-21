@@ -180,7 +180,7 @@ export function thompsonSampleBestSlot(
       if (!isBusinessHour(localDow, localHour)) continue;
 
       const idx = dow * 24 + hour;
-      let alpha = stats.alphaBeta[idx * 2];
+      const alpha = stats.alphaBeta[idx * 2];
       let beta = stats.alphaBeta[idx * 2 + 1];
 
       // Seniority modifier: C-suite gets narrower window (9am-12pm bias)
@@ -302,7 +302,7 @@ export function optimizeBatch(
         if (!BUSINESS_HOUR_MASK[dow * 24 + localHour]) continue;
 
         const slotIdx = dow * 24 + utcHour;
-        let alpha = stats.alphaBeta[slotIdx * 2];
+        const alpha = stats.alphaBeta[slotIdx * 2];
         let beta = stats.alphaBeta[slotIdx * 2 + 1];
 
         // C-suite narrowing: penalize outside 9am-12pm local

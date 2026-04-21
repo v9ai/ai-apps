@@ -141,7 +141,7 @@ export class ResendEmailAdapter {
     scheduledAt: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data, error } = await this.resend.emails.update({
+      const { error } = await this.resend.emails.update({
         id: emailId,
         scheduledAt,
       });
@@ -294,7 +294,7 @@ export class ResendEmailAdapter {
       if (error) {
         throw new Error(error.message);
       }
-      return data;
+      return data as unknown as ReceivedEmail | null;
     } catch (err) {
       throw err;
     }

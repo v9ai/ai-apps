@@ -335,7 +335,7 @@ function FindEmailButton({
         Find email
       </button>
       {result && (
-        <Text size="1" color="gray" maxWidth="180px" align="right">
+        <Text size="1" color="gray" align="right" style={{ maxWidth: "180px" }}>
           {result}
         </Text>
       )}
@@ -796,7 +796,7 @@ export function CompanyContactsClient({
     setRemindStatus(null);
     try {
       await createReminder({
-        variables: { input: { contactId: remindContactId, remindAt: remindDate, recurrence: remindRecurrence, note: remindNote || null } },
+        variables: { input: { entityType: "contact", entityId: remindContactId, remindAt: remindDate, recurrence: remindRecurrence, note: remindNote || null } },
       });
       setRemindStatus({ type: "success", message: "Reminder set" });
       setRemindContactId(null);

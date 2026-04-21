@@ -34,7 +34,6 @@ import type {
   VoyagerClientConfig,
   VoyagerSessionConfig,
   VoyagerSession,
-  SessionRotationConfig,
   VoyagerJobSearchParams,
   VoyagerJobCard,
   VoyagerJobSearchPage,
@@ -46,7 +45,6 @@ import type {
   VoyagerEventType,
   VoyagerEventListener,
   VoyagerErrorCode,
-  EndpointBudget,
   RateLimitBudgets,
   CacheConfig,
   CacheEntry,
@@ -60,11 +58,6 @@ import { VoyagerError, isRotationConfig } from "./types";
 
 const VOYAGER_BASE_URL = "https://www.linkedin.com/voyager/api";
 
-/**
- * Voyager API version header. LinkedIn periodically bumps this;
- * update when responses start returning 400s with version mismatch.
- */
-const VOYAGER_API_VERSION = "2.0.171";
 
 const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -1070,14 +1063,12 @@ export class VoyagerClient {
   async *searchJobs(query: VoyagerJobSearchParams): AsyncGenerator<VoyagerJobCard, void, undefined> {
     const pageSize = Math.min(query.count ?? MAX_PAGE_SIZE, MAX_PAGE_SIZE);
     let start = query.start ?? 0;
-    let totalYielded = 0;
 
     while (start < MAX_PAGINATION_DEPTH) {
       const page = await this.fetchJobSearchPage(query, start, pageSize);
 
       for (const job of page.jobs) {
         yield job;
-        totalYielded++;
       }
 
       // Stop conditions
@@ -1318,8 +1309,6 @@ export class VoyagerClient {
       let prevCount = 0;
 
       for (const bucket of applicableBuckets) {
-        const count = await this.countRemoteJobs(`${query}`);
-
         // For trend calculation, we need counts per bucket
         const page = await this.fetchJobSearchPage(
           { keywords: query, workplaceType: "remote", datePosted: bucket.filter },

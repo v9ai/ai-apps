@@ -331,24 +331,6 @@ export function trainEngagementModel(
 // Batch prediction API
 // ---------------------------------------------------------------------------
 
-/** Convert an EngagementFeature struct to the 12-element array layout. */
-function featureToArray(f: EngagementFeature): number[] {
-  return [
-    f.authorityScore,
-    f.daysSinceLastEmail,
-    f.totalEmailsSent,
-    f.openRate,
-    f.replyRate,
-    f.sequenceNumber,
-    f.intentScore,
-    f.leadTemperature,
-    f.hourSin,
-    f.hourCos,
-    f.companyAiTier,
-    f.emailVerified,
-  ];
-}
-
 /** Number of features in the engagement vector. */
 const NUM_ENGAGEMENT_FEATURES = 12;
 

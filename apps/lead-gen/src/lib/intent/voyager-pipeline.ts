@@ -21,7 +21,6 @@ import {
   intentSignals,
   linkedinPosts,
   type Company,
-  type LinkedInPost,
   type NewIntentSignal,
 } from "@/db/schema";
 import { eq, and, desc, gte, sql, count, inArray } from "drizzle-orm";
@@ -76,13 +75,6 @@ export interface PipelineRunSummary {
   companiesUpdated: number;
   errors: string[];
   durationMs: number;
-}
-
-/** Historical job count snapshot for velocity calculation. */
-interface CompanyJobHistory {
-  companyId: number;
-  /** Number of jobs posted in each time window. */
-  counts: { windowStart: Date; windowEnd: Date; count: number }[];
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────

@@ -7,7 +7,6 @@ import {
   useCreateContactMutation,
   useDeleteContactMutation,
 } from "@/__generated__/hooks";
-import type { GetContactsQuery } from "@/__generated__/hooks";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
@@ -22,7 +21,6 @@ import {
   Heading,
   Spinner,
   Text,
-  TextArea,
   TextField,
 } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
@@ -37,10 +35,6 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-
-type Contact = NonNullable<
-  GetContactsQuery["contacts"]["contacts"]
->[number];
 
 const PAGE_SIZE = 50;
 

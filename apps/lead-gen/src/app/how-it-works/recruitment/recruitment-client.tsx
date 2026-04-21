@@ -30,13 +30,11 @@ import {
   Database,
   BarChart3,
   Code as CodeIcon,
-  Shield,
   Activity,
   Tag,
   Layers,
 } from "lucide-react";
 import { Badge, Flex, Heading, Text, Card, Code, Separator } from "@radix-ui/themes";
-import { LayersIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { papers, stats, technicalDetails, extraSections, nodeDetails } from "./data";
 

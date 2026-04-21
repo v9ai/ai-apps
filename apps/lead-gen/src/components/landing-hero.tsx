@@ -6,7 +6,6 @@ import { badge } from "@/recipes/badge";
 import { button } from "@/recipes/button";
 import {
   ArrowRightIcon,
-  LightningBoltIcon,
   GitHubLogoIcon,
   CheckCircledIcon,
 } from "@radix-ui/react-icons";
@@ -251,7 +250,6 @@ const headlineStyle = css({
 const gradientTextStyle = css({
   color: "transparent",
   backgroundClip: "text",
-  WebkitBackgroundClip: "text",
   background:
     "linear-gradient(135deg, {colors.accent.primary} 0%, {colors.ui.heading} 60%, {colors.ui.heading} 100%)",
   display: "inline",

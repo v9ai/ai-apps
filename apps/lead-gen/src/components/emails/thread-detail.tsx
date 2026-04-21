@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Badge, Box, Flex, Heading, Separator, Spinner, Text } from "@radix-ui/themes";
+import { Badge, Box, Flex, Heading, Spinner, Text } from "@radix-ui/themes";
 import { PaperPlaneIcon, ArchiveIcon, CheckCircledIcon } from "@radix-ui/react-icons";
 import { button } from "@/recipes/button";
 import Link from "next/link";

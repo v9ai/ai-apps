@@ -18,7 +18,6 @@ import {
   ClockIcon,
   MagicWandIcon,
   PaperPlaneIcon,
-  ReloadIcon,
   ArrowLeftIcon,
 } from "@radix-ui/react-icons";
 import { useGenerateEmailMutation } from "@/__generated__/hooks";
@@ -58,7 +57,7 @@ export function FollowUpModal({
   onOpenChange,
   companyId,
   companyName,
-  companyDescription,
+  companyDescription: _companyDescription,
   sentEmails,
   onSuccess,
 }: FollowUpModalProps) {

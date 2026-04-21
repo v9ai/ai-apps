@@ -10,7 +10,7 @@ import {
   Badge,
 } from "@radix-ui/themes";
 import Link from "next/link";
-import { css, cx } from "styled-system/css";
+import { css } from "styled-system/css";
 import { flex, container } from "styled-system/patterns";
 import { button } from "@/recipes/button";
 import {

@@ -14,7 +14,6 @@
 import { eq, and, inArray, sql, desc } from "drizzle-orm";
 import { linkedinPosts, companies, intentSignals } from "@/db/schema";
 import type {
-  LinkedInPost as DbLinkedInPost,
   Company as DbCompany,
   NewIntentSignal,
 } from "@/db/schema";

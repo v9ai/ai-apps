@@ -2,7 +2,7 @@
  * Email utilities — personalization, bounce checking, send+save.
  */
 
-import { eq, and, or, sql, isNotNull } from "drizzle-orm";
+import { and, sql, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, contactEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";

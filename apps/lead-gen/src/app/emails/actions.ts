@@ -1,6 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { neon } from "@neondatabase/serverless";
 import { resend } from "@/lib/resend";
 import { checkIsAdmin } from "@/lib/admin";
 import { db } from "@/db";

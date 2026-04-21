@@ -1,5 +1,5 @@
 import { contacts, reminders, contactEmails, type Reminder as DbReminder } from "@/db/schema";
-import { eq, and, lte, sql, max, desc, inArray } from "drizzle-orm";
+import { eq, and, lte, sql, max, inArray } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 

@@ -1,5 +1,5 @@
 import { emailCampaigns, emailTemplates, contactEmails, contacts } from "@/db/schema";
-import { eq, and, or, count, desc, sql, gte, isNotNull, isNull, gt, inArray } from "drizzle-orm";
+import { eq, and, or, count, desc, gte, isNotNull, isNull, gt, inArray } from "drizzle-orm";
 import { addMinutes, startOfDay, startOfWeek, startOfMonth } from "date-fns";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -16,7 +16,6 @@ import {
   textToStructuredHtml,
   isEmailBounced,
   markEmailAsReplied as markReplied,
-  buildFollowUpInstructions,
   EmailConfig,
 } from "@/lib/email";
 import { generateReplyContent } from "@/lib/email/reply-generation";
@@ -62,7 +61,10 @@ export const emailCampaignResolvers = {
       const offset = args.offset ?? 0;
 
       const conditions = [];
-      if (args.status) conditions.push(eq(emailCampaigns.status, args.status));
+      if (args.status)
+        conditions.push(
+          eq(emailCampaigns.status, args.status as typeof emailCampaigns.status._.data),
+        );
       const where = conditions.length > 0 ? and(...conditions) : undefined;
 
       const [rows, countRows] = await Promise.all([
@@ -327,7 +329,7 @@ export const emailCampaignResolvers = {
       if (sequence !== undefined) patch.sequence = JSON.stringify(sequence);
       if (delayDays !== undefined) patch.delay_days = JSON.stringify(delayDays);
       if (startAt !== undefined) patch.start_at = startAt;
-      if (recipientEmails !== undefined) {
+      if (recipientEmails !== undefined && recipientEmails !== null) {
         patch.recipient_emails = JSON.stringify(recipientEmails);
         patch.total_recipients = recipientEmails.length;
       }
@@ -480,7 +482,7 @@ export const emailCampaignResolvers = {
         throw new Error("Forbidden");
       }
 
-      const { recipientName, recipientRole, companyName, purpose, tone, templateId } = args.input;
+      const { recipientName, companyName, purpose, tone, templateId } = args.input;
 
       let templateContext = "";
       if (templateId) {
@@ -678,7 +680,7 @@ export const emailCampaignResolvers = {
         throw new Error("Forbidden");
       }
 
-      const { companyId, daysAfter, sequenceNumber, customSubject, customInstructions } = args.input;
+      const { companyId, sequenceNumber } = args.input;
       const seqNum = parseInt(sequenceNumber, 10);
       if (isNaN(seqNum) || seqNum < 1) {
         return { success: false, message: "Invalid sequence number", contactCount: 0, emailIds: [] };
@@ -706,14 +708,6 @@ export const emailCampaignResolvers = {
       if (sentEmails.length === 0) {
         return { success: false, message: `No emails from sequence ${previousSequence} need follow-up`, contactCount: 0, emailIds: [] };
       }
-
-      // For now, return the count — actual follow-up content generation can be wired to DeepSeek
-      const instructions = buildFollowUpInstructions(
-        sequenceNumber,
-        daysAfter,
-        sentEmails[0]?.subject ?? "Previous outreach",
-        customInstructions,
-      );
 
       return {
         success: true,
@@ -1033,7 +1027,6 @@ export const emailCampaignResolvers = {
         tone,
         replyType,
         includeCalendly,
-        replyTo,
       } = args.input;
 
       const result = await generateReplyContent({
@@ -1043,7 +1036,6 @@ export const emailCampaignResolvers = {
         tone,
         replyType,
         includeCalendly,
-        replyTo,
       });
 
       return {

@@ -69,7 +69,6 @@ export function FollowUpEmailDialog({
 
   const buildFollowUp = () => {
     const role = appliedOpp?.title ?? "the role";
-    const company = appliedOpp?.companyName ?? contact.company ?? "your team";
 
     const subject = `Following up — ${role}`;
     const body = `Hi ${firstName},

@@ -18,7 +18,7 @@
  * Zero external dependencies beyond drizzle-orm.
  */
 
-import { eq, and, gte, lte, desc, sql, count, avg, type SQL } from "drizzle-orm";
+import { eq, and, gte, lte, desc, sql, count, type SQL } from "drizzle-orm";
 import type { DbInstance } from "@/db";
 import {
   linkedinPosts,
@@ -26,7 +26,6 @@ import {
   voyagerJobCounts,
   voyagerSnapshots,
   type LinkedInPost,
-  type Company,
 } from "@/db/schema";
 import { SKILL_LABELS } from "@/lib/skills/taxonomy";
 import type {
@@ -51,7 +50,6 @@ import type {
   ArbitrageReport,
   ArbitrageOpportunity,
   VoyagerAnalyticsConfig,
-  AnalyticsTimeRange,
 } from "./types";
 import { DEFAULT_ANALYTICS_CONFIG } from "./types";
 
@@ -170,24 +168,6 @@ function normalizeTitle(title: string): string {
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-/** Check if a job is remote based on location/employment_type/content. */
-function isRemoteJob(post: LinkedInPost): boolean {
-  const loc = (post.location || "").toLowerCase();
-  const content = (post.content || "").toLowerCase();
-  const empType = (post.employment_type || "").toLowerCase();
-
-  return (
-    loc.includes("remote") ||
-    loc.includes("anywhere") ||
-    loc.includes("worldwide") ||
-    loc.includes("global") ||
-    empType.includes("remote") ||
-    content.includes("fully remote") ||
-    content.includes("100% remote") ||
-    content.includes("work from anywhere")
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -1075,7 +1055,6 @@ export class VoyagerAnalytics {
       }
 
       const weeks = days / 7;
-      const prevCount = prevCountMap.get(companyId) ?? 0;
 
       profiles.push({
         companyId,

@@ -39,8 +39,6 @@ const LABEL_NAMES: ReplyClass[] = [
   "unsubscribe",
 ];
 
-const NUM_FEATURES = 16;
-
 // ── Keyword lists (must match Python export_reply_labels.py) ─────────────────
 
 const INTERESTED_KW = [

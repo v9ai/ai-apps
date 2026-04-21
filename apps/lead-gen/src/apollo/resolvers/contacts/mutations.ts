@@ -292,7 +292,7 @@ export const contactMutations = {
           .values(toInsert)
           .returning({ id: contacts.id });
         imported = result.length;
-      } catch (err) {
+      } catch {
         // If batch fails, fall back to individual inserts to identify bad rows
         for (const row of toInsert) {
           try {

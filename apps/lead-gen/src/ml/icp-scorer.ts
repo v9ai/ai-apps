@@ -50,7 +50,7 @@ function parseJsonArrayLen(val: string | null | undefined): number {
  * @param dmCount - Decision-maker contacts for this company
  * @param factsCount - Company facts count
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export function extractICPFeatures(
   company: any,
   contactsCount = 0,

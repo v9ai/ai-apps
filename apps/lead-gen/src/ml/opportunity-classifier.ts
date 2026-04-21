@@ -103,7 +103,7 @@ export async function classifyOpportunityLLM(input: {
       { role: "system", content: OPPORTUNITY_SYSTEM_PROMPT },
       { role: "user", content: userMsg },
     ],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     response_format: { type: "json_object" } as any,
     temperature: 0.1,
     max_tokens: 512,

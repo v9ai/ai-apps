@@ -21,7 +21,7 @@ export function CompanySelect({ value, onChange, placeholder = "Select company..
     variables: { text: search || undefined, limit: 50, order_by: "NAME_ASC" as CompanyOrderBy },
   });
 
-  const companies = data?.companies?.companies ?? [];
+  const companies = useMemo(() => data?.companies?.companies ?? [], [data?.companies?.companies]);
 
   const selectedCompany = useMemo(() => {
     if (!value) return null;

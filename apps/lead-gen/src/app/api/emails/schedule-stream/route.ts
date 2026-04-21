@@ -71,10 +71,15 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-  const { companyId } = body;
+  const companyId =
+    typeof body.companyId === "number"
+      ? body.companyId
+      : typeof body.companyId === "string"
+        ? Number(body.companyId)
+        : NaN;
 
-  if (!companyId) {
-    return NextResponse.json({ error: "Missing companyId" }, { status: 400 });
+  if (!Number.isFinite(companyId) || companyId <= 0) {
+    return NextResponse.json({ error: "Missing or invalid companyId" }, { status: 400 });
   }
 
   const { stream, send, close } = createSSEStream();

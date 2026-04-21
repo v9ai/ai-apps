@@ -6,10 +6,7 @@ import { Suspense } from "react";
 import { Container, Text } from "@radix-ui/themes";
 import { OpportunityDetailClient } from "./opportunity-detail-client";
 import { ContactAIProfileSchema } from "@/lib/ai-contact-enrichment";
-import {
-  computeCandidateMatchScore,
-  type MatchBreakdown,
-} from "@/lib/candidate-match-scoring";
+import { computeCandidateMatchScore } from "@/lib/candidate-match-scoring";
 
 export default async function OpportunityDetailPage({
   params,

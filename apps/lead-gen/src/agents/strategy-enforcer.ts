@@ -14,7 +14,7 @@ import { z } from "zod";
 // Types
 // ---------------------------------------------------------------------------
 
-const violationSchema = z.object({
+const _violationSchema = z.object({
   rule: z.string(),
   severity: z.enum(["BLOCKING", "WARNING"]),
   metaApproach: z.string(),
@@ -24,7 +24,7 @@ const violationSchema = z.object({
   fix: z.string(),
 });
 
-type Violation = z.infer<typeof violationSchema>;
+type Violation = z.infer<typeof _violationSchema>;
 
 // ---------------------------------------------------------------------------
 // File pattern matchers

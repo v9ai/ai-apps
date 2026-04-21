@@ -171,7 +171,6 @@ export const glassCard = cva({
     padding: "6",
     bg: "whiteAlpha.5",
     backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
     border: "1px solid",
     borderColor: "whiteAlpha.10",
     borderRadius: "lg",
@@ -196,15 +195,12 @@ export const glassCard = cva({
     blur: {
       light: {
         backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
       },
       default: {
         backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
       },
       heavy: {
         backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
       },
     },
     size: {

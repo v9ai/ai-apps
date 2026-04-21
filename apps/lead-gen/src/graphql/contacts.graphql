@@ -257,6 +257,12 @@ query GetContacts($companyId: Int, $search: String, $limit: Int, $offset: Int) {
       nbResult
       tags
       createdAt
+      seniority
+      department
+      isDecisionMaker
+      authorityScore
+      nextTouchScore
+      lastContactedAt
     }
     totalCount
   }

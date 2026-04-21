@@ -190,60 +190,6 @@ function CollapsibleChips({
   );
 }
 
-function CollapsibleList({
-  items,
-  visibleCount = 7,
-}: {
-  items: string[];
-  visibleCount?: number;
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  const normalized = useMemo(
-    () => items.map((x) => x.trim()).filter(Boolean),
-    [items]
-  );
-
-  const canCollapse = normalized.length > visibleCount;
-  const shown = expanded ? normalized : normalized.slice(0, visibleCount);
-
-  return (
-    <Box>
-      <Flex direction="column" gap="2">
-        {shown.map((item) => (
-          <Flex key={item} align="start" gap="2">
-            <Text color="gray" size="1" style={{ flexShrink: 0, marginTop: 2 }}>•</Text>
-            <Text size="2" color="gray">
-              {item}
-            </Text>
-          </Flex>
-        ))}
-      </Flex>
-
-      {canCollapse && (
-        <Box mt="3">
-          <Button
-            type="button"
-            variant="ghost"
-            color="gray"
-            onClick={() => setExpanded((v) => !v)}
-          >
-            {expanded ? (
-              <>
-                <ChevronUpIcon /> Show less
-              </>
-            ) : (
-              <>
-                <ChevronDownIcon /> Show more ({normalized.length - visibleCount})
-              </>
-            )}
-          </Button>
-        </Box>
-      )}
-    </Box>
-  );
-}
-
 function CompanyAvatar({
   name,
   logoUrl,
@@ -359,8 +305,6 @@ const CATEGORY_OPTIONS: CompanyCategory[] = [
   "CONSULTANCY",
   "AGENCY",
   "STAFFING",
-  "DIRECTORY",
-  "OTHER",
   "UNKNOWN",
 ];
 
@@ -1503,7 +1447,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           ) : null}
 
           {/* Contacts — full width */}
-          {isAdmin && company.id && (
+          {isAdmin && company.id && effectiveKey && (
             <CompanyContactsClient companyKey={effectiveKey} embedded />
           )}
         </Flex>

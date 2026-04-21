@@ -9,7 +9,7 @@
 import OpenAI from "openai";
 import { eq, desc } from "drizzle-orm";
 import { db } from "@/db";
-import { replyDrafts, receivedEmails, contactEmails, contacts, companies } from "@/db/schema";
+import { replyDrafts, receivedEmails, contactEmails, contacts } from "@/db/schema";
 import type { ReplyClass } from "./reply-classifier";
 import { stripQuotedText } from "./reply-classifier";
 

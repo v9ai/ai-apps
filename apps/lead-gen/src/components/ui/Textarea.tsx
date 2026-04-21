@@ -2,9 +2,7 @@ import { forwardRef, type TextareaHTMLAttributes } from "react";
 import { cx } from "styled-system/css";
 import { textarea } from "@/recipes/input";
 
-interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  // Extensible for future variants
-}
+type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...rest }, ref) => {

@@ -24,8 +24,17 @@ export const replyDraftResolvers = {
       const offset = args.offset ?? 0;
 
       const conditions = [];
-      if (args.status) conditions.push(eq(replyDrafts.status, args.status));
-      if (args.draftType) conditions.push(eq(replyDrafts.draft_type, args.draftType));
+      if (args.status)
+        conditions.push(
+          eq(replyDrafts.status, args.status as typeof replyDrafts.status._.data),
+        );
+      if (args.draftType)
+        conditions.push(
+          eq(
+            replyDrafts.draft_type,
+            args.draftType as typeof replyDrafts.draft_type._.data,
+          ),
+        );
 
       const where = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -341,7 +350,7 @@ export const replyDraftResolvers = {
         .limit(50); // Process max 50 at a time
 
       let generated = 0;
-      let skipped = 0;
+      const skipped = 0;
       let failed = 0;
 
       const { generateReplyDraft } = await import("@/lib/email/auto-draft");
@@ -446,8 +455,6 @@ export const replyDraftResolvers = {
       let failed = 0;
 
       // For each eligible email, check if a follow-up draft already exists
-      const { generateReplyDraft } = await import("@/lib/email/auto-draft");
-
       for (const email of needsFollowUp) {
         // Check for existing draft
         const [existingDraft] = await context.db

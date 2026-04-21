@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2018",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -33,5 +33,14 @@
     ".next/dev/types/**/*.ts",
     "styled-system"
   ],
-  "exclude": ["node_modules", "scripts", "migrations/schema.ts"]
+  "exclude": [
+    "node_modules",
+    "scripts",
+    "migrations/schema.ts",
+    "chrome-extension",
+    "backend",
+    "mlx-training",
+    "crates",
+    "consultancies"
+  ]
 }

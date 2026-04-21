@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { eq, and, or, isNull, sql, desc } from "drizzle-orm";
+import { eq, and, or, isNull, desc } from "drizzle-orm";
 import { db } from "@/db";
 import { contactEmails, contacts, replyDrafts, receivedEmails } from "@/db/schema";
 import { buildFollowUpInstructions } from "@/lib/email/followup";

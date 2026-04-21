@@ -191,6 +191,7 @@ export async function POST(request: NextRequest) {
         to: thread.email,
         subject,
         text,
+        html: text.replace(/\n/g, "<br>"),
       });
 
       if (result.error) {

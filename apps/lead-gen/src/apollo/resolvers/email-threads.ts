@@ -1,5 +1,5 @@
 import { contactEmails, receivedEmails, contacts, companies, replyDrafts } from "@/db/schema";
-import { eq, and, or, count, desc, sql, like, isNull } from "drizzle-orm";
+import { eq, and, count, desc, sql, isNull } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 

@@ -22,7 +22,7 @@ type Props = {
 };
 
 function safeIsComposing(e: React.KeyboardEvent) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return Boolean((e.nativeEvent as any)?.isComposing);
 }
 

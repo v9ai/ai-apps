@@ -9,7 +9,6 @@ import {
   Dialog,
   Flex,
   Heading,
-  Spinner,
   Switch,
   Tabs,
   Text,
@@ -661,7 +660,7 @@ function WebhookEventsList() {
   );
 }
 
-export function EmailsPageContent() {
+function EmailsPageContent() {
   const [tab, setTab] = useState("inbox");
 
   const [batchModalOpen, setBatchModalOpen] = useState(false);

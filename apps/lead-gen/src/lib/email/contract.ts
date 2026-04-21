@@ -10,7 +10,7 @@ export interface ContractEmailInstructions {
 }
 
 export function buildContractEmailInstructions(
-  input: ContractEmailInstructions
+  _input: ContractEmailInstructions
 ): string {
   return `CRITICAL INSTRUCTIONS - This is a RECRUITMENT AGENCY:
 

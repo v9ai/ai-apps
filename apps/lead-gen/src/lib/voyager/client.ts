@@ -49,6 +49,17 @@
  * @module voyager/client
  */
 
+declare const chrome:
+  | {
+      cookies?: {
+        get: (details: {
+          url: string;
+          name: string;
+        }) => Promise<{ value?: string } | null>;
+      };
+    }
+  | undefined;
+
 // ═══════════════════════════════════════════════════════════════════════
 // Section 1: URN System
 // ═══════════════════════════════════════════════════════════════════════
@@ -869,7 +880,7 @@ export function resolveIncluded<T extends VoyagerEntity>(
 
 /** Extract elements from either normalized or direct response shape. */
 export function extractElements(data: Record<string, unknown>): unknown[] {
-  const d = data as VoyagerNormalizedResponse & VoyagerDirectResponse;
+  const d = data as unknown as VoyagerNormalizedResponse & VoyagerDirectResponse;
   return d?.data?.elements ?? d?.elements ?? [];
 }
 
@@ -1393,7 +1404,7 @@ export class VoyagerClient {
 
       const data = await this.request<Record<string, unknown>>(url);
       const elements = extractElements(data) as Record<string, unknown>[];
-      const included = (data as VoyagerNormalizedResponse).included ?? [];
+      const included = (data as unknown as VoyagerNormalizedResponse).included ?? [];
 
       if (elements.length === 0) break;
 

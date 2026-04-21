@@ -145,27 +145,6 @@ function hawkesIntensity(
 }
 
 /**
- * LUT-accelerated Hawkes intensity. Replaces Math.exp() with the pre-computed
- * exponential decay lookup table for the hot scoring path.
- */
-function hawkesIntensityLUT(
-  events: EngagementEvent[],
-  t: number,
-  params: HawkesParams,
-): number {
-  const { mu, alpha, beta } = params;
-  let sum = 0;
-  for (let i = 0; i < events.length; i++) {
-    const ev = events[i];
-    if (ev.timestamp >= t) continue;
-    const dt = (t - ev.timestamp) / MS_PER_DAY;
-    const w = EVENT_WEIGHTS[ev.type] ?? 0.1;
-    sum += alpha * w * expDecayLUT(beta * dt);
-  }
-  return mu + sum;
-}
-
-/**
  * Recursive Hawkes intensity computation for sorted event streams.
  *
  * Instead of the naive O(n^2) sum over all past events for each evaluation

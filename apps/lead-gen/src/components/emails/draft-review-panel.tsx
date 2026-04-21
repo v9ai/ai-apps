@@ -42,7 +42,6 @@ export function DraftReviewPanel() {
   const [generateFollowUps, { loading: generatingFollowUps }] = useGenerateFollowUpDraftsMutation();
 
   const drafts = data?.replyDrafts?.drafts ?? [];
-  const totalCount = data?.replyDrafts?.totalCount ?? 0;
   const summary = summaryData?.draftSummary;
 
   const pendingDraftIds = drafts.filter((d) => d.status === "pending").map((d) => d.id);

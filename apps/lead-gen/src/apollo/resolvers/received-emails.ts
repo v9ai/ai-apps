@@ -4,7 +4,7 @@ import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import { textToHtml } from "@/lib/email";
 import { resend } from "@/lib/resend";
-import { classifyReply, classifyReplyHybrid } from "@/lib/email/reply-classifier";
+import { classifyReplyHybrid } from "@/lib/email/reply-classifier";
 import { matchContact } from "@/lib/email/contact-matcher";
 
 function parseJsonArray(val: string | null | undefined): string[] {

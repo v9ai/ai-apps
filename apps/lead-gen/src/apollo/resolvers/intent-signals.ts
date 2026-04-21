@@ -1,4 +1,4 @@
-import { eq, and, desc, gte, count, sql } from "drizzle-orm";
+import { eq, and, desc, gte, count } from "drizzle-orm";
 import { db } from "@/db";
 import { companies, intentSignals } from "@/db/schema";
 import type { IntentSignal, Company } from "@/db/schema";

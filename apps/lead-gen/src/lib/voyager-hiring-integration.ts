@@ -18,7 +18,7 @@
 import { db } from "@/db";
 import { contacts } from "@/db/schema";
 import type { Contact, NewContact } from "@/db/schema";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import {
   classifyContact,
   type ContactClassification,

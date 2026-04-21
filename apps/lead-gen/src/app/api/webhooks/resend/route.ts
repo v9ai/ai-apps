@@ -30,10 +30,6 @@ import { processReceivedEmail } from "@/lib/email/process-received";
  */
 
 const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-
-const SENDER_EMAIL = "contact@vadim.blog";
-const NOTIFICATION_EMAIL = "nicolai.vadim@gmail.com";
 
 // Retry delays in milliseconds
 const RETRY_DELAYS = [100, 500, 1000];

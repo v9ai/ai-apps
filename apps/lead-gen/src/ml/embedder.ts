@@ -86,7 +86,7 @@ const embeddingArena = new EmbeddingArena(EMBEDDING_DIM, 8);
 /** Cached probe result: true = embed-server available, false = use WASM. */
 let _serverAvailable: boolean | null = null;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let _pipeline: any = null;
 
 /** Check if the local embed-server is reachable. Cached after first probe. */

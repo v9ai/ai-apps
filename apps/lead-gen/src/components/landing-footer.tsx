@@ -1,7 +1,6 @@
 "use client";
 
 import { css } from "styled-system/css";
-import { button } from "@/recipes/button";
 import { flex, grid, container } from "styled-system/patterns";
 import {
   GitHubLogoIcon,

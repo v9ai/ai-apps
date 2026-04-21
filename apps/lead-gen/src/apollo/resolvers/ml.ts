@@ -1,9 +1,9 @@
-import { companies, contacts, contactEmails } from "@/db/schema";
+import { companies, contacts } from "@/db/schema";
 import type { Company as DbCompany } from "@/db/schema";
 import { eq, sql, and, isNotNull, count, desc } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
-import { scoreDataQuality, type DataQualityScore } from "@/lib/ml/data-quality";
+import { scoreDataQuality } from "@/lib/ml/data-quality";
 import { evaluateQualityGate } from "@/lib/ml/quality-gate";
 import { scoreICP, extractICPFeatures } from "@/ml/icp-scorer";
 
@@ -251,11 +251,6 @@ export const mlResolvers = {
     },
   },
 };
-
-function seniorityToOrdinal(seniority: string | null): number {
-  const map: Record<string, number> = { IC: 0, Senior: 1, Manager: 2, Director: 3, VP: 4, "C-level": 5, Founder: 5, Partner: 5 };
-  return map[seniority ?? ""] ?? 0;
-}
 
 function daysSince(isoDate: string): number {
   return Math.max(0, (Date.now() - new Date(isoDate).getTime()) / 86_400_000);

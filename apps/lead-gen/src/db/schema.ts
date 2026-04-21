@@ -1,4 +1,15 @@
-import { pgTable, text, integer, real, index, uniqueIndex, serial, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  integer,
+  real,
+  index,
+  uniqueIndex,
+  serial,
+  boolean,
+  vector,
+  type AnyPgColumn,
+} from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
 
 // Re-export Better Auth tables (user, session, account, verification)
@@ -77,6 +88,13 @@ export const companies = pgTable("companies", {
   last_seen_crawl_id: text("last_seen_crawl_id"),
   last_seen_capture_timestamp: text("last_seen_capture_timestamp"),
   last_seen_source_url: text("last_seen_source_url"),
+
+  // ML embeddings & scores (added via migration 0009_blue_fantastic_four.sql)
+  embedding: vector("embedding", { dimensions: 384 }),
+  rank_score: real("rank_score").default(0),
+  rank_score_version: text("rank_score_version"),
+  anomaly_score: real("anomaly_score"),
+  graph_embedding: text("graph_embedding"),
 
   created_at: text("created_at")
     .notNull()
@@ -358,7 +376,7 @@ export const contactEmails = pgTable(
     reply_classification: text("reply_classification"), // interested | not_interested | auto_reply | bounced | info_request | unsubscribe
     // Link to the received email this outbound is replying to
     in_reply_to_received_id: integer("in_reply_to_received_id")
-      .references(() => receivedEmails.id, { onDelete: "set null" }),
+      .references((): AnyPgColumn => receivedEmails.id, { onDelete: "set null" }),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
@@ -477,7 +495,10 @@ export const receivedEmails = pgTable(
     classified_at: text("classified_at"),
     // Contact matching
     matched_contact_id: integer("matched_contact_id").references(() => contacts.id, { onDelete: "set null" }),
-    matched_outbound_id: integer("matched_outbound_id").references(() => contactEmails.id, { onDelete: "set null" }),
+    matched_outbound_id: integer("matched_outbound_id").references(
+      (): AnyPgColumn => contactEmails.id,
+      { onDelete: "set null" },
+    ),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
