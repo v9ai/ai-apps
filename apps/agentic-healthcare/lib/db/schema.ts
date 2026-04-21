@@ -572,3 +572,41 @@ export const memoryBaseline = pgTable(
   (table) => [uniqueIndex("mb_user_idx").on(table.userId)],
 );
 
+// ── Journal (free-form) ─────────────────────────────────────────
+
+export const journalEntries = pgTable(
+  "journal_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title"),
+    body: text("body").notNull(),
+    mood: text("mood"),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    loggedAt: timestamp("logged_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("journal_user_idx").on(table.userId),
+    index("journal_logged_idx").on(table.loggedAt),
+  ],
+);
+
+export const journalEmbeddings = pgTable(
+  "journal_embeddings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    journalId: uuid("journal_id")
+      .notNull()
+      .references(() => journalEntries.id, { onDelete: "cascade" })
+      .unique(),
+    userId: text("user_id").notNull(),
+    content: text("content").notNull(),
+    embedding: vector("embedding").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("journal_emb_user_idx").on(table.userId)],
+);
+

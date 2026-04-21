@@ -5,6 +5,7 @@ import {
   medicationEmbeddings,
   symptomEmbeddings,
   appointmentEmbeddings,
+  journalEmbeddings,
 } from "@/lib/db/schema";
 
 // ── Singleton pipeline ───────────────────────────────────────────────
