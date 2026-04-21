@@ -130,7 +130,7 @@ FETCH_SQL = """
            c.seniority, c.department, c.is_decision_maker, c.authority_score,
            c.ai_profile, c.conversation_stage,
            co.name AS company_name, co.website AS company_website,
-           co.description AS company_description, co.employee_count, co.stage,
+           co.description AS company_description, co.size AS company_size,
            -- gold label signals
            (SELECT string_agg(DISTINCT classification, ',') FROM received_emails re
               WHERE re.contact_id = c.id AND classification IS NOT NULL) AS received_classifications,
@@ -178,8 +178,7 @@ def serialize_profile(rec: dict[str, Any]) -> str:
         f"NAME: {(rec.get('first_name') or '')} {(rec.get('last_name') or '')}".strip(),
         f"TITLE: {rec.get('position') or 'unknown'}",
         f"COMPANY: {rec.get('company_name') or 'unknown'}"
-        + (f" ({rec.get('stage')})" if rec.get("stage") else "")
-        + (f", {rec.get('employee_count')} employees" if rec.get("employee_count") else ""),
+        + (f", {rec.get('company_size')} employees" if rec.get("company_size") else ""),
     ]
     if rec.get("company_description"):
         lines.append(f"COMPANY_DESC: {rec['company_description'][:240]}")

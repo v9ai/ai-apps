@@ -58,7 +58,7 @@ def _load_profile(contact_id: int) -> str:
         SELECT c.first_name, c.last_name, c.position, c.linkedin_url, c.github_handle,
                c.seniority, c.department, c.is_decision_maker, c.authority_score,
                c.ai_profile, co.name AS company_name, co.website AS company_website,
-               co.description AS company_description, co.employee_count, co.stage
+               co.description AS company_description, co.size AS company_size
         FROM contacts c
         LEFT JOIN companies co ON co.id = c.company_id
         WHERE c.id = %s
@@ -85,8 +85,7 @@ def _load_profile(contact_id: int) -> str:
         f"NAME: {rec.get('first_name', '')} {rec.get('last_name', '')}".strip(),
         f"TITLE: {rec.get('position') or 'unknown'}",
         f"COMPANY: {rec.get('company_name') or 'unknown'}"
-        + (f" ({rec.get('stage')})" if rec.get("stage") else "")
-        + (f", {rec.get('employee_count')} employees" if rec.get("employee_count") else ""),
+        + (f", {rec.get('company_size')} employees" if rec.get("company_size") else ""),
     ]
     if rec.get("company_description"):
         lines.append(f"COMPANY_DESC: {rec['company_description'][:240]}")
