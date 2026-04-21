@@ -121,6 +121,20 @@ def normalize_domain(url: str) -> str:
         return ""
 
 
+def is_homepage(url: str) -> bool:
+    """True only for bare-domain URLs like https://foo.com or https://foo.com/.
+
+    Listicle articles live at non-empty paths (/blog/..., /resources/...), so a
+    non-homepage Brave hit is almost never the vendor's canonical homepage and
+    would poison `companies.name` with the article headline.
+    """
+    try:
+        parsed = urlparse(url)
+        return parsed.path.strip("/") == ""
+    except Exception:
+        return False
+
+
 def extract_name_from_title(title: str) -> str:
     """Derive company name from page title."""
     # Split on common separators and take the first part
