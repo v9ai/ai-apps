@@ -133,7 +133,7 @@ FETCH_SQL = """
            co.description AS company_description, co.size AS company_size,
            -- gold label signals
            (SELECT string_agg(DISTINCT classification, ',') FROM received_emails re
-              WHERE re.contact_id = c.id AND classification IS NOT NULL) AS received_classifications,
+              WHERE re.matched_contact_id = c.id AND classification IS NOT NULL) AS received_classifications,
            (SELECT bool_or(reply_received) FROM contact_emails ce
               WHERE ce.contact_id = c.id) AS any_reply,
            (SELECT string_agg(DISTINCT reply_classification, ',') FROM contact_emails ce
