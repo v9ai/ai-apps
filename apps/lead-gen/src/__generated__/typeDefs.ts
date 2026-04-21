@@ -420,6 +420,9 @@ type Contact {
   lastContactedAt: String
   lastName: String!
   linkedinUrl: String
+  loraReasons: [String!]!
+  loraScoredAt: String
+  loraTier: String
   nbExecutionTimeMs: Int
   nbFlags: [String!]!
   nbResult: String
@@ -507,6 +510,13 @@ input ContactInput {
   position: String
   tags: [String!]
   telegramHandle: String
+}
+
+type ContactLoraScore {
+  contactId: Int!
+  reasons: [String!]!
+  score: Float!
+  tier: String!
 }
 
 type ContactMLScore {
@@ -1193,6 +1203,13 @@ enum LinkedInPostType {
   post
 }
 
+type LoraTierBreakdown {
+  a: Int!
+  b: Int!
+  c: Int!
+  d: Int!
+}
+
 type MLStats {
   companiesEmbedded: Int!
   lastEmbeddingAt: String
@@ -1229,6 +1246,7 @@ type Mutation {
   approveCompetitors(analysisId: Int!, competitors: [CompetitorInput!]!): CompetitorAnalysis!
   archiveEmail(id: Int!): ArchiveEmailResult!
   batchDetectIntent(companyIds: [Int!]!): BatchDetectIntentResult!
+  batchScoreContactsLora(companyId: Int!, limit: Int = 50): ScoreContactsLoraResult!
   blockCompany(id: Int!): Company!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
@@ -1294,6 +1312,7 @@ type Mutation {
   saveCrawlLog(input: SaveCrawlLogInput!): SaveCrawlLogResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
+  scoreContactLora(contactId: Int!): Contact!
   scoreContactsML(companyId: Int!): ScoreContactsMLResult!
   sendEmail(input: SendEmailInput!): SendEmailResult!
   sendOutreachEmail(input: SendOutreachEmailInput!): SendOutreachEmailResult!
@@ -2041,6 +2060,14 @@ type ScheduleBatchResult {
   scheduled: Int!
   schedulingPlan: String
   success: Boolean!
+}
+
+type ScoreContactsLoraResult {
+  contactsScored: Int!
+  message: String!
+  results: [ContactLoraScore!]!
+  success: Boolean!
+  tierBreakdown: LoraTierBreakdown!
 }
 
 type ScoreContactsMLResult {

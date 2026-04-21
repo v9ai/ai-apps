@@ -474,6 +474,9 @@ export type Contact = {
   lastContactedAt: Maybe<Scalars['String']['output']>;
   lastName: Scalars['String']['output'];
   linkedinUrl: Maybe<Scalars['String']['output']>;
+  loraReasons: Array<Scalars['String']['output']>;
+  loraScoredAt: Maybe<Scalars['String']['output']>;
+  loraTier: Maybe<Scalars['String']['output']>;
   nbExecutionTimeMs: Maybe<Scalars['Int']['output']>;
   nbFlags: Array<Scalars['String']['output']>;
   nbResult: Maybe<Scalars['String']['output']>;
@@ -564,6 +567,14 @@ export type ContactInput = {
   position?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   telegramHandle?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ContactLoraScore = {
+  __typename: 'ContactLoraScore';
+  contactId: Scalars['Int']['output'];
+  reasons: Array<Scalars['String']['output']>;
+  score: Scalars['Float']['output'];
+  tier: Scalars['String']['output'];
 };
 
 export type ContactMlScore = {
@@ -1295,6 +1306,14 @@ export type LinkedInPostType =
   | 'job'
   | 'post';
 
+export type LoraTierBreakdown = {
+  __typename: 'LoraTierBreakdown';
+  a: Scalars['Int']['output'];
+  b: Scalars['Int']['output'];
+  c: Scalars['Int']['output'];
+  d: Scalars['Int']['output'];
+};
+
 export type MlStats = {
   __typename: 'MLStats';
   companiesEmbedded: Scalars['Int']['output'];
@@ -1336,6 +1355,7 @@ export type Mutation = {
   approveCompetitors: CompetitorAnalysis;
   archiveEmail: ArchiveEmailResult;
   batchDetectIntent: BatchDetectIntentResult;
+  batchScoreContactsLora: ScoreContactsLoraResult;
   blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
@@ -1401,6 +1421,7 @@ export type Mutation = {
   saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
+  scoreContactLora: Contact;
   scoreContactsML: ScoreContactsMlResult;
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
@@ -1483,6 +1504,12 @@ export type MutationArchiveEmailArgs = {
 
 export type MutationBatchDetectIntentArgs = {
   companyIds: Array<Scalars['Int']['input']>;
+};
+
+
+export type MutationBatchScoreContactsLoraArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1776,6 +1803,11 @@ export type MutationScheduleBatchEmailsArgs = {
 
 export type MutationScheduleFollowUpBatchArgs = {
   input: FollowUpBatchInput;
+};
+
+
+export type MutationScoreContactLoraArgs = {
+  contactId: Scalars['Int']['input'];
 };
 
 
@@ -3076,6 +3108,15 @@ export type ScheduleBatchResult = {
   scheduled: Scalars['Int']['output'];
   schedulingPlan: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type ScoreContactsLoraResult = {
+  __typename: 'ScoreContactsLoraResult';
+  contactsScored: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  results: Array<ContactLoraScore>;
+  success: Scalars['Boolean']['output'];
+  tierBreakdown: LoraTierBreakdown;
 };
 
 export type ScoreContactsMlResult = {

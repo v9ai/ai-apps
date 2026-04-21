@@ -198,6 +198,28 @@ type ContactMLScore {
   dmReasons: [String!]!
 }
 
+type ScoreContactsLoraResult {
+  success: Boolean!
+  message: String!
+  contactsScored: Int!
+  tierBreakdown: LoraTierBreakdown!
+  results: [ContactLoraScore!]!
+}
+
+type ContactLoraScore {
+  contactId: Int!
+  tier: String!
+  score: Float!
+  reasons: [String!]!
+}
+
+type LoraTierBreakdown {
+  a: Int!
+  b: Int!
+  c: Int!
+  d: Int!
+}
+
 type ContactsResult {
   contacts: [Contact!]!
   totalCount: Int!

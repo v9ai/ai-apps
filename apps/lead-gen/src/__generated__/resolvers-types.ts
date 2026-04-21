@@ -475,6 +475,9 @@ export type Contact = {
   lastContactedAt: Maybe<Scalars['String']['output']>;
   lastName: Scalars['String']['output'];
   linkedinUrl: Maybe<Scalars['String']['output']>;
+  loraReasons: Array<Scalars['String']['output']>;
+  loraScoredAt: Maybe<Scalars['String']['output']>;
+  loraTier: Maybe<Scalars['String']['output']>;
   nbExecutionTimeMs: Maybe<Scalars['Int']['output']>;
   nbFlags: Array<Scalars['String']['output']>;
   nbResult: Maybe<Scalars['String']['output']>;
@@ -565,6 +568,14 @@ export type ContactInput = {
   position?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   telegramHandle?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ContactLoraScore = {
+  __typename?: 'ContactLoraScore';
+  contactId: Scalars['Int']['output'];
+  reasons: Array<Scalars['String']['output']>;
+  score: Scalars['Float']['output'];
+  tier: Scalars['String']['output'];
 };
 
 export type ContactMlScore = {
@@ -1296,6 +1307,14 @@ export type LinkedInPostType =
   | 'job'
   | 'post';
 
+export type LoraTierBreakdown = {
+  __typename?: 'LoraTierBreakdown';
+  a: Scalars['Int']['output'];
+  b: Scalars['Int']['output'];
+  c: Scalars['Int']['output'];
+  d: Scalars['Int']['output'];
+};
+
 export type MlStats = {
   __typename?: 'MLStats';
   companiesEmbedded: Scalars['Int']['output'];
@@ -1337,6 +1356,7 @@ export type Mutation = {
   approveCompetitors: CompetitorAnalysis;
   archiveEmail: ArchiveEmailResult;
   batchDetectIntent: BatchDetectIntentResult;
+  batchScoreContactsLora: ScoreContactsLoraResult;
   blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
@@ -1402,6 +1422,7 @@ export type Mutation = {
   saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
+  scoreContactLora: Contact;
   scoreContactsML: ScoreContactsMlResult;
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
@@ -1484,6 +1505,12 @@ export type MutationArchiveEmailArgs = {
 
 export type MutationBatchDetectIntentArgs = {
   companyIds: Array<Scalars['Int']['input']>;
+};
+
+
+export type MutationBatchScoreContactsLoraArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1777,6 +1804,11 @@ export type MutationScheduleBatchEmailsArgs = {
 
 export type MutationScheduleFollowUpBatchArgs = {
   input: FollowUpBatchInput;
+};
+
+
+export type MutationScoreContactLoraArgs = {
+  contactId: Scalars['Int']['input'];
 };
 
 
@@ -3079,6 +3111,15 @@ export type ScheduleBatchResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ScoreContactsLoraResult = {
+  __typename?: 'ScoreContactsLoraResult';
+  contactsScored: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  results: Array<ContactLoraScore>;
+  success: Scalars['Boolean']['output'];
+  tierBreakdown: LoraTierBreakdown;
+};
+
 export type ScoreContactsMlResult = {
   __typename?: 'ScoreContactsMLResult';
   contactsScored: Scalars['Int']['output'];
@@ -3706,6 +3747,7 @@ export type ResolversTypes = {
   ContactAIProfile: ResolverTypeWrapper<Partial<ContactAiProfile>>;
   ContactEmail: ResolverTypeWrapper<Partial<ContactEmail>>;
   ContactInput: ResolverTypeWrapper<Partial<ContactInput>>;
+  ContactLoraScore: ResolverTypeWrapper<Partial<ContactLoraScore>>;
   ContactMLScore: ResolverTypeWrapper<Partial<ContactMlScore>>;
   ContactMessage: ResolverTypeWrapper<Partial<ContactMessage>>;
   ContactNextTouch: ResolverTypeWrapper<Partial<ContactNextTouch>>;
@@ -3781,6 +3823,7 @@ export type ResolversTypes = {
   JobCountTrend: ResolverTypeWrapper<Partial<JobCountTrend>>;
   LinkedInPost: ResolverTypeWrapper<Partial<LinkedInPost>>;
   LinkedInPostType: ResolverTypeWrapper<Partial<LinkedInPostType>>;
+  LoraTierBreakdown: ResolverTypeWrapper<Partial<LoraTierBreakdown>>;
   MLStats: ResolverTypeWrapper<Partial<MlStats>>;
   MarkRepliedResult: ResolverTypeWrapper<Partial<MarkRepliedResult>>;
   MergeCompaniesResult: ResolverTypeWrapper<Partial<MergeCompaniesResult>>;
@@ -3851,6 +3894,7 @@ export type ResolversTypes = {
   SaveCrawlLogResult: ResolverTypeWrapper<Partial<SaveCrawlLogResult>>;
   ScheduleBatchEmailsInput: ResolverTypeWrapper<Partial<ScheduleBatchEmailsInput>>;
   ScheduleBatchResult: ResolverTypeWrapper<Partial<ScheduleBatchResult>>;
+  ScoreContactsLoraResult: ResolverTypeWrapper<Partial<ScoreContactsLoraResult>>;
   ScoreContactsMLResult: ResolverTypeWrapper<Partial<ScoreContactsMlResult>>;
   ScrapedPost: ResolverTypeWrapper<Partial<ScrapedPost>>;
   SendDraftResult: ResolverTypeWrapper<Partial<SendDraftResult>>;
@@ -3947,6 +3991,7 @@ export type ResolversParentTypes = {
   ContactAIProfile: Partial<ContactAiProfile>;
   ContactEmail: Partial<ContactEmail>;
   ContactInput: Partial<ContactInput>;
+  ContactLoraScore: Partial<ContactLoraScore>;
   ContactMLScore: Partial<ContactMlScore>;
   ContactMessage: Partial<ContactMessage>;
   ContactNextTouch: Partial<ContactNextTouch>;
@@ -4019,6 +4064,7 @@ export type ResolversParentTypes = {
   JSON: Partial<Scalars['JSON']['output']>;
   JobCountTrend: Partial<JobCountTrend>;
   LinkedInPost: Partial<LinkedInPost>;
+  LoraTierBreakdown: Partial<LoraTierBreakdown>;
   MLStats: Partial<MlStats>;
   MarkRepliedResult: Partial<MarkRepliedResult>;
   MergeCompaniesResult: Partial<MergeCompaniesResult>;
@@ -4088,6 +4134,7 @@ export type ResolversParentTypes = {
   SaveCrawlLogResult: Partial<SaveCrawlLogResult>;
   ScheduleBatchEmailsInput: Partial<ScheduleBatchEmailsInput>;
   ScheduleBatchResult: Partial<ScheduleBatchResult>;
+  ScoreContactsLoraResult: Partial<ScoreContactsLoraResult>;
   ScoreContactsMLResult: Partial<ScoreContactsMlResult>;
   ScrapedPost: Partial<ScrapedPost>;
   SendDraftResult: Partial<SendDraftResult>;
@@ -4479,6 +4526,9 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   lastContactedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   linkedinUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  loraReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  loraScoredAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  loraTier?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   nbExecutionTimeMs?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   nbFlags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   nbResult?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -4552,6 +4602,13 @@ export type ContactEmailResolvers<ContextType = GraphQLContext, ParentType exten
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ContactLoraScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactLoraScore'] = ResolversParentTypes['ContactLoraScore']> = {
+  contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  tier?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type ContactMlScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactMLScore'] = ResolversParentTypes['ContactMLScore']> = {
@@ -5073,6 +5130,13 @@ export type LinkedInPostResolvers<ContextType = GraphQLContext, ParentType exten
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type LoraTierBreakdownResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LoraTierBreakdown'] = ResolversParentTypes['LoraTierBreakdown']> = {
+  a?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  b?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  c?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  d?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type MlStatsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MLStats'] = ResolversParentTypes['MLStats']> = {
   companiesEmbedded?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   lastEmbeddingAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5109,6 +5173,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   approveCompetitors?: Resolver<ResolversTypes['CompetitorAnalysis'], ParentType, ContextType, RequireFields<MutationApproveCompetitorsArgs, 'analysisId' | 'competitors'>>;
   archiveEmail?: Resolver<ResolversTypes['ArchiveEmailResult'], ParentType, ContextType, RequireFields<MutationArchiveEmailArgs, 'id'>>;
   batchDetectIntent?: Resolver<ResolversTypes['BatchDetectIntentResult'], ParentType, ContextType, RequireFields<MutationBatchDetectIntentArgs, 'companyIds'>>;
+  batchScoreContactsLora?: Resolver<ResolversTypes['ScoreContactsLoraResult'], ParentType, ContextType, RequireFields<MutationBatchScoreContactsLoraArgs, 'companyId' | 'limit'>>;
   blockCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationBlockCompanyArgs, 'id'>>;
   cancelCompanyEmails?: Resolver<ResolversTypes['CancelCompanyEmailsResult'], ParentType, ContextType, RequireFields<MutationCancelCompanyEmailsArgs, 'companyId'>>;
   cancelScheduledEmail?: Resolver<ResolversTypes['CancelEmailResult'], ParentType, ContextType, RequireFields<MutationCancelScheduledEmailArgs, 'resendId'>>;
@@ -5168,6 +5233,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   saveCrawlLog?: Resolver<ResolversTypes['SaveCrawlLogResult'], ParentType, ContextType, RequireFields<MutationSaveCrawlLogArgs, 'input'>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
   scheduleFollowUpBatch?: Resolver<ResolversTypes['FollowUpBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleFollowUpBatchArgs, 'input'>>;
+  scoreContactLora?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationScoreContactLoraArgs, 'contactId'>>;
   scoreContactsML?: Resolver<ResolversTypes['ScoreContactsMLResult'], ParentType, ContextType, RequireFields<MutationScoreContactsMlArgs, 'companyId'>>;
   sendEmail?: Resolver<ResolversTypes['SendEmailResult'], ParentType, ContextType, RequireFields<MutationSendEmailArgs, 'input'>>;
   sendOutreachEmail?: Resolver<ResolversTypes['SendOutreachEmailResult'], ParentType, ContextType, RequireFields<MutationSendOutreachEmailArgs, 'input'>>;
@@ -5811,6 +5877,14 @@ export type ScheduleBatchResultResolvers<ContextType = GraphQLContext, ParentTyp
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type ScoreContactsLoraResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScoreContactsLoraResult'] = ResolversParentTypes['ScoreContactsLoraResult']> = {
+  contactsScored?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  results?: Resolver<Array<ResolversTypes['ContactLoraScore']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  tierBreakdown?: Resolver<ResolversTypes['LoraTierBreakdown'], ParentType, ContextType>;
+};
+
 export type ScoreContactsMlResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScoreContactsMLResult'] = ResolversParentTypes['ScoreContactsMLResult']> = {
   contactsScored?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   decisionMakersFound?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -6146,6 +6220,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactAIGitHubRepo?: ContactAiGitHubRepoResolvers<ContextType>;
   ContactAIProfile?: ContactAiProfileResolvers<ContextType>;
   ContactEmail?: ContactEmailResolvers<ContextType>;
+  ContactLoraScore?: ContactLoraScoreResolvers<ContextType>;
   ContactMLScore?: ContactMlScoreResolvers<ContextType>;
   ContactMessage?: ContactMessageResolvers<ContextType>;
   ContactNextTouch?: ContactNextTouchResolvers<ContextType>;
@@ -6203,6 +6278,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   JSON?: GraphQLScalarType;
   JobCountTrend?: JobCountTrendResolvers<ContextType>;
   LinkedInPost?: LinkedInPostResolvers<ContextType>;
+  LoraTierBreakdown?: LoraTierBreakdownResolvers<ContextType>;
   MLStats?: MlStatsResolvers<ContextType>;
   MarkRepliedResult?: MarkRepliedResultResolvers<ContextType>;
   MergeCompaniesResult?: MergeCompaniesResultResolvers<ContextType>;
@@ -6268,6 +6344,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SalescueTurningPoint?: SalescueTurningPointResolvers<ContextType>;
   SaveCrawlLogResult?: SaveCrawlLogResultResolvers<ContextType>;
   ScheduleBatchResult?: ScheduleBatchResultResolvers<ContextType>;
+  ScoreContactsLoraResult?: ScoreContactsLoraResultResolvers<ContextType>;
   ScoreContactsMLResult?: ScoreContactsMlResultResolvers<ContextType>;
   ScrapedPost?: ScrapedPostResolvers<ContextType>;
   SendDraftResult?: SendDraftResultResolvers<ContextType>;
