@@ -27,7 +27,11 @@ def _is_local(base_url: str) -> bool:
 
 def make_llm(temperature: float | None = None) -> ChatOpenAI:
     base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
-    api_key = os.environ.get("LLM_API_KEY", "local")
+    api_key = (
+        os.environ.get("DEEPSEEK_API_KEY")
+        or os.environ.get("LLM_API_KEY")
+        or "local"
+    )
     model = os.environ.get("LLM_MODEL", "default_model")
     temp = temperature if temperature is not None else float(os.environ.get("LLM_TEMPERATURE", "0.2"))
     return ChatOpenAI(model=model, api_key=api_key, base_url=base_url, temperature=temp)

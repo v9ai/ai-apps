@@ -1,14 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { Container, Flex, Heading, Text, TextField, TextArea } from "@radix-ui/themes";
+import { Container, Flex, Heading, Text } from "@radix-ui/themes";
 import { TrashIcon } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import {
   useProductsQuery,
-  useUpsertProductMutation,
   useDeleteProductMutation,
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
@@ -23,13 +21,7 @@ export function ProductsList() {
     skip: !isAdmin,
   });
 
-  const [upsertProduct, { loading: upserting }] = useUpsertProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
-
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [description, setDescription] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
 
   if (!isAdmin) {
     return (
@@ -41,80 +33,11 @@ export function ProductsList() {
 
   const rows = data?.products ?? [];
 
-  async function handleAdd() {
-    setFormError(null);
-    if (!name.trim() || !url.trim()) {
-      setFormError("Name and URL are required");
-      return;
-    }
-    try {
-      await upsertProduct({
-        variables: {
-          input: {
-            name: name.trim(),
-            url: url.trim(),
-            description: description.trim() || null,
-          },
-        },
-        refetchQueries: ["Products"],
-      });
-      setName("");
-      setUrl("");
-      setDescription("");
-    } catch (e) {
-      setFormError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
   return (
     <Container size="4" p="6">
       <Heading size="6" mb="5">
         Products
       </Heading>
-
-      <div
-        className={css({
-          bg: "ui.surface",
-          border: "1px solid",
-          borderColor: "ui.border",
-          borderRadius: "md",
-          p: "4",
-          mb: "5",
-        })}
-      >
-        <Text weight="bold" size="3" as="div" mb="3">
-          Add product
-        </Text>
-        <Flex direction="column" gap="2">
-          <TextField.Root
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Product name (e.g. Ingestible)"
-          />
-          <TextField.Root
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://…"
-          />
-          <TextArea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Short description (optional)"
-            rows={2}
-          />
-          {formError && <Text color="red">{formError}</Text>}
-          <Flex>
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={upserting}
-              className={button({ variant: "solid" })}
-            >
-              {upserting ? "Saving…" : "Add product"}
-            </button>
-          </Flex>
-        </Flex>
-      </div>
 
       {error && (
         <Text color="red" as="p" mb="3">
