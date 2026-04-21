@@ -89,3 +89,19 @@ class ScoreContactState(TypedDict, total=False):
     tier: str  # "A" | "B" | "C" | "D"
     score: float
     reasons: list[str]
+
+
+class DeepICPState(TypedDict, total=False):
+    # input
+    product_id: int
+    # internal
+    product: dict[str, Any]
+    market_research: dict[str, Any]
+    criterion_analyses: dict[str, dict[str, Any]]
+    # output
+    criteria_scores: dict[str, dict[str, Any]]
+    weighted_total: float
+    segments: list[dict[str, Any]]
+    personas: list[dict[str, Any]]
+    anti_icp: list[str]
+    deal_breakers: list[dict[str, Any]]
