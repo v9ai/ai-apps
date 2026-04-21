@@ -56,6 +56,12 @@ const FINISHERS: Finisher[] = [
     completedAt: "Apr 21, 2026",
     github: "https://github.com/suryanshgupta9933",
   },
+  {
+    rank: 6,
+    name: "Ashitesh Singh",
+    completedAt: "Apr 21, 2026",
+    github: "https://github.com/AshiteshSingh",
+  },
 ];
 
 const COURSES: Course[] = [
