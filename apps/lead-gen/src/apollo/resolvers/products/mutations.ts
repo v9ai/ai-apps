@@ -3,9 +3,11 @@ import { eq } from "drizzle-orm";
 import { products } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
+import { analyzeProductICP } from "@/lib/langgraph-client";
 import type {
   MutationUpsertProductArgs,
   MutationDeleteProductArgs,
+  MutationAnalyzeProductIcpArgs,
 } from "@/__generated__/resolvers-types";
 
 function requireAdmin(context: GraphQLContext): void {
@@ -69,5 +71,33 @@ export const productMutations = {
     requireAdmin(context);
     await context.db.delete(products).where(eq(products.id, args.id));
     return true;
+  },
+
+  async analyzeProductICP(
+    _parent: unknown,
+    args: MutationAnalyzeProductIcpArgs,
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    const result = await analyzeProductICP({ productId: args.id });
+    const now = new Date().toISOString();
+
+    const [row] = await context.db
+      .update(products)
+      .set({
+        icp_analysis: result as unknown as Record<string, unknown>,
+        icp_analyzed_at: now,
+        updated_at: now,
+      })
+      .where(eq(products.id, args.id))
+      .returning();
+
+    if (!row) {
+      throw new GraphQLError(`Product ${args.id} not found`, {
+        extensions: { code: "NOT_FOUND" },
+      });
+    }
+    return row;
   },
 };

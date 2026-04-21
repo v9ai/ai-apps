@@ -17,6 +17,7 @@ const LANGGRAPH_AUTH_TOKEN = process.env.LANGGRAPH_AUTH_TOKEN;
 async function runGraph<T>(
   assistantId: string,
   input: Record<string, unknown>,
+  options: { timeoutMs?: number } = {},
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -28,7 +29,7 @@ async function runGraph<T>(
     method: "POST",
     headers,
     body: JSON.stringify({ assistant_id: assistantId, input }),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(options.timeoutMs ?? 60_000),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");

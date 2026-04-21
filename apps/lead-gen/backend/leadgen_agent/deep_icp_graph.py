@@ -55,6 +55,11 @@ def _dsn() -> str:
 
 
 async def load_product(state: DeepICPState) -> dict:
+    # Allow callers (notably deepeval tests) to pre-populate `product` to skip
+    # the DB hop. Production callers pass only `product_id`.
+    if state.get("product"):
+        return {}
+
     product_id = state.get("product_id")
     if product_id is None:
         raise ValueError("product_id is required")

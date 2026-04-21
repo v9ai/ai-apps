@@ -1,0 +1,197 @@
+[
+  {
+    "id": 1001,
+    "product": {
+      "name": "Agentic Lead Gen",
+      "url": "https://agenticleadgen.xyz",
+      "domain": "agenticleadgen.xyz",
+      "description": "Autonomous B2B lead-generation pipeline that discovers, enriches, and reaches out to remote-friendly AI companies worldwide. Runs as a multi-agent LangGraph system with Next.js + Neon.",
+      "highlights": {"stack": ["next.js", "langgraph", "neon", "vercel"], "motion": "self-serve"}
+    },
+    "expected_segments": ["B2B SaaS sales teams", "founder-led AI startups", "technical solo founders"],
+    "expected_personas": ["Founder", "Head of Growth", "Growth-engineer"],
+    "expected_anti_icp": ["enterprise procurement-driven deals", "non-technical sales orgs"]
+  },
+  {
+    "id": 1002,
+    "product": {
+      "name": "LiveKit Agents",
+      "url": "https://livekit.io/agents",
+      "domain": "livekit.io",
+      "description": "Realtime voice and video AI agents SDK built on WebRTC. Integrates with OpenAI/Anthropic/ElevenLabs. Open source core, hosted cloud for scale.",
+      "highlights": {"stack": ["webrtc", "python", "typescript"], "motion": "plg"}
+    },
+    "expected_segments": ["devtools", "voice-AI startups", "enterprise contact-centers"],
+    "expected_personas": ["Staff engineer", "Head of AI", "VP Engineering"],
+    "expected_anti_icp": ["marketers looking for no-code", "pure text chatbot teams"]
+  },
+  {
+    "id": 1003,
+    "product": {
+      "name": "Arctic ETL",
+      "url": "https://arcticetl.example",
+      "domain": "arcticetl.example",
+      "description": "Reverse ETL from Snowflake/BigQuery into SaaS destinations (HubSpot, Salesforce, Braze). Usage-based pricing, SOC 2 Type II.",
+      "highlights": {"motion": "sales-led", "compliance": ["soc2"]}
+    },
+    "expected_segments": ["mid-market SaaS", "data-heavy e-commerce", "B2B marketing teams"],
+    "expected_personas": ["Head of Data", "Director of RevOps", "Data Engineer"],
+    "expected_anti_icp": ["companies without a warehouse", "pre-seed startups"]
+  },
+  {
+    "id": 1004,
+    "product": {
+      "name": "PromptLoop",
+      "url": "https://promptloop.example",
+      "domain": "promptloop.example",
+      "description": "Airtable and Google Sheets plugin that adds LLM calls to any cell. $19/mo self-serve, no-code. Trusted by SMB operations teams.",
+      "highlights": {"motion": "plg", "pricing": "$19/mo"}
+    },
+    "expected_segments": ["SMB operations teams", "agencies", "analyst-heavy SMBs"],
+    "expected_personas": ["Ops Manager", "Agency Owner", "Analyst"],
+    "expected_anti_icp": ["engineering-led AI teams", "regulated enterprises"]
+  },
+  {
+    "id": 1005,
+    "product": {
+      "name": "Modal Labs",
+      "url": "https://modal.com",
+      "domain": "modal.com",
+      "description": "Serverless Python functions with instant GPU access. Charge per second, no infra to manage. Big with ML researchers and AI startups.",
+      "highlights": {"motion": "plg-to-sales", "pricing": "usage"}
+    },
+    "expected_segments": ["AI startups", "ML research teams", "applied ML at scale-ups"],
+    "expected_personas": ["ML engineer", "Research engineer", "CTO"],
+    "expected_anti_icp": ["non-Python stacks", "teams with dedicated GPU fleets"]
+  },
+  {
+    "id": 1006,
+    "product": {
+      "name": "CareLink EHR",
+      "url": "https://carelinkehr.example",
+      "domain": "carelinkehr.example",
+      "description": "HIPAA-compliant electronic health record for independent clinics in the US. Includes scheduling, billing, and e-prescribing. Priced per provider.",
+      "highlights": {"compliance": ["hipaa"], "motion": "sales-led"}
+    },
+    "expected_segments": ["independent US clinics", "small medical practices", "specialty groups"],
+    "expected_personas": ["Practice Manager", "Clinic Owner MD", "Office Admin"],
+    "expected_anti_icp": ["hospitals", "non-US healthcare", "dentists only"]
+  },
+  {
+    "id": 1007,
+    "product": {
+      "name": "Chordly",
+      "url": "https://chordly.example",
+      "domain": "chordly.example",
+      "description": "A mobile app that teaches kids piano through gamified sight-reading. $6.99/mo consumer subscription, parent dashboard included.",
+      "highlights": {"motion": "consumer", "pricing": "$6.99/mo"}
+    },
+    "expected_segments": ["parents of kids 5-12", "homeschool families", "music-curious kids"],
+    "expected_personas": ["Parent", "Homeschool educator", "Grandparent"],
+    "expected_anti_icp": ["professional musicians", "music schools / B2B"]
+  },
+  {
+    "id": 1008,
+    "product": {
+      "name": "LoopFive",
+      "url": "https://loopfive.example",
+      "domain": "loopfive.example",
+      "description": "Boutique generative design agency for seed-stage startups. Fixed-price sprints, 3 week turnaround on brand + landing page. Founder-led.",
+      "highlights": {"motion": "sales-led", "pricing": "$12k/sprint"}
+    },
+    "expected_segments": ["seed-stage startups", "indie founders with funding", "angel-backed teams"],
+    "expected_personas": ["Founder", "CEO", "Head of Product"],
+    "expected_anti_icp": ["enterprise", "pre-product-market-fit teams with no budget"]
+  },
+  {
+    "id": 1009,
+    "product": {
+      "name": "ChartStream",
+      "url": "https://chartstream.example",
+      "domain": "chartstream.example",
+      "description": "Real-time charting SDK for fintech dashboards. WebSocket streams, WebGL rendering, TypeScript. Per-seat licensing.",
+      "highlights": {"stack": ["typescript", "webgl"], "motion": "sales-led"}
+    },
+    "expected_segments": ["fintech product teams", "trading platforms", "brokerage startups"],
+    "expected_personas": ["Frontend Lead", "Fintech Product Manager", "CTO"],
+    "expected_anti_icp": ["non-realtime BI tooling", "static reporting teams"]
+  },
+  {
+    "id": 1010,
+    "product": {
+      "name": "Agronaut",
+      "url": "https://agronaut.example",
+      "domain": "agronaut.example",
+      "description": "Satellite-imagery-powered yield prediction for row-crop farms in the US Midwest. Priced per acre. Sold through co-op partnerships.",
+      "highlights": {"motion": "partner-channel", "geo": "us-midwest"}
+    },
+    "expected_segments": ["mid-sized US row-crop farms", "farm cooperatives", "ag lenders"],
+    "expected_personas": ["Farm Owner", "Co-op Director", "Ag Loan Officer"],
+    "expected_anti_icp": ["non-US farms", "indoor/vertical farming", "specialty-crop niche"]
+  },
+  {
+    "id": 1011,
+    "product": {
+      "name": "Railstack",
+      "url": "https://railstack.example",
+      "domain": "railstack.example",
+      "description": "All-in-one Rails hosting with background jobs, cron, and managed Postgres. Single click deploy from GitHub. $39/mo developer plan.",
+      "highlights": {"motion": "plg", "pricing": "$39/mo"}
+    },
+    "expected_segments": ["solo Rails developers", "small Rails agencies", "indie SaaS founders"],
+    "expected_personas": ["Indie hacker", "Rails developer", "Agency owner"],
+    "expected_anti_icp": ["non-Rails stacks", "enterprise IT"]
+  },
+  {
+    "id": 1012,
+    "product": {
+      "name": "Vaultaro",
+      "url": "https://vaultaro.example",
+      "domain": "vaultaro.example",
+      "description": "Decentralized identity wallet for Web3 apps. Non-custodial, self-hosted bridge, BYO chain. Open-core with enterprise support contracts.",
+      "highlights": {"motion": "open-source-to-enterprise"}
+    },
+    "expected_segments": ["crypto protocols", "Web3 product teams", "compliance-conscious dApps"],
+    "expected_personas": ["Protocol engineer", "Web3 CTO", "Compliance lead"],
+    "expected_anti_icp": ["non-crypto B2B", "traditional finance-only teams"]
+  },
+  {
+    "id": 1013,
+    "product": {
+      "name": "FactoryOps",
+      "url": "https://factoryops.example",
+      "domain": "factoryops.example",
+      "description": "Manufacturing MES for discrete factories in Eastern Europe. Integrates with Siemens and Allen-Bradley PLCs. On-premise deployment, annual license.",
+      "highlights": {"geo": "eastern-europe", "motion": "sales-led"}
+    },
+    "expected_segments": ["discrete manufacturers", "mid-size EU factories", "automotive suppliers"],
+    "expected_personas": ["Plant Manager", "Operations Director", "IT Lead"],
+    "expected_anti_icp": ["software/SaaS companies", "non-EU-based greenfield factories"]
+  },
+  {
+    "id": 1014,
+    "product": {
+      "name": "BenchDeck",
+      "url": "https://benchdeck.example",
+      "domain": "benchdeck.example",
+      "description": "Performance benchmarking marketplace: vendors post real workloads, buyers run head-to-head comparisons. Free to post, paid tier unlocks vendor contact export.",
+      "highlights": {"motion": "marketplace"}
+    },
+    "expected_segments": ["enterprise infra buyers", "devtools evaluation teams", "infra vendors"],
+    "expected_personas": ["Infra Lead", "Head of Platform", "Vendor Marketing"],
+    "expected_anti_icp": ["single-vendor shops", "non-technical buyers"]
+  },
+  {
+    "id": 1015,
+    "product": {
+      "name": "LangCare",
+      "url": "https://langcare.example",
+      "domain": "langcare.example",
+      "description": "A specialized LLM fine-tuned on medical-coding transcripts (ICD-10, CPT). Delivered as an API + playground; HIPAA-ready deployment on AWS.",
+      "highlights": {"compliance": ["hipaa"], "motion": "sales-led"}
+    },
+    "expected_segments": ["health-tech SaaS", "medical-coding BPOs", "revenue-cycle management"],
+    "expected_personas": ["VP Engineering", "Head of Product (healthtech)", "Medical coding lead"],
+    "expected_anti_icp": ["non-healthcare teams", "consumer chat apps"]
+  }
+]

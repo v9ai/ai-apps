@@ -6,11 +6,8 @@
   "observability": { "enabled": true },
   "vars": {
     "LLM_BASE_URL": "https://api.deepseek.com",
-    "LLM_MODEL": "deepseek-chat",
-    "CF_LORA_FINETUNE_ID": "",
-    "CF_LORA_BASE_MODEL": "@cf/meta/llama-3.1-8b-instruct-lora"
+    "LLM_MODEL": "deepseek-chat"
   },
-  "ai": { "binding": "AI" },
   "containers": [
     {
       "class_name": "LeadgenContainer",

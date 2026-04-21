@@ -1,14 +1,18 @@
 """Contact-scoring graph.
 
 Single-node pipeline: serialize a contact profile (or accept pre-serialized text),
-POST to the sibling Worker route ``/score_contact`` which fronts Cloudflare
-Workers AI with a Llama-3.1-8B-Instruct LoRA, then return structured tier JSON.
+POST to the HF Space at ``/score`` which loads a Qwen2.5-1.5B LoRA (merged,
+quantized to Q4_K_M GGUF) via llama-cpp-python, then return structured tier JSON.
 
 Input: {profile: str} OR {contact_id: int}. Output: {tier, score, reasons}.
 
-The graph lives in the same container as the other 5 LangGraph graphs, but the
-actual LoRA inference runs on Workers AI (not in-container), so this node is
-just the glue: profile text in, structured JSON out.
+The graph lives in the Cloudflare Container alongside the other 5 LangGraph
+graphs; LoRA inference runs on the free-tier HF Space at
+``https://v9ai-contact-score-server.hf.space`` (not in-container, not on
+Workers AI). This node is just the glue: profile text in, structured JSON out.
+
+Cold start on the free Space is ~30-60s after idle, so httpx timeout is
+generous (90s). Steady-state responses are a few seconds.
 """
 
 from __future__ import annotations
@@ -23,15 +27,21 @@ from langgraph.graph import END, START, StateGraph
 
 from .state import ScoreContactState
 
-WORKER_URL_DEFAULT = "https://lead-gen-langgraph.eeeew.workers.dev"
+SPACE_URL_DEFAULT = "https://v9ai-contact-score-server.hf.space"
 
 
-def _worker_base_url() -> str:
-    return os.environ.get("WORKER_BASE_URL", WORKER_URL_DEFAULT).rstrip("/")
+def _space_base_url() -> str:
+    # HF_SPACE_URL is the new knob; WORKER_BASE_URL is kept as a legacy fallback
+    # so existing prod env vars keep routing correctly during cutover.
+    return os.environ.get(
+        "HF_SPACE_URL",
+        os.environ.get("WORKER_BASE_URL", SPACE_URL_DEFAULT),
+    ).rstrip("/")
 
 
 def _auth_header() -> dict[str, str]:
-    token = os.environ.get("LANGGRAPH_AUTH_TOKEN", "").strip()
+    """Optional bearer for the HF Space. Public Space = empty token = no header."""
+    token = os.environ.get("HF_SPACE_TOKEN", "").strip()
     return {"authorization": f"Bearer {token}"} if token else {}
 
 
@@ -109,8 +119,10 @@ async def score(state: ScoreContactState) -> dict:
             return {"tier": "D", "score": 0.0, "reasons": ["no profile or contact_id provided"]}
         profile = _load_profile(int(contact_id))
 
-    url = f"{_worker_base_url()}/score_contact"
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    url = f"{_space_base_url()}/score"
+    # Timeout covers HF Space cold start (~30-60s). Warm calls return in a few
+    # seconds; batch callers should expect the first request to pay the tax.
+    async with httpx.AsyncClient(timeout=90.0) as client:
         resp = await client.post(
             url,
             json={"profile": profile},
@@ -120,7 +132,7 @@ async def score(state: ScoreContactState) -> dict:
         return {
             "tier": "D",
             "score": 0.0,
-            "reasons": [f"worker /score_contact returned {resp.status_code}: {resp.text[:200]}"],
+            "reasons": [f"space /score returned {resp.status_code}: {resp.text[:200]}"],
         }
     data = resp.json()
     tier = str(data.get("tier", "D")).upper()
