@@ -34,6 +34,7 @@ class BooksState(TypedDict, total=False):
     # Internal
     _prompt: str
     _research_count: int
+    _skip_persist: bool
     # Output
     success: bool
     message: str
@@ -46,6 +47,11 @@ def _conn_str() -> str:
 
 
 async def collect_data(state: BooksState) -> dict:
+    # Test hook: if a prompt was pre-assembled by the caller, skip the DB
+    # round-trip entirely. Prod callers never set `_prompt`.
+    if state.get("_prompt"):
+        return {}
+
     goal_id = state.get("goal_id")
     user_email = state.get("user_email")
     if not goal_id or not user_email:
@@ -270,6 +276,32 @@ async def persist(state: dict) -> dict:
     conn_str = _conn_str()
     now_iso = datetime.now(timezone.utc).isoformat()
     inserted: list[dict] = []
+
+    # Test hook: if there's no DB URL or the caller opted out, synthesize
+    # output rows from `_books_raw` without touching Neon.
+    if not conn_str or state.get("_skip_persist"):
+        for idx, b in enumerate(books_raw, start=1):
+            inserted.append({
+                "id": idx,
+                "goalId": goal_id,
+                "title": b["title"],
+                "authors": b["authors"],
+                "year": b["year"],
+                "isbn": b["isbn"],
+                "description": b["description"],
+                "whyRecommended": b["why_recommended"],
+                "category": b["category"],
+                "amazonUrl": None,
+                "generatedAt": now_iso,
+                "createdAt": now_iso,
+                "updatedAt": now_iso,
+            })
+        research_count = state.get("_research_count", 0)
+        return {
+            "success": True,
+            "message": f"Recommended {len(inserted)} books based on {research_count} research papers.",
+            "books": inserted,
+        }
 
     try:
         async with await psycopg.AsyncConnection.connect(conn_str) as conn:
