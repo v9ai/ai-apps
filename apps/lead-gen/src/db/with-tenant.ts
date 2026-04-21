@@ -41,6 +41,9 @@ export async function withTenantDb<T>(
 ): Promise<T> {
   const db = drizzle(getPool(), { schema });
   return db.transaction(async (tx) => {
+    // Switch to the non-BYPASSRLS role so the tenant_isolation policy actually
+    // filters. neondb_owner has rolbypassrls=true and would otherwise ignore it.
+    await tx.execute(sql`SET LOCAL ROLE app_tenant`);
     await tx.execute(sql`SELECT set_config('app.tenant', ${tenantKey}, true)`);
     return storage.run(tx as TenantDb, () => fn(tx as TenantDb));
   });
