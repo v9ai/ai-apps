@@ -291,6 +291,10 @@ export const contacts = pgTable(
     deletion_score: real("deletion_score"),
     deletion_reasons: text("deletion_reasons"), // JSON array of reason strings
     deletion_flagged_at: text("deletion_flagged_at"),
+    // Semantic LoRA scoring (Llama-3.1-8B LoRA on CF Workers AI, computed by scoreContactLora)
+    lora_tier: text("lora_tier"), // "A" | "B" | "C" | "D"
+    lora_reasons: jsonb("lora_reasons"), // string[] of rationale bullets from the LoRA
+    lora_scored_at: text("lora_scored_at"),
     // Conversation lifecycle state (updated by webhook handler on reply classification)
     conversation_stage: text("conversation_stage"), // initial_sent | follow_up_1 | follow_up_2 | follow_up_3 | replied_interested | replied_info_request | replied_not_interested | meeting_scheduled | converted | closed
     // Fake account detection (populated by verifyContactAuthenticity mutation)
@@ -313,6 +317,9 @@ export const contacts = pgTable(
     githubHandleIdx: uniqueIndex("idx_contacts_github_handle")
       .on(table.github_handle)
       .where(sql`github_handle IS NOT NULL`),
+    loraTierIdx: index("idx_contacts_lora_tier")
+      .on(table.lora_tier)
+      .where(sql`lora_tier IS NOT NULL`),
   }),
 );
 
