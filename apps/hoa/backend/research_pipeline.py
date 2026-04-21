@@ -92,6 +92,10 @@ _SKIP_AGENTS: set[str] = set()  # populated via --skip-agents CLI flag
 
 _HF_TOKEN: str = os.environ.get("HF_TOKEN", "")
 
+# MLX multi-process pool (each worker loads its own model copy in its own Python process).
+_MLX_WORKERS: int = int(os.environ.get("MLX_WORKERS", "1"))
+_MLX_POOL: Any = None  # multiprocessing.Pool, initialized lazily
+
 def _make_client() -> MLXClient:
     return MLXClient(MLXConfig(
         default_temperature=0.2,
@@ -794,6 +798,52 @@ _TOOL_DEFS: dict[str, FunctionTool] = {
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# MLX worker pool — each worker loads its own Qwen model in its own process
+# ═══════════════════════════════════════════════════════════════════════════
+
+_WORKER_CLIENT: MLXClient | None = None
+
+
+def _mlx_worker_init(model_name: str | None) -> None:
+    """Runs once per worker process on pool start. Loads MLX model into worker memory."""
+    global _WORKER_CLIENT
+    if model_name:
+        os.environ["MLX_MODEL"] = model_name
+    _WORKER_CLIENT = MLXClient(MLXConfig(default_temperature=0.2, default_max_tokens=8192))
+
+
+def _mlx_worker_run(key: str, sys_prompt: str, task_prompt: str, tool_names: list[str] | None) -> tuple[str, str]:
+    """Runs one agent inside a worker. Tool names are resolved from the per-worker _TOOL_DEFS registry."""
+    tools = [_TOOL_DEFS[n] for n in tool_names] if tool_names else None
+    try:
+        result = asyncio.run(_run_agent(_WORKER_CLIENT, sys_prompt, task_prompt, tools))
+    except Exception as e:
+        result = f"(worker error: {e})"
+    return key, result
+
+
+def _get_mlx_pool():
+    """Return the module-level MLX process pool, creating it lazily."""
+    global _MLX_POOL
+    if _MLX_POOL is not None:
+        return _MLX_POOL
+    if _MLX_WORKERS <= 1:
+        return None
+    import multiprocessing as mp
+    ctx = mp.get_context("spawn")
+    model_name = os.environ.get("MLX_MODEL")
+    console.print(f"[bold cyan]Spawning {_MLX_WORKERS} MLX worker processes...[/] (each loads its own model copy)")
+    _MLX_POOL = ctx.Pool(
+        processes=_MLX_WORKERS,
+        initializer=_mlx_worker_init,
+        initargs=(model_name,),
+    )
+    import atexit
+    atexit.register(lambda: _MLX_POOL.close() if _MLX_POOL else None)
+    return _MLX_POOL
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Personality loader
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -1042,9 +1092,24 @@ async def _run_dual_lane(
         console.print(f"  [dim]Single-lane: {len(mlx_specs)} agents → MLX local (sequential)[/]")
 
     # Run both lanes concurrently
+    pool = _get_mlx_pool()
+
     async def _mlx_lane() -> dict[str, str]:
-        """Sequential execution on local MLX model."""
+        """MLX lane: parallel across N worker processes when _MLX_WORKERS > 1, else sequential."""
         lane_results: dict[str, str] = {}
+        if pool is not None and mlx_specs:
+            # Parallel: dispatch all specs to worker pool via starmap.
+            pool_args = [
+                (key, sp, tp, [t.function.name for t in (tools or [])] if tools else None)
+                for key, sp, tp, tools in mlx_specs
+            ]
+            console.print(f"  [cyan]↗[/] dispatching {len(pool_args)} agents to {_MLX_WORKERS} MLX workers...")
+            pairs = await asyncio.to_thread(pool.starmap, _mlx_worker_run, pool_args)
+            for key, result in pairs:
+                lane_results[key] = result
+                console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← MLX worker[/]")
+            return lane_results
+        # Fallback: sequential on in-process MLX client.
         for key, sys_prompt, task_prompt, agent_tools in mlx_specs:
             try:
                 result = await _run_agent(mlx_client, sys_prompt, task_prompt, agent_tools)
