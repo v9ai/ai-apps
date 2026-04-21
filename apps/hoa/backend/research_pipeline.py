@@ -1025,14 +1025,13 @@ async def _run_dual_lane(
             results[key] = "(skipped)"
             console.print(f"  [yellow]⊘[/] {key} (skipped)")
             continue
-        if agent_tools and hf_client:
-            # Tool-heavy → MLX (needs local tool execution loop)
-            mlx_specs.append(spec)
-        elif not agent_tools and hf_client:
-            # Pure synthesis → HF 72B (concurrent)
+        if hf_client:
+            # All agents → HF 72B (concurrent). Tool execution stays local Python;
+            # HF supports tool calling via OpenAI-compatible API. MLX serves as
+            # fallback on 402/auth errors (handled below).
             hf_specs.append(spec)
         else:
-            # No HF available — everything goes to MLX
+            # No HF available — everything goes to MLX sequential.
             mlx_specs.append(spec)
 
     if hf_client and hf_specs:

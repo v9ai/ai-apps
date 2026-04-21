@@ -2,6 +2,7 @@
 
 import * as Tabs from "@radix-ui/react-tabs";
 import { css } from "styled-system/css";
+import { SuspensionLinks } from "../_components/SuspensionLinks";
 import { VideoStitcher } from "../_components/VideoStitcher";
 import { YouTubeFavorites } from "../_components/YouTubeFavorites";
 
@@ -35,6 +36,9 @@ export default function VideosPage() {
           <Tabs.Trigger value="youtube" className={tabTrigger}>
             YT Favs
           </Tabs.Trigger>
+          <Tabs.Trigger value="suspensions" className={tabTrigger}>
+            Suspensions
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="stitcher" className={tabContent}>
@@ -42,6 +46,9 @@ export default function VideosPage() {
         </Tabs.Content>
         <Tabs.Content value="youtube" className={tabContent}>
           <YouTubeFavorites />
+        </Tabs.Content>
+        <Tabs.Content value="suspensions" className={tabContent}>
+          <SuspensionLinks />
         </Tabs.Content>
       </Tabs.Root>
     </main>
