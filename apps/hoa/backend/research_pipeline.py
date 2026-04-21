@@ -1152,15 +1152,25 @@ async def _run_dual_lane(
     if hf_fallback_specs:
         names = [s[0] for s in hf_fallback_specs]
         console.print(f"  [bold yellow]Falling back:[/] {len(hf_fallback_specs)} agents → MLX local (HF credits exhausted): {', '.join(names)}")
-        for key, sys_prompt, task_prompt, agent_tools in hf_fallback_specs:
-            console.print(f"  [dim]  → running {key} on MLX...[/]")
-            try:
-                result = await _run_agent(mlx_client, sys_prompt, task_prompt, agent_tools)
-            except Exception as e:
-                console.print(f"  [red]  → {key} fallback error: {e}[/]")
-                result = f"(agent error: {e})"
-            results[key] = result
-            console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← MLX fallback[/]")
+        if pool is not None:
+            pool_args = [
+                (key, sp, tp, [t.function.name for t in (tools or [])] if tools else None)
+                for key, sp, tp, tools in hf_fallback_specs
+            ]
+            pairs = await asyncio.to_thread(pool.starmap, _mlx_worker_run, pool_args)
+            for key, result in pairs:
+                results[key] = result
+                console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← MLX worker fallback[/]")
+        else:
+            for key, sys_prompt, task_prompt, agent_tools in hf_fallback_specs:
+                console.print(f"  [dim]  → running {key} on MLX...[/]")
+                try:
+                    result = await _run_agent(mlx_client, sys_prompt, task_prompt, agent_tools)
+                except Exception as e:
+                    console.print(f"  [red]  → {key} fallback error: {e}[/]")
+                    result = f"(agent error: {e})"
+                results[key] = result
+                console.print(f"  [green]✓[/] {key} ({len(result)} chars) [dim]← MLX fallback[/]")
 
     return results
 
@@ -2242,6 +2252,8 @@ async def main():
     parser.add_argument("--academic-url", help="Academic profile URL (Academia.edu, ResearchGate, Google Scholar)")
     parser.add_argument("--model", help="MLX model ID (default: env MLX_MODEL or Qwen2.5-7B-Instruct-4bit)")
     parser.add_argument("--skip-agents", help="Comma-separated agent keys to skip (e.g. video_data)")
+    parser.add_argument("--mlx-workers", type=int, default=None,
+                        help="Number of MLX worker processes (each loads its own model). Default: env MLX_WORKERS or 1.")
     args = parser.parse_args()
 
     if args.skip_agents:
@@ -2249,6 +2261,10 @@ async def main():
 
     if args.model:
         os.environ["MLX_MODEL"] = args.model
+
+    if args.mlx_workers is not None:
+        global _MLX_WORKERS
+        _MLX_WORKERS = args.mlx_workers
 
     # Set up HF dual-lane from env or cached token
     global _HF_TOKEN
