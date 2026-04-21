@@ -10,13 +10,23 @@
 const LANGGRAPH_URL =
   process.env.LANGGRAPH_URL || "http://127.0.0.1:8002";
 
+// Optional shared secret used when the backend is exposed via a public tunnel.
+// When set, must match LANGGRAPH_AUTH_TOKEN in backend/.env.
+const LANGGRAPH_AUTH_TOKEN = process.env.LANGGRAPH_AUTH_TOKEN;
+
 async function runGraph<T>(
   assistantId: string,
   input: Record<string, unknown>,
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (LANGGRAPH_AUTH_TOKEN) {
+    headers.Authorization = `Bearer ${LANGGRAPH_AUTH_TOKEN}`;
+  }
   const res = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ assistant_id: assistantId, input }),
     signal: AbortSignal.timeout(60_000),
   });
