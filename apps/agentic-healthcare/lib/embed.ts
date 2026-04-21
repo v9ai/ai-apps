@@ -154,3 +154,46 @@ export async function embedAppointment(
       set: { content, embedding },
     });
 }
+
+export function formatJournalEntry(
+  title: string | null,
+  body: string,
+  mood: string | null,
+  tags: string[],
+  loggedAt: string | null,
+): string {
+  const lines = [`Journal entry${title ? `: ${title}` : ""}`];
+  if (loggedAt) lines.push(`Date: ${loggedAt}`);
+  if (mood) lines.push(`Mood: ${mood}`);
+  if (tags.length > 0) lines.push(`Tags: ${tags.join(", ")}`);
+  lines.push(`Body: ${body}`);
+  return lines.join("\n");
+}
+
+export async function embedJournalEntry(
+  journalId: string,
+  userId: string,
+  body: string,
+  opts: {
+    title?: string | null;
+    mood?: string | null;
+    tags?: string[];
+    loggedAt?: string | null;
+  },
+): Promise<void> {
+  const content = formatJournalEntry(
+    opts.title ?? null,
+    body,
+    opts.mood ?? null,
+    opts.tags ?? [],
+    opts.loggedAt ?? null,
+  );
+  const embedding = await generateEmbedding(content);
+  await db
+    .insert(journalEmbeddings)
+    .values({ journalId, userId, content, embedding })
+    .onConflictDoUpdate({
+      target: journalEmbeddings.journalId,
+      set: { content, embedding },
+    });
+}

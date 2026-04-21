@@ -198,7 +198,10 @@ export default function AnthropicLearningPathPage() {
             <h2 className="courses-group-title">🏆 Finishers</h2>
             <span className="courses-group-count">{FINISHERS.length}</span>
           </div>
-          <div className="courses-group-grid">
+          <div
+            className="courses-group-grid"
+            style={{ gridTemplateColumns: "1fr" }}
+          >
             {FINISHERS.map((f) => (
               <FinisherCard key={f.rank} finisher={f} />
             ))}

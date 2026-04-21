@@ -17,6 +17,7 @@ import {
   Users,
   Brain,
   BrainCircuit,
+  BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { css, cx } from "styled-system/css";
@@ -31,6 +32,7 @@ const navLinks: { href: string; label: string; icon: LucideIcon; separator?: boo
   { href: "/doctors", label: "Doctors", icon: Stethoscope },
   { href: "/family", label: "Family", icon: Users },
   { href: "/brain-memory", label: "Brain / Memory", icon: BrainCircuit },
+  { href: "/journal", label: "Journal", icon: BookOpen },
   { href: "/protocols", label: "Protocols", icon: Brain },
   { href: "/trajectory", label: "Trajectory", icon: TrendingUp },
   { href: "/search", label: "Search", icon: Search, separator: true },
