@@ -121,7 +121,7 @@ function ApplicationDetailInner() {
   }
 
   return (
-    <Container size="3" px={{ initial: "3", sm: "5", md: "8" }} py={{ initial: "4", md: "8" }}>
+    <Container size="3" className="app-detail" px={{ initial: "3", sm: "5", md: "8" }} py={{ initial: "4", md: "8" }}>
       <ApplicationHeader app={app} isAdmin={isAdmin} onUpdate={setApp} onSlugChange={(s) => router.replace(`/applications/${s}?tab=${activeTab}`)} />
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>

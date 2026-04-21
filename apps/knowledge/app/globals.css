@@ -2739,6 +2739,54 @@ body {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ================================================================
+   APPLICATION DETAIL — borderless + mobile-readable
+   ================================================================ */
+.app-detail .rt-Card,
+.app-detail .rt-BaseCard {
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+.app-detail .rt-TabsList {
+  box-shadow: none !important;
+  border-bottom: 0 !important;
+}
+.app-detail .rt-TabsTriggerInner,
+.app-detail .rt-TabsTriggerInnerHidden {
+  box-shadow: none !important;
+}
+.app-detail [style*="border-left"],
+.app-detail [style*="borderLeft"],
+.app-detail [style*="border-top"],
+.app-detail [style*="borderTop"] {
+  border-left: 0 !important;
+  border-top: 0 !important;
+}
+@media (max-width: 640px) {
+  .app-detail {
+    padding-left: var(--space-2) !important;
+    padding-right: var(--space-2) !important;
+  }
+  .app-detail .deep-dive-content,
+  .app-detail .deep-dive-content pre,
+  .app-detail .interview-prep-md,
+  .app-detail .interview-prep-md p,
+  .app-detail .interview-prep-md li {
+    font-size: 16px !important;
+    line-height: 1.65 !important;
+  }
+  .app-detail .deep-dive-content pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .app-detail .rt-TabsTrigger {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
 .interview-prep-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
