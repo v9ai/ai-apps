@@ -384,8 +384,7 @@ export type CompetitorAnalysis = {
   createdBy: Maybe<Scalars['String']['output']>;
   error: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
-  seedProductName: Scalars['String']['output'];
-  seedProductUrl: Scalars['String']['output'];
+  product: Product;
   status: CompetitorAnalysisStatus;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -1365,6 +1364,7 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteLinkedInPost: Scalars['Boolean']['output'];
+  deleteProduct: Scalars['Boolean']['output'];
   detectIntentSignals: DetectIntentResult;
   dismissAllDrafts: BatchDismissResult;
   dismissDraft: DismissDraftResult;
@@ -1427,6 +1427,7 @@ export type Mutation = {
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
+  upsertProduct: Product;
   /** Run fake account detection on all contacts for a company, optionally filtered by skills. */
   verifyCompanyContacts: VerifyCompanyContactsResult;
   /** Run fake account detection on a single contact. Enriches LinkedIn + GitHub, then scores. */
@@ -1527,8 +1528,7 @@ export type MutationCreateCompanyArgs = {
 
 
 export type MutationCreateCompetitorAnalysisArgs = {
-  productName: Scalars['String']['input'];
-  productUrl: Scalars['String']['input'];
+  productId: Scalars['Int']['input'];
 };
 
 
@@ -1588,6 +1588,11 @@ export type MutationDeleteEmailTemplateArgs = {
 
 
 export type MutationDeleteLinkedInPostArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteProductArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1883,6 +1888,11 @@ export type MutationUpsertLinkedInPostsArgs = {
 };
 
 
+export type MutationUpsertProductArgs = {
+  input: ProductInput;
+};
+
+
 export type MutationVerifyCompanyContactsArgs = {
   companyId: Scalars['Int']['input'];
   skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1945,6 +1955,24 @@ export type PricingTier = {
   tierName: Scalars['String']['output'];
 };
 
+export type Product = {
+  __typename?: 'Product';
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: Maybe<Scalars['String']['output']>;
+  description: Maybe<Scalars['String']['output']>;
+  domain: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  url: Scalars['URL']['output'];
+};
+
+export type ProductInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+};
+
 export type QualityGateResult = {
   __typename?: 'QualityGateResult';
   adjustedScore: Scalars['Float']['output'];
@@ -1995,6 +2023,8 @@ export type Query = {
   /** ML model health and stats */
   mlStats: MlStats;
   opportunityByUrl: Maybe<Opportunity>;
+  product: Maybe<Product>;
+  products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   /** Next best companies to contact based on ML scoring */
@@ -2258,6 +2288,17 @@ export type QueryLinkedinPostsArgs = {
 
 export type QueryOpportunityByUrlArgs = {
   url: Scalars['String']['input'];
+};
+
+
+export type QueryProductArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryProductsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3737,27 +3778,26 @@ export type CompetitorCoreFragment = { __typename?: 'Competitor', id: number, an
 
 export type CompetitorFullFragment = { __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> };
 
-export type CompetitorAnalysisCoreFragment = { __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string };
+export type CompetitorAnalysisCoreFragment = { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, product: { __typename?: 'Product', id: number, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } };
 
 export type CompetitorAnalysesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CompetitorAnalysesQuery = { __typename?: 'Query', competitorAnalyses: Array<{ __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, name: string, status: CompetitorStatus }> }> };
+export type CompetitorAnalysesQuery = { __typename?: 'Query', competitorAnalyses: Array<{ __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, name: string, status: CompetitorStatus }>, product: { __typename?: 'Product', id: number, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } }> };
 
 export type CompetitorAnalysisQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type CompetitorAnalysisQuery = { __typename?: 'Query', competitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> }> } | null };
+export type CompetitorAnalysisQuery = { __typename?: 'Query', competitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> }>, product: { __typename?: 'Product', id: number, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } } | null };
 
 export type CreateCompetitorAnalysisMutationVariables = Exact<{
-  productName: Scalars['String']['input'];
-  productUrl: Scalars['String']['input'];
+  productId: Scalars['Int']['input'];
 }>;
 
 
-export type CreateCompetitorAnalysisMutation = { __typename?: 'Mutation', createCompetitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }> } };
+export type CreateCompetitorAnalysisMutation = { __typename?: 'Mutation', createCompetitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }>, product: { __typename?: 'Product', id: number, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } } };
 
 export type ApproveCompetitorsMutationVariables = Exact<{
   analysisId: Scalars['Int']['input'];
@@ -3765,7 +3805,7 @@ export type ApproveCompetitorsMutationVariables = Exact<{
 }>;
 
 
-export type ApproveCompetitorsMutation = { __typename?: 'Mutation', approveCompetitors: { __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }> } };
+export type ApproveCompetitorsMutation = { __typename?: 'Mutation', approveCompetitors: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }>, product: { __typename?: 'Product', id: number, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } } };
 
 export type RescrapeCompetitorMutationVariables = Exact<{
   competitorId: Scalars['Int']['input'];
@@ -4169,6 +4209,34 @@ export type AnalyzeLinkedInPostsMutationVariables = Exact<{
 
 export type AnalyzeLinkedInPostsMutation = { __typename?: 'Mutation', analyzeLinkedInPosts: { __typename?: 'AnalyzePostsResult', success: boolean, analyzed: number, failed: number, errors: Array<string> } };
 
+export type ProductCoreFragment = { __typename?: 'Product', id: number, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string };
+
+export type ProductsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ProductsQuery = { __typename?: 'Query', products: Array<{ __typename?: 'Product', id: number, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string }> };
+
+export type ProductQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type ProductQuery = { __typename?: 'Query', product: { __typename?: 'Product', id: number, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } | null };
+
+export type UpsertProductMutationVariables = Exact<{
+  input: ProductInput;
+}>;
+
+
+export type UpsertProductMutation = { __typename?: 'Mutation', upsertProduct: { __typename?: 'Product', id: number, name: string, url: string, domain: string | null, description: string | null, createdBy: string | null, createdAt: string, updatedAt: string } };
+
+export type DeleteProductMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteProductMutation = { __typename?: 'Mutation', deleteProduct: boolean };
+
 export type DueRemindersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -4460,18 +4528,31 @@ export const CompetitorFullFragmentDoc = gql`
 ${PricingTierCoreFragmentDoc}
 ${CompetitorFeatureCoreFragmentDoc}
 ${CompetitorIntegrationCoreFragmentDoc}`;
+export const ProductCoreFragmentDoc = gql`
+    fragment ProductCore on Product {
+  id
+  name
+  url
+  domain
+  description
+  createdBy
+  createdAt
+  updatedAt
+}
+    `;
 export const CompetitorAnalysisCoreFragmentDoc = gql`
     fragment CompetitorAnalysisCore on CompetitorAnalysis {
   id
-  seedProductName
-  seedProductUrl
+  product {
+    ...ProductCore
+  }
   status
   createdBy
   error
   createdAt
   updatedAt
 }
-    `;
+    ${ProductCoreFragmentDoc}`;
 export const GetUserSettingsDocument = gql`
     query GetUserSettings($userId: String!) {
   userSettings(userId: $userId) {
@@ -5481,8 +5562,8 @@ export type CompetitorAnalysisLazyQueryHookResult = ReturnType<typeof useCompeti
 export type CompetitorAnalysisSuspenseQueryHookResult = ReturnType<typeof useCompetitorAnalysisSuspenseQuery>;
 export type CompetitorAnalysisQueryResult = Apollo.QueryResult<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>;
 export const CreateCompetitorAnalysisDocument = gql`
-    mutation CreateCompetitorAnalysis($productName: String!, $productUrl: String!) {
-  createCompetitorAnalysis(productName: $productName, productUrl: $productUrl) {
+    mutation CreateCompetitorAnalysis($productId: Int!) {
+  createCompetitorAnalysis(productId: $productId) {
     ...CompetitorAnalysisCore
     competitors {
       ...CompetitorCore
@@ -5506,8 +5587,7 @@ export type CreateCompetitorAnalysisMutationFn = Apollo.MutationFunction<CreateC
  * @example
  * const [createCompetitorAnalysisMutation, { data, loading, error }] = useCreateCompetitorAnalysisMutation({
  *   variables: {
- *      productName: // value for 'productName'
- *      productUrl: // value for 'productUrl'
+ *      productId: // value for 'productId'
  *   },
  * });
  */
@@ -8073,6 +8153,155 @@ export function useAnalyzeLinkedInPostsMutation(baseOptions?: Apollo.MutationHoo
 export type AnalyzeLinkedInPostsMutationHookResult = ReturnType<typeof useAnalyzeLinkedInPostsMutation>;
 export type AnalyzeLinkedInPostsMutationResult = Apollo.MutationResult<AnalyzeLinkedInPostsMutation>;
 export type AnalyzeLinkedInPostsMutationOptions = Apollo.BaseMutationOptions<AnalyzeLinkedInPostsMutation, AnalyzeLinkedInPostsMutationVariables>;
+export const ProductsDocument = gql`
+    query Products {
+  products {
+    ...ProductCore
+  }
+}
+    ${ProductCoreFragmentDoc}`;
+
+/**
+ * __useProductsQuery__
+ *
+ * To run a query within a React component, call `useProductsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProductsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProductsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useProductsQuery(baseOptions?: Apollo.QueryHookOptions<ProductsQuery, ProductsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ProductsQuery, ProductsQueryVariables>(ProductsDocument, options);
+      }
+export function useProductsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ProductsQuery, ProductsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ProductsQuery, ProductsQueryVariables>(ProductsDocument, options);
+        }
+// @ts-ignore
+export function useProductsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ProductsQuery, ProductsQueryVariables>): Apollo.UseSuspenseQueryResult<ProductsQuery, ProductsQueryVariables>;
+export function useProductsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductsQuery, ProductsQueryVariables>): Apollo.UseSuspenseQueryResult<ProductsQuery | undefined, ProductsQueryVariables>;
+export function useProductsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductsQuery, ProductsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ProductsQuery, ProductsQueryVariables>(ProductsDocument, options);
+        }
+export type ProductsQueryHookResult = ReturnType<typeof useProductsQuery>;
+export type ProductsLazyQueryHookResult = ReturnType<typeof useProductsLazyQuery>;
+export type ProductsSuspenseQueryHookResult = ReturnType<typeof useProductsSuspenseQuery>;
+export type ProductsQueryResult = Apollo.QueryResult<ProductsQuery, ProductsQueryVariables>;
+export const ProductDocument = gql`
+    query Product($id: Int!) {
+  product(id: $id) {
+    ...ProductCore
+  }
+}
+    ${ProductCoreFragmentDoc}`;
+
+/**
+ * __useProductQuery__
+ *
+ * To run a query within a React component, call `useProductQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProductQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProductQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useProductQuery(baseOptions: Apollo.QueryHookOptions<ProductQuery, ProductQueryVariables> & ({ variables: ProductQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ProductQuery, ProductQueryVariables>(ProductDocument, options);
+      }
+export function useProductLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ProductQuery, ProductQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ProductQuery, ProductQueryVariables>(ProductDocument, options);
+        }
+// @ts-ignore
+export function useProductSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ProductQuery, ProductQueryVariables>): Apollo.UseSuspenseQueryResult<ProductQuery, ProductQueryVariables>;
+export function useProductSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductQuery, ProductQueryVariables>): Apollo.UseSuspenseQueryResult<ProductQuery | undefined, ProductQueryVariables>;
+export function useProductSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductQuery, ProductQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ProductQuery, ProductQueryVariables>(ProductDocument, options);
+        }
+export type ProductQueryHookResult = ReturnType<typeof useProductQuery>;
+export type ProductLazyQueryHookResult = ReturnType<typeof useProductLazyQuery>;
+export type ProductSuspenseQueryHookResult = ReturnType<typeof useProductSuspenseQuery>;
+export type ProductQueryResult = Apollo.QueryResult<ProductQuery, ProductQueryVariables>;
+export const UpsertProductDocument = gql`
+    mutation UpsertProduct($input: ProductInput!) {
+  upsertProduct(input: $input) {
+    ...ProductCore
+  }
+}
+    ${ProductCoreFragmentDoc}`;
+export type UpsertProductMutationFn = Apollo.MutationFunction<UpsertProductMutation, UpsertProductMutationVariables>;
+
+/**
+ * __useUpsertProductMutation__
+ *
+ * To run a mutation, you first call `useUpsertProductMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpsertProductMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [upsertProductMutation, { data, loading, error }] = useUpsertProductMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpsertProductMutation(baseOptions?: Apollo.MutationHookOptions<UpsertProductMutation, UpsertProductMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpsertProductMutation, UpsertProductMutationVariables>(UpsertProductDocument, options);
+      }
+export type UpsertProductMutationHookResult = ReturnType<typeof useUpsertProductMutation>;
+export type UpsertProductMutationResult = Apollo.MutationResult<UpsertProductMutation>;
+export type UpsertProductMutationOptions = Apollo.BaseMutationOptions<UpsertProductMutation, UpsertProductMutationVariables>;
+export const DeleteProductDocument = gql`
+    mutation DeleteProduct($id: Int!) {
+  deleteProduct(id: $id)
+}
+    `;
+export type DeleteProductMutationFn = Apollo.MutationFunction<DeleteProductMutation, DeleteProductMutationVariables>;
+
+/**
+ * __useDeleteProductMutation__
+ *
+ * To run a mutation, you first call `useDeleteProductMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteProductMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteProductMutation, { data, loading, error }] = useDeleteProductMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteProductMutation(baseOptions?: Apollo.MutationHookOptions<DeleteProductMutation, DeleteProductMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteProductMutation, DeleteProductMutationVariables>(DeleteProductDocument, options);
+      }
+export type DeleteProductMutationHookResult = ReturnType<typeof useDeleteProductMutation>;
+export type DeleteProductMutationResult = Apollo.MutationResult<DeleteProductMutation>;
+export type DeleteProductMutationOptions = Apollo.BaseMutationOptions<DeleteProductMutation, DeleteProductMutationVariables>;
 export const DueRemindersDocument = gql`
     query DueReminders {
   dueReminders {

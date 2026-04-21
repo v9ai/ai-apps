@@ -332,8 +332,7 @@ type CompetitorAnalysis {
   createdBy: String
   error: String
   id: Int!
-  seedProductName: String!
-  seedProductUrl: String!
+  product: Product!
   status: CompetitorAnalysisStatus!
   updatedAt: DateTime!
 }
@@ -1244,7 +1243,7 @@ type Mutation {
   """
   countRemoteVoyagerJobs(input: CountRemoteVoyagerJobsInput!): CountRemoteVoyagerJobsResult!
   createCompany(input: CreateCompanyInput!): Company!
-  createCompetitorAnalysis(productName: String!, productUrl: String!): CompetitorAnalysis!
+  createCompetitorAnalysis(productId: Int!): CompetitorAnalysis!
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
@@ -1257,6 +1256,7 @@ type Mutation {
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
   deleteLinkedInPost(id: Int!): Boolean!
+  deleteProduct(id: Int!): Boolean!
   detectIntentSignals(companyId: Int!): DetectIntentResult!
   dismissAllDrafts(draftIds: [Int!]!): BatchDismissResult!
   dismissDraft(draftId: Int!): DismissDraftResult!
@@ -1319,6 +1319,7 @@ type Mutation {
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   upsertLinkedInPost(input: UpsertLinkedInPostInput!): LinkedInPost!
   upsertLinkedInPosts(inputs: [UpsertLinkedInPostInput!]!): UpsertLinkedInPostsResult!
+  upsertProduct(input: ProductInput!): Product!
   """
   Run fake account detection on all contacts for a company, optionally filtered by skills.
   """
@@ -1375,6 +1376,23 @@ type PricingTier {
   tierName: String!
 }
 
+type Product {
+  createdAt: DateTime!
+  createdBy: String
+  description: String
+  domain: String
+  id: Int!
+  name: String!
+  updatedAt: DateTime!
+  url: URL!
+}
+
+input ProductInput {
+  description: String
+  name: String!
+  url: String!
+}
+
 type QualityGateResult {
   adjustedScore: Float!
   flags: [String!]!
@@ -1423,6 +1441,8 @@ type Query {
   """ML model health and stats"""
   mlStats: MLStats!
   opportunityByUrl(url: String!): Opportunity
+  product(id: Int!): Product
+  products(limit: Int, offset: Int): [Product!]!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, classification: String, limit: Int, offset: Int): ReceivedEmailsResult!
   """Next best companies to contact based on ML scoring"""

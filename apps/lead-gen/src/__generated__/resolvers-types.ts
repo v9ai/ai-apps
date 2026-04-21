@@ -384,8 +384,7 @@ export type CompetitorAnalysis = {
   createdBy: Maybe<Scalars['String']['output']>;
   error: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
-  seedProductName: Scalars['String']['output'];
-  seedProductUrl: Scalars['String']['output'];
+  product: Product;
   status: CompetitorAnalysisStatus;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -1365,6 +1364,7 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteLinkedInPost: Scalars['Boolean']['output'];
+  deleteProduct: Scalars['Boolean']['output'];
   detectIntentSignals: DetectIntentResult;
   dismissAllDrafts: BatchDismissResult;
   dismissDraft: DismissDraftResult;
@@ -1427,6 +1427,7 @@ export type Mutation = {
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
+  upsertProduct: Product;
   /** Run fake account detection on all contacts for a company, optionally filtered by skills. */
   verifyCompanyContacts: VerifyCompanyContactsResult;
   /** Run fake account detection on a single contact. Enriches LinkedIn + GitHub, then scores. */
@@ -1527,8 +1528,7 @@ export type MutationCreateCompanyArgs = {
 
 
 export type MutationCreateCompetitorAnalysisArgs = {
-  productName: Scalars['String']['input'];
-  productUrl: Scalars['String']['input'];
+  productId: Scalars['Int']['input'];
 };
 
 
@@ -1588,6 +1588,11 @@ export type MutationDeleteEmailTemplateArgs = {
 
 
 export type MutationDeleteLinkedInPostArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteProductArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1883,6 +1888,11 @@ export type MutationUpsertLinkedInPostsArgs = {
 };
 
 
+export type MutationUpsertProductArgs = {
+  input: ProductInput;
+};
+
+
 export type MutationVerifyCompanyContactsArgs = {
   companyId: Scalars['Int']['input'];
   skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1945,6 +1955,24 @@ export type PricingTier = {
   tierName: Scalars['String']['output'];
 };
 
+export type Product = {
+  __typename?: 'Product';
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: Maybe<Scalars['String']['output']>;
+  description: Maybe<Scalars['String']['output']>;
+  domain: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  url: Scalars['URL']['output'];
+};
+
+export type ProductInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+};
+
 export type QualityGateResult = {
   __typename?: 'QualityGateResult';
   adjustedScore: Scalars['Float']['output'];
@@ -1995,6 +2023,8 @@ export type Query = {
   /** ML model health and stats */
   mlStats: MlStats;
   opportunityByUrl: Maybe<Opportunity>;
+  product: Maybe<Product>;
+  products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   /** Next best companies to contact based on ML scoring */
@@ -2258,6 +2288,17 @@ export type QueryLinkedinPostsArgs = {
 
 export type QueryOpportunityByUrlArgs = {
   url: Scalars['String']['input'];
+};
+
+
+export type QueryProductArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryProductsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3740,6 +3781,8 @@ export type ResolversTypes = {
   Opportunity: ResolverTypeWrapper<Partial<Opportunity>>;
   PreviewEmailInput: ResolverTypeWrapper<Partial<PreviewEmailInput>>;
   PricingTier: ResolverTypeWrapper<Partial<PricingTier>>;
+  Product: ResolverTypeWrapper<Partial<Product>>;
+  ProductInput: ResolverTypeWrapper<Partial<ProductInput>>;
   QualityGateResult: ResolverTypeWrapper<Partial<QualityGateResult>>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   RankedContact: ResolverTypeWrapper<Partial<RankedContact>>;
@@ -3976,6 +4019,8 @@ export type ResolversParentTypes = {
   Opportunity: Partial<Opportunity>;
   PreviewEmailInput: Partial<PreviewEmailInput>;
   PricingTier: Partial<PricingTier>;
+  Product: Partial<Product>;
+  ProductInput: Partial<ProductInput>;
   QualityGateResult: Partial<QualityGateResult>;
   Query: Record<PropertyKey, never>;
   RankedContact: Partial<RankedContact>;
@@ -4358,8 +4403,7 @@ export type CompetitorAnalysisResolvers<ContextType = GraphQLContext, ParentType
   createdBy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  seedProductName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  seedProductUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  product?: Resolver<ResolversTypes['Product'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['CompetitorAnalysisStatus'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
 };
@@ -5066,7 +5110,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   computeNextTouchScores?: Resolver<ResolversTypes['ComputeNextTouchScoresResult'], ParentType, ContextType, RequireFields<MutationComputeNextTouchScoresArgs, 'companyId'>>;
   countRemoteVoyagerJobs?: Resolver<ResolversTypes['CountRemoteVoyagerJobsResult'], ParentType, ContextType, RequireFields<MutationCountRemoteVoyagerJobsArgs, 'input'>>;
   createCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationCreateCompanyArgs, 'input'>>;
-  createCompetitorAnalysis?: Resolver<ResolversTypes['CompetitorAnalysis'], ParentType, ContextType, RequireFields<MutationCreateCompetitorAnalysisArgs, 'productName' | 'productUrl'>>;
+  createCompetitorAnalysis?: Resolver<ResolversTypes['CompetitorAnalysis'], ParentType, ContextType, RequireFields<MutationCreateCompetitorAnalysisArgs, 'productId'>>;
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationCreateContactArgs, 'input'>>;
   createDraftCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationCreateDraftCampaignArgs, 'input'>>;
   createEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationCreateEmailTemplateArgs, 'input'>>;
@@ -5079,6 +5123,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteContact?: Resolver<ResolversTypes['DeleteContactResult'], ParentType, ContextType, RequireFields<MutationDeleteContactArgs, 'id'>>;
   deleteEmailTemplate?: Resolver<ResolversTypes['DeleteEmailTemplateResult'], ParentType, ContextType, RequireFields<MutationDeleteEmailTemplateArgs, 'id'>>;
   deleteLinkedInPost?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationDeleteLinkedInPostArgs, 'id'>>;
+  deleteProduct?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationDeleteProductArgs, 'id'>>;
   detectIntentSignals?: Resolver<ResolversTypes['DetectIntentResult'], ParentType, ContextType, RequireFields<MutationDetectIntentSignalsArgs, 'companyId'>>;
   dismissAllDrafts?: Resolver<ResolversTypes['BatchDismissResult'], ParentType, ContextType, RequireFields<MutationDismissAllDraftsArgs, 'draftIds'>>;
   dismissDraft?: Resolver<ResolversTypes['DismissDraftResult'], ParentType, ContextType, RequireFields<MutationDismissDraftArgs, 'draftId'>>;
@@ -5135,6 +5180,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   upsertLinkedInPost?: Resolver<ResolversTypes['LinkedInPost'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostArgs, 'input'>>;
   upsertLinkedInPosts?: Resolver<ResolversTypes['UpsertLinkedInPostsResult'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostsArgs, 'inputs'>>;
+  upsertProduct?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationUpsertProductArgs, 'input'>>;
   verifyCompanyContacts?: Resolver<ResolversTypes['VerifyCompanyContactsResult'], ParentType, ContextType, RequireFields<MutationVerifyCompanyContactsArgs, 'companyId'>>;
   verifyContactAuthenticity?: Resolver<ResolversTypes['VerifyAuthenticityResult'], ParentType, ContextType, RequireFields<MutationVerifyContactAuthenticityArgs, 'contactId'>>;
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
@@ -5176,6 +5222,17 @@ export type PricingTierResolvers<ContextType = GraphQLContext, ParentType extend
   seatPriceUsd?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   sortOrder?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   tierName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ProductResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Product'] = ResolversParentTypes['Product']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  createdBy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  domain?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  url?: Resolver<ResolversTypes['URL'], ParentType, ContextType>;
 };
 
 export type QualityGateResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['QualityGateResult'] = ResolversParentTypes['QualityGateResult']> = {
@@ -5224,6 +5281,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   linkedinPosts?: Resolver<Array<ResolversTypes['LinkedInPost']>, ParentType, ContextType, Partial<QueryLinkedinPostsArgs>>;
   mlStats?: Resolver<ResolversTypes['MLStats'], ParentType, ContextType>;
   opportunityByUrl?: Resolver<Maybe<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryOpportunityByUrlArgs, 'url'>>;
+  product?: Resolver<Maybe<ResolversTypes['Product']>, ParentType, ContextType, RequireFields<QueryProductArgs, 'id'>>;
+  products?: Resolver<Array<ResolversTypes['Product']>, ParentType, ContextType, Partial<QueryProductsArgs>>;
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
   recommendedCompanies?: Resolver<Array<ResolversTypes['RecommendedCompany']>, ParentType, ContextType, Partial<QueryRecommendedCompaniesArgs>>;
@@ -6140,6 +6199,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Mutation?: MutationResolvers<ContextType>;
   Opportunity?: OpportunityResolvers<ContextType>;
   PricingTier?: PricingTierResolvers<ContextType>;
+  Product?: ProductResolvers<ContextType>;
   QualityGateResult?: QualityGateResultResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RankedContact?: RankedContactResolvers<ContextType>;

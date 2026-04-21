@@ -381,8 +381,7 @@ export type CompetitorAnalysis = {
   createdBy: Maybe<Scalars['String']['output']>;
   error: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
-  seedProductName: Scalars['String']['output'];
-  seedProductUrl: Scalars['String']['output'];
+  product: Product;
   status: CompetitorAnalysisStatus;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -1362,6 +1361,7 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteLinkedInPost: Scalars['Boolean']['output'];
+  deleteProduct: Scalars['Boolean']['output'];
   detectIntentSignals: DetectIntentResult;
   dismissAllDrafts: BatchDismissResult;
   dismissDraft: DismissDraftResult;
@@ -1424,6 +1424,7 @@ export type Mutation = {
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
+  upsertProduct: Product;
   /** Run fake account detection on all contacts for a company, optionally filtered by skills. */
   verifyCompanyContacts: VerifyCompanyContactsResult;
   /** Run fake account detection on a single contact. Enriches LinkedIn + GitHub, then scores. */
@@ -1524,8 +1525,7 @@ export type MutationCreateCompanyArgs = {
 
 
 export type MutationCreateCompetitorAnalysisArgs = {
-  productName: Scalars['String']['input'];
-  productUrl: Scalars['String']['input'];
+  productId: Scalars['Int']['input'];
 };
 
 
@@ -1585,6 +1585,11 @@ export type MutationDeleteEmailTemplateArgs = {
 
 
 export type MutationDeleteLinkedInPostArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteProductArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1880,6 +1885,11 @@ export type MutationUpsertLinkedInPostsArgs = {
 };
 
 
+export type MutationUpsertProductArgs = {
+  input: ProductInput;
+};
+
+
 export type MutationVerifyCompanyContactsArgs = {
   companyId: Scalars['Int']['input'];
   skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1942,6 +1952,24 @@ export type PricingTier = {
   tierName: Scalars['String']['output'];
 };
 
+export type Product = {
+  __typename: 'Product';
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: Maybe<Scalars['String']['output']>;
+  description: Maybe<Scalars['String']['output']>;
+  domain: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  url: Scalars['URL']['output'];
+};
+
+export type ProductInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+};
+
 export type QualityGateResult = {
   __typename: 'QualityGateResult';
   adjustedScore: Scalars['Float']['output'];
@@ -1992,6 +2020,8 @@ export type Query = {
   /** ML model health and stats */
   mlStats: MlStats;
   opportunityByUrl: Maybe<Opportunity>;
+  product: Maybe<Product>;
+  products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   /** Next best companies to contact based on ML scoring */
@@ -2255,6 +2285,17 @@ export type QueryLinkedinPostsArgs = {
 
 export type QueryOpportunityByUrlArgs = {
   url: Scalars['String']['input'];
+};
+
+
+export type QueryProductArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryProductsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
