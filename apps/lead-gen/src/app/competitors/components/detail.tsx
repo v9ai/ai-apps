@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import type { CompetitorAnalysisQuery } from "@/__generated__/hooks";
 import { Badge, Container, Flex, Heading, Text } from "@radix-ui/themes";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
