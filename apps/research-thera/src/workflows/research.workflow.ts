@@ -10,7 +10,6 @@ import {
   searchDataCite as pkgSearchDataCite,
   searchCore as pkgSearchCore,
   searchZenodo as pkgSearchZenodo,
-  dedupeCandidates,
   type PaperCandidate,
 } from "@ai-apps/research";
 import { upsertTherapyResearch } from "@/src/db";
@@ -228,16 +227,15 @@ function phasePlanQueries(userPrompt: string, plannedQueries?: string[]): string
 
 
 async function phaseSearchAll(queries: string[]): Promise<PaperResult[]> {
-  const perProvider = 10;
-  // Cap to 2 queries × 4 highest-yield providers = 8 subrequests max.
-  // Stays well under CF's 50/invocation subrequest budget to leave room for save.
+  const perProvider = 8;
+  // 2 queries × 9 providers = 18 subrequests max.
+  // Still leaves headroom within CF's 50/invocation subrequest budget for save + evals.
   const usedQueries = queries.slice(0, 2);
   const tasks: Array<Promise<PaperResult[]>> = [];
   for (const q of usedQueries) {
-    tasks.push(searchOpenAlex(q, perProvider));
-    tasks.push(searchCrossref(q, perProvider));
-    tasks.push(searchSemanticScholar(q, perProvider));
-    tasks.push(searchArxiv(q, perProvider));
+    for (const { name, fn } of PROVIDERS) {
+      tasks.push(runProvider(name, fn, q, perProvider));
+    }
   }
   const results = await Promise.allSettled(tasks);
   const pool = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
@@ -245,7 +243,19 @@ async function phaseSearchAll(queries: string[]): Promise<PaperResult[]> {
     const a = (p.abstract || "").trim().toLowerCase();
     return a.length >= 50 && a !== "none" && a !== "..." && a !== "n/a" && a !== "no abstract available";
   });
-  return dedupePapers(filtered);
+  const seen = new Set<string>();
+  const deduped: PaperResult[] = [];
+  for (const p of filtered) {
+    const doiKey = p.doi ? `doi:${p.doi.toLowerCase()}` : "";
+    const titleKey = `t:${(p.title || "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 120)}`;
+    const key = doiKey || titleKey;
+    if (!key) continue;
+    if (seen.has(key)) continue;
+    if (doiKey) seen.add(doiKey);
+    seen.add(titleKey);
+    deduped.push(p);
+  }
+  return deduped;
 }
 
 type CuratedPaper = PaperResult & {
@@ -311,7 +321,7 @@ async function phaseRankAndExtract(
   });
 
   scored.sort((a, b) => b.score - a.score);
-  const top = scored.slice(0, 10);
+  const top = scored.slice(0, 20);
 
   const maxScore = top[0]?.score || 1;
   const out: CuratedPaper[] = top.map((s) => ({
