@@ -166,6 +166,16 @@ export function JobDescriptionTab({
                   );
                 },
                 hr: () => <Box mb="4" />,
+                table: ({ children }) => (
+                  <Box mb="3" className="interview-prep-table-wrap">
+                    <table className="interview-prep-table">{children}</table>
+                  </Box>
+                ),
+                thead: ({ children }) => <thead>{children}</thead>,
+                tbody: ({ children }) => <tbody>{children}</tbody>,
+                tr: ({ children }) => <tr>{children}</tr>,
+                th: ({ children }) => <th>{children}</th>,
+                td: ({ children }) => <td>{children}</td>,
               }}
             >
               {app.aiInterviewQuestions}

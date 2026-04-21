@@ -2730,6 +2730,72 @@ body {
   font-size: var(--font-size-2);
   line-height: 1.7;
 }
+.interview-prep-md {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.interview-prep-md pre,
+.interview-prep-md code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.interview-prep-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.interview-prep-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-2);
+  line-height: 1.55;
+}
+.interview-prep-table th,
+.interview-prep-table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  background: var(--color-panel-solid);
+}
+.interview-prep-table thead th {
+  font-weight: 600;
+  color: var(--violet-11);
+  background: var(--violet-2);
+}
+.interview-prep-table tbody tr + tr th,
+.interview-prep-table tbody tr + tr td {
+  box-shadow: inset 0 1px 0 var(--gray-a3);
+}
+@media (max-width: 640px) {
+  .interview-prep-table {
+    display: block;
+    width: 100%;
+  }
+  .interview-prep-table thead {
+    display: none;
+  }
+  .interview-prep-table tbody,
+  .interview-prep-table tr {
+    display: block;
+    width: 100%;
+  }
+  .interview-prep-table tr {
+    margin-bottom: 12px;
+    background: var(--color-panel-solid);
+    border-radius: var(--radius-2);
+    padding: 8px 10px;
+    box-shadow: 0 0 0 1px var(--gray-a3);
+  }
+  .interview-prep-table td {
+    display: block;
+    padding: 6px 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .interview-prep-table td:first-child {
+    font-weight: 600;
+    color: var(--violet-11);
+  }
+}
 
 /* ================================================================
    EXTERNAL COURSES (Class Central)
