@@ -193,6 +193,18 @@ export const Contact = {
   deletionFlaggedAt(parent: DbContact) {
     return parent.deletion_flagged_at ?? null;
   },
+  loraTier(parent: DbContact) {
+    return parent.lora_tier ?? null;
+  },
+  loraReasons(parent: DbContact) {
+    const raw = parent.lora_reasons;
+    if (Array.isArray(raw)) return raw.filter((r): r is string => typeof r === "string");
+    if (typeof raw === "string") return cachedParseArray(parent, "lora_reasons", raw);
+    return [];
+  },
+  loraScoredAt(parent: DbContact) {
+    return parent.lora_scored_at ?? null;
+  },
   authenticityVerdict(parent: DbContact) {
     return parent.authenticity_verdict ?? null;
   },

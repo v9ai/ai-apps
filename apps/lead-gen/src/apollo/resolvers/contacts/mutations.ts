@@ -28,6 +28,7 @@ import {
 import { isAIContact, gatherAIContactProfile, extractLinkedInOG, fetchGitHubProfile, searchGitHubByName } from "@/lib/ai-contact-enrichment";
 import { evaluateFakeAccount } from "@/lib/ml/fake-account-detector";
 import { classifyContact, computeDeletionScore, parseJsonArray } from "./classification";
+import { scoreContactLora as scoreContactLoraGraph, type ContactLoraTier } from "@/lib/langgraph-client";
 import { deriveContactSlug } from "@/lib/contact-slug";
 import type { PgUpdateSetSource } from "drizzle-orm/pg-core/query-builders/update";
 
@@ -1091,6 +1092,125 @@ export const contactMutations = {
       message: `Scored ${results.length} contact(s), found ${decisionMakersFound} decision maker(s)`,
       contactsScored: results.length,
       decisionMakersFound,
+      results,
+    };
+  },
+
+  // ── LoRA-based semantic scoring (Llama-3.1-8B on CF Workers AI) ────────
+
+  async scoreContactLora(
+    _parent: unknown,
+    args: { contactId: number },
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    const existing = await context.db
+      .select({ id: contacts.id })
+      .from(contacts)
+      .where(eq(contacts.id, args.contactId))
+      .limit(1);
+    if (!existing[0]) {
+      throw new GraphQLError(`Contact ${args.contactId} not found`, { extensions: { code: "NOT_FOUND" } });
+    }
+
+    const result = await scoreContactLoraGraph({ contactId: args.contactId });
+    const now = new Date().toISOString();
+
+    const [updated] = await context.db
+      .update(contacts)
+      .set({
+        lora_tier: result.tier,
+        lora_reasons: result.reasons,
+        lora_scored_at: now,
+        updated_at: now,
+      })
+      .where(eq(contacts.id, args.contactId))
+      .returning();
+
+    return updated;
+  },
+
+  async batchScoreContactsLora(
+    _parent: unknown,
+    args: { companyId: number; limit?: number | null },
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+    const limit = Math.max(1, Math.min(args.limit ?? 50, 200));
+
+    // LR pre-filter: only score contacts the logistic regression already thinks
+    // are plausible decision-makers. Keeps LoRA cost bounded.
+    const shortlist = await context.db
+      .select({ id: contacts.id })
+      .from(contacts)
+      .where(
+        and(
+          eq(contacts.company_id, args.companyId),
+          sql`${contacts.authority_score} >= 0.5`,
+        ),
+      )
+      .orderBy(sql`${contacts.authority_score} DESC`)
+      .limit(limit);
+
+    if (shortlist.length === 0) {
+      return {
+        success: true,
+        message: `No contacts with authority_score >= 0.5 for company ${args.companyId}`,
+        contactsScored: 0,
+        tierBreakdown: { a: 0, b: 0, c: 0, d: 0 },
+        results: [],
+      };
+    }
+
+    const results: Array<{ contactId: number; tier: ContactLoraTier; score: number; reasons: string[] }> = [];
+    const breakdown = { a: 0, b: 0, c: 0, d: 0 };
+    const concurrency = 4;
+
+    for (let i = 0; i < shortlist.length; i += concurrency) {
+      const chunk = shortlist.slice(i, i + concurrency);
+      const chunkResults = await Promise.all(
+        chunk.map(async (row) => {
+          try {
+            const r = await scoreContactLoraGraph({ contactId: row.id });
+            return { contactId: row.id, tier: r.tier, score: r.score, reasons: r.reasons };
+          } catch (err) {
+            return {
+              contactId: row.id,
+              tier: "D" as ContactLoraTier,
+              score: 0,
+              reasons: [`scoring failed: ${err instanceof Error ? err.message : String(err)}`],
+            };
+          }
+        }),
+      );
+      results.push(...chunkResults);
+    }
+
+    for (const r of results) {
+      breakdown[r.tier.toLowerCase() as "a" | "b" | "c" | "d"]++;
+    }
+
+    const now = new Date().toISOString();
+    const tierCases = results.map((r) => sql`WHEN ${contacts.id} = ${r.contactId} THEN ${r.tier}`);
+    const reasonsCases = results.map((r) => sql`WHEN ${contacts.id} = ${r.contactId} THEN ${JSON.stringify(r.reasons)}::jsonb`);
+    const scoredAtCases = results.map((r) => sql`WHEN ${contacts.id} = ${r.contactId} THEN ${now}`);
+
+    await context.db
+      .update(contacts)
+      .set({
+        lora_tier: sql`CASE ${sql.join(tierCases, sql` `)} END`,
+        lora_reasons: sql`CASE ${sql.join(reasonsCases, sql` `)} END`,
+        lora_scored_at: sql`CASE ${sql.join(scoredAtCases, sql` `)} END`,
+        updated_at: now,
+      })
+      .where(inArray(contacts.id, results.map((r) => r.contactId)));
+
+    return {
+      success: true,
+      message: `Scored ${results.length} contact(s): A=${breakdown.a} B=${breakdown.b} C=${breakdown.c} D=${breakdown.d}`,
+      contactsScored: results.length,
+      tierBreakdown: breakdown,
       results,
     };
   },
