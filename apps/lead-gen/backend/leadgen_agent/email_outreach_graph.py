@@ -94,7 +94,7 @@ async def format_html(state: EmailOutreachState) -> dict:
     return {"text": text, "html": html}
 
 
-def _build() -> Any:
+def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(EmailOutreachState)
     builder.add_node("lookup_contact", lookup_contact)
     builder.add_node("extract_hook", extract_hook)
@@ -105,7 +105,7 @@ def _build() -> Any:
     builder.add_edge("extract_hook", "draft")
     builder.add_edge("draft", "format_html")
     builder.add_edge("format_html", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
 
 
-graph = _build()
+graph = build_graph()

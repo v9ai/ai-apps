@@ -1,19 +1,35 @@
+---
+title: lead-gen LangGraph
+emoji: 🦜
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # lead-gen backend
 
-LangGraph dev server that hosts 5 graphs (`email_compose`, `email_reply`,
-`email_outreach`, `admin_chat`, `text_to_sql`). Declared in `langgraph.json`,
-implemented under `leadgen_agent/`, consumed by the Next.js app via
-`src/lib/langgraph-client.ts`.
+LangGraph graphs (`email_compose`, `email_reply`, `email_outreach`,
+`admin_chat`, `text_to_sql`) under `leadgen_agent/`, consumed by the Next.js
+app via `src/lib/langgraph-client.ts`.
+
+Two runtimes share the same graph code:
+
+- **`langgraph dev`** (`langgraph.json`) — local dev server on `:8002` with
+  Studio UI. In-memory checkpointer only.
+- **`app.py`** (FastAPI + uvicorn) — containerized for Hugging Face Spaces on
+  `:7860`, with `AsyncPostgresSaver` backed by Neon so threads survive the
+  free-tier Space's sleep/wake cycle.
 
 ## Run modes
-
-Three supported modes, same binary in each case:
 
 | Mode | `LANGGRAPH_URL` | `LANGGRAPH_AUTH_TOKEN` | Use |
 |---|---|---|---|
 | Local-only | `http://127.0.0.1:8002` (default) | unset | Frontend + backend both on your Mac |
 | Tunnel, dev | Cloudflare quick-tunnel URL | unset | Throwaway demos, short-lived share |
 | Tunnel, stable | Named Cloudflare tunnel hostname | set (shared secret) | Vercel-deployed frontend → local backend |
+| HF Spaces | `https://<user>-<space>.hf.space` | set (shared secret) | Vercel-deployed frontend → always-on HF container |
 
 Everything boots with `pnpm backend-dev` from the repo root. The bearer-token
 middleware lives in `leadgen_agent/custom_app.py` and is wired in via the
@@ -117,3 +133,86 @@ ngrok http 8002 --basic-auth "user:pass"
 Copy the `https://*.ngrok-free.app` URL into Vercel's `LANGGRAPH_URL`. If you
 stick with ngrok basic-auth rather than our bearer middleware, unset
 `LANGGRAPH_AUTH_TOKEN` in Vercel and include `user:pass@` in the URL itself.
+
+## Deploy to Hugging Face Spaces
+
+Always-on alternative to the tunnel. HF Spaces Docker SDK runs the Dockerfile
+in this directory; `app.py` binds `0.0.0.0:7860` (the only port Spaces
+exposes) and uses Neon Postgres for the `AsyncPostgresSaver` checkpointer so
+threads persist across the free-tier Space's sleep/wake cycle.
+
+### One-time: provision Neon
+
+1. Create a Neon project (Free Plan, Frankfurt / `eu-central-1` — same region
+   as most HF Spaces). 0.5 GB storage + 5 GB egress is plenty for
+   checkpointer tables.
+2. Grab the **pooled** connection string (hostname contains `-pooler`) and
+   append `?sslmode=require`:
+
+   ```
+   postgresql://<user>:<pass>@ep-xxx-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require
+   ```
+
+   The non-pooled URL works too, but pgBouncer keeps Neon's idle-timeout from
+   biting on the Space's next wake.
+
+### One-time: create the Space
+
+1. New Space → SDK: **Docker** → Blank template → push an empty repo.
+2. In the Space's **Settings → Variables and secrets**, add:
+
+   | Name | Value |
+   |---|---|
+   | `DATABASE_URL` | the Neon pooled URL above |
+   | `LANGGRAPH_AUTH_TOKEN` | `openssl rand -hex 32` |
+   | `LLM_BASE_URL` | `https://api.deepseek.com` |
+   | `LLM_MODEL` | `deepseek-chat` |
+   | `OPENAI_API_KEY` | your DeepSeek API key (the OpenAI-compatible client reads this name) |
+   | `NEON_DATABASE_URL` | same as `DATABASE_URL` *(used by `admin_chat` / `email_outreach` read-only queries)* |
+
+### Push
+
+```bash
+cd apps/lead-gen/backend
+git init
+git remote add space https://huggingface.co/spaces/<user>/<space-name>
+git add .
+git commit -m "initial deploy"
+git push space main
+```
+
+HF builds the Dockerfile, starts the container, and tails logs in the Space
+UI. First boot is ~3–5 min; subsequent boots are ~30 s from cold sleep.
+
+### Point Vercel at the Space
+
+```bash
+vercel env add LANGGRAPH_URL production
+# paste: https://<user>-<space-name>.hf.space
+
+vercel env add LANGGRAPH_AUTH_TOKEN production
+# paste the same token set in the Space secrets
+
+pnpm deploy
+```
+
+### Verify
+
+```bash
+BASE="https://<user>-<space-name>.hf.space"
+
+# Liveness (no DB/LLM touched, always 200)
+curl "$BASE/health"
+# {"status":"ok"}
+
+# Without token → 401
+curl -X POST "$BASE/runs/wait" \
+  -H 'content-type: application/json' \
+  -d '{"assistant_id":"admin_chat","input":{"prompt":"ping","system":""}}'
+
+# With token → 200
+curl -X POST "$BASE/runs/wait" \
+  -H "authorization: Bearer $LANGGRAPH_AUTH_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"assistant_id":"admin_chat","input":{"prompt":"ping","system":""}}'
+```

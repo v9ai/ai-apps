@@ -75,15 +75,16 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 
 ### LangGraph backend (`backend/`) — run modes
 
-5 graphs (`email_compose`, `email_reply`, `email_outreach`, `admin_chat`, `text_to_sql`) served by `langgraph dev` on port 8002. All Next.js → backend calls funnel through `runGraph()` in `src/lib/langgraph-client.ts`, which hits `POST ${LANGGRAPH_URL}/runs/wait`.
+5 graphs (`email_compose`, `email_reply`, `email_outreach`, `admin_chat`, `text_to_sql`) implemented under `backend/leadgen_agent/`. All Next.js → backend calls funnel through `runGraph()` in `src/lib/langgraph-client.ts`, which hits `POST ${LANGGRAPH_URL}/runs/wait`. Same graph code, two runtimes: `langgraph dev` (port 8002, in-memory) for local dev; `app.py` (FastAPI + uvicorn on port 7860, `AsyncPostgresSaver` backed by Neon) for HF Spaces.
 
-| Mode | `LANGGRAPH_URL` | `LANGGRAPH_AUTH_TOKEN` | Start |
-|---|---|---|---|
-| Local-only | `http://127.0.0.1:8002` (default) | unset | `pnpm backend-dev` |
-| Tunnel, dev | `https://*.trycloudflare.com` (random) | unset | `pnpm backend-dev` + `make tunnel` |
-| Tunnel, stable | `https://<host>.<your-domain>` | set (shared secret) | `pnpm backend-dev` + `make tunnel-named` |
+| Mode | `LANGGRAPH_URL` | `LANGGRAPH_AUTH_TOKEN` | `DATABASE_URL` | Start |
+|---|---|---|---|---|
+| Local-only | `http://127.0.0.1:8002` (default) | unset | — | `pnpm backend-dev` |
+| Tunnel, dev | `https://*.trycloudflare.com` (random) | unset | — | `pnpm backend-dev` + `make tunnel` |
+| Tunnel, stable | `https://<host>.<your-domain>` | set (shared secret) | — | `pnpm backend-dev` + `make tunnel-named` |
+| HF Spaces | `https://<user>-<space>.hf.space` | set (shared secret) | Neon pooled URL | HF Docker SDK builds `backend/Dockerfile` |
 
-When `LANGGRAPH_AUTH_TOKEN` is set, the bearer-token middleware in `backend/leadgen_agent/custom_app.py` (wired in via `http.app` in `langgraph.json`) requires `Authorization: Bearer <token>` on every non-health request; the client forwards it automatically from the env var. Full setup in `backend/README.md`.
+When `LANGGRAPH_AUTH_TOKEN` is set, a bearer-token middleware requires `Authorization: Bearer <token>` on every non-health request; the client forwards it automatically from the env var. The middleware lives in `backend/leadgen_agent/custom_app.py` for `langgraph dev` (wired via `http.app` in `langgraph.json`) and is duplicated inline in `backend/app.py` for the FastAPI runtime. Full setup in `backend/README.md`.
 
 ---
 

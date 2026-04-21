@@ -90,7 +90,7 @@ async def polish(state: EmailReplyState) -> dict:
     return {"subject": state.get("subject", ""), "body": body}
 
 
-def _build() -> Any:
+def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(EmailReplyState)
     builder.add_node("analyze_email", analyze_email)
     builder.add_node("draft_reply", draft_reply)
@@ -99,7 +99,7 @@ def _build() -> Any:
     builder.add_edge("analyze_email", "draft_reply")
     builder.add_edge("draft_reply", "polish")
     builder.add_edge("polish", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
 
 
-graph = _build()
+graph = build_graph()

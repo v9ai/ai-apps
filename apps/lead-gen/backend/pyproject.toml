@@ -4,13 +4,16 @@ version = "0.1.0"
 description = "LangGraph backend for lead-gen email composition, replies, admin chat, and text-to-SQL"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
     "langchain>=0.3",
     "langchain-openai>=0.3",
     "langchain-core>=0.3",
     "langgraph>=0.4",
+    "langgraph-checkpoint-postgres>=2.0",
     "pydantic>=2.0",
     "python-dotenv>=1.0.0",
-    "psycopg[binary]>=3.2",
+    "psycopg[binary,pool]>=3.2",
 ]
 
 [build-system]

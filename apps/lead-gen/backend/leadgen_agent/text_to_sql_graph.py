@@ -112,7 +112,7 @@ async def validate_sql(state: TextToSqlState) -> dict:
     return {}
 
 
-def _build() -> Any:
+def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(TextToSqlState)
     builder.add_node("understand_question", understand_question)
     builder.add_node("identify_tables", identify_tables)
@@ -123,7 +123,7 @@ def _build() -> Any:
     builder.add_edge("identify_tables", "generate_sql")
     builder.add_edge("generate_sql", "validate_sql")
     builder.add_edge("validate_sql", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
 
 
-graph = _build()
+graph = build_graph()

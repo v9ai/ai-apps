@@ -69,7 +69,7 @@ async def format_output(state: EmailComposeState) -> dict:
     return {"subject": state.get("subject", ""), "body": state.get("body", "")}
 
 
-def _build() -> Any:
+def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(EmailComposeState)
     builder.add_node("gather_context", gather_context)
     builder.add_node("draft", draft)
@@ -78,7 +78,7 @@ def _build() -> Any:
     builder.add_edge("gather_context", "draft")
     builder.add_edge("draft", "format_output")
     builder.add_edge("format_output", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
 
 
-graph = _build()
+graph = build_graph()

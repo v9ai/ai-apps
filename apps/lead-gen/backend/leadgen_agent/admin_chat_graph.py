@@ -155,12 +155,12 @@ async def chat(state: AdminChatState) -> dict:
     return {"response": transcript[-1] if transcript else ""}
 
 
-def _build() -> Any:
+def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(AdminChatState)
     builder.add_node("chat", chat)
     builder.add_edge(START, "chat")
     builder.add_edge("chat", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
 
 
-graph = _build()
+graph = build_graph()
