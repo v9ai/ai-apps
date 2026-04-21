@@ -47,7 +47,6 @@
 
 .memorize-cat-card--active {
   border-color: var(--violet-8);
-  background: var(--violet-2);
 }
 
 .memorize-cat-icon {
@@ -271,7 +270,6 @@
   font-style: italic;
   margin-top: 8px;
   padding: 8px 12px;
-  background: var(--violet-2);
   border-radius: var(--radius-2);
   border-left: 3px solid var(--violet-6);
 }
@@ -428,7 +426,6 @@
 
 .matcher-option:hover {
   border-color: var(--violet-7);
-  background: var(--violet-2);
 }
 
 .matcher-option--selected {
@@ -648,7 +645,6 @@
 
 .drill-option:hover {
   border-color: var(--violet-7);
-  background: var(--violet-2);
 }
 
 .drill-option--correct {
@@ -981,7 +977,6 @@
 
 .science-group-tip {
   padding: 8px 12px;
-  background: var(--violet-2);
   border-left: 3px solid var(--violet-7);
   border-radius: var(--radius-2);
 }
@@ -1033,7 +1028,6 @@
 
 .session-checkin-emoji:hover {
   border-color: var(--violet-7);
-  background: var(--violet-2);
   transform: scale(1.05);
 }
 
@@ -1073,7 +1067,6 @@
 
 .session-summary-pill:hover {
   border-color: var(--violet-7);
-  background: var(--violet-2);
 }
 
 .session-summary-pill--active {

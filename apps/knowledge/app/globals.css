@@ -1478,7 +1478,6 @@ body {
 }
 .callout-speak {
   border-left-color: var(--violet-8);
-  background: var(--violet-2);
 }
 .callout-warn {
   border-left-color: var(--orange-8);
@@ -2807,7 +2806,6 @@ body {
 .interview-prep-table thead th {
   font-weight: 600;
   color: var(--violet-11);
-  background: var(--violet-2);
 }
 .interview-prep-table tbody tr + tr th,
 .interview-prep-table tbody tr + tr td {

@@ -443,7 +443,7 @@ export function MemorizeDashboard({
       </div>
 
       {/* Smart practice CTA */}
-      <Box mt="5" p="4" style={{ background: "var(--violet-2)", borderRadius: "var(--radius-3)", borderLeft: "3px solid var(--violet-8)" }}>
+      <Box mt="5" p="4" style={{ borderRadius: "var(--radius-3)", borderLeft: "3px solid var(--violet-8)" }}>
         <Flex justify="between" align="center" wrap="wrap" gap="3">
           <div>
             <Text size="4" weight="bold" style={{ display: "block" }}>
