@@ -90,12 +90,12 @@ export function CompetitorAnalysesList() {
                   <Flex direction="column" gap="1">
                     <Flex align="center" gap="2">
                       <Text weight="bold" size="4">
-                        {a.seedProductName}
+                        {a.product.name}
                       </Text>
                       <Badge color={STATUS_COLORS[a.status] ?? "gray"}>{a.status}</Badge>
                     </Flex>
                     <Text color="gray" size="2">
-                      {a.seedProductUrl}
+                      {a.product.url}
                     </Text>
                     <Text color="gray" size="1">
                       {a.competitors?.length ?? 0} competitors
@@ -108,7 +108,7 @@ export function CompetitorAnalysesList() {
                 <button
                   type="button"
                   onClick={async () => {
-                    if (!window.confirm(`Delete analysis "${a.seedProductName}"?`)) return;
+                    if (!window.confirm(`Delete analysis "${a.product.name}"?`)) return;
                     await deleteAnalysis({ variables: { id: a.id } });
                     await refetch();
                   }}

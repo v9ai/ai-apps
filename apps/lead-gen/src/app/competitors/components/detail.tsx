@@ -114,11 +114,11 @@ export function CompetitorAnalysisDetail({ analysisId }: { analysisId: number })
             ← All analyses
           </Link>
           <Flex align="center" gap="2">
-            <Heading size="6">{analysis.seedProductName}</Heading>
+            <Heading size="6">{analysis.product.name}</Heading>
             <Badge color={STATUS_COLORS[analysis.status] ?? "gray"}>{analysis.status}</Badge>
           </Flex>
           <Text color="gray" size="2">
-            {analysis.seedProductUrl}
+            {analysis.product.url}
           </Text>
         </Flex>
       </Flex>
