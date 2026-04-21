@@ -1,0 +1,89 @@
+enum CompetitorAnalysisStatus {
+  pending_approval
+  scraping
+  done
+  failed
+}
+
+enum CompetitorStatus {
+  suggested
+  approved
+  scraping
+  done
+  failed
+}
+
+type CompetitorAnalysis {
+  id: Int!
+  seedProductName: String!
+  seedProductUrl: String!
+  status: CompetitorAnalysisStatus!
+  createdBy: String
+  error: String
+  competitors: [Competitor!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Competitor {
+  id: Int!
+  analysisId: Int!
+  name: String!
+  url: String!
+  domain: String
+  logoUrl: URL
+  description: String
+  positioningHeadline: String
+  positioningTagline: String
+  targetAudience: String
+  status: CompetitorStatus!
+  scrapedAt: DateTime
+  scrapeError: String
+  pricingTiers: [PricingTier!]!
+  features: [CompetitorFeature!]!
+  integrations: [CompetitorIntegration!]!
+  createdAt: DateTime!
+}
+
+type PricingTier {
+  id: Int!
+  tierName: String!
+  monthlyPriceUsd: Float
+  annualPriceUsd: Float
+  seatPriceUsd: Float
+  currency: String!
+  includedLimits: JSON
+  isCustomQuote: Boolean!
+  sortOrder: Int!
+}
+
+type CompetitorFeature {
+  id: Int!
+  tierName: String
+  featureText: String!
+  category: String
+}
+
+type CompetitorIntegration {
+  id: Int!
+  integrationName: String!
+  integrationUrl: URL
+  category: String
+}
+
+input CompetitorInput {
+  name: String!
+  url: String!
+}
+
+extend type Query {
+  competitorAnalysis(id: Int!): CompetitorAnalysis
+  competitorAnalyses(limit: Int, offset: Int): [CompetitorAnalysis!]!
+}
+
+extend type Mutation {
+  createCompetitorAnalysis(productName: String!, productUrl: String!): CompetitorAnalysis!
+  approveCompetitors(analysisId: Int!, competitors: [CompetitorInput!]!): CompetitorAnalysis!
+  rescrapeCompetitor(competitorId: Int!): Competitor!
+  deleteCompetitorAnalysis(id: Int!): Boolean!
+}

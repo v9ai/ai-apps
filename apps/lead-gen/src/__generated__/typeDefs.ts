@@ -306,6 +306,64 @@ type CompetitiveReport {
   topHirers: [CompetitorProfile!]!
 }
 
+type Competitor {
+  analysisId: Int!
+  createdAt: DateTime!
+  description: String
+  domain: String
+  features: [CompetitorFeature!]!
+  id: Int!
+  integrations: [CompetitorIntegration!]!
+  logoUrl: URL
+  name: String!
+  positioningHeadline: String
+  positioningTagline: String
+  pricingTiers: [PricingTier!]!
+  scrapeError: String
+  scrapedAt: DateTime
+  status: CompetitorStatus!
+  targetAudience: String
+  url: String!
+}
+
+type CompetitorAnalysis {
+  competitors: [Competitor!]!
+  createdAt: DateTime!
+  createdBy: String
+  error: String
+  id: Int!
+  seedProductName: String!
+  seedProductUrl: String!
+  status: CompetitorAnalysisStatus!
+  updatedAt: DateTime!
+}
+
+enum CompetitorAnalysisStatus {
+  done
+  failed
+  pending_approval
+  scraping
+}
+
+type CompetitorFeature {
+  category: String
+  featureText: String!
+  id: Int!
+  tierName: String
+}
+
+input CompetitorInput {
+  name: String!
+  url: String!
+}
+
+type CompetitorIntegration {
+  category: String
+  id: Int!
+  integrationName: String!
+  integrationUrl: URL
+}
+
 type CompetitorProfile {
   aiMlOpenings: Int!
   avgSalaryMidpoint: Float
@@ -318,6 +376,14 @@ type CompetitorProfile {
   remotePercent: Float!
   topSkillsSought: [String!]!
   totalOpenings: Int!
+}
+
+enum CompetitorStatus {
+  approved
+  done
+  failed
+  scraping
+  suggested
 }
 
 type ComputeNextTouchScoresResult {
@@ -1161,6 +1227,7 @@ type Mutation {
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   approveAllDrafts(draftIds: [Int!]!): BatchSendDraftResult!
   approveAndSendDraft(draftId: Int!, editedBody: String, editedSubject: String): SendDraftResult!
+  approveCompetitors(analysisId: Int!, competitors: [CompetitorInput!]!): CompetitorAnalysis!
   archiveEmail(id: Int!): ArchiveEmailResult!
   batchDetectIntent(companyIds: [Int!]!): BatchDetectIntentResult!
   blockCompany(id: Int!): Company!
@@ -1177,6 +1244,7 @@ type Mutation {
   """
   countRemoteVoyagerJobs(input: CountRemoteVoyagerJobsInput!): CountRemoteVoyagerJobsResult!
   createCompany(input: CreateCompanyInput!): Company!
+  createCompetitorAnalysis(productName: String!, productUrl: String!): CompetitorAnalysis!
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
@@ -1185,6 +1253,7 @@ type Mutation {
   deleteCampaign(id: String!): DeleteCampaignResult!
   deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
   deleteCompany(id: Int!): DeleteCompanyResponse!
+  deleteCompetitorAnalysis(id: Int!): Boolean!
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
   deleteLinkedInPost(id: Int!): Boolean!
@@ -1220,6 +1289,7 @@ type Mutation {
   purgeDeletedContacts(companyId: Int): BatchOperationResult!
   refreshIntentScores: RefreshIntentResult!
   regenerateDraft(draftId: Int!, instructions: String): ReplyDraft!
+  rescrapeCompetitor(competitorId: Int!): Competitor!
   salescueAnalyze(modules: [SalescueModule!], text: String!): SalescueAnalyzeResult!
   saveCrawlLog(input: SaveCrawlLogInput!): SaveCrawlLogResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
@@ -1293,6 +1363,18 @@ input PreviewEmailInput {
   subject: String!
 }
 
+type PricingTier {
+  annualPriceUsd: Float
+  currency: String!
+  id: Int!
+  includedLimits: JSON
+  isCustomQuote: Boolean!
+  monthlyPriceUsd: Float
+  seatPriceUsd: Float
+  sortOrder: Int!
+  tierName: String!
+}
+
 type QualityGateResult {
   adjustedScore: Float!
   flags: [String!]!
@@ -1311,6 +1393,8 @@ type Query {
   companyScrapedPosts(companySlug: String!): CompanyScrapedPostsResult!
   company_facts(company_id: Int!, field: String, limit: Int, offset: Int): [CompanyFact!]!
   company_snapshots(company_id: Int!, limit: Int, offset: Int): [CompanySnapshot!]!
+  competitorAnalyses(limit: Int, offset: Int): [CompetitorAnalysis!]!
+  competitorAnalysis(id: Int!): CompetitorAnalysis
   contact(id: Int, slug: String): Contact
   contactByEmail(email: String!): Contact
   contactByLinkedinUrl(linkedinUrl: String!): Contact

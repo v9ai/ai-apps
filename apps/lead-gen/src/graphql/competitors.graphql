@@ -1,0 +1,114 @@
+fragment PricingTierCore on PricingTier {
+  id
+  tierName
+  monthlyPriceUsd
+  annualPriceUsd
+  seatPriceUsd
+  currency
+  includedLimits
+  isCustomQuote
+  sortOrder
+}
+
+fragment CompetitorFeatureCore on CompetitorFeature {
+  id
+  tierName
+  featureText
+  category
+}
+
+fragment CompetitorIntegrationCore on CompetitorIntegration {
+  id
+  integrationName
+  integrationUrl
+  category
+}
+
+fragment CompetitorCore on Competitor {
+  id
+  analysisId
+  name
+  url
+  domain
+  logoUrl
+  description
+  positioningHeadline
+  positioningTagline
+  targetAudience
+  status
+  scrapedAt
+  scrapeError
+  createdAt
+}
+
+fragment CompetitorFull on Competitor {
+  ...CompetitorCore
+  pricingTiers {
+    ...PricingTierCore
+  }
+  features {
+    ...CompetitorFeatureCore
+  }
+  integrations {
+    ...CompetitorIntegrationCore
+  }
+}
+
+fragment CompetitorAnalysisCore on CompetitorAnalysis {
+  id
+  seedProductName
+  seedProductUrl
+  status
+  createdBy
+  error
+  createdAt
+  updatedAt
+}
+
+query CompetitorAnalyses {
+  competitorAnalyses {
+    ...CompetitorAnalysisCore
+    competitors {
+      id
+      name
+      status
+    }
+  }
+}
+
+query CompetitorAnalysis($id: Int!) {
+  competitorAnalysis(id: $id) {
+    ...CompetitorAnalysisCore
+    competitors {
+      ...CompetitorFull
+    }
+  }
+}
+
+mutation CreateCompetitorAnalysis($productName: String!, $productUrl: String!) {
+  createCompetitorAnalysis(productName: $productName, productUrl: $productUrl) {
+    ...CompetitorAnalysisCore
+    competitors {
+      ...CompetitorCore
+    }
+  }
+}
+
+mutation ApproveCompetitors($analysisId: Int!, $competitors: [CompetitorInput!]!) {
+  approveCompetitors(analysisId: $analysisId, competitors: $competitors) {
+    ...CompetitorAnalysisCore
+    competitors {
+      ...CompetitorCore
+    }
+  }
+}
+
+mutation RescrapeCompetitor($competitorId: Int!) {
+  rescrapeCompetitor(competitorId: $competitorId) {
+    ...CompetitorFull
+  }
+}
+
+mutation DeleteCompetitorAnalysis($id: Int!) {
+  deleteCompetitorAnalysis(id: $id)
+}

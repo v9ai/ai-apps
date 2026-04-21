@@ -353,6 +353,67 @@ export type CompetitiveReport = {
   topHirers: Array<CompetitorProfile>;
 };
 
+export type Competitor = {
+  __typename: 'Competitor';
+  analysisId: Scalars['Int']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  domain: Maybe<Scalars['String']['output']>;
+  features: Array<CompetitorFeature>;
+  id: Scalars['Int']['output'];
+  integrations: Array<CompetitorIntegration>;
+  logoUrl: Maybe<Scalars['URL']['output']>;
+  name: Scalars['String']['output'];
+  positioningHeadline: Maybe<Scalars['String']['output']>;
+  positioningTagline: Maybe<Scalars['String']['output']>;
+  pricingTiers: Array<PricingTier>;
+  scrapeError: Maybe<Scalars['String']['output']>;
+  scrapedAt: Maybe<Scalars['DateTime']['output']>;
+  status: CompetitorStatus;
+  targetAudience: Maybe<Scalars['String']['output']>;
+  url: Scalars['String']['output'];
+};
+
+export type CompetitorAnalysis = {
+  __typename: 'CompetitorAnalysis';
+  competitors: Array<Competitor>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: Maybe<Scalars['String']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  seedProductName: Scalars['String']['output'];
+  seedProductUrl: Scalars['String']['output'];
+  status: CompetitorAnalysisStatus;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type CompetitorAnalysisStatus =
+  | 'done'
+  | 'failed'
+  | 'pending_approval'
+  | 'scraping';
+
+export type CompetitorFeature = {
+  __typename: 'CompetitorFeature';
+  category: Maybe<Scalars['String']['output']>;
+  featureText: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  tierName: Maybe<Scalars['String']['output']>;
+};
+
+export type CompetitorInput = {
+  name: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+};
+
+export type CompetitorIntegration = {
+  __typename: 'CompetitorIntegration';
+  category: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  integrationName: Scalars['String']['output'];
+  integrationUrl: Maybe<Scalars['URL']['output']>;
+};
+
 export type CompetitorProfile = {
   __typename: 'CompetitorProfile';
   aiMlOpenings: Scalars['Int']['output'];
@@ -367,6 +428,13 @@ export type CompetitorProfile = {
   topSkillsSought: Array<Scalars['String']['output']>;
   totalOpenings: Scalars['Int']['output'];
 };
+
+export type CompetitorStatus =
+  | 'approved'
+  | 'done'
+  | 'failed'
+  | 'scraping'
+  | 'suggested';
 
 export type ComputeNextTouchScoresResult = {
   __typename: 'ComputeNextTouchScoresResult';
@@ -1264,6 +1332,7 @@ export type Mutation = {
   applyEmailPattern: ApplyEmailPatternResult;
   approveAllDrafts: BatchSendDraftResult;
   approveAndSendDraft: SendDraftResult;
+  approveCompetitors: CompetitorAnalysis;
   archiveEmail: ArchiveEmailResult;
   batchDetectIntent: BatchDetectIntentResult;
   blockCompany: Company;
@@ -1280,6 +1349,7 @@ export type Mutation = {
    */
   countRemoteVoyagerJobs: CountRemoteVoyagerJobsResult;
   createCompany: Company;
+  createCompetitorAnalysis: CompetitorAnalysis;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
@@ -1288,6 +1358,7 @@ export type Mutation = {
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
+  deleteCompetitorAnalysis: Scalars['Boolean']['output'];
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteLinkedInPost: Scalars['Boolean']['output'];
@@ -1323,6 +1394,7 @@ export type Mutation = {
   purgeDeletedContacts: BatchOperationResult;
   refreshIntentScores: RefreshIntentResult;
   regenerateDraft: ReplyDraft;
+  rescrapeCompetitor: Competitor;
   salescueAnalyze: SalescueAnalyzeResult;
   saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
@@ -1395,6 +1467,12 @@ export type MutationApproveAndSendDraftArgs = {
 };
 
 
+export type MutationApproveCompetitorsArgs = {
+  analysisId: Scalars['Int']['input'];
+  competitors: Array<CompetitorInput>;
+};
+
+
 export type MutationArchiveEmailArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1445,6 +1523,12 @@ export type MutationCreateCompanyArgs = {
 };
 
 
+export type MutationCreateCompetitorAnalysisArgs = {
+  productName: Scalars['String']['input'];
+  productUrl: Scalars['String']['input'];
+};
+
+
 export type MutationCreateContactArgs = {
   input: CreateContactInput;
 };
@@ -1481,6 +1565,11 @@ export type MutationDeleteCompaniesArgs = {
 
 
 export type MutationDeleteCompanyArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteCompetitorAnalysisArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1654,6 +1743,11 @@ export type MutationPurgeDeletedContactsArgs = {
 export type MutationRegenerateDraftArgs = {
   draftId: Scalars['Int']['input'];
   instructions?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationRescrapeCompetitorArgs = {
+  competitorId: Scalars['Int']['input'];
 };
 
 
@@ -1835,6 +1929,19 @@ export type PreviewEmailInput = {
   subject: Scalars['String']['input'];
 };
 
+export type PricingTier = {
+  __typename: 'PricingTier';
+  annualPriceUsd: Maybe<Scalars['Float']['output']>;
+  currency: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  includedLimits: Maybe<Scalars['JSON']['output']>;
+  isCustomQuote: Scalars['Boolean']['output'];
+  monthlyPriceUsd: Maybe<Scalars['Float']['output']>;
+  seatPriceUsd: Maybe<Scalars['Float']['output']>;
+  sortOrder: Scalars['Int']['output'];
+  tierName: Scalars['String']['output'];
+};
+
 export type QualityGateResult = {
   __typename: 'QualityGateResult';
   adjustedScore: Scalars['Float']['output'];
@@ -1855,6 +1962,8 @@ export type Query = {
   companyScrapedPosts: CompanyScrapedPostsResult;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
+  competitorAnalyses: Array<CompetitorAnalysis>;
+  competitorAnalysis: Maybe<CompetitorAnalysis>;
   contact: Maybe<Contact>;
   contactByEmail: Maybe<Contact>;
   contactByLinkedinUrl: Maybe<Contact>;
@@ -2003,6 +2112,17 @@ export type QueryCompany_SnapshotsArgs = {
   company_id: Scalars['Int']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCompetitorAnalysesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCompetitorAnalysisArgs = {
+  id: Scalars['Int']['input'];
 };
 
 

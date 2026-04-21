@@ -356,6 +356,67 @@ export type CompetitiveReport = {
   topHirers: Array<CompetitorProfile>;
 };
 
+export type Competitor = {
+  __typename?: 'Competitor';
+  analysisId: Scalars['Int']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  domain: Maybe<Scalars['String']['output']>;
+  features: Array<CompetitorFeature>;
+  id: Scalars['Int']['output'];
+  integrations: Array<CompetitorIntegration>;
+  logoUrl: Maybe<Scalars['URL']['output']>;
+  name: Scalars['String']['output'];
+  positioningHeadline: Maybe<Scalars['String']['output']>;
+  positioningTagline: Maybe<Scalars['String']['output']>;
+  pricingTiers: Array<PricingTier>;
+  scrapeError: Maybe<Scalars['String']['output']>;
+  scrapedAt: Maybe<Scalars['DateTime']['output']>;
+  status: CompetitorStatus;
+  targetAudience: Maybe<Scalars['String']['output']>;
+  url: Scalars['String']['output'];
+};
+
+export type CompetitorAnalysis = {
+  __typename?: 'CompetitorAnalysis';
+  competitors: Array<Competitor>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: Maybe<Scalars['String']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  seedProductName: Scalars['String']['output'];
+  seedProductUrl: Scalars['String']['output'];
+  status: CompetitorAnalysisStatus;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type CompetitorAnalysisStatus =
+  | 'done'
+  | 'failed'
+  | 'pending_approval'
+  | 'scraping';
+
+export type CompetitorFeature = {
+  __typename?: 'CompetitorFeature';
+  category: Maybe<Scalars['String']['output']>;
+  featureText: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  tierName: Maybe<Scalars['String']['output']>;
+};
+
+export type CompetitorInput = {
+  name: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+};
+
+export type CompetitorIntegration = {
+  __typename?: 'CompetitorIntegration';
+  category: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  integrationName: Scalars['String']['output'];
+  integrationUrl: Maybe<Scalars['URL']['output']>;
+};
+
 export type CompetitorProfile = {
   __typename?: 'CompetitorProfile';
   aiMlOpenings: Scalars['Int']['output'];
@@ -370,6 +431,13 @@ export type CompetitorProfile = {
   topSkillsSought: Array<Scalars['String']['output']>;
   totalOpenings: Scalars['Int']['output'];
 };
+
+export type CompetitorStatus =
+  | 'approved'
+  | 'done'
+  | 'failed'
+  | 'scraping'
+  | 'suggested';
 
 export type ComputeNextTouchScoresResult = {
   __typename?: 'ComputeNextTouchScoresResult';
@@ -1267,6 +1335,7 @@ export type Mutation = {
   applyEmailPattern: ApplyEmailPatternResult;
   approveAllDrafts: BatchSendDraftResult;
   approveAndSendDraft: SendDraftResult;
+  approveCompetitors: CompetitorAnalysis;
   archiveEmail: ArchiveEmailResult;
   batchDetectIntent: BatchDetectIntentResult;
   blockCompany: Company;
@@ -1283,6 +1352,7 @@ export type Mutation = {
    */
   countRemoteVoyagerJobs: CountRemoteVoyagerJobsResult;
   createCompany: Company;
+  createCompetitorAnalysis: CompetitorAnalysis;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
@@ -1291,6 +1361,7 @@ export type Mutation = {
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
+  deleteCompetitorAnalysis: Scalars['Boolean']['output'];
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteLinkedInPost: Scalars['Boolean']['output'];
@@ -1326,6 +1397,7 @@ export type Mutation = {
   purgeDeletedContacts: BatchOperationResult;
   refreshIntentScores: RefreshIntentResult;
   regenerateDraft: ReplyDraft;
+  rescrapeCompetitor: Competitor;
   salescueAnalyze: SalescueAnalyzeResult;
   saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
@@ -1398,6 +1470,12 @@ export type MutationApproveAndSendDraftArgs = {
 };
 
 
+export type MutationApproveCompetitorsArgs = {
+  analysisId: Scalars['Int']['input'];
+  competitors: Array<CompetitorInput>;
+};
+
+
 export type MutationArchiveEmailArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1448,6 +1526,12 @@ export type MutationCreateCompanyArgs = {
 };
 
 
+export type MutationCreateCompetitorAnalysisArgs = {
+  productName: Scalars['String']['input'];
+  productUrl: Scalars['String']['input'];
+};
+
+
 export type MutationCreateContactArgs = {
   input: CreateContactInput;
 };
@@ -1484,6 +1568,11 @@ export type MutationDeleteCompaniesArgs = {
 
 
 export type MutationDeleteCompanyArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteCompetitorAnalysisArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1657,6 +1746,11 @@ export type MutationPurgeDeletedContactsArgs = {
 export type MutationRegenerateDraftArgs = {
   draftId: Scalars['Int']['input'];
   instructions?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationRescrapeCompetitorArgs = {
+  competitorId: Scalars['Int']['input'];
 };
 
 
@@ -1838,6 +1932,19 @@ export type PreviewEmailInput = {
   subject: Scalars['String']['input'];
 };
 
+export type PricingTier = {
+  __typename?: 'PricingTier';
+  annualPriceUsd: Maybe<Scalars['Float']['output']>;
+  currency: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  includedLimits: Maybe<Scalars['JSON']['output']>;
+  isCustomQuote: Scalars['Boolean']['output'];
+  monthlyPriceUsd: Maybe<Scalars['Float']['output']>;
+  seatPriceUsd: Maybe<Scalars['Float']['output']>;
+  sortOrder: Scalars['Int']['output'];
+  tierName: Scalars['String']['output'];
+};
+
 export type QualityGateResult = {
   __typename?: 'QualityGateResult';
   adjustedScore: Scalars['Float']['output'];
@@ -1858,6 +1965,8 @@ export type Query = {
   companyScrapedPosts: CompanyScrapedPostsResult;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
+  competitorAnalyses: Array<CompetitorAnalysis>;
+  competitorAnalysis: Maybe<CompetitorAnalysis>;
   contact: Maybe<Contact>;
   contactByEmail: Maybe<Contact>;
   contactByLinkedinUrl: Maybe<Contact>;
@@ -2006,6 +2115,17 @@ export type QueryCompany_SnapshotsArgs = {
   company_id: Scalars['Int']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCompetitorAnalysesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCompetitorAnalysisArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -3607,6 +3727,60 @@ export type CompanyAuditQueryVariables = Exact<{
 
 export type CompanyAuditQuery = { __typename?: 'Query', company: { __typename?: 'Company', facts_count: number, snapshots_count: number, id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, blocked: boolean, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, facts: Array<{ __typename?: 'CompanyFact', id: number, company_id: number, field: string, value_json: any | null, value_text: string | null, normalized_value: any | null, confidence: number, created_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }>, snapshots: Array<{ __typename?: 'CompanySnapshot', id: number, company_id: number, source_url: string, crawl_id: string | null, capture_timestamp: string | null, fetched_at: string, http_status: number | null, mime: string | null, content_hash: string | null, text_sample: string | null, jsonld: any | null, extracted: any | null, created_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }>, opportunities: Array<{ __typename?: 'Opportunity', id: string, title: string, url: string | null, status: string, score: number | null, rewardText: string | null, applied: boolean, appliedAt: string | null, tags: Array<string>, createdAt: string }> } | null };
 
+export type PricingTierCoreFragment = { __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number };
+
+export type CompetitorFeatureCoreFragment = { __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null };
+
+export type CompetitorIntegrationCoreFragment = { __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null };
+
+export type CompetitorCoreFragment = { __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string };
+
+export type CompetitorFullFragment = { __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> };
+
+export type CompetitorAnalysisCoreFragment = { __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string };
+
+export type CompetitorAnalysesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CompetitorAnalysesQuery = { __typename?: 'Query', competitorAnalyses: Array<{ __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, name: string, status: CompetitorStatus }> }> };
+
+export type CompetitorAnalysisQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type CompetitorAnalysisQuery = { __typename?: 'Query', competitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> }> } | null };
+
+export type CreateCompetitorAnalysisMutationVariables = Exact<{
+  productName: Scalars['String']['input'];
+  productUrl: Scalars['String']['input'];
+}>;
+
+
+export type CreateCompetitorAnalysisMutation = { __typename?: 'Mutation', createCompetitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }> } };
+
+export type ApproveCompetitorsMutationVariables = Exact<{
+  analysisId: Scalars['Int']['input'];
+  competitors: Array<CompetitorInput> | CompetitorInput;
+}>;
+
+
+export type ApproveCompetitorsMutation = { __typename?: 'Mutation', approveCompetitors: { __typename?: 'CompetitorAnalysis', id: number, seedProductName: string, seedProductUrl: string, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string }> } };
+
+export type RescrapeCompetitorMutationVariables = Exact<{
+  competitorId: Scalars['Int']['input'];
+}>;
+
+
+export type RescrapeCompetitorMutation = { __typename?: 'Mutation', rescrapeCompetitor: { __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> } };
+
+export type DeleteCompetitorAnalysisMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteCompetitorAnalysisMutation = { __typename?: 'Mutation', deleteCompetitorAnalysis: boolean };
+
 export type GetContactQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
@@ -4220,6 +4394,82 @@ export const CompanyFieldsFragmentDoc = gql`
     tags
     createdAt
   }
+}
+    `;
+export const CompetitorCoreFragmentDoc = gql`
+    fragment CompetitorCore on Competitor {
+  id
+  analysisId
+  name
+  url
+  domain
+  logoUrl
+  description
+  positioningHeadline
+  positioningTagline
+  targetAudience
+  status
+  scrapedAt
+  scrapeError
+  createdAt
+}
+    `;
+export const PricingTierCoreFragmentDoc = gql`
+    fragment PricingTierCore on PricingTier {
+  id
+  tierName
+  monthlyPriceUsd
+  annualPriceUsd
+  seatPriceUsd
+  currency
+  includedLimits
+  isCustomQuote
+  sortOrder
+}
+    `;
+export const CompetitorFeatureCoreFragmentDoc = gql`
+    fragment CompetitorFeatureCore on CompetitorFeature {
+  id
+  tierName
+  featureText
+  category
+}
+    `;
+export const CompetitorIntegrationCoreFragmentDoc = gql`
+    fragment CompetitorIntegrationCore on CompetitorIntegration {
+  id
+  integrationName
+  integrationUrl
+  category
+}
+    `;
+export const CompetitorFullFragmentDoc = gql`
+    fragment CompetitorFull on Competitor {
+  ...CompetitorCore
+  pricingTiers {
+    ...PricingTierCore
+  }
+  features {
+    ...CompetitorFeatureCore
+  }
+  integrations {
+    ...CompetitorIntegrationCore
+  }
+}
+    ${CompetitorCoreFragmentDoc}
+${PricingTierCoreFragmentDoc}
+${CompetitorFeatureCoreFragmentDoc}
+${CompetitorIntegrationCoreFragmentDoc}`;
+export const CompetitorAnalysisCoreFragmentDoc = gql`
+    fragment CompetitorAnalysisCore on CompetitorAnalysis {
+  id
+  seedProductName
+  seedProductUrl
+  status
+  createdBy
+  error
+  createdAt
+  updatedAt
 }
     `;
 export const GetUserSettingsDocument = gql`
@@ -5136,6 +5386,240 @@ export type CompanyAuditQueryHookResult = ReturnType<typeof useCompanyAuditQuery
 export type CompanyAuditLazyQueryHookResult = ReturnType<typeof useCompanyAuditLazyQuery>;
 export type CompanyAuditSuspenseQueryHookResult = ReturnType<typeof useCompanyAuditSuspenseQuery>;
 export type CompanyAuditQueryResult = Apollo.QueryResult<CompanyAuditQuery, CompanyAuditQueryVariables>;
+export const CompetitorAnalysesDocument = gql`
+    query CompetitorAnalyses {
+  competitorAnalyses {
+    ...CompetitorAnalysisCore
+    competitors {
+      id
+      name
+      status
+    }
+  }
+}
+    ${CompetitorAnalysisCoreFragmentDoc}`;
+
+/**
+ * __useCompetitorAnalysesQuery__
+ *
+ * To run a query within a React component, call `useCompetitorAnalysesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCompetitorAnalysesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCompetitorAnalysesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useCompetitorAnalysesQuery(baseOptions?: Apollo.QueryHookOptions<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>(CompetitorAnalysesDocument, options);
+      }
+export function useCompetitorAnalysesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>(CompetitorAnalysesDocument, options);
+        }
+// @ts-ignore
+export function useCompetitorAnalysesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>): Apollo.UseSuspenseQueryResult<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>;
+export function useCompetitorAnalysesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>): Apollo.UseSuspenseQueryResult<CompetitorAnalysesQuery | undefined, CompetitorAnalysesQueryVariables>;
+export function useCompetitorAnalysesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>(CompetitorAnalysesDocument, options);
+        }
+export type CompetitorAnalysesQueryHookResult = ReturnType<typeof useCompetitorAnalysesQuery>;
+export type CompetitorAnalysesLazyQueryHookResult = ReturnType<typeof useCompetitorAnalysesLazyQuery>;
+export type CompetitorAnalysesSuspenseQueryHookResult = ReturnType<typeof useCompetitorAnalysesSuspenseQuery>;
+export type CompetitorAnalysesQueryResult = Apollo.QueryResult<CompetitorAnalysesQuery, CompetitorAnalysesQueryVariables>;
+export const CompetitorAnalysisDocument = gql`
+    query CompetitorAnalysis($id: Int!) {
+  competitorAnalysis(id: $id) {
+    ...CompetitorAnalysisCore
+    competitors {
+      ...CompetitorFull
+    }
+  }
+}
+    ${CompetitorAnalysisCoreFragmentDoc}
+${CompetitorFullFragmentDoc}`;
+
+/**
+ * __useCompetitorAnalysisQuery__
+ *
+ * To run a query within a React component, call `useCompetitorAnalysisQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCompetitorAnalysisQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCompetitorAnalysisQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useCompetitorAnalysisQuery(baseOptions: Apollo.QueryHookOptions<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables> & ({ variables: CompetitorAnalysisQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>(CompetitorAnalysisDocument, options);
+      }
+export function useCompetitorAnalysisLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>(CompetitorAnalysisDocument, options);
+        }
+// @ts-ignore
+export function useCompetitorAnalysisSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>): Apollo.UseSuspenseQueryResult<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>;
+export function useCompetitorAnalysisSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>): Apollo.UseSuspenseQueryResult<CompetitorAnalysisQuery | undefined, CompetitorAnalysisQueryVariables>;
+export function useCompetitorAnalysisSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>(CompetitorAnalysisDocument, options);
+        }
+export type CompetitorAnalysisQueryHookResult = ReturnType<typeof useCompetitorAnalysisQuery>;
+export type CompetitorAnalysisLazyQueryHookResult = ReturnType<typeof useCompetitorAnalysisLazyQuery>;
+export type CompetitorAnalysisSuspenseQueryHookResult = ReturnType<typeof useCompetitorAnalysisSuspenseQuery>;
+export type CompetitorAnalysisQueryResult = Apollo.QueryResult<CompetitorAnalysisQuery, CompetitorAnalysisQueryVariables>;
+export const CreateCompetitorAnalysisDocument = gql`
+    mutation CreateCompetitorAnalysis($productName: String!, $productUrl: String!) {
+  createCompetitorAnalysis(productName: $productName, productUrl: $productUrl) {
+    ...CompetitorAnalysisCore
+    competitors {
+      ...CompetitorCore
+    }
+  }
+}
+    ${CompetitorAnalysisCoreFragmentDoc}
+${CompetitorCoreFragmentDoc}`;
+export type CreateCompetitorAnalysisMutationFn = Apollo.MutationFunction<CreateCompetitorAnalysisMutation, CreateCompetitorAnalysisMutationVariables>;
+
+/**
+ * __useCreateCompetitorAnalysisMutation__
+ *
+ * To run a mutation, you first call `useCreateCompetitorAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCompetitorAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCompetitorAnalysisMutation, { data, loading, error }] = useCreateCompetitorAnalysisMutation({
+ *   variables: {
+ *      productName: // value for 'productName'
+ *      productUrl: // value for 'productUrl'
+ *   },
+ * });
+ */
+export function useCreateCompetitorAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<CreateCompetitorAnalysisMutation, CreateCompetitorAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCompetitorAnalysisMutation, CreateCompetitorAnalysisMutationVariables>(CreateCompetitorAnalysisDocument, options);
+      }
+export type CreateCompetitorAnalysisMutationHookResult = ReturnType<typeof useCreateCompetitorAnalysisMutation>;
+export type CreateCompetitorAnalysisMutationResult = Apollo.MutationResult<CreateCompetitorAnalysisMutation>;
+export type CreateCompetitorAnalysisMutationOptions = Apollo.BaseMutationOptions<CreateCompetitorAnalysisMutation, CreateCompetitorAnalysisMutationVariables>;
+export const ApproveCompetitorsDocument = gql`
+    mutation ApproveCompetitors($analysisId: Int!, $competitors: [CompetitorInput!]!) {
+  approveCompetitors(analysisId: $analysisId, competitors: $competitors) {
+    ...CompetitorAnalysisCore
+    competitors {
+      ...CompetitorCore
+    }
+  }
+}
+    ${CompetitorAnalysisCoreFragmentDoc}
+${CompetitorCoreFragmentDoc}`;
+export type ApproveCompetitorsMutationFn = Apollo.MutationFunction<ApproveCompetitorsMutation, ApproveCompetitorsMutationVariables>;
+
+/**
+ * __useApproveCompetitorsMutation__
+ *
+ * To run a mutation, you first call `useApproveCompetitorsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useApproveCompetitorsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [approveCompetitorsMutation, { data, loading, error }] = useApproveCompetitorsMutation({
+ *   variables: {
+ *      analysisId: // value for 'analysisId'
+ *      competitors: // value for 'competitors'
+ *   },
+ * });
+ */
+export function useApproveCompetitorsMutation(baseOptions?: Apollo.MutationHookOptions<ApproveCompetitorsMutation, ApproveCompetitorsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ApproveCompetitorsMutation, ApproveCompetitorsMutationVariables>(ApproveCompetitorsDocument, options);
+      }
+export type ApproveCompetitorsMutationHookResult = ReturnType<typeof useApproveCompetitorsMutation>;
+export type ApproveCompetitorsMutationResult = Apollo.MutationResult<ApproveCompetitorsMutation>;
+export type ApproveCompetitorsMutationOptions = Apollo.BaseMutationOptions<ApproveCompetitorsMutation, ApproveCompetitorsMutationVariables>;
+export const RescrapeCompetitorDocument = gql`
+    mutation RescrapeCompetitor($competitorId: Int!) {
+  rescrapeCompetitor(competitorId: $competitorId) {
+    ...CompetitorFull
+  }
+}
+    ${CompetitorFullFragmentDoc}`;
+export type RescrapeCompetitorMutationFn = Apollo.MutationFunction<RescrapeCompetitorMutation, RescrapeCompetitorMutationVariables>;
+
+/**
+ * __useRescrapeCompetitorMutation__
+ *
+ * To run a mutation, you first call `useRescrapeCompetitorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRescrapeCompetitorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [rescrapeCompetitorMutation, { data, loading, error }] = useRescrapeCompetitorMutation({
+ *   variables: {
+ *      competitorId: // value for 'competitorId'
+ *   },
+ * });
+ */
+export function useRescrapeCompetitorMutation(baseOptions?: Apollo.MutationHookOptions<RescrapeCompetitorMutation, RescrapeCompetitorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RescrapeCompetitorMutation, RescrapeCompetitorMutationVariables>(RescrapeCompetitorDocument, options);
+      }
+export type RescrapeCompetitorMutationHookResult = ReturnType<typeof useRescrapeCompetitorMutation>;
+export type RescrapeCompetitorMutationResult = Apollo.MutationResult<RescrapeCompetitorMutation>;
+export type RescrapeCompetitorMutationOptions = Apollo.BaseMutationOptions<RescrapeCompetitorMutation, RescrapeCompetitorMutationVariables>;
+export const DeleteCompetitorAnalysisDocument = gql`
+    mutation DeleteCompetitorAnalysis($id: Int!) {
+  deleteCompetitorAnalysis(id: $id)
+}
+    `;
+export type DeleteCompetitorAnalysisMutationFn = Apollo.MutationFunction<DeleteCompetitorAnalysisMutation, DeleteCompetitorAnalysisMutationVariables>;
+
+/**
+ * __useDeleteCompetitorAnalysisMutation__
+ *
+ * To run a mutation, you first call `useDeleteCompetitorAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteCompetitorAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteCompetitorAnalysisMutation, { data, loading, error }] = useDeleteCompetitorAnalysisMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteCompetitorAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<DeleteCompetitorAnalysisMutation, DeleteCompetitorAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteCompetitorAnalysisMutation, DeleteCompetitorAnalysisMutationVariables>(DeleteCompetitorAnalysisDocument, options);
+      }
+export type DeleteCompetitorAnalysisMutationHookResult = ReturnType<typeof useDeleteCompetitorAnalysisMutation>;
+export type DeleteCompetitorAnalysisMutationResult = Apollo.MutationResult<DeleteCompetitorAnalysisMutation>;
+export type DeleteCompetitorAnalysisMutationOptions = Apollo.BaseMutationOptions<DeleteCompetitorAnalysisMutation, DeleteCompetitorAnalysisMutationVariables>;
 export const GetContactDocument = gql`
     query GetContact($id: Int, $slug: String) {
   contact(id: $id, slug: $slug) {

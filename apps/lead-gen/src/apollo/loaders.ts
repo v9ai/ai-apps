@@ -13,6 +13,10 @@ import {
   intentSignals,
   receivedEmails,
   opportunities,
+  competitors,
+  competitorPricingTiers,
+  competitorFeatures,
+  competitorIntegrations,
 } from "@/db/schema";
 import type {
   Company,
@@ -26,6 +30,10 @@ import type {
   IntentSignal,
   ReceivedEmail,
   Opportunity,
+  Competitor,
+  CompetitorPricingTier,
+  CompetitorFeature,
+  CompetitorIntegration,
 } from "@/db/schema";
 
 // ── Batch size tuning per entity access pattern ────────────────────────
@@ -313,6 +321,77 @@ export function createLoaders(db: DbInstance) {
         return companyIds.map((id) => byCompany.get(id) ?? []);
       },
       { maxBatchSize: BATCH_CONTACT, batchScheduleFn: batchSchedule },
+    ),
+
+    competitorsByAnalysis: new DataLoader<number, Competitor[]>(
+      async (analysisIds) => {
+        const rows = await db
+          .select()
+          .from(competitors)
+          .where(inArray(competitors.analysis_id, [...analysisIds]));
+        const byAnalysis = new Map<number, Competitor[]>();
+        for (const row of rows) {
+          const arr = byAnalysis.get(row.analysis_id);
+          if (arr) arr.push(row);
+          else byAnalysis.set(row.analysis_id, [row]);
+        }
+        return analysisIds.map((id) => byAnalysis.get(id) ?? []);
+      },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
+    ),
+
+    competitorPricingTiersByCompetitor: new DataLoader<number, CompetitorPricingTier[]>(
+      async (competitorIds) => {
+        const rows = await db
+          .select()
+          .from(competitorPricingTiers)
+          .where(inArray(competitorPricingTiers.competitor_id, [...competitorIds]));
+        const byCompetitor = new Map<number, CompetitorPricingTier[]>();
+        for (const row of rows) {
+          const arr = byCompetitor.get(row.competitor_id);
+          if (arr) arr.push(row);
+          else byCompetitor.set(row.competitor_id, [row]);
+        }
+        for (const arr of byCompetitor.values()) {
+          arr.sort((a, b) => a.sort_order - b.sort_order);
+        }
+        return competitorIds.map((id) => byCompetitor.get(id) ?? []);
+      },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
+    ),
+
+    competitorFeaturesByCompetitor: new DataLoader<number, CompetitorFeature[]>(
+      async (competitorIds) => {
+        const rows = await db
+          .select()
+          .from(competitorFeatures)
+          .where(inArray(competitorFeatures.competitor_id, [...competitorIds]));
+        const byCompetitor = new Map<number, CompetitorFeature[]>();
+        for (const row of rows) {
+          const arr = byCompetitor.get(row.competitor_id);
+          if (arr) arr.push(row);
+          else byCompetitor.set(row.competitor_id, [row]);
+        }
+        return competitorIds.map((id) => byCompetitor.get(id) ?? []);
+      },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
+    ),
+
+    competitorIntegrationsByCompetitor: new DataLoader<number, CompetitorIntegration[]>(
+      async (competitorIds) => {
+        const rows = await db
+          .select()
+          .from(competitorIntegrations)
+          .where(inArray(competitorIntegrations.competitor_id, [...competitorIds]));
+        const byCompetitor = new Map<number, CompetitorIntegration[]>();
+        for (const row of rows) {
+          const arr = byCompetitor.get(row.competitor_id);
+          if (arr) arr.push(row);
+          else byCompetitor.set(row.competitor_id, [row]);
+        }
+        return competitorIds.map((id) => byCompetitor.get(id) ?? []);
+      },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),
 
   };
