@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { Container, Flex, Heading, Text } from "@radix-ui/themes";
-import { TrashIcon } from "@radix-ui/react-icons";
+import {
+  TrashIcon,
+  CubeIcon,
+  ExternalLinkIcon,
+  ArrowRightIcon,
+} from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import {
