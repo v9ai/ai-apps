@@ -8,5 +8,6 @@
     "admin_chat": "leadgen_agent.admin_chat_graph:graph",
     "text_to_sql": "leadgen_agent.text_to_sql_graph:graph"
   },
+  "http": { "app": "leadgen_agent.custom_app:app" },
   "env": ".env"
 }
