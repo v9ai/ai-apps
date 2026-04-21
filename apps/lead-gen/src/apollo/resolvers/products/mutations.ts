@@ -1,5 +1,6 @@
 import { GraphQLError } from "graphql";
 import { eq } from "drizzle-orm";
+import { db } from "@/db";
 import { products } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -9,6 +10,10 @@ import type {
   MutationDeleteProductArgs,
   MutationAnalyzeProductIcpArgs,
 } from "@/__generated__/resolvers-types";
+
+// Products are a global SaaS catalog (see queries.ts). Writes use the
+// unscoped http db so admins can mutate rows regardless of tenant cookie.
+// Access is gated by isAdminEmail() — same guard as before.
 
 function requireAdmin(context: GraphQLContext): void {
   if (!context.userId) {
@@ -38,7 +43,7 @@ export const productMutations = {
     const now = new Date().toISOString();
     const domain = extractDomain(args.input.url);
 
-    const [row] = await context.db
+    const [row] = await db
       .insert(products)
       .values({
         name: args.input.name,
@@ -69,7 +74,7 @@ export const productMutations = {
     context: GraphQLContext,
   ) {
     requireAdmin(context);
-    await context.db.delete(products).where(eq(products.id, args.id));
+    await db.delete(products).where(eq(products.id, args.id));
     return true;
   },
 
@@ -83,7 +88,7 @@ export const productMutations = {
     const result = await analyzeProductICP({ productId: args.id });
     const now = new Date().toISOString();
 
-    const [row] = await context.db
+    const [row] = await db
       .update(products)
       .set({
         icp_analysis: result as unknown as Record<string, unknown>,
