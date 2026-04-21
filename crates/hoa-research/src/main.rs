@@ -6,8 +6,7 @@ use clap::Parser;
 use tracing_subscriber::EnvFilter;
 
 use hoa_research::error::Result;
-use hoa_research::hf_client::HfClient;
-use hoa_research::llm::{best_device, LocalLlm};
+use hoa_research::llm::LocalLlm;
 use hoa_research::output;
 use hoa_research::pipeline::Pipeline;
 use hoa_research::types::PersonInput;
@@ -74,24 +73,11 @@ async fn main() -> Result<()> {
         person.name, person.role, person.org
     );
 
-    // Load DeepSeek API key (fallback: HF token for legacy)
-    let remote_key = load_deepseek_key().or_else(|| {
-        let hf = load_hf_token();
-        if hf.is_empty() { None } else { Some(hf) }
-    }).unwrap_or_default();
-    let hf_client = HfClient::new(&remote_key).await;
-    if hf_client.is_some() {
-        tracing::info!("Dual-lane mode: Candle local + DeepSeek remote");
-    } else {
-        tracing::info!("Single-lane mode: Candle local only");
-    }
+    // Load local model via mistral.rs (Metal, GGUF Q4_K_M)
+    let llm = LocalLlm::load_default().await?;
 
-    // Load Candle model
-    let device = best_device()?;
-    let llm = LocalLlm::load_default(&device)?;
-
-    // Run pipeline
-    let pipeline = Pipeline::new(llm, hf_client);
+    // Run pipeline (fully local)
+    let pipeline = Pipeline::new(llm);
     let state = pipeline.run(person).await?;
 
     // Transform to frontend-compatible schema and write
@@ -112,12 +98,10 @@ async fn main() -> Result<()> {
 }
 
 fn load_personality(cli: &Cli) -> Result<PersonInput> {
-    // Try to read from personality TS file
-    // Try multiple paths relative to CWD
     let candidates = [
-        PathBuf::from("../../apps/hoa/personalities"),   // from crates/hoa-research/
-        PathBuf::from("../personalities"),                // from apps/hoa/backend/
-        PathBuf::from("personalities"),                   // from apps/hoa/
+        PathBuf::from("../../apps/hoa/personalities"),
+        PathBuf::from("../personalities"),
+        PathBuf::from("personalities"),
     ];
     let ts_path = candidates
         .iter()
@@ -130,7 +114,6 @@ fn load_personality(cli: &Cli) -> Result<PersonInput> {
         return Ok(parse_personality_ts(&content, &cli.slug, cli));
     }
 
-    // Fallback to CLI args
     Ok(PersonInput {
         name: cli.name.clone().unwrap_or_else(|| cli.slug.replace('-', " ")),
         slug: cli.slug.clone(),
@@ -143,15 +126,12 @@ fn load_personality(cli: &Cli) -> Result<PersonInput> {
 /// Best-effort extraction from TypeScript personality files.
 fn parse_personality_ts(content: &str, slug: &str, cli: &Cli) -> PersonInput {
     let extract = |key: &str| -> Option<String> {
-        // Match lines like:  name: "Athos Georgiou",
-        // or:                 blogUrl: "https://athrael.net",
         let pattern = format!("{}:", key);
         content.lines().find_map(|line| {
             let trimmed = line.trim();
             if !trimmed.starts_with(&pattern) {
                 return None;
             }
-            // Find the first quote after the colon
             let after_colon = &trimmed[pattern.len()..];
             let start = after_colon.find('"')? + 1;
             let rest = &after_colon[start..];
@@ -170,58 +150,5 @@ fn parse_personality_ts(content: &str, slug: &str, cli: &Cli) -> PersonInput {
         orcid: extract("orcid"),
         blog_url: extract("blogUrl"),
         papers: Vec::new(),
-    }
-}
-
-fn load_deepseek_key() -> Option<String> {
-    // Check env
-    if let Ok(key) = std::env::var("DEEPSEEK_API_KEY") {
-        if !key.is_empty() {
-            return Some(key);
-        }
-    }
-    // Check .env files relative to crate root
-    for path in &["../../.env", "../../apps/hoa/.env.local", ".env"] {
-        if let Ok(contents) = std::fs::read_to_string(path) {
-            for line in contents.lines() {
-                if let Some(val) = line.strip_prefix("DEEPSEEK_API_KEY=") {
-                    let val = val.trim().trim_matches('"');
-                    if !val.is_empty() {
-                        return Some(val.to_string());
-                    }
-                }
-            }
-        }
-    }
-    None
-}
-
-fn load_hf_token() -> String {
-    // Check env first
-    if let Ok(token) = std::env::var("HF_TOKEN") {
-        if !token.is_empty() {
-            return token;
-        }
-    }
-
-    // Check HF cache
-    let cache_path = dirs_next::home_dir()
-        .map(|h| h.join(".cache/huggingface/token"))
-        .unwrap_or_default();
-
-    std::fs::read_to_string(cache_path)
-        .unwrap_or_default()
-        .trim()
-        .to_string()
-}
-
-/// Minimal home_dir without the dirs-next crate
-mod dirs_next {
-    use std::path::PathBuf;
-
-    pub fn home_dir() -> Option<PathBuf> {
-        std::env::var("HOME")
-            .ok()
-            .map(PathBuf::from)
     }
 }

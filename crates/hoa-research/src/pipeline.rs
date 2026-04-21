@@ -1,18 +1,20 @@
-//! Pipeline orchestrator — fully parallel dual-lane execution.
+//! Pipeline orchestrator — fully parallel local execution.
 //!
 //! Phase 1a: ALL HTTP tool calls run concurrently (8 agents' fetches in parallel).
-//! Phase 1b: ALL LLM synthesis calls run concurrently on HF 72B (or sequential on Candle).
-//! Phase 2:  ALL 11 analysis agents run concurrently on HF 72B.
+//! Phase 1b: ALL LLM synthesis calls run concurrently on the local model.
+//! Phase 2:  ALL 11 analysis agents run concurrently on the local model.
 //! Phase 3:  Eval → executive → questions (sequential, each depends on previous).
+//!
+//! mistral.rs internally wraps the model in `Arc<MistralRs>` with a scheduler that
+//! handles continuous batching, so concurrent `&self` chat requests are safe and
+//! parallel tokio::spawn tasks share a single `Arc<LocalLlm>` with no Mutex.
 
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
-use tokio::sync::Mutex;
 use tracing::{info, warn};
 
 use crate::error::Result;
-use crate::hf_client::HfClient;
 use crate::llm::LocalLlm;
 use crate::types::{AgentType, PersonInput, ResearchState};
 
@@ -24,23 +26,16 @@ struct GatheredData {
     user_prompt: String,
 }
 
-/// Dual-lane pipeline runner.
+/// Local-only pipeline runner.
 pub struct Pipeline {
-    local_llm: Arc<Mutex<LocalLlm>>,
-    hf_client: Option<HfClient>,
+    local_llm: Arc<LocalLlm>,
 }
 
 impl Pipeline {
-    pub fn new(local_llm: LocalLlm, hf_client: Option<HfClient>) -> Self {
-        let mode = if hf_client.is_some() {
-            "Dual-lane: Candle local + HF 72B"
-        } else {
-            "Single-lane: Candle local only"
-        };
-        info!("{mode}");
+    pub fn new(local_llm: LocalLlm) -> Self {
+        info!("Local-only mode: mistral.rs ({})", local_llm.model_name);
         Self {
-            local_llm: Arc::new(Mutex::new(local_llm)),
-            hf_client,
+            local_llm: Arc::new(local_llm),
         }
     }
 
@@ -57,7 +52,7 @@ impl Pipeline {
         let phase1_results = self.run_phase1(&person).await?;
         self.merge_results(&mut state, phase1_results);
 
-        // ── Phase 2: Deep Analysis (fully parallel on HF 72B) ────────────────
+        // ── Phase 2: Deep Analysis (fully parallel local) ────────────────────
         info!("Phase 2: Deep Analysis ({} agents)", AgentType::PHASE2.len());
         let phase2_results = self.run_phase2(&state).await?;
         self.merge_results(&mut state, phase2_results);
@@ -77,7 +72,6 @@ impl Pipeline {
     // ═════════════════════════════════════════════════════════════════════════
 
     async fn run_phase1(&self, person: &PersonInput) -> Result<HashMap<String, String>> {
-        // 1a: ALL HTTP fetches run concurrently
         info!("  Phase 1a: {} HTTP gather tasks → tokio parallel", AgentType::PHASE1.len());
         let gather_start = Instant::now();
 
@@ -90,24 +84,12 @@ impl Pipeline {
             gather_elapsed.as_secs_f64()
         );
 
-        // 1b: ALL LLM synthesis calls
         let synth_start = Instant::now();
-
-        let results = if let Some(hf) = &self.hf_client {
-            // Concurrent on HF 72B
-            info!(
-                "  Phase 1b: {} LLM synthesis → HF 72B concurrent",
-                gathered.len()
-            );
-            self.synthesize_all_hf(hf, gathered).await
-        } else {
-            // Sequential on Candle local
-            info!(
-                "  Phase 1b: {} LLM synthesis → Candle local (sequential)",
-                gathered.len()
-            );
-            self.synthesize_all_local(gathered).await
-        };
+        info!(
+            "  Phase 1b: {} LLM synthesis → local concurrent",
+            gathered.len()
+        );
+        let results = self.synthesize_all_local(gathered).await;
 
         let synth_elapsed = synth_start.elapsed();
         info!("  Phase 1b complete in {:.1}s", synth_elapsed.as_secs_f64());
@@ -119,7 +101,6 @@ impl Pipeline {
     async fn gather_all(&self, person: &PersonInput) -> Vec<GatheredData> {
         let p = person.clone();
 
-        // Spawn all HTTP gather tasks concurrently
         let web_handle = {
             let p = p.clone();
             tokio::spawn(async move { gather_web_research(&p).await })
@@ -153,7 +134,6 @@ impl Pipeline {
             tokio::spawn(async move { gather_blog(&p).await })
         };
 
-        // Await all concurrently
         let (web, github, orcid, arxiv, podcast, news, hf, blog) = tokio::join!(
             web_handle,
             github_handle,
@@ -194,16 +174,15 @@ impl Pipeline {
         gathered
     }
 
-    /// Synthesize ALL gathered data concurrently on HF 72B.
-    async fn synthesize_all_hf(
+    /// Synthesize ALL gathered data concurrently on the local model.
+    async fn synthesize_all_local(
         &self,
-        hf: &HfClient,
         gathered: Vec<GatheredData>,
     ) -> HashMap<String, String> {
         let mut handles = Vec::new();
 
         for data in gathered {
-            let hf = hf.clone();
+            let llm = Arc::clone(&self.local_llm);
             let key = data.key.to_string();
             let name = data.agent.as_str().to_string();
             let system = data.system_prompt;
@@ -211,7 +190,7 @@ impl Pipeline {
 
             let handle = tokio::spawn(async move {
                 let start = Instant::now();
-                let result = hf.chat(&system, &user, 4096).await;
+                let result = llm.chat(&system, &user, 4096).await;
                 let elapsed = start.elapsed();
                 (key, name, result, elapsed)
             });
@@ -223,7 +202,7 @@ impl Pipeline {
             match handle.await {
                 Ok((key, name, Ok(data), elapsed)) => {
                     info!(
-                        "  ✓ {name} synthesized ({} chars, {:.1}s) ← HF",
+                        "  ✓ {name} synthesized ({} chars, {:.1}s)",
                         data.len(),
                         elapsed.as_secs_f64()
                     );
@@ -241,118 +220,52 @@ impl Pipeline {
         results
     }
 
-    /// Synthesize ALL gathered data sequentially on Candle local.
-    async fn synthesize_all_local(
-        &self,
-        gathered: Vec<GatheredData>,
-    ) -> HashMap<String, String> {
-        let mut results = HashMap::new();
-
-        for data in gathered {
-            let name = data.agent.as_str();
-            info!("  → {name} (Candle)");
-            let start = Instant::now();
-
-            let mut llm = self.local_llm.lock().await;
-            let result = llm.chat(&data.system_prompt, &data.user_prompt, 4096);
-            drop(llm);
-
-            let elapsed = start.elapsed();
-            match result {
-                Ok(text) => {
-                    info!(
-                        "  ✓ {name} ({} chars, {:.1}s)",
-                        text.len(),
-                        elapsed.as_secs_f64()
-                    );
-                    results.insert(data.key.to_string(), text);
-                }
-                Err(e) => {
-                    warn!("  ✗ {name} failed: {e}");
-                    results.insert(data.key.to_string(), String::new());
-                }
-            }
-        }
-        results
-    }
-
     // ═════════════════════════════════════════════════════════════════════════
-    // Phase 2 — fully parallel synthesis on HF 72B
+    // Phase 2 — fully parallel synthesis on the local model
     // ═════════════════════════════════════════════════════════════════════════
 
     async fn run_phase2(&self, state: &ResearchState) -> Result<HashMap<String, String>> {
-        if let Some(hf) = &self.hf_client {
-            info!(
-                "  {} agents → HF 72B concurrent",
-                AgentType::PHASE2.len()
-            );
+        info!(
+            "  {} agents → local concurrent",
+            AgentType::PHASE2.len()
+        );
 
-            let mut handles = Vec::new();
-            for agent in AgentType::PHASE2 {
-                let hf = hf.clone();
-                let state = state.clone();
-                let handle = tokio::spawn(async move {
-                    let start = Instant::now();
-                    let (system, user) = synthesis_prompt(*agent, &state);
-                    let result = hf.chat(&system, &user, 4096).await;
-                    let elapsed = start.elapsed();
-                    (agent.state_key().to_string(), result, agent.as_str(), elapsed)
-                });
-                handles.push(handle);
-            }
-
-            let mut results = HashMap::new();
-            for handle in handles {
-                match handle.await {
-                    Ok((key, Ok(data), name, elapsed)) => {
-                        info!(
-                            "  ✓ {name} ({} chars, {:.1}s) ← HF",
-                            data.len(),
-                            elapsed.as_secs_f64()
-                        );
-                        results.insert(key, data);
-                    }
-                    Ok((key, Err(e), name, _)) => {
-                        warn!("  ✗ {name} failed: {e}");
-                        results.insert(key, String::new());
-                    }
-                    Err(e) => {
-                        warn!("  ✗ join error: {e}");
-                    }
-                }
-            }
-            Ok(results)
-        } else {
-            info!(
-                "  {} agents → Candle local (sequential)",
-                AgentType::PHASE2.len()
-            );
-
-            let mut results = HashMap::new();
-            for agent in AgentType::PHASE2 {
-                let key = agent.as_str();
-                info!("  → {key}");
+        let mut handles = Vec::new();
+        for agent in AgentType::PHASE2 {
+            let llm = Arc::clone(&self.local_llm);
+            let state = state.clone();
+            let agent = *agent;
+            let handle = tokio::spawn(async move {
                 let start = Instant::now();
-
-                let (system, user) = synthesis_prompt(*agent, state);
-                let mut llm = self.local_llm.lock().await;
-                let result = llm.chat(&system, &user, 4096);
-                drop(llm);
-
+                let (system, user) = synthesis_prompt(agent, &state);
+                let result = llm.chat(&system, &user, 4096).await;
                 let elapsed = start.elapsed();
-                match result {
-                    Ok(data) => {
-                        info!("  ✓ {key} ({} chars, {:.1}s)", data.len(), elapsed.as_secs_f64());
-                        results.insert(agent.state_key().to_string(), data);
-                    }
-                    Err(e) => {
-                        warn!("  ✗ {key} failed: {e}");
-                        results.insert(agent.state_key().to_string(), String::new());
-                    }
+                (agent.state_key().to_string(), result, agent.as_str(), elapsed)
+            });
+            handles.push(handle);
+        }
+
+        let mut results = HashMap::new();
+        for handle in handles {
+            match handle.await {
+                Ok((key, Ok(data), name, elapsed)) => {
+                    info!(
+                        "  ✓ {name} ({} chars, {:.1}s)",
+                        data.len(),
+                        elapsed.as_secs_f64()
+                    );
+                    results.insert(key, data);
+                }
+                Ok((key, Err(e), name, _)) => {
+                    warn!("  ✗ {name} failed: {e}");
+                    results.insert(key, String::new());
+                }
+                Err(e) => {
+                    warn!("  ✗ join error: {e}");
                 }
             }
-            Ok(results)
         }
+        Ok(results)
     }
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -372,12 +285,7 @@ impl Pipeline {
             let start = Instant::now();
 
             let (system, user) = synthesis_prompt(agent, state);
-            let result = if let Some(hf) = &self.hf_client {
-                hf.chat(&system, &user, 8192).await
-            } else {
-                let mut llm = self.local_llm.lock().await;
-                llm.chat(&system, &user, 8192)
-            };
+            let result = self.local_llm.chat(&system, &user, 8192).await;
 
             let elapsed = start.elapsed();
             match result {
