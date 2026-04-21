@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.venv
+node_modules
+.env
+.env.local
+uv.lock
+tests
+README.md
