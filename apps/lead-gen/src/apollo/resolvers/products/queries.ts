@@ -3,8 +3,10 @@ import { products } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import type {
   QueryProductArgs,
+  QueryProductBySlugArgs,
   QueryProductsArgs,
 } from "@/__generated__/resolvers-types";
+import { slugify } from "@/lib/slug";
 
 export const productQueries = {
   async product(
@@ -17,6 +19,18 @@ export const productQueries = {
       .from(products)
       .where(eq(products.id, args.id));
     return row ?? null;
+  },
+
+  async productBySlug(
+    _parent: unknown,
+    args: QueryProductBySlugArgs,
+    context: GraphQLContext,
+  ) {
+    const slug = args.slug.toLowerCase();
+    // Slug is derived from name; no DB index, so scan within the tenant-scoped
+    // set (RLS narrows it) and match in JS. Product counts per tenant are small.
+    const rows = await context.db.select().from(products);
+    return rows.find((p) => slugify(p.name) === slug) ?? null;
   },
 
   async products(

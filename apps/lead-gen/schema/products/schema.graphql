@@ -1,5 +1,6 @@
 type Product {
   id: Int!
+  slug: String!
   name: String!
   url: URL!
   domain: String
@@ -18,6 +19,7 @@ input ProductInput {
 extend type Query {
   products(limit: Int, offset: Int): [Product!]!
   product(id: Int!): Product
+  productBySlug(slug: String!): Product
 }
 
 extend type Mutation {
