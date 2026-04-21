@@ -81,7 +81,7 @@ PERSONALITIES_DIR = PROJECT_ROOT / "personalities"
 RESEARCH_DIR = PROJECT_ROOT / "src" / "lib" / "research"
 
 _HTTP_TIMEOUT = 15.0
-_MAX_REACT_ITERS = 12
+_MAX_REACT_ITERS = 8
 _AGENT_TIMEOUT = 300  # seconds — kill agent if it takes longer
 _SKIP_AGENTS: set[str] = set()  # populated via --skip-agents CLI flag
 
@@ -99,7 +99,7 @@ _MLX_POOL: Any = None  # multiprocessing.Pool, initialized lazily
 def _make_client() -> MLXClient:
     return MLXClient(MLXConfig(
         default_temperature=0.2,
-        default_max_tokens=8192,
+        default_max_tokens=4096,
     ))
 
 
@@ -809,7 +809,7 @@ def _mlx_worker_init(model_name: str | None) -> None:
     global _WORKER_CLIENT
     if model_name:
         os.environ["MLX_MODEL"] = model_name
-    _WORKER_CLIENT = MLXClient(MLXConfig(default_temperature=0.2, default_max_tokens=8192))
+    _WORKER_CLIENT = MLXClient(MLXConfig(default_temperature=0.2, default_max_tokens=4096))
 
 
 def _mlx_worker_run(key: str, sys_prompt: str, task_prompt: str, tool_names: list[str] | None) -> tuple[str, str]:
@@ -995,7 +995,27 @@ async def _run_agent(
     `temperature` and `extra_kwargs` (e.g. {"seed": 7}) are forwarded to
     `client.chat()`. Both clients accept arbitrary **kwargs; the HF backend
     honours `seed`, MLX silently ignores it.
+
+    Hard-capped at `_AGENT_TIMEOUT` seconds; returns a timeout marker on overrun.
     """
+    try:
+        return await asyncio.wait_for(
+            _run_agent_impl(client, system_prompt, task, tools, temperature, extra_kwargs),
+            timeout=_AGENT_TIMEOUT,
+        )
+    except asyncio.TimeoutError:
+        console.print(f"[red]Agent timeout after {_AGENT_TIMEOUT}s[/]")
+        return f"(agent timeout after {_AGENT_TIMEOUT}s)"
+
+
+async def _run_agent_impl(
+    client,
+    system_prompt: str,
+    task: str,
+    tools,
+    temperature: float | None,
+    extra_kwargs: dict | None,
+) -> str:
     extra = dict(extra_kwargs or {})
     if temperature is not None:
         extra.setdefault("temperature", temperature)
