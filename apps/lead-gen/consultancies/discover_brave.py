@@ -212,10 +212,15 @@ def extract_companies(results: list[dict]) -> list[Company]:
             continue
         if domain in seen_domains:
             continue
+        if not is_homepage(url):
+            continue
         seen_domains.add(domain)
 
         name = extract_name_from_title(title)
         if not name or len(name) < 2:
+            continue
+        if LISTICLE_NAME_RE.search(name):
+            log.debug(f"  skip listicle-style name: {name!r} ({domain})")
             continue
 
         companies.append(Company(
