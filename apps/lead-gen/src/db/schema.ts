@@ -16,8 +16,17 @@ import { sql, relations } from "drizzle-orm";
 // Re-export Better Auth tables (user, session, account, verification)
 export { user, session, account, verification } from "@ai-apps/auth/schema";
 
+// Tenant column — used by all tenant-scoped tables for Postgres RLS.
+// Default reads the per-request session GUC `app.tenant` set in withTenantDb();
+// when no GUC is set (scripts / admin), falls back to 'vadim' so existing tools keep working.
+const tenantIdColumn = () =>
+  text("tenant_id")
+    .notNull()
+    .default(sql`COALESCE(NULLIF(current_setting('app.tenant', true), ''), 'vadim')`);
+
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
+  tenant_id: tenantIdColumn(),
   key: text("key").notNull().unique(), // Unique identifier (slug/domain)
   name: text("name").notNull(),
   logo_url: text("logo_url"),
@@ -140,6 +149,7 @@ export const companyFacts = pgTable(
   "company_facts",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     company_id: integer("company_id")
       .notNull()
       .references(() => companies.id, { onDelete: "cascade" }),
@@ -188,6 +198,7 @@ export const companySnapshots = pgTable(
   "company_snapshots",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     company_id: integer("company_id")
       .notNull()
       .references(() => companies.id, { onDelete: "cascade" }),
@@ -237,6 +248,7 @@ export const contacts = pgTable(
   "contacts",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     slug: text("slug"),
     first_name: text("first_name").notNull(),
     last_name: text("last_name").notNull(),
@@ -312,6 +324,7 @@ export const reminders = pgTable(
   "reminders",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     entity_type: text("entity_type").notNull(), // contact | company | ...
     entity_id: integer("entity_id").notNull(),
     remind_at: text("remind_at").notNull(),
@@ -341,6 +354,7 @@ export const contactEmails = pgTable(
   "contact_emails",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     contact_id: integer("contact_id")
       .notNull()
       .references(() => contacts.id, { onDelete: "cascade" }),
@@ -404,6 +418,7 @@ export const emailCampaigns = pgTable(
   "email_campaigns",
   {
     id: text("id").primaryKey(), // campaign_<timestamp>_<random>
+    tenant_id: tenantIdColumn(),
     company_id: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
     name: text("name").notNull(),
     status: text("status", {
@@ -447,6 +462,7 @@ export const emailTemplates = pgTable(
   "email_templates",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     name: text("name").notNull(),
     description: text("description"),
     subject: text("subject"),
@@ -477,6 +493,7 @@ export const receivedEmails = pgTable(
   "received_emails",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     resend_id: text("resend_id").unique(),
     source: text("source").notNull().default("email"), // email | linkedin_dm
     from_email: text("from_email"),
@@ -524,6 +541,7 @@ export const linkedinPosts = pgTable(
   "linkedin_posts",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     type: text("type", { enum: ["post", "job"] }).notNull().default("post"),
     url: text("url").notNull(),           // LinkedIn canonical URL (unique)
 
@@ -579,6 +597,7 @@ export const opportunities = pgTable(
   "opportunities",
   {
     id: text("id").primaryKey(), // opp_<timestamp>_<random>
+    tenant_id: tenantIdColumn(),
     title: text("title").notNull(),
     url: text("url"),
     source: text("source"), // linkedin | website | referral | etc.
@@ -622,6 +641,7 @@ export const intentSignals = pgTable(
   "intent_signals",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     company_id: integer("company_id")
       .notNull()
       .references(() => companies.id, { onDelete: "cascade" }),
@@ -875,6 +895,7 @@ export const replyDrafts = pgTable(
   "reply_drafts",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     received_email_id: integer("received_email_id")
       .notNull()
       .references(() => receivedEmails.id, { onDelete: "cascade" }),
@@ -928,6 +949,7 @@ export const messages = pgTable(
   "messages",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     channel: text("channel").notNull(), // "linkedin" | "telegram" | "whatsapp" | "other"
     direction: text("direction").notNull(), // "inbound" | "outbound"
     contact_id: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
@@ -1040,6 +1062,7 @@ export const competitorAnalyses = pgTable(
   "competitor_analyses",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     seed_product_name: text("seed_product_name").notNull(),
     seed_product_url: text("seed_product_url").notNull(),
     status: text("status", {
@@ -1067,6 +1090,7 @@ export const competitors = pgTable(
   "competitors",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     analysis_id: integer("analysis_id")
       .notNull()
       .references(() => competitorAnalyses.id, { onDelete: "cascade" }),
@@ -1103,6 +1127,7 @@ export const competitorPricingTiers = pgTable(
   "competitor_pricing_tiers",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     competitor_id: integer("competitor_id")
       .notNull()
       .references(() => competitors.id, { onDelete: "cascade" }),
@@ -1130,6 +1155,7 @@ export const competitorFeatures = pgTable(
   "competitor_features",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     competitor_id: integer("competitor_id")
       .notNull()
       .references(() => competitors.id, { onDelete: "cascade" }),
@@ -1153,6 +1179,7 @@ export const competitorIntegrations = pgTable(
   "competitor_integrations",
   {
     id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
     competitor_id: integer("competitor_id")
       .notNull()
       .references(() => competitors.id, { onDelete: "cascade" }),
