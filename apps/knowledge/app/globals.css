@@ -2696,6 +2696,24 @@ body {
   color: var(--gray-8);
   font-family: var(--font-mono, monospace);
 }
+.app-detail-tabs {
+  box-shadow: none !important;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.app-detail-tabs::-webkit-scrollbar {
+  display: none;
+}
+.app-detail-tabs > button {
+  flex-shrink: 0;
+}
+@media (max-width: 520px) {
+  .app-detail-tabs .tab-shortcut-hint {
+    display: none;
+  }
+}
 .collapsible-body {
   max-height: 0;
   overflow: hidden;

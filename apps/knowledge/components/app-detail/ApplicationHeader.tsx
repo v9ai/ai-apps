@@ -174,14 +174,10 @@ export function ApplicationHeader({ app, isAdmin, onUpdate, onSlugChange }: Appl
 
       {/* Header */}
       <Flex
-        gap="4"
+        gap={{ initial: "3", sm: "4" }}
         align="start"
         mb="2"
         direction={{ initial: "column", sm: "row" }}
-        style={{
-          borderLeft: `3px solid ${statusCssColor}`,
-          paddingLeft: 16,
-        }}
       >
         <Avatar
           size="4"
@@ -190,8 +186,8 @@ export function ApplicationHeader({ app, isAdmin, onUpdate, onSlugChange }: Appl
           color="indigo"
           style={{ flexShrink: 0 }}
         />
-        <Box style={{ flex: 1 }}>
-          <Heading size="7" mb="1">
+        <Box style={{ flex: 1, minWidth: 0, width: "100%" }}>
+          <Heading size={{ initial: "5", sm: "6", md: "7" }} mb="1" style={{ wordBreak: "break-word" }}>
             {displayTitle}
           </Heading>
           <Flex align="center" gap="2" wrap="wrap">

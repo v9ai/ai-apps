@@ -44,7 +44,7 @@ export function JobDescriptionTab({
   return (
     <>
       {/* Job description card */}
-      <Card mb="5" id="job-description" style={{ borderLeft: "3px solid var(--accent-6)", borderRadius: 0 }}>
+      <Card mb="5" id="job-description">
         <Flex justify="between" align="center" mb="3">
           <Heading size="4">Job Description</Heading>
           {isAdmin && !editingJobDescription && (
@@ -111,7 +111,7 @@ export function JobDescriptionTab({
 
       {/* AI Interview Prep */}
       {app.aiInterviewQuestions && (
-        <Card mb="5" style={{ borderLeft: "3px solid var(--violet-6)", borderRadius: 0 }}>
+        <Card mb="5">
           <Heading size="4" mb="4">Interview Prep</Heading>
           <Box className="interview-prep-md">
             <ReactMarkdown
@@ -121,12 +121,12 @@ export function JobDescriptionTab({
                   <Heading size="5" mb="2" mt="4" style={{ color: "var(--violet-11)" }}>{children}</Heading>
                 ),
                 h2: ({ children }) => (
-                  <Box mt="5" mb="2" pt="4" style={{ borderTop: "1px solid var(--gray-4)" }}>
+                  <Box mt="5" mb="2" pt="4">
                     <Heading size="4" style={{ color: "var(--violet-11)" }}>{children}</Heading>
                   </Box>
                 ),
                 h3: ({ children }) => (
-                  <Box mt="4" mb="2" p="3" style={{ backgroundColor: "var(--violet-2)", borderLeft: "3px solid var(--violet-8)", borderRadius: 0 }}>
+                  <Box mt="4" mb="2" p="3" style={{ backgroundColor: "var(--violet-2)", borderRadius: "var(--radius-2)" }}>
                     <Heading size="3">{children}</Heading>
                   </Box>
                 ),
@@ -147,7 +147,7 @@ export function JobDescriptionTab({
                   <li style={{ lineHeight: 1.7, marginBottom: 4, fontSize: "var(--font-size-2)" }}>{children}</li>
                 ),
                 blockquote: ({ children }) => (
-                  <Box mb="3" pl="3" style={{ borderLeft: "3px solid var(--gray-6)", color: "var(--gray-11)" }}>
+                  <Box mb="3" pl="3" style={{ color: "var(--gray-11)" }}>
                     {children}
                   </Box>
                 ),
@@ -165,7 +165,7 @@ export function JobDescriptionTab({
                     </code>
                   );
                 },
-                hr: () => <Box mb="4" style={{ borderTop: "1px solid var(--gray-4)" }} />,
+                hr: () => <Box mb="4" />,
               }}
             >
               {app.aiInterviewQuestions}

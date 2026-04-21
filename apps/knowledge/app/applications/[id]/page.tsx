@@ -121,11 +121,11 @@ function ApplicationDetailInner() {
   }
 
   return (
-    <Container size="3" p={{ initial: "4", md: "8" }}>
+    <Container size="3" px={{ initial: "3", sm: "5", md: "8" }} py={{ initial: "4", md: "8" }}>
       <ApplicationHeader app={app} isAdmin={isAdmin} onUpdate={setApp} onSlugChange={(s) => router.replace(`/applications/${s}?tab=${activeTab}`)} />
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
-        <Tabs.List style={{ borderBottom: "1px solid var(--gray-6)" }}>
+        <Tabs.List className="app-detail-tabs">
           <Tabs.Trigger value="description">
             <Flex direction="column" align="center" gap="0">
               <Text>Job Description</Text>

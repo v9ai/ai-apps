@@ -184,7 +184,7 @@ export function TechStackTab({ app, isAdmin }: TabBaseProps) {
 
   if (techs.length === 0) {
     return (
-      <Card style={{ borderLeft: "3px solid var(--cyan-6)", borderRadius: 0 }}>
+      <Card>
         <Flex direction="column" align="center" justify="center" gap="2" py="8" style={{ opacity: 0.7 }}>
           <InfoCircledIcon width={24} height={24} color="var(--gray-8)" />
           <Text size="2" color="gray">No technologies detected in the job description.</Text>
@@ -200,7 +200,7 @@ export function TechStackTab({ app, isAdmin }: TabBaseProps) {
   return (
     <Flex direction="column" gap="4">
       {/* Active technologies */}
-      <Card style={{ borderLeft: "3px solid var(--cyan-6)", borderRadius: 0 }}>
+      <Card>
         <Flex justify="between" align="center" mb="4">
           <Flex align="center" gap="2">
             <Heading size="4">Tech Stack</Heading>
@@ -292,7 +292,7 @@ export function TechStackTab({ app, isAdmin }: TabBaseProps) {
 
       {/* Dismissed technologies */}
       {dismissedTechs.length > 0 && (
-        <Card style={{ borderRadius: 0, opacity: 0.7 }}>
+        <Card style={{ opacity: 0.7 }}>
           <Flex align="center" gap="2" mb="2">
             <Text size="2" weight="bold" color="gray">Dismissed</Text>
           </Flex>
@@ -340,7 +340,7 @@ export function TechStackTab({ app, isAdmin }: TabBaseProps) {
       )}
 
       {/* Help text */}
-      <Card style={{ borderRadius: 0, backgroundColor: "var(--gray-2)" }}>
+      <Card style={{ backgroundColor: "var(--gray-2)" }}>
         <Flex align="center" gap="2">
           <InfoCircledIcon width={14} height={14} color="var(--gray-9)" />
           <Text size="1" color="gray">
