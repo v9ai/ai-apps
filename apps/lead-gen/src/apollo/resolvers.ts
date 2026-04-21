@@ -18,6 +18,7 @@ import { opportunityResolvers } from "./resolvers/opportunities";
 import { scrapedPostResolvers } from "./resolvers/scraped-posts";
 import { webhookEventResolvers } from "./resolvers/webhook-events";
 import { competitorResolvers } from "./resolvers/competitors";
+import { productResolvers } from "./resolvers/products";
 import { merge } from "lodash";
 
 export const resolvers = merge(
@@ -42,4 +43,5 @@ export const resolvers = merge(
   scrapedPostResolvers,
   webhookEventResolvers,
   competitorResolvers,
+  productResolvers,
 );

@@ -1,0 +1,29 @@
+{
+  "slug": "lisa-welsch",
+  "name": "Lisa Welsch",
+  "generated_at": "2026-04-21T11:28:33+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 8,
+      "reasoning": "The biography is specific, evidence-based, and informative. It provides a clear overview of Lisa Welsch's career, highlighting her transition from a K-pop star to a tech entrepreneur. However, it could be more detailed by including more specific dates and achievements within her tech career at TasteHub GmbH."
+    },
+    "source_coverage": {
+      "score": 7,
+      "reasoning": "The sources are diverse and include URLs for the company's website, app, and GitHub repository. However, the biography and timeline are based on the most recent information available, and there is no clear indication of the depth or credibility of the sources. More detailed and verifiable sources would improve the score."
+    },
+    "timeline_completeness": {
+      "score": 6,
+      "reasoning": "The timeline is detailed but lacks specific dates and events. It includes a series of similar events without clear differentiation or dates. More specific and well-documented events would improve the score. Additionally, the timeline should include more concrete dates and achievements to make it more comprehensive."
+    },
+    "contributions_depth": {
+      "score": 9,
+      "reasoning": "The contributions are specific and include technical projects like the 'tastehub-data-pipeline' and open-source contributions. However, more detailed descriptions of the impact and significance of these contributions would further enhance the score. The current information provides a good foundation but lacks depth."
+    },
+    "name_disambiguation": {
+      "score": 10,
+      "reasoning": "The profile is clearly focused on Lisa Welsch, Founder & Developer at TasteHub GmbH. There is no ambiguity, and the digital identity mapping accurately reflects her professional presence. The disambiguation is accurate and thorough."
+    },
+    "overall_score": 8,
+    "summary": "The profile is well-structured and provides a clear overview of Lisa Welsch's career. It includes specific contributions and a detailed timeline. However, there are gaps in the timeline's completeness and the need for more detailed and verifiable sources to improve the overall quality. The bio and contributions are strong, and the name disambiguation is accurate."
+  }
+}
