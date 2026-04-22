@@ -8,5 +8,7 @@ export const lockVault: NonNullable<MutationResolvers['lockVault']> = async (
 ) => {
   ctx.pendingVaultCookie = buildVaultCookie(null);
   ctx.vaultUnlocked = false;
-  return { unlocked: false };
+  const allowed = process.env.VAULT_ALLOWED_EMAIL;
+  const available = !!allowed && !!ctx.userEmail && ctx.userEmail === allowed;
+  return { unlocked: false, available };
 };

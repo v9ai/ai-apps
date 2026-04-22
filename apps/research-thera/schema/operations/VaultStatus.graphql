@@ -1,5 +1,6 @@
 query VaultStatus {
   vaultStatus {
     unlocked
+    available
   }
 }

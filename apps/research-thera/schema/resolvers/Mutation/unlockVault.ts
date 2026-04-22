@@ -18,6 +18,11 @@ export const unlockVault: NonNullable<MutationResolvers['unlockVault']> = async 
     throw new Error("Authentication required");
   }
 
+  const allowed = process.env.VAULT_ALLOWED_EMAIL;
+  if (!allowed || !ctx.userEmail || ctx.userEmail !== allowed) {
+    return { success: false, unlocked: false, message: "Invalid PIN" };
+  }
+
   const rate = checkRateLimit(userId);
   if (!rate.allowed) {
     return { success: false, unlocked: false, message: "Too many attempts. Try again later." };

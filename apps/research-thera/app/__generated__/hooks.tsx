@@ -2375,6 +2375,7 @@ export type UserSettings = {
 
 export type VaultStatus = {
   __typename?: 'VaultStatus';
+  available: Scalars['Boolean']['output'];
   unlocked: Scalars['Boolean']['output'];
 };
 
@@ -3358,7 +3359,7 @@ export type UpdateUserSettingsMutation = { __typename?: 'Mutation', updateUserSe
 export type VaultStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type VaultStatusQuery = { __typename?: 'Query', vaultStatus: { __typename?: 'VaultStatus', unlocked: boolean } };
+export type VaultStatusQuery = { __typename?: 'Query', vaultStatus: { __typename?: 'VaultStatus', unlocked: boolean, available: boolean } };
 
 
 export const CheckNoteClaimsDocument = gql`
@@ -10133,6 +10134,7 @@ export const VaultStatusDocument = gql`
     query VaultStatus {
   vaultStatus {
     unlocked
+    available
   }
 }
     `;

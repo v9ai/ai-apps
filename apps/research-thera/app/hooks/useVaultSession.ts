@@ -9,6 +9,7 @@ export function useVaultSession() {
   });
   return {
     unlocked: data?.vaultStatus?.unlocked === true,
+    available: data?.vaultStatus?.available === true,
     refresh: refetch,
   };
 }

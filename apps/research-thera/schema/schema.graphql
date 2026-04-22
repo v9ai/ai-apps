@@ -1069,6 +1069,7 @@ type DeleteJournalEntryResult {
 
 type VaultStatus {
   unlocked: Boolean!
+  available: Boolean!
 }
 
 type VaultUnlockResult {

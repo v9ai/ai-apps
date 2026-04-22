@@ -139,7 +139,7 @@ type Documents = {
     "mutation UpdateStory($id: Int!, $input: UpdateStoryInput!) {\n  updateStory(id: $id, input: $input) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}": typeof types.UpdateStoryDocument,
     "mutation UpdateTeacherFeedback($id: Int!, $input: UpdateTeacherFeedbackInput!) {\n  updateTeacherFeedback(id: $id, input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": typeof types.UpdateTeacherFeedbackDocument,
     "query GetUserSettings {\n  userSettings {\n    userId\n    storyLanguage\n    storyMinutes\n  }\n}\n\nmutation UpdateUserSettings($storyLanguage: String!, $storyMinutes: Int) {\n  updateUserSettings(storyLanguage: $storyLanguage, storyMinutes: $storyMinutes) {\n    userId\n    storyLanguage\n    storyMinutes\n  }\n}": typeof types.GetUserSettingsDocument,
-    "query VaultStatus {\n  vaultStatus {\n    unlocked\n  }\n}": typeof types.VaultStatusDocument,
+    "query VaultStatus {\n  vaultStatus {\n    unlocked\n    available\n  }\n}": typeof types.VaultStatusDocument,
 };
 const documents: Documents = {
     "mutation CheckNoteClaims($input: CheckNoteClaimsInput!) {\n  checkNoteClaims(input: $input) {\n    success\n    message\n    noteId\n    cards {\n      id\n      claim\n      scope {\n        population\n        intervention\n        comparator\n        outcome\n        timeframe\n        setting\n      }\n      verdict\n      confidence\n      evidence {\n        paper {\n          title\n          doi\n          url\n          year\n          source\n          authors\n          abstract\n          journal\n        }\n        polarity\n        excerpt\n        rationale\n        score\n        locator {\n          section\n          page\n          url\n        }\n      }\n      queries\n      createdAt\n      updatedAt\n      provenance {\n        generatedBy\n        model\n        sourceTools\n      }\n      notes\n    }\n  }\n}": types.CheckNoteClaimsDocument,
@@ -267,7 +267,7 @@ const documents: Documents = {
     "mutation UpdateStory($id: Int!, $input: UpdateStoryInput!) {\n  updateStory(id: $id, input: $input) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}": types.UpdateStoryDocument,
     "mutation UpdateTeacherFeedback($id: Int!, $input: UpdateTeacherFeedbackInput!) {\n  updateTeacherFeedback(id: $id, input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": types.UpdateTeacherFeedbackDocument,
     "query GetUserSettings {\n  userSettings {\n    userId\n    storyLanguage\n    storyMinutes\n  }\n}\n\nmutation UpdateUserSettings($storyLanguage: String!, $storyMinutes: Int) {\n  updateUserSettings(storyLanguage: $storyLanguage, storyMinutes: $storyMinutes) {\n    userId\n    storyLanguage\n    storyMinutes\n  }\n}": types.GetUserSettingsDocument,
-    "query VaultStatus {\n  vaultStatus {\n    unlocked\n  }\n}": types.VaultStatusDocument,
+    "query VaultStatus {\n  vaultStatus {\n    unlocked\n    available\n  }\n}": types.VaultStatusDocument,
 };
 
 /**
@@ -787,7 +787,7 @@ export function gql(source: "query GetUserSettings {\n  userSettings {\n    user
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "query VaultStatus {\n  vaultStatus {\n    unlocked\n  }\n}"): (typeof documents)["query VaultStatus {\n  vaultStatus {\n    unlocked\n  }\n}"];
+export function gql(source: "query VaultStatus {\n  vaultStatus {\n    unlocked\n    available\n  }\n}"): (typeof documents)["query VaultStatus {\n  vaultStatus {\n    unlocked\n    available\n  }\n}"];
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {};

@@ -1530,6 +1530,7 @@ type UserSettings {
 }
 
 type VaultStatus {
+  available: Boolean!
   unlocked: Boolean!
 }
 

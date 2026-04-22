@@ -2356,6 +2356,7 @@ export type UserSettings = {
 
 export type VaultStatus = {
   __typename?: 'VaultStatus';
+  available: Scalars['Boolean']['output'];
   unlocked: Scalars['Boolean']['output'];
 };
 
@@ -3899,6 +3900,7 @@ export type UserSettingsResolvers<ContextType = GraphQLContext, ParentType exten
 };
 
 export type VaultStatusResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VaultStatus'] = ResolversParentTypes['VaultStatus']> = {
+  available?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   unlocked?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 

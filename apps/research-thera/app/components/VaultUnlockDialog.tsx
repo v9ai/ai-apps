@@ -65,7 +65,6 @@ export default function VaultUnlockDialog({
         <form onSubmit={handleSubmit} autoComplete="off">
           <Flex direction="column" gap="3">
             <TextField.Root
-              type="password"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               placeholder="PIN"
