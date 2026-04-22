@@ -24,8 +24,9 @@ impl Fetchers {
     /// `ResearchPaper`, and return combined results (OpenAlex first, arXiv appended
     /// where DOI/title don't collide). Both sources are queried concurrently.
     pub async fn by_author(&self, author_name: &str, per_source: u32) -> Result<Vec<ResearchPaper>> {
+        let arxiv_query = format!("au:\"{}\"", author_name);
         let openalex_fut = self.openalex.search_by_author_name(author_name, 1, per_source);
-        let arxiv_fut = self.arxiv.search(&format!("au:\"{}\"", author_name), 0, per_source, None, None);
+        let arxiv_fut = self.arxiv.search(&arxiv_query, 0, per_source, None, None);
         let (openalex_res, arxiv_res) = tokio::join!(openalex_fut, arxiv_fut);
 
         let mut out: Vec<ResearchPaper> = Vec::new();

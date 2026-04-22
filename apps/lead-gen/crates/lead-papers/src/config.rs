@@ -14,6 +14,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> Result<Self> {
+        let _ = dotenvy::from_filename(".env.local");
         let _ = dotenvy::dotenv();
         Ok(Self {
             github_token: env::var("GITHUB_TOKEN").context("GITHUB_TOKEN missing")?,

@@ -147,7 +147,8 @@ async fn run_pipeline(cfg: &Config, contacts: Vec<Contact>) -> Result<()> {
     let concurrency: usize = std::env::var("LEADMATCH_CONCURRENCY")
         .ok()
         .and_then(|s| s.parse().ok())
-        .unwrap_or(5);
+        .unwrap_or(10);
+    tracing::info!("parallelism: {} contacts in flight", concurrency);
 
     stream::iter(contacts.iter())
         .for_each_concurrent(concurrency, |c| {
