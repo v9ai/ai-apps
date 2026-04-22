@@ -74,9 +74,9 @@ const BROAD_QUERIES: &[&str] = &[
 // sales/lead-gen would almost never contain, with a domain-exclusion pass on
 // top for the remaining edge cases.
 
-/// Strong compound phrases. Any single title-or-abstract match = keep.
-/// Must be phrases that don't appear incidentally in unrelated domains.
-const STRONG_PHRASES: &[&str] = &[
+/// **Tier A** — sales/marketing-specific compound phrases that do not appear
+/// outside the domain. A single match in title or abstract is enough.
+const TIER_A_PHRASES: &[&str] = &[
     // Sales core
     "lead generation", "lead scoring", "lead qualification", "lead ranking",
     "lead prioritization", "sales lead", "b2b sales", "b2b lead",
@@ -95,9 +95,10 @@ const STRONG_PHRASES: &[&str] = &[
     "prospect engagement", "prospect identification", "prospecting",
     "prospect matching",
     // Customer lifecycle
-    "customer acquisition", "customer churn", "churn prediction",
-    "churn model", "customer lifetime value", "customer retention",
-    "customer relationship management", " crm ",
+    "customer acquisition", "customer retention",
+    "customer lifetime value",
+    "customer relationship management", " crm ", "crm data", "crm system",
+    "crm analytics", "crm automation",
     "customer journey", "customer segmentation",
     // Marketing analytics
     "marketing attribution", "marketing automation", "marketing mix",
@@ -105,45 +106,84 @@ const STRONG_PHRASES: &[&str] = &[
     "account-based marketing", " abm ",
     "conversion rate optimization", "click-through rate", " ctr ",
     "digital marketing", "direct marketing", "content marketing",
-    "performance marketing",
+    "performance marketing", "email marketing",
     // ICP / firmographic targeting
     "ideal customer profile", " icp ",
     "firmographic", "firmograph",
     "buyer intent", "intent signal", "purchase intent",
     "lookalike model", "lookalike audience",
     "audience targeting", "audience segmentation",
-    // Recommendation & ads (the commercial-ML setting bandits papers live in)
-    "recommender system", "recommendation system",
-    "product recommendation", "content recommendation", "news recommendation",
+    // Ads (commercial only)
     "ad ranking", "ad allocation", "ad bidding", "real-time bidding",
     "display advertising", "online advertising", "computational advertising",
-    "click prediction",
     // Sales-ops analytics
     "cross-sell", "upsell", "up-sell",
     "next-best-action", "next best action",
     "uplift model", "uplift modeling", "uplift prediction",
     "propensity model", "propensity scoring",
-    // Bandits explicitly (always business-setting relevant)
-    "contextual bandit", "multi-armed bandit", "multi armed bandit",
-    "neural bandit", "neuralucb", "thompson sampling",
     // Sales-specific LLM / agent work
     "sales assistant", "sales chatbot", "ai sales", "ai-powered sales",
     "llm for sales", "llm-based sales", "conversational commerce",
     "voice of the customer", "voice-of-customer",
     "agent for sales", "email agent",
-    // CRM / entity resolution with sales context
-    "crm data", "crm system", "crm analytics",
+    // B2B entity / company matching (commercial)
     "b2b entity", "account matching", "company matching",
     "business entity resolution",
-    // Retail / e-commerce commercial analytics (adjacent but valid)
+    // Retail / e-commerce commercial analytics
     "e-commerce personalization", "retail personalization",
     "purchase prediction", "transaction prediction",
 ];
 
-/// Domain-exclusion strings. If a paper hits one of these AND doesn't hit a
-/// strong phrase in its title, we reject it — guards against mental-health,
-/// clinical, education, agriculture, etc. papers with one stray sales-ish
-/// token in an abstract.
+/// **Tier B** — ML-method phrases that appear in many domains (recommender
+/// systems for movies/tourism/news; bandits for wireless/cyber; churn in
+/// healthcare). A paper with a Tier B phrase but no Tier A phrase must ALSO
+/// contain at least one `COMMERCIAL_CONTEXT` token to be accepted.
+const TIER_B_PHRASES: &[&str] = &[
+    "contextual bandit", "multi-armed bandit", "multi armed bandit",
+    "neural bandit", "neuralucb", "thompson sampling",
+    "recommender system", "recommendation system",
+    "product recommendation", "content recommendation", "news recommendation",
+    "click prediction", "churn prediction", "churn model",
+    "customer churn",
+];
+
+/// Commercial-context tokens required to accept a Tier-B-only paper.
+/// Intentionally narrow: a paper about wireless bandits won't contain
+/// "marketing" / "e-commerce" / "CRM"; a paper about ad-slot bandits will.
+const COMMERCIAL_CONTEXT: &[&str] = &[
+    " sales ", "marketing", " crm ", "e-commerce", "ecommerce",
+    " retail", " b2b ", "b2c", "brand ", "buyer", "consumer ",
+    " ad ", "advertising", "campaign", " revenue ", "conversion rate",
+    " purchase", "shopping", " shop ", "customer acquisition",
+    "customer lifetime", "subscription ", "subscriber ",
+    "commerce", "merchant",
+];
+
+/// Hard title exclusions — if any of these appear in the **title**, reject
+/// regardless of any other match. Covers the domains that showed up as
+/// residual false-positives: cyber, movie/music/news recommenders,
+/// tourism, wireless networking, smart city, energy grid.
+const HARD_EXCLUDE_TITLE: &[&str] = &[
+    "cyber threat", "cyber-threat", "cyber attack", "cybersecurity",
+    "intrusion detect", "malware", "phishing detect",
+    "movie recommend", "music recommend", "film recommend",
+    "news recommend",
+    "tourism", "travel ", "travel recommend",
+    "wireless network", "cognitive radio", "spectrum allocation",
+    "spectrum sensing", "channel sensing",
+    "iiot ", " iot ", "internet of things",
+    "power grid", "smart grid", "energy demand", "electricity demand",
+    "smart city", "smart home",
+    "federated learning", "federated bandit",
+    "blockchain",
+    "age of information",
+    "water network", "sewer",
+    "mobility-aware", "cognitive network",
+    "cyber physical",
+];
+
+/// Domain-exclusion strings (abstract-level). Hits here only reject when
+/// there are at least 2 hits AND no Tier-A phrase in the title.
 const EXCLUDED_DOMAINS: &[&str] = &[
     "mental health", "depression", "anxiety disorder", "psychiatric",
     "psycholog", "clinical trial", "patient ", "clinician", "hospital",
@@ -174,27 +214,41 @@ fn is_relevant(p: &ResearchPaper) -> bool {
     let title = p.title.to_lowercase();
     let abstract_text = p.abstract_text.as_deref().unwrap_or("").to_lowercase();
     let hay = format!(" {title} {abstract_text} ");
+    let title_hay = format!(" {title} ");
 
-    // Must contain at least one strong phrase somewhere.
-    if !contains_any(&hay, STRONG_PHRASES) {
+    // Hard title exclusions: cyber, wireless, tourism, movie/music/news
+    // recommenders, smart city, energy grid, blockchain, etc.
+    if contains_any(&title_hay, HARD_EXCLUDE_TITLE) {
         return false;
     }
 
-    // Even if a strong phrase matched, drop papers whose title is clearly in
-    // an excluded domain (title-scoped to avoid over-filtering).
-    let title_hay = format!(" {title} ");
+    let has_tier_a = contains_any(&hay, TIER_A_PHRASES);
+    let has_tier_b = contains_any(&hay, TIER_B_PHRASES);
+
+    // Must hit some sales-related phrase at all.
+    if !has_tier_a && !has_tier_b {
+        return false;
+    }
+
+    // Tier-B-only papers (pure methods: bandits, recommenders, churn)
+    // must co-occur with commercial context — otherwise they're cyber,
+    // wireless, movie, etc. papers that just happen to use the method.
+    if !has_tier_a && has_tier_b {
+        if !contains_any(&hay, COMMERCIAL_CONTEXT) {
+            return false;
+        }
+    }
+
+    // General domain exclusion: reject if title hits an excluded domain,
+    // or if abstract has ≥2 excluded-domain hits without a Tier A match.
     if contains_any(&title_hay, EXCLUDED_DOMAINS) {
         return false;
     }
-
-    // Abstract-level exclusion only fires when the strong phrase is weak and
-    // the excluded-domain signal in the abstract is strong. For simplicity:
-    // if abstract mentions ≥2 excluded-domain tokens, reject.
     let exclusion_hits = EXCLUDED_DOMAINS
         .iter()
         .filter(|n| abstract_text.contains(*n))
         .count();
-    if exclusion_hits >= 2 {
+    if exclusion_hits >= 2 && !has_tier_a {
         return false;
     }
 
