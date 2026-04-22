@@ -348,13 +348,15 @@ def _persist_sales_enrichment(
     try:
         with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
             with conn.cursor() as cur:
+                # dm_reasons + tags are text-typed (store JSON as string);
+                # linkedin_profile is jsonb. Casts match the column types.
                 cur.execute(
                     "UPDATE contacts "
                     "SET seniority = COALESCE(%s, seniority), "
                     "    department = COALESCE(%s, department), "
                     "    is_decision_maker = COALESCE(%s, is_decision_maker), "
                     "    authority_score = COALESCE(%s, authority_score), "
-                    "    dm_reasons = COALESCE(%s::jsonb, dm_reasons), "
+                    "    dm_reasons = COALESCE(%s, dm_reasons), "
                     "    linkedin_profile = COALESCE(%s::jsonb, linkedin_profile), "
                     "    tags = %s, "
                     "    updated_at = NOW() "
