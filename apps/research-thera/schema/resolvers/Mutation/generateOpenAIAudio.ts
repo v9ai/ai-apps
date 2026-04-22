@@ -52,7 +52,7 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
     if (storyRows.length > 0) {
       storyLanguage = (storyRows[0].language as string) || "English";
       const goalId = (storyRows[0].goal_id as number | undefined) ?? null;
-      await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userEmail}, 'AUDIO', ${goalId}, ${storyId}, 'RUNNING', 0)`;
+      await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userId}, 'AUDIO', ${goalId}, ${storyId}, 'RUNNING', 0)`;
     }
   }
 
@@ -64,7 +64,10 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
       story_id: storyId ?? null,
       language: storyLanguage,
       instructions: instructions || null,
-      user_email: userEmail,
+      // Python graphs still expect the `user_email` key; it holds the caller's
+      // user_id (UUID after migration 0004). The backend uses this value as
+      // public.*.user_id in SQL, so the UUID is correct here.
+      user_email: userId,
     },
   }).then(async (res) => {
     const error = res?.error as string | undefined;
