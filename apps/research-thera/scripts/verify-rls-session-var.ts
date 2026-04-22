@@ -22,7 +22,14 @@
  * Exit code is 0 on success, 1 on any assertion failure.
  */
 
-import "dotenv/config";
+// Load env vars before anything that might read them. Prefer `.env.local`
+// (Next.js convention) and fall back to `.env`. We load both with override=false
+// so whichever was exported in the shell still wins.
+import { config as loadEnv } from "dotenv";
+import { resolve } from "node:path";
+
+loadEnv({ path: resolve(process.cwd(), ".env.local") });
+loadEnv({ path: resolve(process.cwd(), ".env") });
 
 // Allow overriding NEON_DATABASE_URL with NEON_BRANCH_URL before importing the
 // client so the branch connection string takes effect.

@@ -27,7 +27,7 @@ from routes.upload import router as upload_router
 from routes.embed import router as embed_router
 from routes.search import router as search_router
 from config import settings
-from graph import run_graph
+from chat_pipeline import run_chat
 
 app = FastAPI(title="Blood Marker Intelligence Chat")
 app.add_middleware(
