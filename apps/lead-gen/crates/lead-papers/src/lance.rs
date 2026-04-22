@@ -158,6 +158,7 @@ impl Lance {
         Ok(None)
     }
 
+    #[allow(dead_code)]
     pub async fn upsert_homepage(
         &self,
         login: &str,
@@ -209,6 +210,7 @@ impl Lance {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub async fn get_fetch_blob(&self, key: &str) -> Result<Option<String>> {
         use futures::TryStreamExt;
         use lancedb::query::{ExecutableQuery, QueryBase};
@@ -249,6 +251,7 @@ impl Lance {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub async fn all_results(&self) -> Result<Vec<MatchResult>> {
         use futures::TryStreamExt;
         use lancedb::query::ExecutableQuery;
