@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { uploadToR2, generateAudioKey } from "@/lib/r2-uploader";
+import { uploadToR2, generateAudioKey } from "@ai-apps/r2";
 import { parseBuffer } from "music-metadata";
 import { sql as neonSql } from "@/src/db/neon";
 

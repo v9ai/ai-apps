@@ -75,10 +75,17 @@ function ContactDetailContent() {
   const { data: relsData } = useGetRelationshipsQuery({
     variables: {
       subjectType: PersonType.FamilyMember,
-      subjectId: familyIsNumeric ? parseInt(familySlug, 10) : 0,
+      subjectId: resolvedFamilyMemberId,
     },
-    skip: !familyIsNumeric && !contact,
+    skip: isNaN(resolvedFamilyMemberId),
   });
+
+  const contactRelationship = (relsData?.relationships ?? []).find(
+    (r) =>
+      contact &&
+      ((r.relatedType === PersonType.Contact && r.relatedId === contact.id) ||
+        (r.subjectType === PersonType.Contact && r.subjectId === contact.id)),
+  );
 
   // Contact Feedbacks
   const resolvedContactId = contact?.id ?? NaN;
@@ -102,14 +109,8 @@ function ContactDetailContent() {
 
   const handleDelete = async () => {
     if (!contact) return;
-    const relationships = relsData?.relationships ?? [];
-    const rel = relationships.find(
-      (r) =>
-        (r.relatedType === PersonType.Contact && r.relatedId === contact.id) ||
-        (r.subjectType === PersonType.Contact && r.subjectId === contact.id),
-    );
-    if (rel) {
-      await deleteRelationship({ variables: { id: rel.id } });
+    if (contactRelationship) {
+      await deleteRelationship({ variables: { id: contactRelationship.id } });
     }
     await deleteContact({ variables: { id: contact.id } });
   };
@@ -225,6 +226,16 @@ function ContactDetailContent() {
                 </Text>
                 <Text size="2" color="gray">
                   {contact.description}
+                </Text>
+              </Flex>
+            )}
+            {contactRelationship?.context && (
+              <Flex gap="2">
+                <Text size="2" weight="medium" style={{ minWidth: 100 }}>
+                  Relationship
+                </Text>
+                <Text size="2" color="gray">
+                  {contactRelationship.context}
                 </Text>
               </Flex>
             )}

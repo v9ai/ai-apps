@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth/server";
-import { uploadToR2, generateScreenshotKey } from "@/lib/r2-uploader";
+import { uploadToR2, generateScreenshotKey } from "@ai-apps/r2";
 import { addIssueScreenshot } from "@/src/db";
 
 export const runtime = "nodejs";

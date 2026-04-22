@@ -1,6 +1,6 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { deleteIssueScreenshot as _deleteIssueScreenshot } from "@/src/db";
-import { deleteFromR2 } from "@/lib/r2-uploader";
+import { deleteFromR2 } from "@ai-apps/r2";
 
 export const deleteIssueScreenshot: NonNullable<MutationResolvers['deleteIssueScreenshot']> = async (
   _parent,
