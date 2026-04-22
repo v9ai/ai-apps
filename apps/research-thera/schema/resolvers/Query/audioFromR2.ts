@@ -1,21 +1,6 @@
 import type { QueryResolvers } from "./../../types.generated";
 import { GraphQLError } from "graphql";
-import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
-
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "longform-tts";
-const R2_PUBLIC_DOMAIN = process.env.R2_PUBLIC_DOMAIN;
-
-const r2Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID!,
-    secretAccessKey: R2_SECRET_ACCESS_KEY!,
-  },
-});
+import { headR2Object } from "@ai-apps/r2";
 
 export const audioFromR2: NonNullable<QueryResolvers['audioFromR2']> = async (
   _parent,
@@ -41,26 +26,16 @@ export const audioFromR2: NonNullable<QueryResolvers['audioFromR2']> = async (
       };
     }
 
-    // Get object metadata from R2
-    const command = new HeadObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-    });
+    const { audioUrl, metadata: raw } = await headR2Object(key);
 
-    const response = await r2Client.send(command);
-
-    // Generate public URL
-    const audioUrl = R2_PUBLIC_DOMAIN ? `${R2_PUBLIC_DOMAIN}/${key}` : null;
-
-    // Extract metadata
-    const metadata = response.Metadata
+    const metadata = raw
       ? {
-          voice: response.Metadata.voice || null,
-          model: response.Metadata.model || null,
-          textLength: response.Metadata.textlength || null,
-          chunks: response.Metadata.chunks || null,
-          generatedBy: response.Metadata.generatedby || null,
-          instructions: response.Metadata.instructions || null,
+          voice: raw.voice || null,
+          model: raw.model || null,
+          textLength: raw.textlength || null,
+          chunks: raw.chunks || null,
+          generatedBy: raw.generatedby || null,
+          instructions: raw.instructions || null,
         }
       : null;
 

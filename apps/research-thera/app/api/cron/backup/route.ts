@@ -5,7 +5,7 @@ import {
   PutObjectCommand,
   ListObjectsV2Command,
   DeleteObjectsCommand,
-} from "@aws-sdk/client-s3";
+} from "@ai-apps/r2";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
