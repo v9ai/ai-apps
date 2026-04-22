@@ -21,7 +21,7 @@ export function AdminNav() {
 
   return (
     <>
-      <NavLink href="/admin/contacts" title="Contacts">
+      <NavLink href="/contacts" title="Contacts">
         <Flex align="center" gap="2">
           <PersonIcon width={14} height={14} />
           contacts

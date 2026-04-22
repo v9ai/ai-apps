@@ -38,7 +38,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/companies", label: "Companies", icon: HomeIcon },
   { href: "/opportunities", label: "Opportunities", icon: RocketIcon },
   { href: "/follow-ups", label: "Follow-ups", icon: CountdownTimerIcon },
-  { href: "/admin/contacts", label: "Contacts", icon: PersonIcon },
+  { href: "/contacts", label: "Contacts", icon: PersonIcon },
   { href: "/emails", label: "Emails", icon: EnvelopeClosedIcon },
   { href: "/admin/linkedin-posts", label: "Posts", icon: Pencil2Icon },
   { href: "/products", label: "Products", icon: CubeIcon, tenants: ["nyx"] },

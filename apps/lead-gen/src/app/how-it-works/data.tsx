@@ -13,7 +13,7 @@ export const papers: Paper[] = [
     authors: "Vercel",
     year: 2024,
     finding: "React framework with App Router for server-side rendering, static generation, and API routes",
-    relevance: "Used for the entire web application, with server components (e.g., src/app/admin/contacts/page.tsx) and client components for interactive parts like CompanyContactsClient",
+    relevance: "Used for the entire web application, with server components (e.g., src/app/contacts/contacts-client.tsx) and client components for interactive parts like CompanyContactsClient",
     url: "https://nextjs.org/docs",
     categoryColor: "var(--blue-9)",
   },
@@ -194,7 +194,7 @@ export const researchStats: Stat[] = [
   {
     number: "50",
     label: "Page size for paginated admin tables (PAGE_SIZE constant)",
-    source: "src/app/admin/contacts/page.tsx",
+    source: "src/app/contacts/contacts-client.tsx",
   },
   {
     number: "3",
@@ -204,7 +204,7 @@ export const researchStats: Stat[] = [
   {
     number: "300ms",
     label: "Debounce delay for search input in admin contacts",
-    source: "src/app/admin/contacts/page.tsx debounce pattern",
+    source: "src/app/contacts/contacts-client.tsx debounce pattern",
   },
   {
     number: "8am UTC",
@@ -246,7 +246,7 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Email Campaign Delivery",
-    description: "Scored leads are delivered via personalized email campaigns using Resend. Mutations like useCreateDraftCampaignMutation create campaigns, which are scheduled with business-day logic from src/lib/business-days.ts (skips weekends, sets 8am UTC). The system uses Resend webhooks for tracking and sends emails via POST /api/emails/send. Admin can monitor campaigns in src/app/admin/contacts/page.tsx with real-time updates.",
+    description: "Scored leads are delivered via personalized email campaigns using Resend. Mutations like useCreateDraftCampaignMutation create campaigns, which are scheduled with business-day logic from src/lib/business-days.ts (skips weekends, sets 8am UTC). The system uses Resend webhooks for tracking and sends emails via POST /api/emails/send. Admin can monitor campaigns in src/app/contacts/contacts-client.tsx with real-time updates.",
     researchBasis: "Resend API, business scheduling",
     codeSnippet: "export function getNextBusinessDay(offset: number, options: GetNextBusinessDayOptions = {}): Date",
     dataFlow: "Scored leads \u2192 Resend mutations \u2192 scheduled emails \u2192 recipient inboxes",
