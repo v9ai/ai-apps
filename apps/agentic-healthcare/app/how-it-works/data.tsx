@@ -270,7 +270,7 @@ export const story =
 export const extraSections: ExtraSection[] = [
   {
     heading: "System Architecture",
-    content: "A dual-runtime architecture: TypeScript (Next.js 15 App Router) handles entity CRUD and UI with Server Components and Server Actions, while Python (FastAPI on :8001) handles PDF ingestion, the LangGraph pipeline, and vector search. They communicate via internal API with a shared x-api-key header. Embeddings use BAAI/bge-large-en-v1.5 at 1024 dimensions via FastEmbed (ONNX Runtime) on the Python side and Xenova/bge-large-en-v1.5 (q8 via @huggingface/transformers) on the TypeScript side, ensuring vector space alignment across all 7 entity types with zero external API calls.",
+    content: "A dual-runtime architecture: TypeScript (Next.js 15 App Router) handles entity CRUD and UI with Server Components and Server Actions, while Python (FastAPI on :8001) handles PDF ingestion, the LlamaIndex chat/retrieval pipeline, and vector search. They communicate via internal API with a shared x-api-key header. Embeddings use BAAI/bge-large-en-v1.5 at 1024 dimensions via FastEmbed (ONNX Runtime) on the Python side and Xenova/bge-large-en-v1.5 (q8 via @huggingface/transformers) on the TypeScript side, ensuring vector space alignment across all 7 entity types with zero external API calls.",
   },
   {
     heading: "Database Design",
@@ -282,11 +282,11 @@ export const extraSections: ExtraSection[] = [
   },
   {
     heading: "AI Integration",
-    content: "AI capabilities use a 4-node LangGraph StateGraph (triage \u2192 retrieve \u2192 synthesize \u2192 guard) running on the Python backend. Triage classifies queries into 8 intent categories. Retrieve routes to intent-specific pgvector searches\u2014hybrid (0.7 cosine + 0.3 FTS) for markers, temporal joins for trajectory, fan-out for general health. Synthesize generates answers at temperature 0.1 with 7 clinical rules. Guard audits every response against 5 safety checks (no diagnosis, no prescription, physician referral required, no PII, no hallucination). Embeddings use BAAI/bge-large-en-v1.5 at 1024 dimensions via local ONNX Runtime for all 7 entity types.",
+    content: "AI capabilities use a LlamaIndex ContextChatEngine on the Python backend. An intent-based selector (`LLMSingleSelector` over a `RouterQueryEngine`) classifies queries into 8 intent categories. Per-intent BaseRetriever implementations over pgvector handle routing\u2014hybrid (0.7 cosine + 0.3 FTS) for markers, temporal joins for trajectory, composite fan-out for general health. The chat engine synthesizes answers at temperature 0.1 with 7 clinical rules, and a custom safety-guard wrapper audits every response against 5 safety checks (no diagnosis, no prescription, physician referral required, no PII, no hallucination). Embeddings use BAAI/bge-large-en-v1.5 at 1024 dimensions via local ONNX Runtime for all 7 entity types.",
   },
   {
     heading: "Deployment & Infrastructure",
-    content: "The frontend is built with Next.js 15 and deployed on Vercel, using Turbopack for fast development builds. The Python backend (FastAPI) runs the LangGraph pipeline and local embedding generation via FastEmbed. PostgreSQL is hosted on Neon for serverless scaling with pgvector extension, and Cloudflare R2 handles file storage via AWS SDK v3. All embeddings run locally through BAAI/bge-large-en-v1.5 (ONNX Runtime) \u2014 no external embedding API required. Evaluation infrastructure uses DeepEval and RAGAS for RAG-triad metrics.",
+    content: "The frontend is built with Next.js 15 and deployed on Vercel, using Turbopack for fast development builds. The Python backend (FastAPI) runs the LlamaIndex ContextChatEngine pipeline and local embedding generation via FastEmbed. PostgreSQL is hosted on Neon for serverless scaling with pgvector extension, and Cloudflare R2 handles file storage via AWS SDK v3. All embeddings run locally through BAAI/bge-large-en-v1.5 (ONNX Runtime) \u2014 no external embedding API required. Evaluation infrastructure uses DeepEval and RAGAS for RAG-triad metrics.",
   },
   {
     heading: "Evaluation Framework",
@@ -298,7 +298,7 @@ export const extraSections: ExtraSection[] = [
   },
   {
     heading: "Data Flow & Pipeline",
-    content: "Data flows from PDF upload \u2192 Cloudflare R2 \u2192 LlamaParse (PDF \u2192 markdown) \u2192 BloodTestNodeParser (3-tier marker extraction) \u2192 BAAI/bge-large-en-v1.5 (1024-dim, ONNX) \u2192 7 pgvector tables via ON CONFLICT upsert. For Q&A, the LangGraph StateGraph runs: triage (intent classification into 8 categories) \u2192 retrieve (intent-routed pgvector search with hybrid scoring for markers) \u2192 synthesize (temperature 0.1 with 7 clinical rules and last 3 conversation turns) \u2192 guard (5 safety rules with disclaimer injection). The /chat endpoint returns full pipeline metadata\u2014intent, confidence, sources, guard status, and citations.",
+    content: "Data flows from PDF upload \u2192 Cloudflare R2 \u2192 LlamaParse (PDF \u2192 markdown) \u2192 BloodTestNodeParser (3-tier marker extraction) \u2192 BAAI/bge-large-en-v1.5 (1024-dim, ONNX) \u2192 7 pgvector tables via ON CONFLICT upsert. For Q&A, the LlamaIndex ContextChatEngine pipeline runs: intent selector (8 categories via `LLMSingleSelector`) \u2192 per-intent retriever (hybrid scoring for markers, temporal joins for trajectory, composite fan-out for general health) \u2192 response synthesis (temperature 0.1 with 7 clinical rules and last 3 conversation turns) \u2192 safety-guard wrapper (5 safety rules with disclaimer injection). The /chat endpoint returns full pipeline metadata\u2014intent, confidence, sources, guard status, and citations.",
   },
 ];
 
@@ -374,6 +374,6 @@ export const technicalDetails: TechnicalDetail[] = [
     type: "diagram",
     heading: "System Architecture Overview",
     description: "End-to-end flow from upload to insights",
-    code: "User → [Next.js Frontend] → UploadForm → Cloudflare R2 (PDFs)\n                     ↓\n        [FastAPI :8001] ← LlamaParse ← BloodTestNodeParser\n                     ↓\n     [bge-large-en-v1.5 (ONNX)] → 1024-dim → 7 pgvector tables\n                     ↓\n  [LangGraph: triage → retrieve → synthesize → guard]\n                     ↓\n           [ChatInterface] → answer + metadata → User\n                     ↓\n        [Evaluation] ← DeepEval/RAGAS",
+    code: "User → [Next.js Frontend] → UploadForm → Cloudflare R2 (PDFs)\n                     ↓\n        [FastAPI :8001] ← LlamaParse ← BloodTestNodeParser\n                     ↓\n     [bge-large-en-v1.5 (ONNX)] → 1024-dim → 7 pgvector tables\n                     ↓\n  [LlamaIndex ContextChatEngine: intent selector → retriever → synthesis → safety-guard]\n                     ↓\n           [ChatInterface] → answer + metadata → User\n                     ↓\n        [Evaluation] ← DeepEval/RAGAS",
   },
 ];
