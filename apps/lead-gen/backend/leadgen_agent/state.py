@@ -7,6 +7,7 @@ graph nodes. Intermediate keys (e.g. `analysis`, `hook`) are internal.
 
 from __future__ import annotations
 
+import operator
 from typing import Annotated, Any, TypedDict
 
 
@@ -134,10 +135,14 @@ class ContactEnrichState(TypedDict, total=False):
 
 
 class ContactEnrichPaperAuthorState(TypedDict, total=False):
-    # input
+    # input — inverted flow accepts a batch of pre-hydrated contacts tagged
+    # "papers", each carrying its own paper list. The single-contact shape
+    # (contact_id) is still accepted for backward-compatibility callers.
     contact_id: int
-    # populated by load_contact
+    contacts: list[dict[str, Any]]
+    # populated by load_contact / load_contacts
     contact: dict[str, Any]
+    valid_contacts: list[dict[str, Any]]
     # populated by resolve_openalex_author
     openalex_id: str
     orcid: str
@@ -151,9 +156,16 @@ class ContactEnrichPaperAuthorState(TypedDict, total=False):
     topics: list[str]  # names of x_concepts with score >= threshold
     match_confidence: float  # 0..1 heuristic
     resolve_source: str  # "openalex" | "" if failed / no match
+    # populated by process_contact (inverted flow)
+    enriched: Annotated[list[dict[str, Any]], operator.add]
     # output
     enriched_at: str
     error: str | None
+    # per-contact output surfaced when graph is called single-contact
+    github_login: str
+    github_confidence: float
+    github_evidence: str
+    match_status: str  # "matched" | "no_relevant_papers" | "no_github"
 
 
 class ContactEnrichSalesState(TypedDict, total=False):

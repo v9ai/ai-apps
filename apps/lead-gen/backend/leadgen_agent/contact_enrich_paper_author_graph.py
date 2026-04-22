@@ -358,8 +358,18 @@ async def synthesize(state: ContactEnrichPaperAuthorState) -> dict:
 
     resolve_source = state.get("resolve_source") or ""
     if resolve_source not in {"openalex", "existing"}:
-        # Nothing resolved — don't write an empty profile over existing data.
-        return {"enriched_at": enriched_at}
+        # No OpenAlex match — persist a sentinel so batch drivers that re-read
+        # `openalex_profile IS NULL` don't pick this same contact forever.
+        _persist_openalex(
+            contact_id,
+            {
+                "resolved": False,
+                "reason": "no_openalex_match",
+                "resolved_at": enriched_at,
+            },
+            contact.get("tags") or [],
+        )
+        return {"enriched_at": enriched_at, "resolve_source": ""}
 
     profile = {
         "openalex_id": state.get("openalex_id") or "",

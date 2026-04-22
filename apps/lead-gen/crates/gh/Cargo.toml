@@ -53,6 +53,11 @@ path = "src/bin/scan_orgs.rs"
 required-features = ["neon"]
 
 [[bin]]
+name = "match_paper_authors"
+path = "src/bin/match_paper_authors.rs"
+required-features = ["client"]
+
+[[bin]]
 name = "scrape_contributors"
 path = "src/bin/scrape_contributors.rs"
 required-features = ["lance"]

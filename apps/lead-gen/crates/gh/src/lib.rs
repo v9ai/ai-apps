@@ -27,7 +27,8 @@ pub mod store;
 pub mod contributors;
 
 /// Keyword-based AI/ML skill extraction from contributor bios and repos.
-#[cfg(feature = "lance")]
+/// Pure Rust (no external deps beyond serde_json) — always available so
+/// lightweight binaries can score candidates without pulling in LanceDB.
 pub mod skills;
 
 /// ICP feature bridge — maps `Candidate` to `Vec<f32>` for ML scorers.
