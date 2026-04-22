@@ -18,9 +18,9 @@ function parseTags(raw: unknown): string[] {
   }
 }
 
-async function loadTagRules(userEmail: string): Promise<Map<string, string>> {
+async function loadTagRules(userId: string): Promise<Map<string, string>> {
   const rows = await neonSql`
-    SELECT tag, language FROM tag_language_rules WHERE user_id = ${userEmail}
+    SELECT tag, language FROM tag_language_rules WHERE user_id = ${userId}
   `;
   const map = new Map<string, string>();
   for (const r of rows as Array<{ tag: string; language: string }>) {
@@ -38,16 +38,22 @@ function languageForTags(tags: unknown, rules: Map<string, string>): string | nu
 }
 
 export async function resolveGoalLanguage(input: {
-  userEmail: string;
+  /** Caller's user_id (UUID from neon_auth.user.id). */
+  userId?: string;
+  /** @deprecated use `userId`. Kept for backward compat with resolvers that
+   * still pass the legacy email-form identifier. After the user_id → UUID
+   * consolidation (migration 0004) both names hold the same UUID value. */
+  userEmail?: string;
   goalId?: number | null;
   issueId?: number | null;
   journalEntryId?: number | null;
   familyMemberId?: number | null;
 }): Promise<string> {
-  const { userEmail, goalId, issueId, journalEntryId, familyMemberId } = input;
-  if (!userEmail) return "en";
+  const { goalId, issueId, journalEntryId, familyMemberId } = input;
+  const userId = input.userId ?? input.userEmail;
+  if (!userId) return "en";
 
-  const rules = await loadTagRules(userEmail);
+  const rules = await loadTagRules(userId);
   if (rules.size === 0) return "en";
 
   if (goalId) {
@@ -95,7 +101,10 @@ export async function resolveGoalLanguage(input: {
 }
 
 export async function isRoGoal(input: {
-  userEmail: string;
+  /** Caller's user_id (UUID). */
+  userId?: string;
+  /** @deprecated use `userId`. */
+  userEmail?: string;
   goalId?: number | null;
   issueId?: number | null;
   journalEntryId?: number | null;

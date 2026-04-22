@@ -6,8 +6,8 @@ export const deleteGoal: NonNullable<MutationResolvers['deleteGoal']> = async (
   args,
   ctx,
 ) => {
-  const userEmail = ctx.userEmail;
-  if (!userEmail) {
+  const userId = ctx.userId;
+  if (!userId) {
     throw new Error("Authentication required");
   }
 
@@ -19,7 +19,7 @@ export const deleteGoal: NonNullable<MutationResolvers['deleteGoal']> = async (
   await neonSql`DELETE FROM notes_research WHERE note_id IN (SELECT id FROM notes WHERE entity_id = ${args.id} AND entity_type = 'Goal')`;
 
   // 3. Delete notes
-  await neonSql`DELETE FROM notes WHERE entity_id = ${args.id} AND entity_type = 'Goal' AND user_id = ${userEmail}`;
+  await neonSql`DELETE FROM notes WHERE entity_id = ${args.id} AND entity_type = 'Goal' AND user_id = ${userId}`;
 
   // 4. Delete therapeutic questions
   await neonSql`DELETE FROM therapeutic_questions WHERE goal_id = ${args.id}`;
@@ -40,7 +40,7 @@ export const deleteGoal: NonNullable<MutationResolvers['deleteGoal']> = async (
   await neonSql`DELETE FROM generation_jobs WHERE goal_id = ${args.id}`;
 
   // 10. Finally, delete the goal itself
-  await neonSql`DELETE FROM goals WHERE id = ${args.id} AND user_id = ${userEmail}`;
+  await neonSql`DELETE FROM goals WHERE id = ${args.id} AND user_id = ${userId}`;
 
   return {
     success: true,
