@@ -57,21 +57,6 @@ const RSVP = {
   parents: ["Elena Nicolai", "Vadim Nicolai"],
 };
 
-const ALL_TEAMS = [
-  { n: 1, country: "Estonia", flag: "🇪🇪", members: ["Eric Bălan", "Ela Bauer", "Sara Boarti", "Edwin Lorincz"] },
-  { n: 2, country: "Letonia", flag: "🇱🇻", members: ["Amalia Neagu", "Carol Gavrilescu", "Alma Manolescu", "Matei Amărțișoaie"] },
-  { n: 3, country: "Lituania", flag: "🇱🇹", members: ["Sophie Mălăescu", "Olivia Barbir", "Mihai Țigănuș", "Vlad Crăciun"] },
-  { n: 4, country: "Malta", flag: "🇲🇹", members: ["Ilinca Mironescu", "Rian Barabaș", "Charlize Anastasi", "Denis Cernatoni"] },
-  { n: 5, country: "Luxemburg", flag: "🇱🇺", members: ["Ariana Fogoroș", "Matteo Vrăsneag", "Daria Comăniță"] },
-  { n: 6, country: "Slovenia", flag: "🇸🇮", members: ["Bogdan Nicolai", "Iunia Tuca", "Elina Pantelimon", "Iustin Tuca"] },
-  { n: 7, country: "Slovacia", flag: "🇸🇰", members: ["Ana Popoiu", "Cansu Suzgun", "Andrei Dumitru", "Matei Dumitru"] },
-  { n: 8, country: "Polonia", flag: "🇵🇱", members: ["Achim Petreanu", "Ilinca Ganu", "Karina Nica", "Darius Iordache"] },
-  { n: 9, country: "Cehia", flag: "🇨🇿", members: ["Daria Nistorescu", "Alesis Drăgan", "Tudor Constantinescu", "Iulia Cucoș"] },
-  { n: 10, country: "Croația", flag: "🇭🇷", members: ["Gabriel Roussel", "Dimitri Chiliman-Juvara-Drimala", "Ilinca Itu", "Emma Bobeș"] },
-  { n: 11, country: "Portugalia", flag: "🇵🇹", members: ["Andrei Tudor", "Jessica Pascu", "Bogdan Matei", "Mihai Rozorea"] },
-  { n: 12, country: "Italia", flag: "🇮🇹", members: ["Ema Vasilache", "Denis Vasilache", "Anaya Rao", "Vlad Petria"] },
-];
-
 const TODOS = [
   "Luați legătura cu colegii din echipă (Iunia, Iustin, Elina) și organizați o întâlnire (puteți solicita un spațiu în școală, cu anunț prealabil).",
   "Realizați o ștampilă reprezentativă pentru Slovenia.",
@@ -283,48 +268,6 @@ export default function SloveniaEventPage() {
         <Text size="2" as="p" color="gray">
           Important: nu lăsați pregătirea pe ultimul moment.
         </Text>
-      </Card>
-
-      {/* All teams reference */}
-      <Card mb="5">
-        <Heading size="4" mb="3">
-          Toate echipele
-        </Heading>
-        <Flex direction="column" gap="0">
-          {ALL_TEAMS.map((t, i) => {
-            const isUs = t.country === "Slovenia";
-            return (
-              <Box key={t.country}>
-                <Flex
-                  py="3"
-                  align="start"
-                  gap="3"
-                  style={{
-                    background: isUs ? "var(--teal-2)" : "transparent",
-                    padding: isUs ? "12px" : "12px 0",
-                    borderRadius: isUs ? 8 : 0,
-                  }}
-                >
-                  <Text size="2" color="gray" style={{ minWidth: 24 }}>
-                    {t.n}
-                  </Text>
-                  <Text size="4" style={{ minWidth: 28 }}>
-                    {t.flag}
-                  </Text>
-                  <Box style={{ flex: 1, minWidth: 0 }}>
-                    <Text size="2" weight={isUs ? "bold" : "medium"} as="div">
-                      {t.country}
-                    </Text>
-                    <Text size="1" color="gray">
-                      {t.members.join(", ")}
-                    </Text>
-                  </Box>
-                </Flex>
-                {i < ALL_TEAMS.length - 1 && <Separator size="4" />}
-              </Box>
-            );
-          })}
-        </Flex>
       </Card>
 
       {/* Source comment */}
