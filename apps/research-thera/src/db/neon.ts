@@ -82,15 +82,42 @@ export const rawSql: NeonQueryFunction<false, false> = neon(
 type AnyArgs = unknown[];
 
 /**
- * Build the two set_config statements using the provided in-transaction `sql`.
- * We must build them on the transaction-scoped client, not the outer HTTP
- * client, so they share the same batched request.
+ * Build the prelude statements using the provided in-transaction `sql`. We
+ * must build them on the transaction-scoped client, not the outer HTTP client,
+ * so they share the same batched request.
+ *
+ * Order matters:
+ *
+ *   1. `SET LOCAL ROLE app_authenticated` — switches the in-transaction role
+ *      to the NOBYPASSRLS role so that FORCE ROW LEVEL SECURITY actually
+ *      applies to subsequent statements. Without this, `neondb_owner`'s
+ *      `rolbypassrls=true` silently neuters every policy.
+ *
+ *      NOTE: this role must exist on the target database before it is used.
+ *      Applied via `drizzle/0006_create_app_authenticated_role.sql`. Until
+ *      that migration runs on a branch, the `SET LOCAL ROLE` call will raise
+ *      a runtime error — that is intentional and surfaces a missing-role
+ *      rather than silently bypassing RLS.
+ *
+ *   2. `SELECT set_config('app.current_user_id', …, true)` — the UUID the
+ *      policies compare with.
+ *
+ *   3. `SELECT set_config('app.current_user_email', …, true)` — the email
+ *      the share-policies compare with.
+ *
+ * A SQL identifier literal is used for the role rather than parameter
+ * binding, because `SET LOCAL ROLE $1` is a syntax error — Postgres forbids
+ * parameters in utility statements. The role name is a compile-time constant
+ * in this file (not user-provided), so there is no injection surface.
  */
+export const RLS_APP_ROLE = "app_authenticated";
+
 function buildPrelude(
   txn: NeonQueryFunctionInTransaction<false, false>,
   store: { userId: string; userEmail?: string },
 ): NeonQueryInTransaction[] {
   return [
+    txn(`SET LOCAL ROLE ${RLS_APP_ROLE}`, []),
     txn`SELECT set_config('app.current_user_id',    ${store.userId},            true)`,
     txn`SELECT set_config('app.current_user_email', ${store.userEmail ?? ""},   true)`,
   ];
@@ -120,8 +147,8 @@ function runWithSessionVars<T>(
       return [...prelude, userQuery];
     })
     .then((results) => {
-      // results === [setConfig1Rows, setConfig2Rows, userRows]
-      return (results as unknown[])[2] as T;
+      // results === [setRoleRows, setConfig1Rows, setConfig2Rows, userRows]
+      return (results as unknown[])[3] as T;
     });
 
   // Expose .parameterizedQuery so that a caller doing
@@ -194,8 +221,9 @@ function makeSql(): NeonQueryFunction<false, false> {
       };
       const result = rawSql.transaction(wrappedBuilder, opts);
       if (!store?.userId) return result;
-      // Strip the two prelude rows from the result.
-      return result.then((rows) => (rows as unknown[]).slice(2)) as ReturnType<
+      // Strip the three prelude rows from the result
+      // (SET LOCAL ROLE + two set_config()).
+      return result.then((rows) => (rows as unknown[]).slice(3)) as ReturnType<
         typeof rawSql.transaction
       >;
     }
@@ -216,7 +244,7 @@ function makeSql(): NeonQueryFunction<false, false> {
       return [...buildPrelude(txn, store), ...reprojected];
     };
     const result = rawSql.transaction(wrappedBuilder, opts);
-    return result.then((rows) => (rows as unknown[]).slice(2)) as ReturnType<
+    return result.then((rows) => (rows as unknown[]).slice(3)) as ReturnType<
       typeof rawSql.transaction
     >;
   }) as NeonQueryFunction<false, false>["transaction"];
