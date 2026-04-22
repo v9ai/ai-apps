@@ -617,7 +617,7 @@ function PrepPageInner() {
   }
 
   return (
-    <Box px={{ initial: "4", md: "8" }} py={{ initial: "4", md: "8" }}>
+    <Box className="prep-page" px={{ initial: "4", md: "8" }} py={{ initial: "4", md: "8" }}>
       {/* Navigation */}
       <Flex align="center" gap="3" mb="5">
         <Link
