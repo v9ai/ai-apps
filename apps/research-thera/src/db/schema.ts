@@ -288,6 +288,7 @@ export const journalEntries = pgTable("journal_entries", {
   tags: text("tags"), // JSON array
   goalId: integer("goal_id"),
   isPrivate: integer("is_private").notNull().default(1), // 1 = true, 0 = false
+  isVault: integer("is_vault").notNull().default(0), // 1 = hidden behind PIN, 0 = normal
   entryDate: text("entry_date").notNull(),
   createdAt: text("created_at")
     .notNull()
