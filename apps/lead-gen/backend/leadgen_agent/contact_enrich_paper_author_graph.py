@@ -417,4 +417,138 @@ def build_graph(checkpointer: Any = None) -> Any:
     return builder.compile(checkpointer=checkpointer)
 
 
+# --------------------------------------------------------------------------- #
+# Batch graph — loops the single-contact logic entirely server-side so
+# callers don't have to drive iteration from a local shell. One HTTP call to
+# ``/runs/wait?assistant_id=contact_enrich_paper_authors_batch`` churns until
+# the papers-tagged cohort is drained, or a wall-clock budget is hit.
+# --------------------------------------------------------------------------- #
+
+# Container's standard-1 instance gives ~10 min per HTTP request. Budget 8 min
+# of work and leave 2 min headroom for synth/persist + HTTP response framing.
+_BATCH_WALL_CLOCK_SECS_DEFAULT = 8 * 60
+
+
+async def _resolve_one(contact: dict[str, Any]) -> tuple[dict[str, Any], str]:
+    """Run one contact through resolve_openalex_author + synthesize inline.
+
+    Returns (summary_record, resolve_source). summary_record contains the
+    compact per-contact result we surface up to the batch caller.
+    """
+    # Wrap the single-contact state and call the existing nodes directly to
+    # avoid re-invoking the compiled graph (cheaper and avoids checkpointer
+    # round-trips inside the loop).
+    per_state: ContactEnrichPaperAuthorState = {"contact": contact}
+    resolved = await resolve_openalex_author(per_state)
+    per_state.update(resolved)  # type: ignore[typeddict-item]
+
+    synth = await synthesize(per_state)
+    per_state.update(synth)  # type: ignore[typeddict-item]
+
+    return (
+        {
+            "id": contact.get("id"),
+            "name": (contact.get("first_name") or "").strip()
+            + " "
+            + (contact.get("last_name") or "").strip(),
+            "resolve_source": per_state.get("resolve_source") or "",
+            "openalex_id": per_state.get("openalex_id") or "",
+            "display_name": per_state.get("display_name") or "",
+            "institution": per_state.get("institution") or "",
+            "h_index": per_state.get("h_index") or 0,
+            "match_confidence": per_state.get("match_confidence") or 0.0,
+        },
+        per_state.get("resolve_source") or "",
+    )
+
+
+async def batch_enrich_paper_authors(
+    state: ContactEnrichPaperAuthorState,
+) -> dict:
+    """Drain the papers-tagged unenriched cohort within a single HTTP call.
+
+    Input state accepts:
+      - ``count`` (int, optional): hard cap on iterations. Default unlimited.
+      - ``deadline_seconds`` (int, optional): wall-clock budget in seconds.
+        Default ``_BATCH_WALL_CLOCK_SECS_DEFAULT``.
+
+    Behavior: loop picking the next unenriched papers-tagged contact until
+    drained, the cap is hit, or the budget is exhausted. Each iteration
+    reuses the single-contact pipeline so all writes are identical in shape
+    (including the ``no_openalex_match`` sentinel on misses).
+    """
+    import time as _time
+
+    budget_s = int(state.get("deadline_seconds") or _BATCH_WALL_CLOCK_SECS_DEFAULT)
+    cap = state.get("count")
+    try:
+        cap = int(cap) if cap is not None else None
+    except (TypeError, ValueError):
+        cap = None
+
+    start = _time.monotonic()
+    enriched: list[dict[str, Any]] = []
+    resolve_counts: dict[str, int] = {
+        "openalex": 0,
+        "existing": 0,
+        "no_match": 0,
+        "load_error": 0,
+    }
+
+    while True:
+        # Wall-clock guard. Check before making the next expensive call.
+        if _time.monotonic() - start > budget_s:
+            stop_reason = "budget_exhausted"
+            break
+        if cap is not None and len(enriched) >= cap:
+            stop_reason = "count_reached"
+            break
+
+        # Reuse load_contact with no contact_id — it auto-picks the next
+        # unenriched papers-tagged row.
+        load_state: ContactEnrichPaperAuthorState = {}
+        load_result = await load_contact(load_state)
+
+        err = load_result.get("error") if isinstance(load_result, dict) else None
+        if err == "no_unenriched_paper_authors_remaining":
+            stop_reason = "drained"
+            break
+        if err:
+            # Transient DB error; record and stop so the caller can inspect.
+            resolve_counts["load_error"] += 1
+            enriched.append({"error": err})
+            stop_reason = f"load_error:{err}"
+            break
+
+        contact = load_result.get("contact") or {}
+        summary, source = await _resolve_one(contact)
+        enriched.append(summary)
+        if source == "openalex":
+            resolve_counts["openalex"] += 1
+        elif source == "existing":
+            resolve_counts["existing"] += 1
+        else:
+            resolve_counts["no_match"] += 1
+
+    return {
+        "enriched_at": datetime.now(timezone.utc).isoformat(),
+        "enriched": enriched,
+        "counts": resolve_counts,
+        "total": len(enriched),
+        "stop_reason": stop_reason,
+        "elapsed_s": round(_time.monotonic() - start, 2),
+    }
+
+
+def build_batch_graph(checkpointer: Any = None) -> Any:
+    builder = StateGraph(ContactEnrichPaperAuthorState)
+    builder.add_node("batch_enrich", batch_enrich_paper_authors)
+    builder.add_edge(START, "batch_enrich")
+    builder.add_edge("batch_enrich", END)
+    return builder.compile(checkpointer=checkpointer)
+
+
+batch_graph = build_batch_graph()
+
+
 graph = build_graph()

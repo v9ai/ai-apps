@@ -13,6 +13,7 @@
     "contact_enrich": "leadgen_agent.contact_enrich_graph:graph",
     "contact_enrich_sales": "leadgen_agent.contact_enrich_sales_graph:graph",
     "contact_enrich_paper_author": "leadgen_agent.contact_enrich_paper_author_graph:graph",
+    "contact_enrich_paper_authors_batch": "leadgen_agent.contact_enrich_paper_author_graph:batch_graph",
     "classify_paper": "leadgen_agent.classify_paper_graph:graph"
   },
   "http": { "app": "leadgen_agent.custom_app:app" },
