@@ -99,14 +99,16 @@ function buildPrelude(
 /**
  * Given the already-constructed `NeonQueryPromise` produced by the raw client,
  * pull off its `parameterizedQuery` and re-run it inside a transaction that
- * sets `app.current_user_id` / `app.current_user_email` first. Returns only
- * the user's query result — the two set_config rows are dropped.
+ * sets `app.current_user_id` / `app.current_user_email` first. Returns a
+ * NeonQueryPromise-shaped object: a Promise that resolves to only the user's
+ * query result, with `.parameterizedQuery` preserved for downstream
+ * `sql.transaction([...])` callers that re-project it.
  */
 function runWithSessionVars<T>(
   store: { userId: string; userEmail?: string },
   built: NeonQueryPromise<false, false, unknown>,
-): Promise<T> {
-  return rawSql
+): NeonQueryPromise<false, false, T> {
+  const txResult = rawSql
     .transaction((txn) => {
       const prelude = buildPrelude(txn, store);
       // The driver's .transaction(fn) contract requires us to hand back a
@@ -121,6 +123,18 @@ function runWithSessionVars<T>(
       // results === [setConfig1Rows, setConfig2Rows, userRows]
       return (results as unknown[])[2] as T;
     });
+
+  // Expose .parameterizedQuery so that a caller doing
+  //   sql.transaction([sql`SELECT ...`])
+  // can still re-project this query when the outer `sql.transaction` strips
+  // and rebuilds the batch with its own set_config prelude.
+  const out = txResult as Promise<T> & {
+    parameterizedQuery: NeonQueryPromise<false, false, unknown>["parameterizedQuery"];
+    opts?: NeonQueryPromise<false, false, unknown>["opts"];
+  };
+  out.parameterizedQuery = built.parameterizedQuery;
+  out.opts = built.opts;
+  return out as unknown as NeonQueryPromise<false, false, T>;
 }
 
 /**

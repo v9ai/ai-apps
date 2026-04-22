@@ -22,7 +22,6 @@ from db import (
     search_symptoms,
 )
 from embeddings import generate_embedding
-from search_graph import compiled_graph as search_compiled_graph
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/search", tags=["search"])

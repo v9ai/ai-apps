@@ -232,10 +232,10 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Multi-Source Retrieval for RAG",
-    description: "When a user submits a query, the triage node classifies intent into 8 categories, then the retrieve node dispatches to different pgvector search strategies. Marker queries use hybrid search (0.7 cosine + 0.3 FTS via a CTE with ts_rank normalization). Trajectory queries extend this with temporal joins for time-ordered series. General-health fans out to all 7 entity tables simultaneously. Results are deduplicated and re-ranked by score.",
+    description: "When a user submits a query, a LlamaIndex intent selector (backed by `LLMSingleSelector` over a `RouterQueryEngine`) classifies it into 8 categories, then dispatches to per-intent `BaseRetriever` implementations over pgvector. Marker queries use hybrid search (0.7 cosine + 0.3 FTS via a CTE with ts_rank normalization). Trajectory queries extend this with temporal joins for time-ordered series. General-health fans out to all 7 entity tables simultaneously via a composite retriever. Results are deduplicated by a `ClinicalRelevancePostprocessor` node postprocessor and re-ranked by score.",
     researchBasis: "Intent-routed hybrid search: cosine similarity + full-text search in one SQL CTE",
     codeSnippet: "# langgraph/db.py — hybrid scoring (markers only)\ncombined_score = (\n  0.3 * fts_norm  # normalized ts_rank\n+ 0.7 * (1 - (embedding <=> query_vec))  # cosine sim\n)\n# All other tables: pure cosine with 0.3 threshold",
-    dataFlow: "User query → triage (8 intents) → intent-routed pgvector search → dedup + re-rank → context_chunks[]",
+    dataFlow: "User query → intent selector (8 intents) → per-intent BaseRetriever over pgvector → node postprocessors → context_chunks[]",
   },
   {
     name: "LLM Generation and Streaming",

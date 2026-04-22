@@ -246,48 +246,58 @@ async def upload_blood_test(
     background_tasks: BackgroundTasks = BackgroundTasks(),
     x_api_key: str | None = Header(None),
 ) -> UploadResponse:
-    """Upload a blood-test PDF.
-
-    Invokes `ingestion_graph.compiled_graph` with `skip_embedding=True` so
-    that `upload_to_r2 → partition_pdf → extract_markers → store_in_db` run
-    synchronously inside the request, and the heavier `embed_and_index` step
-    is scheduled as a FastAPI background task — preserving the legacy
-    response-time characteristics.
-    """
-    from ingestion_graph import run_ingestion_graph
-
     _check_api_key(x_api_key)
 
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
     file_bytes = await file.read()
+    file_path = f"{user_id}/{int(time.time() * 1000)}_{file.filename}"
 
-    result = await run_ingestion_graph(
-        pdf_bytes=file_bytes,
-        file_name=file.filename,
+    # Upload to R2
+    upload_file(file_path, file_bytes, file.content_type or "application/pdf")
+
+    # Insert blood_tests row
+    test_id = insert_blood_test(
         user_id=user_id,
-        content_type=file.content_type or "application/pdf",
+        file_name=file.filename,
+        file_path=file_path,
+        status="processing",
         test_date=test_date,
-        skip_embedding=True,
     )
 
-    if result.get("aborted"):
-        raise HTTPException(status_code=500, detail=result.get("error") or "ingestion aborted")
+    try:
+        # Parse PDF → structured elements
+        elements = _partition_pdf(file_bytes, file.filename)
 
-    test_id: str = result["blood_test_id"]
-    elements: list[dict] = result.get("elements") or []
-    markers: list[dict] = result.get("markers") or []
-    marker_ids: list[str] = result.get("marker_ids") or []
+        # Extract markers with 3-tier strategy
+        markers = parse_markers(elements)
 
-    # Defer embedding to a FastAPI background task — matches legacy behavior.
-    if markers:
-        background_tasks.add_task(
-            _run_ingestion,
-            elements, test_id, user_id, file.filename, test_date, marker_ids,
-        )
+        # Store markers in PG
+        marker_ids: list[str] = []
+        if markers:
+            marker_ids = insert_blood_markers(
+                test_id, [m.to_dict() for m in markers],
+            )
 
-    return UploadResponse(test_id=test_id, markers_count=len(markers), status="done")
+        update_blood_test_status(test_id, "done")
+
+        # Run LlamaIndex IngestionPipeline in background (non-blocking)
+        if markers:
+            background_tasks.add_task(
+                _run_ingestion,
+                elements, test_id, user_id, file.filename, test_date, marker_ids,
+            )
+
+        return UploadResponse(test_id=test_id, markers_count=len(markers), status="done")
+
+    except Exception as exc:
+        try:
+            delete_file(file_path)
+        except Exception:
+            logger.warning("R2 cleanup failed for %s (non-blocking)", file_path)
+        update_blood_test_status(test_id, "error", str(exc))
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.delete("/blood-tests/{test_id}", response_model=DeleteResponse)
