@@ -1,4 +1,8 @@
-import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import {
+  neon,
+  type NeonQueryFunction,
+  type NeonQueryPromise,
+} from "@neondatabase/serverless";
 
 /**
  * Default Neon HTTP client. Each tagged-template call is a one-shot stateless
@@ -37,7 +41,9 @@ export const sql = neon(process.env.NEON_DATABASE_URL!);
 export async function withUser<T>(
   userId: string,
   userEmail: string | undefined,
-  build: (tx: NeonQueryFunction<false, false>) => Parameters<typeof sql.transaction>[0],
+  build: (
+    tx: NeonQueryFunction<false, false>,
+  ) => NeonQueryPromise<false, false, unknown>[],
 ): Promise<T> {
   if (!userId) throw new Error("withUser: userId is required");
 
@@ -52,7 +58,10 @@ export async function withUser<T>(
 
   // set_config(..., is_local => true) mirrors SET LOCAL and is scoped to the
   // surrounding transaction — neonSql.transaction wraps the array in BEGIN/COMMIT.
-  const results = (await sql.transaction([...prelude, ...statements])) as unknown[];
+  const results = (await sql.transaction([
+    ...prelude,
+    ...statements,
+  ])) as unknown[];
   // Drop the two prelude result rows and return the remainder typed as T.
   return results.slice(prelude.length) as unknown as T;
 }
