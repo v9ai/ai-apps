@@ -6,6 +6,7 @@ use research::ResearchPaper;
 
 // ── Search ──────────────────────────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn search_returns_results() {
     let client = OpenAlexClient::new(None);
@@ -15,6 +16,7 @@ async fn search_returns_results() {
     assert!(resp.results.len() <= 5, "requested max 5");
 }
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn search_respects_per_page() {
     let client = OpenAlexClient::new(None);
@@ -27,6 +29,7 @@ async fn search_respects_per_page() {
     );
 }
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn search_pagination_works() {
     let client = OpenAlexClient::new(None);
@@ -42,6 +45,7 @@ async fn search_pagination_works() {
     assert_ne!(ids1, ids2, "paginated results should differ");
 }
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn search_meta_populated() {
     let client = OpenAlexClient::new(None);
@@ -53,6 +57,7 @@ async fn search_meta_populated() {
 
 // ── Get Work ────────────────────────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn get_work_known_id() {
     let client = OpenAlexClient::new(None);
@@ -69,6 +74,7 @@ async fn get_work_known_id() {
     );
 }
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn get_work_has_authors() {
     let client = OpenAlexClient::new(None);
@@ -90,6 +96,7 @@ async fn get_work_has_authors() {
     assert!(has_vaswani, "expected Vaswani in authors");
 }
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn get_work_abstract_reconstruction() {
     let client = OpenAlexClient::new(None);
@@ -109,6 +116,7 @@ async fn get_work_abstract_reconstruction() {
 
 // ── Conversion to ResearchPaper ─────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn work_converts_to_research_paper() {
     let client = OpenAlexClient::new(None);
@@ -125,6 +133,7 @@ async fn work_converts_to_research_paper() {
 
 // ── Field completeness ──────────────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn work_fields_populated() {
     let client = OpenAlexClient::new(None);
@@ -141,6 +150,7 @@ async fn work_fields_populated() {
 
 // ── Date enforcement ────────────────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn search_results_have_publication_year() {
     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
@@ -164,6 +174,7 @@ async fn search_results_have_publication_year() {
     );
 }
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn search_results_publication_year_is_reasonable() {
     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
@@ -185,6 +196,7 @@ async fn search_results_publication_year_is_reasonable() {
     }
 }
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn client_side_year_filter_works() {
     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
@@ -214,6 +226,7 @@ async fn client_side_year_filter_works() {
     }
 }
 
+#[tokio::test]
 #[ignore = "requires live OpenAlex API"]
 async fn publication_date_field_format() {
     tokio::time::sleep(std::time::Duration::from_secs(3)).await;

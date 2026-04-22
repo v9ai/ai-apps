@@ -5,6 +5,7 @@ use research::ResearchPaper;
 
 // ── Search ──────────────────────────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn search_returns_results() {
     let client = CrossrefClient::new(None);
@@ -18,6 +19,7 @@ async fn search_returns_results() {
     assert!(!items.is_empty(), "expected Crossref search results");
 }
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn search_respects_rows() {
     let client = CrossrefClient::new(None);
@@ -35,6 +37,7 @@ async fn search_respects_rows() {
     );
 }
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn search_pagination_works() {
     let client = CrossrefClient::new(None);
@@ -53,6 +56,7 @@ async fn search_pagination_works() {
     assert_ne!(dois0, dois1, "paginated results should differ");
 }
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn search_total_results_populated() {
     let client = CrossrefClient::new(None);
@@ -68,6 +72,7 @@ async fn search_total_results_populated() {
 
 // ── Get Work by DOI ─────────────────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn get_work_known_doi() {
     let client = CrossrefClient::new(None);
@@ -83,6 +88,7 @@ async fn get_work_known_doi() {
     assert!(!title.is_empty(), "expected non-empty title for DOI");
 }
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn get_work_has_authors() {
     let client = CrossrefClient::new(None);
@@ -98,6 +104,7 @@ async fn get_work_has_authors() {
     );
 }
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn get_work_has_citation_count() {
     let client = CrossrefClient::new(None);
@@ -109,6 +116,7 @@ async fn get_work_has_citation_count() {
 
 // ── Conversion to ResearchPaper ─────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn work_converts_to_research_paper() {
     let client = CrossrefClient::new(None);
@@ -121,6 +129,7 @@ async fn work_converts_to_research_paper() {
 
 // ── Abstract / JATS stripping ───────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn jats_tags_stripped_from_abstract() {
     let work = CrossrefWork {
@@ -146,6 +155,7 @@ async fn jats_tags_stripped_from_abstract() {
 
 // ── Field completeness ──────────────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn work_fields_populated() {
     let client = CrossrefClient::new(None);
@@ -159,6 +169,7 @@ async fn work_fields_populated() {
 
 // ── Date enforcement ─────────────────────────────────────────────────
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn search_results_have_published_date() {
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -181,6 +192,7 @@ async fn search_results_have_published_date() {
     );
 }
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn crossref_date_year_extraction() {
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -206,6 +218,7 @@ async fn crossref_date_year_extraction() {
     }
 }
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn client_side_date_filter_works() {
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -243,6 +256,7 @@ async fn client_side_date_filter_works() {
     }
 }
 
+#[tokio::test]
 #[ignore = "requires live Crossref API"]
 async fn crossref_date_has_date_parts() {
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
