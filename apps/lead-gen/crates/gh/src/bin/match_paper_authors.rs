@@ -153,7 +153,6 @@ fn split_name(full: &str) -> (String, String) {
         [] => (String::new(), String::new()),
         [only] => (String::new(), (*only).to_string()),
         [first, .., last] => ((*first).to_string(), (*last).to_string()),
-        [first, last] => ((*first).to_string(), (*last).to_string()),
     }
 }
 
@@ -248,7 +247,7 @@ fn score_user(
     };
 
     // ── Homepage/social presence: weak but useful tiebreaker ──────────────
-    let mut homepage_score = 0.0;
+    let mut homepage_score: f32 = 0.0;
     if u.blog.as_deref().map_or(false, |b| !b.is_empty()) {
         homepage_score += 0.5;
     }

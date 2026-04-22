@@ -7,6 +7,9 @@ description = "GitHub API client for detecting lead-gen signals: AI adoption, te
 [features]
 default  = ["client"]
 client   = ["dep:reqwest", "dep:tokio", "dep:anyhow"]
+# Lightweight bin target: contacts+papers JSON → GitHub login matches.
+# Needs the async runtime but none of the heavy neon/lance deps.
+match-bin = ["client", "tokio/macros", "tokio/rt-multi-thread"]
 search   = ["client"]
 patterns = ["client", "dep:futures", "dep:toml"]
 # Local BERT semantic scoring via candle — no cloud, runs on Metal / CPU
@@ -55,7 +58,7 @@ required-features = ["neon"]
 [[bin]]
 name = "match_paper_authors"
 path = "src/bin/match_paper_authors.rs"
-required-features = ["client"]
+required-features = ["match-bin"]
 
 [[bin]]
 name = "scrape_contributors"
