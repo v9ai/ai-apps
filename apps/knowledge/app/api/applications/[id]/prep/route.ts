@@ -1,11 +1,10 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { spawn } from "node:child_process";
-import * as path from "node:path";
 import { auth } from "@/lib/auth";
 import { db } from "@/src/db";
 import { applications } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
+import { runAppPrep } from "@/src/lib/langgraph-client";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -13,8 +12,6 @@ function whereApp(id: string, userId: string) {
   const col = UUID_RE.test(id) ? applications.id : applications.slug;
   return and(eq(col, id), eq(applications.userId, userId));
 }
-
-const BACKEND_DIR = path.resolve(process.cwd(), "backend");
 
 async function getSession() {
   return auth.api.getSession({ headers: await headers() });
@@ -30,6 +27,8 @@ export async function POST(
   const [app] = await db
     .select({
       id: applications.id,
+      company: applications.company,
+      position: applications.position,
       jobDescription: applications.jobDescription,
     })
     .from(applications)
@@ -45,17 +44,26 @@ export async function POST(
     );
   }
 
-  // Spawn the Python pipeline in background (fire-and-forget)
-  const child = spawn(
-    path.join(BACKEND_DIR, ".venv", "bin", "python"),
-    ["-m", "graph.cli", "app-prep", "--app-id", id, "--save"],
-    {
-      cwd: BACKEND_DIR,
-      detached: true,
-      stdio: "ignore",
-    },
-  );
-  child.unref();
+  // Fire-and-forget: the UI polls GET until aiInterviewQuestions + aiTechStack
+  // are set. The graph call can take 30-60s so we don't block the POST.
+  void runAppPrep({
+    appId: app.id,
+    jobDescription: app.jobDescription,
+    company: app.company,
+    position: app.position,
+  })
+    .then(async (result) => {
+      await db
+        .update(applications)
+        .set({
+          aiInterviewQuestions: result.interview_questions,
+          aiTechStack: JSON.stringify(result.tech_stack),
+        })
+        .where(eq(applications.id, app.id));
+    })
+    .catch((err) => {
+      console.error(`[app-prep ${app.id}] failed:`, err);
+    });
 
   return NextResponse.json({ status: "started", appId: id });
 }

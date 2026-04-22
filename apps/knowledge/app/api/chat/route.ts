@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { contentDb } from "@/src/db/content";
 import { chatMessages } from "@/src/db/content-schema";
-import { eq, asc, sql } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { searchContent } from "@/lib/actions/search";
 import { deepSearch } from "@/lib/actions/deep-search";
-
-const LLM_BASE_URL =
-  process.env.LLM_BASE_URL || "http://localhost:11434/v1";
-const LLM_MODEL =
-  process.env.LLM_MODEL || "qwen2.5:7b-instruct-q4_K_M";
-const LLM_API_KEY = process.env.LLM_API_KEY || "";
+import { chat } from "@/src/lib/langgraph-client";
 
 export async function POST(req: NextRequest) {
-
   const body = await req.json();
   const message = body.message;
   const threadId = body.thread_id || crypto.randomUUID();
@@ -24,7 +18,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Load history + search context in parallel
   const [history, ftsResults, hybridResults] = await Promise.all([
     contentDb
       .select({ role: chatMessages.role, content: chatMessages.content })
@@ -37,72 +30,51 @@ export async function POST(req: NextRequest) {
     deepSearch(message).catch(() => []),
   ]);
 
-  let context = "";
+  const snippets: string[] = [];
   if (ftsResults.length > 0) {
-    const parts = ftsResults.slice(0, 4).map((r) => {
+    for (const r of ftsResults.slice(0, 4)) {
       const label = r.lessonTitle && r.lessonTitle !== r.title
         ? `[${r.lessonTitle} > ${r.title}]`
         : `[${r.title}]`;
-      return `${label}\n${r.snippet}`;
-    });
-    context = "\n\nRelevant knowledge base excerpts:\n" + parts.join("\n\n---\n\n");
+      snippets.push(`${label}\n${r.snippet}`);
+    }
   }
-
-  // Append hybrid-matched lessons for broader semantic context
   if (hybridResults.length > 0) {
-    const vectorParts = hybridResults
-      .filter((r) => !context.includes(r.title))
-      .slice(0, 4)
-      .map((r) => `[${r.title}] (relevance: ${(r.combinedScore * 100).toFixed(0)}%)`);
-    if (vectorParts.length > 0) {
-      context += "\n\nSemantically related lessons:\n" + vectorParts.join("\n");
+    for (const r of hybridResults.slice(0, 4)) {
+      const isDupe = snippets.some((s) => s.includes(r.title));
+      if (!isDupe) {
+        snippets.push(
+          `[${r.title}] (relevance: ${(r.combinedScore * 100).toFixed(0)}%)`,
+        );
+      }
     }
   }
 
-  const systemPrompt = {
-    role: "system",
-    content:
-      "You are an AI engineering tutor for a knowledge base covering transformers, RAG, agents, fine-tuning, evaluations, infrastructure, safety, and multimodal AI. " +
-      "Answer questions concisely and accurately. Cite specific architectures or lesson topics when relevant. " +
-      "When context excerpts are provided, base your answer on them and cite the lesson title. " +
-      "If a question is outside AI/ML engineering, politely redirect the conversation back to the subject matter." +
-      context,
-  };
-
-  const messages = [
-    systemPrompt,
-    ...history.map((m) => ({ role: m.role, content: m.content })),
-    { role: "user", content: message },
-  ];
-
-  const response = await fetch(`${LLM_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(LLM_API_KEY && { Authorization: `Bearer ${LLM_API_KEY}` }),
-    },
-    body: JSON.stringify({
-      model: LLM_MODEL,
-      messages,
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
+  let assistantContent: string;
+  try {
+    const result = await chat({
+      message,
+      history: history.map((m) => ({ role: m.role, content: m.content })),
+      contextSnippets: snippets,
+    });
+    assistantContent = result.response;
+  } catch (err) {
     return NextResponse.json(
-      { error: "LLM API error", details: err },
-      { status: response.status },
+      {
+        error: "LangGraph chat failed",
+        details: err instanceof Error ? err.message : String(err),
+      },
+      { status: 502 },
     );
   }
 
-  const data = await response.json();
-  const assistantContent = data.choices?.[0]?.message?.content ?? "";
-
-  // Save user + assistant messages
-  contentDb.insert(chatMessages).values([
-    { threadId, role: "user", content: message },
-    { threadId, role: "assistant", content: assistantContent },
-  ]).run();
+  contentDb
+    .insert(chatMessages)
+    .values([
+      { threadId, role: "user", content: message },
+      { threadId, role: "assistant", content: assistantContent },
+    ])
+    .run();
 
   return NextResponse.json({
     response: assistantContent,

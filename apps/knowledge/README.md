@@ -9,10 +9,11 @@ AI engineering educational platform — 88 lessons across 14 categories with sea
 - **ORM**: Drizzle ORM
 - **UI**: Radix UI Themes
 - **AI**: OpenAI, DeepSeek
-- **Content Generation**: Mastra workflow (TypeScript) under `src/mastra/workflows/` — replaces the previous Python LangGraph pipeline
-- **Agent runtime**: Mastra on Cloudflare Workers (`src/mastra/index.ts`, in migration) — workflow state persisted to Neon `mastra` schema (same DB)
+- **LangGraph backend**: Python FastAPI + LangGraph on Cloudflare Containers (`backend/`) — hosts the `chat`, `app_prep`, and `memorize_generate` graphs; `AsyncPostgresSaver` checkpointing on Neon
+- **Content Generation**: Mastra workflow (TypeScript) under `src/mastra/workflows/` — article + course review, being migrated to LangGraph in phase 2
+- **Agent runtime**: Mastra on Cloudflare Workers (`src/mastra/index.ts`) — workflow state persisted to Neon `mastra` schema
 - **File Storage**: Cloudflare R2
-- **Deployment**: Vercel (Next.js) + Cloudflare Workers (Mastra)
+- **Deployment**: Vercel (Next.js frontend) + Cloudflare Containers (LangGraph backend) + Cloudflare Workers (Mastra)
 
 ## Architecture
 
@@ -22,17 +23,23 @@ graph TD
         Browser["Browser"]
     end
 
-    subgraph Next.js["Next.js App (Port 3006)"]
+    subgraph Next.js["Next.js App on Vercel (Port 3006 dev)"]
         Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses\n/coursework\n/anthropic"]
-        API["API Routes\n/api/chat\n/api/research\n/api/course-review/[id]\n/api/learners\n/api/coursework"]
+        API["API Routes\n/api/chat (proxy)\n/api/applications/[id]/prep (proxy)\n/api/applications/[id]/memorize/generate (proxy)\n/api/research\n/api/course-review/[id]\n/api/learners\n/api/coursework"]
+        Client["src/lib/langgraph-client.ts\nPOST /runs/wait"]
         SA["Server Actions\nsearch · analytics"]
         MW["Middleware\nURL redirects"]
+    end
+
+    subgraph LangGraph["LangGraph Backend (Cloudflare Containers)"]
+        Worker["Worker proxy\nknowledge-langgraph.workers.dev"]
+        Container["FastAPI container :7860\nchat · app_prep · memorize_generate"]
     end
 
     subgraph Data["Data Layer"]
         Adapter["data.ts adapter\nDB or filesystem"]
         FS["Filesystem\ncontent/*.md"]
-        DB["Neon PostgreSQL\n+ pgvector"]
+        DB["Neon PostgreSQL\n+ pgvector\n+ checkpoints"]
     end
 
     subgraph External
@@ -45,8 +52,11 @@ graph TD
     MW --> Pages
     Pages --> Adapter
     SA --> DB
-    API --> OpenAI
-    API --> DeepSeek
+    API --> Client
+    Client -->|LANGGRAPH_URL + bearer| Worker
+    Worker --> Container
+    Container --> DeepSeek
+    Container --> DB
     Adapter -->|NEXT_PUBLIC_DATA_SOURCE=db| DB
     Adapter -->|NEXT_PUBLIC_DATA_SOURCE=fs| FS
     Pages --> R2

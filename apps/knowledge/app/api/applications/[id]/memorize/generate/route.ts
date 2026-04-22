@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/src/db";
 import { applications, concepts } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
-import { generateMemorizeContent } from "@/lib/memorize-generator";
+import { runMemorizeGenerate, type TechBadge } from "@/src/lib/langgraph-client";
 import type { MemorizeCategory } from "@/lib/memorize-types";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -13,9 +13,30 @@ async function getSession() {
   return auth.api.getSession({ headers: await headers() });
 }
 
+function parseTechStack(aiTechStack: string | null): TechBadge[] {
+  if (!aiTechStack) return [];
+  try {
+    const parsed = JSON.parse(aiTechStack);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function filterDismissed(techs: TechBadge[], dismissed: string | null): TechBadge[] {
+  if (!dismissed) return techs;
+  try {
+    const tags = JSON.parse(dismissed) as string[];
+    const set = new Set(tags.map((t) => t.toLowerCase()));
+    return techs.filter((t) => !set.has(t.tag.toLowerCase()));
+  } catch {
+    return techs;
+  }
+}
+
 /**
  * POST /api/applications/[id]/memorize/generate
- * Generate memorize categories from the app's tech stack via LLM.
+ * Generate memorize categories from the app's tech stack via LangGraph.
  */
 export async function POST(
   _req: Request,
@@ -25,7 +46,6 @@ export async function POST(
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Load application
   const col = UUID_RE.test(appId) ? applications.id : applications.slug;
   const [app] = await db
     .select({
@@ -45,11 +65,8 @@ export async function POST(
   if (!app)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Idempotent — if already generated, return existing
   if (app.aiMemorizeCategories) {
-    const categories: MemorizeCategory[] = JSON.parse(
-      app.aiMemorizeCategories,
-    );
+    const categories: MemorizeCategory[] = JSON.parse(app.aiMemorizeCategories);
     return NextResponse.json({ status: "already_generated", categories });
   }
 
@@ -60,18 +77,36 @@ export async function POST(
     );
   }
 
-  // Generate via LLM
-  const categories = await generateMemorizeContent({
-    company: app.company,
-    position: app.position,
-    aiTechStack: app.aiTechStack,
-    techDismissedTags: app.techDismissedTags,
-  });
+  const techs = filterDismissed(
+    parseTechStack(app.aiTechStack),
+    app.techDismissedTags,
+  );
 
-  // Upsert concepts into DB
+  if (techs.length === 0) {
+    return NextResponse.json({ status: "generated", categories: [] });
+  }
+
+  let categories: MemorizeCategory[];
+  try {
+    const result = await runMemorizeGenerate({
+      company: app.company,
+      position: app.position,
+      techs,
+    });
+    categories = result.categories as MemorizeCategory[];
+  } catch (err) {
+    return NextResponse.json(
+      {
+        error: "LangGraph memorize_generate failed",
+        details: err instanceof Error ? err.message : String(err),
+      },
+      { status: 502 },
+    );
+  }
+
   for (const cat of categories) {
     for (const item of cat.items) {
-      const conceptName = `app:${appId}:${item.id}`;
+      const conceptName = `app:${app.id}:${item.id}`;
       await db
         .insert(concepts)
         .values({
@@ -102,11 +137,10 @@ export async function POST(
     }
   }
 
-  // Save category catalog to application row
   await db
     .update(applications)
     .set({ aiMemorizeCategories: JSON.stringify(categories) })
-    .where(eq(applications.id, appId));
+    .where(eq(applications.id, app.id));
 
   return NextResponse.json({ status: "generated", categories });
 }
