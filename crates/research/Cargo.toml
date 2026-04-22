@@ -70,6 +70,11 @@ serial_test = "3"
 wiremock    = "0.6"
 
 [[bin]]
+name = "leadgen-papers"
+path = "src/bin/leadgen_papers.rs"
+required-features = ["local-vector"]
+
+[[bin]]
 name = "healthcare-research"
 path = "src/bin/healthcare_research.rs"
 
