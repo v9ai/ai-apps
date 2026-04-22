@@ -16,6 +16,15 @@ SPA_BODY = (
     "<!doctype html><html><head><title>x</title></head>"
     '<body><div id="root"></div></body></html>'
 )
+# A script-heavy SPA: raw HTML is huge but visible body text is effectively
+# empty. The first-pass heuristic (raw-length) would misroute this to `basic`
+# or `recursive`; the visible-text heuristic correctly picks `chromium`.
+SPA_SCRIPT_HEAVY_BODY = (
+    "<!doctype html><html><head>"
+    + "<script>" + ("console.log('x');" * 2000) + "</script>"
+    + '<script src="/a.js"></script><script src="/b.js"></script>'
+    + "</head><body><div id=\"root\"></div></body></html>"
+)
 STATIC_MULTIPAGE_BODY = (
     "<html><body>"
     "<h1>Acme</h1><p>Customer data platform for teams.</p>"
@@ -48,7 +57,7 @@ async def test_sitemap_wins_when_sitemap_head_200():
         ("HEAD", "https://example.com/sitemap.xml"): httpx.Response(200),
     }
     async with httpx.AsyncClient(transport=_transport(routes)) as client:
-        strategy, _ = await _pick_strategy(client, "https://example.com")
+        strategy = await _pick_strategy(client, "https://example.com")
     assert strategy == "sitemap"
 
 
@@ -59,7 +68,21 @@ async def test_chromium_for_spa_with_empty_body():
         ("GET", "https://spa.example"): httpx.Response(200, text=SPA_BODY),
     }
     async with httpx.AsyncClient(transport=_transport(routes)) as client:
-        strategy, _ = await _pick_strategy(client, "https://spa.example")
+        strategy = await _pick_strategy(client, "https://spa.example")
+    assert strategy == "chromium"
+
+
+@pytest.mark.asyncio
+async def test_chromium_for_script_heavy_spa():
+    """Raw HTML is >30KB but visible body text is empty — must route to chromium."""
+    routes = {
+        ("HEAD", "https://heavy-spa.example/sitemap.xml"): httpx.Response(404),
+        ("GET", "https://heavy-spa.example"): httpx.Response(
+            200, text=SPA_SCRIPT_HEAVY_BODY
+        ),
+    }
+    async with httpx.AsyncClient(transport=_transport(routes)) as client:
+        strategy = await _pick_strategy(client, "https://heavy-spa.example")
     assert strategy == "chromium"
 
 
@@ -70,7 +93,7 @@ async def test_chromium_for_tiny_body():
         ("GET", "https://tiny.example"): httpx.Response(200, text=MINIMAL_BODY),
     }
     async with httpx.AsyncClient(transport=_transport(routes)) as client:
-        strategy, _ = await _pick_strategy(client, "https://tiny.example")
+        strategy = await _pick_strategy(client, "https://tiny.example")
     assert strategy == "chromium"
 
 
@@ -81,9 +104,8 @@ async def test_basic_when_homepage_exposes_hot_list_links():
         ("GET", "https://acme.example"): httpx.Response(200, text=STATIC_MULTIPAGE_BODY),
     }
     async with httpx.AsyncClient(transport=_transport(routes)) as client:
-        strategy, body = await _pick_strategy(client, "https://acme.example")
+        strategy = await _pick_strategy(client, "https://acme.example")
     assert strategy == "basic"
-    assert body is not None and "pricing" in body.lower()
 
 
 @pytest.mark.asyncio
@@ -93,5 +115,17 @@ async def test_recursive_when_no_sitemap_and_no_hot_links():
         ("GET", "https://widget.example"): httpx.Response(200, text=STATIC_SINGLEPAGE_BODY),
     }
     async with httpx.AsyncClient(transport=_transport(routes)) as client:
-        strategy, _ = await _pick_strategy(client, "https://widget.example")
+        strategy = await _pick_strategy(client, "https://widget.example")
     assert strategy == "recursive"
+
+
+@pytest.mark.asyncio
+async def test_basic_when_homepage_unreachable():
+    """GET failure → route to basic (cheap fail) instead of spinning up Chromium."""
+    routes = {
+        ("HEAD", "https://dead.example/sitemap.xml"): httpx.Response(404),
+        ("GET", "https://dead.example"): httpx.Response(503),
+    }
+    async with httpx.AsyncClient(transport=_transport(routes)) as client:
+        strategy = await _pick_strategy(client, "https://dead.example")
+    assert strategy == "basic"

@@ -12,6 +12,9 @@ Endpoints:
 ``/runs/wait`` matches the shape the Next.js client in
 ``apps/knowledge/src/lib/langgraph-client.ts`` sends, so flipping
 ``LANGGRAPH_URL`` at the client is the only change needed to cut over.
+
+Tests: ``create_app(graphs=...)`` skips the Postgres-dependent lifespan so
+TestClient runs can inject stub graphs.
 """
 
 from __future__ import annotations
@@ -20,7 +23,7 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Mapping
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -51,8 +54,14 @@ class BearerTokenMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+class RunRequest(BaseModel):
+    assistant_id: str
+    input: dict[str, Any]
+    thread_id: str | None = None
+
+
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def _prod_lifespan(app: FastAPI):
     db_url = os.environ.get("DATABASE_URL")
     if not db_url:
         raise RuntimeError(
@@ -73,28 +82,43 @@ async def lifespan(app: FastAPI):
         yield
 
 
-app = FastAPI(title="knowledge LangGraph", lifespan=lifespan)
-app.add_middleware(BearerTokenMiddleware)
+def create_app(
+    graphs: Mapping[str, Any] | None = None,
+    *,
+    use_prod_lifespan: bool = True,
+) -> FastAPI:
+    """Factory so tests can bypass the Postgres-dependent lifespan.
+
+    - Production: ``create_app()`` — attaches the real lifespan that compiles
+      the 5 graphs with ``AsyncPostgresSaver``.
+    - Tests: ``create_app(graphs={"chat": stub}, use_prod_lifespan=False)`` —
+      pre-populates ``app.state.graphs`` so TestClient can dispatch without
+      touching Postgres or any LLM.
+    """
+    lifespan = _prod_lifespan if use_prod_lifespan else None
+    app = FastAPI(title="knowledge LangGraph", lifespan=lifespan)
+    app.add_middleware(BearerTokenMiddleware)
+
+    if graphs is not None:
+        app.state.graphs = dict(graphs)
+
+    @app.get("/health")
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @app.post("/runs/wait")
+    async def runs_wait(req: RunRequest) -> dict[str, Any]:
+        graphs_dict = getattr(app.state, "graphs", {})
+        graph = graphs_dict.get(req.assistant_id)
+        if graph is None:
+            raise HTTPException(
+                status_code=404, detail=f"Unknown assistant_id: {req.assistant_id}"
+            )
+        thread_id = req.thread_id or str(uuid.uuid4())
+        config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
+        return await graph.ainvoke(req.input, config=config)
+
+    return app
 
 
-class RunRequest(BaseModel):
-    assistant_id: str
-    input: dict[str, Any]
-    thread_id: str | None = None
-
-
-@app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
-
-
-@app.post("/runs/wait")
-async def runs_wait(req: RunRequest) -> dict[str, Any]:
-    graph = app.state.graphs.get(req.assistant_id)
-    if graph is None:
-        raise HTTPException(
-            status_code=404, detail=f"Unknown assistant_id: {req.assistant_id}"
-        )
-    thread_id = req.thread_id or str(uuid.uuid4())
-    config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
-    return await graph.ainvoke(req.input, config=config)
+app = create_app()
