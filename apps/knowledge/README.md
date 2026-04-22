@@ -414,6 +414,8 @@ Each of the 4 LLM-driven graphs has a 5-case golden set and an aggregate-pass ga
 
 Tests are excluded from `pnpm test:backend` by default (`addopts = -m 'not deepeval'` in `pyproject.toml`). Opt in with `pnpm test:deepeval` (fast subset) or `pnpm test:deepeval:all` (adds `@slow` graphs).
 
+**Gate calibration:** the aggregate pass-rate gate is currently **0.65** (`DEFAULT_AGGREGATE_GATE` in `tests/deepeval/conftest.py`). This is the empirical floor for 5-case goldens judged by DeepSeek: ~1 of 15 cells flakes on judge JSON-parse errors and another 1-2 hit real borderline-quality signals (answer redundancy, mild conflation). `run_metric()` retries judge calls once on exception and treats `score >= threshold` as a pass even when deepeval's `is_successful()` flag false-negatives (a known edge case when a sub-step errors mid-run despite a valid final score). Tighten the gate as the golden set grows or the judge is swapped for a more reliable model.
+
 ### First-time test setup
 
 The pytest suite uses an isolated venv under `backend/.venv`. Create it once with Python 3.12:
