@@ -1,0 +1,258 @@
+# Corpus by year
+
+## 2026 (5)
+
+- [Churn prediction](papers/churn-prediction.md) — `broad`
+- [PackMLP: A Patch Based MLP Model for Intelligent Inventory Forecasting and Automation with A-LIQ QR Scanning Integration](papers/packmlp-a-patch-based-mlp-model-for-intelligent-inventory-fo.md) — `broad`
+- [Achieving clinically meaningful outcomes in digital health: a six-step, cyclical precision engagement framework (ENGAGE)](papers/achieving-clinically-meaningful-outcomes-in-digital-health-a.md) — `core`
+- [A Survey for Deep Reinforcement Learning Based Network Intrusion Detection](papers/a-survey-for-deep-reinforcement-learning-based-network-intru.md) — `core`
+- [Editorial: The changing landscape of marketing research in the AI era: prospects and challenges](papers/editorial-the-changing-landscape-of-marketing-research-in-th.md) — `broad`
+
+## 2025 (245)
+
+- [Opening Up Education: The Collective Advancement of Education through Open Technology, Open Content, and Open Knowledge](papers/opening-up-education-the-collective-advancement-of-education.md) — `broad`
+- [The evolving field of digital mental health: current evidence and implementation issues for smartphone apps, generative artificial intelligence, and virtual reality](papers/the-evolving-field-of-digital-mental-health-current-evidence.md) — `broad`
+- [Convergence of evolving artificial intelligence and machine learning techniques in precision oncology](papers/convergence-of-evolving-artificial-intelligence-and-machine-.md) — `core`
+- [AI Agents vs. Agentic AI: A Conceptual Taxonomy, Applications and Challenges](papers/ai-agents-vs-agentic-ai-a-conceptual-taxonomy-applications-a.md) — `core`
+- [Recent Emerging Techniques in Explainable Artificial Intelligence to Enhance the Interpretable and Understanding of AI Models for Human](papers/recent-emerging-techniques-in-explainable-artificial-intelli.md) — `broad`
+- [The Impact of Integrating Variable Renewable Energy Sources into Grid-Connected Power Systems: Challenges, Mitigation Strategies, and Prospects](papers/the-impact-of-integrating-variable-renewable-energy-sources-.md) — `broad`
+- [Industrial applications of large language models](papers/industrial-applications-of-large-language-models.md) — `core`
+- [FinTech: a literature review of emerging financial technologies and applications](papers/fintech-a-literature-review-of-emerging-financial-technologi.md) — `core`
+- [Generative artificial intelligence (GenAI) revolution: A deep dive into GenAI adoption](papers/generative-artificial-intelligence-genai-revolution-a-deep-d.md) — `core`
+- [Generative Artificial Intelligence Use in Healthcare: Opportunities for Clinical Excellence and Administrative Efficiency](papers/generative-artificial-intelligence-use-in-healthcare-opportu.md) — `broad`
+- [A comprehensive review of large language models: issues and solutions in learning environments](papers/a-comprehensive-review-of-large-language-models-issues-and-s.md) — `broad`
+- [Leveraging the Internet of Things, Remote Sensing, and Artificial Intelligence for Sustainable Forest Management](papers/leveraging-the-internet-of-things-remote-sensing-and-artific.md) — `broad`
+- [MedRAG: Enhancing Retrieval-augmented Generation with Knowledge Graph-Elicited Reasoning for Healthcare Copilot](papers/medrag-enhancing-retrieval-augmented-generation-with-knowled.md) — `broad`
+- [Security of Smart Grid: Cybersecurity Issues, Potential Cyberattacks, Major Incidents, and Future Directions](papers/security-of-smart-grid-cybersecurity-issues-potential-cybera.md) — `core`
+- [Sustainable Consumption and Branding for Gen Z: How Brand Dimensions Influence Consumer Behavior and Adoption of Newly Launched Technological Products](papers/sustainable-consumption-and-branding-for-gen-z-how-brand-dim.md) — `broad`
+- [Optimizing Electricity Markets Through Game-Theoretical Methods: Strategic and Policy Implications for Power Purchasing and Generation Enterprises](papers/optimizing-electricity-markets-through-game-theoretical-meth.md) — `broad`
+- [A SEM–ANN analysis to examine impact of artificial intelligence technologies on sustainable performance of SMEs](papers/a-sem-ann-analysis-to-examine-impact-of-artificial-intellige.md) — `broad`
+- [On the conversational persuasiveness of GPT-4](papers/on-the-conversational-persuasiveness-of-gpt-4.md) — `broad`
+- [Expectancy-disconfirmation and consumer satisfaction: A meta-analysis](papers/expectancy-disconfirmation-and-consumer-satisfaction-a-meta-.md) — `broad`
+- [The moderating role of personalized recommendations in the trust–satisfaction–loyalty relationship: an empirical study of AI-driven e-commerce](papers/the-moderating-role-of-personalized-recommendations-in-the-t.md) — `broad`
+- [High-reward, high-risk technologies? An ethical and legal account of AI development in healthcare](papers/high-reward-high-risk-technologies-an-ethical-and-legal-acco.md) — `core`
+- [Artificial Intelligence Adoption in SMEs: Survey Based on TOE–DOI Framework, Primary Methodology and Challenges](papers/artificial-intelligence-adoption-in-smes-survey-based-on-toe.md) — `core`
+- [Guidelines for Theory Selection: The IMPACT Framework](papers/guidelines-for-theory-selection-the-impact-framework.md) — `broad`
+- [Aspects and Implementation of Pharmaceutical Quality by Design from Conceptual Frameworks to Industrial Applications](papers/aspects-and-implementation-of-pharmaceutical-quality-by-desi.md) — `broad`
+- [Emerging Trends in Food Process Engineering: Integrating Sensing Technologies for Health, Sustainability, and Consumer Preferences](papers/emerging-trends-in-food-process-engineering-integrating-sens.md) — `broad`
+- [Kurdish Studies](papers/kurdish-studies.md) — `broad`
+- [A Multifaceted Vision of the Human-AI Collaboration: A Comprehensive Review](papers/a-multifaceted-vision-of-the-human-ai-collaboration-a-compre.md) — `core`
+- [The Role of Artificial Intelligence in Obesity Risk Prediction and Management: Approaches, Insights, and Recommendations](papers/the-role-of-artificial-intelligence-in-obesity-risk-predicti.md) — `broad`
+- [An automated framework for assessing how well LLMs cite relevant medical references](papers/an-automated-framework-for-assessing-how-well-llms-cite-rele.md) — `core`
+- [Interactive Viral Marketing Through Big Data Analytics, Influencer Networks, AI Integration, and Ethical Dimensions](papers/interactive-viral-marketing-through-big-data-analytics-influ.md) — `broad`
+- [Effect of anthropomorphism and perceived intelligence in chatbot avatars of visual design on user experience: accounting for perceived empathy and trust](papers/effect-of-anthropomorphism-and-perceived-intelligence-in-cha.md) — `broad`
+- [Resilience of small and medium-sized enterprises in times of crisis: an umbrella review](papers/resilience-of-small-and-medium-sized-enterprises-in-times-of.md) — `broad`
+- [Advanced sleep disorder detection using multi-layered ensemble learning and advanced data balancing techniques](papers/advanced-sleep-disorder-detection-using-multi-layered-ensemb.md) — `broad`
+- [Common Method Bias in Social and Behavioral Research: Strategic Solutions for Quantitative Research in the Doctoral Research](papers/common-method-bias-in-social-and-behavioral-research-strateg.md) — `broad`
+- [Evidence of a social evaluation penalty for using AI](papers/evidence-of-a-social-evaluation-penalty-for-using-ai.md) — `broad`
+- [Measuring gender and racial biases in large language models: Intersectional evidence from automated resume evaluation](papers/measuring-gender-and-racial-biases-in-large-language-models-.md) — `core`
+- [Evaluating Supervised Learning Models for Fraud Detection: A Comparative Study of Classical and Deep Architectures on Imbalanced Transaction Data](papers/evaluating-supervised-learning-models-for-fraud-detection-a-.md) — `core`
+- [The GenAI Future of Consumer Research](papers/the-genai-future-of-consumer-research.md) — `broad`
+- [Radiology AI and sustainability paradox: environmental, economic, and social dimensions](papers/radiology-ai-and-sustainability-paradox-environmental-econom.md) — `broad`
+- [How Robotics is Shaping Digital Logistics and Supply Chain Management: An Ongoing Call for Research](papers/how-robotics-is-shaping-digital-logistics-and-supply-chain-m.md) — `core`
+- [Beyond Managerialism: Investor Capitalism?](papers/beyond-managerialism-investor-capitalism.md) — `core`
+- [How Does Humanoid Virtual Influencers' Appearance Convey Social Presence? The Underlying Process and Path to Purchase Intention](papers/how-does-humanoid-virtual-influencers-appearance-convey-soci.md) — `broad`
+- [A novel RFE-GRU model for diabetes classification using PIMA Indian dataset](papers/a-novel-rfe-gru-model-for-diabetes-classification-using-pima.md) — `core`
+- [Financial Fraud Detection Using Explainable AI and Stacking Ensemble Methods](papers/financial-fraud-detection-using-explainable-ai-and-stacking-.md) — `core`
+- [Prods and Pleas: Limited Government in an Era of Unlimited Harm](papers/prods-and-pleas-limited-government-in-an-era-of-unlimited-ha.md) — `core`
+- [Large Language Models: A Comprehensive Survey of its Applications, Challenges, Limitations, and Future Prospects](papers/large-language-models-a-comprehensive-survey-of-its-applicat.md) — `broad`
+- [The Impact of Artificial Intelligence on the Sustainability of Regional Ecosystems: Current Challenges and Future Prospects](papers/the-impact-of-artificial-intelligence-on-the-sustainability-.md) — `core`
+- [Personalized nutrition: perspectives on challenges, opportunities, and guiding principles for data use and fusion](papers/personalized-nutrition-perspectives-on-challenges-opportunit.md) — `broad`
+- [Customizing Emotional Support: How Do Individuals Construct and Interact With LLM-Powered Chatbots](papers/customizing-emotional-support-how-do-individuals-construct-a.md) — `broad`
+- [Generative Artificial Intelligence in Healthcare: Applications, Implementation Challenges, and Future Directions](papers/generative-artificial-intelligence-in-healthcare-application.md) — `broad`
+- [Trust and Trustworthiness in AI](papers/trust-and-trustworthiness-in-ai.md) — `broad`
+- [Multi-Agent Deep Reinforcement Learning for Integrated Demand Forecasting and Inventory Optimization in Sensor-Enabled Retail Supply Chains](papers/multi-agent-deep-reinforcement-learning-for-integrated-deman.md) — `broad`
+- [Exploring autonomous methods for deepfake detection: A detailed survey on techniques and evaluation](papers/exploring-autonomous-methods-for-deepfake-detection-a-detail.md) — `core`
+- [Leveraging artificial intelligence in marketing: Trend or the new normal?](papers/leveraging-artificial-intelligence-in-marketing-trend-or-the.md) — `broad`
+- [Affordable access to GLP-1 obesity medications: strategies to guide market action and policy solutions in the US](papers/affordable-access-to-glp-1-obesity-medications-strategies-to.md) — `core`
+- [Customer Churn Prediction: A Systematic Review of Recent Advances, Trends, and Challenges in Machine Learning and Deep Learning](papers/customer-churn-prediction-a-systematic-review-of-recent-adva.md) — `broad`
+- [Innovators and transformers: Enhancing supply chain employee training with an innovative application of a large language model](papers/innovators-and-transformers-enhancing-supply-chain-employee-.md) — `core`
+- [A Brave New World of Human Resources Research: Navigating Perils and Identifying Grand Challenges of the GenAI Revolution](papers/a-brave-new-world-of-human-resources-research-navigating-per.md) — `core`
+- [The Impact of Chatbot Response Strategies and Emojis Usage on Customers’ Purchase Intention: The Mediating Roles of Psychological Distance and Performance Expectancy](papers/the-impact-of-chatbot-response-strategies-and-emojis-usage-o.md) — `broad`
+- [Sentiment analysis of social media data: Business insights and consumer behavior trends in the USA](papers/sentiment-analysis-of-social-media-data-business-insights-an.md) — `broad`
+- [Advances in artificial intelligence for olfaction and gustation: a comprehensive review](papers/advances-in-artificial-intelligence-for-olfaction-and-gustat.md) — `core`
+- [Exploring the ‘Dark Side’ of <scp>AI</scp>‐Powered Digital Assistants: A Moderated Mediation Model of Antecedents and Outcomes of Perceived Creepiness](papers/exploring-the-dark-side-of-scp-ai-scp-powered-digital-assist.md) — `broad`
+- [Digital Transformation in International Trade: Opportunities, Challenges, and Policy Implications](papers/digital-transformation-in-international-trade-opportunities-.md) — `broad`
+- [The Impact of AI-driven Strategy on Salespeople Training and Performance](papers/the-impact-of-ai-driven-strategy-on-salespeople-training-and.md) — `broad`
+- [Enhancing Supply Chain Management: A Comparative Study of Machine Learning Techniques with Cost–Accuracy and ESG-Based Evaluation for Forecasting and Risk Mitigation](papers/enhancing-supply-chain-management-a-comparative-study-of-mac.md) — `broad`
+- [Enhancing Education in Agriculture via XR-Based Digital Twins: A Novel Approach for the Next Generation](papers/enhancing-education-in-agriculture-via-xr-based-digital-twin.md) — `broad`
+- [From Data to Decisions: The Power of Machine Learning in Business Recommendations](papers/from-data-to-decisions-the-power-of-machine-learning-in-busi.md) — `core`
+- [Data Readiness for AI: A 360-Degree Survey](papers/data-readiness-for-ai-a-360-degree-survey.md) — `core`
+- [Generative AI for Finance: Applications, Case Studies and Challenges](papers/generative-ai-for-finance-applications-case-studies-and-chal.md) — `core`
+- [Artificial Intelligence In Retail And E-Commerce: Enhancing Customer Experience Through Personalization, Predictive Analytics, And Real-Time Engagement](papers/artificial-intelligence-in-retail-and-e-commerce-enhancing-c.md) — `broad`
+- [Talking Resilience: Embedded Natural Language Cyber-Organizations by Design](papers/talking-resilience-embedded-natural-language-cyber-organizat.md) — `broad`
+- [Machine Learning‐Assisted Prediction and Generation of Antimicrobial Peptides](papers/machine-learning-assisted-prediction-and-generation-of-antim.md) — `core`
+- [AI-Driven Data Analytics and Automation: A Systematic Literature Review of Industry Applications](papers/ai-driven-data-analytics-and-automation-a-systematic-literat.md) — `core`
+- [Is Artificial Intelligence a Game-Changer in Steering E-Business into the Future? Uncovering Latent Topics with Probabilistic Generative Models](papers/is-artificial-intelligence-a-game-changer-in-steering-e-busi.md) — `core`
+- [Enhancing system resilience to climate change through artificial intelligence: a systematic literature review](papers/enhancing-system-resilience-to-climate-change-through-artifi.md) — `core`
+- [RAGVA: Engineering retrieval augmented generation-based virtual assistants in practice](papers/ragva-engineering-retrieval-augmented-generation-based-virtu.md) — `core`
+- [Artificial Intelligence in Digital Marketing: Towards an Analytical Framework for Revealing and Mitigating Bias](papers/artificial-intelligence-in-digital-marketing-towards-an-anal.md) — `broad`
+- [When AI-Based Agents Are Proactive: Implications for Competence and System Satisfaction in Human–AI Collaboration](papers/when-ai-based-agents-are-proactive-implications-for-competen.md) — `broad`
+- [The role of GPT in promoting inclusive higher education for people with various learning disabilities: a review](papers/the-role-of-gpt-in-promoting-inclusive-higher-education-for-.md) — `broad`
+- [Impact of Influencer Marketing on Consumer Behavior and Online Shopping Preferences](papers/impact-of-influencer-marketing-on-consumer-behavior-and-onli.md) — `broad`
+- [Against The Achilles' Heel: A Survey on Red Teaming for Generative Models](papers/against-the-achilles-heel-a-survey-on-red-teaming-for-genera.md) — `core`
+- [A framework for leveraging artificial intelligence in strategic business decision-making](papers/a-framework-for-leveraging-artificial-intelligence-in-strate.md) — `core`
+- [Avocado Price Prediction Using a Hybrid Deep Learning Model: TCN-MLP-Attention Architecture](papers/avocado-price-prediction-using-a-hybrid-deep-learning-model-.md) — `broad`
+- [A Hybrid Temporal Convolutional Network and Transformer Model for Accurate and Scalable Sales Forecasting](papers/a-hybrid-temporal-convolutional-network-and-transformer-mode.md) — `broad`
+- [A Comprehensive Evaluation of Machine Learning and Deep Learning Models for Churn Prediction](papers/a-comprehensive-evaluation-of-machine-learning-and-deep-lear.md) — `broad`
+- [Personalized and Contextualized Data Analysis for E-Commerce Customer Retention Improvement With Bi-LSTM Churn Prediction](papers/personalized-and-contextualized-data-analysis-for-e-commerce.md) — `broad`
+- [Artificial Intelligence in Healthcare: How to Develop and Implement Safe, Ethical and Trustworthy AI Systems](papers/artificial-intelligence-in-healthcare-how-to-develop-and-imp.md) — `broad`
+- [eXplainable Artificial Intelligence (XAI): A Systematic Review for Unveiling the Black Box Models and Their Relevance to Biomedical Imaging and Sensing](papers/explainable-artificial-intelligence-xai-a-systematic-review-.md) — `broad`
+- [Sales Volume and Price Prediction Using Attention-Based RW-FN-BiLSTM Framework](papers/sales-volume-and-price-prediction-using-attention-based-rw-f.md) — `broad`
+- [Transitioning to artificial intelligence-based key account management: A critical assessment](papers/transitioning-to-artificial-intelligence-based-key-account-m.md) — `broad`
+- [Consumer value dimensions in conversational and mobile commerce](papers/consumer-value-dimensions-in-conversational-and-mobile-comme.md) — `broad`
+- [AI-Driven Personalisation: Transforming User Experience Across Mobile Applications](papers/ai-driven-personalisation-transforming-user-experience-acros.md) — `broad`
+- [The Impact of Artificial Intelligence Adoption on the Quality of Financial Reports on the Saudi Stock Exchange](papers/the-impact-of-artificial-intelligence-adoption-on-the-qualit.md) — `broad`
+- [Bridging Neuromarketing and Data Analytics in Tourism: An Adaptive Digital Marketing Framework for Hotels and Destinations](papers/bridging-neuromarketing-and-data-analytics-in-tourism-an-ada.md) — `core`
+- [A Predictive and Segmentation-Based Marketing Analytics Framework for Optimizing Customer Acquisition, Engagement, and Retention Strategies](papers/a-predictive-and-segmentation-based-marketing-analytics-fram.md) — `core`
+- [AI-driven competitive advantage: the role of personality traits and organizational culture in key account management](papers/ai-driven-competitive-advantage-the-role-of-personality-trai.md) — `broad`
+- [Customer segmentation in the digital marketing using a Q-learning based differential evolution algorithm integrated with K-means clustering](papers/customer-segmentation-in-the-digital-marketing-using-a-q-lea.md) — `broad`
+- [Service Quality Improvement in the Banking Sector: A Data Analytics Perspective](papers/service-quality-improvement-in-the-banking-sector-a-data-ana.md) — `broad`
+- [Revolutionizing Business Analytics: The Impact of Artificial Intelligence and Machine Learning.](papers/revolutionizing-business-analytics-the-impact-of-artificial-.md) — `broad`
+- [A novel feature selection criterion for wetland mapping using GF-3 and Sentinel-2 Data](papers/a-novel-feature-selection-criterion-for-wetland-mapping-usin.md) — `core`
+- [The rise of artificial intelligence for cognitive behavioral therapy: A bibliometric overview](papers/the-rise-of-artificial-intelligence-for-cognitive-behavioral.md) — `core`
+- [Algorithmic fandom: how generative AI is reshaping sports marketing, fan engagement, and the integrity of sport](papers/algorithmic-fandom-how-generative-ai-is-reshaping-sports-mar.md) — `core`
+- [Neuro-insights: a systematic review of neuromarketing perspectives across consumer buying stages](papers/neuro-insights-a-systematic-review-of-neuromarketing-perspec.md) — `core`
+- [Enhancing customer retention in Online Retail through churn prediction: A hybrid RFM, K-means, and deep neural network approach](papers/enhancing-customer-retention-in-online-retail-through-churn-.md) — `broad`
+- [Dynamic Marketing Uplift Modeling: A Symmetry-Preserving Framework Integrating Causal Forests with Deep Reinforcement Learning for Personalized Intervention Strategies](papers/dynamic-marketing-uplift-modeling-a-symmetry-preserving-fram.md) — `broad`
+- [Exploring Attribution Biases in Responsibility Assignment during Digital Human Live Streaming: An Experimental Analysis](papers/exploring-attribution-biases-in-responsibility-assignment-du.md) — `broad`
+- [LLM4Rec: A Comprehensive Survey on the Integration of Large Language Models in Recommender Systems—Approaches, Applications and Challenges](papers/llm4rec-a-comprehensive-survey-on-the-integration-of-large-l.md) — `core`
+- [Anthropomorphism, False Beliefs, and Conversational <scp>AIs</scp> : How Chatbots Undermine Users' Autonomy](papers/anthropomorphism-false-beliefs-and-conversational-scp-ais-sc.md) — `core`
+- [Multi-Touch Attribution and Media Mix Modeling for Marketing ROI Optimization in E-Commerce Platforms](papers/multi-touch-attribution-and-media-mix-modeling-for-marketing.md) — `broad`
+- [International Journal of Scientific Interdisciplinary Research](papers/international-journal-of-scientific-interdisciplinary-resear.md) — `core`
+- [Hepatitis C Detection from Blood Donor Data Using Hybrid Deep Feature Synthesis and Interpretable Machine Learning](papers/hepatitis-c-detection-from-blood-donor-data-using-hybrid-dee.md) — `core`
+- [CADS: A Systematic Literature Review on the Challenges of Abstractive Dialogue Summarization](papers/cads-a-systematic-literature-review-on-the-challenges-of-abs.md) — `core`
+- [AI-driven FMEA: integration of large language models for faster and more accurate risk analysis](papers/ai-driven-fmea-integration-of-large-language-models-for-fast.md) — `core`
+- [Unveiling the Role of Artificial Intelligence: Navigating Personalized Content Marketing, Customer Engagement, and Commitment with Data Transparency and Security](papers/unveiling-the-role-of-artificial-intelligence-navigating-per.md) — `core`
+- [Artificial Intelligence in Ecuadorian SMEs: Drivers and Obstacles to Adoption](papers/artificial-intelligence-in-ecuadorian-smes-drivers-and-obsta.md) — `broad`
+- [Harnessing Artificial Intelligence for Real-Time Compliance in the U.S. Oil &amp; Gas Sector: Enhancing Tax Accuracy, Curbing Evasion, and Unlocking Revenue Growth through Intelligent Automation](papers/harnessing-artificial-intelligence-for-real-time-compliance-.md) — `broad`
+- [Artificial Intelligence for Smart Customer Feedback Management: Improving Content Analysis Approaches](papers/artificial-intelligence-for-smart-customer-feedback-manageme.md) — `broad`
+- [HOW INTERACTIVE DASHBOARDS IMPROVE MANAGERIAL DECISION-MAKING IN OPERATIONS MANAGEMENT](papers/how-interactive-dashboards-improve-managerial-decision-makin.md) — `broad`
+- [Impact of artificial intelligence on auditing: an evaluation from the profession in Jordan](papers/impact-of-artificial-intelligence-on-auditing-an-evaluation-.md) — `broad`
+- [Responsible AI in Marketing: AI Booing and AI Washing Cycle of AI Mistrust](papers/responsible-ai-in-marketing-ai-booing-and-ai-washing-cycle-o.md) — `broad`
+- [Enhancing Transparency and Accountability in Sustainable Finance Through Blockchain Technology: A Systematic Review of the Literature](papers/enhancing-transparency-and-accountability-in-sustainable-fin.md) — `broad`
+- [The Integration of AI and IoT in Marketing: A Systematic Literature Review](papers/the-integration-of-ai-and-iot-in-marketing-a-systematic-lite.md) — `broad`
+- [Prediction of mortality in intensive care unit with short-term heart rate variability: Machine learning-based analysis of the MIMIC-III database](papers/prediction-of-mortality-in-intensive-care-unit-with-short-te.md) — `core`
+- [Machine Learning-Based Orange Quality Classification: A Hyperparameter Optimization Approach Through Puma Optimizer](papers/machine-learning-based-orange-quality-classification-a-hyper.md) — `core`
+- [Deep Learning-Based Feature Extraction and Machine Learning Models for Parkinson's Disease Prediction Using DaTscan Image](papers/deep-learning-based-feature-extraction-and-machine-learning-.md) — `core`
+- [The relevance of lead prioritization: a B2B lead scoring model based on machine learning](papers/the-relevance-of-lead-prioritization-a-b2b-lead-scoring-mode.md) — `core`
+- [AI-Driven Personalization in Educational Marketing: A Framework for Enhancing Student Recruitment and Retention](papers/ai-driven-personalization-in-educational-marketing-a-framewo.md) — `core`
+- [Unlocking the power of AI in CRM: A comprehensive multidimensional exploration](papers/unlocking-the-power-of-ai-in-crm-a-comprehensive-multidimens.md) — `core`
+- [A Deep Learning Algorithm Based on CNN-LSTM Framework for Predicting Cancer Drug Sales Volume](papers/a-deep-learning-algorithm-based-on-cnn-lstm-framework-for-pr.md) — `broad`
+- [Fuel Sales Price Forecasting using Time Series, Machine Learning, and Deep Learning Models](papers/fuel-sales-price-forecasting-using-time-series-machine-learn.md) — `broad`
+- [MNeuralTab: Integrating meta-modeling and neural networks for customer churn prediction in e-commerce](papers/mneuraltab-integrating-meta-modeling-and-neural-networks-for.md) — `broad`
+- [Prompt Engineering for LLMs: Real-World Applications in Banking and Ecommerce](papers/prompt-engineering-for-llms-real-world-applications-in-banki.md) — `broad`
+- [Applications of AI-Based Models for Online Fraud Detection and Analysis](papers/applications-of-ai-based-models-for-online-fraud-detection-a.md) — `broad`
+- [Example dependent cost sensitive learning based selective deep ensemble model for customer credit scoring](papers/example-dependent-cost-sensitive-learning-based-selective-de.md) — `broad`
+- [A META-ANALYSIS OF AI-DRIVEN BUSINESS ANALYTICS: ENHANCING STRATEGIC DECISION-MAKING IN SMES](papers/a-meta-analysis-of-ai-driven-business-analytics-enhancing-st.md) — `broad`
+- [Joint Rough Set Theory and XGBoost-Based Learning for Network Intrusion Detection System](papers/joint-rough-set-theory-and-xgboost-based-learning-for-networ.md) — `core`
+- [Evaluating Ensemble-Based Machine Learning Models for Diagnosing Pediatric Acute Appendicitis: Insights from a Retrospective Observational Study](papers/evaluating-ensemble-based-machine-learning-models-for-diagno.md) — `core`
+- [Machine Learning-Based Predictive Maintenance at Smart Ports Using IoT Sensor Data](papers/machine-learning-based-predictive-maintenance-at-smart-ports.md) — `core`
+- [Hybrid Bayesian deep learning model for predicting urban heat island intensity in African cities](papers/hybrid-bayesian-deep-learning-model-for-predicting-urban-hea.md) — `core`
+- [Anomaly-based intrusion detection system based on SMOTE-IPF, Whale Optimization Algorithm, and ensemble learning](papers/anomaly-based-intrusion-detection-system-based-on-smote-ipf-.md) — `core`
+- [Hello Again! LLM-powered Personalized Agent for Long-term Dialogue](papers/hello-again-llm-powered-personalized-agent-for-long-term-dia.md) — `core`
+- [The Elephant and the Blind: The Experience of Pure Consciousness—Philosophy, Science, and 500+ Experiential Reports](papers/the-elephant-and-the-blind-the-experience-of-pure-consciousn.md) — `core`
+- [From Stopping to Shopping: A Field Experiment on Free Return and Free Shipping Retargeting Policies in Online Retail Operations](papers/from-stopping-to-shopping-a-field-experiment-on-free-return-.md) — `core`
+- [A robust optimization approach to budget optimization in online marketing campaigns](papers/a-robust-optimization-approach-to-budget-optimization-in-onl.md) — `core`
+- [Sustainable biofuel production from fish processing waste: lipase‐catalyzed hydroesterification of tilapia residual oil](papers/sustainable-biofuel-production-from-fish-processing-waste-li.md) — `core`
+- [Towards an End-to-End Digital Framework for Precision Crop Disease Diagnosis and Management Based on Emerging Sensing and Computing Technologies: State over Past Decade and Prospects](papers/towards-an-end-to-end-digital-framework-for-precision-crop-d.md) — `core`
+- [Prediksi Penjualan Aerosol Menggunakan Algoritma ARIMA, LSTM Dan GRU](papers/prediksi-penjualan-aerosol-menggunakan-algoritma-arima-lstm-.md) — `broad`
+- [Transformer-Based Models for Probabilistic Time Series Forecasting with Explanatory Variables](papers/transformer-based-models-for-probabilistic-time-series-forec.md) — `broad`
+- [Optimized hyperparameters for retail sales forecasting using grid search](papers/optimized-hyperparameters-for-retail-sales-forecasting-using.md) — `broad`
+- [Enhancing costumer churn prediction with stacking ensemble and stratified k-fold](papers/enhancing-costumer-churn-prediction-with-stacking-ensemble-a.md) — `broad`
+- [Comparative Analysis of AI-Enhanced UI/UX Design Practices in E-commerce Websites: A Case Study of the USA and the UK](papers/comparative-analysis-of-ai-enhanced-ui-ux-design-practices-i.md) — `broad`
+- [Artificial Intelligence in Financial Customer Relationship Management: A Systematic Review of AI-Driven Strategies in Banking and FinTech](papers/artificial-intelligence-in-financial-customer-relationship-m.md) — `broad`
+- [Selling and sales management for successful servitization: a systematic review and research agenda](papers/selling-and-sales-management-for-successful-servitization-a-.md) — `broad`
+- [Contemporary digital marketing techniques used in unhealthy food campaigns targeting young people](papers/contemporary-digital-marketing-techniques-used-in-unhealthy-.md) — `broad`
+- [Real-Time Fair-Exposure Ad Allocation for SMBs and Underserved Creators via Contextual Bandits-with-Knapsacks](papers/real-time-fair-exposure-ad-allocation-for-smbs-and-underserv.md) — `core`
+- [Childhood trauma and recent stressors in predicting subclinical psychotic symptoms among Chinese university students in southwest China: a machine learning analysis within a gender-specific framework](papers/childhood-trauma-and-recent-stressors-in-predicting-subclini.md) — `core`
+- [Fluoride Risk Prognostication: A Pioneering Ensemble Machine Learning Approach for Groundwater Contamination Prediction in Parts of the East Coast of India](papers/fluoride-risk-prognostication-a-pioneering-ensemble-machine-.md) — `core`
+- [AI and Machine Learning](papers/ai-and-machine-learning.md) — `core`
+- [STRATEGIC USE OF ENGAGEMENT MARKETING IN DIGITAL PLATFORMS: A FOCUSED ANALYSIS OF ROI AND CONSUMER PSYCHOLOGY](papers/strategic-use-of-engagement-marketing-in-digital-platforms-a.md) — `core`
+- [AI-MDD-UX: Revolutionizing E-Commerce User Experience with Generative AI and Model-Driven Development](papers/ai-mdd-ux-revolutionizing-e-commerce-user-experience-with-ge.md) — `core`
+- [AI-Enabled Mobile Food-Ordering Apps and Customer Experience: A Systematic Review and Future Research Agenda](papers/ai-enabled-mobile-food-ordering-apps-and-customer-experience.md) — `core`
+- [Evaluating sequence and structural similarity metrics for predicting shared paralog functions](papers/evaluating-sequence-and-structural-similarity-metrics-for-pr.md) — `core`
+- [Retail Demand Forecasting: A Comparative Analysis of Deep Neural Networks and the Proposal of LSTMixer, a Linear Model Extension](papers/retail-demand-forecasting-a-comparative-analysis-of-deep-neu.md) — `broad`
+- [A Systematic Review of Intelligent Systems and Analytic Applications in Credit Card Fraud Detection](papers/a-systematic-review-of-intelligent-systems-and-analytic-appl.md) — `broad`
+- [Underutilized crops for diversified agri-food systems: spatial modeling and farmer adoption of buckwheat in Italy](papers/underutilized-crops-for-diversified-agri-food-systems-spatia.md) — `broad`
+- [Multi-objective contextual bandits in recommendation systems for smart tourism](papers/multi-objective-contextual-bandits-in-recommendation-systems.md) — `core`
+- [Machine Learning-Driven Consensus Modeling for Activity Ranking and Chemical Landscape Analysis of HIV-1 Inhibitors](papers/machine-learning-driven-consensus-modeling-for-activity-rank.md) — `core`
+- [Optimizing Initial Vancomycin Dosing in Hospitalized Patients Using Machine Learning Approach for Enhanced Therapeutic Outcomes: Algorithm Development and Validation Study](papers/optimizing-initial-vancomycin-dosing-in-hospitalized-patient.md) — `core`
+- [Interpretable machine learning models for prolonged Emergency Department wait time prediction](papers/interpretable-machine-learning-models-for-prolonged-emergenc.md) — `core`
+- [Towards Automated Detection of Inline Code Comment Smells](papers/towards-automated-detection-of-inline-code-comment-smells.md) — `core`
+- [Artificial Intelligence and Patient Support Models for Enhanced Chronic Disease Management and Adherence](papers/artificial-intelligence-and-patient-support-models-for-enhan.md) — `core`
+- [Email Marketing with Artificial Intelligence: Enhancing Personalization, Engagement, and Customer Retention](papers/email-marketing-with-artificial-intelligence-enhancing-perso.md) — `core`
+- [A Hitchhiker’s Guide to Translation – Ideas for Fostering and Disseminating (Clinical) Translational Psychology](papers/a-hitchhiker-s-guide-to-translation-ideas-for-fostering-and-.md) — `core`
+- [A Review of Data Analytics and Machine Learning for Personalization in Tech Sector Marketing](papers/a-review-of-data-analytics-and-machine-learning-for-personal.md) — `core`
+- [Data-Driven Decision Support in SaaS Cloud-Based Service Models](papers/data-driven-decision-support-in-saas-cloud-based-service-mod.md) — `core`
+- [Influencer–Follower Interactions and Consumers' Behavioral Responses: A Multi‐Method Approach and Future Research Agenda](papers/influencer-follower-interactions-and-consumers-behavioral-re.md) — `core`
+- [Opportunities and Challenges in Combining Optical Sensing and Epidemiological Modeling](papers/opportunities-and-challenges-in-combining-optical-sensing-an.md) — `core`
+- [A novel methodological approach to SaaS churn prediction using whale optimization algorithm](papers/a-novel-methodological-approach-to-saas-churn-prediction-usi.md) — `broad`
+- [Understanding E-Commerce Consumer Behavior with CNN-LSTM: A Data-Driven Approach](papers/understanding-e-commerce-consumer-behavior-with-cnn-lstm-a-d.md) — `broad`
+- [Customer Churn Prediction: A Review of Recent Advances, Trends, and Challenges in Conventional Machine Learning and Deep Learning](papers/customer-churn-prediction-a-review-of-recent-advances-trends.md) — `broad`
+- [Exploring Complexity: A Bibliometric Analysis of Agent-Based Modeling in Finance and Banking](papers/exploring-complexity-a-bibliometric-analysis-of-agent-based-.md) — `broad`
+- [Leveraging AI for Predicting Marketing and Customer Insights-An Overview](papers/leveraging-ai-for-predicting-marketing-and-customer-insights.md) — `broad`
+- [Toward Generative AI–Driven Metadata Modeling: A Human–Large Language Model Collaborative Approach](papers/toward-generative-ai-driven-metadata-modeling-a-human-large-.md) — `broad`
+- [Automated detection of arrhythmias using a novel interpretable feature set extracted from 12-lead electrocardiogram](papers/automated-detection-of-arrhythmias-using-a-novel-interpretab.md) — `core`
+- [Multimodal deep learning to predict postoperative major adverse cardiac and cerebrovascular events after noncardiac surgery](papers/multimodal-deep-learning-to-predict-postoperative-major-adve.md) — `core`
+- [Novel insight into prediction model for sleep quality among college students: a LASSO-derived sleep evaluation](papers/novel-insight-into-prediction-model-for-sleep-quality-among-.md) — `core`
+- [Machine learning-based prediction of processing time in furniture manufacturing to estimate lead time and pricing](papers/machine-learning-based-prediction-of-processing-time-in-furn.md) — `core`
+- [Enhanced Heart Disease Prediction Using Advanced Classifiers and Ensemble Learning Techniques](papers/enhanced-heart-disease-prediction-using-advanced-classifiers.md) — `core`
+- [A Score Function to Prioritize Editing in Household Survey Data: A Machine Learning Approach](papers/a-score-function-to-prioritize-editing-in-household-survey-d.md) — `core`
+- [Data-driven classification and prediction of all-inorganic Cs-Pb-Br perovskite crystal structures](papers/data-driven-classification-and-prediction-of-all-inorganic-c.md) — `core`
+- [Choice Vectors: Streamlining Personal AI Alignment Through Binary Selection](papers/choice-vectors-streamlining-personal-ai-alignment-through-bi.md) — `core`
+- [Vibe Coding vs. Agentic Coding: Fundamentals and Practical Implications of Agentic AI](papers/vibe-coding-vs-agentic-coding-fundamentals-and-practical-imp.md) — `core`
+- [An endangered species: how LLMs threaten Wikipedia’s sustainability](papers/an-endangered-species-how-llms-threaten-wikipedia-s-sustaina.md) — `core`
+- [Extracting Emotions from Customer Reviews Using Text Mining, Large Language Models and Fine-Tuning Strategies](papers/extracting-emotions-from-customer-reviews-using-text-mining-.md) — `core`
+- [Balancing Efficiency and Efficacy: A Contextual Bandit-Driven Framework for Multi-Tier Cyber Threat Detection](papers/balancing-efficiency-and-efficacy-a-contextual-bandit-driven.md) — `core`
+- [Data analysis strategies for the Accelerating Medicines Partnership® Schizophrenia Program](papers/data-analysis-strategies-for-the-accelerating-medicines-part.md) — `core`
+- [Instrumental balance assessment in Parkinson's disease and parkinsonism. A systematic review with critical appraisal of clinical applications and quality of reporting](papers/instrumental-balance-assessment-in-parkinson-s-disease-and-p.md) — `core`
+- [Transforming Customer Segmentation with Unsupervised Learning Models and Behavioral Data in Digital Commerce](papers/transforming-customer-segmentation-with-unsupervised-learnin.md) — `core`
+- [Harnessing the Potential of Large Language Models in Modern Marketing Management: Applications, Future Directions, and Strategic Recommendations](papers/harnessing-the-potential-of-large-language-models-in-modern-.md) — `core`
+- [Personal brand value extraction method to identify micro-influencer for effective digital marketing](papers/personal-brand-value-extraction-method-to-identify-micro-inf.md) — `core`
+- [Factors affecting the inference of manipulative intent in influencer marketing](papers/factors-affecting-the-inference-of-manipulative-intent-in-in.md) — `core`
+- [Hybrid LSTM-CNN with Attention Mechanism for Accurate and Scalable Grocery Sales Forecasting](papers/hybrid-lstm-cnn-with-attention-mechanism-for-accurate-and-sc.md) — `broad`
+- [A Residual-Corrected Hybrid ARIMA–CNN–LSTM Framework for High-Accuracy Tobacco Sales Forecasting in Regulated Markets](papers/a-residual-corrected-hybrid-arima-cnn-lstm-framework-for-hig.md) — `broad`
+- [Dynamic model selection in enterprise forecasting systems using sequence modeling](papers/dynamic-model-selection-in-enterprise-forecasting-systems-us.md) — `broad`
+- [A Hybrid Approach for Sales Forecasting: Combining Deep Learning and Time Series Analysis](papers/a-hybrid-approach-for-sales-forecasting-combining-deep-learn.md) — `broad`
+- [Customer Churn Prediction Based on Coordinate Attention Mechanism with CNN-BiLSTM](papers/customer-churn-prediction-based-on-coordinate-attention-mech.md) — `broad`
+- [Research on Customer Churn Prediction Using Machine Learning Models](papers/research-on-customer-churn-prediction-using-machine-learning.md) — `broad`
+- [LinkedIn as a key tool for targeted advertising in industrial B2B marketing](papers/linkedin-as-a-key-tool-for-targeted-advertising-in-industria.md) — `broad`
+- [Degeneracy Is OK: Logarithmic Regret for Network Revenue Management with Indiscrete Distributions](papers/degeneracy-is-ok-logarithmic-regret-for-network-revenue-mana.md) — `broad`
+- [Customer Voice Impact Matrix (CVIM): Structuring Product Feedback with BERT Sentiment Analysis and Topic Modeling](papers/customer-voice-impact-matrix-cvim-structuring-product-feedba.md) — `broad`
+- [Revolutionizing Customer Experience Management through Data-Driven Strategies in Financial Services](papers/revolutionizing-customer-experience-management-through-data-.md) — `broad`
+- [AI-Driven Field Enablement Systems for Oncology Commercial Strategy: A Framework for Enhancing Decision-Making and Market Execution](papers/ai-driven-field-enablement-systems-for-oncology-commercial-s.md) — `broad`
+- [MindFuse: Towards GenAI Explainability in Marketing Strategy Co-Creation](papers/mindfuse-towards-genai-explainability-in-marketing-strategy-.md) — `broad`
+- [The Integration of AI-Powered Personalization and User-Generated Content in Global Digital Marketing](papers/the-integration-of-ai-powered-personalization-and-user-gener.md) — `broad`
+- [Adaptive Noise Exploration for Neural Contextual Multi-Armed Bandits](papers/adaptive-noise-exploration-for-neural-contextual-multi-armed.md) — `core`
+- [Enhancing U.S. Economic and Supply Chain Resilience Through Ai-Powered Erp and Scm System Integration](papers/enhancing-u-s-economic-and-supply-chain-resilience-through-a.md) — `core`
+- [Improving Fire Type Classification in Bahrain Using Supervised Machine Learning Techniques](papers/improving-fire-type-classification-in-bahrain-using-supervis.md) — `core`
+- [Feature Selection for Hypertension Risk Prediction Using XGBoost on Single Nucleotide Polymorphism Data](papers/feature-selection-for-hypertension-risk-prediction-using-xgb.md) — `core`
+- [Short-term atrial fibrillation onset prediction using machine learning](papers/short-term-atrial-fibrillation-onset-prediction-using-machin.md) — `core`
+- [Advanced Machine Learning Ensembles for Improved Precipitation Forecasting: The Modified Stacking Ensemble Strategy in China](papers/advanced-machine-learning-ensembles-for-improved-precipitati.md) — `core`
+- [An explainable artificial intelligence framework for weaning outcomes prediction using features from electrical impedance tomography](papers/an-explainable-artificial-intelligence-framework-for-weaning.md) — `core`
+- [Machine Learning Based Predictive Maintenance at Smart Ports Using IoT Sensor Data](papers/machine-learning-based-predictive-maintenance-at-smart-ports-0223.md) — `core`
+- [Developing Predictive Models for Via Loan Default Risks Using Structured and Unstructured Financial Data Across Lending Institutions](papers/developing-predictive-models-for-via-loan-default-risks-usin.md) — `core`
+- [The benefits of being between (many) fields: Mapping the high-dimensional space of AI research](papers/the-benefits-of-being-between-many-fields-mapping-the-high-d.md) — `core`
+- [Ai-Powered Cold Email Automation for Staffing Solutions: Enhancing Personalization and Efficiency Through Open-Source Large Language Models](papers/ai-powered-cold-email-automation-for-staffing-solutions-enha.md) — `core`
+- [Reliable machine learning models in genomic medicine using conformal prediction](papers/reliable-machine-learning-models-in-genomic-medicine-using-c.md) — `core`
+- [Predicting B2B Customer Churn and Measuring the Impact of Machine Learning-Based Retention Strategies](papers/predicting-b2b-customer-churn-and-measuring-the-impact-of-ma.md) — `core`
+- [Status quo: B2B-Marketing im Mittelstand](papers/status-quo-b2b-marketing-im-mittelstand.md) — `core`
+- [BERT-based Job Recommendation System Using LinkedIn Dataset](papers/bert-based-job-recommendation-system-using-linkedin-dataset.md) — `core`
+- [The Role of Artificial Intelligence in Personalized Marketing: Integrating AI with Information Systems for Competitive Advantage](papers/the-role-of-artificial-intelligence-in-personalized-marketin.md) — `core`
+- [Retention analytics in professional services: CRM–deal flow fusion models for churn prediction and upsell](papers/retention-analytics-in-professional-services-crm-deal-flow-f.md) — `core`
+- [Beyond the Benchmark: A Customizable Platform for Real-Time, Preference-Driven LLM Evaluation](papers/beyond-the-benchmark-a-customizable-platform-for-real-time-p.md) — `core`
+- [DistillRecDial: A Knowledge-Distilled Dataset Capturing User Diversity in Conversational Recommendation](papers/distillrecdial-a-knowledge-distilled-dataset-capturing-user-.md) — `core`
+- [ToolBrain: A Flexible Reinforcement Learning Framework for Agentic Tools](papers/toolbrain-a-flexible-reinforcement-learning-framework-for-ag.md) — `core`
+- [Neural Methods for Programming: A Comprehensive Survey and Future Directions](papers/neural-methods-for-programming-a-comprehensive-survey-and-fu.md) — `core`
+- [B2B Marketing Guidebook - Vol. 1](papers/b2b-marketing-guidebook-vol-1.md) — `broad`
+- [Measuring Time Series Forecast Stability for Demand Planning](papers/measuring-time-series-forecast-stability-for-demand-planning.md) — `broad`
+- [Explainable Multi-Stage Churn Prediction using Graph Neural Network in Telecom Sector](papers/explainable-multi-stage-churn-prediction-using-graph-neural-.md) — `broad`
+- [Machine Learning-Based Prediction of Customer Churn Risk in E-commerce](papers/machine-learning-based-prediction-of-customer-churn-risk-in-.md) — `broad`
+- [Customer Churn Prediction Using Machine Learning Techniques: Awash Bank Wolaita Sodo Region](papers/customer-churn-prediction-using-machine-learning-techniques-.md) — `broad`
+- [AI-driven churn prediction in subscription services: addressing economic metrics, data transparency, and customer interdependence](papers/ai-driven-churn-prediction-in-subscription-services-addressi.md) — `broad`
+- [From AI Adoption to ESG in Industrial B2B Marketing: An Integrated Multi-Theory Model](papers/from-ai-adoption-to-esg-in-industrial-b2b-marketing-an-integ.md) — `broad`
+- [NLP-Based Automation in Customer Support and Case Management](papers/nlp-based-automation-in-customer-support-and-case-management.md) — `broad`
+- [Revenue Maximization Under Unknown Private Values with Nonobligatory Inspection](papers/revenue-maximization-under-unknown-private-values-with-nonob.md) — `broad`
+- [Cloning a Conversational Voice AI Agent from Call Recording Datasets for Telesales](papers/cloning-a-conversational-voice-ai-agent-from-call-recording-.md) — `broad`
+
