@@ -229,6 +229,19 @@ fn arxiv_id_from(p: &ResearchPaper) -> Option<String> {
     }
 }
 
+/// Strip any `https://doi.org/` or `doi:` prefix so we have a bare DOI suitable
+/// for both YAML frontmatter and for splicing into a canonical doi.org link.
+fn normalize_doi(raw: &str) -> String {
+    let s = raw.trim();
+    let lower = s.to_lowercase();
+    for prefix in ["https://doi.org/", "http://doi.org/", "doi.org/", "doi:"] {
+        if lower.starts_with(prefix) {
+            return s[prefix.len()..].trim().to_string();
+        }
+    }
+    s.to_string()
+}
+
 fn resolve_out_dir(out: &Path) -> PathBuf {
     if out.is_absolute() {
         return out.to_path_buf();
@@ -536,7 +549,8 @@ async fn main() -> Result<()> {
 fn render_paper_md(e: &Entry, tags: &[&'static str]) -> String {
     let p = &e.paper;
     let year = p.year.map(|y| y.to_string()).unwrap_or_else(|| "null".into());
-    let doi = p.doi.as_deref().unwrap_or("");
+    let doi = p.doi.as_deref().map(normalize_doi).unwrap_or_default();
+    let doi = doi.as_str();
     let arxiv_id = arxiv_id_from(p).unwrap_or_default();
     let url = p.url.as_deref().unwrap_or("");
     let venue = p.venue.as_deref().unwrap_or("");
