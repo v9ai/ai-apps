@@ -1,18 +1,23 @@
 """
 Reranking quality evaluation — measures retrieval precision improvement.
 
+The LangGraph ``rerank`` node is gone; reranking now runs inside
+``ContextChatEngine`` as a ``ClinicalRelevancePostprocessor`` node-
+postprocessor. These tests exercise that postprocessor directly (plus the
+``SimilarityPostprocessor`` pre-filter it composes with inside
+``chat_pipeline._build_postprocessors``).
+
 Tests:
-  A. Rerank node correctness — JSON parsing, score extraction, fallback behavior
-  B. Ordering quality — NDCG@k, MRR, hit-rate with/without reranking
-  C. Context compression — top-k filtering reduces noise without losing relevant chunks
-  D. Rerank disabled passthrough — feature flag skips LLM calls
-  E. GEval — context relevance improvement from reranking
+  A. ClinicalRelevancePostprocessor correctness — JSON parsing, score
+     extraction, fallback, feature-flag bypass.
+  B. Ordering quality — NDCG@k, MRR, hit-rate with/without reranking.
+  C. Context compression — top-k filtering reduces noise without losing
+     relevant chunks.
+  D. GEval — context relevance improvement from reranking.
 
 Run:
   cd apps/agentic-healthcare
   uv run --project langgraph pytest evals/rerank_eval.py -v
-  uv run --project langgraph pytest evals/rerank_eval.py -v -k Ordering
-  uv run --project langgraph pytest evals/rerank_eval.py -v -k Compression
 """
 
 from __future__ import annotations
@@ -31,42 +36,54 @@ from conftest import make_geval, skip_no_judge
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "langgraph"))
 
-from graph import GraphState, rerank, RERANK_SYSTEM
+from chat_pipeline import _build_postprocessors  # noqa: E402
+from llama_index.core.postprocessor import SimilarityPostprocessor  # noqa: E402
+from llama_index.core.schema import NodeWithScore, QueryBundle, TextNode  # noqa: E402
+from postprocessors import RERANK_SYSTEM, ClinicalRelevancePostprocessor  # noqa: E402
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Fixtures
+# Helpers
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-@pytest.fixture
-def mock_llm():
-    with patch("postprocessors.llm_call") as mock:
-        yield mock
+def _make_nodes(chunks: list[str], scores: list[float]) -> list[NodeWithScore]:
+    return [
+        NodeWithScore(
+            node=TextNode(text=c, metadata={"source_table": "blood_marker_embeddings"}),
+            score=s,
+        )
+        for c, s in zip(chunks, scores)
+    ]
 
 
-def _make_rerank_state(
+def _rerank(
     chunks: list[str],
     scores: list[float],
-    sources: list[str] | None = None,
     query: str = "What is my TG/HDL ratio?",
-    intent: str = "markers",
-) -> GraphState:
-    """Create a GraphState pre-loaded with retrieval results."""
-    if sources is None:
-        sources = ["blood_marker_embeddings"] * len(chunks)
-    return GraphState(
-        query=query,
-        user_id="test-user-123",
-        intent=intent,
-        context_chunks=chunks,
-        retrieval_sources=sources,
-        retrieval_scores=scores,
+    top_n: int = 8,
+    min_score: float = 0.3,
+    apply_sim_filter: bool = True,
+) -> tuple[list[str], list[float], list[str]]:
+    """Mirror the exact two-stage rerank pipeline that ChatEngine runs."""
+    nodes = _make_nodes(chunks, scores)
+    qb = QueryBundle(query)
+
+    if apply_sim_filter:
+        nodes = SimilarityPostprocessor(similarity_cutoff=min_score).postprocess_nodes(nodes, qb)
+
+    reranker = ClinicalRelevancePostprocessor(top_n=top_n, min_score=min_score)
+    reranked = reranker.postprocess_nodes(nodes, qb)
+
+    return (
+        [n.node.get_content() for n in reranked],
+        [float(n.score or 0.0) for n in reranked],
+        reranker.rationales,
     )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Ranking metrics (pure Python, no heavy deps)
+# Ranking metrics (pure Python)
 # ═══════════════════════════════════════════════════════════════════════════
 
 
@@ -97,12 +114,23 @@ def hit_rate(relevance_scores: list[float], threshold: float = 0.5, k: int = 5) 
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# A. Rerank Node Correctness
+# Fixtures
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-class TestRerankNodeCorrectness:
-    """Test rerank node JSON parsing, fallback, and edge cases."""
+@pytest.fixture
+def mock_llm():
+    with patch("postprocessors.llm_call") as mock:
+        yield mock
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# A. Postprocessor correctness
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestRerankPostprocessorCorrectness:
+    """Test ClinicalRelevancePostprocessor JSON parsing, fallback, and edge cases."""
 
     def test_rerank_scores_and_reorders_chunks(self, mock_llm):
         """Rerank assigns scores and reorders chunks by relevance."""
@@ -111,34 +139,24 @@ class TestRerankNodeCorrectness:
             '{"score": 0.9, "rationale": "directly answers query"}',
             '{"score": 0.6, "rationale": "tangentially related"}',
         ]
-        state = _make_rerank_state(
+        chunks, scores, _ = _rerank(
             chunks=["chunk_A", "chunk_B", "chunk_C"],
             scores=[0.8, 0.7, 0.6],
         )
-        result = rerank(state)
-        assert result["context_chunks"][0] == "chunk_B"
-        assert result["rerank_scores"][0] == 0.9
+        assert chunks[0] == "chunk_B"
+        assert scores[0] == 0.9
 
     def test_rerank_handles_malformed_json(self, mock_llm):
         """Rerank uses original score on JSON parse failure."""
         mock_llm.return_value = "not json at all"
-        state = _make_rerank_state(chunks=["chunk_A"], scores=[0.75])
-        result = rerank(state)
-        assert result["rerank_scores"][0] == 0.75
-        assert result["rerank_rationales"][0] == "parse_failure"
-
-    def test_rerank_skips_safety_refusal(self, mock_llm):
-        """Rerank is a no-op for safety_refusal intent."""
-        state = GraphState(intent="safety_refusal", context_chunks=[])
-        result = rerank(state)
-        assert result["rerank_scores"] == []
-        mock_llm.assert_not_called()
+        chunks, scores, rationales = _rerank(chunks=["chunk_A"], scores=[0.75])
+        assert scores[0] == 0.75
+        assert rationales[0] == "parse_failure"
 
     def test_rerank_empty_chunks(self, mock_llm):
         """Rerank handles empty context gracefully."""
-        state = _make_rerank_state(chunks=[], scores=[])
-        result = rerank(state)
-        assert result["context_chunks"] == []
+        chunks, scores, _ = _rerank(chunks=[], scores=[])
+        assert chunks == []
         mock_llm.assert_not_called()
 
     def test_rerank_fallback_when_all_below_threshold(self, mock_llm):
@@ -149,16 +167,15 @@ class TestRerankNodeCorrectness:
             '{"score": 0.15, "rationale": "low"}',
             '{"score": 0.05, "rationale": "irrelevant"}',
         ]
-        state = _make_rerank_state(
+        chunks, _, _ = _rerank(
             chunks=["a", "b", "c", "d"],
             scores=[0.5, 0.5, 0.5, 0.5],
         )
-        result = rerank(state)
-        assert len(result["context_chunks"]) == 3
+        assert len(chunks) == 3
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# B. Ordering Quality
+# B. Ordering quality
 # ═══════════════════════════════════════════════════════════════════════════
 
 
@@ -191,7 +208,7 @@ class TestRerankOrderingQuality:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# C. Context Compression
+# C. Context compression
 # ═══════════════════════════════════════════════════════════════════════════
 
 
@@ -199,65 +216,70 @@ class TestContextCompression:
     """Test that reranking reduces chunk count while preserving quality."""
 
     def test_top_k_limits_output_size(self, mock_llm):
-        """Rerank output should not exceed rerank_top_k."""
+        """Rerank output should not exceed top_n."""
         mock_llm.side_effect = [
             json.dumps({"score": 0.5 + i * 0.03, "rationale": f"chunk {i}"})
             for i in range(15)
         ]
-        state = _make_rerank_state(
+        chunks, _, _ = _rerank(
             chunks=[f"chunk_{i}" for i in range(15)],
             scores=[0.5] * 15,
+            top_n=8,
+            min_score=0.3,
+            apply_sim_filter=False,  # sim filter would drop scores < 0.3 first
         )
-        with patch("config.settings") as mock_settings:
-            mock_settings.rerank_top_k = 8
-            mock_settings.rerank_min_score = 0.3
-            mock_settings.rerank_enabled = True
-            result = rerank(state)
-        assert len(result["context_chunks"]) <= 8
+        assert len(chunks) <= 8
 
     def test_min_score_filters_noise(self, mock_llm):
-        """Chunks below rerank_min_score are excluded."""
+        """Chunks below min_score are excluded."""
         mock_llm.side_effect = [
             '{"score": 0.9, "rationale": "relevant"}',
             '{"score": 0.1, "rationale": "noise"}',
             '{"score": 0.8, "rationale": "relevant"}',
         ]
-        state = _make_rerank_state(
+        chunks, _, _ = _rerank(
             chunks=["relevant_a", "noise", "relevant_b"],
             scores=[0.7, 0.6, 0.5],
+            top_n=8,
+            min_score=0.3,
         )
-        with patch("config.settings") as mock_settings:
-            mock_settings.rerank_top_k = 8
-            mock_settings.rerank_min_score = 0.3
-            mock_settings.rerank_enabled = True
-            result = rerank(state)
-        assert "noise" not in result["context_chunks"]
-        assert len(result["context_chunks"]) == 2
+        assert "noise" not in chunks
+        assert len(chunks) == 2
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# D. Feature Flag
+# D. Feature flag
 # ═══════════════════════════════════════════════════════════════════════════
 
 
 class TestRerankFeatureFlag:
-    """Test rerank_enabled toggle."""
+    """Test rerank_enabled toggle — chat_pipeline._build_postprocessors() must bypass rerank."""
 
-    def test_rerank_disabled_passes_through(self, mock_llm):
-        """When rerank_enabled=False, chunks pass through unchanged."""
-        state = _make_rerank_state(
-            chunks=["a", "b", "c"],
-            scores=[0.8, 0.6, 0.4],
-        )
-        with patch("config.settings") as mock_settings:
+    def test_rerank_disabled_returns_empty_postprocessor_list(self, mock_llm):
+        """When rerank_enabled=False, no postprocessors are attached."""
+        with patch("chat_pipeline.settings") as mock_settings:
             mock_settings.rerank_enabled = False
-            result = rerank(state)
+            mock_settings.rerank_min_score = 0.3
+            mock_settings.rerank_top_k = 8
+            assert _build_postprocessors() == []
         mock_llm.assert_not_called()
-        assert result["rerank_rationales"] == ["rerank_disabled"] * 3
+
+    def test_rerank_enabled_returns_sim_plus_clinical(self, mock_llm):
+        """When rerank_enabled=True, the pipeline stacks similarity + clinical rerank."""
+        with patch("chat_pipeline.settings") as mock_settings:
+            mock_settings.rerank_enabled = True
+            mock_settings.rerank_min_score = 0.3
+            mock_settings.rerank_top_k = 8
+            procs = _build_postprocessors()
+
+        assert len(procs) == 2
+        assert isinstance(procs[0], SimilarityPostprocessor)
+        assert isinstance(procs[1], ClinicalRelevancePostprocessor)
+        mock_llm.assert_not_called()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# E. GEval Quality
+# E. GEval quality
 # ═══════════════════════════════════════════════════════════════════════════
 
 
@@ -290,3 +312,6 @@ class TestRerankGEvalQuality:
             ],
         )
         assert_test(test_case, [metric])
+
+
+__all__ = ["RERANK_SYSTEM"]
