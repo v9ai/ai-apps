@@ -151,6 +151,31 @@ function runWithSessionVars<T>(
       return (results as unknown[])[3] as T;
     });
 
+  // The Neon HTTP driver fires every NeonQueryPromise eagerly (as soon as it
+  // is constructed). Two consequences:
+  //
+  //   A) For direct awaits — `await sql\`SELECT …\`` — the caller sees the
+  //      result (or rejection) via the returned promise. Normal.
+  //
+  //   B) For the `sql.transaction([sql\`SELECT …\`, …])` call pattern, the
+  //      caller only reads `.parameterizedQuery` off each inner item; they
+  //      never await the inner promises. The inner transactions still fire
+  //      in the background because they were constructed eagerly, and any
+  //      rejection (e.g. "role app_authenticated does not exist" on a
+  //      database where 0006 hasn't been applied) would surface as an
+  //      unhandled-rejection crash.
+  //
+  // Attach a no-op `.catch` on a SIBLING chain so the promise is considered
+  // handled for the purposes of unhandled-rejection tracking, but the
+  // original `txResult` still rejects visibly for any real awaiter. If the
+  // caller awaits `txResult` directly, their `await`/`.then`/`.catch` gets
+  // the rejection; Node's rejection tracker is already satisfied by the
+  // sibling handler, so there is no double-log.
+  void txResult.catch(() => {
+    /* handled: either no-op (transaction-array case) or surfaced via the
+       caller's own await on the outer promise (direct-call case). */
+  });
+
   // Expose .parameterizedQuery so that a caller doing
   //   sql.transaction([sql`SELECT ...`])
   // can still re-project this query when the outer `sql.transaction` strips

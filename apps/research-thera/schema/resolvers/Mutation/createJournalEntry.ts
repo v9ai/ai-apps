@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { createJournalEntry as _createJournalEntry, getJournalEntry } from "@/src/db";
+import { createJournalEntry as _createJournalEntry, getJournalEntry, assertOwnsFamilyMember } from "@/src/db";
 
 export const createJournalEntry: NonNullable<MutationResolvers['createJournalEntry']> = async (
   _parent,
@@ -9,6 +9,13 @@ export const createJournalEntry: NonNullable<MutationResolvers['createJournalEnt
   const userEmail = ctx.userEmail;
   if (!userEmail) {
     throw new Error("Authentication required");
+  }
+
+  // Cross-user write guard: if a family member is referenced, caller must own it.
+  const userId = ctx.userId;
+  if (!userId) throw new Error("Authentication required");
+  if (args.input.familyMemberId != null) {
+    await assertOwnsFamilyMember(args.input.familyMemberId, userId);
   }
 
   const entryId = await _createJournalEntry({
