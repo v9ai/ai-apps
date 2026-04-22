@@ -9,8 +9,6 @@ import {
 } from "@/__generated__/hooks";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/lib/auth-hooks";
-import { ADMIN_EMAIL } from "@/lib/constants";
 import {
   Badge,
   Box,
@@ -27,7 +25,6 @@ import {
 import { button } from "@/recipes/button";
 import {
   EnvelopeClosedIcon,
-  ExclamationTriangleIcon,
   InfoCircledIcon,
   LinkedInLogoIcon,
   MagnifyingGlassIcon,
@@ -40,9 +37,6 @@ import {
 const PAGE_SIZE = 50;
 
 export default function AdminContactsPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
-
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -81,23 +75,11 @@ export default function AdminContactsPage() {
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
     },
-    skip: !isAdmin,
     fetchPolicy: "cache-and-network",
   });
 
   const [createContact, { loading: creating }] = useCreateContactMutation();
   const [deleteContact] = useDeleteContactMutation();
-
-  if (!isAdmin) {
-    return (
-      <Container size="3" p="8">
-        <Callout.Root color="red">
-          <Callout.Icon><ExclamationTriangleIcon /></Callout.Icon>
-          <Callout.Text>Access denied. Admin only.</Callout.Text>
-        </Callout.Root>
-      </Container>
-    );
-  }
 
   const contactsList = data?.contacts?.contacts ?? [];
   const totalCount = data?.contacts?.totalCount ?? 0;
