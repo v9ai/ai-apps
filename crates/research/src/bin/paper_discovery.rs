@@ -583,7 +583,7 @@ async fn main() -> Result<()> {
             {
                 let mut seen = HashSet::new();
                 all_entries.retain(|e| {
-                    e.arxiv_id.as_ref().map_or(true, |id| {
+                    e.arxiv_id.as_ref().is_none_or(|id| {
                         seen.insert(base_arxiv_id(id).to_string())
                     })
                 });
@@ -620,7 +620,7 @@ async fn main() -> Result<()> {
             let cfg = ChunkerConfig::default();
 
             let query = format!("cat:{}", category);
-            let total_pages = (max_papers + page_size - 1) / page_size;
+            let total_pages = max_papers.div_ceil(page_size);
             let mut ingested = 0u32;
             let mut chunked = 0usize;
 

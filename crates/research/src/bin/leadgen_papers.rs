@@ -389,7 +389,7 @@ fn slugify(s: &str) -> String {
 fn yaml_str(s: &str) -> String {
     // Escape double-quotes and backslashes, keep it on a single line.
     let s = s.replace('\\', "\\\\").replace('"', "\\\"");
-    let s = s.replace('\n', " ").replace('\r', " ");
+    let s = s.replace(['\n', '\r'], " ");
     format!("\"{s}\"")
 }
 
@@ -923,5 +923,8 @@ fn render_gaps_md(by_tag: &BTreeMap<&'static str, Vec<usize>>, total: usize) -> 
     s.push_str("1. Skim the three smallest-count tags above. Is the thinness real or an artefact of query coverage? Add follow-up queries if needed.\n");
     s.push_str("2. Cross-reference thin tags with your lead-gen stack (bandits, NER, MLX embeddings, LangGraph email agents). A thin tag that your stack already touches is a high-signal publishable angle.\n");
     s.push_str("3. Fill in the `Novelty` / `Relevance` / `Reuse opportunity` sections on the 10–20 most relevant papers; this becomes the related-work section of your paper.\n");
+    s
+}
+);
     s
 }

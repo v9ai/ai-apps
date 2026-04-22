@@ -152,7 +152,7 @@ fn main() -> Result<()> {
         .filter(|e| {
             e.file_name()
                 .to_str()
-                .map_or(false, |n| n.starts_with("agent-") && n.ends_with(".md"))
+                .is_some_and(|n| n.starts_with("agent-") && n.ends_with(".md"))
         })
         .count();
     let has_synthesis = output_dir.join("synthesis.md").exists();

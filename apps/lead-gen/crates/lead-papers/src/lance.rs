@@ -1,8 +1,8 @@
 use crate::types::{Contact, EMBED_DIM, GhCandidate, MatchResult, Paper};
 use anyhow::Result;
-use arrow::array::{
-    Array, FixedSizeListArray, Float32Array, Float32Builder, ListBuilder,
-    RecordBatch, RecordBatchIterator, StringArray, StringBuilder,
+use arrow_array::builder::{ListBuilder, StringBuilder};
+use arrow_array::{
+    Array, FixedSizeListArray, Float32Array, RecordBatch, StringArray,
 };
 use arrow_schema::{DataType, Field, Schema};
 use lancedb::Connection;
@@ -55,8 +55,7 @@ impl Lance {
                 Arc::new(tags_b.finish()),
             ],
         )?;
-        let iter = RecordBatchIterator::new(vec![Ok(batch)], schema);
-        tbl.add(Box::new(iter)).execute().await?;
+        tbl.add(vec![batch]).execute().await?;
         Ok(())
     }
 
@@ -70,7 +69,7 @@ impl Lance {
         let titles: Vec<String> = papers.iter().map(|p| p.title.clone()).collect();
         let abstracts: Vec<Option<String>> = papers.iter().map(|p| p.abstract_text.clone()).collect();
         let contact_ids: Vec<String> = vec![contact_id.to_string(); papers.len()];
-        let emb_arr = fixed_size_list_f32(embs, EMBED_DIM);
+        let emb_arr = fixed_size_list_f32(embs, EMBED_DIM)?;
 
         let batch = RecordBatch::try_new(
             schema.clone(),
@@ -82,8 +81,7 @@ impl Lance {
                 Arc::new(emb_arr),
             ],
         )?;
-        let iter = RecordBatchIterator::new(vec![Ok(batch)], schema);
-        tbl.add(Box::new(iter)).execute().await?;
+        tbl.add(vec![batch]).execute().await?;
         Ok(())
     }
 
@@ -95,7 +93,7 @@ impl Lance {
         )).await.ok();
 
         let schema = candidates_schema();
-        let emb_arr = fixed_size_list_f32(&[emb.to_vec()], EMBED_DIM);
+        let emb_arr = fixed_size_list_f32(&[emb.to_vec()], EMBED_DIM)?;
         let blob = serde_json::to_string(cand)?;
 
         let batch = RecordBatch::try_new(
@@ -107,8 +105,7 @@ impl Lance {
                 Arc::new(emb_arr),
             ],
         )?;
-        let iter = RecordBatchIterator::new(vec![Ok(batch)], schema);
-        tbl.add(Box::new(iter)).execute().await?;
+        tbl.add(vec![batch]).execute().await?;
         Ok(())
     }
 
@@ -128,13 +125,13 @@ impl Lance {
                 Arc::new(StringArray::from(vec![r.evidence.to_string()])),
             ],
         )?;
-        let iter = RecordBatchIterator::new(vec![Ok(batch)], schema);
-        tbl.add(Box::new(iter)).execute().await?;
+        tbl.add(vec![batch]).execute().await?;
         Ok(())
     }
 
     pub async fn all_results(&self) -> Result<Vec<MatchResult>> {
         use futures::TryStreamExt;
+        use lancedb::query::ExecutableQuery;
         let tbl = self.conn.open_table("results").execute().await?;
         let mut stream = tbl.query().execute().await?;
         let mut out = vec![];
@@ -169,7 +166,8 @@ impl Lance {
 
 fn escape(s: &str) -> String { s.replace('\'', "''") }
 
-fn fixed_size_list_f32(rows: &[Vec<f32>], dim: usize) -> FixedSizeListArray {
+fn fixed_size_list_f32(rows: &[Vec<f32>], dim: usize) -> Result<FixedSizeListArray> {
+    use arrow_array::builder::Float32Builder;
     let mut b = Float32Builder::with_capacity(rows.len() * dim);
     for row in rows {
         assert_eq!(row.len(), dim, "embedding dim mismatch");
@@ -177,7 +175,7 @@ fn fixed_size_list_f32(rows: &[Vec<f32>], dim: usize) -> FixedSizeListArray {
     }
     let values = b.finish();
     let field = Arc::new(Field::new("item", DataType::Float32, true));
-    FixedSizeListArray::new(field, dim as i32, Arc::new(values), None)
+    Ok(FixedSizeListArray::try_new(field, dim as i32, Arc::new(values), None)?)
 }
 
 fn contacts_schema() -> Arc<Schema> {

@@ -5866,6 +5866,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "lead-papers"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "arrow-array",
+ "arrow-schema",
+ "candle-core 0.9.2",
+ "candle-nn 0.9.2",
+ "candle-transformers",
+ "chrono",
+ "clap",
+ "dotenvy",
+ "futures",
+ "hf-hub",
+ "lancedb",
+ "rand 0.8.5",
+ "rand_distr 0.4.3",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "strsim 0.11.1",
+ "tokenizers 0.21.4",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-normalization",
+]
+
+[[package]]
 name = "leadgen"
 version = "0.1.0"
 dependencies = [

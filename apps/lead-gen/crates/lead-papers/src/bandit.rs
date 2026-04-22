@@ -10,13 +10,6 @@ pub struct Bandit<'a> {
     pub pg: &'a PgPool,
 }
 
-#[derive(Debug, Clone)]
-pub struct ArmStat {
-    pub arm_id: String,
-    pub pulls: i32,
-    pub reward_sum: f64,
-}
-
 impl<'a> Bandit<'a> {
     pub async fn ensure_arms(&self, arm_ids: &[&str]) -> Result<()> {
         for id in arm_ids {

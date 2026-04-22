@@ -107,7 +107,7 @@ impl ArxivClient {
     ) -> Result<Vec<ArxivPaper>, Error> {
         let mut all = Vec::new();
         let bs = batch_size.max(1);
-        let total_batches = (ids.len() + bs - 1) / bs;
+        let total_batches = ids.len().div_ceil(bs);
         for (i, chunk) in ids.chunks(bs).enumerate() {
             let id_list = chunk.join(",");
             let url = format!(

@@ -8,43 +8,39 @@ name = "leadmatch"
 path = "src/main.rs"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
-futures = "0.3"
+tokio      = { workspace = true }
+futures    = { workspace = true }
 
-reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+reqwest    = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
 
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "json", "chrono"] }
-lancedb = "0.10"
-arrow-array = "52"
-arrow-schema = "52"
-arrow = "52"
 
-candle-core = "0.7"
-candle-nn = "0.7"
-candle-transformers = "0.7"
-tokenizers = "0.20"
-hf-hub = { version = "0.3", features = ["tokio"] }
+lancedb     = { workspace = true }
+arrow-array = { workspace = true }
+arrow-schema = { workspace = true }
 
-strsim = "0.11"
+candle-core         = { workspace = true }
+candle-nn           = { workspace = true }
+candle-transformers = { workspace = true }
+tokenizers          = { workspace = true }
+hf-hub              = { workspace = true, features = ["tokio"] }
+
+strsim                = "0.11"
 unicode-normalization = "0.1"
 
-anyhow = "1"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-clap = { version = "4", features = ["derive"] }
-chrono = { version = "0.4", features = ["serde"] }
-dotenvy = "0.15"
-rand = "0.8"
+anyhow  = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+clap    = { workspace = true }
+chrono  = { workspace = true }
+dotenvy = { workspace = true }
+
+rand       = "0.8"
 rand_distr = "0.4"
 
 [features]
 default = []
 metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]
-cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
-
-[profile.release]
-lto = "thin"
-codegen-units = 1
-opt-level = 3
+cuda  = ["candle-core/cuda",  "candle-nn/cuda",  "candle-transformers/cuda"]
