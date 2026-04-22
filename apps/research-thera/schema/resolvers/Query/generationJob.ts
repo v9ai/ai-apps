@@ -1,9 +1,22 @@
 import type { QueryResolvers } from "./../../types.generated";
+import { GraphQLError } from "graphql";
 import { db } from "@/src/db";
 
-export const generationJob: NonNullable<QueryResolvers['generationJob']> = async (_parent, args, _ctx) => {
+export const generationJob: NonNullable<QueryResolvers['generationJob']> = async (_parent, args, ctx) => {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
+    throw new GraphQLError("Not found", {
+      extensions: { code: "NOT_FOUND" },
+    });
+  }
+
   const job = await db.getGenerationJob(args.id);
-  if (!job) return null;
+  // generation_jobs.user_id is email-keyed (see generationJobs plural + createGenerationJob callers).
+  if (!job || job.userId !== userEmail) {
+    throw new GraphQLError("Not found", {
+      extensions: { code: "NOT_FOUND" },
+    });
+  }
 
   return {
     id: job.id,
