@@ -1096,6 +1096,120 @@
   {
     "hotel": {
       "amenities": [
+        "All Inclusive",
+        "Waterpark",
+        "Multiple restaurants",
+        "Spa",
+        "Kids club",
+        "Beach access",
+        "Tennis courts",
+        "Fitness center",
+        "Piano bar",
+        "Wi-Fi"
+      ],
+      "aspect_scores": {
+        "Beach": 0.42,
+        "Cleanliness": 0.31,
+        "Family": 0.46,
+        "Food": 0.38,
+        "Location": 0.35,
+        "Service": 0.3,
+        "Spa": 0.28,
+        "Value": 0.34
+      },
+      "board_type": "All Inclusive",
+      "cons": [
+        "Large resort (660 rooms) — can feel busy in peak season",
+        "Building stock dates from earlier 2000s, modernised 2015-2016"
+      ],
+      "description": "Large 5-star all-inclusive family resort in Lambi, 75m from the sandy/shingle beach and 2 km from Kos town. 660 rooms across a main building plus bungalow blocks, with on-site waterpark, multiple buffet and a la carte restaurants, pool/piano/lounge bars, spa, tennis courts, animation team and kids club. Fully renovated winter 2015-2016.",
+      "discovery_score": 41.0,
+      "hotel_id": "blue-lagoon-resort-kos",
+      "image_url": null,
+      "lat": 36.9028,
+      "lng": 27.284,
+      "location": "Lambi, Kos, Greece",
+      "name": "Blue Lagoon Resort",
+      "opened_year": 2016,
+      "price_eur": 195.0,
+      "pros": [
+        "All-inclusive pricing covers meals, drinks and animation",
+        "On-site waterpark — well suited for families with kids",
+        "75m from the beach, 2 km from Kos town centre",
+        "Kids club and dedicated children's pools",
+        "10% early booking discount via jeka.ro for June 2026"
+      ],
+      "region": "Dodecanese",
+      "review_count": 0,
+      "review_rating": 0.0,
+      "review_summary": "This hotel offers All Inclusive. This hotel offers Waterpark. This hotel offers Kids club.",
+      "reviews": [
+        {
+          "aspects": [
+            "Family"
+          ],
+          "is_representative": true,
+          "sentiment": 0.68,
+          "source": "description",
+          "text": "Large 5-star all-inclusive family resort in Lambi, 75m from the sandy/shingle beach and 2 km from Kos town"
+        },
+        {
+          "aspects": [
+            "Family",
+            "Beach"
+          ],
+          "is_representative": false,
+          "sentiment": 0.62,
+          "source": "ml-analysis",
+          "text": "This hotel offers Waterpark."
+        },
+        {
+          "aspects": [
+            "Family"
+          ],
+          "is_representative": false,
+          "sentiment": 0.58,
+          "source": "ml-analysis",
+          "text": "This hotel offers Kids club."
+        },
+        {
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true,
+          "sentiment": 0.57,
+          "source": "ml-analysis",
+          "text": "This hotel offers Multiple restaurants."
+        },
+        {
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false,
+          "sentiment": 0.55,
+          "source": "ml-analysis",
+          "text": "This hotel offers Beach access."
+        },
+        {
+          "aspects": [
+            "Spa"
+          ],
+          "is_representative": false,
+          "sentiment": 0.45,
+          "source": "ml-analysis",
+          "text": "This hotel offers Spa."
+        }
+      ],
+      "sentiment_score": 0.72,
+      "source_url": "https://www.jeka.ro/blue-lagoon-resort_42777.aspx?c-departure=1755&c-date=15062026&c-nights=7&tab=c&c-adults=2&c-children=1&c-age1=7",
+      "star_rating": 5,
+      "value_score": 48.0
+    },
+    "score": 0.54
+  },
+  {
+    "hotel": {
+      "amenities": [
         "Wi-Fi",
         "Parking",
         "Kitchen",
