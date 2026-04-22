@@ -719,8 +719,10 @@ mod tests {
             make_paper("D", Some(2019), PaperSource::Crossref),
             make_paper("E", Some(2019), PaperSource::Core),
         ];
-        let mut cfg = CritiqueConfig::default();
-        cfg.current_year = Some(2020);
+        let cfg = CritiqueConfig {
+            current_year: Some(2020),
+            ..CritiqueConfig::default()
+        };
         let critique = cfg.evaluate(&papers);
         let ds = critique.dimension_scores.unwrap();
         assert!(ds.recency_bias < 0.6, "got {}", ds.recency_bias);
@@ -801,9 +803,11 @@ mod tests {
         let papers: Vec<_> = (0..5)
             .map(|i| make_paper_full(&format!("P{i}"), Some(2020), PaperSource::Arxiv, Some(50), None, Some("Abstract".into())))
             .collect();
-        let mut cfg = CritiqueConfig::default();
-        cfg.authority_citation_threshold = 30;
-        cfg.authority_min_fraction = 0.2;
+        let cfg = CritiqueConfig {
+            authority_citation_threshold: 30,
+            authority_min_fraction: 0.2,
+            ..CritiqueConfig::default()
+        };
         let critique = cfg.evaluate(&papers);
         let ds = critique.dimension_scores.unwrap();
         assert!(ds.authority > 0.99, "got {}", ds.authority);
@@ -880,11 +884,13 @@ mod tests {
         let default_cfg = CritiqueConfig::default();
         let default_critique = default_cfg.evaluate(&papers);
 
-        let mut weighted_cfg = CritiqueConfig::default();
-        weighted_cfg.weights = DimensionWeights {
-            result_count: 1.0, year_range: 0.0, source_diversity: 0.0,
-            abstract_coverage: 0.0, recency_bias: 0.0, citation_network: 0.0,
-            authority: 0.0, field_diversity: 0.0,
+        let weighted_cfg = CritiqueConfig {
+            weights: DimensionWeights {
+                result_count: 1.0, year_range: 0.0, source_diversity: 0.0,
+                abstract_coverage: 0.0, recency_bias: 0.0, citation_network: 0.0,
+                authority: 0.0, field_diversity: 0.0,
+            },
+            ..CritiqueConfig::default()
         };
         let weighted_critique = weighted_cfg.evaluate(&papers);
         assert!((weighted_critique.quality_score - 1.0).abs() < 0.01, "score was {}", weighted_critique.quality_score);

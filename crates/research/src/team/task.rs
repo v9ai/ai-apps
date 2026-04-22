@@ -13,18 +13,13 @@ pub enum TaskStatus {
 
 /// Priority level for task scheduling. Higher priority tasks are claimed first.
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, Default,
 )]
 pub enum TaskPriority {
     Low = 0,
+    #[default]
     Normal = 1,
     Critical = 2,
-}
-
-impl Default for TaskPriority {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 /// Progress of a research task as reported by the worker.

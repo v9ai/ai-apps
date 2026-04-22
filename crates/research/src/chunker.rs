@@ -9,7 +9,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 /// Strategy used to split text into chunks.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum ChunkStrategy {
     /// Fixed character-width windows with no boundary awareness.
     Fixed,
@@ -19,13 +19,8 @@ pub enum ChunkStrategy {
     Paragraph,
     /// Breaks at detected section headings, then falls back to sentence
     /// boundaries within each section.
+    #[default]
     Section,
-}
-
-impl Default for ChunkStrategy {
-    fn default() -> Self {
-        Self::Section
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -685,7 +680,7 @@ mod tests {
         assert!(!chunks.is_empty());
         // Verify we actually get sentence-boundary breaks (not mid-word)
         for c in &chunks[..chunks.len().saturating_sub(1)] {
-            let last_char = c.text.chars().last().unwrap();
+            let last_char = c.text.chars().next_back().unwrap();
             assert!(
                 last_char == '.' || last_char == '?' || last_char == '!',
                 "sentence chunk should end at punctuation: {:?}",

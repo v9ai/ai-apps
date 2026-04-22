@@ -263,7 +263,7 @@ pub fn validate_arxiv_id(id: &str) -> Result<(), Error> {
     let old_format = id.contains('/')
         && id
             .split('/')
-            .last()
+            .next_back()
             .map(|d| {
                 let base = d.split('v').next().unwrap_or("");
                 base.len() == 7 && base.chars().all(|c| c.is_ascii_digit())

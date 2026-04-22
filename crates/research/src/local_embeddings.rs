@@ -83,11 +83,11 @@ impl EmbeddingEngine {
         for enc in &encodings {
             let pad = max_len - enc.get_ids().len();
             ids_flat.extend_from_slice(enc.get_ids());
-            ids_flat.extend(std::iter::repeat(0u32).take(pad));
+            ids_flat.extend(std::iter::repeat_n(0u32, pad));
             mask_flat.extend_from_slice(enc.get_attention_mask());
-            mask_flat.extend(std::iter::repeat(0u32).take(pad));
+            mask_flat.extend(std::iter::repeat_n(0u32, pad));
             ttype_flat.extend_from_slice(enc.get_type_ids());
-            ttype_flat.extend(std::iter::repeat(0u32).take(pad));
+            ttype_flat.extend(std::iter::repeat_n(0u32, pad));
         }
 
         let input_ids = Tensor::from_vec(ids_flat, (n, max_len), &self.device)?;
