@@ -29,19 +29,40 @@ export const generationJob: NonNullable<QueryResolvers['generationJob']> = async
       if (status === "success") {
         let count: number | null = null;
         let message: string | null = null;
+        let internalError: string | null = null;
+        let stateFetched = false;
         try {
           const state = await getGraphState(job.langgraphThreadId);
+          stateFetched = true;
           const books = Array.isArray(state.books) ? state.books : [];
           count = books.length;
           message = typeof state.message === "string" ? state.message : null;
+          // Some graphs signal internal failure via state fields even though
+          // the LangGraph run itself exited cleanly. Prefer state.error, then
+          // fall back to state.message when state.success === false.
+          if (typeof state.error === "string" && state.error.length > 0) {
+            internalError = state.error;
+          } else if (state.success === false) {
+            internalError =
+              (typeof state.message === "string" && state.message.length > 0
+                ? state.message
+                : null) ?? "Graph reported success: false";
+          }
         } catch (err) {
           console.warn("[generationJob] getGraphState failed:", err);
         }
-        await db.updateGenerationJob(args.id, {
-          status: "SUCCEEDED",
-          progress: 100,
-          result: JSON.stringify({ count, message }),
-        });
+        if (stateFetched && internalError) {
+          await db.updateGenerationJob(args.id, {
+            status: "FAILED",
+            error: JSON.stringify({ message: internalError }),
+          });
+        } else {
+          await db.updateGenerationJob(args.id, {
+            status: "SUCCEEDED",
+            progress: 100,
+            result: JSON.stringify({ count, message }),
+          });
+        }
         job = await db.getGenerationJob(args.id);
       } else if (status === "error" || status === "interrupted" || status === "timeout") {
         let errMessage = `LangGraph run ${status}`;

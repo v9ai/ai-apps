@@ -33,6 +33,7 @@ class BooksState(TypedDict, total=False):
     goal_id: int
     journal_entry_id: int
     user_email: str
+    job_id: str
     # Internal
     _prompt: str
     _research_count: int
@@ -49,11 +50,53 @@ def _conn_str() -> str:
     return os.environ.get("NEON_DATABASE_URL", "")
 
 
+async def _update_job_progress(job_id: str, progress: int) -> None:
+    try:
+        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE generation_jobs SET progress = %s, updated_at = NOW() WHERE id = %s",
+                    (progress, job_id),
+                )
+    except Exception as exc:
+        print(f"[books._update_job_progress] failed: {exc}")
+
+
+async def _update_job_succeeded(job_id: str, payload: dict) -> None:
+    try:
+        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE generation_jobs SET status = 'SUCCEEDED', progress = 100, "
+                    "result = %s, updated_at = NOW() WHERE id = %s",
+                    (json.dumps(payload), job_id),
+                )
+    except Exception as exc:
+        print(f"[books._update_job_succeeded] failed: {exc}")
+
+
+async def _update_job_failed(job_id: str, error: dict) -> None:
+    try:
+        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE generation_jobs SET status = 'FAILED', error = %s, "
+                    "updated_at = NOW() WHERE id = %s",
+                    (json.dumps(error), job_id),
+                )
+    except Exception as exc:
+        print(f"[books._update_job_failed] failed: {exc}")
+
+
 async def collect_data(state: BooksState) -> dict:
     # Test hook: if a prompt was pre-assembled by the caller, skip the DB
     # round-trip entirely. Prod callers never set `_prompt`.
     if state.get("_prompt"):
         return {}
+
+    job_id = state.get("job_id")
+    if job_id:
+        await _update_job_progress(job_id, 10)
 
     goal_id = state.get("goal_id")
     journal_entry_id = state.get("journal_entry_id")
@@ -203,6 +246,9 @@ async def collect_data(state: BooksState) -> dict:
         ]
     )
 
+    if job_id:
+        await _update_job_progress(job_id, 30)
+
     return {
         "_prompt": prompt,
         "_research_count": len(research_rows),
@@ -267,6 +313,10 @@ async def generate(state: dict) -> dict:
     if state.get("error") or state.get("success") is False:
         return {}
 
+    job_id = state.get("job_id")
+    if job_id:
+        await _update_job_progress(job_id, 50)
+
     prompt = state.get("_prompt", "")
     base_url = os.environ.get("LLM_BASE_URL") or None
     api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY") or ""
@@ -312,6 +362,9 @@ async def generate(state: dict) -> dict:
 
     if len(books) < 3:
         return {"error": f"DeepSeek returned {len(books)} valid books (need >= 3). Top-level keys: {list(parsed.keys()) if isinstance(parsed, dict) else 'array'}"}
+
+    if job_id:
+        await _update_job_progress(job_id, 80)
 
     return {"_books_raw": books}
 
@@ -414,23 +467,33 @@ async def persist(state: dict) -> dict:
     }
 
 
-def _finalize(state: dict) -> dict:
+async def _finalize(state: dict) -> dict:
+    job_id = state.get("job_id")
     if state.get("error"):
+        if job_id:
+            await _update_job_failed(job_id, {"message": state["error"]})
         return {
             "success": False,
             "message": state["error"],
             "books": [],
         }
     if state.get("success") is False:
+        message = state.get("message") or "Books not generated."
+        if job_id:
+            await _update_job_failed(job_id, {"message": message})
         return {
             "success": False,
-            "message": state.get("message") or "Books not generated.",
+            "message": message,
             "books": state.get("books") or [],
         }
+    books = state.get("books") or []
+    message = state.get("message") or ""
+    if job_id:
+        await _update_job_succeeded(job_id, {"count": len(books), "message": message})
     return {
         "success": state.get("success", True),
-        "message": state.get("message") or "",
-        "books": state.get("books") or [],
+        "message": message,
+        "books": books,
     }
 
 

@@ -17,7 +17,9 @@ impl Config {
         let _ = dotenvy::dotenv();
         Ok(Self {
             github_token: env::var("GITHUB_TOKEN").context("GITHUB_TOKEN missing")?,
-            database_url: env::var("DATABASE_URL").context("DATABASE_URL missing")?,
+            database_url: env::var("DATABASE_URL")
+                .or_else(|_| env::var("NEON_DATABASE_URL"))
+                .context("DATABASE_URL or NEON_DATABASE_URL missing")?,
             lance_uri: env::var("LANCE_URI").unwrap_or_else(|_| "./data/lance".into()),
             sqlite_path: env::var("LEADMATCH_SQLITE").unwrap_or_else(|_| "./data/leadmatch.db".into()),
             embed_model: env::var("EMBED_MODEL")
