@@ -1083,7 +1083,7 @@ export async function updateStory(
 
 export async function updateStoryAudio(id: number, userId: string, audioKey: string, audioUrl: string) {
   const now = new Date().toISOString();
-  await neonSql`UPDATE stories SET audio_key = ${audioKey}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${id}`;
+  await neonSql`UPDATE stories SET audio_key = ${audioKey}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${id} AND (user_id = ${userId} OR user_id IS NULL)`;
 }
 
 export async function deleteStory(storyId: number, createdBy: string) {
