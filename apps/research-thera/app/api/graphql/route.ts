@@ -14,7 +14,7 @@ const vaultCookiePlugin: ApolloServerPlugin<GraphQLContext> = {
     return {
       async willSendResponse({ contextValue, response }) {
         if (contextValue.pendingVaultCookie && response.http) {
-          response.http.headers.append("set-cookie", contextValue.pendingVaultCookie);
+          response.http.headers.set("set-cookie", contextValue.pendingVaultCookie);
         }
       },
     };
