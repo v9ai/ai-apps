@@ -210,7 +210,7 @@ export function runArticleGenerate(input: {
 
 /**
  * 10-expert course review: parallel fan-out + weighted aggregator. Input and
- * output shapes match the previous Mastra workflow so storage/UI don't change.
+ * output shapes are stable so storage/UI don't change.
  */
 export function runCourseReview(input: {
   courseId: string;

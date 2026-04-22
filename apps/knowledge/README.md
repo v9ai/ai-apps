@@ -277,7 +277,7 @@ graph TD
 
 ### Course Review Pipeline
 
-LangGraph graph (`backend/knowledge_agent/course_review_graph.py`, `assistant_id: course_review`) running ten expert evaluators concurrently via `asyncio.gather` (pedagogy, technical accuracy, content depth, practical application, instructor clarity, curriculum fit, prerequisites, AI domain relevance, community health, value proposition — at `REASONER_TEMP=0` or `FAST_TEMP=0.3` each), then an aggregator step computes a weighted score and verdict. Prompts ported verbatim from the prior Mastra workflow so output shape is unchanged.
+LangGraph graph (`backend/knowledge_agent/course_review_graph.py`, `assistant_id: course_review`) running ten expert evaluators concurrently via `asyncio.gather` (pedagogy, technical accuracy, content depth, practical application, instructor clarity, curriculum fit, prerequisites, AI domain relevance, community health, value proposition — at `REASONER_TEMP=0` or `FAST_TEMP=0.3` each), then an aggregator step computes a weighted score and verdict. Output shape is stable.
 
 ```mermaid
 graph TD
@@ -345,8 +345,8 @@ apps/knowledge/
 ├── scripts/seed.ts                 # DB seeder (lessons from markdown)
 ├── scripts/seed-courses.ts         # Udemy course catalog seeder
 ├── scripts/scrape-udemy-courses.ts # Playwright scraper — deep-scrapes Udemy topic pages into external_courses
-├── scripts/generate-article.ts     # Mastra article generator CLI
-├── scripts/review-courses.ts       # Mastra 10-expert course reviewer CLI
+├── scripts/generate-article.ts     # Article generator CLI
+├── scripts/review-courses.ts       # 10-expert course reviewer CLI
 ├── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
 └── sql/add_course_reviews.sql  # course_reviews table (10-expert scores, verdict, aggregate)
 ```

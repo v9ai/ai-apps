@@ -8,7 +8,8 @@
     "deep_analysis": "research_agent.deep_analysis_graph:graph",
     "parent_advice": "research_agent.parent_advice_graph:graph",
     "habits": "research_agent.habits_graph:graph",
-    "books": "research_agent.books_graph:graph"
+    "books": "research_agent.books_graph:graph",
+    "generate_therapy_research": "research_agent.generate_therapy_research_graph:graph"
   },
   "env": ".env"
 }

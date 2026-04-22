@@ -141,14 +141,18 @@ async def _load_sitemap(url: str) -> list[Any]:
     # blocksize + blocknum cap the fetch inside SitemapLoader itself.
     # Without them, large sitemaps (apollo.io: 10k+ URLs) get fully scraped
     # at requests_per_second=2 before any post-slice runs — minutes per site.
+    # header_template must be passed at init — setting it post-init is too
+    # late to silence the "USER_AGENT env var not set" warning that
+    # WebBaseLoader (SitemapLoader's parent) emits during construction.
     loader = SitemapLoader(
         web_path=urljoin(url, "/sitemap.xml"),
         filter_urls=[rf"^{scheme}://(www\.)?{domain_re}"],
         requests_per_second=2,
         blocksize=MAX_PAGES_PER_COMPETITOR,
         blocknum=0,
+        header_template={"User-Agent": USER_AGENT},
     )
-    loader.requests_kwargs = {"headers": {"User-Agent": USER_AGENT}, "timeout": 10}
+    loader.requests_kwargs = {"timeout": 10}
     docs = await asyncio.to_thread(loader.load)
     return docs[:MAX_PAGES_PER_COMPETITOR]
 
