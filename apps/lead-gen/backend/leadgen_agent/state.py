@@ -133,6 +133,29 @@ class ContactEnrichState(TypedDict, total=False):
     github_handle_source: str
 
 
+class ContactEnrichPaperAuthorState(TypedDict, total=False):
+    # input
+    contact_id: int
+    # populated by load_contact
+    contact: dict[str, Any]
+    # populated by resolve_openalex_author
+    openalex_id: str
+    orcid: str
+    display_name: str
+    institution: str
+    institution_country: str
+    works_count: int
+    cited_by_count: int
+    h_index: int
+    i10_index: int
+    topics: list[str]  # names of x_concepts with score >= threshold
+    match_confidence: float  # 0..1 heuristic
+    resolve_source: str  # "openalex" | "" if failed / no match
+    # output
+    enriched_at: str
+    error: str | None
+
+
 class ContactEnrichSalesState(TypedDict, total=False):
     # input
     contact_id: int

@@ -304,6 +304,8 @@ export const contacts = pgTable(
     paper_classifications_at: text("paper_classifications_at"),
     // Sales enrichment (populated by contact_enrich_sales graph: LinkedIn OG scrape)
     linkedin_profile: jsonb("linkedin_profile"), // {headline, bio, scraped_at}
+    // OpenAlex author enrichment (populated by contact_enrich_paper_author graph)
+    openalex_profile: jsonb("openalex_profile"), // {openalex_id, orcid, display_name, institution, country, works_count, cited_by_count, h_index, i10_index, topics[], match_confidence, resolved_at}
     // Conversation lifecycle state (updated by webhook handler on reply classification)
     conversation_stage: text("conversation_stage"), // initial_sent | follow_up_1 | follow_up_2 | follow_up_3 | replied_interested | replied_info_request | replied_not_interested | meeting_scheduled | converted | closed
     // Fake account detection (populated by verifyContactAuthenticity mutation)

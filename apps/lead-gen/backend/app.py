@@ -32,8 +32,10 @@ from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from leadgen_agent.admin_chat_graph import build_graph as build_admin_chat
+from leadgen_agent.classify_paper_graph import build_graph as build_classify_paper
 from leadgen_agent.competitors_team_graph import build_graph as build_competitors_team
 from leadgen_agent.contact_enrich_graph import build_graph as build_contact_enrich
+from leadgen_agent.contact_enrich_paper_author_graph import build_graph as build_contact_enrich_paper_author
 from leadgen_agent.contact_enrich_sales_graph import build_graph as build_contact_enrich_sales
 from leadgen_agent.deep_icp_graph import build_graph as build_deep_icp
 from leadgen_agent.email_compose_graph import build_graph as build_email_compose
@@ -78,9 +80,11 @@ async def lifespan(app: FastAPI):
         await checkpointer.setup()
         app.state.graphs = {
             "admin_chat": build_admin_chat(checkpointer),
+            "classify_paper": build_classify_paper(checkpointer),
             "competitors_team": build_competitors_team(checkpointer),
             "contact_enrich": build_contact_enrich(checkpointer),
             "contact_enrich_sales": build_contact_enrich_sales(checkpointer),
+            "contact_enrich_paper_author": build_contact_enrich_paper_author(checkpointer),
             "deep_icp": build_deep_icp(checkpointer),
             "email_compose": build_email_compose(checkpointer),
             "email_outreach": build_email_outreach(checkpointer),
