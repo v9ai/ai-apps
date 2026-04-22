@@ -106,3 +106,37 @@ class DeepICPState(TypedDict, total=False):
     anti_icp: list[str]
     deal_breakers: list[dict[str, Any]]
     graph_meta: dict[str, Any]
+
+
+class ICPTeamState(TypedDict, total=False):
+    # input
+    product_id: int
+    # internal — specialists write their slice; synthesizer merges
+    product: dict[str, Any]
+    market_research: dict[str, Any]
+    personas_research: list[dict[str, Any]]
+    anti_icp_research: dict[str, Any]
+    criteria_research: dict[str, Any]
+    agent_timings: dict[str, float]
+    # output — same shape as DeepICPOutput so the existing UI is unchanged
+    criteria_scores: dict[str, dict[str, Any]]
+    weighted_total: float
+    segments: list[dict[str, Any]]
+    personas: list[dict[str, Any]]
+    anti_icp: list[str]
+    deal_breakers: list[dict[str, Any]]
+    graph_meta: dict[str, Any]
+
+
+class CompetitorsTeamState(TypedDict, total=False):
+    # input
+    product_id: int
+    # internal
+    product: dict[str, Any]
+    candidates: list[dict[str, Any]]
+    differentiation: dict[str, dict[str, Any]]   # keyed by candidate url
+    threat_levels: dict[str, dict[str, Any]]     # keyed by candidate url
+    agent_timings: dict[str, float]
+    # output — list matches the `Competitor` DB/GraphQL row shape
+    competitors: list[dict[str, Any]]
+    graph_meta: dict[str, Any]

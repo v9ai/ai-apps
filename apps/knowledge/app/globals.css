@@ -4227,3 +4227,29 @@ body {
   border-radius: 3px;
   line-height: 1.8;
 }
+
+/* ================================================================
+   PREP PAGE — strip all borders and backgrounds
+   ================================================================ */
+.prep-page,
+.prep-page * {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  border-left: 0 !important;
+  box-shadow: none !important;
+}
+.prep-page .roadmap-handle {
+  visibility: hidden !important;
+}
+.prep-page .code-block-dots span {
+  background: currentColor !important;
+  opacity: 0.35;
+}
+.prep-page iframe {
+  background: transparent !important;
+}
