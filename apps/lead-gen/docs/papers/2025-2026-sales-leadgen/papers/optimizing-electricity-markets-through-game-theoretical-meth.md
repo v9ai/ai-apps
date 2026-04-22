@@ -9,7 +9,7 @@ url: "https://doi.org/10.3390/math13030373"
 citations: 54
 source: openalex
 tier: broad
-query: "next-best-action recommendation sales"
+query: "sales forecasting time series deep learning"
 tags: ["bandits", "entity-resolution", "llm-agents"]
 ---
 

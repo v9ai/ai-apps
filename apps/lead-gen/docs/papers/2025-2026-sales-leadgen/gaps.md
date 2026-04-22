@@ -1,22 +1,22 @@
 # Gap analysis (tag histogram)
 
-Corpus size: **250**.
+Corpus size: **800**.
 
 Tags with low counts are candidate angles for your own contribution. Tags with very high counts are saturated — novelty there requires a sharper framing.
 
 | Tag | Count | Share |
 |---|---:|---:|
-| email-llm | 6 | 2.4% |
-| bandits | 12 | 4.8% |
-| revops | 13 | 5.2% |
-| matching | 19 | 7.6% |
-| lead-scoring | 26 | 10.4% |
-| llm-agents | 33 | 13.2% |
-| other | 40 | 16.0% |
-| evaluation | 41 | 16.4% |
-| forecasting | 55 | 22.0% |
-| personalization | 61 | 24.4% |
-| entity-resolution | 115 | 46.0% |
+| email-llm | 16 | 2.0% |
+| revops | 57 | 7.1% |
+| lead-scoring | 63 | 7.9% |
+| matching | 68 | 8.5% |
+| llm-agents | 94 | 11.8% |
+| bandits | 107 | 13.4% |
+| forecasting | 141 | 17.6% |
+| other | 148 | 18.5% |
+| evaluation | 150 | 18.8% |
+| personalization | 151 | 18.9% |
+| entity-resolution | 351 | 43.9% |
 
 ## Suggested next steps
 

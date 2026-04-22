@@ -9,7 +9,7 @@ url: "https://doi.org/10.63125/f7yjxw69"
 citations: 11
 source: openalex
 tier: broad
-query: "sales process mining workflow"
+query: "sales pipeline anomaly detection"
 tags: ["personalization"]
 ---
 

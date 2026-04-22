@@ -9,7 +9,7 @@ url: "https://doi.org/10.3390/en18030689"
 citations: 89
 source: openalex
 tier: broad
-query: "next-best-action recommendation sales"
+query: "sales forecasting time series deep learning"
 tags: ["entity-resolution", "matching"]
 ---
 

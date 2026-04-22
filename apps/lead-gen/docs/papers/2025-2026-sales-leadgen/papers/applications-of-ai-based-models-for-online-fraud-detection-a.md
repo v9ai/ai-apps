@@ -8,8 +8,8 @@ arxiv_id: ""
 url: "https://doi.org/10.1186/s40163-025-00248-8"
 citations: 7
 source: openalex
-tier: broad
-query: "sales call transcript summarization LLM"
+tier: core
+query: "sales email generation large language model retrieval"
 tags: ["entity-resolution", "evaluation"]
 ---
 

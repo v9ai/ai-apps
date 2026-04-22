@@ -8,8 +8,8 @@ arxiv_id: ""
 url: "https://doi.org/10.36227/techrxiv.23589741.v8"
 citations: 26
 source: openalex
-tier: broad
-query: "personalization dynamic content LLM marketing"
+tier: core
+query: "evaluation benchmark lead-gen LLM agent"
 tags: ["entity-resolution", "matching"]
 ---
 

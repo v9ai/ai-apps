@@ -9,7 +9,7 @@ url: "https://doi.org/10.1007/s11063-025-11732-2"
 citations: 93
 source: openalex
 tier: broad
-query: "conversational AI sales assistant"
+query: "sales forecasting time series deep learning"
 tags: ["other"]
 ---
 

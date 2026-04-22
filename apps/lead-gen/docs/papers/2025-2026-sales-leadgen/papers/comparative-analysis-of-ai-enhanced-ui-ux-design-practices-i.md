@@ -8,8 +8,8 @@ arxiv_id: ""
 url: "https://doi.org/10.54660/ijfei.2024.1.2.48-57"
 citations: 6
 source: openalex
-tier: broad
-query: "cross-sell upsell recommendation"
+tier: core
+query: "retrieval-augmented generation CRM context"
 tags: ["bandits", "entity-resolution", "personalization"]
 ---
 

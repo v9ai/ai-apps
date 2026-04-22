@@ -9,7 +9,7 @@ url: "https://doi.org/10.3390/s25216649"
 citations: 13
 source: openalex
 tier: broad
-query: "fraud detection lead quality B2B"
+query: "B2B lead generation machine learning"
 tags: ["lead-scoring", "evaluation"]
 ---
 

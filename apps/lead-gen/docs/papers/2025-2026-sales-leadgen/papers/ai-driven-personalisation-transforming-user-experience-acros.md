@@ -9,7 +9,7 @@ url: "https://doi.org/10.51219/jaimld/maxwell-nwanna/425"
 citations: 12
 source: openalex
 tier: broad
-query: "voice-of-customer NLP feedback mining"
+query: "conversational AI sales assistant"
 tags: ["other"]
 ---
 

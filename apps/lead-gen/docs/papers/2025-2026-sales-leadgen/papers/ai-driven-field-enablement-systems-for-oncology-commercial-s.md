@@ -2,14 +2,14 @@
 title: "AI-Driven Field Enablement Systems for Oncology Commercial Strategy: A Framework for Enhancing Decision-Making and Market Execution"
 authors: ["Ezichi Adanna Anokwuru", "Igba Emmauel"]
 year: 2025
-venue: "International Journal of Scientific Research and Modern Technology"
-doi: ""
+venue: "International Journal of Scientific Research and Modern Technology."
+doi: "10.38124/ijsrmt.v4i2.1011"
 arxiv_id: ""
-url: "https://www.semanticscholar.org/paper/ce22d20c7cee6bc74b3d7d4dbd8d4b1c29275cec"
+url: "https://doi.org/10.38124/ijsrmt.v4i2.1011"
 citations: 3
-source: s2
-tier: broad
-query: "next-best-action recommendation sales"
+source: openalex
+tier: core
+query: "sales funnel conversion prediction deep learning"
 tags: ["personalization"]
 ---
 
@@ -17,9 +17,9 @@ tags: ["personalization"]
 
 **Authors.** Ezichi Adanna Anokwuru, Igba Emmauel
 
-**Venue / year.** International Journal of Scientific Research and Modern Technology · 2025
+**Venue / year.** International Journal of Scientific Research and Modern Technology. · 2025
 
-**Links.** [source](https://www.semanticscholar.org/paper/ce22d20c7cee6bc74b3d7d4dbd8d4b1c29275cec)
+**Links.** [DOI](https://doi.org/10.38124/ijsrmt.v4i2.1011) · [source](https://doi.org/10.38124/ijsrmt.v4i2.1011)
 
 **Abstract.**
 
