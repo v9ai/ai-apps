@@ -16,9 +16,11 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
   {
     context: async () => {
       const { data: session } = await auth.getSession();
+      const userId = session?.user?.id;
       return {
-        userId: session?.user?.id,
-        userEmail: session?.user?.email,
+        userId,
+        userEmail: userId,
+        userActualEmail: session?.user?.email,
         userName: session?.user?.name ?? undefined,
       };
     },
