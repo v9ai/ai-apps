@@ -22,9 +22,7 @@ runs synchronously after `store_in_db`. The route can still choose to
 invoke only the subgraph `upload_to_r2 → store_in_db` in the request
 and defer `embed_and_index` to a background task — see `routes/upload.py`.
 
-TODO(team): register this graph in `langgraph.json` under the key
-`"ingestion": "ingestion_graph:compiled_graph"` when that file is
-updated by the sibling team. Currently the file only exposes `chat`.
+Registered in `langgraph.json` as `"ingestion": "ingestion_graph:compiled_graph"`.
 
 Exports:
   - `GraphState` — pydantic state model
