@@ -19,8 +19,6 @@ from __future__ import annotations
 
 import pytest
 
-from knowledge_agent.course_review_graph import build_graph
-
 from .conftest import (
     DEFAULT_THRESHOLD,
     aggregate_gate,
@@ -31,18 +29,17 @@ from .conftest import (
 VALID_VERDICTS = {"excellent", "recommended", "average", "skip"}
 
 
-async def _run_course_review(case: dict) -> dict:
-    graph = build_graph()
-    return await graph.ainvoke(case["course"])
-
-
 @pytest.mark.deepeval
 @pytest.mark.slow
-@pytest.mark.asyncio
-async def test_course_review_shape(
+def test_course_review_shape(
     golden_course_review: list[dict],
+    course_review_outputs: list[dict],
 ) -> None:
-    """Every graph output must be well-formed: 10 experts, aggregate in range, valid verdict."""
+    """Every graph output must be well-formed: 10 experts, aggregate in range, valid verdict.
+
+    Uses the session-scoped ``course_review_outputs`` fixture so the graph
+    is run once per case; all three slow tests share the same outputs.
+    """
     failures: list[str] = []
 
     expert_keys = [
@@ -58,11 +55,9 @@ async def test_course_review_shape(
         "value_proposition_score",
     ]
 
-    for case in golden_course_review:
-        try:
-            out = await _run_course_review(case)
-        except Exception as e:  # noqa: BLE001
-            failures.append(f"[{case['id']}] graph raised: {e!r}")
+    for case, out in zip(golden_course_review, course_review_outputs):
+        if not isinstance(out, dict):
+            failures.append(f"[{case['id']}] graph output not a dict: {out!r}")
             continue
 
         for k in expert_keys:
@@ -90,9 +85,9 @@ async def test_course_review_shape(
 
 @pytest.mark.deepeval
 @pytest.mark.slow
-@pytest.mark.asyncio
-async def test_course_review_verdict_direction(
+def test_course_review_verdict_direction(
     golden_course_review: list[dict],
+    course_review_outputs: list[dict],
 ) -> None:
     """On benchmark courses the verdict must land in the expected band.
 
@@ -104,11 +99,9 @@ async def test_course_review_verdict_direction(
     total = 0
     failures: list[str] = []
 
-    for case in golden_course_review:
-        try:
-            out = await _run_course_review(case)
-        except Exception as e:  # noqa: BLE001
-            failures.append(f"[{case['id']}] graph error: {e!r}")
+    for case, out in zip(golden_course_review, course_review_outputs):
+        if not isinstance(out, dict):
+            failures.append(f"[{case['id']}] graph output not a dict")
             continue
 
         verdict = out.get("verdict", "")
@@ -147,9 +140,10 @@ async def test_course_review_verdict_direction(
 @deepeval_required
 @pytest.mark.deepeval
 @pytest.mark.slow
-@pytest.mark.asyncio
-async def test_course_review_summary_coherence(
-    golden_course_review: list[dict], judge
+def test_course_review_summary_coherence(
+    golden_course_review: list[dict],
+    course_review_outputs: list[dict],
+    judge,
 ) -> None:
     """GEval: summary + strengths/weaknesses should fit the aggregate score."""
     from deepeval.metrics import GEval
@@ -173,11 +167,9 @@ async def test_course_review_summary_coherence(
     total = 0
     failures: list[str] = []
 
-    for case in golden_course_review:
-        try:
-            out = await _run_course_review(case)
-        except Exception as e:  # noqa: BLE001
-            failures.append(f"[{case['id']}] graph error: {e!r}")
+    for case, out in zip(golden_course_review, course_review_outputs):
+        if not isinstance(out, dict):
+            failures.append(f"[{case['id']}] graph output not a dict")
             continue
 
         course = case["course"]

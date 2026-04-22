@@ -107,6 +107,54 @@ def judge():
     return make_judge()
 
 
+def _run_graph_for_all(graph, payloads: list[dict]) -> list[dict]:
+    """Invoke ``graph.ainvoke`` once per payload; return results in order.
+
+    Used by session-scoped output fixtures so the expensive graphs
+    (course_review: 11 LLM calls/case; article_generate: 4-5 calls/case)
+    run exactly once per case per test session — shape, direction, and
+    judged tests then share the same outputs. Cuts slow-tier runtime by ~3x.
+    """
+    import asyncio
+
+    async def _all() -> list[dict]:
+        out: list[dict] = []
+        for p in payloads:
+            out.append(await graph.ainvoke(p))
+        return out
+
+    return asyncio.run(_all())
+
+
+@pytest.fixture(scope="session")
+def course_review_outputs(golden_course_review: list[dict]) -> list[dict]:
+    """Run each golden course through ``course_review`` exactly once per session."""
+    from knowledge_agent.course_review_graph import build_graph
+
+    graph = build_graph()
+    return _run_graph_for_all(graph, [c["course"] for c in golden_course_review])
+
+
+@pytest.fixture(scope="session")
+def article_outputs(golden_article_generate: list[dict]) -> list[dict]:
+    """Run each golden article case through ``article_generate`` once per session."""
+    from knowledge_agent.article_generate_graph import build_graph
+
+    graph = build_graph()
+    payloads = [
+        {
+            "slug": c["slug"],
+            "topic": c["topic"],
+            "category": c["category"],
+            "related_topics": c["related_topics"],
+            "existing_articles": c["existing_articles"],
+            "style_sample": c["style_sample"],
+        }
+        for c in golden_article_generate
+    ]
+    return _run_graph_for_all(graph, payloads)
+
+
 DEFAULT_THRESHOLD = 0.7
 # 0.65 is the empirical floor for 5-case goldens judged by DeepSeek:
 # ~1 of 15 cells flakes on judge JSON parse errors and another 1-2 hit real
