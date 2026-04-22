@@ -2958,7 +2958,7 @@ export type GetGenerationJobQueryVariables = Exact<{
 }>;
 
 
-export type GetGenerationJobQuery = { __typename?: 'Query', generationJob?: { __typename?: 'GenerationJob', id: string, status: JobStatus, progress: number, storyId?: number | null, updatedAt: string, result?: { __typename?: 'JobResult', audioUrl?: string | null, progress?: number | null, stage?: string | null, count?: number | null, diagnostics?: { __typename?: 'PipelineDiagnostics', searchCount?: number | null, enrichedCount?: number | null, extractedCount?: number | null, qualifiedCount?: number | null, persistedCount?: number | null, searchUsedFallback?: boolean | null, enrichedDropped?: number | null } | null } | null, error?: { __typename?: 'JobError', message: string } | null } | null };
+export type GetGenerationJobQuery = { __typename?: 'Query', generationJob?: { __typename?: 'GenerationJob', id: string, type: JobType, goalId?: number | null, storyId?: number | null, status: JobStatus, progress: number, createdAt: string, updatedAt: string, result?: { __typename?: 'JobResult', audioUrl?: string | null, progress?: number | null, stage?: string | null, count?: number | null, diagnostics?: { __typename?: 'PipelineDiagnostics', searchCount?: number | null, enrichedCount?: number | null, extractedCount?: number | null, qualifiedCount?: number | null, persistedCount?: number | null, searchUsedFallback?: boolean | null, enrichedDropped?: number | null } | null } | null, error?: { __typename?: 'JobError', message: string } | null } | null };
 
 export type GetGenerationJobsQueryVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -7176,9 +7176,12 @@ export const GetGenerationJobDocument = gql`
     query GetGenerationJob($id: String!) {
   generationJob(id: $id) {
     id
+    type
+    goalId
+    storyId
     status
     progress
-    storyId
+    createdAt
     result {
       audioUrl
       progress

@@ -123,6 +123,30 @@ class ContactEnrichState(TypedDict, total=False):
     github_handle_source: str
 
 
+class ContactEnrichSalesState(TypedDict, total=False):
+    # input
+    contact_id: int
+    # populated by load_contact
+    contact: dict[str, Any]
+    company: dict[str, Any]
+    # populated by classify_seniority
+    seniority: str  # "IC" | "Manager" | "Director" | "VP" | "C-level"
+    department: str  # "Sales" | "Marketing" | "BD" | "Partnerships" | "CS" | "RevOps" | "Other"
+    is_decision_maker: bool
+    authority_score: float  # 0.0 – 1.0
+    dm_reasons: list[str]
+    classify_source: str  # "existing" | "llm" | "" (skip on LLM failure)
+    # populated by scrape_linkedin
+    linkedin_profile: dict[str, Any]  # {headline, bio, scraped_at}
+    linkedin_scrape_source: str  # "og" | "existing" | "" if failed / skipped
+    # populated by inherit_icp
+    icp_bucket: str  # "high" | "medium" | "low" | ""
+    icp_company_score: float | None
+    # output
+    enriched_at: str
+    error: str | None
+
+
 class DeepICPState(TypedDict, total=False):
     # input
     product_id: int

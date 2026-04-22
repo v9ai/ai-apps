@@ -1,9 +1,12 @@
 query GetGenerationJob($id: String!) {
   generationJob(id: $id) {
     id
+    type
+    goalId
+    storyId
     status
     progress
-    storyId
+    createdAt
     result {
       audioUrl
       progress

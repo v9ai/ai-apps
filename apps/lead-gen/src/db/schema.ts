@@ -298,6 +298,8 @@ export const contacts = pgTable(
     // Paper + tag enrichment (populated by enrichContactPapersAndTags mutation → contact_enrich graph)
     papers: jsonb("papers"), // Paper[] — {title, authors, year, venue, doi, url, citation_count, source}
     papers_enriched_at: text("papers_enriched_at"),
+    // Sales enrichment (populated by contact_enrich_sales graph: LinkedIn OG scrape)
+    linkedin_profile: jsonb("linkedin_profile"), // {headline, bio, scraped_at}
     // Conversation lifecycle state (updated by webhook handler on reply classification)
     conversation_stage: text("conversation_stage"), // initial_sent | follow_up_1 | follow_up_2 | follow_up_3 | replied_interested | replied_info_request | replied_not_interested | meeting_scheduled | converted | closed
     // Fake account detection (populated by verifyContactAuthenticity mutation)

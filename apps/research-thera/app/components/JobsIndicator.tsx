@@ -50,19 +50,8 @@ function formatElapsed(iso: string): string {
   return `${Math.floor(hr / 24)}d ago`;
 }
 
-function jobHref(job: { type: JobType; goalId?: number | null; storyId?: number | null }): string | null {
-  if (job.type === "LONGFORM" && job.storyId) return `/stories/${job.storyId}`;
-  if (job.goalId) {
-    switch (job.type) {
-      case "RESEARCH":
-      case "QUESTIONS":
-      case "RECOMMENDED_BOOKS":
-        return `/goals/${job.goalId}`;
-      default:
-        return `/goals/${job.goalId}`;
-    }
-  }
-  return null;
+function jobHref(job: { id: string }): string {
+  return `/jobs/${job.id}`;
 }
 
 export function JobsIndicator() {
@@ -144,7 +133,7 @@ export function JobsIndicator() {
                       gap="1"
                       px="3"
                       py="2"
-                      style={{ cursor: href ? "pointer" : "default" }}
+                      style={{ cursor: "pointer" }}
                     >
                       <Flex justify="between" align="center" gap="2">
                         <Flex align="center" gap="2" style={{ minWidth: 0 }}>
@@ -185,13 +174,9 @@ export function JobsIndicator() {
 
                   return (
                     <Box key={job.id}>
-                      {href ? (
-                        <NextLink href={href} style={{ textDecoration: "none", color: "inherit" }} onClick={() => setOpen(false)}>
-                          {Row}
-                        </NextLink>
-                      ) : (
-                        Row
-                      )}
+                      <NextLink href={href} style={{ textDecoration: "none", color: "inherit" }} onClick={() => setOpen(false)}>
+                        {Row}
+                      </NextLink>
                       {idx < jobs.length - 1 && <Separator size="4" />}
                     </Box>
                   );
