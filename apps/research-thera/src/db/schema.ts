@@ -220,6 +220,8 @@ export const generationJobs = pgTable("generation_jobs", {
   progress: integer("progress").notNull().default(0),
   result: text("result"), // JSON object
   error: text("error"), // JSON object
+  langgraphThreadId: text("langgraph_thread_id"),
+  langgraphRunId: text("langgraph_run_id"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`NOW()`),

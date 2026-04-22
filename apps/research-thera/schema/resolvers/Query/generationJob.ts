@@ -1,6 +1,7 @@
 import type { QueryResolvers } from "./../../types.generated";
 import { GraphQLError } from "graphql";
 import { db } from "@/src/db";
+import { getGraphRunStatus, getGraphState } from "@/src/lib/langgraph-client";
 
 export const generationJob: NonNullable<QueryResolvers['generationJob']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -10,12 +11,62 @@ export const generationJob: NonNullable<QueryResolvers['generationJob']> = async
     });
   }
 
-  const job = await db.getGenerationJob(args.id);
-  // generation_jobs.user_id is email-keyed (see generationJobs plural + createGenerationJob callers).
+  let job = await db.getGenerationJob(args.id);
   if (!job || job.userId !== userEmail) {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },
     });
+  }
+
+  // Live-sync with LangGraph if this is a background run still in flight.
+  if (
+    job.status === "RUNNING" &&
+    job.langgraphThreadId &&
+    job.langgraphRunId
+  ) {
+    try {
+      const { status } = await getGraphRunStatus(job.langgraphThreadId, job.langgraphRunId);
+      if (status === "success") {
+        let count: number | null = null;
+        let message: string | null = null;
+        try {
+          const state = await getGraphState(job.langgraphThreadId);
+          const books = Array.isArray(state.books) ? state.books : [];
+          count = books.length;
+          message = typeof state.message === "string" ? state.message : null;
+        } catch (err) {
+          console.warn("[generationJob] getGraphState failed:", err);
+        }
+        await db.updateGenerationJob(args.id, {
+          status: "SUCCEEDED",
+          progress: 100,
+          result: JSON.stringify({ count, message }),
+        });
+        job = await db.getGenerationJob(args.id);
+      } else if (status === "error" || status === "interrupted" || status === "timeout") {
+        let errMessage = `LangGraph run ${status}`;
+        try {
+          const state = await getGraphState(job.langgraphThreadId);
+          if (typeof state.error === "string") errMessage = state.error;
+          else if (typeof state.message === "string") errMessage = state.message;
+        } catch {
+          /* noop */
+        }
+        await db.updateGenerationJob(args.id, {
+          status: "FAILED",
+          error: JSON.stringify({ message: errMessage }),
+        });
+        job = await db.getGenerationJob(args.id);
+      }
+      // else: still pending/running — return current row.
+    } catch (err) {
+      // Network hiccup to LangGraph — don't flip the job; just return the current row.
+      console.warn("[generationJob] LangGraph sync skipped:", err);
+    }
+  }
+
+  if (!job) {
+    throw new GraphQLError("Not found", { extensions: { code: "NOT_FOUND" } });
   }
 
   return {

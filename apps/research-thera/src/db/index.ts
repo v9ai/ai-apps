@@ -1116,6 +1116,19 @@ export async function createGenerationJob(
     VALUES (${id}, ${userId}, ${type}, ${goalId ?? null}, ${storyId || null}, 'RUNNING', 0)`;
 }
 
+export async function setGenerationJobLangGraphIds(
+  id: string,
+  threadId: string,
+  runId: string,
+) {
+  await neonSql`
+    UPDATE generation_jobs
+    SET langgraph_thread_id = ${threadId},
+        langgraph_run_id = ${runId},
+        updated_at = NOW()
+    WHERE id = ${id}`;
+}
+
 export async function updateGenerationJob(
   id: string,
   updates: {
@@ -1195,6 +1208,8 @@ export async function listGenerationJobs(filters: { userId?: string; goalId?: nu
     progress: row.progress as number,
     result: safeJsonParse(row.result as string, null),
     error: row.error ? parseJobError(row.error as string) : null,
+    langgraphThreadId: (row.langgraph_thread_id as string) || null,
+    langgraphRunId: (row.langgraph_run_id as string) || null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }));
@@ -1216,6 +1231,8 @@ export async function getGenerationJob(id: string) {
     progress: row.progress as number,
     result: safeJsonParse(row.result as string, null),
     error: row.error ? parseJobError(row.error as string) : null,
+    langgraphThreadId: (row.langgraph_thread_id as string) || null,
+    langgraphRunId: (row.langgraph_run_id as string) || null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -3349,6 +3366,7 @@ export const db = {
   // Generation Jobs
   cleanupStaleJobs,
   createGenerationJob,
+  setGenerationJobLangGraphIds,
   updateGenerationJob,
   getGenerationJob,
   listGenerationJobs,

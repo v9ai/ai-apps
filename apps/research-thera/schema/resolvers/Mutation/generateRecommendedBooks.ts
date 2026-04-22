@@ -1,7 +1,7 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { GraphQLError } from "graphql";
 import { db } from "@/src/db";
-import { runGraphAndWait } from "@/src/lib/langgraph-client";
+import { startGraphRun } from "@/src/lib/langgraph-client";
 
 export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRecommendedBooks']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -35,46 +35,29 @@ export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRe
   await db.cleanupStaleJobs(15);
 
   const jobId = crypto.randomUUID();
-  await db.createGenerationJob(
-    jobId,
-    userEmail,
-    "RECOMMENDED_BOOKS",
-    goalId ?? null,
-  );
+  await db.createGenerationJob(jobId, userEmail, "RECOMMENDED_BOOKS", goalId ?? null);
 
   const input: Record<string, unknown> = { user_email: userEmail };
   if (goalId) input.goal_id = goalId;
   if (journalEntryId) input.journal_entry_id = journalEntryId;
 
-  runGraphAndWait("books", { input })
-    .then(async (r) => {
-      const success = Boolean(r?.success);
-      const message = (r?.message as string | undefined) ?? "";
-      const books = (r?.books as unknown[] | undefined) ?? [];
-      const errorText = r?.error as string | undefined;
-
-      if (errorText || (!success && !books.length)) {
-        await db.updateGenerationJob(jobId, {
-          status: "FAILED",
-          error: JSON.stringify({ message: errorText || message || "Books generation failed" }),
-        });
-        return;
-      }
-
-      await db.updateGenerationJob(jobId, {
-        status: "SUCCEEDED",
-        progress: 100,
-        result: JSON.stringify({ message, count: books.length }),
-      });
-    })
-    .catch(async (err) => {
-      const message = err instanceof Error ? err.message : "Books generation failed";
-      console.error("[generateRecommendedBooks] LangGraph error:", message);
-      await db.updateGenerationJob(jobId, {
-        status: "FAILED",
-        error: JSON.stringify({ message }),
-      });
+  try {
+    const { threadId, runId } = await startGraphRun("books", { input });
+    await db.setGenerationJobLangGraphIds(jobId, threadId, runId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to start books run";
+    console.error("[generateRecommendedBooks] LangGraph start error:", message);
+    await db.updateGenerationJob(jobId, {
+      status: "FAILED",
+      error: JSON.stringify({ message }),
     });
+    return {
+      success: false,
+      message,
+      jobId,
+      books: [],
+    };
+  }
 
   return {
     success: true,
