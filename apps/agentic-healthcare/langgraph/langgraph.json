@@ -3,7 +3,8 @@
   "dependencies": ["."],
   "graphs": {
     "chat": "graph:compiled_graph",
-    "search": "search_graph:compiled_graph"
+    "search": "search_graph:compiled_graph",
+    "ingestion": "ingestion_graph:compiled_graph"
   },
   "env": ".env"
 }
