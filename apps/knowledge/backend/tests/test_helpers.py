@@ -109,7 +109,7 @@ def test_format_course_info_includes_all_fields():
             "provider": "X Academy",
             "url": "https://example.com/rl",
             "level": "Advanced",
-            "rating": 4.25,
+            "rating": 4.6,
             "review_count": 1234,
             "duration_hours": 12.7,
             "is_free": False,
@@ -117,7 +117,7 @@ def test_format_course_info_includes_all_fields():
         }
     )
     assert "Title: Deep RL" in info
-    assert "Rating: 4.3/5 (1,234 reviews)" in info
+    assert "Rating: 4.6/5 (1,234 reviews)" in info
     assert "Duration: ~13h" in info
     assert "Price: Paid" in info
     assert "Description: N/A" in info
