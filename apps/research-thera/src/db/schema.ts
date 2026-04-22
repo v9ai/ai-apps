@@ -502,6 +502,7 @@ export const userSettings = pgTable("user_settings", {
   userId: text("user_id").primaryKey(),
   storyLanguage: text("story_language").notNull().default("English"),
   storyMinutes: integer("story_minutes").notNull().default(10),
+  dateOfBirth: text("date_of_birth"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`NOW()`),
