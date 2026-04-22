@@ -176,9 +176,10 @@ async def criteria_scorer(state: ICPTeamState) -> dict:
             "justification": str(entry.get("justification", ""))[:600],
             "evidence": [str(e)[:240] for e in (entry.get("evidence") or [])][:6],
         }
-    timings = dict(state.get("agent_timings") or {})
-    timings["criteria_scorer"] = round(time.perf_counter() - t0, 3)
-    return {"criteria_research": normalized, "agent_timings": timings}
+    return {
+        "criteria_research": normalized,
+        "agent_timings": {"criteria_scorer": round(time.perf_counter() - t0, 3)},
+    }
 
 
 def _fan_out(_state: ICPTeamState) -> list[str]:

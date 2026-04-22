@@ -112,9 +112,10 @@ async def discovery_scout(state: CompetitorsTeamState) -> dict:
         if len(candidates) >= 7:
             break
 
-    timings = dict(state.get("agent_timings") or {})
-    timings["discovery_scout"] = round(time.perf_counter() - t0, 3)
-    return {"candidates": candidates, "agent_timings": timings}
+    return {
+        "candidates": candidates,
+        "agent_timings": {"discovery_scout": round(time.perf_counter() - t0, 3)},
+    }
 
 
 async def differentiator(state: CompetitorsTeamState) -> dict:
@@ -157,9 +158,10 @@ async def differentiator(state: CompetitorsTeamState) -> dict:
     by_url = result.get("by_url") or {}
     if not isinstance(by_url, dict):
         by_url = {}
-    timings = dict(state.get("agent_timings") or {})
-    timings["differentiator"] = round(time.perf_counter() - t0, 3)
-    return {"differentiation": by_url, "agent_timings": timings}
+    return {
+        "differentiation": by_url,
+        "agent_timings": {"differentiator": round(time.perf_counter() - t0, 3)},
+    }
 
 
 async def threat_assessor(state: CompetitorsTeamState) -> dict:
@@ -200,9 +202,10 @@ async def threat_assessor(state: CompetitorsTeamState) -> dict:
     by_url = result.get("by_url") or {}
     if not isinstance(by_url, dict):
         by_url = {}
-    timings = dict(state.get("agent_timings") or {})
-    timings["threat_assessor"] = round(time.perf_counter() - t0, 3)
-    return {"threat_levels": by_url, "agent_timings": timings}
+    return {
+        "threat_levels": by_url,
+        "agent_timings": {"threat_assessor": round(time.perf_counter() - t0, 3)},
+    }
 
 
 def _fan_out(_state: CompetitorsTeamState) -> list[str]:

@@ -102,8 +102,15 @@ async def run_seo():
         await close_client()
 
 
-async def run_images(hotel_ids: list[str]) -> None:
-    """Scrape + validate galleries for one or more hotels in hotels_2026.json."""
+async def run_images(hotel_ids: list[str], root_override: str | None = None) -> None:
+    """Scrape + validate galleries for one or more hotels in hotels_2026.json.
+
+    Resolution order for the scrape root:
+      1. --root CLI argument (applies to every target hotel)
+      2. hotel["image_source_urls"] list field (per-hotel override)
+      3. hotel["source_url"] domain (fallback — only useful when source_url
+         points at the hotel's own site, not a booking aggregator).
+    """
     from urllib.parse import urlparse
     from travel_agent.image_scraper import graph as image_graph
 
@@ -124,15 +131,25 @@ async def run_images(hotel_ids: list[str]) -> None:
     for hid in targets:
         entry = by_id[hid]
         hotel = entry["hotel"]
-        source = hotel.get("source_url") or ""
-        parsed = urlparse(source)
-        root_url = f"{parsed.scheme}://{parsed.netloc}/" if parsed.netloc else None
+
+        explicit: list[str] = hotel.get("image_source_urls") or []
+        if root_override:
+            seeds = [root_override]
+            root_url = root_override
+        elif explicit:
+            seeds = explicit
+            root_url = explicit[0]
+        else:
+            source = hotel.get("source_url") or ""
+            parsed = urlparse(source)
+            root_url = f"{parsed.scheme}://{parsed.netloc}/" if parsed.netloc else None
+            seeds = [source] if source else []
 
         print(f"\n[{hid}] seed root: {root_url or '(none)'}")
         t0 = time.time()
         result = await image_graph.ainvoke({
             "hotel_id": hid,
-            "seed_urls": [source] if source else [],
+            "seed_urls": seeds,
             "root_url": root_url,
             "max_images": 24,
             "max_per_category": 3,
@@ -165,9 +182,16 @@ def main():
     elif "--seo" in sys.argv:
         asyncio.run(run_seo())
     elif "--images" in sys.argv:
-        idx = sys.argv.index("--images")
-        hotel_ids = sys.argv[idx + 1:]
-        asyncio.run(run_images(hotel_ids))
+        args = sys.argv[sys.argv.index("--images") + 1:]
+        root_override: str | None = None
+        if "--root" in args:
+            ri = args.index("--root")
+            if ri + 1 >= len(args):
+                print("Error: --root requires a URL argument")
+                sys.exit(1)
+            root_override = args[ri + 1]
+            args = args[:ri] + args[ri + 2:]
+        asyncio.run(run_images(args, root_override=root_override))
     else:
         asyncio.run(run())
 
