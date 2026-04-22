@@ -306,6 +306,7 @@ input CreateJournalEntryInput {
   familyMemberId: Int
   goalId: Int
   isPrivate: Boolean
+  isVault: Boolean
   mood: String
   moodScore: Int
   tags: [String!]
@@ -904,6 +905,7 @@ type JournalEntry {
   goalId: Int
   id: Int!
   isPrivate: Boolean!
+  isVault: Boolean!
   issue: Issue
   mood: String
   moodScore: Int
@@ -981,6 +983,7 @@ type Mutation {
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   linkContactToIssue(contactId: Int!, issueId: Int!): IssueContactLink!
   linkIssues(issueId: Int!, linkType: String, linkedIssueId: Int!): IssueLink!
+  lockVault: VaultStatus!
   logHabit(count: Int, habitId: Int!, loggedDate: String!, notes: String): HabitLog!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
   refreshClaimCard(id: ID!): ClaimCard!
@@ -992,6 +995,7 @@ type Mutation {
   unlinkContactFromIssue(contactId: Int!, issueId: Int!): UnlinkContactResult!
   unlinkGoalFamilyMember(id: Int!): Goal!
   unlinkIssues(issueId: Int!, linkedIssueId: Int!): UnlinkIssuesResult!
+  unlockVault(pin: String!): VaultUnlockResult!
   unshareFamilyMember(email: String!, familyMemberId: Int!): Boolean!
   unshareNote(email: String!, noteId: Int!): Boolean!
   updateAffirmation(id: Int!, input: UpdateAffirmationInput!): Affirmation!
@@ -1208,6 +1212,7 @@ type Query {
   teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
   userSettings: UserSettings!
+  vaultStatus: VaultStatus!
 }
 
 type RecommendedBook {
@@ -1482,6 +1487,7 @@ input UpdateJournalEntryInput {
   familyMemberId: Int
   goalId: Int
   isPrivate: Boolean
+  isVault: Boolean
   mood: String
   moodScore: Int
   tags: [String!]
@@ -1521,4 +1527,14 @@ type UserSettings {
   storyLanguage: String!
   storyMinutes: Int!
   userId: String!
+}
+
+type VaultStatus {
+  unlocked: Boolean!
+}
+
+type VaultUnlockResult {
+  message: String
+  success: Boolean!
+  unlocked: Boolean!
 }

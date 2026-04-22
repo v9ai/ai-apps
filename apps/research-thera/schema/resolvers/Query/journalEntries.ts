@@ -18,6 +18,7 @@ export const journalEntries: NonNullable<QueryResolvers['journalEntries']> = asy
     tag: args.tag ?? undefined,
     fromDate: args.fromDate ?? undefined,
     toDate: args.toDate ?? undefined,
+    includeVault: ctx.vaultUnlocked === true,
   });
 
   return entries.map((entry) => ({
@@ -31,6 +32,7 @@ export const journalEntries: NonNullable<QueryResolvers['journalEntries']> = asy
     tags: entry.tags,
     goalId: entry.goalId,
     isPrivate: entry.isPrivate,
+    isVault: entry.isVault,
     entryDate: entry.entryDate,
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,

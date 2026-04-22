@@ -1,0 +1,7 @@
+mutation UnlockVault($pin: String!) {
+  unlockVault(pin: $pin) {
+    success
+    unlocked
+    message
+  }
+}

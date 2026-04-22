@@ -26,6 +26,7 @@ query GetJournalEntries($familyMemberId: Int, $goalId: Int, $mood: String, $tag:
       title
     }
     isPrivate
+    isVault
     entryDate
     createdAt
     updatedAt

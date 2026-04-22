@@ -14,6 +14,11 @@ export const createJournalEntry: NonNullable<MutationResolvers['createJournalEnt
     await assertOwnsFamilyMember(args.input.familyMemberId, userEmail);
   }
 
+  const wantsVault = args.input.isVault === true;
+  if (wantsVault && !ctx.vaultUnlocked) {
+    throw new Error("Authentication required");
+  }
+
   const entryId = await _createJournalEntry({
     userId: userEmail,
     familyMemberId: args.input.familyMemberId ?? null,
@@ -24,6 +29,7 @@ export const createJournalEntry: NonNullable<MutationResolvers['createJournalEnt
     tags: args.input.tags || [],
     goalId: args.input.goalId ?? null,
     isPrivate: args.input.isPrivate !== false,
+    isVault: wantsVault,
     entryDate: args.input.entryDate,
   });
 
@@ -44,6 +50,7 @@ export const createJournalEntry: NonNullable<MutationResolvers['createJournalEnt
     tags: entry.tags,
     goalId: entry.goalId,
     isPrivate: entry.isPrivate,
+    isVault: entry.isVault,
     entryDate: entry.entryDate,
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,

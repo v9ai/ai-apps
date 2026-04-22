@@ -10,6 +10,7 @@ mutation CreateJournalEntry($input: CreateJournalEntryInput!) {
     tags
     goalId
     isPrivate
+    isVault
     entryDate
     createdAt
     updatedAt

@@ -32,6 +32,7 @@ query GetJournalEntry($id: Int!) {
       }
     }
     isPrivate
+    isVault
     entryDate
     createdAt
     updatedAt

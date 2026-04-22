@@ -344,6 +344,7 @@ export type CreateJournalEntryInput = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  isVault?: InputMaybe<Scalars['Boolean']['input']>;
   mood?: InputMaybe<Scalars['String']['input']>;
   moodScore?: InputMaybe<Scalars['Int']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1003,6 +1004,7 @@ export type JournalEntry = {
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
   isPrivate: Scalars['Boolean']['output'];
+  isVault: Scalars['Boolean']['output'];
   issue?: Maybe<Issue>;
   mood?: Maybe<Scalars['String']['output']>;
   moodScore?: Maybe<Scalars['Int']['output']>;
@@ -1083,6 +1085,7 @@ export type Mutation = {
   generateTherapeuticQuestions: GenerateQuestionsResult;
   linkContactToIssue: IssueContactLink;
   linkIssues: IssueLink;
+  lockVault: VaultStatus;
   logHabit: HabitLog;
   markTeacherFeedbackExtracted: TeacherFeedback;
   refreshClaimCard: ClaimCard;
@@ -1094,6 +1097,7 @@ export type Mutation = {
   unlinkContactFromIssue: UnlinkContactResult;
   unlinkGoalFamilyMember: Goal;
   unlinkIssues: UnlinkIssuesResult;
+  unlockVault: VaultUnlockResult;
   unshareFamilyMember: Scalars['Boolean']['output'];
   unshareNote: Scalars['Boolean']['output'];
   updateAffirmation: Affirmation;
@@ -1498,6 +1502,11 @@ export type MutationUnlinkIssuesArgs = {
 };
 
 
+export type MutationUnlockVaultArgs = {
+  pin: Scalars['String']['input'];
+};
+
+
 export type MutationUnshareFamilyMemberArgs = {
   email: Scalars['String']['input'];
   familyMemberId: Scalars['Int']['input'];
@@ -1801,6 +1810,7 @@ export type Query = {
   teacherFeedbacks: Array<TeacherFeedback>;
   therapeuticQuestions: Array<TherapeuticQuestion>;
   userSettings: UserSettings;
+  vaultStatus: VaultStatus;
 };
 
 
@@ -2320,6 +2330,7 @@ export type UpdateJournalEntryInput = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  isVault?: InputMaybe<Scalars['Boolean']['input']>;
   mood?: InputMaybe<Scalars['String']['input']>;
   moodScore?: InputMaybe<Scalars['Int']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -2360,6 +2371,18 @@ export type UserSettings = {
   storyLanguage: Scalars['String']['output'];
   storyMinutes: Scalars['Int']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type VaultStatus = {
+  __typename?: 'VaultStatus';
+  unlocked: Scalars['Boolean']['output'];
+};
+
+export type VaultUnlockResult = {
+  __typename?: 'VaultUnlockResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+  unlocked: Scalars['Boolean']['output'];
 };
 
 export type CheckNoteClaimsMutationVariables = Exact<{
@@ -2477,7 +2500,7 @@ export type CreateJournalEntryMutationVariables = Exact<{
 }>;
 
 
-export type CreateJournalEntryMutation = { __typename?: 'Mutation', createJournalEntry: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, entryDate: string, createdAt: string, updatedAt: string } };
+export type CreateJournalEntryMutation = { __typename?: 'Mutation', createJournalEntry: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, isVault: boolean, entryDate: string, createdAt: string, updatedAt: string } };
 
 export type CreateNoteMutationVariables = Exact<{
   input: CreateNoteInput;
@@ -3002,14 +3025,14 @@ export type GetJournalEntriesQueryVariables = Exact<{
 }>;
 
 
-export type GetJournalEntriesQuery = { __typename?: 'Query', journalEntries: Array<{ __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string } | null }> };
+export type GetJournalEntriesQuery = { __typename?: 'Query', journalEntries: Array<{ __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, isVault: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string } | null }> };
 
 export type GetJournalEntryQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type GetJournalEntryQuery = { __typename?: 'Query', journalEntry?: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null } | null, issue?: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, analysis?: { __typename?: 'JournalAnalysis', id: number, journalEntryId: number, summary: string, reflectionPrompts: Array<string>, model: string, createdAt: string, emotionalLandscape: { __typename?: 'EmotionalLandscape', primaryEmotions: Array<string>, underlyingEmotions: Array<string>, emotionalRegulation: string, attachmentPatterns?: string | null }, therapeuticInsights: Array<{ __typename?: 'TherapeuticInsight', title: string, observation: string, clinicalRelevance: string, relatedResearchIds?: Array<number> | null }>, actionableRecommendations: Array<{ __typename?: 'ActionableRecommendation', title: string, description: string, priority: string, concreteSteps: Array<string>, relatedResearchIds?: Array<number> | null }> } | null, discussionGuide?: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } | null } | null };
+export type GetJournalEntryQuery = { __typename?: 'Query', journalEntry?: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, isVault: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null } | null, issue?: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, analysis?: { __typename?: 'JournalAnalysis', id: number, journalEntryId: number, summary: string, reflectionPrompts: Array<string>, model: string, createdAt: string, emotionalLandscape: { __typename?: 'EmotionalLandscape', primaryEmotions: Array<string>, underlyingEmotions: Array<string>, emotionalRegulation: string, attachmentPatterns?: string | null }, therapeuticInsights: Array<{ __typename?: 'TherapeuticInsight', title: string, observation: string, clinicalRelevance: string, relatedResearchIds?: Array<number> | null }>, actionableRecommendations: Array<{ __typename?: 'ActionableRecommendation', title: string, description: string, priority: string, concreteSteps: Array<string>, relatedResearchIds?: Array<number> | null }> } | null, discussionGuide?: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } | null } | null };
 
 export type GetJournalRecommendedBooksQueryVariables = Exact<{
   journalEntryId: Scalars['Int']['input'];
@@ -3130,6 +3153,11 @@ export type LinkIssuesMutationVariables = Exact<{
 
 export type LinkIssuesMutation = { __typename?: 'Mutation', linkIssues: { __typename?: 'IssueLink', id: number, linkType: string, issue: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMemberId: number, createdAt: string } } };
 
+export type LockVaultMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LockVaultMutation = { __typename?: 'Mutation', lockVault: { __typename?: 'VaultStatus', unlocked: boolean } };
+
 export type LogHabitMutationVariables = Exact<{
   habitId: Scalars['Int']['input'];
   loggedDate: Scalars['String']['input'];
@@ -3194,6 +3222,13 @@ export type UnlinkIssuesMutationVariables = Exact<{
 
 
 export type UnlinkIssuesMutation = { __typename?: 'Mutation', unlinkIssues: { __typename?: 'UnlinkIssuesResult', success: boolean } };
+
+export type UnlockVaultMutationVariables = Exact<{
+  pin: Scalars['String']['input'];
+}>;
+
+
+export type UnlockVaultMutation = { __typename?: 'Mutation', unlockVault: { __typename?: 'VaultUnlockResult', success: boolean, unlocked: boolean, message?: string | null } };
 
 export type UnshareFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -3319,6 +3354,11 @@ export type UpdateUserSettingsMutationVariables = Exact<{
 
 
 export type UpdateUserSettingsMutation = { __typename?: 'Mutation', updateUserSettings: { __typename?: 'UserSettings', userId: string, storyLanguage: string, storyMinutes: number } };
+
+export type VaultStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type VaultStatusQuery = { __typename?: 'Query', vaultStatus: { __typename?: 'VaultStatus', unlocked: boolean } };
 
 
 export const CheckNoteClaimsDocument = gql`
@@ -4153,6 +4193,7 @@ export const CreateJournalEntryDocument = gql`
     tags
     goalId
     isPrivate
+    isVault
     entryDate
     createdAt
     updatedAt
@@ -7807,6 +7848,7 @@ export const GetJournalEntriesDocument = gql`
       title
     }
     isPrivate
+    isVault
     entryDate
     createdAt
     updatedAt
@@ -7889,6 +7931,7 @@ export const GetJournalEntryDocument = gql`
       }
     }
     isPrivate
+    isVault
     entryDate
     createdAt
     updatedAt
@@ -9019,6 +9062,38 @@ export function useLinkIssuesMutation(baseOptions?: Apollo.MutationHookOptions<L
 export type LinkIssuesMutationHookResult = ReturnType<typeof useLinkIssuesMutation>;
 export type LinkIssuesMutationResult = Apollo.MutationResult<LinkIssuesMutation>;
 export type LinkIssuesMutationOptions = Apollo.BaseMutationOptions<LinkIssuesMutation, LinkIssuesMutationVariables>;
+export const LockVaultDocument = gql`
+    mutation LockVault {
+  lockVault {
+    unlocked
+  }
+}
+    `;
+export type LockVaultMutationFn = Apollo.MutationFunction<LockVaultMutation, LockVaultMutationVariables>;
+
+/**
+ * __useLockVaultMutation__
+ *
+ * To run a mutation, you first call `useLockVaultMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLockVaultMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [lockVaultMutation, { data, loading, error }] = useLockVaultMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useLockVaultMutation(baseOptions?: Apollo.MutationHookOptions<LockVaultMutation, LockVaultMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LockVaultMutation, LockVaultMutationVariables>(LockVaultDocument, options);
+      }
+export type LockVaultMutationHookResult = ReturnType<typeof useLockVaultMutation>;
+export type LockVaultMutationResult = Apollo.MutationResult<LockVaultMutation>;
+export type LockVaultMutationOptions = Apollo.BaseMutationOptions<LockVaultMutation, LockVaultMutationVariables>;
 export const LogHabitDocument = gql`
     mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {
   logHabit(
@@ -9330,6 +9405,41 @@ export function useUnlinkIssuesMutation(baseOptions?: Apollo.MutationHookOptions
 export type UnlinkIssuesMutationHookResult = ReturnType<typeof useUnlinkIssuesMutation>;
 export type UnlinkIssuesMutationResult = Apollo.MutationResult<UnlinkIssuesMutation>;
 export type UnlinkIssuesMutationOptions = Apollo.BaseMutationOptions<UnlinkIssuesMutation, UnlinkIssuesMutationVariables>;
+export const UnlockVaultDocument = gql`
+    mutation UnlockVault($pin: String!) {
+  unlockVault(pin: $pin) {
+    success
+    unlocked
+    message
+  }
+}
+    `;
+export type UnlockVaultMutationFn = Apollo.MutationFunction<UnlockVaultMutation, UnlockVaultMutationVariables>;
+
+/**
+ * __useUnlockVaultMutation__
+ *
+ * To run a mutation, you first call `useUnlockVaultMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnlockVaultMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unlockVaultMutation, { data, loading, error }] = useUnlockVaultMutation({
+ *   variables: {
+ *      pin: // value for 'pin'
+ *   },
+ * });
+ */
+export function useUnlockVaultMutation(baseOptions?: Apollo.MutationHookOptions<UnlockVaultMutation, UnlockVaultMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnlockVaultMutation, UnlockVaultMutationVariables>(UnlockVaultDocument, options);
+      }
+export type UnlockVaultMutationHookResult = ReturnType<typeof useUnlockVaultMutation>;
+export type UnlockVaultMutationResult = Apollo.MutationResult<UnlockVaultMutation>;
+export type UnlockVaultMutationOptions = Apollo.BaseMutationOptions<UnlockVaultMutation, UnlockVaultMutationVariables>;
 export const UnshareFamilyMemberDocument = gql`
     mutation UnshareFamilyMember($familyMemberId: Int!, $email: String!) {
   unshareFamilyMember(familyMemberId: $familyMemberId, email: $email)
@@ -10016,3 +10126,45 @@ export function useUpdateUserSettingsMutation(baseOptions?: Apollo.MutationHookO
 export type UpdateUserSettingsMutationHookResult = ReturnType<typeof useUpdateUserSettingsMutation>;
 export type UpdateUserSettingsMutationResult = Apollo.MutationResult<UpdateUserSettingsMutation>;
 export type UpdateUserSettingsMutationOptions = Apollo.BaseMutationOptions<UpdateUserSettingsMutation, UpdateUserSettingsMutationVariables>;
+export const VaultStatusDocument = gql`
+    query VaultStatus {
+  vaultStatus {
+    unlocked
+  }
+}
+    `;
+
+/**
+ * __useVaultStatusQuery__
+ *
+ * To run a query within a React component, call `useVaultStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useVaultStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVaultStatusQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useVaultStatusQuery(baseOptions?: Apollo.QueryHookOptions<VaultStatusQuery, VaultStatusQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<VaultStatusQuery, VaultStatusQueryVariables>(VaultStatusDocument, options);
+      }
+export function useVaultStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<VaultStatusQuery, VaultStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<VaultStatusQuery, VaultStatusQueryVariables>(VaultStatusDocument, options);
+        }
+// @ts-ignore
+export function useVaultStatusSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<VaultStatusQuery, VaultStatusQueryVariables>): Apollo.UseSuspenseQueryResult<VaultStatusQuery, VaultStatusQueryVariables>;
+export function useVaultStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<VaultStatusQuery, VaultStatusQueryVariables>): Apollo.UseSuspenseQueryResult<VaultStatusQuery | undefined, VaultStatusQueryVariables>;
+export function useVaultStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<VaultStatusQuery, VaultStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<VaultStatusQuery, VaultStatusQueryVariables>(VaultStatusDocument, options);
+        }
+export type VaultStatusQueryHookResult = ReturnType<typeof useVaultStatusQuery>;
+export type VaultStatusLazyQueryHookResult = ReturnType<typeof useVaultStatusLazyQuery>;
+export type VaultStatusSuspenseQueryHookResult = ReturnType<typeof useVaultStatusSuspenseQuery>;
+export type VaultStatusQueryResult = Apollo.QueryResult<VaultStatusQuery, VaultStatusQueryVariables>;

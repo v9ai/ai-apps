@@ -11,5 +11,5 @@ export const allTags: NonNullable<QueryResolvers['allTags']> = async (
     throw new Error("Authentication required");
   }
 
-  return db.getAllTags(userEmail);
+  return db.getAllTags(userEmail, { includeVault: ctx.vaultUnlocked === true });
 };

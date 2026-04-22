@@ -342,6 +342,7 @@ export type CreateJournalEntryInput = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  isVault?: InputMaybe<Scalars['Boolean']['input']>;
   mood?: InputMaybe<Scalars['String']['input']>;
   moodScore?: InputMaybe<Scalars['Int']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -993,6 +994,7 @@ export type JournalEntry = {
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
   isPrivate: Scalars['Boolean']['output'];
+  isVault: Scalars['Boolean']['output'];
   issue?: Maybe<Issue>;
   mood?: Maybe<Scalars['String']['output']>;
   moodScore?: Maybe<Scalars['Int']['output']>;
@@ -1073,6 +1075,7 @@ export type Mutation = {
   generateTherapeuticQuestions: GenerateQuestionsResult;
   linkContactToIssue: IssueContactLink;
   linkIssues: IssueLink;
+  lockVault: VaultStatus;
   logHabit: HabitLog;
   markTeacherFeedbackExtracted: TeacherFeedback;
   refreshClaimCard: ClaimCard;
@@ -1084,6 +1087,7 @@ export type Mutation = {
   unlinkContactFromIssue: UnlinkContactResult;
   unlinkGoalFamilyMember: Goal;
   unlinkIssues: UnlinkIssuesResult;
+  unlockVault: VaultUnlockResult;
   unshareFamilyMember: Scalars['Boolean']['output'];
   unshareNote: Scalars['Boolean']['output'];
   updateAffirmation: Affirmation;
@@ -1488,6 +1492,11 @@ export type MutationunlinkIssuesArgs = {
 };
 
 
+export type MutationunlockVaultArgs = {
+  pin: Scalars['String']['input'];
+};
+
+
 export type MutationunshareFamilyMemberArgs = {
   email: Scalars['String']['input'];
   familyMemberId: Scalars['Int']['input'];
@@ -1784,6 +1793,7 @@ export type Query = {
   teacherFeedbacks: Array<TeacherFeedback>;
   therapeuticQuestions: Array<TherapeuticQuestion>;
   userSettings: UserSettings;
+  vaultStatus: VaultStatus;
 };
 
 
@@ -2301,6 +2311,7 @@ export type UpdateJournalEntryInput = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  isVault?: InputMaybe<Scalars['Boolean']['input']>;
   mood?: InputMaybe<Scalars['String']['input']>;
   moodScore?: InputMaybe<Scalars['Int']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -2341,6 +2352,18 @@ export type UserSettings = {
   storyLanguage: Scalars['String']['output'];
   storyMinutes: Scalars['Int']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type VaultStatus = {
+  __typename?: 'VaultStatus';
+  unlocked: Scalars['Boolean']['output'];
+};
+
+export type VaultUnlockResult = {
+  __typename?: 'VaultUnlockResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+  unlocked: Scalars['Boolean']['output'];
 };
 
 
@@ -2577,6 +2600,8 @@ export type ResolversTypes = {
   UpdateStoryInput: UpdateStoryInput;
   UpdateTeacherFeedbackInput: UpdateTeacherFeedbackInput;
   UserSettings: ResolverTypeWrapper<UserSettings>;
+  VaultStatus: ResolverTypeWrapper<VaultStatus>;
+  VaultUnlockResult: ResolverTypeWrapper<VaultUnlockResult>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -2721,6 +2746,8 @@ export type ResolversParentTypes = {
   UpdateStoryInput: UpdateStoryInput;
   UpdateTeacherFeedbackInput: UpdateTeacherFeedbackInput;
   UserSettings: UserSettings;
+  VaultStatus: VaultStatus;
+  VaultUnlockResult: VaultUnlockResult;
 };
 
 export type ActionableRecommendationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ActionableRecommendation'] = ResolversParentTypes['ActionableRecommendation']> = {
@@ -3413,6 +3440,7 @@ export type JournalEntryResolvers<ContextType = GraphQLContext, ParentType exten
   goalId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   isPrivate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  isVault?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   issue?: Resolver<Maybe<ResolversTypes['Issue']>, ParentType, ContextType>;
   mood?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   moodScore?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -3490,6 +3518,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateTherapeuticQuestions?: Resolver<ResolversTypes['GenerateQuestionsResult'], ParentType, ContextType, Partial<MutationgenerateTherapeuticQuestionsArgs>>;
   linkContactToIssue?: Resolver<ResolversTypes['IssueContactLink'], ParentType, ContextType, RequireFields<MutationlinkContactToIssueArgs, 'contactId' | 'issueId'>>;
   linkIssues?: Resolver<ResolversTypes['IssueLink'], ParentType, ContextType, RequireFields<MutationlinkIssuesArgs, 'issueId' | 'linkedIssueId'>>;
+  lockVault?: Resolver<ResolversTypes['VaultStatus'], ParentType, ContextType>;
   logHabit?: Resolver<ResolversTypes['HabitLog'], ParentType, ContextType, RequireFields<MutationlogHabitArgs, 'habitId' | 'loggedDate'>>;
   markTeacherFeedbackExtracted?: Resolver<ResolversTypes['TeacherFeedback'], ParentType, ContextType, RequireFields<MutationmarkTeacherFeedbackExtractedArgs, 'id'>>;
   refreshClaimCard?: Resolver<ResolversTypes['ClaimCard'], ParentType, ContextType, RequireFields<MutationrefreshClaimCardArgs, 'id'>>;
@@ -3501,6 +3530,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   unlinkContactFromIssue?: Resolver<ResolversTypes['UnlinkContactResult'], ParentType, ContextType, RequireFields<MutationunlinkContactFromIssueArgs, 'contactId' | 'issueId'>>;
   unlinkGoalFamilyMember?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationunlinkGoalFamilyMemberArgs, 'id'>>;
   unlinkIssues?: Resolver<ResolversTypes['UnlinkIssuesResult'], ParentType, ContextType, RequireFields<MutationunlinkIssuesArgs, 'issueId' | 'linkedIssueId'>>;
+  unlockVault?: Resolver<ResolversTypes['VaultUnlockResult'], ParentType, ContextType, RequireFields<MutationunlockVaultArgs, 'pin'>>;
   unshareFamilyMember?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationunshareFamilyMemberArgs, 'email' | 'familyMemberId'>>;
   unshareNote?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationunshareNoteArgs, 'email' | 'noteId'>>;
   updateAffirmation?: Resolver<ResolversTypes['Affirmation'], ParentType, ContextType, RequireFields<MutationupdateAffirmationArgs, 'id' | 'input'>>;
@@ -3680,6 +3710,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   teacherFeedbacks?: Resolver<Array<ResolversTypes['TeacherFeedback']>, ParentType, ContextType, RequireFields<QueryteacherFeedbacksArgs, 'familyMemberId'>>;
   therapeuticQuestions?: Resolver<Array<ResolversTypes['TherapeuticQuestion']>, ParentType, ContextType, Partial<QuerytherapeuticQuestionsArgs>>;
   userSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType>;
+  vaultStatus?: Resolver<ResolversTypes['VaultStatus'], ParentType, ContextType>;
 };
 
 export type RecommendedBookResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RecommendedBook'] = ResolversParentTypes['RecommendedBook']> = {
@@ -3867,6 +3898,16 @@ export type UserSettingsResolvers<ContextType = GraphQLContext, ParentType exten
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type VaultStatusResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VaultStatus'] = ResolversParentTypes['VaultStatus']> = {
+  unlocked?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type VaultUnlockResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VaultUnlockResult'] = ResolversParentTypes['VaultUnlockResult']> = {
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  unlocked?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type Resolvers<ContextType = GraphQLContext> = {
   ActionableRecommendation?: ActionableRecommendationResolvers<ContextType>;
   Affirmation?: AffirmationResolvers<ContextType>;
@@ -3994,5 +4035,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   UnlinkContactResult?: UnlinkContactResultResolvers<ContextType>;
   UnlinkIssuesResult?: UnlinkIssuesResultResolvers<ContextType>;
   UserSettings?: UserSettingsResolvers<ContextType>;
+  VaultStatus?: VaultStatusResolvers<ContextType>;
+  VaultUnlockResult?: VaultUnlockResultResolvers<ContextType>;
 };
 

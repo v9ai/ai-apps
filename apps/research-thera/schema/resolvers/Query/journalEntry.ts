@@ -16,6 +16,9 @@ export const journalEntry: NonNullable<QueryResolvers['journalEntry']> = async (
   if (!entry) {
     return null;
   }
+  if (entry.isVault && !ctx.vaultUnlocked) {
+    return null;
+  }
 
   return {
     id: entry.id,
@@ -28,6 +31,7 @@ export const journalEntry: NonNullable<QueryResolvers['journalEntry']> = async (
     tags: entry.tags,
     goalId: entry.goalId,
     isPrivate: entry.isPrivate,
+    isVault: entry.isVault,
     entryDate: entry.entryDate,
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,

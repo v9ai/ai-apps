@@ -98,6 +98,7 @@ type Query {
   # Journal Entries
   journalEntries(familyMemberId: Int, goalId: Int, mood: String, tag: String, fromDate: String, toDate: String): [JournalEntry!]!
   journalEntry(id: Int!): JournalEntry
+  vaultStatus: VaultStatus!
 
   # Behavior Observations
   behaviorObservations(familyMemberId: Int!, goalId: Int): [BehaviorObservation!]!
@@ -227,6 +228,8 @@ type Mutation {
   createJournalEntry(input: CreateJournalEntryInput!): JournalEntry!
   updateJournalEntry(id: Int!, input: UpdateJournalEntryInput!): JournalEntry!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
+  unlockVault(pin: String!): VaultUnlockResult!
+  lockVault: VaultStatus!
 
   # Behavior Observations
   updateBehaviorObservation(id: Int!, input: UpdateBehaviorObservationInput!): BehaviorObservation!
@@ -1025,6 +1028,7 @@ type JournalEntry {
   goal: Goal
   issue: Issue
   isPrivate: Boolean!
+  isVault: Boolean!
   entryDate: String!
   createdAt: String!
   updatedAt: String!
@@ -1041,6 +1045,7 @@ input CreateJournalEntryInput {
   tags: [String!]
   goalId: Int
   isPrivate: Boolean
+  isVault: Boolean
   entryDate: String!
 }
 
@@ -1053,11 +1058,22 @@ input UpdateJournalEntryInput {
   tags: [String!]
   goalId: Int
   isPrivate: Boolean
+  isVault: Boolean
   entryDate: String
 }
 
 type DeleteJournalEntryResult {
   success: Boolean!
+  message: String
+}
+
+type VaultStatus {
+  unlocked: Boolean!
+}
+
+type VaultUnlockResult {
+  success: Boolean!
+  unlocked: Boolean!
   message: String
 }
 
