@@ -416,7 +416,7 @@ async def persist(state: dict) -> dict:
                     await cur.execute(
                         "INSERT INTO recommended_books "
                         "(goal_id, journal_entry_id, title, authors, year, isbn, description, why_recommended, category, amazon_url, generated_at, created_at, updated_at) "
-                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
                         "RETURNING id, goal_id, journal_entry_id, title, authors, year, isbn, description, why_recommended, category, amazon_url, generated_at, created_at, updated_at",
                         (
                             goal_id,

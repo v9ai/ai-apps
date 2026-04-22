@@ -34,7 +34,7 @@ pub async fn promote(
             counts.skipped += 1;
             continue;
         }
-        let contact_id: i64 = match s.contact_id.parse() {
+        let contact_id: i32 = match s.contact_id.parse() {
             Ok(v) => v,
             Err(_) => {
                 tracing::warn!("skip non-numeric contact id: {}", s.contact_id);

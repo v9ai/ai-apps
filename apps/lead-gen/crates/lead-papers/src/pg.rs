@@ -9,7 +9,7 @@ pub async fn connect(url: &str) -> Result<PgPool> {
 #[allow(clippy::too_many_arguments)]
 pub async fn promote_contact(
     pg: &PgPool,
-    contact_id: i64,
+    contact_id: i32,
     github_handle: Option<&str>,
     papers_json: &serde_json::Value,
     gh_match_score: f32,
@@ -43,7 +43,7 @@ pub async fn promote_contact(
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct ContactSeed {
-    pub id: i64,
+    pub id: i32,
     pub first_name: String,
     pub last_name: String,
     pub email: Option<String>,
