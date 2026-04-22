@@ -103,6 +103,22 @@ class ScoreContactState(TypedDict, total=False):
     reasons: list[str]
 
 
+class ContactEnrichState(TypedDict, total=False):
+    # input
+    contact_id: int
+    # internal — populated by load_contact, consumed by downstream nodes
+    contact: dict[str, Any]
+    company: dict[str, Any]
+    existing_tags: list[str]
+    existing_research_areas: list[str]
+    # output
+    papers: list[dict[str, Any]]
+    tags: list[str]
+    tags_added: list[str]
+    enriched_at: str
+    error: str | None
+
+
 class DeepICPState(TypedDict, total=False):
     # input
     product_id: int

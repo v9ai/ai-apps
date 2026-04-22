@@ -60,6 +60,7 @@ extend type Mutation {
   batchScoreContactsLora(companyId: Int!, limit: Int = 50): ScoreContactsLoraResult!
   enrichAIContactProfile(contactId: Int!): EnrichAIContactResult!
   enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
+  enrichContactPapersAndTags(contactId: Int!): EnrichContactPapersResult!
   computeContactDeletionScores(companyId: Int): BatchOperationResult!
   flagContactsForDeletion(threshold: Float): BatchOperationResult!
   unflagContactForDeletion(id: Int!): Contact!
@@ -125,8 +126,32 @@ type Contact {
   loraTier: String
   loraReasons: [String!]!
   loraScoredAt: String
+  # Paper + tag enrichment (populated by enrichContactPapersAndTags)
+  papers: [ContactPaper!]!
+  papersEnrichedAt: String
   createdAt: String!
   updatedAt: String!
+}
+
+type ContactPaper {
+  title: String!
+  authors: [String!]!
+  year: Int
+  venue: String
+  doi: String
+  url: String
+  citationCount: Int
+  source: String
+}
+
+type EnrichContactPapersResult {
+  success: Boolean!
+  message: String!
+  contactId: Int!
+  papers: [ContactPaper!]!
+  tags: [String!]!
+  tagsAdded: [String!]!
+  papersEnrichedAt: String
 }
 
 type ContactAIGitHubRepo {

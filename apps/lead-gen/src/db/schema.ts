@@ -295,6 +295,9 @@ export const contacts = pgTable(
     lora_tier: text("lora_tier"), // "A" | "B" | "C" | "D"
     lora_reasons: jsonb("lora_reasons"), // string[] of rationale bullets from the LoRA
     lora_scored_at: text("lora_scored_at"),
+    // Paper + tag enrichment (populated by enrichContactPapersAndTags mutation → contact_enrich graph)
+    papers: jsonb("papers"), // Paper[] — {title, authors, year, venue, doi, url, citation_count, source}
+    papers_enriched_at: text("papers_enriched_at"),
     // Conversation lifecycle state (updated by webhook handler on reply classification)
     conversation_stage: text("conversation_stage"), // initial_sent | follow_up_1 | follow_up_2 | follow_up_3 | replied_interested | replied_info_request | replied_not_interested | meeting_scheduled | converted | closed
     // Fake account detection (populated by verifyContactAuthenticity mutation)

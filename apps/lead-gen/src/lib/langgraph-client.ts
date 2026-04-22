@@ -79,6 +79,25 @@ export interface ScoreContactLoraResult {
   reasons: string[];
 }
 
+export interface ContactPaper {
+  title: string;
+  authors: string[];
+  year: number | null;
+  venue: string | null;
+  doi: string | null;
+  url: string | null;
+  citation_count: number | null;
+  source: string | null;
+}
+
+export interface ContactEnrichResult {
+  papers: ContactPaper[];
+  tags: string[];
+  tags_added: string[];
+  enriched_at: string;
+  error?: string | null;
+}
+
 export interface DeepICPCriterion {
   score: number;
   confidence: number;
@@ -227,6 +246,23 @@ export function scoreContactLora(input: {
     contact_id: input.contactId ?? null,
     profile: input.profile ?? "",
   });
+}
+
+/**
+ * Enrich a contact with academic papers (OpenAlex/Crossref/Semantic Scholar)
+ * and normalized research tags. Graph is read-only; the caller persists the
+ * returned papers/tags back to the contacts row.
+ */
+export function enrichContactPapers(input: {
+  contactId: number;
+}): Promise<ContactEnrichResult> {
+  return runGraph<ContactEnrichResult>(
+    "contact_enrich",
+    { contact_id: input.contactId },
+    // Paper search fans out to three APIs + one LLM call. Network bursts can
+    // exceed the 60s default on cold OpenAlex responses.
+    { timeoutMs: 120_000 },
+  );
 }
 
 /**

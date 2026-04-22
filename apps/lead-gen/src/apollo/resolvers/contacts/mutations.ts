@@ -28,7 +28,7 @@ import {
 import { isAIContact, gatherAIContactProfile, extractLinkedInOG, fetchGitHubProfile, searchGitHubByName } from "@/lib/ai-contact-enrichment";
 import { evaluateFakeAccount } from "@/lib/ml/fake-account-detector";
 import { classifyContact, computeDeletionScore, parseJsonArray } from "./classification";
-import { scoreContactLora as scoreContactLoraGraph, type ContactLoraTier } from "@/lib/langgraph-client";
+import { scoreContactLora as scoreContactLoraGraph, enrichContactPapers as enrichContactPapersGraph, type ContactLoraTier } from "@/lib/langgraph-client";
 import { deriveContactSlug } from "@/lib/contact-slug";
 import type { PgUpdateSetSource } from "drizzle-orm/pg-core/query-builders/update";
 
@@ -1273,6 +1273,70 @@ export const contactMutations = {
       message: `AI profile enriched (trigger: ${profile.trigger}, confidence: ${profile.synthesis_confidence.toFixed(2)})`,
       contactId: contact.id,
       aiProfile: aiProfileOut,
+    };
+  },
+
+  async enrichContactPapersAndTags(
+    _parent: unknown,
+    args: { contactId: number },
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    const existing = await context.db
+      .select({ id: contacts.id })
+      .from(contacts)
+      .where(eq(contacts.id, args.contactId))
+      .limit(1);
+    if (!existing[0]) {
+      throw new GraphQLError(`Contact ${args.contactId} not found`, {
+        extensions: { code: "NOT_FOUND" },
+      });
+    }
+
+    const result = await enrichContactPapersGraph({ contactId: args.contactId });
+    if (result.error) {
+      return {
+        success: false,
+        message: result.error,
+        contactId: args.contactId,
+        papers: [],
+        tags: [],
+        tagsAdded: [],
+        papersEnrichedAt: null,
+      };
+    }
+
+    const now = new Date().toISOString();
+    await context.db
+      .update(contacts)
+      .set({
+        papers: result.papers,
+        papers_enriched_at: result.enriched_at || now,
+        tags: JSON.stringify(result.tags),
+        updated_at: now,
+      })
+      .where(eq(contacts.id, args.contactId));
+
+    const papersOut = result.papers.map((p) => ({
+      title: p.title,
+      authors: p.authors ?? [],
+      year: p.year ?? null,
+      venue: p.venue ?? null,
+      doi: p.doi ?? null,
+      url: p.url ?? null,
+      citationCount: p.citation_count ?? null,
+      source: p.source ?? null,
+    }));
+
+    return {
+      success: true,
+      message: `Enriched with ${result.papers.length} paper(s); ${result.tags_added.length} new tag(s)`,
+      contactId: args.contactId,
+      papers: papersOut,
+      tags: result.tags,
+      tagsAdded: result.tags_added,
+      papersEnrichedAt: result.enriched_at || now,
     };
   },
 

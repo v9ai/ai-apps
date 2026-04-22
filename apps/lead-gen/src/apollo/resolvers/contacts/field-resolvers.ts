@@ -205,6 +205,38 @@ export const Contact = {
   loraScoredAt(parent: DbContact) {
     return parent.lora_scored_at ?? null;
   },
+  papers(parent: DbContact) {
+    // papers is a jsonb column; Drizzle auto-parses it to an array of objects.
+    const raw = parent.papers;
+    if (!Array.isArray(raw)) return [];
+    type PaperRow = {
+      title?: unknown;
+      authors?: unknown;
+      year?: unknown;
+      venue?: unknown;
+      doi?: unknown;
+      url?: unknown;
+      citation_count?: unknown;
+      source?: unknown;
+    };
+    return raw
+      .filter((p): p is PaperRow => typeof p === "object" && p !== null)
+      .map((p) => ({
+        title: typeof p.title === "string" ? p.title : "",
+        authors: Array.isArray(p.authors)
+          ? p.authors.filter((a): a is string => typeof a === "string")
+          : [],
+        year: typeof p.year === "number" ? p.year : null,
+        venue: typeof p.venue === "string" ? p.venue : null,
+        doi: typeof p.doi === "string" ? p.doi : null,
+        url: typeof p.url === "string" ? p.url : null,
+        citationCount: typeof p.citation_count === "number" ? p.citation_count : null,
+        source: typeof p.source === "string" ? p.source : null,
+      }));
+  },
+  papersEnrichedAt(parent: DbContact) {
+    return parent.papers_enriched_at ?? null;
+  },
   authenticityVerdict(parent: DbContact) {
     return parent.authenticity_verdict ?? null;
   },

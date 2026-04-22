@@ -431,6 +431,8 @@ type Contact {
   nbSuggestedCorrection: String
   nextTouchScore: Float
   notes: String
+  papers: [ContactPaper!]!
+  papersEnrichedAt: String
   position: String
   seniority: String
   slug: String
@@ -554,6 +556,17 @@ type ContactNextTouch {
   lastName: String!
   nextTouchScore: Float!
   position: String
+}
+
+type ContactPaper {
+  authors: [String!]!
+  citationCount: Int
+  doi: String
+  source: String
+  title: String!
+  url: String
+  venue: String
+  year: Int
 }
 
 type ContactWorkExperience {
@@ -909,6 +922,16 @@ type EnrichAIContactsBulkResult {
   message: String!
   skipped: Int!
   success: Boolean!
+}
+
+type EnrichContactPapersResult {
+  contactId: Int!
+  message: String!
+  papers: [ContactPaper!]!
+  papersEnrichedAt: String
+  success: Boolean!
+  tags: [String!]!
+  tagsAdded: [String!]!
 }
 
 type Evidence {
@@ -1286,6 +1309,7 @@ type Mutation {
   enhanceProductIcp(id: Int!): Product!
   enrichAIContactProfile(contactId: Int!): EnrichAIContactResult!
   enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
+  enrichContactPapersAndTags(contactId: Int!): EnrichContactPapersResult!
   enrichOpportunityCandidates(opportunityId: String!): EnrichAIContactsBulkResult!
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!

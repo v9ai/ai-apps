@@ -486,6 +486,8 @@ export type Contact = {
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
   nextTouchScore: Maybe<Scalars['Float']['output']>;
   notes: Maybe<Scalars['String']['output']>;
+  papers: Array<ContactPaper>;
+  papersEnrichedAt: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
@@ -616,6 +618,18 @@ export type ContactNextTouch = {
   lastName: Scalars['String']['output'];
   nextTouchScore: Scalars['Float']['output'];
   position: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactPaper = {
+  __typename?: 'ContactPaper';
+  authors: Array<Scalars['String']['output']>;
+  citationCount: Maybe<Scalars['Int']['output']>;
+  doi: Maybe<Scalars['String']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+  venue: Maybe<Scalars['String']['output']>;
+  year: Maybe<Scalars['Int']['output']>;
 };
 
 export type ContactWorkExperience = {
@@ -995,6 +1009,17 @@ export type EnrichAiContactsBulkResult = {
   message: Scalars['String']['output'];
   skipped: Scalars['Int']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type EnrichContactPapersResult = {
+  __typename?: 'EnrichContactPapersResult';
+  contactId: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  papers: Array<ContactPaper>;
+  papersEnrichedAt: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+  tags: Array<Scalars['String']['output']>;
+  tagsAdded: Array<Scalars['String']['output']>;
 };
 
 export type Evidence = {
@@ -1396,6 +1421,7 @@ export type Mutation = {
   enhanceProductIcp: Product;
   enrichAIContactProfile: EnrichAiContactResult;
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
+  enrichContactPapersAndTags: EnrichContactPapersResult;
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
@@ -1670,6 +1696,11 @@ export type MutationEnrichAiContactProfileArgs = {
 
 export type MutationEnrichAiContactsForCompanyArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationEnrichContactPapersAndTagsArgs = {
+  contactId: Scalars['Int']['input'];
 };
 
 
@@ -3767,6 +3798,7 @@ export type ResolversTypes = {
   ContactMLScore: ResolverTypeWrapper<Partial<ContactMlScore>>;
   ContactMessage: ResolverTypeWrapper<Partial<ContactMessage>>;
   ContactNextTouch: ResolverTypeWrapper<Partial<ContactNextTouch>>;
+  ContactPaper: ResolverTypeWrapper<Partial<ContactPaper>>;
   ContactWorkExperience: ResolverTypeWrapper<Partial<ContactWorkExperience>>;
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
   CountRemoteVoyagerJobsInput: ResolverTypeWrapper<Partial<CountRemoteVoyagerJobsInput>>;
@@ -3804,6 +3836,7 @@ export type ResolversTypes = {
   EnhanceCompanyResponse: ResolverTypeWrapper<Partial<EnhanceCompanyResponse>>;
   EnrichAIContactResult: ResolverTypeWrapper<Partial<EnrichAiContactResult>>;
   EnrichAIContactsBulkResult: ResolverTypeWrapper<Partial<EnrichAiContactsBulkResult>>;
+  EnrichContactPapersResult: ResolverTypeWrapper<Partial<EnrichContactPapersResult>>;
   Evidence: ResolverTypeWrapper<Partial<Evidence>>;
   EvidenceInput: ResolverTypeWrapper<Partial<EvidenceInput>>;
   ExtractMethod: ResolverTypeWrapper<Partial<ExtractMethod>>;
@@ -4011,6 +4044,7 @@ export type ResolversParentTypes = {
   ContactMLScore: Partial<ContactMlScore>;
   ContactMessage: Partial<ContactMessage>;
   ContactNextTouch: Partial<ContactNextTouch>;
+  ContactPaper: Partial<ContactPaper>;
   ContactWorkExperience: Partial<ContactWorkExperience>;
   ContactsResult: Partial<ContactsResult>;
   CountRemoteVoyagerJobsInput: Partial<CountRemoteVoyagerJobsInput>;
@@ -4048,6 +4082,7 @@ export type ResolversParentTypes = {
   EnhanceCompanyResponse: Partial<EnhanceCompanyResponse>;
   EnrichAIContactResult: Partial<EnrichAiContactResult>;
   EnrichAIContactsBulkResult: Partial<EnrichAiContactsBulkResult>;
+  EnrichContactPapersResult: Partial<EnrichContactPapersResult>;
   Evidence: Partial<Evidence>;
   EvidenceInput: Partial<EvidenceInput>;
   ExtractedSkill: Partial<ExtractedSkill>;
@@ -4553,6 +4588,8 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   nbSuggestedCorrection?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   nextTouchScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  papers?: Resolver<Array<ResolversTypes['ContactPaper']>, ParentType, ContextType>;
+  papersEnrichedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seniority?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -4662,6 +4699,17 @@ export type ContactNextTouchResolvers<ContextType = GraphQLContext, ParentType e
   lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   nextTouchScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type ContactPaperResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactPaper'] = ResolversParentTypes['ContactPaper']> = {
+  authors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  citationCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  doi?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  venue?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
 };
 
 export type ContactWorkExperienceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactWorkExperience'] = ResolversParentTypes['ContactWorkExperience']> = {
@@ -4929,6 +4977,16 @@ export type EnrichAiContactsBulkResultResolvers<ContextType = GraphQLContext, Pa
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   skipped?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type EnrichContactPapersResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EnrichContactPapersResult'] = ResolversParentTypes['EnrichContactPapersResult']> = {
+  contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  papers?: Resolver<Array<ResolversTypes['ContactPaper']>, ParentType, ContextType>;
+  papersEnrichedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  tagsAdded?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type EvidenceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Evidence'] = ResolversParentTypes['Evidence']> = {
@@ -5224,6 +5282,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   enhanceProductIcp?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationEnhanceProductIcpArgs, 'id'>>;
   enrichAIContactProfile?: Resolver<ResolversTypes['EnrichAIContactResult'], ParentType, ContextType, RequireFields<MutationEnrichAiContactProfileArgs, 'contactId'>>;
   enrichAIContactsForCompany?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichAiContactsForCompanyArgs, 'companyId'>>;
+  enrichContactPapersAndTags?: Resolver<ResolversTypes['EnrichContactPapersResult'], ParentType, ContextType, RequireFields<MutationEnrichContactPapersAndTagsArgs, 'contactId'>>;
   enrichOpportunityCandidates?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichOpportunityCandidatesArgs, 'opportunityId'>>;
   findCompanyEmails?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType, RequireFields<MutationFindCompanyEmailsArgs, 'companyId'>>;
   findContactEmail?: Resolver<ResolversTypes['FindContactEmailResult'], ParentType, ContextType, RequireFields<MutationFindContactEmailArgs, 'contactId'>>;
@@ -6245,6 +6304,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactMLScore?: ContactMlScoreResolvers<ContextType>;
   ContactMessage?: ContactMessageResolvers<ContextType>;
   ContactNextTouch?: ContactNextTouchResolvers<ContextType>;
+  ContactPaper?: ContactPaperResolvers<ContextType>;
   ContactWorkExperience?: ContactWorkExperienceResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
   CountRemoteVoyagerJobsResult?: CountRemoteVoyagerJobsResultResolvers<ContextType>;
@@ -6275,6 +6335,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   EnhanceCompanyResponse?: EnhanceCompanyResponseResolvers<ContextType>;
   EnrichAIContactResult?: EnrichAiContactResultResolvers<ContextType>;
   EnrichAIContactsBulkResult?: EnrichAiContactsBulkResultResolvers<ContextType>;
+  EnrichContactPapersResult?: EnrichContactPapersResultResolvers<ContextType>;
   Evidence?: EvidenceResolvers<ContextType>;
   ExtractedSkill?: ExtractedSkillResolvers<ContextType>;
   FindCompanyResult?: FindCompanyResultResolvers<ContextType>;

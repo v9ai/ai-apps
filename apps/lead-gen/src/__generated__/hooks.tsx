@@ -486,6 +486,8 @@ export type Contact = {
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
   nextTouchScore: Maybe<Scalars['Float']['output']>;
   notes: Maybe<Scalars['String']['output']>;
+  papers: Array<ContactPaper>;
+  papersEnrichedAt: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
@@ -616,6 +618,18 @@ export type ContactNextTouch = {
   lastName: Scalars['String']['output'];
   nextTouchScore: Scalars['Float']['output'];
   position: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactPaper = {
+  __typename?: 'ContactPaper';
+  authors: Array<Scalars['String']['output']>;
+  citationCount: Maybe<Scalars['Int']['output']>;
+  doi: Maybe<Scalars['String']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+  venue: Maybe<Scalars['String']['output']>;
+  year: Maybe<Scalars['Int']['output']>;
 };
 
 export type ContactWorkExperience = {
@@ -995,6 +1009,17 @@ export type EnrichAiContactsBulkResult = {
   message: Scalars['String']['output'];
   skipped: Scalars['Int']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type EnrichContactPapersResult = {
+  __typename?: 'EnrichContactPapersResult';
+  contactId: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  papers: Array<ContactPaper>;
+  papersEnrichedAt: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+  tags: Array<Scalars['String']['output']>;
+  tagsAdded: Array<Scalars['String']['output']>;
 };
 
 export type Evidence = {
@@ -1396,6 +1421,7 @@ export type Mutation = {
   enhanceProductIcp: Product;
   enrichAIContactProfile: EnrichAiContactResult;
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
+  enrichContactPapersAndTags: EnrichContactPapersResult;
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
@@ -1670,6 +1696,11 @@ export type MutationEnrichAiContactProfileArgs = {
 
 export type MutationEnrichAiContactsForCompanyArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationEnrichContactPapersAndTagsArgs = {
+  contactId: Scalars['Int']['input'];
 };
 
 
