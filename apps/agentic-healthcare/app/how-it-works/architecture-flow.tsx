@@ -287,9 +287,10 @@ export function IngestionFlow() {
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- *  2. LANGGRAPH PIPELINE FLOW
+ *  2. CHAT PIPELINE FLOW
  *
- *  The core 4-node StateGraph: triage → retrieve → synthesize → guard.
+ *  The LlamaIndex ContextChatEngine: intent selector (triage) →
+ *  per-intent retriever → response synthesis → safety-guard wrapper.
  *  Shows intent classification flowing into retrieval routing,
  *  then synthesis with clinical safety, and finally guard audit.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */

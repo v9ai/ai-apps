@@ -2,5 +2,6 @@ packages:
   - "apps/*"
   - "apps/lead-gen/backend"
   - "apps/lead-gen/chrome-extension"
+  - "apps/research-thera/backend"
   - "packages/*"
   - "pypackages/how_it_works"

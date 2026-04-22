@@ -74,7 +74,7 @@ import {
 export const metadata: Metadata = {
   title: "How It Works | Agentic Healthcare",
   description:
-    "A LangGraph-powered platform that transforms blood test PDFs into AI-driven health insights using agentic triage, multi-table retrieval, and safety-guarded synthesis.",
+    "A LlamaIndex-powered platform that transforms blood test PDFs into AI-driven health insights using agentic triage, multi-table retrieval, and safety-guarded synthesis.",
 };
 
 /* ── Data ─────────────────────────────────────────────────────────── */
@@ -138,11 +138,11 @@ const archSections = [
     icon: Brain,
     iconColor: "var(--indigo-9)",
     iconBg: "var(--indigo-a3)",
-    title: "LangGraph StateGraph Pipeline",
+    title: "LlamaIndex ContextChatEngine Pipeline",
     brief: "Triage \u2192 Retrieve \u2192 Rerank \u2192 Synthesize \u2192 Guard",
     description:
-      "Every chat query flows through a 15-node conditional graph: triage classifies intent into 9 categories (including derived_ratios), low-confidence triage triggers re_triage with disambiguation hints, 9 per-intent LlamaIndex BaseRetriever nodes fan out to the right pgvector tables, a ClinicalRelevancePostprocessor reranks chunks by LLM-scored relevance, LlamaIndex ResponseSynthesizer (COMPACT mode) generates a clinical answer with a PromptTemplate, and the safety guard audits for 5 rules with a self-correction loop (resynthesize up to 1 retry). Safety refusals route directly to a refuse node that skips retrieval entirely.",
-    tags: ["LangGraph", "15 nodes", "conditional routing", "self-correction loop", "LlamaIndex pipeline"],
+      "Every chat query flows through a LlamaIndex ContextChatEngine with conditional routing: an `LLMSingleSelector` classifies intent into 9 categories (including derived_ratios), low-confidence triage triggers re_triage with disambiguation hints, 9 per-intent LlamaIndex BaseRetriever nodes fan out to the right pgvector tables, a ClinicalRelevancePostprocessor reranks chunks by LLM-scored relevance, LlamaIndex ResponseSynthesizer (COMPACT mode) generates a clinical answer with a PromptTemplate, and a custom safety-guard wrapper audits for 5 rules with a self-correction loop (resynthesize up to 1 retry). Safety refusals route directly to a refuse path that skips retrieval entirely.",
+    tags: ["LlamaIndex", "ContextChatEngine", "conditional routing", "self-correction loop", "RouterQueryEngine"],
     Flow: PipelineFlow,
   },
   {
@@ -950,7 +950,7 @@ const bridgeEndpoints = [
   {
     method: "POST",
     path: "/chat",
-    description: "Full LangGraph pipeline: triage → retrieve → synthesize → guard",
+    description: "Full LlamaIndex ContextChatEngine pipeline: triage → retrieve → synthesize → guard",
     input: "{messages[], user_id}",
     output: "{answer, intent, guard_passed, guard_issues, citations, retrieval_sources}",
     color: "var(--crimson-9)",
@@ -1034,7 +1034,7 @@ const evalSuiteOverview = {
 const evalCategories = [
   {
     id: "graph-pipeline",
-    title: "LangGraph Pipeline",
+    title: "Chat Pipeline (LlamaIndex)",
     file: "graph_eval.py",
     icon: GitBranch,
     color: "var(--indigo-9)",
@@ -1903,7 +1903,7 @@ const guardRulesDetailed = [
 
 const hipaaAlignment = [
   { rule: "Access Control (§164.312(a))", status: "implemented" as const, detail: "withAuth() on every server action, session-based user_id extraction, x-api-key for inter-service calls. No anonymous access to any health data endpoint.", color: "var(--green-9)" },
-  { rule: "Audit Controls (§164.312(b))", status: "partial" as const, detail: "Session table logs IP + UserAgent + timestamps. LangGraph logs intent classification + guard results per query. No dedicated audit trail table yet.", color: "var(--amber-9)" },
+  { rule: "Audit Controls (§164.312(b))", status: "partial" as const, detail: "Session table logs IP + UserAgent + timestamps. The LlamaIndex chat pipeline logs intent classification + guard results per query. No dedicated audit trail table yet.", color: "var(--amber-9)" },
   { rule: "Integrity Controls (§164.312(c))", status: "implemented" as const, detail: "Parameterized SQL via psycopg3 prevents injection. Pydantic validates all inputs. UNIQUE constraints prevent duplicates. ON CONFLICT upsert for idempotency.", color: "var(--green-9)" },
   { rule: "Transmission Security (§164.312(e))", status: "implemented" as const, detail: "Neon TLS on all database connections, R2 AES-256 encryption at rest, HTTPS between Next.js and Python, CORS whitelist restricts origins.", color: "var(--green-9)" },
   { rule: "Person Authentication (§164.312(d))", status: "implemented" as const, detail: "Better Auth with OAuth providers, email/password with bcrypt, session tokens with expiry, IP and UserAgent tracking per session.", color: "var(--green-9)" },
@@ -2058,10 +2058,10 @@ export default function HowItWorksPage() {
               align="center"
               style={{ maxWidth: 520, lineHeight: 1.65 }}
             >
-              A 15-node LangGraph StateGraph triages every query through
-              LlamaIndex retrievers, reranks with a clinical postprocessor,
+              A LlamaIndex ContextChatEngine triages every query through
+              per-intent retrievers, reranks with a clinical postprocessor,
               synthesizes via ResponseSynthesizer, and self-corrects through a
-              guard loop before the response reaches you.
+              safety-guard loop before the response reaches you.
             </Text>
 
             {/* Enhanced node flow with icons */}
@@ -4939,9 +4939,9 @@ if not passed:
               style={{ maxWidth: 580, lineHeight: 1.65 }}
             >
               TypeScript (Next.js) handles entity CRUD and UI. Python
-              (FastAPI on :8001) handles PDF ingestion, LangGraph pipeline,
-              and vector search. They communicate via internal API with a
-              shared x-api-key header.
+              (FastAPI on :8001) handles PDF ingestion, the LlamaIndex
+              chat pipeline, and vector search. They communicate via
+              internal API with a shared x-api-key header.
             </Text>
           </Flex>
         </ScrollReveal>
@@ -6341,7 +6341,7 @@ export async function sendChatMessage(messages) {
             }}
           >
 {`# Individual categories
-pnpm eval:graph              # LangGraph pipeline (65 tests)
+pnpm eval:graph              # Chat pipeline — LlamaIndex (65 tests)
 pnpm eval:graph:triage       # Triage classification only
 pnpm eval:graph:guard        # Safety guard only
 pnpm eval:graph:e2e          # End-to-end quality

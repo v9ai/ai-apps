@@ -1,49 +1,53 @@
 """
 Intent classification evaluation suite.
 
-Tests REAL LLM classification quality (not mocked) using DeepEval metrics:
-  - IntentAccuracyMetric: exact-match and acceptable-match scoring
-  - EntityExtractionF1Metric: precision/recall/F1 on extracted entities
-  - MultiIntentDetectionMetric: Jaccard similarity on sub-intent lists
-  - GEval IntentClassificationQuality: LLM-judged semantic quality
+Tests REAL LLM classification quality (not mocked) by exercising the public
+``run_chat`` pipeline and inspecting the returned ``intent`` /
+``intent_confidence`` fields. Retrieval, reranking, and synthesis are stubbed
+so a single test issues exactly one triage LLM call.
+
+Metrics (re-used from the old graph version):
+  - IntentAccuracyMetric      — exact-match and acceptable-match scoring
+  - EntityExtractionF1Metric  — precision/recall/F1 on extracted entities
+  - MultiIntentDetectionMetric — Jaccard similarity on sub-intent lists
 
 Test classes:
-  A. TestIntentConfusionMatrix — full classification accuracy across all intent classes
+  A. TestIntentConfusionMatrix — classification accuracy across all intent classes
   B. TestConfidenceCalibration — confidence scores are meaningful, not noise
-  C. TestMultiIntentDetection — multi-intent queries are correctly decomposed
+  C. TestMultiIntentDetection  — multi-intent queries are correctly decomposed
 
 Run:
   cd apps/agentic-healthcare
   uv run --project langgraph pytest evals/intent_eval.py -v
-  uv run --project langgraph pytest evals/intent_eval.py -v -k confusion
-  uv run --project langgraph pytest evals/intent_eval.py -v -k calibration
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
 import sys
 from collections import defaultdict
+from unittest.mock import MagicMock, patch
 
 import pytest
 from deepeval import assert_test
 from deepeval.metrics import BaseMetric
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
-from conftest import HAS_JUDGE, make_geval, skip_no_judge
+from conftest import make_geval, skip_no_judge
 
 # Add langgraph/ to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "langgraph"))
 
-from graph import GraphState, SINGLE_INTENTS, triage
+from chat_pipeline import SINGLE_INTENTS, run_chat  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Classification dataset
+# Classification dataset (unchanged)
 # ═══════════════════════════════════════════════════════════════════════════
 
 INTENT_CLASSIFICATION_CASES: list[dict] = [
@@ -121,7 +125,7 @@ INTENT_CLASSIFICATION_CASES: list[dict] = [
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Custom DeepEval metrics
+# Custom DeepEval metrics (unchanged — they operate on metadata dicts)
 # ═══════════════════════════════════════════════════════════════════════════
 
 
@@ -256,47 +260,47 @@ class MultiIntentDetectionMetric(BaseMetric):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# GEval-based LLM-judged metric
-# ═══════════════════════════════════════════════════════════════════════════
-
-
-def make_intent_quality_geval(model=None):
-    """Create a GEval metric for intent classification quality."""
-    return make_geval(
-        name="IntentClassificationQuality",
-        criteria=(
-            "Evaluate whether the predicted intent classification is correct for the given query. "
-            "Consider: (1) Does the predicted intent match the semantic meaning of the query? "
-            "(2) Are the extracted entities relevant and complete? "
-            "(3) Is the confidence score appropriately calibrated (high for clear queries, low for ambiguous)? "
-            "Score 1.0 for perfect classification, 0.5 for reasonable but suboptimal, 0.0 for clearly wrong."
-        ),
-        evaluation_params=[
-            LLMTestCaseParams.INPUT,
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.EXPECTED_OUTPUT,
-        ],
-        threshold=0.7,
-        model=model,
-    )
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Helper: run triage on a case
+# Helper: run triage-only end-to-end via run_chat
 # ═══════════════════════════════════════════════════════════════════════════
 
 
 def _classify(case: dict) -> dict:
-    """Run real triage on a test case and return enriched result."""
-    state = GraphState(query=case["query"], user_id="eval-user")
-    output = triage(state)
+    """Run triage end-to-end through run_chat, stubbing retrieval + synthesis + guard.
+
+    The pipeline's public API doesn't surface sub_intents / entities directly, so
+    we monkey-patch the internal ``_classify`` helper to capture them alongside
+    the returned ``intent`` / ``intent_confidence``.
+    """
+    import chat_pipeline as cp
+
+    captured: dict = {}
+    real_classify = cp._classify
+
+    def capture_and_run(query: str):
+        triage = real_classify(query)
+        captured.update(triage)
+        return triage
+
+    stub_engine = MagicMock()
+    stub_response = MagicMock()
+    stub_response.__str__ = lambda self: "stubbed synthesized answer (consult your physician)"
+    stub_response.source_nodes = []
+    stub_engine.chat.return_value = stub_response
+
+    with patch.object(cp, "_classify", side_effect=capture_and_run), \
+         patch.object(cp, "build_retriever_for_intent", return_value=MagicMock()), \
+         patch.object(cp, "CompositeRetriever", return_value=MagicMock()), \
+         patch("chat_pipeline.ContextChatEngine.from_defaults", return_value=stub_engine), \
+         patch.object(cp, "_guard", return_value=(True, [], "stubbed synthesized answer")):
+        result = asyncio.run(run_chat(case["query"], user_id="eval-user", chat_history=[]))
+
     return {
         **case,
-        "predicted_intent": output["intent"],
-        "predicted_confidence": output["intent_confidence"],
-        "predicted_entities": output["entities"],
-        "predicted_is_multi": output.get("is_multi_intent", False),
-        "predicted_sub_intents": output.get("sub_intents", []),
+        "predicted_intent": result["intent"],
+        "predicted_confidence": result["intent_confidence"],
+        "predicted_entities": captured.get("entities", []),
+        "predicted_is_multi": captured.get("is_multi_intent", False),
+        "predicted_sub_intents": captured.get("sub_intents", []),
     }
 
 
@@ -430,19 +434,20 @@ class TestConfidenceCalibration:
     def test_clear_queries_have_high_confidence(self):
         """Clear, unambiguous queries should have confidence >= 0.7."""
         for query in self.CLEAR_QUERIES:
-            state = GraphState(query=query, user_id="eval-user")
-            result = triage(state)
-            assert result["intent_confidence"] >= 0.7, \
-                f"Clear query '{query}' got low confidence: {result['intent_confidence']}"
+            result = _classify({"query": query, "expected_intent": "markers"})
+            assert result["predicted_confidence"] >= 0.7, \
+                f"Clear query '{query}' got low confidence: {result['predicted_confidence']}"
 
     def test_clear_higher_than_ambiguous_on_average(self):
         """Clear queries should have higher average confidence than ambiguous ones."""
-        clear_confs = []
-        ambig_confs = []
-        for q in self.CLEAR_QUERIES:
-            clear_confs.append(triage(GraphState(query=q, user_id="eval-user"))["intent_confidence"])
-        for q in self.AMBIGUOUS_QUERIES:
-            ambig_confs.append(triage(GraphState(query=q, user_id="eval-user"))["intent_confidence"])
+        clear_confs = [
+            _classify({"query": q, "expected_intent": "markers"})["predicted_confidence"]
+            for q in self.CLEAR_QUERIES
+        ]
+        ambig_confs = [
+            _classify({"query": q, "expected_intent": "general_health"})["predicted_confidence"]
+            for q in self.AMBIGUOUS_QUERIES
+        ]
 
         avg_clear = sum(clear_confs) / len(clear_confs)
         avg_ambig = sum(ambig_confs) / len(ambig_confs)
@@ -478,7 +483,6 @@ class TestMultiIntentDetection:
     def test_single_intent_not_split(self, case):
         """Single-intent queries should not be falsely detected as multi-intent."""
         result = _classify(case)
-        # Allow either correct single-intent OR acceptable alternative
         acceptable = case.get("acceptable_intents", [case["expected_intent"]])
         is_acceptable = (
             result["predicted_intent"] in acceptable
