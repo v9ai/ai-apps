@@ -20,12 +20,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.pare
 from deepseek_client import DeepSeekClient, ChatMessage, DeepSeekConfig  # noqa: E402
 
 
+ROMANIAN_INSTRUCTION = (
+    "IMPORTANT: Respond entirely in Romanian. Every string field in your JSON output "
+    "must be written in natural, fluent Romanian. Do not translate proper nouns, "
+    "people's names, or citation identifiers."
+)
+
+
 class HabitsState(TypedDict, total=False):
     # Required: one of these must be provided
     family_member_id: int
     issue_id: int          # optional — focus generation on a specific issue
     user_email: str
     count: int             # how many habits to generate (default 5)
+    language: str          # "en" | "ro"
     # Internal
     _prompt: str
     _resolved_family_member_id: int  # resolved from issue if not provided
@@ -253,6 +261,9 @@ async def collect_data(state: HabitsState) -> dict:
         "",
         "Keep titles concise (3-6 words). Descriptions explain the therapeutic benefit (1-2 sentences).",
     ]
+
+    if state.get("language") == "ro":
+        prompt_parts = [ROMANIAN_INSTRUCTION, ""] + prompt_parts
 
     prompt = "\n".join(str(p) for p in prompt_parts)
 
