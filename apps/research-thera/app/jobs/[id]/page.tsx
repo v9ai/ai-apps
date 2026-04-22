@@ -207,6 +207,14 @@ export default function JobDetailPage() {
           <Flex direction="column" gap="3" p="4">
             <Heading size="3">Result</Heading>
             <Separator size="4" />
+            {typeof job.result.message === "string" && job.result.message.length > 0 && (
+              <Flex direction="column" gap="1">
+                <Text size="1" color="gray" weight="medium">Message</Text>
+                <Text size="2" style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}>
+                  {job.result.message}
+                </Text>
+              </Flex>
+            )}
             <Flex gap="5" wrap="wrap">
               {job.result.stage && (
                 <Flex direction="column" gap="1">
