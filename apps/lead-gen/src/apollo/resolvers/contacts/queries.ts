@@ -2,10 +2,25 @@
  * Contact query resolvers.
  */
 
+import { GraphQLError } from "graphql";
 import { contacts, contactEmails, messages, receivedEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";
 import { eq, and, like, or, count, desc, asc, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
+import { isAdminEmail } from "@/lib/admin";
+
+function requireAdmin(context: GraphQLContext): void {
+  if (!context.userId) {
+    throw new GraphQLError("Authentication required", {
+      extensions: { code: "UNAUTHENTICATED" },
+    });
+  }
+  if (!isAdminEmail(context.userEmail)) {
+    throw new GraphQLError("Admin access required", {
+      extensions: { code: "FORBIDDEN" },
+    });
+  }
+}
 
 export const contactQueries = {
   async contacts(
@@ -19,6 +34,8 @@ export const contactQueries = {
     },
     context: GraphQLContext,
   ) {
+    requireAdmin(context);
+
     const limit = Math.min(args.limit ?? 50, 200);
     const offset = args.offset ?? 0;
 
