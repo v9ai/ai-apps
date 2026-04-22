@@ -2,6 +2,7 @@ mutation GenerateRecommendedBooks($goalId: Int!) {
   generateRecommendedBooks(goalId: $goalId) {
     success
     message
+    jobId
     books {
       id
       goalId

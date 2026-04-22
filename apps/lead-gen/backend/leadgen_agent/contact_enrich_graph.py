@@ -364,6 +364,44 @@ Rules:
     return {"tags": derived}
 
 
+def _persist_papers_and_tags(
+    contact_id: int,
+    papers: list[dict[str, Any]],
+    tags: list[str],
+    enriched_at: str,
+) -> bool:
+    """Write papers / papers_enriched_at / tags for ``contact_id``.
+
+    Mirrors the columns the TypeScript resolver in
+    ``src/apollo/resolvers/contacts/mutations.ts:enrichContactPapersAndTags``
+    would have written — safe to run alongside it (same data, idempotent).
+    ``tags`` is stored as a JSON string (the column is ``text``-typed with
+    stringified JSON, not ``jsonb``) to match the existing convention.
+    """
+    dsn = os.environ.get("NEON_DATABASE_URL", "").strip()
+    if not dsn:
+        return False
+    try:
+        with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE contacts "
+                    "SET papers = %s::jsonb, papers_enriched_at = %s, "
+                    "    tags = %s, updated_at = NOW() "
+                    "WHERE id = %s",
+                    (
+                        json.dumps(papers),
+                        enriched_at,
+                        json.dumps(tags),
+                        contact_id,
+                    ),
+                )
+                return cur.rowcount > 0
+    except psycopg.Error as e:
+        log.warning("failed to persist papers/tags for %s: %s", contact_id, e)
+        return False
+
+
 async def synthesize(state: ContactEnrichState) -> dict:
     existing = state.get("existing_tags") or []
     derived = state.get("tags") or []
@@ -383,10 +421,22 @@ async def synthesize(state: ContactEnrichState) -> dict:
     existing_keys = {t.strip().lower() for t in existing if isinstance(t, str)}
     tags_added = [t for t in derived if isinstance(t, str) and t.strip().lower() not in existing_keys]
 
+    enriched_at = datetime.now(timezone.utc).isoformat()
+    papers = state.get("papers") or []
+
+    # Persist papers + tags to Postgres ourselves — the graph is the single
+    # writer now (per the "python-only" direction). Skip on error so we don't
+    # blow away prior data with empty arrays from a failed run.
+    if not state.get("error"):
+        contact = state.get("contact") or {}
+        contact_id = contact.get("id")
+        if isinstance(contact_id, int):
+            _persist_papers_and_tags(contact_id, papers, merged, enriched_at)
+
     return {
         "tags": merged,
         "tags_added": tags_added,
-        "enriched_at": datetime.now(timezone.utc).isoformat(),
+        "enriched_at": enriched_at,
         # Re-emit so the caller's final state always carries these fields,
         # even when the resolve node ran on an earlier turn.
         "github_handle": state.get("github_handle") or "",

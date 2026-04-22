@@ -782,6 +782,7 @@ export type GenerateQuestionsResult = {
 export type GenerateRecommendedBooksResult = {
   __typename?: 'GenerateRecommendedBooksResult';
   books: Array<RecommendedBook>;
+  jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -3226,6 +3227,7 @@ export type GenerateQuestionsResultResolvers<ContextType = GraphQLContext, Paren
 
 export type GenerateRecommendedBooksResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateRecommendedBooksResult'] = ResolversParentTypes['GenerateRecommendedBooksResult']> = {
   books?: Resolver<Array<ResolversTypes['RecommendedBook']>, ParentType, ContextType>;
+  jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  Box,
   Flex,
   Heading,
   Text,
@@ -18,6 +19,7 @@ import {
   useGetJournalRecommendedBooksQuery,
   useGenerateJournalRecommendedBooksMutation,
   useDeleteJournalRecommendedBooksMutation,
+  useGetGenerationJobQuery,
 } from "@/app/__generated__/hooks";
 
 interface JournalRecommendedBooksSectionProps {
@@ -48,26 +50,54 @@ export default function JournalRecommendedBooksSection({
   });
   const books = data?.recommendedBooks ?? [];
 
-  const [generateBooks, { loading: generating }] = useGenerateJournalRecommendedBooksMutation({
-    onCompleted: () => refetch(),
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  const [generateBooks, { loading: starting }] = useGenerateJournalRecommendedBooksMutation({
+    onCompleted: (res) => {
+      const newJobId = res.generateRecommendedBooks.jobId ?? null;
+      if (newJobId) setJobId(newJobId);
+    },
   });
 
   const [deleteBooks, { loading: deleting }] = useDeleteJournalRecommendedBooksMutation({
     onCompleted: () => refetch(),
   });
 
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const { data: jobData, stopPolling } = useGetGenerationJobQuery({
+    variables: { id: jobId! },
+    skip: !jobId,
+    pollInterval: 2000,
+    notifyOnNetworkStatusChange: true,
+    fetchPolicy: "network-only",
+  });
+
+  const jobStatus = jobData?.generationJob?.status;
+  const isRunning = !!jobId && jobStatus !== "SUCCEEDED" && jobStatus !== "FAILED";
+
+  useEffect(() => {
+    if (!jobId || !jobStatus) return;
+    if (jobStatus === "SUCCEEDED") {
+      stopPolling();
+      setJobId(null);
+      setMessage({ text: "Books recommended.", type: "success" });
+      refetch();
+    } else if (jobStatus === "FAILED") {
+      stopPolling();
+      setJobId(null);
+      setMessage({
+        text: jobData?.generationJob?.error?.message ?? "Failed to generate recommendations.",
+        type: "error",
+      });
+    }
+  }, [jobId, jobStatus, jobData, refetch, stopPolling]);
+
+  const generating = starting || isRunning;
 
   const handleGenerate = async () => {
     setMessage(null);
     try {
-      const result = await generateBooks({ variables: { journalEntryId } });
-      const res = result.data?.generateRecommendedBooks;
-      if (res?.success) {
-        setMessage({ text: res.message || "Books recommended.", type: "success" });
-      } else {
-        setMessage({ text: res?.message || "Failed to generate recommendations.", type: "error" });
-      }
+      await generateBooks({ variables: { journalEntryId } });
     } catch (err: any) {
       setMessage({ text: err.message || "Error generating recommendations.", type: "error" });
     }
@@ -132,6 +162,15 @@ export default function JournalRecommendedBooksSection({
           <Text size="2" color="gray">
             Generate research first to unlock book recommendations.
           </Text>
+        )}
+
+        {generating && (
+          <Flex direction="column" gap="2">
+            <Text size="2" color="gray">Generating book recommendations...</Text>
+            <Box style={{ height: 6, borderRadius: 3, background: "var(--gray-4)", overflow: "hidden" }}>
+              <Box style={{ height: "100%", width: "40%", background: "var(--indigo-9)", borderRadius: 3, animation: "researchSweep 1.4s ease-in-out infinite" }} />
+            </Box>
+          </Flex>
         )}
 
         {message && (

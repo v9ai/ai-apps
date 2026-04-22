@@ -788,6 +788,7 @@ export type GenerateQuestionsResult = {
 export type GenerateRecommendedBooksResult = {
   __typename?: 'GenerateRecommendedBooksResult';
   books: Array<RecommendedBook>;
+  jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -2745,7 +2746,7 @@ export type GenerateJournalRecommendedBooksMutationVariables = Exact<{
 }>;
 
 
-export type GenerateJournalRecommendedBooksMutation = { __typename?: 'Mutation', generateRecommendedBooks: { __typename?: 'GenerateRecommendedBooksResult', success: boolean, message?: string | null, books: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, journalEntryId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string }> } };
+export type GenerateJournalRecommendedBooksMutation = { __typename?: 'Mutation', generateRecommendedBooks: { __typename?: 'GenerateRecommendedBooksResult', success: boolean, message?: string | null, jobId?: string | null, books: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, journalEntryId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string }> } };
 
 export type GenerateLongFormTextMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -2788,7 +2789,7 @@ export type GenerateRecommendedBooksMutationVariables = Exact<{
 }>;
 
 
-export type GenerateRecommendedBooksMutation = { __typename?: 'Mutation', generateRecommendedBooks: { __typename?: 'GenerateRecommendedBooksResult', success: boolean, message?: string | null, books: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string }> } };
+export type GenerateRecommendedBooksMutation = { __typename?: 'Mutation', generateRecommendedBooks: { __typename?: 'GenerateRecommendedBooksResult', success: boolean, message?: string | null, jobId?: string | null, books: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string }> } };
 
 export type GenerateResearchMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -5561,6 +5562,7 @@ export const GenerateJournalRecommendedBooksDocument = gql`
   generateRecommendedBooks(journalEntryId: $journalEntryId) {
     success
     message
+    jobId
     books {
       id
       goalId
@@ -5778,6 +5780,7 @@ export const GenerateRecommendedBooksDocument = gql`
   generateRecommendedBooks(goalId: $goalId) {
     success
     message
+    jobId
     books {
       id
       goalId

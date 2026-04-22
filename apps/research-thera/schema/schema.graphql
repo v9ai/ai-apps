@@ -672,6 +672,7 @@ type DeleteQuestionsResult {
 type GenerateRecommendedBooksResult {
   success: Boolean!
   message: String
+  jobId: String
   books: [RecommendedBook!]!
 }
 

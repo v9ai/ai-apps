@@ -702,6 +702,7 @@ type GenerateQuestionsResult {
 
 type GenerateRecommendedBooksResult {
   books: [RecommendedBook!]!
+  jobId: String
   message: String
   success: Boolean!
 }
