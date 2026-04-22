@@ -73,7 +73,7 @@ export async function deleteMedicalLetter(letterId: string, doctorId: string) {
 
   if (!letter) return;
 
-  await deleteFile(letter.filePath);
+  await deleteFromR2(letter.filePath, { bucket: R2_BUCKET });
   await db.delete(medicalLetters).where(eq(medicalLetters.id, letterId));
 
   revalidatePath(`/doctors/${doctorId}`);
