@@ -10,7 +10,13 @@ import type { GraphQLContext } from "../../context";
 export const contactQueries = {
   async contacts(
     _parent: unknown,
-    args: { companyId?: number; search?: string; limit?: number; offset?: number },
+    args: {
+      companyId?: number;
+      search?: string;
+      tag?: string;
+      limit?: number;
+      offset?: number;
+    },
     context: GraphQLContext,
   ) {
     const limit = Math.min(args.limit ?? 50, 200);
@@ -29,6 +35,15 @@ export const contactQueries = {
           like(contacts.email, term),
           like(contacts.company, term),
         ),
+      );
+    }
+    if (args.tag) {
+      // `tags` is a text column holding a JSON array. Containment via
+      // `jsonb_build_array($tag::text)` is driver-safe (no need to
+      // pre-serialize a JSON string parameter, which some Postgres drivers
+      // re-escape and break the `::jsonb` cast).
+      conditions.push(
+        sql`${contacts.tags}::jsonb @> jsonb_build_array(${args.tag}::text)`,
       );
     }
 

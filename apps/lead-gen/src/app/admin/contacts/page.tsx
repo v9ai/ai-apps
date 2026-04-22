@@ -8,6 +8,7 @@ import {
   useDeleteContactMutation,
 } from "@/__generated__/hooks";
 import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import {
@@ -42,6 +43,12 @@ export default function AdminContactsPage() {
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const activeTag = searchParams.get("tag") || null;
+
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -55,9 +62,22 @@ export default function AdminContactsPage() {
     debounceRef.current = setTimeout(() => setDebouncedSearch(val), 300);
   }, []);
 
+  const setTag = useCallback(
+    (tag: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (tag) params.set("tag", tag);
+      else params.delete("tag");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+      setPage(0);
+    },
+    [searchParams, router, pathname],
+  );
+
   const { data, loading, refetch } = useGetContactsQuery({
     variables: {
       search: debouncedSearch || undefined,
+      tag: activeTag || undefined,
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
     },
@@ -137,10 +157,32 @@ export default function AdminContactsPage() {
         </Dialog.Root>
       </Flex>
 
-      <Flex align="center" justify="between" gap="3" mb="4">
-        <Text size="2" color="gray">
-          {loading ? "Loading…" : `${totalCount} contact${totalCount !== 1 ? "s" : ""}`}
-        </Text>
+      <Flex align="center" justify="between" gap="3" mb="4" wrap="wrap">
+        <Flex align="center" gap="2" wrap="wrap">
+          <Text size="2" color="gray">
+            {loading ? "Loading…" : `${totalCount} contact${totalCount !== 1 ? "s" : ""}`}
+          </Text>
+          <button
+            className={button({ variant: activeTag === "papers" ? "solid" : "outline", size: "sm" })}
+            onClick={() => setTag(activeTag === "papers" ? null : "papers")}
+            aria-pressed={activeTag === "papers"}
+          >
+            Papers
+          </button>
+          {activeTag && activeTag !== "papers" && (
+            <Badge color="blue" variant="soft" size="1">
+              tag: {activeTag}
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
+                onClick={() => setTag(null)}
+                style={{ padding: 0, marginLeft: 4 }}
+                aria-label="Clear tag filter"
+              >
+                ×
+              </button>
+            </Badge>
+          )}
+        </Flex>
         <Box style={{ width: 280 }}>
           <TextField.Root
             size="2"
@@ -205,7 +247,20 @@ export default function AdminContactsPage() {
                     {contact.tags && contact.tags.length > 0 && (
                       <Flex gap="1" mt="2" wrap="wrap">
                         {contact.tags.map((tag) => (
-                          <Badge key={tag} color="gray" variant="surface" size="1">{tag}</Badge>
+                          <Badge
+                            key={tag}
+                            color={activeTag === tag ? "blue" : "gray"}
+                            variant={activeTag === tag ? "soft" : "surface"}
+                            size="1"
+                            onClick={(ev) => {
+                              ev.preventDefault();
+                              ev.stopPropagation();
+                              setTag(activeTag === tag ? null : tag);
+                            }}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {tag}
+                          </Badge>
                         ))}
                       </Flex>
                     )}

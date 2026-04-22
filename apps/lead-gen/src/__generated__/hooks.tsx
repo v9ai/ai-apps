@@ -2249,6 +2249,7 @@ export type QueryContactsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  tag?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3980,6 +3981,7 @@ export type CancelScheduledEmailMutation = { __typename?: 'Mutation', cancelSche
 export type GetContactsQueryVariables = Exact<{
   companyId?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  tag?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
 }>;
@@ -6441,8 +6443,14 @@ export type CancelScheduledEmailMutationHookResult = ReturnType<typeof useCancel
 export type CancelScheduledEmailMutationResult = Apollo.MutationResult<CancelScheduledEmailMutation>;
 export type CancelScheduledEmailMutationOptions = Apollo.BaseMutationOptions<CancelScheduledEmailMutation, CancelScheduledEmailMutationVariables>;
 export const GetContactsDocument = gql`
-    query GetContacts($companyId: Int, $search: String, $limit: Int, $offset: Int) {
-  contacts(companyId: $companyId, search: $search, limit: $limit, offset: $offset) {
+    query GetContacts($companyId: Int, $search: String, $tag: String, $limit: Int, $offset: Int) {
+  contacts(
+    companyId: $companyId
+    search: $search
+    tag: $tag
+    limit: $limit
+    offset: $offset
+  ) {
     contacts {
       id
       slug
@@ -6487,6 +6495,7 @@ export const GetContactsDocument = gql`
  *   variables: {
  *      companyId: // value for 'companyId'
  *      search: // value for 'search'
+ *      tag: // value for 'tag'
  *      limit: // value for 'limit'
  *      offset: // value for 'offset'
  *   },
