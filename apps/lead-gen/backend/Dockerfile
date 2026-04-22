@@ -20,6 +20,10 @@ RUN apt-get update \
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Playwright's Chromium is needed by AsyncChromiumLoader in competitor_loader.
+# `--with-deps` pulls the OS libs Chromium needs on slim Debian (~350 MB total).
+RUN python -m playwright install --with-deps chromium
+
 COPY app.py ./
 COPY leadgen_agent ./leadgen_agent
 
