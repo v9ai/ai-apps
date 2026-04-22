@@ -943,7 +943,6 @@ type DeleteFamilyMemberResult {
 }
 
 enum FamilyMemberShareRole {
-  VIEWER
   EDITOR
 }
 

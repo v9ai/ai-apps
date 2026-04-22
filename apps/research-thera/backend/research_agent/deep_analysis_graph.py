@@ -25,6 +25,7 @@ class DeepAnalysisState(TypedDict, total=False):
     family_member_id: int
     trigger_issue_id: Optional[int]
     user_email: str
+    language: str  # "en" | "ro"
     # Internal
     _prompt: str
     _data_snapshot: str  # JSON
@@ -33,6 +34,13 @@ class DeepAnalysisState(TypedDict, total=False):
     analysis: str  # JSON — full structured analysis
     analysis_id: int
     error: str
+
+
+ROMANIAN_INSTRUCTION = (
+    "IMPORTANT: Respond entirely in Romanian. Every string field in your JSON output "
+    "must be written in natural, fluent Romanian. Do not translate proper nouns, "
+    "people's names, or citation identifiers."
+)
 
 
 def _conn_str() -> str:
@@ -418,6 +426,10 @@ ATTRIBUTION CHECK — before writing the summary, verify for each issue:
 State the profiled member's role clearly in the summary. Do not attribute another person's actions to the profiled member.
 
 Write the analysis in the same language as the majority of the input data.""")
+
+    # Prepend Romanian instruction if requested (matches TS sections.unshift).
+    if state.get("language") == "ro":
+        sections.insert(0, ROMANIAN_INSTRUCTION)
 
     prompt = "\n\n".join(sections)
 
