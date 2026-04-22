@@ -7,7 +7,7 @@ import { createResearchSourceResolver } from "@/src/adapters/research-resolver.a
 import { createStorageAdapter } from "@/src/adapters/storage.adapter";
 import type { LinkedSourceRef } from "@/src/tools/generic-claim-cards.tools";
 
-export const checkNoteClaims: NonNullable<MutationResolvers['checkNoteClaims']> = async (_parent, { input }, _ctx) => {
+export const checkNoteClaims: NonNullable<MutationResolvers['checkNoteClaims']> = async (_parent, { input }, ctx) => {
   const {
     noteId,
     maxClaims = 12,
@@ -17,9 +17,19 @@ export const checkNoteClaims: NonNullable<MutationResolvers['checkNoteClaims']> 
     sources,
   } = input;
 
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
+    return {
+      success: false,
+      message: `Note ${noteId} not found`,
+      cards: [],
+      noteId,
+    };
+  }
+
   try {
-    // 1. Fetch the note
-    const noteRows = await sql`SELECT * FROM notes WHERE id = ${noteId}`;
+    // 1. Fetch the note (owner-only — do not allow note-share bypass for claim checking)
+    const noteRows = await sql`SELECT * FROM notes WHERE id = ${noteId} AND user_id = ${userEmail}`;
 
     if (noteRows.length === 0) {
       return {

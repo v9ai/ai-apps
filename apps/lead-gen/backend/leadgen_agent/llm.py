@@ -76,8 +76,57 @@ def _parse_json(text: str) -> Any:
     try:
         return json.loads(text)
     except json.JSONDecodeError:
-        # Fallback: grab the first {...} or [...] block.
-        match = re.search(r"(\{.*\}|\[.*\])", text, re.DOTALL)
-        if match:
-            return json.loads(match.group(1))
-        raise
+        pass
+    # Fallback 1: grab the first balanced {...} or [...] block.
+    block = _extract_json_block(text)
+    if block:
+        try:
+            return json.loads(block)
+        except json.JSONDecodeError:
+            text = block
+    # Fallback 2: json-repair handles unescaped quotes, trailing commas,
+    # truncated output, and similar Qwen/MLX quirks.
+    from json_repair import repair_json  # lazy import
+
+    repaired = repair_json(text, return_objects=True)
+    if repaired in ("", None):
+        raise json.JSONDecodeError("Unrecoverable JSON", text, 0)
+    return repaired
+
+
+def _extract_json_block(text: str) -> str | None:
+    """Find the largest brace/bracket-balanced span. Ignores braces inside
+    double-quoted strings (with \\ escapes)."""
+    start = None
+    open_ch = None
+    for i, ch in enumerate(text):
+        if ch in "{[":
+            start = i
+            open_ch = ch
+            break
+    if start is None:
+        return None
+    close_ch = "}" if open_ch == "{" else "]"
+    depth = 0
+    in_str = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_str:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+            continue
+        if ch == open_ch:
+            depth += 1
+        elif ch == close_ch:
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None

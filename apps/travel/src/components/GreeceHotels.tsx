@@ -61,6 +61,34 @@ function Lightbox({ images, startIndex, onClose }: LightboxProps) {
     };
   }, [onClose, prev, next]);
 
+  const touchStartX = useRef<number | null>(null);
+  const touchMoved = useRef<boolean>(false);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchMoved.current = false;
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    if (Math.abs(e.touches[0].clientX - touchStartX.current) > 10) {
+      touchMoved.current = true;
+    }
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
+    if (dx > 0) prev();
+    else next();
+  };
+  const onBackdropClick = () => {
+    if (touchMoved.current) {
+      touchMoved.current = false;
+      return;
+    }
+    onClose();
+  };
+
   return (
     <div
       className={css({
@@ -72,8 +100,12 @@ function Lightbox({ images, startIndex, onClose }: LightboxProps) {
         justifyContent: "center",
         bg: "rgba(0, 0, 0, 0.92)",
         backdropFilter: "blur(12px)",
+        touchAction: "pan-y",
       })}
-      onClick={onClose}
+      onClick={onBackdropClick}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
       {/* Close button */}
       <button
