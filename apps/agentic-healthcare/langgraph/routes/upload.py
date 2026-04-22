@@ -36,9 +36,6 @@ from config import settings
 from db import (
     delete_blood_test,
     get_blood_test_file_path,
-    insert_blood_markers,
-    insert_blood_test,
-    update_blood_test_status,
     upsert_blood_marker_embedding,
     upsert_blood_test_embedding,
     upsert_health_state_embedding,
@@ -51,8 +48,7 @@ from embeddings import (
     get_embed_model,
 )
 from ingestion_pipeline import BloodTestNodeParser, build_ingestion_pipeline
-from parsers import Marker, parse_markers
-from storage import delete_file, upload_file
+from storage import delete_file
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
