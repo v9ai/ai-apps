@@ -31,7 +31,6 @@ import logging
 import re
 from typing import Any
 
-from llama_index.core import Settings
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from llama_index.core.chat_engine import ContextChatEngine
 from llama_index.core.postprocessor import SimilarityPostprocessor
