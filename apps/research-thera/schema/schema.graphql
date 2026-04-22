@@ -1640,7 +1640,7 @@ type DiscussionGuide {
 type PublicDiscussionGuideResult {
   entryTitle: String
   familyMemberName: String
-  guide: DiscussionGuide!
+  guide: DiscussionGuide
 }
 
 type DevelopmentalContext {
