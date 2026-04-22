@@ -103,6 +103,16 @@ class ScoreContactState(TypedDict, total=False):
     reasons: list[str]
 
 
+class ClassifyPaperState(TypedDict, total=False):
+    # input
+    title: str
+    abstract: str
+    # output
+    is_sales_leadgen: bool
+    confidence: float  # 0.0 – 1.0
+    reasons: list[str]  # <= 3 short bullets
+
+
 class ContactEnrichState(TypedDict, total=False):
     # input
     contact_id: int

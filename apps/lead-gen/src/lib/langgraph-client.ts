@@ -98,6 +98,12 @@ export interface ContactEnrichResult {
   error?: string | null;
 }
 
+export interface ClassifyPaperResult {
+  is_sales_leadgen: boolean;
+  confidence: number;
+  reasons: string[];
+}
+
 export interface DeepICPCriterion {
   score: number;
   confidence: number;
@@ -263,6 +269,20 @@ export function enrichContactPapers(input: {
     // exceed the 60s default on cold OpenAlex responses.
     { timeoutMs: 120_000 },
   );
+}
+
+/**
+ * Classify whether a single paper is about B2B sales / lead-gen / outbound.
+ * Used to verify `tag:papers` contacts imported from the 2025–2026 corpus.
+ */
+export function classifyPaper(input: {
+  title: string;
+  abstract?: string;
+}): Promise<ClassifyPaperResult> {
+  return runGraph<ClassifyPaperResult>("classify_paper", {
+    title: input.title,
+    abstract: input.abstract ?? "",
+  });
 }
 
 /**

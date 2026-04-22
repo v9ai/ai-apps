@@ -11,7 +11,8 @@
     "icp_team": "leadgen_agent.icp_team_graph:graph",
     "competitors_team": "leadgen_agent.competitors_team_graph:graph",
     "contact_enrich": "leadgen_agent.contact_enrich_graph:graph",
-    "contact_enrich_sales": "leadgen_agent.contact_enrich_sales_graph:graph"
+    "contact_enrich_sales": "leadgen_agent.contact_enrich_sales_graph:graph",
+    "classify_paper": "leadgen_agent.classify_paper_graph:graph"
   },
   "http": { "app": "leadgen_agent.custom_app:app" },
   "env": ".env"
