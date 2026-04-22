@@ -1,0 +1,7 @@
+mutation DeleteJournalRecommendedBooks($journalEntryId: Int!) {
+  deleteRecommendedBooks(journalEntryId: $journalEntryId) {
+    success
+    message
+    deletedCount
+  }
+}

@@ -4,6 +4,7 @@ import { runGraphAndWait } from "@/src/lib/langgraph-client";
 type BookResult = {
   id: number;
   goalId: number | null;
+  journalEntryId: number | null;
   title: string;
   authors: string[];
   year: number | null;
@@ -29,12 +30,20 @@ export const generateRecommendedBooks: NonNullable<MutationResolvers['generateRe
     throw new Error("Authentication required");
   }
 
-  const goalId = args.goalId;
+  const { goalId, journalEntryId } = args;
+  if (!goalId && !journalEntryId) {
+    return {
+      success: false,
+      message: "goalId or journalEntryId is required",
+      books: [],
+    };
+  }
 
-  // All generation + DB persistence happens inside the Python books_graph.
-  const result = (await runGraphAndWait("books", {
-    input: { goal_id: goalId, user_email: userEmail },
-  })) as BooksGraphResponse;
+  const input: Record<string, unknown> = { user_email: userEmail };
+  if (goalId) input.goal_id = goalId;
+  if (journalEntryId) input.journal_entry_id = journalEntryId;
+
+  const result = (await runGraphAndWait("books", { input })) as BooksGraphResponse;
 
   return {
     success: Boolean(result.success),

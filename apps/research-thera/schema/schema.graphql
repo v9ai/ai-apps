@@ -77,7 +77,7 @@ type Query {
   allTags: [String!]!
   research(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int): [Research!]!
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
-  recommendedBooks(goalId: Int!): [RecommendedBook!]!
+  recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
   allRecommendedBooks(category: String): [RecommendedBook!]!
   notes(entityId: Int!, entityType: String!): [Note!]!
   allNotes: [Note!]!
@@ -171,8 +171,8 @@ type Mutation {
   deleteResearch(goalId: Int!): DeleteResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
-  generateRecommendedBooks(goalId: Int!): GenerateRecommendedBooksResult!
-  deleteRecommendedBooks(goalId: Int!): DeleteRecommendedBooksResult!
+  generateRecommendedBooks(goalId: Int, journalEntryId: Int): GenerateRecommendedBooksResult!
+  deleteRecommendedBooks(goalId: Int, journalEntryId: Int): DeleteRecommendedBooksResult!
   generateLongFormText(
     goalId: Int
     issueId: Int
@@ -374,6 +374,7 @@ type Goal {
 type RecommendedBook {
   id: Int!
   goalId: Int
+  journalEntryId: Int
   title: String!
   authors: [String!]!
   year: Int

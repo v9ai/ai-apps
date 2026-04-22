@@ -1,0 +1,20 @@
+mutation GenerateJournalRecommendedBooks($journalEntryId: Int!) {
+  generateRecommendedBooks(journalEntryId: $journalEntryId) {
+    success
+    message
+    books {
+      id
+      goalId
+      journalEntryId
+      title
+      authors
+      year
+      isbn
+      description
+      whyRecommended
+      category
+      amazonUrl
+      generatedAt
+    }
+  }
+}

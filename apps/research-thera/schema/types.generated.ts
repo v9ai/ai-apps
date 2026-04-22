@@ -1287,7 +1287,8 @@ export type MutationdeleteNoteArgs = {
 
 
 export type MutationdeleteRecommendedBooksArgs = {
-  goalId: Scalars['Int']['input'];
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1384,7 +1385,8 @@ export type MutationgenerateParentAdviceArgs = {
 
 
 export type MutationgenerateRecommendedBooksArgs = {
-  goalId: Scalars['Int']['input'];
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1945,7 +1947,8 @@ export type QuerypublicDiscussionGuideArgs = {
 
 
 export type QueryrecommendedBooksArgs = {
-  goalId: Scalars['Int']['input'];
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2010,6 +2013,7 @@ export type RecommendedBook = {
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
   isbn?: Maybe<Scalars['String']['output']>;
+  journalEntryId?: Maybe<Scalars['Int']['output']>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
   whyRecommended: Scalars['String']['output'];
@@ -3461,7 +3465,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteJournalAnalysis?: Resolver<ResolversTypes['DeleteJournalAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteJournalAnalysisArgs, 'journalEntryId'>>;
   deleteJournalEntry?: Resolver<ResolversTypes['DeleteJournalEntryResult'], ParentType, ContextType, RequireFields<MutationdeleteJournalEntryArgs, 'id'>>;
   deleteNote?: Resolver<ResolversTypes['DeleteNoteResult'], ParentType, ContextType, RequireFields<MutationdeleteNoteArgs, 'id'>>;
-  deleteRecommendedBooks?: Resolver<ResolversTypes['DeleteRecommendedBooksResult'], ParentType, ContextType, RequireFields<MutationdeleteRecommendedBooksArgs, 'goalId'>>;
+  deleteRecommendedBooks?: Resolver<ResolversTypes['DeleteRecommendedBooksResult'], ParentType, ContextType, Partial<MutationdeleteRecommendedBooksArgs>>;
   deleteRelationship?: Resolver<ResolversTypes['DeleteRelationshipResult'], ParentType, ContextType, RequireFields<MutationdeleteRelationshipArgs, 'id'>>;
   deleteResearch?: Resolver<ResolversTypes['DeleteResearchResult'], ParentType, ContextType, RequireFields<MutationdeleteResearchArgs, 'goalId'>>;
   deleteStory?: Resolver<ResolversTypes['DeleteStoryResult'], ParentType, ContextType, RequireFields<MutationdeleteStoryArgs, 'id'>>;
@@ -3477,7 +3481,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateLongFormText?: Resolver<ResolversTypes['GenerateLongFormTextResult'], ParentType, ContextType, Partial<MutationgenerateLongFormTextArgs>>;
   generateOpenAIAudio?: Resolver<ResolversTypes['GenerateOpenAIAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateOpenAIAudioArgs, 'input'>>;
   generateParentAdvice?: Resolver<ResolversTypes['GenerateParentAdviceResult'], ParentType, ContextType, RequireFields<MutationgenerateParentAdviceArgs, 'goalId'>>;
-  generateRecommendedBooks?: Resolver<ResolversTypes['GenerateRecommendedBooksResult'], ParentType, ContextType, RequireFields<MutationgenerateRecommendedBooksArgs, 'goalId'>>;
+  generateRecommendedBooks?: Resolver<ResolversTypes['GenerateRecommendedBooksResult'], ParentType, ContextType, Partial<MutationgenerateRecommendedBooksArgs>>;
   generateResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, Partial<MutationgenerateResearchArgs>>;
   generateTherapeuticQuestions?: Resolver<ResolversTypes['GenerateQuestionsResult'], ParentType, ContextType, Partial<MutationgenerateTherapeuticQuestionsArgs>>;
   linkContactToIssue?: Resolver<ResolversTypes['IssueContactLink'], ParentType, ContextType, RequireFields<MutationlinkContactToIssueArgs, 'contactId' | 'issueId'>>;
@@ -3661,7 +3665,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   note?: Resolver<Maybe<ResolversTypes['Note']>, ParentType, ContextType, Partial<QuerynoteArgs>>;
   notes?: Resolver<Array<ResolversTypes['Note']>, ParentType, ContextType, RequireFields<QuerynotesArgs, 'entityId' | 'entityType'>>;
   publicDiscussionGuide?: Resolver<Maybe<ResolversTypes['PublicDiscussionGuideResult']>, ParentType, ContextType, RequireFields<QuerypublicDiscussionGuideArgs, 'journalEntryId'>>;
-  recommendedBooks?: Resolver<Array<ResolversTypes['RecommendedBook']>, ParentType, ContextType, RequireFields<QueryrecommendedBooksArgs, 'goalId'>>;
+  recommendedBooks?: Resolver<Array<ResolversTypes['RecommendedBook']>, ParentType, ContextType, Partial<QueryrecommendedBooksArgs>>;
   relationship?: Resolver<Maybe<ResolversTypes['Relationship']>, ParentType, ContextType, RequireFields<QueryrelationshipArgs, 'id'>>;
   relationships?: Resolver<Array<ResolversTypes['Relationship']>, ParentType, ContextType, RequireFields<QueryrelationshipsArgs, 'subjectId' | 'subjectType'>>;
   research?: Resolver<Array<ResolversTypes['Research']>, ParentType, ContextType, Partial<QueryresearchArgs>>;
@@ -3684,6 +3688,7 @@ export type RecommendedBookResolvers<ContextType = GraphQLContext, ParentType ex
   goalId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   isbn?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  journalEntryId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   whyRecommended?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

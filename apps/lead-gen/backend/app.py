@@ -33,6 +33,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from leadgen_agent.admin_chat_graph import build_graph as build_admin_chat
 from leadgen_agent.competitors_team_graph import build_graph as build_competitors_team
+from leadgen_agent.contact_enrich_graph import build_graph as build_contact_enrich
 from leadgen_agent.deep_icp_graph import build_graph as build_deep_icp
 from leadgen_agent.email_compose_graph import build_graph as build_email_compose
 from leadgen_agent.email_outreach_graph import build_graph as build_email_outreach
@@ -77,6 +78,7 @@ async def lifespan(app: FastAPI):
         app.state.graphs = {
             "admin_chat": build_admin_chat(checkpointer),
             "competitors_team": build_competitors_team(checkpointer),
+            "contact_enrich": build_contact_enrich(checkpointer),
             "deep_icp": build_deep_icp(checkpointer),
             "email_compose": build_email_compose(checkpointer),
             "email_outreach": build_email_outreach(checkpointer),

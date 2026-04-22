@@ -38,6 +38,7 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
+import JournalRecommendedBooksSection from "./_components/JournalRecommendedBooksSection";
 
 const moodColor = (mood: string) =>
   (
@@ -894,6 +895,12 @@ function JournalEntryContent() {
           </Flex>
         </Card>
       )}
+
+      {/* Recommended Books */}
+      <JournalRecommendedBooksSection
+        journalEntryId={entry.id}
+        hasResearch={researchPapers.length > 0}
+      />
 
       {/* Generate Questions */}
       {researchPapers.length > 0 && (

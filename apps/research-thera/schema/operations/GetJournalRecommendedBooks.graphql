@@ -1,0 +1,18 @@
+query GetJournalRecommendedBooks($journalEntryId: Int!) {
+  recommendedBooks(journalEntryId: $journalEntryId) {
+    id
+    goalId
+    journalEntryId
+    title
+    authors
+    year
+    isbn
+    description
+    whyRecommended
+    category
+    amazonUrl
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}

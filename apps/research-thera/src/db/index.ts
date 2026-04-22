@@ -1305,13 +1305,28 @@ export async function deleteTherapeuticQuestions(goalId?: number, issueId?: numb
 // Recommended Books
 // ============================================
 
-export async function listRecommendedBooks(goalId: number) {
-  const rows = await neonSql`
-    SELECT * FROM recommended_books WHERE goal_id = ${goalId} ORDER BY created_at DESC
-  `;
-  return rows.map((row) => ({
+type RecommendedBookRow = {
+  id: number;
+  goalId: number | null;
+  journalEntryId: number | null;
+  title: string;
+  authors: string[];
+  year: number | null;
+  isbn: string | null;
+  description: string;
+  whyRecommended: string;
+  category: string;
+  amazonUrl: string | null;
+  generatedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+function mapRecommendedBook(row: Record<string, unknown>): RecommendedBookRow {
+  return {
     id: row.id as number,
     goalId: (row.goal_id as number) || null,
+    journalEntryId: (row.journal_entry_id as number) || null,
     title: row.title as string,
     authors: JSON.parse((row.authors as string) || "[]") as string[],
     year: (row.year as number) || null,
@@ -1323,12 +1338,27 @@ export async function listRecommendedBooks(goalId: number) {
     generatedAt: row.generated_at as string,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
-  }));
+  };
+}
+
+export async function listRecommendedBooks(goalId: number) {
+  const rows = await neonSql`
+    SELECT * FROM recommended_books WHERE goal_id = ${goalId} ORDER BY created_at DESC
+  `;
+  return rows.map(mapRecommendedBook);
+}
+
+export async function listRecommendedBooksForJournal(journalEntryId: number) {
+  const rows = await neonSql`
+    SELECT * FROM recommended_books WHERE journal_entry_id = ${journalEntryId} ORDER BY created_at DESC
+  `;
+  return rows.map(mapRecommendedBook);
 }
 
 export async function insertRecommendedBooks(
   books: Array<{
     goalId?: number;
+    journalEntryId?: number;
     title: string;
     authors: string[];
     year?: number;
@@ -1344,31 +1374,22 @@ export async function insertRecommendedBooks(
   for (const b of books) {
     const authorsJson = JSON.stringify(b.authors);
     const rows = await neonSql`
-      INSERT INTO recommended_books (goal_id, title, authors, year, isbn, description, why_recommended, category, amazon_url, generated_at, created_at, updated_at)
-      VALUES (${b.goalId ?? null}, ${b.title}, ${authorsJson}, ${b.year ?? null}, ${b.isbn ?? null}, ${b.description}, ${b.whyRecommended}, ${b.category}, ${b.amazonUrl ?? null}, ${now}, ${now}, ${now})
+      INSERT INTO recommended_books (goal_id, journal_entry_id, title, authors, year, isbn, description, why_recommended, category, amazon_url, generated_at, created_at, updated_at)
+      VALUES (${b.goalId ?? null}, ${b.journalEntryId ?? null}, ${b.title}, ${authorsJson}, ${b.year ?? null}, ${b.isbn ?? null}, ${b.description}, ${b.whyRecommended}, ${b.category}, ${b.amazonUrl ?? null}, ${now}, ${now}, ${now})
       RETURNING *
     `;
     if (rows[0]) inserted.push(rows[0]);
   }
-  return inserted.map((row) => ({
-    id: row.id as number,
-    goalId: (row.goal_id as number) || null,
-    title: row.title as string,
-    authors: JSON.parse((row.authors as string) || "[]") as string[],
-    year: (row.year as number) || null,
-    isbn: (row.isbn as string) || null,
-    description: row.description as string,
-    whyRecommended: row.why_recommended as string,
-    category: row.category as string,
-    amazonUrl: (row.amazon_url as string) || null,
-    generatedAt: row.generated_at as string,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
+  return inserted.map(mapRecommendedBook);
 }
 
 export async function deleteRecommendedBooks(goalId: number) {
   const rows = await neonSql`DELETE FROM recommended_books WHERE goal_id = ${goalId} RETURNING id`;
+  return rows.length;
+}
+
+export async function deleteRecommendedBooksForJournal(journalEntryId: number) {
+  const rows = await neonSql`DELETE FROM recommended_books WHERE journal_entry_id = ${journalEntryId} RETURNING id`;
   return rows.length;
 }
 
@@ -1377,29 +1398,15 @@ export async function listAllRecommendedBooks(options?: { category?: string }) {
   const rows = category
     ? await neonSql`
         SELECT * FROM recommended_books
-        WHERE goal_id IS NULL AND category = ${category}
+        WHERE goal_id IS NULL AND journal_entry_id IS NULL AND category = ${category}
         ORDER BY category ASC, created_at DESC
       `
     : await neonSql`
         SELECT * FROM recommended_books
-        WHERE goal_id IS NULL
+        WHERE goal_id IS NULL AND journal_entry_id IS NULL
         ORDER BY category ASC, created_at DESC
       `;
-  return rows.map((row) => ({
-    id: row.id as number,
-    goalId: (row.goal_id as number) || null,
-    title: row.title as string,
-    authors: JSON.parse((row.authors as string) || "[]") as string[],
-    year: (row.year as number) || null,
-    isbn: (row.isbn as string) || null,
-    description: row.description as string,
-    whyRecommended: row.why_recommended as string,
-    category: row.category as string,
-    amazonUrl: (row.amazon_url as string) || null,
-    generatedAt: row.generated_at as string,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
+  return rows.map(mapRecommendedBook);
 }
 
 export async function deleteRecommendedBooksByCategory(category: string, onlyOrphans = true) {

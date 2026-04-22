@@ -129,6 +129,7 @@ export const therapeuticQuestions = pgTable("therapeutic_questions", {
 export const recommendedBooks = pgTable("recommended_books", {
   id: serial("id").primaryKey(),
   goalId: integer("goal_id"),
+  journalEntryId: integer("journal_entry_id"),
   title: text("title").notNull(),
   authors: text("authors").notNull(), // JSON array
   year: integer("year"),

@@ -18,6 +18,9 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
+# Vendored local-path deps referenced by requirements.txt (e.g. research-client).
+# Copied before `pip install` so the local-path entries resolve.
+COPY vendor ./vendor
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Playwright's Chromium is needed by AsyncChromiumLoader in competitor_loader.

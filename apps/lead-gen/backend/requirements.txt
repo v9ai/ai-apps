@@ -1,5 +1,7 @@
 fastapi>=0.115
 uvicorn[standard]>=0.32
+json-repair>=0.59.4
+./vendor/research-client
 langchain>=0.3
 langchain-openai>=0.3
 langchain-core>=0.3

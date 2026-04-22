@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "vendor:sync": "rm -rf vendor/research-client && mkdir -p vendor && cp -R ../../../pypackages/research vendor/research-client",
+    "predeploy": "npm run vendor:sync",
     "deploy": "wrangler deploy",
     "tail": "wrangler tail"
   },

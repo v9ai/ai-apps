@@ -31,6 +31,7 @@ _VALID_CATEGORIES = {
 
 class BooksState(TypedDict, total=False):
     goal_id: int
+    journal_entry_id: int
     user_email: str
     # Internal
     _prompt: str
@@ -55,30 +56,60 @@ async def collect_data(state: BooksState) -> dict:
         return {}
 
     goal_id = state.get("goal_id")
+    journal_entry_id = state.get("journal_entry_id")
     user_email = state.get("user_email")
-    if not goal_id or not user_email:
-        return {"error": "goal_id and user_email are required"}
+    if not user_email or (not goal_id and not journal_entry_id):
+        return {"error": "user_email and (goal_id or journal_entry_id) are required"}
 
     conn_str = _conn_str()
     try:
         async with await psycopg.AsyncConnection.connect(conn_str) as conn:
             async with conn.cursor() as cur:
-                # Goal
-                await cur.execute(
-                    "SELECT id, title, description, family_member_id FROM goals WHERE id = %s AND user_id = %s",
-                    (goal_id, user_email),
-                )
-                goal_row = await cur.fetchone()
-                if not goal_row:
-                    return {"error": f"Goal {goal_id} not found"}
-                _, goal_title, goal_desc, family_member_id = goal_row
+                goal_title: str
+                goal_desc: Optional[str] = None
+                family_member_id: Optional[int] = None
 
-                # Research papers for the goal
-                await cur.execute(
-                    "SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level "
-                    "FROM therapy_research WHERE goal_id = %s ORDER BY relevance_score DESC LIMIT 10",
-                    (goal_id,),
-                )
+                if journal_entry_id:
+                    # Journal entry context stands in for the goal.
+                    await cur.execute(
+                        "SELECT id, title, content, mood, family_member_id FROM journal_entries "
+                        "WHERE id = %s AND user_id = %s",
+                        (journal_entry_id, user_email),
+                    )
+                    je_row = await cur.fetchone()
+                    if not je_row:
+                        return {"error": f"Journal entry {journal_entry_id} not found"}
+                    _, je_title, je_content, je_mood, family_member_id = je_row
+                    goal_title = je_title or "Journal reflection"
+                    desc_parts: list[str] = []
+                    if je_mood:
+                        desc_parts.append(f"Mood: {je_mood}")
+                    if je_content:
+                        desc_parts.append((je_content or "")[:800])
+                    goal_desc = "\n".join(desc_parts) if desc_parts else None
+
+                    await cur.execute(
+                        "SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level "
+                        "FROM therapy_research WHERE journal_entry_id = %s ORDER BY relevance_score DESC LIMIT 10",
+                        (journal_entry_id,),
+                    )
+                else:
+                    # Goal
+                    await cur.execute(
+                        "SELECT id, title, description, family_member_id FROM goals WHERE id = %s AND user_id = %s",
+                        (goal_id, user_email),
+                    )
+                    goal_row = await cur.fetchone()
+                    if not goal_row:
+                        return {"error": f"Goal {goal_id} not found"}
+                    _, goal_title, goal_desc, family_member_id = goal_row
+
+                    # Research papers for the goal
+                    await cur.execute(
+                        "SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level "
+                        "FROM therapy_research WHERE goal_id = %s ORDER BY relevance_score DESC LIMIT 10",
+                        (goal_id,),
+                    )
                 research_rows = await cur.fetchall()
                 if not research_rows:
                     return {
@@ -293,6 +324,7 @@ async def persist(state: dict) -> dict:
         return {}
 
     goal_id = state.get("goal_id")
+    journal_entry_id = state.get("journal_entry_id")
     conn_str = _conn_str()
     now_iso = datetime.now(timezone.utc).isoformat()
     inserted: list[dict] = []
@@ -304,6 +336,7 @@ async def persist(state: dict) -> dict:
             inserted.append({
                 "id": idx,
                 "goalId": goal_id,
+                "journalEntryId": journal_entry_id,
                 "title": b["title"],
                 "authors": b["authors"],
                 "year": b["year"],
@@ -329,11 +362,12 @@ async def persist(state: dict) -> dict:
                 for b in books_raw:
                     await cur.execute(
                         "INSERT INTO recommended_books "
-                        "(goal_id, title, authors, year, isbn, description, why_recommended, category, amazon_url, generated_at, created_at, updated_at) "
-                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-                        "RETURNING id, goal_id, title, authors, year, isbn, description, why_recommended, category, amazon_url, generated_at, created_at, updated_at",
+                        "(goal_id, journal_entry_id, title, authors, year, isbn, description, why_recommended, category, amazon_url, generated_at, created_at, updated_at) "
+                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                        "RETURNING id, goal_id, journal_entry_id, title, authors, year, isbn, description, why_recommended, category, amazon_url, generated_at, created_at, updated_at",
                         (
                             goal_id,
+                            journal_entry_id,
                             b["title"],
                             json.dumps(b["authors"]),
                             b["year"],
@@ -350,12 +384,13 @@ async def persist(state: dict) -> dict:
                     row = await cur.fetchone()
                     if row:
                         (
-                            r_id, r_goal, r_title, r_authors, r_year, r_isbn, r_desc,
+                            r_id, r_goal, r_je, r_title, r_authors, r_year, r_isbn, r_desc,
                             r_why, r_cat, r_amazon, r_gen, r_created, r_updated,
                         ) = row
                         inserted.append({
                             "id": r_id,
                             "goalId": r_goal,
+                            "journalEntryId": r_je,
                             "title": r_title,
                             "authors": json.loads(r_authors) if r_authors else [],
                             "year": r_year,
