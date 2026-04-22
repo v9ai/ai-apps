@@ -1,0 +1,17 @@
+query GetAllRecommendedBooks($category: String) {
+  allRecommendedBooks(category: $category) {
+    id
+    goalId
+    title
+    authors
+    year
+    isbn
+    description
+    whyRecommended
+    category
+    amazonUrl
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}

@@ -43,3 +43,62 @@ class MemorizeGenerateState(TypedDict, total=False):
     techs: list[TechBadge]
     # output
     categories: list[dict[str, Any]]       # [{id, name, icon, color, items: [...]}]
+
+
+class ArticleGenerateState(TypedDict, total=False):
+    # input
+    slug: str
+    topic: str
+    category: str
+    related_topics: str                    # resolved by caller (comma-separated)
+    existing_articles: str                 # resolved by caller (markdown list)
+    style_sample: str                      # resolved by caller (content snippet)
+    # internal
+    research: str
+    outline: str
+    draft: str
+    revision: int
+    quality: dict[str, Any]                # {ok, issues, wordCount, codeBlocks, crossRefs}
+    total_tokens: int
+    # output
+    final: str
+    word_count: int
+    revisions: int
+
+
+class ExpertScore(TypedDict, total=False):
+    score: int
+    reasoning: str
+    strengths: list[str]
+    weaknesses: list[str]
+
+
+class CourseReviewState(TypedDict, total=False):
+    # input
+    course_id: str
+    title: str
+    url: str
+    provider: str
+    description: str
+    level: str
+    rating: float
+    review_count: int
+    duration_hours: float
+    is_free: bool
+    # internal — 10 expert scores
+    pedagogy_score: ExpertScore
+    technical_accuracy_score: ExpertScore
+    content_depth_score: ExpertScore
+    practical_application_score: ExpertScore
+    instructor_clarity_score: ExpertScore
+    curriculum_fit_score: ExpertScore
+    prerequisites_score: ExpertScore
+    ai_domain_relevance_score: ExpertScore
+    community_health_score: ExpertScore
+    value_proposition_score: ExpertScore
+    # output — aggregator fields
+    aggregate_score: float
+    verdict: str
+    summary: str
+    top_strengths: list[str]
+    key_weaknesses: list[str]

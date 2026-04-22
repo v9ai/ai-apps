@@ -78,6 +78,7 @@ type Query {
   research(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int): [Research!]!
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
   recommendedBooks(goalId: Int!): [RecommendedBook!]!
+  allRecommendedBooks(category: String): [RecommendedBook!]!
   notes(entityId: Int!, entityType: String!): [Note!]!
   allNotes: [Note!]!
   note(id: Int, slug: String): Note

@@ -1131,6 +1131,9 @@
         "https://www.jeka.ro/Images/SectionThumbs/All-Inclusive-937d14808bf442c9af1d.jpg"
       ],
       "hotel_id": "blue-lagoon-resort-kos",
+      "image_source_urls": [
+        "https://www.bluelagoonresort.gr/"
+      ],
       "image_url": "https://www.jeka.ro/Images/SectionThumbs/Oferte-Spania-AN-d1d5c152a1034596b385.jpg",
       "lat": 36.9028,
       "lng": 27.284,

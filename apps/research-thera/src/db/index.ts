@@ -1350,6 +1350,43 @@ export async function deleteRecommendedBooks(goalId: number) {
   return rows.length;
 }
 
+export async function listAllRecommendedBooks(options?: { category?: string }) {
+  const category = options?.category;
+  const rows = category
+    ? await neonSql`
+        SELECT * FROM recommended_books
+        WHERE goal_id IS NULL AND category = ${category}
+        ORDER BY category ASC, created_at DESC
+      `
+    : await neonSql`
+        SELECT * FROM recommended_books
+        WHERE goal_id IS NULL
+        ORDER BY category ASC, created_at DESC
+      `;
+  return rows.map((row) => ({
+    id: row.id as number,
+    goalId: (row.goal_id as number) || null,
+    title: row.title as string,
+    authors: JSON.parse((row.authors as string) || "[]") as string[],
+    year: (row.year as number) || null,
+    isbn: (row.isbn as string) || null,
+    description: row.description as string,
+    whyRecommended: row.why_recommended as string,
+    category: row.category as string,
+    amazonUrl: (row.amazon_url as string) || null,
+    generatedAt: row.generated_at as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }));
+}
+
+export async function deleteRecommendedBooksByCategory(category: string, onlyOrphans = true) {
+  const rows = onlyOrphans
+    ? await neonSql`DELETE FROM recommended_books WHERE goal_id IS NULL AND category = ${category} RETURNING id`
+    : await neonSql`DELETE FROM recommended_books WHERE category = ${category} RETURNING id`;
+  return rows.length;
+}
+
 export async function getTextSegmentsForStory(storyId: number) {
   const rows = await neonSql`SELECT * FROM text_segments WHERE story_id = ${storyId} ORDER BY idx ASC`;
 
