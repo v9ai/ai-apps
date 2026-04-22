@@ -102,12 +102,72 @@ async def run_seo():
         await close_client()
 
 
+async def run_images(hotel_ids: list[str]) -> None:
+    """Scrape + validate galleries for one or more hotels in hotels_2026.json."""
+    from urllib.parse import urlparse
+    from travel_agent.image_scraper import graph as image_graph
+
+    data_path = OUTPUT_DIR / "hotels_2026.json"
+    if not data_path.exists():
+        print(f"Error: {data_path} not found.")
+        sys.exit(1)
+
+    data = json.loads(data_path.read_text())
+    by_id = {e["hotel"]["hotel_id"]: e for e in data}
+
+    targets = hotel_ids or list(by_id.keys())
+    missing = [h for h in targets if h not in by_id]
+    if missing:
+        print(f"Unknown hotel_id(s): {', '.join(missing)}")
+        sys.exit(1)
+
+    for hid in targets:
+        entry = by_id[hid]
+        hotel = entry["hotel"]
+        source = hotel.get("source_url") or ""
+        parsed = urlparse(source)
+        root_url = f"{parsed.scheme}://{parsed.netloc}/" if parsed.netloc else None
+
+        print(f"\n[{hid}] seed root: {root_url or '(none)'}")
+        t0 = time.time()
+        result = await image_graph.ainvoke({
+            "hotel_id": hid,
+            "seed_urls": [source] if source else [],
+            "root_url": root_url,
+            "max_images": 24,
+            "max_per_category": 3,
+        })
+        elapsed = time.time() - t0
+
+        gallery = result.get("gallery", [])
+        valid = result.get("valid_urls", [])
+        broken = result.get("broken_urls", [])
+        print(f"  scraped: {len(result.get('raw_urls', []))}  "
+              f"canonical: {len(result.get('canonical_urls', []))}  "
+              f"valid: {len(valid)}  broken: {len(broken)}  "
+              f"curated: {len(gallery)}  [{elapsed:.1f}s]")
+
+        if not gallery:
+            print("  ! no images curated — leaving hotel entry unchanged")
+            continue
+
+        hotel["gallery"] = gallery
+        hotel["image_url"] = gallery[0]
+
+    data_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+    print(f"\nUpdated {data_path}")
+
+
 def main():
     if "--eval" in sys.argv:
         from travel_agent.evals import main as eval_main
         eval_main()
     elif "--seo" in sys.argv:
         asyncio.run(run_seo())
+    elif "--images" in sys.argv:
+        idx = sys.argv.index("--images")
+        hotel_ids = sys.argv[idx + 1:]
+        asyncio.run(run_images(hotel_ids))
     else:
         asyncio.run(run())
 

@@ -64,9 +64,10 @@ async def market_researcher(state: ICPTeamState) -> dict:
     result.setdefault("segments", [])
     result.setdefault("pains", [])
     result.setdefault("gtm_signals", {})
-    timings = dict(state.get("agent_timings") or {})
-    timings["market_researcher"] = round(time.perf_counter() - t0, 3)
-    return {"market_research": result, "agent_timings": timings}
+    return {
+        "market_research": result,
+        "agent_timings": {"market_researcher": round(time.perf_counter() - t0, 3)},
+    }
 
 
 async def persona_builder(state: ICPTeamState) -> dict:
@@ -92,9 +93,10 @@ async def persona_builder(state: ICPTeamState) -> dict:
     personas = result.get("personas") or []
     if not isinstance(personas, list):
         personas = []
-    timings = dict(state.get("agent_timings") or {})
-    timings["persona_builder"] = round(time.perf_counter() - t0, 3)
-    return {"personas_research": personas, "agent_timings": timings}
+    return {
+        "personas_research": personas,
+        "agent_timings": {"persona_builder": round(time.perf_counter() - t0, 3)},
+    }
 
 
 async def anti_icp_analyst(state: ICPTeamState) -> dict:
@@ -123,11 +125,9 @@ async def anti_icp_analyst(state: ICPTeamState) -> dict:
     deal_breakers = result.get("deal_breakers") or []
     if not isinstance(deal_breakers, list):
         deal_breakers = []
-    timings = dict(state.get("agent_timings") or {})
-    timings["anti_icp_analyst"] = round(time.perf_counter() - t0, 3)
     return {
         "anti_icp_research": {"anti_icp": anti_icp, "deal_breakers": deal_breakers},
-        "agent_timings": timings,
+        "agent_timings": {"anti_icp_analyst": round(time.perf_counter() - t0, 3)},
     }
 
 

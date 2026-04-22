@@ -7,6 +7,9 @@ dependencies = [
     "langgraph>=0.2",
     "deepseek-client",
     "python-dotenv>=1.0.0",
+    "langchain-community>=0.3",
+    "beautifulsoup4>=4.12",
+    "requests>=2.31",
 ]
 
 [tool.uv.sources]

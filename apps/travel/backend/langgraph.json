@@ -2,7 +2,8 @@
   "$schema": "https://langgra.ph/schema.json",
   "dependencies": ["."],
   "graphs": {
-    "explore_city": "travel_agent.graph:graph"
+    "explore_city": "travel_agent.graph:graph",
+    "scrape_images": "travel_agent.image_scraper:graph"
   },
   "env": ".env"
 }

@@ -7,7 +7,19 @@ graph nodes. Intermediate keys (e.g. `analysis`, `hook`) are internal.
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Annotated, Any, TypedDict
+
+
+def _merge_dict(left: dict[str, Any] | None, right: dict[str, Any] | None) -> dict[str, Any]:
+    """Reducer for dict state keys that multiple parallel nodes write to.
+
+    Without this, LangGraph raises INVALID_CONCURRENT_GRAPH_UPDATE when two
+    fan-out nodes both emit e.g. `agent_timings` — the graph can't pick one.
+    """
+    out: dict[str, Any] = dict(left or {})
+    if right:
+        out.update(right)
+    return out
 
 
 class EmailComposeState(TypedDict, total=False):
@@ -117,7 +129,8 @@ class ICPTeamState(TypedDict, total=False):
     personas_research: list[dict[str, Any]]
     anti_icp_research: dict[str, Any]
     criteria_research: dict[str, Any]
-    agent_timings: dict[str, float]
+    # agent_timings is written by every parallel specialist — reducer merges.
+    agent_timings: Annotated[dict[str, float], _merge_dict]
     # output — same shape as DeepICPOutput so the existing UI is unchanged
     criteria_scores: dict[str, dict[str, Any]]
     weighted_total: float
@@ -137,7 +150,7 @@ class CompetitorsTeamState(TypedDict, total=False):
     competitor_pages: dict[str, dict[str, Any]]  # keyed by candidate url: {markdown, pages, loader, error?}
     differentiation: dict[str, dict[str, Any]]   # keyed by candidate url
     threat_levels: dict[str, dict[str, Any]]     # keyed by candidate url
-    agent_timings: dict[str, float]
+    agent_timings: Annotated[dict[str, float], _merge_dict]
     # output — list matches the `Competitor` DB/GraphQL row shape
     competitors: list[dict[str, Any]]
     graph_meta: dict[str, Any]
