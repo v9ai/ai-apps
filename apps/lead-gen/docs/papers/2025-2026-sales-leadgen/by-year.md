@@ -1,0 +1,693 @@
+# Corpus by year
+
+## 2026 (158)
+
+- [Churn prediction](papers/churn-prediction.md) — `broad`
+- [PackMLP: A Patch Based MLP Model for Intelligent Inventory Forecasting and Automation with A-LIQ QR Scanning Integration](papers/packmlp-a-patch-based-mlp-model-for-intelligent-inventory-fo.md) — `broad`
+- [RAGMail: a cloud-based retrieval-augmented framework for reducing hallucinations in LLM text generation](papers/ragmail-a-cloud-based-retrieval-augmented-framework-for-redu.md) — `core`
+- [Personalization in smart urban environments: a taxonomy and survey of recommender systems](papers/personalization-in-smart-urban-environments-a-taxonomy-and-s.md) — `core`
+- [Comparative Analysis of AI-Generated Video Marketing Content: Evaluating OpenAI’s Sora and Gemini’s VEO Generated Video Modalities](papers/comparative-analysis-of-ai-generated-video-marketing-content.md) — `core`
+- [Systematic Review of Customer Churn Prediction in the Telecom](papers/systematic-review-of-customer-churn-prediction-in-the-teleco.md) — `broad`
+- [Artificial Intelligence for Personalized Digital Advertising: Methods and Applications](papers/artificial-intelligence-for-personalized-digital-advertising.md) — `core`
+- [Natural language processing in bank marketing: a systematic review and strategic gap analysis](papers/natural-language-processing-in-bank-marketing-a-systematic-r.md) — `core`
+- [Profiling before scoring: a two-stage predictive model for B2B lead prioritization](papers/profiling-before-scoring-a-two-stage-predictive-model-for-b2.md) — `core`
+- [Artificial Intelligence for Demand Prediction and Revenue Optimization in B2B Sales](papers/artificial-intelligence-for-demand-prediction-and-revenue-op.md) — `core`
+- [Digital Transformation of B2B Sales in the Souvenir Industry: Ivan Valinchuk's Original Model](papers/digital-transformation-of-b2b-sales-in-the-souvenir-industry.md) — `core`
+- [AI-Modulated Pólya Urns (AIM-PU): A Unified Framework for Risk-Sensitive Contextual Bandits, Resource Allocation and Portfolio Design](papers/ai-modulated-p-lya-urns-aim-pu-a-unified-framework-for-risk-.md) — `core`
+- [OMNICHANNEL IN B2B DISTRIBUTION: MITIGATING CONFLICTS BETWEEN DIRECT SALES, E-COMMERCE, AND SALES REPRESENTATIVES](papers/omnichannel-in-b2b-distribution-mitigating-conflicts-between.md) — `core`
+- [Deep Contextual Bandits with Multivariate Outcomes: Empirical Copula Normalization, Temporal Feature Learning, and Doubly Robust Policy Evaluation](papers/deep-contextual-bandits-with-multivariate-outcomes-empirical.md) — `core`
+- [How do business-to-business (B2B) small and medium-sized enterprises (SMEs) leverage social media for marketing and engagement?](papers/how-do-business-to-business-b2b-small-and-medium-sized-enter.md) — `core`
+- [Reward-Based Online LLM Routing via NeuralUCB](papers/reward-based-online-llm-routing-via-neuralucb.md) — `core`
+- [Learning to Attack: A Bandit Approach to Adversarial Context Poisoning](papers/learning-to-attack-a-bandit-approach-to-adversarial-context-.md) — `core`
+- [A Practical Algorithm for Feature-Rich, Non-Stationary Bandit Problems](papers/a-practical-algorithm-for-feature-rich-non-stationary-bandit.md) — `core`
+- [Quantum-Enhanced Neural Contextual Bandit Algorithms](papers/quantum-enhanced-neural-contextual-bandit-algorithms.md) — `core`
+- [Learning When to Trust in Contextual Bandits](papers/learning-when-to-trust-in-contextual-bandits.md) — `core`
+- [NL-CPS: Reinforcement Learning-Based Kubernetes Control Plane Placement in Multi-Region Clusters](papers/nl-cps-reinforcement-learning-based-kubernetes-control-plane.md) — `core`
+- [Preference-Aware Adaptive Dispatch for Demand-Responsive Transit: A Contextual Bandit Approach with Stated-Preference Priors under Demand Uncertainty](papers/preference-aware-adaptive-dispatch-for-demand-responsive-tra.md) — `core`
+- [Ksurf-Drone: Attention Kalman Filter for Contextual Bandit Optimization in Cloud Resource Allocation](papers/ksurf-drone-attention-kalman-filter-for-contextual-bandit-op.md) — `core`
+- [From Top-1 to Top-K: A Reproducibility Study and Benchmarking of Counterfactual Explanations for Recommender Systems](papers/from-top-1-to-top-k-a-reproducibility-study-and-benchmarking.md) — `core`
+- [TripSmart: An ML-Powered Group Travel Decision Support and Recommendation System](papers/tripsmart-an-ml-powered-group-travel-decision-support-and-re.md) — `core`
+- [Implementasi Bayesian Optimization untuk Meningkatkan Akurasi Prediksi Penjualan Menggunakan Algoritma XGBoost (Studi Kasus: CV XYZ)](papers/implementasi-bayesian-optimization-untuk-meningkatkan-akuras.md) — `core`
+- [Lead Scoring for CRM Systems Using Machine Learning: A Comparative Study of Classification Algorithms](papers/lead-scoring-for-crm-systems-using-machine-learning-a-compar.md) — `core`
+- [Tekoälyagenttien ja agenttisen tekoälyn hyödyntäminen monimutkaisissa B2B-myynnin operaatioissa](papers/teko-lyagenttien-ja-agenttisen-teko-lyn-hy-dynt-minen-monimu.md) — `core`
+- [Enhancing customer experience, engagement, value creation, and loyalty through artificial intelligence and machine learning in CRM](papers/enhancing-customer-experience-engagement-value-creation-and-.md) — `core`
+- [Pecan AI Forecasting Pipelines Enhancing Funnel Efficiency from Initial Browse Signals to Predictive Customer Acquisition](papers/pecan-ai-forecasting-pipelines-enhancing-funnel-efficiency-f.md) — `core`
+- [Data‐Driven Marketing Processes: A Roadmap for Big Data Analytics Adoption in a Brazilian <scp>SaaS SME</scp>](papers/data-driven-marketing-processes-a-roadmap-for-big-data-analy.md) — `core`
+- [Following the TRAIL: Predicting and Explaining Tomorrow's Hits with a Fine-Tuned LLM](papers/following-the-trail-predicting-and-explaining-tomorrow-s-hit.md) — `core`
+- [LoopCTR: Unlocking the Loop Scaling Power for Click-Through Rate Prediction](papers/loopctr-unlocking-the-loop-scaling-power-for-click-through-r.md) — `core`
+- [BanditLP: Large-Scale Stochastic Optimization for Personalized Recommendations](papers/banditlp-large-scale-stochastic-optimization-for-personalize.md) — `core`
+- [Structured Exploration vs. Generative Flexibility: A Field Study Comparing Bandit and LLM Architectures for Personalised Health Behaviour Interventions](papers/structured-exploration-vs-generative-flexibility-a-field-stu.md) — `core`
+- [Customer Acquisition Cost Optimization: A Comparative Study of Paid Versus Organic Growth Strategies in Direct-to-Consumer Brands](papers/customer-acquisition-cost-optimization-a-comparative-study-o.md) — `core`
+- [IMPLEMENTASI KINERJA ALGORITMA MULTI-ARMED BANDIT (MAB) UNTUK OPTIMALISASI REKOMENDASI KONTEN VIDEO PENDEK](papers/implementasi-kinerja-algoritma-multi-armed-bandit-mab-untuk-.md) — `core`
+- [Learning Piecewise-Stationary Multi-Armed Bandit with One-Sided Feedback](papers/learning-piecewise-stationary-multi-armed-bandit-with-one-si.md) — `core`
+- [A Comparative Analysis of Cumulative Regret Based on Multi-Armed Bandit Algorithms](papers/a-comparative-analysis-of-cumulative-regret-based-on-multi-a.md) — `core`
+- [Reinforcement learning framework for computerized adaptive testing using multi armed bandit approach](papers/reinforcement-learning-framework-for-computerized-adaptive-t.md) — `core`
+- [Artificial intelligence for customer relationship management: Impact on customer experience, engagement, value creation, and loyalty](papers/artificial-intelligence-for-customer-relationship-management.md) — `core`
+- [A study on the sales funnel optimization to improve conversion rate in an Edtech company at Jyesta Coetorate entity](papers/a-study-on-the-sales-funnel-optimization-to-improve-conversi.md) — `core`
+- [A Study on Analyzing the Sales Conversion Funnel: From Test Ride to Purchase at Royal Enfield Showroom, Amravati](papers/a-study-on-analyzing-the-sales-conversion-funnel-from-test-r.md) — `core`
+- [Improving Sales Performance using Machine Learning Prediction Model](papers/improving-sales-performance-using-machine-learning-predictio.md) — `core`
+- [ApexCRM Copilot: A Hybrid AI Framework for Enhancing Contextual Personalization in CRM Email Automation](papers/apexcrm-copilot-a-hybrid-ai-framework-for-enhancing-contextu.md) — `core`
+- [Retrieval-Augmented AI for Cloud CRM Systems: Advancing Customer Engagement Through Enterprise-Grade RAG Architectures](papers/retrieval-augmented-ai-for-cloud-crm-systems-advancing-custo.md) — `core`
+- [Analyzing the digital customer journey: a novel framework for sequential behavior modeling](papers/analyzing-the-digital-customer-journey-a-novel-framework-for.md) — `core`
+- [The influence of generative AI on consumer perceptions and decision-making: a study on personalization, trust and ethical implications](papers/the-influence-of-generative-ai-on-consumer-perceptions-and-d.md) — `core`
+- [BEFORE THE SIGNAL -HOW THE ABM FUNNEL REALLY WORKS The five-phase sequence that wins complex B2B deals before the RFP is issued](papers/before-the-signal-how-the-abm-funnel-really-works-the-five-p.md) — `core`
+- [From Explicit Elements to Implicit Intent: A Predefined Library for Auditable Behavioral Inference](papers/from-explicit-elements-to-implicit-intent-a-predefined-libra.md) — `core`
+- [Low-Latency AI Inference Tooling for Personalized Product Recommendations at Checkout](papers/low-latency-ai-inference-tooling-for-personalized-product-re.md) — `core`
+- [A Study on the Role of Data-Driven Marketing in Enhancing B2B Lead Generation at Innoppl IT Services Pvt. Ltd.](papers/a-study-on-the-role-of-data-driven-marketing-in-enhancing-b2.md) — `broad`
+- [OPTIMIZING THE USE OF INSTAGRAM TO ENHANCE B2B LEAD GENERATION : A CASE STUDY OF TELKOM DWS](papers/optimizing-the-use-of-instagram-to-enhance-b2b-lead-generati.md) — `broad`
+- [A Study on the Effectiveness of Digital Lead Generation in B2B Manufacturing: A Study with Reference to STM Plastic](papers/a-study-on-the-effectiveness-of-digital-lead-generation-in-b.md) — `broad`
+- [Food Product Sales Forecasting Using the LSTM Model: A Case Study of SMAN 1 Malang Teachers’ Cooperative](papers/food-product-sales-forecasting-using-the-lstm-model-a-case-s.md) — `broad`
+- [Comparison of daily sales forecasting methods using deep learning and time series features](papers/comparison-of-daily-sales-forecasting-methods-using-deep-lea.md) — `broad`
+- [A deep learning model for sales forecasting using univariate time series data](papers/a-deep-learning-model-for-sales-forecasting-using-univariate.md) — `broad`
+- [A Multi-Model Approach to Supermarket Sales Forecasting System Using Machine Learning and Time Series](papers/a-multi-model-approach-to-supermarket-sales-forecasting-syst.md) — `broad`
+- [Application of backpropagation neural network algorithm in e-commerce customer churn prediction](papers/application-of-backpropagation-neural-network-algorithm-in-e.md) — `broad`
+- [Applications of Machine Learning in Predicting Customer Churn in Telecommunications: A Review Analysis](papers/applications-of-machine-learning-in-predicting-customer-chur.md) — `broad`
+- [Intelligent Bank Customer Churn Prediction: An AI Ensemble Approach Using Neural Networks and TabPFN Foundation Models](papers/intelligent-bank-customer-churn-prediction-an-ai-ensemble-ap.md) — `broad`
+- [Neural network approach enhancing churn prediction with categorical encoding and standard scaling](papers/neural-network-approach-enhancing-churn-prediction-with-cate.md) — `broad`
+- [Graph Machine Learning to Map and Predict Customer Journeys and Churn](papers/graph-machine-learning-to-map-and-predict-customer-journeys-.md) — `broad`
+- [Machine Learning Algorithms for Customer Churn Prediction in the Banking Sector: A Comparative Study](papers/machine-learning-algorithms-for-customer-churn-prediction-in.md) — `broad`
+- [A Customer Lifetime Value-aware Framework for Strategic Churn Prediction Using Deep Learning](papers/a-customer-lifetime-value-aware-framework-for-strategic-chur.md) — `broad`
+- [Improving the Reliability of Bank Customer Churn Prediction via Calibration and Uncertainty Quantification](papers/improving-the-reliability-of-bank-customer-churn-prediction-.md) — `broad`
+- [Multi-domain subscriber churn prediction using ANN](papers/multi-domain-subscriber-churn-prediction-using-ann.md) — `broad`
+- [A Review of Customer Classification Techniques Based on Historical Purchase Data](papers/a-review-of-customer-classification-techniques-based-on-hist.md) — `broad`
+- [ChurnNet-XAI: A Neural Network-Based Framework for Customer Attrition Prediction in Banking](papers/churnnet-xai-a-neural-network-based-framework-for-customer-a.md) — `broad`
+- [CUSTOMER CHURN PREDICTION: MACHINE LEARNING CLASSIFICATION FOR IDENTIFYING POTENTIAL CHURN](papers/customer-churn-prediction-machine-learning-classification-fo.md) — `broad`
+- [Customer Churn Prediction using XGBoost](papers/customer-churn-prediction-using-xgboost.md) — `broad`
+- [Comparative Study Of Machine Learning Models (Decision Tree, Random Forest, ANN) For Churn Prediction in Telecom Industry](papers/comparative-study-of-machine-learning-models-decision-tree-r.md) — `broad`
+- [Customer Churn Prediction Using Machine Learning Models](papers/customer-churn-prediction-using-machine-learning-models.md) — `broad`
+- [Beyond Interference: Estimating Causal Network Effects in Digital Advertising Markets](papers/beyond-interference-estimating-causal-network-effects-in-dig.md) — `broad`
+- [DeepCausalMMM: A Deep Learning Framework for Marketing Mix Modeling with Causal Structure Learning](papers/deepcausalmmm-a-deep-learning-framework-for-marketing-mix-mo.md) — `broad`
+- [Explainable AI for Marketing Intelligence: Interpretable Multi-Agent Systems for Data-Driven Decision Support](papers/explainable-ai-for-marketing-intelligence-interpretable-mult.md) — `broad`
+- [Evaluating the Effectiveness of Digital Marketing Channels: A Causal Inference and Predictive Modeling Approach](papers/evaluating-the-effectiveness-of-digital-marketing-channels-a.md) — `broad`
+- [Predictive incrementality: Bridging attribution and causal measurement for real return on marketing investment](papers/predictive-incrementality-bridging-attribution-and-causal-me.md) — `broad`
+- [Uncertainty-Aware Marketing Attribution Inference and Budget Decision-Making with Intelligent Agents](papers/uncertainty-aware-marketing-attribution-inference-and-budget.md) — `broad`
+- [Adaptive Hybrid Agents for CRM: Combining Rule Engines, LLMs, and Feedback Loops for Reliable Automation](papers/adaptive-hybrid-agents-for-crm-combining-rule-engines-llms-a.md) — `broad`
+- [THE APPLICATION OF ARTIFICIAL INTELLIGENCE IN THE ANNUITY SALES BUSINESS PROCESSES OF INDEPENDENT INSURANCE AGENTS](papers/the-application-of-artificial-intelligence-in-the-annuity-sa.md) — `broad`
+- [ЗАСТОСУВАННЯ ШТУЧНОГО ІНТЕЛЕКТУ В БІЗНЕС-ПРОЦЕСАХ ПРОДАЖУ АНУЇТЕТІВ НЕЗАЛЕЖНИМИ СТРАХОВИМИ АГЕНТАМИ](papers/paper-0493.md) — `broad`
+- [RevOpsBench: A Large-Scale Benchmark for Evaluating LLM Agents on Enterprise CRM Operations](papers/revopsbench-a-large-scale-benchmark-for-evaluating-llm-agent.md) — `broad`
+- [Эволюция CRM-аналитики в задачах динамического ценообразования](papers/crm-0497.md) — `broad`
+- [Decoding Consumer Behaviour in the Age of Tech-Driven Product Management: Integrating Marketing, Analytics, and CRM for Competitive Advantage](papers/decoding-consumer-behaviour-in-the-age-of-tech-driven-produc.md) — `broad`
+- [Integrating marketing capabilities and CRM for social promotion: evidence from big data marketing analytics](papers/integrating-marketing-capabilities-and-crm-for-social-promot.md) — `broad`
+- [CRM SYSTEMS AND THEIR IMPACT ON THE RESULTS OF MARKETING STRATEGY IN DISTRIBUTION COMPANIES](papers/crm-systems-and-their-impact-on-the-results-of-marketing-str.md) — `broad`
+- [The Role of AI in Customer Base Management in the Beauty Industry](papers/the-role-of-ai-in-customer-base-management-in-the-beauty-ind.md) — `broad`
+- [The Relationship Revolution](papers/the-relationship-revolution.md) — `broad`
+- [Unpacking account-based marketing: Conceptualization, key activities, and performance outcomes](papers/unpacking-account-based-marketing-conceptualization-key-acti.md) — `broad`
+- [ACCOUNT-BASED MARKETING -WINNING BEFORE THE FIRST MEETING&amp;nbsp;](papers/account-based-marketing-winning-before-the-first-meeting-amp.md) — `broad`
+- [Machine Learning-Based Recommender Systems for Digital Marketing](papers/machine-learning-based-recommender-systems-for-digital-marke.md) — `broad`
+- [Revenue Management With Nonparametric Demand Learning and Product Returns](papers/revenue-management-with-nonparametric-demand-learning-and-pr.md) — `broad`
+- [Predictive Marketing Frameworks Resolving Revenue Attribution Conflicts in Regulated Professional Services Environments](papers/predictive-marketing-frameworks-resolving-revenue-attributio.md) — `broad`
+- [From CRM to Cognition: Autonomous Revenue Operations Systems (AROS) A Framework for AI-Native Sales Execution in Enterprise Environments](papers/from-crm-to-cognition-autonomous-revenue-operations-systems-.md) — `broad`
+- [Predictive Customer Lifetime Value: Transitioning from Segment-Based Classification to Probabilistic Revenue Forecasting](papers/predictive-customer-lifetime-value-transitioning-from-segmen.md) — `broad`
+- [Design of an Adaptive and Explainable Sales Forecasting Platform Using Auto-ARIMA](papers/design-of-an-adaptive-and-explainable-sales-forecasting-plat.md) — `broad`
+- [Real –Time Auction Web Application](papers/real-time-auction-web-application.md) — `broad`
+- [SalesMind: A Multimodal Emotion-Aware AI Assistant for Real-Time Sales Enhancement](papers/salesmind-a-multimodal-emotion-aware-ai-assistant-for-real-t.md) — `broad`
+- [CRMaster: Deep NLP Integration Across the Entire ERP Workflow](papers/crmaster-deep-nlp-integration-across-the-entire-erp-workflow.md) — `broad`
+- [Unlocking the Potential of Conversational AI as a Sales Agent: Application of Sequential Request Techniques and Message Framing for Persuasion](papers/unlocking-the-potential-of-conversational-ai-as-a-sales-agen.md) — `broad`
+- [Do personalized product recommendations influence consumer purchasing decisions more effectively than price discounts in e-commerce?](papers/do-personalized-product-recommendations-influence-consumer-p.md) — `broad`
+- [From Data to Decision: A Data Analytics Approach to Sales Optimization](papers/from-data-to-decision-a-data-analytics-approach-to-sales-opt.md) — `broad`
+- [How do eCommerce companies use AI to increase revenue? 10 real use cases (2026)](papers/how-do-ecommerce-companies-use-ai-to-increase-revenue-10-rea.md) — `broad`
+- [cross-sell, v.](papers/cross-sell-v.md) — `broad`
+- [RankAgent OTO: Full Details + Upsell Coupon App](papers/rankagent-oto-full-details-upsell-coupon-app.md) — `broad`
+- [GramGenies Bundle: Honest Review all 5 OTO Links + Upsell 2025](papers/gramgenies-bundle-honest-review-all-5-oto-links-upsell-2025.md) — `broad`
+- [KDPRobots OTO: Honest Review all 6 OTO Links + Upsell 2026](papers/kdprobots-oto-honest-review-all-6-oto-links-upsell-2026.md) — `broad`
+- [AIVideoStitcherFx Bundle: Honest Review all 5 OTO Links + Upsell 2026](papers/aivideostitcherfx-bundle-honest-review-all-5-oto-links-upsel.md) — `broad`
+- [LinkedEmpire Bundle: Honest Review all 5 OTO Links + Upsell 2025](papers/linkedempire-bundle-honest-review-all-5-oto-links-upsell-202.md) — `broad`
+- [GramGenies Bundle OTO: Full Details + Upsell Coupon App](papers/gramgenies-bundle-oto-full-details-upsell-coupon-app.md) — `broad`
+- [AIVideoStitcherFx Bundle: REVIEW 1 to 4 OTOs Links +Large Bonuses Upsell](papers/aivideostitcherfx-bundle-review-1-to-4-otos-links-large-bonu.md) — `broad`
+- [RankAgent OTO: HONEST REVIEW +Large Bonuses Upsell](papers/rankagent-oto-honest-review-large-bonuses-upsell.md) — `broad`
+- [SuperHost SEO OTO: Honest Review of All 6 OTO Links + Upsell 2026](papers/superhost-seo-oto-honest-review-of-all-6-oto-links-upsell-20.md) — `broad`
+- [AiVideoStitcherFx OTO: Honest Review All 5 OTO Links + Upsell 2026](papers/aivideostitcherfx-oto-honest-review-all-5-oto-links-upsell-2.md) — `broad`
+- [Local AI OTO: Honest Review All 5 OTO Links + Upsell 2026](papers/local-ai-oto-honest-review-all-5-oto-links-upsell-2026.md) — `broad`
+- [SuperHost OTO: Honest Review of All 6 OTO Links + Upsell 2026](papers/superhost-oto-honest-review-of-all-6-oto-links-upsell-2026.md) — `broad`
+- [GramGenies Bundle: UPDATE Honest Review all 5 OTO Links + Upsell 2025](papers/gramgenies-bundle-update-honest-review-all-5-oto-links-upsel.md) — `broad`
+- [SiteBuddy AI OTO: Honest Review All 10 OTO Links + Upsell 2026](papers/sitebuddy-ai-oto-honest-review-all-10-oto-links-upsell-2026.md) — `broad`
+- [ToonBook AI OTO: Honest Review all 8 OTO Links + Upsell 2025](papers/toonbook-ai-oto-honest-review-all-8-oto-links-upsell-2025.md) — `broad`
+- [Algorithmic Recommendation and Aesthetic Flourishing](papers/algorithmic-recommendation-and-aesthetic-flourishing.md) — `broad`
+- [CS3: Efficient Online Capability Synergy for Two-Tower Recommendation](papers/cs3-efficient-online-capability-synergy-for-two-tower-recomm.md) — `broad`
+- [Spectral bandits for smooth graph functions](papers/spectral-bandits-for-smooth-graph-functions.md) — `broad`
+- [Balanced Co-Clustering of Users and Items for Embedding Table Compression in Recommender Systems](papers/balanced-co-clustering-of-users-and-items-for-embedding-tabl.md) — `broad`
+- [Multi-LLM Token Filtering and Routing for Sequential Recommendation](papers/multi-llm-token-filtering-and-routing-for-sequential-recomme.md) — `broad`
+- [Modular Representation Compression: Adapting LLMs for Efficient and Effective Recommendations](papers/modular-representation-compression-adapting-llms-for-efficie.md) — `broad`
+- [HABIT: Chrono-Synergia Robust Progressive Learning Framework for Composed Image Retrieval](papers/habit-chrono-synergia-robust-progressive-learning-framework-.md) — `broad`
+- [RankUp: Towards High-rank Representations for Large Scale Advertising Recommender Systems](papers/rankup-towards-high-rank-representations-for-large-scale-adv.md) — `broad`
+- [FedCRF: A Federated Cross-domain Recommendation Method with Semantic-driven Deep Knowledge Fusion](papers/fedcrf-a-federated-cross-domain-recommendation-method-with-s.md) — `broad`
+- [Transparent and Controllable Recommendation Filtering via Multimodal Multi-Agent Collaboration](papers/transparent-and-controllable-recommendation-filtering-via-mu.md) — `broad`
+- [HopRank: Self-Supervised LLM Preference-Tuning on Graphs for Few-Shot Node Classification](papers/hoprank-self-supervised-llm-preference-tuning-on-graphs-for-.md) — `broad`
+- [Visual Inception: Compromising Long-term Planning in Agentic Recommenders via Multimodal Memory Poisoning](papers/visual-inception-compromising-long-term-planning-in-agentic-.md) — `broad`
+- [Beyond Serendipity: From Exposing the Unknown to Fostering Engagement through Peer Recommendation](papers/beyond-serendipity-from-exposing-the-unknown-to-fostering-en.md) — `broad`
+- [NONLINEAR DIMENSIONALITY REDUCTION FOR LOOKALIKE AUDIENCE DETECTION USING MANIFOLD LEARNING AND AUTOENCODER-BASED REPRESENTATIONS](papers/nonlinear-dimensionality-reduction-for-lookalike-audience-de.md) — `broad`
+- [The Use of Artificial Intelligence for Personalized Advertising and Marketing.](papers/the-use-of-artificial-intelligence-for-personalized-advertis.md) — `broad`
+- [The Strategic Integration of Artificial Intelligence in Digital Marketing: Global Case Studies and Implications for the Albanian Emerging Market](papers/the-strategic-integration-of-artificial-intelligence-in-digi.md) — `broad`
+- [Context-Aware Video Recommendation via Transcript Embeddings and LLM-Based Hashtag Generation](papers/context-aware-video-recommendation-via-transcript-embeddings.md) — `broad`
+- [Integrating Marketing Analytics Approaches into B2B Lead Management](papers/integrating-marketing-analytics-approaches-into-b2b-lead-man.md) — `broad`
+- [Measuring Marketing Effectiveness: Marketing Mix Modeling vs. Multi-Touch Attribution](papers/measuring-marketing-effectiveness-marketing-mix-modeling-vs-.md) — `broad`
+- [Implementation of Marketing Mix as an Educational Marketing Strategy in Private School](papers/implementation-of-marketing-mix-as-an-educational-marketing-.md) — `broad`
+- [Marketing mix rebuilding for the age of generative AI: From 7P to 7G marketing mix model](papers/marketing-mix-rebuilding-for-the-age-of-generative-ai-from-7.md) — `broad`
+- [A New Era in Marketing Mix Transition to E-Marketing Mix: Traditionalism can be reinterpreted, but bases cannot](papers/a-new-era-in-marketing-mix-transition-to-e-marketing-mix-tra.md) — `broad`
+- [Mastering the marketing mix: an empirical approach to strategically orchestrate the marketing mix across segments and competitors](papers/mastering-the-marketing-mix-an-empirical-approach-to-strateg.md) — `broad`
+- [&lt;p&gt;Linking Marketing Strategies to Purchasing Decisions Through the 4P Marketing Mix Model in the Age of Artificial Intelligence Disruption&lt;/p&gt;](papers/lt-p-gt-linking-marketing-strategies-to-purchasing-decisions.md) — `broad`
+- [From Static Planning to Real-Time Recalibration: A Hybrid Dynamic Marketing Mix Framework for Marketing Intelligence Systems](papers/from-static-planning-to-real-time-recalibration-a-hybrid-dyn.md) — `broad`
+- [Redefining the Marketing Mix](papers/redefining-the-marketing-mix.md) — `broad`
+- [Next-Best-Action Systems in CRM: A Quantitative Study of Uplift, Policy Learning, and Business Impact](papers/next-best-action-systems-in-crm-a-quantitative-study-of-upli.md) — `broad`
+- [Actual Einstein-Next-Best-Action-Accredited-Professional  Dumps (Questions 2026) To Ensure High Score in Exam](papers/actual-einstein-next-best-action-accredited-professional-dum.md) — `broad`
+- [Jointly Optimizing Debiased CTR and Uplift for Coupons Marketing: A Unified Causal Framework](papers/jointly-optimizing-debiased-ctr-and-uplift-for-coupons-marke.md) — `broad`
+- [Orthogonal Uplift Learning with Permutation-Invariant Representations for Combinatorial Treatments](papers/orthogonal-uplift-learning-with-permutation-invariant-repres.md) — `broad`
+- [Modeling Time-Sensitive Causal Uplift in Marketing Campaigns: Evidence From Synthetic and Real-World Data](papers/modeling-time-sensitive-causal-uplift-in-marketing-campaigns.md) — `broad`
+- [A Dynamic Framework for Causal User Profiling and Treatment Segmentation via Uplift Modeling in Internet Lending](papers/a-dynamic-framework-for-causal-user-profiling-and-treatment-.md) — `broad`
+- [Assessing the Influence of AI-Driven Personalization on Email Marketing Performance](papers/assessing-the-influence-of-ai-driven-personalization-on-emai.md) — `broad`
+- [AI-POWERED CONTENT CREATION IN MARKETING: OPPORTUNITIES, CHALLENGES, AND STRATEGIC IMPLICATIONS](papers/ai-powered-content-creation-in-marketing-opportunities-chall.md) — `broad`
+- [THE SIGNIFICANCE AND STRATEGIC ROLE OF DIGITAL MARKETING IN THE CONTEMPORARY WORLD](papers/the-significance-and-strategic-role-of-digital-marketing-in-.md) — `broad`
+- [MARKETING STRATEGIES IN E-COMMERCE](papers/marketing-strategies-in-e-commerce.md) — `broad`
+- [Analyzing the Sales Process](papers/analyzing-the-sales-process.md) — `broad`
+- [Sales Prediction in Omnichannel Distribution Systems Based on Consumer Behavior Using Process Mining and ARIMAX](papers/sales-prediction-in-omnichannel-distribution-systems-based-o.md) — `broad`
+
+## 2025 (525)
+
+- [Sustainable Consumption and Branding for Gen Z: How Brand Dimensions Influence Consumer Behavior and Adoption of Newly Launched Technological Products](papers/sustainable-consumption-and-branding-for-gen-z-how-brand-dim.md) — `broad`
+- [The moderating role of personalized recommendations in the trust–satisfaction–loyalty relationship: an empirical study of AI-driven e-commerce](papers/the-moderating-role-of-personalized-recommendations-in-the-t.md) — `broad`
+- [Ensemble-based customer churn prediction in banking: a voting classifier approach for improved client retention using demographic and behavioral data](papers/ensemble-based-customer-churn-prediction-in-banking-a-voting.md) — `broad`
+- [How Does Humanoid Virtual Influencers' Appearance Convey Social Presence? The Underlying Process and Path to Purchase Intention](papers/how-does-humanoid-virtual-influencers-appearance-convey-soci.md) — `broad`
+- [Customer Churn Prediction: A Systematic Review of Recent Advances, Trends, and Challenges in Machine Learning and Deep Learning](papers/customer-churn-prediction-a-systematic-review-of-recent-adva.md) — `broad`
+- [A meta-analysis of the effectiveness of social media influencers: Mechanisms and moderation](papers/a-meta-analysis-of-the-effectiveness-of-social-media-influen.md) — `broad`
+- [The Impact of AI-driven Strategy on Salespeople Training and Performance](papers/the-impact-of-ai-driven-strategy-on-salespeople-training-and.md) — `broad`
+- [Mitigating class imbalance in churn prediction with ensemble methods and SMOTE](papers/mitigating-class-imbalance-in-churn-prediction-with-ensemble.md) — `broad`
+- [Enhancing Supply Chain Management: A Comparative Study of Machine Learning Techniques with Cost–Accuracy and ESG-Based Evaluation for Forecasting and Risk Mitigation](papers/enhancing-supply-chain-management-a-comparative-study-of-mac.md) — `broad`
+- [From Data to Decisions: The Power of Machine Learning in Business Recommendations](papers/from-data-to-decisions-the-power-of-machine-learning-in-busi.md) — `core`
+- [Artificial creativity in luxury advertising: How trust and perceived humanness drive consumer response to AI-generated content](papers/artificial-creativity-in-luxury-advertising-how-trust-and-pe.md) — `broad`
+- [Artificial Intelligence in Digital Marketing: Towards an Analytical Framework for Revealing and Mitigating Bias](papers/artificial-intelligence-in-digital-marketing-towards-an-anal.md) — `broad`
+- [Hybrid Quality-Based Recommender Systems: A Systematic Literature Review](papers/hybrid-quality-based-recommender-systems-a-systematic-litera.md) — `broad`
+- [A survey on point-of-interest recommendations leveraging heterogeneous data](papers/a-survey-on-point-of-interest-recommendations-leveraging-het.md) — `core`
+- [Big-data AI analytics in value-chain innovation and international marketing strategy: insights from SMEs in cultural and creative industries](papers/big-data-ai-analytics-in-value-chain-innovation-and-internat.md) — `broad`
+- [Impact of Influencer Marketing on Consumer Behavior and Online Shopping Preferences](papers/impact-of-influencer-marketing-on-consumer-behavior-and-onli.md) — `broad`
+- [A framework for leveraging artificial intelligence in strategic business decision-making](papers/a-framework-for-leveraging-artificial-intelligence-in-strate.md) — `core`
+- [A Hybrid Temporal Convolutional Network and Transformer Model for Accurate and Scalable Sales Forecasting](papers/a-hybrid-temporal-convolutional-network-and-transformer-mode.md) — `broad`
+- [A Comprehensive Evaluation of Machine Learning and Deep Learning Models for Churn Prediction](papers/a-comprehensive-evaluation-of-machine-learning-and-deep-lear.md) — `broad`
+- [Personalized and Contextualized Data Analysis for E-Commerce Customer Retention Improvement With Bi-LSTM Churn Prediction](papers/personalized-and-contextualized-data-analysis-for-e-commerce.md) — `broad`
+- [A modernized approach to sentiment analysis of product reviews using BiGRU and RNN based LSTM deep learning models](papers/a-modernized-approach-to-sentiment-analysis-of-product-revie.md) — `broad`
+- [Consumer value dimensions in conversational and mobile commerce](papers/consumer-value-dimensions-in-conversational-and-mobile-comme.md) — `broad`
+- [Bridging Neuromarketing and Data Analytics in Tourism: An Adaptive Digital Marketing Framework for Hotels and Destinations](papers/bridging-neuromarketing-and-data-analytics-in-tourism-an-ada.md) — `core`
+- [A Predictive and Segmentation-Based Marketing Analytics Framework for Optimizing Customer Acquisition, Engagement, and Retention Strategies](papers/a-predictive-and-segmentation-based-marketing-analytics-fram.md) — `core`
+- [Customer segmentation in the digital marketing using a Q-learning based differential evolution algorithm integrated with K-means clustering](papers/customer-segmentation-in-the-digital-marketing-using-a-q-lea.md) — `broad`
+- [Revolutionizing Business Analytics: The Impact of Artificial Intelligence and Machine Learning.](papers/revolutionizing-business-analytics-the-impact-of-artificial-.md) — `broad`
+- [Service Quality Improvement in the Banking Sector: A Data Analytics Perspective](papers/service-quality-improvement-in-the-banking-sector-a-data-ana.md) — `broad`
+- [Algorithmic fandom: how generative AI is reshaping sports marketing, fan engagement, and the integrity of sport](papers/algorithmic-fandom-how-generative-ai-is-reshaping-sports-mar.md) — `core`
+- [Enhancing customer retention in Online Retail through churn prediction: A hybrid RFM, K-means, and deep neural network approach](papers/enhancing-customer-retention-in-online-retail-through-churn-.md) — `broad`
+- [Dynamic Marketing Uplift Modeling: A Symmetry-Preserving Framework Integrating Causal Forests with Deep Reinforcement Learning for Personalized Intervention Strategies](papers/dynamic-marketing-uplift-modeling-a-symmetry-preserving-fram.md) — `broad`
+- [The impact of new generative AI chatbots on the switch point (SP): toward an artificial emotional awareness (AEA)](papers/the-impact-of-new-generative-ai-chatbots-on-the-switch-point.md) — `broad`
+- [LLM4Rec: A Comprehensive Survey on the Integration of Large Language Models in Recommender Systems—Approaches, Applications and Challenges](papers/llm4rec-a-comprehensive-survey-on-the-integration-of-large-l.md) — `core`
+- [&lt;b&gt;AI Strategic Orientation and the B2B Social Media Brand Meaning Process: Antecedents, Consequences, and Outcomes&lt;/b&gt;](papers/lt-b-gt-ai-strategic-orientation-and-the-b2b-social-media-br.md) — `broad`
+- [Multi-Touch Attribution and Media Mix Modeling for Marketing ROI Optimization in E-Commerce Platforms](papers/multi-touch-attribution-and-media-mix-modeling-for-marketing.md) — `broad`
+- [Online Causal Inference for Advertising in Real-Time Bidding Auctions](papers/online-causal-inference-for-advertising-in-real-time-bidding.md) — `broad`
+- [An analysis of artificial intelligence automation in digital music streaming platforms for improving consumer subscription responses: a review](papers/an-analysis-of-artificial-intelligence-automation-in-digital.md) — `broad`
+- [International Journal of Scientific Interdisciplinary Research](papers/international-journal-of-scientific-interdisciplinary-resear.md) — `core`
+- [Unveiling the Role of Artificial Intelligence: Navigating Personalized Content Marketing, Customer Engagement, and Commitment with Data Transparency and Security](papers/unveiling-the-role-of-artificial-intelligence-navigating-per.md) — `core`
+- [Understanding customer loyalty-aware recommender systems in E-commerce: an analytical perspective](papers/understanding-customer-loyalty-aware-recommender-systems-in-.md) — `core`
+- [Artificial Intelligence for Smart Customer Feedback Management: Improving Content Analysis Approaches](papers/artificial-intelligence-for-smart-customer-feedback-manageme.md) — `broad`
+- [The relevance of lead prioritization: a B2B lead scoring model based on machine learning](papers/the-relevance-of-lead-prioritization-a-b2b-lead-scoring-mode.md) — `core`
+- [CORES: Context-Aware Emotion-Driven Recommendation System-Based LLM to Improve Virtual Shopping Experiences](papers/cores-context-aware-emotion-driven-recommendation-system-bas.md) — `core`
+- [AI-Driven Personalization in Educational Marketing: A Framework for Enhancing Student Recruitment and Retention](papers/ai-driven-personalization-in-educational-marketing-a-framewo.md) — `core`
+- [Unlocking the power of AI in CRM: A comprehensive multidimensional exploration](papers/unlocking-the-power-of-ai-in-crm-a-comprehensive-multidimens.md) — `core`
+- [MNeuralTab: Integrating meta-modeling and neural networks for customer churn prediction in e-commerce](papers/mneuraltab-integrating-meta-modeling-and-neural-networks-for.md) — `broad`
+- [Prompt Engineering for LLMs: Real-World Applications in Banking and Ecommerce](papers/prompt-engineering-for-llms-real-world-applications-in-banki.md) — `broad`
+- [A robust optimization approach to budget optimization in online marketing campaigns](papers/a-robust-optimization-approach-to-budget-optimization-in-onl.md) — `core`
+- [Comparative Analysis of AI-Enhanced UI/UX Design Practices in E-commerce Websites: A Case Study of the USA and the UK](papers/comparative-analysis-of-ai-enhanced-ui-ux-design-practices-i.md) — `core`
+- [Prediksi Penjualan Aerosol Menggunakan Algoritma ARIMA, LSTM Dan GRU](papers/prediksi-penjualan-aerosol-menggunakan-algoritma-arima-lstm-.md) — `broad`
+- [Optimized hyperparameters for retail sales forecasting using grid search](papers/optimized-hyperparameters-for-retail-sales-forecasting-using.md) — `broad`
+- [ChurnKB: A Generative AI-Enriched Knowledge Base for Customer Churn Feature Engineering](papers/churnkb-a-generative-ai-enriched-knowledge-base-for-customer.md) — `broad`
+- [Artificial Intelligence in Financial Customer Relationship Management: A Systematic Review of AI-Driven Strategies in Banking and FinTech](papers/artificial-intelligence-in-financial-customer-relationship-m.md) — `broad`
+- [Contemporary digital marketing techniques used in unhealthy food campaigns targeting young people](papers/contemporary-digital-marketing-techniques-used-in-unhealthy-.md) — `broad`
+- [Real-Time Fair-Exposure Ad Allocation for SMBs and Underserved Creators via Contextual Bandits-with-Knapsacks](papers/real-time-fair-exposure-ad-allocation-for-smbs-and-underserv.md) — `core`
+- [RecUserSim: A Realistic and Diverse User Simulator for Evaluating Conversational Recommender Systems](papers/recusersim-a-realistic-and-diverse-user-simulator-for-evalua.md) — `core`
+- [Customer Churn Prediction: A Review of Recent Advances, Trends, and Challenges in Conventional Machine Learning and Deep Learning](papers/customer-churn-prediction-a-review-of-recent-advances-trends.md) — `broad`
+- [Multi-objective contextual bandits in recommendation systems for smart tourism](papers/multi-objective-contextual-bandits-in-recommendation-systems.md) — `core`
+- [Email Marketing with Artificial Intelligence: Enhancing Personalization, Engagement, and Customer Retention](papers/email-marketing-with-artificial-intelligence-enhancing-perso.md) — `core`
+- [A Review of Data Analytics and Machine Learning for Personalization in Tech Sector Marketing](papers/a-review-of-data-analytics-and-machine-learning-for-personal.md) — `core`
+- [Necessary condition analysis for sales funnel optimization](papers/necessary-condition-analysis-for-sales-funnel-optimization.md) — `core`
+- [A novel methodological approach to SaaS churn prediction using whale optimization algorithm](papers/a-novel-methodological-approach-to-saas-churn-prediction-usi.md) — `broad`
+- [Understanding E-Commerce Consumer Behavior with CNN-LSTM: A Data-Driven Approach](papers/understanding-e-commerce-consumer-behavior-with-cnn-lstm-a-d.md) — `broad`
+- [Adaptive transformer modelling of density function for nonparametric survival analysis](papers/adaptive-transformer-modelling-of-density-function-for-nonpa.md) — `broad`
+- [Exploring Complexity: A Bibliometric Analysis of Agent-Based Modeling in Finance and Banking](papers/exploring-complexity-a-bibliometric-analysis-of-agent-based-.md) — `broad`
+- [Leveraging AI for Predicting Marketing and Customer Insights-An Overview](papers/leveraging-ai-for-predicting-marketing-and-customer-insights.md) — `broad`
+- [Problem-Oriented Process Mining for Auditable Marketing Automation Lifecycle Control](papers/problem-oriented-process-mining-for-auditable-marketing-auto.md) — `broad`
+- [Balancing Efficiency and Efficacy: A Contextual Bandit-Driven Framework for Multi-Tier Cyber Threat Detection](papers/balancing-efficiency-and-efficacy-a-contextual-bandit-driven.md) — `core`
+- [Transforming Customer Segmentation with Unsupervised Learning Models and Behavioral Data in Digital Commerce](papers/transforming-customer-segmentation-with-unsupervised-learnin.md) — `core`
+- [Harnessing the Potential of Large Language Models in Modern Marketing Management: Applications, Future Directions, and Strategic Recommendations](papers/harnessing-the-potential-of-large-language-models-in-modern-.md) — `core`
+- [Personal brand value extraction method to identify micro-influencer for effective digital marketing](papers/personal-brand-value-extraction-method-to-identify-micro-inf.md) — `core`
+- [AI-Driven Field Enablement Systems for Oncology Commercial Strategy: A Framework for Enhancing Decision-Making and Market Execution](papers/ai-driven-field-enablement-systems-for-oncology-commercial-s.md) — `core`
+- [Hybrid LSTM-CNN with Attention Mechanism for Accurate and Scalable Grocery Sales Forecasting](papers/hybrid-lstm-cnn-with-attention-mechanism-for-accurate-and-sc.md) — `broad`
+- [A Residual-Corrected Hybrid ARIMA–CNN–LSTM Framework for High-Accuracy Tobacco Sales Forecasting in Regulated Markets](papers/a-residual-corrected-hybrid-arima-cnn-lstm-framework-for-hig.md) — `broad`
+- [A Hybrid Approach for Sales Forecasting: Combining Deep Learning and Time Series Analysis](papers/a-hybrid-approach-for-sales-forecasting-combining-deep-learn.md) — `broad`
+- [Customer Churn Prediction Based on Coordinate Attention Mechanism with CNN-BiLSTM](papers/customer-churn-prediction-based-on-coordinate-attention-mech.md) — `broad`
+- [Research on Customer Churn Prediction Using Machine Learning Models](papers/research-on-customer-churn-prediction-using-machine-learning.md) — `broad`
+- [LinkedIn as a key tool for targeted advertising in industrial B2B marketing](papers/linkedin-as-a-key-tool-for-targeted-advertising-in-industria.md) — `broad`
+- [Spatial Intelligence in E-Commerce: Integrating Mobile Agents with GISs for a Dynamic Recommendation System](papers/spatial-intelligence-in-e-commerce-integrating-mobile-agents.md) — `broad`
+- [MARTECH STACK ADOPTION IN SMES: A REVIEW OF AUTOMATION, CRM, AND AI INTEGRATION](papers/martech-stack-adoption-in-smes-a-review-of-automation-crm-an.md) — `broad`
+- [MindFuse: Towards GenAI Explainability in Marketing Strategy Co-Creation](papers/mindfuse-towards-genai-explainability-in-marketing-strategy-.md) — `broad`
+- [The Integration of AI-Powered Personalization and User-Generated Content in Global Digital Marketing](papers/the-integration-of-ai-powered-personalization-and-user-gener.md) — `broad`
+- [Adaptive Noise Exploration for Neural Contextual Multi-Armed Bandits](papers/adaptive-noise-exploration-for-neural-contextual-multi-armed.md) — `core`
+- [Contextual bandits to increase user prediction accuracy in movie recommendation system](papers/contextual-bandits-to-increase-user-prediction-accuracy-in-m.md) — `core`
+- [Ai-Powered Cold Email Automation for Staffing Solutions: Enhancing Personalization and Efficiency Through Open-Source Large Language Models](papers/ai-powered-cold-email-automation-for-staffing-solutions-enha.md) — `core`
+- [Predicting B2B Customer Churn and Measuring the Impact of Machine Learning-Based Retention Strategies](papers/predicting-b2b-customer-churn-and-measuring-the-impact-of-ma.md) — `core`
+- [BERT-based Job Recommendation System Using LinkedIn Dataset](papers/bert-based-job-recommendation-system-using-linkedin-dataset.md) — `core`
+- [Retention analytics in professional services: CRM–deal flow fusion models for churn prediction and upsell](papers/retention-analytics-in-professional-services-crm-deal-flow-f.md) — `core`
+- [Predicting purchase intentions in online food delivery using deep learning and AIDA model: Insights from sentiment analysis of user reviews](papers/predicting-purchase-intentions-in-online-food-delivery-using.md) — `core`
+- [DistillRecDial: A Knowledge-Distilled Dataset Capturing User Diversity in Conversational Recommendation](papers/distillrecdial-a-knowledge-distilled-dataset-capturing-user-.md) — `core`
+- [B2B Marketing Guidebook - Vol. 1](papers/b2b-marketing-guidebook-vol-1.md) — `broad`
+- [Explainable Multi-Stage Churn Prediction using Graph Neural Network in Telecom Sector](papers/explainable-multi-stage-churn-prediction-using-graph-neural-.md) — `broad`
+- [Machine Learning-Based Prediction of Customer Churn Risk in E-commerce](papers/machine-learning-based-prediction-of-customer-churn-risk-in-.md) — `broad`
+- [Customer Churn Prediction Using Machine Learning Techniques: Awash Bank Wolaita Sodo Region](papers/customer-churn-prediction-using-machine-learning-techniques-.md) — `broad`
+- [AI-driven churn prediction in subscription services: addressing economic metrics, data transparency, and customer interdependence](papers/ai-driven-churn-prediction-in-subscription-services-addressi.md) — `broad`
+- [From AI Adoption to ESG in Industrial B2B Marketing: An Integrated Multi-Theory Model](papers/from-ai-adoption-to-esg-in-industrial-b2b-marketing-an-integ.md) — `broad`
+- [NLP-Based Automation in Customer Support and Case Management](papers/nlp-based-automation-in-customer-support-and-case-management.md) — `broad`
+- [Customer Service Chatbot With AI](papers/customer-service-chatbot-with-ai.md) — `broad`
+- [The role of global marketing strategies on the international performance of SMEs: current state and future research agenda](papers/the-role-of-global-marketing-strategies-on-the-international.md) — `broad`
+- [Financial Customer Behavior Prediction Based on Machine Learning: A Comprehensive Investigation](papers/financial-customer-behavior-prediction-based-on-machine-lear.md) — `broad`
+- [Marketing Mix Modeling in Lemonade](papers/marketing-mix-modeling-in-lemonade.md) — `broad`
+- [Tourism product consumers clustering for developing the tailored marketing mix](papers/tourism-product-consumers-clustering-for-developing-the-tail.md) — `broad`
+- [Evaluating Mobile Telecom Apps: An Integrated Fuzzy MCDM Model Using Marketing Mix](papers/evaluating-mobile-telecom-apps-an-integrated-fuzzy-mcdm-mode.md) — `broad`
+- [Optimizing Enterprise Decision-Making through Causal Machine Learning Models and Real-Time Business Intelligence Integration](papers/optimizing-enterprise-decision-making-through-causal-machine.md) — `broad`
+- [Robust Uplift Modeling with Large-Scale Contexts for Real-time Marketing](papers/robust-uplift-modeling-with-large-scale-contexts-for-real-ti.md) — `broad`
+- [Modeling emoji online marketing on websites among young consumers: the moderation effect of age](papers/modeling-emoji-online-marketing-on-websites-among-young-cons.md) — `broad`
+- [A Reinforcement-Learning-Enhanced LLM Framework for Automated A/B Testing in Personalized Marketing](papers/a-reinforcement-learning-enhanced-llm-framework-for-automate.md) — `broad`
+- [Machine learning applications in digital advertising performance optimization: A systematic literature review](papers/machine-learning-applications-in-digital-advertising-perform.md) — `core`
+- [Algorithmizing B2B Sales: Can AI Create a Sales Framework That Guarantees Predictable Results?](papers/algorithmizing-b2b-sales-can-ai-create-a-sales-framework-tha.md) — `core`
+- [Optimal Multitask Linear Regression and Contextual Bandits under Sparse Heterogeneity](papers/optimal-multitask-linear-regression-and-contextual-bandits-u.md) — `core`
+- [Gaussian Process with Vine Copula-Based Context Modeling for Contextual Multi-Armed Bandits](papers/gaussian-process-with-vine-copula-based-context-modeling-for.md) — `core`
+- [Neural Contextual Bandits Under Delayed Feedback Constraints](papers/neural-contextual-bandits-under-delayed-feedback-constraints.md) — `core`
+- [Predictive model for converting leads into repeat order customer using machine learning](papers/predictive-model-for-converting-leads-into-repeat-order-cust.md) — `core`
+- [Assessing the Success of Automotive Sales Transactions Using Selected Machine Learning Algorithms](papers/assessing-the-success-of-automotive-sales-transactions-using.md) — `core`
+- [Comparing Traditional Machine Learning and Advanced Gradient Boosting Techniques in Customer Churn Prediction: A Telecom Industry Case Study](papers/comparing-traditional-machine-learning-and-advanced-gradient.md) — `core`
+- [Best Practices for Scaling Cold Outreach Processes in Global Fundraising](papers/best-practices-for-scaling-cold-outreach-processes-in-global.md) — `core`
+- [AI-Powered Cold Email Generator and Personalized Outreach Platform](papers/ai-powered-cold-email-generator-and-personalized-outreach-pl.md) — `core`
+- [Ideal Customer Profile, Customer Insights und Buyer Personas – Kenne deine Kunden](papers/ideal-customer-profile-customer-insights-und-buyer-personas-.md) — `core`
+- [Knowledge Graphs and Artificial Intelligence for the Implementation of Cognitive Heritage Digital Twins](papers/knowledge-graphs-and-artificial-intelligence-for-the-impleme.md) — `core`
+- [AI-Driven Nudge Optimization: Integrating Two-Tower Networks and Multi-Armed Bandit With Behavioral Economics for Digital Banking Campaign](papers/ai-driven-nudge-optimization-integrating-two-tower-networks-.md) — `core`
+- [Flexible Resource Optimization for D2D XL-MIMO Communication via Adversarial Multi-Armed Bandit](papers/flexible-resource-optimization-for-d2d-xl-mimo-communication.md) — `core`
+- [Strategies in the multi-armed bandit](papers/strategies-in-the-multi-armed-bandit.md) — `core`
+- [Deep Reinforcement Learning for the Expert Advice Multi-Armed Bandit](papers/deep-reinforcement-learning-for-the-expert-advice-multi-arme.md) — `core`
+- [Learning to detect via multi-armed bandit](papers/learning-to-detect-via-multi-armed-bandit.md) — `core`
+- [The Role of Predictive Analytics in E-Commerce Conversion Rate Optimization](papers/the-role-of-predictive-analytics-in-e-commerce-conversion-ra.md) — `core`
+- [Artificial Intelligence in Digital Marketing Strategies in the UAE: The Mediating Role of Predictive Analytics in Enhancing Customer Conversion](papers/artificial-intelligence-in-digital-marketing-strategies-in-t.md) — `core`
+- [AI-driven decision support systems in strategic business management: a case-based analysis](papers/ai-driven-decision-support-systems-in-strategic-business-man.md) — `core`
+- [Architecting an Integrated AI Platform for the Apparel Industry](papers/architecting-an-integrated-ai-platform-for-the-apparel-indus.md) — `core`
+- [MECHANISMS BY WHICH AI-ENABLED CRM SYSTEMS INFLUENCE CUSTOMER RETENTION AND OVERALL BUSINESS PERFORMANCE: A SYSTEMATIC LITERATURE REVIEW OF EMPIRICAL FINDINGS](papers/mechanisms-by-which-ai-enabled-crm-systems-influence-custome.md) — `core`
+- [ADVANCEMENTS IN MACHINE LEARNING FOR CUSTOMER RETENTION: A SYSTEMATIC LITERATURE REVIEW OF PREDICTIVE MODELS AND CHURN ANALYSIS](papers/advancements-in-machine-learning-for-customer-retention-a-sy.md) — `core`
+- [EXAMINING THE EFFECT OF AI-POWERED PERSONALIZATION ON CUSTOMER LOYALTY: A META-ANALYSIS OF E-COMMERCE STUDIES](papers/examining-the-effect-of-ai-powered-personalization-on-custom.md) — `core`
+- [No-Code vs Traditional Machine Learning for Lead Generation: A Comparative Case Study](papers/no-code-vs-traditional-machine-learning-for-lead-generation-.md) — `broad`
+- [From static to conversational: The role of landing pages and chatbots in B2B lead generation](papers/from-static-to-conversational-the-role-of-landing-pages-and-.md) — `broad`
+- [Deep Learning based Seasonality and Trend Detection in Sales Forecasting](papers/deep-learning-based-seasonality-and-trend-detection-in-sales.md) — `broad`
+- [Pengembangan Model Deep Learning LSTM dan CNN untuk Peramalan Penjualan Sepeda Motor di Indonesia](papers/pengembangan-model-deep-learning-lstm-dan-cnn-untuk-peramala.md) — `broad`
+- [Sales Forecasting using Predictive Analytics: A Machine Learning and Time-Series Approach](papers/sales-forecasting-using-predictive-analytics-a-machine-learn.md) — `broad`
+- [Forecasting Sales Trends Using Time Series Analysis: A Comparative Study Of Traditional And Machine Learning Models](papers/forecasting-sales-trends-using-time-series-analysis-a-compar.md) — `broad`
+- [Multimodal data fusion for precision customer marketing based on deep learning: service quality perception and loyalty prediction](papers/multimodal-data-fusion-for-precision-customer-marketing-base.md) — `broad`
+- [An Optimized Customer Churn Prediction Approach Based on Regularized Bidirectional Long Short-Term Memory Model](papers/an-optimized-customer-churn-prediction-approach-based-on-reg.md) — `broad`
+- [Machine Learning Applications in Customer Relationship Management: A Comprehensive Review](papers/machine-learning-applications-in-customer-relationship-manag.md) — `broad`
+- [Predicting Customer Churn in Telecom Industry Using Machine Learning Algorithms](papers/predicting-customer-churn-in-telecom-industry-using-machine-.md) — `broad`
+- [Social Network-Integrated Machine Learning for Customer Churn Prediction](papers/social-network-integrated-machine-learning-for-customer-chur.md) — `broad`
+- [Machine Learning for Customer Churn Prediction in Retail](papers/machine-learning-for-customer-churn-prediction-in-retail.md) — `broad`
+- [Comparative Evaluation of Machine Learning Models for Customer Churn Prediction in the Telecom Sector](papers/comparative-evaluation-of-machine-learning-models-for-custom.md) — `broad`
+- [Leveraging Ensemble Learning with Deep Learning for Accurate Customer Churn Prediction in Subscription-Based Mode](papers/leveraging-ensemble-learning-with-deep-learning-for-accurate.md) — `broad`
+- [AI-based Customer Churn Prediction for Financial Institutions: Algorithms, Applications and Challenges](papers/ai-based-customer-churn-prediction-for-financial-institution.md) — `broad`
+- [Customer retention model using machine learning for improved user-centric quality of experience through personalised quality of service](papers/customer-retention-model-using-machine-learning-for-improved.md) — `broad`
+- [Data-driven approaches to predicting customer churn in a non-contractual car-sharing company](papers/data-driven-approaches-to-predicting-customer-churn-in-a-non.md) — `broad`
+- [Enhancing Customer Churn Prediction in Telecommunications through Deep Learning: A Comprehensive Review](papers/enhancing-customer-churn-prediction-in-telecommunications-th.md) — `broad`
+- [Quantum-enhanced customer retention](papers/quantum-enhanced-customer-retention.md) — `broad`
+- [Intelligent computing strategies for customer churn prediction: Innovations and practical applications](papers/intelligent-computing-strategies-for-customer-churn-predicti.md) — `broad`
+- [Temporal Graph Networks for Bank Customer Churn Prediction with Dynamic](papers/temporal-graph-networks-for-bank-customer-churn-prediction-w.md) — `broad`
+- [Using Transformers for B2B Contractual Churn Prediction Based on Customer Behavior Data](papers/using-transformers-for-b2b-contractual-churn-prediction-base.md) — `broad`
+- [AI-Driven Fraud Detection in Banking: The Convergence of Predictive Analytics and Salesforce CRM Automation](papers/ai-driven-fraud-detection-in-banking-the-convergence-of-pred.md) — `broad`
+- [Marketing Automation Through Decentralized AI Agents: A Blockchain-Based Paradigm Shift](papers/marketing-automation-through-decentralized-ai-agents-a-block.md) — `broad`
+- [Scalable SaaS Implementation Governance for Enterprise Sales Operations](papers/scalable-saas-implementation-governance-for-enterprise-sales.md) — `broad`
+- [The influence of customer voice on educational service quality through the mediating effects of perceived trust, value, and customer relationship management](papers/the-influence-of-customer-voice-on-educational-service-quali.md) — `broad`
+- [Data-Driven Marketing in Banks: The Role of Artificial Intelligence in Enhancing Marketing Efficiency and Business Performance](papers/data-driven-marketing-in-banks-the-role-of-artificial-intell.md) — `broad`
+- [Enhancing Client Relationship Management in Financial Services with Salesforce Financial Services Cloud](papers/enhancing-client-relationship-management-in-financial-servic.md) — `broad`
+- [Digital Entrepreneurship on Purchase Decisions: Analysis of Content-Based Business, Online Store, and Business Matchmaking](papers/digital-entrepreneurship-on-purchase-decisions-analysis-of-c.md) — `broad`
+- [IMPACT OF E-COMMERCE PLATFORM ON CONSUMERS MINDSET](papers/impact-of-e-commerce-platform-on-consumers-mindset.md) — `broad`
+- [Customer Segmentation of Mobile Banking Users Using Feature Engineering and K-Means Clustering](papers/customer-segmentation-of-mobile-banking-users-using-feature-.md) — `broad`
+- [Implementasi Customer Relationship Management Pada Sistem Informasi Pemesanan Sewa-Beli Produk Feno.Florist Menggunakan Upsell And Cross-Sell Rate Sebagai Indikator Penawaran Promo](papers/implementasi-customer-relationship-management-pada-sistem-in.md) — `broad`
+- [Digital Marketing Transformation in Emerging Economies: Evidence from Vietnam](papers/digital-marketing-transformation-in-emerging-economies-evide.md) — `broad`
+- [CRMArena: Understanding the Capacity of LLM Agents to Perform Professional CRM Tasks in Realistic Environments](papers/crmarena-understanding-the-capacity-of-llm-agents-to-perform.md) — `broad`
+- [The Role of Bayesian Priors in a Marketing Mix Model: A Scholarly Exploration](papers/the-role-of-bayesian-priors-in-a-marketing-mix-model-a-schol.md) — `broad`
+- [Calibrating Marketing Mix Models (MMMs) with Incrementality Tests](papers/calibrating-marketing-mix-models-mmms-with-incrementality-te.md) — `broad`
+- [Salespersons as media channel: Making marketing mix modelling work for business-to-business](papers/salespersons-as-media-channel-making-marketing-mix-modelling.md) — `broad`
+- [Investigating the Effects of Emerging Technologies on AIDA and Marketing Mix in Indian Digital Marketing](papers/investigating-the-effects-of-emerging-technologies-on-aida-a.md) — `broad`
+- [Data-Driven Uplift Modeling](papers/data-driven-uplift-modeling.md) — `broad`
+- [Heteroscedasticity-aware stratified sampling to improve uplift modeling](papers/heteroscedasticity-aware-stratified-sampling-to-improve-upli.md) — `broad`
+- [Revolutionizing Lead Qualification: The Power of LLMs Over Traditional Methods](papers/revolutionizing-lead-qualification-the-power-of-llms-over-tr.md) — `broad`
+- [LLM-Driven Personalized Email Campaigns: Enhancing Attendee Engagement and Experience through Targeted Communication](papers/llm-driven-personalized-email-campaigns-enhancing-attendee-e.md) — `broad`
+- [AI-Powered Smart CPQ Engines: Leveraging Machine Learning And Generative AI For Enhanced Configure, Price, Quote Systems](papers/ai-powered-smart-cpq-engines-leveraging-machine-learning-and.md) — `core`
+- [Machine Learning in Digital Marketing: Real-Time Campaign Optimization and Conversion Prediction Using Multimodal Consumer Interaction Data](papers/machine-learning-in-digital-marketing-real-time-campaign-opt.md) — `core`
+- [Consumer Behavior in Online Retail Environments](papers/consumer-behavior-in-online-retail-environments.md) — `core`
+- [Search Engine Optimization (SEO) and Search Engine Marketing (SEM)](papers/search-engine-optimization-seo-and-search-engine-marketing-s.md) — `core`
+- [Customer Loyalty and Retention Strategies in E-Commerce](papers/customer-loyalty-and-retention-strategies-in-e-commerce.md) — `core`
+- [Fundamentals of E-Commerce and Retail Strategy](papers/fundamentals-of-e-commerce-and-retail-strategy.md) — `core`
+- [SparseFraudNet: A Graph-based Approach for Cold-start Fraud Detection with Information Aggregation](papers/sparsefraudnet-a-graph-based-approach-for-cold-start-fraud-d.md) — `core`
+- [LinUCB-MLP: A Hybrid Approach for Nonlinear Contextual Bandits in Dynamic Recommendation Systems](papers/linucb-mlp-a-hybrid-approach-for-nonlinear-contextual-bandit.md) — `core`
+- [Social Selling in B2B: How Sales Benefit and the Sales Process Flourishes](papers/social-selling-in-b2b-how-sales-benefit-and-the-sales-proces.md) — `core`
+- [Effective B2B Sales Growth Strategy: Evidence from A Longitudinal Study of 44,000 B2B Customers](papers/effective-b2b-sales-growth-strategy-evidence-from-a-longitud.md) — `core`
+- [Beyond Use Cases: A Strategic Framework for Scaling AI in B2B Sales](papers/beyond-use-cases-a-strategic-framework-for-scaling-ai-in-b2b.md) — `core`
+- [Lead generation IN B2B sales of IT services: strategies and digital tools](papers/lead-generation-in-b2b-sales-of-it-services-strategies-and-d.md) — `core`
+- [Balancing B2B Lead Generation through Manual Research and AI Innovation](papers/balancing-b2b-lead-generation-through-manual-research-and-ai.md) — `core`
+- [The Impact of Two Types of Customer Orientation on Sales Performance in the B2B Sales Environment](papers/the-impact-of-two-types-of-customer-orientation-on-sales-per.md) — `core`
+- [CRM3.0’s B2B Sales Digital Transformation](papers/crm3-0-s-b2b-sales-digital-transformation.md) — `core`
+- [Quantum Contextual Bandits: Integrating Bandit Exploration into Quantum Neural Network](papers/quantum-contextual-bandits-integrating-bandit-exploration-in.md) — `core`
+- [Contextual Multi-Armed Bandits for Dynamic News Recommendation: An Empirical Evaluation](papers/contextual-multi-armed-bandits-for-dynamic-news-recommendati.md) — `core`
+- [Automated Feature Engineering for Contextual Bandits via AATention Transfer Learning](papers/automated-feature-engineering-for-contextual-bandits-via-aat.md) — `core`
+- [Expert-Guided Multi-Head Contextual Bandits for Classifying Harmful Brain Activity Patterns](papers/expert-guided-multi-head-contextual-bandits-for-classifying-.md) — `core`
+- [Multi-Agent Contextual Bandits for Multi-Objective Recommendation Systems](papers/multi-agent-contextual-bandits-for-multi-objective-recommend.md) — `core`
+- [Цифровые инструменты и технологии для оптимизации управления B2B-продажами](papers/b2b.md) — `core`
+- [Revolutionizing B2B Ecosystems: AI-Driven Integration of Marketing, Sales and Data Engineering at Scale](papers/revolutionizing-b2b-ecosystems-ai-driven-integration-of-mark.md) — `core`
+- [Uncertainty-aware contextual multi-armed bandits for recommendations in e-commerce](papers/uncertainty-aware-contextual-multi-armed-bandits-for-recomme.md) — `core`
+- [Neural Risk-sensitive Satisficing in Contextual Bandits](papers/neural-risk-sensitive-satisficing-in-contextual-bandits.md) — `core`
+- [Leveraging Heterogeneous Spillover in Maximizing Contextual Bandit Rewards](papers/leveraging-heterogeneous-spillover-in-maximizing-contextual-.md) — `core`
+- [Scalable and Interpretable Contextual Bandits: A Literature Review and Retail Offer Prototype](papers/scalable-and-interpretable-contextual-bandits-a-literature-r.md) — `core`
+- [Performance Benchmarking of DETC, FG-TS, and MNL-UCB in Contextual Recommendation Tasks](papers/performance-benchmarking-of-detc-fg-ts-and-mnl-ucb-in-contex.md) — `core`
+- [Neural Embedding Bandit - A Novel Contextual Bandit for Intelligent Payment Gateway Routing](papers/neural-embedding-bandit-a-novel-contextual-bandit-for-intell.md) — `core`
+- [A Hybrid Deep Contextual Multi-Armed Bandit Framework for Personalized Video Recommendation](papers/a-hybrid-deep-contextual-multi-armed-bandit-framework-for-pe.md) — `core`
+- [Semantic Review and Contextual Feature Integration in Multi-Armed Bandit for Yelp Recommendation](papers/semantic-review-and-contextual-feature-integration-in-multi-.md) — `core`
+- [Optimizing Neural Spike Train Prediction Using Contextual Bandit Algorithms Within Dqn Frameworks](papers/optimizing-neural-spike-train-prediction-using-contextual-ba.md) — `core`
+- [Valid Post-Contextual Bandit Inference](papers/valid-post-contextual-bandit-inference.md) — `core`
+- [HD-CB
+                    <sub>BIN</sub>
+                    : A Lightweight Approach for Contextual Bandit Learning in Real-Time Applications](papers/hd-cb-sub-bin-sub-a-lightweight-approach-for-contextual-band.md) — `core`
+- [Application of Multi-Armed Bandit Algorithms in Movie Rating Recommendation Simulation Systems](papers/application-of-multi-armed-bandit-algorithms-in-movie-rating.md) — `core`
+- [On the Optimal Regret of Linear Contextual Bandit under Generalized Margin Condition](papers/on-the-optimal-regret-of-linear-contextual-bandit-under-gene.md) — `core`
+- [The Exploration of Music Recommendation System Performance Based on Multi-Armed Bandit Algorithms](papers/the-exploration-of-music-recommendation-system-performance-b.md) — `core`
+- [Strategic Consumer Behavior and Personalized Pricing: A Contextual Bandit Approach for Retailers](papers/strategic-consumer-behavior-and-personalized-pricing-a-conte.md) — `core`
+- [Robust contextual bandit method for optimal loan offering](papers/robust-contextual-bandit-method-for-optimal-loan-offering.md) — `core`
+- [Enhancing Activity Recommendation Systems: A Comparative Evaluation of Traditional and Improved Multi-Armed Bandit Algorithms on User Rating Dataset](papers/enhancing-activity-recommendation-systems-a-comparative-eval.md) — `core`
+- [A Gaussian process approach for contextual bandit-based battery replacement](papers/a-gaussian-process-approach-for-contextual-bandit-based-batt.md) — `core`
+- [Reinforcement Learning for Economically Optimized Churn Management: A Contextual Bandit Framework](papers/reinforcement-learning-for-economically-optimized-churn-mana.md) — `core`
+- [Variational Quantum Circuits in Offline Contextual Bandit Problems](papers/variational-quantum-circuits-in-offline-contextual-bandit-pr.md) — `core`
+- [Enhancing Dynamic Movie Recommendations With User Expectation Ratings in Contextual Bandit Models](papers/enhancing-dynamic-movie-recommendations-with-user-expectatio.md) — `core`
+- [Review of Social Media Sentiment and Contextual Bandit Models in Stock Market Investment](papers/review-of-social-media-sentiment-and-contextual-bandit-model.md) — `core`
+- [Optimizing Coupon Recommendation Using Multi-Armed Bandit Algorithms](papers/optimizing-coupon-recommendation-using-multi-armed-bandit-al.md) — `core`
+- [A Contextual Bandit Approach to Dynamic Thread Tuning in Data Pipeline Systems](papers/a-contextual-bandit-approach-to-dynamic-thread-tuning-in-dat.md) — `core`
+- [Spectrum Allocation for Multiple Users in Wireless Communication Networks using Graph Attention based Contextual Bandit](papers/spectrum-allocation-for-multiple-users-in-wireless-communica.md) — `core`
+- [Horizon-Sensitive Performance Analysis of Bandit Algorithms in Movie Recommendation Systems](papers/horizon-sensitive-performance-analysis-of-bandit-algorithms-.md) — `core`
+- [Enhancing Personalized Recommendation Systems: A Hybrid Etc-Ucb Bandit Algorithm Approach](papers/enhancing-personalized-recommendation-systems-a-hybrid-etc-u.md) — `core`
+- [When Labor-Intensive Mobile Crowdsourcing Meets Unobservability: Contextual Bandit Learning with Unobservable Individual Rewards](papers/when-labor-intensive-mobile-crowdsourcing-meets-unobservabil.md) — `core`
+- [Mobility-aware user scheduling in wireless federated learning with contextual multi-armed bandit](papers/mobility-aware-user-scheduling-in-wireless-federated-learnin.md) — `core`
+- [The Recommendation System (察举制)](papers/the-recommendation-system.md) — `core`
+- [E-DiffBand: A Recommendation Method Combining Diffusion Models and Multi-Armed Bandit in Embodied AI Environments](papers/e-diffband-a-recommendation-method-combining-diffusion-model.md) — `core`
+- [Adaptive Resource Provisioning in Satellite Networks via VAE-Assisted Contextual Bandit Learning](papers/adaptive-resource-provisioning-in-satellite-networks-via-vae.md) — `core`
+- [DEEP LEARNING-BASED VISUAL STYLE MATCHING: A CNN-DRIVEN APPROACH FOR FASHION RECOMMENDATIONS](papers/deep-learning-based-visual-style-matching-a-cnn-driven-appro.md) — `core`
+- [Designing Recommender Systems at Scale: Multi-Stage Architecture and Cold-Start Optimization](papers/designing-recommender-systems-at-scale-multi-stage-architect.md) — `core`
+- [Neural Network-Based Bandit: A Medium Access Control for the IIoT Alarm Scenario](papers/neural-network-based-bandit-a-medium-access-control-for-the-.md) — `core`
+- [Predictive Optimization of CRM Pipelines Using Multi-Model Ensemble Learning in HubSpot Environments](papers/predictive-optimization-of-crm-pipelines-using-multi-model-e.md) — `core`
+- [Comprehensive Review of Gen Agentic AI in Marketing: Tools, Theories and Applications](papers/comprehensive-review-of-gen-agentic-ai-in-marketing-tools-th.md) — `core`
+- [Cloud-Powered Healthcare &amp; Insurance Transformation with CRM and Advanced Analytics](papers/cloud-powered-healthcare-amp-insurance-transformation-with-c.md) — `core`
+- [Generatiivisen tekoälyn käyttöönotto B2B markkinointiin, myyntiin ja toimitusketjunhallintaan startup-yrityksessä tehokkuuden parantamisessa](papers/generatiivisen-teko-lyn-k-ytt-notto-b2b-markkinointiin-myynt.md) — `core`
+- [AI-Powered Market Segmentation and Personalization Strategies for Enhancing Digital Product Lifecycle Management](papers/ai-powered-market-segmentation-and-personalization-strategie.md) — `core`
+- [A Case Study on AI-driven Digital Marketing for Small Businesses](papers/a-case-study-on-ai-driven-digital-marketing-for-small-busine.md) — `core`
+- [Cold Email Generator Using LLM](papers/cold-email-generator-using-llm.md) — `core`
+- [Template-Adaptive Content Organization: AI-Driven Personalization for E-Commerce Email Marketing](papers/template-adaptive-content-organization-ai-driven-personaliza.md) — `core`
+- [Personalization Models for Email Subject Lines and Send Times](papers/personalization-models-for-email-subject-lines-and-send-time.md) — `core`
+- [Cold Email Generation Datasets for Prompt Evaluation (Informative vs. Basic Prompting)](papers/cold-email-generation-datasets-for-prompt-evaluation-informa.md) — `core`
+- [Driving Sponsorship Conversions at Money Expo India Strategic Outreach and CRM Discipline at Trasol](papers/driving-sponsorship-conversions-at-money-expo-india-strategi.md) — `core`
+- [Automating Personalized Email Outreach: A LangChain–LLaMA Framework with ChromaDB and Groq Cloud](papers/automating-personalized-email-outreach-a-langchain-llama-fra.md) — `core`
+- [A review of AI-based business lead generation: Scrapus as a case study](papers/a-review-of-ai-based-business-lead-generation-scrapus-as-a-c.md) — `core`
+- [Strategic cross-functional alignment in B2B technology companies](papers/strategic-cross-functional-alignment-in-b2b-technology-compa.md) — `core`
+- [МЕТОДОЛОГІЯ ОПТИМІЗАЦІЇ КРИТЕРІЇВ IDEAL CUSTOMER PROFILE З МЕТОЮ ПІДВИЩЕННЯ ПРОДУКТИВНОСТІ ЗБУТОВИХ ПРОЦЕСІВ ІТ-ПІДПРИЄМСТВ У НЕСТАБІЛЬНОМУ  РИНКОВОМУ СЕРЕДОВИЩІ](papers/ideal-customer-profile.md) — `core`
+- [Architecting Lead-to-Cash Automation: The Role of Artificial Intelligence in Redefining B2B Revenue Systems](papers/architecting-lead-to-cash-automation-the-role-of-artificial-.md) — `core`
+- [ACCOUNT-BASED MARKETING: PERSONALIZED COMMUNICATIONS WITH CUSTOMERS IN THE B2B MARKET](papers/account-based-marketing-personalized-communications-with-cus.md) — `core`
+- [Account-Based B2B Marketing: Integrating Advanced Technology to Optimize Processes and Performance](papers/account-based-b2b-marketing-integrating-advanced-technology-.md) — `core`
+- [Strategic Customer-Oriented Marketing: The ABM Model for the Perfect Start into Account-Based Marketing](papers/strategic-customer-oriented-marketing-the-abm-model-for-the-.md) — `core`
+- [The B2B Marketing Ecosystem: A Journey Through the Colorful World of B2B Terms](papers/the-b2b-marketing-ecosystem-a-journey-through-the-colorful-w.md) — `core`
+- [Next Generation B2B Marketing](papers/next-generation-b2b-marketing.md) — `core`
+- [evamaxfield/sci-soft-models: Author-Developer Account Matching](papers/evamaxfield-sci-soft-models-author-developer-account-matchin.md) — `core`
+- [Tenyidie Named Entity Recognition - Corpus creation and Machine/Deep Learning applications](papers/tenyidie-named-entity-recognition-corpus-creation-and-machin.md) — `core`
+- [ENHANCING MARKET COMPETITIVENESS THROUGH AI-POWERED SEO AND DIGITAL MARKETING STRATEGIES IN E-COMMERCE](papers/enhancing-market-competitiveness-through-ai-powered-seo-and-.md) — `core`
+- [Linking Strategies and the Sales Role in the Era of CRM and Data Analytics](papers/linking-strategies-and-the-sales-role-in-the-era-of-crm-and-.md) — `core`
+- [Hybrid Attention-SVM Based Product Recommendation with Grey Wolf Optimization for E-Commerce Platforms](papers/hybrid-attention-svm-based-product-recommendation-with-grey-.md) — `core`
+- [News Recommendation Using Sentence Embeddings and Deep Neural Networks](papers/news-recommendation-using-sentence-embeddings-and-deep-neura.md) — `core`
+- [Personalized Email Marketing with Agentic AI](papers/personalized-email-marketing-with-agentic-ai.md) — `core`
+- [Design of scheduling policies for minimizing age of incorrect information in multi-hop wireless networks](papers/design-of-scheduling-policies-for-minimizing-age-of-incorrec.md) — `core`
+- [The AI Revolution in SaaS: From One-Size-Fits-Most to Hyper-Personalized Cloud Platforms](papers/the-ai-revolution-in-saas-from-one-size-fits-most-to-hyper-p.md) — `core`
+- [BEYOND THE LAST CLICK: AN ANALYSIS OF HYBRID MEASUREMENT FRAMEWORKS AND AI-DRIVEN ATTRIBUTION IN A PRIVACY-FIRST OMNICHANNEL ECONOMY](papers/beyond-the-last-click-an-analysis-of-hybrid-measurement-fram.md) — `core`
+- [Deep Reinforcement Learning-Based Recommendation System for Libraries Using Implicit Feedback](papers/deep-reinforcement-learning-based-recommendation-system-for-.md) — `core`
+- [Enhancing Multi-Armed Bandit Algorithms through Multi-Process Optimization: Efficiency and Comparative Performance Analysis](papers/enhancing-multi-armed-bandit-algorithms-through-multi-proces.md) — `core`
+- [IEEE 802.15.4.e TSCH-Based Scheduling for Throughput Optimization: A Combinatorial Multi-Armed Bandit Approach](papers/ieee-802-15-4-e-tsch-based-scheduling-for-throughput-optimiz.md) — `core`
+- [Optimization of Uav Obstacle Avoidance Based on Multi-Armed Bandit Algorithms](papers/optimization-of-uav-obstacle-avoidance-based-on-multi-armed-.md) — `core`
+- [Optimizing Exploration-Exploitation Balance in Multi-Armed Bandit Algorithms for Enhanced Decision-Making](papers/optimizing-exploration-exploitation-balance-in-multi-armed-b.md) — `core`
+- [A Comprehensive Investigation into the Progress and Applications of Multi-Armed Bandit Algorithms](papers/a-comprehensive-investigation-into-the-progress-and-applicat.md) — `core`
+- [Multi-Agent Multi-Armed Bandit with Fully Heavy-Tailed Dynamics](papers/multi-agent-multi-armed-bandit-with-fully-heavy-tailed-dynam.md) — `core`
+- [Stable Experimentation? An Analysis of Multi-Armed Bandit Problems with Bundling](papers/stable-experimentation-an-analysis-of-multi-armed-bandit-pro.md) — `core`
+- [Multi-Armed Bandit Algorithms for Large Language Model Optimization: A Survey of Theory and Applications](papers/multi-armed-bandit-algorithms-for-large-language-model-optim.md) — `core`
+- [Optimization of multi-cell edge caching strategies based on trial and error multi-armed bandit algorithm](papers/optimization-of-multi-cell-edge-caching-strategies-based-on-.md) — `core`
+- [An Attention-Based Reward Framework for Multi-Armed Bandit Scheduling in 5G Uplink](papers/an-attention-based-reward-framework-for-multi-armed-bandit-s.md) — `core`
+- [Invitation Messages for Business Surveys: A Multi-Armed Bandit Experiment&amp;nbsp;](papers/invitation-messages-for-business-surveys-a-multi-armed-bandi.md) — `core`
+- [Latency-Constrained Request Routing for Interactive LLM Applications: A Multi-Armed Bandit Approach](papers/latency-constrained-request-routing-for-interactive-llm-appl.md) — `core`
+- [Multi-Dimensional Arms for Combinatorial Multi-Armed Bandit](papers/multi-dimensional-arms-for-combinatorial-multi-armed-bandit.md) — `core`
+- [Exploiting Adjacent Similarity in Multi-Armed Bandit Tasks via Transfer of Reward Samples](papers/exploiting-adjacent-similarity-in-multi-armed-bandit-tasks-v.md) — `core`
+- [Multi-Armed Bandit Algorithms for Recommender Systems in Non-Stationary Environments](papers/multi-armed-bandit-algorithms-for-recommender-systems-in-non.md) — `core`
+- [Comparative Analysis of Three Algorithms in Multi-Armed  Bandit Problems](papers/comparative-analysis-of-three-algorithms-in-multi-armed-band.md) — `core`
+- [Federated Non-Stochastic Multi-Armed Bandit for Channel Sensing in Cognitive Radio Systems](papers/federated-non-stochastic-multi-armed-bandit-for-channel-sens.md) — `core`
+- [Efficient Multi-Armed Bandit-Based Beam Training for Multi-User XL-MIMO Systems](papers/efficient-multi-armed-bandit-based-beam-training-for-multi-u.md) — `core`
+- [Evaluation of Multi-Armed Bandit Decision Making in Multi-Agent Cyber Physical Games](papers/evaluation-of-multi-armed-bandit-decision-making-in-multi-ag.md) — `core`
+- [Optimizing Ad Recommendations Using A Bayesian Multi-Armed Bandit Approach](papers/optimizing-ad-recommendations-using-a-bayesian-multi-armed-b.md) — `core`
+- [Extended UCB Policies for Multi-armed Bandit Problems](papers/extended-ucb-policies-for-multi-armed-bandit-problems.md) — `core`
+- [Neural Network-Based Parameter Tuning for Multi-Armed Bandit Algorithms](papers/neural-network-based-parameter-tuning-for-multi-armed-bandit.md) — `core`
+- [Version v2.0.0 — Reinforced-lib: Rapid prototyping of reinforcement learning solutions](papers/version-v2-0-0-reinforced-lib-rapid-prototyping-of-reinforce.md) — `core`
+- [RL-Based Crawlers Evaluation Framework](papers/rl-based-crawlers-evaluation-framework.md) — `core`
+- [A Numerical Analysis of Allocation Strategies for the Multi Armed Bandit Problem under Delayed Rewards Conditions in Digital Campaign Management](papers/a-numerical-analysis-of-allocation-strategies-for-the-multi-.md) — `core`
+- [Optimizing LLM Chatbot to Human Handover with Multi-Agent AI Approach](papers/optimizing-llm-chatbot-to-human-handover-with-multi-agent-ai.md) — `core`
+- [Enhancing Text Prediction in Marketing Email Campaigns Through Idiolect and Sociolect Modeling](papers/enhancing-text-prediction-in-marketing-email-campaigns-throu.md) — `core`
+- [Efficiency Analysis and Classification of an Airline’s Email Campaigns Using DEA and Decision Trees](papers/efficiency-analysis-and-classification-of-an-airline-s-email.md) — `core`
+- [Re-Engaging the Dormant: A Data-Driven Framework for Cold Start Email Campaigns in Large-Scale Platforms](papers/re-engaging-the-dormant-a-data-driven-framework-for-cold-sta.md) — `core`
+- [Sales Prediction Using LSTM and BiLSTM Models: A Deep Learning Approach for Time Series Forecasting](papers/sales-prediction-using-lstm-and-bilstm-models-a-deep-learnin.md) — `core`
+- [Intelligent Segmentation and Real-Time Coupon Distribution Model for E-Commerce Platforms](papers/intelligent-segmentation-and-real-time-coupon-distribution-m.md) — `core`
+- [An Initial Survey on Sales prediction using Linear Regression](papers/an-initial-survey-on-sales-prediction-using-linear-regressio.md) — `core`
+- [A Real-time Associative Feature-based Integration Model and Platform for Small and Medium-sized Enterprises in the Manufacturing Industry](papers/a-real-time-associative-feature-based-integration-model-and-.md) — `core`
+- [Autonomous CRM agents: Architecting intelligent assistants for scalable, human-like customer engagement](papers/autonomous-crm-agents-architecting-intelligent-assistants-fo.md) — `core`
+- [Enhancing Search and Recommendation Personalization through User Modeling and Representation](papers/enhancing-search-and-recommendation-personalization-through-.md) — `core`
+- [Predicting Modeling in E-Commerce Marketing Based on User Journeys](papers/predicting-modeling-in-e-commerce-marketing-based-on-user-jo.md) — `core`
+- [Algorithmic Digital Transformation in Name-Personalized Retargeting](papers/algorithmic-digital-transformation-in-name-personalized-reta.md) — `core`
+- [A novel data-driven approach to detect and predict customer transitions in the marketing funnel](papers/a-novel-data-driven-approach-to-detect-and-predict-customer-.md) — `core`
+- [The Era of Hyper-Personalization in Marketing Management and the Privacy Paradox](papers/the-era-of-hyper-personalization-in-marketing-management-and.md) — `core`
+- [Conceptual Replication of Voice Search Impact on Consumer Choice Simplicity: The Role of Task Complexity and Personal Innovativeness](papers/conceptual-replication-of-voice-search-impact-on-consumer-ch.md) — `core`
+- [Intent Based Knowledge Graph Aware Recommender System with Causal Inference](papers/intent-based-knowledge-graph-aware-recommender-system-with-c.md) — `core`
+- [Use of Artificial Intelligence in Global B2B Content Marketing](papers/use-of-artificial-intelligence-in-global-b2b-content-marketi.md) — `core`
+- [The Power of Session-Level Data: Predicting Return Intent along the Browsing Journey](papers/the-power-of-session-level-data-predicting-return-intent-alo.md) — `core`
+- [AI-Driven Forecasting of Supply Chain Shocks: Regulatory Determinants of B2B Fuel Trade Performance](papers/ai-driven-forecasting-of-supply-chain-shocks-regulatory-dete.md) — `core`
+- [Sub-100ms Latency Optimization in Production ML Systems: Lessons from Building Customer Intelligence Platforms](papers/sub-100ms-latency-optimization-in-production-ml-systems-less.md) — `core`
+- [Role of Primary and Secondary Research in a B2B Lead Generation: A Practical Approach](papers/role-of-primary-and-secondary-research-in-a-b2b-lead-generat.md) — `broad`
+- [Machine Learning Models for Customer Churn Classification in B2B FMCG Platforms](papers/machine-learning-models-for-customer-churn-classification-in.md) — `broad`
+- [B2B Marketing Strategy: Finding the Needle in the Haystack](papers/b2b-marketing-strategy-finding-the-needle-in-the-haystack.md) — `broad`
+- [MAIN MODERN APPROACHES TO LEAD GENERATION IN THE B2B SPHERE](papers/main-modern-approaches-to-lead-generation-in-the-b2b-sphere.md) — `broad`
+- [The Marketing Pathfinder: The B2B Marketing Journey of an SME](papers/the-marketing-pathfinder-the-b2b-marketing-journey-of-an-sme.md) — `broad`
+- [The B2B Marketing Maturity Model in the Era of Predictive Intelligence](papers/the-b2b-marketing-maturity-model-in-the-era-of-predictive-in.md) — `broad`
+- [Employer Branding as a Turbo for B2B Marketing](papers/employer-branding-as-a-turbo-for-b2b-marketing.md) — `broad`
+- [Analysis and clustering of B2B customers with a focus on sustainable sales: using machine learning techniques to identify different customer groups and optimize resource allocation in line with sustainable sales strategies](papers/analysis-and-clustering-of-b2b-customers-with-a-focus-on-sus.md) — `broad`
+- [A Study on Evaluating the Impact of Trade Fairs and Industial Exhibitions on Lead Generation](papers/a-study-on-evaluating-the-impact-of-trade-fairs-and-industia.md) — `broad`
+- [Enhancing Enterprise Performance Through Forecasting: A Deep RNN Approach](papers/enhancing-enterprise-performance-through-forecasting-a-deep-.md) — `broad`
+- [Comparative Study of Time Series Forecasting on Iron Sales Using CNN, MLP, and LSTM](papers/comparative-study-of-time-series-forecasting-on-iron-sales-u.md) — `broad`
+- [Data Driven Forecasting of Sales in India's Oil and Gas Industry Using Machine Learning Techniques](papers/data-driven-forecasting-of-sales-in-india-s-oil-and-gas-indu.md) — `broad`
+- [Clustering and Forecasting Sales Patterns through Lifecycle Analysis using Self-Organizing Maps and Temporal Transformers](papers/clustering-and-forecasting-sales-patterns-through-lifecycle-.md) — `broad`
+- [A Hybrid TCN-LSTM-Attention Model for Accurate Sales Forecasting](papers/a-hybrid-tcn-lstm-attention-model-for-accurate-sales-forecas.md) — `broad`
+- [Cryptohub and Sales Forecasting Using Machine Learning](papers/cryptohub-and-sales-forecasting-using-machine-learning.md) — `broad`
+- [COMPARISON OF ARIMA, LSTM, AND GRU MODELS FOR FORECASTING SALES OF HIT AEROSOL PRODUCTS](papers/comparison-of-arima-lstm-and-gru-models-for-forecasting-sale.md) — `broad`
+- [Neural Prophet-based Weekly Sales Forecasting Model](papers/neural-prophet-based-weekly-sales-forecasting-model.md) — `broad`
+- [From ARIMA to LSTM: Evaluating Traditional and AI-Based Models for Accurate Retail Sales Forecasting](papers/from-arima-to-lstm-evaluating-traditional-and-ai-based-model.md) — `broad`
+- [Intelligent Forecasting of Online Retail Sales Using Ensemble Machine Learning Models](papers/intelligent-forecasting-of-online-retail-sales-using-ensembl.md) — `broad`
+- [Q-ForecasterNet: A Hybrid Quantum Neural Network for Sales Forecasting](papers/q-forecasternet-a-hybrid-quantum-neural-network-for-sales-fo.md) — `broad`
+- [Data-driven forecasting of sales influenced by climate variability using deep learning](papers/data-driven-forecasting-of-sales-influenced-by-climate-varia.md) — `broad`
+- [Retail Sales Forecasting using Advanced Deep Learning Models: A Comparative Study](papers/retail-sales-forecasting-using-advanced-deep-learning-models.md) — `broad`
+- [ERP-Driven Sales Forecasting with AI Techniques: A Predictive Analytics Approach](papers/erp-driven-sales-forecasting-with-ai-techniques-a-predictive.md) — `broad`
+- [A Review of E-commerce Sales Forecasting Based on Deep Learning: Methods, Advances, and Challenges](papers/a-review-of-e-commerce-sales-forecasting-based-on-deep-learn.md) — `broad`
+- [Some Insights into Machine Learning for Retail Sales Forecasting](papers/some-insights-into-machine-learning-for-retail-sales-forecas.md) — `broad`
+- [Research on Electricity Sales Forecasting Method Based on GRU-Attention Considering Multi-Market Factors](papers/research-on-electricity-sales-forecasting-method-based-on-gr.md) — `broad`
+- [Harnessing AI and Machine Learning in E-Commerce to Advance Product Recommendation Systems and Sales Forecast Accuracy](papers/harnessing-ai-and-machine-learning-in-e-commerce-to-advance-.md) — `broad`
+- [Predicting Red Wine Sales Using Deep Learning Algorithms for Market Performance Optimisation](papers/predicting-red-wine-sales-using-deep-learning-algorithms-for.md) — `broad`
+- [Autoformer-Based Sales and Inventory Forecasting for Cross-Border E-Commerce: A Time Series Deep Learning Approach](papers/autoformer-based-sales-and-inventory-forecasting-for-cross-b.md) — `broad`
+- [Retail Sales Forecasting Using Advanced Time Series Regression Techniques](papers/retail-sales-forecasting-using-advanced-time-series-regressi.md) — `broad`
+- [SALES FORECASTING AND DEMAND PREDICTION THROUGH TIME SERIES ANALYSIS AND MACHINE LEARNING](papers/sales-forecasting-and-demand-prediction-through-time-series-.md) — `broad`
+- [Marrying Theory and Practice: Product Network-Inspired Deep Learning for Sales Forecasting](papers/marrying-theory-and-practice-product-network-inspired-deep-l.md) — `broad`
+- [EFFICIENT APPROACH FOR PREDICTING SALES USING SUPERVISED MACHINE LEARNING ALGORITHMS](papers/efficient-approach-for-predicting-sales-using-supervised-mac.md) — `broad`
+- [A Comparative Analysis of Machine Learning Models for Customer Churn Prediction in Subscription-Based Businesses](papers/a-comparative-analysis-of-machine-learning-models-for-custom.md) — `broad`
+- [Hybrid Neural Network Approach for Customer Churn Prediction in Web Services](papers/hybrid-neural-network-approach-for-customer-churn-prediction.md) — `broad`
+- [Enhanced Telecom Customer Churn Prediction Using Machine Learning and Deep Learning Models](papers/enhanced-telecom-customer-churn-prediction-using-machine-lea.md) — `broad`
+- [Browser-Based Customer Churn Prediction using WebAssembly (Pyodide)](papers/browser-based-customer-churn-prediction-using-webassembly-py.md) — `broad`
+- [Predictive Modeling of Customer Churn in Telecommunications](papers/predictive-modeling-of-customer-churn-in-telecommunications.md) — `broad`
+- [Predicting Customer Churn in Financial Services Using Ensemble Machine Learning Models](papers/predicting-customer-churn-in-financial-services-using-ensemb.md) — `broad`
+- [Graph Neural Networks for Customer Churn Analysis in Subscription-Based Business Models](papers/graph-neural-networks-for-customer-churn-analysis-in-subscri.md) — `broad`
+- [Behavioral Data–Driven Customer Segmentation using Ensemble Machine Learning and Temporal Forecasting](papers/behavioral-data-driven-customer-segmentation-using-ensemble-.md) — `broad`
+- [Leveraging Social Network Analysis to Enhance Customer Relationship Management in Retail Commerce](papers/leveraging-social-network-analysis-to-enhance-customer-relat.md) — `broad`
+- [AI-Powered Predictive Analytics in Consumer Behavior: A Machine Learning Approach for Marketing Strategy Optimization](papers/ai-powered-predictive-analytics-in-consumer-behavior-a-machi.md) — `broad`
+- [Strategi Retensi Pelanggan Berbasis Historis: Optimalisasi Model Prediksi Churn Menggunakan Machine Learning](papers/strategi-retensi-pelanggan-berbasis-historis-optimalisasi-mo.md) — `broad`
+- [Customer Churn Prediction in Telecom: A Deep Learning Approach Using Keras and TensorFlow](papers/customer-churn-prediction-in-telecom-a-deep-learning-approac.md) — `broad`
+- [ST-GAT: A Medium-To-Long-term Prediction Model for Telecom Churn Based on Spatial-Temporal Graph Attention Networks](papers/st-gat-a-medium-to-long-term-prediction-model-for-telecom-ch.md) — `broad`
+- [Predicting Telecom Customer Churn with Combined Machine Learning Models](papers/predicting-telecom-customer-churn-with-combined-machine-lear.md) — `broad`
+- [A Comprehensive Analysis of Churn Prediction in Telecommunications Using Machine Learning](papers/a-comprehensive-analysis-of-churn-prediction-in-telecommunic.md) — `broad`
+- [Research on Customer Churn Prediction based on Transformer and CNN Fusion Model](papers/research-on-customer-churn-prediction-based-on-transformer-a.md) — `broad`
+- [Deep Learning Models for Predicting Customer Churn in Omni-Channel Retail Environments](papers/deep-learning-models-for-predicting-customer-churn-in-omni-c.md) — `broad`
+- [Uncertainty-Aware Deep Ensembles for Confident Customer Churn Prediction with Rejection Option](papers/uncertainty-aware-deep-ensembles-for-confident-customer-chur.md) — `broad`
+- [Performance analysis of ResNet 50 for accurate prediction and classification of customer churn compared over convolution neural network](papers/performance-analysis-of-resnet-50-for-accurate-prediction-an.md) — `broad`
+- [Systematic Literature Review of Machine Learning Algorithms for Predicting Customer Churn in the context of HRMS Software Providers](papers/systematic-literature-review-of-machine-learning-algorithms-.md) — `broad`
+- [Ensemble Learning based Categorical Boosting for Customer Lifetime Value Prediction in Businesses](papers/ensemble-learning-based-categorical-boosting-for-customer-li.md) — `broad`
+- [Deep Neural Networks for Real-Time Customer Retention Forecasting in Digital Banking Platforms](papers/deep-neural-networks-for-real-time-customer-retention-foreca.md) — `broad`
+- [Prediction of Customer Churn in Financial Sectors using Machine Learning Algorithms](papers/prediction-of-customer-churn-in-financial-sectors-using-mach.md) — `broad`
+- [Exploration of the MLP Neural Network Evaluation Model for Risk Control in Digital Inclusive Finance](papers/exploration-of-the-mlp-neural-network-evaluation-model-for-r.md) — `broad`
+- [Secure Privacy Preserving Banking Customer Churn Prediction Using Federated Learning and Fully Homomorphic Encryption](papers/secure-privacy-preserving-banking-customer-churn-prediction-.md) — `broad`
+- [Churn Prediction and Factor Identification in Telecommunication Industry Using Deep Learning](papers/churn-prediction-and-factor-identification-in-telecommunicat.md) — `broad`
+- [Predictive Analytics System for Customer Churn in Telecom Using Artificial Intelligence Approaches](papers/predictive-analytics-system-for-customer-churn-in-telecom-us.md) — `broad`
+- [Credit Card Churn Prediction: An Analytical and Model-Driven Study](papers/credit-card-churn-prediction-an-analytical-and-model-driven-.md) — `broad`
+- [Leveraging RFM Features for Churn Prediction in Imbalanced E-Commerce Data: A Hepsiburada Case Study](papers/leveraging-rfm-features-for-churn-prediction-in-imbalanced-e.md) — `broad`
+- [Customer churn prediction analysis on E-commerce platforms based on improved XGBoost algorithm](papers/customer-churn-prediction-analysis-on-e-commerce-platforms-b.md) — `broad`
+- [Customer Churn Prediction in E-Commerce Using AutoML and Explainable AI Frameworks](papers/customer-churn-prediction-in-e-commerce-using-automl-and-exp.md) — `broad`
+- [An Ensembled DNN and XGBoost Model with SVM Augmentation in Churn Prediction](papers/an-ensembled-dnn-and-xgboost-model-with-svm-augmentation-in-.md) — `broad`
+- [Customer Churn Prediction using Deep Learning](papers/customer-churn-prediction-using-deep-learning.md) — `broad`
+- [Machine learning for business intelligence](papers/machine-learning-for-business-intelligence.md) — `broad`
+- [AI-Enhanced Deep Learning Framework for Customer Churn Prediction In Indonesian Mobile Commerce Platforms](papers/ai-enhanced-deep-learning-framework-for-customer-churn-predi.md) — `broad`
+- [Bank Churn Prediction Using Machine Learning](papers/bank-churn-prediction-using-machine-learning.md) — `broad`
+- [Enhanced Customer Retention: Deep Learning- Based Churn Prediction for Telecom Industry](papers/enhanced-customer-retention-deep-learning-based-churn-predic.md) — `broad`
+- [Customer Churn Prediction Using Artificial Neural Networks](papers/customer-churn-prediction-using-artificial-neural-networks.md) — `broad`
+- [The Effect of Neural Networks Depth on Forecasting Performance: A Study on Customer Churn Prediction in Telecom Industry](papers/the-effect-of-neural-networks-depth-on-forecasting-performan.md) — `broad`
+- [Telecom Customer Churn Prediction and Root Cause Analysis Using Network Quality Metrics](papers/telecom-customer-churn-prediction-and-root-cause-analysis-us.md) — `broad`
+- [Machine Learning-Based Customer Churn Risk Prediction for Live Streaming e-Commerce](papers/machine-learning-based-customer-churn-risk-prediction-for-li.md) — `broad`
+- [Customer Churn Prediction in Telecommunication Industry: A Literature Review](papers/customer-churn-prediction-in-telecommunication-industry-a-li.md) — `broad`
+- [Domain-Adaptive Customer Churn Prediction with Integrated SHAP-Based Explainability](papers/domain-adaptive-customer-churn-prediction-with-integrated-sh.md) — `broad`
+- [Customer Churn Prediction Using Machine Learning](papers/customer-churn-prediction-using-machine-learning.md) — `broad`
+- [Customer Churn Prediction Using AI and Big Data Analytics](papers/customer-churn-prediction-using-ai-and-big-data-analytics.md) — `broad`
+- [Predictive Analytics and Generative AI for Customer Churn Prediction and Proactive Retention](papers/predictive-analytics-and-generative-ai-for-customer-churn-pr.md) — `broad`
+- [Machine Learning-Based Customer Churn Prediction for E-Commerce Businesses](papers/machine-learning-based-customer-churn-prediction-for-e-comme.md) — `broad`
+- [The Role of Artificial Intelligence in Customer Churn Prediction and Lifecycle Management](papers/the-role-of-artificial-intelligence-in-customer-churn-predic.md) — `broad`
+- [CUSTOMER CHURN RATE PREDICTION USING RANDOM FOREST USING MACHINE LEARNING TECHNIQUES AND STREAMLIT FRAMEWORK](papers/customer-churn-rate-prediction-using-random-forest-using-mac.md) — `broad`
+- [Machine Learning-based prediction on customer churn](papers/machine-learning-based-prediction-on-customer-churn.md) — `broad`
+- [Deep Multi-level Ensemble Model for Customer Churn Prediction](papers/deep-multi-level-ensemble-model-for-customer-churn-predictio.md) — `broad`
+- [Customer Churn Prediction](papers/customer-churn-prediction.md) — `broad`
+- [Churn Prediction in Over-The-Top (OTT) for Customer Retention Using Machine Learning Algorithms](papers/churn-prediction-in-over-the-top-ott-for-customer-retention-.md) — `broad`
+- [Customer Churn Prediction in the Telecommunication Industry Over the Last Decade: A Systematic Literature Review](papers/customer-churn-prediction-in-the-telecommunication-industry-.md) — `broad`
+- [Detection of Bank Customer Churn Using Neural Network and Voting Classifier Ensembles](papers/detection-of-bank-customer-churn-using-neural-network-and-vo.md) — `broad`
+- [Segment-Aware Learning for Adaptive Customer Churn Prediction](papers/segment-aware-learning-for-adaptive-customer-churn-predictio.md) — `broad`
+- [“An Explainable Hybrid Machine Learning Framework for Customer Churn Prediction”](papers/an-explainable-hybrid-machine-learning-framework-for-custome.md) — `broad`
+- [Title - Bridging the Deployment Gap: An Integrated Web Analytics and ML Framework for Operational Customer Churn Prediction](papers/title-bridging-the-deployment-gap-an-integrated-web-analytic.md) — `broad`
+- [Advanced Algorithms for Enhancing Customer Churn Prediction Accuracy using Real-Time Data Analytics](papers/advanced-algorithms-for-enhancing-customer-churn-prediction-.md) — `broad`
+- [CUSTOMER CHURN PREDICTION ON OTT PLATFORMS](papers/customer-churn-prediction-on-ott-platforms.md) — `broad`
+- [Customer Churn Prediction Based on Customer Value and User Evaluation Emotions in Online Marketing](papers/customer-churn-prediction-based-on-customer-value-and-user-e.md) — `broad`
+- [e-Profits: A Business-Aligned Evaluation Metric for Profit-Sensitive Customer Churn Prediction](papers/e-profits-a-business-aligned-evaluation-metric-for-profit-se.md) — `broad`
+- [E-Commerce Customer Churn Prediction and Key Determinant Investigation Based on Machine Learning Algorithms](papers/e-commerce-customer-churn-prediction-and-key-determinant-inv.md) — `broad`
+- [Predictive Analytics for Customer Lifetime Value (CLV): Using Artificial Intelligence to Forecast Purchasing Behavior and Churn](papers/predictive-analytics-for-customer-lifetime-value-clv-using-a.md) — `broad`
+- [Deep Neural Network Model for Customer Attrition Forecast in a Telecommunication Company](papers/deep-neural-network-model-for-customer-attrition-forecast-in.md) — `broad`
+- [Analyzing AI-Driven Marketing ROI Measurement and Optimization: An Integrated Framework and Power BI Implementation for Causal-Predictive Analysis.](papers/analyzing-ai-driven-marketing-roi-measurement-and-optimizati.md) — `broad`
+- [Bridging Performance and Brand Equity: An AI-Driven Framework for FMCG Influencer Marketing ROI Measurement](papers/bridging-performance-and-brand-equity-an-ai-driven-framework.md) — `broad`
+- [Causal Inference in Marketing: A Machine Learning Approach to Identifying High-Impact Channels](papers/causal-inference-in-marketing-a-machine-learning-approach-to.md) — `broad`
+- [Explainable AI-Driven Content Optimization for 2D Character Merchandise Marketing: A Causal Feature Attribution and Attention-Guided Framework](papers/explainable-ai-driven-content-optimization-for-2d-character-.md) — `broad`
+- [THE ROI REVOLUTION: MOVING BEYOND VANITY METRICS TO MANAGE WHAT TRULY MATTERS](papers/the-roi-revolution-moving-beyond-vanity-metrics-to-manage-wh.md) — `broad`
+- [“LLM4IMPACT: АНАЛІЗ ВПЛИВУ IT-РІШЕНЬ НА БІЗНЕС-ПОКАЗНИКИ ЗА ДОПОМОГОЮ ВЕЛИКИХ МОВНИХ МОДЕЛЕЙ”](papers/llm4impact-it.md) — `broad`
+- [Bridging Enterprise IT and Emerging Technologies: How Dev Technosys Leverages Salesforce and AI to Drive Digital Transformation: A Review](papers/bridging-enterprise-it-and-emerging-technologies-how-dev-tec.md) — `broad`
+- [Federated LLMs for Personalized CRM Automation: Privacy-Preserving Customer Insights Across Multi-Cloud Platforms](papers/federated-llms-for-personalized-crm-automation-privacy-prese.md) — `broad`
+- [CRM](papers/crm.md) — `broad`
+- [The Integration of Supply Chain Analytics and Customer Relationship Management (CRM)](papers/the-integration-of-supply-chain-analytics-and-customer-relat.md) — `broad`
+- [Role of IoT in Enhancing CRM Data Analytics](papers/role-of-iot-in-enhancing-crm-data-analytics.md) — `broad`
+- [Agentforce by Salesforce: Redefining Enterprise Automation with Role-Based AI Agents and Seamless CRM Integration](papers/agentforce-by-salesforce-redefining-enterprise-automation-wi.md) — `broad`
+- [Leveraging AI-Driven Sales Intelligence to Revolutionize CRM Forecasting with Predictive Analytics](papers/leveraging-ai-driven-sales-intelligence-to-revolutionize-crm.md) — `broad`
+- [Driving Aftermarket Services in Manufacturing via Predictive CRM Analytics](papers/driving-aftermarket-services-in-manufacturing-via-predictive.md) — `broad`
+- [ERP-Driven Data Analytics for Personalizing Advertising and Strengthening CRM Strategies](papers/erp-driven-data-analytics-for-personalizing-advertising-and-.md) — `broad`
+- [Improving Customer Experience Through Crm Automation in Service Delivery: A Study of Store My Goods Private Limited](papers/improving-customer-experience-through-crm-automation-in-serv.md) — `broad`
+- [AI-Powered CRM Optimization: Transforming Manufacturing Sales and Operations with Predictive Insights](papers/ai-powered-crm-optimization-transforming-manufacturing-sales.md) — `broad`
+- [Role of Artificial Intelligence in Enhancing Customer Relationship Management in E - Commerce](papers/role-of-artificial-intelligence-in-enhancing-customer-relati.md) — `broad`
+- [Empowering CRM with AI: Unlocking New Opportunities and Challenges for Business Growth](papers/empowering-crm-with-ai-unlocking-new-opportunities-and-chall.md) — `broad`
+- [THE FUTURE OF DATA GOVERNANCE AND SECURITY IN CLOUD-BASED MARKETING PLATFORMS: A COMPLIANCE-DRIVEN FRAMEWORK FOR LARGE-SCALE CRM ECOSYSTEMS](papers/the-future-of-data-governance-and-security-in-cloud-based-ma.md) — `broad`
+- [AI-Augmented CRM: Unifying Data Clouds, Predictive Analytics, and Threat Detection in Salesforce Ecosystems](papers/ai-augmented-crm-unifying-data-clouds-predictive-analytics-a.md) — `broad`
+- [Building B2B Advertising Data Intelligence Systems: AI Solutions for Enterprise Marketing](papers/building-b2b-advertising-data-intelligence-systems-ai-soluti.md) — `broad`
+- [AI in Account-Based Marketing (ABM): Tactical Playbooks for Hyper-Personalized Prospecting](papers/ai-in-account-based-marketing-abm-tactical-playbooks-for-hyp.md) — `broad`
+- [Artificial Intelligence in Marketing: A Comparative Analysis of Account-Based and Customer-Based Strategies](papers/artificial-intelligence-in-marketing-a-comparative-analysis-.md) — `broad`
+- [Empirical ABM for Marketing](papers/empirical-abm-for-marketing.md) — `broad`
+- [Understanding Business Buyers and Account-Based Marketing](papers/understanding-business-buyers-and-account-based-marketing.md) — `broad`
+- [Digital marketing evolution: Understanding the role of AI and Big Data in shaping marketing strategies](papers/digital-marketing-evolution-understanding-the-role-of-ai-and.md) — `broad`
+- [Optimizing Marketing Campaigns with AI Automation](papers/optimizing-marketing-campaigns-with-ai-automation.md) — `broad`
+- [AI-Driven Marketing Personalization](papers/ai-driven-marketing-personalization.md) — `broad`
+- [New Production Diffusion and ABM](papers/new-production-diffusion-and-abm.md) — `broad`
+- [ABM with More Proactive Agents](papers/abm-with-more-proactive-agents.md) — `broad`
+- [ACCOUNT-BASED MARKETING AND ORGANIZATIONAL PERFORMANCE OF MANUFACTURING INDUSTRY IN DELTA STATE, NIGERIA](papers/account-based-marketing-and-organizational-performance-of-ma.md) — `broad`
+- [AI-Powered Forecasting Models for Sales and Revenue Operations](papers/ai-powered-forecasting-models-for-sales-and-revenue-operatio.md) — `broad`
+- [Architecting GTM-Aligned CRM Systems: A Scalable Dynamics 365 Model for Enterprise Growth](papers/architecting-gtm-aligned-crm-systems-a-scalable-dynamics-365.md) — `broad`
+- [Intelligent Revenue Operations Platform Using AI, NLP, and Machine Learning](papers/intelligent-revenue-operations-platform-using-ai-nlp-and-mac.md) — `broad`
+- [CRM system adoption in customer service : case: Company X](papers/crm-system-adoption-in-customer-service-case-company-x.md) — `broad`
+- [Measured Impact of an Interval Management Application During Revenue Operations](papers/measured-impact-of-an-interval-management-application-during.md) — `broad`
+- [Cloud-Native Revenue Intelligence: Streaming Analytics for Big Data Operations](papers/cloud-native-revenue-intelligence-streaming-analytics-for-bi.md) — `broad`
+- [THE INTERSECTION OF BEHAVIORAL ECONOMICS AND DATA SCIENCE IN PERSONALIZING CONSUMER EXPERIENCES AND MAXIMIZING REVENUE OPTIMIZATION](papers/the-intersection-of-behavioral-economics-and-data-science-in.md) — `broad`
+- [Sales Pipeline Technology: Automated Lead Nurturing](papers/sales-pipeline-technology-automated-lead-nurturing.md) — `broad`
+- [How Conversational AI Transforms Customer Service at Sephora With Virtual Beauty Assistants](papers/how-conversational-ai-transforms-customer-service-at-sephora.md) — `broad`
+- [Real-Time Feedback Signal Processing: Transforming Customer Surveys into Actionable Intelligence Through NLP-Driven Architectures](papers/real-time-feedback-signal-processing-transforming-customer-s.md) — `broad`
+- [Natural Language Processing (NLP) for Industry Applications Sentiment Analysis for Customer Feedback](papers/natural-language-processing-nlp-for-industry-applications-se.md) — `broad`
+- [Selected Useful Methodologies That Can Help Improve Customer Service and Voice of the Customer](papers/selected-useful-methodologies-that-can-help-improve-customer.md) — `broad`
+- [The Voice of the Customer and the Voice of the Process](papers/the-voice-of-the-customer-and-the-voice-of-the-process.md) — `broad`
+- [Enhancing Retail Strategy Through Market Basket Analysis and Social Network Influence](papers/enhancing-retail-strategy-through-market-basket-analysis-and.md) — `broad`
+- [Machine Learning-Based Recommendation Engine for Intelligent Cross-Selling and Upselling in E-Commerce Systems](papers/machine-learning-based-recommendation-engine-for-intelligent.md) — `broad`
+- [Transforming Raw Insurance Data into Stable Segments and Personalized Upgrade Recommendations](papers/transforming-raw-insurance-data-into-stable-segments-and-per.md) — `broad`
+- [Weighted Eligibility-Based Product Recommendation System](papers/weighted-eligibility-based-product-recommendation-system.md) — `broad`
+- [Penerapan K-Means Clustering untuk Segmentasi Pelanggan](papers/penerapan-k-means-clustering-untuk-segmentasi-pelanggan.md) — `broad`
+- [CRM Analytics in Banking: A Survey of Data-Driven Customer Engagement Tactics](papers/crm-analytics-in-banking-a-survey-of-data-driven-customer-en.md) — `broad`
+- [Cross-Temporal Skill Evolution and Dynamic Recommendation: A Study for Personalized Recommendation Systems](papers/cross-temporal-skill-evolution-and-dynamic-recommendation-a-.md) — `broad`
+- [When the Known Well May Sell](papers/when-the-known-well-may-sell.md) — `broad`
+- [Utilizing KPI Analysis and Dashboards for Strategic  Decision-Making in Customer Success](papers/utilizing-kpi-analysis-and-dashboards-for-strategic-decision.md) — `broad`
+- [Next-User Retrieval: Enhancing Cold-Start Recommendations via Generative Next-User Modeling](papers/next-user-retrieval-enhancing-cold-start-recommendations-via.md) — `broad`
+- [Transforming Ad-Serving Infrastructure with Machine Learning and Artificial Intelligence](papers/transforming-ad-serving-infrastructure-with-machine-learning.md) — `broad`
+- [A comprehensive review of digital marketing strategies for e-commerce success](papers/a-comprehensive-review-of-digital-marketing-strategies-for-e.md) — `broad`
+- [Integrating AI with Omnichannel Marketing: Targeting High-Value Customers through Cross-Platform Data Fusion and Intent Recognition](papers/integrating-ai-with-omnichannel-marketing-targeting-high-val.md) — `broad`
+- [Consumer behaviour models for organic products in social media advertising](papers/consumer-behaviour-models-for-organic-products-in-social-med.md) — `broad`
+- [Data2Dialogue: Structured Enterprise Knowledge Grounding in LLM Agents for Personalized Wellness Sales](papers/data2dialogue-structured-enterprise-knowledge-grounding-in-l.md) — `broad`
+- [Marketing mix modelling 4.0: The superiority of agentic, Bayesian optimised marketing mix modelling over traditional approaches](papers/marketing-mix-modelling-4-0-the-superiority-of-agentic-bayes.md) — `broad`
+- [DeepCausalMMM: A Deep Learning Framework for Marketing Mix Modeling with Causal Inference](papers/deepcausalmmm-a-deep-learning-framework-for-marketing-mix-mo-0603.md) — `broad`
+- [Marketing mix modelling as a tool for evaluating the effectiveness of advertising campaigns](papers/marketing-mix-modelling-as-a-tool-for-evaluating-the-effecti.md) — `broad`
+- [Methods for Evaluating the Effectiveness of Sales Channels in Global Projects](papers/methods-for-evaluating-the-effectiveness-of-sales-channels-i.md) — `broad`
+- [Marketing Media Mix Models: Towards a Bayesian Framework](papers/marketing-media-mix-models-towards-a-bayesian-framework.md) — `broad`
+- [Comparing analytical methods of allocating media influence](papers/comparing-analytical-methods-of-allocating-media-influence.md) — `broad`
+- [Análise comparativa de abordagens de modelagem de mix de marketing: Estudo de caso em um varejista de e-commerce de moda](papers/an-lise-comparativa-de-abordagens-de-modelagem-de-mix-de-mar.md) — `broad`
+- [Digital Marketing ROI in the Era of Experience Economy](papers/digital-marketing-roi-in-the-era-of-experience-economy.md) — `broad`
+- [The New Marketing Mix in the Digital Age: Introducing the 8E Model](papers/the-new-marketing-mix-in-the-digital-age-introducing-the-8e-.md) — `broad`
+- [Controlling des Marketing Mix mit Marketing Mix Modeling](papers/controlling-des-marketing-mix-mit-marketing-mix-modeling.md) — `broad`
+- [Analysing Marketing Mix](papers/analysing-marketing-mix.md) — `broad`
+- [Marketing Mix Modelling](papers/marketing-mix-modelling.md) — `broad`
+- [MARKETING MIX MODEL ISLAMIC VALUES AS A MARKETING STRATEGY AT MAN 1 MUSI BANYUASIN](papers/marketing-mix-model-islamic-values-as-a-marketing-strategy-a.md) — `broad`
+- [The Passenger Satisfaction in Pasig River Ferry Service A SERVQUAL Model and Marketing Mix Model Approach](papers/the-passenger-satisfaction-in-pasig-river-ferry-service-a-se.md) — `broad`
+- [The Role of the 4Ps Marketing Mix Elements in Achieving Customer Satisfaction: Korek Telecom Company as a Model](papers/the-role-of-the-4ps-marketing-mix-elements-in-achieving-cust.md) — `broad`
+- [Marketing Mix Concept in the Context of Regional Marketing](papers/marketing-mix-concept-in-the-context-of-regional-marketing.md) — `broad`
+- [Marketing Mix Optimization and Customer Satisfaction in Online Retail](papers/marketing-mix-optimization-and-customer-satisfaction-in-onli.md) — `broad`
+- [Integration of Marketing Tools in the Marketing Mix of the Insurance Company](papers/integration-of-marketing-tools-in-the-marketing-mix-of-the-i.md) — `broad`
+- [A stochastic nonlinear programming model for budget mix optimization of digital marketing campaigns under uncertainty](papers/a-stochastic-nonlinear-programming-model-for-budget-mix-opti.md) — `broad`
+- [The Role of Social Media and Marketing Mix 4P in Online  Marketing Strategy on the Grand Everest Housing Cluster PT.  Menteng Mandiri Sejahtera](papers/the-role-of-social-media-and-marketing-mix-4p-in-online-mark.md) — `broad`
+- [Implementasi Marketing Pendidikan Sekolah Dasar Negeri 21 Bengkalis dengan Pendekatan Marketing Mix](papers/implementasi-marketing-pendidikan-sekolah-dasar-negeri-21-be.md) — `broad`
+- [Model Marketing Mix 7P dan Pengaruhnya Terhadap Loyalitas Konsumen](papers/model-marketing-mix-7p-dan-pengaruhnya-terhadap-loyalitas-ko.md) — `broad`
+- [Green Marketing Mix](papers/green-marketing-mix.md) — `broad`
+- [THE IMPACT OF ARTIFICIAL INTELLIGENCE ON THE MARKETING MIX: FROM PERSONALIZATION TO PREDICTIVE STRATEGY](papers/the-impact-of-artificial-intelligence-on-the-marketing-mix-f.md) — `broad`
+- [Walking the Talk: LinkedIn’s Best Practices to Advance Women in Sales](papers/walking-the-talk-linkedin-s-best-practices-to-advance-women-.md) — `broad`
+- [Next-Generation Recommendation Systems in E-Commerce](papers/next-generation-recommendation-systems-in-e-commerce.md) — `broad`
+- [Application of Knowledge Based Method in Mobile Application-Based Cat Feed Recommendation System](papers/application-of-knowledge-based-method-in-mobile-application-.md) — `broad`
+- [Which Company Adjustment Matter? Insights from Uplift Modeling on Financial Health](papers/which-company-adjustment-matter-insights-from-uplift-modelin.md) — `broad`
+- [Continual Causal Effect Estimation for Dataset Shifting Streams in Marketing Optimization](papers/continual-causal-effect-estimation-for-dataset-shifting-stre.md) — `broad`
+- [The Estimation of Continual Causal Effect for Dataset Shifting Streams](papers/the-estimation-of-continual-causal-effect-for-dataset-shifti.md) — `broad`
+- [Identifying counterfactual probabilities using bivariate distributions and uplift modeling](papers/identifying-counterfactual-probabilities-using-bivariate-dis.md) — `broad`
+- [A Comparative Study of Model Adaptation Strategies for Multi-Treatment Uplift Modeling](papers/a-comparative-study-of-model-adaptation-strategies-for-multi.md) — `broad`
+- [QiniDeep - Deep Neural Uplift Modeling](papers/qinideep-deep-neural-uplift-modeling.md) — `broad`
+- [Применение uplift-моделирования в задачах повышения эффективности маркетинговых коммуникаций](papers/uplift.md) — `broad`
+- [ADSeq-Uplift: Attention-based Deep Uplift Modeling for Imbalanced Sequential Outcomes](papers/adseq-uplift-attention-based-deep-uplift-modeling-for-imbala.md) — `broad`
+- [EVALUATION OF THE EFFECTIVENESS OF MARKETING CAMPAIGNS IN BANK DIGITAL CHANNELS: ATTRIBUTION METHODS, A/B TESTING, UPLIFT MODELING](papers/evaluation-of-the-effectiveness-of-marketing-campaigns-in-ba.md) — `broad`
+- [Bounded Individualized Treatment Effect: A Novel Approach for Uplift Modeling](papers/bounded-individualized-treatment-effect-a-novel-approach-for.md) — `broad`
+- [Inversion uplift modeling calibrated with 10Be-derived catchment-wide denudation rates reveals a 6 Myr history of waxing-waning uplift in the Western Carpathians, Central Europe](papers/inversion-uplift-modeling-calibrated-with-10be-derived-catch.md) — `broad`
+- [A machine learning framework for uplift modeling through customer segmentation](papers/a-machine-learning-framework-for-uplift-modeling-through-cus.md) — `broad`
+- [Budget and Fairness Aware Uplift Modeling in Recommender Systems](papers/budget-and-fairness-aware-uplift-modeling-in-recommender-sys.md) — `broad`
+- [Applying Marketing Mix Modeling for the Marketing Strategies of a Regional Amusement Park](papers/applying-marketing-mix-modeling-for-the-marketing-strategies.md) — `broad`
+- [Event-Based Uplift Modeling for Electricity Demand Response Targeting with Carbon Optimization](papers/event-based-uplift-modeling-for-electricity-demand-response-.md) — `broad`
+- [Evaluating the Incremental Value of E-commerce Promotional Campaigns: An Uplift Modeling Approach](papers/evaluating-the-incremental-value-of-e-commerce-promotional-c.md) — `broad`
+- [Modeling the Relationship and Capabilities of Digital Marketing Inhibitors in Marketing - A Multidisciplinary Approach to Understanding the Complexities of Digital Marketing](papers/modeling-the-relationship-and-capabilities-of-digital-market.md) — `broad`
+- [Comparative Performance Analysis of Boosting Ensemble Learning Models for Optimizing Marketing Promotion Strategy Classification](papers/comparative-performance-analysis-of-boosting-ensemble-learni.md) — `broad`
+- [Analyzing of live marketing in driving digital workforce growth with the Structural Equation Model (SEM) Approach](papers/analyzing-of-live-marketing-in-driving-digital-workforce-gro.md) — `broad`
+- [Causal AI for strategic business planning: uncovering latent drivers of long-term organizational performance and resilience](papers/causal-ai-for-strategic-business-planning-uncovering-latent-.md) — `broad`
+- [Automatic Lead Qualification Based on Opinion Mining in CRM Projects: An Experimental Study Using Social Media](papers/automatic-lead-qualification-based-on-opinion-mining-in-crm-.md) — `broad`
+- [THE IMPACT OF ARTIFICIAL INTELLIGENCE-GENERATED CONTENT, USER-GENERATED CONTENT, DYNAMIC PERSONALIZATION ON TIKTOK ENGAGEMENT AND MARKETING CAMPAIGN EFFECTIVENESS](papers/the-impact-of-artificial-intelligence-generated-content-user.md) — `broad`
+- [AI-based Personalization of Pempek Bunan's Marketing Content on Social Media](papers/ai-based-personalization-of-pempek-bunan-s-marketing-content.md) — `broad`
+- [Application of Multimodal LLM in Digital Marketing Multimedia Content Generation: Technological Innovation and Performance Evaluation](papers/application-of-multimodal-llm-in-digital-marketing-multimedi.md) — `broad`
+- [Generative AI in Marketing OpenAI's ChatGPT Enhancing Customer Conversation and Content](papers/generative-ai-in-marketing-openai-s-chatgpt-enhancing-custom.md) — `broad`
+- [The Impact of AI- Powered Content Personalization on Inbound Marketing Strategies: A Case Study of Indian White Goods Brands](papers/the-impact-of-ai-powered-content-personalization-on-inbound-.md) — `broad`
+- [Personalization in E-Commerce: Optimizing Recommendations for Multimodal Content](papers/personalization-in-e-commerce-optimizing-recommendations-for.md) — `broad`
+- [Personalization Of Marketing Communications in The Photographic Equipment Trade](papers/personalization-of-marketing-communications-in-the-photograp.md) — `broad`
+- [AI-Driven Marketing Innovations: Personalization and Ethics in the Digital Era](papers/ai-driven-marketing-innovations-personalization-and-ethics-i.md) — `broad`
+- [AI-Driven Personalization in E-Commerce: Balancing Marketing Personalization with Operational Scalability](papers/ai-driven-personalization-in-e-commerce-balancing-marketing-.md) — `broad`
+- [Personalized Marketing Strategies and Their Effect on Online Sales](papers/personalized-marketing-strategies-and-their-effect-on-online.md) — `broad`
+- [MAXIMUM MARKETING WITH THE USE OF ARTIFICIAL INTELLIGENCE TO GROW BUSINESS INCOME](papers/maximum-marketing-with-the-use-of-artificial-intelligence-to.md) — `broad`
+- [Marketing Mavericks" Riding the Wave of Innovation](papers/marketing-mavericks-riding-the-wave-of-innovation.md) — `broad`
+- [Smart CRM AI-Driven Sales, Fulfilment and Workflow Automation with Dynamics 365](papers/smart-crm-ai-driven-sales-fulfilment-and-workflow-automation.md) — `broad`
+
