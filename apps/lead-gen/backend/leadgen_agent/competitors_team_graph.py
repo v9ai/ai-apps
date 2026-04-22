@@ -27,6 +27,7 @@ from langgraph.graph import END, START, StateGraph
 from .deep_icp_graph import _product_brief, load_product
 from .icp_schemas import GRAPH_VERSION
 from .llm import ainvoke_json, make_llm
+from .loaders import competitor_loader
 from .state import CompetitorsTeamState
 
 
@@ -36,6 +37,32 @@ def _extract_domain(url: str) -> str:
         return host.removeprefix("www.")
     except Exception:
         return ""
+
+
+SCRAPED_EXCERPT_CHARS = 4000
+
+
+def _grounding_block(
+    candidates: list[dict[str, Any]], pages: dict[str, dict[str, Any]]
+) -> str:
+    """Format scraped markdown per candidate for inclusion in LLM prompts."""
+    if not pages:
+        return ""
+    parts: list[str] = []
+    for c in candidates:
+        url = c["url"]
+        entry = pages.get(url) or {}
+        md = (entry.get("markdown") or "").strip()
+        if not md:
+            continue
+        loader = entry.get("loader", "unknown")
+        parts.append(
+            f"### {c['name']} ({url}) — loader={loader}\n<<<\n"
+            f"{md[:SCRAPED_EXCERPT_CHARS]}\n>>>"
+        )
+    if not parts:
+        return ""
+    return "\n\nScraped content from competitor sites:\n" + "\n\n".join(parts)
 
 
 async def discovery_scout(state: CompetitorsTeamState) -> dict:
@@ -102,6 +129,7 @@ async def differentiator(state: CompetitorsTeamState) -> dict:
     candidates_block = "\n".join(
         f"- {c['name']} ({c['url']}): {c.get('description', '')}" for c in candidates
     )
+    grounding = _grounding_block(candidates, state.get("competitor_pages") or {})
     result = await ainvoke_json(
         llm,
         [
@@ -112,14 +140,16 @@ async def differentiator(state: CompetitorsTeamState) -> dict:
                     "competitor, produce: positioning_headline (1 line), "
                     "positioning_tagline (short), target_audience (who buys it), "
                     "differentiation_angles (array of 2-4 angles vs the seed). "
+                    "When scraped content is provided, ground every field in phrases "
+                    "that actually appear on the competitor's site. "
                     'Return strict JSON: {"by_url": {<url>: {...}}}.'
                 ),
             },
             {
                 "role": "user",
                 "content": (
-                    f"Seed product:\n{brief}\n\nCompetitors:\n{candidates_block}\n\n"
-                    "Return JSON only."
+                    f"Seed product:\n{brief}\n\nCompetitors:\n{candidates_block}"
+                    f"{grounding}\n\nReturn JSON only."
                 ),
             },
         ],
@@ -144,6 +174,7 @@ async def threat_assessor(state: CompetitorsTeamState) -> dict:
     candidates_block = "\n".join(
         f"- {c['name']} ({c['url']})" for c in candidates
     )
+    grounding = _grounding_block(candidates, state.get("competitor_pages") or {})
     result = await ainvoke_json(
         llm,
         [
@@ -152,15 +183,16 @@ async def threat_assessor(state: CompetitorsTeamState) -> dict:
                 "content": (
                     "You score how much each competitor threatens the seed product. "
                     "For each, return: threat_score (0..10), market_overlap (0..1), "
-                    "rationale (1-2 sentences). "
+                    "rationale (1-2 sentences). When scraped content is provided, "
+                    "cite concrete features/pricing/claims from it in the rationale. "
                     'Return strict JSON: {"by_url": {<url>: {threat_score,market_overlap,rationale}}}.'
                 ),
             },
             {
                 "role": "user",
                 "content": (
-                    f"Seed product:\n{brief}\n\nCompetitors:\n{candidates_block}\n\n"
-                    "Return JSON only."
+                    f"Seed product:\n{brief}\n\nCompetitors:\n{candidates_block}"
+                    f"{grounding}\n\nReturn JSON only."
                 ),
             },
         ],
