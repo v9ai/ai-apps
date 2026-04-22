@@ -66,13 +66,15 @@ async def load_contact(state: ContactEnrichPaperAuthorState) -> dict:
         return {"error": "NEON_DATABASE_URL not set"}
 
     if contact_id is None:
+        # Parameterize the ILIKE pattern — psycopg3 treats raw `%` as a
+        # placeholder marker and would otherwise error on `%"papers"%` literal.
         select_sql = (
             "SELECT id, first_name, last_name, tags, openalex_profile "
             "FROM contacts "
-            "WHERE tags ILIKE '%\"papers\"%' AND openalex_profile IS NULL "
+            "WHERE tags ILIKE %s AND openalex_profile IS NULL "
             "ORDER BY id LIMIT 1"
         )
-        params: tuple[Any, ...] = ()
+        params: tuple[Any, ...] = ('%"papers"%',)
     else:
         select_sql = (
             "SELECT id, first_name, last_name, tags, openalex_profile "
