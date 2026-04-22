@@ -452,6 +452,12 @@ cd langgraph
 cp .env.example .env   # fill in DATABASE_URL, R2_*, DEEPSEEK_API_KEY
 uv sync
 uv run uvicorn chat_server:app --port 8001 --reload
+
+# Alternative: run the chat graph via the LangGraph CLI (Studio-compatible).
+# Exposes the compiled StateGraph from graph.py as assistant_id "chat"
+# through a LangGraph-standard HTTP server — upload/embed/search routes
+# remain on the FastAPI server above.
+uv run langgraph dev
 ```
 
 ### Database Migrations

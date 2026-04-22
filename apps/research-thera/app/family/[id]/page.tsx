@@ -799,17 +799,6 @@ function FamilyMemberContent() {
                   >
                     <Flex gap="2" align="center">
                       <Text size="2">{share.email}</Text>
-                      <Badge
-                        color={
-                          share.role === FamilyMemberShareRole.Editor
-                            ? "blue"
-                            : "gray"
-                        }
-                        variant="soft"
-                        size="1"
-                      >
-                        {share.role}
-                      </Badge>
                     </Flex>
                     <AlertDialog.Root>
                       <AlertDialog.Trigger>
