@@ -44,43 +44,11 @@ impl<'a> Pipeline<'a> {
             return Ok(r);
         }
 
-        // 1) Acquire papers — use inline set if present, else fetch from OpenAlex+arXiv.
-        let mut papers = contact.papers.clone();
-        if papers.is_empty() {
-            papers = self.fetchers.by_author(&contact.name, self.fetch_per_source).await.unwrap_or_default();
-        }
-        if papers.is_empty() {
-            let r = MatchResult {
-                contact_id: contact.id.clone(),
-                login: None,
-                score: 0.0,
-                breakdown: None,
-                evidence: json!({"reason": "no_papers"}),
-                arm_id: None,
-                status: MatchStatus::NoRelevantPapers,
-            };
-            self.lance.write_result(&r).await?;
-            sqlite::upsert_match_state(
-                self.sqlite, &contact.id, None, r.status.as_str(),
-                Some(r.score), None, None, None,
-            ).await?;
-            return Ok(r);
-        }
+        // Kick the two independent branches concurrently.
+        //  Branch A: papers → embed → author_topic (+ Lance persistence)
+        //  Branch B: build_queries → bandit_select → gh_search → hydrate → embed_candidates
 
-        // 2) Persist paper metadata to SQLite and embed them for Lance.
-        persist_papers(self.sqlite, self.lance, &papers).await.ok();
-
-        let texts: Vec<String> = papers.iter().map(paper_text_for_embedding).collect();
-        let paper_embs = self.emb.embed(&texts).await?;
-
-        self.lance.upsert_contact(contact).await?;
-        self.lance
-            .upsert_paper_embeddings(&contact.id, &papers, &paper_embs)
-            .await?;
-
-        let author_topic = mean_rows(&paper_embs);
-
-        // 3) Bandit-select a GH query arm (SQLite-backed).
+        // Prepare GH query arms + bandit selection up-front (cheap, decides Branch B's first call).
         let queries = build_queries(&contact.name, contact.affiliation.as_deref(), contact.email.as_deref());
         let arm_ids: Vec<&str> = queries.iter().map(|(id, _)| id.as_str()).collect();
         sqlite::ensure_arms(self.sqlite, BANDIT_POOL, &arm_ids).await?;
@@ -95,54 +63,60 @@ impl<'a> Pipeline<'a> {
             .find(|(id, _)| id == &arm_id)
             .map(|(_, q)| q.clone())
             .unwrap_or_else(|| queries[0].1.clone());
+        let fallback_query = queries[0].1.clone();
 
         tracing::debug!(contact = %contact.id, arm = %arm_id, query = %query, "github search");
 
-        // 4) Search GitHub (with fallback to name_only arm).
-        let mut logins = self.gh.search_users(&query).await.unwrap_or_default();
-        if logins.is_empty() && arm_id != "name_only" {
-            logins = self.gh.search_users(&queries[0].1).await.unwrap_or_default();
-        }
-        if logins.is_empty() {
-            sqlite::report_arm(self.sqlite, BANDIT_POOL, &arm_id, 0.0).await.ok();
-            let r = MatchResult {
-                contact_id: contact.id.clone(),
-                login: None,
-                score: 0.0,
-                breakdown: None,
-                evidence: json!({"reason": "no_candidates", "query": query}),
-                arm_id: Some(arm_id.clone()),
-                status: MatchStatus::NoGithub,
-            };
-            self.lance.write_result(&r).await?;
-            sqlite::upsert_match_state(
-                self.sqlite, &contact.id, None, r.status.as_str(),
-                Some(r.score), None, Some(&arm_id), None,
-            ).await?;
-            return Ok(r);
-        }
+        let branch_a = self.branch_papers(contact);
+        let branch_b = self.branch_github(&arm_id, &query, &fallback_query);
 
-        // 5) Hydrate top 5 candidates in parallel.
-        let to_hydrate: Vec<String> = logins.into_iter().take(5).collect();
-        let hydrate_futs = to_hydrate.iter().map(|l| {
-            let login = l.clone();
-            async move {
-                match self.gh.hydrate(&login).await {
-                    Ok(c) => Some(c),
-                    Err(e) => {
-                        tracing::warn!("hydrate {} failed: {}", login, e);
-                        None
-                    }
-                }
+        let (a_res, b_res) = tokio::join!(branch_a, branch_b);
+
+        let (papers, author_topic) = match a_res? {
+            Some(x) => x,
+            None => {
+                let r = MatchResult {
+                    contact_id: contact.id.clone(),
+                    login: None,
+                    score: 0.0,
+                    breakdown: None,
+                    evidence: json!({"reason": "no_papers"}),
+                    arm_id: None,
+                    status: MatchStatus::NoRelevantPapers,
+                };
+                self.lance.write_result(&r).await?;
+                sqlite::upsert_match_state(
+                    self.sqlite, &contact.id, None, r.status.as_str(),
+                    Some(r.score), None, None, None,
+                ).await?;
+                return Ok(r);
             }
-        });
-        let hydrated: Vec<GhCandidate> = futures::future::join_all(hydrate_futs)
-            .await
-            .into_iter()
-            .flatten()
-            .collect();
+        };
+        let _ = papers;
 
-        // 6) Embed candidate topic blobs, score, rank.
+        let hydrated = match b_res? {
+            Some(h) => h,
+            None => {
+                sqlite::report_arm(self.sqlite, BANDIT_POOL, &arm_id, 0.0).await.ok();
+                let r = MatchResult {
+                    contact_id: contact.id.clone(),
+                    login: None,
+                    score: 0.0,
+                    breakdown: None,
+                    evidence: json!({"reason": "no_candidates", "query": query}),
+                    arm_id: Some(arm_id.clone()),
+                    status: MatchStatus::NoGithub,
+                };
+                self.lance.write_result(&r).await?;
+                sqlite::upsert_match_state(
+                    self.sqlite, &contact.id, None, r.status.as_str(),
+                    Some(r.score), None, Some(&arm_id), None,
+                ).await?;
+                return Ok(r);
+            }
+        };
+
+        // 5) Embed candidate topic blobs, score, rank.
         let topic_texts: Vec<String> = hydrated.iter().map(candidate_topic_text).collect();
         let cand_embs = if topic_texts.is_empty() {
             vec![]
@@ -237,6 +211,75 @@ impl<'a> Pipeline<'a> {
         .await?;
 
         Ok(result)
+    }
+
+    /// Branch A: acquire papers, embed them, persist to SQLite+Lance, return
+    /// the (papers, author_topic) tuple. None if no papers could be gathered.
+    async fn branch_papers(
+        &self,
+        contact: &Contact,
+    ) -> Result<Option<(Vec<crate::types::ResearchPaper>, Vec<f32>)>> {
+        let mut papers = contact.papers.clone();
+        if papers.is_empty() {
+            papers = self
+                .fetchers
+                .by_author(&contact.name, self.fetch_per_source)
+                .await
+                .unwrap_or_default();
+        }
+        if papers.is_empty() {
+            return Ok(None);
+        }
+
+        persist_papers(self.sqlite, self.lance, &papers).await.ok();
+
+        let texts: Vec<String> = papers.iter().map(paper_text_for_embedding).collect();
+        let paper_embs = self.emb.embed(&texts).await?;
+        self.lance.upsert_contact(contact).await.ok();
+        self.lance
+            .upsert_paper_embeddings(&contact.id, &papers, &paper_embs)
+            .await
+            .ok();
+
+        let author_topic = mean_rows(&paper_embs);
+        Ok(Some((papers, author_topic)))
+    }
+
+    /// Branch B: GH search with fallback, parallel hydrate of top 5 candidates.
+    /// None if no candidates could be found at all.
+    async fn branch_github(
+        &self,
+        arm_id: &str,
+        query: &str,
+        fallback_query: &str,
+    ) -> Result<Option<Vec<GhCandidate>>> {
+        let mut logins = self.gh.search_users(query).await.unwrap_or_default();
+        if logins.is_empty() && arm_id != "name_only" {
+            logins = self.gh.search_users(fallback_query).await.unwrap_or_default();
+        }
+        if logins.is_empty() {
+            return Ok(None);
+        }
+
+        let to_hydrate: Vec<String> = logins.into_iter().take(5).collect();
+        let hydrate_futs = to_hydrate.iter().map(|l| {
+            let login = l.clone();
+            async move {
+                match self.gh.hydrate(&login).await {
+                    Ok(c) => Some(c),
+                    Err(e) => {
+                        tracing::warn!("hydrate {} failed: {}", login, e);
+                        None
+                    }
+                }
+            }
+        });
+        let hydrated: Vec<GhCandidate> = futures::future::join_all(hydrate_futs)
+            .await
+            .into_iter()
+            .flatten()
+            .collect();
+        Ok(Some(hydrated))
     }
 }
 
