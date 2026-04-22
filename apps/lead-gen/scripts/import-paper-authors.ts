@@ -219,23 +219,64 @@ async function main() {
   // Stable-sort by paper count desc (most prolific first)
   authors.sort((a, b) => b.entries.length - a.entries.length);
 
-  // Build the row shapes we'll insert
+  // Build the row shapes we'll insert.
+  // Each author's tags = base tags ∪ union of theme tags across their papers,
+  // so the CRM UI can filter by research theme (bandits / email-llm / ...).
   const rows = authors.slice(0, LIMIT).map((a) => {
     const { first, last } = splitName(a.canonical);
     const slug = authorSlug(a.canonical);
     const notes = renderNotes(a.canonical, a.entries);
-    const tags = JSON.stringify([
+
+    const themeTags = new Set<string>();
+    for (const e of a.entries) {
+      for (const t of e.tags ?? []) {
+        if (t && t !== "other") themeTags.add(t);
+      }
+    }
+    const tierTags = new Set(a.entries.map((e) => `tier-${e.tier}`));
+
+    const tagList = [
       "paper-author",
       "research-corpus-2025-2026",
       "sales-leadgen-papers",
-    ]);
-    return { slug, first, last, notes, tags, paperCount: a.entries.length };
+      ...Array.from(themeTags).sort(),
+      ...Array.from(tierTags).sort(),
+    ];
+    const tags = JSON.stringify(tagList);
+    return {
+      slug,
+      first,
+      last,
+      notes,
+      tags,
+      paperCount: a.entries.length,
+      themeCount: themeTags.size,
+    };
   });
 
   console.log(`Prepared ${rows.length} contact rows`);
   console.log(`  → top author has ${rows[0]?.paperCount ?? 0} papers`);
   console.log(`  → median notes length: ${medianNotesLen(rows)} chars`);
   console.log(`  → total notes payload: ${totalNotesLen(rows).toLocaleString()} chars`);
+
+  // Theme tag distribution sanity check
+  const themeCounts = new Map<string, number>();
+  for (const r of rows) {
+    for (const t of JSON.parse(r.tags) as string[]) {
+      if (
+        t === "paper-author" ||
+        t === "research-corpus-2025-2026" ||
+        t === "sales-leadgen-papers" ||
+        t.startsWith("tier-")
+      ) continue;
+      themeCounts.set(t, (themeCounts.get(t) ?? 0) + 1);
+    }
+  }
+  const themeRows = Array.from(themeCounts.entries()).sort((a, b) => b[1] - a[1]);
+  console.log(`  → theme tag coverage (top 10):`);
+  for (const [tag, n] of themeRows.slice(0, 10)) {
+    console.log(`      ${tag.padEnd(20)} ${n}`);
+  }
 
   if (DRY_RUN) {
     console.log("\n--dry-run — sample row:\n");
