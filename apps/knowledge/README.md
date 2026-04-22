@@ -324,14 +324,21 @@ apps/knowledge/
 │   ├── Dockerfile          # python:3.12-slim, uvicorn --workers 1
 │   ├── pyproject.toml      # pytest config (asyncio_mode=auto)
 │   ├── requirements.txt    # runtime: fastapi, langgraph, langgraph-checkpoint-postgres, psycopg[binary]
-│   ├── requirements-dev.txt # adds pytest, pytest-asyncio, httpx for local test runs
+│   ├── requirements-dev.txt # adds pytest, pytest-asyncio, httpx, deepeval for local test runs
 │   ├── app.py              # FastAPI harness — create_app() factory, /health + /runs/wait, bearer-token middleware
 │   ├── src/index.js        # Cloudflare Worker proxying to KnowledgeContainer
 │   ├── package.json        # wrangler deploy script
-│   ├── tests/              # pytest suite — no Postgres, no LLM, no network
+│   ├── tests/              # pytest suite
 │   │   ├── conftest.py             # StubGraph fixtures + TestClient wiring (create_app with use_prod_lifespan=False)
 │   │   ├── test_app.py             # /health, bearer auth gate, routing, 404s, graph dispatch
-│   │   └── test_helpers.py         # Pure-function tests: check_quality, _normalize_expert, _category_id, _format_course_info, _after_revise
+│   │   ├── test_helpers.py         # Pure-function tests: check_quality, _normalize_expert, _category_id, _format_course_info, _after_revise
+│   │   └── deepeval/               # LLM-judge gate (costs tokens; opt-in via `-m deepeval`)
+│   │       ├── conftest.py         # DeepEvalBaseLLM judge (reuses make_llm()), golden loaders, aggregate_gate helper
+│   │       ├── golden/             # 5-case JSON fixtures per graph
+│   │       ├── test_chat_eval.py            # Faithfulness + AnswerRelevancy vs context_snippets
+│   │       ├── test_app_prep_eval.py        # Tech-Coverage + Interview-Relevance GEvals
+│   │       ├── test_course_review_eval.py   # Verdict direction + Verdict-Coherence GEval (@slow)
+│   │       └── test_article_generate_eval.py # Quality gate + Faithfulness vs research + Technical-Depth GEval (@slow)
 │   └── knowledge_agent/
 │       ├── llm.py                       # make_llm() + ainvoke_json() shared helpers
 │       ├── state.py                     # TypedDict schemas for all 5 graph states
@@ -385,11 +392,26 @@ pnpm backend:dev                                # uvicorn --reload on :7860 (nee
 pnpm backend:deploy                             # wrangler deploy from backend/
 pnpm backend:tail                               # live wrangler tail
 
-# Tests — two layers:
+# Tests — three layers:
 pnpm test:backend                               # pytest (unit + FastAPI integration, stubbed graphs; no LLM, no DB)
 pnpm test:e2e                                   # smoke the deployed worker (routing/auth/404; no LLM cost)
 pnpm test:e2e:live                              # + one real DeepSeek chat call (~$0.001)
+pnpm test:deepeval                              # LLM-judge gate on chat + app_prep (~$0.05, excludes @slow graphs)
+pnpm test:deepeval:all                          # + course_review + article_generate (~$0.20 total, 5+ min)
 ```
+
+### DeepEval gate (`backend/tests/deepeval/`)
+
+Each of the 4 LLM-driven graphs has a 5-case golden set and an aggregate-pass gate at ≥ 0.80 across all `(case × metric)` cells. The judge is a `DeepEvalBaseLLM` wrapper over `make_llm()`, so it picks up the same `LLM_BASE_URL` / `DEEPSEEK_API_KEY` the graphs use — no separate judge configuration. Metrics per graph:
+
+| Graph | Fast/Slow | Judged metrics | Deterministic checks |
+| --- | --- | --- | --- |
+| `chat` | fast | FaithfulnessMetric (vs snippets), AnswerRelevancyMetric | must_mention heuristic, non-empty response |
+| `app_prep` | fast | Tech-Coverage GEval, Interview-Relevance GEval | tech-tag coverage heuristic, shape |
+| `course_review` | slow | Verdict-Coherence GEval | verdict direction vs golden band, aggregate in range, 10 expert scores present |
+| `article_generate` | slow | FaithfulnessMetric (vs research), Technical-Depth GEval | `check_quality()` passes, expected-theme hits ≥ 50% |
+
+Tests are excluded from `pnpm test:backend` by default (`addopts = -m 'not deepeval'` in `pyproject.toml`). Opt in with `pnpm test:deepeval` (fast subset) or `pnpm test:deepeval:all` (adds `@slow` graphs).
 
 ### First-time test setup
 
@@ -402,6 +424,8 @@ python3.12 -m venv .venv
 ```
 
 After that `pnpm test:backend` runs against it. The venv is `.gitignore`d.
+
+`pnpm test:deepeval*` scripts source `.env.local` before invoking pytest so `DEEPSEEK_API_KEY` and `LLM_BASE_URL` reach the judge. If the env vars are missing, deepeval cases are skipped rather than failing.
 
 ### LangGraph backend (`backend/`)
 

@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { getJournalEntry, createIssue, getIssue } from "@/src/db";
+import { getJournalEntry, createIssue, getIssue, assertOwnsFamilyMember } from "@/src/db";
 
 export const convertJournalEntryToIssue: NonNullable<MutationResolvers['convertJournalEntryToIssue']> = async (
   _parent,
@@ -16,6 +16,12 @@ export const convertJournalEntryToIssue: NonNullable<MutationResolvers['convertJ
   if (!entry) {
     throw new Error("Journal entry not found");
   }
+
+  // Cross-user write guard: caller must own the referenced family member
+  // on the target issue.
+  const userId = ctx.userId;
+  if (!userId) throw new Error("Authentication required");
+  await assertOwnsFamilyMember(args.input.familyMemberId, userId);
 
   // Create a new issue linked to this journal entry
   const issueId = await createIssue({
