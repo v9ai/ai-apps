@@ -13,8 +13,8 @@ persisted — the graph itself exposes that step as `embed_and_index`, which the
 route invokes via a background task rather than as part of the synchronous
 ainvoke.
 
-TODO(team): when `langgraph.json` is updated by the sibling team, the new
-graph should be registered as `"ingestion": "ingestion_graph:compiled_graph"`.
+The graph is registered in `langgraph.json` as
+`"ingestion": "ingestion_graph:compiled_graph"`.
 
 Delete behavior (`DELETE /blood-tests/{id}`) is unchanged — it bypasses the
 graph and operates directly on `db.delete_blood_test` + `storage.delete_file`.

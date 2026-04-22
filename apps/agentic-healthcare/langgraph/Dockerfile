@@ -35,7 +35,9 @@ COPY config.py ./
 COPY db.py ./
 COPY embeddings.py ./
 COPY graph.py ./
+COPY ingestion_graph.py ./
 COPY ingestion_pipeline.py ./
+COPY search_graph.py ./
 COPY llm_backend.py ./
 COPY llm_settings.py ./
 COPY parsers.py ./
