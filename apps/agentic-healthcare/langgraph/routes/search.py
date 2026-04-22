@@ -68,22 +68,16 @@ async def search_multi(
     req: SearchRequest,
     x_api_key: str | None = Header(None),
 ) -> dict:
-    """Embed once, search all entity tables via LangGraph fan-out StateGraph.
-
-    Delegates to `search_graph.compiled_graph` which parallelises the six
-    per-table retrievals. Response shape is preserved byte-for-byte.
-    """
+    """Embed once, search all entity tables — returns combined results for RAG context."""
     _check_api_key(x_api_key)
-    result = await search_compiled_graph.ainvoke(
-        {"query": req.query, "user_id": req.user_id},
-    )
+    embedding = generate_embedding(req.query)
     return {
-        "tests": result.get("tests", []),
-        "markers": result.get("markers", []),
-        "conditions": result.get("conditions", []),
-        "medications": result.get("medications", []),
-        "symptoms": result.get("symptoms", []),
-        "appointments": result.get("appointments", []),
+        "tests": search_blood_tests(embedding, req.user_id),
+        "markers": search_markers_hybrid(req.query, embedding, req.user_id, limit=5),
+        "conditions": search_conditions(embedding, req.user_id),
+        "medications": search_medications(embedding, req.user_id),
+        "symptoms": search_symptoms(embedding, req.user_id),
+        "appointments": search_appointments(embedding, req.user_id),
     }
 
 
