@@ -969,8 +969,10 @@ export enum JobStatus {
 
 export enum JobType {
   Audio = 'AUDIO',
+  DeepAnalysis = 'DEEP_ANALYSIS',
   Longform = 'LONGFORM',
   Questions = 'QUESTIONS',
+  RecommendedBooks = 'RECOMMENDED_BOOKS',
   Research = 'RESEARCH'
 }
 
@@ -3043,6 +3045,11 @@ export type GetPublicDiscussionGuideQueryVariables = Exact<{
 
 
 export type GetPublicDiscussionGuideQuery = { __typename?: 'Query', publicDiscussionGuide?: { __typename?: 'PublicDiscussionGuideResult', entryTitle?: string | null, familyMemberName?: string | null, guide?: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } | null } | null };
+
+export type GetRecentJobsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetRecentJobsQuery = { __typename?: 'Query', generationJobs: Array<{ __typename?: 'GenerationJob', id: string, type: JobType, goalId?: number | null, storyId?: number | null, status: JobStatus, progress: number, createdAt: string, updatedAt: string, result?: { __typename?: 'JobResult', count?: number | null, stage?: string | null, audioUrl?: string | null } | null, error?: { __typename?: 'JobError', message: string } | null }> };
 
 export type GetRecommendedBooksQueryVariables = Exact<{
   goalId: Scalars['Int']['input'];
@@ -8372,6 +8379,63 @@ export type GetPublicDiscussionGuideQueryHookResult = ReturnType<typeof useGetPu
 export type GetPublicDiscussionGuideLazyQueryHookResult = ReturnType<typeof useGetPublicDiscussionGuideLazyQuery>;
 export type GetPublicDiscussionGuideSuspenseQueryHookResult = ReturnType<typeof useGetPublicDiscussionGuideSuspenseQuery>;
 export type GetPublicDiscussionGuideQueryResult = Apollo.QueryResult<GetPublicDiscussionGuideQuery, GetPublicDiscussionGuideQueryVariables>;
+export const GetRecentJobsDocument = gql`
+    query GetRecentJobs {
+  generationJobs {
+    id
+    type
+    goalId
+    storyId
+    status
+    progress
+    result {
+      count
+      stage
+      audioUrl
+    }
+    error {
+      message
+    }
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetRecentJobsQuery__
+ *
+ * To run a query within a React component, call `useGetRecentJobsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetRecentJobsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetRecentJobsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetRecentJobsQuery(baseOptions?: Apollo.QueryHookOptions<GetRecentJobsQuery, GetRecentJobsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetRecentJobsQuery, GetRecentJobsQueryVariables>(GetRecentJobsDocument, options);
+      }
+export function useGetRecentJobsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetRecentJobsQuery, GetRecentJobsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetRecentJobsQuery, GetRecentJobsQueryVariables>(GetRecentJobsDocument, options);
+        }
+// @ts-ignore
+export function useGetRecentJobsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetRecentJobsQuery, GetRecentJobsQueryVariables>): Apollo.UseSuspenseQueryResult<GetRecentJobsQuery, GetRecentJobsQueryVariables>;
+export function useGetRecentJobsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRecentJobsQuery, GetRecentJobsQueryVariables>): Apollo.UseSuspenseQueryResult<GetRecentJobsQuery | undefined, GetRecentJobsQueryVariables>;
+export function useGetRecentJobsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRecentJobsQuery, GetRecentJobsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetRecentJobsQuery, GetRecentJobsQueryVariables>(GetRecentJobsDocument, options);
+        }
+export type GetRecentJobsQueryHookResult = ReturnType<typeof useGetRecentJobsQuery>;
+export type GetRecentJobsLazyQueryHookResult = ReturnType<typeof useGetRecentJobsLazyQuery>;
+export type GetRecentJobsSuspenseQueryHookResult = ReturnType<typeof useGetRecentJobsSuspenseQuery>;
+export type GetRecentJobsQueryResult = Apollo.QueryResult<GetRecentJobsQuery, GetRecentJobsQueryVariables>;
 export const GetRecommendedBooksDocument = gql`
     query GetRecommendedBooks($goalId: Int!) {
   recommendedBooks(goalId: $goalId) {

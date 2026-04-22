@@ -872,8 +872,10 @@ enum JobStatus {
 
 enum JobType {
   AUDIO
+  DEEP_ANALYSIS
   LONGFORM
   QUESTIONS
+  RECOMMENDED_BOOKS
   RESEARCH
 }
 

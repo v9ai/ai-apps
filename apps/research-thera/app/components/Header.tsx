@@ -5,6 +5,7 @@ import { GitHubLogoIcon, HamburgerMenuIcon } from "@radix-ui/react-icons";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import UserMenu from "./UserMenu";
+import { JobsIndicator } from "./JobsIndicator";
 
 const NAV_LINKS = [
   { href: "/issues", label: "Issues" },
@@ -86,6 +87,7 @@ export function Header() {
 
             {/* Right: user controls */}
             <Flex align="center" gap="3">
+              <JobsIndicator />
               <UserMenu />
               <IconButton
                 asChild
