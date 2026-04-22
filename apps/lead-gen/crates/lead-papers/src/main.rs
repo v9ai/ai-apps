@@ -143,14 +143,25 @@ async fn run_pipeline(cfg: &Config, contacts: Vec<Contact>) -> Result<()> {
         fetch_per_source: cfg.fetch_per_source,
     };
 
-    for c in &contacts {
-        match pipe.process(c).await {
-            Ok(r) => tracing::info!(
-                contact = %c.id, status = ?r.status, login = ?r.login, score = r.score,
-                "processed"
-            ),
-            Err(e) => tracing::error!(contact = %c.id, "failed: {e:#}"),
-        }
-    }
+    use futures::stream::{self, StreamExt};
+    let concurrency: usize = std::env::var("LEADMATCH_CONCURRENCY")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(5);
+
+    stream::iter(contacts.iter())
+        .for_each_concurrent(concurrency, |c| {
+            let pipe = &pipe;
+            async move {
+                match pipe.process(c).await {
+                    Ok(r) => tracing::info!(
+                        contact = %c.id, status = ?r.status, login = ?r.login, score = r.score,
+                        "processed"
+                    ),
+                    Err(e) => tracing::error!(contact = %c.id, "failed: {e:#}"),
+                }
+            }
+        })
+        .await;
     Ok(())
 }
