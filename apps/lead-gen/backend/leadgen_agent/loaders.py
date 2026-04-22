@@ -256,6 +256,7 @@ async def competitor_loader(state: CompetitorsTeamState) -> dict:
         )
 
     pages = dict(results)
-    timings = dict(state.get("agent_timings") or {})
-    timings["competitor_loader"] = round(time.perf_counter() - t0, 3)
-    return {"competitor_pages": pages, "agent_timings": timings}
+    return {
+        "competitor_pages": pages,
+        "agent_timings": {"competitor_loader": round(time.perf_counter() - t0, 3)},
+    }

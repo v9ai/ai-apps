@@ -360,18 +360,23 @@ pnpm db:studio    # open Drizzle Studio
 pnpm seed         # seed DB from markdown files
 pnpm seed:courses # seed Udemy course catalog
 pnpm scrape:udemy # scrape 20+ AI/ML Udemy topics → external_courses (with topic_group classification)
-pnpm generate prompt-caching               # generate article via Mastra (src/mastra/)
+pnpm generate prompt-caching               # generate article via LangGraph (backend/)
 pnpm generate:dry prompt-caching           # preview without saving
 pnpm generate prompt-caching --model deepseek-reasoner  # use specific model
 pnpm generate:missing                      # list articles without content files
 pnpm generate:batch                        # generate all missing articles
 pnpm generate:graph                        # print workflow as Mermaid
 
-# Batch-review unreviewed courses (Mastra workflow in src/mastra/):
+# Batch-review unreviewed courses (calls course_review graph):
 pnpm review:courses                             # review up to 5 courses
 pnpm review:courses --limit=10
 pnpm review:courses --provider="DeepLearning.AI"
 pnpm review:courses:dry                         # preview without calling the pipeline
+
+# Backend (LangGraph container) scripts — run from apps/knowledge/:
+pnpm backend:dev                                # uvicorn --reload on :7860 (needs .env in backend/)
+pnpm backend:deploy                             # wrangler deploy from backend/
+pnpm backend:tail                               # live wrangler tail
 ```
 
 ### LangGraph backend (`backend/`)
