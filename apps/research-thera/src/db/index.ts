@@ -2630,16 +2630,16 @@ export async function getGoalById(goalId: number) {
   };
 }
 
-export async function deleteNote(noteId: number, userEmail: string): Promise<void> {
+export async function deleteNote(noteId: number, userId: string): Promise<void> {
   await neonSql`DELETE FROM notes_claims WHERE note_id = ${noteId}`;
   await neonSql`DELETE FROM notes_research WHERE note_id = ${noteId}`;
-  await neonSql`DELETE FROM notes WHERE id = ${noteId} AND user_id = ${userEmail}`;
+  await neonSql`DELETE FROM notes WHERE id = ${noteId} AND user_id = ${userId}`;
 }
 
-export async function deleteGoal(goalId: number, userEmail: string): Promise<void> {
+export async function deleteGoal(goalId: number, userId: string): Promise<void> {
   await neonSql`DELETE FROM notes_claims WHERE note_id IN (SELECT id FROM notes WHERE entity_id = ${goalId} AND entity_type = 'Goal')`;
   await neonSql`DELETE FROM notes_research WHERE note_id IN (SELECT id FROM notes WHERE entity_id = ${goalId} AND entity_type = 'Goal')`;
-  await neonSql`DELETE FROM notes WHERE entity_id = ${goalId} AND entity_type = 'Goal' AND user_id = ${userEmail}`;
+  await neonSql`DELETE FROM notes WHERE entity_id = ${goalId} AND entity_type = 'Goal' AND user_id = ${userId}`;
   await neonSql`DELETE FROM therapeutic_questions WHERE goal_id = ${goalId}`;
   await neonSql`DELETE FROM recommended_books WHERE goal_id = ${goalId}`;
   await neonSql`DELETE FROM therapy_research WHERE goal_id = ${goalId}`;
@@ -2647,7 +2647,7 @@ export async function deleteGoal(goalId: number, userEmail: string): Promise<voi
   await neonSql`DELETE FROM audio_assets WHERE goal_id = ${goalId}`;
   await neonSql`DELETE FROM stories WHERE goal_id = ${goalId}`;
   await neonSql`DELETE FROM generation_jobs WHERE goal_id = ${goalId}`;
-  await neonSql`DELETE FROM goals WHERE id = ${goalId} AND user_id = ${userEmail}`;
+  await neonSql`DELETE FROM goals WHERE id = ${goalId} AND user_id = ${userId}`;
 }
 
 // ============================================
