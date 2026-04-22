@@ -2,32 +2,6 @@ mutation GenerateJournalAnalysis($journalEntryId: Int!) {
   generateJournalAnalysis(journalEntryId: $journalEntryId) {
     success
     message
-    analysis {
-      id
-      journalEntryId
-      summary
-      emotionalLandscape {
-        primaryEmotions
-        underlyingEmotions
-        emotionalRegulation
-        attachmentPatterns
-      }
-      therapeuticInsights {
-        title
-        observation
-        clinicalRelevance
-        relatedResearchIds
-      }
-      actionableRecommendations {
-        title
-        description
-        priority
-        concreteSteps
-        relatedResearchIds
-      }
-      reflectionPrompts
-      model
-      createdAt
-    }
+    jobId
   }
 }

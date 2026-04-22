@@ -728,6 +728,7 @@ export type GenerateHabitsResult = {
 export type GenerateJournalAnalysisResult = {
   __typename?: 'GenerateJournalAnalysisResult';
   analysis?: Maybe<JournalAnalysis>;
+  jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -2726,7 +2727,7 @@ export type GenerateJournalAnalysisMutationVariables = Exact<{
 }>;
 
 
-export type GenerateJournalAnalysisMutation = { __typename?: 'Mutation', generateJournalAnalysis: { __typename?: 'GenerateJournalAnalysisResult', success: boolean, message?: string | null, analysis?: { __typename?: 'JournalAnalysis', id: number, journalEntryId: number, summary: string, reflectionPrompts: Array<string>, model: string, createdAt: string, emotionalLandscape: { __typename?: 'EmotionalLandscape', primaryEmotions: Array<string>, underlyingEmotions: Array<string>, emotionalRegulation: string, attachmentPatterns?: string | null }, therapeuticInsights: Array<{ __typename?: 'TherapeuticInsight', title: string, observation: string, clinicalRelevance: string, relatedResearchIds?: Array<number> | null }>, actionableRecommendations: Array<{ __typename?: 'ActionableRecommendation', title: string, description: string, priority: string, concreteSteps: Array<string>, relatedResearchIds?: Array<number> | null }> } | null } };
+export type GenerateJournalAnalysisMutation = { __typename?: 'Mutation', generateJournalAnalysis: { __typename?: 'GenerateJournalAnalysisResult', success: boolean, message?: string | null, jobId?: string | null } };
 
 export type GenerateLongFormTextMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -5465,33 +5466,7 @@ export const GenerateJournalAnalysisDocument = gql`
   generateJournalAnalysis(journalEntryId: $journalEntryId) {
     success
     message
-    analysis {
-      id
-      journalEntryId
-      summary
-      emotionalLandscape {
-        primaryEmotions
-        underlyingEmotions
-        emotionalRegulation
-        attachmentPatterns
-      }
-      therapeuticInsights {
-        title
-        observation
-        clinicalRelevance
-        relatedResearchIds
-      }
-      actionableRecommendations {
-        title
-        description
-        priority
-        concreteSteps
-        relatedResearchIds
-      }
-      reflectionPrompts
-      model
-      createdAt
-    }
+    jobId
   }
 }
     `;

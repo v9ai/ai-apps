@@ -647,6 +647,7 @@ type GenerateHabitsResult {
 
 type GenerateJournalAnalysisResult {
   analysis: JournalAnalysis
+  jobId: String
   message: String
   success: Boolean!
 }

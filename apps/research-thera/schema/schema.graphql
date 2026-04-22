@@ -1609,6 +1609,7 @@ type ActionableRecommendation {
 type GenerateJournalAnalysisResult {
   success: Boolean!
   message: String
+  jobId: String
   analysis: JournalAnalysis
 }
 

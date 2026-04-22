@@ -722,6 +722,7 @@ export type GenerateHabitsResult = {
 export type GenerateJournalAnalysisResult = {
   __typename?: 'GenerateJournalAnalysisResult';
   analysis?: Maybe<JournalAnalysis>;
+  jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -3178,6 +3179,7 @@ export type GenerateHabitsResultResolvers<ContextType = GraphQLContext, ParentTy
 
 export type GenerateJournalAnalysisResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateJournalAnalysisResult'] = ResolversParentTypes['GenerateJournalAnalysisResult']> = {
   analysis?: Resolver<Maybe<ResolversTypes['JournalAnalysis']>, ParentType, ContextType>;
+  jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };

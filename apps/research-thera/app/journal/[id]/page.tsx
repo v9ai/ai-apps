@@ -257,20 +257,50 @@ function JournalEntryContent() {
   const analysis = entry?.analysis ?? null;
   const [analysisMessage, setAnalysisMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [activeAnalysisTab, setActiveAnalysisTab] = useState<"emotions" | "insights" | "recommendations" | "prompts">("emotions");
+  const [analysisJobId, setAnalysisJobId] = useState<string | null>(null);
 
-  const [generateAnalysis, { loading: generatingAnalysis }] = useGenerateJournalAnalysisMutation({
+  const [generateAnalysis, { loading: startingAnalysis }] = useGenerateJournalAnalysisMutation({
     onCompleted: (data) => {
-      if (data.generateJournalAnalysis.success) {
-        setAnalysisMessage({ text: data.generateJournalAnalysis.message || "Analysis generated.", type: "success" });
-        refetchEntry();
+      const res = data.generateJournalAnalysis;
+      if (res.success && res.jobId) {
+        setAnalysisJobId(res.jobId);
+        setAnalysisMessage(null);
       } else {
-        setAnalysisMessage({ text: data.generateJournalAnalysis.message || "Failed.", type: "error" });
+        setAnalysisMessage({ text: res.message || "Failed to start analysis.", type: "error" });
       }
     },
     onError: (err) => {
       setAnalysisMessage({ text: err.message, type: "error" });
     },
   });
+
+  const { data: analysisJobData, stopPolling: stopAnalysisPolling } =
+    useGetGenerationJobQuery({
+      variables: { id: analysisJobId! },
+      skip: !analysisJobId,
+      pollInterval: 2000,
+      notifyOnNetworkStatusChange: true,
+      fetchPolicy: "network-only",
+    });
+
+  useEffect(() => {
+    const status = analysisJobData?.generationJob?.status;
+    if (status === "SUCCEEDED" || status === "FAILED") {
+      stopAnalysisPolling();
+      setAnalysisJobId(null);
+      if (status === "SUCCEEDED") {
+        setAnalysisMessage({ text: "Deep analysis generated.", type: "success" });
+        refetchEntry();
+      } else {
+        setAnalysisMessage({
+          text: analysisJobData?.generationJob?.error?.message ?? "Analysis failed.",
+          type: "error",
+        });
+      }
+    }
+  }, [analysisJobData]);
+
+  const generatingAnalysis = startingAnalysis || !!analysisJobId;
 
   const [deleteAnalysis, { loading: deletingAnalysis }] = useDeleteJournalAnalysisMutation({
     onCompleted: () => {
