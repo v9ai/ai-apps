@@ -482,6 +482,7 @@ export type Contact = {
   nbStatus: Maybe<Scalars['String']['output']>;
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
   nextTouchScore: Maybe<Scalars['Float']['output']>;
+  notes: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;

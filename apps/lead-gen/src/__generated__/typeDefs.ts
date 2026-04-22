@@ -430,6 +430,7 @@ type Contact {
   nbStatus: String
   nbSuggestedCorrection: String
   nextTouchScore: Float
+  notes: String
   position: String
   seniority: String
   slug: String

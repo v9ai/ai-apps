@@ -16,6 +16,7 @@ query GetContact($id: Int, $slug: String) {
     githubHandle
     telegramHandle
     tags
+    notes
     forwardingAlias
     forwardingAliasRuleId
     nbStatus
@@ -256,6 +257,7 @@ query GetContacts($companyId: Int, $search: String, $tag: String, $limit: Int, $
       doNotContact
       nbResult
       tags
+      notes
       createdAt
       seniority
       department

@@ -485,6 +485,7 @@ export type Contact = {
   nbStatus: Maybe<Scalars['String']['output']>;
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
   nextTouchScore: Maybe<Scalars['Float']['output']>;
+  notes: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
@@ -3891,7 +3892,7 @@ export type GetContactQueryVariables = Exact<{
 }>;
 
 
-export type GetContactQuery = { __typename?: 'Query', contact: { __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, emails: Array<string>, bouncedEmails: Array<string>, linkedinUrl: string | null, company: string | null, companyId: number | null, position: string | null, emailVerified: boolean | null, doNotContact: boolean, githubHandle: string | null, telegramHandle: string | null, tags: Array<string>, forwardingAlias: string | null, forwardingAliasRuleId: string | null, nbStatus: string | null, nbResult: string | null, nbFlags: Array<string>, nbSuggestedCorrection: string | null, createdAt: string, updatedAt: string, aiProfile: { __typename?: 'ContactAIProfile', trigger: string, enrichedAt: string, linkedinHeadline: string | null, linkedinBio: string | null, specialization: string | null, skills: Array<string>, researchAreas: Array<string>, experienceLevel: string, synthesisConfidence: number, synthesisRationale: string | null, githubBio: string | null, githubTopLanguages: Array<string>, githubTotalStars: number, githubAiRepos: Array<{ __typename?: 'ContactAIGitHubRepo', name: string, description: string | null, stars: number, topics: Array<string> }>, workExperience: Array<{ __typename?: 'ContactWorkExperience', company: string, companyLogo: string | null, title: string, employmentType: string | null, startDate: string, endDate: string | null, duration: string | null, location: string | null, description: string | null, skills: Array<string> }> } | null } | null };
+export type GetContactQuery = { __typename?: 'Query', contact: { __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, emails: Array<string>, bouncedEmails: Array<string>, linkedinUrl: string | null, company: string | null, companyId: number | null, position: string | null, emailVerified: boolean | null, doNotContact: boolean, githubHandle: string | null, telegramHandle: string | null, tags: Array<string>, notes: string | null, forwardingAlias: string | null, forwardingAliasRuleId: string | null, nbStatus: string | null, nbResult: string | null, nbFlags: Array<string>, nbSuggestedCorrection: string | null, createdAt: string, updatedAt: string, aiProfile: { __typename?: 'ContactAIProfile', trigger: string, enrichedAt: string, linkedinHeadline: string | null, linkedinBio: string | null, specialization: string | null, skills: Array<string>, researchAreas: Array<string>, experienceLevel: string, synthesisConfidence: number, synthesisRationale: string | null, githubBio: string | null, githubTopLanguages: Array<string>, githubTotalStars: number, githubAiRepos: Array<{ __typename?: 'ContactAIGitHubRepo', name: string, description: string | null, stars: number, topics: Array<string> }>, workExperience: Array<{ __typename?: 'ContactWorkExperience', company: string, companyLogo: string | null, title: string, employmentType: string | null, startDate: string, endDate: string | null, duration: string | null, location: string | null, description: string | null, skills: Array<string> }> } | null } | null };
 
 export type UpdateContactMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3987,7 +3988,7 @@ export type GetContactsQueryVariables = Exact<{
 }>;
 
 
-export type GetContactsQuery = { __typename?: 'Query', contacts: { __typename?: 'ContactsResult', totalCount: number, contacts: Array<{ __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, bouncedEmails: Array<string>, linkedinUrl: string | null, position: string | null, company: string | null, companyId: number | null, githubHandle: string | null, telegramHandle: string | null, emailVerified: boolean | null, doNotContact: boolean, nbResult: string | null, tags: Array<string>, createdAt: string, seniority: string | null, department: string | null, isDecisionMaker: boolean | null, authorityScore: number | null, nextTouchScore: number | null, lastContactedAt: string | null }> } };
+export type GetContactsQuery = { __typename?: 'Query', contacts: { __typename?: 'ContactsResult', totalCount: number, contacts: Array<{ __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, bouncedEmails: Array<string>, linkedinUrl: string | null, position: string | null, company: string | null, companyId: number | null, githubHandle: string | null, telegramHandle: string | null, emailVerified: boolean | null, doNotContact: boolean, nbResult: string | null, tags: Array<string>, notes: string | null, createdAt: string, seniority: string | null, department: string | null, isDecisionMaker: boolean | null, authorityScore: number | null, nextTouchScore: number | null, lastContactedAt: string | null }> } };
 
 export type ImportContactsMutationVariables = Exact<{
   contacts: Array<ContactInput> | ContactInput;
@@ -5809,6 +5810,7 @@ export const GetContactDocument = gql`
     githubHandle
     telegramHandle
     tags
+    notes
     forwardingAlias
     forwardingAliasRuleId
     nbStatus
@@ -6468,6 +6470,7 @@ export const GetContactsDocument = gql`
       doNotContact
       nbResult
       tags
+      notes
       createdAt
       seniority
       department

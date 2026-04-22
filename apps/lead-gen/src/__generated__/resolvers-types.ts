@@ -485,6 +485,7 @@ export type Contact = {
   nbStatus: Maybe<Scalars['String']['output']>;
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
   nextTouchScore: Maybe<Scalars['Float']['output']>;
+  notes: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
@@ -4551,6 +4552,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   nbStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   nbSuggestedCorrection?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   nextTouchScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seniority?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

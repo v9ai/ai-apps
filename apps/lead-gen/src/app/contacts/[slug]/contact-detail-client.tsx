@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   useGetContactQuery,
   useGetContactEmailsQuery,
@@ -2168,6 +2170,41 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                         </Badge>
                       ))}
                     </Flex>
+                  </Box>
+                </>
+              )}
+
+              {/* Notes (free-text / markdown). Used by the paper-author
+                  import to store per-paper metadata — can be long. */}
+              {contact.notes && contact.notes.trim().length > 0 && (
+                <>
+                  <Separator size="4" />
+                  <Box>
+                    <Flex align="center" justify="between">
+                      <Text size="2" color="gray" weight="medium">
+                        Notes
+                      </Text>
+                      <Text size="1" color="gray">
+                        {contact.notes.length.toLocaleString()} chars
+                      </Text>
+                    </Flex>
+                    <Box
+                      mt="2"
+                      p="3"
+                      style={{
+                        border: "1px solid var(--gray-a5)",
+                        borderRadius: 6,
+                        background: "var(--gray-a2)",
+                        maxHeight: 560,
+                        overflow: "auto",
+                        fontSize: "var(--font-size-2)",
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {contact.notes}
+                      </ReactMarkdown>
+                    </Box>
                   </Box>
                 </>
               )}

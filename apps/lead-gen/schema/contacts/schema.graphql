@@ -98,6 +98,7 @@ type Contact {
   telegramHandle: String
   doNotContact: Boolean!
   tags: [String!]!
+  notes: String
   # Cloudflare email routing: `{forwardingAlias}@vadim.blog` → email
   forwardingAlias: String
   forwardingAliasRuleId: String
