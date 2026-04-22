@@ -862,23 +862,6 @@ function FamilyMemberContent() {
                     disabled={sharing}
                   />
                 </Box>
-                <Select.Root
-                  value={shareRole}
-                  onValueChange={(v) =>
-                    setShareRole(v as FamilyMemberShareRole)
-                  }
-                  disabled={sharing}
-                >
-                  <Select.Trigger style={{ minWidth: 110 }} />
-                  <Select.Content>
-                    <Select.Item value={FamilyMemberShareRole.Viewer}>
-                      Viewer
-                    </Select.Item>
-                    <Select.Item value={FamilyMemberShareRole.Editor}>
-                      Editor
-                    </Select.Item>
-                  </Select.Content>
-                </Select.Root>
                 <Button type="submit" disabled={sharing}>
                   {sharing ? "Sharing..." : "Share"}
                 </Button>
