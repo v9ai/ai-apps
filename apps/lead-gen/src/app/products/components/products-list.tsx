@@ -16,8 +16,6 @@ import {
   ExternalLinkIcon,
   ArrowRightIcon,
   MagicWandIcon,
-  RocketIcon,
-  MagnifyingGlassIcon,
 } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
@@ -25,8 +23,6 @@ import {
   useProductsQuery,
   useDeleteProductMutation,
   useAnalyzeProductIcpMutation,
-  useEnhanceProductIcpMutation,
-  useCreateCompetitorAnalysisMutation,
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
@@ -44,11 +40,7 @@ export function ProductsList() {
 
   const [deleteProduct] = useDeleteProductMutation();
   const [analyzeIcp] = useAnalyzeProductIcpMutation();
-  const [enhanceIcp] = useEnhanceProductIcpMutation();
-  const [createCompetitorAnalysis] = useCreateCompetitorAnalysisMutation();
   const [analyzingId, setAnalyzingId] = useState<number | null>(null);
-  const [enhancingId, setEnhancingId] = useState<number | null>(null);
-  const [competitorsBusyId, setCompetitorsBusyId] = useState<number | null>(null);
 
   if (authLoading) {
     return (
@@ -76,30 +68,6 @@ export function ProductsList() {
       router.push(`/products/${slug}/icp`);
     } finally {
       setAnalyzingId(null);
-    }
-  }
-
-  async function onEnhance(id: number, slug: string) {
-    setEnhancingId(id);
-    try {
-      await enhanceIcp({ variables: { id } });
-      await refetch();
-      router.push(`/products/${slug}/icp`);
-    } finally {
-      setEnhancingId(null);
-    }
-  }
-
-  async function onFindCompetitors(id: number) {
-    setCompetitorsBusyId(id);
-    try {
-      const res = await createCompetitorAnalysis({ variables: { productId: id } });
-      const analysisId = res.data?.createCompetitorAnalysis?.id;
-      if (analysisId) {
-        router.push(`/competitors/${analysisId}`);
-      }
-    } finally {
-      setCompetitorsBusyId(null);
     }
   }
 

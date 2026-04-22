@@ -14,7 +14,6 @@ const T = {
     stars: "stele",
     sentiment: "Scor Sentiment",
     value: "Valoare Pret",
-    aspects: "Analiza Aspecte",
     pros: "Avantaje",
     cons: "Dezavantaje",
     reviews: "Recenzii",
@@ -41,7 +40,6 @@ const T = {
     stars: "stars",
     sentiment: "Sentiment Score",
     value: "Value Score",
-    aspects: "Aspect Analysis",
     pros: "Pros",
     cons: "Cons",
     reviews: "Reviews",
@@ -125,90 +123,6 @@ function SentimentGauge({ score, label }: { score: number; label: string }) {
             transition: "width 0.6s ease",
           }}
         />
-      </div>
-    </div>
-  );
-}
-
-function AspectBars({
-  scores,
-  label,
-}: {
-  scores: Record<string, number>;
-  label: string;
-}) {
-  const entries = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-  if (entries.length === 0) return null;
-
-  return (
-    <div>
-      <h3
-        className={css({
-          fontSize: "meta",
-          fontWeight: "600",
-          fontFamily: "display",
-          color: "text.secondary",
-          letterSpacing: "0.03em",
-          textTransform: "uppercase",
-          mb: "4",
-        })}
-      >
-        {label}
-      </h3>
-      <div className={css({ display: "flex", flexDirection: "column", gap: "3" })}>
-        {entries.map(([name, score]) => {
-          const pct = Math.round(score * 100);
-          return (
-            <div key={name}>
-              <div
-                className={css({
-                  display: "flex",
-                  justifyContent: "space-between",
-                  mb: "1",
-                })}
-              >
-                <span
-                  className={css({
-                    fontSize: "meta",
-                    color: "text.muted",
-                  })}
-                >
-                  {name}
-                </span>
-                <span
-                  className={css({
-                    fontSize: "meta",
-                    color: "text.faint",
-                    fontVariantNumeric: "tabular-nums",
-                  })}
-                >
-                  {pct}%
-                </span>
-              </div>
-              <div
-                className={css({
-                  h: "5px",
-                  rounded: "full",
-                  bg: "steel.raised",
-                  overflow: "hidden",
-                })}
-              >
-                <div
-                  style={{
-                    width: `${pct}%`,
-                    height: "100%",
-                    background:
-                      pct >= 60
-                        ? "linear-gradient(90deg, #4a7a9b88, #4a7a9b)"
-                        : "linear-gradient(90deg, #C9922A55, #C9922A)",
-                    borderRadius: "9999px",
-                    transition: "width 0.5s ease",
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
@@ -891,22 +805,6 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
             </span>
           </div>
         )}
-
-        {/* ── Aspect Bars ── */}
-        {hotel.aspect_scores &&
-          Object.keys(hotel.aspect_scores).length > 0 && (
-            <div
-              className={css({
-                p: { base: "5", md: "6" },
-                bg: "steel.surface",
-                rounded: "card",
-                border: "1px solid",
-                borderColor: "steel.border",
-              })}
-            >
-              <AspectBars scores={hotel.aspect_scores} label={t.aspects} />
-            </div>
-          )}
 
         {/* ── Pros / Cons ── */}
         {((hotel.pros && hotel.pros.length > 0) ||
