@@ -263,14 +263,16 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(CompetitorsTeamState)
     builder.add_node("load_product", load_product)
     builder.add_node("discovery_scout", discovery_scout)
+    builder.add_node("competitor_loader", competitor_loader)
     builder.add_node("differentiator", differentiator)
     builder.add_node("threat_assessor", threat_assessor)
     builder.add_node("synthesizer", synthesizer)
 
     builder.add_edge(START, "load_product")
     builder.add_edge("load_product", "discovery_scout")
+    builder.add_edge("discovery_scout", "competitor_loader")
     builder.add_conditional_edges(
-        "discovery_scout", _fan_out, ["differentiator", "threat_assessor"]
+        "competitor_loader", _fan_out, ["differentiator", "threat_assessor"]
     )
     builder.add_edge("differentiator", "synthesizer")
     builder.add_edge("threat_assessor", "synthesizer")
