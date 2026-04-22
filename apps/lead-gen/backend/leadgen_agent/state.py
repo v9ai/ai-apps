@@ -117,6 +117,10 @@ class ContactEnrichState(TypedDict, total=False):
     tags_added: list[str]
     enriched_at: str
     error: str | None
+    # populated by resolve_github_handle: "" if unresolved;
+    # source is "existing" | "search" | "" (empty when lookup found no match)
+    github_handle: str
+    github_handle_source: str
 
 
 class DeepICPState(TypedDict, total=False):
