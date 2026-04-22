@@ -27,10 +27,10 @@ UPLOADS = re.compile(r"/(?:wp-content/uploads|uploads|images|media|assets|photos
 THUMB_SUFFIX = re.compile(r"-\d+x\d+(?=\.(?:jpe?g|png|webp)$)", re.I)
 SCALED_SUFFIX = re.compile(r"-scaled(?=\.(?:jpe?g|png|webp)$)", re.I)
 
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-)
+# Minimal UA — some WAFs block full Chrome fingerprints, and this short form
+# is accepted by Apache/nginx/Cloudflare defaults while still passing
+# "looks like a browser" checks.
+USER_AGENT = "Mozilla/5.0"
 
 # Universal category patterns (case-insensitive). A URL/filename matching the
 # pattern goes into that bucket; non-matches fall into "other" and still get

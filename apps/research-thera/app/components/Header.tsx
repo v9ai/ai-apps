@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: "/habits", label: "Habits" },
   { href: "/notes", label: "Notes" },
   { href: "/stories", label: "Stories" },
+  { href: "/books", label: "Books" },
   { href: "/family", label: "Family" },
   { href: "/journal", label: "Journal" },
 ];

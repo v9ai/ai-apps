@@ -82,6 +82,54 @@ export interface MemorizeGenerateResult {
   categories: MemorizeCategory[];
 }
 
+export interface ArticleGenerateResult {
+  final: string;
+  word_count: number;
+  revisions: number;
+  quality: {
+    ok: boolean;
+    issues: string[];
+    wordCount: number;
+    codeBlocks: number;
+    crossRefs: number;
+  };
+}
+
+export interface ExpertScore {
+  score: number;
+  reasoning: string;
+  strengths: string[];
+  weaknesses: string[];
+}
+
+export interface CourseReviewResult {
+  course_id: string;
+  title: string;
+  url: string;
+  provider: string;
+  description: string;
+  level: string;
+  rating: number;
+  review_count: number;
+  duration_hours: number;
+  is_free: boolean;
+  pedagogy_score: ExpertScore;
+  technical_accuracy_score: ExpertScore;
+  content_depth_score: ExpertScore;
+  practical_application_score: ExpertScore;
+  instructor_clarity_score: ExpertScore;
+  curriculum_fit_score: ExpertScore;
+  prerequisites_score: ExpertScore;
+  ai_domain_relevance_score: ExpertScore;
+  community_health_score: ExpertScore;
+  value_proposition_score: ExpertScore;
+  aggregate_score: number;
+  verdict: "excellent" | "recommended" | "average" | "skip";
+  summary: string;
+  top_strengths: string[];
+  key_weaknesses: string[];
+}
+
 // ── Typed wrappers ─────────────────────────────────────────
 
 export function chat(input: {
@@ -125,6 +173,70 @@ export function runMemorizeGenerate(input: {
       company: input.company,
       position: input.position,
       techs: input.techs,
+    },
+    { timeoutMs: 180_000 },
+  );
+}
+
+/**
+ * Generate a knowledge-base article end-to-end (research → outline → draft →
+ * review → revise loop). The container has no repo access, so the caller
+ * resolves catalog context (related_topics, existing_articles, style_sample,
+ * category) via lib/catalog on the Next.js side and passes them in.
+ *
+ * Returns the final markdown plus quality metrics. The caller handles saving.
+ */
+export function runArticleGenerate(input: {
+  slug: string;
+  topic: string;
+  category: string;
+  relatedTopics: string;
+  existingArticles: string;
+  styleSample: string;
+}): Promise<ArticleGenerateResult> {
+  return runGraph<ArticleGenerateResult>(
+    "article_generate",
+    {
+      slug: input.slug,
+      topic: input.topic,
+      category: input.category,
+      related_topics: input.relatedTopics,
+      existing_articles: input.existingArticles,
+      style_sample: input.styleSample,
+    },
+    { timeoutMs: 300_000 },
+  );
+}
+
+/**
+ * 10-expert course review: parallel fan-out + weighted aggregator. Input and
+ * output shapes match the previous Mastra workflow so storage/UI don't change.
+ */
+export function runCourseReview(input: {
+  courseId: string;
+  title: string;
+  url: string;
+  provider: string;
+  description?: string;
+  level?: string;
+  rating?: number;
+  reviewCount?: number;
+  durationHours?: number;
+  isFree?: boolean;
+}): Promise<CourseReviewResult> {
+  return runGraph<CourseReviewResult>(
+    "course_review",
+    {
+      course_id: input.courseId,
+      title: input.title,
+      url: input.url,
+      provider: input.provider,
+      description: input.description ?? "",
+      level: input.level ?? "Beginner",
+      rating: input.rating ?? 0,
+      review_count: input.reviewCount ?? 0,
+      duration_hours: input.durationHours ?? 0,
+      is_free: input.isFree ?? false,
     },
     { timeoutMs: 180_000 },
   );

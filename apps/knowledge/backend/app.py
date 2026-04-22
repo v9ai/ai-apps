@@ -29,7 +29,9 @@ from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from knowledge_agent.app_prep_graph import build_graph as build_app_prep
+from knowledge_agent.article_generate_graph import build_graph as build_article_generate
 from knowledge_agent.chat_graph import build_graph as build_chat
+from knowledge_agent.course_review_graph import build_graph as build_course_review
 from knowledge_agent.memorize_generate_graph import build_graph as build_memorize_generate
 
 log = logging.getLogger("knowledge_agent")
@@ -64,6 +66,8 @@ async def lifespan(app: FastAPI):
             "chat": build_chat(checkpointer),
             "app_prep": build_app_prep(checkpointer),
             "memorize_generate": build_memorize_generate(checkpointer),
+            "article_generate": build_article_generate(checkpointer),
+            "course_review": build_course_review(checkpointer),
         }
         log.info("Graphs compiled: %s", list(app.state.graphs))
         yield
