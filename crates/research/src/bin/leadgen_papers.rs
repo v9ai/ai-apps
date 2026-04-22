@@ -264,7 +264,7 @@ struct Entry {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
-    tracing_subscriber::fmt().with_env_filter("warn").init();
+    tracing_subscriber::fmt().init();
 
     let args = Args::parse();
     let queries: Vec<(&'static str, &'static str)> = match args.tier {
@@ -308,20 +308,20 @@ async fn main() -> Result<()> {
                     Some(&year_range),
                     None,
                     Some("citationCount:desc"),
-                    per as usize,
+                    per,
                 )
                 .await
                 .map(|r| r.data.into_iter().map(ResearchPaper::from).collect::<Vec<_>>())
                 .unwrap_or_default()
             },
             async {
-                oa.search_filtered(query, Some(&date_filter), 1, per as usize)
+                oa.search_filtered(query, Some(&date_filter), 1, per)
                     .await
                     .map(|r| r.results.into_iter().map(ResearchPaper::from).collect::<Vec<_>>())
                     .unwrap_or_default()
             },
             async {
-                cr.search_filtered(query, Some(&date_filter), per as usize, 0)
+                cr.search_filtered(query, Some(&date_filter), per, 0)
                     .await
                     .map(|r| {
                         r.message
@@ -348,7 +348,7 @@ async fn main() -> Result<()> {
             },
             async {
                 zenodo
-                    .search(query, 1, (per as usize).min(15))
+                    .search(query, 1, per.min(15))
                     .await
                     .map(|r| {
                         r.hits
