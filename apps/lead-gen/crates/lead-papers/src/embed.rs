@@ -4,11 +4,15 @@ use candle_nn::VarBuilder;
 use candle_transformers::models::bert::{BertModel, Config as BertConfig, HiddenAct};
 use hf_hub::{api::tokio::Api, Repo, RepoType};
 use tokenizers::{PaddingParams, PaddingStrategy, Tokenizer, TruncationParams};
+use tokio::sync::Mutex;
 
 pub struct Embedder {
     model: BertModel,
     tokenizer: Tokenizer,
     device: Device,
+    /// Serializes concurrent forward passes. Candle BertModel::forward is not
+    /// guaranteed re-entrant on Metal; cheaper to queue than to crash.
+    lock: Mutex<()>,
 }
 
 impl Embedder {
@@ -47,14 +51,16 @@ impl Embedder {
 
         let _ = HiddenAct::Gelu;
 
-        Ok(Self { model, tokenizer, device })
+        Ok(Self { model, tokenizer, device, lock: Mutex::new(()) })
     }
 
     /// Embed a batch. Returns (n, 384) f32 row-major Vec.
-    pub fn embed(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
+    /// Internally serializes concurrent forward passes.
+    pub async fn embed(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
         if texts.is_empty() {
             return Ok(vec![]);
         }
+        let _guard = self.lock.lock().await;
         let encodings = self
             .tokenizer
             .encode_batch(texts.to_vec(), true)

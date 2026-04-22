@@ -22,11 +22,14 @@ impl Default for Fetchers {
 impl Fetchers {
     /// Search OpenAlex + arXiv for papers authored by `author_name`, normalize to
     /// `ResearchPaper`, and return combined results (OpenAlex first, arXiv appended
-    /// where DOI/title don't collide).
+    /// where DOI/title don't collide). Both sources are queried concurrently.
     pub async fn by_author(&self, author_name: &str, per_source: u32) -> Result<Vec<ResearchPaper>> {
-        let mut out: Vec<ResearchPaper> = Vec::new();
+        let openalex_fut = self.openalex.search_by_author_name(author_name, 1, per_source);
+        let arxiv_fut = self.arxiv.search(&format!("au:\"{}\"", author_name), 0, per_source, None, None);
+        let (openalex_res, arxiv_res) = tokio::join!(openalex_fut, arxiv_fut);
 
-        match self.openalex.search_by_author_name(author_name, 1, per_source).await {
+        let mut out: Vec<ResearchPaper> = Vec::new();
+        match openalex_res {
             Ok(resp) => {
                 for w in resp.results {
                     out.push(ResearchPaper::from(w));
@@ -34,8 +37,7 @@ impl Fetchers {
             }
             Err(e) => tracing::warn!("openalex search_by_author_name({}): {}", author_name, e),
         }
-
-        match self.arxiv.search(&format!("au:\"{}\"", author_name), 0, per_source, None, None).await {
+        match arxiv_res {
             Ok(resp) => {
                 for p in resp.papers {
                     let candidate = ResearchPaper::from(p);
@@ -46,16 +48,18 @@ impl Fetchers {
             }
             Err(e) => tracing::warn!("arxiv search(au:{}): {}", author_name, e),
         }
-
         Ok(out)
     }
 
-    /// Topic-driven discovery: query both OpenAlex and arXiv by keyword.
+    /// Topic-driven discovery: query OpenAlex and arXiv concurrently.
     #[allow(dead_code)]
     pub async fn by_topic(&self, query: &str, per_source: u32) -> Result<Vec<ResearchPaper>> {
-        let mut out: Vec<ResearchPaper> = Vec::new();
+        let openalex_fut = self.openalex.search(query, 1, per_source);
+        let arxiv_fut = self.arxiv.search(query, 0, per_source, None, None);
+        let (openalex_res, arxiv_res) = tokio::join!(openalex_fut, arxiv_fut);
 
-        match self.openalex.search(query, 1, per_source).await {
+        let mut out: Vec<ResearchPaper> = Vec::new();
+        match openalex_res {
             Ok(resp) => {
                 for w in resp.results {
                     out.push(ResearchPaper::from(w));
@@ -63,8 +67,7 @@ impl Fetchers {
             }
             Err(e) => tracing::warn!("openalex search({}): {}", query, e),
         }
-
-        match self.arxiv.search(query, 0, per_source, None, None).await {
+        match arxiv_res {
             Ok(resp) => {
                 for p in resp.papers {
                     let candidate = ResearchPaper::from(p);
@@ -75,7 +78,6 @@ impl Fetchers {
             }
             Err(e) => tracing::warn!("arxiv search({}): {}", query, e),
         }
-
         Ok(out)
     }
 }

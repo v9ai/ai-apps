@@ -71,7 +71,7 @@ impl<'a> Pipeline<'a> {
         persist_papers(self.sqlite, self.lance, &papers).await.ok();
 
         let texts: Vec<String> = papers.iter().map(paper_text_for_embedding).collect();
-        let paper_embs = self.emb.embed(&texts)?;
+        let paper_embs = self.emb.embed(&texts).await?;
 
         self.lance.upsert_contact(contact).await?;
         self.lance
@@ -122,21 +122,32 @@ impl<'a> Pipeline<'a> {
             return Ok(r);
         }
 
-        // 5) Hydrate top 5 candidates.
-        let mut hydrated = vec![];
-        for login in logins.into_iter().take(5) {
-            match self.gh.hydrate(&login).await {
-                Ok(c) => hydrated.push(c),
-                Err(e) => tracing::warn!("hydrate {} failed: {}", login, e),
+        // 5) Hydrate top 5 candidates in parallel.
+        let to_hydrate: Vec<String> = logins.into_iter().take(5).collect();
+        let hydrate_futs = to_hydrate.iter().map(|l| {
+            let login = l.clone();
+            async move {
+                match self.gh.hydrate(&login).await {
+                    Ok(c) => Some(c),
+                    Err(e) => {
+                        tracing::warn!("hydrate {} failed: {}", login, e);
+                        None
+                    }
+                }
             }
-        }
+        });
+        let hydrated: Vec<GhCandidate> = futures::future::join_all(hydrate_futs)
+            .await
+            .into_iter()
+            .flatten()
+            .collect();
 
         // 6) Embed candidate topic blobs, score, rank.
         let topic_texts: Vec<String> = hydrated.iter().map(candidate_topic_text).collect();
         let cand_embs = if topic_texts.is_empty() {
             vec![]
         } else {
-            self.emb.embed(&topic_texts)?
+            self.emb.embed(&topic_texts).await?
         };
 
         let mut scored: Vec<(GhCandidate, ScoreBreakdown, Vec<f32>)> = hydrated
