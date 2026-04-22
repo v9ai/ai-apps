@@ -68,6 +68,13 @@ const FINISHERS: Finisher[] = [
     completedAt: "Apr 21, 2026",
     github: "https://github.com/petervdbroek",
   },
+  {
+    rank: 8,
+    name: "Vadim Nicolai",
+    completedAt: "Apr 22, 2026",
+    github: "https://github.com/v9ai",
+    website: "https://vadim.blog",
+  },
 ];
 
 const COURSES: Course[] = [
