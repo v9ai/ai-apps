@@ -392,6 +392,12 @@ function JournalEntryContent() {
                     Private
                   </Badge>
                 )}
+                {entry.isVault && (
+                  <Badge color="amber" variant="soft" size="2">
+                    <LockClosedIcon width="12" height="12" />
+                    Vault
+                  </Badge>
+                )}
               </Flex>
             </Flex>
             <Flex align="center" gap="4">

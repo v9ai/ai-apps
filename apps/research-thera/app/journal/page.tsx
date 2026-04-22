@@ -189,6 +189,11 @@ function JournalListContent() {
                         {entry.mood}
                       </Badge>
                     )}
+                    {entry.isVault && (
+                      <Badge color="amber" variant="soft" size="1">
+                        <LockClosedIcon width="10" height="10" />
+                      </Badge>
+                    )}
                   </Flex>
                 </Flex>
 

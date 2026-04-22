@@ -7,12 +7,13 @@ import {
   Dialog,
   Button,
   Flex,
+  Switch,
   Text,
   TextField,
   TextArea,
   Select,
 } from "@radix-ui/themes";
-import { PlusIcon, Pencil1Icon } from "@radix-ui/react-icons";
+import { PlusIcon, Pencil1Icon, LockClosedIcon } from "@radix-ui/react-icons";
 import {
   useCreateJournalEntryMutation,
   useUpdateJournalEntryMutation,
@@ -21,6 +22,7 @@ import {
   useGetAllTagsQuery,
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
+import { useVaultSession } from "@/app/hooks/useVaultSession";
 
 interface EditEntry {
   id: number;
@@ -32,6 +34,7 @@ interface EditEntry {
   familyMemberId?: number | null;
   goalId?: number | null;
   tags?: string[] | null;
+  isVault?: boolean | null;
 }
 
 interface AddJournalEntryButtonProps {
@@ -50,6 +53,7 @@ const defaultForm = () => ({
   familyMemberId: "",
   goalId: "",
   tags: "",
+  isVault: false,
 });
 
 export default function AddJournalEntryButton({
@@ -59,6 +63,7 @@ export default function AddJournalEntryButton({
 }: AddJournalEntryButtonProps) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const { unlocked: vaultUnlocked } = useVaultSession();
   const isSignedIn = !!session?.user;
   const isEdit = !!editEntry;
   const isControlled = controlledOpen !== undefined;
@@ -141,6 +146,7 @@ export default function AddJournalEntryButton({
               familyMemberId: form.familyMemberId ? parseInt(form.familyMemberId, 10) : undefined,
               goalId: form.goalId ? parseInt(form.goalId, 10) : undefined,
               isPrivate: true,
+              isVault: vaultUnlocked ? form.isVault : undefined,
               tags: parsedTags.length > 0 ? parsedTags : undefined,
             },
           },
@@ -156,6 +162,7 @@ export default function AddJournalEntryButton({
               familyMemberId: form.familyMemberId ? parseInt(form.familyMemberId, 10) : undefined,
               goalId: form.goalId ? parseInt(form.goalId, 10) : undefined,
               isPrivate: true,
+              isVault: vaultUnlocked && form.isVault ? true : undefined,
               tags: parsedTags.length > 0 ? parsedTags : undefined,
             },
           },
@@ -184,6 +191,7 @@ export default function AddJournalEntryButton({
             familyMemberId: editEntry.familyMemberId ? String(editEntry.familyMemberId) : "",
             goalId: editEntry.goalId ? String(editEntry.goalId) : "",
             tags: (editEntry.tags || []).join(", "),
+            isVault: editEntry.isVault === true,
           });
         }
         if (!isOpen) {
@@ -362,6 +370,22 @@ export default function AddJournalEntryButton({
                 ) : null;
               })()}
             </label>
+
+            {vaultUnlocked && (
+              <Flex align="center" gap="2" asChild>
+                <label>
+                  <Switch
+                    checked={form.isVault}
+                    onCheckedChange={(checked) => setForm((f) => ({ ...f, isVault: checked }))}
+                    disabled={loading}
+                  />
+                  <Flex align="center" gap="1">
+                    <LockClosedIcon width="12" height="12" />
+                    <Text size="2" weight="medium">Vault</Text>
+                  </Flex>
+                </label>
+              </Flex>
+            )}
 
             {error && (
               <Text color="red" size="2">
