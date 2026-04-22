@@ -15,10 +15,19 @@ import re
 from pathlib import Path
 from typing import Any
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 from langchain_openai import ChatOpenAI
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# Load backend/.env first (LLM + auth secrets) without clobbering shell exports,
+# then fill in any missing keys (e.g. NEON_DATABASE_URL) from the Next.js
+# app's .env.local. Using `dotenv_values` for the second pass lets us only set
+# keys that are empty/unset — backend/.env ships with NEON_DATABASE_URL= as a
+# placeholder which would otherwise shadow the real value.
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(_BACKEND_DIR / ".env")
+for _k, _v in dotenv_values(_BACKEND_DIR.parent / ".env.local").items():
+    if _v and not os.environ.get(_k):
+        os.environ[_k] = _v
 
 
 def _is_local(base_url: str) -> bool:

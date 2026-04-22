@@ -160,18 +160,20 @@ sequenceDiagram
     participant User
     participant ChatUI as Chat Component
     participant Route as /api/chat
-    participant LLM as OpenAI / DeepSeek
-    participant DB as Neon DB
+    participant CDB as Content SQLite
+    participant LG as LangGraph container
+    participant LLM as DeepSeek
 
     User->>ChatUI: send message
-    ChatUI->>Route: POST { messages, lessonSlug }
-    Route->>DB: fetch lesson context
-    DB-->>Route: lesson content + concepts
-    Route->>LLM: stream completion (system + context + messages)
-    LLM-->>Route: token stream
-    Route-->>ChatUI: SSE stream
-    ChatUI-->>User: streamed response
-    Route->>DB: INSERT chat_messages
+    ChatUI->>Route: POST { message, thread_id? }
+    Route->>CDB: FTS + vector search + history
+    CDB-->>Route: snippets + prior messages
+    Route->>LG: POST /runs/wait { chat, message, history, context_snippets }
+    LG->>LLM: chat completion (system + snippets + history + user)
+    LLM-->>LG: assistant reply
+    LG-->>Route: { response }
+    Route->>CDB: INSERT chat_messages (user + assistant)
+    Route-->>ChatUI: { response, thread_id }
 ```
 
 ## Knowledge Graph
@@ -317,11 +319,25 @@ apps/knowledge/
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (22 tables, incl. learners, coursework, external_courses[+topic_group], lesson_courses, course_reviews)
-├── src/mastra/             # Mastra runtime (Cloudflare Workers deploy)
+├── src/mastra/             # Mastra runtime (Cloudflare Workers deploy, phase-2 migration target)
 │   ├── index.ts            # Mastra instance (PostgresStore + CloudflareDeployer)
-│   ├── workflows/generate-article.ts  # Article generation pipeline (ported from backend/ LangGraph)
+│   ├── workflows/generate-article.ts  # Article generation pipeline
 │   ├── workflows/review-course.ts     # 10-expert course review pipeline
 │   └── lib/                # catalog, prompts, deepseek, quality
+├── src/lib/langgraph-client.ts       # Typed POST /runs/wait client (chat, runAppPrep, runMemorizeGenerate)
+├── backend/                # Python FastAPI + LangGraph on Cloudflare Containers
+│   ├── wrangler.jsonc      # Worker + KnowledgeContainer (standard-1 on :7860)
+│   ├── Dockerfile          # python:3.12-slim, uvicorn --workers 1
+│   ├── requirements.txt    # fastapi, langgraph, langgraph-checkpoint-postgres, psycopg[binary]
+│   ├── app.py              # FastAPI harness — /health + /runs/wait, bearer-token middleware
+│   ├── src/index.js        # Cloudflare Worker proxying to KnowledgeContainer
+│   ├── package.json        # wrangler deploy script
+│   └── knowledge_agent/
+│       ├── llm.py                      # make_llm() + ainvoke_json() shared helpers
+│       ├── state.py                    # TypedDict schemas (ChatState, AppPrepState, MemorizeGenerateState)
+│       ├── chat_graph.py               # RAG chat — retrieval stays in Next.js, graph runs LLM
+│       ├── app_prep_graph.py           # Derive tech_stack + interview_questions from jobDescription
+│       └── memorize_generate_graph.py  # Per-tech fan-out flashcards (8 primary, 4 secondary)
 ├── lib/
 │   ├── articles.ts         # Lesson data layer — Lesson interface includes url field;
 │   │                       # exports AWS_DEEP_DIVE_SLUGS and getUrlPath()
@@ -361,12 +377,37 @@ pnpm review:courses --provider="DeepLearning.AI"
 pnpm review:courses:dry                         # preview without calling the pipeline
 ```
 
+### LangGraph backend (`backend/`)
+
+```bash
+# Local dev (run against local Python)
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app:app --host 0.0.0.0 --port 7860 --reload
+
+# Local dev via Docker
+docker build -t knowledge-langgraph .
+docker run --env-file .env -p 7860:7860 knowledge-langgraph
+
+# Deploy to Cloudflare Containers
+wrangler deploy              # or: pnpm deploy (from backend/)
+wrangler secret put DATABASE_URL
+wrangler secret put DEEPSEEK_API_KEY
+wrangler secret put LANGGRAPH_AUTH_TOKEN
+wrangler tail                # live logs
+```
+
+Once deployed, set `LANGGRAPH_URL` + `LANGGRAPH_AUTH_TOKEN` in the Next.js Vercel environment so `/api/chat`, `/api/applications/[id]/prep`, and `/api/applications/[id]/memorize/generate` route to the container.
+
 ### Environment
 
 ```env
-DATABASE_URL=           # Neon connection string
+DATABASE_URL=           # Neon connection string (also used by backend container)
 OPENAI_API_KEY=
 DEEPSEEK_API_KEY=
+LANGGRAPH_URL=          # http://127.0.0.1:7860 locally; workers.dev URL in prod
+LANGGRAPH_AUTH_TOKEN=   # bearer token shared between Next.js and backend
 NEXT_PUBLIC_R2_DOMAIN=  # audio CDN domain
 WORKER_URL=             # Cloudflare Worker endpoint
 NEXT_PUBLIC_DATA_SOURCE= # "db" | "fs"

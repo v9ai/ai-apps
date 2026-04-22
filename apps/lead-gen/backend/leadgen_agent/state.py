@@ -134,6 +134,7 @@ class CompetitorsTeamState(TypedDict, total=False):
     # internal
     product: dict[str, Any]
     candidates: list[dict[str, Any]]
+    competitor_pages: dict[str, dict[str, Any]]  # keyed by candidate url: {markdown, pages, loader, error?}
     differentiation: dict[str, dict[str, Any]]   # keyed by candidate url
     threat_levels: dict[str, dict[str, Any]]     # keyed by candidate url
     agent_timings: dict[str, float]
