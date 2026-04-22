@@ -666,8 +666,7 @@ export type FamilyMemberShare = {
 };
 
 export enum FamilyMemberShareRole {
-  Editor = 'EDITOR',
-  Viewer = 'VIEWER'
+  Editor = 'EDITOR'
 }
 
 export type FamilySystemInsight = {

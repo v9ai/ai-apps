@@ -662,8 +662,7 @@ export type FamilyMemberShare = {
 };
 
 export type FamilyMemberShareRole =
-  | 'EDITOR'
-  | 'VIEWER';
+  | 'EDITOR';
 
 export type FamilySystemInsight = {
   __typename?: 'FamilySystemInsight';
@@ -2486,7 +2485,7 @@ export type ResolversTypes = {
   ExtractedIssue: ResolverTypeWrapper<ExtractedIssue>;
   FamilyMember: ResolverTypeWrapper<Omit<FamilyMember, 'affirmations' | 'behaviorObservations' | 'goals' | 'issues' | 'relationships' | 'shares' | 'teacherFeedbacks'> & { affirmations: Array<ResolversTypes['Affirmation']>, behaviorObservations: Array<ResolversTypes['BehaviorObservation']>, goals: Array<ResolversTypes['Goal']>, issues: Array<ResolversTypes['Issue']>, relationships: Array<ResolversTypes['Relationship']>, shares: Array<ResolversTypes['FamilyMemberShare']>, teacherFeedbacks: Array<ResolversTypes['TeacherFeedback']> }>;
   FamilyMemberShare: ResolverTypeWrapper<Omit<FamilyMemberShare, 'role'> & { role: ResolversTypes['FamilyMemberShareRole'] }>;
-  FamilyMemberShareRole: ResolverTypeWrapper<'VIEWER' | 'EDITOR'>;
+  FamilyMemberShareRole: ResolverTypeWrapper<'EDITOR'>;
   FamilySystemInsight: ResolverTypeWrapper<FamilySystemInsight>;
   FeedbackSource: ResolverTypeWrapper<'EMAIL' | 'MEETING' | 'REPORT' | 'PHONE' | 'NOTE' | 'OTHER'>;
   FollowUpStep: ResolverTypeWrapper<FollowUpStep>;
@@ -3132,7 +3131,7 @@ export type FamilyMemberShareResolvers<ContextType = GraphQLContext, ParentType 
   role?: Resolver<ResolversTypes['FamilyMemberShareRole'], ParentType, ContextType>;
 };
 
-export type FamilyMemberShareRoleResolvers = EnumResolverSignature<{ EDITOR?: any, VIEWER?: any }, ResolversTypes['FamilyMemberShareRole']>;
+export type FamilyMemberShareRoleResolvers = EnumResolverSignature<{ EDITOR?: any }, ResolversTypes['FamilyMemberShareRole']>;
 
 export type FamilySystemInsightResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FamilySystemInsight'] = ResolversParentTypes['FamilySystemInsight']> = {
   actionable?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;

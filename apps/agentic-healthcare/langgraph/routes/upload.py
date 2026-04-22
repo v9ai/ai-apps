@@ -23,7 +23,6 @@ graph and operates directly on `db.delete_blood_test` + `storage.delete_file`.
 from __future__ import annotations
 
 import logging
-import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Form, Header, HTTPException, UploadFile

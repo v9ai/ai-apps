@@ -593,7 +593,6 @@ type FamilyMemberShare {
 
 enum FamilyMemberShareRole {
   EDITOR
-  VIEWER
 }
 
 type FamilySystemInsight {
