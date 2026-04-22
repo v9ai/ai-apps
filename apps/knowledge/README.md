@@ -9,11 +9,9 @@ AI engineering educational platform — 88 lessons across 14 categories with sea
 - **ORM**: Drizzle ORM
 - **UI**: Radix UI Themes
 - **AI**: OpenAI, DeepSeek
-- **LangGraph backend**: Python FastAPI + LangGraph on Cloudflare Containers (`backend/`) — hosts the `chat`, `app_prep`, and `memorize_generate` graphs; `AsyncPostgresSaver` checkpointing on Neon
-- **Content Generation**: Mastra workflow (TypeScript) under `src/mastra/workflows/` — article + course review, being migrated to LangGraph in phase 2
-- **Agent runtime**: Mastra on Cloudflare Workers (`src/mastra/index.ts`) — workflow state persisted to Neon `mastra` schema
+- **LangGraph backend**: Python FastAPI + LangGraph on Cloudflare Containers (`backend/`) — hosts all 5 graphs (`chat`, `app_prep`, `memorize_generate`, `article_generate`, `course_review`); `AsyncPostgresSaver` checkpointing on Neon
 - **File Storage**: Cloudflare R2
-- **Deployment**: Vercel (Next.js frontend) + Cloudflare Containers (LangGraph backend) + Cloudflare Workers (Mastra)
+- **Deployment**: Vercel (Next.js frontend) + Cloudflare Containers (LangGraph backend)
 
 ## Architecture
 
@@ -33,7 +31,7 @@ graph TD
 
     subgraph LangGraph["LangGraph Backend (Cloudflare Containers)"]
         Worker["Worker proxy\nknowledge-langgraph.workers.dev"]
-        Container["FastAPI container :7860\nchat · app_prep · memorize_generate"]
+        Container["FastAPI container :7860\nchat · app_prep · memorize_generate\narticle_generate · course_review"]
     end
 
     subgraph Data["Data Layer"]
@@ -233,11 +231,11 @@ graph LR
     A5 -->|related| A7
 ```
 
-## Mastra Pipelines
+## LangGraph Pipelines
 
 ### Content Generation Pipeline
 
-Mastra workflow (`src/mastra/workflows/generate-article.ts`) generating knowledge base articles from a topic slug. Uses DeepSeek through five LLM passes, with a `.dowhile()` revision loop (max 2) gated by quality checks (word count, code blocks, cross-refs).
+LangGraph graph (`backend/knowledge_agent/article_generate_graph.py`, `assistant_id: article_generate`) generates knowledge base articles from a topic slug. Uses DeepSeek through five LLM passes, with a conditional revision loop (max 2) gated by quality checks (word count, code blocks, cross-refs). Catalog context (related topics, existing articles, style sample) is resolved by the Next.js caller via `lib/article-catalog.ts` and passed as input — the container has no filesystem access to the repo.
 
 ```mermaid
 graph TD
@@ -246,10 +244,10 @@ graph TD
     outline --> draft
     draft --> review
     review --> revise_loop{quality OK?}
-    revise_loop -->|"yes"| save
+    revise_loop -->|"yes"| finalize
     revise_loop -->|"no, <2 revs"| revise
     revise --> revise_loop
-    save --> END((End))
+    finalize --> END((End))
 
     style research fill:#9cf,stroke:#333
     style outline fill:#ff9,stroke:#333
@@ -257,7 +255,7 @@ graph TD
     style review fill:#fbb,stroke:#333
     style revise_loop fill:#f9f,stroke:#333
     style revise fill:#fcb,stroke:#333
-    style save fill:#bfb,stroke:#333
+    style finalize fill:#bfb,stroke:#333
 ```
 
 ### RAG Pipeline
@@ -279,7 +277,7 @@ graph TD
 
 ### Course Review Pipeline
 
-Mastra workflow (`src/mastra/workflows/review-course.ts`) running ten expert evaluators concurrently via `Promise.all` (pedagogy, technical accuracy, content depth, practical application, instructor clarity, curriculum fit, prerequisites, AI domain relevance, community health, value proposition), then an aggregator step computes a weighted score and verdict.
+LangGraph graph (`backend/knowledge_agent/course_review_graph.py`, `assistant_id: course_review`) running ten expert evaluators concurrently via `asyncio.gather` (pedagogy, technical accuracy, content depth, practical application, instructor clarity, curriculum fit, prerequisites, AI domain relevance, community health, value proposition — at `REASONER_TEMP=0` or `FAST_TEMP=0.3` each), then an aggregator step computes a weighted score and verdict. Prompts ported verbatim from the prior Mastra workflow so output shape is unchanged.
 
 ```mermaid
 graph TD
@@ -319,12 +317,8 @@ apps/knowledge/
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (22 tables, incl. learners, coursework, external_courses[+topic_group], lesson_courses, course_reviews)
-├── src/mastra/             # Mastra runtime (Cloudflare Workers deploy, phase-2 migration target)
-│   ├── index.ts            # Mastra instance (PostgresStore + CloudflareDeployer)
-│   ├── workflows/generate-article.ts  # Article generation pipeline
-│   ├── workflows/review-course.ts     # 10-expert course review pipeline
-│   └── lib/                # catalog, prompts, deepseek, quality
-├── src/lib/langgraph-client.ts       # Typed POST /runs/wait client (chat, runAppPrep, runMemorizeGenerate)
+├── src/lib/langgraph-client.ts       # Typed POST /runs/wait client (chat, runAppPrep, runMemorizeGenerate, runArticleGenerate, runCourseReview)
+├── lib/article-catalog.ts            # Catalog helpers used by generate-article CLI (slugs, categories, related topics, style sample)
 ├── backend/                # Python FastAPI + LangGraph on Cloudflare Containers
 │   ├── wrangler.jsonc      # Worker + KnowledgeContainer (standard-1 on :7860)
 │   ├── Dockerfile          # python:3.12-slim, uvicorn --workers 1
@@ -333,11 +327,14 @@ apps/knowledge/
 │   ├── src/index.js        # Cloudflare Worker proxying to KnowledgeContainer
 │   ├── package.json        # wrangler deploy script
 │   └── knowledge_agent/
-│       ├── llm.py                      # make_llm() + ainvoke_json() shared helpers
-│       ├── state.py                    # TypedDict schemas (ChatState, AppPrepState, MemorizeGenerateState)
-│       ├── chat_graph.py               # RAG chat — retrieval stays in Next.js, graph runs LLM
-│       ├── app_prep_graph.py           # Derive tech_stack + interview_questions from jobDescription
-│       └── memorize_generate_graph.py  # Per-tech fan-out flashcards (8 primary, 4 secondary)
+│       ├── llm.py                       # make_llm() + ainvoke_json() shared helpers
+│       ├── state.py                     # TypedDict schemas for all 5 graph states
+│       ├── chat_graph.py                # RAG chat — retrieval stays in Next.js, graph runs LLM
+│       ├── app_prep_graph.py            # Derive tech_stack + interview_questions from jobDescription
+│       ├── memorize_generate_graph.py   # Per-tech fan-out flashcards (8 primary, 4 secondary)
+│       ├── article_generate_graph.py    # Knowledge-base article writer (research → outline → draft → review → revise)
+│       ├── course_review_graph.py       # 10 parallel experts + weighted aggregator
+│       └── course_review_prompts.py     # 10 expert system prompts + aggregator prompt
 ├── lib/
 │   ├── articles.ts         # Lesson data layer — Lesson interface includes url field;
 │   │                       # exports AWS_DEEP_DIVE_SLUGS and getUrlPath()
