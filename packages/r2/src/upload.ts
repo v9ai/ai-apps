@@ -3,9 +3,10 @@ import { getR2Client } from "./client";
 
 export interface UploadOptions {
   key: string;
-  body: Buffer;
+  body: Buffer | Uint8Array;
   contentType?: string;
   metadata?: Record<string, string>;
+  bucket?: string;
 }
 
 export interface UploadResult {
@@ -18,8 +19,14 @@ export interface UploadResult {
 export async function uploadToR2(
   options: UploadOptions,
 ): Promise<UploadResult> {
-  const { client, bucket, publicDomain } = getR2Client();
-  const { key, body, contentType = "audio/mpeg", metadata = {} } = options;
+  const ctx = getR2Client();
+  const {
+    key,
+    body,
+    contentType = "application/octet-stream",
+    metadata = {},
+    bucket = ctx.bucket,
+  } = options;
 
   const uploadParams: PutObjectCommandInput = {
     Bucket: bucket,
@@ -29,11 +36,11 @@ export async function uploadToR2(
     Metadata: metadata,
   };
 
-  await client.send(new PutObjectCommand(uploadParams));
+  await ctx.client.send(new PutObjectCommand(uploadParams));
 
   return {
     key,
-    publicUrl: publicDomain ? `${publicDomain}/${key}` : null,
+    publicUrl: ctx.publicDomain ? `${ctx.publicDomain}/${key}` : null,
     bucket,
     sizeBytes: body.length,
   };

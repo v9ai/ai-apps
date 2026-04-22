@@ -1742,7 +1742,7 @@ export type PublicDiscussionGuideResult = {
   __typename?: 'PublicDiscussionGuideResult';
   entryTitle?: Maybe<Scalars['String']['output']>;
   familyMemberName?: Maybe<Scalars['String']['output']>;
-  guide: DiscussionGuide;
+  guide?: Maybe<DiscussionGuide>;
 };
 
 export type Query = {
@@ -3015,7 +3015,7 @@ export type GetPublicDiscussionGuideQueryVariables = Exact<{
 }>;
 
 
-export type GetPublicDiscussionGuideQuery = { __typename?: 'Query', publicDiscussionGuide?: { __typename?: 'PublicDiscussionGuideResult', entryTitle?: string | null, familyMemberName?: string | null, guide: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } } | null };
+export type GetPublicDiscussionGuideQuery = { __typename?: 'Query', publicDiscussionGuide?: { __typename?: 'PublicDiscussionGuideResult', entryTitle?: string | null, familyMemberName?: string | null, guide?: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } | null } | null };
 
 export type GetRecommendedBooksQueryVariables = Exact<{
   goalId: Scalars['Int']['input'];

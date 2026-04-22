@@ -1,7 +1,6 @@
-# Exclude all apps except agentic-healthcare, lead-gen, todo, knowledge, and bricks
+# Exclude all apps except agentic-healthcare, lead-gen, todo, knowledge, bricks, and research-thera
 apps/podcasts
 apps/real-estate
-apps/research-thera
 apps/vadim.blog
 
 # Exclude packages not needed

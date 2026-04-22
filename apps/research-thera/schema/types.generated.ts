@@ -1726,7 +1726,7 @@ export type PublicDiscussionGuideResult = {
   __typename?: 'PublicDiscussionGuideResult';
   entryTitle?: Maybe<Scalars['String']['output']>;
   familyMemberName?: Maybe<Scalars['String']['output']>;
-  guide: DiscussionGuide;
+  guide?: Maybe<DiscussionGuide>;
 };
 
 export type Query = {
@@ -3620,7 +3620,7 @@ export type PriorityRecommendationResolvers<ContextType = GraphQLContext, Parent
 export type PublicDiscussionGuideResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PublicDiscussionGuideResult'] = ResolversParentTypes['PublicDiscussionGuideResult']> = {
   entryTitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   familyMemberName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  guide?: Resolver<ResolversTypes['DiscussionGuide'], ParentType, ContextType>;
+  guide?: Resolver<Maybe<ResolversTypes['DiscussionGuide']>, ParentType, ContextType>;
 };
 
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {

@@ -7,7 +7,7 @@
  * JS dependency. This file is the sole TS keep-alive — a thin fetch wrapper.
  */
 
-const LANGGRAPH_URL = process.env.LANGGRAPH_URL || "http://localhost:2024";
+const LANGGRAPH_URL = (process.env.LANGGRAPH_URL || "http://localhost:2024").trim();
 
 export interface LangGraphRunOptions {
   input: Record<string, unknown>;
@@ -24,7 +24,7 @@ export async function runGraphAndWait(
   options: LangGraphRunOptions,
   baseUrl: string = LANGGRAPH_URL,
 ): Promise<Record<string, unknown>> {
-  const response = await fetch(`${baseUrl}/runs/wait`, {
+  const response = await fetch(`${baseUrl.trim().replace(/\/+$/, "")}/runs/wait`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

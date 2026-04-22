@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { familyDocuments, familyMembers } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { uploadFile, deleteFile } from "@/lib/storage";
+import { uploadToR2, deleteFromR2 } from "@ai-apps/r2";
+import { R2_BUCKET } from "@/lib/r2-bucket";
 
 export async function addFamilyDocument(familyMemberId: string, formData: FormData) {
   const { userId } = await withAuth();
@@ -34,7 +35,12 @@ export async function addFamilyDocument(familyMemberId: string, formData: FormDa
     const buffer = Buffer.from(await file.arrayBuffer());
     fileName = file.name;
     filePath = `family-documents/${userId}/${familyMemberId}/${Date.now()}-${file.name}`;
-    await uploadFile(filePath, buffer, file.type);
+    await uploadToR2({
+      key: filePath,
+      body: buffer,
+      contentType: file.type,
+      bucket: R2_BUCKET,
+    });
   }
 
   await db.insert(familyDocuments).values({
@@ -64,7 +70,7 @@ export async function deleteFamilyDocument(documentId: string, familyMemberSlug:
   if (!doc) return;
 
   if (doc.filePath) {
-    await deleteFile(doc.filePath);
+    await deleteFromR2(doc.filePath, { bucket: R2_BUCKET });
   }
 
   await db

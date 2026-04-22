@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { doctors, medicalLetters } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { uploadFile, deleteFile } from "@/lib/storage";
+import { uploadToR2, deleteFromR2 } from "@ai-apps/r2";
+import { R2_BUCKET } from "@/lib/r2-bucket";
 
 export async function addDoctor(formData: FormData) {
   const { userId } = await withAuth();
@@ -43,7 +44,12 @@ export async function uploadMedicalLetter(doctorId: string, formData: FormData) 
   const buffer = Buffer.from(bytes);
   const key = `medical-letters/${userId}/${doctorId}/${Date.now()}-${file.name}`;
 
-  await uploadFile(key, buffer, file.type || "application/octet-stream");
+  await uploadToR2({
+    key,
+    body: buffer,
+    contentType: file.type || "application/octet-stream",
+    bucket: R2_BUCKET,
+  });
 
   await db.insert(medicalLetters).values({
     userId,

@@ -7,10 +7,13 @@ export interface HeadResult {
   raw: HeadObjectCommandOutput;
 }
 
-export async function headR2Object(key: string): Promise<HeadResult> {
+export async function headR2Object(
+  key: string,
+  opts: { bucket?: string } = {},
+): Promise<HeadResult> {
   const { client, bucket, publicDomain } = getR2Client();
   const response = await client.send(
-    new HeadObjectCommand({ Bucket: bucket, Key: key }),
+    new HeadObjectCommand({ Bucket: opts.bucket ?? bucket, Key: key }),
   );
   return {
     audioUrl: publicDomain ? `${publicDomain}/${key}` : null,

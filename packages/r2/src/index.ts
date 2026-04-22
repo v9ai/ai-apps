@@ -10,6 +10,7 @@ export { downloadFromR2 } from "./download";
 export { deleteFromR2 } from "./delete";
 export { getPresignedUrl } from "./presign";
 export { headR2Object, type HeadResult } from "./head";
+export { getR2FileStream, type FileStreamResult } from "./stream";
 export { generateAudioKey, generateScreenshotKey } from "./keys";
 export {
   S3Client,
