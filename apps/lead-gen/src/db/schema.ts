@@ -298,6 +298,10 @@ export const contacts = pgTable(
     // Paper + tag enrichment (populated by enrichContactPapersAndTags mutation → contact_enrich graph)
     papers: jsonb("papers"), // Paper[] — {title, authors, year, venue, doi, url, citation_count, source}
     papers_enriched_at: text("papers_enriched_at"),
+    // Per-paper sales/lead-gen relevance verdict (populated by scripts/classify-paper-contacts.ts → classify_paper graph)
+    // PaperClassification[] — {paper_id, title, is_sales_leadgen, confidence, reasons[]}
+    paper_classifications: jsonb("paper_classifications"),
+    paper_classifications_at: text("paper_classifications_at"),
     // Sales enrichment (populated by contact_enrich_sales graph: LinkedIn OG scrape)
     linkedin_profile: jsonb("linkedin_profile"), // {headline, bio, scraped_at}
     // Conversation lifecycle state (updated by webhook handler on reply classification)
