@@ -955,6 +955,7 @@ export type JobResult = {
   count?: Maybe<Scalars['Int']['output']>;
   diagnostics?: Maybe<PipelineDiagnostics>;
   manifestUrl?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
   progress?: Maybe<Scalars['Int']['output']>;
   questions?: Maybe<Array<TherapeuticQuestion>>;
   segmentUrls?: Maybe<Array<Scalars['String']['output']>>;
@@ -2959,7 +2960,7 @@ export type GetGenerationJobQueryVariables = Exact<{
 }>;
 
 
-export type GetGenerationJobQuery = { __typename?: 'Query', generationJob?: { __typename?: 'GenerationJob', id: string, type: JobType, goalId?: number | null, storyId?: number | null, status: JobStatus, progress: number, createdAt: string, updatedAt: string, result?: { __typename?: 'JobResult', audioUrl?: string | null, progress?: number | null, stage?: string | null, count?: number | null, diagnostics?: { __typename?: 'PipelineDiagnostics', searchCount?: number | null, enrichedCount?: number | null, extractedCount?: number | null, qualifiedCount?: number | null, persistedCount?: number | null, searchUsedFallback?: boolean | null, enrichedDropped?: number | null } | null } | null, error?: { __typename?: 'JobError', message: string } | null } | null };
+export type GetGenerationJobQuery = { __typename?: 'Query', generationJob?: { __typename?: 'GenerationJob', id: string, type: JobType, goalId?: number | null, storyId?: number | null, status: JobStatus, progress: number, createdAt: string, updatedAt: string, result?: { __typename?: 'JobResult', audioUrl?: string | null, progress?: number | null, stage?: string | null, count?: number | null, message?: string | null, diagnostics?: { __typename?: 'PipelineDiagnostics', searchCount?: number | null, enrichedCount?: number | null, extractedCount?: number | null, qualifiedCount?: number | null, persistedCount?: number | null, searchUsedFallback?: boolean | null, enrichedDropped?: number | null } | null } | null, error?: { __typename?: 'JobError', message: string } | null } | null };
 
 export type GetGenerationJobsQueryVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -7188,6 +7189,7 @@ export const GetGenerationJobDocument = gql`
       progress
       stage
       count
+      message
       diagnostics {
         searchCount
         enrichedCount

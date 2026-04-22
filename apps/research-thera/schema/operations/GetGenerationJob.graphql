@@ -12,6 +12,7 @@ query GetGenerationJob($id: String!) {
       progress
       stage
       count
+      message
       diagnostics {
         searchCount
         enrichedCount

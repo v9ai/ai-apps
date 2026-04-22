@@ -858,6 +858,7 @@ type JobResult {
   count: Int
   diagnostics: PipelineDiagnostics
   manifestUrl: String
+  message: String
   progress: Int
   questions: [TherapeuticQuestion!]
   segmentUrls: [String!]

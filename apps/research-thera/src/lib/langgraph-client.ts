@@ -13,6 +13,13 @@ function normalizeBase(baseUrl: string): string {
   return baseUrl.trim().replace(/\/+$/, "");
 }
 
+export class LangGraphHttpError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+    this.name = "LangGraphHttpError";
+  }
+}
+
 export interface LangGraphRunOptions {
   input: Record<string, unknown>;
   config?: Record<string, unknown>;
@@ -116,7 +123,10 @@ export async function getGraphRunStatus(
   const res = await fetch(`${normalizeBase(baseUrl)}/threads/${threadId}/runs/${runId}`);
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`LangGraph GET run status failed (${res.status}): ${text}`);
+    throw new LangGraphHttpError(
+      res.status,
+      `LangGraph GET run status failed (${res.status}): ${text}`,
+    );
   }
   const raw = (await res.json()) as Record<string, unknown>;
   const rawStatus = typeof raw.status === "string" ? (raw.status as string).toLowerCase() : "unknown";
@@ -141,7 +151,10 @@ export async function getGraphState(
   const res = await fetch(`${normalizeBase(baseUrl)}/threads/${threadId}/state`);
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`LangGraph GET thread state failed (${res.status}): ${text}`);
+    throw new LangGraphHttpError(
+      res.status,
+      `LangGraph GET thread state failed (${res.status}): ${text}`,
+    );
   }
   const raw = (await res.json()) as { values?: Record<string, unknown> };
   return raw.values ?? {};

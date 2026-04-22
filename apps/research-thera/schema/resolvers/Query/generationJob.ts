@@ -1,7 +1,7 @@
 import type { QueryResolvers } from "./../../types.generated";
 import { GraphQLError } from "graphql";
 import { db } from "@/src/db";
-import { getGraphRunStatus, getGraphState } from "@/src/lib/langgraph-client";
+import { getGraphRunStatus, getGraphState, LangGraphHttpError } from "@/src/lib/langgraph-client";
 
 export const generationJob: NonNullable<QueryResolvers['generationJob']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -81,8 +81,23 @@ export const generationJob: NonNullable<QueryResolvers['generationJob']> = async
       }
       // else: still pending/running — return current row.
     } catch (err) {
-      // Network hiccup to LangGraph — don't flip the job; just return the current row.
-      console.warn("[generationJob] LangGraph sync skipped:", err);
+      if (err instanceof LangGraphHttpError && err.status === 404) {
+        // The backend container restarted and forgot this run. Without this
+        // branch the job would sit in RUNNING until cleanupStaleJobs fires
+        // on the next generation-job creation (could be hours).
+        console.warn("[generationJob] LangGraph run lost (404) — marking FAILED:", args.id);
+        await db.updateGenerationJob(args.id, {
+          status: "FAILED",
+          error: JSON.stringify({
+            message: "LangGraph run state was lost (backend restarted)",
+            code: "RUN_LOST",
+          }),
+        });
+        job = await db.getGenerationJob(args.id);
+      } else {
+        // Network hiccup / 5xx — don't flip the job; just return the current row.
+        console.warn("[generationJob] LangGraph sync skipped:", err);
+      }
     }
   }
 
