@@ -5,7 +5,10 @@ import { useLang } from "@/components/LanguageSwitcher";
 import { getHotelById, hotels2026 } from "@/lib/data";
 import { NEW_HOTEL_MIN_YEAR } from "@/lib/constants";
 import Link from "next/link";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+
+// 50px horizontal swipe threshold; below this, treat as tap (backdrop closes).
+const SWIPE_THRESHOLD_PX = 50;
 
 const T = {
   ro: {
@@ -298,6 +301,36 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
     return () => window.removeEventListener("keydown", handler);
   }, [lightboxIdx, closeLightbox, prevImage, nextImage]);
 
+  const touchStartX = useRef<number | null>(null);
+  const touchMoved = useRef<boolean>(false);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchMoved.current = false;
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    if (Math.abs(e.touches[0].clientX - touchStartX.current) > 10) {
+      touchMoved.current = true;
+    }
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
+    if (dx > 0) prevImage();
+    else nextImage();
+  };
+  // On mobile, a tap fires `click` on the backdrop -> closeLightbox.
+  // But a swipe also ends in a click; guard against that.
+  const onBackdropClick = () => {
+    if (touchMoved.current) {
+      touchMoved.current = false;
+      return;
+    }
+    closeLightbox();
+  };
+
   return (
     <div
       className={css({
@@ -317,8 +350,12 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            touchAction: "pan-y",
           })}
-          onClick={closeLightbox}
+          onClick={onBackdropClick}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
           <button
             onClick={(e) => { e.stopPropagation(); closeLightbox(); }}

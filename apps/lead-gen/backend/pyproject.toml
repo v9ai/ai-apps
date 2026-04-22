@@ -20,6 +20,7 @@ dependencies = [
     "lxml>=5.3",
     "playwright>=1.48",
     "unstructured[html]>=0.16",
+    "json-repair>=0.59.4",
 ]
 
 [project.optional-dependencies]

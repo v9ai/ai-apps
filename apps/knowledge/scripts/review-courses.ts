@@ -1,5 +1,6 @@
 import { parseArgs } from "node:util";
 import { neon } from "@neondatabase/serverless";
+import { runCourseReview, type CourseReviewResult } from "../src/lib/langgraph-client";
 
 interface Args {
   limit: number;
@@ -89,22 +90,7 @@ async function fetchUnreviewed(
 
 async function upsertReview(
   row: CourseRow,
-  result: {
-    pedagogy_score: { score: number };
-    technical_accuracy_score: { score: number };
-    content_depth_score: { score: number };
-    practical_application_score: { score: number };
-    instructor_clarity_score: { score: number };
-    curriculum_fit_score: { score: number };
-    prerequisites_score: { score: number };
-    ai_domain_relevance_score: { score: number };
-    community_health_score: { score: number };
-    value_proposition_score: { score: number };
-    aggregate_score: number;
-    verdict: string;
-    summary: string;
-    [k: string]: unknown;
-  },
+  result: CourseReviewResult,
 ): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL!;
   const sql = neon(databaseUrl);
@@ -157,7 +143,7 @@ async function upsertReview(
       ${result.verdict},
       ${result.summary},
       ${JSON.stringify(expertDetails)}::jsonb,
-      ${"deepseek-chat"},
+      ${process.env.LLM_MODEL ?? "deepseek-chat"},
       NOW()
     )
     ON CONFLICT (course_id) DO UPDATE SET
@@ -210,39 +196,28 @@ async function main() {
     return;
   }
 
-  const { mastra } = await import("../src/mastra");
-  const workflow = mastra.getWorkflow("reviewCourse");
-
   for (let i = 0; i < courses.length; i++) {
     const row = courses[i];
     console.log(
       `\n[${i + 1}/${courses.length}] Reviewing: ${row.title} (${row.provider}) …`,
     );
     try {
-      const run = await workflow.createRun();
-      const result = await run.start({
-        inputData: {
-          courseId: row.id,
-          title: row.title,
-          url: row.url,
-          provider: row.provider,
-          description: row.description,
-          level: row.level,
-          rating: Number(row.rating),
-          reviewCount: Number(row.review_count),
-          durationHours: Number(row.duration_hours),
-          isFree: Boolean(row.is_free),
-        },
+      const result = await runCourseReview({
+        courseId: row.id,
+        title: row.title,
+        url: row.url,
+        provider: row.provider,
+        description: row.description,
+        level: row.level,
+        rating: Number(row.rating),
+        reviewCount: Number(row.review_count),
+        durationHours: Number(row.duration_hours),
+        isFree: Boolean(row.is_free),
       });
-      if (result.status !== "success") {
-        throw new Error(
-          `Workflow ${result.status}: ${JSON.stringify((result as { error?: unknown }).error ?? result)}`,
-        );
-      }
-      await upsertReview(row, result.result);
+      await upsertReview(row, result);
       console.log(
-        `  verdict=${result.result.verdict}  ` +
-          `score=${result.result.aggregate_score.toFixed(2)}  ` +
+        `  verdict=${result.verdict}  ` +
+          `score=${result.aggregate_score.toFixed(2)}  ` +
           `saved to course_reviews.`,
       );
     } catch (err) {

@@ -1,7 +1,15 @@
 import { parseArgs } from "node:util";
 import path from "node:path";
 import fs from "node:fs";
-import { CONTENT_DIR, getMissingSlugs } from "../src/mastra/lib/catalog";
+import {
+  CONTENT_DIR,
+  getCategory,
+  getExistingArticles,
+  getMissingSlugs,
+  getRelatedTopics,
+  getStyleSample,
+} from "../lib/article-catalog";
+import { runArticleGenerate } from "../src/lib/langgraph-client";
 
 interface Args {
   slug?: string;
@@ -44,23 +52,20 @@ async function runSingle(
   slug: string,
   topic: string,
   dryRun: boolean,
-): Promise<{ wordCount: number; revisions: number; totalTokens: number }> {
-  const { mastra } = await import("../src/mastra");
-  const workflow = mastra.getWorkflow("generateArticle");
-  const run = await workflow.createRun();
-  const result = await run.start({
-    inputData: { slug, topic, dryRun },
+): Promise<{ wordCount: number; revisions: number }> {
+  const result = await runArticleGenerate({
+    slug,
+    topic,
+    category: getCategory(slug),
+    relatedTopics: getRelatedTopics(slug),
+    existingArticles: getExistingArticles(),
+    styleSample: getStyleSample(),
   });
-  if (result.status !== "success") {
-    throw new Error(
-      `Workflow ${result.status}: ${JSON.stringify((result as { error?: unknown }).error ?? result)}`,
-    );
+  if (!dryRun) {
+    const outPath = path.join(CONTENT_DIR, `${slug}.md`);
+    fs.writeFileSync(outPath, result.final);
   }
-  return {
-    wordCount: result.result.wordCount,
-    revisions: result.result.revisions,
-    totalTokens: result.result.totalTokens,
-  };
+  return { wordCount: result.word_count, revisions: result.revisions };
 }
 
 async function runBatch(dryRun: boolean): Promise<void> {
@@ -96,10 +101,10 @@ function printGraph() {
   console.log("    outline --> draft");
   console.log("    draft --> review");
   console.log("    review --> revise_loop{quality OK?}");
-  console.log('    revise_loop -->|"yes"| save');
+  console.log('    revise_loop -->|"yes"| finalize');
   console.log('    revise_loop -->|"no, <2 revs"| revise');
   console.log("    revise --> revise_loop");
-  console.log("    save --> END((End))");
+  console.log("    finalize --> END((End))");
   console.log("```");
 }
 
@@ -150,7 +155,7 @@ async function main() {
   console.log(`${action}: ${topic} (${slug})`);
   console.log(`Model:      ${model}`);
   console.log(
-    `Pipeline:   research -> outline -> draft -> review -> [revise loop] -> save`,
+    `Pipeline:   research -> outline -> draft -> review -> [revise loop] -> finalize`,
   );
   console.log();
 
@@ -158,7 +163,7 @@ async function main() {
   const r = await runSingle(slug, topic, args.dryRun);
   const elapsed = ((Date.now() - t0) / 1000).toFixed(0);
   console.log(
-    `\nDone! ${r.wordCount} words, ${r.revisions} revisions, ${r.totalTokens.toLocaleString()} tokens, ${elapsed}s`,
+    `\nDone! ${r.wordCount} words, ${r.revisions} revisions, ${elapsed}s`,
   );
 }
 

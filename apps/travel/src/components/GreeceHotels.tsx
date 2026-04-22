@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+
+const SWIPE_THRESHOLD_PX = 50;
 import { css } from "styled-system/css";
 import Link from "next/link";
 import type { HotelSearchResult } from "@/lib/types";
