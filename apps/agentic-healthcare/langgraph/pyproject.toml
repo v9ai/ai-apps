@@ -30,3 +30,28 @@ app = "chat_server:app"
 [build-system]
 requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = [
+    "graph",
+    "chat_server",
+    "config",
+    "db",
+    "embeddings",
+    "llm_backend",
+    "llm_settings",
+    "parsers",
+    "postprocessors",
+    "retrievers",
+    "storage",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["routes*"]
+
+[dependency-groups]
+dev = [
+    "langgraph-cli[inmem]>=0.4.14",
+]
+

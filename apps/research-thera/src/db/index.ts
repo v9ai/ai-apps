@@ -209,7 +209,7 @@ function normalizeEmail(email: string): string {
 export async function shareFamilyMember(
   familyMemberId: number,
   email: string,
-  role: "VIEWER" | "EDITOR",
+  role: "EDITOR",
   createdBy: string,
 ) {
   const normalizedEmail = normalizeEmail(email);
@@ -223,7 +223,7 @@ export async function shareFamilyMember(
   return {
     familyMemberId: row.family_member_id as number,
     email: row.email as string,
-    role: row.role as "VIEWER" | "EDITOR",
+    role: row.role as "EDITOR",
     createdAt: row.created_at as string,
     createdBy: row.created_by as string,
   };
@@ -243,7 +243,7 @@ export async function getFamilyMemberShares(familyMemberId: number) {
   return rows.map((row) => ({
     familyMemberId: row.family_member_id as number,
     email: row.email as string,
-    role: row.role as "VIEWER" | "EDITOR",
+    role: row.role as "EDITOR",
     createdAt: row.created_at as string,
     createdBy: row.created_by as string,
   }));

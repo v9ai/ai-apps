@@ -12,7 +12,7 @@ export const shareFamilyMember: NonNullable<MutationResolvers['shareFamilyMember
   const share = await _shareFamilyMember(
     args.familyMemberId,
     args.email,
-    args.role ?? "VIEWER",
+    args.role ?? "EDITOR",
     userEmail,
   );
 

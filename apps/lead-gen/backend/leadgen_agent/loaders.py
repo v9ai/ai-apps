@@ -87,10 +87,15 @@ async def _pick_strategy(
 async def _load_sitemap(url: str) -> list[Any]:
     from langchain_community.document_loaders.sitemap import SitemapLoader
 
+    # blocksize + blocknum cap the fetch inside SitemapLoader itself.
+    # Without them, large sitemaps (apollo.io: 10k+ URLs) get fully scraped
+    # at requests_per_second=2 before any post-slice runs — minutes per site.
     loader = SitemapLoader(
         web_path=urljoin(url, "/sitemap.xml"),
         filter_urls=[rf"^{urlparse(url).scheme}://(www\.)?{_same_domain(url)}"],
         requests_per_second=2,
+        blocksize=MAX_PAGES_PER_COMPETITOR,
+        blocknum=0,
     )
     loader.requests_kwargs = {"headers": {"User-Agent": USER_AGENT}, "timeout": 10}
     docs = await asyncio.to_thread(loader.load)

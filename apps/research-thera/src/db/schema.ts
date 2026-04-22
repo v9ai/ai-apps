@@ -46,7 +46,7 @@ export const familyMemberShares = pgTable("family_member_shares", {
     .notNull()
     .references(() => familyMembers.id, { onDelete: "cascade" }),
   email: text("email").notNull(), // normalized lower(trim(email))
-  role: text("role").notNull().default("VIEWER"), // VIEWER or EDITOR
+  role: text("role").notNull().default("EDITOR"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`NOW()`),

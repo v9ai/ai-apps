@@ -117,9 +117,6 @@ function FamilyMemberContent() {
 
   // Share form state
   const [shareEmail, setShareEmail] = useState("");
-  const [shareRole, setShareRole] = useState<FamilyMemberShareRole>(
-    FamilyMemberShareRole.Viewer,
-  );
   const [shareError, setShareError] = useState<string | null>(null);
 
   const [updateFamilyMember, { loading: updating }] =
@@ -136,7 +133,6 @@ function FamilyMemberContent() {
     useShareFamilyMemberMutation({
       onCompleted: () => {
         setShareEmail("");
-        setShareRole(FamilyMemberShareRole.Viewer);
         setShareError(null);
       },
       onError: (err) => setShareError(err.message),
@@ -245,7 +241,7 @@ function FamilyMemberContent() {
       variables: {
         familyMemberId: memberId,
         email: shareEmail.trim().toLowerCase(),
-        role: shareRole,
+        role: FamilyMemberShareRole.Editor,
       },
     });
   };

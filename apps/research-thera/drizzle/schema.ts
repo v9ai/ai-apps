@@ -127,7 +127,7 @@ export const familyMembers = pgTable("family_members", {
 export const familyMemberShares = pgTable("family_member_shares", {
 	familyMemberId: integer("family_member_id").notNull(),
 	email: text().notNull(),
-	role: text().default('VIEWER').notNull(),
+	role: text().default('EDITOR').notNull(),
 	createdAt: text("created_at").default(now()).notNull(),
 	createdBy: text("created_by").notNull(),
 }, (table) => [
