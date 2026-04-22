@@ -384,9 +384,11 @@ def _synthesize(
 
     Returns (answer, sources, chunks, rerank_scores).
     """
+    # ``llm`` is resolved inside ``from_defaults`` from ``Settings.llm`` —
+    # don't force-resolve it here so tests can patch ``from_defaults`` without
+    # OpenAI credentials.
     engine = ContextChatEngine.from_defaults(
         retriever=retriever,
-        llm=Settings.llm,
         node_postprocessors=postprocessors,
         system_prompt=SYNTHESIS_SYSTEM,
         context_template=CLINICAL_CONTEXT_TEMPLATE,
