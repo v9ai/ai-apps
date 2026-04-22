@@ -462,10 +462,6 @@
           "type": "string",
           "const": "Function Calling"
         },
-        "mastra": {
-          "type": "string",
-          "const": "Mastra"
-        },
         "cloudflare-workers": {
           "type": "string",
           "const": "Cloudflare Workers"

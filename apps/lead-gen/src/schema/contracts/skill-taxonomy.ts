@@ -125,7 +125,6 @@ export const SKILL_TAXONOMY: Record<string, string> = {
   "model-evaluation": "Model Evaluation",
   "structured-output": "Structured Output",
   "function-calling": "Function Calling",
-  mastra: "Mastra",
 
   // Cloudflare ecosystem
   "cloudflare-workers": "Cloudflare Workers",

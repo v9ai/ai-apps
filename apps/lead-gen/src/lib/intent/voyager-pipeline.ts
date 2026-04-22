@@ -668,7 +668,7 @@ function generateTechAdoptionSignals(
     ],
     "mlops": ["mlops", "model-evaluation", "huggingface"],
     "vector-db": ["vector-db", "pinecone", "weaviate", "chromadb"],
-    "ai-agents": ["agents", "agentic-ai", "langchain", "langgraph", "mastra"],
+    "ai-agents": ["agents", "agentic-ai", "langchain", "langgraph"],
   };
 
   const jobSkillTags = new Set(job.skills.map((s) => s.tag));

@@ -20,16 +20,29 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import re
 import time
 from typing import Any
 from urllib.parse import urljoin, urlparse
+from xml.etree import ElementTree as ET
 
 import httpx
 
 from .state import CompetitorsTeamState
 
 logger = logging.getLogger(__name__)
+
+# Silence langchain-community's WebBaseLoader "USER_AGENT env var not set"
+# warning. header_template at init covers most paths but a few code paths
+# (nested sub-sitemap fetches in SitemapLoader) still call _get_user_agent().
+os.environ.setdefault(
+    "USER_AGENT",
+    "Mozilla/5.0 (compatible; leadgen-competitor-loader/1.0; "
+    "+https://agenticleadgen.xyz)",
+)
+
+SITEMAP_NS = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
 
 MAX_PAGES_PER_COMPETITOR = 8
 MAX_MARKDOWN_CHARS = 20_000
