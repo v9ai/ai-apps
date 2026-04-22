@@ -9,7 +9,7 @@ import {
 async function assertEntityOwned(
   entityType: string,
   entityId: number,
-  userId: string,
+  userEmail: string,
 ): Promise<void> {
   const notFound = () =>
     new GraphQLError("Not found", { extensions: { code: "NOT_FOUND" } });
@@ -17,39 +17,39 @@ async function assertEntityOwned(
   switch (entityType) {
     case "Goal": {
       try {
-        await db.getGoal(entityId, userId);
+        await db.getGoal(entityId, userEmail);
       } catch {
         throw notFound();
       }
       return;
     }
     case "Issue": {
-      const issue = await db.getIssue(entityId, userId);
+      const issue = await db.getIssue(entityId, userEmail);
       if (!issue) throw notFound();
       return;
     }
     case "FamilyMember": {
       const fm = await db.getFamilyMember(entityId);
-      if (!fm || fm.userId !== userId) throw notFound();
+      if (!fm || fm.userId !== userEmail) throw notFound();
       return;
     }
     case "JournalEntry": {
-      const entry = await db.getJournalEntry(entityId, userId);
+      const entry = await db.getJournalEntry(entityId, userEmail);
       if (!entry) throw notFound();
       return;
     }
     case "Contact": {
-      const contact = await db.getContact(entityId, userId);
+      const contact = await db.getContact(entityId, userEmail);
       if (!contact) throw notFound();
       return;
     }
     case "ContactFeedback": {
-      const fb = await db.getContactFeedback(entityId, userId);
+      const fb = await db.getContactFeedback(entityId, userEmail);
       if (!fb) throw notFound();
       return;
     }
     case "TeacherFeedback": {
-      const fb = await db.getTeacherFeedback(entityId, userId);
+      const fb = await db.getTeacherFeedback(entityId, userEmail);
       if (!fb) throw notFound();
       return;
     }
@@ -64,21 +64,21 @@ export const createNote: NonNullable<MutationResolvers['createNote']> = async (
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
-  await assertEntityOwned(args.input.entityType, args.input.entityId, userId);
+  await assertEntityOwned(args.input.entityType, args.input.entityId, userEmail);
 
   const noteId = await _createNote({
     entityId: args.input.entityId,
     entityType: args.input.entityType,
-    userId,
+    userId: userEmail,
     content: args.input.content,
     slug: args.input.slug || null,
     noteType: args.input.noteType || null,
-    createdBy: userId,
+    createdBy: userEmail,
     tags: args.input.tags || [],
   });
 
@@ -86,7 +86,7 @@ export const createNote: NonNullable<MutationResolvers['createNote']> = async (
   const notes = await listNotesForEntity(
     args.input.entityId,
     args.input.entityType,
-    userId,
+    userEmail,
   );
 
   const createdNote = notes.find((note) => note.id === noteId);

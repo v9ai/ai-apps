@@ -6,12 +6,12 @@ export const userSettings: NonNullable<QueryResolvers['userSettings']> = async (
   _args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
-  const settings = await getUserSettings(userId);
+  const settings = await getUserSettings(userEmail);
 
   return {
     userId: settings.userId,

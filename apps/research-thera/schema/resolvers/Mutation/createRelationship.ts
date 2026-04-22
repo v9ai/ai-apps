@@ -5,11 +5,11 @@ import { db } from "@/src/db";
 async function assertPersonOwned(
   type: "FAMILY_MEMBER" | "CONTACT",
   id: number,
-  userId: string,
+  userEmail: string,
 ): Promise<void> {
   if (type === "FAMILY_MEMBER") {
     const fm = await db.getFamilyMember(id);
-    if (!fm || fm.userId !== userId) {
+    if (!fm || fm.userId !== userEmail) {
       throw new GraphQLError("Not found", {
         extensions: { code: "NOT_FOUND" },
       });
@@ -17,7 +17,7 @@ async function assertPersonOwned(
     return;
   }
   if (type === "CONTACT") {
-    const contact = await db.getContact(id, userId);
+    const contact = await db.getContact(id, userEmail);
     if (!contact) {
       throw new GraphQLError("Not found", {
         extensions: { code: "NOT_FOUND" },
@@ -36,16 +36,16 @@ export const createRelationship: NonNullable<MutationResolvers['createRelationsh
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
-  await assertPersonOwned(args.input.subjectType, args.input.subjectId, userId);
-  await assertPersonOwned(args.input.relatedType, args.input.relatedId, userId);
+  await assertPersonOwned(args.input.subjectType, args.input.subjectId, userEmail);
+  await assertPersonOwned(args.input.relatedType, args.input.relatedId, userEmail);
 
   const id = await db.createRelationship({
-    userId,
+    userId: userEmail,
     subjectType: args.input.subjectType,
     subjectId: args.input.subjectId,
     relatedType: args.input.relatedType,
@@ -56,7 +56,7 @@ export const createRelationship: NonNullable<MutationResolvers['createRelationsh
     status: args.input.status ?? "ACTIVE",
   });
 
-  const item = await db.getRelationship(id, userId);
+  const item = await db.getRelationship(id, userEmail);
   if (!item) {
     throw new Error("Failed to retrieve created relationship");
   }

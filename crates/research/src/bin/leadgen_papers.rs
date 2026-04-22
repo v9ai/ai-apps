@@ -65,15 +65,141 @@ const BROAD_QUERIES: &[&str] = &[
     "sales process mining workflow",
 ];
 
-// ─── Relevance + tagging ───────────────────────────────────────────────────
+// ─── Relevance filtering ───────────────────────────────────────────────────
+//
+// Hard lesson: single-word generic keywords (`lead`, `email`, `customer`,
+// `account`, `recommend`) produce massive false-positives — papers on mental
+// health, pedagogy, biology slip through on a stray mention of "email" or
+// "personalized". We now require a compound phrase that a paper not about
+// sales/lead-gen would almost never contain, with a domain-exclusion pass on
+// top for the remaining edge cases.
 
-const RELEVANCE_KEYWORDS: &[&str] = &[
-    "lead", "sales", "crm", "b2b", "prospect", "outreach", "email", "customer",
-    "marketing", "bandit", "recommend", "personaliz", "ranking", "scoring",
-    "churn", "attribution", "funnel", "pipeline", "revenue", "account",
-    "firmograph", "conversion", "icp", "cold email", "reply", "uplift",
-    "next-best-action", "abm", "cross-sell", "upsell",
+/// Strong compound phrases. Any single title-or-abstract match = keep.
+/// Must be phrases that don't appear incidentally in unrelated domains.
+const STRONG_PHRASES: &[&str] = &[
+    // Sales core
+    "lead generation", "lead scoring", "lead qualification", "lead ranking",
+    "lead prioritization", "sales lead", "b2b sales", "b2b lead",
+    "b2b marketing", "b2b buyer", "b2b customer", "b2b company",
+    "sales forecast", "sales funnel", "sales pipeline", "sales agent",
+    "sales process", "sales automation", "sales call", "sales team",
+    "sales rep", "sales performance", "sales conversion", "sales strategy",
+    "sales manager", "sales cycle",
+    "outbound sales", "inbound lead", "inbound marketing", "outbound marketing",
+    "revops", "revenue operations", "sales enablement",
+    // Outreach & email
+    "cold email", "cold outreach", "cold call", "cold calling",
+    "email marketing", "email campaign", "email outreach",
+    "email personalization", "email subject line", "email deliverability",
+    "sales email", "outbound email", "marketing email",
+    "prospect engagement", "prospect identification", "prospecting",
+    "prospect matching",
+    // Customer lifecycle
+    "customer acquisition", "customer churn", "churn prediction",
+    "churn model", "customer lifetime value", "customer retention",
+    "customer relationship management", " crm ",
+    "customer journey", "customer segmentation",
+    // Marketing analytics
+    "marketing attribution", "marketing automation", "marketing mix",
+    "marketing campaign", "marketing funnel",
+    "account-based marketing", " abm ",
+    "conversion rate optimization", "click-through rate", " ctr ",
+    "digital marketing", "direct marketing", "content marketing",
+    "performance marketing",
+    // ICP / firmographic targeting
+    "ideal customer profile", " icp ",
+    "firmographic", "firmograph",
+    "buyer intent", "intent signal", "purchase intent",
+    "lookalike model", "lookalike audience",
+    "audience targeting", "audience segmentation",
+    // Recommendation & ads (the commercial-ML setting bandits papers live in)
+    "recommender system", "recommendation system",
+    "product recommendation", "content recommendation", "news recommendation",
+    "ad ranking", "ad allocation", "ad bidding", "real-time bidding",
+    "display advertising", "online advertising", "computational advertising",
+    "click prediction",
+    // Sales-ops analytics
+    "cross-sell", "upsell", "up-sell",
+    "next-best-action", "next best action",
+    "uplift model", "uplift modeling", "uplift prediction",
+    "propensity model", "propensity scoring",
+    // Bandits explicitly (always business-setting relevant)
+    "contextual bandit", "multi-armed bandit", "multi armed bandit",
+    "neural bandit", "neuralucb", "thompson sampling",
+    // Sales-specific LLM / agent work
+    "sales assistant", "sales chatbot", "ai sales", "ai-powered sales",
+    "llm for sales", "llm-based sales", "conversational commerce",
+    "voice of the customer", "voice-of-customer",
+    "agent for sales", "email agent",
+    // CRM / entity resolution with sales context
+    "crm data", "crm system", "crm analytics",
+    "b2b entity", "account matching", "company matching",
+    "business entity resolution",
+    // Retail / e-commerce commercial analytics (adjacent but valid)
+    "e-commerce personalization", "retail personalization",
+    "purchase prediction", "transaction prediction",
 ];
+
+/// Domain-exclusion strings. If a paper hits one of these AND doesn't hit a
+/// strong phrase in its title, we reject it — guards against mental-health,
+/// clinical, education, agriculture, etc. papers with one stray sales-ish
+/// token in an abstract.
+const EXCLUDED_DOMAINS: &[&str] = &[
+    "mental health", "depression", "anxiety disorder", "psychiatric",
+    "psycholog", "clinical trial", "patient ", "clinician", "hospital",
+    "diagnosis", "diagnostic", "disease", "cancer", "tumor", "tumour",
+    "therapeutic", "pharmaceutic", "pharma ", "drug discovery",
+    "vaccine", "medical imaging", "electronic health record", "ehr ",
+    "k-12", "classroom", "pedagog", "curriculum", "learner ",
+    "student engagement", "higher education",
+    "agricultur", "crop ", "farm ", "farmer", "soil ", "irrigation",
+    "election", "voter", "democracy", "parliament",
+    "religion", "theolog", "spiritual", "worship",
+    "climate change", "greenhouse gas", "biodivers", "ecolog",
+    "earthquake", "seismic", "geolog",
+    "molecular", "genom", "protein folding", "bioinformat",
+    "autonomous driving", "autonomous vehicle", "drone ",
+    "medical robot", "surgical robot",
+    "nuclear reactor", "power grid", "smart grid",
+    "water treatment", "wastewater",
+    "traffic flow", "urban mobility",
+    "wildlife", "animal behav",
+];
+
+fn contains_any(hay: &str, needles: &[&str]) -> bool {
+    needles.iter().any(|n| hay.contains(n))
+}
+
+fn is_relevant(p: &ResearchPaper) -> bool {
+    let title = p.title.to_lowercase();
+    let abstract_text = p.abstract_text.as_deref().unwrap_or("").to_lowercase();
+    let hay = format!(" {title} {abstract_text} ");
+
+    // Must contain at least one strong phrase somewhere.
+    if !contains_any(&hay, STRONG_PHRASES) {
+        return false;
+    }
+
+    // Even if a strong phrase matched, drop papers whose title is clearly in
+    // an excluded domain (title-scoped to avoid over-filtering).
+    let title_hay = format!(" {title} ");
+    if contains_any(&title_hay, EXCLUDED_DOMAINS) {
+        return false;
+    }
+
+    // Abstract-level exclusion only fires when the strong phrase is weak and
+    // the excluded-domain signal in the abstract is strong. For simplicity:
+    // if abstract mentions ≥2 excluded-domain tokens, reject.
+    let exclusion_hits = EXCLUDED_DOMAINS
+        .iter()
+        .filter(|n| abstract_text.contains(*n))
+        .count();
+    if exclusion_hits >= 2 {
+        return false;
+    }
+
+    true
+}
 
 /// Tag map: (tag, keywords-that-imply-it). Order matters — the first tag that
 /// matches is primary; a paper can carry multiple tags.
@@ -140,15 +266,6 @@ fn norm_title(t: &str) -> String {
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
-}
-
-fn is_relevant(p: &ResearchPaper) -> bool {
-    let hay = format!(
-        "{} {}",
-        p.title.to_lowercase(),
-        p.abstract_text.as_deref().unwrap_or("").to_lowercase()
-    );
-    RELEVANCE_KEYWORDS.iter().any(|kw| hay.contains(kw))
 }
 
 fn tags_for(p: &ResearchPaper) -> Vec<&'static str> {
