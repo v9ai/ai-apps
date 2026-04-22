@@ -1,10 +1,11 @@
 import type { MutationResolvers } from "../../types.generated";
+import { GraphQLError } from "graphql";
 import { claimCardsTools } from "../../../src/tools/claim-cards.tools";
 import { sourceTools, PaperCandidate } from "../../../src/tools/sources.tools";
 import { generateObject } from "../../../src/lib/deepseek";
 import { z } from "zod";
 import { toGqlClaimCards } from "../utils/normalize-claim-card";
-import { getResearchForNote } from "../../../src/db";
+import { getResearchForNote, getNoteById } from "../../../src/db";
 import type { PaperDetails } from "../../../src/tools/sources.tools";
 
 // Suppress AI SDK warnings
@@ -112,7 +113,14 @@ Return only the claims array.`,
  * 3. Maps evidence ONLY from the linked corpus (no external searches)
  * 4. Falls back to external search if useLinkedResearch=false
  */
-export const buildClaimCards: NonNullable<MutationResolvers['buildClaimCards']> = async (_parent, { input }) => {
+export const buildClaimCards: NonNullable<MutationResolvers['buildClaimCards']> = async (_parent, { input }, ctx) => {
+  const userId = ctx.userId;
+  if (!userId) {
+    throw new GraphQLError("Authentication required", {
+      extensions: { code: "UNAUTHENTICATED" },
+    });
+  }
+
   const {
     text,
     claims,
@@ -148,6 +156,24 @@ export const buildClaimCards: NonNullable<MutationResolvers['buildClaimCards']> 
     console.warn(
       "⚠️  persist=true was requested but noteId is missing/invalid; skipping DB save",
     );
+  }
+
+  // Verify note ownership up-front whenever a noteId is used for either
+  // persisting cards or reading the note's linked research corpus. Prevents
+  // an attacker from injecting fabricated evidence into another user's note
+  // and from triggering expensive DeepSeek/search work keyed to a victim
+  // note.
+  const needsNoteCheck =
+    noteId != null &&
+    Number.isFinite(noteId) &&
+    (persist || Boolean(useLinkedResearch));
+  if (needsNoteCheck) {
+    const note = await getNoteById(noteId as number, userId);
+    if (!note) {
+      throw new GraphQLError("Not found", {
+        extensions: { code: "NOT_FOUND" },
+      });
+    }
   }
 
   // Map GraphQL enums to lowercase source names

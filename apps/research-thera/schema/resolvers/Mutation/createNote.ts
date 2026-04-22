@@ -1,24 +1,84 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { createNote as _createNote, listNotesForEntity } from "@/src/db";
+import { GraphQLError } from "graphql";
+import {
+  createNote as _createNote,
+  listNotesForEntity,
+  db,
+} from "@/src/db";
+
+async function assertEntityOwned(
+  entityType: string,
+  entityId: number,
+  userId: string,
+): Promise<void> {
+  const notFound = () =>
+    new GraphQLError("Not found", { extensions: { code: "NOT_FOUND" } });
+
+  switch (entityType) {
+    case "Goal": {
+      try {
+        await db.getGoal(entityId, userId);
+      } catch {
+        throw notFound();
+      }
+      return;
+    }
+    case "Issue": {
+      const issue = await db.getIssue(entityId, userId);
+      if (!issue) throw notFound();
+      return;
+    }
+    case "FamilyMember": {
+      const fm = await db.getFamilyMember(entityId);
+      if (!fm || fm.userId !== userId) throw notFound();
+      return;
+    }
+    case "JournalEntry": {
+      const entry = await db.getJournalEntry(entityId, userId);
+      if (!entry) throw notFound();
+      return;
+    }
+    case "Contact": {
+      const contact = await db.getContact(entityId, userId);
+      if (!contact) throw notFound();
+      return;
+    }
+    case "ContactFeedback": {
+      const fb = await db.getContactFeedback(entityId, userId);
+      if (!fb) throw notFound();
+      return;
+    }
+    case "TeacherFeedback": {
+      const fb = await db.getTeacherFeedback(entityId, userId);
+      if (!fb) throw notFound();
+      return;
+    }
+    default:
+      // Unknown entity type — refuse rather than trust caller input.
+      throw notFound();
+  }
+}
 
 export const createNote: NonNullable<MutationResolvers['createNote']> = async (
   _parent,
   args,
   ctx,
 ) => {
-  const userEmail = ctx.userEmail;
-  if (!userEmail) {
+  const userId = ctx.userId;
+  if (!userId) {
     throw new Error("Authentication required");
   }
+
+  await assertEntityOwned(args.input.entityType, args.input.entityId, userId);
 
   const noteId = await _createNote({
     entityId: args.input.entityId,
     entityType: args.input.entityType,
-    userId: userEmail,
+    userId,
     content: args.input.content,
     slug: args.input.slug || null,
     noteType: args.input.noteType || null,
-    createdBy: userEmail,
+    createdBy: userId,
     tags: args.input.tags || [],
   });
 
@@ -26,7 +86,7 @@ export const createNote: NonNullable<MutationResolvers['createNote']> = async (
   const notes = await listNotesForEntity(
     args.input.entityId,
     args.input.entityType,
-    userEmail,
+    userId,
   );
 
   const createdNote = notes.find((note) => note.id === noteId);

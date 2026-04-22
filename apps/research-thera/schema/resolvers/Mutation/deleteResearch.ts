@@ -1,10 +1,21 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { deleteTherapyResearch } from "@/src/db";
+import { GraphQLError } from "graphql";
+import { deleteTherapyResearch, getGoal } from "@/src/db";
 
 export const deleteResearch: NonNullable<MutationResolvers['deleteResearch']> = async (_parent, args, ctx) => {
-  const userEmail = ctx.userEmail;
-  if (!userEmail) {
+  const userId = ctx.userId;
+  if (!userId) {
     throw new Error("Authentication required");
+  }
+
+  // Ownership gate: deleteTherapyResearch has no user_id filter; enforce via
+  // parent goal ownership before delete.
+  try {
+    await getGoal(args.goalId, userId);
+  } catch {
+    throw new GraphQLError("Not found", {
+      extensions: { code: "NOT_FOUND" },
+    });
   }
 
   try {

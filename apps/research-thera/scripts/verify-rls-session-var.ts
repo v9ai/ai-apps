@@ -81,6 +81,25 @@ async function readCurrentUser(): Promise<string> {
   return rows[0]?.v ?? "";
 }
 
+/**
+ * Detect "role does not exist" errors from the driver. Those happen when
+ * `drizzle/0006_create_app_authenticated_role.sql` has not been applied to
+ * the target database yet. We want the verify script to keep running in that
+ * case (reporting a SKIP) instead of aborting — so the outside-scope checks
+ * still exercise the silent-fallback contract.
+ */
+function isMissingAppRole(err: unknown): boolean {
+  const msg = (err as Error | undefined)?.message ?? "";
+  return /role .*app_authenticated.* does not exist/i.test(msg);
+}
+
+function skipForMissingRole(label: string, err: unknown): void {
+  // eslint-disable-next-line no-console
+  console.warn(
+    `SKIP  ${label}\n      reason: ${(err as Error).message}\n      (role \`app_authenticated\` not provisioned on this DB — apply\n       drizzle/0006_create_app_authenticated_role.sql and re-run against\n       NEON_BRANCH_URL to exercise the full inside-scope path.)`,
+  );
+}
+
 async function main(): Promise<void> {
   if (!process.env.NEON_DATABASE_URL) {
     throw new Error(
@@ -93,15 +112,27 @@ async function main(): Promise<void> {
   const outsideUserId = await readUserId();
   assertEq(outsideUserId, "", "outside scope: app.current_user_id is empty");
 
-  // 2. Inside userContext.run(...) the wrapper prepends set_config() and the
-  //    query sees the injected value.
+  // 2. Inside userContext.run(...) the wrapper prepends SET LOCAL ROLE +
+  //    set_config() and the query sees the injected values.
   await userContext.run(
     { userId: FAKE_UUID, userEmail: FAKE_EMAIL },
     async () => {
-      const insideUserId = await readUserId();
-      assertEq(insideUserId, FAKE_UUID, "inside scope: app.current_user_id");
-      const insideUserEmail = await readUserEmail();
-      assertEq(insideUserEmail, FAKE_EMAIL, "inside scope: app.current_user_email");
+      try {
+        const insideUserId = await readUserId();
+        assertEq(insideUserId, FAKE_UUID, "inside scope: app.current_user_id");
+        const insideUserEmail = await readUserEmail();
+        assertEq(
+          insideUserEmail,
+          FAKE_EMAIL,
+          "inside scope: app.current_user_email",
+        );
+      } catch (err) {
+        if (isMissingAppRole(err)) {
+          skipForMissingRole("inside scope: set_config visibility", err);
+        } else {
+          throw err;
+        }
+      }
     },
   );
 
@@ -116,15 +147,23 @@ async function main(): Promise<void> {
   await userContext.run(
     { userId: FAKE_UUID, userEmail: FAKE_EMAIL },
     async () => {
-      const rows = (await sql(
-        "SELECT current_setting('app.current_user_id', true) AS v",
-        [],
-      )) as Array<{ v: string | null }>;
-      assertEq(
-        rows[0]?.v ?? "",
-        FAKE_UUID,
-        "inside scope: ordinary-function form also carries session var",
-      );
+      try {
+        const rows = (await sql(
+          "SELECT current_setting('app.current_user_id', true) AS v",
+          [],
+        )) as Array<{ v: string | null }>;
+        assertEq(
+          rows[0]?.v ?? "",
+          FAKE_UUID,
+          "inside scope: ordinary-function form also carries session var",
+        );
+      } catch (err) {
+        if (isMissingAppRole(err)) {
+          skipForMissingRole("inside scope: ordinary-function form", err);
+        } else {
+          throw err;
+        }
+      }
     },
   );
 
@@ -133,12 +172,20 @@ async function main(): Promise<void> {
   await userContext.run(
     { userId: FAKE_UUID, userEmail: FAKE_EMAIL },
     async () => {
-      const [[r1], [r2]] = (await sql.transaction([
-        sql`SELECT current_setting('app.current_user_id', true) AS v`,
-        sql`SELECT current_setting('app.current_user_email', true) AS v`,
-      ])) as Array<Array<{ v: string | null }>>;
-      assertEq(r1?.v ?? "", FAKE_UUID, "transaction array form: user id");
-      assertEq(r2?.v ?? "", FAKE_EMAIL, "transaction array form: user email");
+      try {
+        const [[r1], [r2]] = (await sql.transaction([
+          sql`SELECT current_setting('app.current_user_id', true) AS v`,
+          sql`SELECT current_setting('app.current_user_email', true) AS v`,
+        ])) as Array<Array<{ v: string | null }>>;
+        assertEq(r1?.v ?? "", FAKE_UUID, "transaction array form: user id");
+        assertEq(r2?.v ?? "", FAKE_EMAIL, "transaction array form: user email");
+      } catch (err) {
+        if (isMissingAppRole(err)) {
+          skipForMissingRole("inside scope: transaction array form", err);
+        } else {
+          throw err;
+        }
+      }
     },
   );
 
@@ -149,9 +196,9 @@ async function main(): Promise<void> {
   //    This assertion only passes against a database where the
   //    `app_authenticated` role exists (see
   //    `drizzle/0006_create_app_authenticated_role.sql`). On vanilla main,
-  //    the SET LOCAL ROLE will raise; we downgrade the assertion to a
-  //    "manual verification" note in that case so the rest of the script
-  //    keeps running.
+  //    the SET LOCAL ROLE raises "role does not exist"; we downgrade the
+  //    check to a SKIP in that case so the outside-scope contract below
+  //    still runs.
   await userContext.run(
     { userId: FAKE_UUID, userEmail: FAKE_EMAIL },
     async () => {
@@ -163,12 +210,14 @@ async function main(): Promise<void> {
           "inside scope: current_user is app_authenticated (NOBYPASSRLS)",
         );
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error(
-          `SKIP  inside scope: current_user check\n      reason: ${
-            (err as Error).message
-          }\n      (likely the app_authenticated role is not yet provisioned on\n       this database — apply drizzle/0006_create_app_authenticated_role.sql\n       on the target branch and re-run against NEON_BRANCH_URL.)`,
-        );
+        if (isMissingAppRole(err)) {
+          skipForMissingRole(
+            "inside scope: current_user is app_authenticated",
+            err,
+          );
+        } else {
+          throw err;
+        }
       }
     },
   );

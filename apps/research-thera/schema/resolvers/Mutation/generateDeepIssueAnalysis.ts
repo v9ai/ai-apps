@@ -9,9 +9,16 @@ export const generateDeepIssueAnalysis: NonNullable<MutationResolvers['generateD
 
   const { familyMemberId, triggerIssueId } = args;
 
-  // Verify family member exists
-  const familyMember = await db.getFamilyMember(familyMemberId);
-  if (!familyMember) throw new Error("Family member not found");
+  // Verify family member belongs to the caller (not just "exists").
+  const userId = ctx.userId;
+  if (!userId) throw new Error("Authentication required");
+  await db.assertOwnsFamilyMember(familyMemberId, userId);
+
+  // If a trigger issue was supplied, it must also belong to the caller.
+  if (triggerIssueId) {
+    const issue = await db.getIssue(triggerIssueId, userId);
+    if (!issue) throw new Error("Issue not found");
+  }
 
   // Clean up stale jobs
   await db.cleanupStaleJobs(15);

@@ -9,6 +9,13 @@ export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['gener
 
   const { familyMemberId, count = 5 } = args;
 
+  // Verify the family member belongs to the caller before forwarding to
+  // LangGraph (which trusts familyMemberId and would otherwise run against
+  // any user's child).
+  const userId = ctx.userId;
+  if (!userId) throw new Error("Authentication required");
+  await db.assertOwnsFamilyMember(familyMemberId, userId);
+
   const isRo = await isRoGoal({ userEmail, familyMemberId });
 
   const result = (await runGraphAndWait("habits", {

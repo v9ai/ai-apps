@@ -1,4 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
+import { GraphQLError } from "graphql";
 import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
@@ -21,6 +22,12 @@ export const audioFromR2: NonNullable<QueryResolvers['audioFromR2']> = async (
   args,
   ctx,
 ) => {
+  if (!ctx.userId) {
+    throw new GraphQLError("Not found", {
+      extensions: { code: "NOT_FOUND" },
+    });
+  }
+
   try {
     const { key } = args;
 

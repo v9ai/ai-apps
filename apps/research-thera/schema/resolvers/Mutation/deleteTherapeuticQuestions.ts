@@ -1,8 +1,13 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { deleteTherapeuticQuestions as deleteQuestions } from "@/src/db";
+import { GraphQLError } from "graphql";
+import {
+  deleteTherapeuticQuestions as deleteQuestions,
+  db,
+} from "@/src/db";
 
 export const deleteTherapeuticQuestions: NonNullable<MutationResolvers['deleteTherapeuticQuestions']> = async (_parent, args, ctx) => {
-  if (!ctx.userEmail) {
+  const userId = ctx.userId;
+  if (!userId) {
     throw new Error("Authentication required");
   }
 
@@ -12,6 +17,27 @@ export const deleteTherapeuticQuestions: NonNullable<MutationResolvers['deleteTh
 
   if (!goalId && !issueId && !journalEntryId) {
     throw new Error("Either goalId, issueId, or journalEntryId is required");
+  }
+
+  const notFound = () =>
+    new GraphQLError("Not found", { extensions: { code: "NOT_FOUND" } });
+
+  // therapeutic_questions has no user_id; enforce ownership through the
+  // parent row (goal / issue / journal entry).
+  if (journalEntryId != null) {
+    const entry = await db.getJournalEntry(journalEntryId, userId);
+    if (!entry) throw notFound();
+  }
+  if (issueId != null) {
+    const issue = await db.getIssue(issueId, userId);
+    if (!issue) throw notFound();
+  }
+  if (goalId != null) {
+    try {
+      await db.getGoal(goalId, userId);
+    } catch {
+      throw notFound();
+    }
   }
 
   const deletedCount = await deleteQuestions(goalId, issueId, journalEntryId);
