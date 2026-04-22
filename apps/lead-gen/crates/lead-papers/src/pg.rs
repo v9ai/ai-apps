@@ -1,64 +1,66 @@
-use crate::types::{Contact, MatchResult};
 use anyhow::Result;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 
 pub async fn connect(url: &str) -> Result<PgPool> {
-    Ok(PgPoolOptions::new()
-        .max_connections(5)
-        .connect(url)
-        .await?)
+    Ok(PgPoolOptions::new().max_connections(5).connect(url).await?)
 }
 
-pub async fn migrate(pg: &PgPool) -> Result<()> {
-    let sql = include_str!("../migrations/0001_init.sql");
-    sqlx::raw_sql(sql).execute(pg).await?;
-    Ok(())
-}
-
-pub async fn upsert_contact(pg: &PgPool, c: &Contact) -> Result<()> {
-    sqlx::query(
-        r#"insert into contacts(id,name,affiliation,email,tags)
-           values($1,$2,$3,$4,$5)
-           on conflict (id) do update set
-             name=excluded.name,
-             affiliation=excluded.affiliation,
-             email=excluded.email,
-             tags=excluded.tags"#,
+#[allow(clippy::too_many_arguments)]
+pub async fn promote_contact(
+    pg: &PgPool,
+    contact_id: i64,
+    github_handle: Option<&str>,
+    papers_json: &serde_json::Value,
+    gh_match_score: f32,
+    gh_match_status: &str,
+    gh_match_arm: Option<&str>,
+    gh_match_evidence_ref: Option<&str>,
+) -> Result<u64> {
+    let result = sqlx::query(
+        r#"update contacts set
+             github_handle         = coalesce($1, github_handle),
+             papers                = $2,
+             papers_enriched_at    = now()::text,
+             gh_match_score        = $3,
+             gh_match_status       = $4,
+             gh_match_arm          = coalesce($5, gh_match_arm),
+             gh_match_evidence_ref = coalesce($6, gh_match_evidence_ref),
+             updated_at            = now()::text
+           where id = $7"#,
     )
-    .bind(&c.id).bind(&c.name).bind(&c.affiliation).bind(&c.email).bind(&c.tags)
-    .execute(pg).await?;
-    Ok(())
+    .bind(github_handle)
+    .bind(papers_json)
+    .bind(gh_match_score)
+    .bind(gh_match_status)
+    .bind(gh_match_arm)
+    .bind(gh_match_evidence_ref)
+    .bind(contact_id)
+    .execute(pg)
+    .await?;
+    Ok(result.rows_affected())
 }
 
-pub async fn persist_match(pg: &PgPool, r: &MatchResult) -> Result<()> {
-    let (name_sim, affil, topic) = match &r.breakdown {
-        Some(b) => (b.name_sim, b.affil_overlap, b.topic_cos),
-        None => (0.0, 0.0, 0.0),
-    };
-    sqlx::query(
-        r#"insert into gh_matches(contact_id,login,score,name_sim,affil_overlap,topic_cos,evidence,arm_id,status)
-           values($1,$2,$3,$4,$5,$6,$7,$8,$9)
-           on conflict (contact_id) do update set
-             login=excluded.login,
-             score=excluded.score,
-             name_sim=excluded.name_sim,
-             affil_overlap=excluded.affil_overlap,
-             topic_cos=excluded.topic_cos,
-             evidence=excluded.evidence,
-             arm_id=excluded.arm_id,
-             status=excluded.status,
-             matched_at=now()"#,
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct ContactSeed {
+    pub id: i64,
+    pub first_name: String,
+    pub last_name: String,
+    pub email: Option<String>,
+    pub company: Option<String>,
+}
+
+pub async fn list_contacts_needing_match(pg: &PgPool, limit: i64) -> Result<Vec<ContactSeed>> {
+    let rows = sqlx::query_as::<_, ContactSeed>(
+        r#"select id, first_name, last_name, email, company
+           from contacts
+           where coalesce(tags, '[]')::jsonb ? 'papers'
+             and (github_handle is null or papers_enriched_at is null)
+           order by id
+           limit $1"#,
     )
-    .bind(&r.contact_id)
-    .bind(&r.login)
-    .bind(r.score)
-    .bind(name_sim)
-    .bind(affil)
-    .bind(topic)
-    .bind(&r.evidence)
-    .bind(&r.arm_id)
-    .bind(r.status.as_str())
-    .execute(pg).await?;
-    Ok(())
+    .bind(limit)
+    .fetch_all(pg)
+    .await?;
+    Ok(rows)
 }

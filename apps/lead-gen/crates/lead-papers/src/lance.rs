@@ -1,8 +1,10 @@
-use crate::types::{Contact, EMBED_DIM, GhCandidate, MatchResult, Paper};
+use crate::types::{
+    paper_stable_id, Contact, GhCandidate, MatchResult, MatchStatus, ResearchPaper, EMBED_DIM,
+};
 use anyhow::Result;
 use arrow_array::builder::{ListBuilder, StringBuilder};
 use arrow_array::{
-    Array, FixedSizeListArray, Float32Array, RecordBatch, StringArray,
+    Array, FixedSizeListArray, Float32Array, Int64Array, RecordBatch, StringArray,
 };
 use arrow_schema::{DataType, Field, Schema};
 use lancedb::Connection;
@@ -21,17 +23,18 @@ impl Lance {
 
     pub async fn ensure_tables(&self) -> Result<()> {
         let existing = self.conn.table_names().execute().await?;
-        if !existing.contains(&"contacts".to_string()) {
-            self.conn.create_empty_table("contacts", contacts_schema()).execute().await?;
-        }
-        if !existing.contains(&"papers".to_string()) {
-            self.conn.create_empty_table("papers", papers_schema()).execute().await?;
-        }
-        if !existing.contains(&"candidates".to_string()) {
-            self.conn.create_empty_table("candidates", candidates_schema()).execute().await?;
-        }
-        if !existing.contains(&"results".to_string()) {
-            self.conn.create_empty_table("results", results_schema()).execute().await?;
+        for (name, schema) in [
+            ("contacts", contacts_schema()),
+            ("paper_embeddings", paper_embeddings_schema()),
+            ("gh_profiles", gh_profiles_schema()),
+            ("homepages", homepages_schema()),
+            ("topic_clusters", topic_clusters_schema()),
+            ("fetch_cache", fetch_cache_schema()),
+            ("results", results_schema()),
+        ] {
+            if !existing.contains(&name.to_string()) {
+                self.conn.create_empty_table(name, schema).execute().await?;
+            }
         }
         Ok(())
     }
@@ -42,7 +45,9 @@ impl Lance {
 
         let schema = contacts_schema();
         let mut tags_b = ListBuilder::new(StringBuilder::new());
-        for t in &c.tags { tags_b.values().append_value(t); }
+        for t in &c.tags {
+            tags_b.values().append_value(t);
+        }
         tags_b.append(true);
 
         let batch = RecordBatch::try_new(
@@ -59,13 +64,21 @@ impl Lance {
         Ok(())
     }
 
-    pub async fn upsert_papers(&self, contact_id: &str, papers: &[Paper], embs: &[Vec<f32>]) -> Result<()> {
-        let tbl = self.conn.open_table("papers").execute().await?;
+    /// Store one paper embedding per contact/paper pair. `papers.len() == embs.len()`.
+    pub async fn upsert_paper_embeddings(
+        &self,
+        contact_id: &str,
+        papers: &[ResearchPaper],
+        embs: &[Vec<f32>],
+    ) -> Result<()> {
+        let tbl = self.conn.open_table("paper_embeddings").execute().await?;
         tbl.delete(&format!("contact_id = '{}'", escape(contact_id))).await.ok();
 
-        if papers.is_empty() { return Ok(()); }
-        let schema = papers_schema();
-        let ids: Vec<String> = papers.iter().map(|p| p.id.clone()).collect();
+        if papers.is_empty() {
+            return Ok(());
+        }
+        let schema = paper_embeddings_schema();
+        let ids: Vec<String> = papers.iter().map(paper_stable_id).collect();
         let titles: Vec<String> = papers.iter().map(|p| p.title.clone()).collect();
         let abstracts: Vec<Option<String>> = papers.iter().map(|p| p.abstract_text.clone()).collect();
         let contact_ids: Vec<String> = vec![contact_id.to_string(); papers.len()];
@@ -85,14 +98,22 @@ impl Lance {
         Ok(())
     }
 
-    pub async fn upsert_candidate(&self, contact_id: &str, cand: &GhCandidate, emb: &[f32]) -> Result<()> {
-        let tbl = self.conn.open_table("candidates").execute().await?;
+    pub async fn upsert_gh_profile(
+        &self,
+        contact_id: &str,
+        cand: &GhCandidate,
+        emb: &[f32],
+    ) -> Result<()> {
+        let tbl = self.conn.open_table("gh_profiles").execute().await?;
         tbl.delete(&format!(
             "contact_id = '{}' and login = '{}'",
-            escape(contact_id), escape(&cand.login)
-        )).await.ok();
+            escape(contact_id),
+            escape(&cand.login)
+        ))
+        .await
+        .ok();
 
-        let schema = candidates_schema();
+        let schema = gh_profiles_schema();
         let emb_arr = fixed_size_list_f32(&[emb.to_vec()], EMBED_DIM)?;
         let blob = serde_json::to_string(cand)?;
 
@@ -107,6 +128,105 @@ impl Lance {
         )?;
         tbl.add(vec![batch]).execute().await?;
         Ok(())
+    }
+
+    /// Read the single best GH profile for a contact (the one we wrote as "winner").
+    /// Returns None if no row found.
+    #[allow(dead_code)]
+    pub async fn get_gh_profile(&self, contact_id: &str, login: &str) -> Result<Option<GhCandidate>> {
+        use futures::TryStreamExt;
+        use lancedb::query::{ExecutableQuery, QueryBase};
+        let tbl = self.conn.open_table("gh_profiles").execute().await?;
+        let mut stream = tbl
+            .query()
+            .only_if(format!(
+                "contact_id = '{}' and login = '{}'",
+                escape(contact_id),
+                escape(login)
+            ))
+            .limit(1)
+            .execute()
+            .await?;
+        while let Some(batch) = stream.try_next().await? {
+            if batch.num_rows() == 0 {
+                continue;
+            }
+            let blob = batch.column(2).as_any().downcast_ref::<StringArray>().unwrap();
+            let cand: GhCandidate = serde_json::from_str(blob.value(0))?;
+            return Ok(Some(cand));
+        }
+        Ok(None)
+    }
+
+    pub async fn upsert_homepage(
+        &self,
+        login: &str,
+        url: &str,
+        text_excerpt: &str,
+        emb: &[f32],
+    ) -> Result<()> {
+        let tbl = self.conn.open_table("homepages").execute().await?;
+        tbl.delete(&format!("login = '{}'", escape(login))).await.ok();
+        let schema = homepages_schema();
+        let emb_arr = fixed_size_list_f32(&[emb.to_vec()], EMBED_DIM)?;
+        let batch = RecordBatch::try_new(
+            schema.clone(),
+            vec![
+                Arc::new(StringArray::from(vec![login.to_string()])),
+                Arc::new(StringArray::from(vec![url.to_string()])),
+                Arc::new(StringArray::from(vec![text_excerpt.to_string()])),
+                Arc::new(emb_arr),
+            ],
+        )?;
+        tbl.add(vec![batch]).execute().await?;
+        Ok(())
+    }
+
+    pub async fn put_fetch_blob(
+        &self,
+        key: &str,
+        raw: &[u8],
+        format: &str,
+        source_url: &str,
+    ) -> Result<()> {
+        let tbl = self.conn.open_table("fetch_cache").execute().await?;
+        tbl.delete(&format!("key = '{}'", escape(key))).await.ok();
+        let schema = fetch_cache_schema();
+        let now = chrono::Utc::now().timestamp();
+        let batch = RecordBatch::try_new(
+            schema.clone(),
+            vec![
+                Arc::new(StringArray::from(vec![key.to_string()])),
+                Arc::new(StringArray::from(vec![
+                    String::from_utf8_lossy(raw).to_string(),
+                ])),
+                Arc::new(StringArray::from(vec![format.to_string()])),
+                Arc::new(StringArray::from(vec![source_url.to_string()])),
+                Arc::new(Int64Array::from(vec![now])),
+            ],
+        )?;
+        tbl.add(vec![batch]).execute().await?;
+        Ok(())
+    }
+
+    pub async fn get_fetch_blob(&self, key: &str) -> Result<Option<String>> {
+        use futures::TryStreamExt;
+        use lancedb::query::{ExecutableQuery, QueryBase};
+        let tbl = self.conn.open_table("fetch_cache").execute().await?;
+        let mut stream = tbl
+            .query()
+            .only_if(format!("key = '{}'", escape(key)))
+            .limit(1)
+            .execute()
+            .await?;
+        while let Some(batch) = stream.try_next().await? {
+            if batch.num_rows() == 0 {
+                continue;
+            }
+            let raw = batch.column(1).as_any().downcast_ref::<StringArray>().unwrap();
+            return Ok(Some(raw.value(0).to_string()));
+        }
+        Ok(None)
     }
 
     pub async fn write_result(&self, r: &MatchResult) -> Result<()> {
@@ -143,11 +263,10 @@ impl Lance {
             let arm = batch.column(4).as_any().downcast_ref::<StringArray>().unwrap();
             let ev = batch.column(5).as_any().downcast_ref::<StringArray>().unwrap();
             for i in 0..batch.num_rows() {
-                let status_str = status.value(i);
-                let status_enum = match status_str {
-                    "matched" => crate::types::MatchStatus::Matched,
-                    "no_relevant_papers" => crate::types::MatchStatus::NoRelevantPapers,
-                    _ => crate::types::MatchStatus::NoGithub,
+                let status_enum = match status.value(i) {
+                    "matched" => MatchStatus::Matched,
+                    "no_relevant_papers" => MatchStatus::NoRelevantPapers,
+                    _ => MatchStatus::NoGithub,
                 };
                 out.push(MatchResult {
                     contact_id: cid.value(i).to_string(),
@@ -164,7 +283,9 @@ impl Lance {
     }
 }
 
-fn escape(s: &str) -> String { s.replace('\'', "''") }
+fn escape(s: &str) -> String {
+    s.replace('\'', "''")
+}
 
 fn fixed_size_list_f32(rows: &[Vec<f32>], dim: usize) -> Result<FixedSizeListArray> {
     use arrow_array::builder::Float32Builder;
@@ -178,34 +299,89 @@ fn fixed_size_list_f32(rows: &[Vec<f32>], dim: usize) -> Result<FixedSizeListArr
     Ok(FixedSizeListArray::try_new(field, dim as i32, Arc::new(values), None)?)
 }
 
+fn emb_field() -> Field {
+    Field::new(
+        "item",
+        DataType::Float32,
+        true,
+    )
+}
+
 fn contacts_schema() -> Arc<Schema> {
     Arc::new(Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("name", DataType::Utf8, false),
         Field::new("affiliation", DataType::Utf8, true),
         Field::new("email", DataType::Utf8, true),
-        Field::new("tags", DataType::List(Arc::new(Field::new("item", DataType::Utf8, true))), false),
+        Field::new(
+            "tags",
+            DataType::List(Arc::new(Field::new("item", DataType::Utf8, true))),
+            false,
+        ),
     ]))
 }
 
-fn papers_schema() -> Arc<Schema> {
+fn paper_embeddings_schema() -> Arc<Schema> {
     Arc::new(Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("contact_id", DataType::Utf8, false),
         Field::new("title", DataType::Utf8, false),
         Field::new("abstract", DataType::Utf8, true),
-        Field::new("topic_emb", DataType::FixedSizeList(
-            Arc::new(Field::new("item", DataType::Float32, true)), EMBED_DIM as i32), false),
+        Field::new(
+            "topic_emb",
+            DataType::FixedSizeList(Arc::new(emb_field()), EMBED_DIM as i32),
+            false,
+        ),
     ]))
 }
 
-fn candidates_schema() -> Arc<Schema> {
+fn gh_profiles_schema() -> Arc<Schema> {
     Arc::new(Schema::new(vec![
         Field::new("contact_id", DataType::Utf8, false),
         Field::new("login", DataType::Utf8, false),
         Field::new("blob_json", DataType::Utf8, false),
-        Field::new("topics_emb", DataType::FixedSizeList(
-            Arc::new(Field::new("item", DataType::Float32, true)), EMBED_DIM as i32), false),
+        Field::new(
+            "topics_emb",
+            DataType::FixedSizeList(Arc::new(emb_field()), EMBED_DIM as i32),
+            false,
+        ),
+    ]))
+}
+
+fn homepages_schema() -> Arc<Schema> {
+    Arc::new(Schema::new(vec![
+        Field::new("login", DataType::Utf8, false),
+        Field::new("url", DataType::Utf8, false),
+        Field::new("text_excerpt", DataType::Utf8, true),
+        Field::new(
+            "embedding",
+            DataType::FixedSizeList(Arc::new(emb_field()), EMBED_DIM as i32),
+            false,
+        ),
+    ]))
+}
+
+fn topic_clusters_schema() -> Arc<Schema> {
+    Arc::new(Schema::new(vec![
+        Field::new("author_id", DataType::Utf8, false),
+        Field::new("cluster_idx", DataType::Utf8, false),
+        Field::new("label", DataType::Utf8, true),
+        Field::new("weight", DataType::Float32, false),
+        Field::new(
+            "centroid",
+            DataType::FixedSizeList(Arc::new(emb_field()), EMBED_DIM as i32),
+            false,
+        ),
+    ]))
+}
+
+fn fetch_cache_schema() -> Arc<Schema> {
+    Arc::new(Schema::new(vec![
+        Field::new("key", DataType::Utf8, false),
+        Field::new("raw_content", DataType::Utf8, false),
+        Field::new("format", DataType::Utf8, true),
+        Field::new("source_url", DataType::Utf8, true),
+        Field::new("fetched_at", DataType::Int64, false),
     ]))
 }
 

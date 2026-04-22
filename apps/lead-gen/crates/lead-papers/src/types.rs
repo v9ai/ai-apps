@@ -2,12 +2,7 @@ use serde::{Deserialize, Serialize};
 
 pub const EMBED_DIM: usize = 384;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Paper {
-    pub id: String,
-    pub title: String,
-    pub abstract_text: Option<String>,
-}
+pub use research::ResearchPaper;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Contact {
@@ -16,7 +11,8 @@ pub struct Contact {
     pub affiliation: Option<String>,
     pub email: Option<String>,
     pub tags: Vec<String>,
-    pub papers: Vec<Paper>,
+    #[serde(default)]
+    pub papers: Vec<ResearchPaper>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -78,4 +74,40 @@ impl MatchStatus {
             Self::NoRelevantPapers => "no_relevant_papers",
         }
     }
+}
+
+pub fn paper_stable_id(p: &ResearchPaper) -> String {
+    if let Some(doi) = &p.doi {
+        return format!("doi:{}", doi.to_lowercase());
+    }
+    if let Some(src_id) = find_arxiv_id(p) {
+        return format!("arxiv:{}", src_id);
+    }
+    format!(
+        "{}:{}",
+        match p.source {
+            research::paper::PaperSource::SemanticScholar => "s2",
+            research::paper::PaperSource::OpenAlex => "openalex",
+            research::paper::PaperSource::Crossref => "crossref",
+            research::paper::PaperSource::Core => "core",
+            research::paper::PaperSource::Arxiv => "arxiv",
+            research::paper::PaperSource::Zenodo => "zenodo",
+        },
+        p.source_id
+    )
+}
+
+fn find_arxiv_id(p: &ResearchPaper) -> Option<String> {
+    if matches!(p.source, research::paper::PaperSource::Arxiv) {
+        return Some(p.source_id.clone());
+    }
+    p.url.as_ref().and_then(|u| {
+        let prefix = "arxiv.org/abs/";
+        u.find(prefix).map(|i| u[i + prefix.len()..].trim_end_matches('/').to_string())
+    })
+}
+
+pub fn paper_text_for_embedding(p: &ResearchPaper) -> String {
+    let abs = p.abstract_text.as_deref().unwrap_or("");
+    format!("{}. {}", p.title, abs)
 }

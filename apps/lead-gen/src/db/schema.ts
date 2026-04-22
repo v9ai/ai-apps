@@ -302,6 +302,11 @@ export const contacts = pgTable(
     // PaperClassification[] — {paper_id, title, is_sales_leadgen, confidence, reasons[]}
     paper_classifications: jsonb("paper_classifications"),
     paper_classifications_at: text("paper_classifications_at"),
+    // GitHub match outputs (populated by crates/lead-papers Rust pipeline)
+    gh_match_score: real("gh_match_score"),
+    gh_match_status: text("gh_match_status"), // "matched" | "review" | "rejected"
+    gh_match_arm: text("gh_match_arm"),
+    gh_match_evidence_ref: text("gh_match_evidence_ref"), // "lance://results/{contact_id}"
     // Sales enrichment (populated by contact_enrich_sales graph: LinkedIn OG scrape)
     linkedin_profile: jsonb("linkedin_profile"), // {headline, bio, scraped_at}
     // OpenAlex author enrichment (populated by contact_enrich_paper_author graph)
