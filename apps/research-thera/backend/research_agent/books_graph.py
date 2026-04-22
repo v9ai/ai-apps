@@ -7,7 +7,8 @@ from datetime import datetime, timezone
 from typing import Optional, TypedDict
 
 from langgraph.graph import StateGraph, START, END
-from openai import AsyncOpenAI
+
+from deepseek_client import ChatMessage, DeepSeekClient, DeepSeekConfig
 
 import psycopg
 
@@ -236,7 +237,7 @@ async def generate(state: dict) -> dict:
         return {}
 
     prompt = state.get("_prompt", "")
-    base_url = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com")
+    base_url = os.environ.get("LLM_BASE_URL") or None
     api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY") or ""
     model = os.environ.get("LLM_MODEL", "deepseek-chat")
     # DeepSeek's JSON mode occasionally emits malformed JSON under load; one
@@ -244,26 +245,30 @@ async def generate(state: dict) -> dict:
     parsed = None
     last_exc: Optional[Exception] = None
     try:
-        client = AsyncOpenAI(base_url=base_url, api_key=api_key, timeout=180.0)
+        config = DeepSeekConfig(
+            api_key=api_key, base_url=base_url, timeout=180.0, default_model=model
+        )
     except Exception as exc:
-        return {"error": f"generate failed (client init): {exc}"}
-    for attempt in range(2):
-        try:
-            resp = await client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.4,
-                max_tokens=8192,
-                response_format={"type": "json_object"},
-            )
-            content = resp.choices[0].message.content
-            parsed = json.loads(content)
-            break
-        except json.JSONDecodeError as exc:
-            last_exc = exc
-            continue
-        except Exception as exc:
-            return {"error": f"generate failed: {exc}"}
+        return {"error": f"generate failed (config): {exc}"}
+    try:
+        async with DeepSeekClient(config) as client:
+            for _ in range(2):
+                try:
+                    resp = await client.chat(
+                        [ChatMessage(role="user", content=prompt)],
+                        model=model,
+                        temperature=0.4,
+                        max_tokens=8192,
+                        response_format={"type": "json_object"},
+                    )
+                    content = resp.choices[0].message.content
+                    parsed = json.loads(content)
+                    break
+                except json.JSONDecodeError as exc:
+                    last_exc = exc
+                    continue
+    except Exception as exc:
+        return {"error": f"generate failed: {exc}"}
     if parsed is None:
         return {"error": f"generate failed: {last_exc}"}
 

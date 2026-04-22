@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py ./
 COPY research_agent ./research_agent
+COPY deepseek_client ./deepseek_client
 
 # Only the books graph runs in the container today; drop the siblings so the
 # image stays slim and avoids pulling their transitive deps at import time.

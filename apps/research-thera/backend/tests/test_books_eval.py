@@ -134,37 +134,48 @@ def _retrieval_context_from_prompt(prompt: str) -> list[str]:
 
 
 def _make_judge():
-    """Wrap AsyncOpenAI in a deepeval BaseLLM honoring LLM_BASE_URL."""
-    from deepeval.models.base_model import DeepEvalBaseLLM
-    from openai import AsyncOpenAI, OpenAI
+    """Wrap the shared DeepSeekClient in a deepeval BaseLLM.
 
-    base_url = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com")
+    DeepSeekClient is async-only, so `generate()` dispatches to `a_generate()`
+    via a worker thread — needed because the test runs inside pytest-asyncio's
+    event loop and `asyncio.run()` would refuse to nest.
+    """
+    from deepeval.models.base_model import DeepEvalBaseLLM
+
+    from deepseek_client import ChatMessage, DeepSeekClient, DeepSeekConfig
+
+    base_url = os.environ.get("LLM_BASE_URL") or None
     api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY") or ""
     model = os.environ.get("LLM_MODEL", "deepseek-chat")
 
     class LocalJudge(DeepEvalBaseLLM):
         def __init__(self) -> None:
-            self._sync = OpenAI(base_url=base_url, api_key=api_key, timeout=180.0)
-            self._async = AsyncOpenAI(base_url=base_url, api_key=api_key, timeout=180.0)
+            self._config = DeepSeekConfig(
+                api_key=api_key, base_url=base_url, timeout=180.0, default_model=model
+            )
 
         def load_model(self):
-            return self._sync
+            return self._config
 
         def generate(self, prompt: str) -> str:
-            resp = self._sync.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
-            return resp.choices[0].message.content or ""
+            import asyncio
+            import concurrent.futures
+
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                return asyncio.run(self.a_generate(prompt))
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                return pool.submit(asyncio.run, self.a_generate(prompt)).result()
 
         async def a_generate(self, prompt: str) -> str:
-            resp = await self._async.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
-            return resp.choices[0].message.content or ""
+            async with DeepSeekClient(self._config) as client:
+                resp = await client.chat(
+                    [ChatMessage(role="user", content=prompt)],
+                    model=model,
+                    temperature=0.0,
+                )
+                return resp.choices[0].message.content or ""
 
         def get_model_name(self) -> str:
             return model
@@ -273,7 +284,7 @@ async def test_llm_judge_aggregate_pass_rate(golden_goals: list[dict]) -> None:
         for metric in (relevancy, faithful, realness, fit):
             total += 1
             try:
-                metric.measure(tc)
+                await metric.a_measure(tc)
                 ok = bool(getattr(metric, "is_successful", lambda: False)())
             except Exception as e:  # noqa: BLE001
                 ok = False
