@@ -3,8 +3,8 @@ import { sql as neonSql } from "@/src/db/neon";
 import { runGraphAndWait } from "@/src/lib/langgraph-client";
 
 export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIAudio']> = async (_parent, args, ctx) => {
-  const userEmail = ctx.userEmail;
-  if (!userEmail) {
+  const userId = ctx.userId;
+  if (!userId) {
     throw new Error("Authentication required");
   }
 
@@ -18,7 +18,7 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
   if (storyId) {
     const existing = await neonSql`
       SELECT id, created_at, updated_at FROM generation_jobs
-      WHERE story_id = ${storyId} AND user_id = ${userEmail} AND type = 'AUDIO' AND status = 'RUNNING'
+      WHERE story_id = ${storyId} AND user_id = ${userId} AND type = 'AUDIO' AND status = 'RUNNING'
       ORDER BY created_at DESC LIMIT 1`;
     if (existing.length > 0) {
       const existingJobId = existing[0].id as string;
