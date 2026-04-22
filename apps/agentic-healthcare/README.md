@@ -463,11 +463,11 @@ pnpm drizzle-kit migrate    # Apply migrations to Neon
 
 ### Deployment
 
-The LangGraph chat service ships as a Cloudflare Container mirroring the
+The FastAPI chat service ships as a Cloudflare Container mirroring the
 research-thera setup — a slim Python 3.12 image with FastAPI + LlamaIndex +
 FastEmbed, fronted by a Worker Durable Object. Config lives in
 `langgraph/wrangler.jsonc` (`agentic-healthcare-langgraph` worker, port 8001,
-`standard-1` container).
+`standard-1` container). The Worker name is retained for DNS stability.
 
 ```bash
 cd apps/agentic-healthcare/langgraph

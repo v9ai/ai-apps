@@ -1,28 +1,17 @@
-"""Blood test upload & delete — LangGraph `ingestion_graph` over LlamaParse → R2 + PG.
+"""Blood test upload & delete — LlamaIndex IngestionPipeline over LlamaParse → R2 + PG.
 
-The POST /upload handler invokes the compiled `ingestion_graph.compiled_graph`
-which wraps the flow as a StateGraph:
-
-  upload_to_r2 → partition_pdf → extract_markers → store_in_db → embed_and_index
-                                                                       │
-                                          [failures route to ─> abort]
-
-Embedding (LlamaIndex IngestionPipeline + FastEmbed) still runs in a FastAPI
-background task so the HTTP response is returned as soon as markers are
-persisted — the graph itself exposes that step as `embed_and_index`, which the
-route invokes via a background task rather than as part of the synchronous
-ainvoke.
-
-The graph is registered in `langgraph.json` as
-`"ingestion": "ingestion_graph:compiled_graph"`.
-
-Delete behavior (`DELETE /blood-tests/{id}`) is unchanged — it bypasses the
-graph and operates directly on `db.delete_blood_test` + `storage.delete_file`.
+The pipeline uses LlamaIndex abstractions end-to-end:
+  1. LlamaParse → LlamaIndex Document
+  2. Custom BloodTestNodeParser → TextNode per marker + test summary + health state
+  3. FastEmbedEmbedding (via LlamaIndex Settings) for vector generation
+  4. IngestionPipeline orchestrates the transform + embed flow
+  5. Persist to Neon PG via the db module
 """
 
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Form, Header, HTTPException, UploadFile
@@ -36,6 +25,9 @@ from config import settings
 from db import (
     delete_blood_test,
     get_blood_test_file_path,
+    insert_blood_markers,
+    insert_blood_test,
+    update_blood_test_status,
     upsert_blood_marker_embedding,
     upsert_blood_test_embedding,
     upsert_health_state_embedding,
@@ -48,7 +40,8 @@ from embeddings import (
     get_embed_model,
 )
 from ingestion_pipeline import BloodTestNodeParser, build_ingestion_pipeline
-from storage import delete_file
+from parsers import parse_markers
+from storage import delete_file, upload_file
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
