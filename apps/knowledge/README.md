@@ -328,6 +328,7 @@ apps/knowledge/
 │   ├── app.py              # FastAPI harness — create_app() factory, /health + /runs/wait, bearer-token middleware
 │   ├── src/index.js        # Cloudflare Worker proxying to KnowledgeContainer
 │   ├── package.json        # wrangler deploy script
+│   ├── run-with-env.sh     # Loads .env files via Python (handles `&` etc.) + opts out of deepeval telemetry before exec'ing pytest
 │   ├── tests/              # pytest suite
 │   │   ├── conftest.py             # StubGraph fixtures + TestClient wiring (create_app with use_prod_lifespan=False)
 │   │   ├── test_app.py             # /health, bearer auth gate, routing, 404s, graph dispatch
