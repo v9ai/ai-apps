@@ -29,4 +29,5 @@ extend type Mutation {
   upsertProduct(input: ProductInput!): Product!
   deleteProduct(id: Int!): Boolean!
   analyzeProductICP(id: Int!): Product!
+  enhanceProductIcp(id: Int!): Product!
 }

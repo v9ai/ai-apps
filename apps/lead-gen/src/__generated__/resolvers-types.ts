@@ -1392,6 +1392,7 @@ export type Mutation = {
   dismissReminder: Reminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
+  enhanceProductIcp: Product;
   enrichAIContactProfile: EnrichAiContactResult;
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
@@ -1653,6 +1654,11 @@ export type MutationDismissReminderArgs = {
 export type MutationEnhanceCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationEnhanceProductIcpArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -5212,6 +5218,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   dismissReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationDismissReminderArgs, 'id'>>;
   enhanceAllContacts?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType>;
   enhanceCompany?: Resolver<ResolversTypes['EnhanceCompanyResponse'], ParentType, ContextType, Partial<MutationEnhanceCompanyArgs>>;
+  enhanceProductIcp?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationEnhanceProductIcpArgs, 'id'>>;
   enrichAIContactProfile?: Resolver<ResolversTypes['EnrichAIContactResult'], ParentType, ContextType, RequireFields<MutationEnrichAiContactProfileArgs, 'contactId'>>;
   enrichAIContactsForCompany?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichAiContactsForCompanyArgs, 'companyId'>>;
   enrichOpportunityCandidates?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichOpportunityCandidatesArgs, 'opportunityId'>>;

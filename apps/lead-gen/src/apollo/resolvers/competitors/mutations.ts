@@ -15,6 +15,7 @@ import type {
   MutationDeleteCompetitorAnalysisArgs,
 } from "@/__generated__/resolvers-types";
 import { suggestCompetitors } from "@/lib/competitors/discover";
+import { discoverCompetitorsTeam } from "@/lib/langgraph-client";
 
 function requireAdmin(context: GraphQLContext): void {
   if (!context.userId) {
@@ -79,17 +80,45 @@ export const competitorMutations = {
       .returning();
 
     try {
-      const suggestions = await suggestCompetitors(product.name, product.url);
-      if (suggestions.length > 0) {
-        await context.db.insert(competitors).values(
-          suggestions.map<NewCompetitor>((s) => ({
-            analysis_id: analysis.id,
-            name: s.name,
-            url: s.url,
-            domain: extractDomain(s.url),
-            status: "suggested",
-          })),
-        );
+      // Primary: multi-agent discovery team (richer output).
+      let inserted = false;
+      try {
+        const team = await discoverCompetitorsTeam({ productId: product.id });
+        const suggestions = team.competitors ?? [];
+        if (suggestions.length > 0) {
+          await context.db.insert(competitors).values(
+            suggestions.map<NewCompetitor>((s) => ({
+              analysis_id: analysis.id,
+              name: s.name,
+              url: s.url,
+              domain: s.domain || extractDomain(s.url),
+              description: s.description || null,
+              positioning_headline: s.positioning_headline || null,
+              positioning_tagline: s.positioning_tagline || null,
+              target_audience: s.target_audience || null,
+              status: "suggested",
+            })),
+          );
+          inserted = true;
+        }
+      } catch (teamErr) {
+        console.warn("[competitors] team graph failed, falling back", teamErr);
+      }
+
+      // Fallback: single-shot DeepSeek if the team run didn't produce rows.
+      if (!inserted) {
+        const suggestions = await suggestCompetitors(product.name, product.url);
+        if (suggestions.length > 0) {
+          await context.db.insert(competitors).values(
+            suggestions.map<NewCompetitor>((s) => ({
+              analysis_id: analysis.id,
+              name: s.name,
+              url: s.url,
+              domain: extractDomain(s.url),
+              status: "suggested",
+            })),
+          );
+        }
       }
       return analysis;
     } catch (err) {

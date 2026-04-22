@@ -99,8 +99,8 @@ export function GreecePageContent() {
       {/* ── New 2026 Hotels ── */}
       <main
         className={css({
-          mx: "auto",
-          px: { base: "5", md: "8" },
+          w: "100%",
+          px: { base: "5", md: "8", xl: "12" },
           pb: "16",
         })}
       >

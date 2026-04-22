@@ -1282,6 +1282,7 @@ type Mutation {
   dismissReminder(id: Int!): Reminder!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
+  enhanceProductIcp(id: Int!): Product!
   enrichAIContactProfile(contactId: Int!): EnrichAIContactResult!
   enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
   enrichOpportunityCandidates(opportunityId: String!): EnrichAIContactsBulkResult!

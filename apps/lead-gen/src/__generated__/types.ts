@@ -1389,6 +1389,7 @@ export type Mutation = {
   dismissReminder: Reminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
+  enhanceProductIcp: Product;
   enrichAIContactProfile: EnrichAiContactResult;
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
@@ -1650,6 +1651,11 @@ export type MutationDismissReminderArgs = {
 export type MutationEnhanceCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationEnhanceProductIcpArgs = {
+  id: Scalars['Int']['input'];
 };
 
 

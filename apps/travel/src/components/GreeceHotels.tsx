@@ -397,7 +397,7 @@ export function GreeceHotels({ results, lang }: GreeceHotelsProps) {
       <div
         className={css({
           display: "grid",
-          gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(3, 1fr)" },
+          gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)", xl: "repeat(4, 1fr)" },
           gap: { base: "5", sm: "6" },
         })}
       >

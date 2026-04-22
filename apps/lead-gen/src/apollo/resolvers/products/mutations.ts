@@ -4,11 +4,12 @@ import { db } from "@/db";
 import { products } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
-import { analyzeProductICP } from "@/lib/langgraph-client";
+import { analyzeProductICP, enhanceProductIcpTeam } from "@/lib/langgraph-client";
 import type {
   MutationUpsertProductArgs,
   MutationDeleteProductArgs,
   MutationAnalyzeProductIcpArgs,
+  MutationEnhanceProductIcpArgs,
 } from "@/__generated__/resolvers-types";
 
 // Products are a global SaaS catalog (see queries.ts). Writes use the
@@ -86,6 +87,34 @@ export const productMutations = {
     requireAdmin(context);
 
     const result = await analyzeProductICP({ productId: args.id });
+    const now = new Date().toISOString();
+
+    const [row] = await db
+      .update(products)
+      .set({
+        icp_analysis: result as unknown as Record<string, unknown>,
+        icp_analyzed_at: now,
+        updated_at: now,
+      })
+      .where(eq(products.id, args.id))
+      .returning();
+
+    if (!row) {
+      throw new GraphQLError(`Product ${args.id} not found`, {
+        extensions: { code: "NOT_FOUND" },
+      });
+    }
+    return row;
+  },
+
+  async enhanceProductIcp(
+    _parent: unknown,
+    args: MutationEnhanceProductIcpArgs,
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    const result = await enhanceProductIcpTeam({ productId: args.id });
     const now = new Date().toISOString();
 
     const [row] = await db

@@ -16,6 +16,8 @@ import {
   ExternalLinkIcon,
   ArrowRightIcon,
   MagicWandIcon,
+  RocketIcon,
+  MagnifyingGlassIcon,
 } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";

@@ -591,10 +591,9 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
             bottom: "0",
             left: "0",
             right: "0",
-            px: { base: "5", md: "8" },
+            px: { base: "5", md: "8", xl: "12" },
             pb: { base: "6", md: "8" },
-            maxW: "900px",
-            mx: "auto",
+            w: "100%",
           })}
         >
           <div
@@ -727,9 +726,8 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
       {hasGallery && gallery.length > 1 && (
         <div
           className={css({
-            maxW: "900px",
-            mx: "auto",
-            px: { base: "5", md: "8" },
+            w: "100%",
+            px: { base: "5", md: "8", xl: "12" },
             pt: "4",
             display: "flex",
             gap: "2",
@@ -773,9 +771,8 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
       {/* ── Main content ── */}
       <main
         className={css({
-          maxW: "900px",
-          mx: "auto",
-          px: { base: "5", md: "8" },
+          w: "100%",
+          px: { base: "5", md: "8", xl: "12" },
           py: { base: "8", md: "12" },
           display: "flex",
           flexDirection: "column",
@@ -953,7 +950,7 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
             <div
               className={css({
                 display: "grid",
-                gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+                gridTemplateColumns: { base: "1fr", md: "1fr 1fr", xl: "repeat(3, 1fr)" },
                 gap: "4",
               })}
             >

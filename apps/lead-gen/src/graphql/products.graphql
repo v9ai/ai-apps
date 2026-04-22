@@ -46,3 +46,9 @@ mutation AnalyzeProductICP($id: Int!) {
     ...ProductCore
   }
 }
+
+mutation EnhanceProductIcp($id: Int!) {
+  enhanceProductIcp(id: $id) {
+    ...ProductCore
+  }
+}

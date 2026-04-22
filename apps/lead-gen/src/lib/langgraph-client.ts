@@ -247,3 +247,57 @@ export function analyzeProductICP(input: {
     { timeoutMs: 120_000 },
   );
 }
+
+/**
+ * Multi-agent ICP team (fan-out specialists → synthesizer). Produces the same
+ * DeepICPResult shape as analyzeProductICP, with graph_meta.team = "icp_team"
+ * and per-agent timings.
+ */
+export function enhanceProductIcpTeam(input: {
+  productId: number;
+}): Promise<DeepICPResult> {
+  return runGraph<DeepICPResult>(
+    "icp_team",
+    { product_id: input.productId },
+    { timeoutMs: 180_000 },
+  );
+}
+
+export interface CompetitorTeamSuggestion {
+  name: string;
+  url: string;
+  domain: string;
+  description: string;
+  positioning_headline: string;
+  positioning_tagline: string;
+  target_audience: string;
+  differentiation_angles: string[];
+  threat_score: number;
+  market_overlap: number;
+  threat_rationale: string;
+}
+
+export interface CompetitorsTeamResult {
+  competitors: CompetitorTeamSuggestion[];
+  graph_meta?: {
+    version: string;
+    team: string;
+    model: string;
+    agent_timings: Record<string, number>;
+  };
+}
+
+/**
+ * Multi-agent competitor discovery team: discovery_scout → (differentiator ||
+ * threat_assessor) → synthesizer. Replaces the single-shot suggestCompetitors
+ * LLM call with richer, structured output.
+ */
+export function discoverCompetitorsTeam(input: {
+  productId: number;
+}): Promise<CompetitorsTeamResult> {
+  return runGraph<CompetitorsTeamResult>(
+    "competitors_team",
+    { product_id: input.productId },
+    { timeoutMs: 180_000 },
+  );
+}

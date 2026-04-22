@@ -1392,6 +1392,7 @@ export type Mutation = {
   dismissReminder: Reminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
+  enhanceProductIcp: Product;
   enrichAIContactProfile: EnrichAiContactResult;
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
@@ -1653,6 +1654,11 @@ export type MutationDismissReminderArgs = {
 export type MutationEnhanceCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationEnhanceProductIcpArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -4307,6 +4313,13 @@ export type AnalyzeProductIcpMutationVariables = Exact<{
 
 
 export type AnalyzeProductIcpMutation = { __typename?: 'Mutation', analyzeProductICP: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, icpAnalysis: any | null, icpAnalyzedAt: string | null, createdBy: string | null, createdAt: string, updatedAt: string } };
+
+export type EnhanceProductIcpMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type EnhanceProductIcpMutation = { __typename?: 'Mutation', enhanceProductIcp: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, icpAnalysis: any | null, icpAnalyzedAt: string | null, createdBy: string | null, createdAt: string, updatedAt: string } };
 
 export type DueRemindersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -8453,6 +8466,39 @@ export function useAnalyzeProductIcpMutation(baseOptions?: Apollo.MutationHookOp
 export type AnalyzeProductIcpMutationHookResult = ReturnType<typeof useAnalyzeProductIcpMutation>;
 export type AnalyzeProductIcpMutationResult = Apollo.MutationResult<AnalyzeProductIcpMutation>;
 export type AnalyzeProductIcpMutationOptions = Apollo.BaseMutationOptions<AnalyzeProductIcpMutation, AnalyzeProductIcpMutationVariables>;
+export const EnhanceProductIcpDocument = gql`
+    mutation EnhanceProductIcp($id: Int!) {
+  enhanceProductIcp(id: $id) {
+    ...ProductCore
+  }
+}
+    ${ProductCoreFragmentDoc}`;
+export type EnhanceProductIcpMutationFn = Apollo.MutationFunction<EnhanceProductIcpMutation, EnhanceProductIcpMutationVariables>;
+
+/**
+ * __useEnhanceProductIcpMutation__
+ *
+ * To run a mutation, you first call `useEnhanceProductIcpMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useEnhanceProductIcpMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [enhanceProductIcpMutation, { data, loading, error }] = useEnhanceProductIcpMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useEnhanceProductIcpMutation(baseOptions?: Apollo.MutationHookOptions<EnhanceProductIcpMutation, EnhanceProductIcpMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<EnhanceProductIcpMutation, EnhanceProductIcpMutationVariables>(EnhanceProductIcpDocument, options);
+      }
+export type EnhanceProductIcpMutationHookResult = ReturnType<typeof useEnhanceProductIcpMutation>;
+export type EnhanceProductIcpMutationResult = Apollo.MutationResult<EnhanceProductIcpMutation>;
+export type EnhanceProductIcpMutationOptions = Apollo.BaseMutationOptions<EnhanceProductIcpMutation, EnhanceProductIcpMutationVariables>;
 export const DueRemindersDocument = gql`
     query DueReminders {
   dueReminders {
