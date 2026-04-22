@@ -1,11 +1,23 @@
-"""Blood test upload & delete — LlamaIndex IngestionPipeline over LlamaParse → R2 + PG.
+"""Blood test upload & delete — LangGraph `ingestion_graph` over LlamaParse → R2 + PG.
 
-The pipeline uses LlamaIndex abstractions end-to-end:
-  1. LlamaParse → LlamaIndex Document
-  2. Custom BloodTestNodeParser → TextNode per marker + test summary + health state
-  3. FastEmbedEmbedding (via LlamaIndex Settings) for vector generation
-  4. IngestionPipeline orchestrates the transform + embed flow
-  5. Persist to Neon PG via the db module
+The POST /upload handler invokes the compiled `ingestion_graph.compiled_graph`
+which wraps the flow as a StateGraph:
+
+  upload_to_r2 → partition_pdf → extract_markers → store_in_db → embed_and_index
+                                                                       │
+                                          [failures route to ─> abort]
+
+Embedding (LlamaIndex IngestionPipeline + FastEmbed) still runs in a FastAPI
+background task so the HTTP response is returned as soon as markers are
+persisted — the graph itself exposes that step as `embed_and_index`, which the
+route invokes via a background task rather than as part of the synchronous
+ainvoke.
+
+TODO(team): when `langgraph.json` is updated by the sibling team, the new
+graph should be registered as `"ingestion": "ingestion_graph:compiled_graph"`.
+
+Delete behavior (`DELETE /blood-tests/{id}`) is unchanged — it bypasses the
+graph and operates directly on `db.delete_blood_test` + `storage.delete_file`.
 """
 
 from __future__ import annotations
@@ -246,54 +258,48 @@ async def upload_blood_test(
     background_tasks: BackgroundTasks = BackgroundTasks(),
     x_api_key: str | None = Header(None),
 ) -> UploadResponse:
+    """Upload a blood-test PDF.
+
+    Invokes `ingestion_graph.compiled_graph` with `skip_embedding=True` so
+    that `upload_to_r2 → partition_pdf → extract_markers → store_in_db` run
+    synchronously inside the request, and the heavier `embed_and_index` step
+    is scheduled as a FastAPI background task — preserving the legacy
+    response-time characteristics.
+    """
+    from ingestion_graph import run_ingestion_graph
+
     _check_api_key(x_api_key)
 
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
     file_bytes = await file.read()
-    file_path = f"{user_id}/{int(time.time() * 1000)}_{file.filename}"
 
-    # Upload to R2
-    upload_file(file_path, file_bytes, file.content_type or "application/pdf")
-
-    # Insert blood_tests row
-    test_id = insert_blood_test(
-        user_id=user_id,
+    result = await run_ingestion_graph(
+        pdf_bytes=file_bytes,
         file_name=file.filename,
-        file_path=file_path,
-        status="processing",
+        user_id=user_id,
+        content_type=file.content_type or "application/pdf",
         test_date=test_date,
+        skip_embedding=True,
     )
 
-    try:
-        # Parse PDF → structured elements
-        elements = _partition_pdf(file_bytes, file.filename)
+    if result.get("aborted"):
+        raise HTTPException(status_code=500, detail=result.get("error") or "ingestion aborted")
 
-        # Extract markers with 3-tier strategy
-        markers = parse_markers(elements)
+    test_id: str = result["blood_test_id"]
+    elements: list[dict] = result.get("elements") or []
+    markers: list[dict] = result.get("markers") or []
+    marker_ids: list[str] = result.get("marker_ids") or []
 
-        # Store markers in PG
-        marker_ids: list[str] = []
-        if markers:
-            marker_ids = insert_blood_markers(
-                test_id, [m.to_dict() for m in markers],
-            )
+    # Defer embedding to a FastAPI background task — matches legacy behavior.
+    if markers:
+        background_tasks.add_task(
+            _run_ingestion,
+            elements, test_id, user_id, file.filename, test_date, marker_ids,
+        )
 
-        update_blood_test_status(test_id, "done")
-
-        # Run LlamaIndex IngestionPipeline in background (non-blocking)
-        if markers:
-            background_tasks.add_task(
-                _run_ingestion,
-                elements, test_id, user_id, file.filename, test_date, marker_ids,
-            )
-
-        return UploadResponse(test_id=test_id, markers_count=len(markers), status="done")
-
-    except Exception as exc:
-        update_blood_test_status(test_id, "error", str(exc))
-        raise HTTPException(status_code=500, detail=str(exc))
+    return UploadResponse(test_id=test_id, markers_count=len(markers), status="done")
 
 
 @router.delete("/blood-tests/{test_id}", response_model=DeleteResponse)

@@ -467,6 +467,38 @@ pnpm drizzle-kit generate   # Generate migration files
 pnpm drizzle-kit migrate    # Apply migrations to Neon
 ```
 
+### Deployment
+
+The LangGraph chat service ships as a Cloudflare Container mirroring the
+research-thera setup — a slim Python 3.12 image with FastAPI + LlamaIndex +
+FastEmbed, fronted by a Worker Durable Object. Config lives in
+`langgraph/wrangler.jsonc` (`agentic-healthcare-langgraph` worker, port 8001,
+`standard-1` container).
+
+```bash
+cd apps/agentic-healthcare/langgraph
+
+# One-time: install wrangler + @cloudflare/containers
+pnpm install
+
+# Set secrets (database, R2, LlamaCloud, LLM key). Override `vars` in
+# wrangler.jsonc if pointing at a non-DeepSeek OpenAI-compatible LLM.
+wrangler secret put DATABASE_URL
+wrangler secret put R2_ACCOUNT_ID
+wrangler secret put R2_ACCESS_KEY_ID
+wrangler secret put R2_SECRET_ACCESS_KEY
+wrangler secret put LLAMA_CLOUD_API_KEY
+wrangler secret put INTERNAL_API_KEY
+wrangler secret put LLM_API_KEY
+
+# Deploy to agentic-healthcare-langgraph.<subdomain>.workers.dev
+wrangler deploy
+```
+
+FastEmbed model weights (bge-large-en-v1.5, ~1.3 GB) are downloaded on the
+first embedding call and cached inside the container until it sleeps. Bump
+`instance_type` to `standard-2` if ingestion OOMs on large PDFs.
+
 ### Running Evals
 
 ```bash

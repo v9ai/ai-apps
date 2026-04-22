@@ -374,7 +374,7 @@ export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "Database Design",
     content:
-      "PostgreSQL hosts 39 tables via Drizzle ORM. Core tables: users (Neon Auth), goals with parentGoalId for hierarchies, family_members with sharing (VIEWER/EDITOR/ADMIN), and family_member_characteristics (severity, risk tiers). Behavioral tracking: issues (8 categories, linked via issue_links and issue_contacts), habits + habit_logs (daily/weekly with target counts), behavior_observations (frequency/intensity), and affirmations (5 categories). Journaling: journal_entries (mood, tags, privacy), journal_analyses (emotional landscape, therapeutic insights), and discussion_guides (conversation starters, anticipated reactions). Communication: conversations + conversation_messages (per-issue AI chat), contacts, relationships, teacher_feedbacks, and contact_feedbacks. Evidence: therapy_research (12 domains, 7 study types, evidence level), research_embeddings (1024-dim pgvector), claim_cards (verdict: supported/contradicted/mixed/insufficient), and deep_issue_analyses (pattern clustering, family systems, root cause). Content: stories + text_segments, audio_assets, recommended_books, and therapeutic_questions. Infrastructure: generation_jobs (status RUNNING/SUCCEEDED/FAILED, type AUDIO/RESEARCH/QUESTIONS/LONGFORM/HABITS/BOOKS/ANALYSIS).",
+      "PostgreSQL hosts 39 tables via Drizzle ORM. Core tables: users (Neon Auth), goals with parentGoalId for hierarchies, family_members with sharing (EDITOR), and family_member_characteristics (severity, risk tiers). Behavioral tracking: issues (8 categories, linked via issue_links and issue_contacts), habits + habit_logs (daily/weekly with target counts), behavior_observations (frequency/intensity), and affirmations (5 categories). Journaling: journal_entries (mood, tags, privacy), journal_analyses (emotional landscape, therapeutic insights), and discussion_guides (conversation starters, anticipated reactions). Communication: conversations + conversation_messages (per-issue AI chat), contacts, relationships, teacher_feedbacks, and contact_feedbacks. Evidence: therapy_research (12 domains, 7 study types, evidence level), research_embeddings (1024-dim pgvector), claim_cards (verdict: supported/contradicted/mixed/insufficient), and deep_issue_analyses (pattern clustering, family systems, root cause). Content: stories + text_segments, audio_assets, recommended_books, and therapeutic_questions. Infrastructure: generation_jobs (status RUNNING/SUCCEEDED/FAILED, type AUDIO/RESEARCH/QUESTIONS/LONGFORM/HABITS/BOOKS/ANALYSIS).",
   },
   {
     heading: "Resilience & Error Handling",
@@ -384,7 +384,7 @@ export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "Security & Auth",
     content:
-      "Authentication via Neon Auth: authClient.useSession() provides user identity, and the AuthGate component protects all routes. Row-level security ensures users only access their own data unless shared via family_member_shares (VIEWER/EDITOR/ADMIN roles). GraphQL requests carry Bearer tokens validated in the Apollo context. Environment variables secure all API keys; Cloudflare R2 audio files are accessed via presigned URLs that expire after a short window.",
+      "Authentication via Neon Auth: authClient.useSession() provides user identity, and the AuthGate component protects all routes. Row-level security ensures users only access their own data unless shared via family_member_shares (EDITOR role). GraphQL requests carry Bearer tokens validated in the Apollo context. Environment variables secure all API keys; Cloudflare R2 audio files are accessed via presigned URLs that expire after a short window.",
   },
   {
     heading: "Deployment & Infrastructure",
@@ -426,7 +426,7 @@ export const platformFeatures: FeatureCategory[] = [
     category: "Family & Contacts",
     color: "var(--teal-9)",
     features: [
-      { name: "Family Members", description: "Profiles with age, gender, relationship, developmental tier. Sharing with VIEWER/EDITOR/ADMIN roles for collaborative caregiving", color: "var(--teal-9)" },
+      { name: "Family Members", description: "Profiles with age, gender, relationship, developmental tier. Sharing with EDITOR role for collaborative caregiving", color: "var(--teal-9)" },
       { name: "Contacts & Relationships", description: "Teachers, therapists, and other professionals linked to family members and issues. Generic relationship mapping system", color: "var(--teal-9)" },
       { name: "Contact Feedback", description: "Structured feedback collection from teachers and contacts. Automatic issue extraction from feedback text", color: "var(--teal-9)" },
     ],
