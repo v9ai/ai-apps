@@ -162,8 +162,10 @@ const COMMERCIAL_CONTEXT: &[&str] = &[
 /// Hard title exclusions — if any of these appear in the **title**, reject
 /// regardless of any other match. Covers the domains that showed up as
 /// residual false-positives: cyber, movie/music/news recommenders,
-/// tourism, wireless networking, smart city, energy grid.
+/// tourism, wireless networking, smart city, energy grid, and affiliate-
+/// marketing spam ("OTO", "honest review", etc.).
 const HARD_EXCLUDE_TITLE: &[&str] = &[
+    // Non-sales domains
     "cyber threat", "cyber-threat", "cyber attack", "cybersecurity",
     "intrusion detect", "malware", "phishing detect",
     "movie recommend", "music recommend", "film recommend",
@@ -180,6 +182,19 @@ const HARD_EXCLUDE_TITLE: &[&str] = &[
     "water network", "sewer",
     "mobility-aware", "cognitive network",
     "cyber physical",
+    // Affiliate-marketing / SEO spam (Crossref has DOIs like
+    // 10.55277/researchhub.* with titles like "ProductX OTO: Honest Review
+    // All 5 OTO Links + Upsell 2026"). Block on the tell-tale phrases.
+    " oto ", "oto:", " oto-", "oto links",
+    "honest review", "review all", "review of all",
+    "bonus pack", "bonuses", "coupon app",
+    "lifetime deal", "lifetime access", "agency license",
+];
+
+/// DOI prefix blocklist — junk registrars that host almost exclusively
+/// affiliate-marketing "review" posts disguised as research.
+const EXCLUDED_DOI_PREFIXES: &[&str] = &[
+    "10.55277/researchhub",
 ];
 
 /// Domain-exclusion strings (abstract-level). Hits here only reject when
@@ -216,8 +231,16 @@ fn is_relevant(p: &ResearchPaper) -> bool {
     let hay = format!(" {title} {abstract_text} ");
     let title_hay = format!(" {title} ");
 
+    // DOI prefix blocklist — drops junk "research hub" affiliate posts.
+    if let Some(doi) = p.doi.as_deref() {
+        let doi_lower = doi.to_lowercase();
+        if EXCLUDED_DOI_PREFIXES.iter().any(|p| doi_lower.contains(p)) {
+            return false;
+        }
+    }
+
     // Hard title exclusions: cyber, wireless, tourism, movie/music/news
-    // recommenders, smart city, energy grid, blockchain, etc.
+    // recommenders, smart city, energy grid, blockchain, affiliate spam.
     if contains_any(&title_hay, HARD_EXCLUDE_TITLE) {
         return false;
     }
