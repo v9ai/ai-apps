@@ -71,9 +71,9 @@ The pipeline produces three types of LlamaIndex nodes per upload:
 | Velocity Monitor | Per-day rate-of-change, range-aware direction interpretation | Giannini, Fest |
 | Trajectory Analyst | Qwen Plus classification with inline citations and risk tiers | All 8 papers |
 
-## Python Service (`langgraph/`)
+## Python Service (`langgraph/` dir)
 
-The `langgraph/` directory contains a **FastAPI** server that handles both the blood test upload pipeline and the RAG chat. All LLM and embedding operations run in Python via LlamaIndex.
+The `langgraph/` directory (name is historical — predates the move to a pure LlamaIndex stack) contains a **FastAPI** server that handles both the blood test upload pipeline and the RAG chat. All LLM and embedding operations run in Python via LlamaIndex.
 
 ### Modules
 
@@ -452,12 +452,6 @@ cd langgraph
 cp .env.example .env   # fill in DATABASE_URL, R2_*, DEEPSEEK_API_KEY
 uv sync
 uv run uvicorn chat_server:app --port 8001 --reload
-
-# Alternative: run the chat graph via the LangGraph CLI (Studio-compatible).
-# Exposes the compiled StateGraph from graph.py as assistant_id "chat"
-# through a LangGraph-standard HTTP server — upload/embed/search routes
-# remain on the FastAPI server above.
-uv run langgraph dev
 ```
 
 ### Database Migrations
