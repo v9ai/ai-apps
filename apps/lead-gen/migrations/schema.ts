@@ -107,39 +107,6 @@ export const skillAliases = sqliteTable("skill_aliases", {
 	tag: text().notNull(),
 });
 
-export const mastraScorers = sqliteTable("mastra_scorers", {
-	id: text().primaryKey().notNull(),
-	scorerId: text(),
-	traceId: text(),
-	spanId: text(),
-	runId: text(),
-	scorer: text(),
-	preprocessStepResult: text(),
-	extractStepResult: text(),
-	analyzeStepResult: text(),
-	score: real(),
-	reason: text(),
-	metadata: text(),
-	preprocessPrompt: text(),
-	extractPrompt: text(),
-	generateScorePrompt: text(),
-	generateReasonPrompt: text(),
-	analyzePrompt: text(),
-	reasonPrompt: text(),
-	input: text(),
-	output: text(),
-	additionalContext: text(),
-	requestContext: text(),
-	entityType: text(),
-	entity: text(),
-	entityId: text(),
-	source: text(),
-	resourceId: text(),
-	threadId: text(),
-	createdAt: text(),
-	updatedAt: text(),
-});
-
 export const skillsTaxonomy = sqliteTable("skills_taxonomy", {
 	id: numeric().primaryKey(),
 	vectorId: text("vector_id").notNull(),
@@ -150,15 +117,6 @@ export const skillsTaxonomy = sqliteTable("skills_taxonomy", {
 	// @ts-expect-error — generated migration: vector index has no column in Drizzle schema
 	index("skills_taxonomy_vector_idx").on(),
 ]);
-
-export const mastraThreads = sqliteTable("mastra_threads", {
-	id: text().primaryKey().notNull(),
-	resourceId: text().notNull(),
-	title: text().notNull(),
-	metadata: text(),
-	createdAt: text().notNull(),
-	updatedAt: text().notNull(),
-});
 
 export const skillsTaxonomyVectorIdxShadow = sqliteTable("skills_taxonomy_vector_idx_shadow", {
 	indexKey: integer("index_key").primaryKey(),
