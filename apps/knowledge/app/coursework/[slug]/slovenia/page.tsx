@@ -17,7 +17,6 @@ import {
   ArrowLeftIcon,
   CalendarIcon,
   ClockIcon,
-  PersonIcon,
   StarIcon,
   InfoCircledIcon,
 } from "@radix-ui/react-icons";
@@ -51,11 +50,6 @@ const TEAM_SLOVENIA = [
   { name: "Iustin Tuca" },
   { name: "Elina Pantelimon" },
 ];
-
-const RSVP = {
-  children: ["Bogdan Nicolai"],
-  parents: ["Elena Nicolai", "Vadim Nicolai"],
-};
 
 const TODOS = [
   "Luați legătura cu colegii din echipă (Iunia, Iustin, Elina) și organizați o întâlnire (puteți solicita un spațiu în școală, cu anunț prealabil).",
@@ -179,35 +173,6 @@ export default function SloveniaEventPage() {
               )}
             </Flex>
           ))}
-        </Flex>
-      </Card>
-
-      {/* RSVP confirmations */}
-      <Card mb="5">
-        <Heading size="4" mb="3">
-          RSVP confirmat
-        </Heading>
-        <Flex direction="column" gap="3">
-          <Box>
-            <Text size="2" color="gray" weight="medium" as="div" mb="1">
-              Copii ({RSVP.children.length})
-            </Text>
-            {RSVP.children.map((n) => (
-              <Flex key={n} align="center" gap="2">
-                <PersonIcon /> <Text size="2">{n}</Text>
-              </Flex>
-            ))}
-          </Box>
-          <Box>
-            <Text size="2" color="gray" weight="medium" as="div" mb="1">
-              Părinți ({RSVP.parents.length})
-            </Text>
-            {RSVP.parents.map((n) => (
-              <Flex key={n} align="center" gap="2">
-                <PersonIcon /> <Text size="2">{n}</Text>
-              </Flex>
-            ))}
-          </Box>
         </Flex>
       </Card>
 
