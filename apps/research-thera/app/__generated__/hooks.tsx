@@ -1752,6 +1752,7 @@ export type Query = {
   affirmations: Array<Affirmation>;
   allIssues: Array<Issue>;
   allNotes: Array<Note>;
+  allRecommendedBooks: Array<RecommendedBook>;
   allStories: Array<Story>;
   allTags: Array<Scalars['String']['output']>;
   audioFromR2?: Maybe<AudioFromR2Result>;
@@ -1805,6 +1806,11 @@ export type QueryAffirmationArgs = {
 
 export type QueryAffirmationsArgs = {
   familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type QueryAllRecommendedBooksArgs = {
+  category?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2801,6 +2807,13 @@ export type GetAllNotesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetAllNotesQuery = { __typename?: 'Query', allNotes: Array<{ __typename?: 'Note', id: number, entityId: number, entityType: string, createdBy: string, noteType?: string | null, slug?: string | null, title?: string | null, content: string, tags?: Array<string> | null, createdAt: string, updatedAt: string, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null, status: string } | null }> };
+
+export type GetAllRecommendedBooksQueryVariables = Exact<{
+  category?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GetAllRecommendedBooksQuery = { __typename?: 'Query', allRecommendedBooks: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string, createdAt: string, updatedAt: string }> };
 
 export type GetAllStoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5985,6 +5998,61 @@ export type GetAllNotesQueryHookResult = ReturnType<typeof useGetAllNotesQuery>;
 export type GetAllNotesLazyQueryHookResult = ReturnType<typeof useGetAllNotesLazyQuery>;
 export type GetAllNotesSuspenseQueryHookResult = ReturnType<typeof useGetAllNotesSuspenseQuery>;
 export type GetAllNotesQueryResult = Apollo.QueryResult<GetAllNotesQuery, GetAllNotesQueryVariables>;
+export const GetAllRecommendedBooksDocument = gql`
+    query GetAllRecommendedBooks($category: String) {
+  allRecommendedBooks(category: $category) {
+    id
+    goalId
+    title
+    authors
+    year
+    isbn
+    description
+    whyRecommended
+    category
+    amazonUrl
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetAllRecommendedBooksQuery__
+ *
+ * To run a query within a React component, call `useGetAllRecommendedBooksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAllRecommendedBooksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAllRecommendedBooksQuery({
+ *   variables: {
+ *      category: // value for 'category'
+ *   },
+ * });
+ */
+export function useGetAllRecommendedBooksQuery(baseOptions?: Apollo.QueryHookOptions<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>(GetAllRecommendedBooksDocument, options);
+      }
+export function useGetAllRecommendedBooksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>(GetAllRecommendedBooksDocument, options);
+        }
+// @ts-ignore
+export function useGetAllRecommendedBooksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>;
+export function useGetAllRecommendedBooksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllRecommendedBooksQuery | undefined, GetAllRecommendedBooksQueryVariables>;
+export function useGetAllRecommendedBooksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>(GetAllRecommendedBooksDocument, options);
+        }
+export type GetAllRecommendedBooksQueryHookResult = ReturnType<typeof useGetAllRecommendedBooksQuery>;
+export type GetAllRecommendedBooksLazyQueryHookResult = ReturnType<typeof useGetAllRecommendedBooksLazyQuery>;
+export type GetAllRecommendedBooksSuspenseQueryHookResult = ReturnType<typeof useGetAllRecommendedBooksSuspenseQuery>;
+export type GetAllRecommendedBooksQueryResult = Apollo.QueryResult<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>;
 export const GetAllStoriesDocument = gql`
     query GetAllStories {
   allStories {

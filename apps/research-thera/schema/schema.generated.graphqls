@@ -1161,6 +1161,7 @@ type Query {
   affirmations(familyMemberId: Int!): [Affirmation!]!
   allIssues: [Issue!]!
   allNotes: [Note!]!
+  allRecommendedBooks(category: String): [RecommendedBook!]!
   allStories: [Story!]!
   allTags: [String!]!
   audioFromR2(key: String!): AudioFromR2Result

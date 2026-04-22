@@ -1735,6 +1735,7 @@ export type Query = {
   affirmations: Array<Affirmation>;
   allIssues: Array<Issue>;
   allNotes: Array<Note>;
+  allRecommendedBooks: Array<RecommendedBook>;
   allStories: Array<Story>;
   allTags: Array<Scalars['String']['output']>;
   audioFromR2?: Maybe<AudioFromR2Result>;
@@ -1788,6 +1789,11 @@ export type QueryaffirmationArgs = {
 
 export type QueryaffirmationsArgs = {
   familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type QueryallRecommendedBooksArgs = {
+  category?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3621,6 +3627,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   affirmations?: Resolver<Array<ResolversTypes['Affirmation']>, ParentType, ContextType, RequireFields<QueryaffirmationsArgs, 'familyMemberId'>>;
   allIssues?: Resolver<Array<ResolversTypes['Issue']>, ParentType, ContextType>;
   allNotes?: Resolver<Array<ResolversTypes['Note']>, ParentType, ContextType>;
+  allRecommendedBooks?: Resolver<Array<ResolversTypes['RecommendedBook']>, ParentType, ContextType, Partial<QueryallRecommendedBooksArgs>>;
   allStories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType>;
   allTags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   audioFromR2?: Resolver<Maybe<ResolversTypes['AudioFromR2Result']>, ParentType, ContextType, RequireFields<QueryaudioFromR2Args, 'key'>>;
