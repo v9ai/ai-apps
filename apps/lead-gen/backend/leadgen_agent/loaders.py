@@ -144,28 +144,72 @@ async def _pick_strategy(client: httpx.AsyncClient, url: str) -> str:
     return "recursive"
 
 
-async def _load_sitemap(url: str) -> list[Any]:
-    from langchain_community.document_loaders.sitemap import SitemapLoader
+async def _pick_sitemap_urls(
+    client: httpx.AsyncClient, sitemap_url: str, domain_re: re.Pattern[str]
+) -> list[str]:
+    """Parse sitemap.xml, return up to MAX_PAGES_PER_COMPETITOR same-domain
+    URLs. If the root is a sitemap index, follows only the FIRST sub-sitemap
+    — `langchain_community.SitemapLoader` recursively fetches every
+    sub-sitemap (30+ for apollo.io) which takes 10× longer than our entire
+    budget for a single site."""
+    try:
+        r = await client.get(sitemap_url)
+        if r.status_code != 200 or not r.text.strip():
+            return []
+        root = ET.fromstring(r.text)
+    except (httpx.HTTPError, ET.ParseError):
+        return []
 
-    domain = _same_domain(url)
+    urls: list[str] = []
+
+    def _collect(elem: ET.Element) -> None:
+        for loc in elem.iter(f"{SITEMAP_NS}loc"):
+            u = (loc.text or "").strip()
+            if u and domain_re.match(u):
+                urls.append(u)
+                if len(urls) >= MAX_PAGES_PER_COMPETITOR:
+                    return
+
+    if root.tag == f"{SITEMAP_NS}sitemapindex":
+        first = root.find(f"{SITEMAP_NS}sitemap/{SITEMAP_NS}loc")
+        if first is not None and first.text:
+            try:
+                sub = await client.get(first.text.strip())
+                if sub.status_code == 200:
+                    _collect(ET.fromstring(sub.text))
+            except (httpx.HTTPError, ET.ParseError):
+                pass
+    else:
+        _collect(root)
+
+    return urls[:MAX_PAGES_PER_COMPETITOR]
+
+
+async def _load_sitemap(url: str) -> list[Any]:
+    from langchain_community.document_loaders import WebBaseLoader
+
     scheme = urlparse(url).scheme or "https"
-    # re.escape ensures dots in the domain are literal, not wildcards.
-    domain_re = re.escape(domain)
-    # blocksize + blocknum cap the fetch inside SitemapLoader itself.
-    # Without them, large sitemaps (apollo.io: 10k+ URLs) get fully scraped
-    # at requests_per_second=2 before any post-slice runs — minutes per site.
-    # header_template must be passed at init — setting it post-init is too
-    # late to silence the "USER_AGENT env var not set" warning that
-    # WebBaseLoader (SitemapLoader's parent) emits during construction.
-    loader = SitemapLoader(
-        web_path=urljoin(url, "/sitemap.xml"),
-        filter_urls=[rf"^{scheme}://(www\.)?{domain_re}"],
+    domain_re = re.compile(rf"^{scheme}://(www\.)?{re.escape(_same_domain(url))}")
+    sitemap_url = urljoin(url, "/sitemap.xml")
+
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(10.0),
+        headers={"User-Agent": USER_AGENT},
+        follow_redirects=True,
+    ) as client:
+        urls = await _pick_sitemap_urls(client, sitemap_url, domain_re)
+
+    if not urls:
+        return []
+
+    # Hand the bounded URL list to WebBaseLoader (one of the five loaders) —
+    # no further network fan-out, no index recursion.
+    loader = WebBaseLoader(
+        web_paths=urls,
         requests_per_second=2,
-        blocksize=MAX_PAGES_PER_COMPETITOR,
-        blocknum=0,
         header_template={"User-Agent": USER_AGENT},
+        continue_on_failure=True,
     )
-    loader.requests_kwargs = {"timeout": 10}
     docs = await asyncio.to_thread(loader.load)
     return docs[:MAX_PAGES_PER_COMPETITOR]
 

@@ -322,10 +322,16 @@ apps/knowledge/
 ├── backend/                # Python FastAPI + LangGraph on Cloudflare Containers
 │   ├── wrangler.jsonc      # Worker + KnowledgeContainer (standard-1 on :7860)
 │   ├── Dockerfile          # python:3.12-slim, uvicorn --workers 1
-│   ├── requirements.txt    # fastapi, langgraph, langgraph-checkpoint-postgres, psycopg[binary]
-│   ├── app.py              # FastAPI harness — /health + /runs/wait, bearer-token middleware
+│   ├── pyproject.toml      # pytest config (asyncio_mode=auto)
+│   ├── requirements.txt    # runtime: fastapi, langgraph, langgraph-checkpoint-postgres, psycopg[binary]
+│   ├── requirements-dev.txt # adds pytest, pytest-asyncio, httpx for local test runs
+│   ├── app.py              # FastAPI harness — create_app() factory, /health + /runs/wait, bearer-token middleware
 │   ├── src/index.js        # Cloudflare Worker proxying to KnowledgeContainer
 │   ├── package.json        # wrangler deploy script
+│   ├── tests/              # pytest suite — no Postgres, no LLM, no network
+│   │   ├── conftest.py             # StubGraph fixtures + TestClient wiring (create_app with use_prod_lifespan=False)
+│   │   ├── test_app.py             # /health, bearer auth gate, routing, 404s, graph dispatch
+│   │   └── test_helpers.py         # Pure-function tests: check_quality, _normalize_expert, _category_id, _format_course_info, _after_revise
 │   └── knowledge_agent/
 │       ├── llm.py                       # make_llm() + ainvoke_json() shared helpers
 │       ├── state.py                     # TypedDict schemas for all 5 graph states
@@ -347,6 +353,7 @@ apps/knowledge/
 ├── scripts/scrape-udemy-courses.ts # Playwright scraper — deep-scrapes Udemy topic pages into external_courses
 ├── scripts/generate-article.ts     # Article generator CLI
 ├── scripts/review-courses.ts       # 10-expert course reviewer CLI
+├── scripts/test-langgraph-e2e.ts   # E2E integration test against deployed worker (routing/auth/404; --live adds one DeepSeek call)
 ├── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
 └── sql/add_course_reviews.sql  # course_reviews table (10-expert scores, verdict, aggregate)
 ```
@@ -377,7 +384,24 @@ pnpm review:courses:dry                         # preview without calling the pi
 pnpm backend:dev                                # uvicorn --reload on :7860 (needs .env in backend/)
 pnpm backend:deploy                             # wrangler deploy from backend/
 pnpm backend:tail                               # live wrangler tail
+
+# Tests — two layers:
+pnpm test:backend                               # pytest (unit + FastAPI integration, stubbed graphs; no LLM, no DB)
+pnpm test:e2e                                   # smoke the deployed worker (routing/auth/404; no LLM cost)
+pnpm test:e2e:live                              # + one real DeepSeek chat call (~$0.001)
 ```
+
+### First-time test setup
+
+The pytest suite uses an isolated venv under `backend/.venv`. Create it once with Python 3.12:
+
+```bash
+cd backend
+python3.12 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+```
+
+After that `pnpm test:backend` runs against it. The venv is `.gitignore`d.
 
 ### LangGraph backend (`backend/`)
 

@@ -39,6 +39,9 @@ yarn-error.log*
 # wrangler
 .wrangler/
 
+# mastra (removed; kept to prevent re-committing stray build output)
+.mastra/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
