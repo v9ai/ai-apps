@@ -22,7 +22,7 @@ graph TD
     end
 
     subgraph Next.js["Next.js App on Vercel (Port 3006 dev)"]
-        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses\n/coursework\n/coursework/[slug]\n/anthropic"]
+        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses\n/coursework\n/coursework/[slug]\n/coursework/[slug]/slovenia\n/anthropic"]
         API["API Routes\n/api/chat (proxy)\n/api/applications/[id]/prep (proxy)\n/api/applications/[id]/memorize/generate (proxy)\n/api/research\n/api/course-review/[id]\n/api/learners\n/api/coursework"]
         Client["src/lib/langgraph-client.ts\nPOST /runs/wait"]
         SA["Server Actions\nsearch · analytics"]
@@ -307,6 +307,7 @@ apps/knowledge/
 │   ├── api/course-review/[id]/  # GET fetch review · POST upsert AI review
 │   ├── coursework/page.tsx     # All learners + files (cards UI)
 │   ├── coursework/[slug]/page.tsx  # Per-learner view; slug = lowercased/hyphenated name
+│   ├── coursework/[slug]/slovenia/page.tsx  # Static event page: Ziua Europei — standul Slovenia (echipa Bogdan)
 │   ├── api/learners/       # CRUD for managed learners
 │   ├── api/coursework/     # GET list coursework files
 │   └── api/coursework/upload/  # FormData upload to Cloudflare R2
