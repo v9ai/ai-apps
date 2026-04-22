@@ -6,17 +6,20 @@ export const familyMember: NonNullable<QueryResolvers['familyMember']> = async (
   args,
   ctx,
 ) => {
-  const userEmail = ctx.userEmail;
-  if (!userEmail) {
+  const userId = ctx.userId;
+  if (!userId) {
     throw new Error("Authentication required");
   }
 
   let member;
 
   if (args.slug) {
-    member = await db.getFamilyMemberBySlug(args.slug, userEmail);
+    // Slug path is already user-scoped in the helper.
+    member = await db.getFamilyMemberBySlug(args.slug, userId);
   } else if (args.id) {
+    // ID path leaks PII without an explicit ownership check.
     member = await db.getFamilyMember(args.id);
+    if (!member || member.userId !== userId) return null;
   } else {
     throw new Error("Either id or slug must be provided");
   }

@@ -2,12 +2,16 @@ import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
 
 export const updateFamilyMember: NonNullable<MutationResolvers['updateFamilyMember']> = async (_parent, args, ctx) => {
-  const userEmail = ctx.userEmail;
-  if (!userEmail) {
+  const userId = ctx.userId;
+  if (!userId) {
     throw new Error("Authentication required");
   }
 
-  await db.updateFamilyMember(args.id, {
+  // Ownership check: verifies the family_member exists and belongs to the
+  // caller before running the UPDATE (which itself is also user-scoped).
+  await db.assertOwnsFamilyMember(args.id, userId);
+
+  await db.updateFamilyMember(args.id, userId, {
     firstName: args.input.firstName ?? undefined,
     name: args.input.name,
     ageYears: args.input.ageYears,

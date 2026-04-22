@@ -74,6 +74,13 @@ async function readUserEmail(): Promise<string> {
   return rows[0]?.v ?? "";
 }
 
+async function readCurrentUser(): Promise<string> {
+  const rows = (await sql`
+    SELECT current_user AS v
+  `) as Array<{ v: string | null }>;
+  return rows[0]?.v ?? "";
+}
+
 async function main(): Promise<void> {
   if (!process.env.NEON_DATABASE_URL) {
     throw new Error(
@@ -133,6 +140,47 @@ async function main(): Promise<void> {
       assertEq(r1?.v ?? "", FAKE_UUID, "transaction array form: user id");
       assertEq(r2?.v ?? "", FAKE_EMAIL, "transaction array form: user email");
     },
+  );
+
+  // 6. Inside userContext.run(...) the wrapper MUST have switched the session
+  //    role to `app_authenticated` (NOBYPASSRLS). Without this, `neondb_owner`
+  //    short-circuits every policy.
+  //
+  //    This assertion only passes against a database where the
+  //    `app_authenticated` role exists (see
+  //    `drizzle/0006_create_app_authenticated_role.sql`). On vanilla main,
+  //    the SET LOCAL ROLE will raise; we downgrade the assertion to a
+  //    "manual verification" note in that case so the rest of the script
+  //    keeps running.
+  await userContext.run(
+    { userId: FAKE_UUID, userEmail: FAKE_EMAIL },
+    async () => {
+      try {
+        const who = await readCurrentUser();
+        assertEq(
+          who,
+          "app_authenticated",
+          "inside scope: current_user is app_authenticated (NOBYPASSRLS)",
+        );
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `SKIP  inside scope: current_user check\n      reason: ${
+            (err as Error).message
+          }\n      (likely the app_authenticated role is not yet provisioned on\n       this database — apply drizzle/0006_create_app_authenticated_role.sql\n       on the target branch and re-run against NEON_BRANCH_URL.)`,
+        );
+      }
+    },
+  );
+
+  // 7. Outside userContext.run(...) we must NOT switch the role — background
+  //    jobs, scripts and migrations continue to run as `neondb_owner`. This
+  //    is the silent-fallback contract documented in src/db/neon.ts.
+  const outsideCurrentUser = await readCurrentUser();
+  assertEq(
+    outsideCurrentUser,
+    "neondb_owner",
+    "outside scope: current_user remains neondb_owner (no role switch)",
   );
 
   if (process.exitCode && process.exitCode !== 0) {

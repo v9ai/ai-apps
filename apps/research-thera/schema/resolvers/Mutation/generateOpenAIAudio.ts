@@ -1,4 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
+import { GraphQLError } from "graphql";
 import { sql as neonSql } from "@/src/db/neon";
 import { runGraphAndWait } from "@/src/lib/langgraph-client";
 
@@ -48,12 +49,17 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
   // Look up story language from DB
   let storyLanguage = "English";
   if (storyId) {
-    const storyRows = await neonSql`SELECT goal_id, language FROM stories WHERE id = ${storyId}`;
-    if (storyRows.length > 0) {
-      storyLanguage = (storyRows[0].language as string) || "English";
-      const goalId = (storyRows[0].goal_id as number | undefined) ?? null;
-      await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userId}, 'AUDIO', ${goalId}, ${storyId}, 'RUNNING', 0)`;
+    const storyRows = await neonSql`
+      SELECT goal_id, language FROM stories
+      WHERE id = ${storyId} AND (user_id = ${userId} OR user_id IS NULL)`;
+    if (storyRows.length === 0) {
+      throw new GraphQLError("Not found", {
+        extensions: { code: "NOT_FOUND" },
+      });
     }
+    storyLanguage = (storyRows[0].language as string) || "English";
+    const goalId = (storyRows[0].goal_id as number | undefined) ?? null;
+    await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userId}, 'AUDIO', ${goalId}, ${storyId}, 'RUNNING', 0)`;
   }
 
   console.log(`[TTS] dispatching LangGraph job=${jobId} storyId=${storyId} language=${storyLanguage} textLen=${text.length}`);

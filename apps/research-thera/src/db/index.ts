@@ -1,5 +1,6 @@
 import { sql as neonSql } from "./neon";
 import { safeJsonParse } from "../lib/safe-json";
+import { GraphQLError } from "graphql";
 
 /**
  * Convert a SQL string with `?` placeholders to PostgreSQL `$N` style,
@@ -157,6 +158,7 @@ export async function createFamilyMember(params: {
 
 export async function updateFamilyMember(
   id: number,
+  userId: string,
   params: {
     firstName?: string;
     name?: string | null;
@@ -188,9 +190,29 @@ export async function updateFamilyMember(
 
   sets.push("updated_at = NOW()");
   args.push(id);
+  args.push(userId);
 
-  const [query, queryParams] = p(`UPDATE family_members SET ${sets.join(", ")} WHERE id = ?`, args);
+  const [query, queryParams] = p(`UPDATE family_members SET ${sets.join(", ")} WHERE id = ? AND user_id = ?`, args);
   await neonSql(query, queryParams);
+}
+
+/**
+ * Verify that the given family_member row belongs to the caller.
+ * Throws GraphQLError NOT_FOUND if the row doesn't exist or is owned by
+ * someone else. Returns the row on success.
+ *
+ * Use this at the top of any resolver that accepts a `familyMemberId`
+ * argument before performing writes or invoking expensive downstream
+ * work (LLM, LangGraph, etc.).
+ */
+export async function assertOwnsFamilyMember(id: number, userId: string) {
+  const fm = await getFamilyMember(id);
+  if (!fm || fm.userId !== userId) {
+    throw new GraphQLError("Family member not found", {
+      extensions: { code: "NOT_FOUND" },
+    });
+  }
+  return fm;
 }
 
 export async function deleteFamilyMember(id: number): Promise<boolean> {
@@ -3262,6 +3284,7 @@ export const db = {
   getFamilyMemberBySlug,
   createFamilyMember,
   updateFamilyMember,
+  assertOwnsFamilyMember,
   deleteFamilyMember,
   shareFamilyMember,
   unshareFamilyMember,

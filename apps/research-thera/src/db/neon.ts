@@ -283,7 +283,12 @@ export async function withUser<T>(
 
   // Use rawSql (not the wrapped sql) so we don't double-wrap the transaction.
   const statements = build(rawSql as unknown as NeonQueryFunction<false, false>);
+  // Mirror the prelude the proxy `sql` emits: switch to the NOBYPASSRLS role
+  // first, then set the session vars. `SET LOCAL ROLE` can't be
+  // parameter-bound, and the role name is a compile-time constant so there is
+  // no injection surface.
   const prelude = [
+    rawSql(`SET LOCAL ROLE ${RLS_APP_ROLE}`, []),
     rawSql`SELECT set_config('app.current_user_id',    ${userId},            true)`,
     rawSql`SELECT set_config('app.current_user_email', ${userEmail ?? ""},   true)`,
   ];

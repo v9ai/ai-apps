@@ -1,4 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
+import { GraphQLError } from "graphql";
 import { db } from "@/src/db";
 
 export const stories: NonNullable<QueryResolvers['stories']> = async (
@@ -6,9 +7,19 @@ export const stories: NonNullable<QueryResolvers['stories']> = async (
   args,
   ctx,
 ) => {
-  const userEmail = ctx.userEmail;
-  if (!userEmail) {
-    throw new Error("Authentication required");
+  const userId = ctx.userId;
+  if (!userId) {
+    throw new GraphQLError("Not found", {
+      extensions: { code: "NOT_FOUND" },
+    });
+  }
+
+  try {
+    await db.getGoal(args.goalId, userId);
+  } catch {
+    throw new GraphQLError("Not found", {
+      extensions: { code: "NOT_FOUND" },
+    });
   }
 
   return db.listStories(args.goalId) as any;

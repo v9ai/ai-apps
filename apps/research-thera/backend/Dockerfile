@@ -8,7 +8,9 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HF_HOME=/app/.cache/huggingface \
+    SENTENCE_TRANSFORMERS_HOME=/app/.cache/huggingface/sentence-transformers
 
 WORKDIR /app
 
@@ -18,6 +20,14 @@ RUN apt-get update \
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Pre-download the sentence-transformers models used by research_client so
+# cold-start requests don't pay the model download cost.
+RUN python - <<'PY'
+from sentence_transformers import SentenceTransformer, CrossEncoder
+SentenceTransformer("all-MiniLM-L6-v2")
+CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+PY
 
 COPY app.py ./
 COPY research_agent ./research_agent
