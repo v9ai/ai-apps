@@ -22,16 +22,27 @@ from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from research_agent.books_graph import graph as books_graph
+from research_agent.deep_analysis_graph import graph as deep_analysis_graph
+from research_agent.generate_therapy_research_graph import (
+    graph as generate_therapy_research_graph,
+)
+from research_agent.graph import graph as research_graph
+from research_agent.habits_graph import graph as habits_graph
+from research_agent.parent_advice_graph import graph as parent_advice_graph
+from research_agent.story_graph import graph as story_graph
+from research_agent.tts_graph import graph as tts_graph
 
 log = logging.getLogger("research_thera_agent")
 
-# Only graphs whose deps ship in the container image are registered here.
-# `books` is self-contained (psycopg + openai). The research / story / tts /
-# deep_analysis / parent_advice / habits graphs pull in `research-client[ml]`
-# (torch, scipy, tokenizers) and the shared pypackages/deepseek module — add
-# them here once the image is extended to vendor them.
 GRAPHS: dict[str, Any] = {
     "books": books_graph,
+    "deep_analysis": deep_analysis_graph,
+    "generate_therapy_research": generate_therapy_research_graph,
+    "habits": habits_graph,
+    "parent_advice": parent_advice_graph,
+    "research": research_graph,
+    "story": story_graph,
+    "tts": tts_graph,
 }
 
 _PUBLIC_PATHS = frozenset({"/health", "/ok"})
