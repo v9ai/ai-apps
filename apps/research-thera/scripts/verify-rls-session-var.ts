@@ -12,12 +12,17 @@
  *
  * Usage:
  *
- *   # Point at the RLS branch explicitly:
- *   NEON_BRANCH_URL="postgres://<role>:<pw>@<host>/<db>?sslmode=require" \
- *     pnpm tsx scripts/verify-rls-session-var.ts
+ *   # Reuse whatever NEON_DATABASE_URL is in .env.local:
+ *   pnpm tsx --env-file=.env.local scripts/verify-rls-session-var.ts
  *
- *   # Or just reuse whatever NEON_DATABASE_URL is already pointing at:
- *   pnpm tsx scripts/verify-rls-session-var.ts
+ *   # Or point at the RLS branch explicitly:
+ *   NEON_BRANCH_URL="postgres://<role>:<pw>@<host>/<db>?sslmode=require" \
+ *     pnpm tsx --env-file=.env.local scripts/verify-rls-session-var.ts
+ *
+ * NOTE: `--env-file` is required (rather than `dotenv/config` at the top of the
+ * script) because `src/db/neon.ts` calls `neon(process.env.NEON_DATABASE_URL)`
+ * eagerly at module load, which runs before any import-body `loadEnv()` can
+ * populate the env.
  *
  * Exit code is 0 on success, 1 on any assertion failure.
  */

@@ -63,12 +63,12 @@ class GraphChatResponse(BaseModel):
     citations: list[str]
 
 
-# ── Primary endpoint: LangGraph agentic pipeline ────────────────────────
+# ── Primary endpoint: LlamaIndex clinical chat pipeline ────────────────────
 
 
 @app.post("/chat")
 async def chat(req: ChatRequest) -> GraphChatResponse:
-    """Run the full LangGraph clinical intelligence pipeline."""
+    """Run the full LlamaIndex clinical intelligence chat pipeline."""
     if not req.messages:
         return GraphChatResponse(
             answer="Please provide a message to get started.",
@@ -82,7 +82,7 @@ async def chat(req: ChatRequest) -> GraphChatResponse:
     last_message = req.messages[-1].get("content", "")
     history = req.messages[:-1] if len(req.messages) > 1 else []
 
-    result = await run_graph(
+    result = await run_chat(
         query=last_message,
         user_id=req.user_id,
         chat_history=history,

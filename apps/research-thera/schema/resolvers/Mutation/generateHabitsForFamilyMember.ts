@@ -1,6 +1,6 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
-import { urlForGraph } from "@/src/lib/langgraph-client";
+import { runGraphAndWait } from "@/src/lib/langgraph-client";
 import { isRoGoal } from "@/src/lib/ro";
 
 export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['generateHabitsForFamilyMember']> = async (_parent, args, ctx) => {
@@ -11,27 +11,14 @@ export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['gener
 
   const isRo = await isRoGoal({ userEmail, familyMemberId });
 
-  const response = await fetch(`${urlForGraph("habits")}/runs/wait`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(180_000),
-    body: JSON.stringify({
-      assistant_id: "habits",
-      input: {
-        family_member_id: familyMemberId,
-        user_email: userEmail,
-        count,
-        language: isRo ? "ro" : "en",
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(`LangGraph habits failed (${response.status}): ${text}`);
-  }
-
-  const result = await response.json();
+  const result = (await runGraphAndWait("habits", {
+    input: {
+      family_member_id: familyMemberId,
+      user_email: userEmail,
+      count,
+      language: isRo ? "ro" : "en",
+    },
+  })) as { error?: string; habits?: unknown[] };
 
   if (result.error) {
     throw new Error(result.error);

@@ -263,7 +263,7 @@ export const pipelineAgents: PipelineAgent[] = [
 // ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "Users upload blood test PDFs via the UploadForm component, which are stored in Cloudflare R2 and processed through a LlamaIndex IngestionPipeline with a custom BloodTestNodeParser. The pipeline produces 3 node types per test\u2014test-level, per-marker, and health-state with 7 derived ratios\u2014all embedded locally via BAAI/bge-large-en-v1.5 (native 1024-dim, ONNX Runtime) and stored in 7 paired pgvector tables. For AI Q&A, a 4-node LangGraph StateGraph (triage \u2192 retrieve \u2192 synthesize \u2192 guard) classifies intent into 8 categories, routes to intent-specific pgvector searches (hybrid for markers, fan-out for general health), generates a clinical answer, and audits it against 5 safety rules before delivery.";
+  "Users upload blood test PDFs via the UploadForm component, which are stored in Cloudflare R2 and processed through a LlamaIndex IngestionPipeline with a custom BloodTestNodeParser. The pipeline produces 3 node types per test\u2014test-level, per-marker, and health-state with 7 derived ratios\u2014all embedded locally via BAAI/bge-large-en-v1.5 (native 1024-dim, ONNX Runtime) and stored in 7 paired pgvector tables. For AI Q&A, a LlamaIndex ContextChatEngine wraps an intent-based selector (8 categories) over per-intent query engines (hybrid retriever for markers, composite fan-out for general health), with a ClinicalRelevancePostprocessor reranker and a custom safety-guard wrapper that audits every response against 5 safety rules before delivery.";
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
