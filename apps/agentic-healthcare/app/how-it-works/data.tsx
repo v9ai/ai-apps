@@ -211,7 +211,7 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "LlamaParse PDF-to-Markdown Conversion",
-    description: "LlamaParse is called directly (not through LlamaIndex or LangGraph) to convert uploaded PDFs into structured markdown. The PDF bytes are written to a temp file, passed to LlamaParse's cloud API with result_type='markdown', then deleted. The returned markdown is processed by _markdown_to_elements() which uses regex to extract markdown tables and converts them to HTML via _md_table_to_html(). The result is a list of element dicts with type 'Table' (containing text_as_html) or 'NarrativeText'.",
+    description: "LlamaParse is called directly (not through the LlamaIndex IngestionPipeline) to convert uploaded PDFs into structured markdown. The PDF bytes are written to a temp file, passed to LlamaParse's cloud API with result_type='markdown', then deleted. The returned markdown is processed by _markdown_to_elements() which uses regex to extract markdown tables and converts them to HTML via _md_table_to_html(). The result is a list of element dicts with type 'Table' (containing text_as_html) or 'NarrativeText'.",
     researchBasis: "LlamaParse cloud API — standalone invocation, decoupled from LlamaIndex",
     codeSnippet: "# langgraph/routes/upload.py — _partition_pdf()\nfrom llama_parse import LlamaParse\n\nparser = LlamaParse(\n    api_key=settings.llama_cloud_api_key,\n    result_type=\"markdown\",\n)\ndocs = parser.load_data(tmp_path)\nfor doc in docs:\n    elements.extend(_markdown_to_elements(doc.text))",
     dataFlow: "PDF bytes → temp file → LlamaParse cloud API → markdown → _markdown_to_elements() → element dicts",
