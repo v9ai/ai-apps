@@ -499,6 +499,8 @@ enum JobType {
   RESEARCH
   QUESTIONS
   LONGFORM
+  DEEP_ANALYSIS
+  RECOMMENDED_BOOKS
 }
 
 enum JobStatus {

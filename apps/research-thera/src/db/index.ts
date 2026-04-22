@@ -1458,11 +1458,13 @@ export async function listJournalEntries(
     tag?: string;
     fromDate?: string;
     toDate?: string;
+    includeVault?: boolean;
   },
 ) {
   let sqlStr = `SELECT * FROM journal_entries WHERE user_id = ?`;
   const args: any[] = [userId];
 
+  if (!opts?.includeVault) { sqlStr += ` AND is_vault = 0`; }
   if (opts?.familyMemberId) { sqlStr += ` AND family_member_id = ?`; args.push(opts.familyMemberId); }
   if (opts?.goalId) { sqlStr += ` AND goal_id = ?`; args.push(opts.goalId); }
   if (opts?.mood) { sqlStr += ` AND mood = ?`; args.push(opts.mood); }
@@ -1485,6 +1487,7 @@ export async function listJournalEntries(
     tags: safeJsonParse(row.tags as string, []),
     goalId: (row.goal_id as number) || null,
     isPrivate: (row.is_private as number) === 1,
+    isVault: (row.is_vault as number) === 1,
     entryDate: row.entry_date as string,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
@@ -1506,6 +1509,7 @@ export async function getJournalEntry(id: number, userId: string) {
     tags: safeJsonParse(row.tags as string, []),
     goalId: (row.goal_id as number) || null,
     isPrivate: (row.is_private as number) === 1,
+    isVault: (row.is_vault as number) === 1,
     entryDate: row.entry_date as string,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
@@ -1522,13 +1526,15 @@ export async function createJournalEntry(params: {
   tags?: string[];
   goalId?: number | null;
   isPrivate?: boolean;
+  isVault?: boolean;
   entryDate: string;
 }): Promise<number> {
   const tagsJson = JSON.stringify(params.tags || []);
   const isPrivate = params.isPrivate !== false ? 1 : 0;
+  const isVault = params.isVault === true ? 1 : 0;
   const rows = await neonSql`
-    INSERT INTO journal_entries (user_id, family_member_id, title, content, mood, mood_score, tags, goal_id, is_private, entry_date, created_at, updated_at)
-    VALUES (${params.userId}, ${params.familyMemberId ?? null}, ${params.title ?? null}, ${params.content}, ${params.mood ?? null}, ${params.moodScore ?? null}, ${tagsJson}, ${params.goalId ?? null}, ${isPrivate}, ${params.entryDate}, NOW(), NOW())
+    INSERT INTO journal_entries (user_id, family_member_id, title, content, mood, mood_score, tags, goal_id, is_private, is_vault, entry_date, created_at, updated_at)
+    VALUES (${params.userId}, ${params.familyMemberId ?? null}, ${params.title ?? null}, ${params.content}, ${params.mood ?? null}, ${params.moodScore ?? null}, ${tagsJson}, ${params.goalId ?? null}, ${isPrivate}, ${isVault}, ${params.entryDate}, NOW(), NOW())
     RETURNING id`;
   return rows[0].id as number;
 }
@@ -1545,6 +1551,7 @@ export async function updateJournalEntry(
     goalId?: number | null;
     familyMemberId?: number | null;
     isPrivate?: boolean;
+    isVault?: boolean;
     entryDate?: string;
   },
 ) {
@@ -1559,6 +1566,7 @@ export async function updateJournalEntry(
   if (updates.goalId !== undefined) { fields.push("goal_id = ?"); args.push(updates.goalId); }
   if (updates.familyMemberId !== undefined) { fields.push("family_member_id = ?"); args.push(updates.familyMemberId); }
   if (updates.isPrivate !== undefined) { fields.push("is_private = ?"); args.push(updates.isPrivate ? 1 : 0); }
+  if (updates.isVault !== undefined) { fields.push("is_vault = ?"); args.push(updates.isVault ? 1 : 0); }
   if (updates.entryDate !== undefined) { fields.push("entry_date = ?"); args.push(updates.entryDate); }
 
   if (fields.length === 0) return;
@@ -2952,15 +2960,17 @@ export async function getTodayLogForHabit(habitId: number, userId: string, today
 // Tags
 // ============================================
 
-export async function getAllTags(userId: string): Promise<string[]> {
-  const rows = await neonSql`
-    SELECT DISTINCT tag FROM (
-      SELECT jsonb_array_elements_text(tags::jsonb) AS tag FROM journal_entries WHERE user_id = ${userId} AND tags IS NOT NULL AND tags != '[]'
+export async function getAllTags(userId: string, opts?: { includeVault?: boolean }): Promise<string[]> {
+  const vaultClause = opts?.includeVault ? "" : " AND is_vault = 0";
+  const rows = await neonSql(
+    `SELECT DISTINCT tag FROM (
+      SELECT jsonb_array_elements_text(tags::jsonb) AS tag FROM journal_entries WHERE user_id = $1 AND tags IS NOT NULL AND tags != '[]'${vaultClause}
       UNION
-      SELECT jsonb_array_elements_text(tags::jsonb) AS tag FROM goals WHERE user_id = ${userId} AND tags IS NOT NULL AND tags != '[]'
-    ) t ORDER BY tag
-  `;
-  return rows.map((r) => r.tag as string);
+      SELECT jsonb_array_elements_text(tags::jsonb) AS tag FROM goals WHERE user_id = $1 AND tags IS NOT NULL AND tags != '[]'
+    ) t ORDER BY tag`,
+    [userId],
+  );
+  return rows.map((r: any) => r.tag as string);
 }
 
 // ============================================
@@ -3067,8 +3077,9 @@ export async function getDiscussionGuidePublic(journalEntryId: number) {
 }
 
 export async function getJournalEntryPublic(id: number) {
-  const rows = await neonSql`SELECT je.title, fm.first_name, fm.name FROM journal_entries je LEFT JOIN family_members fm ON je.family_member_id = fm.id WHERE je.id = ${id}`;
+  const rows = await neonSql`SELECT je.title, je.is_vault, fm.first_name, fm.name FROM journal_entries je LEFT JOIN family_members fm ON je.family_member_id = fm.id WHERE je.id = ${id}`;
   if (rows.length === 0) return null;
+  if ((rows[0].is_vault as number) === 1) return null;
   return {
     title: (rows[0].title as string) || null,
     familyMemberFirstName: (rows[0].first_name as string) || null,

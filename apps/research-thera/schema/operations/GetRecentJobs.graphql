@@ -1,0 +1,20 @@
+query GetRecentJobs {
+  generationJobs {
+    id
+    type
+    goalId
+    storyId
+    status
+    progress
+    result {
+      count
+      stage
+      audioUrl
+    }
+    error {
+      message
+    }
+    createdAt
+    updatedAt
+  }
+}
