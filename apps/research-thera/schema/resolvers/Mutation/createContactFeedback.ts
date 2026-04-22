@@ -10,11 +10,7 @@ export const createContactFeedback: NonNullable<MutationResolvers['createContact
   if (!userEmail) {
     throw new Error("Authentication required");
   }
-
-  // Cross-user write guard: caller must own the referenced family member.
-  const userId = ctx.userId;
-  if (!userId) throw new Error("Authentication required");
-  await db.assertOwnsFamilyMember(args.input.familyMemberId, userId);
+  await db.assertOwnsFamilyMember(args.input.familyMemberId, userEmail);
 
   const id = await db.createContactFeedback({
     contactId: args.input.contactId,

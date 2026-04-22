@@ -7,7 +7,7 @@ export const allRecommendedBooks: NonNullable<QueryResolvers['allRecommendedBook
   args,
   ctx,
 ) => {
-  if (!ctx.userId) {
+  if (!ctx.userEmail) {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },
     });

@@ -4,14 +4,14 @@ import { claimCardsTools } from "../../../src/tools/claim-cards.tools";
 import { getNoteById } from "@/src/db";
 
 export const claimCardsForNote: NonNullable<QueryResolvers['claimCardsForNote']> = async (_parent, { noteId }, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new GraphQLError("Authentication required", {
       extensions: { code: "UNAUTHENTICATED" },
     });
   }
 
-  const note = await getNoteById(noteId, userId);
+  const note = await getNoteById(noteId, userEmail);
   if (!note) {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },

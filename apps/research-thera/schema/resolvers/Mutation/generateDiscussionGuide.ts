@@ -59,11 +59,11 @@ const discussionGuideSchema = z.object({
 });
 
 export const generateDiscussionGuide: NonNullable<MutationResolvers['generateDiscussionGuide']> = async (_parent, args, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) throw new Error("Authentication required");
+  const userEmail = ctx.userEmail;
+  if (!userEmail) throw new Error("Authentication required");
 
   const { journalEntryId } = args;
-  const entry = await db.getJournalEntry(journalEntryId, userId);
+  const entry = await db.getJournalEntry(journalEntryId, userEmail);
   if (!entry) throw new Error("Journal entry not found");
 
   // ── Build primary journal entry context ─────────────────────────
@@ -90,12 +90,12 @@ export const generateDiscussionGuide: NonNullable<MutationResolvers['generateDis
       characteristics,
     ] = await Promise.all([
       getFamilyMember(entry.familyMemberId),
-      getIssuesForFamilyMember(entry.familyMemberId, undefined, userId),
-      getBehaviorObservationsForFamilyMember(entry.familyMemberId, userId),
-      getTeacherFeedbacksForFamilyMember(entry.familyMemberId, userId),
-      getContactFeedbacksForFamilyMember(entry.familyMemberId, userId),
-      getDeepIssueAnalysesForFamilyMember(entry.familyMemberId, userId),
-      neonSql`SELECT category, title, description, severity, impairment_domains FROM family_member_characteristics WHERE family_member_id = ${entry.familyMemberId} AND user_id = ${userId} ORDER BY created_at DESC`,
+      getIssuesForFamilyMember(entry.familyMemberId, undefined, userEmail),
+      getBehaviorObservationsForFamilyMember(entry.familyMemberId, userEmail),
+      getTeacherFeedbacksForFamilyMember(entry.familyMemberId, userEmail),
+      getContactFeedbacksForFamilyMember(entry.familyMemberId, userEmail),
+      getDeepIssueAnalysesForFamilyMember(entry.familyMemberId, userEmail),
+      neonSql`SELECT category, title, description, severity, impairment_domains FROM family_member_characteristics WHERE family_member_id = ${entry.familyMemberId} AND user_id = ${userEmail} ORDER BY created_at DESC`,
     ]);
 
     if (member) {
@@ -248,9 +248,9 @@ export const generateDiscussionGuide: NonNullable<MutationResolvers['generateDis
   ].join("\n");
 
   // Delete existing guide
-  await db.deleteDiscussionGuide(journalEntryId, userId);
+  await db.deleteDiscussionGuide(journalEntryId, userEmail);
 
-  const isRo = await isRoGoal({ userId, journalEntryId });
+  const isRo = await isRoGoal({ userEmail, journalEntryId });
 
   const { object } = await generateObject({
     schema: discussionGuideSchema,
@@ -261,7 +261,7 @@ export const generateDiscussionGuide: NonNullable<MutationResolvers['generateDis
 
   const guideId = await db.createDiscussionGuide({
     journalEntryId,
-    userId: userId,
+    userId: userEmail,
     childAge,
     behaviorSummary: object.behaviorSummary,
     developmentalContext: object.developmentalContext,

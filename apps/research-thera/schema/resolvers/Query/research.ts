@@ -7,8 +7,8 @@ export const research: NonNullable<QueryResolvers['research']> = async (
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },
     });
@@ -20,20 +20,20 @@ export const research: NonNullable<QueryResolvers['research']> = async (
   // therapy_research has no user_id; ownership flows through
   // goal_id / issue_id / feedback_id / journal_entry_id.
   if (args.journalEntryId != null) {
-    const entry = await db.getJournalEntry(args.journalEntryId, userId);
+    const entry = await db.getJournalEntry(args.journalEntryId, userEmail);
     if (!entry) throw notFound();
   }
   if (args.issueId != null) {
-    const issue = await db.getIssue(args.issueId, userId);
+    const issue = await db.getIssue(args.issueId, userEmail);
     if (!issue) throw notFound();
   }
   if (args.feedbackId != null) {
-    const feedback = await db.getContactFeedback(args.feedbackId, userId);
+    const feedback = await db.getContactFeedback(args.feedbackId, userEmail);
     if (!feedback) throw notFound();
   }
   if (args.goalId != null) {
     try {
-      await db.getGoal(args.goalId, userId);
+      await db.getGoal(args.goalId, userEmail);
     } catch {
       throw notFound();
     }

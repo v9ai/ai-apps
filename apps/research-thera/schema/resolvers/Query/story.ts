@@ -7,8 +7,8 @@ export const story: NonNullable<QueryResolvers['story']> = async (
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },
     });
@@ -18,12 +18,12 @@ export const story: NonNullable<QueryResolvers['story']> = async (
   if (!story) return null;
 
   // Story ownership via createdBy (user_id column). Legacy rows may have NULL.
-  if (story.createdBy != null && story.createdBy !== userId) return null;
+  if (story.createdBy != null && story.createdBy !== userEmail) return null;
 
   // If attached to a goal, verify goal ownership as well.
   if (story.goalId) {
     try {
-      await db.getGoal(story.goalId, userId);
+      await db.getGoal(story.goalId, userEmail);
     } catch {
       return null;
     }

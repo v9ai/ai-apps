@@ -6,14 +6,14 @@ export const tagLanguage: NonNullable<QueryResolvers['tagLanguage']> = async (
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
   const rows = await neonSql`
     SELECT language FROM tag_language_rules
-    WHERE tag = ${args.tag} AND user_id = ${userId}
+    WHERE tag = ${args.tag} AND user_id = ${userEmail}
     LIMIT 1
   `;
   return (rows[0]?.language as string | undefined) ?? null;

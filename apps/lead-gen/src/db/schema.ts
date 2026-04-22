@@ -302,6 +302,7 @@ export const contacts = pgTable(
     authenticity_verdict: text("authenticity_verdict"),
     authenticity_flags: text("authenticity_flags"), // JSON array
     verified_at: text("verified_at"),
+    notes: text("notes"),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),

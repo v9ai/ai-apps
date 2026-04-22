@@ -42,11 +42,11 @@ const analysisSchema = z.object({
 });
 
 export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJournalAnalysis']> = async (_parent, args, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) throw new Error("Authentication required");
+  const userEmail = ctx.userEmail;
+  if (!userEmail) throw new Error("Authentication required");
 
   const { journalEntryId } = args;
-  const entry = await db.getJournalEntry(journalEntryId, userId);
+  const entry = await db.getJournalEntry(journalEntryId, userEmail);
   if (!entry) throw new Error("Journal entry not found");
 
   // ── Build primary journal entry context ─────────────────────────
@@ -62,14 +62,14 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
   let goalContext = "";
   if (entry.goalId) {
     try {
-      const goal = await db.getGoal(entry.goalId, userId);
+      const goal = await db.getGoal(entry.goalId, userEmail);
       goalContext = `\n\n## Linked Goal\n- **${goal.title}**${goal.description ? `\n  ${goal.description}` : ""}`;
     } catch { /* goal may not exist */ }
   }
 
   // ── Other journal entries (for pattern detection) ───────────────
   let otherEntriesContext = "";
-  const otherEntries = await db.listJournalEntries(userId, {
+  const otherEntries = await db.listJournalEntries(userEmail, {
     familyMemberId: entry.familyMemberId ?? undefined,
   });
   const siblings = otherEntries.filter(e => e.id !== journalEntryId).slice(0, 8);
@@ -100,14 +100,14 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
       allMembers,
     ] = await Promise.all([
       getFamilyMember(entry.familyMemberId),
-      getIssuesForFamilyMember(entry.familyMemberId, undefined, userId),
-      getBehaviorObservationsForFamilyMember(entry.familyMemberId, userId),
-      getTeacherFeedbacksForFamilyMember(entry.familyMemberId, userId),
-      getContactFeedbacksForFamilyMember(entry.familyMemberId, userId),
-      getDeepIssueAnalysesForFamilyMember(entry.familyMemberId, userId),
-      neonSql`SELECT category, title, description, severity, impairment_domains FROM family_member_characteristics WHERE family_member_id = ${entry.familyMemberId} AND user_id = ${userId} ORDER BY created_at DESC`,
-      getIssuesReferencingFamilyMember(entry.familyMemberId, userId),
-      listFamilyMembers(userId),
+      getIssuesForFamilyMember(entry.familyMemberId, undefined, userEmail),
+      getBehaviorObservationsForFamilyMember(entry.familyMemberId, userEmail),
+      getTeacherFeedbacksForFamilyMember(entry.familyMemberId, userEmail),
+      getContactFeedbacksForFamilyMember(entry.familyMemberId, userEmail),
+      getDeepIssueAnalysesForFamilyMember(entry.familyMemberId, userEmail),
+      neonSql`SELECT category, title, description, severity, impairment_domains FROM family_member_characteristics WHERE family_member_id = ${entry.familyMemberId} AND user_id = ${userEmail} ORDER BY created_at DESC`,
+      getIssuesReferencingFamilyMember(entry.familyMemberId, userEmail),
+      listFamilyMembers(userEmail),
     ]);
 
     // Person profile
@@ -286,9 +286,9 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
   ].join("\n");
 
   // Delete any existing analysis for this entry
-  await db.deleteJournalAnalysis(journalEntryId, userId);
+  await db.deleteJournalAnalysis(journalEntryId, userEmail);
 
-  const isRo = await isRoGoal({ userId, journalEntryId });
+  const isRo = await isRoGoal({ userEmail, journalEntryId });
 
   const { object } = await generateObject({
     schema: analysisSchema,
@@ -299,7 +299,7 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
 
   const analysisId = await db.createJournalAnalysis({
     journalEntryId,
-    userId: userId,
+    userId: userEmail,
     summary: object.summary,
     emotionalLandscape: object.emotionalLandscape,
     therapeuticInsights: object.therapeuticInsights,

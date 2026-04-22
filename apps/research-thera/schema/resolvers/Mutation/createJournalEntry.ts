@@ -10,12 +10,8 @@ export const createJournalEntry: NonNullable<MutationResolvers['createJournalEnt
   if (!userEmail) {
     throw new Error("Authentication required");
   }
-
-  // Cross-user write guard: if a family member is referenced, caller must own it.
-  const userId = ctx.userId;
-  if (!userId) throw new Error("Authentication required");
   if (args.input.familyMemberId != null) {
-    await assertOwnsFamilyMember(args.input.familyMemberId, userId);
+    await assertOwnsFamilyMember(args.input.familyMemberId, userEmail);
   }
 
   const entryId = await _createJournalEntry({

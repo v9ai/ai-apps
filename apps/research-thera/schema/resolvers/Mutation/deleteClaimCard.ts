@@ -5,8 +5,8 @@ import { getNoteById } from "@/src/db";
 import { sql as neonSql } from "@/src/db/neon";
 
 export const deleteClaimCard: NonNullable<MutationResolvers['deleteClaimCard']> = async (_parent, { id }, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new GraphQLError("Authentication required", {
       extensions: { code: "UNAUTHENTICATED" },
     });
@@ -36,7 +36,7 @@ export const deleteClaimCard: NonNullable<MutationResolvers['deleteClaimCard']> 
     });
   }
 
-  const note = await getNoteById(noteId, userId);
+  const note = await getNoteById(noteId, userEmail);
   if (!note) {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },

@@ -15,8 +15,8 @@ import { isRoGoal, withRo } from "@/src/lib/ro";
 import { z } from "zod";
 
 export const generateTherapeuticQuestions: NonNullable<MutationResolvers['generateTherapeuticQuestions']> = async (_parent, args, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
@@ -32,7 +32,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
   let contextText: string;
   let familyMemberId: number | null = null;
   if (journalEntryId) {
-    const entry = await db.getJournalEntry(journalEntryId, userId);
+    const entry = await db.getJournalEntry(journalEntryId, userEmail);
     if (!entry) throw new Error("Journal entry not found");
     familyMemberId = entry.familyMemberId;
     contextText = [
@@ -42,7 +42,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
       entry.tags?.length ? `Tags: ${entry.tags.join(", ")}` : "",
     ].filter(Boolean).join("\n");
   } else if (issueId) {
-    const issue = await db.getIssue(issueId, userId);
+    const issue = await db.getIssue(issueId, userEmail);
     if (!issue) throw new Error("Issue not found");
     familyMemberId = issue.familyMemberId;
     contextText = [
@@ -53,7 +53,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
       issue.recommendations ? `Recommendations: ${issue.recommendations}` : "",
     ].filter(Boolean).join("\n");
   } else {
-    const goal = await db.getGoal(goalId!, userId);
+    const goal = await db.getGoal(goalId!, userEmail);
     familyMemberId = goal.familyMemberId;
     contextText = [
       `Goal: ${goal.title}`,
@@ -66,12 +66,12 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
   if (familyMemberId) {
     const [member, allIssues, observations, teacherFeedbacks, contactFeedbacks, deepAnalyses, characteristics] = await Promise.all([
       getFamilyMember(familyMemberId),
-      getIssuesForFamilyMember(familyMemberId, undefined, userId),
-      getBehaviorObservationsForFamilyMember(familyMemberId, userId),
-      getTeacherFeedbacksForFamilyMember(familyMemberId, userId),
-      getContactFeedbacksForFamilyMember(familyMemberId, userId),
-      getDeepIssueAnalysesForFamilyMember(familyMemberId, userId),
-      neonSql`SELECT category, title, description, severity, impairment_domains FROM family_member_characteristics WHERE family_member_id = ${familyMemberId} AND user_id = ${userId} ORDER BY created_at DESC`,
+      getIssuesForFamilyMember(familyMemberId, undefined, userEmail),
+      getBehaviorObservationsForFamilyMember(familyMemberId, userEmail),
+      getTeacherFeedbacksForFamilyMember(familyMemberId, userEmail),
+      getContactFeedbacksForFamilyMember(familyMemberId, userEmail),
+      getDeepIssueAnalysesForFamilyMember(familyMemberId, userEmail),
+      neonSql`SELECT category, title, description, severity, impairment_domains FROM family_member_characteristics WHERE family_member_id = ${familyMemberId} AND user_id = ${userEmail} ORDER BY created_at DESC`,
     ]);
 
     const sections: string[] = [];
@@ -195,7 +195,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
     `Provide a rationale explaining why the question matters and how the person's profile informs it.`,
   ].join("\n");
 
-  const isRo = await isRoGoal({ userId, goalId, issueId, journalEntryId });
+  const isRo = await isRoGoal({ userEmail, goalId, issueId, journalEntryId });
 
   const { object } = await generateObject({
     schema: questionSchema,

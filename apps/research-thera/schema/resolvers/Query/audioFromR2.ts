@@ -22,7 +22,7 @@ export const audioFromR2: NonNullable<QueryResolvers['audioFromR2']> = async (
   args,
   ctx,
 ) => {
-  if (!ctx.userId) {
+  if (!ctx.userEmail) {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },
     });

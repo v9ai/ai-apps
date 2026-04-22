@@ -14,7 +14,7 @@ export const Research: ResearchResolvers = {
     return {
       id: row.id as number,
       familyMemberId: row.family_member_id as number,
-      userId: row.user_id as string,
+      userEmail: row.user_id as string,
       title: row.title as string,
       description: (row.description as string) || null,
       status: row.status as string,

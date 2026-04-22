@@ -4,8 +4,8 @@ import { sql as neonSql } from "@/src/db/neon";
 import { runGraphAndWait } from "@/src/lib/langgraph-client";
 
 export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIAudio']> = async (_parent, args, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
@@ -19,7 +19,7 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
   if (storyId) {
     const existing = await neonSql`
       SELECT id, created_at, updated_at FROM generation_jobs
-      WHERE story_id = ${storyId} AND user_id = ${userId} AND type = 'AUDIO' AND status = 'RUNNING'
+      WHERE story_id = ${storyId} AND user_id = ${userEmail} AND type = 'AUDIO' AND status = 'RUNNING'
       ORDER BY created_at DESC LIMIT 1`;
     if (existing.length > 0) {
       const existingJobId = existing[0].id as string;
@@ -51,7 +51,7 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
   if (storyId) {
     const storyRows = await neonSql`
       SELECT goal_id, language FROM stories
-      WHERE id = ${storyId} AND (user_id = ${userId} OR user_id IS NULL)`;
+      WHERE id = ${storyId} AND (user_id = ${userEmail} OR user_id IS NULL)`;
     if (storyRows.length === 0) {
       throw new GraphQLError("Not found", {
         extensions: { code: "NOT_FOUND" },
@@ -59,7 +59,7 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
     }
     storyLanguage = (storyRows[0].language as string) || "English";
     const goalId = (storyRows[0].goal_id as number | undefined) ?? null;
-    await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userId}, 'AUDIO', ${goalId}, ${storyId}, 'RUNNING', 0)`;
+    await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userEmail}, 'AUDIO', ${goalId}, ${storyId}, 'RUNNING', 0)`;
   }
 
   console.log(`[TTS] dispatching LangGraph job=${jobId} storyId=${storyId} language=${storyLanguage} textLen=${text.length}`);
@@ -73,7 +73,7 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
       // Python graphs still expect the `user_email` key; it holds the caller's
       // user_id (UUID after migration 0004). The backend uses this value as
       // public.*.user_id in SQL, so the UUID is correct here.
-      user_email: userId,
+      user_email: userEmail,
     },
   }).then(async (res) => {
     const error = res?.error as string | undefined;

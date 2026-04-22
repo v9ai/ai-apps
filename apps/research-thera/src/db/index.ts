@@ -158,7 +158,7 @@ export async function createFamilyMember(params: {
 
 export async function updateFamilyMember(
   id: number,
-  userId: string,
+  userEmail: string,
   params: {
     firstName?: string;
     name?: string | null;
@@ -190,7 +190,7 @@ export async function updateFamilyMember(
 
   sets.push("updated_at = NOW()");
   args.push(id);
-  args.push(userId);
+  args.push(userEmail);
 
   const [query, queryParams] = p(`UPDATE family_members SET ${sets.join(", ")} WHERE id = ? AND user_id = ?`, args);
   await neonSql(query, queryParams);
@@ -205,9 +205,9 @@ export async function updateFamilyMember(
  * argument before performing writes or invoking expensive downstream
  * work (LLM, LangGraph, etc.).
  */
-export async function assertOwnsFamilyMember(id: number, userId: string) {
+export async function assertOwnsFamilyMember(id: number, userEmail: string) {
   const fm = await getFamilyMember(id);
-  if (!fm || fm.userId !== userId) {
+  if (!fm || fm.userId !== userEmail) {
     throw new GraphQLError("Family member not found", {
       extensions: { code: "NOT_FOUND" },
     });
@@ -1081,9 +1081,9 @@ export async function updateStory(
   await neonSql(query, params);
 }
 
-export async function updateStoryAudio(id: number, userId: string, audioKey: string, audioUrl: string) {
+export async function updateStoryAudio(id: number, audioKey: string, audioUrl: string) {
   const now = new Date().toISOString();
-  await neonSql`UPDATE stories SET audio_key = ${audioKey}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${id} AND (user_id = ${userId} OR user_id IS NULL)`;
+  await neonSql`UPDATE stories SET audio_key = ${audioKey}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${id}`;
 }
 
 export async function deleteStory(storyId: number, createdBy: string) {

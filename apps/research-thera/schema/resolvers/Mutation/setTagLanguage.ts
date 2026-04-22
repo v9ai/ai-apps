@@ -8,8 +8,8 @@ export const setTagLanguage: NonNullable<MutationResolvers['setTagLanguage']> = 
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
@@ -24,12 +24,12 @@ export const setTagLanguage: NonNullable<MutationResolvers['setTagLanguage']> = 
   if (language === "en") {
     await neonSql`
       DELETE FROM tag_language_rules
-      WHERE tag = ${tag} AND user_id = ${userId}
+      WHERE tag = ${tag} AND user_id = ${userEmail}
     `;
   } else {
     await neonSql`
       INSERT INTO tag_language_rules (tag, user_id, language, updated_at)
-      VALUES (${tag}, ${userId}, ${language}, NOW())
+      VALUES (${tag}, ${userEmail}, ${language}, NOW())
       ON CONFLICT (tag, user_id) DO UPDATE
       SET language = EXCLUDED.language, updated_at = NOW()
     `;

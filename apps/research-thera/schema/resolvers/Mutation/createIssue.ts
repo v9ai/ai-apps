@@ -10,11 +10,7 @@ export const createIssue: NonNullable<MutationResolvers['createIssue']> = async 
   if (!userEmail) {
     throw new Error("Authentication required");
   }
-
-  // Cross-user write guard: caller must own the referenced family member.
-  const userId = ctx.userId;
-  if (!userId) throw new Error("Authentication required");
-  await assertOwnsFamilyMember(args.input.familyMemberId, userId);
+  await assertOwnsFamilyMember(args.input.familyMemberId, userEmail);
 
   const id = await _createIssue({
     feedbackId: args.input.feedbackId,

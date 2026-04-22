@@ -8,11 +8,7 @@ export const createAffirmation: NonNullable<MutationResolvers['createAffirmation
 ) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) throw new Error("Authentication required");
-
-  // Cross-user write guard: caller must own the referenced family member.
-  const userId = ctx.userId;
-  if (!userId) throw new Error("Authentication required");
-  await db.assertOwnsFamilyMember(args.input.familyMemberId, userId);
+  await db.assertOwnsFamilyMember(args.input.familyMemberId, userEmail);
 
   const { input } = args;
   const id = await db.createAffirmation({

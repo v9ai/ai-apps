@@ -4,8 +4,8 @@ import { getGoal } from "@/src/db";
 import { runGraphAndWait } from "@/src/lib/langgraph-client";
 
 export const generateParentAdvice: NonNullable<MutationResolvers['generateParentAdvice']> = async (_parent, args, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
@@ -14,7 +14,7 @@ export const generateParentAdvice: NonNullable<MutationResolvers['generateParent
 
   // Verify goal ownership before forwarding to LangGraph.
   try {
-    await getGoal(goalId, userId);
+    await getGoal(goalId, userEmail);
   } catch {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },
@@ -25,7 +25,7 @@ export const generateParentAdvice: NonNullable<MutationResolvers['generateParent
     const result = await runGraphAndWait("parent_advice", {
       input: {
         goal_id: goalId,
-        user_email: userId,
+        user_email: userEmail,
         language,
       },
     });

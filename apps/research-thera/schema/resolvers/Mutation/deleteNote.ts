@@ -6,8 +6,8 @@ export const deleteNote: NonNullable<MutationResolvers['deleteNote']> = async (
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
@@ -18,7 +18,7 @@ export const deleteNote: NonNullable<MutationResolvers['deleteNote']> = async (
   await neonSql`DELETE FROM notes_research WHERE note_id = ${args.id}`;
 
   // Delete the note itself
-  await neonSql`DELETE FROM notes WHERE id = ${args.id} AND user_id = ${userId}`;
+  await neonSql`DELETE FROM notes WHERE id = ${args.id} AND user_id = ${userEmail}`;
 
   return {
     success: true,

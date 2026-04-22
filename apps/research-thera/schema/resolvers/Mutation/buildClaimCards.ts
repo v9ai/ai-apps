@@ -114,8 +114,8 @@ Return only the claims array.`,
  * 4. Falls back to external search if useLinkedResearch=false
  */
 export const buildClaimCards: NonNullable<MutationResolvers['buildClaimCards']> = async (_parent, { input }, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new GraphQLError("Authentication required", {
       extensions: { code: "UNAUTHENTICATED" },
     });
@@ -168,7 +168,7 @@ export const buildClaimCards: NonNullable<MutationResolvers['buildClaimCards']> 
     Number.isFinite(noteId) &&
     (persist || Boolean(useLinkedResearch));
   if (needsNoteCheck) {
-    const note = await getNoteById(noteId as number, userId);
+    const note = await getNoteById(noteId as number, userEmail);
     if (!note) {
       throw new GraphQLError("Not found", {
         extensions: { code: "NOT_FOUND" },

@@ -6,8 +6,8 @@ import {
 } from "@/src/db";
 
 export const deleteTherapeuticQuestions: NonNullable<MutationResolvers['deleteTherapeuticQuestions']> = async (_parent, args, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
@@ -25,16 +25,16 @@ export const deleteTherapeuticQuestions: NonNullable<MutationResolvers['deleteTh
   // therapeutic_questions has no user_id; enforce ownership through the
   // parent row (goal / issue / journal entry).
   if (journalEntryId != null) {
-    const entry = await db.getJournalEntry(journalEntryId, userId);
+    const entry = await db.getJournalEntry(journalEntryId, userEmail);
     if (!entry) throw notFound();
   }
   if (issueId != null) {
-    const issue = await db.getIssue(issueId, userId);
+    const issue = await db.getIssue(issueId, userEmail);
     if (!issue) throw notFound();
   }
   if (goalId != null) {
     try {
-      await db.getGoal(goalId, userId);
+      await db.getGoal(goalId, userEmail);
     } catch {
       throw notFound();
     }

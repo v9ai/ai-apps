@@ -16,12 +16,7 @@ export const convertJournalEntryToIssue: NonNullable<MutationResolvers['convertJ
   if (!entry) {
     throw new Error("Journal entry not found");
   }
-
-  // Cross-user write guard: caller must own the referenced family member
-  // on the target issue.
-  const userId = ctx.userId;
-  if (!userId) throw new Error("Authentication required");
-  await assertOwnsFamilyMember(args.input.familyMemberId, userId);
+  await assertOwnsFamilyMember(args.input.familyMemberId, userEmail);
 
   // Create a new issue linked to this journal entry
   const issueId = await createIssue({

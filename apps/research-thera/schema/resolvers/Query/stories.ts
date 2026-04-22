@@ -7,15 +7,15 @@ export const stories: NonNullable<QueryResolvers['stories']> = async (
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },
     });
   }
 
   try {
-    await db.getGoal(args.goalId, userId);
+    await db.getGoal(args.goalId, userEmail);
   } catch {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },

@@ -9,8 +9,8 @@ export const claimCard: NonNullable<QueryResolvers['claimCard']> = async (
   { id },
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new GraphQLError("Authentication required", {
       extensions: { code: "UNAUTHENTICATED" },
     });
@@ -35,7 +35,7 @@ export const claimCard: NonNullable<QueryResolvers['claimCard']> = async (
     null;
   if (noteId == null) return null;
 
-  const note = await getNoteById(noteId, userId);
+  const note = await getNoteById(noteId, userEmail);
   if (!note) return null;
 
   return card as any;

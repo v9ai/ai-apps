@@ -3,15 +3,15 @@ import { GraphQLError } from "graphql";
 import { deleteTherapyResearch, getGoal } from "@/src/db";
 
 export const deleteResearch: NonNullable<MutationResolvers['deleteResearch']> = async (_parent, args, ctx) => {
-  const userId = ctx.userId;
-  if (!userId) {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) {
     throw new Error("Authentication required");
   }
 
   // Ownership gate: deleteTherapyResearch has no user_id filter; enforce via
   // parent goal ownership before delete.
   try {
-    await getGoal(args.goalId, userId);
+    await getGoal(args.goalId, userEmail);
   } catch {
     throw new GraphQLError("Not found", {
       extensions: { code: "NOT_FOUND" },
