@@ -6,6 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import UserMenu from "./UserMenu";
 import { JobsIndicator } from "./JobsIndicator";
+import { SIDEBAR_WIDTH } from "./sidebar-constants";
+
+export { SIDEBAR_WIDTH };
 
 const NAV_LINKS = [
   { href: "/issues", label: "Issues" },
