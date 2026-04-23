@@ -271,6 +271,25 @@ export async function getFamilyMemberShares(familyMemberId: number) {
   }));
 }
 
+export async function hasFamilyMemberAccess(
+  familyMemberId: number,
+  viewerEmail: string,
+): Promise<boolean> {
+  const normalized = normalizeEmail(viewerEmail);
+  const rows = await neonSql`
+    SELECT 1 FROM family_members fm
+    WHERE fm.id = ${familyMemberId}
+      AND (
+        fm.user_id = ${normalized}
+        OR EXISTS (
+          SELECT 1 FROM family_member_shares s
+          WHERE s.family_member_id = fm.id AND s.email = ${normalized}
+        )
+      )
+    LIMIT 1`;
+  return rows.length > 0;
+}
+
 export async function getSharedFamilyMembers(viewerEmail: string) {
   const normalizedEmail = normalizeEmail(viewerEmail);
   const rows = await neonSql`
@@ -1513,6 +1532,43 @@ export async function listJournalEntries(
 
 export async function getJournalEntry(id: number, userId: string) {
   const rows = await neonSql`SELECT * FROM journal_entries WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: row.id as number,
+    userId: row.user_id as string,
+    familyMemberId: (row.family_member_id as number) || null,
+    title: (row.title as string) || null,
+    content: row.content as string,
+    mood: (row.mood as string) || null,
+    moodScore: (row.mood_score as number) || null,
+    tags: safeJsonParse(row.tags as string, []),
+    goalId: (row.goal_id as number) || null,
+    isPrivate: (row.is_private as number) === 1,
+    isVault: (row.is_vault as number) === 1,
+    entryDate: row.entry_date as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function getJournalEntryForViewer(id: number, viewerEmail: string) {
+  const normalized = normalizeEmail(viewerEmail);
+  const rows = await neonSql`
+    SELECT je.* FROM journal_entries je
+    WHERE je.id = ${id}
+      AND (
+        je.user_id = ${normalized}
+        OR (
+          je.family_member_id IS NOT NULL
+          AND EXISTS (
+            SELECT 1 FROM family_member_shares s
+            WHERE s.family_member_id = je.family_member_id
+              AND s.email = ${normalized}
+          )
+        )
+      )
+    LIMIT 1`;
   if (rows.length === 0) return null;
   const row = rows[0];
   return {
@@ -3324,6 +3380,7 @@ export const db = {
   shareFamilyMember,
   unshareFamilyMember,
   getSharedFamilyMembers,
+  hasFamilyMemberAccess,
   // Goals
   getGoal,
   getGoalById,
@@ -3373,6 +3430,7 @@ export const db = {
   // Journal
   listJournalEntries,
   getJournalEntry,
+  getJournalEntryForViewer,
   createJournalEntry,
   updateJournalEntry,
   deleteJournalEntry,

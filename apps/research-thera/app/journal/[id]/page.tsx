@@ -38,6 +38,7 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
+import { DeepIssueAnalysisCard } from "@/app/components/DeepIssueAnalysisCard";
 import JournalRecommendedBooksSection from "./_components/JournalRecommendedBooksSection";
 
 const moodColor = (mood: string) =>
@@ -767,6 +768,15 @@ function JournalEntryContent() {
           )}
         </Flex>
       </Card>
+
+      {entry.familyMemberId && (
+        <DeepIssueAnalysisCard
+          familyMemberId={entry.familyMemberId}
+          triggerIssueId={entry.issue?.id ?? null}
+          familyMemberFirstName={entry.familyMember?.firstName ?? null}
+          description={`Analyze all issues for ${entry.familyMember?.firstName ?? "this member"} in the context of this entry.`}
+        />
+      )}
 
       {/* Discussion Guide */}
       <NextLink href={`/journal/${entry.id}/discussion-guide`} style={{ textDecoration: "none" }}>

@@ -77,8 +77,6 @@ function RoutineContent({ slug }: { slug: string }) {
   });
 
   const habitsByFrequency = useMemo(() => {
-    const byFreq: Record<string, typeof habitsData extends { habits: infer H } ? H : never> =
-      {} as never;
     const all = habitsData?.habits ?? [];
     const active = all.filter((h) => h.status === HabitStatus.Active);
     return {
