@@ -202,9 +202,22 @@ class OutreachTemplate(BaseModel):
 class Objection(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    objection: str = Field(default="", max_length=240)
-    response: str = Field(default="", max_length=600)
+    objection: str = Field(default="", max_length=400)
+    response: str = Field(default="", max_length=900)
     evidence_to_show: list[str] = Field(default_factory=list, max_length=5)
+
+    @field_validator("objection", "response", mode="before")
+    @classmethod
+    def _truncate_str(cls, v: object) -> str:
+        # LLMs occasionally overshoot length hints by a few dozen chars; rather
+        # than raise and crash the whole graph, truncate to the soft caps
+        # below. Caps match the Field max_length values — keep in sync.
+        if v is None:
+            return ""
+        s = str(v)
+        # Use the stricter of the two caps for either field; Pydantic max_length
+        # still enforces the final ceiling.
+        return s[:900]
 
 
 class SalesPlaybook(BaseModel):

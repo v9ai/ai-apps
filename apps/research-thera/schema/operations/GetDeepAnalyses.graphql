@@ -1,0 +1,85 @@
+query GetDeepAnalyses(
+  $subjectType: DeepAnalysisSubjectType!
+  $subjectId: Int!
+) {
+  deepAnalyses(subjectType: $subjectType, subjectId: $subjectId) {
+    id
+    subjectType
+    subjectId
+    triggerType
+    triggerId
+    createdBy
+    jobId
+    summary
+    patternClusters {
+      name
+      description
+      issueIds
+      issueTitles
+      categories
+      pattern
+      confidence
+      suggestedRootCause
+    }
+    timelineAnalysis {
+      phases {
+        period
+        issueIds
+        description
+        moodTrend
+        keyEvents
+      }
+      moodCorrelation
+      escalationTrend
+      criticalPeriods
+    }
+    familySystemInsights {
+      insight
+      involvedMemberIds
+      involvedMemberNames
+      evidenceIssueIds
+      systemicPattern
+      actionable
+    }
+    priorityRecommendations {
+      rank
+      issueId
+      issueTitle
+      rationale
+      urgency
+      suggestedApproach
+      relatedResearchIds
+    }
+    researchRelevance {
+      patternClusterName
+      relevantResearchIds
+      relevantResearchTitles
+      coverageGaps
+    }
+    parentAdvice {
+      title
+      advice
+      targetIssueIds
+      targetIssueTitles
+      relatedPatternCluster
+      relatedResearchIds
+      relatedResearchTitles
+      ageAppropriate
+      developmentalContext
+      priority
+      concreteSteps
+    }
+    dataSnapshot {
+      issueCount
+      observationCount
+      journalEntryCount
+      contactFeedbackCount
+      teacherFeedbackCount
+      researchPaperCount
+      relatedMemberIssueCount
+    }
+    model
+    createdAt
+    updatedAt
+  }
+}

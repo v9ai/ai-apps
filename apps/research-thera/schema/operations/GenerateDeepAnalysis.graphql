@@ -1,0 +1,17 @@
+mutation GenerateDeepAnalysis(
+  $subjectType: DeepAnalysisSubjectType!
+  $subjectId: Int!
+  $triggerType: DeepAnalysisTriggerType
+  $triggerId: Int
+) {
+  generateDeepAnalysis(
+    subjectType: $subjectType
+    subjectId: $subjectId
+    triggerType: $triggerType
+    triggerId: $triggerId
+  ) {
+    success
+    message
+    jobId
+  }
+}

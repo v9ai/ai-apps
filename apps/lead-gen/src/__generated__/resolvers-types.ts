@@ -1376,7 +1376,9 @@ export type Mutation = {
   add_company_facts: Array<CompanyFact>;
   analyzeCompany: AnalyzeCompanyResponse;
   analyzeLinkedInPosts: AnalyzePostsResult;
+  analyzeProductGTM: Product;
   analyzeProductICP: Product;
+  analyzeProductPricing: Product;
   applyEmailPattern: ApplyEmailPatternResult;
   approveAllDrafts: BatchSendDraftResult;
   approveAndSendDraft: SendDraftResult;
@@ -1447,6 +1449,7 @@ export type Mutation = {
   refreshIntentScores: RefreshIntentResult;
   regenerateDraft: ReplyDraft;
   rescrapeCompetitor: Competitor;
+  runFullProductIntel: Product;
   salescueAnalyze: SalescueAnalyzeResult;
   saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
@@ -1504,7 +1507,17 @@ export type MutationAnalyzeLinkedInPostsArgs = {
 };
 
 
+export type MutationAnalyzeProductGtmArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationAnalyzeProductIcpArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationAnalyzeProductPricingArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1830,6 +1843,11 @@ export type MutationRescrapeCompetitorArgs = {
 };
 
 
+export type MutationRunFullProductIntelArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationSalescueAnalyzeArgs = {
   modules?: InputMaybe<Array<SalescueModule>>;
   text: Scalars['String']['input'];
@@ -2037,11 +2055,17 @@ export type Product = {
   createdBy: Maybe<Scalars['String']['output']>;
   description: Maybe<Scalars['String']['output']>;
   domain: Maybe<Scalars['String']['output']>;
+  gtmAnalysis: Maybe<Scalars['JSON']['output']>;
+  gtmAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   highlights: Maybe<Scalars['JSON']['output']>;
   icpAnalysis: Maybe<Scalars['JSON']['output']>;
   icpAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['Int']['output'];
+  intelReport: Maybe<Scalars['JSON']['output']>;
+  intelReportAt: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
+  pricingAnalysis: Maybe<Scalars['JSON']['output']>;
+  pricingAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   slug: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   url: Scalars['URL']['output'];
@@ -5242,7 +5266,9 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   add_company_facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, RequireFields<MutationAdd_Company_FactsArgs, 'company_id' | 'facts'>>;
   analyzeCompany?: Resolver<ResolversTypes['AnalyzeCompanyResponse'], ParentType, ContextType, Partial<MutationAnalyzeCompanyArgs>>;
   analyzeLinkedInPosts?: Resolver<ResolversTypes['AnalyzePostsResult'], ParentType, ContextType, Partial<MutationAnalyzeLinkedInPostsArgs>>;
+  analyzeProductGTM?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationAnalyzeProductGtmArgs, 'id'>>;
   analyzeProductICP?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationAnalyzeProductIcpArgs, 'id'>>;
+  analyzeProductPricing?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationAnalyzeProductPricingArgs, 'id'>>;
   applyEmailPattern?: Resolver<ResolversTypes['ApplyEmailPatternResult'], ParentType, ContextType, RequireFields<MutationApplyEmailPatternArgs, 'companyId'>>;
   approveAllDrafts?: Resolver<ResolversTypes['BatchSendDraftResult'], ParentType, ContextType, RequireFields<MutationApproveAllDraftsArgs, 'draftIds'>>;
   approveAndSendDraft?: Resolver<ResolversTypes['SendDraftResult'], ParentType, ContextType, RequireFields<MutationApproveAndSendDraftArgs, 'draftId'>>;
@@ -5307,6 +5333,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   refreshIntentScores?: Resolver<ResolversTypes['RefreshIntentResult'], ParentType, ContextType>;
   regenerateDraft?: Resolver<ResolversTypes['ReplyDraft'], ParentType, ContextType, RequireFields<MutationRegenerateDraftArgs, 'draftId'>>;
   rescrapeCompetitor?: Resolver<ResolversTypes['Competitor'], ParentType, ContextType, RequireFields<MutationRescrapeCompetitorArgs, 'competitorId'>>;
+  runFullProductIntel?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationRunFullProductIntelArgs, 'id'>>;
   salescueAnalyze?: Resolver<ResolversTypes['SalescueAnalyzeResult'], ParentType, ContextType, RequireFields<MutationSalescueAnalyzeArgs, 'text'>>;
   saveCrawlLog?: Resolver<ResolversTypes['SaveCrawlLogResult'], ParentType, ContextType, RequireFields<MutationSaveCrawlLogArgs, 'input'>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
@@ -5381,11 +5408,17 @@ export type ProductResolvers<ContextType = GraphQLContext, ParentType extends Re
   createdBy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   domain?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  gtmAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  gtmAnalyzedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   highlights?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   icpAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   icpAnalyzedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  intelReport?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  intelReportAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pricingAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  pricingAnalyzedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['URL'], ParentType, ContextType>;

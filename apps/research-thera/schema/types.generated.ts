@@ -402,6 +402,43 @@ export type DataSnapshot = {
   teacherFeedbackCount: Scalars['Int']['output'];
 };
 
+export type DeepAnalysis = {
+  __typename?: 'DeepAnalysis';
+  createdAt: Scalars['String']['output'];
+  createdBy: Scalars['String']['output'];
+  dataSnapshot: DataSnapshot;
+  familyMember?: Maybe<FamilyMember>;
+  familySystemInsights: Array<FamilySystemInsight>;
+  goal?: Maybe<Goal>;
+  id: Scalars['Int']['output'];
+  jobId?: Maybe<Scalars['String']['output']>;
+  journalEntry?: Maybe<JournalEntry>;
+  model: Scalars['String']['output'];
+  note?: Maybe<Note>;
+  parentAdvice: Array<ParentAdviceItem>;
+  patternClusters: Array<PatternCluster>;
+  priorityRecommendations: Array<PriorityRecommendation>;
+  researchRelevance: Array<ResearchRelevanceMapping>;
+  subjectId: Scalars['Int']['output'];
+  subjectType: DeepAnalysisSubjectType;
+  summary: Scalars['String']['output'];
+  timelineAnalysis: TimelineAnalysis;
+  triggerId?: Maybe<Scalars['Int']['output']>;
+  triggerType?: Maybe<DeepAnalysisTriggerType>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type DeepAnalysisSubjectType =
+  | 'FAMILY_MEMBER'
+  | 'GOAL'
+  | 'JOURNAL_ENTRY'
+  | 'NOTE';
+
+export type DeepAnalysisTriggerType =
+  | 'FEEDBACK'
+  | 'ISSUE'
+  | 'OBSERVATION';
+
 export type DeepIssueAnalysis = {
   __typename?: 'DeepIssueAnalysis';
   createdAt: Scalars['String']['output'];
@@ -1044,6 +1081,7 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteContactFeedback: DeleteContactFeedbackResult;
   deleteConversation: DeleteConversationResult;
+  deleteDeepAnalysis: DeleteDeepAnalysisResult;
   deleteDeepIssueAnalysis: DeleteDeepAnalysisResult;
   deleteDiscussionGuide: DeleteDiscussionGuideResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
@@ -1063,6 +1101,7 @@ export type Mutation = {
   deleteTherapeuticQuestions: DeleteQuestionsResult;
   extractContactFeedbackIssues: ContactFeedback;
   generateAudio: GenerateAudioResult;
+  generateDeepAnalysis: GenerateDeepAnalysisResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
   generateDiscussionGuide: GenerateDiscussionGuideResult;
   generateHabitsForFamilyMember: GenerateHabitsResult;
@@ -1239,6 +1278,11 @@ export type MutationdeleteConversationArgs = {
 };
 
 
+export type MutationdeleteDeepAnalysisArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationdeleteDeepIssueAnalysisArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1338,6 +1382,14 @@ export type MutationgenerateAudioArgs = {
   storyId?: InputMaybe<Scalars['Int']['input']>;
   text?: InputMaybe<Scalars['String']['input']>;
   voice?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationgenerateDeepAnalysisArgs = {
+  subjectId: Scalars['Int']['input'];
+  subjectType: DeepAnalysisSubjectType;
+  triggerId?: InputMaybe<Scalars['Int']['input']>;
+  triggerType?: InputMaybe<DeepAnalysisTriggerType>;
 };
 
 
@@ -1764,6 +1816,8 @@ export type Query = {
   contacts: Array<Contact>;
   conversation?: Maybe<Conversation>;
   conversationsForIssue: Array<Conversation>;
+  deepAnalyses: Array<DeepAnalysis>;
+  deepAnalysis?: Maybe<DeepAnalysis>;
   deepIssueAnalyses: Array<DeepIssueAnalysis>;
   deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
   familyMember?: Maybe<FamilyMember>;
@@ -1863,6 +1917,17 @@ export type QueryconversationArgs = {
 
 export type QueryconversationsForIssueArgs = {
   issueId: Scalars['Int']['input'];
+};
+
+
+export type QuerydeepAnalysesArgs = {
+  subjectId: Scalars['Int']['input'];
+  subjectType: DeepAnalysisSubjectType;
+};
+
+
+export type QuerydeepAnalysisArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -2486,6 +2551,9 @@ export type ResolversTypes = {
   CreateSubGoalInput: CreateSubGoalInput;
   CreateTeacherFeedbackInput: CreateTeacherFeedbackInput;
   DataSnapshot: ResolverTypeWrapper<DataSnapshot>;
+  DeepAnalysis: ResolverTypeWrapper<Omit<DeepAnalysis, 'familyMember' | 'goal' | 'journalEntry' | 'note' | 'subjectType' | 'triggerType'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, goal?: Maybe<ResolversTypes['Goal']>, journalEntry?: Maybe<ResolversTypes['JournalEntry']>, note?: Maybe<ResolversTypes['Note']>, subjectType: ResolversTypes['DeepAnalysisSubjectType'], triggerType?: Maybe<ResolversTypes['DeepAnalysisTriggerType']> }>;
+  DeepAnalysisSubjectType: ResolverTypeWrapper<'GOAL' | 'NOTE' | 'JOURNAL_ENTRY' | 'FAMILY_MEMBER'>;
+  DeepAnalysisTriggerType: ResolverTypeWrapper<'ISSUE' | 'OBSERVATION' | 'FEEDBACK'>;
   DeepIssueAnalysis: ResolverTypeWrapper<Omit<DeepIssueAnalysis, 'familyMember' | 'triggerIssue'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, triggerIssue?: Maybe<ResolversTypes['Issue']> }>;
   DeleteAffirmationResult: ResolverTypeWrapper<DeleteAffirmationResult>;
   DeleteBehaviorObservationResult: ResolverTypeWrapper<DeleteBehaviorObservationResult>;
@@ -2649,6 +2717,7 @@ export type ResolversParentTypes = {
   CreateSubGoalInput: CreateSubGoalInput;
   CreateTeacherFeedbackInput: CreateTeacherFeedbackInput;
   DataSnapshot: DataSnapshot;
+  DeepAnalysis: Omit<DeepAnalysis, 'familyMember' | 'goal' | 'journalEntry' | 'note'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, goal?: Maybe<ResolversParentTypes['Goal']>, journalEntry?: Maybe<ResolversParentTypes['JournalEntry']>, note?: Maybe<ResolversParentTypes['Note']> };
   DeepIssueAnalysis: Omit<DeepIssueAnalysis, 'familyMember' | 'triggerIssue'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, triggerIssue?: Maybe<ResolversParentTypes['Issue']> };
   DeleteAffirmationResult: DeleteAffirmationResult;
   DeleteBehaviorObservationResult: DeleteBehaviorObservationResult;
@@ -2951,6 +3020,35 @@ export type DataSnapshotResolvers<ContextType = GraphQLContext, ParentType exten
   researchPaperCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   teacherFeedbackCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
+
+export type DeepAnalysisResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeepAnalysis'] = ResolversParentTypes['DeepAnalysis']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdBy?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  dataSnapshot?: Resolver<ResolversTypes['DataSnapshot'], ParentType, ContextType>;
+  familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
+  familySystemInsights?: Resolver<Array<ResolversTypes['FamilySystemInsight']>, ParentType, ContextType>;
+  goal?: Resolver<Maybe<ResolversTypes['Goal']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  journalEntry?: Resolver<Maybe<ResolversTypes['JournalEntry']>, ParentType, ContextType>;
+  model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  note?: Resolver<Maybe<ResolversTypes['Note']>, ParentType, ContextType>;
+  parentAdvice?: Resolver<Array<ResolversTypes['ParentAdviceItem']>, ParentType, ContextType>;
+  patternClusters?: Resolver<Array<ResolversTypes['PatternCluster']>, ParentType, ContextType>;
+  priorityRecommendations?: Resolver<Array<ResolversTypes['PriorityRecommendation']>, ParentType, ContextType>;
+  researchRelevance?: Resolver<Array<ResolversTypes['ResearchRelevanceMapping']>, ParentType, ContextType>;
+  subjectId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  subjectType?: Resolver<ResolversTypes['DeepAnalysisSubjectType'], ParentType, ContextType>;
+  summary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  timelineAnalysis?: Resolver<ResolversTypes['TimelineAnalysis'], ParentType, ContextType>;
+  triggerId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  triggerType?: Resolver<Maybe<ResolversTypes['DeepAnalysisTriggerType']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type DeepAnalysisSubjectTypeResolvers = EnumResolverSignature<{ FAMILY_MEMBER?: any, GOAL?: any, JOURNAL_ENTRY?: any, NOTE?: any }, ResolversTypes['DeepAnalysisSubjectType']>;
+
+export type DeepAnalysisTriggerTypeResolvers = EnumResolverSignature<{ FEEDBACK?: any, ISSUE?: any, OBSERVATION?: any }, ResolversTypes['DeepAnalysisTriggerType']>;
 
 export type DeepIssueAnalysisResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeepIssueAnalysis'] = ResolversParentTypes['DeepIssueAnalysis']> = {
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3489,6 +3587,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteContact?: Resolver<ResolversTypes['DeleteContactResult'], ParentType, ContextType, RequireFields<MutationdeleteContactArgs, 'id'>>;
   deleteContactFeedback?: Resolver<ResolversTypes['DeleteContactFeedbackResult'], ParentType, ContextType, RequireFields<MutationdeleteContactFeedbackArgs, 'id'>>;
   deleteConversation?: Resolver<ResolversTypes['DeleteConversationResult'], ParentType, ContextType, RequireFields<MutationdeleteConversationArgs, 'id'>>;
+  deleteDeepAnalysis?: Resolver<ResolversTypes['DeleteDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteDeepAnalysisArgs, 'id'>>;
   deleteDeepIssueAnalysis?: Resolver<ResolversTypes['DeleteDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteDeepIssueAnalysisArgs, 'id'>>;
   deleteDiscussionGuide?: Resolver<ResolversTypes['DeleteDiscussionGuideResult'], ParentType, ContextType, RequireFields<MutationdeleteDiscussionGuideArgs, 'journalEntryId'>>;
   deleteFamilyMember?: Resolver<ResolversTypes['DeleteFamilyMemberResult'], ParentType, ContextType, RequireFields<MutationdeleteFamilyMemberArgs, 'id'>>;
@@ -3508,6 +3607,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteTherapeuticQuestions?: Resolver<ResolversTypes['DeleteQuestionsResult'], ParentType, ContextType, Partial<MutationdeleteTherapeuticQuestionsArgs>>;
   extractContactFeedbackIssues?: Resolver<ResolversTypes['ContactFeedback'], ParentType, ContextType, RequireFields<MutationextractContactFeedbackIssuesArgs, 'id'>>;
   generateAudio?: Resolver<ResolversTypes['GenerateAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateAudioArgs, 'goalId'>>;
+  generateDeepAnalysis?: Resolver<ResolversTypes['GenerateDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateDeepAnalysisArgs, 'subjectId' | 'subjectType'>>;
   generateDeepIssueAnalysis?: Resolver<ResolversTypes['GenerateDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateDeepIssueAnalysisArgs, 'familyMemberId'>>;
   generateDiscussionGuide?: Resolver<ResolversTypes['GenerateDiscussionGuideResult'], ParentType, ContextType, RequireFields<MutationgenerateDiscussionGuideArgs, 'journalEntryId'>>;
   generateHabitsForFamilyMember?: Resolver<ResolversTypes['GenerateHabitsResult'], ParentType, ContextType, RequireFields<MutationgenerateHabitsForFamilyMemberArgs, 'familyMemberId'>>;
@@ -3683,6 +3783,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
   conversation?: Resolver<Maybe<ResolversTypes['Conversation']>, ParentType, ContextType, RequireFields<QueryconversationArgs, 'id'>>;
   conversationsForIssue?: Resolver<Array<ResolversTypes['Conversation']>, ParentType, ContextType, RequireFields<QueryconversationsForIssueArgs, 'issueId'>>;
+  deepAnalyses?: Resolver<Array<ResolversTypes['DeepAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepAnalysesArgs, 'subjectId' | 'subjectType'>>;
+  deepAnalysis?: Resolver<Maybe<ResolversTypes['DeepAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepAnalysisArgs, 'id'>>;
   deepIssueAnalyses?: Resolver<Array<ResolversTypes['DeepIssueAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepIssueAnalysesArgs, 'familyMemberId'>>;
   deepIssueAnalysis?: Resolver<Maybe<ResolversTypes['DeepIssueAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepIssueAnalysisArgs, 'id'>>;
   familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType, Partial<QueryfamilyMemberArgs>>;
@@ -3937,6 +4039,9 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ConversationMessage?: ConversationMessageResolvers<ContextType>;
   ConversationStarter?: ConversationStarterResolvers<ContextType>;
   DataSnapshot?: DataSnapshotResolvers<ContextType>;
+  DeepAnalysis?: DeepAnalysisResolvers<ContextType>;
+  DeepAnalysisSubjectType?: DeepAnalysisSubjectTypeResolvers;
+  DeepAnalysisTriggerType?: DeepAnalysisTriggerTypeResolvers;
   DeepIssueAnalysis?: DeepIssueAnalysisResolvers<ContextType>;
   DeleteAffirmationResult?: DeleteAffirmationResultResolvers<ContextType>;
   DeleteBehaviorObservationResult?: DeleteBehaviorObservationResultResolvers<ContextType>;

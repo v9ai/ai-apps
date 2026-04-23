@@ -1376,7 +1376,9 @@ export type Mutation = {
   add_company_facts: Array<CompanyFact>;
   analyzeCompany: AnalyzeCompanyResponse;
   analyzeLinkedInPosts: AnalyzePostsResult;
+  analyzeProductGTM: Product;
   analyzeProductICP: Product;
+  analyzeProductPricing: Product;
   applyEmailPattern: ApplyEmailPatternResult;
   approveAllDrafts: BatchSendDraftResult;
   approveAndSendDraft: SendDraftResult;
@@ -1447,6 +1449,7 @@ export type Mutation = {
   refreshIntentScores: RefreshIntentResult;
   regenerateDraft: ReplyDraft;
   rescrapeCompetitor: Competitor;
+  runFullProductIntel: Product;
   salescueAnalyze: SalescueAnalyzeResult;
   saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
@@ -1504,7 +1507,17 @@ export type MutationAnalyzeLinkedInPostsArgs = {
 };
 
 
+export type MutationAnalyzeProductGtmArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationAnalyzeProductIcpArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationAnalyzeProductPricingArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1830,6 +1843,11 @@ export type MutationRescrapeCompetitorArgs = {
 };
 
 
+export type MutationRunFullProductIntelArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationSalescueAnalyzeArgs = {
   modules?: InputMaybe<Array<SalescueModule>>;
   text: Scalars['String']['input'];
@@ -2037,11 +2055,17 @@ export type Product = {
   createdBy: Maybe<Scalars['String']['output']>;
   description: Maybe<Scalars['String']['output']>;
   domain: Maybe<Scalars['String']['output']>;
+  gtmAnalysis: Maybe<Scalars['JSON']['output']>;
+  gtmAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   highlights: Maybe<Scalars['JSON']['output']>;
   icpAnalysis: Maybe<Scalars['JSON']['output']>;
   icpAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['Int']['output'];
+  intelReport: Maybe<Scalars['JSON']['output']>;
+  intelReportAt: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
+  pricingAnalysis: Maybe<Scalars['JSON']['output']>;
+  pricingAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   slug: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   url: Scalars['URL']['output'];

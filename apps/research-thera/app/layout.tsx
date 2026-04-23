@@ -8,7 +8,10 @@ import { GlobalJournalShortcut } from "./components/GlobalJournalShortcut";
 import { VaultShortcut } from "./components/VaultShortcut";
 
 export const metadata: Metadata = {
-  title: "ResearchThera.com",
+  title: {
+    default: "ResearchThera",
+    template: "%s · ResearchThera",
+  },
   description: "Research-based therapeutic notes and reflections powered by AI",
 };
 

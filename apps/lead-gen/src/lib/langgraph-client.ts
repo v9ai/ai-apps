@@ -357,3 +357,156 @@ export function discoverCompetitorsTeam(input: {
     { timeoutMs: 180_000 },
   );
 }
+
+// ─── Pricing / GTM / Product Intelligence ─────────────────────────────────
+//
+// These call the new DeepSeek-backed graphs in
+// `backend/leadgen_agent/{pricing,gtm,product_intel}_graph.py`. Output shapes
+// mirror the Pydantic models in `product_intel_schemas.py` (keep these types in
+// sync with that module when the contract changes).
+
+export interface PriceTier {
+  name: string;
+  price_monthly_usd: number | null;
+  billing_unit: "per_seat" | "per_usage" | "flat" | "hybrid" | "custom";
+  target_persona: string;
+  included: string[];
+  limits: string[];
+  upgrade_trigger: string;
+}
+
+export interface PricingStrategyResult {
+  model: {
+    value_metric: string;
+    model_type:
+      | "subscription"
+      | "usage"
+      | "hybrid"
+      | "per_outcome"
+      | "freemium";
+    free_offer: string;
+    tiers: PriceTier[];
+    addons: string[];
+    discounting_strategy: string;
+  };
+  rationale: {
+    value_basis: string;
+    competitor_benchmark: string;
+    wtp_estimate: string;
+    risks: string[];
+    recommendation: string;
+  };
+  graph_meta?: Record<string, unknown>;
+}
+
+export interface GTMChannel {
+  name: string;
+  why: string;
+  icp_presence: string;
+  tactics: string[];
+  effort: "low" | "medium" | "high";
+  time_to_first_lead: string;
+}
+
+export interface MessagingPillar {
+  theme: string;
+  proof_points: string[];
+  when_to_use: string;
+  avoid_when: string;
+}
+
+export interface OutreachTemplate {
+  channel:
+    | "cold_email"
+    | "linkedin_dm"
+    | "linkedin_connect"
+    | "linkedin_post"
+    | "reply_guy"
+    | "community"
+    | "webinar";
+  persona: string;
+  hook: string;
+  body: string;
+  cta: string;
+}
+
+export interface SalesPlaybook {
+  discovery_questions: string[];
+  objections: {
+    objection: string;
+    response: string;
+    evidence_to_show: string[];
+  }[];
+  battlecards: Record<string, string>;
+}
+
+export interface GTMStrategyResult {
+  channels: GTMChannel[];
+  messaging_pillars: MessagingPillar[];
+  outreach_templates: OutreachTemplate[];
+  sales_playbook: SalesPlaybook;
+  first_90_days: string[];
+  graph_meta?: Record<string, unknown>;
+}
+
+export interface ProductIntelReportResult {
+  tldr: string;
+  top_3_priorities: string[];
+  key_risks: string[];
+  quick_wins: string[];
+  product_profile?: {
+    name: string;
+    one_liner: string;
+    category: string;
+    core_jobs: string[];
+    key_features: string[];
+    stated_audience: string;
+    visible_pricing: string;
+    tech_signals: string[];
+  } | null;
+  graph_meta?: Record<string, unknown>;
+}
+
+/** Pricing strategy graph — benchmark + value-metric (parallel) → design → rationale. */
+export function analyzeProductPricing(input: {
+  productId: number;
+}): Promise<{ pricing: PricingStrategyResult; graph_meta?: Record<string, unknown> }> {
+  return runGraph<{ pricing: PricingStrategyResult; graph_meta?: Record<string, unknown> }>(
+    "pricing",
+    { product_id: input.productId },
+    { timeoutMs: 180_000 },
+  );
+}
+
+/** Go-to-market graph — channels + pillars (parallel) → templates + playbook → 90-day plan. */
+export function analyzeProductGTM(input: {
+  productId: number;
+}): Promise<{ gtm: GTMStrategyResult; graph_meta?: Record<string, unknown> }> {
+  return runGraph<{ gtm: GTMStrategyResult; graph_meta?: Record<string, unknown> }>(
+    "gtm",
+    { product_id: input.productId },
+    { timeoutMs: 180_000 },
+  );
+}
+
+/**
+ * Product intelligence supervisor — orchestrates ICP (re-used or fresh) →
+ * competitor check → pricing + GTM (parallel) → executive synthesis. Persists
+ * every stage to the products row.
+ *
+ * 300s timeout matches the Vercel maxDuration in vercel.json. Pass
+ * force_refresh=true to ignore cached ICP and re-run deep_icp first.
+ */
+export function runFullProductIntel(input: {
+  productId: number;
+  forceRefresh?: boolean;
+}): Promise<{ report: ProductIntelReportResult; graph_meta?: Record<string, unknown> }> {
+  return runGraph<{ report: ProductIntelReportResult; graph_meta?: Record<string, unknown> }>(
+    "product_intel",
+    {
+      product_id: input.productId,
+      force_refresh: Boolean(input.forceRefresh),
+    },
+    { timeoutMs: 300_000 },
+  );
+}

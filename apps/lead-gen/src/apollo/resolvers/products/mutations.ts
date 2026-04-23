@@ -4,12 +4,21 @@ import { db } from "@/db";
 import { products } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
-import { analyzeProductICP, enhanceProductIcpTeam } from "@/lib/langgraph-client";
+import {
+  analyzeProductGTM,
+  analyzeProductICP,
+  analyzeProductPricing,
+  enhanceProductIcpTeam,
+  runFullProductIntel,
+} from "@/lib/langgraph-client";
 import type {
   MutationUpsertProductArgs,
   MutationDeleteProductArgs,
   MutationAnalyzeProductIcpArgs,
   MutationEnhanceProductIcpArgs,
+  MutationAnalyzeProductPricingArgs,
+  MutationAnalyzeProductGtmArgs,
+  MutationRunFullProductIntelArgs,
 } from "@/__generated__/resolvers-types";
 
 // Products are a global SaaS catalog (see queries.ts). Writes use the
@@ -122,6 +131,96 @@ export const productMutations = {
       .set({
         icp_analysis: result as unknown as Record<string, unknown>,
         icp_analyzed_at: now,
+        updated_at: now,
+      })
+      .where(eq(products.id, args.id))
+      .returning();
+
+    if (!row) {
+      throw new GraphQLError(`Product ${args.id} not found`, {
+        extensions: { code: "NOT_FOUND" },
+      });
+    }
+    return row;
+  },
+
+  async analyzeProductPricing(
+    _parent: unknown,
+    args: MutationAnalyzeProductPricingArgs,
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    // The pricing graph writes its own pricing_analysis row via asyncpg inside
+    // the `write_rationale` node, but we also persist here so the GraphQL
+    // response always carries the latest value (write_rationale + our UPDATE
+    // race is harmless — same value).
+    const { pricing } = await analyzeProductPricing({ productId: args.id });
+    const now = new Date().toISOString();
+
+    const [row] = await db
+      .update(products)
+      .set({
+        pricing_analysis: pricing as unknown as Record<string, unknown>,
+        pricing_analyzed_at: now,
+        updated_at: now,
+      })
+      .where(eq(products.id, args.id))
+      .returning();
+
+    if (!row) {
+      throw new GraphQLError(`Product ${args.id} not found`, {
+        extensions: { code: "NOT_FOUND" },
+      });
+    }
+    return row;
+  },
+
+  async analyzeProductGTM(
+    _parent: unknown,
+    args: MutationAnalyzeProductGtmArgs,
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    const { gtm } = await analyzeProductGTM({ productId: args.id });
+    const now = new Date().toISOString();
+
+    const [row] = await db
+      .update(products)
+      .set({
+        gtm_analysis: gtm as unknown as Record<string, unknown>,
+        gtm_analyzed_at: now,
+        updated_at: now,
+      })
+      .where(eq(products.id, args.id))
+      .returning();
+
+    if (!row) {
+      throw new GraphQLError(`Product ${args.id} not found`, {
+        extensions: { code: "NOT_FOUND" },
+      });
+    }
+    return row;
+  },
+
+  async runFullProductIntel(
+    _parent: unknown,
+    args: MutationRunFullProductIntelArgs,
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    // Supervisor persists pricing/gtm/intel_report internally. We still re-read
+    // the row so the resolver returns the latest state.
+    const { report } = await runFullProductIntel({ productId: args.id });
+    const now = new Date().toISOString();
+
+    const [row] = await db
+      .update(products)
+      .set({
+        intel_report: report as unknown as Record<string, unknown>,
+        intel_report_at: now,
         updated_at: now,
       })
       .where(eq(products.id, args.id))

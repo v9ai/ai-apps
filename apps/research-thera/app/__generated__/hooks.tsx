@@ -404,6 +404,45 @@ export type DataSnapshot = {
   teacherFeedbackCount: Scalars['Int']['output'];
 };
 
+export type DeepAnalysis = {
+  __typename?: 'DeepAnalysis';
+  createdAt: Scalars['String']['output'];
+  createdBy: Scalars['String']['output'];
+  dataSnapshot: DataSnapshot;
+  familyMember?: Maybe<FamilyMember>;
+  familySystemInsights: Array<FamilySystemInsight>;
+  goal?: Maybe<Goal>;
+  id: Scalars['Int']['output'];
+  jobId?: Maybe<Scalars['String']['output']>;
+  journalEntry?: Maybe<JournalEntry>;
+  model: Scalars['String']['output'];
+  note?: Maybe<Note>;
+  parentAdvice: Array<ParentAdviceItem>;
+  patternClusters: Array<PatternCluster>;
+  priorityRecommendations: Array<PriorityRecommendation>;
+  researchRelevance: Array<ResearchRelevanceMapping>;
+  subjectId: Scalars['Int']['output'];
+  subjectType: DeepAnalysisSubjectType;
+  summary: Scalars['String']['output'];
+  timelineAnalysis: TimelineAnalysis;
+  triggerId?: Maybe<Scalars['Int']['output']>;
+  triggerType?: Maybe<DeepAnalysisTriggerType>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export enum DeepAnalysisSubjectType {
+  FamilyMember = 'FAMILY_MEMBER',
+  Goal = 'GOAL',
+  JournalEntry = 'JOURNAL_ENTRY',
+  Note = 'NOTE'
+}
+
+export enum DeepAnalysisTriggerType {
+  Feedback = 'FEEDBACK',
+  Issue = 'ISSUE',
+  Observation = 'OBSERVATION'
+}
+
 export type DeepIssueAnalysis = {
   __typename?: 'DeepIssueAnalysis';
   createdAt: Scalars['String']['output'];
@@ -1054,6 +1093,7 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteContactFeedback: DeleteContactFeedbackResult;
   deleteConversation: DeleteConversationResult;
+  deleteDeepAnalysis: DeleteDeepAnalysisResult;
   deleteDeepIssueAnalysis: DeleteDeepAnalysisResult;
   deleteDiscussionGuide: DeleteDiscussionGuideResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
@@ -1073,6 +1113,7 @@ export type Mutation = {
   deleteTherapeuticQuestions: DeleteQuestionsResult;
   extractContactFeedbackIssues: ContactFeedback;
   generateAudio: GenerateAudioResult;
+  generateDeepAnalysis: GenerateDeepAnalysisResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
   generateDiscussionGuide: GenerateDiscussionGuideResult;
   generateHabitsForFamilyMember: GenerateHabitsResult;
@@ -1249,6 +1290,11 @@ export type MutationDeleteConversationArgs = {
 };
 
 
+export type MutationDeleteDeepAnalysisArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationDeleteDeepIssueAnalysisArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1348,6 +1394,14 @@ export type MutationGenerateAudioArgs = {
   storyId?: InputMaybe<Scalars['Int']['input']>;
   text?: InputMaybe<Scalars['String']['input']>;
   voice?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationGenerateDeepAnalysisArgs = {
+  subjectId: Scalars['Int']['input'];
+  subjectType: DeepAnalysisSubjectType;
+  triggerId?: InputMaybe<Scalars['Int']['input']>;
+  triggerType?: InputMaybe<DeepAnalysisTriggerType>;
 };
 
 
@@ -1781,6 +1835,8 @@ export type Query = {
   contacts: Array<Contact>;
   conversation?: Maybe<Conversation>;
   conversationsForIssue: Array<Conversation>;
+  deepAnalyses: Array<DeepAnalysis>;
+  deepAnalysis?: Maybe<DeepAnalysis>;
   deepIssueAnalyses: Array<DeepIssueAnalysis>;
   deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
   familyMember?: Maybe<FamilyMember>;
@@ -1880,6 +1936,17 @@ export type QueryConversationArgs = {
 
 export type QueryConversationsForIssueArgs = {
   issueId: Scalars['Int']['input'];
+};
+
+
+export type QueryDeepAnalysesArgs = {
+  subjectId: Scalars['Int']['input'];
+  subjectType: DeepAnalysisSubjectType;
+};
+
+
+export type QueryDeepAnalysisArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -2584,6 +2651,13 @@ export type DeleteConversationMutationVariables = Exact<{
 
 export type DeleteConversationMutation = { __typename?: 'Mutation', deleteConversation: { __typename?: 'DeleteConversationResult', id: number } };
 
+export type DeleteDeepAnalysisMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteDeepAnalysisMutation = { __typename?: 'Mutation', deleteDeepAnalysis: { __typename?: 'DeleteDeepAnalysisResult', success: boolean, message?: string | null } };
+
 export type DeleteDeepIssueAnalysisMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -2729,6 +2803,16 @@ export type GenerateAudioMutationVariables = Exact<{
 
 
 export type GenerateAudioMutation = { __typename?: 'Mutation', generateAudio: { __typename?: 'GenerateAudioResult', success: boolean, message?: string | null, jobId: string, audioUrl?: string | null } };
+
+export type GenerateDeepAnalysisMutationVariables = Exact<{
+  subjectType: DeepAnalysisSubjectType;
+  subjectId: Scalars['Int']['input'];
+  triggerType?: InputMaybe<DeepAnalysisTriggerType>;
+  triggerId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GenerateDeepAnalysisMutation = { __typename?: 'Mutation', generateDeepAnalysis: { __typename?: 'GenerateDeepAnalysisResult', success: boolean, message?: string | null, jobId?: string | null } };
 
 export type GenerateDeepIssueAnalysisMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -2934,6 +3018,14 @@ export type GetConversationsForIssueQueryVariables = Exact<{
 
 
 export type GetConversationsForIssueQuery = { __typename?: 'Query', conversationsForIssue: Array<{ __typename?: 'Conversation', id: number, issueId: number, userId: string, title?: string | null, createdAt: string, updatedAt: string, messages: Array<{ __typename?: 'ConversationMessage', id: number, conversationId: number, role: string, content: string, createdAt: string }> }> };
+
+export type GetDeepAnalysesQueryVariables = Exact<{
+  subjectType: DeepAnalysisSubjectType;
+  subjectId: Scalars['Int']['input'];
+}>;
+
+
+export type GetDeepAnalysesQuery = { __typename?: 'Query', deepAnalyses: Array<{ __typename?: 'DeepAnalysis', id: number, subjectType: DeepAnalysisSubjectType, subjectId: number, triggerType?: DeepAnalysisTriggerType | null, triggerId?: number | null, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, patternClusters: Array<{ __typename?: 'PatternCluster', name: string, description: string, issueIds: Array<number>, issueTitles: Array<string>, categories: Array<string>, pattern: string, confidence: number, suggestedRootCause?: string | null }>, timelineAnalysis: { __typename?: 'TimelineAnalysis', moodCorrelation?: string | null, escalationTrend?: string | null, criticalPeriods: Array<string>, phases: Array<{ __typename?: 'TimelinePhase', period: string, issueIds: Array<number>, description: string, moodTrend?: string | null, keyEvents: Array<string> }> }, familySystemInsights: Array<{ __typename?: 'FamilySystemInsight', insight: string, involvedMemberIds: Array<number>, involvedMemberNames: Array<string>, evidenceIssueIds: Array<number>, systemicPattern?: string | null, actionable: boolean }>, priorityRecommendations: Array<{ __typename?: 'PriorityRecommendation', rank: number, issueId?: number | null, issueTitle?: string | null, rationale: string, urgency: string, suggestedApproach: string, relatedResearchIds?: Array<number> | null }>, researchRelevance: Array<{ __typename?: 'ResearchRelevanceMapping', patternClusterName: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, parentAdvice: Array<{ __typename?: 'ParentAdviceItem', title: string, advice: string, targetIssueIds: Array<number>, targetIssueTitles: Array<string>, relatedPatternCluster?: string | null, relatedResearchIds?: Array<number> | null, relatedResearchTitles?: Array<string> | null, ageAppropriate: boolean, developmentalContext?: string | null, priority: string, concreteSteps: Array<string> }>, dataSnapshot: { __typename?: 'DataSnapshot', issueCount: number, observationCount: number, journalEntryCount: number, contactFeedbackCount: number, teacherFeedbackCount: number, researchPaperCount: number, relatedMemberIssueCount: number } }> };
 
 export type GetDeepIssueAnalysesQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -4655,6 +4747,40 @@ export function useDeleteConversationMutation(baseOptions?: Apollo.MutationHookO
 export type DeleteConversationMutationHookResult = ReturnType<typeof useDeleteConversationMutation>;
 export type DeleteConversationMutationResult = Apollo.MutationResult<DeleteConversationMutation>;
 export type DeleteConversationMutationOptions = Apollo.BaseMutationOptions<DeleteConversationMutation, DeleteConversationMutationVariables>;
+export const DeleteDeepAnalysisDocument = gql`
+    mutation DeleteDeepAnalysis($id: Int!) {
+  deleteDeepAnalysis(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteDeepAnalysisMutationFn = Apollo.MutationFunction<DeleteDeepAnalysisMutation, DeleteDeepAnalysisMutationVariables>;
+
+/**
+ * __useDeleteDeepAnalysisMutation__
+ *
+ * To run a mutation, you first call `useDeleteDeepAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDeepAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteDeepAnalysisMutation, { data, loading, error }] = useDeleteDeepAnalysisMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteDeepAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<DeleteDeepAnalysisMutation, DeleteDeepAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteDeepAnalysisMutation, DeleteDeepAnalysisMutationVariables>(DeleteDeepAnalysisDocument, options);
+      }
+export type DeleteDeepAnalysisMutationHookResult = ReturnType<typeof useDeleteDeepAnalysisMutation>;
+export type DeleteDeepAnalysisMutationResult = Apollo.MutationResult<DeleteDeepAnalysisMutation>;
+export type DeleteDeepAnalysisMutationOptions = Apollo.BaseMutationOptions<DeleteDeepAnalysisMutation, DeleteDeepAnalysisMutationVariables>;
 export const DeleteDeepIssueAnalysisDocument = gql`
     mutation DeleteDeepIssueAnalysis($id: Int!) {
   deleteDeepIssueAnalysis(id: $id) {
@@ -5360,6 +5486,49 @@ export function useGenerateAudioMutation(baseOptions?: Apollo.MutationHookOption
 export type GenerateAudioMutationHookResult = ReturnType<typeof useGenerateAudioMutation>;
 export type GenerateAudioMutationResult = Apollo.MutationResult<GenerateAudioMutation>;
 export type GenerateAudioMutationOptions = Apollo.BaseMutationOptions<GenerateAudioMutation, GenerateAudioMutationVariables>;
+export const GenerateDeepAnalysisDocument = gql`
+    mutation GenerateDeepAnalysis($subjectType: DeepAnalysisSubjectType!, $subjectId: Int!, $triggerType: DeepAnalysisTriggerType, $triggerId: Int) {
+  generateDeepAnalysis(
+    subjectType: $subjectType
+    subjectId: $subjectId
+    triggerType: $triggerType
+    triggerId: $triggerId
+  ) {
+    success
+    message
+    jobId
+  }
+}
+    `;
+export type GenerateDeepAnalysisMutationFn = Apollo.MutationFunction<GenerateDeepAnalysisMutation, GenerateDeepAnalysisMutationVariables>;
+
+/**
+ * __useGenerateDeepAnalysisMutation__
+ *
+ * To run a mutation, you first call `useGenerateDeepAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateDeepAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateDeepAnalysisMutation, { data, loading, error }] = useGenerateDeepAnalysisMutation({
+ *   variables: {
+ *      subjectType: // value for 'subjectType'
+ *      subjectId: // value for 'subjectId'
+ *      triggerType: // value for 'triggerType'
+ *      triggerId: // value for 'triggerId'
+ *   },
+ * });
+ */
+export function useGenerateDeepAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<GenerateDeepAnalysisMutation, GenerateDeepAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateDeepAnalysisMutation, GenerateDeepAnalysisMutationVariables>(GenerateDeepAnalysisDocument, options);
+      }
+export type GenerateDeepAnalysisMutationHookResult = ReturnType<typeof useGenerateDeepAnalysisMutation>;
+export type GenerateDeepAnalysisMutationResult = Apollo.MutationResult<GenerateDeepAnalysisMutation>;
+export type GenerateDeepAnalysisMutationOptions = Apollo.BaseMutationOptions<GenerateDeepAnalysisMutation, GenerateDeepAnalysisMutationVariables>;
 export const GenerateDeepIssueAnalysisDocument = gql`
     mutation GenerateDeepIssueAnalysis($familyMemberId: Int!, $triggerIssueId: Int) {
   generateDeepIssueAnalysis(
@@ -6797,6 +6966,127 @@ export type GetConversationsForIssueQueryHookResult = ReturnType<typeof useGetCo
 export type GetConversationsForIssueLazyQueryHookResult = ReturnType<typeof useGetConversationsForIssueLazyQuery>;
 export type GetConversationsForIssueSuspenseQueryHookResult = ReturnType<typeof useGetConversationsForIssueSuspenseQuery>;
 export type GetConversationsForIssueQueryResult = Apollo.QueryResult<GetConversationsForIssueQuery, GetConversationsForIssueQueryVariables>;
+export const GetDeepAnalysesDocument = gql`
+    query GetDeepAnalyses($subjectType: DeepAnalysisSubjectType!, $subjectId: Int!) {
+  deepAnalyses(subjectType: $subjectType, subjectId: $subjectId) {
+    id
+    subjectType
+    subjectId
+    triggerType
+    triggerId
+    createdBy
+    jobId
+    summary
+    patternClusters {
+      name
+      description
+      issueIds
+      issueTitles
+      categories
+      pattern
+      confidence
+      suggestedRootCause
+    }
+    timelineAnalysis {
+      phases {
+        period
+        issueIds
+        description
+        moodTrend
+        keyEvents
+      }
+      moodCorrelation
+      escalationTrend
+      criticalPeriods
+    }
+    familySystemInsights {
+      insight
+      involvedMemberIds
+      involvedMemberNames
+      evidenceIssueIds
+      systemicPattern
+      actionable
+    }
+    priorityRecommendations {
+      rank
+      issueId
+      issueTitle
+      rationale
+      urgency
+      suggestedApproach
+      relatedResearchIds
+    }
+    researchRelevance {
+      patternClusterName
+      relevantResearchIds
+      relevantResearchTitles
+      coverageGaps
+    }
+    parentAdvice {
+      title
+      advice
+      targetIssueIds
+      targetIssueTitles
+      relatedPatternCluster
+      relatedResearchIds
+      relatedResearchTitles
+      ageAppropriate
+      developmentalContext
+      priority
+      concreteSteps
+    }
+    dataSnapshot {
+      issueCount
+      observationCount
+      journalEntryCount
+      contactFeedbackCount
+      teacherFeedbackCount
+      researchPaperCount
+      relatedMemberIssueCount
+    }
+    model
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetDeepAnalysesQuery__
+ *
+ * To run a query within a React component, call `useGetDeepAnalysesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDeepAnalysesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDeepAnalysesQuery({
+ *   variables: {
+ *      subjectType: // value for 'subjectType'
+ *      subjectId: // value for 'subjectId'
+ *   },
+ * });
+ */
+export function useGetDeepAnalysesQuery(baseOptions: Apollo.QueryHookOptions<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables> & ({ variables: GetDeepAnalysesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables>(GetDeepAnalysesDocument, options);
+      }
+export function useGetDeepAnalysesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables>(GetDeepAnalysesDocument, options);
+        }
+// @ts-ignore
+export function useGetDeepAnalysesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables>): Apollo.UseSuspenseQueryResult<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables>;
+export function useGetDeepAnalysesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables>): Apollo.UseSuspenseQueryResult<GetDeepAnalysesQuery | undefined, GetDeepAnalysesQueryVariables>;
+export function useGetDeepAnalysesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables>(GetDeepAnalysesDocument, options);
+        }
+export type GetDeepAnalysesQueryHookResult = ReturnType<typeof useGetDeepAnalysesQuery>;
+export type GetDeepAnalysesLazyQueryHookResult = ReturnType<typeof useGetDeepAnalysesLazyQuery>;
+export type GetDeepAnalysesSuspenseQueryHookResult = ReturnType<typeof useGetDeepAnalysesSuspenseQuery>;
+export type GetDeepAnalysesQueryResult = Apollo.QueryResult<GetDeepAnalysesQuery, GetDeepAnalysesQueryVariables>;
 export const GetDeepIssueAnalysesDocument = gql`
     query GetDeepIssueAnalyses($familyMemberId: Int!) {
   deepIssueAnalyses(familyMemberId: $familyMemberId) {

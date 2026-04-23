@@ -11,4 +11,10 @@ export const ProductField = {
   highlights: (p: DbProduct) => p.highlights ?? null,
   icpAnalysis: (p: DbProduct) => p.icp_analysis ?? null,
   icpAnalyzedAt: (p: DbProduct) => p.icp_analyzed_at ?? null,
+  pricingAnalysis: (p: DbProduct) => p.pricing_analysis ?? null,
+  pricingAnalyzedAt: (p: DbProduct) => p.pricing_analyzed_at ?? null,
+  gtmAnalysis: (p: DbProduct) => p.gtm_analysis ?? null,
+  gtmAnalyzedAt: (p: DbProduct) => p.gtm_analyzed_at ?? null,
+  intelReport: (p: DbProduct) => p.intel_report ?? null,
+  intelReportAt: (p: DbProduct) => p.intel_report_at ?? null,
 };

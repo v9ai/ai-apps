@@ -1264,7 +1264,9 @@ type Mutation {
   add_company_facts(company_id: Int!, facts: [CompanyFactInput!]!): [CompanyFact!]!
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   analyzeLinkedInPosts(limit: Int, postIds: [Int!]): AnalyzePostsResult!
+  analyzeProductGTM(id: Int!): Product!
   analyzeProductICP(id: Int!): Product!
+  analyzeProductPricing(id: Int!): Product!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   approveAllDrafts(draftIds: [Int!]!): BatchSendDraftResult!
   approveAndSendDraft(draftId: Int!, editedBody: String, editedSubject: String): SendDraftResult!
@@ -1335,6 +1337,7 @@ type Mutation {
   refreshIntentScores: RefreshIntentResult!
   regenerateDraft(draftId: Int!, instructions: String): ReplyDraft!
   rescrapeCompetitor(competitorId: Int!): Competitor!
+  runFullProductIntel(id: Int!): Product!
   salescueAnalyze(modules: [SalescueModule!], text: String!): SalescueAnalyzeResult!
   saveCrawlLog(input: SaveCrawlLogInput!): SaveCrawlLogResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
@@ -1427,11 +1430,17 @@ type Product {
   createdBy: String
   description: String
   domain: String
+  gtmAnalysis: JSON
+  gtmAnalyzedAt: DateTime
   highlights: JSON
   icpAnalysis: JSON
   icpAnalyzedAt: DateTime
   id: Int!
+  intelReport: JSON
+  intelReportAt: DateTime
   name: String!
+  pricingAnalysis: JSON
+  pricingAnalyzedAt: DateTime
   slug: String!
   updatedAt: DateTime!
   url: URL!

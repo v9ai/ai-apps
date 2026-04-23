@@ -365,6 +365,44 @@ type DataSnapshot {
   teacherFeedbackCount: Int!
 }
 
+type DeepAnalysis {
+  createdAt: String!
+  createdBy: String!
+  dataSnapshot: DataSnapshot!
+  familyMember: FamilyMember
+  familySystemInsights: [FamilySystemInsight!]!
+  goal: Goal
+  id: Int!
+  jobId: String
+  journalEntry: JournalEntry
+  model: String!
+  note: Note
+  parentAdvice: [ParentAdviceItem!]!
+  patternClusters: [PatternCluster!]!
+  priorityRecommendations: [PriorityRecommendation!]!
+  researchRelevance: [ResearchRelevanceMapping!]!
+  subjectId: Int!
+  subjectType: DeepAnalysisSubjectType!
+  summary: String!
+  timelineAnalysis: TimelineAnalysis!
+  triggerId: Int
+  triggerType: DeepAnalysisTriggerType
+  updatedAt: String!
+}
+
+enum DeepAnalysisSubjectType {
+  FAMILY_MEMBER
+  GOAL
+  JOURNAL_ENTRY
+  NOTE
+}
+
+enum DeepAnalysisTriggerType {
+  FEEDBACK
+  ISSUE
+  OBSERVATION
+}
+
 type DeepIssueAnalysis {
   createdAt: String!
   createdBy: String!
@@ -952,6 +990,7 @@ type Mutation {
   deleteContact(id: Int!): DeleteContactResult!
   deleteContactFeedback(id: Int!): DeleteContactFeedbackResult!
   deleteConversation(id: Int!): DeleteConversationResult!
+  deleteDeepAnalysis(id: Int!): DeleteDeepAnalysisResult!
   deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
   deleteDiscussionGuide(journalEntryId: Int!): DeleteDiscussionGuideResult!
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
@@ -971,6 +1010,7 @@ type Mutation {
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
+  generateDeepAnalysis(subjectId: Int!, subjectType: DeepAnalysisSubjectType!, triggerId: Int, triggerType: DeepAnalysisTriggerType): GenerateDeepAnalysisResult!
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
   generateDiscussionGuide(journalEntryId: Int!): GenerateDiscussionGuideResult!
   generateHabitsForFamilyMember(count: Int, familyMemberId: Int!): GenerateHabitsResult!
@@ -1183,6 +1223,8 @@ type Query {
   contacts: [Contact!]!
   conversation(id: Int!): Conversation
   conversationsForIssue(issueId: Int!): [Conversation!]!
+  deepAnalyses(subjectId: Int!, subjectType: DeepAnalysisSubjectType!): [DeepAnalysis!]!
+  deepAnalysis(id: Int!): DeepAnalysis
   deepIssueAnalyses(familyMemberId: Int!): [DeepIssueAnalysis!]!
   deepIssueAnalysis(id: Int!): DeepIssueAnalysis
   familyMember(id: Int, slug: String): FamilyMember

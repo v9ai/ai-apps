@@ -133,6 +133,10 @@ type Query {
   deepIssueAnalysis(id: Int!): DeepIssueAnalysis
   deepIssueAnalyses(familyMemberId: Int!): [DeepIssueAnalysis!]!
 
+  # Generic Deep Analysis (goals, notes, journal entries, family members)
+  deepAnalysis(id: Int!): DeepAnalysis
+  deepAnalyses(subjectType: DeepAnalysisSubjectType!, subjectId: Int!): [DeepAnalysis!]!
+
   # Claim Cards
   claimCard(id: ID!): ClaimCard
   claimCardsForNote(noteId: Int!): [ClaimCard!]!
@@ -262,6 +266,15 @@ type Mutation {
   # Deep Issue Analysis
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
   deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
+
+  # Generic Deep Analysis
+  generateDeepAnalysis(
+    subjectType: DeepAnalysisSubjectType!
+    subjectId: Int!
+    triggerType: DeepAnalysisTriggerType
+    triggerId: Int
+  ): GenerateDeepAnalysisResult!
+  deleteDeepAnalysis(id: Int!): DeleteDeepAnalysisResult!
 
   # Journal Analysis
   generateJournalAnalysis(journalEntryId: Int!): GenerateJournalAnalysisResult!
@@ -1717,4 +1730,51 @@ type GenerateDiscussionGuideResult {
 type DeleteDiscussionGuideResult {
   success: Boolean!
   message: String
+}
+
+# ============================================
+# Generic Deep Analysis (polymorphic across Goal / Note / JournalEntry / FamilyMember)
+# Reuses nested types from the Deep Issue Analysis block above:
+# PatternCluster, TimelineAnalysis, FamilySystemInsight, PriorityRecommendation,
+# ResearchRelevanceMapping, ParentAdviceItem, DataSnapshot, GenerateDeepAnalysisResult,
+# DeleteDeepAnalysisResult.
+# ============================================
+
+enum DeepAnalysisSubjectType {
+  GOAL
+  NOTE
+  JOURNAL_ENTRY
+  FAMILY_MEMBER
+}
+
+enum DeepAnalysisTriggerType {
+  ISSUE
+  OBSERVATION
+  FEEDBACK
+}
+
+type DeepAnalysis {
+  id: Int!
+  subjectType: DeepAnalysisSubjectType!
+  subjectId: Int!
+  triggerType: DeepAnalysisTriggerType
+  triggerId: Int
+  createdBy: String!
+  jobId: String
+  summary: String!
+  patternClusters: [PatternCluster!]!
+  timelineAnalysis: TimelineAnalysis!
+  familySystemInsights: [FamilySystemInsight!]!
+  priorityRecommendations: [PriorityRecommendation!]!
+  researchRelevance: [ResearchRelevanceMapping!]!
+  parentAdvice: [ParentAdviceItem!]!
+  dataSnapshot: DataSnapshot!
+  model: String!
+  createdAt: String!
+  updatedAt: String!
+  # Convenience resolvers (exactly one will be non-null, matching subjectType)
+  goal: Goal
+  note: Note
+  journalEntry: JournalEntry
+  familyMember: FamilyMember
 }
