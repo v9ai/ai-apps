@@ -125,6 +125,53 @@ def _load_product_row(product_id: int) -> dict[str, Any]:
     }
 
 
+def _load_competitive(product_id: int) -> dict[str, Any]:
+    """Fetch named competitors for the standalone positioning path.
+
+    Mirrors the SQL in ``ensure_competitors`` (product_intel_graph) so both
+    execution paths see identical competitive data. Only returns competitors
+    with a done analysis and a done/approved individual status.
+    """
+    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*)::int
+                FROM competitor_analyses a
+                JOIN competitors c ON c.analysis_id = a.id
+                WHERE a.product_id = %s AND a.status = 'done'
+                """,
+                (int(product_id),),
+            )
+            count_row = cur.fetchone() or (0,)
+            has_completed = bool(count_row[0])
+
+            named: list[dict[str, Any]] = []
+            if has_completed:
+                cur.execute(
+                    """
+                    SELECT c.name, c.url, c.domain, c.description,
+                           c.positioning_headline, c.target_audience
+                    FROM competitors c
+                    JOIN competitor_analyses a ON c.analysis_id = a.id
+                    WHERE a.product_id = %s
+                      AND a.status = 'done'
+                      AND c.status IN ('done', 'approved')
+                    ORDER BY c.id
+                    LIMIT 10
+                    """,
+                    (int(product_id),),
+                )
+                cols = [d[0] for d in cur.description or []]
+                named = [dict(zip(cols, r)) for r in cur.fetchall()]
+
+    return {
+        "has_completed_analysis": has_completed,
+        "competitor_count": count_row[0],
+        "competitors": named,
+    }
+
+
 def _product_brief(product: dict[str, Any]) -> str:
     parts = [
         f"Name: {product.get('name', '')}",
@@ -142,8 +189,8 @@ def _product_brief(product: dict[str, Any]) -> str:
 async def load_inputs(state: PositioningState) -> dict:
     """Materialize product + cached analyses from the DB when called standalone.
 
-    When invoked from the product_intel supervisor these are already in state,
-    in which case this is a no-op.
+    When invoked from the product_intel supervisor these are already in state
+    (product, icp, competitive all pre-populated), in which case this is a no-op.
     """
     if state.get("_error"):
         return {}
@@ -156,6 +203,20 @@ async def load_inputs(state: PositioningState) -> dict:
         loaded = _load_product_row(int(product_id))
     except Exception as e:  # noqa: BLE001
         return {"_error": f"load_inputs: {e}"}
+
+    # Standalone path: also load competitor data the supervisor would inject.
+    # A failure is non-fatal — the graph degrades gracefully with an empty
+    # competitive dict (LLM is told not to fabricate competitors).
+    if not state.get("competitive"):
+        try:
+            loaded["competitive"] = _load_competitive(int(product_id))
+        except Exception:  # noqa: BLE001
+            loaded["competitive"] = {
+                "has_completed_analysis": False,
+                "competitor_count": 0,
+                "competitors": [],
+            }
+
     return loaded
 
 

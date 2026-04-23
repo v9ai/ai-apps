@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Container, Flex, Heading, Text } from "@radix-ui/themes";
+import { Badge, Container, Flex, Heading, Text } from "@radix-ui/themes";
 import {
   ArrowLeftIcon,
   ExternalLinkIcon,
@@ -25,6 +25,23 @@ import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import { useProductBySlugQuery } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
+import type {
+  PricingStrategyResult,
+  GTMStrategyResult,
+  ProductIntelReportResult,
+} from "@/lib/langgraph-client";
+
+type PositioningSneak = {
+  category?: string;
+  positioning_statement?: string;
+  differentiators?: string[];
+};
+
+type IcpSneak = {
+  weighted_total?: number;
+  segments?: { name: string; industry?: string; stage?: string }[];
+  personas?: { title: string; seniority?: string }[];
+};
 
 type Stat = { label: string; value: string };
 type PipelineStage = { stage: string; description: string };
@@ -107,6 +124,21 @@ export function ProductDetail({ slug }: { slug: string }) {
   }
 
   const highlights = (product.highlights ?? null) as Highlights | null;
+  const positioning = (product.positioningAnalysis ?? null) as PositioningSneak | null;
+  const icp = (product.icpAnalysis ?? null) as IcpSneak | null;
+  const pricing = (product.pricingAnalysis ?? null) as PricingStrategyResult | null;
+  const gtm = (product.gtmAnalysis ?? null) as GTMStrategyResult | null;
+  const intel = (product.intelReport ?? null) as ProductIntelReportResult | null;
+
+  const navBtnBase = button({ variant: "soft", size: "sm" });
+  const navBtnDisabledCls = css({ opacity: 0.38, cursor: "not-allowed", pointerEvents: "none" });
+  const cardCls = css({
+    bg: "ui.surface",
+    border: "1px solid",
+    borderColor: "ui.border",
+    borderRadius: "md",
+    p: "4",
+  });
 
   return (
     <Container size="4" p="6">
