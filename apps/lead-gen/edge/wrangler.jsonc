@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "agenticleadgen-edge",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-01",
+  "vars": {
+    // Eventual Vercel project URL. For dev, any public URL works.
+    "ORIGIN": "https://agenticleadgen.xyz"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "RL", "class_name": "RateLimiter" }]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["RateLimiter"] }
+  ],
+  "observability": { "enabled": true }
+}

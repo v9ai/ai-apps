@@ -239,8 +239,7 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                 key={i}
                 className={css({
                   border: "1px solid",
-                  borderColor: "status.negativeBorder",
-                  bg: "status.negativeSubtle",
+                  borderColor: "ui.border",
                   borderRadius: "sm",
                   p: "3",
                 })}

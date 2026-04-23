@@ -250,37 +250,42 @@ async def benchmark_competitors(state: PricingState) -> dict:
 
 
 async def choose_value_metric(state: PricingState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
     icp_block = _fmt_icp_block(state.get("icp") or {})
 
-    llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You choose the best value metric for a B2B product. A good value "
-                    "metric (a) scales with customer value received, (b) is predictable "
-                    "for the buyer, (c) does not punish successful usage. Examples: "
-                    "'per verified lead', 'per closed deal', 'per active workspace'. "
-                    "Avoid 'per API call' (punishes success) or 'per feature' (arbitrary). "
-                    "Return strict JSON: "
-                    '{"recommended_metric":string,"alternatives":[string],"reasoning":"1-3 sentences"}.'
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Product brief:\n{brief}\n\nICP context:\n{icp_block}"
-                    f"\n\nReturn JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
+    try:
+        llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You choose the best value metric for a B2B product. A good value "
+                        "metric (a) scales with customer value received, (b) is predictable "
+                        "for the buyer, (c) does not punish successful usage. Examples: "
+                        "'per verified lead', 'per closed deal', 'per active workspace'. "
+                        "Avoid 'per API call' (punishes success) or 'per feature' (arbitrary). "
+                        "Return strict JSON: "
+                        '{"recommended_metric":string,"alternatives":[string],"reasoning":"1-3 sentences"}.'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Product brief:\n{brief}\n\nICP context:\n{icp_block}"
+                        f"\n\nReturn JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"choose_value_metric: {e}"}
     if not isinstance(result, dict):
         result = {}
     return {
@@ -298,6 +303,8 @@ def _fan_out(_state: PricingState) -> list[str]:
 
 
 async def design_model(state: PricingState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
@@ -305,41 +312,44 @@ async def design_model(state: PricingState) -> dict:
     benchmark = state.get("benchmark") or {}
     metric = state.get("value_metric") or {}
 
-    llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You design a pricing model for a B2B product. Produce 2-5 tiers. "
-                    "Each tier: {name, price_monthly_usd (number|null for custom), "
-                    "billing_unit ('per_seat'|'per_usage'|'flat'|'hybrid'|'custom'), "
-                    "target_persona, included:[string], limits:[string], upgrade_trigger}. "
-                    "Anchor prices to the competitor benchmark provided. Use null for the "
-                    "enterprise/custom tier. Do not invent prices from thin air; justify by "
-                    "value_metric × persona WTP × competitor anchors."
-                    'Return strict JSON: {"value_metric":string,"model_type":("subscription"|"usage"|"hybrid"|"per_outcome"|"freemium"),'
-                    '"free_offer":string,"tiers":[...],"addons":[string],"discounting_strategy":string}.'
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Product brief:\n{brief}\n\n"
-                    f"ICP context:\n{icp_block}\n\n"
-                    f"Benchmark:\n{json.dumps(benchmark)[:2000]}\n\n"
-                    f"Value metric recommendation:\n{json.dumps(metric)[:800]}\n\n"
-                    "Return JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
-    if not isinstance(result, dict):
-        result = {}
-    # Validate via Pydantic — turns bad LLM output into an early clean failure
-    validated = PricingModel.model_validate(result)
+    try:
+        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You design a pricing model for a B2B product. Produce 2-5 tiers. "
+                        "Each tier: {name, price_monthly_usd (number|null for custom), "
+                        "billing_unit ('per_seat'|'per_usage'|'flat'|'hybrid'|'custom'), "
+                        "target_persona, included:[string], limits:[string], upgrade_trigger}. "
+                        "Anchor prices to the competitor benchmark provided. Use null for the "
+                        "enterprise/custom tier. Do not invent prices from thin air; justify by "
+                        "value_metric × persona WTP × competitor anchors."
+                        'Return strict JSON: {"value_metric":string,"model_type":("subscription"|"usage"|"hybrid"|"per_outcome"|"freemium"),'
+                        '"free_offer":string,"tiers":[...],"addons":[string],"discounting_strategy":string}.'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Product brief:\n{brief}\n\n"
+                        f"ICP context:\n{icp_block}\n\n"
+                        f"Benchmark:\n{json.dumps(benchmark)[:2000]}\n\n"
+                        f"Value metric recommendation:\n{json.dumps(metric)[:800]}\n\n"
+                        "Return JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+        if not isinstance(result, dict):
+            result = {}
+        # Validate via Pydantic — turns bad LLM output into an early clean failure
+        validated = PricingModel.model_validate(result)
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"design_model: {e}"}
     return {
         "model": validated.model_dump(),
         "agent_timings": {"design_model": round(time.perf_counter() - t0, 3)},
