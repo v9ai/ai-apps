@@ -314,7 +314,8 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
 
       {(data.rationale?.value_basis ||
         data.rationale?.competitor_benchmark ||
-        data.rationale?.wtp_estimate) && (
+        data.rationale?.wtp_estimate ||
+        (data.rationale?.price_anchors && data.rationale.price_anchors.length > 0)) && (
         <>
           <Separator size="4" />
           <Box>
@@ -322,6 +323,67 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
               Rationale
             </Heading>
             <Flex direction="column" gap="2">
+              {data.rationale?.price_anchors &&
+                data.rationale.price_anchors.length > 0 && (
+                  <Box
+                    className={css({
+                      border: "1px solid",
+                      borderColor: "ui.border",
+                      borderRadius: "sm",
+                      p: "3",
+                    })}
+                  >
+                    <Text weight="bold" size="2" as="div" mb="2">
+                      Price anchors
+                    </Text>
+                    <div
+                      className={css({
+                        display: "grid",
+                        gridTemplateColumns: {
+                          base: "1fr",
+                          md: "1.4fr 1fr auto auto 2fr",
+                        },
+                        columnGap: "3",
+                        rowGap: "2",
+                        alignItems: "center",
+                        fontSize: "sm",
+                      })}
+                    >
+                      <Text size="1" color="gray" weight="bold">
+                        Competitor
+                      </Text>
+                      <Text size="1" color="gray" weight="bold">
+                        Tier
+                      </Text>
+                      <Text size="1" color="gray" weight="bold">
+                        Price/mo
+                      </Text>
+                      <Text size="1" color="gray" weight="bold">
+                        Relation
+                      </Text>
+                      <Text size="1" color="gray" weight="bold">
+                        Note
+                      </Text>
+                      {data.rationale.price_anchors.map((anchor, i) => (
+                        <React.Fragment key={i}>
+                          <Text size="2">{anchor.competitor}</Text>
+                          <Text size="2" color="gray">
+                            {anchor.tier}
+                          </Text>
+                          <Text size="2" weight="bold">
+                            {formatPrice(anchor.monthly_price_usd)}
+                          </Text>
+                          <Badge color={relationColor(anchor.relation)} size="1">
+                            {anchor.relation}
+                          </Badge>
+                          <Text size="2" color="gray" className={css({ lineHeight: "1.4" })}>
+                            {anchor.note}
+                          </Text>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </Box>
+                )}
               {data.rationale?.value_basis && (
                 <Box
                   className={css({
