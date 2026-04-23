@@ -630,21 +630,36 @@ function JournalEntryContent() {
               </Box>
 
               {/* Tabs */}
-              <Flex gap="2" wrap="wrap">
-                {(["emotions", "insights", "recommendations", "prompts"] as const).map((tab) => (
-                  <Button
-                    key={tab}
-                    variant={activeAnalysisTab === tab ? "solid" : "soft"}
-                    size="1"
-                    onClick={() => setActiveAnalysisTab(tab)}
-                  >
-                    {tab === "emotions" ? "Emotions"
-                      : tab === "insights" ? `Insights (${analysis.therapeuticInsights.length})`
-                      : tab === "recommendations" ? `Recommendations (${analysis.actionableRecommendations.length})`
-                      : `Reflection (${analysis.reflectionPrompts.length})`}
-                  </Button>
-                ))}
-              </Flex>
+              <Box
+                style={{
+                  overflowX: "auto",
+                  overflowY: "hidden",
+                  marginLeft: "calc(-1 * var(--space-1))",
+                  marginRight: "calc(-1 * var(--space-1))",
+                  paddingLeft: "var(--space-1)",
+                  paddingRight: "var(--space-1)",
+                  paddingBottom: 2,
+                  WebkitOverflowScrolling: "touch",
+                  scrollbarWidth: "none",
+                }}
+              >
+                <Flex gap="2" style={{ width: "max-content" }}>
+                  {(["emotions", "insights", "recommendations", "prompts"] as const).map((tab) => (
+                    <Button
+                      key={tab}
+                      variant={activeAnalysisTab === tab ? "solid" : "soft"}
+                      size="2"
+                      onClick={() => setActiveAnalysisTab(tab)}
+                      style={{ flexShrink: 0 }}
+                    >
+                      {tab === "emotions" ? "Emotions"
+                        : tab === "insights" ? `Insights (${analysis.therapeuticInsights.length})`
+                        : tab === "recommendations" ? `Recommendations (${analysis.actionableRecommendations.length})`
+                        : `Reflection (${analysis.reflectionPrompts.length})`}
+                    </Button>
+                  ))}
+                </Flex>
+              </Box>
 
               {/* Emotional Landscape Tab */}
               {activeAnalysisTab === "emotions" && (
@@ -756,8 +771,8 @@ function JournalEntryContent() {
       {/* Discussion Guide */}
       <NextLink href={`/journal/${entry.id}/discussion-guide`} style={{ textDecoration: "none" }}>
         <Card style={{ cursor: "pointer" }}>
-          <Flex justify="between" align="center" gap="3" p="4">
-            <Box>
+          <Flex justify="between" align="center" gap="3" p="4" wrap="wrap">
+            <Box style={{ flex: 1, minWidth: 0 }}>
               <Heading size="3" mb="1">Discussion Guide</Heading>
               <Text size="2" color="gray">
                 {discussionGuide
@@ -765,7 +780,7 @@ function JournalEntryContent() {
                   : "Generate a research-grounded guide for discussing this with your child."}
               </Text>
             </Box>
-            <Flex align="center" gap="2">
+            <Flex align="center" gap="2" style={{ flexShrink: 0 }}>
               {discussionGuide && <Badge variant="soft" color="teal" size="1">Ready</Badge>}
               <Text color="gray" size="3">&rsaquo;</Text>
             </Flex>
@@ -851,11 +866,16 @@ function JournalEntryContent() {
             {researchPapers.map((paper) => (
               <Card key={paper.id} variant="surface">
                 <Flex direction="column" gap="2" p="3">
-                  <Flex justify="between" align="start" gap="3">
-                    <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Flex
+                    direction={{ initial: "column", sm: "row" }}
+                    justify="between"
+                    align={{ initial: "start", sm: "start" }}
+                    gap={{ initial: "2", sm: "3" }}
+                  >
+                    <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
                       <Text size="2" weight="bold">
                         {paper.url ? (
-                          <a href={paper.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--indigo-11)", textDecoration: "underline" }}>
+                          <a href={paper.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--indigo-11)", textDecoration: "underline", wordBreak: "break-word" }}>
                             {paper.title}
                           </a>
                         ) : paper.title}
@@ -864,7 +884,7 @@ function JournalEntryContent() {
                         {[paper.authors?.join(", "), paper.year, paper.journal].filter(Boolean).join(" · ")}
                       </Text>
                     </Flex>
-                    <Flex gap="2" align="center" style={{ flexShrink: 0 }}>
+                    <Flex gap="2" align="center" wrap="wrap" style={{ flexShrink: 0 }}>
                       {paper.evidenceLevel && (
                         <Badge variant="soft" color="indigo" size="1">{paper.evidenceLevel}</Badge>
                       )}
@@ -983,8 +1003,13 @@ function JournalEntryContent() {
             </Text>
           </Box>
 
-          <Flex gap="3" align="end" wrap="wrap">
-            <Box style={{ minWidth: 140 }}>
+          <Flex
+            direction={{ initial: "column", sm: "row" }}
+            gap="3"
+            align={{ initial: "stretch", sm: "end" }}
+            wrap="wrap"
+          >
+            <Box style={{ flex: "1 1 140px", minWidth: 0 }}>
               <Text as="div" size="2" weight="medium" mb="1">Language</Text>
               <Select.Root
                 value={storyLanguage}
@@ -1001,7 +1026,7 @@ function JournalEntryContent() {
               </Select.Root>
             </Box>
 
-            <Box style={{ minWidth: 140 }}>
+            <Box style={{ flex: "1 1 140px", minWidth: 0 }}>
               <Text as="div" size="2" weight="medium" mb="1">Duration</Text>
               <Select.Root
                 value={storyMinutes}
@@ -1018,7 +1043,11 @@ function JournalEntryContent() {
               </Select.Root>
             </Box>
 
-            <Button onClick={handleGenerateStory} disabled={isGenerating}>
+            <Button
+              onClick={handleGenerateStory}
+              disabled={isGenerating}
+              style={{ width: "100%", maxWidth: 220 }}
+            >
               {isGenerating && <Spinner />}
               {isGenerating ? "Generating..." : "Generate Story"}
             </Button>

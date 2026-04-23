@@ -121,11 +121,11 @@ export default function JournalRecommendedBooksSection({
               Recommended Books {books.length > 0 ? `(${books.length})` : ""}
             </Heading>
           </Flex>
-          <Flex gap="2">
+          <Flex gap="2" align="center" wrap="wrap">
             {books.length > 0 && (
               <AlertDialog.Root>
                 <AlertDialog.Trigger>
-                  <Button variant="soft" color="red" size="2" disabled={deleting || generating}>
+                  <Button variant="soft" color="red" size="3" disabled={deleting || generating}>
                     {deleting ? "Deleting..." : "Clear"}
                   </Button>
                 </AlertDialog.Trigger>
