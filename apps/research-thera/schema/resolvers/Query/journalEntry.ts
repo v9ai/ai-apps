@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { getJournalEntry } from "@/src/db";
+import { getJournalEntryForViewer } from "@/src/db";
 
 export const journalEntry: NonNullable<QueryResolvers['journalEntry']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const journalEntry: NonNullable<QueryResolvers['journalEntry']> = async (
     throw new Error("Authentication required");
   }
 
-  const entry = await getJournalEntry(args.id, userEmail);
+  const entry = await getJournalEntryForViewer(args.id, userEmail);
 
   if (!entry) {
     return null;
