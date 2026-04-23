@@ -31,6 +31,15 @@ function statusColor(s: string): "green" | "red" | "orange" | "blue" | "gray" {
   return "gray";
 }
 
+function relationColor(
+  r: string | undefined,
+): "green" | "blue" | "orange" | "gray" {
+  if (r === "below" || r === "undercut") return "green";
+  if (r === "at_parity") return "blue";
+  if (r === "premium") return "orange";
+  return "gray";
+}
+
 function formatPrice(p: number | null | undefined): string {
   if (p === null || p === undefined) return "Custom";
   if (p === 0) return "Free";

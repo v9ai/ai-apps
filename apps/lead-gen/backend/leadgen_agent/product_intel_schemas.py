@@ -49,6 +49,7 @@ __all__ = [
     "PRODUCT_INTEL_VERSION",
     "ProductProfile",
     "PriceTier",
+    "PriceAnchor",
     "PricingModel",
     "PricingRationale",
     "PricingStrategy",
@@ -223,11 +224,24 @@ class PricingModel(BaseModel):
     tiers: list[PriceTier] = Field(default_factory=list, min_length=1, max_length=6)
     addons: list[str] = Field(default_factory=list, max_length=8)
     discounting_strategy: str = Field(default="", max_length=300)
+    # Top-level "why" reasoning, surfaced in the UI so readers can see why this
+    # metric / model shape was chosen. Additive — default empty.
+    value_metric_reasoning: str = Field(default="", max_length=400)
+    model_type_reasoning: str = Field(default="", max_length=400)
 
     @model_validator(mode="before")
     @classmethod
     def _coerce_nulls(cls, v: Any) -> Any:
-        return _none_to_empty_str(v, ("value_metric", "free_offer", "discounting_strategy"))
+        return _none_to_empty_str(
+            v,
+            (
+                "value_metric",
+                "free_offer",
+                "discounting_strategy",
+                "value_metric_reasoning",
+                "model_type_reasoning",
+            ),
+        )
 
     @field_validator("model_type", mode="before")
     @classmethod
@@ -235,6 +249,62 @@ class PricingModel(BaseModel):
         if v is None or v == "":
             return "subscription"
         return str(v)
+
+
+PriceAnchorRelation = Literal["below", "at_parity", "premium", "undercut"]
+
+
+class PriceAnchor(BaseModel):
+    """One competitor tier used as a reference point for a recommended price.
+
+    Surfaced in the UI as a structured anchors table so readers can see at a
+    glance which competitor each price is benchmarked against and how the
+    recommendation compares (below / at parity / premium / undercut).
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    competitor: str = Field(default="", max_length=160)
+    tier: str = Field(default="", max_length=80)
+    monthly_price_usd: float | None = None
+    relation: PriceAnchorRelation = "at_parity"
+    note: str = Field(default="", max_length=240)
+
+    @field_validator("competitor", "tier", "note", mode="before")
+    @classmethod
+    def _coerce_str(cls, v: object) -> str:
+        if v is None:
+            return ""
+        return str(v)
+
+    @field_validator("relation", mode="before")
+    @classmethod
+    def _coerce_relation(cls, v: object) -> str:
+        if v is None or v == "":
+            return "at_parity"
+        s = str(v).lower().strip()
+        if s in {"below", "at_parity", "premium", "undercut"}:
+            return s
+        # Common LLM variants.
+        if s in {"at parity", "parity", "equal", "match"}:
+            return "at_parity"
+        if s in {"above", "higher", "more_expensive"}:
+            return "premium"
+        if s in {"lower", "cheaper", "under"}:
+            return "below"
+        return "at_parity"
+
+    @field_validator("monthly_price_usd", mode="before")
+    @classmethod
+    def _coerce_price(cls, v: object) -> float | None:
+        if v is None or v == "":
+            return None
+        if isinstance(v, str) and v.strip().lower() in {"custom", "contact", "contact sales"}:
+            return None
+        try:
+            return max(0.0, float(v))
+        except (TypeError, ValueError):
+            return None
 
 
 class PricingRationale(BaseModel):
@@ -245,6 +315,9 @@ class PricingRationale(BaseModel):
     wtp_estimate: str = Field(default="", max_length=300)
     risks: list[str] = Field(default_factory=list, max_length=6)
     recommendation: str = Field(default="", max_length=600)
+    # Structured version of competitor_benchmark — an explicit list of anchor
+    # tiers so the UI can render a comparison table instead of a wall of text.
+    price_anchors: list[PriceAnchor] = Field(default_factory=list, max_length=8)
 
     @model_validator(mode="before")
     @classmethod
@@ -252,6 +325,15 @@ class PricingRationale(BaseModel):
         return _none_to_empty_str(
             v, ("value_basis", "competitor_benchmark", "wtp_estimate", "recommendation")
         )
+
+    @field_validator("price_anchors", mode="before")
+    @classmethod
+    def _coerce_anchors(cls, v: object) -> list:
+        if v is None or not isinstance(v, list):
+            return []
+        # Drop non-dict entries so a malformed LLM response doesn't crash the
+        # whole run — each PriceAnchor validates itself downstream.
+        return [item for item in v if isinstance(item, dict)]
 
 
 class PricingStrategy(BaseModel):

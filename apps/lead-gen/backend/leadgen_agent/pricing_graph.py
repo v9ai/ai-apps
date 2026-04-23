@@ -401,12 +401,24 @@ async def design_model(state: PricingState) -> dict:
                         "You design a pricing model for a B2B product. Produce 2-5 tiers. "
                         "Each tier: {name, price_monthly_usd (number|null for custom), "
                         "billing_unit ('per_seat'|'per_usage'|'flat'|'hybrid'|'custom'), "
-                        "target_persona, included:[string], limits:[string], upgrade_trigger}. "
-                        "Anchor prices to the competitor benchmark provided. Use null for the "
-                        "enterprise/custom tier. Do not invent prices from thin air; justify by "
-                        "value_metric × persona WTP × competitor anchors."
-                        'Return strict JSON: {"value_metric":string,"model_type":("subscription"|"usage"|"hybrid"|"per_outcome"|"freemium"),'
-                        '"free_offer":string,"tiers":[...],"addons":[string],"discounting_strategy":string}.'
+                        "target_persona, included:[string], limits:[string], upgrade_trigger, "
+                        "price_justification (1-3 sentences: WHY this exact price), "
+                        "anchor_competitors ([string] — names of specific competitor tiers "
+                        "this price is benchmarked against, e.g. 'Relevance AI Pro ($199/mo)'), "
+                        "value_math (one-line quantitative basis — e.g. 'Saves 6h/wk × $85/hr "
+                        "× 4.3 wk = $2,193/mo value; price at ~9% of value captured')}. "
+                        "HARD RULE: Every numeric price must be justified by at least one "
+                        "competitor anchor from the benchmark OR explicit value_math. No pure "
+                        "intuition. For the custom/enterprise tier, anchor against the "
+                        "competitor's enterprise tier and note the value basis even if the "
+                        "price itself is a range. "
+                        "Also produce top-level value_metric_reasoning (why this metric — "
+                        "1-2 sentences, WTP aligned) and model_type_reasoning (why this "
+                        "billing model — buyer behavior + category norms). "
+                        'Return strict JSON: {"value_metric":string,"value_metric_reasoning":string,'
+                        '"model_type":("subscription"|"usage"|"hybrid"|"per_outcome"|"freemium"),'
+                        '"model_type_reasoning":string,"free_offer":string,"tiers":[...],'
+                        '"addons":[string],"discounting_strategy":string}.'
                     ),
                 },
                 {
@@ -424,6 +436,17 @@ async def design_model(state: PricingState) -> dict:
         )
         if not isinstance(result, dict):
             result = {}
+        # Forward the value_metric node's reasoning into the model dict so the
+        # UI can surface it alongside the metric label itself — don't let a
+        # shorter free-text reason from design_model overwrite the dedicated
+        # upstream analysis.
+        upstream_metric_reasoning = str(
+            (state.get("value_metric") or {}).get("reasoning") or ""
+        ).strip()
+        if upstream_metric_reasoning and not str(
+            result.get("value_metric_reasoning") or ""
+        ).strip():
+            result["value_metric_reasoning"] = upstream_metric_reasoning
         # Validate via Pydantic — turns bad LLM output into an early clean failure
         validated = PricingModel.model_validate(result)
     except Exception as e:  # noqa: BLE001
@@ -468,9 +491,18 @@ async def write_rationale(state: PricingState) -> dict:
                         "or $ earned, etc.), competitor_benchmark (how this compares vs competitors, "
                         "where deliberately above/below), wtp_estimate (USD range for the primary "
                         "persona), risks (array of 2-5 pricing pitfalls), recommendation (one-paragraph "
-                        "top-line call). Be concrete, cite numbers where possible."
+                        "top-line call). Be concrete, cite numbers where possible. "
+                        "ALSO emit price_anchors: a structured list of 2-6 competitor tiers used "
+                        "as reference points. Each anchor is {competitor, tier, monthly_price_usd "
+                        "(number|null), relation ('below'|'at_parity'|'premium'|'undercut'), "
+                        "note (short rationale for the comparison)}. Use real competitor names "
+                        "from the benchmark — do not invent. 'below' = our price is lower; "
+                        "'premium' = our price is higher; 'at_parity' = matched; 'undercut' = "
+                        "deliberately priced to undercut a named incumbent."
                         'Return strict JSON: {"value_basis":string,"competitor_benchmark":string,'
-                        '"wtp_estimate":string,"risks":[string],"recommendation":string}.'
+                        '"wtp_estimate":string,"risks":[string],"recommendation":string,'
+                        '"price_anchors":[{"competitor":string,"tier":string,'
+                        '"monthly_price_usd":number|null,"relation":string,"note":string}]}.'
                     ),
                 },
                 {

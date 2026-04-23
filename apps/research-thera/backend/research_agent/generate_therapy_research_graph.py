@@ -315,7 +315,7 @@ async def load_context(state: GenerateTherapyResearchState) -> dict:
 
                     if fm_id and (family_member_name is None or family_member_age is None):
                         await cur.execute(
-                            'SELECT "firstName", name, age_years FROM family_members WHERE id = %s',
+                            "SELECT first_name, name, age_years FROM family_members WHERE id = %s",
                             (fm_id,),
                         )
                         fm_row = await cur.fetchone()
@@ -352,7 +352,7 @@ async def load_context(state: GenerateTherapyResearchState) -> dict:
 
                 if fm_id and (family_member_name is None or family_member_age is None):
                     await cur.execute(
-                        'SELECT "firstName", name, age_years FROM family_members WHERE id = %s',
+                        "SELECT first_name, name, age_years FROM family_members WHERE id = %s",
                         (fm_id,),
                     )
                     fm_row = await cur.fetchone()

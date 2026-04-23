@@ -94,6 +94,27 @@ async def _run_research(args: argparse.Namespace) -> None:
             print("⚠️  No JSON output block found in research", file=sys.stderr)
 
 
+async def _run_research_goal(args: argparse.Namespace) -> None:
+    from .generate_therapy_research_graph import graph as research_graph
+
+    state: dict = {"userId": args.user_email, "goalId": args.goal_id}
+    if args.language:
+        state["language"] = args.language
+
+    print(
+        f"Invoking generate_therapy_research: goal_id={args.goal_id} user={args.user_email}",
+        file=sys.stderr,
+    )
+    result = await research_graph.ainvoke(state)
+    err = result.get("_error")
+    if err or result.get("success") is False:
+        msg = (err or {}).get("message") or result.get("message") or "research failed"
+        print(f"\n❌ {msg}", file=sys.stderr)
+        sys.exit(1)
+    count = result.get("count", 0)
+    print(f"\n✅ {result.get('message') or f'Persisted {count} research papers.'}")
+
+
 async def _run_books(args: argparse.Namespace) -> None:
     from .books_graph import graph as books_graph
 
@@ -190,6 +211,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     url_p.add_argument("path", help="App URL path")
 
+    # research-goal (invokes the newer generate_therapy_research_graph)
+    rg_p = sub.add_parser(
+        "research-goal",
+        help="Generate therapy research for an existing goal via the LangGraph pipeline",
+    )
+    rg_p.add_argument("--user-email", required=True, help="Owner email (goals.user_id)")
+    rg_p.add_argument("--goal-id", type=int, required=True, help="Goal id")
+    rg_p.add_argument("--language", default=None, help='Output language (e.g. "ro")')
+
     # books
     books_p = sub.add_parser(
         "books",
@@ -225,6 +255,8 @@ def main() -> None:
         asyncio.run(_run_story(args))
     elif args.subcommand == "books":
         asyncio.run(_run_books(args))
+    elif args.subcommand == "research-goal":
+        asyncio.run(_run_research_goal(args))
     else:
         asyncio.run(_run_research(args))
 

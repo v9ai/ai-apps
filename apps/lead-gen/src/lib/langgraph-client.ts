@@ -373,6 +373,23 @@ export interface PriceTier {
   included: string[];
   limits: string[];
   upgrade_trigger: string;
+  price_justification?: string;
+  anchor_competitors?: string[];
+  value_math?: string;
+}
+
+export type PriceAnchorRelation =
+  | "below"
+  | "at_parity"
+  | "premium"
+  | "undercut";
+
+export interface PriceAnchor {
+  competitor: string;
+  tier: string;
+  monthly_price_usd: number | null;
+  relation: PriceAnchorRelation;
+  note: string;
 }
 
 export interface PricingStrategyResult {
@@ -388,6 +405,8 @@ export interface PricingStrategyResult {
     tiers: PriceTier[];
     addons: string[];
     discounting_strategy: string;
+    value_metric_reasoning?: string;
+    model_type_reasoning?: string;
   };
   rationale: {
     value_basis: string;
@@ -395,6 +414,7 @@ export interface PricingStrategyResult {
     wtp_estimate: string;
     risks: string[];
     recommendation: string;
+    price_anchors?: PriceAnchor[];
   };
   graph_meta?: Record<string, unknown>;
 }
