@@ -261,6 +261,10 @@ class ICPTeamState(TypedDict, total=False):
 class CompetitorsTeamState(TypedDict, total=False):
     # input
     product_id: int
+    # When true, discovery_scout's system prompt is biased toward Python-ecosystem
+    # rivals (OSS libraries, PyPI packages, GitHub projects). Used by the
+    # competitor_deep_dive orchestrator for Python-centric products like Ingestible.
+    python_focus: bool
     # internal
     product: dict[str, Any]
     candidates: list[dict[str, Any]]
@@ -270,6 +274,31 @@ class CompetitorsTeamState(TypedDict, total=False):
     agent_timings: Annotated[dict[str, float], _merge_dict]
     # output — list matches the `Competitor` DB/GraphQL row shape
     competitors: list[dict[str, Any]]
+    graph_meta: dict[str, Any]
+
+
+class CompetitorDeepDiveState(TypedDict, total=False):
+    """State for the composite graph that chains competitors_team → deep_competitor → pricing.
+
+    Inputs:
+        product_id: Product to analyze.
+        analysis_id: Pre-created competitor_analyses row id. The graph updates its
+            status as each team completes.
+        python_focus: Passed through to competitors_team to bias discovery.
+    """
+
+    # input
+    product_id: int
+    analysis_id: int
+    python_focus: bool
+    # internal — populated by run_team1
+    competitor_ids: list[int]
+    team1_meta: dict[str, Any]
+    # populated by fan-out — one entry per competitor_id
+    team2_per_competitor: Annotated[dict[int, dict[str, Any]], _merge_dict]
+    # populated by run_team3
+    team3_meta: dict[str, Any]
+    # aggregated at the end — {team_1, team_2, team_3} each with run_at + timings
     graph_meta: dict[str, Any]
 
 

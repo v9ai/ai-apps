@@ -294,17 +294,18 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
     ].join("\n");
   } else if (goalId) {
     const goal = await db.getGoal(goalId, userEmail);
-    let goalSiblingSection = "";
+    let subjectProfile = "";
     let memberContext = "";
     if (goal.familyMemberId) {
-      const allIssues = await db.getIssuesForFamilyMember(goal.familyMemberId, undefined, userEmail);
-      goalSiblingSection = buildSiblingIssuesSection(allIssues);
       try {
         const fm = await db.getFamilyMember(goal.familyMemberId);
         if (fm) {
           memberContext = `Patient: ${memberLabel(fm)}`;
         }
-      } catch { /* non-fatal */ }
+        subjectProfile = await buildSubjectProfile(goal.familyMemberId, userEmail);
+      } catch (err) {
+        console.warn("[generateResearch] subject profile failed:", err instanceof Error ? err.message : err);
+      }
     } else {
       try {
         const self = await db.getSelfFamilyMember(userEmail);
@@ -318,7 +319,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       `Title: ${goal.title}`,
       goal.description ? `Description: ${goal.description}` : "",
       memberContext,
-      goalSiblingSection,
+      subjectProfile,
     ].filter(Boolean);
     evalPromptContext = contextLines.join("\n");
     prompt = [
@@ -332,6 +333,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       ``,
       `Search for academic papers that support this therapeutic goal.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
+      `When the goal targets parent self-regulation or co-regulation, also search for research on the child's observed presentation (see Subject Profile) so recommendations address BOTH sides of the dyad — the parent's skill + the child's clinical pattern (e.g. defiance, ODD-spectrum, emotion dysregulation, selective eating, peer-conflict).`,
       `Only save papers with real abstracts (not "None", "...", or empty). Skip papers lacking abstracts.`,
       ``,
       `IMPORTANT: When calling save_research_papers, use goal_id: ${goalId} — do NOT use issue_id or feedback_id.`,
