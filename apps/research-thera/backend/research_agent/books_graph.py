@@ -675,8 +675,32 @@ _OPENLIB_SEARCH_URL = "https://openlibrary.org/search.json"
 _VERIFY_TITLE_THRESHOLD = 0.72  # SequenceMatcher ratio on lowercased titles
 
 
+def _normalize_title(t: str) -> str:
+    """Strip subtitle so 'Raising a Secure Child: How Circle of Security…' == 'Raising a Secure Child'."""
+    t = (t or "").lower().strip()
+    for sep in (": ", " — ", " – ", " - "):
+        if sep in t:
+            t = t.split(sep, 1)[0].strip()
+            break
+    return t
+
+
 def _title_sim(a: str, b: str) -> float:
-    return SequenceMatcher(None, (a or "").lower().strip(), (b or "").lower().strip()).ratio()
+    """Best of: raw ratio, main-title ratio, and containment (either way)."""
+    a_raw = (a or "").lower().strip()
+    b_raw = (b or "").lower().strip()
+    raw = SequenceMatcher(None, a_raw, b_raw).ratio()
+
+    a_main = _normalize_title(a)
+    b_main = _normalize_title(b)
+    main = SequenceMatcher(None, a_main, b_main).ratio() if a_main and b_main else 0.0
+
+    # If one main-title contains the other, treat that as very strong evidence.
+    contain = 0.0
+    if a_main and b_main and (a_main in b_raw or b_main in a_raw):
+        contain = 0.95
+
+    return max(raw, main, contain)
 
 
 def _author_match(candidate_author: str, library_authors: list[str]) -> bool:
@@ -696,15 +720,37 @@ def _author_match(candidate_author: str, library_authors: list[str]) -> bool:
     return False
 
 
+async def _ol_search(
+    client: httpx.AsyncClient, q: str, semaphore: asyncio.Semaphore
+) -> Optional[list[dict]]:
+    """Rate-limited Open Library search with 2 retries on transient errors."""
+    last_err: str = "no-attempt"
+    for attempt in range(3):
+        try:
+            async with semaphore:
+                resp = await client.get(
+                    _OPENLIB_SEARCH_URL, params={"q": q, "limit": 5}
+                )
+            if resp.status_code == 200:
+                return resp.json().get("docs") or []
+            last_err = f"HTTP {resp.status_code}"
+        except Exception as exc:
+            last_err = f"{exc.__class__.__name__}: {exc}".strip(": ")
+        await asyncio.sleep(0.4 * (attempt + 1))
+    # All retries exhausted — raise so caller can distinguish network error from
+    # "book not on Open Library".
+    raise RuntimeError(last_err)
+
+
 async def _verify_one_book(
     title: str,
     authors: list[str],
     client: httpx.AsyncClient,
+    semaphore: asyncio.Semaphore,
 ) -> dict:
     """Return {verified, confidence, match_title, match_authors, url, reason}."""
     primary_author = (authors[0] if authors else "").strip()
-    # Search by title + author for strongest signal; fall back to title-only.
-    queries = []
+    queries: list[str] = []
     if primary_author:
         queries.append(f'title:"{title}" author:"{primary_author}"')
     queries.append(f'title:"{title}"')
@@ -713,13 +759,11 @@ async def _verify_one_book(
     best_sim = 0.0
     for q in queries:
         try:
-            resp = await client.get(_OPENLIB_SEARCH_URL, params={"q": q, "limit": 5}, timeout=8.0)
-            if resp.status_code != 200:
-                continue
-            docs = (resp.json().get("docs") or [])
+            docs = await _ol_search(client, q, semaphore)
         except Exception as exc:
             return {"verified": False, "confidence": 0.0, "reason": f"api error: {exc}"}
-
+        if docs is None:
+            continue
         for doc in docs:
             sim = _title_sim(doc.get("title", ""), title)
             author_ok = _author_match(primary_author, doc.get("author_name") or [])
@@ -760,17 +804,25 @@ async def verify_books(state: dict) -> dict:
     if job_id:
         await _update_job_progress(job_id, 85)
 
-    async with httpx.AsyncClient() as client:
+    timeout = httpx.Timeout(connect=8.0, read=12.0, write=8.0, pool=8.0)
+    semaphore = asyncio.Semaphore(3)  # polite to a free public API
+    async with httpx.AsyncClient(
+        timeout=timeout, headers={"User-Agent": "research-thera books_graph (+verify)"}
+    ) as client:
         verdicts = await asyncio.gather(
-            *[_verify_one_book(b["title"], b.get("authors") or [], client) for b in books]
+            *[_verify_one_book(b["title"], b.get("authors") or [], client, semaphore) for b in books]
         )
 
         verified: list[dict] = []
         rejections: list[dict] = []
+        api_errors = 0
         for book, verdict in zip(books, verdicts):
             if verdict.get("verified"):
                 verified.append({**book, "_verify": verdict})
             else:
+                reason = str(verdict.get("reason") or "")
+                if reason.startswith("api error:"):
+                    api_errors += 1
                 rejections.append({
                     "title": book["title"],
                     "authors": book.get("authors") or [],
@@ -779,6 +831,18 @@ async def verify_books(state: dict) -> dict:
                     "closest_match": verdict.get("match_title"),
                 })
 
+        # If more than half of first-pass drops were transient API errors, the
+        # verifier is unreliable right now — keep the unverified books rather
+        # than replacing them all with backfills. Open Library flakiness is not
+        # the LLM's fault.
+        if api_errors >= max(2, len(books) // 2):
+            print(
+                f"[books.verify_books] {api_errors}/{len(books)} hit transient API errors — "
+                "keeping unverified books rather than over-rejecting"
+            )
+            verified = [{**b, "_verify": {"verified": False, "reason": "verifier unavailable"}} for b in books]
+            rejections = []
+
         # Backfill from leftover candidates if we dropped too many.
         backfilled = 0
         if len(verified) < 4:
@@ -786,7 +850,7 @@ async def verify_books(state: dict) -> dict:
             leftover = [c for c in (state.get("_candidates") or []) if c["title"].lower() not in used]
             if leftover:
                 leftover_verdicts = await asyncio.gather(
-                    *[_verify_one_book(c["title"], c.get("authors") or [], client) for c in leftover[:8]]
+                    *[_verify_one_book(c["title"], c.get("authors") or [], client, semaphore) for c in leftover[:8]]
                 )
                 for cand, verdict in zip(leftover[:8], leftover_verdicts):
                     if len(verified) >= 6:
