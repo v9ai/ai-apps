@@ -228,39 +228,44 @@ async def pick_channels(state: GTMState) -> dict:
 
 
 async def craft_pillars(state: GTMState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
     icp = state.get("icp") or {}
     comps = state.get("competitive") or {}
 
-    llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You derive 3-5 messaging pillars. Each: {theme (core promise, e.g. 'Cut "
-                    "research time 10x'), proof_points (specific evidence/numbers/demos), "
-                    "when_to_use (persona and buying stage), avoid_when (when this backfires)}. "
-                    "Tie pillars to persona pains and our differentiation vs competitors. "
-                    "Avoid generic SaaS platitudes. Be concrete."
-                    'Return strict JSON: {"pillars":[...]}'
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Product brief:\n{brief}\n\n"
-                    f"ICP:\n{_icp_summary(icp)}\n\n"
-                    f"Competitors:\n{_competitive_summary(comps)}\n\n"
-                    "Return JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
+    try:
+        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You derive 3-5 messaging pillars. Each: {theme (core promise, e.g. 'Cut "
+                        "research time 10x'), proof_points (specific evidence/numbers/demos), "
+                        "when_to_use (persona and buying stage), avoid_when (when this backfires)}. "
+                        "Tie pillars to persona pains and our differentiation vs competitors. "
+                        "Avoid generic SaaS platitudes. Be concrete."
+                        'Return strict JSON: {"pillars":[...]}'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Product brief:\n{brief}\n\n"
+                        f"ICP:\n{_icp_summary(icp)}\n\n"
+                        f"Competitors:\n{_competitive_summary(comps)}\n\n"
+                        "Return JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"craft_pillars: {e}"}
     raw = result.get("pillars") if isinstance(result, dict) else None
     pillars: list[dict[str, Any]] = []
     for p in raw or []:
