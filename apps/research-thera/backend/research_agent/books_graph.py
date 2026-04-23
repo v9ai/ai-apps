@@ -409,64 +409,222 @@ def _coerce_book(raw: dict) -> Optional[dict]:
     }
 
 
-async def generate(state: dict) -> dict:
+async def _deepseek_json_call(
+    prompt: str,
+    model: str,
+    temperature: float,
+    max_tokens: int,
+    use_json_mode: bool = True,
+) -> tuple[Optional[dict], Optional[Exception]]:
+    """Run a single DeepSeek call with one JSON-parse retry. Returns (parsed, last_exc)."""
+    base_url = os.environ.get("LLM_BASE_URL") or None
+    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY") or ""
+    config = DeepSeekConfig(api_key=api_key, base_url=base_url, timeout=300.0, default_model=model)
+    parsed: Optional[dict] = None
+    last_exc: Optional[Exception] = None
+    async with DeepSeekClient(config) as client:
+        for _ in range(2):
+            try:
+                kwargs: dict = {
+                    "model": model,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                }
+                if use_json_mode:
+                    kwargs["response_format"] = {"type": "json_object"}
+                resp = await client.chat(
+                    [ChatMessage(role="user", content=prompt)],
+                    **kwargs,
+                )
+                content = resp.choices[0].message.content
+                # Reasoner model doesn't honor JSON mode reliably — extract {...} if needed
+                if not use_json_mode:
+                    start = content.find("{")
+                    end = content.rfind("}")
+                    if start >= 0 and end > start:
+                        content = content[start : end + 1]
+                parsed = json.loads(content)
+                break
+            except json.JSONDecodeError as exc:
+                last_exc = exc
+                continue
+    return parsed, last_exc
+
+
+async def generate_candidates(state: dict) -> dict:
+    """Pass 1: wide shortlist of 10-12 candidate books via deepseek-chat + JSON mode."""
     if state.get("error") or state.get("success") is False:
         return {}
 
     job_id = state.get("job_id")
     if job_id:
-        await _update_job_progress(job_id, 50)
+        await _update_job_progress(job_id, 40)
 
     prompt = state.get("_prompt", "")
-    base_url = os.environ.get("LLM_BASE_URL") or None
-    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY") or ""
     model = os.environ.get("LLM_MODEL", "deepseek-chat")
-    # DeepSeek's JSON mode occasionally emits malformed JSON under load; one
-    # retry cuts the flake rate without adding meaningful cost.
-    parsed = None
-    last_exc: Optional[Exception] = None
     try:
-        config = DeepSeekConfig(
-            api_key=api_key, base_url=base_url, timeout=180.0, default_model=model
+        parsed, last_exc = await _deepseek_json_call(
+            prompt, model=model, temperature=0.4, max_tokens=8192, use_json_mode=True
         )
     except Exception as exc:
-        return {"error": f"generate failed (config): {exc}"}
-    try:
-        async with DeepSeekClient(config) as client:
-            for _ in range(2):
-                try:
-                    resp = await client.chat(
-                        [ChatMessage(role="user", content=prompt)],
-                        model=model,
-                        temperature=0.4,
-                        max_tokens=8192,
-                        response_format={"type": "json_object"},
-                    )
-                    content = resp.choices[0].message.content
-                    parsed = json.loads(content)
-                    break
-                except json.JSONDecodeError as exc:
-                    last_exc = exc
-                    continue
-    except Exception as exc:
-        return {"error": f"generate failed: {exc}"}
+        return {"error": f"generate_candidates failed: {exc}"}
     if parsed is None:
-        return {"error": f"generate failed: {last_exc}"}
+        return {"error": f"generate_candidates failed: {last_exc}"}
 
     raw_books = _normalize_books(parsed)
-    books: list[dict] = []
-    for raw in raw_books[:8]:
+    candidates: list[dict] = []
+    for raw in raw_books[:14]:
         coerced = _coerce_book(raw)
         if coerced:
-            books.append(coerced)
+            # Preserve facet from the raw dict if the model supplied one.
+            facet = raw.get("facet")
+            if isinstance(facet, str):
+                coerced["facet"] = facet.strip().lower()
+            candidates.append(coerced)
 
-    if len(books) < 3:
-        return {"error": f"DeepSeek returned {len(books)} valid books (need >= 3). Top-level keys: {list(parsed.keys()) if isinstance(parsed, dict) else 'array'}"}
+    if len(candidates) < 5:
+        return {"error": f"candidate pass returned {len(candidates)} valid books (need >= 5)"}
+
+    return {"_candidates": candidates}
+
+
+async def rank_and_explain(state: dict) -> dict:
+    """Pass 2: take candidates, pick top 6 with explicit ordering + per-rank rationale.
+
+    Uses deepseek-reasoner for stronger clinical reasoning. Merges the rank rationale
+    into each book's why_recommended so the UI displays it without a schema change.
+    """
+    if state.get("error"):
+        return {}
+
+    job_id = state.get("job_id")
+    if job_id:
+        await _update_job_progress(job_id, 65)
+
+    candidates = state.get("_candidates") or []
+    if not candidates:
+        return {"error": "rank_and_explain: no candidates to rank"}
+
+    # Build a compact candidate digest for the reasoner
+    digest_lines: list[str] = []
+    for i, b in enumerate(candidates, 1):
+        authors = ", ".join(b.get("authors") or []) or "(unknown)"
+        year = f" ({b['year']})" if b.get("year") else ""
+        facet = f" [{b.get('facet')}]" if b.get("facet") else ""
+        digest_lines.append(
+            f"[C{i}] {b['title']}{year} — {authors}{facet}\n"
+            f"     desc: {(b.get('description') or '')[:220]}\n"
+            f"     why : {(b.get('why_recommended') or '')[:320]}"
+        )
+    digest = "\n\n".join(digest_lines)
+
+    # Pass original context back in so the reasoner can ground rank rationale in the profile
+    original_context = state.get("_prompt", "")
+    # Strip instruction block from the original prompt — keep only goal + profile + research
+    context_head = original_context.split("## Instructions", 1)[0].strip()
+
+    rank_prompt = "\n".join(
+        [
+            "You are the SECOND-PASS ranker for a clinical bibliotherapist curation.",
+            "Given 10-14 candidate books already shortlisted for a specific parent/family,",
+            "choose the FINAL top 6 AND put them in an intentional reading order.",
+            "",
+            "Ordering principles (apply in this priority):",
+            "1. Start with what gives the parent the fastest calming-in-the-moment leverage (self-regulation / framing / neuroscience), BEFORE action-heavy technique books.",
+            "2. Then move to active parenting frameworks (Collaborative Problem Solving / PMT / Emotion Coaching) matched to the specific profile.",
+            "3. Then condition-specific or script-level tools that slot into those frameworks.",
+            "4. Close with a sustainability / self-compassion / long-horizon book so the parent doesn't burn out.",
+            "5. Prefer diversity of facets over stacking same-type books.",
+            "6. Demote books with overlapping content to the one already ranked higher.",
+            "",
+            "## Original context (do NOT re-summarize; use it to ground your rationale)",
+            context_head,
+            "",
+            "## Candidate shortlist",
+            digest,
+            "",
+            "## Your task",
+            "Select exactly 6 candidates and return them in the intentional reading order (position 1 = read first).",
+            "",
+            'Respond with a JSON object of the shape:',
+            '{',
+            '  "orderingStrategy": "<2-4 sentence overall arc — why THIS order for THIS parent. Must reference specifics from the profile (e.g. Bogdan, a teacher observation, a specific behavior).>",',
+            '  "ranked": [',
+            '    { "candidate_id": "C3", "rank": 1, "rankRationale": "<2 sentences — why this book is FIRST for this parent. Cite something concrete from the profile or research>" },',
+            '    { "candidate_id": "C7", "rank": 2, "rankRationale": "..." },',
+            '    ... 6 entries total ...',
+            '  ]',
+            '}',
+        ]
+    )
+
+    # Try reasoner first (no JSON mode — it emits JSON in the body), fall back to chat.
+    reasoner_model = os.environ.get("LLM_REASONER_MODEL", "deepseek-reasoner")
+    try:
+        parsed, last_exc = await _deepseek_json_call(
+            rank_prompt,
+            model=reasoner_model,
+            temperature=0.2,
+            max_tokens=6000,
+            use_json_mode=False,
+        )
+    except Exception as exc:
+        print(f"[books.rank_and_explain] reasoner failed, falling back to chat: {exc}")
+        parsed, last_exc = None, exc
+
+    if parsed is None:
+        # Fallback to chat model with JSON mode
+        fallback_model = os.environ.get("LLM_MODEL", "deepseek-chat")
+        try:
+            parsed, last_exc = await _deepseek_json_call(
+                rank_prompt,
+                model=fallback_model,
+                temperature=0.2,
+                max_tokens=4096,
+                use_json_mode=True,
+            )
+        except Exception as exc:
+            return {"error": f"rank_and_explain failed: {exc}"}
+    if parsed is None:
+        return {"error": f"rank_and_explain failed: {last_exc}"}
+
+    ordering_strategy = str(parsed.get("orderingStrategy") or "").strip()
+    ranked = parsed.get("ranked") or []
+    if not isinstance(ranked, list) or len(ranked) < 5:
+        return {"error": f"rank_and_explain: got {len(ranked) if isinstance(ranked, list) else 0} ranked entries"}
+
+    # Build candidate lookup by "C{n}"
+    cand_by_id = {f"C{i + 1}": c for i, c in enumerate(candidates)}
+
+    ranked_books: list[dict] = []
+    seen_titles: set[str] = set()
+    for entry in ranked[:6]:
+        if not isinstance(entry, dict):
+            continue
+        cid = str(entry.get("candidate_id") or "").strip()
+        rank = entry.get("rank")
+        rationale = str(entry.get("rankRationale") or "").strip()
+        cand = cand_by_id.get(cid)
+        if not cand:
+            continue
+        title_key = cand["title"].lower()
+        if title_key in seen_titles:
+            continue
+        seen_titles.add(title_key)
+        merged_why = (
+            f"[#{rank} — {rationale}]\n\n{cand['why_recommended']}"
+            if rationale
+            else cand["why_recommended"]
+        )
+        ranked_books.append({**cand, "why_recommended": merged_why})
+
+    if len(ranked_books) < 4:
+        return {"error": f"rank_and_explain: only {len(ranked_books)} valid ranked books after dedupe"}
 
     if job_id:
         await _update_job_progress(job_id, 80)
 
-    return {"_books_raw": books}
+    return {"_books_raw": ranked_books, "_ordering_strategy": ordering_strategy}
 
 
 async def persist(state: dict) -> dict:
@@ -481,6 +639,14 @@ async def persist(state: dict) -> dict:
     conn_str = _conn_str()
     now_iso = datetime.now(timezone.utc).isoformat()
     inserted: list[dict] = []
+
+    ordering_strategy = (state.get("_ordering_strategy") or "").strip()
+
+    def _build_message(n: int, research_count: int) -> str:
+        base = f"Recommended {n} books based on {research_count} research papers."
+        if ordering_strategy:
+            return f"{base}\n\nReading order: {ordering_strategy}"
+        return base
 
     # Test hook: if there's no DB URL or the caller opted out, synthesize
     # output rows from `_books_raw` without touching Neon.
@@ -505,7 +671,7 @@ async def persist(state: dict) -> dict:
         research_count = state.get("_research_count", 0)
         return {
             "success": True,
-            "message": f"Recommended {len(inserted)} books based on {research_count} research papers.",
+            "message": _build_message(len(inserted), research_count),
             "books": inserted,
         }
 
@@ -562,7 +728,7 @@ async def persist(state: dict) -> dict:
     research_count = state.get("_research_count", 0)
     return {
         "success": True,
-        "message": f"Recommended {len(inserted)} books based on {research_count} research papers.",
+        "message": _build_message(len(inserted), research_count),
         "books": inserted,
     }
 
@@ -600,13 +766,15 @@ async def _finalize(state: dict) -> dict:
 def create_books_graph():
     builder = StateGraph(BooksState)
     builder.add_node("collect_data", collect_data)
-    builder.add_node("generate", generate)
+    builder.add_node("generate_candidates", generate_candidates)
+    builder.add_node("rank_and_explain", rank_and_explain)
     builder.add_node("persist", persist)
     builder.add_node("finalize", _finalize)
 
     builder.add_edge(START, "collect_data")
-    builder.add_edge("collect_data", "generate")
-    builder.add_edge("generate", "persist")
+    builder.add_edge("collect_data", "generate_candidates")
+    builder.add_edge("generate_candidates", "rank_and_explain")
+    builder.add_edge("rank_and_explain", "persist")
     builder.add_edge("persist", "finalize")
     builder.add_edge("finalize", END)
 
