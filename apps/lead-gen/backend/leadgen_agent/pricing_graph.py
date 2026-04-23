@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Any
+from typing import Annotated, Any
 
 import psycopg
 from langgraph.graph import END, START, StateGraph
@@ -41,6 +41,11 @@ _COMPETITOR_BRIEF_CHARS = 3500
 _ICP_BRIEF_CHARS = 2500
 
 
+def _first_error(left: str | None, right: str | None) -> str | None:
+    """Reducer: keep the first error set by parallel fan-out nodes."""
+    return left or right
+
+
 class _PricingStateWithError(PricingState, total=False):
     """Local extension of PricingState that carries an optional ``_error`` key.
 
@@ -48,10 +53,11 @@ class _PricingStateWithError(PricingState, total=False):
     are silently dropped. We need the error string to survive across nodes so
     the final router can pick notify_error vs notify_complete, but the instruction
     set forbids editing state.py. Extending here keeps the ad-hoc key local to
-    the graph module.
+    the graph module. The ``_first_error`` reducer handles the case where two
+    parallel fan-out nodes both fail in the same step.
     """
 
-    _error: str
+    _error: Annotated[str, _first_error]
 
 
 async def load_inputs(state: PricingState) -> dict:

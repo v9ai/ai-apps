@@ -23,6 +23,9 @@ import {
   useProductsQuery,
   useDeleteProductMutation,
   useAnalyzeProductIcpMutation,
+  useAnalyzeProductPricingAsyncMutation,
+  useAnalyzeProductGtmAsyncMutation,
+  useRunFullProductIntelAsyncMutation,
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
