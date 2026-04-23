@@ -18,6 +18,7 @@ import {
   useGetPublicDiscussionGuideQuery,
   useGenerateDiscussionGuideMutation,
   useDeleteDiscussionGuideMutation,
+  useGetGenerationJobQuery,
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
@@ -34,6 +35,7 @@ export default function DiscussionGuidePage() {
 
   const [activeTab, setActiveTab] = useState<GuideTab>("context");
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
 
   const { data, loading, refetch } = useGetPublicDiscussionGuideQuery({
     variables: { journalEntryId: id },
@@ -45,17 +47,48 @@ export default function DiscussionGuidePage() {
   const entryTitle = result?.entryTitle;
   const familyName = result?.familyMemberName;
 
-  const [generateGuide, { loading: generating }] = useGenerateDiscussionGuideMutation({
+  const { data: jobData, stopPolling } = useGetGenerationJobQuery({
+    variables: { id: jobId! },
+    skip: !jobId,
+    pollInterval: 2000,
+    notifyOnNetworkStatusChange: true,
+    fetchPolicy: "network-only",
     onCompleted: (d) => {
-      if (d.generateDiscussionGuide.success) {
-        setMessage({ text: d.generateDiscussionGuide.message || "Guide generated.", type: "success" });
-        refetch();
+      const status = d.generationJob?.status;
+      if (status === "SUCCEEDED" || status === "FAILED") {
+        stopPolling();
+        if (status === "SUCCEEDED") {
+          setMessage({ text: "Guide generated.", type: "success" });
+          refetch();
+        } else {
+          setMessage({
+            text: d.generationJob?.error?.message ?? "Discussion guide generation failed.",
+            type: "error",
+          });
+        }
+        setJobId(null);
+      }
+    },
+  });
+
+  const jobProgress = jobData?.generationJob?.progress ?? 0;
+
+  const [generateGuide, { loading: starting }] = useGenerateDiscussionGuideMutation({
+    onCompleted: (d) => {
+      if (d.generateDiscussionGuide.success && d.generateDiscussionGuide.jobId) {
+        setMessage(null);
+        setJobId(d.generateDiscussionGuide.jobId);
       } else {
-        setMessage({ text: d.generateDiscussionGuide.message || "Failed.", type: "error" });
+        setMessage({
+          text: d.generateDiscussionGuide.message || "Failed to start generation.",
+          type: "error",
+        });
       }
     },
     onError: (err) => setMessage({ text: err.message, type: "error" }),
   });
+
+  const generating = starting || Boolean(jobId);
 
   const [deleteGuide, { loading: deleting }] = useDeleteDiscussionGuideMutation({
     onCompleted: () => {
@@ -137,9 +170,31 @@ export default function DiscussionGuidePage() {
       {generating && (
         <Card>
           <Flex direction="column" gap="2" p="4">
-            <Text size="2" color="gray">Preparing discussion guide...</Text>
+            <Text size="2" color="gray">
+              {jobProgress > 0 ? `Preparing discussion guide… ${jobProgress}%` : "Preparing discussion guide…"}
+            </Text>
             <Box style={{ height: 6, borderRadius: 3, background: "var(--gray-4)", overflow: "hidden" }}>
-              <Box style={{ height: "100%", width: "40%", background: "var(--teal-9)", borderRadius: 3, animation: "researchSweep 1.4s ease-in-out infinite" }} />
+              {jobProgress > 0 ? (
+                <Box
+                  style={{
+                    height: "100%",
+                    width: `${Math.max(jobProgress, 5)}%`,
+                    background: "var(--teal-9)",
+                    borderRadius: 3,
+                    transition: "width 400ms ease-out",
+                  }}
+                />
+              ) : (
+                <Box
+                  style={{
+                    height: "100%",
+                    width: "40%",
+                    background: "var(--teal-9)",
+                    borderRadius: 3,
+                    animation: "researchSweep 1.4s ease-in-out infinite",
+                  }}
+                />
+              )}
             </Box>
           </Flex>
         </Card>

@@ -30,6 +30,7 @@ import {
   HabitFrequency,
 } from "@/app/__generated__/hooks";
 import { AuthGate } from "@/app/components/AuthGate";
+import { format } from "date-fns";
 
 type RoutineGroup = {
   key: "DAILY" | "WEEKLY";
@@ -209,9 +210,7 @@ function RoutineContent({ slug }: { slug: string }) {
                               logHabit({
                                 variables: {
                                   habitId: habit.id,
-                                  loggedDate: new Date()
-                                    .toISOString()
-                                    .slice(0, 10),
+                                  loggedDate: format(new Date(), "yyyy-MM-dd"),
                                 },
                               })
                             }
