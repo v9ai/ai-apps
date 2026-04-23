@@ -237,8 +237,26 @@ def _missed_pattern(log_dates: set[date], window_days: int, today: date) -> Opti
     return None
 
 
+# Keyword match flags habits that are narrow media-scoped therapy protocols
+# (parent-delivered interventions tied to a specific media moment), not
+# substantive self-initiated daily behaviors. Their low adherence is a
+# data-modeling artifact, not a signal of an absent routine — we mark them so
+# the LLM deprioritizes them in the verdict.
+_NARROW_THERAPY_RE = re.compile(
+    r"\b(film|movie|movies|tv|television|televizor|televizorul|ecran|ecrane|ecranul|screen|screens|media)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_narrow_therapy_protocol(title: Optional[str], description: Optional[str]) -> bool:
+    blob = f"{title or ''} {description or ''}"
+    return bool(_NARROW_THERAPY_RE.search(blob))
+
+
 async def collect_data(state: RoutineAnalysisState) -> dict:
-    """Load habits + logs, compute adherence, render prompt."""
+    """Load habits + logs + full family-member context (issues, journals,
+    observations, feedbacks, research), compute adherence, render prompt with
+    issues + journals as the primary substrate."""
     family_member_id = state.get("family_member_id")
     user_email = state.get("user_email")
     window_days = int(state.get("window_days") or 60)
@@ -251,16 +269,16 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
     try:
         async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
             async with conn.cursor() as cur:
-                await cur.execute(
-                    "SELECT id, first_name, name, age_years, relationship, bio "
-                    "FROM family_members WHERE id = %s AND user_id = %s",
-                    (family_member_id, user_email),
+                # Full family-member context (issues, journals, observations,
+                # feedbacks, related-member issues, research, issue_contacts,
+                # all_members) — reused from the deep-analysis loader.
+                ctx = await shared.load_family_member_full_context(
+                    cur, family_member_id, user_email
                 )
-                fm_row = await cur.fetchone()
-                if not fm_row:
-                    return {"error": f"Family member {family_member_id} not found"}
-                fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio = fm_row
+                _fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio = ctx["fm"]
 
+                # Habits + logs (specific to the routine graph — shared
+                # loader doesn't cover them).
                 await cur.execute(
                     "SELECT id, title, description, frequency, target_count, "
                     "goal_id, issue_id, created_at "
@@ -289,13 +307,27 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
                             except Exception:
                                 continue
                         logs_by_habit.setdefault(hid, []).append(logged_date)
+    except Exception as exc:
+        return {"error": f"collect_data failed: {exc}"}
 
-                # Linked goals / issues (one-liner context each).
-                goal_ids = [r[5] for r in habit_rows if r[5]]
-                issue_ids = [r[6] for r in habit_rows if r[6]]
-                linked_goals: list[tuple] = []
-                linked_issues: list[tuple] = []
-                if goal_ids:
+    issues = ctx["issues"]
+    journals = ctx["journals"]
+    observations = ctx["observations"]
+    teacher_fbs = ctx["teacher_fbs"]
+    contact_fbs = ctx["contact_fbs"]
+    related_issues = ctx["related_issues"]
+    research = ctx["research"]
+    issue_contacts = ctx["issue_contacts"]
+    all_members = ctx["all_members"]
+
+    # Goals linked from habits — cheap extra context when habits were
+    # generated from a goal.
+    goal_ids = list({r[5] for r in habit_rows if r[5]})
+    linked_goals: list[tuple] = []
+    if goal_ids:
+        try:
+            async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+                async with conn.cursor() as cur:
                     placeholders = ",".join(["%s"] * len(goal_ids))
                     await cur.execute(
                         f"SELECT id, title, description, status FROM goals "
@@ -303,28 +335,8 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
                         [*goal_ids, user_email],
                     )
                     linked_goals = await cur.fetchall()
-                if issue_ids:
-                    placeholders = ",".join(["%s"] * len(issue_ids))
-                    await cur.execute(
-                        f"SELECT id, title, category, severity FROM issues "
-                        f"WHERE id IN ({placeholders}) AND user_id = %s",
-                        [*issue_ids, user_email],
-                    )
-                    linked_issues = await cur.fetchall()
-
-                # Research tied to any linked issue — pure context for citation.
-                research: list = []
-                if issue_ids:
-                    placeholders = ",".join(["%s"] * len(issue_ids))
-                    await cur.execute(
-                        f"SELECT id, issue_id, title, key_findings, therapeutic_techniques "
-                        f"FROM therapy_research WHERE issue_id IN ({placeholders}) "
-                        f"ORDER BY relevance_score DESC LIMIT 10",
-                        issue_ids,
-                    )
-                    research = await cur.fetchall()
-    except Exception as exc:
-        return {"error": f"collect_data failed: {exc}"}
+        except Exception:
+            linked_goals = []
 
     # ── Compute per-habit stats ─────────────────────────────────────────
     habit_stats: list[dict[str, Any]] = []
@@ -332,6 +344,7 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
     weekly_count = 0
     total_observed = 0
     total_expected = 0
+    narrow_count = 0
     for h_id, h_title, h_desc, h_freq, h_target, _g_id, _i_id, h_created in habit_rows:
         h_freq = (h_freq or "daily").lower()
         h_target = int(h_target or 1)
@@ -349,6 +362,9 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
         consistency = min(1.0, observed / expected) if expected else 0.0
         total_observed += observed
         total_expected += expected
+        is_narrow = _is_narrow_therapy_protocol(h_title, h_desc)
+        if is_narrow:
+            narrow_count += 1
         habit_stats.append(
             {
                 "id": h_id,
@@ -365,6 +381,7 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
                 if h_freq == "daily"
                 else None,
                 "created_at": str(h_created)[:10] if h_created else None,
+                "is_narrow_therapy_protocol": is_narrow,
             }
         )
 
@@ -379,11 +396,15 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
 
     sections.append(
         "You are a family-systems clinician and behavioral-change coach. "
-        "Analyze the daily/weekly ROUTINE of the family member below — their "
-        "active habits, adherence stats, streaks, gaps, and balance across "
-        "life domains (self-care, physical, learning, social, emotional, "
-        "chores, sleep, screens). Your output must be age-appropriate and "
-        "grounded in the observed adherence data.\n\n"
+        "Analyze the ROUTINE of the family member below — but ground the "
+        "analysis in the ISSUES and JOURNAL ENTRIES listed further down "
+        "(primary substrate). Habits flagged as `narrow therapy protocols` "
+        "(media-scoped parent-delivered interventions) MUST NOT drive the "
+        "routine verdict — their low adherence is a data-modeling artifact, "
+        "not a signal of an absent routine. Derive the real daily-life "
+        "picture — sleep, meals, activities, peer interactions, emotional "
+        "arcs, recurring conflicts — from the journal/issue substrate, and "
+        "diagnose gaps and optimizations from there.\n\n"
         "Be concrete and practical. Recommendations should be specific "
         "enough for a parent to act on this week."
     )
@@ -393,19 +414,51 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
     )
 
     sections.append(
-        f"## Observation window\n"
+        f"## Observation window (habit logs)\n"
         f"- From: {since.isoformat()}\n"
         f"- To: {today.isoformat()}\n"
         f"- Days: {window_days}\n"
-        f"- Overall adherence: {overall_adherence:.0%} "
-        f"({total_observed} of {total_expected} expected completions)"
+        f"- Raw habit adherence: {overall_adherence:.0%} "
+        f"({total_observed} of {total_expected} expected completions) — "
+        f"note: {narrow_count} of {len(habit_stats)} habit(s) are narrow "
+        f"therapy protocols; their adherence should NOT be used as the "
+        f"routine verdict."
     )
 
+    # ── Primary substrate: issues + journals ────────────────────────────
+    sections.append(
+        shared.render_issues_section(
+            issues,
+            f"## Issues (primary substrate — what's actually happening · {len(issues)})",
+        )
+    )
+    journals_chunk = shared.render_journals_section(journals)
+    if journals_chunk:
+        # Retitle to emphasize primary role.
+        journals_chunk = journals_chunk.replace(
+            f"## Journal Entries ({len(journals)})",
+            f"## Journal Entries (primary substrate · {len(journals)})",
+            1,
+        )
+        sections.append(journals_chunk)
+
+    # ── Supporting substrate: observations + feedbacks + related ────────
+    for renderer, rows in [
+        (shared.render_observations_section, observations),
+        (shared.render_teacher_feedbacks_section, teacher_fbs),
+        (shared.render_contact_feedbacks_section, contact_fbs),
+        (shared.render_related_member_issues_section, related_issues),
+    ]:
+        chunk = renderer(rows)
+        if chunk:
+            sections.append(chunk)
+
+    # ── Habits — explicitly demoted, split by narrow-therapy flag ───────
     if habit_stats:
-        habit_lines = [
-            f"## Active habits ({len(habit_stats)} — {daily_count} daily, {weekly_count} weekly)"
-        ]
-        for h in habit_stats:
+        narrow_habits = [h for h in habit_stats if h["is_narrow_therapy_protocol"]]
+        substantive_habits = [h for h in habit_stats if not h["is_narrow_therapy_protocol"]]
+
+        def _habit_line(h: dict[str, Any]) -> str:
             line = (
                 f"- [ID:{h['id']}] \"{h['title']}\" "
                 f"({h['frequency']}, target ×{h['targetCount']}) — "
@@ -416,74 +469,88 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
             if h.get("missedPattern"):
                 line += f", missed pattern: {h['missedPattern']}"
             if h.get("description"):
-                line += f"\n  {h['description'][:200]}"
-            habit_lines.append(line)
-        sections.append("\n".join(habit_lines))
+                line += f"\n  {h['description'][:240]}"
+            return line
+
+        habit_section_parts = [
+            f"## Habits ({len(habit_stats)} — {daily_count} daily, {weekly_count} weekly)"
+        ]
+        if narrow_habits:
+            habit_section_parts.append(
+                f"### Narrow therapy protocols ({len(narrow_habits)} — media-scoped "
+                f"interventions, NOT a substantive daily routine)\n"
+                f"These are parent-delivered interventions triggered by specific media "
+                f"events (e.g. before watching a film). 0% adherence is expected because "
+                f"they are not self-initiated daily behaviors. Do NOT use these to diagnose "
+                f"routine gaps or set the routine verdict.\n"
+                + "\n".join(_habit_line(h) for h in narrow_habits)
+            )
+        if substantive_habits:
+            habit_section_parts.append(
+                f"### Substantive routine habits ({len(substantive_habits)})\n"
+                + "\n".join(_habit_line(h) for h in substantive_habits)
+            )
+        if not substantive_habits:
+            habit_section_parts.append(
+                "### Substantive routine habits (0)\n"
+                "None — there are no substantive, self-initiated routine habits on file. "
+                "Derive the routine view and its gaps from the ISSUES + JOURNAL ENTRIES "
+                "sections above."
+            )
+        sections.append("\n\n".join(habit_section_parts))
     else:
         sections.append(
-            "## Active habits\nNone — the family member has no active habits yet. "
-            "Focus your analysis on proposing a starter routine appropriate for "
-            "their age and profile."
+            "## Habits\nNone on file. Derive the routine view and its gaps from the "
+            "ISSUES + JOURNAL ENTRIES sections above."
         )
 
+    # ── Context: linked goals, research, other members, issue contacts ──
     if linked_goals:
         sections.append(
-            "## Linked goals (context)\n"
+            "## Linked goals (habit-linked only, context)\n"
             + "\n".join(
                 f"- [G{g_id}] \"{g_title}\" — {g_status}"
                 + (f": {g_desc[:160]}" if g_desc else "")
                 for g_id, g_title, g_desc, g_status in linked_goals
             )
         )
-    if linked_issues:
-        sections.append(
-            "## Linked issues (context)\n"
-            + "\n".join(
-                f"- [I{i_id}] \"{i_title}\" ({i_cat}, {i_sev})"
-                for i_id, i_title, i_cat, i_sev in linked_issues
-            )
-        )
-    if research:
-        research_lines = ["## Related research (cite by ResearchID if used)"]
-        for r_id, r_issue_id, r_title, r_kf, r_tt in research:
-            entry = f"- [ResearchID:{r_id}] \"{r_title}\" (issue {r_issue_id})"
-            try:
-                kf = json.loads(r_kf) if r_kf else []
-                if kf:
-                    entry += f"\n  Key findings: {'; '.join(kf[:2])}"
-            except Exception:
-                pass
-            try:
-                tt = json.loads(r_tt) if r_tt else []
-                if tt:
-                    entry += f"\n  Techniques: {'; '.join(tt[:3])}"
-            except Exception:
-                pass
-            research_lines.append(entry)
-        sections.append("\n".join(research_lines))
+
+    research_chunk = shared.render_research_section(research)
+    if research_chunk:
+        sections.append(research_chunk)
+
+    members_chunk = shared.render_family_members_section(all_members, exclude_id=family_member_id)
+    if members_chunk:
+        sections.append(members_chunk)
+
+    contacts_chunk = shared.render_issue_contacts_section(issue_contacts)
+    if contacts_chunk:
+        sections.append(contacts_chunk)
 
     sections.append(
-        """## Instructions
+        f"""## Instructions
+
+PRIMARY SUBSTRATE = the Issues and Journal Entries sections above. The habit adherence numbers are supporting data only. If the only habits on file are narrow therapy protocols, the routine verdict must come from journal + issue patterns, NOT from habit adherence.
 
 Produce a structured JSON analysis with these fields:
 
-1. **summary** (string): 2-3 paragraph executive read of the routine — what is working, what is brittle, and what the next concrete move should be for the parent. Tie insights to the adherence numbers above.
+1. **summary** (string): 2-3 paragraph executive read of the ACTUAL routine. OPEN with a synthesis of what the journal entries and issues collectively show about this child's daily life (sleep, meals, school, activities, emotional arcs, recurring conflicts) — reference specific issue IDs like [ID:42] and journal dates. Only THEN note the habits and what they do or don't contribute. If {narrow_count} of {len(habit_stats)} habit(s) are narrow therapy protocols, state explicitly that the visible "routine" on file is a therapy-instruction protocol, not a substantive daily routine, and that the real routine view had to be derived from journals/issues.
 
-2. **adherencePatterns** (array of objects, one per habit): {habitId (int — MUST match an ID from the Active habits above), habitTitle (string), frequency ("daily"|"weekly"), targetCount (int), observedCount (int), consistency (float 0-1), currentStreak (int), longestStreak (int), missedPattern (optional string — e.g. "weekends", "mostly Fridays"), interpretation (string — 1-2 sentences diagnosing why this habit is/isn't sticking)}.
+2. **adherencePatterns** (array of objects, one per habit): {{habitId (int — MUST match an ID from the Habits section above), habitTitle (string), frequency ("daily"|"weekly"), targetCount (int), observedCount (int), consistency (float 0-1), currentStreak (int), longestStreak (int), missedPattern (optional string — e.g. "weekends", "mostly Fridays"), interpretation (string — 1-2 sentences). For habits listed under "Narrow therapy protocols", the `interpretation` MUST state explicitly: "narrow therapy protocol — adherence here doesn't reflect routine quality" followed by a brief note on the intervention's purpose.}}
 
-3. **routineBalance** (object): {domainsCovered (array of strings — e.g. ["sleep","self-care","learning"]), domainsMissing (array of strings), overEmphasized (array of strings), underEmphasized (array of strings), verdict ("balanced"|"unbalanced"|"sparse"|"overloaded")}.
+3. **routineBalance** (object): {{domainsCovered (array of strings — derived from JOURNAL activity themes and ISSUE categories, not from habit frequency mix — e.g. ["sleep","school","peer interactions"]), domainsMissing (array of strings), overEmphasized (array of strings), underEmphasized (array of strings), verdict ("balanced"|"unbalanced"|"sparse"|"overloaded")}}.
 
-4. **streaks** (object): {strongestHabitId (optional int — from the habits above), strongestStreak (int), weakestHabitId (optional int), weakestStreak (int), momentum ("building"|"fading"|"steady"|"stalled")}.
+4. **streaks** (object): {{strongestHabitId (optional int from the habits above), strongestStreak (int), weakestHabitId (optional int), weakestStreak (int), momentum ("building"|"fading"|"steady"|"stalled"). If the only habits are narrow therapy protocols, set momentum to "stalled" and note in the summary that momentum refers only to the narrow protocols, not to the child's overall routine.}}
 
-5. **gaps** (array of objects): {area (string — e.g. "evening wind-down", "physical activity"), rationale (string — why this matters for THIS child), severity ("low"|"medium"|"high")}. 2-4 items.
+5. **gaps** (array of 2-4 objects): {{area (string), rationale (string — reference journal patterns and issue IDs, e.g. "Journals from 2026-03 show homework starts after 8pm on weekdays; issue [ID:17] documents the resulting meltdowns"), severity ("low"|"medium"|"high")}}. Derive gaps from the journal/issue substrate, NOT from missing habit categories.
 
-6. **optimizationSuggestions** (array of 3-5 objects): {title (string), rationale (string), priority ("immediate"|"short_term"|"long_term"), changeType ("add"|"remove"|"modify"|"merge"|"split"), targetHabitId (optional int — from the habits above when changeType is modify/remove/merge/split), suggestedFrequency (optional "daily"|"weekly"), suggestedTargetCount (optional int), concreteSteps (array of 2-3 very specific parent-actionable strings — e.g. "Set a 7:30pm phone-in-basket rule and log it each night" not "Reduce screen time"), ageAppropriate (bool — verify against the profile age above), developmentalContext (optional string — 1 sentence on why this fits the child's stage)}.
+6. **optimizationSuggestions** (array of 3-5 objects): {{title (string), rationale (string — reference specific issue IDs from the Issues section when applicable), priority ("immediate"|"short_term"|"long_term"), changeType ("add"|"remove"|"modify"|"merge"|"split"), targetHabitId (optional int — from habits above when changeType is modify/remove/merge/split), suggestedFrequency (optional "daily"|"weekly"), suggestedTargetCount (optional int), concreteSteps (array of 2-3 very specific parent-actionable strings — e.g. "Set a 7:30pm phone-in-basket rule and log it each night" not "Reduce screen time"), ageAppropriate (bool — verify against the profile age above), developmentalContext (optional string)}}. Suggestions must address what the ISSUES + JOURNALS reveal, not just gaps in the habit list.
 
-7. **researchRelevance** (array of objects, may be empty): {topic (string), relevantResearchIds (array of ints — MUST be ResearchIDs from the Related research block when present), relevantResearchTitles (array of strings), coverageGaps (array of strings)}. Cite real IDs only; do NOT invent research.
+7. **researchRelevance** (array of objects, may be empty): {{topic (string), relevantResearchIds (array of ints — MUST be ResearchIDs from the "Existing Research" section when present), relevantResearchTitles (array of strings), coverageGaps (array of strings)}}. Cite real IDs only; do NOT invent research.
 
-IMPORTANT: Every field annotated as "array of" MUST be a JSON array, even when there is only one item. Only reference habit IDs / ResearchIDs that appear in the data above. Do not invent IDs.
+IMPORTANT: Every field annotated as "array of" MUST be a JSON array, even when there is only one item. Only reference habit IDs / ResearchIDs / issue IDs that appear in the data above. Do not invent IDs.
 
-Write the analysis in the same language as the family-member profile and habit titles above."""
+Write the analysis in the same language as the family-member profile and journal entries above."""
     )
 
     prompt = "\n\n".join(sections)
@@ -498,8 +565,15 @@ Write the analysis in the same language as the family-member profile and habit t
             "dateRange": {"from": since.isoformat(), "to": today.isoformat()},
             "overallAdherence": overall_adherence,
             "linkedGoalCount": len(linked_goals),
-            "linkedIssueCount": len(linked_issues),
+            "linkedIssueCount": len(issues),
             "researchPaperCount": len(research),
+            # New: richer substrate counts
+            "issueCount": len(issues),
+            "journalEntryCount": len(journals),
+            "observationCount": len(observations),
+            "teacherFeedbackCount": len(teacher_fbs),
+            "contactFeedbackCount": len(contact_fbs),
+            "narrowTherapyHabitsCount": narrow_count,
         }
     )
 

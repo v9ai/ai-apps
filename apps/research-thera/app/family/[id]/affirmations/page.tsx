@@ -17,7 +17,7 @@ import {
   AlertDialog,
   Separator,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon, PlusIcon, Pencil1Icon, TrashIcon, MagicWandIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, PlusIcon, Pencil1Icon, TrashIcon, MagicWandIcon, CopyIcon, CheckIcon } from "@radix-ui/react-icons";
 import { useParams } from "next/navigation";
 import NextLink from "next/link";
 import {
@@ -185,6 +185,19 @@ function AffirmationsContent() {
 
   const handleDelete = async (id: number) => {
     await deleteAffirmation({ variables: { id } });
+  };
+
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const handleCopy = async (id: number, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => {
+        setCopiedId((current) => (current === id ? null : current));
+      }, 1500);
+    } catch {
+      // Clipboard unavailable (e.g. insecure context) — silently ignore
+    }
   };
 
   if (loading) {
@@ -394,7 +407,12 @@ function AffirmationsContent() {
                   <Flex direction="column" gap="2" p="4">
                     <Flex justify="between" align="start">
                       <Flex direction="column" gap="2" style={{ flex: 1 }}>
-                        <Text size="3" style={{ lineHeight: "1.5" }}>
+                        <Text
+                          size="3"
+                          style={{ lineHeight: "1.5", cursor: "copy" }}
+                          onClick={() => handleCopy(aff.id, aff.text)}
+                          title="Click to copy"
+                        >
                           &ldquo;{aff.text}&rdquo;
                         </Text>
                         <Flex gap="2" align="center">
@@ -415,6 +433,15 @@ function AffirmationsContent() {
                         </Flex>
                       </Flex>
                       <Flex gap="2" ml="3">
+                        <Button
+                          variant="ghost"
+                          size="1"
+                          color={copiedId === aff.id ? "green" : undefined}
+                          onClick={() => handleCopy(aff.id, aff.text)}
+                          title="Copy affirmation"
+                        >
+                          {copiedId === aff.id ? <CheckIcon /> : <CopyIcon />}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="1"
@@ -480,7 +507,12 @@ function AffirmationsContent() {
                     <Flex direction="column" gap="2" p="4">
                       <Flex justify="between" align="start">
                         <Flex direction="column" gap="2" style={{ flex: 1 }}>
-                          <Text size="3" style={{ lineHeight: "1.5" }}>
+                          <Text
+                            size="3"
+                            style={{ lineHeight: "1.5", cursor: "copy" }}
+                            onClick={() => handleCopy(aff.id, aff.text)}
+                            title="Click to copy"
+                          >
                             &ldquo;{aff.text}&rdquo;
                           </Text>
                           <Flex gap="2" align="center">
@@ -494,6 +526,15 @@ function AffirmationsContent() {
                           </Flex>
                         </Flex>
                         <Flex gap="2" ml="3">
+                          <Button
+                            variant="ghost"
+                            size="1"
+                            color={copiedId === aff.id ? "green" : undefined}
+                            onClick={() => handleCopy(aff.id, aff.text)}
+                            title="Copy affirmation"
+                          >
+                            {copiedId === aff.id ? <CheckIcon /> : <CopyIcon />}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="1"

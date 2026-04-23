@@ -30,13 +30,36 @@ log = logging.getLogger(__name__)
 # (report) before more generic ones.
 _OUTPUT_KEYS: tuple[str, ...] = ("report", "pricing", "gtm", "icp")
 
+# Infra keys that must never appear in the publicly-readable output jsonb.
+# Defense-in-depth — the Pydantic PricingStrategy/GTMStrategy/ProductIntelReport
+# schemas already whitelist which fields serialize, but recursively scrubbing
+# guards against accidental pass-through from state blobs or graph_meta dicts.
+_PRIVATE_KEYS: frozenset[str] = frozenset({
+    "webhook_url",
+    "webhook_secret",
+    "app_run_id",
+    "langsmith_trace_url",
+    "langsmith_run_id",
+    "tenant_id",
+    "lg_run_id",
+    "lg_thread_id",
+})
+
+
+def _scrub(v: Any) -> Any:
+    if isinstance(v, list):
+        return [_scrub(x) for x in v]
+    if isinstance(v, dict):
+        return {k: _scrub(val) for k, val in v.items() if k not in _PRIVATE_KEYS}
+    return v
+
 
 def _build_payload(state: dict[str, Any]) -> dict[str, Any]:
     payload: dict[str, Any] = {"status": "success"}
     for key in _OUTPUT_KEYS:
         value = state.get(key)
         if value:
-            payload["output"] = {key: value}
+            payload["output"] = {key: _scrub(value)}
             break
     return payload
 

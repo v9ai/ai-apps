@@ -2296,12 +2296,18 @@ export type RoutineDataSnapshot = {
   __typename?: 'RoutineDataSnapshot';
   activeDailyCount: Scalars['Int']['output'];
   activeWeeklyCount: Scalars['Int']['output'];
+  contactFeedbackCount?: Maybe<Scalars['Int']['output']>;
   habitsCount: Scalars['Int']['output'];
+  issueCount?: Maybe<Scalars['Int']['output']>;
+  journalEntryCount?: Maybe<Scalars['Int']['output']>;
   linkedGoalCount: Scalars['Int']['output'];
   linkedIssueCount: Scalars['Int']['output'];
   logCount: Scalars['Int']['output'];
+  narrowTherapyHabitsCount?: Maybe<Scalars['Int']['output']>;
+  observationCount?: Maybe<Scalars['Int']['output']>;
   overallAdherence: Scalars['Float']['output'];
   researchPaperCount: Scalars['Int']['output'];
+  teacherFeedbackCount?: Maybe<Scalars['Int']['output']>;
   windowDays: Scalars['Int']['output'];
 };
 
@@ -3378,14 +3384,14 @@ export type GetRoutineAnalysesQueryVariables = Exact<{
 }>;
 
 
-export type GetRoutineAnalysesQuery = { __typename?: 'Query', routineAnalyses: Array<{ __typename?: 'RoutineAnalysis', id: number, familyMemberId: number, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, adherencePatterns: Array<{ __typename?: 'HabitAdherence', habitId: number, habitTitle: string, frequency: string, targetCount: number, observedCount: number, consistency: number, currentStreak: number, longestStreak: number, missedPattern?: string | null, interpretation: string }>, routineBalance: { __typename?: 'RoutineBalance', domainsCovered: Array<string>, domainsMissing: Array<string>, overEmphasized: Array<string>, underEmphasized: Array<string>, verdict: string }, streaks: { __typename?: 'StreakSummary', strongestHabitId?: number | null, strongestStreak: number, weakestHabitId?: number | null, weakestStreak: number, momentum: string }, gaps: Array<{ __typename?: 'RoutineGap', area: string, rationale: string, severity: string }>, optimizationSuggestions: Array<{ __typename?: 'RoutineOptimization', title: string, rationale: string, priority: string, changeType: string, targetHabitId?: number | null, suggestedFrequency?: string | null, suggestedTargetCount?: number | null, concreteSteps: Array<string>, ageAppropriate: boolean, developmentalContext?: string | null }>, researchRelevance: Array<{ __typename?: 'RoutineResearchMapping', topic: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'RoutineDataSnapshot', habitsCount: number, activeDailyCount: number, activeWeeklyCount: number, logCount: number, windowDays: number, overallAdherence: number, linkedGoalCount: number, linkedIssueCount: number, researchPaperCount: number } }> };
+export type GetRoutineAnalysesQuery = { __typename?: 'Query', routineAnalyses: Array<{ __typename?: 'RoutineAnalysis', id: number, familyMemberId: number, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, adherencePatterns: Array<{ __typename?: 'HabitAdherence', habitId: number, habitTitle: string, frequency: string, targetCount: number, observedCount: number, consistency: number, currentStreak: number, longestStreak: number, missedPattern?: string | null, interpretation: string }>, routineBalance: { __typename?: 'RoutineBalance', domainsCovered: Array<string>, domainsMissing: Array<string>, overEmphasized: Array<string>, underEmphasized: Array<string>, verdict: string }, streaks: { __typename?: 'StreakSummary', strongestHabitId?: number | null, strongestStreak: number, weakestHabitId?: number | null, weakestStreak: number, momentum: string }, gaps: Array<{ __typename?: 'RoutineGap', area: string, rationale: string, severity: string }>, optimizationSuggestions: Array<{ __typename?: 'RoutineOptimization', title: string, rationale: string, priority: string, changeType: string, targetHabitId?: number | null, suggestedFrequency?: string | null, suggestedTargetCount?: number | null, concreteSteps: Array<string>, ageAppropriate: boolean, developmentalContext?: string | null }>, researchRelevance: Array<{ __typename?: 'RoutineResearchMapping', topic: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'RoutineDataSnapshot', habitsCount: number, activeDailyCount: number, activeWeeklyCount: number, logCount: number, windowDays: number, overallAdherence: number, linkedGoalCount: number, linkedIssueCount: number, researchPaperCount: number, issueCount?: number | null, journalEntryCount?: number | null, observationCount?: number | null, teacherFeedbackCount?: number | null, contactFeedbackCount?: number | null, narrowTherapyHabitsCount?: number | null } }> };
 
 export type GetRoutineAnalysisQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type GetRoutineAnalysisQuery = { __typename?: 'Query', routineAnalysis?: { __typename?: 'RoutineAnalysis', id: number, familyMemberId: number, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, adherencePatterns: Array<{ __typename?: 'HabitAdherence', habitId: number, habitTitle: string, frequency: string, targetCount: number, observedCount: number, consistency: number, currentStreak: number, longestStreak: number, missedPattern?: string | null, interpretation: string }>, routineBalance: { __typename?: 'RoutineBalance', domainsCovered: Array<string>, domainsMissing: Array<string>, overEmphasized: Array<string>, underEmphasized: Array<string>, verdict: string }, streaks: { __typename?: 'StreakSummary', strongestHabitId?: number | null, strongestStreak: number, weakestHabitId?: number | null, weakestStreak: number, momentum: string }, gaps: Array<{ __typename?: 'RoutineGap', area: string, rationale: string, severity: string }>, optimizationSuggestions: Array<{ __typename?: 'RoutineOptimization', title: string, rationale: string, priority: string, changeType: string, targetHabitId?: number | null, suggestedFrequency?: string | null, suggestedTargetCount?: number | null, concreteSteps: Array<string>, ageAppropriate: boolean, developmentalContext?: string | null }>, researchRelevance: Array<{ __typename?: 'RoutineResearchMapping', topic: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'RoutineDataSnapshot', habitsCount: number, activeDailyCount: number, activeWeeklyCount: number, logCount: number, windowDays: number, overallAdherence: number, linkedGoalCount: number, linkedIssueCount: number, researchPaperCount: number } } | null };
+export type GetRoutineAnalysisQuery = { __typename?: 'Query', routineAnalysis?: { __typename?: 'RoutineAnalysis', id: number, familyMemberId: number, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, adherencePatterns: Array<{ __typename?: 'HabitAdherence', habitId: number, habitTitle: string, frequency: string, targetCount: number, observedCount: number, consistency: number, currentStreak: number, longestStreak: number, missedPattern?: string | null, interpretation: string }>, routineBalance: { __typename?: 'RoutineBalance', domainsCovered: Array<string>, domainsMissing: Array<string>, overEmphasized: Array<string>, underEmphasized: Array<string>, verdict: string }, streaks: { __typename?: 'StreakSummary', strongestHabitId?: number | null, strongestStreak: number, weakestHabitId?: number | null, weakestStreak: number, momentum: string }, gaps: Array<{ __typename?: 'RoutineGap', area: string, rationale: string, severity: string }>, optimizationSuggestions: Array<{ __typename?: 'RoutineOptimization', title: string, rationale: string, priority: string, changeType: string, targetHabitId?: number | null, suggestedFrequency?: string | null, suggestedTargetCount?: number | null, concreteSteps: Array<string>, ageAppropriate: boolean, developmentalContext?: string | null }>, researchRelevance: Array<{ __typename?: 'RoutineResearchMapping', topic: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'RoutineDataSnapshot', habitsCount: number, activeDailyCount: number, activeWeeklyCount: number, logCount: number, windowDays: number, overallAdherence: number, linkedGoalCount: number, linkedIssueCount: number, researchPaperCount: number, issueCount?: number | null, journalEntryCount?: number | null, observationCount?: number | null, teacherFeedbackCount?: number | null, contactFeedbackCount?: number | null, narrowTherapyHabitsCount?: number | null } } | null };
 
 export type GetStoriesQueryVariables = Exact<{
   goalId: Scalars['Int']['input'];
@@ -9363,6 +9369,12 @@ export const GetRoutineAnalysesDocument = gql`
       linkedGoalCount
       linkedIssueCount
       researchPaperCount
+      issueCount
+      journalEntryCount
+      observationCount
+      teacherFeedbackCount
+      contactFeedbackCount
+      narrowTherapyHabitsCount
     }
     model
     createdAt
@@ -9473,6 +9485,12 @@ export const GetRoutineAnalysisDocument = gql`
       linkedGoalCount
       linkedIssueCount
       researchPaperCount
+      issueCount
+      journalEntryCount
+      observationCount
+      teacherFeedbackCount
+      contactFeedbackCount
+      narrowTherapyHabitsCount
     }
     model
     createdAt

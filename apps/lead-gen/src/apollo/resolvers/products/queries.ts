@@ -6,7 +6,6 @@ import type {
   QueryProductBySlugArgs,
   QueryProductsArgs,
 } from "@/__generated__/resolvers-types";
-import { slugify } from "@/lib/slug";
 
 // Products are the SaaS's own catalog (see /products) — not per-tenant data.
 // Use the unscoped http db so the catalog is visible regardless of the
@@ -31,9 +30,14 @@ export const productQueries = {
   },
 
   async productBySlug(_parent: unknown, args: QueryProductBySlugArgs) {
-    const slug = args.slug.toLowerCase();
-    const rows = await db.select().from(products);
-    return rows.find((p) => slugify(p.name) === slug) ?? null;
+    // Uses the generated `slug` column + unique index (see migration 0059).
+    // O(log n) instead of the previous full-table-scan + in-memory slugify.
+    const [row] = await db
+      .select()
+      .from(products)
+      .where(eq(products.slug, args.slug.toLowerCase()))
+      .limit(1);
+    return row ?? null;
   },
 
   async products(_parent: unknown, args: QueryProductsArgs) {

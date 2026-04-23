@@ -2275,12 +2275,18 @@ export type RoutineDataSnapshot = {
   __typename?: 'RoutineDataSnapshot';
   activeDailyCount: Scalars['Int']['output'];
   activeWeeklyCount: Scalars['Int']['output'];
+  contactFeedbackCount?: Maybe<Scalars['Int']['output']>;
   habitsCount: Scalars['Int']['output'];
+  issueCount?: Maybe<Scalars['Int']['output']>;
+  journalEntryCount?: Maybe<Scalars['Int']['output']>;
   linkedGoalCount: Scalars['Int']['output'];
   linkedIssueCount: Scalars['Int']['output'];
   logCount: Scalars['Int']['output'];
+  narrowTherapyHabitsCount?: Maybe<Scalars['Int']['output']>;
+  observationCount?: Maybe<Scalars['Int']['output']>;
   overallAdherence: Scalars['Float']['output'];
   researchPaperCount: Scalars['Int']['output'];
+  teacherFeedbackCount?: Maybe<Scalars['Int']['output']>;
   windowDays: Scalars['Int']['output'];
 };
 
@@ -4133,12 +4139,18 @@ export type RoutineBalanceResolvers<ContextType = GraphQLContext, ParentType ext
 export type RoutineDataSnapshotResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RoutineDataSnapshot'] = ResolversParentTypes['RoutineDataSnapshot']> = {
   activeDailyCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   activeWeeklyCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  contactFeedbackCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   habitsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  issueCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  journalEntryCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   linkedGoalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   linkedIssueCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   logCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  narrowTherapyHabitsCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  observationCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   overallAdherence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   researchPaperCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  teacherFeedbackCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   windowDays?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 

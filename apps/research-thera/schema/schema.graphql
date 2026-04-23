@@ -1870,6 +1870,14 @@ type RoutineDataSnapshot {
   linkedGoalCount: Int!
   linkedIssueCount: Int!
   researchPaperCount: Int!
+  # Richer substrate counts (nullable for backward compatibility with rows
+  # produced before the journals-and-issues refactor).
+  issueCount: Int
+  journalEntryCount: Int
+  observationCount: Int
+  teacherFeedbackCount: Int
+  contactFeedbackCount: Int
+  narrowTherapyHabitsCount: Int
 }
 
 type RoutineAnalysis {

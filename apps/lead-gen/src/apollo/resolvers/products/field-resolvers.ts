@@ -2,7 +2,10 @@ import type { Product as DbProduct } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 
 export const ProductField = {
-  slug: (p: DbProduct) => slugify(p.name),
+  // Prefer the generated DB column (populated by migration 0059); fall back to
+  // slugify(name) for rows created before the column existed or in tests that
+  // build Product objects by hand.
+  slug: (p: DbProduct) => p.slug ?? slugify(p.name),
   createdBy: (p: DbProduct) => p.created_by ?? null,
   createdAt: (p: DbProduct) => p.created_at,
   updatedAt: (p: DbProduct) => p.updated_at,

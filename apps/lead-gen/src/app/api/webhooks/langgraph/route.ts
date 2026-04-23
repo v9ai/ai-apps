@@ -33,6 +33,32 @@ type WebhookBody = {
   output?: Record<string, unknown>;
 };
 
+// Keys that must never end up in a publicly-readable jsonb column. The graphs
+// also scrub them on their own write-back path (backend/leadgen_agent/notify.py
+// builds the payload from a whitelist), but defense-in-depth here too.
+const PRIVATE_KEYS = new Set([
+  "webhook_url",
+  "webhook_secret",
+  "app_run_id",
+  "langsmith_trace_url",
+  "langsmith_run_id",
+  "tenant_id",
+  "lg_run_id",
+  "lg_thread_id",
+]);
+
+function sanitize(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(sanitize);
+  if (v && typeof v === "object") {
+    return Object.fromEntries(
+      Object.entries(v as Record<string, unknown>)
+        .filter(([k]) => !PRIVATE_KEYS.has(k))
+        .map(([k, val]) => [k, sanitize(val)]),
+    );
+  }
+  return v;
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.text(); // raw bytes — must match what the graph signed
   const signature = req.headers.get("x-app-signature") ?? "";
@@ -84,34 +110,39 @@ export async function POST(req: NextRequest) {
   const now = new Date();
   const nowIso = now.toISOString();
 
+  const safeOutput = payload.output
+    ? (sanitize(payload.output) as Record<string, unknown>)
+    : null;
+
   await db
     .update(productIntelRuns)
     .set({
       status: payload.status,
       finished_at: now,
       error: payload.error ?? null,
-      output: (payload.output ?? null) as Record<string, unknown> | null,
+      output: safeOutput,
     })
     .where(eq(productIntelRuns.id, appRunId));
 
-  if (payload.status === "success" && payload.output) {
-    const out = payload.output;
+  if (payload.status === "success" && safeOutput) {
     const patch: Record<string, unknown> = { updated_at: nowIso };
     switch (run.kind) {
       case "pricing":
-        patch.pricing_analysis = (out as { pricing?: unknown }).pricing ?? out;
+        patch.pricing_analysis =
+          (safeOutput as { pricing?: unknown }).pricing ?? safeOutput;
         patch.pricing_analyzed_at = nowIso;
         break;
       case "gtm":
-        patch.gtm_analysis = (out as { gtm?: unknown }).gtm ?? out;
+        patch.gtm_analysis = (safeOutput as { gtm?: unknown }).gtm ?? safeOutput;
         patch.gtm_analyzed_at = nowIso;
         break;
       case "product_intel":
-        patch.intel_report = (out as { report?: unknown }).report ?? out;
+        patch.intel_report =
+          (safeOutput as { report?: unknown }).report ?? safeOutput;
         patch.intel_report_at = nowIso;
         break;
       case "icp":
-        patch.icp_analysis = (out as { icp?: unknown }).icp ?? out;
+        patch.icp_analysis = (safeOutput as { icp?: unknown }).icp ?? safeOutput;
         patch.icp_analyzed_at = nowIso;
         break;
     }

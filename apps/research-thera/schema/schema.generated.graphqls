@@ -1414,12 +1414,18 @@ type RoutineBalance {
 type RoutineDataSnapshot {
   activeDailyCount: Int!
   activeWeeklyCount: Int!
+  contactFeedbackCount: Int
   habitsCount: Int!
+  issueCount: Int
+  journalEntryCount: Int
   linkedGoalCount: Int!
   linkedIssueCount: Int!
   logCount: Int!
+  narrowTherapyHabitsCount: Int
+  observationCount: Int
   overallAdherence: Float!
   researchPaperCount: Int!
+  teacherFeedbackCount: Int
   windowDays: Int!
 }
 

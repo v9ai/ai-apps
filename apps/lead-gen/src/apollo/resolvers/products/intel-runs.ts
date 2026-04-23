@@ -163,10 +163,23 @@ export const intelRunQueries = {
   },
 };
 
-// GraphQL field camelCase ← Drizzle column snake_case
+// GraphQL field resolvers for IntelRun — EXPLICIT ALLOWLIST.
+// Since product_intel_runs is public-read (see migration 0059), we must not
+// rely on default resolution; an accidental SELECT * would otherwise surface
+// webhook_secret / tenant_id / lg_* / created_by to anonymous callers.
+//
+// If a field isn't listed below AND isn't in the IntelRun GraphQL type, it
+// can't leak. Keep both sides in sync.
 export const IntelRunField = {
+  id: (r: DbIntelRun) => r.id,
   productId: (r: DbIntelRun) => r.product_id,
+  kind: (r: DbIntelRun) => r.kind,
+  status: (r: DbIntelRun) => r.status,
   startedAt: (r: DbIntelRun) => r.started_at.toISOString(),
   finishedAt: (r: DbIntelRun) =>
     r.finished_at ? r.finished_at.toISOString() : null,
+  error: (r: DbIntelRun) => r.error ?? null,
+  output: (r: DbIntelRun) => r.output ?? null,
+  // Deliberately absent (and not in the GraphQL schema either):
+  //   webhook_secret, tenant_id, lg_run_id, lg_thread_id, created_by
 };

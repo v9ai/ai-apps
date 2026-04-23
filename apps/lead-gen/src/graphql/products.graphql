@@ -8,9 +8,26 @@ fragment ProductCore on Product {
   highlights
   icpAnalysis
   icpAnalyzedAt
+  pricingAnalysis
+  pricingAnalyzedAt
+  gtmAnalysis
+  gtmAnalyzedAt
+  intelReport
+  intelReportAt
   createdBy
   createdAt
   updatedAt
+}
+
+fragment IntelRunCore on IntelRun {
+  id
+  productId
+  kind
+  status
+  startedAt
+  finishedAt
+  error
+  output
 }
 
 query Products {
@@ -28,6 +45,46 @@ query Product($id: Int!) {
 query ProductBySlug($slug: String!) {
   productBySlug(slug: $slug) {
     ...ProductCore
+  }
+}
+
+# Public-facing queries: the catalog is intentionally world-readable
+# (see src/apollo/resolvers/products/queries.ts). These slimmer shapes keep
+# the scraped payload size down for marketing pages.
+
+query PublicProducts($limit: Int, $offset: Int) {
+  products(limit: $limit, offset: $offset) {
+    id
+    slug
+    name
+    domain
+    icpAnalyzedAt
+    pricingAnalyzedAt
+    gtmAnalyzedAt
+    intelReportAt
+  }
+}
+
+query PublicProduct($slug: String!) {
+  productBySlug(slug: $slug) {
+    ...ProductCore
+  }
+}
+
+query PublicIntelRun($id: ID!) {
+  productIntelRun(id: $id) {
+    ...IntelRunCore
+  }
+}
+
+query PublicIntelRuns($productId: Int!, $kind: String) {
+  productIntelRuns(productId: $productId, kind: $kind) {
+    id
+    kind
+    status
+    startedAt
+    finishedAt
+    error
   }
 }
 
@@ -50,5 +107,53 @@ mutation AnalyzeProductICP($id: Int!) {
 mutation EnhanceProductIcp($id: Int!) {
   enhanceProductIcp(id: $id) {
     ...ProductCore
+  }
+}
+
+mutation AnalyzeProductPricing($id: Int!) {
+  analyzeProductPricing(id: $id) {
+    ...ProductCore
+  }
+}
+
+mutation AnalyzeProductGTM($id: Int!) {
+  analyzeProductGTM(id: $id) {
+    ...ProductCore
+  }
+}
+
+mutation RunFullProductIntel($id: Int!) {
+  runFullProductIntel(id: $id) {
+    ...ProductCore
+  }
+}
+
+# Async kickoff mutations — return IntelRunAccepted immediately, complete via
+# webhook (see /api/webhooks/langgraph). Clients poll PublicIntelRun for status.
+
+mutation AnalyzeProductPricingAsync($id: Int!) {
+  analyzeProductPricingAsync(id: $id) {
+    runId
+    productId
+    kind
+    status
+  }
+}
+
+mutation AnalyzeProductGTMAsync($id: Int!) {
+  analyzeProductGTMAsync(id: $id) {
+    runId
+    productId
+    kind
+    status
+  }
+}
+
+mutation RunFullProductIntelAsync($id: Int!, $forceRefresh: Boolean) {
+  runFullProductIntelAsync(id: $id, forceRefresh: $forceRefresh) {
+    runId
+    productId
+    kind
+    status
   }
 }

@@ -1101,6 +1101,11 @@ export const products = pgTable(
     gtm_analyzed_at: text("gtm_analyzed_at"),
     intel_report: jsonb("intel_report"),
     intel_report_at: text("intel_report_at"),
+    // Generated column (see migrations/0059_public_intel_reads.sql) — mirrors
+    // slugify(name) at the DB level, indexed for fast productBySlug.
+    slug: text("slug").generatedAlwaysAs(
+      sql`lower(regexp_replace(regexp_replace(name, '[^a-zA-Z0-9]+', '-', 'g'), '^-|-$', '', 'g'))`,
+    ),
     created_by: text("created_by"),
     created_at: text("created_at")
       .notNull()
@@ -1112,6 +1117,7 @@ export const products = pgTable(
   (table) => [
     uniqueIndex("idx_products_tenant_url").on(table.tenant_id, table.url),
     index("idx_products_tenant_id").on(table.tenant_id),
+    uniqueIndex("idx_products_slug").on(table.slug),
   ],
 );
 

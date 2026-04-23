@@ -156,6 +156,18 @@ export function RoutineAnalysisPanel({ familyMemberId, subjectLabel }: Props) {
                   {latest.dataSnapshot.habitsCount} habit
                   {latest.dataSnapshot.habitsCount === 1 ? "" : "s"}
                 </Badge>
+                {latest.dataSnapshot.issueCount != null && (
+                  <Badge color="gray" variant="soft">
+                    {latest.dataSnapshot.issueCount} issue
+                    {latest.dataSnapshot.issueCount === 1 ? "" : "s"}
+                  </Badge>
+                )}
+                {latest.dataSnapshot.journalEntryCount != null && (
+                  <Badge color="gray" variant="soft">
+                    {latest.dataSnapshot.journalEntryCount} journal
+                    {latest.dataSnapshot.journalEntryCount === 1 ? "" : "s"}
+                  </Badge>
+                )}
                 <Badge color="gray" variant="soft">
                   {Math.round(latest.dataSnapshot.overallAdherence * 100)}%
                   adherence
@@ -169,6 +181,13 @@ export function RoutineAnalysisPanel({ familyMemberId, subjectLabel }: Props) {
                 <Badge color="gray" variant="soft">
                   momentum: {latest.streaks.momentum}
                 </Badge>
+                {(latest.dataSnapshot.narrowTherapyHabitsCount ?? 0) > 0 && (
+                  <Badge color="orange" variant="soft">
+                    {latest.dataSnapshot.narrowTherapyHabitsCount} narrow-therapy
+                    habit{latest.dataSnapshot.narrowTherapyHabitsCount === 1 ? "" : "s"}{" "}
+                    excluded from verdict
+                  </Badge>
+                )}
               </Flex>
               <Text size="2" style={{ whiteSpace: "pre-wrap" }}>
                 {latest.summary}

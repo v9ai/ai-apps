@@ -31,6 +31,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from research_agent.affirmations_graph import graph as affirmations_graph
 from research_agent.books_graph import graph as books_graph
 from research_agent.deep_analysis_graph import graph as deep_analysis_graph
+from research_agent.deep_analysis_v2_graph import graph as deep_analysis_v2_graph
 from research_agent.discussion_guide_graph import graph as discussion_guide_graph
 from research_agent.generate_therapy_research_graph import (
     graph as generate_therapy_research_graph,
@@ -49,6 +50,7 @@ GRAPHS: dict[str, Any] = {
     "affirmations": affirmations_graph,
     "books": books_graph,
     "deep_analysis": deep_analysis_graph,
+    "deep_analysis_v2": deep_analysis_v2_graph,
     "discussion_guide": discussion_guide_graph,
     "generate_therapy_research": generate_therapy_research_graph,
     "habits": habits_graph,

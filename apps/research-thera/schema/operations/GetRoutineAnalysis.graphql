@@ -64,6 +64,12 @@ query GetRoutineAnalysis($id: Int!) {
       linkedGoalCount
       linkedIssueCount
       researchPaperCount
+      issueCount
+      journalEntryCount
+      observationCount
+      teacherFeedbackCount
+      contactFeedbackCount
+      narrowTherapyHabitsCount
     }
     model
     createdAt
