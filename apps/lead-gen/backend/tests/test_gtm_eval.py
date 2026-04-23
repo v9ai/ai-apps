@@ -21,6 +21,7 @@ from typing import Any
 
 import pytest
 
+from leadgen_agent import gtm_graph as _gg
 from leadgen_agent.gtm_graph import build_graph
 
 from ._eval_utils import (
@@ -80,12 +81,74 @@ def _serialize_gtm(out: dict[str, Any]) -> str:
     )
 
 
+async def _load_inputs_stub(state: dict) -> dict:
+    """Eval-mode replacement for gtm_graph.load_inputs (see pricing eval for
+    pattern rationale). Feeds the pre-populated product and leaves the ICP /
+    competitive / pricing slices empty — the GTM nodes tolerate missing inputs
+    and note the gap in their output."""
+    product = state.get("product") or {}
+    return {
+        "product": product,
+        "icp": state.get("icp") or {},
+        "competitive": state.get("competitive") or {"competitors": []},
+        "pricing": state.get("pricing") or {},
+    }
+
+
+class _NoopCursor:
+    def execute(self, *_a, **_kw):
+        return None
+
+    def fetchone(self):
+        return None
+
+    def fetchall(self):
+        return []
+
+    description = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        return False
+
+
+class _NoopConn:
+    def cursor(self):
+        return _NoopCursor()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        return False
+
+
+def _noop_connect(*_a, **_kw):
+    return _NoopConn()
+
+
 async def _run(product: dict) -> dict:
-    graph = build_graph()
+    original_load = _gg.load_inputs
+    original_psycopg = _gg.psycopg
+    _gg.load_inputs = _load_inputs_stub  # type: ignore[assignment]
+
+    class _ShimPsycopg:
+        connect = staticmethod(_noop_connect)
+
+    _gg.psycopg = _ShimPsycopg  # type: ignore[assignment]
     try:
-        return await graph.ainvoke({"product_id": product.get("id", 0), "product": product})
-    except Exception as e:  # noqa: BLE001
-        return {"_runtime_error": repr(e)}
+        graph = build_graph()
+        try:
+            return await graph.ainvoke(
+                {"product_id": product.get("id", 0), "product": product}
+            )
+        except Exception as e:  # noqa: BLE001
+            return {"_runtime_error": repr(e)}
+    finally:
+        _gg.load_inputs = original_load  # type: ignore[assignment]
+        _gg.psycopg = original_psycopg  # type: ignore[assignment]
 
 
 METRICS: list[tuple[str, str, str]] = [

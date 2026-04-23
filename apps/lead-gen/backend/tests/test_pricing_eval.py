@@ -97,11 +97,54 @@ async def _load_inputs_stub(state: dict) -> dict:
     }
 
 
+class _NoopCursor:
+    def execute(self, *_a, **_kw):
+        return None
+
+    def fetchone(self):
+        return None
+
+    def fetchall(self):
+        return []
+
+    description = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        return False
+
+
+class _NoopConn:
+    def cursor(self):
+        return _NoopCursor()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        return False
+
+
+def _noop_connect(*_a, **_kw):
+    """Stand-in for psycopg.connect that swallows the final UPDATE. Only used
+    inside EVAL=1 runs so no production path is affected."""
+    return _NoopConn()
+
+
 async def _run(product: dict) -> dict:
     # Rebind load_inputs on the module BEFORE build_graph() so the compiled
-    # StateGraph captures our stub. Restore afterwards so test isolation holds.
-    original = _pg.load_inputs
+    # StateGraph captures our stub. Also suppress the final UPDATE so evals
+    # don't need NEON_DATABASE_URL. Restore afterwards for test isolation.
+    original_load = _pg.load_inputs
+    original_psycopg = _pg.psycopg
     _pg.load_inputs = _load_inputs_stub  # type: ignore[assignment]
+
+    class _ShimPsycopg:
+        connect = staticmethod(_noop_connect)
+
+    _pg.psycopg = _ShimPsycopg  # type: ignore[assignment]
     try:
         graph = build_graph()
         try:
@@ -111,7 +154,8 @@ async def _run(product: dict) -> dict:
         except Exception as e:  # noqa: BLE001
             return {"_runtime_error": repr(e)}
     finally:
-        _pg.load_inputs = original  # type: ignore[assignment]
+        _pg.load_inputs = original_load  # type: ignore[assignment]
+        _pg.psycopg = original_psycopg  # type: ignore[assignment]
 
 
 METRICS: list[tuple[str, str, str]] = [
