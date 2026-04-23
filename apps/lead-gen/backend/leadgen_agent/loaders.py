@@ -70,6 +70,49 @@ USER_AGENT = (
     "+https://agenticleadgen.xyz)"
 )
 
+
+def _env_float(name: str, default: float) -> float:
+    """Read a float env var, falling back to ``default`` on missing/invalid."""
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+def _fetch_timeout(total: float | None = None) -> httpx.Timeout:
+    """Build a uniform httpx.Timeout for non-probe fetches.
+
+    All non-probe HTTP clients in this module route through here so
+    connect/read/write/pool limits stay consistent. ``LOADER_FETCH_TIMEOUT_S``
+    overrides the default read budget; connect always uses a tight cap
+    (``LOADER_CONNECT_TIMEOUT_S``, default 5s) so a dead host fails fast
+    regardless of how generous the overall timeout is.
+    """
+    read = total if total is not None else _env_float("LOADER_FETCH_TIMEOUT_S", 10.0)
+    connect = _env_float("LOADER_CONNECT_TIMEOUT_S", 5.0)
+    # Cap connect at read so "read=2s, connect=5s" doesn't silently stretch.
+    connect = min(connect, read)
+    return httpx.Timeout(connect=connect, read=read, write=read, pool=read)
+
+
+def _client(
+    *, timeout: httpx.Timeout | None = None, follow_redirects: bool = True
+) -> httpx.AsyncClient:
+    """Factory for httpx.AsyncClient with shared UA + timeout defaults.
+
+    Callers typically use ``async with _client() as client:``. Pass
+    ``timeout=PROBE_TIMEOUT`` for strategy-selection probes (tight budget);
+    omit for regular fetches (uses ``_fetch_timeout``).
+    """
+    return httpx.AsyncClient(
+        timeout=timeout if timeout is not None else _fetch_timeout(),
+        headers={"User-Agent": USER_AGENT},
+        follow_redirects=follow_redirects,
+    )
+
 # Bound Chromium instances across parallel _load_one calls. Lazy-instantiated
 # so module import does not pin the semaphore to a particular event loop —
 # LangGraph may invoke us under different loops across runs.
@@ -192,11 +235,7 @@ async def _load_sitemap(url: str) -> list[Any]:
     domain_re = re.compile(rf"^{scheme}://(www\.)?{re.escape(_same_domain(url))}")
     sitemap_url = urljoin(url, "/sitemap.xml")
 
-    async with httpx.AsyncClient(
-        timeout=httpx.Timeout(10.0),
-        headers={"User-Agent": USER_AGENT},
-        follow_redirects=True,
-    ) as client:
+    async with _client() as client:
         urls = await _pick_sitemap_urls(client, sitemap_url, domain_re)
 
     if not urls:
@@ -386,11 +425,7 @@ async def fetch_url(url: str, *, timeout: float = 10.0) -> dict[str, Any]:
     """
     started = time.perf_counter()
     try:
-        async with httpx.AsyncClient(
-            timeout=httpx.Timeout(timeout),
-            headers={"User-Agent": USER_AGENT},
-            follow_redirects=True,
-        ) as client:
+        async with _client(timeout=_fetch_timeout(timeout)) as client:
             resp = await client.get(url)
     except httpx.HTTPError as exc:
         return {
@@ -421,11 +456,7 @@ async def competitor_loader(state: CompetitorsTeamState) -> dict:
     if not candidates:
         return {"competitor_pages": {}}
 
-    async with httpx.AsyncClient(
-        timeout=PROBE_TIMEOUT,
-        headers={"User-Agent": USER_AGENT},
-        follow_redirects=True,
-    ) as client:
+    async with _client(timeout=PROBE_TIMEOUT) as client:
         results = await asyncio.gather(
             *[_load_one(client, c) for c in candidates],
             return_exceptions=False,
