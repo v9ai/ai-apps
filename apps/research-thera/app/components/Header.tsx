@@ -20,6 +20,7 @@ const NAV_LINKS = [
   { href: "/books", label: "Books" },
   { href: "/family", label: "Family" },
   { href: "/journal", label: "Journal" },
+  { href: "/games", label: "Games" },
 ];
 
 export function Header() {
