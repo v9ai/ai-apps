@@ -8,6 +8,7 @@ const PLANNER_SYSTEM_PROMPT = [
   "You are a clinical research librarian. Given a therapist's note (journal/goal/issue with title, content, age, and any related-person context), output 3 PubMed-style search queries that capture SEMANTIC intent, not literal keywords.",
   "For metaphorical language (e.g., \"distraction\" meaning career regret), translate to clinical concepts (\"career decision regret\", \"counterfactual rumination\", \"midlife occupational transition\").",
   "Each query must be age-appropriate — prefix with the age bucket when provided (e.g., \"adults: career decision regret\").",
+  "If the prompt contains a Subject Profile section, GROUND the queries in the concrete behaviors, teacher observations, and journal incidents listed there — not just the goal title. For parent-regulation goals, target one query at the parent skill, one at the child's clinical presentation (e.g. ODD/CD, emotion dysregulation, selective eating), and one at the dyadic intervention (e.g. Collaborative Problem Solving, Parent Management Training, Emotion Coaching).",
   "Queries should be complementary, not redundant.",
   "Output ONLY JSON: {\"queries\":[q1,q2,q3]}",
 ].join(" ");
