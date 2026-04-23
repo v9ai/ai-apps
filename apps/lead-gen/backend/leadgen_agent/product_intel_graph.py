@@ -178,49 +178,25 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
 
 
 async def run_pricing(state: ProductIntelState) -> dict:
+    """Invoke the pricing subgraph. The subgraph's write_rationale node
+    persists pricing_analysis itself — no second write here."""
     t0 = time.perf_counter()
     sub = pricing_graph.build_graph()
     result = await sub.ainvoke({"product_id": state["product_id"]})
-    pricing = result.get("pricing") or {}
-    if pricing:
-        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE products
-                    SET pricing_analysis = %s::jsonb,
-                        pricing_analyzed_at = now()::text,
-                        updated_at = now()::text
-                    WHERE id = %s
-                    """,
-                    (json.dumps(pricing), int(state["product_id"])),
-                )
     return {
-        "pricing": pricing,
+        "pricing": result.get("pricing") or {},
         "agent_timings": {"run_pricing": round(time.perf_counter() - t0, 3)},
     }
 
 
 async def run_gtm(state: ProductIntelState) -> dict:
+    """Invoke the GTM subgraph. The subgraph's draft_plan node persists
+    gtm_analysis itself — no second write here."""
     t0 = time.perf_counter()
     sub = gtm_graph.build_graph()
     result = await sub.ainvoke({"product_id": state["product_id"]})
-    gtm = result.get("gtm") or {}
-    if gtm:
-        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE products
-                    SET gtm_analysis = %s::jsonb,
-                        gtm_analyzed_at = now()::text,
-                        updated_at = now()::text
-                    WHERE id = %s
-                    """,
-                    (json.dumps(gtm), int(state["product_id"])),
-                )
     return {
-        "gtm": gtm,
+        "gtm": result.get("gtm") or {},
         "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
     }
 

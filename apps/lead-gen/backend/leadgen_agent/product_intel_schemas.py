@@ -21,6 +21,16 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+# Re-export ICP shapes so product_intel consumers can import everything from
+# one module.
+from .icp_schemas import (  # noqa: F401 — re-exported via __all__
+    DealBreaker,
+    DeepICPOutput,
+    GraphMeta,
+    Persona,
+    Segment,
+)
+
 
 def _none_to_empty_str(payload: dict[str, Any] | Any, fields: tuple[str, ...]) -> dict[str, Any] | Any:
     """LLMs frequently emit `null` for string fields that have no applicable
@@ -34,9 +44,6 @@ def _none_to_empty_str(payload: dict[str, Any] | Any, fields: tuple[str, ...]) -
             payload[f] = ""
     return payload
 
-# Re-export ICP shapes so product_intel consumers can import everything from
-# one module.
-from .icp_schemas import DealBreaker, DeepICPOutput, GraphMeta, Persona, Segment
 
 __all__ = [
     "PRODUCT_INTEL_VERSION",

@@ -412,6 +412,23 @@ async def draft_plan(state: GTMState) -> dict:
         }
     )
     dumped = gtm.model_dump()
+
+    product = state.get("product") or {}
+    product_id = product.get("id") or state.get("product_id")
+    if product_id is not None:
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE products
+                    SET gtm_analysis = %s::jsonb,
+                        gtm_analyzed_at = now()::text,
+                        updated_at = now()::text
+                    WHERE id = %s
+                    """,
+                    (json.dumps(dumped), int(product_id)),
+                )
+
     return {
         "first_90_days": plan,
         "gtm": dumped,
