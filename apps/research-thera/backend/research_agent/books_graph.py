@@ -182,16 +182,109 @@ async def collect_data(state: BooksState) -> dict:
 
                     await cur.execute(
                         "SELECT title, category, severity, description FROM issues "
-                        "WHERE family_member_id = %s AND user_id = %s ORDER BY created_at DESC LIMIT 10",
-                        (family_member_id, user_email),
+                        "WHERE (family_member_id = %s OR related_family_member_id = %s) AND user_id = %s "
+                        "ORDER BY CASE severity WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, created_at DESC LIMIT 20",
+                        (family_member_id, family_member_id, user_email),
                     )
                     issue_rows = await cur.fetchall()
                     if issue_rows:
                         lines = [
-                            f"- **{row[0]}** [{row[2]}/{row[1]}]: {(row[3] or '')[:150]}"
+                            f"- **{row[0]}** [{row[2]}/{row[1]}]: {(row[3] or '')[:180]}"
                             for row in issue_rows
                         ]
                         family_sections.append(f"### Known Issues ({len(issue_rows)})\n" + "\n".join(lines))
+
+                    # Priority concerns & support needs (structured clinical flags)
+                    await cur.execute(
+                        "SELECT title, category, risk_tier, description, strengths "
+                        "FROM family_member_characteristics "
+                        "WHERE family_member_id = %s AND user_id = %s "
+                        "ORDER BY CASE category WHEN 'PRIORITY_CONCERN' THEN 0 WHEN 'SUPPORT_NEED' THEN 1 ELSE 2 END, created_at DESC LIMIT 12",
+                        (family_member_id, user_email),
+                    )
+                    char_rows = await cur.fetchall()
+                    if char_rows:
+                        lines = []
+                        for c_title, c_cat, c_risk, c_desc, c_strengths in char_rows:
+                            tag = f"[{c_cat or ''}{('/' + c_risk) if c_risk and c_risk != 'NONE' else ''}]"
+                            extra = f": {(c_desc or '')[:200]}" if c_desc else ""
+                            strengths_line = f"\n  strengths: {c_strengths[:150]}" if c_strengths else ""
+                            lines.append(f"- {tag} {c_title or ''}{extra}{strengths_line}".rstrip())
+                        family_sections.append(f"### Priority Concerns & Support Needs ({len(char_rows)})\n" + "\n".join(lines))
+
+                    # Teacher feedbacks — external observer data
+                    await cur.execute(
+                        "SELECT teacher_name, subject, feedback_date, content FROM teacher_feedbacks "
+                        "WHERE family_member_id = %s AND user_id = %s ORDER BY feedback_date DESC, created_at DESC LIMIT 5",
+                        (family_member_id, user_email),
+                    )
+                    teacher_rows = await cur.fetchall()
+                    if teacher_rows:
+                        lines = [
+                            f"- {t_date} — {t_name}{(' (' + t_subj + ')') if t_subj else ''}: {(t_content or '')[:250]}"
+                            for t_name, t_subj, t_date, t_content in teacher_rows
+                        ]
+                        family_sections.append(f"### Teacher Observations ({len(teacher_rows)})\n" + "\n".join(lines))
+
+                    # Behavior observations (ABC data)
+                    await cur.execute(
+                        "SELECT observation_type, frequency, intensity, context, notes, observed_at "
+                        "FROM behavior_observations WHERE family_member_id = %s AND user_id = %s "
+                        "ORDER BY observed_at DESC, created_at DESC LIMIT 5",
+                        (family_member_id, user_email),
+                    )
+                    obs_rows = await cur.fetchall()
+                    if obs_rows:
+                        lines = []
+                        for o_type, o_freq, o_int, o_ctx, o_notes, o_date in obs_rows:
+                            meta = [o_type or ""]
+                            if o_int: meta.append(f"intensity:{o_int}")
+                            if o_freq is not None: meta.append(f"freq:{o_freq}")
+                            ctx_s = f" ctx: {o_ctx[:120]}" if o_ctx else ""
+                            notes_s = f" — {o_notes[:160]}" if o_notes else ""
+                            lines.append(f"- {o_date} [{', '.join(m for m in meta if m)}]{ctx_s}{notes_s}")
+                        family_sections.append(f"### Behavior Observations ({len(obs_rows)})\n" + "\n".join(lines))
+
+                    # Recent journal entries (incident log)
+                    await cur.execute(
+                        "SELECT entry_date, title, content, mood FROM journal_entries "
+                        "WHERE family_member_id = %s AND user_id = %s "
+                        "ORDER BY entry_date DESC NULLS LAST, created_at DESC LIMIT 10",
+                        (family_member_id, user_email),
+                    )
+                    je_rows = await cur.fetchall()
+                    if je_rows:
+                        lines = [
+                            f"- {j_date}{(' — ' + j_title) if j_title else ''}{(' [' + j_mood + ']') if j_mood else ''}{(': ' + j_content[:200]) if j_content else ''}"
+                            for j_date, j_title, j_content, j_mood in je_rows
+                        ]
+                        family_sections.append(f"### Recent Journal Entries ({len(je_rows)})\n" + "\n".join(lines))
+
+                    # Prior clinical analyses (already-synthesized parent advice)
+                    await cur.execute(
+                        "SELECT summary, parent_advice FROM deep_issue_analyses "
+                        "WHERE family_member_id = %s AND user_id = %s ORDER BY created_at DESC LIMIT 3",
+                        (family_member_id, user_email),
+                    )
+                    analysis_rows = await cur.fetchall()
+                    if analysis_rows:
+                        lines = []
+                        for idx, (a_summary, a_advice_raw) in enumerate(analysis_rows, 1):
+                            head = f"- [Analysis {idx}] {(a_summary or '')[:350]}"
+                            try:
+                                advice = json.loads(a_advice_raw) if a_advice_raw else []
+                            except Exception:
+                                advice = []
+                            advice_lines = []
+                            if isinstance(advice, list):
+                                for p in advice[:3]:
+                                    if not isinstance(p, dict):
+                                        continue
+                                    title = p.get("title") or ""
+                                    text = p.get("advice") or ""
+                                    advice_lines.append(f"    • {title}{(': ' + str(text)[:180]) if text else ''}".rstrip())
+                            lines.append("\n".join([head, *advice_lines]) if advice_lines else head)
+                        family_sections.append(f"### Prior Clinical Analyses ({len(analysis_rows)})\n" + "\n".join(lines))
     except Exception as exc:
         return {"error": f"collect_data failed: {exc}"}
 
