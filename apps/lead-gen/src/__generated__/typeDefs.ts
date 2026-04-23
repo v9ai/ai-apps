@@ -1283,10 +1283,10 @@ type Mutation {
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   analyzeLinkedInPosts(limit: Int, postIds: [Int!]): AnalyzePostsResult!
   analyzeProductGTM(id: Int!): Product!
-  analyzeProductGTMAsync(id: Int!): IntelRunAccepted!
+  analyzeProductGTMAsync(id: Int!, resumeFromRunId: ID): IntelRunAccepted!
   analyzeProductICP(id: Int!): Product!
   analyzeProductPricing(id: Int!): Product!
-  analyzeProductPricingAsync(id: Int!): IntelRunAccepted!
+  analyzeProductPricingAsync(id: Int!, resumeFromRunId: ID): IntelRunAccepted!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   approveAllDrafts(draftIds: [Int!]!): BatchSendDraftResult!
   approveAndSendDraft(draftId: Int!, editedBody: String, editedSubject: String): SendDraftResult!
@@ -1358,7 +1358,7 @@ type Mutation {
   regenerateDraft(draftId: Int!, instructions: String): ReplyDraft!
   rescrapeCompetitor(competitorId: Int!): Competitor!
   runFullProductIntel(id: Int!): Product!
-  runFullProductIntelAsync(forceRefresh: Boolean, id: Int!): IntelRunAccepted!
+  runFullProductIntelAsync(forceRefresh: Boolean, id: Int!, resumeFromRunId: ID): IntelRunAccepted!
   salescueAnalyze(modules: [SalescueModule!], text: String!): SalescueAnalyzeResult!
   saveCrawlLog(input: SaveCrawlLogInput!): SaveCrawlLogResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!

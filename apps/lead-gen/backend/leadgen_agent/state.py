@@ -23,6 +23,34 @@ def _merge_dict(left: dict[str, Any] | None, right: dict[str, Any] | None) -> di
     return out
 
 
+def _merge_graph_meta(
+    left: dict[str, Any] | None, right: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Reducer for ``graph_meta`` on graphs that also write per-node telemetry.
+
+    Parallel fan-out nodes each emit::
+
+        {"graph_meta": {"telemetry": {"<node_name>": {...}}}}
+
+    A plain ``update()`` would clobber the ``telemetry`` sub-dict when two
+    branches arrive simultaneously. This reducer does a shallow merge on the
+    top level and a key-wise merge on ``telemetry`` so entries from different
+    nodes co-exist. Non-telemetry keys (``version``, ``graph``, ``model``,
+    ``run_at``, ``agent_timings``, ``totals``) use last-write-wins.
+    """
+    out: dict[str, Any] = dict(left or {})
+    if not right:
+        return out
+    for k, v in right.items():
+        if k == "telemetry" and isinstance(v, dict):
+            merged = dict(out.get("telemetry") or {})
+            merged.update(v)
+            out["telemetry"] = merged
+        else:
+            out[k] = v
+    return out
+
+
 class EmailComposeState(TypedDict, total=False):
     # input
     recipient_name: str
@@ -271,7 +299,9 @@ class PricingState(TypedDict, total=False):
     rationale: dict[str, Any]
     # output — matches PricingStrategy.model_dump()
     pricing: dict[str, Any]
-    graph_meta: dict[str, Any]
+    # graph_meta carries version + per-node telemetry (cost / latency / tokens);
+    # the reducer merges the telemetry sub-dict across parallel fan-out writes.
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
 
 
 class GTMState(TypedDict, total=False):
@@ -299,7 +329,8 @@ class GTMState(TypedDict, total=False):
     first_90_days: list[str]
     # output — matches GTMStrategy.model_dump()
     gtm: dict[str, Any]
-    graph_meta: dict[str, Any]
+    # Carries per-node telemetry; merged across parallel fan-out writes.
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
 
 
 class DeepCompetitorState(TypedDict, total=False):
@@ -328,6 +359,35 @@ class DeepCompetitorState(TypedDict, total=False):
     graph_meta: dict[str, Any]
 
 
+class FreshnessState(TypedDict, total=False):
+    """State for the standalone freshness scoring graph.
+
+    Answers: "does our cached ICP / competitor analysis still reflect the
+    product's current landing page?" — see backend/leadgen_agent/freshness_graph.py.
+    """
+
+    # input
+    product_id: int
+    # when true, probe competitor URLs too and update competitors.last_url_hash
+    check_competitors: bool
+    # internal — populated by load_product_freshness
+    product: dict[str, Any]
+    previous_hash: str
+    previous_run_at: str
+    # internal — populated by fetch_current_content
+    current_markdown: str
+    current_hash: str
+    reachable: bool
+    # internal — populated by check_competitor_freshness (optional)
+    competitor_movements: list[dict[str, Any]]
+    # output
+    stale: bool
+    confidence: float
+    reason: str  # "same" | "new pricing page" | "content drift" | "unreachable" | "no baseline"
+    snapshot: dict[str, Any]
+    graph_meta: dict[str, Any]
+
+
 class ProductIntelState(TypedDict, total=False):
     # input
     product_id: int
@@ -339,6 +399,9 @@ class ProductIntelState(TypedDict, total=False):
     # streaming progress — see notify.update_progress + migration 0063
     _progress_started_at: float
     _completed_stages: Annotated[list[str], operator.add]
+    # freshness gate — populated by freshness_graph.run if invoked up-front;
+    # the supervisor reads this to decide whether to trust cached icp/competitors.
+    freshness: dict[str, Any]
     # internal
     product: dict[str, Any]
     product_profile: dict[str, Any]
@@ -349,4 +412,5 @@ class ProductIntelState(TypedDict, total=False):
     agent_timings: Annotated[dict[str, float], _merge_dict]
     # output — matches ProductIntelReport.model_dump()
     report: dict[str, Any]
-    graph_meta: dict[str, Any]
+    # Carries per-node telemetry; merged across parallel fan-out writes.
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]

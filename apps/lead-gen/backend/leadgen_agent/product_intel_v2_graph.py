@@ -1,0 +1,551 @@
+"""Product-intelligence supervisor graph — v2 (parallel DAG).
+
+Rewrites ``product_intel_graph`` (sequential supervisor) as a DAG that fans out
+the three heavyweight analyses (``deep_competitor_analysis``, ``pricing``,
+``gtm``) concurrently, joins on a positioning step that consumes all three,
+then synthesizes.
+
+Registered as a **separate** assistant ``analyze_product_v2`` in
+``langgraph.json`` — the existing ``analyze_product``/``product_intel``
+assistant is untouched so the current API keeps working.
+
+DAG shape::
+
+    START
+      └── check_freshness        (team 7 — freshness_graph, with fallback)
+            ├── fresh    → load_cached_outputs → synthesize → END
+            └── stale    → fan_out
+                            ├── deep_competitor_analysis   (team 3)
+                            ├── run_pricing                (this repo)
+                            └── run_gtm                    (this repo)
+                                    ⇣⇣⇣ (all three feed in)
+                                 positioning              (team 4)
+                                    ⇣
+                                 synthesize
+                                    ⇣
+                                 END
+
+Concurrency safety:
+    - Each subgraph writes to a disjoint set of ``products.*_analysis`` columns
+      (pricing_analysis / gtm_analysis / competitor_analysis_deep /
+      positioning_analysis). No two parallel branches ever touch the same
+      column, so write ordering doesn't matter.
+    - All supervisor-level state merges use ``operator``-style reducers
+      (``_merge_dict``, ``_first_error``) so concurrent updates fold cleanly
+      rather than raising ``INVALID_CONCURRENT_GRAPH_UPDATE``.
+
+Graceful import pattern:
+    Teams 3, 4, 7 are building ``deep_competitor_graph`` / ``positioning_graph``
+    / ``freshness_graph`` in parallel worktrees. Until they land, we import
+    those modules inside ``try/except ImportError`` blocks and fall back to
+    no-op passthroughs (freshness=stale, positioning=empty) so v2 still runs
+    end-to-end today. When the real subgraphs land, they slot in with no other
+    changes required here.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import time
+from typing import Annotated, Any, TypedDict
+
+import psycopg
+from langgraph.graph import END, START, StateGraph
+
+from . import gtm_graph, pricing_graph
+from .deep_icp_graph import _dsn
+from .llm import ainvoke_json, make_llm
+from .notify import notify_complete, notify_error
+from .product_intel_schemas import (
+    ProductIntelReport,
+    product_intel_graph_meta,
+)
+from .state import ProductIntelState
+
+# ── Graceful imports for teams 3, 4, 7 ────────────────────────────────
+#
+# Coupling notes — where v2 assumes DB shape that other teams ship:
+#   • team 3 (deep_competitor_graph) writes to products.competitor_analysis_deep
+#     (jsonb). If that column doesn't exist yet, the subgraph itself will
+#     fail; v2 surfaces the error via _error and still produces a partial
+#     report from pricing+gtm.
+#   • team 4 (positioning_graph) writes to products.positioning_analysis.
+#   • team 7 (freshness_graph) reads *_analyzed_at timestamp columns only —
+#     no writes — so it's safe to run even if downstream columns are missing.
+try:
+    from . import deep_competitor_graph  # type: ignore[attr-defined]
+except ImportError:
+    deep_competitor_graph = None  # type: ignore[assignment]
+
+try:
+    from . import positioning_graph  # type: ignore[attr-defined]
+except ImportError:
+    positioning_graph = None  # type: ignore[assignment]
+
+try:
+    from . import freshness_graph  # type: ignore[attr-defined]
+except ImportError:
+    freshness_graph = None  # type: ignore[assignment]
+
+
+# ── Reducers ──────────────────────────────────────────────────────────
+
+
+def _first_error(left: str | None, right: str | None) -> str | None:
+    """Preserve the first error that any parallel branch sets."""
+    return left or right
+
+
+def _merge_dict(
+    left: dict[str, Any] | None, right: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Shallow-merge parallel dict updates. Last write wins per key."""
+    out: dict[str, Any] = dict(left or {})
+    if right:
+        out.update(right)
+    return out
+
+
+def _merge_writes(
+    left: list[str] | None, right: list[str] | None
+) -> list[str]:
+    """Append-only list reducer for ``db_writes`` — the audit log of which
+    columns each parallel branch wrote. Used by tests to assert that every
+    parallel branch completed its write without stomping another."""
+    out: list[str] = list(left or [])
+    if right:
+        out.extend(right)
+    return out
+
+
+# ── State ─────────────────────────────────────────────────────────────
+
+
+class ProductIntelV2State(ProductIntelState, total=False):
+    """Extension of ProductIntelState with v2-specific channels.
+
+    New channels all use reducers so the parallel fan-out (deep_competitor ∥
+    pricing ∥ gtm) never raises ``INVALID_CONCURRENT_GRAPH_UPDATE``.
+    """
+
+    _error: Annotated[str, _first_error]
+    # freshness verdict — True means every input is fresh, short-circuit path
+    is_fresh: bool
+    freshness_report: dict[str, Any]
+    # team-3 output (competitor deep dive; richer than the current competitors_team)
+    competitor_deep: Annotated[dict[str, Any], _merge_dict]
+    # team-4 output (positioning; consumes all three parallel branches)
+    positioning: dict[str, Any]
+    # audit trail — which products.* columns each branch wrote to.
+    db_writes: Annotated[list[str], _merge_writes]
+
+
+# ── Module-level subgraph compilation ─────────────────────────────────
+
+
+_PRICING_GRAPH = pricing_graph.build_graph(checkpointer=None)
+_GTM_GRAPH = gtm_graph.build_graph(checkpointer=None)
+
+# team-3/4/7 subgraphs compiled lazily because they may not exist at import.
+_DEEP_COMPETITOR_GRAPH = (
+    deep_competitor_graph.build_graph(checkpointer=None)
+    if deep_competitor_graph is not None
+    and hasattr(deep_competitor_graph, "build_graph")
+    else None
+)
+_POSITIONING_GRAPH = (
+    positioning_graph.build_graph(checkpointer=None)
+    if positioning_graph is not None
+    and hasattr(positioning_graph, "build_graph")
+    else None
+)
+_FRESHNESS_GRAPH = (
+    freshness_graph.build_graph(checkpointer=None)
+    if freshness_graph is not None
+    and hasattr(freshness_graph, "build_graph")
+    else None
+)
+
+
+# ── Nodes ─────────────────────────────────────────────────────────────
+
+
+async def check_freshness(state: ProductIntelV2State) -> dict:
+    """Run the freshness subgraph (team 7). If unavailable, default to stale
+    so every run executes the full pipeline — the v1 supervisor's behavior."""
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+
+    if state.get("force_refresh"):
+        return {
+            "is_fresh": False,
+            "freshness_report": {"reason": "force_refresh"},
+            "agent_timings": {"check_freshness": round(time.perf_counter() - t0, 3)},
+        }
+
+    if _FRESHNESS_GRAPH is None:
+        return {
+            "is_fresh": False,
+            "freshness_report": {"reason": "freshness_graph not available — default stale"},
+            "agent_timings": {"check_freshness": round(time.perf_counter() - t0, 3)},
+        }
+
+    try:
+        result = await _FRESHNESS_GRAPH.ainvoke({"product_id": state["product_id"]})
+    except Exception as e:  # noqa: BLE001
+        return {
+            "_error": f"check_freshness: {e}",
+            "is_fresh": False,
+            "agent_timings": {"check_freshness": round(time.perf_counter() - t0, 3)},
+        }
+
+    is_fresh = bool(result.get("is_fresh", False))
+    return {
+        "is_fresh": is_fresh,
+        "freshness_report": result.get("freshness_report") or {},
+        "agent_timings": {"check_freshness": round(time.perf_counter() - t0, 3)},
+    }
+
+
+async def load_cached_outputs(state: ProductIntelV2State) -> dict:
+    """Fresh path: read the already-persisted jsonb columns straight off the
+    products row so synthesize has everything it needs without re-running
+    any analysis."""
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+    product_id = state["product_id"]
+    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, name, url, domain, description,
+                       icp_analysis, pricing_analysis, gtm_analysis
+                FROM products
+                WHERE id = %s
+                LIMIT 1
+                """,
+                (int(product_id),),
+            )
+            row = cur.fetchone()
+            cols = [d[0] for d in cur.description or []]
+    if not row:
+        return {"_error": f"load_cached_outputs: product {product_id} not found"}
+    rec = dict(zip(cols, row))
+
+    def _maybe_json(v: Any) -> Any:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return None
+        return v
+
+    return {
+        "product": {
+            "id": rec["id"],
+            "name": rec.get("name") or "",
+            "url": rec.get("url") or "",
+            "domain": rec.get("domain") or "",
+            "description": rec.get("description") or "",
+        },
+        "icp": _maybe_json(rec.get("icp_analysis")) or {},
+        "pricing": _maybe_json(rec.get("pricing_analysis")) or {},
+        "gtm": _maybe_json(rec.get("gtm_analysis")) or {},
+        "agent_timings": {"load_cached_outputs": round(time.perf_counter() - t0, 3)},
+    }
+
+
+async def run_deep_competitor(state: ProductIntelV2State) -> dict:
+    """Invoke team-3 deep_competitor_graph if available, else no-op.
+
+    Idempotent: the subgraph is expected to write only to
+    ``products.competitor_analysis_deep``. Our supervisor performs no
+    additional writes here; we just bubble up the payload.
+    """
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+    if _DEEP_COMPETITOR_GRAPH is None:
+        return {
+            "competitor_deep": {"_unavailable": True},
+            "db_writes": [],
+            "agent_timings": {"run_deep_competitor": round(time.perf_counter() - t0, 3)},
+        }
+    try:
+        result = await _DEEP_COMPETITOR_GRAPH.ainvoke(
+            {"product_id": state["product_id"]}
+        )
+    except Exception as e:  # noqa: BLE001
+        return {
+            "_error": f"run_deep_competitor: {e}",
+            "agent_timings": {"run_deep_competitor": round(time.perf_counter() - t0, 3)},
+        }
+    return {
+        "competitor_deep": result.get("competitor_deep")
+        or result.get("competitors")
+        or {},
+        "db_writes": ["competitor_analysis_deep"],
+        "agent_timings": {"run_deep_competitor": round(time.perf_counter() - t0, 3)},
+    }
+
+
+async def run_pricing(state: ProductIntelV2State) -> dict:
+    """Invoke the pricing subgraph. The subgraph's write_rationale node
+    persists ``products.pricing_analysis`` itself — supervisor does not
+    re-write. Safe for parallel execution because column is disjoint from
+    gtm/competitor branches."""
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+    try:
+        result = await _PRICING_GRAPH.ainvoke({"product_id": state["product_id"]})
+    except Exception as e:  # noqa: BLE001
+        return {
+            "_error": f"run_pricing: {e}",
+            "agent_timings": {"run_pricing": round(time.perf_counter() - t0, 3)},
+        }
+    return {
+        "pricing": result.get("pricing") or {},
+        "db_writes": ["pricing_analysis"],
+        "agent_timings": {"run_pricing": round(time.perf_counter() - t0, 3)},
+    }
+
+
+async def run_gtm(state: ProductIntelV2State) -> dict:
+    """Invoke the GTM subgraph. Writes ``products.gtm_analysis`` inside the
+    subgraph; disjoint from the pricing/competitor branches."""
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+    try:
+        result = await _GTM_GRAPH.ainvoke({"product_id": state["product_id"]})
+    except Exception as e:  # noqa: BLE001
+        return {
+            "_error": f"run_gtm: {e}",
+            "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
+        }
+    return {
+        "gtm": result.get("gtm") or {},
+        "db_writes": ["gtm_analysis"],
+        "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
+    }
+
+
+async def run_positioning(state: ProductIntelV2State) -> dict:
+    """Join step. Consumes ``competitor_deep`` + ``pricing`` + ``gtm`` from
+    state (LangGraph guarantees parallel branches have flushed before this
+    node runs, because it has incoming edges from all three).
+
+    Team 4 owns the subgraph; we pass all three inputs through.
+    """
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+    if _POSITIONING_GRAPH is None:
+        return {
+            "positioning": {"_unavailable": True},
+            "agent_timings": {"run_positioning": round(time.perf_counter() - t0, 3)},
+        }
+    try:
+        result = await _POSITIONING_GRAPH.ainvoke(
+            {
+                "product_id": state["product_id"],
+                "competitor_deep": state.get("competitor_deep") or {},
+                "pricing": state.get("pricing") or {},
+                "gtm": state.get("gtm") or {},
+            }
+        )
+    except Exception as e:  # noqa: BLE001
+        return {
+            "_error": f"run_positioning: {e}",
+            "agent_timings": {"run_positioning": round(time.perf_counter() - t0, 3)},
+        }
+    return {
+        "positioning": result.get("positioning") or result,
+        "db_writes": ["positioning_analysis"],
+        "agent_timings": {"run_positioning": round(time.perf_counter() - t0, 3)},
+    }
+
+
+async def synthesize_report(state: ProductIntelV2State) -> dict:
+    """Final step — identical contract to v1 ``synthesize_report``: writes
+    the rolled-up ``products.intel_report`` jsonb. Adds positioning +
+    competitor_deep into the executive TL;DR when available."""
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+    product = state.get("product") or {}
+    icp = state.get("icp") or {}
+    pricing = state.get("pricing") or {}
+    gtm = state.get("gtm") or {}
+    competitor_deep = state.get("competitor_deep") or {}
+    positioning = state.get("positioning") or {}
+
+    try:
+        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You synthesize an executive product-intelligence report. "
+                        "Ruthlessly concise — founders read only the TL;DR. "
+                        'Return strict JSON: {"tldr":string,"top_3_priorities":[string],'
+                        '"key_risks":[string],"quick_wins":[string]}'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Product: {product.get('name', '?')} — {product.get('url', '?')}\n"
+                        f"ICP weighted_total: {icp.get('weighted_total', '?')}\n"
+                        f"Pricing rec: {(pricing.get('rationale') or {}).get('recommendation', 'none')}\n"
+                        f"GTM channels: "
+                        f"{', '.join(c.get('name', '') for c in (gtm.get('channels') or [])[:5])}\n"
+                        f"Deep competitor signals: {len(competitor_deep) if isinstance(competitor_deep, dict) else 0}\n"
+                        f"Positioning: {json.dumps(positioning, default=str)[:400]}\n\n"
+                        "Return JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"synthesize_report: {e}"}
+
+    meta = product_intel_graph_meta(
+        graph="product_intel_v2",
+        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner"),
+        agent_timings=state.get("agent_timings") or {},
+    )
+    report = ProductIntelReport.model_validate(
+        {
+            **(result if isinstance(result, dict) else {}),
+            "graph_meta": meta,
+        }
+    )
+    dumped = report.model_dump()
+
+    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE products
+                SET intel_report = %s::jsonb,
+                    intel_report_at = now()::text,
+                    updated_at = now()::text
+                WHERE id = %s
+                """,
+                (json.dumps(dumped), int(state["product_id"])),
+            )
+
+    return {
+        "report": dumped,
+        "graph_meta": meta,
+        "db_writes": ["intel_report"],
+        "agent_timings": {"synthesize_report": round(time.perf_counter() - t0, 3)},
+    }
+
+
+async def notify_error_node(state: ProductIntelV2State) -> dict:
+    err = state.get("_error") or "unknown error"
+    await notify_error(state, err)
+    return {}
+
+
+# ── Routing ───────────────────────────────────────────────────────────
+
+
+def _route_freshness(state: ProductIntelV2State) -> str:
+    """Short-circuit to cache-load if fresh, else kick off the parallel DAG."""
+    if state.get("_error"):
+        return "notify_error_node"
+    return "load_cached_outputs" if state.get("is_fresh") else "fan_out"
+
+
+def _fan_out_analyses(_state: ProductIntelV2State) -> list[str]:
+    """Kick off all three heavyweight branches concurrently. LangGraph
+    schedules these as parallel tasks; their writes merge via the reducers
+    on ProductIntelV2State."""
+    return ["run_deep_competitor", "run_pricing", "run_gtm"]
+
+
+async def fan_out(_state: ProductIntelV2State) -> dict:
+    """Marker node — all the real work happens in the three branches fanned
+    out from here via conditional edges. Kept as an explicit node so the
+    DAG diagram is readable and LangGraph can attach the conditional edge."""
+    return {}
+
+
+def _route_final(state: ProductIntelV2State) -> str:
+    return "notify_error_node" if state.get("_error") else "notify_complete"
+
+
+# ── Build ─────────────────────────────────────────────────────────────
+
+
+def build_graph(checkpointer: Any = None) -> Any:
+    """Compile the v2 DAG.
+
+    Edges:
+        START → check_freshness
+        check_freshness → load_cached_outputs  (fresh path)
+        check_freshness → fan_out              (stale path)
+        fan_out ⇒ {run_deep_competitor, run_pricing, run_gtm}  (parallel)
+        {all three} → run_positioning          (join — waits for all 3)
+        load_cached_outputs → synthesize_report
+        run_positioning → synthesize_report
+        synthesize_report → notify_complete | notify_error_node
+    """
+    builder = StateGraph(ProductIntelV2State)
+    builder.add_node("check_freshness", check_freshness)
+    builder.add_node("load_cached_outputs", load_cached_outputs)
+    builder.add_node("fan_out", fan_out)
+    builder.add_node("run_deep_competitor", run_deep_competitor)
+    builder.add_node("run_pricing", run_pricing)
+    builder.add_node("run_gtm", run_gtm)
+    builder.add_node("run_positioning", run_positioning)
+    builder.add_node("synthesize_report", synthesize_report)
+    builder.add_node("notify_complete", notify_complete)
+    builder.add_node("notify_error_node", notify_error_node)
+
+    builder.add_edge(START, "check_freshness")
+    builder.add_conditional_edges(
+        "check_freshness",
+        _route_freshness,
+        ["load_cached_outputs", "fan_out", "notify_error_node"],
+    )
+
+    # stale path — fan out three-ways in parallel
+    builder.add_conditional_edges(
+        "fan_out",
+        _fan_out_analyses,
+        ["run_deep_competitor", "run_pricing", "run_gtm"],
+    )
+
+    # all three branches converge on positioning (join)
+    builder.add_edge("run_deep_competitor", "run_positioning")
+    builder.add_edge("run_pricing", "run_positioning")
+    builder.add_edge("run_gtm", "run_positioning")
+
+    # both paths rejoin at synthesize
+    builder.add_edge("load_cached_outputs", "synthesize_report")
+    builder.add_edge("run_positioning", "synthesize_report")
+
+    builder.add_conditional_edges(
+        "synthesize_report",
+        _route_final,
+        ["notify_complete", "notify_error_node"],
+    )
+    builder.add_edge("notify_complete", END)
+    builder.add_edge("notify_error_node", END)
+
+    return builder.compile(checkpointer=checkpointer)
+
+
+graph = build_graph()

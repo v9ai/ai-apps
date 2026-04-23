@@ -1538,6 +1538,7 @@ export type MutationAnalyzeProductGtmArgs = {
 
 export type MutationAnalyzeProductGtmAsyncArgs = {
   id: Scalars['Int']['input'];
+  resumeFromRunId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -1553,6 +1554,7 @@ export type MutationAnalyzeProductPricingArgs = {
 
 export type MutationAnalyzeProductPricingAsyncArgs = {
   id: Scalars['Int']['input'];
+  resumeFromRunId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -1885,6 +1887,7 @@ export type MutationRunFullProductIntelArgs = {
 export type MutationRunFullProductIntelAsyncArgs = {
   forceRefresh?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['Int']['input'];
+  resumeFromRunId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 

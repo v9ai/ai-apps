@@ -1,0 +1,273 @@
+[
+  {
+    "id": 4001,
+    "product": {
+      "id": 4001,
+      "name": "Linear",
+      "url": "https://linear.app",
+      "domain": "linear.app",
+      "description": "Issue tracking for modern software teams. Opinionated, fast, keyboard-first.",
+      "highlights": {"motion": "plg"}
+    },
+    "expected_category": "project management / issue tracking",
+    "expected_differentiators": [
+      "keyboard-first UX",
+      "opinionated workflow (cycles, triage)",
+      "exceptional speed and design polish",
+      "dev-first mental model"
+    ],
+    "expected_positioning_axes": [
+      "speed vs bloat",
+      "opinionated workflow vs infinite customization",
+      "dev-first vs PM-first UX"
+    ],
+    "expected_competitor_frame": [
+      "jira (legacy, slow, bloated)",
+      "asana (general-purpose, less eng-oriented)",
+      "github projects (lightweight but limited)"
+    ],
+    "expected_narrative_hooks": [
+      "the purpose-built jira alternative",
+      "speed is a feature",
+      "opinionated so your team doesn't need to be"
+    ]
+  },
+  {
+    "id": 4002,
+    "product": {
+      "id": 4002,
+      "name": "Notion",
+      "url": "https://notion.so",
+      "domain": "notion.so",
+      "description": "All-in-one workspace for notes, docs, wikis, and projects.",
+      "highlights": {"motion": "plg"}
+    },
+    "expected_category": "collaborative workspace / docs + wiki",
+    "expected_differentiators": [
+      "flexible block model",
+      "docs + databases in one tool",
+      "templates ecosystem",
+      "strong individual-to-team plg motion"
+    ],
+    "expected_positioning_axes": [
+      "all-in-one vs best-of-breed",
+      "flexible blocks vs fixed structure",
+      "collaboration vs personal productivity"
+    ],
+    "expected_competitor_frame": [
+      "confluence (enterprise-heavy, static)",
+      "google docs + drive (docs-only, no db)",
+      "coda (niche power users)",
+      "obsidian / roam (individual-first, no team)"
+    ],
+    "expected_narrative_hooks": [
+      "one tool for every team doc",
+      "your second brain, for teams",
+      "docs as databases"
+    ]
+  },
+  {
+    "id": 4003,
+    "product": {
+      "id": 4003,
+      "name": "Stripe",
+      "url": "https://stripe.com",
+      "domain": "stripe.com",
+      "description": "Payments infrastructure for the internet. APIs for online payments, subscriptions, marketplaces.",
+      "highlights": {"motion": "plg-to-sales"}
+    },
+    "expected_category": "payments infrastructure / api-first fintech",
+    "expected_differentiators": [
+      "developer-first documentation and dx",
+      "modular payments apis",
+      "global payment methods and fx",
+      "platform ecosystem (connect, billing, radar)"
+    ],
+    "expected_positioning_axes": [
+      "developer-first vs merchant-first",
+      "modular apis vs end-to-end checkout",
+      "horizontal platform vs vertical payments"
+    ],
+    "expected_competitor_frame": [
+      "paypal / braintree (legacy, dx-weaker)",
+      "adyen (enterprise-first)",
+      "square (in-person / smb retail)",
+      "checkout.com (enterprise, merchant-first)"
+    ],
+    "expected_narrative_hooks": [
+      "7 lines of code to accept payments",
+      "infrastructure for internet businesses",
+      "the payments platform that scales with you"
+    ]
+  },
+  {
+    "id": 4004,
+    "product": {
+      "id": 4004,
+      "name": "Vercel",
+      "url": "https://vercel.com",
+      "domain": "vercel.com",
+      "description": "Frontend cloud platform for deploying Next.js and other frameworks.",
+      "highlights": {"motion": "plg"}
+    },
+    "expected_category": "frontend cloud / application hosting platform",
+    "expected_differentiators": [
+      "opinionated next.js dx",
+      "preview deployments per pr",
+      "edge network performance",
+      "zero-config for modern frontends"
+    ],
+    "expected_positioning_axes": [
+      "frontend-first vs full-stack",
+      "managed dx vs raw cloud",
+      "framework-opinionated vs framework-agnostic"
+    ],
+    "expected_competitor_frame": [
+      "netlify (jamstack peer)",
+      "aws amplify / cloudfront (raw cloud)",
+      "cloudflare pages / workers (edge-first peer)",
+      "render / railway (fullstack-first)"
+    ],
+    "expected_narrative_hooks": [
+      "the developer experience cloud",
+      "where next.js lives",
+      "ship faster, scale without thinking"
+    ]
+  },
+  {
+    "id": 4005,
+    "product": {
+      "id": 4005,
+      "name": "Retool",
+      "url": "https://retool.com",
+      "domain": "retool.com",
+      "description": "Low-code platform to build internal tools fast.",
+      "highlights": {"motion": "plg-to-sales"}
+    },
+    "expected_category": "internal tools / low-code application builder",
+    "expected_differentiators": [
+      "developer-targeted low-code",
+      "150+ built-in integrations",
+      "self-hostable for security-sensitive teams",
+      "code escape hatch (js transformers, api)"
+    ],
+    "expected_positioning_axes": [
+      "build-vs-buy internal tools",
+      "low-code speed vs hand-coded flexibility",
+      "dev-targeted vs business-user low-code"
+    ],
+    "expected_competitor_frame": [
+      "internal.io / superblocks (peer low-code)",
+      "budibase / appsmith (open-source peers)",
+      "salesforce app builder (enterprise, biz-user)",
+      "zapier / make (automation, not ui-building)"
+    ],
+    "expected_narrative_hooks": [
+      "build internal tools in minutes, not months",
+      "low-code without the low-code ceiling",
+      "the developer's low-code platform"
+    ]
+  },
+  {
+    "id": 4006,
+    "product": {
+      "id": 4006,
+      "name": "Modal Labs",
+      "url": "https://modal.com",
+      "domain": "modal.com",
+      "description": "Serverless Python functions with instant GPU access.",
+      "highlights": {"motion": "plg"}
+    },
+    "expected_category": "serverless compute / ai-ml infrastructure",
+    "expected_differentiators": [
+      "python-native, no dockerfile required",
+      "instant gpu provisioning",
+      "per-second billing",
+      "simple scale-out semantics"
+    ],
+    "expected_positioning_axes": [
+      "serverless gpu vs dedicated fleets",
+      "python-native dx vs docker-first",
+      "instant scaling vs capacity planning"
+    ],
+    "expected_competitor_frame": [
+      "runpod / vast.ai (raw gpu rental)",
+      "replicate (ml-model-focused serverless)",
+      "baseten (ml-deployment peer)",
+      "aws lambda + sagemaker (raw cloud)"
+    ],
+    "expected_narrative_hooks": [
+      "gpus in seconds, not weeks",
+      "forget the dockerfile",
+      "serverless python for ml"
+    ]
+  },
+  {
+    "id": 4007,
+    "product": {
+      "id": 4007,
+      "name": "Agentic Lead Gen",
+      "url": "https://agenticleadgen.xyz",
+      "domain": "agenticleadgen.xyz",
+      "description": "Autonomous B2B lead-generation pipeline that discovers, enriches, and reaches out to remote-friendly AI companies worldwide.",
+      "highlights": {"motion": "self-serve"}
+    },
+    "expected_category": "ai sales-engagement / autonomous lead generation",
+    "expected_differentiators": [
+      "multi-agent langgraph pipeline",
+      "deep ai-engineering-focused icp enrichment",
+      "founder-built, open architecture",
+      "worldwide remote-first targeting"
+    ],
+    "expected_positioning_axes": [
+      "autonomous pipeline vs manual + tools",
+      "ai-research-grade enrichment vs firmographic-only",
+      "founder-built-for-founders vs enterprise sales-engagement"
+    ],
+    "expected_competitor_frame": [
+      "apollo / zoominfo (firmographic-only)",
+      "outreach / salesloft (sequencing, not discovery)",
+      "clay (enrichment platform, requires assembly)",
+      "relevance ai (agent platform, not lead-gen-specific)"
+    ],
+    "expected_narrative_hooks": [
+      "your autonomous sdr for ai companies",
+      "skip apollo — let agents find and write",
+      "built-in-public b2b pipeline"
+    ]
+  },
+  {
+    "id": 4008,
+    "product": {
+      "id": 4008,
+      "name": "CareLink EHR",
+      "url": "https://carelinkehr.example",
+      "domain": "carelinkehr.example",
+      "description": "HIPAA-compliant electronic health record for independent clinics in the US.",
+      "highlights": {"compliance": ["hipaa"], "motion": "sales-led"}
+    },
+    "expected_category": "healthcare ehr / clinic management software",
+    "expected_differentiators": [
+      "independent-clinic focus",
+      "modern ux vs legacy ehrs",
+      "integrated scheduling + billing + e-rx",
+      "per-provider pricing transparency"
+    ],
+    "expected_positioning_axes": [
+      "independent-clinic-focus vs hospital-focus",
+      "modern ux vs epic/cerner legacy",
+      "all-in-one vs best-of-breed billing/scheduling"
+    ],
+    "expected_competitor_frame": [
+      "epic / cerner (hospital-scale legacy)",
+      "athenahealth (mid-market peer)",
+      "drchrono / practice fusion (smb peers)",
+      "nextgen / eclinicalworks (mid-market legacy)"
+    ],
+    "expected_narrative_hooks": [
+      "the ehr built for independent clinics",
+      "hipaa-compliant without epic's overhead",
+      "run your clinic, not your software"
+    ]
+  }
+]

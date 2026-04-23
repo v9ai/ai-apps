@@ -72,10 +72,25 @@ PRODUCT_INTEL_VERSION = "1.0.0"
 
 
 def product_intel_graph_meta(
-    *, graph: str, model: str, agent_timings: dict[str, float] | None = None
+    *,
+    graph: str,
+    model: str,
+    agent_timings: dict[str, float] | None = None,
+    telemetry: dict[str, Any] | None = None,
+    totals: dict[str, Any] | None = None,
 ) -> dict:
-    """Stamp a run with version + timings. Returned as a plain dict because
-    nodes write jsonb, not Pydantic."""
+    """Stamp a run with version + timings + optional cost/latency telemetry.
+
+    ``telemetry`` is the per-node dict built via
+    ``llm.merge_node_telemetry`` — one entry per graph node that made an LLM
+    call, each carrying ``{model, input_tokens, output_tokens, cost_usd,
+    latency_ms, calls}``. ``totals`` is the aggregate computed by
+    ``llm.compute_totals`` (sum of cost / tokens / llm latency across nodes).
+
+    Both are optional so graphs that don't wire telemetry still pass this
+    through unchanged. Returned as a plain dict because nodes write jsonb, not
+    Pydantic.
+    """
     payload = {
         "version": PRODUCT_INTEL_VERSION,
         "graph": graph,
@@ -84,6 +99,10 @@ def product_intel_graph_meta(
     }
     if agent_timings:
         payload["agent_timings"] = agent_timings
+    if telemetry:
+        payload["telemetry"] = telemetry
+    if totals:
+        payload["totals"] = totals
     return payload
 
 

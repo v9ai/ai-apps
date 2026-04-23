@@ -1,0 +1,274 @@
+[
+  {
+    "id": 3001,
+    "product": {
+      "id": 3001,
+      "name": "Linear",
+      "url": "https://linear.app",
+      "domain": "linear.app",
+      "description": "Issue tracking for modern software teams. Opinionated, fast, keyboard-first. Free for small teams, per-seat pricing for growing teams.",
+      "highlights": {"motion": "plg"}
+    },
+    "expected_channels": [
+      "founder-led content",
+      "community (devtools twitter, hn)",
+      "product-led growth / free tier",
+      "referral from power users",
+      "linkedin thought leadership"
+    ],
+    "expected_icps": [
+      "early-stage startup engineering teams",
+      "developer-first product teams",
+      "heads of engineering at < 100-person cos"
+    ],
+    "expected_pain_points": [
+      "jira bloat and slowness",
+      "sprint ceremony fatigue",
+      "disconnected roadmap and issue tracker",
+      "poor keyboard/accessibility UX"
+    ],
+    "expected_positioning_axes": [
+      "speed vs bloat",
+      "opinionated workflow vs infinite customization",
+      "built-for-ICs vs built-for-PMs"
+    ]
+  },
+  {
+    "id": 3002,
+    "product": {
+      "id": 3002,
+      "name": "Notion",
+      "url": "https://notion.so",
+      "domain": "notion.so",
+      "description": "All-in-one workspace for notes, docs, wikis, and projects. Free for individuals, per-seat pricing for teams.",
+      "highlights": {"motion": "plg"}
+    },
+    "expected_channels": [
+      "product-led growth / free tier",
+      "template marketplace",
+      "creator partnerships / youtube",
+      "community (notion hq, reddit)",
+      "integrations in other tools"
+    ],
+    "expected_icps": [
+      "remote teams 10-200 people",
+      "startup operations managers",
+      "creator and solopreneur workflows"
+    ],
+    "expected_pain_points": [
+      "fragmented docs across google docs / confluence / slack",
+      "no single source of truth for team docs",
+      "engineers and non-eng need the same tool",
+      "onboarding friction from tool sprawl"
+    ],
+    "expected_positioning_axes": [
+      "all-in-one vs best-of-breed",
+      "customizable blocks vs rigid templates",
+      "collaboration vs personal productivity"
+    ]
+  },
+  {
+    "id": 3003,
+    "product": {
+      "id": 3003,
+      "name": "Retool",
+      "url": "https://retool.com",
+      "domain": "retool.com",
+      "description": "Low-code platform to build internal tools fast. Drag-and-drop UI, connect any DB or API.",
+      "highlights": {"motion": "plg-to-sales"}
+    },
+    "expected_channels": [
+      "developer advocacy / engineering blog",
+      "case studies from recognizable logos",
+      "integration partner co-marketing",
+      "outbound to platform/ops engineering",
+      "hackathons / community workshops"
+    ],
+    "expected_icps": [
+      "platform engineering teams at 200-5000-person cos",
+      "internal tools / ops engineers",
+      "developer productivity leads"
+    ],
+    "expected_pain_points": [
+      "building admin panels from scratch wastes eng time",
+      "legacy internal tools rotting",
+      "backlog of ops requests that need ui",
+      "security review for new crud apps"
+    ],
+    "expected_positioning_axes": [
+      "build-vs-buy for internal tools",
+      "low-code speed vs hand-coded flexibility",
+      "dev-targeted vs business-user-targeted low-code"
+    ]
+  },
+  {
+    "id": 3004,
+    "product": {
+      "id": 3004,
+      "name": "Vercel",
+      "url": "https://vercel.com",
+      "domain": "vercel.com",
+      "description": "Frontend cloud platform for deploying Next.js and other frameworks. Free hobby tier, Pro plan plus overages, enterprise custom.",
+      "highlights": {"motion": "plg"}
+    },
+    "expected_channels": [
+      "open-source Next.js stewardship",
+      "developer advocacy / twitter",
+      "conference talks and sponsorships",
+      "product-led hobby-to-pro funnel",
+      "agency partnerships"
+    ],
+    "expected_icps": [
+      "Next.js developers and agencies",
+      "frontend-heavy product teams",
+      "marketing sites at mid-market brands"
+    ],
+    "expected_pain_points": [
+      "ops overhead of self-hosted deploys",
+      "preview envs per pr are hard to set up",
+      "edge performance and DX",
+      "AI app deployment complexity"
+    ],
+    "expected_positioning_axes": [
+      "frontend-first vs full-stack",
+      "managed DX vs raw cloud (aws/gcp)",
+      "opinionated Next.js vs framework-agnostic"
+    ]
+  },
+  {
+    "id": 3005,
+    "product": {
+      "id": 3005,
+      "name": "Modal Labs",
+      "url": "https://modal.com",
+      "domain": "modal.com",
+      "description": "Serverless Python functions with instant GPU access. Pay per second of compute.",
+      "highlights": {"motion": "plg"}
+    },
+    "expected_channels": [
+      "technical blog posts / engineering deep-dives",
+      "ml-twitter and hackernews launches",
+      "conference sponsorship (neurips, pytorch)",
+      "free credits to ai startups",
+      "academic / researcher outreach"
+    ],
+    "expected_icps": [
+      "ml / ai startup engineers",
+      "applied research engineers at scale-ups",
+      "independent ml researchers"
+    ],
+    "expected_pain_points": [
+      "managing gpu fleets is expensive and painful",
+      "cold-start and provisioning slowness",
+      "pay-for-idle on dedicated gpus",
+      "docker / infra overhead for python workloads"
+    ],
+    "expected_positioning_axes": [
+      "serverless gpu vs dedicated fleets",
+      "python-native dx vs docker-first",
+      "instant scaling vs capacity planning"
+    ]
+  },
+  {
+    "id": 3006,
+    "product": {
+      "id": 3006,
+      "name": "Stripe",
+      "url": "https://stripe.com",
+      "domain": "stripe.com",
+      "description": "Payments infrastructure for the internet. APIs for online payments, subscriptions, marketplaces.",
+      "highlights": {"motion": "plg-to-sales"}
+    },
+    "expected_channels": [
+      "developer documentation and brand",
+      "partner integrations (shopify, saas platforms)",
+      "enterprise sales to platforms / marketplaces",
+      "events and sessions targeting startup founders",
+      "outbound to large merchants"
+    ],
+    "expected_icps": [
+      "software startups taking payments",
+      "online marketplaces and platforms",
+      "subscription SaaS companies"
+    ],
+    "expected_pain_points": [
+      "gateway integration complexity",
+      "chargeback and fraud management",
+      "international payment methods",
+      "subscription billing edge cases"
+    ],
+    "expected_positioning_axes": [
+      "developer-first vs merchant-first",
+      "modular APIs vs end-to-end checkout",
+      "horizontal platform vs vertical payments (e.g. healthcare, real-estate)"
+    ]
+  },
+  {
+    "id": 3007,
+    "product": {
+      "id": 3007,
+      "name": "Agentic Lead Gen",
+      "url": "https://agenticleadgen.xyz",
+      "domain": "agenticleadgen.xyz",
+      "description": "Autonomous B2B lead-generation pipeline that discovers, enriches, and reaches out to remote-friendly AI companies worldwide. Multi-agent LangGraph + Next.js + Neon.",
+      "highlights": {"motion": "self-serve", "stack": ["langgraph", "next.js", "neon"]}
+    },
+    "expected_channels": [
+      "founder-led build-in-public on x / linkedin",
+      "indiehackers community posts",
+      "ai engineering newsletter sponsorships",
+      "demo videos on youtube / loom",
+      "cold email to founder-led b2b saas teams"
+    ],
+    "expected_icps": [
+      "founder-led b2b saas startups",
+      "technical solo founders doing sales",
+      "ai-adjacent early-stage startups"
+    ],
+    "expected_pain_points": [
+      "manual list-building from apollo / linkedin",
+      "generic templated outreach has poor reply rates",
+      "no signal on which companies are hiring / ai-active",
+      "founders can't afford SDR hires yet"
+    ],
+    "expected_positioning_axes": [
+      "autonomous pipeline vs manual + tools",
+      "ai-research-grade enrichment vs firmographic-only",
+      "founder-built-for-founders vs enterprise sales-engagement (outreach / salesloft)"
+    ]
+  },
+  {
+    "id": 3008,
+    "product": {
+      "id": 3008,
+      "name": "CareLink EHR",
+      "url": "https://carelinkehr.example",
+      "domain": "carelinkehr.example",
+      "description": "HIPAA-compliant electronic health record for independent clinics in the US.",
+      "highlights": {"compliance": ["hipaa"], "motion": "sales-led"}
+    },
+    "expected_channels": [
+      "outbound sales to clinic practice managers",
+      "medical trade show presence",
+      "specialty group association partnerships",
+      "referral from billing service partners",
+      "targeted paid search on ehr buying keywords"
+    ],
+    "expected_icps": [
+      "independent us primary-care clinics",
+      "small specialty groups (dermatology, pediatrics)",
+      "clinic administrators doing vendor selection"
+    ],
+    "expected_pain_points": [
+      "legacy ehr is slow and clunky",
+      "billing denials from bad ehr/payer mapping",
+      "hipaa audit burden",
+      "staff burnout from documentation"
+    ],
+    "expected_positioning_axes": [
+      "independent-clinic-focus vs hospital-focus",
+      "modern UX vs epic/cerner legacy",
+      "all-in-one vs best-of-breed billing/scheduling"
+    ]
+  }
+]

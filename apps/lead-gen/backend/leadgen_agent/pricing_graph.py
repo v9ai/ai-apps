@@ -27,8 +27,19 @@ import psycopg
 from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn, _product_brief
-from .llm import ainvoke_json, make_llm
-from .notify import notify_complete, notify_error
+from .llm import (
+    ainvoke_json,
+    ainvoke_json_with_telemetry,
+    compute_totals,
+    make_llm,
+    merge_node_telemetry,
+)
+from .notify import (
+    notify_complete,
+    notify_error,
+    progress_start_marker,
+    update_progress,
+)
 from .product_intel_schemas import (
     PricingModel,
     PricingRationale,
@@ -61,12 +72,18 @@ class _PricingStateWithError(PricingState, total=False):
 
 
 async def load_inputs(state: PricingState) -> dict:
+    # Seed the progress clock on first entry so update_progress can report
+    # monotonic elapsed_ms even after sub-subgraph fan-outs.
+    start_seed = {} if state.get("_progress_started_at") else progress_start_marker()
+    _seeded_state = {**state, **start_seed} if start_seed else state
+    await update_progress(_seeded_state, stage="load_inputs")
+
     # Checkpoint-aware short-circuit: when the supervisor resumes from a prior
     # thread via `resume_from_run_id`, AsyncPostgresSaver rehydrates state
     # before any node runs. If we already loaded product + competitor rows,
     # skip the DB round-trip entirely.
     if state.get("product") and state.get("competitor_summary") is not None:
-        return {}
+        return {**start_seed, "_completed_stages": ["load_inputs"]}
     product_id = state.get("product_id")
     if product_id is None:
         raise ValueError("product_id is required")
@@ -155,6 +172,7 @@ async def load_inputs(state: PricingState) -> dict:
             )
 
     return {
+        **start_seed,
         "product": {
             "id": product_row["id"],
             "name": product_row.get("name") or "",
@@ -166,6 +184,7 @@ async def load_inputs(state: PricingState) -> dict:
         "icp": icp_analysis or {},
         "competitor_pricing": tiers,
         "competitor_summary": list(by_competitor.values()),
+        "_completed_stages": ["load_inputs"],
     }
 
 
@@ -221,12 +240,17 @@ def _fmt_icp_block(icp: dict[str, Any]) -> str:
 async def benchmark_competitors(state: PricingState) -> dict:
     if state.get("_error"):
         return {}
+    await update_progress(
+        state,
+        stage="benchmark_competitors",
+        completed_stages=state.get("_completed_stages") or [],
+    )
     # Checkpoint-aware short-circuit: LLM call is the expensive bit. If a prior
     # checkpoint already produced a benchmark payload (non-empty summary), skip
     # the DeepSeek round-trip on resume.
     existing = state.get("benchmark") or {}
     if existing.get("category_summary"):
-        return {}
+        return {"_completed_stages": ["benchmark_competitors"]}
     t0 = time.perf_counter()
     tiers = state.get("competitor_pricing") or []
     summary = state.get("competitor_summary") or []
@@ -238,6 +262,7 @@ async def benchmark_competitors(state: PricingState) -> dict:
                 "category_norms": [],
             },
             "agent_timings": {"benchmark_competitors": round(time.perf_counter() - t0, 3)},
+            "_completed_stages": ["benchmark_competitors"],
         }
 
     try:
@@ -277,16 +302,22 @@ async def benchmark_competitors(state: PricingState) -> dict:
             "category_norms": [str(x)[:200] for x in (result.get("category_norms") or [])][:8],
         },
         "agent_timings": {"benchmark_competitors": round(time.perf_counter() - t0, 3)},
+        "_completed_stages": ["benchmark_competitors"],
     }
 
 
 async def choose_value_metric(state: PricingState) -> dict:
     if state.get("_error"):
         return {}
+    await update_progress(
+        state,
+        stage="choose_value_metric",
+        completed_stages=state.get("_completed_stages") or [],
+    )
     # Checkpoint-aware short-circuit (reasoner-tier call, ~$0.002 saved per resume).
     existing = state.get("value_metric") or {}
     if existing.get("recommended_metric"):
-        return {}
+        return {"_completed_stages": ["choose_value_metric"]}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
@@ -330,6 +361,7 @@ async def choose_value_metric(state: PricingState) -> dict:
             "reasoning": str(result.get("reasoning", ""))[:600],
         },
         "agent_timings": {"choose_value_metric": round(time.perf_counter() - t0, 3)},
+        "_completed_stages": ["choose_value_metric"],
     }
 
 
@@ -340,12 +372,17 @@ def _fan_out(_state: PricingState) -> list[str]:
 async def design_model(state: PricingState) -> dict:
     if state.get("_error"):
         return {}
+    await update_progress(
+        state,
+        stage="design_model",
+        completed_stages=state.get("_completed_stages") or [],
+    )
     # Checkpoint-aware short-circuit: design_model is a reasoner-tier call with
     # validated Pydantic output. If the model was already designed in a prior
     # run on this thread, skip.
     existing = state.get("model") or {}
     if existing.get("tiers"):
-        return {}
+        return {"_completed_stages": ["design_model"]}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
@@ -394,17 +431,23 @@ async def design_model(state: PricingState) -> dict:
     return {
         "model": validated.model_dump(),
         "agent_timings": {"design_model": round(time.perf_counter() - t0, 3)},
+        "_completed_stages": ["design_model"],
     }
 
 
 async def write_rationale(state: PricingState) -> dict:
     if state.get("_error"):
         return {}
+    await update_progress(
+        state,
+        stage="write_rationale",
+        completed_stages=state.get("_completed_stages") or [],
+    )
     # Checkpoint-aware short-circuit: if both `pricing` (the terminal dumped
     # payload) and `rationale` are set on the checkpoint, the work is done —
     # skip the reasoner-tier LLM call + the products UPDATE.
     if state.get("pricing") and (state.get("rationale") or {}).get("recommendation"):
-        return {}
+        return {"_completed_stages": ["write_rationale"]}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
@@ -487,6 +530,7 @@ async def write_rationale(state: PricingState) -> dict:
         "graph_meta": meta,
         "rationale": rationale.model_dump(),
         "agent_timings": {"write_rationale": round(time.perf_counter() - t0, 3)},
+        "_completed_stages": ["write_rationale"],
     }
 
 

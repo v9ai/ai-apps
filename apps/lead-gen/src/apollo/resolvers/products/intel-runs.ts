@@ -46,12 +46,40 @@ async function kickoff(
   extraInput: Record<string, unknown>,
   productId: number,
   context: GraphQLContext,
+  resumeFromRunId?: string | null,
 ) {
   requireAdmin(context);
+
+  // Checkpoint-aware retry: if the caller passed a prior run id, look up its
+  // LangGraph thread_id and reuse it. AsyncPostgresSaver rehydrates all
+  // previously-computed state channels on thread re-entry, so nodes whose
+  // outputs are already populated short-circuit and return `{}` immediately —
+  // only the node that failed (and everything after it) re-runs.
+  let resumeThreadId: string | null = null;
+  if (resumeFromRunId) {
+    const [prior] = await db
+      .select({ threadId: productIntelRuns.lg_thread_id, kind: productIntelRuns.kind })
+      .from(productIntelRuns)
+      .where(eq(productIntelRuns.id, resumeFromRunId))
+      .limit(1);
+    if (!prior) {
+      throw new GraphQLError(`resumeFromRunId ${resumeFromRunId} not found`, {
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    }
+    if (prior.kind !== kind) {
+      throw new GraphQLError(
+        `cannot resume ${prior.kind} run as ${kind}`,
+        { extensions: { code: "BAD_USER_INPUT" } },
+      );
+    }
+    resumeThreadId = prior.threadId;
+  }
 
   const { appRunId, lgRunId, threadId, webhookSecret } = await startGraphRun(
     assistantId,
     { product_id: productId, ...extraInput },
+    { resumeThreadId },
   );
 
   await db.insert(productIntelRuns).values({
@@ -90,7 +118,14 @@ export const intelRunMutations = {
     args: MutationAnalyzeProductPricingAsyncArgs,
     context: GraphQLContext,
   ) {
-    return kickoff("pricing", "pricing", {}, args.id, context);
+    return kickoff(
+      "pricing",
+      "pricing",
+      {},
+      args.id,
+      context,
+      args.resumeFromRunId,
+    );
   },
 
   async analyzeProductGTMAsync(
@@ -98,7 +133,14 @@ export const intelRunMutations = {
     args: MutationAnalyzeProductGtmAsyncArgs,
     context: GraphQLContext,
   ) {
-    return kickoff("gtm", "gtm", {}, args.id, context);
+    return kickoff(
+      "gtm",
+      "gtm",
+      {},
+      args.id,
+      context,
+      args.resumeFromRunId,
+    );
   },
 
   async runFullProductIntelAsync(
@@ -112,6 +154,7 @@ export const intelRunMutations = {
       { force_refresh: Boolean(args.forceRefresh) },
       args.id,
       context,
+      args.resumeFromRunId,
     );
   },
 };

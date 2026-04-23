@@ -60,8 +60,8 @@ extend type Mutation {
   analyzeProductPricing(id: Int!): Product!
   analyzeProductGTM(id: Int!): Product!
   runFullProductIntel(id: Int!): Product!
-  analyzeProductPricingAsync(id: Int!): IntelRunAccepted!
-  analyzeProductGTMAsync(id: Int!): IntelRunAccepted!
-  runFullProductIntelAsync(id: Int!, forceRefresh: Boolean): IntelRunAccepted!
+  analyzeProductPricingAsync(id: Int!, resumeFromRunId: ID): IntelRunAccepted!
+  analyzeProductGTMAsync(id: Int!, resumeFromRunId: ID): IntelRunAccepted!
+  runFullProductIntelAsync(id: Int!, forceRefresh: Boolean, resumeFromRunId: ID): IntelRunAccepted!
   setProductPublished(id: Int!, published: Boolean!): Product!
 }

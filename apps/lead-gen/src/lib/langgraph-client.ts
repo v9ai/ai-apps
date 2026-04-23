@@ -554,10 +554,17 @@ async function lgFetch(path: string, init: RequestInit): Promise<Response> {
  * Callers should INSERT a product_intel_runs row with the returned ids BEFORE
  * returning to the GraphQL client, so a fast webhook can't arrive before the
  * row exists.
+ *
+ * When `options.resumeThreadId` is set, the new run is created on the existing
+ * LangGraph thread so AsyncPostgresSaver rehydrates prior node outputs. Nodes
+ * in the pricing / gtm / product_intel graphs short-circuit when their output
+ * state channels are already populated, so only the nodes that failed on the
+ * previous run actually re-execute (LLM-free happy path).
  */
 export async function startGraphRun(
   assistantId: string,
   input: Record<string, unknown>,
+  options: { resumeThreadId?: string | null } = {},
 ): Promise<StartRunResult> {
   const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
   if (!appUrl) {
@@ -567,20 +574,27 @@ export async function startGraphRun(
   const appRunId = randomUUID();
   const webhookSecret = randomBytes(32).toString("hex");
 
-  // 1. Create a thread
-  const threadRes = await lgFetch("/threads", {
-    method: "POST",
-    body: JSON.stringify({
-      metadata: { app_run_id: appRunId, kind: assistantId },
-    }),
-  });
-  if (!threadRes.ok) {
-    throw new Error(
-      `LangGraph thread create failed (${threadRes.status}): ${await threadRes.text().catch(() => "")}`,
-    );
+  let threadId: string;
+  if (options.resumeThreadId) {
+    // Reuse the thread from the previous (failed) run — AsyncPostgresSaver
+    // rehydrates all earlier state channels, so idempotent nodes short-circuit.
+    threadId = options.resumeThreadId;
+  } else {
+    // 1. Create a fresh thread
+    const threadRes = await lgFetch("/threads", {
+      method: "POST",
+      body: JSON.stringify({
+        metadata: { app_run_id: appRunId, kind: assistantId },
+      }),
+    });
+    if (!threadRes.ok) {
+      throw new Error(
+        `LangGraph thread create failed (${threadRes.status}): ${await threadRes.text().catch(() => "")}`,
+      );
+    }
+    const threadBody = (await threadRes.json()) as { thread_id: string };
+    threadId = threadBody.thread_id;
   }
-  const threadBody = (await threadRes.json()) as { thread_id: string };
-  const threadId = threadBody.thread_id;
 
   // 2. Kick off background run — /runs, NOT /runs/wait
   const runRes = await lgFetch(`/threads/${threadId}/runs`, {

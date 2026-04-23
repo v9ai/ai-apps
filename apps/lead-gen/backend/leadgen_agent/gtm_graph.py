@@ -28,7 +28,12 @@ from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import ainvoke_json, make_llm
-from .notify import notify_complete, notify_error
+from .notify import (
+    notify_complete,
+    notify_error,
+    progress_start_marker,
+    update_progress,
+)
 from .product_intel_schemas import (
     Channel,
     GTMStrategy,
@@ -53,6 +58,15 @@ class _GTMStateWithError(GTMState, total=False):
 
 
 async def load_inputs(state: GTMState) -> dict:
+    start_seed = {} if state.get("_progress_started_at") else progress_start_marker()
+    _seeded_state = {**state, **start_seed} if start_seed else state
+    await update_progress(_seeded_state, stage="load_inputs")
+
+    # Checkpoint-aware short-circuit: when resuming from a prior thread,
+    # AsyncPostgresSaver rehydrates product/icp/competitive before the node
+    # runs. Skip the DB round-trip in that case.
+    if state.get("product") and state.get("competitive") is not None:
+        return {**start_seed, "_completed_stages": ["load_inputs"]}
     product_id = state.get("product_id")
     if product_id is None:
         raise ValueError("product_id is required")
@@ -116,6 +130,7 @@ async def load_inputs(state: GTMState) -> dict:
     ]
 
     return {
+        **start_seed,
         "product": {
             "id": product_row["id"],
             "name": product_row.get("name") or "",
@@ -127,6 +142,7 @@ async def load_inputs(state: GTMState) -> dict:
         "icp": icp,
         "competitive": {"competitors": competitors},
         "pricing": pricing,
+        "_completed_stages": ["load_inputs"],
     }
 
 
@@ -175,6 +191,15 @@ def _pricing_summary(pricing: dict[str, Any]) -> str:
 async def pick_channels(state: GTMState) -> dict:
     if state.get("_error"):
         return {}
+    await update_progress(
+        state,
+        stage="pick_channels",
+        completed_stages=state.get("_completed_stages") or [],
+    )
+    # Checkpoint-aware short-circuit: validated channel list is expensive
+    # (LLM + Pydantic). Skip when a prior checkpoint already populated it.
+    if state.get("channels"):
+        return {"_completed_stages": ["pick_channels"]}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
@@ -224,12 +249,22 @@ async def pick_channels(state: GTMState) -> dict:
     return {
         "channels": channels_validated[:5],
         "agent_timings": {"pick_channels": round(time.perf_counter() - t0, 3)},
+        "_completed_stages": ["pick_channels"],
     }
 
 
 async def craft_pillars(state: GTMState) -> dict:
     if state.get("_error"):
         return {}
+    await update_progress(
+        state,
+        stage="craft_pillars",
+        completed_stages=state.get("_completed_stages") or [],
+    )
+    # Checkpoint-aware short-circuit: reasoner-tier LLM call. Skip on resume
+    # when pillars are already populated from a prior checkpoint.
+    if state.get("pillars"):
+        return {"_completed_stages": ["craft_pillars"]}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
@@ -278,6 +313,7 @@ async def craft_pillars(state: GTMState) -> dict:
     return {
         "pillars": pillars[:5],
         "agent_timings": {"craft_pillars": round(time.perf_counter() - t0, 3)},
+        "_completed_stages": ["craft_pillars"],
     }
 
 
@@ -288,6 +324,15 @@ def _fan_out(_state: GTMState) -> list[str]:
 async def write_templates(state: GTMState) -> dict:
     if state.get("_error"):
         return {}
+    await update_progress(
+        state,
+        stage="write_templates",
+        completed_stages=state.get("_completed_stages") or [],
+    )
+    # Checkpoint-aware short-circuit: skip the outreach-template LLM call on
+    # resume when templates are already populated.
+    if state.get("templates"):
+        return {"_completed_stages": ["write_templates"]}
     t0 = time.perf_counter()
     icp = state.get("icp") or {}
     personas = (icp.get("personas") or [])[:4]
@@ -336,12 +381,23 @@ async def write_templates(state: GTMState) -> dict:
     return {
         "templates": templates[:8],
         "agent_timings": {"write_templates": round(time.perf_counter() - t0, 3)},
+        "_completed_stages": ["write_templates"],
     }
 
 
 async def build_playbook(state: GTMState) -> dict:
     if state.get("_error"):
         return {}
+    await update_progress(
+        state,
+        stage="build_playbook",
+        completed_stages=state.get("_completed_stages") or [],
+    )
+    # Checkpoint-aware short-circuit: reasoner-tier LLM call. Skip on resume
+    # when playbook is already fleshed out (discovery_questions populated).
+    existing = state.get("playbook") or {}
+    if existing.get("discovery_questions"):
+        return {"_completed_stages": ["build_playbook"]}
     t0 = time.perf_counter()
     icp = state.get("icp") or {}
     comps = state.get("competitive") or {}
@@ -386,12 +442,23 @@ async def build_playbook(state: GTMState) -> dict:
     return {
         "playbook": playbook,
         "agent_timings": {"build_playbook": round(time.perf_counter() - t0, 3)},
+        "_completed_stages": ["build_playbook"],
     }
 
 
 async def draft_plan(state: GTMState) -> dict:
     if state.get("_error"):
         return {}
+    await update_progress(
+        state,
+        stage="draft_plan",
+        completed_stages=state.get("_completed_stages") or [],
+    )
+    # Checkpoint-aware short-circuit: terminal node emits `gtm` (the dumped
+    # GTMStrategy) and `first_90_days`. If both are set on the checkpoint,
+    # the work (LLM call + products UPDATE) is already done.
+    if state.get("gtm") and state.get("first_90_days"):
+        return {"_completed_stages": ["draft_plan"]}
     t0 = time.perf_counter()
     channels = state.get("channels") or []
     pillars = state.get("pillars") or []

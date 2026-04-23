@@ -27,7 +27,7 @@ from typing import Annotated, Any
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
-from . import deep_icp_graph, gtm_graph, pricing_graph
+from . import deep_icp_graph, freshness_graph, gtm_graph, pricing_graph
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import ainvoke_json, make_llm
 from .notify import notify_complete, notify_error
@@ -120,6 +120,10 @@ _GTM_BUSINESS_NODES = frozenset(
 async def load_and_profile(state: ProductIntelState) -> dict:
     if state.get("_error"):
         return {}
+    # Checkpoint-aware short-circuit: on resume the checkpoint already carries
+    # product + product_profile. Skip the DB read + LLM profile extraction.
+    if state.get("product") and state.get("product_profile"):
+        return {}
     t0 = time.perf_counter()
     product_id = state.get("product_id")
     if product_id is None:
@@ -207,9 +211,30 @@ async def ensure_icp(state: ProductIntelState) -> dict:
     t0 = time.perf_counter()
     cached = state.get("icp") or {}
     force = bool(state.get("force_refresh"))
+
+    # Freshness gate: before committing to cache reuse, ask the freshness
+    # graph whether the product's landing page still looks like what we
+    # analyzed last time. If stale with high confidence, treat this like
+    # force_refresh. See backend/leadgen_agent/freshness_graph.py.
+    freshness = state.get("freshness") or {}
+    if cached and not force:
+        if not freshness:
+            try:
+                freshness = await freshness_graph.assess_product_freshness(
+                    state["product_id"]
+                )
+            except Exception:  # noqa: BLE001 — never let freshness block the pipeline
+                freshness = {"stale": False, "confidence": 0.0, "reason": "error"}
+        # Only override cache when we're reasonably sure something moved.
+        # Low-confidence "no baseline" or "unreachable" leave the cache in
+        # place — conservative, matches existing behavior.
+        if freshness.get("stale") and float(freshness.get("confidence") or 0) >= 0.7:
+            force = True  # fall through to re-run below
+
     if cached and not force:
         return {
             "icp": cached,
+            "freshness": freshness,
             "agent_timings": {"ensure_icp": round(time.perf_counter() - t0, 3)},
         }
 
@@ -235,6 +260,7 @@ async def ensure_icp(state: ProductIntelState) -> dict:
             )
     return {
         "icp": icp,
+        "freshness": freshness,
         "agent_timings": {"ensure_icp": round(time.perf_counter() - t0, 3)},
     }
 
@@ -243,8 +269,17 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
     """Check whether a completed competitor analysis exists. Don't invoke the
     team graph implicitly — competitor scraping is heavy and the existing
     approve-then-scrape workflow (``/competitors`` UI) is the expected entry
-    point. We just surface whether data is available for the downstream nodes."""
+    point. We just surface whether data is available for the downstream nodes.
+
+    Freshness-aware: if the freshness gate flags the product's own landing
+    page as stale with high confidence, mark the completed competitor
+    analysis as ``maybe_stale`` so downstream nodes (and the UI) can choose
+    to re-trigger the competitors team graph.
+    """
     if state.get("_error"):
+        return {}
+    # Checkpoint-aware short-circuit: cheap COUNT query, but still skippable.
+    if state.get("competitive") is not None:
         return {}
     t0 = time.perf_counter()
     product_id = state["product_id"]
@@ -262,8 +297,25 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
             )
             row = cur.fetchone() or (0,)
     has_competitors = bool(row[0])
+
+    # Surface freshness verdict so the UI can show a "re-scan competitors"
+    # nudge without re-computing it. ``ensure_icp`` populates state["freshness"]
+    # on its first call; if that didn't run (force_refresh from caller), we
+    # don't block — just emit a neutral verdict.
+    freshness = state.get("freshness") or {}
+    maybe_stale = (
+        has_competitors
+        and bool(freshness.get("stale"))
+        and float(freshness.get("confidence") or 0) >= 0.7
+    )
+
     return {
-        "competitive": {"has_completed_analysis": has_competitors, "competitor_count": row[0]},
+        "competitive": {
+            "has_completed_analysis": has_competitors,
+            "competitor_count": row[0],
+            "maybe_stale": maybe_stale,
+            "freshness_reason": freshness.get("reason", ""),
+        },
         "agent_timings": {"ensure_competitors": round(time.perf_counter() - t0, 3)},
     }
 
@@ -319,6 +371,11 @@ async def run_pricing(state: ProductIntelState) -> dict:
     """
     if state.get("_error"):
         return {}
+    # Checkpoint-aware short-circuit: skip the entire pricing subgraph
+    # invocation when a prior resumed run already produced a pricing payload.
+    existing = state.get("pricing") or {}
+    if existing.get("model") or existing.get("rationale"):
+        return {}
     t0 = time.perf_counter()
     try:
         result, progress = await _stream_subgraph(
@@ -344,6 +401,11 @@ async def run_gtm(state: ProductIntelState) -> dict:
     """
     if state.get("_error"):
         return {}
+    # Checkpoint-aware short-circuit: skip the entire GTM subgraph invocation
+    # when a prior resumed run already produced a gtm payload.
+    existing = state.get("gtm") or {}
+    if existing.get("channels") or existing.get("messaging_pillars"):
+        return {}
     t0 = time.perf_counter()
     try:
         result, progress = await _stream_subgraph(
@@ -366,6 +428,11 @@ def _fan_out_pricing_gtm(_state: ProductIntelState) -> list[str]:
 
 async def synthesize_report(state: ProductIntelState) -> dict:
     if state.get("_error"):
+        return {}
+    # Checkpoint-aware short-circuit: terminal report writer. Skip the deep-tier
+    # LLM call + products UPDATE when a prior resumed run already produced it.
+    existing_report = state.get("report") or {}
+    if existing_report.get("tldr"):
         return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
