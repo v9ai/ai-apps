@@ -238,15 +238,25 @@ async def identify_white_space(state: PositioningState) -> dict:
                 {
                     "role": "system",
                     "content": (
-                        "You map the competitive landscape and identify unoccupied axes "
-                        "(the 'white space') where this product could credibly position. "
-                        "An axis is a tradeoff dimension most competitors have picked "
-                        "one side of (e.g. 'opinionated vs customizable', 'speed vs "
-                        "completeness'). Only return axes the product's own description "
-                        "already supports — no wishful thinking. "
-                        'Return strict JSON: {"axes":[string],"competitor_frame":[string]} '
-                        "with 2-4 axes and 2-5 competitor frames. Each frame names a "
-                        "competitor with the key gap: 'jira (legacy, bloated)'."
+                        "You map the competitive landscape for this product. Return three "
+                        "distinct things:\n"
+                        "  - axes: 2-4 tradeoff dimensions used to plot competitors "
+                        "(e.g. 'opinionated vs customizable', 'speed vs completeness').\n"
+                        "  - white_space: 2-4 unoccupied market positions the product "
+                        "could credibly own — phrased as positions, not axes "
+                        "(e.g. 'opinionated speed-first issue tracker for small teams'). "
+                        "These must NOT repeat the axes verbatim.\n"
+                        "  - competitor_frame: 2-5 entries, each naming a real competing "
+                        "product/service plus its key gap in the form "
+                        "'<competitor name> (<one-phrase gap>)'. Forbidden: anti-patterns "
+                        "like 'naive X', 'manual Y', 'legacy tools', 'custom scripts'. "
+                        "Only real, named products or services. If the competitive "
+                        "snapshot is empty and you cannot name real competitors with "
+                        "confidence, return an empty list — do not fabricate.\n"
+                        "Only return content the product's own description already "
+                        "supports — no wishful thinking. "
+                        'Return strict JSON: {"axes":[string],"white_space":[string],'
+                        '"competitor_frame":[string]}.'
                     ),
                 },
                 {
@@ -266,14 +276,36 @@ async def identify_white_space(state: PositioningState) -> dict:
 
     payload = result if isinstance(result, dict) else {}
     axes = payload.get("axes") or []
+    white_space = payload.get("white_space") or []
     frame = payload.get("competitor_frame") or []
     if not isinstance(axes, list):
         axes = []
+    if not isinstance(white_space, list):
+        white_space = []
     if not isinstance(frame, list):
         frame = []
 
+    # Scrub anti-pattern competitors that slipped past the prompt (LLMs still
+    # reach for 'naive X' / 'manual Y' / the Jira example). Keep the check
+    # lowercase-substring so variants like 'Naive Chunking' and 'legacy
+    # tooling' are caught.
+    _anti = ("naive ", "manual ", "legacy ", "custom script", "in-house ",
+             "homegrown ", "jira (legacy")
+    clean_frame = [
+        s for s in (str(x)[:240] for x in frame)
+        if not any(p in s.lower() for p in _anti)
+    ][:8]
+
+    # De-dupe white_space against axes — if the LLM returned the same phrase
+    # in both, drop it from white_space (axes are the canonical dimensions).
+    axes_lc = {str(a).strip().lower() for a in axes}
+    clean_white_space = [
+        str(x)[:240] for x in white_space
+        if str(x).strip().lower() not in axes_lc
+    ][:6]
+
     return {
-        "white_space": [str(x)[:240] for x in axes][:6],
+        "white_space": clean_white_space,
         "agent_timings": {"identify_white_space": round(time.perf_counter() - t0, 3)},
         "graph_meta": {
             "telemetry": merge_node_telemetry(
@@ -285,7 +317,7 @@ async def identify_white_space(state: PositioningState) -> dict:
         "draft": {
             **(state.get("draft") or {}),
             "positioning_axes": [str(x)[:240] for x in axes][:6],
-            "competitor_frame": [str(x)[:240] for x in frame][:8],
+            "competitor_frame": clean_frame,
         },
     }
 
@@ -301,11 +333,30 @@ async def draft_positioning_statement(state: PositioningState) -> dict:
     critic_feedback = state.get("critic_feedback") or ""
     rounds = int(state.get("critic_rounds") or 0)
 
+    # Richer persona hint: pull role + seniority + team/stage so the drafter
+    # has enough to write a specific ICP rather than 'tech-savvy CTOs'.
     persona_hint = ""
     personas = icp.get("personas") or []
-    if personas and isinstance(personas, list):
-        first = personas[0] if isinstance(personas[0], dict) else {}
-        persona_hint = str(first.get("title") or first.get("role") or "")[:120]
+    if personas and isinstance(personas, list) and isinstance(personas[0], dict):
+        first = personas[0]
+        bits = [
+            str(first.get("title") or first.get("role") or ""),
+            str(first.get("seniority") or ""),
+            str(first.get("company_stage") or first.get("segment") or ""),
+            str(first.get("team_size") or ""),
+        ]
+        persona_hint = " · ".join(b for b in bits if b)[:240]
+
+    # Segment fallback when personas aren't structured: pull ICP summary text
+    # so the drafter grounds the statement in upstream analysis rather than
+    # inventing a buyer.
+    icp_summary = ""
+    segments = icp.get("segments") or []
+    if segments and isinstance(segments, list):
+        top_segs = [str(s) for s in segments[:3]]
+        icp_summary = " | ".join(top_segs)[:300]
+    if not icp_summary:
+        icp_summary = str(icp.get("summary") or icp.get("description") or "")[:300]
 
     top_pillar = ""
     pillars = (gtm.get("messaging_pillars") or [])
@@ -332,7 +383,8 @@ async def draft_positioning_statement(state: PositioningState) -> dict:
                 f"Category: {draft_so_far.get('category', '')}\n"
                 f"Positioning axes: {json.dumps(draft_so_far.get('positioning_axes') or [])}\n"
                 f"Competitor frame: {json.dumps(draft_so_far.get('competitor_frame') or [])}\n"
-                f"Top persona: {persona_hint}\n"
+                f"Top persona: {persona_hint or '(unknown — use the ICP summary below)'}\n"
+                f"ICP summary: {icp_summary or '(no upstream ICP — infer from the product description, do not default to \"CTOs\")'}\n"
                 f"Top messaging pillar: {top_pillar}\n"
                 + (f"\nCritic feedback from previous draft (address this directly):\n{critic_feedback}\n"
                    if critic_feedback else "")
@@ -378,16 +430,89 @@ async def draft_positioning_statement(state: PositioningState) -> dict:
     }
 
 
+def _hard_validate_draft(draft: dict[str, Any], competitive: dict[str, Any]) -> list[str]:
+    """Deterministic draft checks run before the LLM critic.
+
+    These catch the failure modes the LLM critic was rubber-stamping in
+    production: empty competitor_frame, straw-man competitors, missing
+    template markers, too few differentiators. Returning a non-empty list
+    forces another draft round (no LLM spend on the critic).
+    """
+    issues: list[str] = []
+
+    stmt = str(draft.get("positioning_statement") or "")
+    # Template: "For <ICP> who <pain>, <product> is the <category> that
+    # <differentiator>, unlike <competitor> which <gap>."
+    for marker in ("For ", " who ", " unlike ", " which "):
+        if marker not in stmt:
+            issues.append(
+                f"positioning_statement is missing template marker '{marker.strip()}' "
+                "— use the exact template: 'For <ICP> who <pain>, <product> is the "
+                "<category> that <differentiator>, unlike <competitor> which <gap>.'"
+            )
+            break
+
+    diffs = draft.get("differentiators") or []
+    if not isinstance(diffs, list) or len(diffs) < 3:
+        issues.append("need at least 3 concrete differentiators (evidence-backed, not adjectives)")
+
+    frame = draft.get("competitor_frame") or []
+    # Only require a non-empty competitor_frame when upstream competitive
+    # analysis actually named some competitors; otherwise the honest answer
+    # is "unknown" and we don't want the drafter to fabricate one.
+    upstream_has_competitors = bool(
+        (competitive or {}).get("competitors")
+        or (competitive or {}).get("competitor_count")
+    )
+    if upstream_has_competitors and (not isinstance(frame, list) or len(frame) < 1):
+        issues.append(
+            "competitor_frame is empty but the competitive snapshot lists "
+            "competitors — name 2-5 of them with their key gap, e.g. "
+            "'<product> (<one-phrase gap>)'"
+        )
+
+    # Straw-man competitors in the statement itself (e.g. 'unlike naive
+    # chunking which …') usually mean there's no real competitor handy.
+    stmt_lc = stmt.lower()
+    for anti in ("unlike naive ", "unlike manual ", "unlike legacy ",
+                 "unlike custom script", "unlike in-house ",
+                 "unlike homegrown "):
+        if anti in stmt_lc:
+            issues.append(
+                f"positioning_statement uses an anti-pattern ('{anti.strip()}') as the "
+                "competitor — name a real competing product/service instead"
+            )
+            break
+
+    return issues
+
+
 async def stress_test(state: PositioningState) -> dict:
-    """LLM-as-critic. Emits a critique; if non-empty and rounds remain, the
-    router bounces back to ``draft_positioning_statement`` with the critique
-    in state. On approval (or budget exhausted), persist to DB.
+    """LLM-as-critic with a deterministic pre-check.
+
+    Hard validators run first; if they trip and rounds remain, we skip the
+    LLM critic and force a rewrite directly (saves a call and produces a
+    more targeted critique). On approval (or budget exhausted), persist.
     """
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
     draft = state.get("draft") or {}
     product = state.get("product") or {}
+    competitive = state.get("competitive") or {}
+    rounds = int(state.get("critic_rounds") or 0)
+
+    hard_issues = _hard_validate_draft(draft, competitive)
+    if hard_issues and rounds < MAX_CRITIC_ROUNDS:
+        return {
+            "critic_feedback": (
+                "Fix these hard issues before anything else:\n- "
+                + "\n- ".join(hard_issues)
+            ),
+            "critic_rounds": rounds + 1,
+            "agent_timings": {"stress_test": round(time.perf_counter() - t0, 3)},
+            # No LLM telemetry added — this round didn't call the model.
+        }
 
     try:
         llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
@@ -397,14 +522,26 @@ async def stress_test(state: PositioningState) -> dict:
                 {
                     "role": "system",
                     "content": (
-                        "You are a skeptical positioning critic. Attack the draft: is the "
-                        "differentiator defensible, or is it a claim every competitor also "
-                        "makes? Is the competitor frame accurate or strawmanned? Does the "
-                        "statement commit to a specific ICP and pain, or hedge? "
-                        "If the draft is defensible and specific, return "
-                        '{"approved":true,"critique":""}. Otherwise return '
-                        '{"approved":false,"critique":"<3-6 sentence critique>"}. '
-                        "Return JSON only."
+                        "You are a skeptical positioning critic. Default to disapproval "
+                        "unless every check below passes. Work through each:\n"
+                        "  1. ICP specificity: does it name a role AND a context (company "
+                        "stage, team size, or industry)? 'CTOs' or 'Engineering Managers' "
+                        "alone is too generic — reject.\n"
+                        "  2. Pain specificity: is the pain observable (slow, expensive, "
+                        "error-prone), not abstract ('suboptimal', 'fragmented')?\n"
+                        "  3. Differentiator defensibility: is it evidence-backed "
+                        "(numbers, specific capabilities) or could any competitor claim "
+                        "the same words?\n"
+                        "  4. Competitor frame: are the named competitors real, current, "
+                        "and in the same category? Reject anti-patterns like 'naive X', "
+                        "'manual Y', 'legacy tools'.\n"
+                        "  5. Category accuracy: does the stated category match the "
+                        "product's actual buyer journey (e.g. developer onboarding, not "
+                        "generic 'Employee Onboarding Software' if product is code-aware)?\n"
+                        "If ALL five pass, return "
+                        '{"approved":true,"critique":""}. Otherwise list the failing '
+                        'checks: {"approved":false,"critique":"<one bullet per failed '
+                        'check, 3-6 bullets total>"}. Return JSON only.'
                     ),
                 },
                 {
@@ -428,7 +565,6 @@ async def stress_test(state: PositioningState) -> dict:
     approved = bool(payload.get("approved", True))
     critique = str(payload.get("critique") or "")[:2000]
 
-    rounds = int(state.get("critic_rounds") or 0)
     will_revise = (not approved) and rounds < MAX_CRITIC_ROUNDS
 
     delta: dict[str, Any] = {
