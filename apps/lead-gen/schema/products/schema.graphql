@@ -35,6 +35,10 @@ type IntelRun {
   finishedAt: DateTime
   error: String
   output: JSON
+  "Streaming progress snapshot written by graph nodes as they execute. See migration 0063."
+  progress: JSON
+  "Aggregate USD cost across all LLM calls in this run. See migration 0066."
+  totalCostUsd: Float
 }
 
 type IntelRunAccepted {

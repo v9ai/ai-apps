@@ -409,6 +409,8 @@ class ProductIntelState(TypedDict, total=False):
     competitive: dict[str, Any]
     pricing: dict[str, Any]
     gtm: dict[str, Any]
+    # positioning synthesis — PositioningStatement.model_dump() from positioning_graph
+    positioning: dict[str, Any]
     agent_timings: Annotated[dict[str, float], _merge_dict]
     # output — matches ProductIntelReport.model_dump()
     report: dict[str, Any]

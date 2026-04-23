@@ -1146,8 +1146,16 @@ type IntelRun {
   kind: String!
   output: JSON
   productId: Int!
+  """
+  Streaming progress snapshot written by graph nodes as they execute. See migration 0063.
+  """
+  progress: JSON
   startedAt: DateTime!
   status: String!
+  """
+  Aggregate USD cost across all LLM calls in this run. See migration 0066.
+  """
+  totalCostUsd: Float
 }
 
 type IntelRunAccepted {

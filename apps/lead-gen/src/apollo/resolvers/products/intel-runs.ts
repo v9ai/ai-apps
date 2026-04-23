@@ -234,6 +234,12 @@ export const IntelRunField = {
     r.finished_at ? r.finished_at.toISOString() : null,
   error: (r: DbIntelRun) => r.error ?? null,
   output: (r: DbIntelRun) => r.output ?? null,
+  progress: (r: DbIntelRun) => r.progress ?? null,
+  // numeric returns string from pg; coerce to Float at the GraphQL boundary.
+  totalCostUsd: (r: DbIntelRun) =>
+    r.total_cost_usd === null || r.total_cost_usd === undefined
+      ? null
+      : Number(r.total_cost_usd),
   // Deliberately absent (and not in the GraphQL schema either):
   //   webhook_secret, tenant_id, lg_run_id, lg_thread_id, created_by
 };

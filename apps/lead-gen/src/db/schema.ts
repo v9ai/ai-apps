@@ -10,6 +10,7 @@ import {
   vector,
   jsonb,
   timestamp,
+  numeric,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
@@ -1308,6 +1309,14 @@ export const productIntelRuns = pgTable(
     error: text("error"),
     output: jsonb("output"),
     created_by: text("created_by"),
+    // Streaming per-stage progress snapshot written by graph nodes. See
+    // migration 0063 and backend/leadgen_agent/notify.py::update_progress.
+    progress: jsonb("progress"),
+    // Run-level cost telemetry aggregated from graph_meta.telemetry. See
+    // migration 0066 and backend/leadgen_agent/llm.py::compute_totals.
+    // Stored as numeric; drizzle returns it as string — parseFloat at the
+    // resolver boundary when you need a number.
+    total_cost_usd: numeric("total_cost_usd", { precision: 10, scale: 6 }),
   },
   (table) => [
     index("idx_intel_runs_product_id").on(table.product_id),

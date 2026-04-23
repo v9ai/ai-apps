@@ -16,6 +16,7 @@
     "product_intel": "leadgen_agent.product_intel_graph:graph",
     "analyze_product_v2": "leadgen_agent.product_intel_v2_graph:graph",
     "freshness": "leadgen_agent.freshness_graph:graph",
+    "positioning": "leadgen_agent.positioning_graph:graph",
     "contact_enrich": "leadgen_agent.contact_enrich_graph:graph",
     "contact_enrich_sales": "leadgen_agent.contact_enrich_sales_graph:graph",
     "contact_enrich_paper_author": "leadgen_agent.contact_enrich_paper_author_graph:graph",

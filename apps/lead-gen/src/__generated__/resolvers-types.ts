@@ -1251,8 +1251,12 @@ export type IntelRun = {
   kind: Scalars['String']['output'];
   output: Maybe<Scalars['JSON']['output']>;
   productId: Scalars['Int']['output'];
+  /** Streaming progress snapshot written by graph nodes as they execute. See migration 0063. */
+  progress: Maybe<Scalars['JSON']['output']>;
   startedAt: Scalars['DateTime']['output'];
   status: Scalars['String']['output'];
+  /** Aggregate USD cost across all LLM calls in this run. See migration 0066. */
+  totalCostUsd: Maybe<Scalars['Float']['output']>;
 };
 
 export type IntelRunAccepted = {
@@ -5229,8 +5233,10 @@ export type IntelRunResolvers<ContextType = GraphQLContext, ParentType extends R
   kind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   output?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   productId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  progress?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   startedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  totalCostUsd?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
 };
 
 export type IntelRunAcceptedResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntelRunAccepted'] = ResolversParentTypes['IntelRunAccepted']> = {

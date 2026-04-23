@@ -1251,8 +1251,12 @@ export type IntelRun = {
   kind: Scalars['String']['output'];
   output: Maybe<Scalars['JSON']['output']>;
   productId: Scalars['Int']['output'];
+  /** Streaming progress snapshot written by graph nodes as they execute. See migration 0063. */
+  progress: Maybe<Scalars['JSON']['output']>;
   startedAt: Scalars['DateTime']['output'];
   status: Scalars['String']['output'];
+  /** Aggregate USD cost across all LLM calls in this run. See migration 0066. */
+  totalCostUsd: Maybe<Scalars['Float']['output']>;
 };
 
 export type IntelRunAccepted = {

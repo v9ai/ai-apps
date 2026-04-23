@@ -27,9 +27,20 @@ from typing import Annotated, Any
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
-from . import deep_icp_graph, freshness_graph, gtm_graph, pricing_graph
+from . import (
+    deep_icp_graph,
+    freshness_graph,
+    gtm_graph,
+    positioning_graph,
+    pricing_graph,
+)
 from .deep_icp_graph import _dsn, _product_brief
-from .llm import ainvoke_json, make_llm
+from .llm import (
+    ainvoke_json_with_telemetry,
+    compute_totals,
+    make_llm,
+    merge_node_telemetry,
+)
 from .notify import notify_complete, notify_error
 from .product_intel_schemas import (
     ProductIntelReport,
@@ -91,6 +102,7 @@ class _ProductIntelStateWithError(ProductIntelState, total=False):
 # async callables used by ``run_pricing`` / ``run_gtm``.
 _PRICING_GRAPH = pricing_graph.build_graph(checkpointer=None)
 _GTM_GRAPH = gtm_graph.build_graph(checkpointer=None)
+_POSITIONING_GRAPH = positioning_graph.build_graph(checkpointer=None)
 
 # The "real work" nodes inside each subgraph — we surface total counts so the
 # progress payload can render "4/5 nodes done" without the UI having to know
@@ -170,7 +182,7 @@ async def load_and_profile(state: ProductIntelState) -> dict:
     # initial ingest).
     try:
         llm = make_llm(temperature=0.1, provider="deepseek")
-        result = await ainvoke_json(
+        result, tel_profile = await ainvoke_json_with_telemetry(
             llm,
             [
                 {
@@ -202,6 +214,9 @@ async def load_and_profile(state: ProductIntelState) -> dict:
         "pricing": _maybe_json(rec.get("pricing_analysis")) or {},
         "gtm": _maybe_json(rec.get("gtm_analysis")) or {},
         "agent_timings": {"load_and_profile": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {
+            "telemetry": merge_node_telemetry(None, "load_and_profile", tel_profile)
+        },
     }
 
 
@@ -426,6 +441,43 @@ def _fan_out_pricing_gtm(_state: ProductIntelState) -> list[str]:
     return ["run_pricing", "run_gtm"]
 
 
+async def run_positioning(state: ProductIntelState) -> dict:
+    """Synthesize positioning after pricing/GTM finish.
+
+    Feeds the already-loaded product, icp, competitive, pricing, and gtm
+    dicts straight into the positioning subgraph — no second DB round-trip.
+    The subgraph's ``stress_test`` node persists to ``products.positioning_analysis``
+    so the read path is ready before ``synthesize_report`` runs.
+    """
+    if state.get("_error"):
+        return {}
+    existing = state.get("positioning") or {}
+    if existing.get("positioning_statement"):
+        return {}  # checkpoint-aware short-circuit
+    t0 = time.perf_counter()
+    try:
+        result = await _POSITIONING_GRAPH.ainvoke(
+            {
+                "product_id": state["product_id"],
+                "product": state.get("product") or {},
+                "icp": state.get("icp") or {},
+                "competitive": state.get("competitive") or {},
+                "pricing": state.get("pricing") or {},
+                "gtm": state.get("gtm") or {},
+            }
+        )
+    except Exception as e:  # noqa: BLE001
+        # Positioning is a bonus — never block the main report on its failure.
+        return {
+            "positioning": {},
+            "agent_timings": {"run_positioning": round(time.perf_counter() - t0, 3)},
+        }
+    return {
+        "positioning": result.get("positioning") or {},
+        "agent_timings": {"run_positioning": round(time.perf_counter() - t0, 3)},
+    }
+
+
 async def synthesize_report(state: ProductIntelState) -> dict:
     if state.get("_error"):
         return {}
@@ -441,10 +493,11 @@ async def synthesize_report(state: ProductIntelState) -> dict:
     pricing = state.get("pricing") or {}
     gtm = state.get("gtm") or {}
     competitive = state.get("competitive") or {}
+    positioning = state.get("positioning") or {}
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result, tel_synth = await ainvoke_json_with_telemetry(
             llm,
             [
                 {
@@ -473,6 +526,8 @@ async def synthesize_report(state: ProductIntelState) -> dict:
                         f"{(pricing.get('rationale') or {}).get('recommendation', 'none yet')}\n\n"
                         f"GTM channels chosen: "
                         f"{', '.join([c.get('name', '') for c in (gtm.get('channels') or [])][:5])}\n\n"
+                        f"Positioning statement: {positioning.get('positioning_statement', 'not yet synthesized')}\n"
+                        f"Differentiators: {json.dumps(positioning.get('differentiators') or [])[:400]}\n\n"
                         "Return JSON only."
                     ),
                 },
@@ -482,15 +537,21 @@ async def synthesize_report(state: ProductIntelState) -> dict:
     except Exception as e:  # noqa: BLE001
         return {"_error": f"synthesize_report: {e}"}
 
+    telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
+    telemetry = merge_node_telemetry(telemetry, "synthesize_report", tel_synth)
+    totals = compute_totals(telemetry)
     meta = product_intel_graph_meta(
         graph="product_intel",
         model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner"),
         agent_timings=state.get("agent_timings") or {},
+        telemetry=telemetry,
+        totals=totals,
     )
     report = ProductIntelReport.model_validate(
         {
             **(result if isinstance(result, dict) else {}),
             "product_profile": profile,
+            "positioning": positioning or None,
             "graph_meta": meta,
         }
     )
@@ -508,10 +569,26 @@ async def synthesize_report(state: ProductIntelState) -> dict:
                 """,
                 (json.dumps(dumped), int(state["product_id"])),
             )
+            # Mirror run-level cost into product_intel_runs so it's queryable
+            # without unpacking the jsonb. Best-effort: a missing app_run_id
+            # (sync /runs/wait invocation) skips the update silently.
+            run_id = state.get("app_run_id")
+            if run_id:
+                try:
+                    cur.execute(
+                        """
+                        UPDATE product_intel_runs
+                        SET total_cost_usd = %s
+                        WHERE id = %s
+                        """,
+                        (totals.get("total_cost_usd", 0.0), str(run_id)),
+                    )
+                except Exception:  # noqa: BLE001 — cost accounting is best-effort
+                    pass
 
     return {
         "report": dumped,
-        "graph_meta": meta,
+        "graph_meta": {"telemetry": telemetry, **{k: v for k, v in meta.items() if k != "telemetry"}},
         "agent_timings": {"synthesize_report": round(time.perf_counter() - t0, 3)},
     }
 
@@ -533,6 +610,7 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("ensure_competitors", ensure_competitors)
     builder.add_node("run_pricing", run_pricing)
     builder.add_node("run_gtm", run_gtm)
+    builder.add_node("run_positioning", run_positioning)
     builder.add_node("synthesize_report", synthesize_report)
     builder.add_node("notify_complete", notify_complete)
     builder.add_node("notify_error_node", notify_error_node)
@@ -543,8 +621,9 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_conditional_edges(
         "ensure_competitors", _fan_out_pricing_gtm, ["run_pricing", "run_gtm"]
     )
-    builder.add_edge("run_pricing", "synthesize_report")
-    builder.add_edge("run_gtm", "synthesize_report")
+    builder.add_edge("run_pricing", "run_positioning")
+    builder.add_edge("run_gtm", "run_positioning")
+    builder.add_edge("run_positioning", "synthesize_report")
     builder.add_conditional_edges(
         "synthesize_report", _route_final, ["notify_complete", "notify_error_node"]
     )

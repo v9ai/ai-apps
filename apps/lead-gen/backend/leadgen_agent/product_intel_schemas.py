@@ -58,6 +58,7 @@ __all__ = [
     "Objection",
     "SalesPlaybook",
     "GTMStrategy",
+    "PositioningStatement",
     "ProductIntelReport",
     "product_intel_graph_meta",
     # re-exports
@@ -363,6 +364,46 @@ class GTMStrategy(BaseModel):
     graph_meta: dict = Field(default_factory=dict)
 
 
+# ─── Positioning ──────────────────────────────────────────────────────────
+
+class PositioningStatement(BaseModel):
+    """Final output of the ``positioning`` graph. Stored in
+    ``products.positioning_analysis`` (migration 0064)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    category: str = Field(default="", max_length=160)
+    category_conventions: list[str] = Field(default_factory=list, max_length=10)
+    white_space: list[str] = Field(default_factory=list, max_length=8)
+    differentiators: list[str] = Field(default_factory=list, max_length=8)
+    positioning_axes: list[str] = Field(default_factory=list, max_length=6)
+    competitor_frame: list[str] = Field(default_factory=list, max_length=8)
+    narrative_hooks: list[str] = Field(default_factory=list, max_length=6)
+    positioning_statement: str = Field(default="", max_length=600)
+    critic_rounds: int = Field(default=0, ge=0, le=3)
+    graph_meta: dict = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_nulls(cls, v: Any) -> Any:
+        return _none_to_empty_str(v, ("category", "positioning_statement"))
+
+    @field_validator(
+        "category_conventions",
+        "white_space",
+        "differentiators",
+        "positioning_axes",
+        "competitor_frame",
+        "narrative_hooks",
+        mode="before",
+    )
+    @classmethod
+    def _truncate_list(cls, v: object) -> list[str]:
+        if not isinstance(v, list):
+            return []
+        return [str(x)[:400] for x in v if isinstance(x, (str, int, float))]
+
+
 # ─── Executive report ─────────────────────────────────────────────────────
 
 class ProductIntelReport(BaseModel):
@@ -375,6 +416,7 @@ class ProductIntelReport(BaseModel):
     key_risks: list[str] = Field(default_factory=list, max_length=5)
     quick_wins: list[str] = Field(default_factory=list, max_length=6)
     product_profile: ProductProfile | None = None
+    positioning: PositioningStatement | None = None
     graph_meta: dict = Field(default_factory=dict)
 
     @model_validator(mode="before")
