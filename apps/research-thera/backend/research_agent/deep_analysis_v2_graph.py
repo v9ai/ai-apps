@@ -89,7 +89,7 @@ async def _collect_for_goal(
         )
         issues = await cur.fetchall()
         await cur.execute(
-            "SELECT id, first_name, name, age_years, relationship FROM family_members WHERE user_id = %s",
+            "SELECT id, first_name, name, age_years, relationship, location FROM family_members WHERE user_id = %s",
             (user_email,),
         )
         all_members = await cur.fetchall()
@@ -152,9 +152,9 @@ async def _collect_for_goal(
     sections.append("## Goal Profile\n" + "\n".join(goal_profile))
 
     if fm_row:
-        fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio = fm_row
+        fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio, fm_loc = fm_row
         sections.append(
-            shared.render_family_member_profile(fm_first, fm_name, fm_age, fm_rel, fm_bio)
+            shared.render_family_member_profile(fm_first, fm_name, fm_age, fm_rel, fm_bio, fm_loc)
         )
 
     role_note = (
@@ -360,7 +360,7 @@ async def _collect_for_journal_entry(
     all_members: list = []
     if j_fm_id:
         await cur.execute(
-            "SELECT id, first_name, name, age_years, relationship, bio FROM family_members WHERE id = %s",
+            "SELECT id, first_name, name, age_years, relationship, bio, location FROM family_members WHERE id = %s",
             (j_fm_id,),
         )
         fm_row = await cur.fetchone()
@@ -371,7 +371,7 @@ async def _collect_for_journal_entry(
         )
         fm_issues = await cur.fetchall()
         await cur.execute(
-            "SELECT id, first_name, name, age_years, relationship FROM family_members WHERE user_id = %s",
+            "SELECT id, first_name, name, age_years, relationship, location FROM family_members WHERE user_id = %s",
             (user_email,),
         )
         all_members = await cur.fetchall()
@@ -398,8 +398,8 @@ async def _collect_for_journal_entry(
     sections.append("## Journal Entry (Primary Focus)\n" + "\n".join(entry_section))
 
     if fm_row:
-        fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio = fm_row
-        sections.append(shared.render_family_member_profile(fm_first, fm_name, fm_age, fm_rel, fm_bio))
+        fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio, fm_loc = fm_row
+        sections.append(shared.render_family_member_profile(fm_first, fm_name, fm_age, fm_rel, fm_bio, fm_loc))
 
     nearby_chunk = shared.render_journals_section(nearby)
     if nearby_chunk:
@@ -439,7 +439,7 @@ async def _collect_for_family_member(
     language: str,
 ) -> dict:
     ctx = await shared.load_family_member_full_context(cur, subject_id, user_email)
-    fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio = ctx["fm"]
+    fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio, fm_loc = ctx["fm"]
 
     sections: list[str] = []
     sections.append(
