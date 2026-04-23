@@ -34,32 +34,77 @@ def _is_local(base_url: str) -> bool:
     return "localhost" in base_url or "127.0.0.1" in base_url
 
 
-def make_llm(temperature: float | None = None) -> ChatOpenAI:
-    base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
-    api_key = (
-        os.environ.get("DEEPSEEK_API_KEY")
-        or os.environ.get("LLM_API_KEY")
-        or "local"
-    )
-    model = os.environ.get("LLM_MODEL", "default_model")
+def _deepseek_cfg(tier: str | None) -> tuple[str, str, str]:
+    """Resolve (base_url, api_key, model) for the DeepSeek provider.
+
+    Used by the new product-intel graphs (pricing / gtm / product_intel) which
+    pin to DeepSeek without disturbing existing graphs that still default to
+    local Qwen via LLM_BASE_URL.
+    """
+    base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if tier == "deep":
+        model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner")
+    else:
+        model = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+    return base_url, api_key, model
+
+
+def make_llm(
+    temperature: float | None = None,
+    *,
+    provider: str | None = None,
+    tier: str | None = None,
+) -> ChatOpenAI:
+    """Build a ChatOpenAI client.
+
+    Default (``provider=None``) reads ``LLM_BASE_URL`` / ``LLM_API_KEY`` /
+    ``LLM_MODEL`` — the existing path, points at local Qwen for legacy graphs.
+
+    ``provider="deepseek"`` pins to DeepSeek's public API (or the proxy set via
+    ``DEEPSEEK_BASE_URL``). ``tier="deep"`` swaps ``deepseek-chat`` for
+    ``deepseek-reasoner`` — use for higher-reasoning nodes (value metric,
+    differentiation, pricing rationale, GTM pillars, final synthesis).
+    """
+    if provider == "deepseek":
+        base_url, api_key, model = _deepseek_cfg(tier)
+    else:
+        base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
+        api_key = (
+            os.environ.get("DEEPSEEK_API_KEY")
+            or os.environ.get("LLM_API_KEY")
+            or "local"
+        )
+        model = os.environ.get("LLM_MODEL", "default_model")
     temp = temperature if temperature is not None else float(os.environ.get("LLM_TEMPERATURE", "0.2"))
     return ChatOpenAI(model=model, api_key=api_key, base_url=base_url, temperature=temp)
 
 
-def supports_json_mode() -> bool:
+def supports_json_mode(*, provider: str | None = None) -> bool:
+    if provider == "deepseek":
+        return True
     base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
     return not _is_local(base_url)
 
 
-async def ainvoke_json(llm: ChatOpenAI, messages: list[dict[str, str]]) -> Any:
+async def ainvoke_json(
+    llm: ChatOpenAI,
+    messages: list[dict[str, str]],
+    *,
+    provider: str | None = None,
+) -> Any:
     """Invoke the LLM and parse the response as JSON.
 
     Uses `response_format={"type": "json_object"}` when the provider supports it,
     otherwise falls back to regex-extracting JSON from the reply (robust to
     markdown code fences that Qwen tends to emit).
+
+    Pass ``provider="deepseek"`` when the llm was built via
+    ``make_llm(provider="deepseek")`` so JSON mode is enabled regardless of the
+    legacy ``LLM_BASE_URL`` env.
     """
     kwargs: dict[str, Any] = {}
-    if supports_json_mode():
+    if supports_json_mode(provider=provider):
         kwargs["response_format"] = {"type": "json_object"}
     resp = await llm.ainvoke(messages, **kwargs)
     return _parse_json(resp.content)

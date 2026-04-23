@@ -300,6 +300,7 @@ export async function getSharedFamilyMembers(viewerEmail: string) {
   return rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
+    slug: (row.slug as string) || null,
     firstName: row.first_name as string,
     name: (row.name as string) || null,
     ageYears: (row.age_years as number) || null,
