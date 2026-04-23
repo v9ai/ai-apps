@@ -129,8 +129,9 @@ def _load_competitive(product_id: int) -> dict[str, Any]:
     """Fetch named competitors for the standalone positioning path.
 
     Mirrors the SQL in ``ensure_competitors`` (product_intel_graph) so both
-    execution paths see identical competitive data. Only returns competitors
-    with a done analysis and a done/approved individual status.
+    execution paths see identical competitive data. Includes suggested
+    competitors so positioning can use LLM-generated competitor data even
+    before the manual approve→scrape workflow completes.
     """
     with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
         with conn.cursor() as cur:
@@ -139,7 +140,8 @@ def _load_competitive(product_id: int) -> dict[str, Any]:
                 SELECT COUNT(*)::int
                 FROM competitor_analyses a
                 JOIN competitors c ON c.analysis_id = a.id
-                WHERE a.product_id = %s AND a.status = 'done'
+                WHERE a.product_id = %s
+                  AND c.status IN ('done', 'approved', 'suggested')
                 """,
                 (int(product_id),),
             )
