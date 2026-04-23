@@ -43,9 +43,6 @@ import {
   useGetGenerationJobQuery,
   useGetResearchQuery,
   useGetTherapeuticQuestionsQuery,
-  useGenerateDeepIssueAnalysisMutation,
-  useGetDeepIssueAnalysesQuery,
-  useDeleteDeepIssueAnalysisMutation,
   useCreateRelatedIssueMutation,
   useLinkIssuesMutation,
   useUnlinkIssuesMutation,
@@ -58,6 +55,7 @@ import {
   useDeleteIssueScreenshotMutation,
 } from "@/app/__generated__/hooks";
 import { ConversationsSection } from "@/app/components/ConversationsSection";
+import { DeepIssueAnalysisCard } from "@/app/components/DeepIssueAnalysisCard";
 import { getSeverityColor, getCategoryColor } from "@/app/lib/issue-colors";
 
 const CATEGORY_OPTIONS = [
@@ -279,89 +277,6 @@ function IssueDetailContent() {
   }, [jobData]);
 
   const issue = data?.issue;
-
-  // Deep Issue Analysis state
-  const [deepAnalysisJobId, setDeepAnalysisJobId] = useState<string | null>(null);
-  const [deepAnalysisMessage, setDeepAnalysisMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
-  const [activeAnalysisTab, setActiveAnalysisTab] = useState<"advice" | "patterns" | "timeline" | "family" | "priorities" | "research">("advice");
-  const [copiedAdviceIdx, setCopiedAdviceIdx] = useState<number | null>(null);
-
-  const formatAdviceText = (item: { title: string; advice: string; concreteSteps: string[]; developmentalContext?: string | null; relatedResearchTitles?: string[] | null }) => {
-    let text = `${item.title}\n\n${item.advice}`;
-    if (item.developmentalContext) text += `\n\nDevelopmental context: ${item.developmentalContext}`;
-    if (item.concreteSteps.length > 0) text += `\n\nConcrete steps:\n${item.concreteSteps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`;
-    if (item.relatedResearchTitles?.length) text += `\n\nResearch: ${item.relatedResearchTitles.join("; ")}`;
-    return text;
-  };
-
-  const copyAdvice = async (text: string, idx: number) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedAdviceIdx(idx);
-    setTimeout(() => setCopiedAdviceIdx(null), 2000);
-  };
-
-  const { data: deepAnalysesData, refetch: refetchDeepAnalyses } = useGetDeepIssueAnalysesQuery({
-    variables: { familyMemberId: issue?.familyMemberId ?? 0 },
-    skip: !issue?.familyMemberId,
-  });
-  const latestAnalysis = deepAnalysesData?.deepIssueAnalyses?.find(a => a.triggerIssueId === issue?.id) ?? null;
-
-  const [generateDeepAnalysis, { loading: generatingDeepAnalysis }] = useGenerateDeepIssueAnalysisMutation({
-    onCompleted: (data) => {
-      if (data.generateDeepIssueAnalysis.success && data.generateDeepIssueAnalysis.jobId) {
-        setDeepAnalysisMessage(null);
-        setDeepAnalysisJobId(data.generateDeepIssueAnalysis.jobId);
-      } else {
-        setDeepAnalysisMessage({ text: data.generateDeepIssueAnalysis.message || "Failed", type: "error" });
-      }
-    },
-    onError: (err) => {
-      setDeepAnalysisMessage({ text: err.message, type: "error" });
-    },
-  });
-
-  const { data: deepAnalysisJobData, stopPolling: stopDeepAnalysisPolling } = useGetGenerationJobQuery({
-    variables: { id: deepAnalysisJobId! },
-    skip: !deepAnalysisJobId,
-    pollInterval: 3000,
-    notifyOnNetworkStatusChange: true,
-    fetchPolicy: "network-only",
-  });
-
-  useEffect(() => {
-    const status = deepAnalysisJobData?.generationJob?.status;
-    if (status === "SUCCEEDED" || status === "FAILED") {
-      stopDeepAnalysisPolling();
-      setDeepAnalysisJobId(null);
-      if (status === "SUCCEEDED") {
-        setDeepAnalysisMessage({ text: "Deep analysis complete.", type: "success" });
-        refetchDeepAnalyses();
-      } else {
-        setDeepAnalysisMessage({ text: deepAnalysisJobData?.generationJob?.error?.message ?? "Analysis failed.", type: "error" });
-      }
-    }
-  }, [deepAnalysisJobData]);
-
-  const deepAnalysisProgress = deepAnalysisJobData?.generationJob?.progress ?? 0;
-  const isDeepAnalysisRunning = !!deepAnalysisJobId && deepAnalysisJobData?.generationJob?.status !== "SUCCEEDED" && deepAnalysisJobData?.generationJob?.status !== "FAILED";
-
-  const [deleteDeepAnalysis, { loading: deletingDeepAnalysis }] = useDeleteDeepIssueAnalysisMutation({
-    onCompleted: () => {
-      setDeepAnalysisMessage(null);
-      refetchDeepAnalyses();
-    },
-  });
-
-  const handleGenerateDeepAnalysis = async () => {
-    if (!issue) return;
-    setDeepAnalysisMessage(null);
-    await generateDeepAnalysis({ variables: { familyMemberId: issue.familyMemberId, triggerIssueId: issue.id } });
-  };
-
-  const handleDeleteDeepAnalysis = async () => {
-    if (!latestAnalysis) return;
-    await deleteDeepAnalysis({ variables: { id: latestAnalysis.id } });
-  };
 
   const handleGenerateResearch = async () => {
     if (!issue) return;
