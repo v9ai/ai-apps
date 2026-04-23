@@ -243,3 +243,62 @@ class CompetitorsTeamState(TypedDict, total=False):
     # output — list matches the `Competitor` DB/GraphQL row shape
     competitors: list[dict[str, Any]]
     graph_meta: dict[str, Any]
+
+
+class PricingState(TypedDict, total=False):
+    # input
+    product_id: int
+    # internal — populated by load_inputs
+    product: dict[str, Any]
+    icp: dict[str, Any]                         # products.icp_analysis jsonb or {}
+    competitor_pricing: list[dict[str, Any]]    # rows from competitor_pricing_tiers
+    competitor_summary: list[dict[str, Any]]    # minimal competitor rows (name, url, positioning)
+    # populated by parallel nodes
+    benchmark: dict[str, Any]
+    value_metric: dict[str, Any]
+    agent_timings: Annotated[dict[str, float], _merge_dict]
+    # populated by design_model
+    model: dict[str, Any]
+    # populated by write_rationale
+    rationale: dict[str, Any]
+    # output — matches PricingStrategy.model_dump()
+    pricing: dict[str, Any]
+    graph_meta: dict[str, Any]
+
+
+class GTMState(TypedDict, total=False):
+    # input
+    product_id: int
+    # internal
+    product: dict[str, Any]
+    icp: dict[str, Any]
+    competitive: dict[str, Any]                 # {competitors: [...], differentiation_angles: [...]}
+    pricing: dict[str, Any]                     # products.pricing_analysis jsonb (optional)
+    # populated by parallel nodes
+    channels: list[dict[str, Any]]
+    pillars: list[dict[str, Any]]
+    agent_timings: Annotated[dict[str, float], _merge_dict]
+    # populated by sequential nodes
+    templates: list[dict[str, Any]]
+    playbook: dict[str, Any]
+    first_90_days: list[str]
+    # output — matches GTMStrategy.model_dump()
+    gtm: dict[str, Any]
+    graph_meta: dict[str, Any]
+
+
+class ProductIntelState(TypedDict, total=False):
+    # input
+    product_id: int
+    force_refresh: bool     # when true, ignore cached icp/pricing/gtm and re-run everything
+    # internal
+    product: dict[str, Any]
+    product_profile: dict[str, Any]
+    icp: dict[str, Any]
+    competitive: dict[str, Any]
+    pricing: dict[str, Any]
+    gtm: dict[str, Any]
+    agent_timings: Annotated[dict[str, float], _merge_dict]
+    # output — matches ProductIntelReport.model_dump()
+    report: dict[str, Any]
+    graph_meta: dict[str, Any]

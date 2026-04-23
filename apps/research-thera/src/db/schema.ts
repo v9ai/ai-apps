@@ -465,6 +465,33 @@ export const deepIssueAnalyses = pgTable("deep_issue_analyses", {
     .default(sql`NOW()`),
 });
 
+// Polymorphic deep analyses. subject_type: 'GOAL' | 'NOTE' | 'JOURNAL_ENTRY' | 'FAMILY_MEMBER'.
+// trigger_type: 'ISSUE' | 'OBSERVATION' | 'FEEDBACK' | null.
+export const deepAnalyses = pgTable("deep_analyses", {
+  id: serial("id").primaryKey(),
+  subjectType: text("subject_type").notNull(),
+  subjectId: integer("subject_id").notNull(),
+  triggerType: text("trigger_type"),
+  triggerId: integer("trigger_id"),
+  userId: text("user_id").notNull(),
+  jobId: text("job_id"),
+  summary: text("summary").notNull(),
+  patternClusters: text("pattern_clusters").notNull(),
+  timelineAnalysis: text("timeline_analysis").notNull(),
+  familySystemInsights: text("family_system_insights").notNull(),
+  priorityRecommendations: text("priority_recommendations").notNull(),
+  researchRelevance: text("research_relevance").notNull(),
+  parentAdvice: text("parent_advice").notNull().default("[]"),
+  dataSnapshot: text("data_snapshot").notNull(),
+  model: text("model").notNull().default("deepseek-chat"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
