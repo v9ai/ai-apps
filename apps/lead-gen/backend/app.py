@@ -77,11 +77,15 @@ class BearerTokenMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    db_url = os.environ.get("DATABASE_URL")
+    db_url = (
+        os.environ.get("DATABASE_URL", "").strip()
+        or os.environ.get("NEON_DATABASE_URL", "").strip()
+    )
     if not db_url:
         raise RuntimeError(
-            "DATABASE_URL env var is required. Use the Neon pooled connection "
-            "string (hostname contains '-pooler') with sslmode=require."
+            "DATABASE_URL (or NEON_DATABASE_URL) env var is required. Use the "
+            "Neon pooled connection string (hostname contains '-pooler') with "
+            "sslmode=require."
         )
 
     async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
