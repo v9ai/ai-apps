@@ -91,6 +91,65 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
         </Box>
       )}
 
+      {(data.model?.value_metric_reasoning || data.model?.model_type_reasoning) && (
+        <div
+          className={css({
+            display: "grid",
+            gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" },
+            gap: "3",
+          })}
+        >
+          {data.model?.value_metric_reasoning && (
+            <Box
+              className={css({
+                border: "1px solid",
+                borderColor: "ui.border",
+                borderRadius: "sm",
+                p: "3",
+              })}
+            >
+              <Flex gap="2" align="center" mb="1">
+                <Text weight="bold" size="2" as="div">
+                  Why this value metric
+                </Text>
+                {data.model.value_metric && (
+                  <Badge color="indigo" size="1">
+                    {data.model.value_metric}
+                  </Badge>
+                )}
+              </Flex>
+              <Text color="gray" size="2" as="p" className={css({ lineHeight: "1.5" })}>
+                {data.model.value_metric_reasoning}
+              </Text>
+            </Box>
+          )}
+          {data.model?.model_type_reasoning && (
+            <Box
+              className={css({
+                border: "1px solid",
+                borderColor: "ui.border",
+                borderRadius: "sm",
+                p: "3",
+              })}
+            >
+              <Flex gap="2" align="center" mb="1">
+                <Text weight="bold" size="2" as="div">
+                  Why this model
+                </Text>
+                {data.model.model_type && (
+                  <Badge color="gray" size="1">
+                    {data.model.model_type}
+                  </Badge>
+                )}
+              </Flex>
+              <Text color="gray" size="2" as="p" className={css({ lineHeight: "1.5" })}>
+                {data.model.model_type_reasoning}
+              </Text>
+            </Box>
+          )}
+        </div>
+      )}
+
       <Box>
         <Heading size="3" mb="2">
           Tiers ({tiers.length})
@@ -174,6 +233,63 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                   <Text size="2" as="p" className={css({ lineHeight: "1.5" })}>
                     {t.upgrade_trigger}
                   </Text>
+                </Box>
+              )}
+              {(t.value_math ||
+                t.price_justification ||
+                (t.anchor_competitors && t.anchor_competitors.length > 0)) && (
+                <Box
+                  className={css({
+                    mt: "2",
+                    pt: "2",
+                    borderTop: "1px solid",
+                    borderColor: "ui.border",
+                  })}
+                >
+                  <Text size="1" color="gray" as="div" weight="bold" mb="1">
+                    Why this price
+                  </Text>
+                  {t.value_math && (
+                    <Text
+                      size="1"
+                      as="div"
+                      className={css({
+                        fontFamily: "mono",
+                        bg: "gray.2",
+                        border: "1px solid",
+                        borderColor: "ui.border",
+                        borderRadius: "xs",
+                        px: "2",
+                        py: "1",
+                        mb: "2",
+                        lineHeight: "1.4",
+                      })}
+                    >
+                      {t.value_math}
+                    </Text>
+                  )}
+                  {t.price_justification && (
+                    <Text
+                      size="2"
+                      as="p"
+                      className={css({ lineHeight: "1.5" })}
+                      mb={t.anchor_competitors && t.anchor_competitors.length > 0 ? "2" : "0"}
+                    >
+                      {t.price_justification}
+                    </Text>
+                  )}
+                  {t.anchor_competitors && t.anchor_competitors.length > 0 && (
+                    <Flex gap="1" wrap="wrap" align="center">
+                      <Text size="1" color="gray">
+                        vs
+                      </Text>
+                      {t.anchor_competitors.map((a, k) => (
+                        <Badge key={k} color="gray" size="1">
+                          {a}
+                        </Badge>
+                      ))}
+                    </Flex>
+                  )}
                 </Box>
               )}
             </Box>
