@@ -211,9 +211,11 @@ async def pick_channels(state: GTMState) -> dict:
     brief = _product_brief(product)
     icp = state.get("icp") or {}
 
+    icp_has_signal = bool((icp.get("segments") or icp.get("personas")))
+
     try:
         llm = make_llm(temperature=0.2, provider="deepseek")
-        result = await ainvoke_json(
+        result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
                 {
@@ -225,15 +227,19 @@ async def pick_channels(state: GTMState) -> dict:
                         "tactics (3-5 concrete plays), effort ('low'|'medium'|'high'), "
                         "time_to_first_lead (e.g. '1-2 weeks')}. "
                         "Bias toward high-leverage, founder-doable channels early. Do NOT list "
-                        "'paid ads' unless ICP actually converts on paid (most B2B ICPs don't). "
-                        'Return strict JSON: {"channels":[...]}'
+                        "'paid ads' unless the ICP summary names a concrete paid-ad community/"
+                        "placement (most B2B ICPs don't). When the ICP is empty, fall back to "
+                        "channels keyed to the product brief itself (e.g. developer tool → "
+                        "developer advocacy / engineering blog) and note the ICP gap in `why`. "
+                        'Return strict JSON only — no prose, no markdown fences: {"channels":[...]}'
                     ),
                 },
                 {
                     "role": "user",
                     "content": (
                         f"Product brief:\n{brief}\n\n"
-                        f"ICP:\n{_icp_summary(icp)}\n\n"
+                        f"ICP (signal={'yes' if icp_has_signal else 'MISSING'}):\n"
+                        f"{_icp_summary(icp)}\n\n"
                         f"Competitors:\n{_competitive_summary(state.get('competitive') or {})}\n\n"
                         "Return JSON only."
                     ),
@@ -255,6 +261,9 @@ async def pick_channels(state: GTMState) -> dict:
     return {
         "channels": channels_validated[:5],
         "agent_timings": {"pick_channels": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {
+            "telemetry": merge_node_telemetry(None, "pick_channels", tel)
+        },
         "_completed_stages": ["pick_channels"],
     }
 
@@ -279,7 +288,7 @@ async def craft_pillars(state: GTMState) -> dict:
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
                 {
@@ -289,8 +298,8 @@ async def craft_pillars(state: GTMState) -> dict:
                         "research time 10x'), proof_points (specific evidence/numbers/demos), "
                         "when_to_use (persona and buying stage), avoid_when (when this backfires)}. "
                         "Tie pillars to persona pains and our differentiation vs competitors. "
-                        "Avoid generic SaaS platitudes. Be concrete."
-                        'Return strict JSON: {"pillars":[...]}'
+                        "Avoid generic SaaS platitudes. Be concrete. "
+                        'Return strict JSON only — no prose, no markdown fences: {"pillars":[...]}'
                     ),
                 },
                 {
@@ -319,6 +328,9 @@ async def craft_pillars(state: GTMState) -> dict:
     return {
         "pillars": pillars[:5],
         "agent_timings": {"craft_pillars": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {
+            "telemetry": merge_node_telemetry(None, "craft_pillars", tel)
+        },
         "_completed_stages": ["craft_pillars"],
     }
 
@@ -346,7 +358,7 @@ async def write_templates(state: GTMState) -> dict:
 
     try:
         llm = make_llm(temperature=0.3, provider="deepseek")
-        result = await ainvoke_json(
+        result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
                 {
@@ -359,7 +371,7 @@ async def write_templates(state: GTMState) -> dict:
                         "body (plain text, <100 words, no marketing fluff, use {{first_name}} and "
                         "{{company}} placeholders), cta (one clear ask)}. Each template must be "
                         "grounded in a messaging pillar. "
-                        'Return strict JSON: {"templates":[...]}'
+                        'Return strict JSON only — no prose, no markdown fences: {"templates":[...]}'
                     ),
                 },
                 {
@@ -387,6 +399,9 @@ async def write_templates(state: GTMState) -> dict:
     return {
         "templates": templates[:8],
         "agent_timings": {"write_templates": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {
+            "telemetry": merge_node_telemetry(None, "write_templates", tel)
+        },
         "_completed_stages": ["write_templates"],
     }
 
@@ -411,7 +426,7 @@ async def build_playbook(state: GTMState) -> dict:
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
                 {
@@ -422,7 +437,8 @@ async def build_playbook(state: GTMState) -> dict:
                         "objections:[{objection, response, evidence_to_show:[string]}], "
                         "battlecards:{competitor_name: 'one-paragraph differentiation vs them'}}. "
                         "Don't bash competitors; position around gaps. "
-                        'Return strict JSON: {"discovery_questions":[],"objections":[],"battlecards":{}}'
+                        'Return strict JSON only — no prose, no markdown fences: '
+                        '{"discovery_questions":[],"objections":[],"battlecards":{}}'
                     ),
                 },
                 {
@@ -441,13 +457,53 @@ async def build_playbook(state: GTMState) -> dict:
         return {"_error": f"build_playbook: {e}"}
     if not isinstance(result, dict):
         result = {}
+
+    # Per-item validation: one malformed objection must NOT nuke the entire
+    # playbook (discovery_questions + battlecards). Validate each sub-piece
+    # independently and drop only the failing entries.
+    raw_questions = result.get("discovery_questions") or []
+    discovery_questions = [
+        str(q)[:400]
+        for q in raw_questions
+        if isinstance(q, (str, int, float))
+    ][:10]
+
+    raw_objections = result.get("objections") or []
+    objections: list[dict[str, Any]] = []
+    for o in raw_objections:
+        if not isinstance(o, dict):
+            continue
+        try:
+            objections.append(Objection.model_validate(o).model_dump())
+        except Exception:
+            continue
+    objections = objections[:8]
+
+    raw_battlecards = result.get("battlecards") or {}
+    battlecards: dict[str, str] = {}
+    if isinstance(raw_battlecards, dict):
+        for comp_name, blurb in raw_battlecards.items():
+            if not isinstance(comp_name, str) or not comp_name.strip():
+                continue
+            battlecards[comp_name[:160]] = str(blurb)[:900]
+
     try:
-        playbook = SalesPlaybook.model_validate(result).model_dump()
+        playbook = SalesPlaybook.model_validate(
+            {
+                "discovery_questions": discovery_questions,
+                "objections": objections,
+                "battlecards": battlecards,
+            }
+        ).model_dump()
     except Exception:
+        # Final safety net — never crash the graph on an unexpected shape.
         playbook = SalesPlaybook().model_dump()
     return {
         "playbook": playbook,
         "agent_timings": {"build_playbook": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {
+            "telemetry": merge_node_telemetry(None, "build_playbook", tel)
+        },
         "_completed_stages": ["build_playbook"],
     }
 
@@ -474,7 +530,7 @@ async def draft_plan(state: GTMState) -> dict:
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek")
-        result = await ainvoke_json(
+        result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
                 {
@@ -484,7 +540,8 @@ async def draft_plan(state: GTMState) -> dict:
                         "week-labelled (e.g. 'Week 1: …', 'Week 2-3: …', 'Month 2: …', 'Month 3: …'). "
                         "Each item must be specific, owner-clear, and shippable by a small team. "
                         "Tie items back to the channels and pillars chosen. "
-                        'Return strict JSON: {"first_90_days":[string]}'
+                        'Return strict JSON only — no prose, no markdown fences: '
+                        '{"first_90_days":[string]}'
                     ),
                 },
                 {
@@ -507,10 +564,17 @@ async def draft_plan(state: GTMState) -> dict:
     raw = result.get("first_90_days") if isinstance(result, dict) else None
     plan = [str(x)[:400] for x in (raw or []) if isinstance(x, (str, int, float))][:12]
 
+    # Fold this node's call into the run-wide telemetry, then compute totals for
+    # the terminal meta payload (mirrored into products.gtm_analysis.graph_meta
+    # and used by product_intel_runs.total_cost_usd downstream).
+    telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
+    telemetry = merge_node_telemetry(telemetry, "draft_plan", tel)
     meta = product_intel_graph_meta(
         graph="gtm",
         model=os.environ.get("DEEPSEEK_MODEL", "deepseek-chat"),
         agent_timings=state.get("agent_timings") or {},
+        telemetry=telemetry,
+        totals=compute_totals(telemetry),
     )
     gtm = GTMStrategy.model_validate(
         {

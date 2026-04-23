@@ -15,6 +15,27 @@ Nodes:
 
 The pricing + gtm nodes call their built graphs via ``.ainvoke()``, so they
 share the same AsyncPostgresSaver when compiled inside ``app.py``.
+
+Partial-failure tolerance
+-------------------------
+Subgraph failures (pricing / gtm / positioning / ensure_icp / ensure_competitors)
+are recorded in ``state["subgraph_errors"]`` and surfaced in the final report's
+``graph_meta.partial_failures`` list, rather than aborting the whole supervisor.
+Only fatal supervisor-level errors (``load_and_profile`` can't read the product
+row, ``synthesize_report`` can't produce JSON) still set the terminal ``_error``
+channel and route to ``notify_error_node``. This means a single flaky subgraph
+no longer costs the user the whole run — they still get a report, with the
+missing section noted. See ``subgraph_errors`` reducer and
+``synthesize_report``'s user-prompt construction below.
+
+v1 vs v2
+--------
+``product_intel_v2_graph`` is a separate DAG (registered as ``analyze_product_v2``
+in ``langgraph.json``) that fans out three branches — deep_competitor, pricing,
+gtm — in parallel and joins on positioning. It is NOT yet wired into the
+Next.js frontend (which still calls ``product_intel``); v1 here is the
+production supervisor. Don't delete v2 until it ships, and don't delete v1
+until v2 fully subsumes it. Tracked as a consolidation follow-up.
 """
 
 from __future__ import annotations
@@ -73,6 +94,54 @@ def _merge_progress(
     return out
 
 
+def _merge_subgraph_errors(
+    left: dict[str, str] | None, right: dict[str, str] | None
+) -> dict[str, str]:
+    """Reducer for per-subgraph error records.
+
+    Parallel fan-out (``run_pricing`` ∥ ``run_gtm``) can both emit a failure in
+    the same step; each writes its own key (subgraph name) so merging is
+    disjoint and last-write-wins is safe. Lets us record partial failures
+    without collapsing them into a single ``_error`` and aborting the run.
+    """
+    out: dict[str, str] = dict(left or {})
+    if right:
+        out.update(right)
+    return out
+
+
+def _fold_subgraph_telemetry(
+    supervisor_telemetry: dict[str, Any] | None,
+    node_name: str,
+    sub_state: Any,
+) -> dict[str, Any]:
+    """Fold a subgraph's ``graph_meta.telemetry`` into the supervisor telemetry
+    under a namespaced key so ``compute_totals`` picks up the subgraph's cost,
+    token, and latency numbers.
+
+    The subgraph's own per-node telemetry lives in
+    ``sub_state["graph_meta"]["telemetry"][<inner_node>]``. Folding each inner
+    entry under a namespaced key (``f"{node_name}/{inner_node}"``) preserves
+    per-inner-node granularity while avoiding collisions with other subgraphs
+    (e.g. pricing's ``load_inputs`` vs gtm's ``load_inputs``).
+
+    Safe to call with ``None`` / missing / malformed telemetry — returns the
+    input unchanged. Callers don't need to null-check.
+    """
+    tel = dict(supervisor_telemetry or {})
+    if not isinstance(sub_state, dict):
+        return tel
+    sub_meta = sub_state.get("graph_meta") or {}
+    sub_tel = sub_meta.get("telemetry") if isinstance(sub_meta, dict) else None
+    if not isinstance(sub_tel, dict):
+        return tel
+    for inner_node, entry in sub_tel.items():
+        if not isinstance(entry, dict):
+            continue
+        tel[f"{node_name}/{inner_node}"] = entry
+    return tel
+
+
 class _ProductIntelStateWithError(ProductIntelState, total=False):
     """Local extension of ProductIntelState carrying an ad-hoc ``_error`` channel
     so exception-path routing survives across nodes without editing state.py.
@@ -81,11 +150,15 @@ class _ProductIntelStateWithError(ProductIntelState, total=False):
     the subgraph-invocation nodes populate as they stream node-by-node events
     out of the compiled subgraphs. These power "4/7 nodes done" progress
     surfaces in ``notify_complete`` without changing the webhook contract.
+
+    ``subgraph_errors`` records per-subgraph failures without aborting the
+    supervisor — see module docstring for the partial-failure contract.
     """
 
     _error: Annotated[str, _first_error]
     pricing_subgraph_progress: Annotated[dict[str, Any], _merge_progress]
     gtm_subgraph_progress: Annotated[dict[str, Any], _merge_progress]
+    subgraph_errors: Annotated[dict[str, str], _merge_subgraph_errors]
 
 
 # ── Module-level subgraph compilation ──────────────────────────────────
@@ -257,8 +330,15 @@ async def ensure_icp(state: ProductIntelState) -> dict:
         # Invoke the existing deep_icp subgraph to build fresh ICP.
         sub = deep_icp_graph.build_graph()
         icp = await sub.ainvoke({"product_id": state["product_id"]})
-    except Exception as e:  # noqa: BLE001
-        return {"_error": f"ensure_icp: {e}"}
+    except Exception as e:  # noqa: BLE001 — partial failure, not fatal
+        # Fall back to whatever's cached (possibly {}). Record the error so the
+        # final report surfaces the missing/stale ICP section, but keep going.
+        return {
+            "icp": cached or {},
+            "freshness": freshness,
+            "subgraph_errors": {"ensure_icp": str(e)[:500]},
+            "agent_timings": {"ensure_icp": round(time.perf_counter() - t0, 3)},
+        }
 
     # Persist so other graphs can pick it up immediately.
     with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
@@ -425,12 +505,23 @@ async def run_pricing(state: ProductIntelState) -> dict:
             {"product_id": state["product_id"]},
             _PRICING_BUSINESS_NODES,
         )
-    except Exception as e:  # noqa: BLE001
-        return {"_error": f"run_pricing: {e}"}
+    except Exception as e:  # noqa: BLE001 — partial failure, not fatal
+        # Report proceeds without pricing; the missing section is noted in the
+        # final graph_meta.partial_failures and in the synthesize prompt.
+        return {
+            "pricing": existing or {},
+            "subgraph_errors": {"run_pricing": str(e)[:500]},
+            "agent_timings": {"run_pricing": round(time.perf_counter() - t0, 3)},
+        }
+    # Fold subgraph-internal telemetry into the supervisor's graph_meta so
+    # intel_report.graph_meta.totals reflects real costs (not just the
+    # supervisor's own LLM calls).
+    sub_tel = _fold_subgraph_telemetry(None, "run_pricing", result)
     return {
         "pricing": result.get("pricing") or {},
         "pricing_subgraph_progress": progress,
         "agent_timings": {"run_pricing": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {"telemetry": sub_tel} if sub_tel else {},
     }
 
 
@@ -455,12 +546,18 @@ async def run_gtm(state: ProductIntelState) -> dict:
             {"product_id": state["product_id"]},
             _GTM_BUSINESS_NODES,
         )
-    except Exception as e:  # noqa: BLE001
-        return {"_error": f"run_gtm: {e}"}
+    except Exception as e:  # noqa: BLE001 — partial failure, not fatal
+        return {
+            "gtm": existing or {},
+            "subgraph_errors": {"run_gtm": str(e)[:500]},
+            "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
+        }
+    sub_tel = _fold_subgraph_telemetry(None, "run_gtm", result)
     return {
         "gtm": result.get("gtm") or {},
         "gtm_subgraph_progress": progress,
         "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {"telemetry": sub_tel} if sub_tel else {},
     }
 
 
@@ -493,15 +590,19 @@ async def run_positioning(state: ProductIntelState) -> dict:
                 "gtm": state.get("gtm") or {},
             }
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001 — partial failure, not fatal
         # Positioning is a bonus — never block the main report on its failure.
+        # Record it so the report notes the missing section.
         return {
             "positioning": {},
+            "subgraph_errors": {"run_positioning": str(e)[:500]},
             "agent_timings": {"run_positioning": round(time.perf_counter() - t0, 3)},
         }
+    sub_tel = _fold_subgraph_telemetry(None, "run_positioning", result)
     return {
         "positioning": result.get("positioning") or {},
         "agent_timings": {"run_positioning": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {"telemetry": sub_tel} if sub_tel else {},
     }
 
 

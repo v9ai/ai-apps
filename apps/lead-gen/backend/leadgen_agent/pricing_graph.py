@@ -90,9 +90,10 @@ async def _ainvoke_json_with_retry(
             return await ainvoke_json_with_telemetry(
                 llm, messages, provider=provider
             )
-        except (json.JSONDecodeError, ValueError) as e:
-            # Parse errors: the response came back, it's just malformed.
-            # Retrying won't help — the prompt is the problem.
+        except json.JSONDecodeError:
+            # Parse error: the response came back, it's just malformed.
+            # Retrying the *same* prompt won't produce different JSON, so
+            # short-circuit to let the caller surface the prompt bug fast.
             raise
         except Exception as e:  # noqa: BLE001
             last_exc = e
@@ -464,7 +465,7 @@ async def design_model(state: PricingState) -> dict:
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result, tel = await _ainvoke_json_with_retry(
             llm,
             [
                 {
@@ -490,7 +491,10 @@ async def design_model(state: PricingState) -> dict:
                         'Return strict JSON: {"value_metric":string,"value_metric_reasoning":string,'
                         '"model_type":("subscription"|"usage"|"hybrid"|"per_outcome"|"freemium"),'
                         '"model_type_reasoning":string,"free_offer":string,"tiers":[...],'
-                        '"addons":[string],"discounting_strategy":string}.'
+                        '"addons":[string],"discounting_strategy":string}. '
+                        "Respond with ONLY the JSON object — no prose, no markdown fences, "
+                        "no preamble like 'Here is...'. The very first character of your "
+                        "response must be '{'."
                     ),
                 },
                 {
@@ -505,6 +509,7 @@ async def design_model(state: PricingState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="design_model",
         )
         if not isinstance(result, dict):
             result = {}
@@ -526,6 +531,13 @@ async def design_model(state: PricingState) -> dict:
     return {
         "model": validated.model_dump(),
         "agent_timings": {"design_model": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {
+            "telemetry": merge_node_telemetry(
+                (state.get("graph_meta") or {}).get("telemetry"),
+                "design_model",
+                tel,
+            )
+        },
         "_completed_stages": ["design_model"],
     }
 
@@ -552,7 +564,7 @@ async def write_rationale(state: PricingState) -> dict:
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result, tel = await _ainvoke_json_with_retry(
             llm,
             [
                 {
@@ -570,11 +582,14 @@ async def write_rationale(state: PricingState) -> dict:
                         "note (short rationale for the comparison)}. Use real competitor names "
                         "from the benchmark — do not invent. 'below' = our price is lower; "
                         "'premium' = our price is higher; 'at_parity' = matched; 'undercut' = "
-                        "deliberately priced to undercut a named incumbent."
+                        "deliberately priced to undercut a named incumbent. "
                         'Return strict JSON: {"value_basis":string,"competitor_benchmark":string,'
                         '"wtp_estimate":string,"risks":[string],"recommendation":string,'
                         '"price_anchors":[{"competitor":string,"tier":string,'
-                        '"monthly_price_usd":number|null,"relation":string,"note":string}]}.'
+                        '"monthly_price_usd":number|null,"relation":string,"note":string}]}. '
+                        "Respond with ONLY the JSON object — no prose, no markdown fences, "
+                        "no preamble like 'Here is...'. The very first character of your "
+                        "response must be '{'."
                     ),
                 },
                 {
@@ -589,6 +604,7 @@ async def write_rationale(state: PricingState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="write_rationale",
         )
         if not isinstance(result, dict):
             result = {}
@@ -596,10 +612,17 @@ async def write_rationale(state: PricingState) -> dict:
     except Exception as e:  # noqa: BLE001
         return {"_error": f"write_rationale: {e}"}
 
+    # Fold this node's telemetry into the run-level ledger, then compute totals
+    # so graph_meta.totals reflects the full pricing run (not just the last
+    # node). Mirrors the positioning_graph pattern.
+    telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
+    telemetry = merge_node_telemetry(telemetry, "write_rationale", tel)
     meta = product_intel_graph_meta(
         graph="pricing",
         model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner"),
         agent_timings=state.get("agent_timings") or {},
+        telemetry=telemetry,
+        totals=compute_totals(telemetry),
     )
     pricing = PricingStrategy.model_validate(
         {
@@ -639,8 +662,34 @@ async def write_rationale(state: PricingState) -> dict:
 
 
 async def notify_error_node(state: PricingState) -> dict:
-    err = state.get("_error") or "unknown error"
-    await notify_error(state, err)
+    """Emit an error webhook with structured node + stage context.
+
+    The raw ``_error`` string is prefixed with ``node_name: <msg>`` by the
+    nodes that set it (see ``benchmark_competitors``, ``design_model``, etc).
+    We wrap it into a human-readable message that also carries the last
+    ``completed_stages`` so the UI can show *where* the pipeline bailed
+    without needing to cross-reference logs.
+    """
+    raw = state.get("_error") or "unknown error"
+    # _error values are of the form "node_name: <exception text>". Split so we
+    # can surface the node in a structured spot as well as keep the full
+    # message for the webhook body.
+    node = "unknown"
+    message = raw
+    if ":" in raw:
+        head, _, rest = raw.partition(":")
+        # Only accept short, identifier-like prefixes as the node tag; anything
+        # else is just part of the exception text.
+        if head.strip().replace("_", "").isalnum() and len(head) <= 40:
+            node = head.strip()
+            message = rest.strip()
+    completed = state.get("_completed_stages") or []
+    last_stage = completed[-1] if completed else "load_inputs"
+    enriched = (
+        f"[pricing/{node}] failed after stage={last_stage}"
+        f" (completed={','.join(completed) or 'none'}): {message}"
+    )
+    await notify_error(state, enriched)
     return {}
 
 

@@ -41,8 +41,11 @@ but is **NOT** registered in ``langgraph.json`` as a standalone assistant; only
 
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 import os
+import random
 import time
 from typing import Annotated, Any
 from urllib.parse import urljoin
@@ -57,6 +60,69 @@ from .loaders import fetch_url
 from .notify import notify_complete, notify_error
 from .product_intel_schemas import product_intel_graph_meta
 from .state import DeepCompetitorState
+
+log = logging.getLogger(__name__)
+
+# Retry budget for transient LLM failures (rate limits, 5xx, socket blips).
+# Mirrors the pattern in pricing_graph: bounded retries with jitter, only for
+# network/provider transients — parse errors (JSONDecodeError / ValueError) are
+# deterministic and re-raised immediately. DeepSeek's public API hits short
+# outages a few times per week; with 6 specialists running in parallel per
+# deep-dive, any of them catching a transient used to abort the whole run.
+_MAX_LLM_ATTEMPTS = 3
+_RETRY_BASE_DELAY = 0.75  # seconds; doubles each attempt, jittered ±25%
+
+
+async def _ainvoke_json_retry(
+    llm: Any,
+    messages: list[dict[str, str]],
+    *,
+    provider: str | None = None,
+    node: str,
+) -> Any:
+    """Bounded retry wrapper around ``ainvoke_json``.
+
+    Specialists fan out in parallel; a single transient from DeepSeek used to
+    kill the whole graph run via ``_error`` routing. Retrying once or twice
+    turns most of those into no-op blips. Parse errors are NOT retried — the
+    prompt is the problem and re-calling wastes tokens.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(1, _MAX_LLM_ATTEMPTS + 1):
+        try:
+            return await ainvoke_json(llm, messages, provider=provider)
+        except (json.JSONDecodeError, ValueError):
+            raise
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            if attempt >= _MAX_LLM_ATTEMPTS:
+                break
+            delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
+            delay *= random.uniform(0.75, 1.25)
+            log.warning(
+                "deep_competitor.%s: transient LLM failure (attempt %d/%d): %s "
+                "— retrying in %.2fs",
+                node, attempt, _MAX_LLM_ATTEMPTS, exc, delay,
+            )
+            await asyncio.sleep(delay)
+    raise RuntimeError(
+        f"LLM failed after {_MAX_LLM_ATTEMPTS} attempts: {last_exc}"
+    ) from last_exc
+
+
+def _page_is_usable(page: dict[str, Any] | None) -> bool:
+    """A scraped page is usable if we got 200 + non-empty markdown.
+
+    Cheap guard to skip the LLM round-trip when /pricing, /features, etc. 404
+    or redirect to an empty shell. Saves DeepSeek tokens and avoids grounding
+    the extractor on empty input (which produced hallucinated tiers in the
+    wild — see the previous shadow-tier bug in pricing_graph.benchmark).
+    """
+    if not page:
+        return False
+    if int(page.get("status") or 0) != 200:
+        return False
+    return bool((page.get("markdown") or "").strip())
 
 # Specialist node names — single source of truth so `_fan_out` + `build_graph`
 # can't drift apart. Order controls the Send fan-out order (cosmetic only;
@@ -212,11 +278,25 @@ async def pricing_deep(state: DeepCompetitorState) -> dict:
         return {"pricing_deep": {"tiers": [], "note": "no url"}}
 
     page = await fetch_url(urljoin(url, "/pricing"))
+    if not _page_is_usable(page):
+        # 404 / redirect / empty shell — skip the LLM, mark the scrape so the
+        # UI can distinguish "no pricing page" from "LLM emitted no tiers".
+        return {
+            "pricing_deep": {
+                "tiers": [],
+                "note": "scrape_error",
+                "scrape_status": int(page.get("status") or 0),
+                "scrape_error": page.get("error"),
+                "source_url": page.get("url"),
+            },
+            "pages": {"pricing": page},
+            "agent_timings": {"pricing_deep": round(time.perf_counter() - t0, 3)},
+        }
     markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
 
     try:
         llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result = await _ainvoke_json_retry(
             llm,
             [
                 {
@@ -242,6 +322,7 @@ async def pricing_deep(state: DeepCompetitorState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="pricing_deep",
         )
     except Exception as e:  # noqa: BLE001
         return {
@@ -252,9 +333,26 @@ async def pricing_deep(state: DeepCompetitorState) -> dict:
     if not isinstance(result, dict):
         result = {}
     tiers = result.get("tiers") or []
+    if not isinstance(tiers, list):
+        tiers = []
+    # Dedup by normalized tier_name. Reasoner occasionally restates the same
+    # tier twice (once from the price card, once from a comparison table); the
+    # downstream DELETE+INSERT then writes duplicate rows that inflate
+    # pricing_graph's `competitor_pricing` list. Keep the first occurrence
+    # since it preserves the model's intended sort_order.
+    deduped: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
+    for t in tiers:
+        if not isinstance(t, dict):
+            continue
+        key = str(t.get("tier_name") or "").strip().lower()
+        if not key or key in seen_names:
+            continue
+        seen_names.add(key)
+        deduped.append(t)
     return {
         "pricing_deep": {
-            "tiers": tiers if isinstance(tiers, list) else [],
+            "tiers": deduped,
             "notes": str(result.get("notes", ""))[:600],
             "source_url": page.get("url"),
         },
@@ -273,11 +371,22 @@ async def features_deep(state: DeepCompetitorState) -> dict:
         return {"features_deep": {"parity": []}}
 
     page = await fetch_url(urljoin(url, "/features"))
+    if not _page_is_usable(page):
+        return {
+            "features_deep": {
+                "parity": [],
+                "note": "scrape_error",
+                "scrape_status": int(page.get("status") or 0),
+                "scrape_error": page.get("error"),
+            },
+            "pages": {"features": page},
+            "agent_timings": {"features_deep": round(time.perf_counter() - t0, 3)},
+        }
     markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result = await _ainvoke_json_retry(
             llm,
             [
                 {
@@ -305,6 +414,7 @@ async def features_deep(state: DeepCompetitorState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="features_deep",
         )
     except Exception as e:  # noqa: BLE001
         return {
@@ -333,11 +443,22 @@ async def integrations_deep(state: DeepCompetitorState) -> dict:
         return {"integrations_deep": {"integrations": []}}
 
     page = await fetch_url(urljoin(url, "/integrations"))
+    if not _page_is_usable(page):
+        return {
+            "integrations_deep": {
+                "integrations": [],
+                "note": "scrape_error",
+                "scrape_status": int(page.get("status") or 0),
+                "scrape_error": page.get("error"),
+            },
+            "pages": {"integrations": page},
+            "agent_timings": {"integrations_deep": round(time.perf_counter() - t0, 3)},
+        }
     markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
 
     try:
         llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result = await _ainvoke_json_retry(
             llm,
             [
                 {
@@ -361,6 +482,7 @@ async def integrations_deep(state: DeepCompetitorState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="integrations_deep",
         )
     except Exception as e:  # noqa: BLE001
         return {
@@ -370,9 +492,25 @@ async def integrations_deep(state: DeepCompetitorState) -> dict:
     if not isinstance(result, dict):
         result = {}
     integrations = result.get("integrations") or []
+    if not isinstance(integrations, list):
+        integrations = []
+    # Dedup by normalized (name, category). Integration lists often appear
+    # twice on the same page (hero grid + filtered view); downstream join
+    # on (competitor_id, name) would otherwise drop to last-write-wins.
+    deduped: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for it in integrations:
+        if not isinstance(it, dict):
+            continue
+        name_key = str(it.get("name") or "").strip().lower()
+        cat_key = str(it.get("category") or "").strip().lower()
+        if not name_key or (name_key, cat_key) in seen:
+            continue
+        seen.add((name_key, cat_key))
+        deduped.append(it)
     return {
         "integrations_deep": {
-            "integrations": integrations if isinstance(integrations, list) else [],
+            "integrations": deduped,
             "notes": str(result.get("notes", ""))[:400],
         },
         "pages": {"integrations": page},
@@ -407,7 +545,7 @@ async def changelog(state: DeepCompetitorState) -> dict:
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result = await _ainvoke_json_retry(
             llm,
             [
                 {
@@ -432,6 +570,7 @@ async def changelog(state: DeepCompetitorState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="changelog",
         )
     except Exception as e:  # noqa: BLE001
         return {
