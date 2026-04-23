@@ -151,22 +151,16 @@ export const productMutations = {
   ) {
     requireAdmin(context);
 
-    // The pricing graph writes its own pricing_analysis row via asyncpg inside
-    // the `write_rationale` node, but we also persist here so the GraphQL
-    // response always carries the latest value (write_rationale + our UPDATE
-    // race is harmless — same value).
-    const { pricing } = await analyzeProductPricing({ productId: args.id });
-    const now = new Date().toISOString();
+    // The pricing graph writes pricing_analysis + pricing_analyzed_at via
+    // asyncpg inside its `write_rationale` node — it's the source of truth.
+    // We just re-read the row so the resolver response has the latest state
+    // without a second, racing UPDATE with a different timestamp.
+    await analyzeProductPricing({ productId: args.id });
 
     const [row] = await db
-      .update(products)
-      .set({
-        pricing_analysis: pricing as unknown as Record<string, unknown>,
-        pricing_analyzed_at: now,
-        updated_at: now,
-      })
-      .where(eq(products.id, args.id))
-      .returning();
+      .select()
+      .from(products)
+      .where(eq(products.id, args.id));
 
     if (!row) {
       throw new GraphQLError(`Product ${args.id} not found`, {
@@ -183,18 +177,13 @@ export const productMutations = {
   ) {
     requireAdmin(context);
 
-    const { gtm } = await analyzeProductGTM({ productId: args.id });
-    const now = new Date().toISOString();
+    // Same pattern: gtm_graph.draft_plan is the single writer.
+    await analyzeProductGTM({ productId: args.id });
 
     const [row] = await db
-      .update(products)
-      .set({
-        gtm_analysis: gtm as unknown as Record<string, unknown>,
-        gtm_analyzed_at: now,
-        updated_at: now,
-      })
-      .where(eq(products.id, args.id))
-      .returning();
+      .select()
+      .from(products)
+      .where(eq(products.id, args.id));
 
     if (!row) {
       throw new GraphQLError(`Product ${args.id} not found`, {
@@ -211,20 +200,14 @@ export const productMutations = {
   ) {
     requireAdmin(context);
 
-    // Supervisor persists pricing/gtm/intel_report internally. We still re-read
-    // the row so the resolver returns the latest state.
-    const { report } = await runFullProductIntel({ productId: args.id });
-    const now = new Date().toISOString();
+    // product_intel_graph persists pricing/gtm/intel_report across its nodes.
+    // Re-read the row instead of issuing a second UPDATE.
+    await runFullProductIntel({ productId: args.id });
 
     const [row] = await db
-      .update(products)
-      .set({
-        intel_report: report as unknown as Record<string, unknown>,
-        intel_report_at: now,
-        updated_at: now,
-      })
-      .where(eq(products.id, args.id))
-      .returning();
+      .select()
+      .from(products)
+      .where(eq(products.id, args.id));
 
     if (!row) {
       throw new GraphQLError(`Product ${args.id} not found`, {

@@ -274,6 +274,13 @@ function FamilyMemberContent() {
 
   return (
     <Flex direction="column" gap="5">
+      {/* Deep Analysis (whole-member superset view, no trigger) */}
+      <DeepAnalysisPanel
+        subjectType={DeepAnalysisSubjectType.FamilyMember}
+        subjectId={member.id}
+        subjectLabel={memberName}
+      />
+
       {/* Member Info */}
       <Card>
         <Flex direction="column" gap="3" p="4">

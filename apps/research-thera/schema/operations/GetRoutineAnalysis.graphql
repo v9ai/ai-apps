@@ -1,0 +1,72 @@
+query GetRoutineAnalysis($id: Int!) {
+  routineAnalysis(id: $id) {
+    id
+    familyMemberId
+    createdBy
+    jobId
+    summary
+    adherencePatterns {
+      habitId
+      habitTitle
+      frequency
+      targetCount
+      observedCount
+      consistency
+      currentStreak
+      longestStreak
+      missedPattern
+      interpretation
+    }
+    routineBalance {
+      domainsCovered
+      domainsMissing
+      overEmphasized
+      underEmphasized
+      verdict
+    }
+    streaks {
+      strongestHabitId
+      strongestStreak
+      weakestHabitId
+      weakestStreak
+      momentum
+    }
+    gaps {
+      area
+      rationale
+      severity
+    }
+    optimizationSuggestions {
+      title
+      rationale
+      priority
+      changeType
+      targetHabitId
+      suggestedFrequency
+      suggestedTargetCount
+      concreteSteps
+      ageAppropriate
+      developmentalContext
+    }
+    researchRelevance {
+      topic
+      relevantResearchIds
+      relevantResearchTitles
+      coverageGaps
+    }
+    dataSnapshot {
+      habitsCount
+      activeDailyCount
+      activeWeeklyCount
+      logCount
+      windowDays
+      overallAdherence
+      linkedGoalCount
+      linkedIssueCount
+      researchPaperCount
+    }
+    model
+    createdAt
+    updatedAt
+  }
+}

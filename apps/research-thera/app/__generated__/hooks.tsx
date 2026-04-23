@@ -580,6 +580,12 @@ export type DeleteResearchResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteRoutineAnalysisResult = {
+  __typename?: 'DeleteRoutineAnalysisResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteStoryResult = {
   __typename?: 'DeleteStoryResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -841,6 +847,13 @@ export type GenerateResearchResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GenerateRoutineAnalysisResult = {
+  __typename?: 'GenerateRoutineAnalysisResult';
+  jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerationJob = {
   __typename?: 'GenerationJob';
   createdAt: Scalars['String']['output'];
@@ -904,6 +917,20 @@ export type Habit = {
   todayLog?: Maybe<HabitLog>;
   updatedAt: Scalars['String']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type HabitAdherence = {
+  __typename?: 'HabitAdherence';
+  consistency: Scalars['Float']['output'];
+  currentStreak: Scalars['Int']['output'];
+  frequency: Scalars['String']['output'];
+  habitId: Scalars['Int']['output'];
+  habitTitle: Scalars['String']['output'];
+  interpretation: Scalars['String']['output'];
+  longestStreak: Scalars['Int']['output'];
+  missedPattern?: Maybe<Scalars['String']['output']>;
+  observedCount: Scalars['Int']['output'];
+  targetCount: Scalars['Int']['output'];
 };
 
 export enum HabitFrequency {
@@ -1108,6 +1135,7 @@ export type Mutation = {
   deleteRecommendedBooks: DeleteRecommendedBooksResult;
   deleteRelationship: DeleteRelationshipResult;
   deleteResearch: DeleteResearchResult;
+  deleteRoutineAnalysis: DeleteRoutineAnalysisResult;
   deleteStory: DeleteStoryResult;
   deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
@@ -1124,6 +1152,7 @@ export type Mutation = {
   generateParentAdvice: GenerateParentAdviceResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
   generateResearch: GenerateResearchResult;
+  generateRoutineAnalysis: GenerateRoutineAnalysisResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
   linkContactToIssue: IssueContactLink;
   linkIssues: IssueLink;
@@ -1366,6 +1395,11 @@ export type MutationDeleteResearchArgs = {
 };
 
 
+export type MutationDeleteRoutineAnalysisArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationDeleteStoryArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1467,6 +1501,11 @@ export type MutationGenerateResearchArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationGenerateRoutineAnalysisArgs = {
+  familyMemberId: Scalars['Int']['input'];
 };
 
 
@@ -1860,6 +1899,8 @@ export type Query = {
   relationship?: Maybe<Relationship>;
   relationships: Array<Relationship>;
   research: Array<Research>;
+  routineAnalyses: Array<RoutineAnalysis>;
+  routineAnalysis?: Maybe<RoutineAnalysis>;
   stories: Array<Story>;
   story?: Maybe<Story>;
   tagLanguage?: Maybe<Scalars['String']['output']>;
@@ -2069,6 +2110,16 @@ export type QueryResearchArgs = {
 };
 
 
+export type QueryRoutineAnalysesArgs = {
+  familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type QueryRoutineAnalysisArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type QueryStoriesArgs = {
   goalId: Scalars['Int']['input'];
 };
@@ -2194,6 +2245,77 @@ export enum ResearchSource {
   SemanticScholar = 'SEMANTIC_SCHOLAR'
 }
 
+export type RoutineAnalysis = {
+  __typename?: 'RoutineAnalysis';
+  adherencePatterns: Array<HabitAdherence>;
+  createdAt: Scalars['String']['output'];
+  createdBy: Scalars['String']['output'];
+  dataSnapshot: RoutineDataSnapshot;
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId: Scalars['Int']['output'];
+  gaps: Array<RoutineGap>;
+  id: Scalars['Int']['output'];
+  jobId?: Maybe<Scalars['String']['output']>;
+  model: Scalars['String']['output'];
+  optimizationSuggestions: Array<RoutineOptimization>;
+  researchRelevance: Array<RoutineResearchMapping>;
+  routineBalance: RoutineBalance;
+  streaks: StreakSummary;
+  summary: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type RoutineBalance = {
+  __typename?: 'RoutineBalance';
+  domainsCovered: Array<Scalars['String']['output']>;
+  domainsMissing: Array<Scalars['String']['output']>;
+  overEmphasized: Array<Scalars['String']['output']>;
+  underEmphasized: Array<Scalars['String']['output']>;
+  verdict: Scalars['String']['output'];
+};
+
+export type RoutineDataSnapshot = {
+  __typename?: 'RoutineDataSnapshot';
+  activeDailyCount: Scalars['Int']['output'];
+  activeWeeklyCount: Scalars['Int']['output'];
+  habitsCount: Scalars['Int']['output'];
+  linkedGoalCount: Scalars['Int']['output'];
+  linkedIssueCount: Scalars['Int']['output'];
+  logCount: Scalars['Int']['output'];
+  overallAdherence: Scalars['Float']['output'];
+  researchPaperCount: Scalars['Int']['output'];
+  windowDays: Scalars['Int']['output'];
+};
+
+export type RoutineGap = {
+  __typename?: 'RoutineGap';
+  area: Scalars['String']['output'];
+  rationale: Scalars['String']['output'];
+  severity: Scalars['String']['output'];
+};
+
+export type RoutineOptimization = {
+  __typename?: 'RoutineOptimization';
+  ageAppropriate: Scalars['Boolean']['output'];
+  changeType: Scalars['String']['output'];
+  concreteSteps: Array<Scalars['String']['output']>;
+  developmentalContext?: Maybe<Scalars['String']['output']>;
+  priority: Scalars['String']['output'];
+  rationale: Scalars['String']['output'];
+  suggestedFrequency?: Maybe<Scalars['String']['output']>;
+  suggestedTargetCount?: Maybe<Scalars['Int']['output']>;
+  targetHabitId?: Maybe<Scalars['Int']['output']>;
+  title: Scalars['String']['output'];
+};
+
+export type RoutineResearchMapping = {
+  __typename?: 'RoutineResearchMapping';
+  coverageGaps: Array<Scalars['String']['output']>;
+  relevantResearchIds: Array<Scalars['Int']['output']>;
+  relevantResearchTitles: Array<Scalars['String']['output']>;
+  topic: Scalars['String']['output'];
+};
+
 export type Story = {
   __typename?: 'Story';
   audioAssets: Array<AudioAsset>;
@@ -2213,6 +2335,15 @@ export type Story = {
   minutes?: Maybe<Scalars['Int']['output']>;
   segments: Array<TextSegment>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type StreakSummary = {
+  __typename?: 'StreakSummary';
+  momentum: Scalars['String']['output'];
+  strongestHabitId?: Maybe<Scalars['Int']['output']>;
+  strongestStreak: Scalars['Int']['output'];
+  weakestHabitId?: Maybe<Scalars['Int']['output']>;
+  weakestStreak: Scalars['Int']['output'];
 };
 
 export type Subscription = {
@@ -2763,6 +2894,13 @@ export type DeleteResearchMutationVariables = Exact<{
 
 export type DeleteResearchMutation = { __typename?: 'Mutation', deleteResearch: { __typename?: 'DeleteResearchResult', success: boolean, message?: string | null, deletedCount: number } };
 
+export type DeleteRoutineAnalysisMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteRoutineAnalysisMutation = { __typename?: 'Mutation', deleteRoutineAnalysis: { __typename?: 'DeleteRoutineAnalysisResult', success: boolean, message?: string | null } };
+
 export type DeleteStoryMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -2911,6 +3049,13 @@ export type GenerateResearchMutationVariables = Exact<{
 
 
 export type GenerateResearchMutation = { __typename?: 'Mutation', generateResearch: { __typename?: 'GenerateResearchResult', success: boolean, message?: string | null, jobId?: string | null, count?: number | null } };
+
+export type GenerateRoutineAnalysisMutationVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type GenerateRoutineAnalysisMutation = { __typename?: 'Mutation', generateRoutineAnalysis: { __typename?: 'GenerateRoutineAnalysisResult', success: boolean, message?: string | null, jobId?: string | null } };
 
 export type GenerateTherapeuticQuestionsMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -3199,6 +3344,20 @@ export type GetResearchQueryVariables = Exact<{
 
 
 export type GetResearchQuery = { __typename?: 'Query', research: Array<{ __typename?: 'Research', id: number, goalId?: number | null, feedbackId?: number | null, journalEntryId?: number | null, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> };
+
+export type GetRoutineAnalysesQueryVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type GetRoutineAnalysesQuery = { __typename?: 'Query', routineAnalyses: Array<{ __typename?: 'RoutineAnalysis', id: number, familyMemberId: number, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, adherencePatterns: Array<{ __typename?: 'HabitAdherence', habitId: number, habitTitle: string, frequency: string, targetCount: number, observedCount: number, consistency: number, currentStreak: number, longestStreak: number, missedPattern?: string | null, interpretation: string }>, routineBalance: { __typename?: 'RoutineBalance', domainsCovered: Array<string>, domainsMissing: Array<string>, overEmphasized: Array<string>, underEmphasized: Array<string>, verdict: string }, streaks: { __typename?: 'StreakSummary', strongestHabitId?: number | null, strongestStreak: number, weakestHabitId?: number | null, weakestStreak: number, momentum: string }, gaps: Array<{ __typename?: 'RoutineGap', area: string, rationale: string, severity: string }>, optimizationSuggestions: Array<{ __typename?: 'RoutineOptimization', title: string, rationale: string, priority: string, changeType: string, targetHabitId?: number | null, suggestedFrequency?: string | null, suggestedTargetCount?: number | null, concreteSteps: Array<string>, ageAppropriate: boolean, developmentalContext?: string | null }>, researchRelevance: Array<{ __typename?: 'RoutineResearchMapping', topic: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'RoutineDataSnapshot', habitsCount: number, activeDailyCount: number, activeWeeklyCount: number, logCount: number, windowDays: number, overallAdherence: number, linkedGoalCount: number, linkedIssueCount: number, researchPaperCount: number } }> };
+
+export type GetRoutineAnalysisQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type GetRoutineAnalysisQuery = { __typename?: 'Query', routineAnalysis?: { __typename?: 'RoutineAnalysis', id: number, familyMemberId: number, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, adherencePatterns: Array<{ __typename?: 'HabitAdherence', habitId: number, habitTitle: string, frequency: string, targetCount: number, observedCount: number, consistency: number, currentStreak: number, longestStreak: number, missedPattern?: string | null, interpretation: string }>, routineBalance: { __typename?: 'RoutineBalance', domainsCovered: Array<string>, domainsMissing: Array<string>, overEmphasized: Array<string>, underEmphasized: Array<string>, verdict: string }, streaks: { __typename?: 'StreakSummary', strongestHabitId?: number | null, strongestStreak: number, weakestHabitId?: number | null, weakestStreak: number, momentum: string }, gaps: Array<{ __typename?: 'RoutineGap', area: string, rationale: string, severity: string }>, optimizationSuggestions: Array<{ __typename?: 'RoutineOptimization', title: string, rationale: string, priority: string, changeType: string, targetHabitId?: number | null, suggestedFrequency?: string | null, suggestedTargetCount?: number | null, concreteSteps: Array<string>, ageAppropriate: boolean, developmentalContext?: string | null }>, researchRelevance: Array<{ __typename?: 'RoutineResearchMapping', topic: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'RoutineDataSnapshot', habitsCount: number, activeDailyCount: number, activeWeeklyCount: number, logCount: number, windowDays: number, overallAdherence: number, linkedGoalCount: number, linkedIssueCount: number, researchPaperCount: number } } | null };
 
 export type GetStoriesQueryVariables = Exact<{
   goalId: Scalars['Int']['input'];
@@ -5290,6 +5449,40 @@ export function useDeleteResearchMutation(baseOptions?: Apollo.MutationHookOptio
 export type DeleteResearchMutationHookResult = ReturnType<typeof useDeleteResearchMutation>;
 export type DeleteResearchMutationResult = Apollo.MutationResult<DeleteResearchMutation>;
 export type DeleteResearchMutationOptions = Apollo.BaseMutationOptions<DeleteResearchMutation, DeleteResearchMutationVariables>;
+export const DeleteRoutineAnalysisDocument = gql`
+    mutation DeleteRoutineAnalysis($id: Int!) {
+  deleteRoutineAnalysis(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteRoutineAnalysisMutationFn = Apollo.MutationFunction<DeleteRoutineAnalysisMutation, DeleteRoutineAnalysisMutationVariables>;
+
+/**
+ * __useDeleteRoutineAnalysisMutation__
+ *
+ * To run a mutation, you first call `useDeleteRoutineAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteRoutineAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteRoutineAnalysisMutation, { data, loading, error }] = useDeleteRoutineAnalysisMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteRoutineAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<DeleteRoutineAnalysisMutation, DeleteRoutineAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteRoutineAnalysisMutation, DeleteRoutineAnalysisMutationVariables>(DeleteRoutineAnalysisDocument, options);
+      }
+export type DeleteRoutineAnalysisMutationHookResult = ReturnType<typeof useDeleteRoutineAnalysisMutation>;
+export type DeleteRoutineAnalysisMutationResult = Apollo.MutationResult<DeleteRoutineAnalysisMutation>;
+export type DeleteRoutineAnalysisMutationOptions = Apollo.BaseMutationOptions<DeleteRoutineAnalysisMutation, DeleteRoutineAnalysisMutationVariables>;
 export const DeleteStoryDocument = gql`
     mutation DeleteStory($id: Int!) {
   deleteStory(id: $id) {
@@ -6040,6 +6233,41 @@ export function useGenerateResearchMutation(baseOptions?: Apollo.MutationHookOpt
 export type GenerateResearchMutationHookResult = ReturnType<typeof useGenerateResearchMutation>;
 export type GenerateResearchMutationResult = Apollo.MutationResult<GenerateResearchMutation>;
 export type GenerateResearchMutationOptions = Apollo.BaseMutationOptions<GenerateResearchMutation, GenerateResearchMutationVariables>;
+export const GenerateRoutineAnalysisDocument = gql`
+    mutation GenerateRoutineAnalysis($familyMemberId: Int!) {
+  generateRoutineAnalysis(familyMemberId: $familyMemberId) {
+    success
+    message
+    jobId
+  }
+}
+    `;
+export type GenerateRoutineAnalysisMutationFn = Apollo.MutationFunction<GenerateRoutineAnalysisMutation, GenerateRoutineAnalysisMutationVariables>;
+
+/**
+ * __useGenerateRoutineAnalysisMutation__
+ *
+ * To run a mutation, you first call `useGenerateRoutineAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateRoutineAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateRoutineAnalysisMutation, { data, loading, error }] = useGenerateRoutineAnalysisMutation({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGenerateRoutineAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<GenerateRoutineAnalysisMutation, GenerateRoutineAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateRoutineAnalysisMutation, GenerateRoutineAnalysisMutationVariables>(GenerateRoutineAnalysisDocument, options);
+      }
+export type GenerateRoutineAnalysisMutationHookResult = ReturnType<typeof useGenerateRoutineAnalysisMutation>;
+export type GenerateRoutineAnalysisMutationResult = Apollo.MutationResult<GenerateRoutineAnalysisMutation>;
+export type GenerateRoutineAnalysisMutationOptions = Apollo.BaseMutationOptions<GenerateRoutineAnalysisMutation, GenerateRoutineAnalysisMutationVariables>;
 export const GenerateTherapeuticQuestionsDocument = gql`
     mutation GenerateTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {
   generateTherapeuticQuestions(
@@ -8987,6 +9215,226 @@ export type GetResearchQueryHookResult = ReturnType<typeof useGetResearchQuery>;
 export type GetResearchLazyQueryHookResult = ReturnType<typeof useGetResearchLazyQuery>;
 export type GetResearchSuspenseQueryHookResult = ReturnType<typeof useGetResearchSuspenseQuery>;
 export type GetResearchQueryResult = Apollo.QueryResult<GetResearchQuery, GetResearchQueryVariables>;
+export const GetRoutineAnalysesDocument = gql`
+    query GetRoutineAnalyses($familyMemberId: Int!) {
+  routineAnalyses(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    createdBy
+    jobId
+    summary
+    adherencePatterns {
+      habitId
+      habitTitle
+      frequency
+      targetCount
+      observedCount
+      consistency
+      currentStreak
+      longestStreak
+      missedPattern
+      interpretation
+    }
+    routineBalance {
+      domainsCovered
+      domainsMissing
+      overEmphasized
+      underEmphasized
+      verdict
+    }
+    streaks {
+      strongestHabitId
+      strongestStreak
+      weakestHabitId
+      weakestStreak
+      momentum
+    }
+    gaps {
+      area
+      rationale
+      severity
+    }
+    optimizationSuggestions {
+      title
+      rationale
+      priority
+      changeType
+      targetHabitId
+      suggestedFrequency
+      suggestedTargetCount
+      concreteSteps
+      ageAppropriate
+      developmentalContext
+    }
+    researchRelevance {
+      topic
+      relevantResearchIds
+      relevantResearchTitles
+      coverageGaps
+    }
+    dataSnapshot {
+      habitsCount
+      activeDailyCount
+      activeWeeklyCount
+      logCount
+      windowDays
+      overallAdherence
+      linkedGoalCount
+      linkedIssueCount
+      researchPaperCount
+    }
+    model
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetRoutineAnalysesQuery__
+ *
+ * To run a query within a React component, call `useGetRoutineAnalysesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetRoutineAnalysesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetRoutineAnalysesQuery({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGetRoutineAnalysesQuery(baseOptions: Apollo.QueryHookOptions<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables> & ({ variables: GetRoutineAnalysesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>(GetRoutineAnalysesDocument, options);
+      }
+export function useGetRoutineAnalysesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>(GetRoutineAnalysesDocument, options);
+        }
+// @ts-ignore
+export function useGetRoutineAnalysesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>): Apollo.UseSuspenseQueryResult<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>;
+export function useGetRoutineAnalysesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>): Apollo.UseSuspenseQueryResult<GetRoutineAnalysesQuery | undefined, GetRoutineAnalysesQueryVariables>;
+export function useGetRoutineAnalysesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>(GetRoutineAnalysesDocument, options);
+        }
+export type GetRoutineAnalysesQueryHookResult = ReturnType<typeof useGetRoutineAnalysesQuery>;
+export type GetRoutineAnalysesLazyQueryHookResult = ReturnType<typeof useGetRoutineAnalysesLazyQuery>;
+export type GetRoutineAnalysesSuspenseQueryHookResult = ReturnType<typeof useGetRoutineAnalysesSuspenseQuery>;
+export type GetRoutineAnalysesQueryResult = Apollo.QueryResult<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>;
+export const GetRoutineAnalysisDocument = gql`
+    query GetRoutineAnalysis($id: Int!) {
+  routineAnalysis(id: $id) {
+    id
+    familyMemberId
+    createdBy
+    jobId
+    summary
+    adherencePatterns {
+      habitId
+      habitTitle
+      frequency
+      targetCount
+      observedCount
+      consistency
+      currentStreak
+      longestStreak
+      missedPattern
+      interpretation
+    }
+    routineBalance {
+      domainsCovered
+      domainsMissing
+      overEmphasized
+      underEmphasized
+      verdict
+    }
+    streaks {
+      strongestHabitId
+      strongestStreak
+      weakestHabitId
+      weakestStreak
+      momentum
+    }
+    gaps {
+      area
+      rationale
+      severity
+    }
+    optimizationSuggestions {
+      title
+      rationale
+      priority
+      changeType
+      targetHabitId
+      suggestedFrequency
+      suggestedTargetCount
+      concreteSteps
+      ageAppropriate
+      developmentalContext
+    }
+    researchRelevance {
+      topic
+      relevantResearchIds
+      relevantResearchTitles
+      coverageGaps
+    }
+    dataSnapshot {
+      habitsCount
+      activeDailyCount
+      activeWeeklyCount
+      logCount
+      windowDays
+      overallAdherence
+      linkedGoalCount
+      linkedIssueCount
+      researchPaperCount
+    }
+    model
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetRoutineAnalysisQuery__
+ *
+ * To run a query within a React component, call `useGetRoutineAnalysisQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetRoutineAnalysisQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetRoutineAnalysisQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetRoutineAnalysisQuery(baseOptions: Apollo.QueryHookOptions<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables> & ({ variables: GetRoutineAnalysisQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>(GetRoutineAnalysisDocument, options);
+      }
+export function useGetRoutineAnalysisLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>(GetRoutineAnalysisDocument, options);
+        }
+// @ts-ignore
+export function useGetRoutineAnalysisSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>): Apollo.UseSuspenseQueryResult<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>;
+export function useGetRoutineAnalysisSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>): Apollo.UseSuspenseQueryResult<GetRoutineAnalysisQuery | undefined, GetRoutineAnalysisQueryVariables>;
+export function useGetRoutineAnalysisSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>(GetRoutineAnalysisDocument, options);
+        }
+export type GetRoutineAnalysisQueryHookResult = ReturnType<typeof useGetRoutineAnalysisQuery>;
+export type GetRoutineAnalysisLazyQueryHookResult = ReturnType<typeof useGetRoutineAnalysisLazyQuery>;
+export type GetRoutineAnalysisSuspenseQueryHookResult = ReturnType<typeof useGetRoutineAnalysisSuspenseQuery>;
+export type GetRoutineAnalysisQueryResult = Apollo.QueryResult<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>;
 export const GetStoriesDocument = gql`
     query GetStories($goalId: Int!) {
   stories(goalId: $goalId) {

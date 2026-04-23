@@ -1,0 +1,7 @@
+mutation GenerateRoutineAnalysis($familyMemberId: Int!) {
+  generateRoutineAnalysis(familyMemberId: $familyMemberId) {
+    success
+    message
+    jobId
+  }
+}

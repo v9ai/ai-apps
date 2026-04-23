@@ -2958,6 +2958,68 @@ async function cascadeDeleteDeepAnalyses(
   await neonSql`DELETE FROM deep_analyses WHERE subject_type = ${subjectType} AND subject_id = ${subjectId} AND user_id = ${userId}`;
 }
 
+// ── Routine analyses (dedicated /routines/[slug] deep analysis) ──────────
+
+interface RoutineAnalysisRow {
+  id: number;
+  family_member_id: number;
+  user_id: string;
+  job_id: string | null;
+  summary: string;
+  adherence_patterns: string;
+  routine_balance: string;
+  streaks: string;
+  gaps: string;
+  optimization_suggestions: string;
+  research_relevance: string;
+  data_snapshot: string;
+  model: string;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapRoutineAnalysisRow(row: RoutineAnalysisRow) {
+  return {
+    id: row.id,
+    familyMemberId: row.family_member_id,
+    userId: row.user_id,
+    jobId: row.job_id,
+    summary: row.summary,
+    adherencePatterns: safeJsonParse(row.adherence_patterns, []),
+    routineBalance: safeJsonParse(row.routine_balance, {}),
+    streaks: safeJsonParse(row.streaks, {}),
+    gaps: safeJsonParse(row.gaps, []),
+    optimizationSuggestions: safeJsonParse(row.optimization_suggestions, []),
+    researchRelevance: safeJsonParse(row.research_relevance, []),
+    dataSnapshot: safeJsonParse(row.data_snapshot, {}),
+    model: row.model,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function getRoutineAnalysis(id: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM routine_analyses WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  return mapRoutineAnalysisRow(rows[0] as unknown as RoutineAnalysisRow);
+}
+
+export async function getRoutineAnalysesByFamilyMember(
+  familyMemberId: number,
+  userId: string,
+) {
+  const rows = await neonSql`
+    SELECT * FROM routine_analyses
+    WHERE family_member_id = ${familyMemberId}
+      AND user_id = ${userId}
+    ORDER BY created_at DESC`;
+  return rows.map((r) => mapRoutineAnalysisRow(r as unknown as RoutineAnalysisRow));
+}
+
+export async function deleteRoutineAnalysis(id: number, userId: string): Promise<void> {
+  await neonSql`DELETE FROM routine_analyses WHERE id = ${id} AND user_id = ${userId}`;
+}
+
 /**
  * Verify that the given goal row belongs to the caller.
  * Throws GraphQLError NOT_FOUND if the row doesn't exist or isn't owned.
@@ -3653,6 +3715,10 @@ export const db = {
   getDeepAnalysis,
   getDeepAnalysesForSubject,
   deleteDeepAnalysis,
+  // Routine Analyses (dedicated, /routines/[slug])
+  getRoutineAnalysis,
+  getRoutineAnalysesByFamilyMember,
+  deleteRoutineAnalysis,
   assertOwnsGoal,
   assertOwnsNote,
   assertOwnsJournalEntry,

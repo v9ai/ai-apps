@@ -561,6 +561,30 @@ export const habits = pgTable("habits", {
     .default(sql`NOW()`),
 });
 
+// Dedicated routine analysis — backs /routines/[slug] deep analysis.
+// Follows the same text-JSON convention as deepIssueAnalyses / deepAnalyses.
+export const routineAnalyses = pgTable("routine_analyses", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").notNull(),
+  userId: text("user_id").notNull(),
+  jobId: text("job_id"),
+  summary: text("summary").notNull(),
+  adherencePatterns: text("adherence_patterns").notNull().default("[]"), // JSON
+  routineBalance: text("routine_balance").notNull().default("{}"), // JSON
+  streaks: text("streaks").notNull().default("{}"), // JSON
+  gaps: text("gaps").notNull().default("[]"), // JSON
+  optimizationSuggestions: text("optimization_suggestions").notNull().default("[]"), // JSON
+  researchRelevance: text("research_relevance").notNull().default("[]"), // JSON
+  dataSnapshot: text("data_snapshot").notNull().default("{}"), // JSON
+  model: text("model").notNull().default("deepseek-chat"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const habitLogs = pgTable("habit_logs", {
   id: serial("id").primaryKey(),
   habitId: integer("habit_id").notNull().references(() => habits.id, { onDelete: "cascade" }),

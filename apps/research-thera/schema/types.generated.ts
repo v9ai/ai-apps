@@ -576,6 +576,12 @@ export type DeleteResearchResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteRoutineAnalysisResult = {
+  __typename?: 'DeleteRoutineAnalysisResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteStoryResult = {
   __typename?: 'DeleteStoryResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -833,6 +839,13 @@ export type GenerateResearchResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GenerateRoutineAnalysisResult = {
+  __typename?: 'GenerateRoutineAnalysisResult';
+  jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerationJob = {
   __typename?: 'GenerationJob';
   createdAt: Scalars['String']['output'];
@@ -896,6 +909,20 @@ export type Habit = {
   todayLog?: Maybe<HabitLog>;
   updatedAt: Scalars['String']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type HabitAdherence = {
+  __typename?: 'HabitAdherence';
+  consistency: Scalars['Float']['output'];
+  currentStreak: Scalars['Int']['output'];
+  frequency: Scalars['String']['output'];
+  habitId: Scalars['Int']['output'];
+  habitTitle: Scalars['String']['output'];
+  interpretation: Scalars['String']['output'];
+  longestStreak: Scalars['Int']['output'];
+  missedPattern?: Maybe<Scalars['String']['output']>;
+  observedCount: Scalars['Int']['output'];
+  targetCount: Scalars['Int']['output'];
 };
 
 export type HabitFrequency =
@@ -1096,6 +1123,7 @@ export type Mutation = {
   deleteRecommendedBooks: DeleteRecommendedBooksResult;
   deleteRelationship: DeleteRelationshipResult;
   deleteResearch: DeleteResearchResult;
+  deleteRoutineAnalysis: DeleteRoutineAnalysisResult;
   deleteStory: DeleteStoryResult;
   deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
@@ -1112,6 +1140,7 @@ export type Mutation = {
   generateParentAdvice: GenerateParentAdviceResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
   generateResearch: GenerateResearchResult;
+  generateRoutineAnalysis: GenerateRoutineAnalysisResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
   linkContactToIssue: IssueContactLink;
   linkIssues: IssueLink;
@@ -1354,6 +1383,11 @@ export type MutationdeleteResearchArgs = {
 };
 
 
+export type MutationdeleteRoutineAnalysisArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationdeleteStoryArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1455,6 +1489,11 @@ export type MutationgenerateResearchArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationgenerateRoutineAnalysisArgs = {
+  familyMemberId: Scalars['Int']['input'];
 };
 
 
@@ -1841,6 +1880,8 @@ export type Query = {
   relationship?: Maybe<Relationship>;
   relationships: Array<Relationship>;
   research: Array<Research>;
+  routineAnalyses: Array<RoutineAnalysis>;
+  routineAnalysis?: Maybe<RoutineAnalysis>;
   stories: Array<Story>;
   story?: Maybe<Story>;
   tagLanguage?: Maybe<Scalars['String']['output']>;
@@ -2050,6 +2091,16 @@ export type QueryresearchArgs = {
 };
 
 
+export type QueryroutineAnalysesArgs = {
+  familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type QueryroutineAnalysisArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type QuerystoriesArgs = {
   goalId: Scalars['Int']['input'];
 };
@@ -2173,6 +2224,77 @@ export type ResearchSource =
   | 'PUBMED'
   | 'SEMANTIC_SCHOLAR';
 
+export type RoutineAnalysis = {
+  __typename?: 'RoutineAnalysis';
+  adherencePatterns: Array<HabitAdherence>;
+  createdAt: Scalars['String']['output'];
+  createdBy: Scalars['String']['output'];
+  dataSnapshot: RoutineDataSnapshot;
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId: Scalars['Int']['output'];
+  gaps: Array<RoutineGap>;
+  id: Scalars['Int']['output'];
+  jobId?: Maybe<Scalars['String']['output']>;
+  model: Scalars['String']['output'];
+  optimizationSuggestions: Array<RoutineOptimization>;
+  researchRelevance: Array<RoutineResearchMapping>;
+  routineBalance: RoutineBalance;
+  streaks: StreakSummary;
+  summary: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type RoutineBalance = {
+  __typename?: 'RoutineBalance';
+  domainsCovered: Array<Scalars['String']['output']>;
+  domainsMissing: Array<Scalars['String']['output']>;
+  overEmphasized: Array<Scalars['String']['output']>;
+  underEmphasized: Array<Scalars['String']['output']>;
+  verdict: Scalars['String']['output'];
+};
+
+export type RoutineDataSnapshot = {
+  __typename?: 'RoutineDataSnapshot';
+  activeDailyCount: Scalars['Int']['output'];
+  activeWeeklyCount: Scalars['Int']['output'];
+  habitsCount: Scalars['Int']['output'];
+  linkedGoalCount: Scalars['Int']['output'];
+  linkedIssueCount: Scalars['Int']['output'];
+  logCount: Scalars['Int']['output'];
+  overallAdherence: Scalars['Float']['output'];
+  researchPaperCount: Scalars['Int']['output'];
+  windowDays: Scalars['Int']['output'];
+};
+
+export type RoutineGap = {
+  __typename?: 'RoutineGap';
+  area: Scalars['String']['output'];
+  rationale: Scalars['String']['output'];
+  severity: Scalars['String']['output'];
+};
+
+export type RoutineOptimization = {
+  __typename?: 'RoutineOptimization';
+  ageAppropriate: Scalars['Boolean']['output'];
+  changeType: Scalars['String']['output'];
+  concreteSteps: Array<Scalars['String']['output']>;
+  developmentalContext?: Maybe<Scalars['String']['output']>;
+  priority: Scalars['String']['output'];
+  rationale: Scalars['String']['output'];
+  suggestedFrequency?: Maybe<Scalars['String']['output']>;
+  suggestedTargetCount?: Maybe<Scalars['Int']['output']>;
+  targetHabitId?: Maybe<Scalars['Int']['output']>;
+  title: Scalars['String']['output'];
+};
+
+export type RoutineResearchMapping = {
+  __typename?: 'RoutineResearchMapping';
+  coverageGaps: Array<Scalars['String']['output']>;
+  relevantResearchIds: Array<Scalars['Int']['output']>;
+  relevantResearchTitles: Array<Scalars['String']['output']>;
+  topic: Scalars['String']['output'];
+};
+
 export type Story = {
   __typename?: 'Story';
   audioAssets: Array<AudioAsset>;
@@ -2192,6 +2314,15 @@ export type Story = {
   minutes?: Maybe<Scalars['Int']['output']>;
   segments: Array<TextSegment>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type StreakSummary = {
+  __typename?: 'StreakSummary';
+  momentum: Scalars['String']['output'];
+  strongestHabitId?: Maybe<Scalars['Int']['output']>;
+  strongestStreak: Scalars['Int']['output'];
+  weakestHabitId?: Maybe<Scalars['Int']['output']>;
+  weakestStreak: Scalars['Int']['output'];
 };
 
 export type Subscription = {
@@ -2574,6 +2705,7 @@ export type ResolversTypes = {
   DeleteRecommendedBooksResult: ResolverTypeWrapper<DeleteRecommendedBooksResult>;
   DeleteRelationshipResult: ResolverTypeWrapper<DeleteRelationshipResult>;
   DeleteResearchResult: ResolverTypeWrapper<DeleteResearchResult>;
+  DeleteRoutineAnalysisResult: ResolverTypeWrapper<DeleteRoutineAnalysisResult>;
   DeleteStoryResult: ResolverTypeWrapper<DeleteStoryResult>;
   DeleteTeacherFeedbackResult: ResolverTypeWrapper<DeleteTeacherFeedbackResult>;
   DevelopmentalContext: ResolverTypeWrapper<DevelopmentalContext>;
@@ -2602,9 +2734,11 @@ export type ResolversTypes = {
   GenerateQuestionsResult: ResolverTypeWrapper<GenerateQuestionsResult>;
   GenerateRecommendedBooksResult: ResolverTypeWrapper<GenerateRecommendedBooksResult>;
   GenerateResearchResult: ResolverTypeWrapper<GenerateResearchResult>;
+  GenerateRoutineAnalysisResult: ResolverTypeWrapper<GenerateRoutineAnalysisResult>;
   GenerationJob: ResolverTypeWrapper<Omit<GenerationJob, 'status' | 'type'> & { status: ResolversTypes['JobStatus'], type: ResolversTypes['JobType'] }>;
   Goal: ResolverTypeWrapper<Omit<Goal, 'familyMember' | 'notes' | 'parentGoal' | 'research' | 'stories' | 'subGoals'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, notes: Array<ResolversTypes['Note']>, parentGoal?: Maybe<ResolversTypes['Goal']>, research: Array<ResolversTypes['Research']>, stories: Array<ResolversTypes['Story']>, subGoals: Array<ResolversTypes['Goal']> }>;
   Habit: ResolverTypeWrapper<Omit<Habit, 'frequency' | 'status'> & { frequency: ResolversTypes['HabitFrequency'], status: ResolversTypes['HabitStatus'] }>;
+  HabitAdherence: ResolverTypeWrapper<HabitAdherence>;
   HabitFrequency: ResolverTypeWrapper<'DAILY' | 'WEEKLY'>;
   HabitLog: ResolverTypeWrapper<HabitLog>;
   HabitStatus: ResolverTypeWrapper<'ACTIVE' | 'PAUSED' | 'ARCHIVED'>;
@@ -2645,7 +2779,14 @@ export type ResolversTypes = {
   Research: ResolverTypeWrapper<Omit<Research, 'goal'> & { goal?: Maybe<ResolversTypes['Goal']> }>;
   ResearchRelevanceMapping: ResolverTypeWrapper<ResearchRelevanceMapping>;
   ResearchSource: ResolverTypeWrapper<'ARXIV' | 'CROSSREF' | 'DATACITE' | 'EUROPEPMC' | 'OPENALEX' | 'PUBMED' | 'SEMANTIC_SCHOLAR'>;
+  RoutineAnalysis: ResolverTypeWrapper<Omit<RoutineAnalysis, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
+  RoutineBalance: ResolverTypeWrapper<RoutineBalance>;
+  RoutineDataSnapshot: ResolverTypeWrapper<RoutineDataSnapshot>;
+  RoutineGap: ResolverTypeWrapper<RoutineGap>;
+  RoutineOptimization: ResolverTypeWrapper<RoutineOptimization>;
+  RoutineResearchMapping: ResolverTypeWrapper<RoutineResearchMapping>;
   Story: ResolverTypeWrapper<Omit<Story, 'goal' | 'issue'> & { goal?: Maybe<ResolversTypes['Goal']>, issue?: Maybe<ResolversTypes['Issue']> }>;
+  StreakSummary: ResolverTypeWrapper<StreakSummary>;
   Subscription: ResolverTypeWrapper<Record<PropertyKey, never>>;
   TalkingPoint: ResolverTypeWrapper<TalkingPoint>;
   TeacherFeedback: ResolverTypeWrapper<Omit<TeacherFeedback, 'familyMember' | 'source'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, source?: Maybe<ResolversTypes['FeedbackSource']> }>;
@@ -2738,6 +2879,7 @@ export type ResolversParentTypes = {
   DeleteRecommendedBooksResult: DeleteRecommendedBooksResult;
   DeleteRelationshipResult: DeleteRelationshipResult;
   DeleteResearchResult: DeleteResearchResult;
+  DeleteRoutineAnalysisResult: DeleteRoutineAnalysisResult;
   DeleteStoryResult: DeleteStoryResult;
   DeleteTeacherFeedbackResult: DeleteTeacherFeedbackResult;
   DevelopmentalContext: DevelopmentalContext;
@@ -2762,9 +2904,11 @@ export type ResolversParentTypes = {
   GenerateQuestionsResult: GenerateQuestionsResult;
   GenerateRecommendedBooksResult: GenerateRecommendedBooksResult;
   GenerateResearchResult: GenerateResearchResult;
+  GenerateRoutineAnalysisResult: GenerateRoutineAnalysisResult;
   GenerationJob: GenerationJob;
   Goal: Omit<Goal, 'familyMember' | 'notes' | 'parentGoal' | 'research' | 'stories' | 'subGoals'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, notes: Array<ResolversParentTypes['Note']>, parentGoal?: Maybe<ResolversParentTypes['Goal']>, research: Array<ResolversParentTypes['Research']>, stories: Array<ResolversParentTypes['Story']>, subGoals: Array<ResolversParentTypes['Goal']> };
   Habit: Habit;
+  HabitAdherence: HabitAdherence;
   HabitLog: HabitLog;
   Issue: Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversParentTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']>, relatedIssues: Array<ResolversParentTypes['IssueLink']>, stories: Array<ResolversParentTypes['Story']> };
   IssueContactLink: IssueContactLink;
@@ -2792,7 +2936,14 @@ export type ResolversParentTypes = {
   RelationshipPerson: RelationshipPerson;
   Research: Omit<Research, 'goal'> & { goal?: Maybe<ResolversParentTypes['Goal']> };
   ResearchRelevanceMapping: ResearchRelevanceMapping;
+  RoutineAnalysis: Omit<RoutineAnalysis, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
+  RoutineBalance: RoutineBalance;
+  RoutineDataSnapshot: RoutineDataSnapshot;
+  RoutineGap: RoutineGap;
+  RoutineOptimization: RoutineOptimization;
+  RoutineResearchMapping: RoutineResearchMapping;
   Story: Omit<Story, 'goal' | 'issue'> & { goal?: Maybe<ResolversParentTypes['Goal']>, issue?: Maybe<ResolversParentTypes['Issue']> };
+  StreakSummary: StreakSummary;
   Subscription: Record<PropertyKey, never>;
   TalkingPoint: TalkingPoint;
   TeacherFeedback: Omit<TeacherFeedback, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
@@ -3167,6 +3318,11 @@ export type DeleteResearchResultResolvers<ContextType = GraphQLContext, ParentTy
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type DeleteRoutineAnalysisResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteRoutineAnalysisResult'] = ResolversParentTypes['DeleteRoutineAnalysisResult']> = {
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type DeleteStoryResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteStoryResult'] = ResolversParentTypes['DeleteStoryResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -3368,6 +3524,12 @@ export type GenerateResearchResultResolvers<ContextType = GraphQLContext, Parent
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type GenerateRoutineAnalysisResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateRoutineAnalysisResult'] = ResolversParentTypes['GenerateRoutineAnalysisResult']> = {
+  jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type GenerationJobResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerationJob'] = ResolversParentTypes['GenerationJob']> = {
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   error?: Resolver<Maybe<ResolversTypes['JobError']>, ParentType, ContextType>;
@@ -3428,6 +3590,19 @@ export type HabitResolvers<ContextType = GraphQLContext, ParentType extends Reso
   todayLog?: Resolver<Maybe<ResolversTypes['HabitLog']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type HabitAdherenceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HabitAdherence'] = ResolversParentTypes['HabitAdherence']> = {
+  consistency?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  currentStreak?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  frequency?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  habitId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  habitTitle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  interpretation?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  longestStreak?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  missedPattern?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  observedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  targetCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type HabitFrequencyResolvers = EnumResolverSignature<{ DAILY?: any, WEEKLY?: any }, ResolversTypes['HabitFrequency']>;
@@ -3602,6 +3777,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteRecommendedBooks?: Resolver<ResolversTypes['DeleteRecommendedBooksResult'], ParentType, ContextType, Partial<MutationdeleteRecommendedBooksArgs>>;
   deleteRelationship?: Resolver<ResolversTypes['DeleteRelationshipResult'], ParentType, ContextType, RequireFields<MutationdeleteRelationshipArgs, 'id'>>;
   deleteResearch?: Resolver<ResolversTypes['DeleteResearchResult'], ParentType, ContextType, RequireFields<MutationdeleteResearchArgs, 'goalId'>>;
+  deleteRoutineAnalysis?: Resolver<ResolversTypes['DeleteRoutineAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteRoutineAnalysisArgs, 'id'>>;
   deleteStory?: Resolver<ResolversTypes['DeleteStoryResult'], ParentType, ContextType, RequireFields<MutationdeleteStoryArgs, 'id'>>;
   deleteTeacherFeedback?: Resolver<ResolversTypes['DeleteTeacherFeedbackResult'], ParentType, ContextType, RequireFields<MutationdeleteTeacherFeedbackArgs, 'id'>>;
   deleteTherapeuticQuestions?: Resolver<ResolversTypes['DeleteQuestionsResult'], ParentType, ContextType, Partial<MutationdeleteTherapeuticQuestionsArgs>>;
@@ -3618,6 +3794,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateParentAdvice?: Resolver<ResolversTypes['GenerateParentAdviceResult'], ParentType, ContextType, RequireFields<MutationgenerateParentAdviceArgs, 'goalId'>>;
   generateRecommendedBooks?: Resolver<ResolversTypes['GenerateRecommendedBooksResult'], ParentType, ContextType, Partial<MutationgenerateRecommendedBooksArgs>>;
   generateResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, Partial<MutationgenerateResearchArgs>>;
+  generateRoutineAnalysis?: Resolver<ResolversTypes['GenerateRoutineAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateRoutineAnalysisArgs, 'familyMemberId'>>;
   generateTherapeuticQuestions?: Resolver<ResolversTypes['GenerateQuestionsResult'], ParentType, ContextType, Partial<MutationgenerateTherapeuticQuestionsArgs>>;
   linkContactToIssue?: Resolver<ResolversTypes['IssueContactLink'], ParentType, ContextType, RequireFields<MutationlinkContactToIssueArgs, 'contactId' | 'issueId'>>;
   linkIssues?: Resolver<ResolversTypes['IssueLink'], ParentType, ContextType, RequireFields<MutationlinkIssuesArgs, 'issueId' | 'linkedIssueId'>>;
@@ -3808,6 +3985,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   relationship?: Resolver<Maybe<ResolversTypes['Relationship']>, ParentType, ContextType, RequireFields<QueryrelationshipArgs, 'id'>>;
   relationships?: Resolver<Array<ResolversTypes['Relationship']>, ParentType, ContextType, RequireFields<QueryrelationshipsArgs, 'subjectId' | 'subjectType'>>;
   research?: Resolver<Array<ResolversTypes['Research']>, ParentType, ContextType, Partial<QueryresearchArgs>>;
+  routineAnalyses?: Resolver<Array<ResolversTypes['RoutineAnalysis']>, ParentType, ContextType, RequireFields<QueryroutineAnalysesArgs, 'familyMemberId'>>;
+  routineAnalysis?: Resolver<Maybe<ResolversTypes['RoutineAnalysis']>, ParentType, ContextType, RequireFields<QueryroutineAnalysisArgs, 'id'>>;
   stories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType, RequireFields<QuerystoriesArgs, 'goalId'>>;
   story?: Resolver<Maybe<ResolversTypes['Story']>, ParentType, ContextType, RequireFields<QuerystoryArgs, 'id'>>;
   tagLanguage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<QuerytagLanguageArgs, 'tag'>>;
@@ -3896,6 +4075,71 @@ export type ResearchRelevanceMappingResolvers<ContextType = GraphQLContext, Pare
 
 export type ResearchSourceResolvers = EnumResolverSignature<{ ARXIV?: any, CROSSREF?: any, DATACITE?: any, EUROPEPMC?: any, OPENALEX?: any, PUBMED?: any, SEMANTIC_SCHOLAR?: any }, ResolversTypes['ResearchSource']>;
 
+export type RoutineAnalysisResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RoutineAnalysis'] = ResolversParentTypes['RoutineAnalysis']> = {
+  adherencePatterns?: Resolver<Array<ResolversTypes['HabitAdherence']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdBy?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  dataSnapshot?: Resolver<ResolversTypes['RoutineDataSnapshot'], ParentType, ContextType>;
+  familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
+  familyMemberId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  gaps?: Resolver<Array<ResolversTypes['RoutineGap']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  optimizationSuggestions?: Resolver<Array<ResolversTypes['RoutineOptimization']>, ParentType, ContextType>;
+  researchRelevance?: Resolver<Array<ResolversTypes['RoutineResearchMapping']>, ParentType, ContextType>;
+  routineBalance?: Resolver<ResolversTypes['RoutineBalance'], ParentType, ContextType>;
+  streaks?: Resolver<ResolversTypes['StreakSummary'], ParentType, ContextType>;
+  summary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type RoutineBalanceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RoutineBalance'] = ResolversParentTypes['RoutineBalance']> = {
+  domainsCovered?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  domainsMissing?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  overEmphasized?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  underEmphasized?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  verdict?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type RoutineDataSnapshotResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RoutineDataSnapshot'] = ResolversParentTypes['RoutineDataSnapshot']> = {
+  activeDailyCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  activeWeeklyCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  habitsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  linkedGoalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  linkedIssueCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  logCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  overallAdherence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  researchPaperCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  windowDays?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type RoutineGapResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RoutineGap'] = ResolversParentTypes['RoutineGap']> = {
+  area?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  rationale?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  severity?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type RoutineOptimizationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RoutineOptimization'] = ResolversParentTypes['RoutineOptimization']> = {
+  ageAppropriate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  changeType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  concreteSteps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  developmentalContext?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  priority?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  rationale?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  suggestedFrequency?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  suggestedTargetCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  targetHabitId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type RoutineResearchMappingResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RoutineResearchMapping'] = ResolversParentTypes['RoutineResearchMapping']> = {
+  coverageGaps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  relevantResearchIds?: Resolver<Array<ResolversTypes['Int']>, ParentType, ContextType>;
+  relevantResearchTitles?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  topic?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type StoryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Story'] = ResolversParentTypes['Story']> = {
   audioAssets?: Resolver<Array<ResolversTypes['AudioAsset']>, ParentType, ContextType>;
   audioGeneratedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3914,6 +4158,14 @@ export type StoryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   minutes?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   segments?: Resolver<Array<ResolversTypes['TextSegment']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type StreakSummaryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StreakSummary'] = ResolversParentTypes['StreakSummary']> = {
+  momentum?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  strongestHabitId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  strongestStreak?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  weakestHabitId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  weakestStreak?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
@@ -4062,6 +4314,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteRecommendedBooksResult?: DeleteRecommendedBooksResultResolvers<ContextType>;
   DeleteRelationshipResult?: DeleteRelationshipResultResolvers<ContextType>;
   DeleteResearchResult?: DeleteResearchResultResolvers<ContextType>;
+  DeleteRoutineAnalysisResult?: DeleteRoutineAnalysisResultResolvers<ContextType>;
   DeleteStoryResult?: DeleteStoryResultResolvers<ContextType>;
   DeleteTeacherFeedbackResult?: DeleteTeacherFeedbackResultResolvers<ContextType>;
   DevelopmentalContext?: DevelopmentalContextResolvers<ContextType>;
@@ -4089,9 +4342,11 @@ export type Resolvers<ContextType = GraphQLContext> = {
   GenerateQuestionsResult?: GenerateQuestionsResultResolvers<ContextType>;
   GenerateRecommendedBooksResult?: GenerateRecommendedBooksResultResolvers<ContextType>;
   GenerateResearchResult?: GenerateResearchResultResolvers<ContextType>;
+  GenerateRoutineAnalysisResult?: GenerateRoutineAnalysisResultResolvers<ContextType>;
   GenerationJob?: GenerationJobResolvers<ContextType>;
   Goal?: GoalResolvers<ContextType>;
   Habit?: HabitResolvers<ContextType>;
+  HabitAdherence?: HabitAdherenceResolvers<ContextType>;
   HabitFrequency?: HabitFrequencyResolvers;
   HabitLog?: HabitLogResolvers<ContextType>;
   HabitStatus?: HabitStatusResolvers;
@@ -4132,7 +4387,14 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Research?: ResearchResolvers<ContextType>;
   ResearchRelevanceMapping?: ResearchRelevanceMappingResolvers<ContextType>;
   ResearchSource?: ResearchSourceResolvers;
+  RoutineAnalysis?: RoutineAnalysisResolvers<ContextType>;
+  RoutineBalance?: RoutineBalanceResolvers<ContextType>;
+  RoutineDataSnapshot?: RoutineDataSnapshotResolvers<ContextType>;
+  RoutineGap?: RoutineGapResolvers<ContextType>;
+  RoutineOptimization?: RoutineOptimizationResolvers<ContextType>;
+  RoutineResearchMapping?: RoutineResearchMappingResolvers<ContextType>;
   Story?: StoryResolvers<ContextType>;
+  StreakSummary?: StreakSummaryResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
   TalkingPoint?: TalkingPointResolvers<ContextType>;
   TeacherFeedback?: TeacherFeedbackResolvers<ContextType>;

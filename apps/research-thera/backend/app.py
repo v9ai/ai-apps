@@ -38,6 +38,7 @@ from research_agent.graph import graph as research_graph
 from research_agent.habits_graph import graph as habits_graph
 from research_agent.journal_analysis_graph import graph as journal_analysis_graph
 from research_agent.parent_advice_graph import graph as parent_advice_graph
+from research_agent.routine_analysis_graph import graph as routine_analysis_graph
 from research_agent.story_graph import graph as story_graph
 from research_agent.tts_graph import graph as tts_graph
 
@@ -52,6 +53,7 @@ GRAPHS: dict[str, Any] = {
     "journal_analysis": journal_analysis_graph,
     "parent_advice": parent_advice_graph,
     "research": research_graph,
+    "routine_analysis": routine_analysis_graph,
     "story": story_graph,
     "tts": tts_graph,
 }

@@ -137,6 +137,10 @@ type Query {
   deepAnalysis(id: Int!): DeepAnalysis
   deepAnalyses(subjectType: DeepAnalysisSubjectType!, subjectId: Int!): [DeepAnalysis!]!
 
+  # Routine Analysis (dedicated — backs /routines/[slug])
+  routineAnalysis(id: Int!): RoutineAnalysis
+  routineAnalyses(familyMemberId: Int!): [RoutineAnalysis!]!
+
   # Claim Cards
   claimCard(id: ID!): ClaimCard
   claimCardsForNote(noteId: Int!): [ClaimCard!]!
@@ -275,6 +279,10 @@ type Mutation {
     triggerId: Int
   ): GenerateDeepAnalysisResult!
   deleteDeepAnalysis(id: Int!): DeleteDeepAnalysisResult!
+
+  # Routine Analysis (dedicated — backs /routines/[slug])
+  generateRoutineAnalysis(familyMemberId: Int!): GenerateRoutineAnalysisResult!
+  deleteRoutineAnalysis(id: Int!): DeleteRoutineAnalysisResult!
 
   # Journal Analysis
   generateJournalAnalysis(journalEntryId: Int!): GenerateJournalAnalysisResult!
@@ -1777,4 +1785,105 @@ type DeepAnalysis {
   note: Note
   journalEntry: JournalEntry
   familyMember: FamilyMember
+}
+
+# ============================================
+# Routine Analysis (dedicated — /routines/[slug])
+# ============================================
+
+type HabitAdherence {
+  habitId: Int!
+  habitTitle: String!
+  frequency: String!
+  targetCount: Int!
+  observedCount: Int!
+  consistency: Float!
+  currentStreak: Int!
+  longestStreak: Int!
+  missedPattern: String
+  interpretation: String!
+}
+
+type RoutineBalance {
+  domainsCovered: [String!]!
+  domainsMissing: [String!]!
+  overEmphasized: [String!]!
+  underEmphasized: [String!]!
+  verdict: String!
+}
+
+type StreakSummary {
+  strongestHabitId: Int
+  strongestStreak: Int!
+  weakestHabitId: Int
+  weakestStreak: Int!
+  momentum: String!
+}
+
+type RoutineGap {
+  area: String!
+  rationale: String!
+  severity: String!
+}
+
+type RoutineOptimization {
+  title: String!
+  rationale: String!
+  priority: String!
+  changeType: String!
+  targetHabitId: Int
+  suggestedFrequency: String
+  suggestedTargetCount: Int
+  concreteSteps: [String!]!
+  ageAppropriate: Boolean!
+  developmentalContext: String
+}
+
+type RoutineResearchMapping {
+  topic: String!
+  relevantResearchIds: [Int!]!
+  relevantResearchTitles: [String!]!
+  coverageGaps: [String!]!
+}
+
+type RoutineDataSnapshot {
+  habitsCount: Int!
+  activeDailyCount: Int!
+  activeWeeklyCount: Int!
+  logCount: Int!
+  windowDays: Int!
+  overallAdherence: Float!
+  linkedGoalCount: Int!
+  linkedIssueCount: Int!
+  researchPaperCount: Int!
+}
+
+type RoutineAnalysis {
+  id: Int!
+  familyMemberId: Int!
+  createdBy: String!
+  jobId: String
+  summary: String!
+  adherencePatterns: [HabitAdherence!]!
+  routineBalance: RoutineBalance!
+  streaks: StreakSummary!
+  gaps: [RoutineGap!]!
+  optimizationSuggestions: [RoutineOptimization!]!
+  researchRelevance: [RoutineResearchMapping!]!
+  dataSnapshot: RoutineDataSnapshot!
+  model: String!
+  createdAt: String!
+  updatedAt: String!
+  familyMember: FamilyMember
+}
+
+type GenerateRoutineAnalysisResult {
+  success: Boolean!
+  message: String
+  jobId: String
+}
+
+type DeleteRoutineAnalysisResult {
+  success: Boolean!
+  message: String
 }

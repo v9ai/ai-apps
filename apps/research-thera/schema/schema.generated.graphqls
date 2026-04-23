@@ -520,6 +520,11 @@ type DeleteResearchResult {
   success: Boolean!
 }
 
+type DeleteRoutineAnalysisResult {
+  message: String
+  success: Boolean!
+}
+
 type DeleteStoryResult {
   message: String
   success: Boolean!
@@ -753,6 +758,12 @@ type GenerateResearchResult {
   success: Boolean!
 }
 
+type GenerateRoutineAnalysisResult {
+  jobId: String
+  message: String
+  success: Boolean!
+}
+
 type GenerationJob {
   createdAt: String!
   error: JobError
@@ -813,6 +824,19 @@ type Habit {
   todayLog: HabitLog
   updatedAt: String!
   userId: String!
+}
+
+type HabitAdherence {
+  consistency: Float!
+  currentStreak: Int!
+  frequency: String!
+  habitId: Int!
+  habitTitle: String!
+  interpretation: String!
+  longestStreak: Int!
+  missedPattern: String
+  observedCount: Int!
+  targetCount: Int!
 }
 
 enum HabitFrequency {
@@ -1005,6 +1029,7 @@ type Mutation {
   deleteRecommendedBooks(goalId: Int, journalEntryId: Int): DeleteRecommendedBooksResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
+  deleteRoutineAnalysis(id: Int!): DeleteRoutineAnalysisResult!
   deleteStory(id: Int!): DeleteStoryResult!
   deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
@@ -1021,6 +1046,7 @@ type Mutation {
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
   generateRecommendedBooks(goalId: Int, journalEntryId: Int): GenerateRecommendedBooksResult!
   generateResearch(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): GenerateResearchResult!
+  generateRoutineAnalysis(familyMemberId: Int!): GenerateRoutineAnalysisResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   linkContactToIssue(contactId: Int!, issueId: Int!): IssueContactLink!
   linkIssues(issueId: Int!, linkType: String, linkedIssueId: Int!): IssueLink!
@@ -1248,6 +1274,8 @@ type Query {
   relationship(id: Int!): Relationship
   relationships(subjectId: Int!, subjectType: PersonType!): [Relationship!]!
   research(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): [Research!]!
+  routineAnalyses(familyMemberId: Int!): [RoutineAnalysis!]!
+  routineAnalysis(id: Int!): RoutineAnalysis
   stories(goalId: Int!): [Story!]!
   story(id: Int!): Story
   tagLanguage(tag: String!): String
@@ -1347,6 +1375,71 @@ enum ResearchSource {
   SEMANTIC_SCHOLAR
 }
 
+type RoutineAnalysis {
+  adherencePatterns: [HabitAdherence!]!
+  createdAt: String!
+  createdBy: String!
+  dataSnapshot: RoutineDataSnapshot!
+  familyMember: FamilyMember
+  familyMemberId: Int!
+  gaps: [RoutineGap!]!
+  id: Int!
+  jobId: String
+  model: String!
+  optimizationSuggestions: [RoutineOptimization!]!
+  researchRelevance: [RoutineResearchMapping!]!
+  routineBalance: RoutineBalance!
+  streaks: StreakSummary!
+  summary: String!
+  updatedAt: String!
+}
+
+type RoutineBalance {
+  domainsCovered: [String!]!
+  domainsMissing: [String!]!
+  overEmphasized: [String!]!
+  underEmphasized: [String!]!
+  verdict: String!
+}
+
+type RoutineDataSnapshot {
+  activeDailyCount: Int!
+  activeWeeklyCount: Int!
+  habitsCount: Int!
+  linkedGoalCount: Int!
+  linkedIssueCount: Int!
+  logCount: Int!
+  overallAdherence: Float!
+  researchPaperCount: Int!
+  windowDays: Int!
+}
+
+type RoutineGap {
+  area: String!
+  rationale: String!
+  severity: String!
+}
+
+type RoutineOptimization {
+  ageAppropriate: Boolean!
+  changeType: String!
+  concreteSteps: [String!]!
+  developmentalContext: String
+  priority: String!
+  rationale: String!
+  suggestedFrequency: String
+  suggestedTargetCount: Int
+  targetHabitId: Int
+  title: String!
+}
+
+type RoutineResearchMapping {
+  coverageGaps: [String!]!
+  relevantResearchIds: [Int!]!
+  relevantResearchTitles: [String!]!
+  topic: String!
+}
+
 type Story {
   audioAssets: [AudioAsset!]!
   audioGeneratedAt: String
@@ -1365,6 +1458,14 @@ type Story {
   minutes: Int
   segments: [TextSegment!]!
   updatedAt: String!
+}
+
+type StreakSummary {
+  momentum: String!
+  strongestHabitId: Int
+  strongestStreak: Int!
+  weakestHabitId: Int
+  weakestStreak: Int!
 }
 
 type Subscription {

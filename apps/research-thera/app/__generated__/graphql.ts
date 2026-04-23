@@ -579,6 +579,12 @@ export type DeleteResearchResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteRoutineAnalysisResult = {
+  __typename?: 'DeleteRoutineAnalysisResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteStoryResult = {
   __typename?: 'DeleteStoryResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -840,6 +846,13 @@ export type GenerateResearchResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GenerateRoutineAnalysisResult = {
+  __typename?: 'GenerateRoutineAnalysisResult';
+  jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerationJob = {
   __typename?: 'GenerationJob';
   createdAt: Scalars['String']['output'];
@@ -903,6 +916,20 @@ export type Habit = {
   todayLog?: Maybe<HabitLog>;
   updatedAt: Scalars['String']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type HabitAdherence = {
+  __typename?: 'HabitAdherence';
+  consistency: Scalars['Float']['output'];
+  currentStreak: Scalars['Int']['output'];
+  frequency: Scalars['String']['output'];
+  habitId: Scalars['Int']['output'];
+  habitTitle: Scalars['String']['output'];
+  interpretation: Scalars['String']['output'];
+  longestStreak: Scalars['Int']['output'];
+  missedPattern?: Maybe<Scalars['String']['output']>;
+  observedCount: Scalars['Int']['output'];
+  targetCount: Scalars['Int']['output'];
 };
 
 export enum HabitFrequency {
@@ -1107,6 +1134,7 @@ export type Mutation = {
   deleteRecommendedBooks: DeleteRecommendedBooksResult;
   deleteRelationship: DeleteRelationshipResult;
   deleteResearch: DeleteResearchResult;
+  deleteRoutineAnalysis: DeleteRoutineAnalysisResult;
   deleteStory: DeleteStoryResult;
   deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
@@ -1123,6 +1151,7 @@ export type Mutation = {
   generateParentAdvice: GenerateParentAdviceResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
   generateResearch: GenerateResearchResult;
+  generateRoutineAnalysis: GenerateRoutineAnalysisResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
   linkContactToIssue: IssueContactLink;
   linkIssues: IssueLink;
@@ -1365,6 +1394,11 @@ export type MutationDeleteResearchArgs = {
 };
 
 
+export type MutationDeleteRoutineAnalysisArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationDeleteStoryArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1466,6 +1500,11 @@ export type MutationGenerateResearchArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationGenerateRoutineAnalysisArgs = {
+  familyMemberId: Scalars['Int']['input'];
 };
 
 
@@ -1859,6 +1898,8 @@ export type Query = {
   relationship?: Maybe<Relationship>;
   relationships: Array<Relationship>;
   research: Array<Research>;
+  routineAnalyses: Array<RoutineAnalysis>;
+  routineAnalysis?: Maybe<RoutineAnalysis>;
   stories: Array<Story>;
   story?: Maybe<Story>;
   tagLanguage?: Maybe<Scalars['String']['output']>;
@@ -2068,6 +2109,16 @@ export type QueryResearchArgs = {
 };
 
 
+export type QueryRoutineAnalysesArgs = {
+  familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type QueryRoutineAnalysisArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type QueryStoriesArgs = {
   goalId: Scalars['Int']['input'];
 };
@@ -2193,6 +2244,77 @@ export enum ResearchSource {
   SemanticScholar = 'SEMANTIC_SCHOLAR'
 }
 
+export type RoutineAnalysis = {
+  __typename?: 'RoutineAnalysis';
+  adherencePatterns: Array<HabitAdherence>;
+  createdAt: Scalars['String']['output'];
+  createdBy: Scalars['String']['output'];
+  dataSnapshot: RoutineDataSnapshot;
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId: Scalars['Int']['output'];
+  gaps: Array<RoutineGap>;
+  id: Scalars['Int']['output'];
+  jobId?: Maybe<Scalars['String']['output']>;
+  model: Scalars['String']['output'];
+  optimizationSuggestions: Array<RoutineOptimization>;
+  researchRelevance: Array<RoutineResearchMapping>;
+  routineBalance: RoutineBalance;
+  streaks: StreakSummary;
+  summary: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type RoutineBalance = {
+  __typename?: 'RoutineBalance';
+  domainsCovered: Array<Scalars['String']['output']>;
+  domainsMissing: Array<Scalars['String']['output']>;
+  overEmphasized: Array<Scalars['String']['output']>;
+  underEmphasized: Array<Scalars['String']['output']>;
+  verdict: Scalars['String']['output'];
+};
+
+export type RoutineDataSnapshot = {
+  __typename?: 'RoutineDataSnapshot';
+  activeDailyCount: Scalars['Int']['output'];
+  activeWeeklyCount: Scalars['Int']['output'];
+  habitsCount: Scalars['Int']['output'];
+  linkedGoalCount: Scalars['Int']['output'];
+  linkedIssueCount: Scalars['Int']['output'];
+  logCount: Scalars['Int']['output'];
+  overallAdherence: Scalars['Float']['output'];
+  researchPaperCount: Scalars['Int']['output'];
+  windowDays: Scalars['Int']['output'];
+};
+
+export type RoutineGap = {
+  __typename?: 'RoutineGap';
+  area: Scalars['String']['output'];
+  rationale: Scalars['String']['output'];
+  severity: Scalars['String']['output'];
+};
+
+export type RoutineOptimization = {
+  __typename?: 'RoutineOptimization';
+  ageAppropriate: Scalars['Boolean']['output'];
+  changeType: Scalars['String']['output'];
+  concreteSteps: Array<Scalars['String']['output']>;
+  developmentalContext?: Maybe<Scalars['String']['output']>;
+  priority: Scalars['String']['output'];
+  rationale: Scalars['String']['output'];
+  suggestedFrequency?: Maybe<Scalars['String']['output']>;
+  suggestedTargetCount?: Maybe<Scalars['Int']['output']>;
+  targetHabitId?: Maybe<Scalars['Int']['output']>;
+  title: Scalars['String']['output'];
+};
+
+export type RoutineResearchMapping = {
+  __typename?: 'RoutineResearchMapping';
+  coverageGaps: Array<Scalars['String']['output']>;
+  relevantResearchIds: Array<Scalars['Int']['output']>;
+  relevantResearchTitles: Array<Scalars['String']['output']>;
+  topic: Scalars['String']['output'];
+};
+
 export type Story = {
   __typename?: 'Story';
   audioAssets: Array<AudioAsset>;
@@ -2212,6 +2334,15 @@ export type Story = {
   minutes?: Maybe<Scalars['Int']['output']>;
   segments: Array<TextSegment>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type StreakSummary = {
+  __typename?: 'StreakSummary';
+  momentum: Scalars['String']['output'];
+  strongestHabitId?: Maybe<Scalars['Int']['output']>;
+  strongestStreak: Scalars['Int']['output'];
+  weakestHabitId?: Maybe<Scalars['Int']['output']>;
+  weakestStreak: Scalars['Int']['output'];
 };
 
 export type Subscription = {
@@ -2762,6 +2893,13 @@ export type DeleteResearchMutationVariables = Exact<{
 
 export type DeleteResearchMutation = { __typename?: 'Mutation', deleteResearch: { __typename?: 'DeleteResearchResult', success: boolean, message?: string | null, deletedCount: number } };
 
+export type DeleteRoutineAnalysisMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteRoutineAnalysisMutation = { __typename?: 'Mutation', deleteRoutineAnalysis: { __typename?: 'DeleteRoutineAnalysisResult', success: boolean, message?: string | null } };
+
 export type DeleteStoryMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -2910,6 +3048,13 @@ export type GenerateResearchMutationVariables = Exact<{
 
 
 export type GenerateResearchMutation = { __typename?: 'Mutation', generateResearch: { __typename?: 'GenerateResearchResult', success: boolean, message?: string | null, jobId?: string | null, count?: number | null } };
+
+export type GenerateRoutineAnalysisMutationVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type GenerateRoutineAnalysisMutation = { __typename?: 'Mutation', generateRoutineAnalysis: { __typename?: 'GenerateRoutineAnalysisResult', success: boolean, message?: string | null, jobId?: string | null } };
 
 export type GenerateTherapeuticQuestionsMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -3198,6 +3343,20 @@ export type GetResearchQueryVariables = Exact<{
 
 
 export type GetResearchQuery = { __typename?: 'Query', research: Array<{ __typename?: 'Research', id: number, goalId?: number | null, feedbackId?: number | null, journalEntryId?: number | null, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> };
+
+export type GetRoutineAnalysesQueryVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type GetRoutineAnalysesQuery = { __typename?: 'Query', routineAnalyses: Array<{ __typename?: 'RoutineAnalysis', id: number, familyMemberId: number, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, adherencePatterns: Array<{ __typename?: 'HabitAdherence', habitId: number, habitTitle: string, frequency: string, targetCount: number, observedCount: number, consistency: number, currentStreak: number, longestStreak: number, missedPattern?: string | null, interpretation: string }>, routineBalance: { __typename?: 'RoutineBalance', domainsCovered: Array<string>, domainsMissing: Array<string>, overEmphasized: Array<string>, underEmphasized: Array<string>, verdict: string }, streaks: { __typename?: 'StreakSummary', strongestHabitId?: number | null, strongestStreak: number, weakestHabitId?: number | null, weakestStreak: number, momentum: string }, gaps: Array<{ __typename?: 'RoutineGap', area: string, rationale: string, severity: string }>, optimizationSuggestions: Array<{ __typename?: 'RoutineOptimization', title: string, rationale: string, priority: string, changeType: string, targetHabitId?: number | null, suggestedFrequency?: string | null, suggestedTargetCount?: number | null, concreteSteps: Array<string>, ageAppropriate: boolean, developmentalContext?: string | null }>, researchRelevance: Array<{ __typename?: 'RoutineResearchMapping', topic: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'RoutineDataSnapshot', habitsCount: number, activeDailyCount: number, activeWeeklyCount: number, logCount: number, windowDays: number, overallAdherence: number, linkedGoalCount: number, linkedIssueCount: number, researchPaperCount: number } }> };
+
+export type GetRoutineAnalysisQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type GetRoutineAnalysisQuery = { __typename?: 'Query', routineAnalysis?: { __typename?: 'RoutineAnalysis', id: number, familyMemberId: number, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, adherencePatterns: Array<{ __typename?: 'HabitAdherence', habitId: number, habitTitle: string, frequency: string, targetCount: number, observedCount: number, consistency: number, currentStreak: number, longestStreak: number, missedPattern?: string | null, interpretation: string }>, routineBalance: { __typename?: 'RoutineBalance', domainsCovered: Array<string>, domainsMissing: Array<string>, overEmphasized: Array<string>, underEmphasized: Array<string>, verdict: string }, streaks: { __typename?: 'StreakSummary', strongestHabitId?: number | null, strongestStreak: number, weakestHabitId?: number | null, weakestStreak: number, momentum: string }, gaps: Array<{ __typename?: 'RoutineGap', area: string, rationale: string, severity: string }>, optimizationSuggestions: Array<{ __typename?: 'RoutineOptimization', title: string, rationale: string, priority: string, changeType: string, targetHabitId?: number | null, suggestedFrequency?: string | null, suggestedTargetCount?: number | null, concreteSteps: Array<string>, ageAppropriate: boolean, developmentalContext?: string | null }>, researchRelevance: Array<{ __typename?: 'RoutineResearchMapping', topic: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'RoutineDataSnapshot', habitsCount: number, activeDailyCount: number, activeWeeklyCount: number, logCount: number, windowDays: number, overallAdherence: number, linkedGoalCount: number, linkedIssueCount: number, researchPaperCount: number } } | null };
 
 export type GetStoriesQueryVariables = Exact<{
   goalId: Scalars['Int']['input'];
@@ -3499,6 +3658,7 @@ export const DeleteNoteDocument = {"kind":"Document","definitions":[{"kind":"Ope
 export const DeleteRecommendedBooksDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteRecommendedBooks"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteRecommendedBooks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"goalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"deletedCount"}}]}}]}}]} as unknown as DocumentNode<DeleteRecommendedBooksMutation, DeleteRecommendedBooksMutationVariables>;
 export const DeleteRelationshipDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteRelationship"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteRelationship"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<DeleteRelationshipMutation, DeleteRelationshipMutationVariables>;
 export const DeleteResearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteResearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteResearch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"goalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"deletedCount"}}]}}]}}]} as unknown as DocumentNode<DeleteResearchMutation, DeleteResearchMutationVariables>;
+export const DeleteRoutineAnalysisDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteRoutineAnalysis"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteRoutineAnalysis"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<DeleteRoutineAnalysisMutation, DeleteRoutineAnalysisMutationVariables>;
 export const DeleteStoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteStory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteStory"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<DeleteStoryMutation, DeleteStoryMutationVariables>;
 export const DeleteTeacherFeedbackDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteTeacherFeedback"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteTeacherFeedback"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<DeleteTeacherFeedbackMutation, DeleteTeacherFeedbackMutationVariables>;
 export const DeleteTherapeuticQuestionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteTherapeuticQuestions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"issueId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"journalEntryId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteTherapeuticQuestions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"goalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}}},{"kind":"Argument","name":{"kind":"Name","value":"issueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"issueId"}}},{"kind":"Argument","name":{"kind":"Name","value":"journalEntryId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"journalEntryId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"deletedCount"}}]}}]}}]} as unknown as DocumentNode<DeleteTherapeuticQuestionsMutation, DeleteTherapeuticQuestionsMutationVariables>;
@@ -3517,6 +3677,7 @@ export const GenerateOpenAiAudioDocument = {"kind":"Document","definitions":[{"k
 export const GenerateParentAdviceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateParentAdvice"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"language"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateParentAdvice"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"goalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}}},{"kind":"Argument","name":{"kind":"Name","value":"language"},"value":{"kind":"Variable","name":{"kind":"Name","value":"language"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"parentAdvice"}}]}}]}}]} as unknown as DocumentNode<GenerateParentAdviceMutation, GenerateParentAdviceMutationVariables>;
 export const GenerateRecommendedBooksDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateRecommendedBooks"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateRecommendedBooks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"goalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"jobId"}},{"kind":"Field","name":{"kind":"Name","value":"books"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"goalId"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"authors"}},{"kind":"Field","name":{"kind":"Name","value":"year"}},{"kind":"Field","name":{"kind":"Name","value":"isbn"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"whyRecommended"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"amazonUrl"}},{"kind":"Field","name":{"kind":"Name","value":"generatedAt"}}]}}]}}]}}]} as unknown as DocumentNode<GenerateRecommendedBooksMutation, GenerateRecommendedBooksMutationVariables>;
 export const GenerateResearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateResearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"issueId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"feedbackId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"journalEntryId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateResearch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"goalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}}},{"kind":"Argument","name":{"kind":"Name","value":"issueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"issueId"}}},{"kind":"Argument","name":{"kind":"Name","value":"feedbackId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"feedbackId"}}},{"kind":"Argument","name":{"kind":"Name","value":"journalEntryId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"journalEntryId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"jobId"}},{"kind":"Field","name":{"kind":"Name","value":"count"}}]}}]}}]} as unknown as DocumentNode<GenerateResearchMutation, GenerateResearchMutationVariables>;
+export const GenerateRoutineAnalysisDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateRoutineAnalysis"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"familyMemberId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateRoutineAnalysis"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"familyMemberId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"familyMemberId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"jobId"}}]}}]}}]} as unknown as DocumentNode<GenerateRoutineAnalysisMutation, GenerateRoutineAnalysisMutationVariables>;
 export const GenerateTherapeuticQuestionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateTherapeuticQuestions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"issueId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"journalEntryId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateTherapeuticQuestions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"goalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}}},{"kind":"Argument","name":{"kind":"Name","value":"issueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"issueId"}}},{"kind":"Argument","name":{"kind":"Name","value":"journalEntryId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"journalEntryId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"jobId"}},{"kind":"Field","name":{"kind":"Name","value":"questions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"goalId"}},{"kind":"Field","name":{"kind":"Name","value":"issueId"}},{"kind":"Field","name":{"kind":"Name","value":"journalEntryId"}},{"kind":"Field","name":{"kind":"Name","value":"question"}},{"kind":"Field","name":{"kind":"Name","value":"researchId"}},{"kind":"Field","name":{"kind":"Name","value":"researchTitle"}},{"kind":"Field","name":{"kind":"Name","value":"rationale"}},{"kind":"Field","name":{"kind":"Name","value":"generatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]}}]} as unknown as DocumentNode<GenerateTherapeuticQuestionsMutation, GenerateTherapeuticQuestionsMutationVariables>;
 export const GetAffirmationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAffirmations"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"familyMemberId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"affirmations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"familyMemberId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"familyMemberId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"familyMemberId"}},{"kind":"Field","name":{"kind":"Name","value":"text"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetAffirmationsQuery, GetAffirmationsQueryVariables>;
 export const GetAllIssuesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAllIssues"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"allIssues"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"familyMemberId"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"severity"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"familyMember"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<GetAllIssuesQuery, GetAllIssuesQueryVariables>;
@@ -3557,6 +3718,8 @@ export const GetRecommendedBooksDocument = {"kind":"Document","definitions":[{"k
 export const GetRelationshipDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRelationship"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"relationship"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"}},{"kind":"Field","name":{"kind":"Name","value":"subjectType"}},{"kind":"Field","name":{"kind":"Name","value":"subjectId"}},{"kind":"Field","name":{"kind":"Name","value":"relatedType"}},{"kind":"Field","name":{"kind":"Name","value":"relatedId"}},{"kind":"Field","name":{"kind":"Name","value":"relationshipType"}},{"kind":"Field","name":{"kind":"Name","value":"context"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"subject"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}},{"kind":"Field","name":{"kind":"Name","value":"related"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}}]}}]}}]} as unknown as DocumentNode<GetRelationshipQuery, GetRelationshipQueryVariables>;
 export const GetRelationshipsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRelationships"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"subjectType"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"PersonType"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"subjectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"relationships"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"subjectType"},"value":{"kind":"Variable","name":{"kind":"Name","value":"subjectType"}}},{"kind":"Argument","name":{"kind":"Name","value":"subjectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"subjectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"}},{"kind":"Field","name":{"kind":"Name","value":"subjectType"}},{"kind":"Field","name":{"kind":"Name","value":"subjectId"}},{"kind":"Field","name":{"kind":"Name","value":"relatedType"}},{"kind":"Field","name":{"kind":"Name","value":"relatedId"}},{"kind":"Field","name":{"kind":"Name","value":"relationshipType"}},{"kind":"Field","name":{"kind":"Name","value":"context"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"subject"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}},{"kind":"Field","name":{"kind":"Name","value":"related"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}}]}}]}}]} as unknown as DocumentNode<GetRelationshipsQuery, GetRelationshipsQueryVariables>;
 export const GetResearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetResearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"issueId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"feedbackId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"journalEntryId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"research"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"goalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}}},{"kind":"Argument","name":{"kind":"Name","value":"issueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"issueId"}}},{"kind":"Argument","name":{"kind":"Name","value":"feedbackId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"feedbackId"}}},{"kind":"Argument","name":{"kind":"Name","value":"journalEntryId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"journalEntryId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"goalId"}},{"kind":"Field","name":{"kind":"Name","value":"feedbackId"}},{"kind":"Field","name":{"kind":"Name","value":"journalEntryId"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"authors"}},{"kind":"Field","name":{"kind":"Name","value":"year"}},{"kind":"Field","name":{"kind":"Name","value":"journal"}},{"kind":"Field","name":{"kind":"Name","value":"doi"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"abstract"}},{"kind":"Field","name":{"kind":"Name","value":"keyFindings"}},{"kind":"Field","name":{"kind":"Name","value":"therapeuticTechniques"}},{"kind":"Field","name":{"kind":"Name","value":"evidenceLevel"}},{"kind":"Field","name":{"kind":"Name","value":"relevanceScore"}},{"kind":"Field","name":{"kind":"Name","value":"extractedBy"}},{"kind":"Field","name":{"kind":"Name","value":"extractionConfidence"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<GetResearchQuery, GetResearchQueryVariables>;
+export const GetRoutineAnalysesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRoutineAnalyses"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"familyMemberId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"routineAnalyses"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"familyMemberId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"familyMemberId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"familyMemberId"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"}},{"kind":"Field","name":{"kind":"Name","value":"jobId"}},{"kind":"Field","name":{"kind":"Name","value":"summary"}},{"kind":"Field","name":{"kind":"Name","value":"adherencePatterns"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"habitId"}},{"kind":"Field","name":{"kind":"Name","value":"habitTitle"}},{"kind":"Field","name":{"kind":"Name","value":"frequency"}},{"kind":"Field","name":{"kind":"Name","value":"targetCount"}},{"kind":"Field","name":{"kind":"Name","value":"observedCount"}},{"kind":"Field","name":{"kind":"Name","value":"consistency"}},{"kind":"Field","name":{"kind":"Name","value":"currentStreak"}},{"kind":"Field","name":{"kind":"Name","value":"longestStreak"}},{"kind":"Field","name":{"kind":"Name","value":"missedPattern"}},{"kind":"Field","name":{"kind":"Name","value":"interpretation"}}]}},{"kind":"Field","name":{"kind":"Name","value":"routineBalance"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"domainsCovered"}},{"kind":"Field","name":{"kind":"Name","value":"domainsMissing"}},{"kind":"Field","name":{"kind":"Name","value":"overEmphasized"}},{"kind":"Field","name":{"kind":"Name","value":"underEmphasized"}},{"kind":"Field","name":{"kind":"Name","value":"verdict"}}]}},{"kind":"Field","name":{"kind":"Name","value":"streaks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"strongestHabitId"}},{"kind":"Field","name":{"kind":"Name","value":"strongestStreak"}},{"kind":"Field","name":{"kind":"Name","value":"weakestHabitId"}},{"kind":"Field","name":{"kind":"Name","value":"weakestStreak"}},{"kind":"Field","name":{"kind":"Name","value":"momentum"}}]}},{"kind":"Field","name":{"kind":"Name","value":"gaps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"area"}},{"kind":"Field","name":{"kind":"Name","value":"rationale"}},{"kind":"Field","name":{"kind":"Name","value":"severity"}}]}},{"kind":"Field","name":{"kind":"Name","value":"optimizationSuggestions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"rationale"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"changeType"}},{"kind":"Field","name":{"kind":"Name","value":"targetHabitId"}},{"kind":"Field","name":{"kind":"Name","value":"suggestedFrequency"}},{"kind":"Field","name":{"kind":"Name","value":"suggestedTargetCount"}},{"kind":"Field","name":{"kind":"Name","value":"concreteSteps"}},{"kind":"Field","name":{"kind":"Name","value":"ageAppropriate"}},{"kind":"Field","name":{"kind":"Name","value":"developmentalContext"}}]}},{"kind":"Field","name":{"kind":"Name","value":"researchRelevance"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"topic"}},{"kind":"Field","name":{"kind":"Name","value":"relevantResearchIds"}},{"kind":"Field","name":{"kind":"Name","value":"relevantResearchTitles"}},{"kind":"Field","name":{"kind":"Name","value":"coverageGaps"}}]}},{"kind":"Field","name":{"kind":"Name","value":"dataSnapshot"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"habitsCount"}},{"kind":"Field","name":{"kind":"Name","value":"activeDailyCount"}},{"kind":"Field","name":{"kind":"Name","value":"activeWeeklyCount"}},{"kind":"Field","name":{"kind":"Name","value":"logCount"}},{"kind":"Field","name":{"kind":"Name","value":"windowDays"}},{"kind":"Field","name":{"kind":"Name","value":"overallAdherence"}},{"kind":"Field","name":{"kind":"Name","value":"linkedGoalCount"}},{"kind":"Field","name":{"kind":"Name","value":"linkedIssueCount"}},{"kind":"Field","name":{"kind":"Name","value":"researchPaperCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetRoutineAnalysesQuery, GetRoutineAnalysesQueryVariables>;
+export const GetRoutineAnalysisDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRoutineAnalysis"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"routineAnalysis"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"familyMemberId"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"}},{"kind":"Field","name":{"kind":"Name","value":"jobId"}},{"kind":"Field","name":{"kind":"Name","value":"summary"}},{"kind":"Field","name":{"kind":"Name","value":"adherencePatterns"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"habitId"}},{"kind":"Field","name":{"kind":"Name","value":"habitTitle"}},{"kind":"Field","name":{"kind":"Name","value":"frequency"}},{"kind":"Field","name":{"kind":"Name","value":"targetCount"}},{"kind":"Field","name":{"kind":"Name","value":"observedCount"}},{"kind":"Field","name":{"kind":"Name","value":"consistency"}},{"kind":"Field","name":{"kind":"Name","value":"currentStreak"}},{"kind":"Field","name":{"kind":"Name","value":"longestStreak"}},{"kind":"Field","name":{"kind":"Name","value":"missedPattern"}},{"kind":"Field","name":{"kind":"Name","value":"interpretation"}}]}},{"kind":"Field","name":{"kind":"Name","value":"routineBalance"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"domainsCovered"}},{"kind":"Field","name":{"kind":"Name","value":"domainsMissing"}},{"kind":"Field","name":{"kind":"Name","value":"overEmphasized"}},{"kind":"Field","name":{"kind":"Name","value":"underEmphasized"}},{"kind":"Field","name":{"kind":"Name","value":"verdict"}}]}},{"kind":"Field","name":{"kind":"Name","value":"streaks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"strongestHabitId"}},{"kind":"Field","name":{"kind":"Name","value":"strongestStreak"}},{"kind":"Field","name":{"kind":"Name","value":"weakestHabitId"}},{"kind":"Field","name":{"kind":"Name","value":"weakestStreak"}},{"kind":"Field","name":{"kind":"Name","value":"momentum"}}]}},{"kind":"Field","name":{"kind":"Name","value":"gaps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"area"}},{"kind":"Field","name":{"kind":"Name","value":"rationale"}},{"kind":"Field","name":{"kind":"Name","value":"severity"}}]}},{"kind":"Field","name":{"kind":"Name","value":"optimizationSuggestions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"rationale"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"changeType"}},{"kind":"Field","name":{"kind":"Name","value":"targetHabitId"}},{"kind":"Field","name":{"kind":"Name","value":"suggestedFrequency"}},{"kind":"Field","name":{"kind":"Name","value":"suggestedTargetCount"}},{"kind":"Field","name":{"kind":"Name","value":"concreteSteps"}},{"kind":"Field","name":{"kind":"Name","value":"ageAppropriate"}},{"kind":"Field","name":{"kind":"Name","value":"developmentalContext"}}]}},{"kind":"Field","name":{"kind":"Name","value":"researchRelevance"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"topic"}},{"kind":"Field","name":{"kind":"Name","value":"relevantResearchIds"}},{"kind":"Field","name":{"kind":"Name","value":"relevantResearchTitles"}},{"kind":"Field","name":{"kind":"Name","value":"coverageGaps"}}]}},{"kind":"Field","name":{"kind":"Name","value":"dataSnapshot"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"habitsCount"}},{"kind":"Field","name":{"kind":"Name","value":"activeDailyCount"}},{"kind":"Field","name":{"kind":"Name","value":"activeWeeklyCount"}},{"kind":"Field","name":{"kind":"Name","value":"logCount"}},{"kind":"Field","name":{"kind":"Name","value":"windowDays"}},{"kind":"Field","name":{"kind":"Name","value":"overallAdherence"}},{"kind":"Field","name":{"kind":"Name","value":"linkedGoalCount"}},{"kind":"Field","name":{"kind":"Name","value":"linkedIssueCount"}},{"kind":"Field","name":{"kind":"Name","value":"researchPaperCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetRoutineAnalysisQuery, GetRoutineAnalysisQueryVariables>;
 export const GetStoriesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetStories"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stories"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"goalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"goalId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"goalId"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetStoriesQuery, GetStoriesQueryVariables>;
 export const GetStoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetStory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"story"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"goalId"}},{"kind":"Field","name":{"kind":"Name","value":"issueId"}},{"kind":"Field","name":{"kind":"Name","value":"feedbackId"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"language"}},{"kind":"Field","name":{"kind":"Name","value":"minutes"}},{"kind":"Field","name":{"kind":"Name","value":"audioKey"}},{"kind":"Field","name":{"kind":"Name","value":"audioUrl"}},{"kind":"Field","name":{"kind":"Name","value":"audioGeneratedAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"goal"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}},{"kind":"Field","name":{"kind":"Name","value":"issue"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"familyMember"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetStoryQuery, GetStoryQueryVariables>;
 export const GetTeacherFeedbacksDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetTeacherFeedbacks"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"familyMemberId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"teacherFeedbacks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"familyMemberId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"familyMemberId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"familyMemberId"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"}},{"kind":"Field","name":{"kind":"Name","value":"teacherName"}},{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"feedbackDate"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"extracted"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"familyMember"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>;

@@ -1,0 +1,6 @@
+mutation DeleteRoutineAnalysis($id: Int!) {
+  deleteRoutineAnalysis(id: $id) {
+    success
+    message
+  }
+}
