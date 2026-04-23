@@ -2,9 +2,11 @@ import { GraphQLError } from "graphql";
 import { eq } from "drizzle-orm";
 import {
   competitorAnalyses,
+  competitorPricingTiers,
   competitors,
   products,
   type NewCompetitor,
+  type NewCompetitorPricingTier,
 } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -13,6 +15,7 @@ import type {
   MutationApproveCompetitorsArgs,
   MutationRescrapeCompetitorArgs,
   MutationDeleteCompetitorAnalysisArgs,
+  MutationSetCompetitorPricingTiersArgs,
 } from "@/__generated__/resolvers-types";
 import { suggestCompetitors } from "@/lib/competitors/discover";
 import { discoverCompetitorsTeam } from "@/lib/langgraph-client";
@@ -222,5 +225,49 @@ export const competitorMutations = {
     requireAdmin(context);
     await context.db.delete(competitorAnalyses).where(eq(competitorAnalyses.id, args.id));
     return true;
+  },
+
+  async setCompetitorPricingTiers(
+    _parent: unknown,
+    args: MutationSetCompetitorPricingTiersArgs,
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    const [row] = await context.db
+      .select()
+      .from(competitors)
+      .where(eq(competitors.id, args.competitorId));
+    if (!row) {
+      throw new GraphQLError("Competitor not found", { extensions: { code: "NOT_FOUND" } });
+    }
+
+    await context.db
+      .delete(competitorPricingTiers)
+      .where(eq(competitorPricingTiers.competitor_id, args.competitorId));
+
+    if (args.tiers.length > 0) {
+      await context.db.insert(competitorPricingTiers).values(
+        args.tiers.map<NewCompetitorPricingTier>((t, idx) => ({
+          competitor_id: args.competitorId,
+          tier_name: t.tierName,
+          monthly_price_usd: t.monthlyPriceUsd ?? null,
+          annual_price_usd: t.annualPriceUsd ?? null,
+          seat_price_usd: t.seatPriceUsd ?? null,
+          currency: t.currency ?? "USD",
+          included_limits: t.includedLimits ?? null,
+          is_custom_quote: t.isCustomQuote ?? false,
+          sort_order: t.sortOrder ?? idx,
+        })),
+      );
+    }
+
+    const now = new Date().toISOString();
+    const [updated] = await context.db
+      .update(competitors)
+      .set({ updated_at: now })
+      .where(eq(competitors.id, args.competitorId))
+      .returning();
+    return updated;
   },
 };
