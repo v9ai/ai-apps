@@ -75,6 +75,22 @@ input CompetitorInput {
   url: String!
 }
 
+"""
+Tier shape written by the Product team's Pricing Analyst (Claude agent).
+Mirrors PricingTier but as an input. Null numeric fields mean "not disclosed";
+set isCustomQuote=true for 'Contact Sales' tiers.
+"""
+input PricingTierInput {
+  tierName: String!
+  monthlyPriceUsd: Float
+  annualPriceUsd: Float
+  seatPriceUsd: Float
+  currency: String = "USD"
+  includedLimits: JSON
+  isCustomQuote: Boolean = false
+  sortOrder: Int = 0
+}
+
 extend type Query {
   competitorAnalysis(id: Int!): CompetitorAnalysis
   competitorAnalyses(limit: Int, offset: Int): [CompetitorAnalysis!]!
@@ -85,4 +101,10 @@ extend type Mutation {
   approveCompetitors(analysisId: Int!, competitors: [CompetitorInput!]!): CompetitorAnalysis!
   rescrapeCompetitor(competitorId: Int!): Competitor!
   deleteCompetitorAnalysis(id: Int!): Boolean!
+  """
+  Replace a competitor's pricing tiers in bulk. Used by the Product team's
+  Pricing Analyst (Claude agent) to write hand-extracted tiers without going
+  through the deep_competitor scraper.
+  """
+  setCompetitorPricingTiers(competitorId: Int!, tiers: [PricingTierInput!]!): Competitor!
 }

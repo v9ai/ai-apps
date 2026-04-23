@@ -16,6 +16,8 @@ Parse `$ARGUMENTS` and dispatch:
 | `research {company}` | Research | Full competing-hypotheses research |
 | `research batch {c1} {c2} ...` | Research | Parallel squads, comparative summary |
 | `research score {company}` | Research | Quick ICP scoring (single agent) |
+| `product {slug} [--python-focus]` | Product | 3-agent deep dive: competitors + pricing + positioning |
+| `product batch {slug1} {slug2} ...` | Product | Parallel teams across products, comparative summary |
 | `improve` | Improve | Full self-improvement cycle |
 | `improve status` | Improve | Pipeline health check |
 | `improve discover` | Improve | Expand job sources |
@@ -277,6 +279,82 @@ Single subagent with `research-icp` skill. No team, no debate.
 3. **Never trigger outreach** — research feeds pipeline, user decides
 4. **Seed from DB** — check existing company data before web research
 5. **Debate timeout**: 2 minutes of silence → close debate
+
+---
+
+# Team: Product
+
+Deep-dive competitor + pricing + positioning analysis for a single product in the `products` table. Created per product, destroyed after synthesis. Uses the same competing-hypotheses pattern as the Research team but the subject is a *product*, not a *company*.
+
+## Agents
+
+```
+    ┌────────────┐  ┌────────────┐  ┌────────────┐
+    │ Competitor │  │  Pricing   │  │Positioning │
+    │  Analyst   │  │  Analyst   │  │  Analyst   │
+    └─────┬──────┘  └─────┬──────┘  └─────┬──────┘
+          └────────────────┼────────────────┘
+                           ▼
+                  ┌────────────────┐
+                  │   Debate +     │
+                  │   Synthesize   │
+                  └────────────────┘
+```
+
+| Agent | Skill | Mission |
+|---|---|---|
+| **Competitor Analyst** | `product-competitors` | Discover 5–7 direct competitors (Python-ecosystem bias when `--python-focus`); write to `competitor_analyses` + `competitors` |
+| **Pricing Analyst** | `product-pricing` | Extract tier tables for each competitor, benchmark, recommend pricing model for the seed; write to `competitor_pricing_tiers` + `products.pricing_analysis` |
+| **Positioning Analyst** | `product-positioning` | Write defensible positioning statement for the seed framed against the discovered competitors; write to `products.positioning_analysis` |
+
+## Debate Protocol
+
+After initial analysis completes:
+1. Agents cross-read each other's findings
+2. Challenge claims with conflicting evidence via SendMessage (e.g. Pricing challenges Competitor's threat score when the pricing shape implies a different buyer; Positioning challenges inclusion of a competitor that's actually adjacent)
+3. Challenged agent responds with stronger evidence or revises
+4. All confidence scores updated to account for challenges
+5. Every challenge + resolution logged in `hypotheses[].challenged` / `hypotheses[].resolution`
+
+## Dependency Graph
+
+```
+T1: competitor discovery        (no deps)
+T2: pricing extraction          addBlockedBy: [T1]   ← needs competitor URLs
+T3: positioning synthesis       addBlockedBy: [T1]   ← needs competitor frame
+T4: debate phase                addBlockedBy: [T1, T2, T3]
+T5: synthesize + persist        addBlockedBy: [T4]
+```
+
+Note: T2 and T3 both depend on T1 (not parallel with it) because pricing and positioning both frame *against* the discovered competitors. Once T1 writes rows to `competitors`, T2 and T3 run in parallel.
+
+## Execution: `product {slug} [--python-focus]`
+
+```
+Step 1: Parse slug. Check DB: does the product exist? Any open competitor_analyses row?
+Step 2: If no open analysis, call createCompetitorAnalysis(productId) — gets analysisId
+Step 3: TeamCreate { name: "product-{slug}" }
+Step 4: TaskCreate T1–T5 with the dependency graph above
+Step 5: Spawn Competitor Analyst (claims T1) with python_focus flag threaded through
+Step 6: When T1 completes (competitors rows written), spawn Pricing + Positioning Analysts in parallel
+Step 7: T1+T2+T3 done → activate debate phase (T4)
+Step 8: Debate settles or 2min timeout → synthesize (T5, orchestrator-inline): flip competitor_analyses.status='done', write team report to ~/.claude/state/product-{slug}-analysis.json
+Step 9: TeamDelete → show UI link /products/{slug}/competitors
+```
+
+## Execution: `product batch {slug1} {slug2} ...`
+
+One team per product, all spawned in parallel. After all complete, show comparative summary: which products have the strongest moat, which have the most crowded pricing landscapes, which have the best positioning gaps.
+
+## Product Rules
+
+1. **TeamCreate per product** — never reuse teams
+2. **Debate is mandatory** — single-agent shortcut path doesn't exist for products (unlike `/research score`)
+3. **Never trigger outreach or deploy** — analysis output feeds the UI, user decides what to ship
+4. **Seed from DB** — every agent must check `products`, `competitor_analyses`, `competitors`, `competitor_pricing_tiers` before doing web research
+5. **Debate timeout**: 2 minutes of silence → close debate
+6. **`--python-focus` applies to ALL 3 agents** — Competitor Analyst biases discovery, Pricing Analyst accepts OSS-only pricing shapes, Positioning Analyst frames against Python-ecosystem alternatives in the moat hypotheses
+7. **Never overwrite prior Python-pipeline output** — the `competitors_team` / `deep_competitor` / `pricing` LangGraph graphs may have populated rows; mark Claude-authored writes with `authored_by: "claude-team"` in jsonb fields so the UI can distinguish provenance
 
 ---
 
