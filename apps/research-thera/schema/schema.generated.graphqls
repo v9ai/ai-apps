@@ -634,7 +634,7 @@ type GenerateDeepAnalysisResult {
 }
 
 type GenerateDiscussionGuideResult {
-  guide: DiscussionGuide
+  jobId: String
   message: String
   success: Boolean!
 }

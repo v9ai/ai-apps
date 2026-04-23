@@ -1711,7 +1711,7 @@ type FollowUpStep {
 type GenerateDiscussionGuideResult {
   success: Boolean!
   message: String
-  guide: DiscussionGuide
+  jobId: String
 }
 
 type DeleteDiscussionGuideResult {

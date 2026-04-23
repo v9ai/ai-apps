@@ -713,7 +713,7 @@ export type GenerateDeepAnalysisResult = {
 
 export type GenerateDiscussionGuideResult = {
   __typename?: 'GenerateDiscussionGuideResult';
-  guide?: Maybe<DiscussionGuide>;
+  jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -2743,7 +2743,7 @@ export type GenerateDiscussionGuideMutationVariables = Exact<{
 }>;
 
 
-export type GenerateDiscussionGuideMutation = { __typename?: 'Mutation', generateDiscussionGuide: { __typename?: 'GenerateDiscussionGuideResult', success: boolean, message?: string | null, guide?: { __typename?: 'DiscussionGuide', id: number, journalEntryId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, relatedResearchIds?: Array<number> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } | null } };
+export type GenerateDiscussionGuideMutation = { __typename?: 'Mutation', generateDiscussionGuide: { __typename?: 'GenerateDiscussionGuideResult', success: boolean, message?: string | null, jobId?: string | null } };
 
 export type GenerateHabitsForFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -5404,53 +5404,7 @@ export const GenerateDiscussionGuideDocument = gql`
   generateDiscussionGuide(journalEntryId: $journalEntryId) {
     success
     message
-    guide {
-      id
-      journalEntryId
-      childAge
-      behaviorSummary
-      developmentalContext {
-        stage
-        explanation
-        normalizedBehavior
-        researchBasis
-      }
-      conversationStarters {
-        opener
-        context
-        ageAppropriateNote
-      }
-      talkingPoints {
-        point
-        explanation
-        researchBacking
-        relatedResearchIds
-      }
-      languageGuide {
-        whatToSay {
-          phrase
-          reason
-          alternative
-        }
-        whatNotToSay {
-          phrase
-          reason
-          alternative
-        }
-      }
-      anticipatedReactions {
-        reaction
-        likelihood
-        howToRespond
-      }
-      followUpPlan {
-        action
-        timing
-        description
-      }
-      model
-      createdAt
-    }
+    jobId
   }
 }
     `;

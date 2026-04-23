@@ -707,7 +707,7 @@ export type GenerateDeepAnalysisResult = {
 
 export type GenerateDiscussionGuideResult = {
   __typename?: 'GenerateDiscussionGuideResult';
-  guide?: Maybe<DiscussionGuide>;
+  jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -3201,7 +3201,7 @@ export type GenerateDeepAnalysisResultResolvers<ContextType = GraphQLContext, Pa
 };
 
 export type GenerateDiscussionGuideResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateDiscussionGuideResult'] = ResolversParentTypes['GenerateDiscussionGuideResult']> = {
-  guide?: Resolver<Maybe<ResolversTypes['DiscussionGuide']>, ParentType, ContextType>;
+  jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
