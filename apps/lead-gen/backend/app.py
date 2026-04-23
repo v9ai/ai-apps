@@ -266,3 +266,151 @@ async def dispatch_positioning_all(req: DispatchPositioningRequest) -> dict[str,
         "in_flight_before": len(_positioning_inflight) - len(dispatched),
         "runs": dispatched,
     }
+
+
+class DispatchLeadGenRequest(BaseModel):
+    force: bool = False
+    product_ids: list[int] | None = None
+    segments_per_product: int = 3
+
+
+_LEAD_GEN_CONCURRENCY = int(os.environ.get("LEAD_GEN_CONCURRENCY", "3"))
+_LEAD_GEN_TIMEOUT_S = float(os.environ.get("LEAD_GEN_TIMEOUT_S", "300"))
+_lead_gen_sem = asyncio.Semaphore(_LEAD_GEN_CONCURRENCY)
+_lead_gen_inflight: set[asyncio.Task[None]] = set()
+
+
+async def _run_lead_gen_bg(product_id: int, segment_index: int, thread_id: str) -> None:
+    graph = app.state.graphs.get("lead_gen_team") if hasattr(app.state, "graphs") else None
+    if graph is None:
+        log.error("lead_gen_team graph not compiled — dropping product_id=%s", product_id)
+        return
+    config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
+    async with _lead_gen_sem:
+        try:
+            await asyncio.wait_for(
+                graph.ainvoke(
+                    {"product_id": product_id, "segment_index": segment_index},
+                    config=config,
+                ),
+                timeout=_LEAD_GEN_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:
+            log.error(
+                "lead_gen_team timed out after %.0fs for product_id=%s seg=%s (thread=%s)",
+                _LEAD_GEN_TIMEOUT_S,
+                product_id,
+                segment_index,
+                thread_id,
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception(
+                "lead_gen_team failed for product_id=%s seg=%s (thread=%s)",
+                product_id,
+                segment_index,
+                thread_id,
+            )
+
+
+@app.post("/dispatch/lead-gen-teams")
+async def dispatch_lead_gen_teams(req: DispatchLeadGenRequest) -> dict[str, Any]:
+    """Fire-and-forget lead-gen team runs.
+
+    Default behavior: for every product that has ``icp_analysis.segments``, fire
+    one run per segment (capped at ``segments_per_product``, default 3). That
+    means the typical payload is ``{}`` → 3 products × 3 segments = 9 runs.
+    Narrow the scope by passing ``product_ids`` and/or lowering
+    ``segments_per_product`` for smoke tests.
+    """
+    if req.segments_per_product <= 0 or req.segments_per_product > 10:
+        raise HTTPException(status_code=400, detail="segments_per_product must be 1..10")
+
+    if not hasattr(app.state, "graphs") or "lead_gen_team" not in app.state.graphs:
+        raise HTTPException(
+            status_code=503,
+            detail="lead_gen_team graph not compiled — check startup logs",
+        )
+
+    db_url = (
+        os.environ.get("NEON_DATABASE_URL", "").strip()
+        or os.environ.get("DATABASE_URL", "").strip()
+    )
+    if not db_url:
+        raise HTTPException(status_code=500, detail="DATABASE_URL is not set")
+
+    where_parts: list[str] = ["icp_analysis IS NOT NULL"]
+    params: list[Any] = []
+    if req.product_ids:
+        where_parts.append("id = ANY(%s)")
+        params.append(req.product_ids)
+    where_sql = " AND ".join(where_parts)
+
+    try:
+        with psycopg.connect(db_url, autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT id, name, icp_analysis FROM products WHERE {where_sql} ORDER BY id",
+                    params,
+                )
+                rows = cur.fetchall()
+    except psycopg.Error as err:
+        log.exception("dispatch_lead_gen_teams: products query failed")
+        raise HTTPException(
+            status_code=503, detail=f"products query failed: {err}"
+        ) from err
+
+    dispatched: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+
+    for product_id, name, icp_raw in rows:
+        icp_obj: Any = icp_raw
+        if isinstance(icp_raw, str):
+            try:
+                icp_obj = json.loads(icp_raw)
+            except json.JSONDecodeError:
+                icp_obj = None
+        segments = (icp_obj or {}).get("segments") if isinstance(icp_obj, dict) else None
+        if not isinstance(segments, list) or not segments:
+            skipped.append({"product_id": int(product_id), "reason": "no icp_analysis.segments"})
+            continue
+
+        n = min(len(segments), req.segments_per_product)
+        for i in range(n):
+            thread_id = str(uuid.uuid4())
+            task = asyncio.create_task(
+                _run_lead_gen_bg(int(product_id), i, thread_id)
+            )
+            _lead_gen_inflight.add(task)
+            task.add_done_callback(_lead_gen_inflight.discard)
+            seg_name = (
+                segments[i].get("name")
+                if isinstance(segments[i], dict)
+                else None
+            )
+            dispatched.append(
+                {
+                    "product_id": int(product_id),
+                    "product_name": name,
+                    "segment_index": i,
+                    "segment_name": seg_name,
+                    "thread_id": thread_id,
+                }
+            )
+
+    log.info(
+        "dispatched lead_gen_team runs: %d (skipped %d, concurrency=%d, timeout=%.0fs)",
+        len(dispatched),
+        len(skipped),
+        _LEAD_GEN_CONCURRENCY,
+        _LEAD_GEN_TIMEOUT_S,
+    )
+    return {
+        "dispatched": len(dispatched),
+        "skipped": skipped,
+        "concurrency": _LEAD_GEN_CONCURRENCY,
+        "timeout_s": _LEAD_GEN_TIMEOUT_S,
+        "in_flight_before": len(_lead_gen_inflight) - len(dispatched),
+        "runs": dispatched,
+    }

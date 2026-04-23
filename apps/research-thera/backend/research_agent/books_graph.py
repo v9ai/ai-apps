@@ -312,11 +312,11 @@ async def collect_data(state: BooksState) -> dict:
 
     family_context_text = ""
     if family_sections:
-        family_context_text = "\n## Family Context\n" + "\n\n".join(family_sections)
+        family_context_text = "\n## Subject Profile\n" + "\n\n".join(family_sections)
 
     prompt = "\n".join(
         [
-            "You are a clinical bibliotherapist. Based on the therapeutic goal, family context, and academic research papers below, recommend 4-6 real, published books that would be most helpful.",
+            "You are a clinical bibliotherapist. The therapeutic goal belongs to the PARENT/CAREGIVER (the reader). The child/subject under their care is described in **Subject Profile**. Recommend 4-6 real, published books that help the parent (a) achieve the goal, (b) co-regulate with the specific pattern the child shows (e.g. defiance, emotion dysregulation, ODD-spectrum presentations, selective eating, peer conflict — whatever the profile reveals), and (c) practice evidence-based approaches such as Collaborative Problem Solving, Parent Management Training, Emotion Coaching, and DBT/ACT parent-self-regulation skills when relevant.",
             "",
             "## Therapeutic Goal",
             context_text,
@@ -329,11 +329,11 @@ async def collect_data(state: BooksState) -> dict:
             "Recommend 4-6 books that:",
             "- Are REAL, well-known published books (do NOT invent titles)",
             "- Cover diverse categories (mix of parenting guides, therapy workbooks, psychology, child development)",
-            "- Are directly relevant to the therapeutic goal and research findings",
+            "- Are directly relevant to the therapeutic goal, Subject Profile, and research findings",
             "- Would be accessible and practical for a parent or caregiver",
             "- Range from introductory to advanced where appropriate",
             "",
-            "For each book provide: title (exact), authors (array of full names), year (int, optional), isbn (string, optional), description (brief content summary), whyRecommended (personalized rationale linking to the goal, research, and family context), category (one of: parenting, therapy, self-help, child development, education, psychology, neuroscience).",
+            "For each book provide: title (exact), authors (array of full names), year (int, optional), isbn (string, optional), description (brief content summary), whyRecommended (personalized rationale that cites specific items from the Subject Profile — e.g. reference the actual issues, teacher observations, or journal incidents by name or phrase), category (one of: parenting, therapy, self-help, child development, education, psychology, neuroscience).",
             "",
             'Respond with a JSON object of the shape {"books": [ {...}, ... ]}. The top-level key MUST be "books" and its value MUST be an array.',
         ]
