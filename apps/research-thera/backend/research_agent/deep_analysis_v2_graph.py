@@ -455,7 +455,7 @@ async def _collect_for_family_member(
         "are external individuals (classmates, school colleagues, neighbors, etc.).\n\n"
         "IMPORTANT: Only reference issue IDs, research IDs, and family member IDs that appear in the data below."
     )
-    sections.append(shared.render_family_member_profile(fm_first, fm_name, fm_age, fm_rel, fm_bio))
+    sections.append(shared.render_family_member_profile(fm_first, fm_name, fm_age, fm_rel, fm_bio, fm_loc))
 
     role_note = (
         "\n(Note: The profiled family member may be subject, victim, or bystander in these "
