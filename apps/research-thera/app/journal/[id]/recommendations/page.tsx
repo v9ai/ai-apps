@@ -17,7 +17,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   return {
-    title: `Recommendations | Journal Entry ${id} | ResearchThera`,
+    title: `Recommendations · Journal Entry ${id}`,
     description:
       "Actionable therapeutic recommendations from journal analysis",
   };

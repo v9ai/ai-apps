@@ -154,9 +154,12 @@ def test_sales_playbook_defaults_to_empty() -> None:
 
 
 def test_objection_truncates_long_response() -> None:
-    long = "x" * 1000
+    # LLMs overshoot soft caps; the schema truncates before Pydantic's
+    # max_length fires so the graph doesn't crash on a 1001-char string.
+    long = "x" * 2000
     o = Objection.model_validate({"objection": "y", "response": long})
-    assert len(o.response) <= 600
+    assert len(o.response) <= 900
+    assert o.response.startswith("x")
 
 
 def test_messaging_pillar_allows_empty_avoid_when() -> None:
