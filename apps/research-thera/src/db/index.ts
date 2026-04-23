@@ -3659,6 +3659,35 @@ export async function deleteAffirmation(id: number, userId: string) {
 }
 
 // ============================================
+// Family Member Characteristics
+// ============================================
+
+export async function getCharacteristicsForFamilyMember(familyMemberId: number, userId: string) {
+  const rows = await neonSql`
+    SELECT id, title, category, severity, risk_tier, description, strengths,
+           age_of_onset, frequency_per_week, duration_weeks, impairment_domains, externalized_name
+    FROM family_member_characteristics
+    WHERE family_member_id = ${familyMemberId} AND user_id = ${userId}
+    ORDER BY
+      CASE category WHEN 'PRIORITY_CONCERN' THEN 0 WHEN 'SUPPORT_NEED' THEN 1 ELSE 2 END,
+      created_at DESC`;
+  return rows.map((row) => ({
+    id: row.id as number,
+    title: (row.title as string) || null,
+    category: (row.category as string) || null,
+    severity: (row.severity as string) || null,
+    riskTier: (row.risk_tier as string) || null,
+    description: (row.description as string) || null,
+    strengths: (row.strengths as string) || null,
+    ageOfOnset: (row.age_of_onset as number) || null,
+    frequencyPerWeek: (row.frequency_per_week as number) || null,
+    durationWeeks: (row.duration_weeks as number) || null,
+    impairmentDomains: (row.impairment_domains as string) || null,
+    externalizedName: (row.externalized_name as string) || null,
+  }));
+}
+
+// ============================================
 // Namespace export
 // ============================================
 
@@ -3841,5 +3870,7 @@ export const db = {
   createAffirmation,
   updateAffirmation,
   deleteAffirmation,
+  // Family Member Characteristics
+  getCharacteristicsForFamilyMember,
 };
 

@@ -78,6 +78,87 @@ function buildSiblingIssuesSection(
   ].join("\n");
 }
 
+async function buildSubjectProfile(
+  familyMemberId: number,
+  userEmail: string,
+): Promise<string> {
+  const [fm, characteristics, issues, teacherFbs, observations, analyses, journalEntries] = await Promise.all([
+    db.getFamilyMember(familyMemberId),
+    db.getCharacteristicsForFamilyMember(familyMemberId, userEmail),
+    db.getIssuesForFamilyMember(familyMemberId, undefined, userEmail),
+    db.getTeacherFeedbacksForFamilyMember(familyMemberId, userEmail),
+    db.getBehaviorObservationsForFamilyMember(familyMemberId, userEmail),
+    db.getDeepIssueAnalysesForFamilyMember(familyMemberId, userEmail),
+    db.listJournalEntries(userEmail, { familyMemberId }),
+  ]);
+  if (!fm) return "";
+
+  const sections: string[] = [];
+  sections.push(`## Subject Profile`);
+  sections.push(`**${memberLabel(fm)}**${fm.bio ? ` — ${fm.bio.slice(0, 400)}` : ""}`);
+
+  if (characteristics.length > 0) {
+    const lines = characteristics
+      .slice(0, 12)
+      .map((c) => {
+        const tag = c.category ? `[${c.category}${c.riskTier && c.riskTier !== "NONE" ? `/${c.riskTier}` : ""}]` : "";
+        const desc = c.description ? `: ${c.description.slice(0, 200)}` : "";
+        return `- ${tag} ${c.title ?? ""}${desc}`.trim();
+      })
+      .join("\n");
+    sections.push(`### Priority Concerns & Support Needs (${characteristics.length})\n${lines}`);
+  }
+
+  if (issues.length > 0) {
+    const lines = issues
+      .slice(0, 20)
+      .map((i) => `- [${(i.severity || "").toUpperCase()}] ${i.title} (${i.category})${i.description ? `: ${i.description.slice(0, 180)}` : ""}`)
+      .join("\n");
+    sections.push(`### Known Issues (${issues.length})\n${lines}`);
+  }
+
+  if (teacherFbs.length > 0) {
+    const lines = teacherFbs
+      .slice(0, 5)
+      .map((t) => `- ${t.feedbackDate} — ${t.teacherName}${t.subject ? ` (${t.subject})` : ""}: ${(t.content || "").slice(0, 250)}`)
+      .join("\n");
+    sections.push(`### Teacher Observations (${teacherFbs.length})\n${lines}`);
+  }
+
+  if (observations.length > 0) {
+    const lines = observations
+      .slice(0, 5)
+      .map((o) => {
+        const bits = [o.observationType, o.intensity && `intensity:${o.intensity}`, o.frequency != null && `freq:${o.frequency}`].filter(Boolean);
+        return `- ${o.observedAt} [${bits.join(", ")}]${o.context ? ` ctx: ${o.context.slice(0, 120)}` : ""}${o.notes ? ` — ${o.notes.slice(0, 160)}` : ""}`;
+      })
+      .join("\n");
+    sections.push(`### Behavior Observations (${observations.length})\n${lines}`);
+  }
+
+  if (journalEntries.length > 0) {
+    const lines = journalEntries
+      .slice(0, 10)
+      .map((j) => `- ${j.entryDate}${j.title ? ` — ${j.title}` : ""}${j.mood ? ` [${j.mood}]` : ""}${j.content ? `: ${j.content.slice(0, 200)}` : ""}`)
+      .join("\n");
+    sections.push(`### Recent Journal Entries (last ${Math.min(journalEntries.length, 10)} of ${journalEntries.length})\n${lines}`);
+  }
+
+  if (analyses.length > 0) {
+    const pieces = analyses.slice(0, 3).map((a, idx) => {
+      const advice = Array.isArray(a.parentAdvice) ? (a.parentAdvice as Array<{ title?: string; advice?: string }>) : [];
+      const adviceLines = advice
+        .slice(0, 3)
+        .map((p) => `    • ${p.title ?? ""}${p.advice ? `: ${String(p.advice).slice(0, 180)}` : ""}`.trim())
+        .join("\n");
+      return `- [Analysis ${idx + 1}] ${(a.summary || "").slice(0, 350)}${adviceLines ? `\n${adviceLines}` : ""}`;
+    });
+    sections.push(`### Prior Clinical Analyses (${analyses.length})\n${pieces.join("\n")}`);
+  }
+
+  return sections.join("\n\n");
+}
+
 export const generateResearch: NonNullable<MutationResolvers['generateResearch']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) {
