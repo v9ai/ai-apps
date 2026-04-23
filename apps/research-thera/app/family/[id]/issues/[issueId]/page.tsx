@@ -10,8 +10,6 @@ import {
   Badge,
   Spinner,
   Button,
-  IconButton,
-  Tooltip,
   Separator,
   Dialog,
   AlertDialog,
@@ -28,8 +26,6 @@ import {
   Link2Icon,
   PlusIcon,
   Cross2Icon,
-  CopyIcon,
-  CheckIcon,
   MagicWandIcon,
 } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
