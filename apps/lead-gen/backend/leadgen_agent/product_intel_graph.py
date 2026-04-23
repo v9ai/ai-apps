@@ -294,6 +294,7 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("run_pricing", run_pricing)
     builder.add_node("run_gtm", run_gtm)
     builder.add_node("synthesize_report", synthesize_report)
+    builder.add_node("notify_complete", notify_complete)
 
     builder.add_edge(START, "load_and_profile")
     builder.add_edge("load_and_profile", "ensure_icp")
@@ -303,7 +304,8 @@ def build_graph(checkpointer: Any = None) -> Any:
     )
     builder.add_edge("run_pricing", "synthesize_report")
     builder.add_edge("run_gtm", "synthesize_report")
-    builder.add_edge("synthesize_report", END)
+    builder.add_edge("synthesize_report", "notify_complete")
+    builder.add_edge("notify_complete", END)
     return builder.compile(checkpointer=checkpointer)
 
 

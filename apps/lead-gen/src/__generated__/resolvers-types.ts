@@ -1243,6 +1243,26 @@ export type IndustryGrowth = {
   remoteRatio: Scalars['Float']['output'];
 };
 
+export type IntelRun = {
+  __typename?: 'IntelRun';
+  error: Maybe<Scalars['String']['output']>;
+  finishedAt: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  kind: Scalars['String']['output'];
+  output: Maybe<Scalars['JSON']['output']>;
+  productId: Scalars['Int']['output'];
+  startedAt: Scalars['DateTime']['output'];
+  status: Scalars['String']['output'];
+};
+
+export type IntelRunAccepted = {
+  __typename?: 'IntelRunAccepted';
+  kind: Scalars['String']['output'];
+  productId: Scalars['Int']['output'];
+  runId: Scalars['ID']['output'];
+  status: Scalars['String']['output'];
+};
+
 export type IntentDashboard = {
   __typename?: 'IntentDashboard';
   companiesWithIntent: Scalars['Int']['output'];
@@ -1377,8 +1397,10 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   analyzeLinkedInPosts: AnalyzePostsResult;
   analyzeProductGTM: Product;
+  analyzeProductGTMAsync: IntelRunAccepted;
   analyzeProductICP: Product;
   analyzeProductPricing: Product;
+  analyzeProductPricingAsync: IntelRunAccepted;
   applyEmailPattern: ApplyEmailPatternResult;
   approveAllDrafts: BatchSendDraftResult;
   approveAndSendDraft: SendDraftResult;
@@ -1450,6 +1472,7 @@ export type Mutation = {
   regenerateDraft: ReplyDraft;
   rescrapeCompetitor: Competitor;
   runFullProductIntel: Product;
+  runFullProductIntelAsync: IntelRunAccepted;
   salescueAnalyze: SalescueAnalyzeResult;
   saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
@@ -1512,12 +1535,22 @@ export type MutationAnalyzeProductGtmArgs = {
 };
 
 
+export type MutationAnalyzeProductGtmAsyncArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationAnalyzeProductIcpArgs = {
   id: Scalars['Int']['input'];
 };
 
 
 export type MutationAnalyzeProductPricingArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationAnalyzeProductPricingAsyncArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1848,6 +1881,12 @@ export type MutationRunFullProductIntelArgs = {
 };
 
 
+export type MutationRunFullProductIntelAsyncArgs = {
+  forceRefresh?: InputMaybe<Scalars['Boolean']['input']>;
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationSalescueAnalyzeArgs = {
   modules?: InputMaybe<Array<SalescueModule>>;
   text: Scalars['String']['input'];
@@ -2129,6 +2168,8 @@ export type Query = {
   opportunityByUrl: Maybe<Opportunity>;
   product: Maybe<Product>;
   productBySlug: Maybe<Product>;
+  productIntelRun: Maybe<IntelRun>;
+  productIntelRuns: Array<IntelRun>;
   products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
@@ -2404,6 +2445,17 @@ export type QueryProductArgs = {
 
 export type QueryProductBySlugArgs = {
   slug: Scalars['String']['input'];
+};
+
+
+export type QueryProductIntelRunArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryProductIntelRunsArgs = {
+  kind?: InputMaybe<Scalars['String']['input']>;
+  productId: Scalars['Int']['input'];
 };
 
 
@@ -3879,6 +3931,7 @@ export type ResolversTypes = {
   GenerateReplyInput: ResolverTypeWrapper<Partial<GenerateReplyInput>>;
   GenerateReplyResult: ResolverTypeWrapper<Partial<GenerateReplyResult>>;
   GrowthReport: ResolverTypeWrapper<Partial<GrowthReport>>;
+  ID: ResolverTypeWrapper<Partial<Scalars['ID']['output']>>;
   ImportCompaniesResult: ResolverTypeWrapper<Partial<ImportCompaniesResult>>;
   ImportCompanyResult: ResolverTypeWrapper<Partial<ImportCompanyResult>>;
   ImportCompanyWithContactsInput: ResolverTypeWrapper<Partial<ImportCompanyWithContactsInput>>;
@@ -3887,6 +3940,8 @@ export type ResolversTypes = {
   ImportResendResult: ResolverTypeWrapper<Partial<ImportResendResult>>;
   IndustryGrowth: ResolverTypeWrapper<Partial<IndustryGrowth>>;
   Int: ResolverTypeWrapper<Partial<Scalars['Int']['output']>>;
+  IntelRun: ResolverTypeWrapper<Partial<IntelRun>>;
+  IntelRunAccepted: ResolverTypeWrapper<Partial<IntelRunAccepted>>;
   IntentDashboard: ResolverTypeWrapper<Partial<IntentDashboard>>;
   IntentScore: ResolverTypeWrapper<Partial<IntentScore>>;
   IntentSignal: ResolverTypeWrapper<Partial<IntentSignal>>;
@@ -4124,6 +4179,7 @@ export type ResolversParentTypes = {
   GenerateReplyInput: Partial<GenerateReplyInput>;
   GenerateReplyResult: Partial<GenerateReplyResult>;
   GrowthReport: Partial<GrowthReport>;
+  ID: Partial<Scalars['ID']['output']>;
   ImportCompaniesResult: Partial<ImportCompaniesResult>;
   ImportCompanyResult: Partial<ImportCompanyResult>;
   ImportCompanyWithContactsInput: Partial<ImportCompanyWithContactsInput>;
@@ -4132,6 +4188,8 @@ export type ResolversParentTypes = {
   ImportResendResult: Partial<ImportResendResult>;
   IndustryGrowth: Partial<IndustryGrowth>;
   Int: Partial<Scalars['Int']['output']>;
+  IntelRun: Partial<IntelRun>;
+  IntelRunAccepted: Partial<IntelRunAccepted>;
   IntentDashboard: Partial<IntentDashboard>;
   IntentScore: Partial<IntentScore>;
   IntentSignal: Partial<IntentSignal>;
@@ -5153,6 +5211,24 @@ export type IndustryGrowthResolvers<ContextType = GraphQLContext, ParentType ext
   remoteRatio?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
+export type IntelRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntelRun'] = ResolversParentTypes['IntelRun']> = {
+  error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  finishedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  kind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  output?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  productId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  startedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type IntelRunAcceptedResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntelRunAccepted'] = ResolversParentTypes['IntelRunAccepted']> = {
+  kind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  productId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  runId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type IntentDashboardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntentDashboard'] = ResolversParentTypes['IntentDashboard']> = {
   companiesWithIntent?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   recentSignals?: Resolver<Array<ResolversTypes['IntentSignal']>, ParentType, ContextType>;
@@ -5267,8 +5343,10 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   analyzeCompany?: Resolver<ResolversTypes['AnalyzeCompanyResponse'], ParentType, ContextType, Partial<MutationAnalyzeCompanyArgs>>;
   analyzeLinkedInPosts?: Resolver<ResolversTypes['AnalyzePostsResult'], ParentType, ContextType, Partial<MutationAnalyzeLinkedInPostsArgs>>;
   analyzeProductGTM?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationAnalyzeProductGtmArgs, 'id'>>;
+  analyzeProductGTMAsync?: Resolver<ResolversTypes['IntelRunAccepted'], ParentType, ContextType, RequireFields<MutationAnalyzeProductGtmAsyncArgs, 'id'>>;
   analyzeProductICP?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationAnalyzeProductIcpArgs, 'id'>>;
   analyzeProductPricing?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationAnalyzeProductPricingArgs, 'id'>>;
+  analyzeProductPricingAsync?: Resolver<ResolversTypes['IntelRunAccepted'], ParentType, ContextType, RequireFields<MutationAnalyzeProductPricingAsyncArgs, 'id'>>;
   applyEmailPattern?: Resolver<ResolversTypes['ApplyEmailPatternResult'], ParentType, ContextType, RequireFields<MutationApplyEmailPatternArgs, 'companyId'>>;
   approveAllDrafts?: Resolver<ResolversTypes['BatchSendDraftResult'], ParentType, ContextType, RequireFields<MutationApproveAllDraftsArgs, 'draftIds'>>;
   approveAndSendDraft?: Resolver<ResolversTypes['SendDraftResult'], ParentType, ContextType, RequireFields<MutationApproveAndSendDraftArgs, 'draftId'>>;
@@ -5334,6 +5412,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   regenerateDraft?: Resolver<ResolversTypes['ReplyDraft'], ParentType, ContextType, RequireFields<MutationRegenerateDraftArgs, 'draftId'>>;
   rescrapeCompetitor?: Resolver<ResolversTypes['Competitor'], ParentType, ContextType, RequireFields<MutationRescrapeCompetitorArgs, 'competitorId'>>;
   runFullProductIntel?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationRunFullProductIntelArgs, 'id'>>;
+  runFullProductIntelAsync?: Resolver<ResolversTypes['IntelRunAccepted'], ParentType, ContextType, RequireFields<MutationRunFullProductIntelAsyncArgs, 'id'>>;
   salescueAnalyze?: Resolver<ResolversTypes['SalescueAnalyzeResult'], ParentType, ContextType, RequireFields<MutationSalescueAnalyzeArgs, 'text'>>;
   saveCrawlLog?: Resolver<ResolversTypes['SaveCrawlLogResult'], ParentType, ContextType, RequireFields<MutationSaveCrawlLogArgs, 'input'>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
@@ -5472,6 +5551,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   opportunityByUrl?: Resolver<Maybe<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryOpportunityByUrlArgs, 'url'>>;
   product?: Resolver<Maybe<ResolversTypes['Product']>, ParentType, ContextType, RequireFields<QueryProductArgs, 'id'>>;
   productBySlug?: Resolver<Maybe<ResolversTypes['Product']>, ParentType, ContextType, RequireFields<QueryProductBySlugArgs, 'slug'>>;
+  productIntelRun?: Resolver<Maybe<ResolversTypes['IntelRun']>, ParentType, ContextType, RequireFields<QueryProductIntelRunArgs, 'id'>>;
+  productIntelRuns?: Resolver<Array<ResolversTypes['IntelRun']>, ParentType, ContextType, RequireFields<QueryProductIntelRunsArgs, 'productId'>>;
   products?: Resolver<Array<ResolversTypes['Product']>, ParentType, ContextType, Partial<QueryProductsArgs>>;
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
@@ -6386,6 +6467,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ImportContactsResult?: ImportContactsResultResolvers<ContextType>;
   ImportResendResult?: ImportResendResultResolvers<ContextType>;
   IndustryGrowth?: IndustryGrowthResolvers<ContextType>;
+  IntelRun?: IntelRunResolvers<ContextType>;
+  IntelRunAccepted?: IntelRunAcceptedResolvers<ContextType>;
   IntentDashboard?: IntentDashboardResolvers<ContextType>;
   IntentScore?: IntentScoreResolvers<ContextType>;
   IntentSignal?: IntentSignalResolvers<ContextType>;

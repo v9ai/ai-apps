@@ -25,10 +25,30 @@ input ProductInput {
   description: String
 }
 
+type IntelRun {
+  id: ID!
+  productId: Int!
+  kind: String!
+  status: String!
+  startedAt: DateTime!
+  finishedAt: DateTime
+  error: String
+  output: JSON
+}
+
+type IntelRunAccepted {
+  runId: ID!
+  productId: Int!
+  kind: String!
+  status: String!
+}
+
 extend type Query {
   products(limit: Int, offset: Int): [Product!]!
   product(id: Int!): Product
   productBySlug(slug: String!): Product
+  productIntelRun(id: ID!): IntelRun
+  productIntelRuns(productId: Int!, kind: String): [IntelRun!]!
 }
 
 extend type Mutation {
@@ -39,4 +59,7 @@ extend type Mutation {
   analyzeProductPricing(id: Int!): Product!
   analyzeProductGTM(id: Int!): Product!
   runFullProductIntel(id: Int!): Product!
+  analyzeProductPricingAsync(id: Int!): IntelRunAccepted!
+  analyzeProductGTMAsync(id: Int!): IntelRunAccepted!
+  runFullProductIntelAsync(id: Int!, forceRefresh: Boolean): IntelRunAccepted!
 }

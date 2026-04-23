@@ -1139,6 +1139,24 @@ type IndustryGrowth {
   remoteRatio: Float!
 }
 
+type IntelRun {
+  error: String
+  finishedAt: DateTime
+  id: ID!
+  kind: String!
+  output: JSON
+  productId: Int!
+  startedAt: DateTime!
+  status: String!
+}
+
+type IntelRunAccepted {
+  kind: String!
+  productId: Int!
+  runId: ID!
+  status: String!
+}
+
 type IntentDashboard {
   companiesWithIntent: Int!
   recentSignals: [IntentSignal!]!
@@ -1265,8 +1283,10 @@ type Mutation {
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   analyzeLinkedInPosts(limit: Int, postIds: [Int!]): AnalyzePostsResult!
   analyzeProductGTM(id: Int!): Product!
+  analyzeProductGTMAsync(id: Int!): IntelRunAccepted!
   analyzeProductICP(id: Int!): Product!
   analyzeProductPricing(id: Int!): Product!
+  analyzeProductPricingAsync(id: Int!): IntelRunAccepted!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   approveAllDrafts(draftIds: [Int!]!): BatchSendDraftResult!
   approveAndSendDraft(draftId: Int!, editedBody: String, editedSubject: String): SendDraftResult!
@@ -1338,6 +1358,7 @@ type Mutation {
   regenerateDraft(draftId: Int!, instructions: String): ReplyDraft!
   rescrapeCompetitor(competitorId: Int!): Competitor!
   runFullProductIntel(id: Int!): Product!
+  runFullProductIntelAsync(forceRefresh: Boolean, id: Int!): IntelRunAccepted!
   salescueAnalyze(modules: [SalescueModule!], text: String!): SalescueAnalyzeResult!
   saveCrawlLog(input: SaveCrawlLogInput!): SaveCrawlLogResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
@@ -1502,6 +1523,8 @@ type Query {
   opportunityByUrl(url: String!): Opportunity
   product(id: Int!): Product
   productBySlug(slug: String!): Product
+  productIntelRun(id: ID!): IntelRun
+  productIntelRuns(kind: String, productId: Int!): [IntelRun!]!
   products(limit: Int, offset: Int): [Product!]!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, classification: String, limit: Int, offset: Int): ReceivedEmailsResult!

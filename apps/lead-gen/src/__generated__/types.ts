@@ -1240,6 +1240,26 @@ export type IndustryGrowth = {
   remoteRatio: Scalars['Float']['output'];
 };
 
+export type IntelRun = {
+  __typename: 'IntelRun';
+  error: Maybe<Scalars['String']['output']>;
+  finishedAt: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  kind: Scalars['String']['output'];
+  output: Maybe<Scalars['JSON']['output']>;
+  productId: Scalars['Int']['output'];
+  startedAt: Scalars['DateTime']['output'];
+  status: Scalars['String']['output'];
+};
+
+export type IntelRunAccepted = {
+  __typename: 'IntelRunAccepted';
+  kind: Scalars['String']['output'];
+  productId: Scalars['Int']['output'];
+  runId: Scalars['ID']['output'];
+  status: Scalars['String']['output'];
+};
+
 export type IntentDashboard = {
   __typename: 'IntentDashboard';
   companiesWithIntent: Scalars['Int']['output'];
@@ -1374,8 +1394,10 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   analyzeLinkedInPosts: AnalyzePostsResult;
   analyzeProductGTM: Product;
+  analyzeProductGTMAsync: IntelRunAccepted;
   analyzeProductICP: Product;
   analyzeProductPricing: Product;
+  analyzeProductPricingAsync: IntelRunAccepted;
   applyEmailPattern: ApplyEmailPatternResult;
   approveAllDrafts: BatchSendDraftResult;
   approveAndSendDraft: SendDraftResult;
@@ -1447,6 +1469,7 @@ export type Mutation = {
   regenerateDraft: ReplyDraft;
   rescrapeCompetitor: Competitor;
   runFullProductIntel: Product;
+  runFullProductIntelAsync: IntelRunAccepted;
   salescueAnalyze: SalescueAnalyzeResult;
   saveCrawlLog: SaveCrawlLogResult;
   scheduleBatchEmails: ScheduleBatchResult;
@@ -1509,12 +1532,22 @@ export type MutationAnalyzeProductGtmArgs = {
 };
 
 
+export type MutationAnalyzeProductGtmAsyncArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationAnalyzeProductIcpArgs = {
   id: Scalars['Int']['input'];
 };
 
 
 export type MutationAnalyzeProductPricingArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationAnalyzeProductPricingAsyncArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1845,6 +1878,12 @@ export type MutationRunFullProductIntelArgs = {
 };
 
 
+export type MutationRunFullProductIntelAsyncArgs = {
+  forceRefresh?: InputMaybe<Scalars['Boolean']['input']>;
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationSalescueAnalyzeArgs = {
   modules?: InputMaybe<Array<SalescueModule>>;
   text: Scalars['String']['input'];
@@ -2126,6 +2165,8 @@ export type Query = {
   opportunityByUrl: Maybe<Opportunity>;
   product: Maybe<Product>;
   productBySlug: Maybe<Product>;
+  productIntelRun: Maybe<IntelRun>;
+  productIntelRuns: Array<IntelRun>;
   products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
@@ -2401,6 +2442,17 @@ export type QueryProductArgs = {
 
 export type QueryProductBySlugArgs = {
   slug: Scalars['String']['input'];
+};
+
+
+export type QueryProductIntelRunArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryProductIntelRunsArgs = {
+  kind?: InputMaybe<Scalars['String']['input']>;
+  productId: Scalars['Int']['input'];
 };
 
 
