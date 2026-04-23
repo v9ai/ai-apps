@@ -28,6 +28,7 @@ from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import ainvoke_json, make_llm
+from .notify import notify_complete
 from .product_intel_schemas import (
     Channel,
     GTMStrategy,
@@ -445,6 +446,7 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("write_templates", write_templates)
     builder.add_node("build_playbook", build_playbook)
     builder.add_node("draft_plan", draft_plan)
+    builder.add_node("notify_complete", notify_complete)
 
     builder.add_edge(START, "load_inputs")
     builder.add_conditional_edges(
@@ -455,7 +457,8 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_edge("craft_pillars", "build_playbook")
     builder.add_edge("write_templates", "draft_plan")
     builder.add_edge("build_playbook", "draft_plan")
-    builder.add_edge("draft_plan", END)
+    builder.add_edge("draft_plan", "notify_complete")
+    builder.add_edge("notify_complete", END)
     return builder.compile(checkpointer=checkpointer)
 
 

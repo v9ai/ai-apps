@@ -28,6 +28,7 @@ from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import ainvoke_json, make_llm
+from .notify import notify_complete
 from .product_intel_schemas import (
     PricingModel,
     PricingRationale,
@@ -430,6 +431,7 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("choose_value_metric", choose_value_metric)
     builder.add_node("design_model", design_model)
     builder.add_node("write_rationale", write_rationale)
+    builder.add_node("notify_complete", notify_complete)
 
     builder.add_edge(START, "load_inputs")
     builder.add_conditional_edges(
@@ -438,7 +440,8 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_edge("benchmark_competitors", "design_model")
     builder.add_edge("choose_value_metric", "design_model")
     builder.add_edge("design_model", "write_rationale")
-    builder.add_edge("write_rationale", END)
+    builder.add_edge("write_rationale", "notify_complete")
+    builder.add_edge("notify_complete", END)
     return builder.compile(checkpointer=checkpointer)
 
 

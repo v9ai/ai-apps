@@ -510,3 +510,123 @@ export function runFullProductIntel(input: {
     { timeoutMs: 300_000 },
   );
 }
+
+// ─── Async run pattern ─────────────────────────────────────────────────────
+//
+// The sync wrappers above block a Vercel function up to 300s — fine for Apollo
+// Sandbox, cron, and tests, too long for real UI flows. The async helpers
+// below kick off the run on the CF Container, return a run id in <2s, and let
+// the container POST back to /api/webhooks/langgraph when it finishes.
+//
+// See migrations/0058_add_product_intel_runs.sql for the tracking table and
+// backend/leadgen_agent/notify.py for the graph-side webhook notifier.
+
+import { randomBytes, randomUUID } from "node:crypto";
+
+export interface StartRunResult {
+  /** UUID used as the PK in product_intel_runs + passed to the graph as app_run_id. */
+  appRunId: string;
+  /** LangGraph's own run_id. Null only if the backend returned a malformed body. */
+  lgRunId: string;
+  /** LangGraph thread_id — needed for getRunStatus reconciliation. */
+  threadId: string;
+  /** Per-run HMAC secret — store in product_intel_runs.webhook_secret. */
+  webhookSecret: string;
+}
+
+async function lgFetch(path: string, init: RequestInit): Promise<Response> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(init.headers as Record<string, string> | undefined),
+  };
+  if (LANGGRAPH_AUTH_TOKEN) {
+    headers.Authorization = `Bearer ${LANGGRAPH_AUTH_TOKEN}`;
+  }
+  return fetch(`${LANGGRAPH_URL}${path}`, { ...init, headers });
+}
+
+/**
+ * Kick off a LangGraph run in the background. Returns as soon as the container
+ * accepts the run — does NOT wait for the graph to finish. The graph's
+ * `notify_complete` terminal node POSTs the final state to
+ * `${APP_URL}/api/webhooks/langgraph` signed with `webhookSecret`.
+ *
+ * Callers should INSERT a product_intel_runs row with the returned ids BEFORE
+ * returning to the GraphQL client, so a fast webhook can't arrive before the
+ * row exists.
+ */
+export async function startGraphRun(
+  assistantId: string,
+  input: Record<string, unknown>,
+): Promise<StartRunResult> {
+  const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    throw new Error("APP_URL (or NEXT_PUBLIC_APP_URL) must be set for async runs");
+  }
+
+  const appRunId = randomUUID();
+  const webhookSecret = randomBytes(32).toString("hex");
+
+  // 1. Create a thread
+  const threadRes = await lgFetch("/threads", {
+    method: "POST",
+    body: JSON.stringify({
+      metadata: { app_run_id: appRunId, kind: assistantId },
+    }),
+  });
+  if (!threadRes.ok) {
+    throw new Error(
+      `LangGraph thread create failed (${threadRes.status}): ${await threadRes.text().catch(() => "")}`,
+    );
+  }
+  const threadBody = (await threadRes.json()) as { thread_id: string };
+  const threadId = threadBody.thread_id;
+
+  // 2. Kick off background run — /runs, NOT /runs/wait
+  const runRes = await lgFetch(`/threads/${threadId}/runs`, {
+    method: "POST",
+    body: JSON.stringify({
+      assistant_id: assistantId,
+      input: {
+        ...input,
+        webhook_url: `${appUrl.replace(/\/$/, "")}/api/webhooks/langgraph`,
+        webhook_secret: webhookSecret,
+        app_run_id: appRunId,
+      },
+      multitask_strategy: "enqueue",
+    }),
+  });
+  if (!runRes.ok) {
+    throw new Error(
+      `LangGraph run create failed (${runRes.status}): ${await runRes.text().catch(() => "")}`,
+    );
+  }
+  const runBody = (await runRes.json()) as { run_id: string };
+
+  return {
+    appRunId,
+    lgRunId: runBody.run_id,
+    threadId,
+    webhookSecret,
+  };
+}
+
+/**
+ * Reconcile a run's state directly from LangGraph. Used when the webhook is
+ * unusually delayed or dropped — kicks the product_intel_runs row to `error`
+ * if the remote run already finished badly.
+ */
+export async function getRunStatus(
+  threadId: string,
+  lgRunId: string,
+): Promise<{ status: string; output?: Record<string, unknown> }> {
+  try {
+    const res = await lgFetch(`/threads/${threadId}/runs/${lgRunId}`, {
+      method: "GET",
+    });
+    if (!res.ok) return { status: "unknown" };
+    return (await res.json()) as { status: string; output?: Record<string, unknown> };
+  } catch {
+    return { status: "unknown" };
+  }
+}

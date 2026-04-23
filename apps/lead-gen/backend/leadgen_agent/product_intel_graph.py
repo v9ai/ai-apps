@@ -30,6 +30,7 @@ from langgraph.graph import END, START, StateGraph
 from . import deep_icp_graph, gtm_graph, pricing_graph
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import ainvoke_json, make_llm
+from .notify import notify_complete
 from .product_intel_schemas import (
     ProductIntelReport,
     ProductProfile,

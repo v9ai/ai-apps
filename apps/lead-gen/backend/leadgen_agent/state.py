@@ -248,6 +248,11 @@ class CompetitorsTeamState(TypedDict, total=False):
 class PricingState(TypedDict, total=False):
     # input
     product_id: int
+    # async-run webhook contract (optional — set by startGraphRun in the
+    # Next.js client; absent for sync /runs/wait calls)
+    webhook_url: str
+    webhook_secret: str
+    app_run_id: str
     # internal — populated by load_inputs
     product: dict[str, Any]
     icp: dict[str, Any]                         # products.icp_analysis jsonb or {}
@@ -269,6 +274,10 @@ class PricingState(TypedDict, total=False):
 class GTMState(TypedDict, total=False):
     # input
     product_id: int
+    # async-run webhook contract (optional — same as PricingState)
+    webhook_url: str
+    webhook_secret: str
+    app_run_id: str
     # internal
     product: dict[str, Any]
     icp: dict[str, Any]
@@ -291,6 +300,10 @@ class ProductIntelState(TypedDict, total=False):
     # input
     product_id: int
     force_refresh: bool     # when true, ignore cached icp/pricing/gtm and re-run everything
+    # async-run webhook contract (optional — same as PricingState)
+    webhook_url: str
+    webhook_secret: str
+    app_run_id: str
     # internal
     product: dict[str, Any]
     product_profile: dict[str, Any]
