@@ -14,6 +14,7 @@ fragment ProductCore on Product {
   gtmAnalyzedAt
   intelReport
   intelReportAt
+  positioningAnalysis
   publishedAt
   createdBy
   createdAt

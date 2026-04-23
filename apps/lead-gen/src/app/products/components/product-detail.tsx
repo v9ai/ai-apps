@@ -171,6 +171,18 @@ export function ProductDetail({ slug }: { slug: string }) {
           </Text>
         )}
 
+        {product.positioningAnalysis ? (
+          <Flex gap="2" mt="3" wrap="wrap">
+            <Link
+              href={`/products/${product.slug}/positioning`}
+              className={button({ variant: "soft", size: "sm" })}
+            >
+              <StarIcon />
+              <span className={css({ ml: "1" })}>View positioning</span>
+            </Link>
+          </Flex>
+        ) : null}
+
         {highlights?.stats && highlights.stats.length > 0 && (
           <div
             className={css({

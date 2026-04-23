@@ -2114,6 +2114,7 @@ export type Product = {
   intelReport: Maybe<Scalars['JSON']['output']>;
   intelReportAt: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
+  positioningAnalysis: Maybe<Scalars['JSON']['output']>;
   pricingAnalysis: Maybe<Scalars['JSON']['output']>;
   pricingAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   publishedAt: Maybe<Scalars['DateTime']['output']>;

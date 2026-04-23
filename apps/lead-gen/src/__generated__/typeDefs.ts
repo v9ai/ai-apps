@@ -1469,6 +1469,7 @@ type Product {
   intelReport: JSON
   intelReportAt: DateTime
   name: String!
+  positioningAnalysis: JSON
   pricingAnalysis: JSON
   pricingAnalyzedAt: DateTime
   publishedAt: DateTime

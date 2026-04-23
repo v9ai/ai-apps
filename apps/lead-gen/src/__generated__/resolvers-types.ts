@@ -2117,6 +2117,7 @@ export type Product = {
   intelReport: Maybe<Scalars['JSON']['output']>;
   intelReportAt: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
+  positioningAnalysis: Maybe<Scalars['JSON']['output']>;
   pricingAnalysis: Maybe<Scalars['JSON']['output']>;
   pricingAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
   publishedAt: Maybe<Scalars['DateTime']['output']>;
@@ -5514,6 +5515,7 @@ export type ProductResolvers<ContextType = GraphQLContext, ParentType extends Re
   intelReport?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   intelReportAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  positioningAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   pricingAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   pricingAnalyzedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   publishedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;

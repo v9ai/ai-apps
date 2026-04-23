@@ -1102,6 +1102,11 @@ export const products = pgTable(
     gtm_analyzed_at: text("gtm_analyzed_at"),
     intel_report: jsonb("intel_report"),
     intel_report_at: text("intel_report_at"),
+    // Positioning statement — written by backend/leadgen_agent/positioning_graph.py
+    // (migration 0064). Full PositioningStatement payload; no separate timestamp
+    // because updated_at bumps on write and graph_meta.run_at carries the precise
+    // completion time.
+    positioning_analysis: jsonb("positioning_analysis"),
     // Freshness snapshot — written by the `freshness` LangGraph endpoint
     // (see migrations/0065_add_freshness_tracking.sql + backend/leadgen_agent/
     // freshness_graph.py). Used by the product_intel supervisor to decide
