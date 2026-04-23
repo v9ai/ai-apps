@@ -326,6 +326,12 @@ type Mutation {
   createAffirmation(input: CreateAffirmationInput!): Affirmation!
   updateAffirmation(id: Int!, input: UpdateAffirmationInput!): Affirmation!
   deleteAffirmation(id: Int!): DeleteAffirmationResult!
+  generateAffirmationsForFamilyMember(
+    familyMemberId: Int!
+    count: Int
+    categoryFocus: AffirmationCategory
+    language: String
+  ): GenerateAffirmationsResult!
 
   # Tag language rules
   setTagLanguage(tag: String!, language: String!): Boolean!
@@ -525,6 +531,7 @@ enum JobType {
   LONGFORM
   DEEP_ANALYSIS
   RECOMMENDED_BOOKS
+  ROUTINE_ANALYSIS
 }
 
 enum JobStatus {
@@ -1021,6 +1028,13 @@ input UpdateAffirmationInput {
 type DeleteAffirmationResult {
   success: Boolean!
   message: String
+}
+
+type GenerateAffirmationsResult {
+  success: Boolean!
+  message: String
+  count: Int!
+  affirmations: [Affirmation!]!
 }
 
 type AudioMetadata {

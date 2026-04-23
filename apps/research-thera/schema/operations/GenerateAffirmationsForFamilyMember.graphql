@@ -1,0 +1,27 @@
+mutation GenerateAffirmationsForFamilyMember(
+  $familyMemberId: Int!
+  $count: Int
+  $categoryFocus: AffirmationCategory
+  $language: String
+) {
+  generateAffirmationsForFamilyMember(
+    familyMemberId: $familyMemberId
+    count: $count
+    categoryFocus: $categoryFocus
+    language: $language
+  ) {
+    success
+    message
+    count
+    affirmations {
+      id
+      familyMemberId
+      userId
+      text
+      category
+      isActive
+      createdAt
+      updatedAt
+    }
+  }
+}

@@ -17,9 +17,22 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+def _none_to_empty_str(payload: dict[str, Any] | Any, fields: tuple[str, ...]) -> dict[str, Any] | Any:
+    """LLMs frequently emit `null` for string fields that have no applicable
+    value. This helper replaces `None` with `""` for the listed fields so the
+    model validator's string type check doesn't fail. Used across the DeepSeek-
+    driven graphs (pricing / gtm / product_intel)."""
+    if not isinstance(payload, dict):
+        return payload
+    for f in fields:
+        if payload.get(f) is None:
+            payload[f] = ""
+    return payload
 
 # Re-export ICP shapes so product_intel consumers can import everything from
 # one module.
@@ -110,6 +123,32 @@ class PriceTier(BaseModel):
     included: list[str] = Field(default_factory=list, max_length=12)
     limits: list[str] = Field(default_factory=list, max_length=8)
     upgrade_trigger: str = Field(default="", max_length=240)
+
+    @field_validator(
+        "name", "target_persona", "upgrade_trigger", mode="before"
+    )
+    @classmethod
+    def _coerce_str(cls, v: object) -> str:
+        # LLMs frequently emit `null` for non-applicable fields (e.g. custom
+        # tier has no upgrade_trigger). Coerce to empty string so Pydantic's
+        # str type accepts it — max_length still enforces the upper bound.
+        if v is None:
+            return ""
+        return str(v)
+
+    @field_validator("billing_unit", mode="before")
+    @classmethod
+    def _coerce_billing_unit(cls, v: object) -> str:
+        if v is None or v == "":
+            return "flat"
+        return str(v)
+
+    @field_validator("included", "limits", mode="before")
+    @classmethod
+    def _coerce_list(cls, v: object) -> list:
+        if v is None:
+            return []
+        return v if isinstance(v, list) else []
 
     @field_validator("price_monthly_usd", mode="before")
     @classmethod

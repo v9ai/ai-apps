@@ -1041,7 +1041,8 @@ export enum JobType {
   Longform = 'LONGFORM',
   Questions = 'QUESTIONS',
   RecommendedBooks = 'RECOMMENDED_BOOKS',
-  Research = 'RESEARCH'
+  Research = 'RESEARCH',
+  RoutineAnalysis = 'ROUTINE_ANALYSIS'
 }
 
 export type JournalAnalysis = {

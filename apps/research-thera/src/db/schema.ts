@@ -465,6 +465,28 @@ export const deepIssueAnalyses = pgTable("deep_issue_analyses", {
     .default(sql`NOW()`),
 });
 
+export const deepGoalAnalyses = pgTable("deep_goal_analyses", {
+  id: serial("id").primaryKey(),
+  goalId: integer("goal_id").notNull(),
+  userId: text("user_id").notNull(),
+  jobId: text("job_id"),
+  summary: text("summary").notNull(),
+  patternClusters: text("pattern_clusters").notNull(), // JSON
+  timelineAnalysis: text("timeline_analysis").notNull(), // JSON
+  familySystemInsights: text("family_system_insights").notNull(), // JSON
+  priorityRecommendations: text("priority_recommendations").notNull(), // JSON
+  researchRelevance: text("research_relevance").notNull(), // JSON
+  parentAdvice: text("parent_advice").notNull().default("[]"), // JSON
+  dataSnapshot: text("data_snapshot").notNull(), // JSON
+  model: text("model").notNull().default("deepseek-chat"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 // Polymorphic deep analyses. subject_type: 'GOAL' | 'NOTE' | 'JOURNAL_ENTRY' | 'FAMILY_MEMBER'.
 // trigger_type: 'ISSUE' | 'OBSERVATION' | 'FEEDBACK' | null.
 export const deepAnalyses = pgTable("deep_analyses", {

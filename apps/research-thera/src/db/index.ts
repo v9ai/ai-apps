@@ -1128,7 +1128,7 @@ export async function cleanupStaleJobs(minutes = 15): Promise<void> {
 export async function createGenerationJob(
   id: string,
   userId: string,
-  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "DISCUSSION_GUIDE",
+  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS",
   goalId?: number | null,
   storyId?: number,
 ) {
@@ -2847,6 +2847,84 @@ export async function deleteDeepIssueAnalysis(id: number, userId: string): Promi
 }
 
 // ============================================
+// Deep Goal Analyses (dedicated, goal-centered)
+// ============================================
+
+interface DeepGoalAnalysisRow {
+  id: number;
+  goal_id: number;
+  user_id: string;
+  job_id: string | null;
+  summary: string;
+  pattern_clusters: string;
+  timeline_analysis: string;
+  family_system_insights: string;
+  priority_recommendations: string;
+  research_relevance: string;
+  parent_advice: string;
+  data_snapshot: string;
+  model: string;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapDeepGoalAnalysisRow(row: DeepGoalAnalysisRow) {
+  return {
+    id: row.id,
+    goalId: row.goal_id,
+    userId: row.user_id,
+    jobId: row.job_id,
+    summary: row.summary,
+    patternClusters: safeJsonParse(row.pattern_clusters, []),
+    timelineAnalysis: safeJsonParse(row.timeline_analysis, {}),
+    familySystemInsights: safeJsonParse(row.family_system_insights, {}),
+    priorityRecommendations: safeJsonParse(row.priority_recommendations, []),
+    researchRelevance: safeJsonParse(row.research_relevance, []),
+    parentAdvice: safeJsonParse(row.parent_advice, []),
+    dataSnapshot: safeJsonParse(row.data_snapshot, {}),
+    model: row.model,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function createDeepGoalAnalysis(params: {
+  goalId: number;
+  userId: string;
+  jobId?: string | null;
+  summary: string;
+  patternClusters: unknown[];
+  timelineAnalysis: unknown;
+  familySystemInsights: unknown[];
+  priorityRecommendations: unknown[];
+  researchRelevance: unknown[];
+  parentAdvice: unknown[];
+  dataSnapshot: unknown;
+  model?: string;
+}): Promise<number> {
+  const rows = await neonSql`
+    INSERT INTO deep_goal_analyses (goal_id, user_id, job_id, summary, pattern_clusters, timeline_analysis, family_system_insights, priority_recommendations, research_relevance, parent_advice, data_snapshot, model, created_at, updated_at)
+    VALUES (${params.goalId}, ${params.userId}, ${params.jobId ?? null}, ${params.summary}, ${JSON.stringify(params.patternClusters)}, ${JSON.stringify(params.timelineAnalysis)}, ${JSON.stringify(params.familySystemInsights)}, ${JSON.stringify(params.priorityRecommendations)}, ${JSON.stringify(params.researchRelevance)}, ${JSON.stringify(params.parentAdvice)}, ${JSON.stringify(params.dataSnapshot)}, ${params.model ?? "deepseek-chat"}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
+export async function getDeepGoalAnalysis(id: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM deep_goal_analyses WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  return mapDeepGoalAnalysisRow(rows[0] as unknown as DeepGoalAnalysisRow);
+}
+
+export async function getDeepGoalAnalysesForGoal(goalId: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM deep_goal_analyses WHERE goal_id = ${goalId} AND user_id = ${userId} ORDER BY created_at DESC`;
+  return rows.map((r) => mapDeepGoalAnalysisRow(r as unknown as DeepGoalAnalysisRow));
+}
+
+export async function deleteDeepGoalAnalysis(id: number, userId: string): Promise<void> {
+  await neonSql`DELETE FROM deep_goal_analyses WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+// ============================================
 // Deep Analyses (polymorphic: goals, notes, journal entries, family members)
 // ============================================
 
@@ -3710,6 +3788,11 @@ export const db = {
   getDeepIssueAnalysis,
   getDeepIssueAnalysesForFamilyMember,
   deleteDeepIssueAnalysis,
+  // Deep Goal Analyses (dedicated)
+  createDeepGoalAnalysis,
+  getDeepGoalAnalysis,
+  getDeepGoalAnalysesForGoal,
+  deleteDeepGoalAnalysis,
   // Deep Analyses (polymorphic)
   createDeepAnalysis,
   getDeepAnalysis,

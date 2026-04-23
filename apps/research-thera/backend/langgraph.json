@@ -2,6 +2,7 @@
   "$schema": "https://langgra.ph/schema.json",
   "dependencies": ["."],
   "graphs": {
+    "affirmations": "research_agent.affirmations_graph:graph",
     "research": "research_agent.graph:graph",
     "story": "research_agent.story_graph:graph",
     "tts": "research_agent.tts_graph:graph",

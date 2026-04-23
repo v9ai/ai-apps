@@ -1030,7 +1030,8 @@ export type JobType =
   | 'LONGFORM'
   | 'QUESTIONS'
   | 'RECOMMENDED_BOOKS'
-  | 'RESEARCH';
+  | 'RESEARCH'
+  | 'ROUTINE_ANALYSIS';
 
 export type JournalAnalysis = {
   __typename?: 'JournalAnalysis';
@@ -2749,7 +2750,7 @@ export type ResolversTypes = {
   JobError: ResolverTypeWrapper<JobError>;
   JobResult: ResolverTypeWrapper<JobResult>;
   JobStatus: ResolverTypeWrapper<'RUNNING' | 'SUCCEEDED' | 'FAILED'>;
-  JobType: ResolverTypeWrapper<'AUDIO' | 'RESEARCH' | 'QUESTIONS' | 'LONGFORM' | 'DEEP_ANALYSIS' | 'RECOMMENDED_BOOKS'>;
+  JobType: ResolverTypeWrapper<'AUDIO' | 'RESEARCH' | 'QUESTIONS' | 'LONGFORM' | 'DEEP_ANALYSIS' | 'RECOMMENDED_BOOKS' | 'ROUTINE_ANALYSIS'>;
   JournalAnalysis: ResolverTypeWrapper<JournalAnalysis>;
   JournalEntry: ResolverTypeWrapper<Omit<JournalEntry, 'familyMember' | 'goal' | 'issue'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, goal?: Maybe<ResolversTypes['Goal']>, issue?: Maybe<ResolversTypes['Issue']> }>;
   LanguageExample: ResolverTypeWrapper<LanguageExample>;
@@ -3689,7 +3690,7 @@ export type JobResultResolvers<ContextType = GraphQLContext, ParentType extends 
 
 export type JobStatusResolvers = EnumResolverSignature<{ FAILED?: any, RUNNING?: any, SUCCEEDED?: any }, ResolversTypes['JobStatus']>;
 
-export type JobTypeResolvers = EnumResolverSignature<{ AUDIO?: any, DEEP_ANALYSIS?: any, LONGFORM?: any, QUESTIONS?: any, RECOMMENDED_BOOKS?: any, RESEARCH?: any }, ResolversTypes['JobType']>;
+export type JobTypeResolvers = EnumResolverSignature<{ AUDIO?: any, DEEP_ANALYSIS?: any, LONGFORM?: any, QUESTIONS?: any, RECOMMENDED_BOOKS?: any, RESEARCH?: any, ROUTINE_ANALYSIS?: any }, ResolversTypes['JobType']>;
 
 export type JournalAnalysisResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['JournalAnalysis'] = ResolversParentTypes['JournalAnalysis']> = {
   actionableRecommendations?: Resolver<Array<ResolversTypes['ActionableRecommendation']>, ParentType, ContextType>;

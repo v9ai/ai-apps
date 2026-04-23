@@ -28,6 +28,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from research_agent.affirmations_graph import graph as affirmations_graph
 from research_agent.books_graph import graph as books_graph
 from research_agent.deep_analysis_graph import graph as deep_analysis_graph
 from research_agent.discussion_guide_graph import graph as discussion_guide_graph
@@ -45,6 +46,7 @@ from research_agent.tts_graph import graph as tts_graph
 log = logging.getLogger("research_thera_agent")
 
 GRAPHS: dict[str, Any] = {
+    "affirmations": affirmations_graph,
     "books": books_graph,
     "deep_analysis": deep_analysis_graph,
     "discussion_guide": discussion_guide_graph,

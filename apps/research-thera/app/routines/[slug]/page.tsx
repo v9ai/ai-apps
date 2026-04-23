@@ -30,6 +30,7 @@ import {
   HabitFrequency,
 } from "@/app/__generated__/hooks";
 import { AuthGate } from "@/app/components/AuthGate";
+import { RoutineAnalysisPanel } from "@/app/components/RoutineAnalysisPanel";
 import { format } from "date-fns";
 
 type RoutineGroup = {
@@ -226,6 +227,12 @@ function RoutineContent({ slug }: { slug: string }) {
           })}
 
           <Separator size="4" />
+
+          <RoutineAnalysisPanel
+            familyMemberId={familyMember.id}
+            subjectLabel={displayName}
+          />
+
           <Flex justify="end">
             <Button variant="soft" asChild>
               <NextLink href={`/family/${familyMember.id}`}>

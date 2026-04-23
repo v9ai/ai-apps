@@ -941,6 +941,7 @@ enum JobType {
   QUESTIONS
   RECOMMENDED_BOOKS
   RESEARCH
+  ROUTINE_ANALYSIS
 }
 
 type JournalAnalysis {
