@@ -24,6 +24,7 @@ from typing import Any
 
 import pytest
 
+from leadgen_agent import pricing_graph as _pg
 from leadgen_agent.pricing_graph import build_graph
 
 from ._eval_utils import (
@@ -78,16 +79,39 @@ def _serialize_pricing(out: dict[str, Any]) -> str:
     )
 
 
+async def _load_inputs_stub(state: dict) -> dict:
+    """Eval-mode replacement for pricing_graph.load_inputs.
+
+    The production node queries Neon for competitor pricing; for offline evals
+    we feed it the pre-populated ``product`` from the golden entry and leave
+    ICP / competitor slices empty (the graph tolerates both). Matches the
+    deep_icp eval pattern of short-circuiting DB access when ``product`` is
+    already on state.
+    """
+    product = state.get("product") or {}
+    return {
+        "product": product,
+        "icp": state.get("icp") or {},
+        "competitor_pricing": state.get("competitor_pricing") or [],
+        "competitor_summary": state.get("competitor_summary") or [],
+    }
+
+
 async def _run(product: dict) -> dict:
-    graph = build_graph()
-    # Seed state with product already populated so load_inputs skips the DB.
-    # The graph's load_inputs still tries psycopg — we bypass that by
-    # invoking from choose_value_metric downstream. For simplicity + parity
-    # with deep_icp tests, we just catch DB errors and skip those entries.
+    # Rebind load_inputs on the module BEFORE build_graph() so the compiled
+    # StateGraph captures our stub. Restore afterwards so test isolation holds.
+    original = _pg.load_inputs
+    _pg.load_inputs = _load_inputs_stub  # type: ignore[assignment]
     try:
-        return await graph.ainvoke({"product_id": product.get("id", 0), "product": product})
-    except Exception as e:  # noqa: BLE001
-        return {"_runtime_error": repr(e)}
+        graph = build_graph()
+        try:
+            return await graph.ainvoke(
+                {"product_id": product.get("id", 0), "product": product}
+            )
+        except Exception as e:  # noqa: BLE001
+            return {"_runtime_error": repr(e)}
+    finally:
+        _pg.load_inputs = original  # type: ignore[assignment]
 
 
 METRICS: list[tuple[str, str, str]] = [
