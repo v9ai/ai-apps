@@ -75,6 +75,12 @@ const FINISHERS: Finisher[] = [
     github: "https://github.com/v9ai",
     website: "https://vadim.blog",
   },
+  {
+    rank: 9,
+    name: "Tom Seidel",
+    completedAt: "Apr 23, 2026",
+    github: "https://github.com/tmseidel",
+  },
 ];
 
 const COURSES: Course[] = [
