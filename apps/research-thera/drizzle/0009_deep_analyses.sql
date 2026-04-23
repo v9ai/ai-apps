@@ -34,12 +34,15 @@ CREATE INDEX IF NOT EXISTS idx_deep_analyses_subject
 CREATE INDEX IF NOT EXISTS idx_deep_analyses_user_created
   ON deep_analyses (user_id, created_at DESC);
 
-ALTER TABLE deep_analyses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE deep_analyses FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS user_isolation ON deep_analyses;
-CREATE POLICY user_isolation ON deep_analyses
-  USING (user_id = app_current_user_id())
-  WITH CHECK (user_id = app_current_user_id());
+-- RLS intentionally NOT enabled on this table to match the rest of the live
+-- production schema (the 0005 RLS migration has not been applied; auth is
+-- enforced in the app/resolver layer via user_id filters). If RLS ever goes
+-- live project-wide, add here:
+--   ALTER TABLE deep_analyses ENABLE ROW LEVEL SECURITY;
+--   ALTER TABLE deep_analyses FORCE ROW LEVEL SECURITY;
+--   CREATE POLICY user_isolation ON deep_analyses
+--     USING (user_id = app_current_user_id())
+--     WITH CHECK (user_id = app_current_user_id());
 
 COMMIT;
 

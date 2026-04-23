@@ -8,6 +8,12 @@ type Product {
   highlights: JSON
   icpAnalysis: JSON
   icpAnalyzedAt: DateTime
+  pricingAnalysis: JSON
+  pricingAnalyzedAt: DateTime
+  gtmAnalysis: JSON
+  gtmAnalyzedAt: DateTime
+  intelReport: JSON
+  intelReportAt: DateTime
   createdBy: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -30,4 +36,7 @@ extend type Mutation {
   deleteProduct(id: Int!): Boolean!
   analyzeProductICP(id: Int!): Product!
   enhanceProductIcp(id: Int!): Product!
+  analyzeProductPricing(id: Int!): Product!
+  analyzeProductGTM(id: Int!): Product!
+  runFullProductIntel(id: Int!): Product!
 }

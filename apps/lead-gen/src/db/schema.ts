@@ -1094,6 +1094,12 @@ export const products = pgTable(
     highlights: jsonb("highlights"),
     icp_analysis: jsonb("icp_analysis"),
     icp_analyzed_at: text("icp_analyzed_at"),
+    pricing_analysis: jsonb("pricing_analysis"),
+    pricing_analyzed_at: text("pricing_analyzed_at"),
+    gtm_analysis: jsonb("gtm_analysis"),
+    gtm_analyzed_at: text("gtm_analyzed_at"),
+    intel_report: jsonb("intel_report"),
+    intel_report_at: text("intel_report_at"),
     created_by: text("created_by"),
     created_at: text("created_at")
       .notNull()

@@ -44,7 +44,10 @@ from leadgen_agent.deep_icp_graph import build_graph as build_deep_icp
 from leadgen_agent.email_compose_graph import build_graph as build_email_compose
 from leadgen_agent.email_outreach_graph import build_graph as build_email_outreach
 from leadgen_agent.email_reply_graph import build_graph as build_email_reply
+from leadgen_agent.gtm_graph import build_graph as build_gtm
 from leadgen_agent.icp_team_graph import build_graph as build_icp_team
+from leadgen_agent.pricing_graph import build_graph as build_pricing
+from leadgen_agent.product_intel_graph import build_graph as build_product_intel
 from leadgen_agent.score_contact_graph import build_graph as build_score_contact
 from leadgen_agent.text_to_sql_graph import build_graph as build_text_to_sql
 
@@ -93,7 +96,10 @@ async def lifespan(app: FastAPI):
             "email_compose": build_email_compose(checkpointer),
             "email_outreach": build_email_outreach(checkpointer),
             "email_reply": build_email_reply(checkpointer),
+            "gtm": build_gtm(checkpointer),
             "icp_team": build_icp_team(checkpointer),
+            "pricing": build_pricing(checkpointer),
+            "product_intel": build_product_intel(checkpointer),
             "score_contact": build_score_contact(checkpointer),
             "text_to_sql": build_text_to_sql(checkpointer),
         }

@@ -216,6 +216,7 @@ export async function assertOwnsFamilyMember(id: number, userEmail: string) {
 }
 
 export async function deleteFamilyMember(id: number): Promise<boolean> {
+  await neonSql`DELETE FROM deep_analyses WHERE subject_type = 'FAMILY_MEMBER' AND subject_id = ${id}`;
   await neonSql`DELETE FROM family_members WHERE id = ${id}`;
   return true;
 }
@@ -1656,6 +1657,7 @@ export async function deleteJournalEntry(
   id: number,
   userId: string,
 ): Promise<boolean> {
+  await neonSql`DELETE FROM deep_analyses WHERE subject_type = 'JOURNAL_ENTRY' AND subject_id = ${id} AND user_id = ${userId}`;
   await neonSql`DELETE FROM journal_entries WHERE id = ${id} AND user_id = ${userId}`;
   return true;
 }
@@ -2744,6 +2746,7 @@ export async function getGoalById(goalId: number) {
 export async function deleteNote(noteId: number, userId: string): Promise<void> {
   await neonSql`DELETE FROM notes_claims WHERE note_id = ${noteId}`;
   await neonSql`DELETE FROM notes_research WHERE note_id = ${noteId}`;
+  await neonSql`DELETE FROM deep_analyses WHERE subject_type = 'NOTE' AND subject_id = ${noteId} AND user_id = ${userId}`;
   await neonSql`DELETE FROM notes WHERE id = ${noteId} AND user_id = ${userId}`;
 }
 
@@ -2758,6 +2761,7 @@ export async function deleteGoal(goalId: number, userId: string): Promise<void> 
   await neonSql`DELETE FROM audio_assets WHERE goal_id = ${goalId}`;
   await neonSql`DELETE FROM stories WHERE goal_id = ${goalId}`;
   await neonSql`DELETE FROM generation_jobs WHERE goal_id = ${goalId}`;
+  await neonSql`DELETE FROM deep_analyses WHERE subject_type = 'GOAL' AND subject_id = ${goalId} AND user_id = ${userId}`;
   await neonSql`DELETE FROM goals WHERE id = ${goalId} AND user_id = ${userId}`;
 }
 
@@ -2841,6 +2845,156 @@ export async function getDeepIssueAnalysesForFamilyMember(familyMemberId: number
 export async function deleteDeepIssueAnalysis(id: number, userId: string): Promise<void> {
   await neonSql`DELETE FROM deep_issue_analyses WHERE id = ${id} AND user_id = ${userId}`;
 }
+
+// ============================================
+// Deep Analyses (polymorphic: goals, notes, journal entries, family members)
+// ============================================
+
+export type DeepAnalysisSubjectType =
+  | "GOAL"
+  | "NOTE"
+  | "JOURNAL_ENTRY"
+  | "FAMILY_MEMBER";
+
+export type DeepAnalysisTriggerType = "ISSUE" | "OBSERVATION" | "FEEDBACK";
+
+interface DeepAnalysisRow {
+  id: number;
+  subject_type: string;
+  subject_id: number;
+  trigger_type: string | null;
+  trigger_id: number | null;
+  user_id: string;
+  job_id: string | null;
+  summary: string;
+  pattern_clusters: string;
+  timeline_analysis: string;
+  family_system_insights: string;
+  priority_recommendations: string;
+  research_relevance: string;
+  parent_advice: string;
+  data_snapshot: string;
+  model: string;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapDeepAnalysisRow(row: DeepAnalysisRow) {
+  return {
+    id: row.id,
+    subjectType: row.subject_type as DeepAnalysisSubjectType,
+    subjectId: row.subject_id,
+    triggerType: (row.trigger_type as DeepAnalysisTriggerType | null) ?? null,
+    triggerId: row.trigger_id,
+    userId: row.user_id,
+    jobId: row.job_id,
+    summary: row.summary,
+    patternClusters: safeJsonParse(row.pattern_clusters, []),
+    timelineAnalysis: safeJsonParse(row.timeline_analysis, {}),
+    familySystemInsights: safeJsonParse(row.family_system_insights, []),
+    priorityRecommendations: safeJsonParse(row.priority_recommendations, []),
+    researchRelevance: safeJsonParse(row.research_relevance, []),
+    parentAdvice: safeJsonParse(row.parent_advice, []),
+    dataSnapshot: safeJsonParse(row.data_snapshot, {}),
+    model: row.model,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function createDeepAnalysis(params: {
+  subjectType: DeepAnalysisSubjectType;
+  subjectId: number;
+  triggerType?: DeepAnalysisTriggerType | null;
+  triggerId?: number | null;
+  userId: string;
+  jobId?: string | null;
+  summary: string;
+  patternClusters: unknown[];
+  timelineAnalysis: unknown;
+  familySystemInsights: unknown[];
+  priorityRecommendations: unknown[];
+  researchRelevance: unknown[];
+  parentAdvice: unknown[];
+  dataSnapshot: unknown;
+  model?: string;
+}): Promise<number> {
+  const rows = await neonSql`
+    INSERT INTO deep_analyses (subject_type, subject_id, trigger_type, trigger_id, user_id, job_id, summary, pattern_clusters, timeline_analysis, family_system_insights, priority_recommendations, research_relevance, parent_advice, data_snapshot, model, created_at, updated_at)
+    VALUES (${params.subjectType}, ${params.subjectId}, ${params.triggerType ?? null}, ${params.triggerId ?? null}, ${params.userId}, ${params.jobId ?? null}, ${params.summary}, ${JSON.stringify(params.patternClusters)}, ${JSON.stringify(params.timelineAnalysis)}, ${JSON.stringify(params.familySystemInsights)}, ${JSON.stringify(params.priorityRecommendations)}, ${JSON.stringify(params.researchRelevance)}, ${JSON.stringify(params.parentAdvice)}, ${JSON.stringify(params.dataSnapshot)}, ${params.model ?? "deepseek-chat"}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
+export async function getDeepAnalysis(id: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM deep_analyses WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  return mapDeepAnalysisRow(rows[0] as unknown as DeepAnalysisRow);
+}
+
+export async function getDeepAnalysesForSubject(
+  subjectType: DeepAnalysisSubjectType,
+  subjectId: number,
+  userId: string,
+) {
+  const rows = await neonSql`
+    SELECT * FROM deep_analyses
+    WHERE subject_type = ${subjectType}
+      AND subject_id = ${subjectId}
+      AND user_id = ${userId}
+    ORDER BY created_at DESC`;
+  return rows.map((r) => mapDeepAnalysisRow(r as unknown as DeepAnalysisRow));
+}
+
+export async function deleteDeepAnalysis(id: number, userId: string): Promise<void> {
+  await neonSql`DELETE FROM deep_analyses WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+async function cascadeDeleteDeepAnalyses(
+  subjectType: DeepAnalysisSubjectType,
+  subjectId: number,
+  userId: string,
+): Promise<void> {
+  await neonSql`DELETE FROM deep_analyses WHERE subject_type = ${subjectType} AND subject_id = ${subjectId} AND user_id = ${userId}`;
+}
+
+/**
+ * Verify that the given goal row belongs to the caller.
+ * Throws GraphQLError NOT_FOUND if the row doesn't exist or isn't owned.
+ */
+export async function assertOwnsGoal(id: number, userEmail: string) {
+  const rows = await neonSql`SELECT id, user_id FROM goals WHERE id = ${id} AND user_id = ${userEmail}`;
+  if (rows.length === 0) {
+    throw new GraphQLError("Goal not found", { extensions: { code: "NOT_FOUND" } });
+  }
+  return rows[0] as { id: number; user_id: string };
+}
+
+/**
+ * Verify that the given note row belongs to the caller.
+ * Throws GraphQLError NOT_FOUND if the row doesn't exist or isn't owned.
+ */
+export async function assertOwnsNote(id: number, userEmail: string) {
+  const rows = await neonSql`SELECT id, user_id FROM notes WHERE id = ${id} AND user_id = ${userEmail}`;
+  if (rows.length === 0) {
+    throw new GraphQLError("Note not found", { extensions: { code: "NOT_FOUND" } });
+  }
+  return rows[0] as { id: number; user_id: string };
+}
+
+/**
+ * Verify that the given journal_entry row belongs to the caller.
+ * Throws GraphQLError NOT_FOUND if the row doesn't exist or isn't owned.
+ */
+export async function assertOwnsJournalEntry(id: number, userEmail: string) {
+  const rows = await neonSql`SELECT id, user_id FROM journal_entries WHERE id = ${id} AND user_id = ${userEmail}`;
+  if (rows.length === 0) {
+    throw new GraphQLError("Journal entry not found", { extensions: { code: "NOT_FOUND" } });
+  }
+  return rows[0] as { id: number; user_id: string };
+}
+
+export { cascadeDeleteDeepAnalyses };
 
 // Helper: all contact feedbacks for a family member (no contactId filter)
 export async function getContactFeedbacksForFamilyMember(familyMemberId: number, userId: string) {
