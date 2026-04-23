@@ -171,17 +171,53 @@ export function ProductDetail({ slug }: { slug: string }) {
           </Text>
         )}
 
-        {product.positioningAnalysis ? (
-          <Flex gap="2" mt="3" wrap="wrap">
+        <Flex gap="2" mt="3" wrap="wrap">
+          {product.positioningAnalysis ? (
             <Link
               href={`/products/${product.slug}/positioning`}
               className={button({ variant: "soft", size: "sm" })}
             >
               <StarIcon />
-              <span className={css({ ml: "1" })}>View positioning</span>
+              <span className={css({ ml: "1" })}>Positioning</span>
             </Link>
-          </Flex>
-        ) : null}
+          ) : null}
+          {product.icpAnalysis ? (
+            <Link
+              href={`/products/${product.slug}/icp`}
+              className={button({ variant: "soft", size: "sm" })}
+            >
+              <ComponentInstanceIcon />
+              <span className={css({ ml: "1" })}>ICP</span>
+            </Link>
+          ) : null}
+          {product.pricingAnalysis ? (
+            <Link
+              href={`/products/${product.slug}/pricing`}
+              className={button({ variant: "soft", size: "sm" })}
+            >
+              <BarChartIcon />
+              <span className={css({ ml: "1" })}>Pricing</span>
+            </Link>
+          ) : null}
+          {product.gtmAnalysis ? (
+            <Link
+              href={`/products/${product.slug}/gtm`}
+              className={button({ variant: "soft", size: "sm" })}
+            >
+              <RocketIcon />
+              <span className={css({ ml: "1" })}>GTM</span>
+            </Link>
+          ) : null}
+          {product.intelReport ? (
+            <Link
+              href={`/products/${product.slug}/intel`}
+              className={button({ variant: "soft", size: "sm" })}
+            >
+              <MagicWandIcon />
+              <span className={css({ ml: "1" })}>Intel report</span>
+            </Link>
+          ) : null}
+        </Flex>
 
         {highlights?.stats && highlights.stats.length > 0 && (
           <div
