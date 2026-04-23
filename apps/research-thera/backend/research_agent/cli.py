@@ -185,6 +185,25 @@ async def _run_books(args: argparse.Namespace) -> None:
 
     books = result.get("books") or []
     print(f"\n✅ {result.get('message')}\n")
+
+    evals = result.get("_evals") or {}
+    if evals:
+        verified = evals.get("verified_count", 0)
+        rejected = evals.get("rejected_count", 0)
+        backfilled = evals.get("backfilled_count", 0)
+        attempted = verified + rejected
+        print(f"Verification: {verified}/{attempted} confirmed on Open Library"
+              + (f" (backfilled {backfilled})" if backfilled else ""))
+        for r in (evals.get("rejections") or []):
+            authors = ", ".join(r.get("authors") or [])
+            closest = r.get("closest_match")
+            closest_str = f" — closest: \"{closest}\"" if closest else ""
+            print(f"  - dropped: \"{r['title']}\" by {authors}{closest_str}")
+            reason = r.get("reason")
+            if reason:
+                print(f"      reason: {reason}")
+        print()
+
     for i, b in enumerate(books, 1):
         year = f" ({b['year']})" if b.get("year") else ""
         authors = ", ".join(b.get("authors") or [])

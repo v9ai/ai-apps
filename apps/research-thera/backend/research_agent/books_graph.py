@@ -1,11 +1,14 @@
 """LangGraph book-recommendation graph — grounds book picks in research papers + family context."""
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from datetime import datetime, timezone
-from typing import Optional, TypedDict
+from difflib import SequenceMatcher
+from typing import Any, Optional, TypedDict
 
+import httpx
 from langgraph.graph import StateGraph, START, END
 
 from deepseek_client import ChatMessage, DeepSeekClient, DeepSeekConfig
@@ -41,6 +44,7 @@ class BooksState(TypedDict, total=False):
     _candidates: list[dict]  # pass-1 candidate books (pre-rank)
     _books_raw: list[dict]  # pass-2 ranked top-N, rationales merged
     _ordering_strategy: str  # overall curatorial arc
+    _evals: dict  # verification stats from verify_books node
     # Output
     success: bool
     message: str
@@ -664,6 +668,171 @@ async def rank_and_explain(state: dict) -> dict:
     return {"_books_raw": ranked_books, "_ordering_strategy": ordering_strategy}
 
 
+# ---------------------------------------------------------------------------
+# Verification eval — prevent hallucinated titles by cross-checking Open Library
+# ---------------------------------------------------------------------------
+_OPENLIB_SEARCH_URL = "https://openlibrary.org/search.json"
+_VERIFY_TITLE_THRESHOLD = 0.72  # SequenceMatcher ratio on lowercased titles
+
+
+def _title_sim(a: str, b: str) -> float:
+    return SequenceMatcher(None, (a or "").lower().strip(), (b or "").lower().strip()).ratio()
+
+
+def _author_match(candidate_author: str, library_authors: list[str]) -> bool:
+    if not candidate_author or not library_authors:
+        return False
+    ca = candidate_author.lower().strip()
+    # Last-name-only match is common on Open Library
+    ca_last = ca.split()[-1] if ca.split() else ca
+    for la in library_authors:
+        la_l = (la or "").lower().strip()
+        if not la_l:
+            continue
+        if ca in la_l or la_l in ca:
+            return True
+        if ca_last and ca_last in la_l:
+            return True
+    return False
+
+
+async def _verify_one_book(
+    title: str,
+    authors: list[str],
+    client: httpx.AsyncClient,
+) -> dict:
+    """Return {verified, confidence, match_title, match_authors, url, reason}."""
+    primary_author = (authors[0] if authors else "").strip()
+    # Search by title + author for strongest signal; fall back to title-only.
+    queries = []
+    if primary_author:
+        queries.append(f'title:"{title}" author:"{primary_author}"')
+    queries.append(f'title:"{title}"')
+
+    best_doc: Optional[dict] = None
+    best_sim = 0.0
+    for q in queries:
+        try:
+            resp = await client.get(_OPENLIB_SEARCH_URL, params={"q": q, "limit": 5}, timeout=8.0)
+            if resp.status_code != 200:
+                continue
+            docs = (resp.json().get("docs") or [])
+        except Exception as exc:
+            return {"verified": False, "confidence": 0.0, "reason": f"api error: {exc}"}
+
+        for doc in docs:
+            sim = _title_sim(doc.get("title", ""), title)
+            author_ok = _author_match(primary_author, doc.get("author_name") or [])
+            if sim >= _VERIFY_TITLE_THRESHOLD and (author_ok or not primary_author):
+                return {
+                    "verified": True,
+                    "confidence": round(sim, 2),
+                    "match_title": doc.get("title"),
+                    "match_authors": doc.get("author_name") or [],
+                    "url": f"https://openlibrary.org{doc.get('key', '')}",
+                    "reason": "openlibrary title+author match",
+                }
+            if sim > best_sim:
+                best_sim = sim
+                best_doc = doc
+
+    if best_doc:
+        return {
+            "verified": False,
+            "confidence": round(best_sim, 2),
+            "match_title": best_doc.get("title"),
+            "match_authors": best_doc.get("author_name") or [],
+            "reason": f"closest: '{best_doc.get('title')}' by {best_doc.get('author_name')} (sim={round(best_sim, 2)})",
+        }
+    return {"verified": False, "confidence": 0.0, "reason": "no results on openlibrary"}
+
+
+async def verify_books(state: dict) -> dict:
+    """Eval node — drop hallucinated titles, backfill from leftover candidates."""
+    if state.get("error"):
+        return {}
+
+    books = state.get("_books_raw") or []
+    if not books:
+        return {}
+
+    job_id = state.get("job_id")
+    if job_id:
+        await _update_job_progress(job_id, 85)
+
+    async with httpx.AsyncClient() as client:
+        verdicts = await asyncio.gather(
+            *[_verify_one_book(b["title"], b.get("authors") or [], client) for b in books]
+        )
+
+        verified: list[dict] = []
+        rejections: list[dict] = []
+        for book, verdict in zip(books, verdicts):
+            if verdict.get("verified"):
+                verified.append({**book, "_verify": verdict})
+            else:
+                rejections.append({
+                    "title": book["title"],
+                    "authors": book.get("authors") or [],
+                    "isbn": book.get("isbn"),
+                    "reason": verdict.get("reason"),
+                    "closest_match": verdict.get("match_title"),
+                })
+
+        # Backfill from leftover candidates if we dropped too many.
+        backfilled = 0
+        if len(verified) < 4:
+            used = {b["title"].lower() for b in books}
+            leftover = [c for c in (state.get("_candidates") or []) if c["title"].lower() not in used]
+            if leftover:
+                leftover_verdicts = await asyncio.gather(
+                    *[_verify_one_book(c["title"], c.get("authors") or [], client) for c in leftover[:8]]
+                )
+                for cand, verdict in zip(leftover[:8], leftover_verdicts):
+                    if len(verified) >= 6:
+                        break
+                    if verdict.get("verified"):
+                        promoted = {**cand, "_verify": verdict}
+                        original_why = cand.get("why_recommended") or ""
+                        # Strip any existing TIER prefix so we don't double-tag.
+                        stripped = original_why
+                        if original_why.startswith("TIER "):
+                            parts = original_why.split("\n\n", 1)
+                            stripped = parts[1] if len(parts) > 1 else ""
+                        promoted["why_recommended"] = (
+                            f"TIER 2 — Backfilled. Promoted after a higher-ranked candidate failed verification. "
+                            f"{stripped}".strip()
+                        )
+                        verified.append(promoted)
+                        backfilled += 1
+
+    evals = {
+        "verified_count": len(verified),
+        "rejected_count": len(rejections),
+        "backfilled_count": backfilled,
+        "rejections": rejections,
+        "source": "openlibrary",
+    }
+
+    print(
+        f"[books.verify_books] verified={evals['verified_count']} "
+        f"rejected={evals['rejected_count']} backfilled={evals['backfilled_count']}"
+    )
+    for r in rejections:
+        print(f"[books.verify_books]   rejected: \"{r['title']}\" — {r['reason']}")
+
+    if len(verified) < 3:
+        return {
+            "error": (
+                f"verify_books: only {len(verified)} books passed Open Library verification "
+                f"(rejected {len(rejections)}). Refusing to persist a mostly-hallucinated list."
+            ),
+            "_evals": evals,
+        }
+
+    return {"_books_raw": verified, "_evals": evals}
+
+
 async def persist(state: dict) -> dict:
     if state.get("error"):
         return {}
@@ -678,12 +847,24 @@ async def persist(state: dict) -> dict:
     inserted: list[dict] = []
 
     ordering_strategy = (state.get("_ordering_strategy") or "").strip()
+    evals = state.get("_evals") or {}
 
     def _build_message(n: int, research_count: int) -> str:
         base = f"Recommended {n} books based on {research_count} research papers."
+        parts = [base]
+        if evals.get("rejected_count") is not None:
+            verified_total = evals.get("verified_count", n)
+            attempted = verified_total + evals.get("rejected_count", 0)
+            line = f"Verified {verified_total}/{attempted} via Open Library"
+            if evals.get("rejected_count"):
+                titles = ", ".join(f'"{r["title"]}"' for r in (evals.get("rejections") or [])[:3])
+                line += f"; dropped {evals['rejected_count']} unverified ({titles})"
+            if evals.get("backfilled_count"):
+                line += f"; backfilled {evals['backfilled_count']} from leftover candidates"
+            parts.append(line)
         if ordering_strategy:
-            return f"{base}\n\nReading order: {ordering_strategy}"
-        return base
+            parts.append(f"Reading order: {ordering_strategy}")
+        return "\n\n".join(parts)
 
     # Test hook: if there's no DB URL or the caller opted out, synthesize
     # output rows from `_books_raw` without touching Neon.
@@ -805,13 +986,15 @@ def create_books_graph():
     builder.add_node("collect_data", collect_data)
     builder.add_node("generate_candidates", generate_candidates)
     builder.add_node("rank_and_explain", rank_and_explain)
+    builder.add_node("verify_books", verify_books)
     builder.add_node("persist", persist)
     builder.add_node("finalize", _finalize)
 
     builder.add_edge(START, "collect_data")
     builder.add_edge("collect_data", "generate_candidates")
     builder.add_edge("generate_candidates", "rank_and_explain")
-    builder.add_edge("rank_and_explain", "persist")
+    builder.add_edge("rank_and_explain", "verify_books")
+    builder.add_edge("verify_books", "persist")
     builder.add_edge("persist", "finalize")
     builder.add_edge("finalize", END)
 
