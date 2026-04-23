@@ -275,7 +275,8 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
                 ctx = await shared.load_family_member_full_context(
                     cur, family_member_id, user_email
                 )
-                _fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio = ctx["fm"]
+                fm_tuple = ctx["fm"]
+                _fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio = fm_tuple[:6]
 
                 # Habits + logs (specific to the routine graph — shared
                 # loader doesn't cover them).
