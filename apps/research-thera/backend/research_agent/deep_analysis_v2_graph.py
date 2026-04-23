@@ -76,12 +76,15 @@ async def _collect_for_goal(
     fm_row = None
     all_members: list = []
 
+    fm_loc: Optional[str] = None
     if g_fm_id:
         await cur.execute(
             "SELECT id, first_name, name, age_years, relationship, bio, location FROM family_members WHERE id = %s",
             (g_fm_id,),
         )
         fm_row = await cur.fetchone()
+        if fm_row:
+            fm_loc = fm_row[6]
         await cur.execute(
             "SELECT id, title, category, severity, description, recommendations, related_family_member_id, created_at "
             "FROM issues WHERE family_member_id = %s AND user_id = %s ORDER BY created_at DESC LIMIT 30",
@@ -93,6 +96,62 @@ async def _collect_for_goal(
             (user_email,),
         )
         all_members = await cur.fetchall()
+
+    # Household members — other family members living at the same location
+    # as the goal's owner. Excludes Ludmila (Criuleni) when goal is Vadim's
+    # (Brașov). Skipped if goal has no family_member or fm has no location.
+    household_members: list = []
+    if g_fm_id and fm_loc:
+        await cur.execute(
+            "SELECT id, first_name, name, age_years, relationship, bio, location "
+            "FROM family_members "
+            "WHERE user_id = %s AND location = %s AND id != %s "
+            "ORDER BY id",
+            (user_email, fm_loc, g_fm_id),
+        )
+        household_members = await cur.fetchall()
+
+    household_context: list[dict] = []
+    for hm in household_members:
+        hm_id = hm[0]
+        await cur.execute(
+            "SELECT id, title, category, severity, description, recommendations, related_family_member_id, created_at "
+            "FROM issues WHERE family_member_id = %s AND user_id = %s ORDER BY created_at DESC LIMIT 15",
+            (hm_id, user_email),
+        )
+        hm_issues = await cur.fetchall()
+        await cur.execute(
+            "SELECT observed_at, observation_type, frequency, intensity, context, notes "
+            "FROM behavior_observations WHERE family_member_id = %s AND user_id = %s ORDER BY observed_at DESC LIMIT 10",
+            (hm_id, user_email),
+        )
+        hm_obs = await cur.fetchall()
+        await cur.execute(
+            "SELECT entry_date, mood, mood_score, tags, content "
+            "FROM journal_entries WHERE family_member_id = %s AND user_id = %s ORDER BY entry_date DESC LIMIT 10",
+            (hm_id, user_email),
+        )
+        hm_journals = await cur.fetchall()
+        await cur.execute(
+            "SELECT feedback_date, teacher_name, subject, content, tags "
+            "FROM teacher_feedbacks WHERE family_member_id = %s AND user_id = %s ORDER BY feedback_date DESC LIMIT 8",
+            (hm_id, user_email),
+        )
+        hm_teacher = await cur.fetchall()
+        await cur.execute(
+            "SELECT feedback_date, subject, content, tags "
+            "FROM contact_feedbacks WHERE family_member_id = %s AND user_id = %s ORDER BY feedback_date DESC LIMIT 8",
+            (hm_id, user_email),
+        )
+        hm_contact = await cur.fetchall()
+        household_context.append({
+            "member": hm,
+            "issues": hm_issues,
+            "observations": hm_obs,
+            "journals": hm_journals,
+            "teacher_fbs": hm_teacher,
+            "contact_fbs": hm_contact,
+        })
 
     await cur.execute(
         "SELECT observed_at, observation_type, frequency, intensity, context, notes "
@@ -119,14 +178,17 @@ async def _collect_for_goal(
     sections: list[str] = []
     sections.append(
         "You are a clinical psychologist and family systems analyst. Your task is to "
-        "analyze a specific GOAL in the context of the family member it belongs to — "
-        "identify patterns, systemic dynamics, research relevance, and produce practical "
-        "parent-facing advice that advances this goal.\n\n"
+        "analyze a specific GOAL — identify patterns, systemic dynamics, research "
+        "relevance, and produce practical parent-facing advice that advances this goal.\n\n"
+        "When the goal concerns the household (a shared home, routine, environment, or "
+        "activity involving multiple cohabiting members), the `## Household Member Context` "
+        "section is primary clinical data — not background. Center analysis and advice on "
+        "the members whose clinical patterns most directly intersect the goal.\n\n"
         "CRITICAL — ATTRIBUTION RULES:\n"
         "- For each issue/observation, read the text to identify WHO is the primary actor, "
         "victim, or bystander. The profiled family member may be a victim.\n"
-        "- People mentioned who are NOT listed in ## Other Family Members are external "
-        "individuals (classmates, colleagues, etc.).\n\n"
+        "- People mentioned who are NOT listed in ## Other Family Members or ## Household "
+        "Member Context are external individuals (classmates, colleagues, etc.).\n\n"
         "IMPORTANT: Only reference issue IDs, research IDs, and family member IDs that "
         "appear in the data below."
     )
@@ -179,6 +241,60 @@ async def _collect_for_goal(
     if research_chunk:
         sections.append(research_chunk)
 
+    if household_context:
+        hh_lines: list[str] = [
+            "## Household Member Context",
+            "These family members live in the same household as the goal owner. When the "
+            "goal concerns the household (e.g. a shared home, routine, or environment), "
+            "their issues, observations, and feedback are PRIMARY context — weigh them "
+            "heavily in your analysis, not as a footnote.",
+        ]
+        for hc in household_context:
+            hm_id, hm_first, hm_name, hm_age, hm_rel, hm_bio, _hm_loc = hc["member"]
+            header = f"### {hm_first}" + (f" {hm_name}" if hm_name else "") + f" [ID:{hm_id}]"
+            if hm_age:
+                header += f", age {hm_age}"
+            if hm_rel:
+                header += f" ({hm_rel})"
+            hh_lines.append(header)
+            if hm_bio:
+                hh_lines.append(f"Bio: {hm_bio[:300]}")
+            if hc["issues"]:
+                chunk = shared.render_issues_section(
+                    hc["issues"],
+                    f"#### Issues for {hm_first} ({len(hc['issues'])})",
+                )
+                hh_lines.append(chunk)
+            obs = shared.render_observations_section(hc["observations"])
+            if obs:
+                hh_lines.append(
+                    obs.replace(
+                        "## Behavior Observations", f"#### Observations for {hm_first}"
+                    )
+                )
+            jrn = shared.render_journals_section(hc["journals"])
+            if jrn:
+                hh_lines.append(
+                    jrn.replace(
+                        "## Journal Entries", f"#### Journal Entries for {hm_first}"
+                    )
+                )
+            tch = shared.render_teacher_feedbacks_section(hc["teacher_fbs"])
+            if tch:
+                hh_lines.append(
+                    tch.replace(
+                        "## Teacher Feedbacks", f"#### Teacher Feedbacks for {hm_first}"
+                    )
+                )
+            cct = shared.render_contact_feedbacks_section(hc["contact_fbs"])
+            if cct:
+                hh_lines.append(
+                    cct.replace(
+                        "## Contact Feedbacks", f"#### Contact Feedbacks for {hm_first}"
+                    )
+                )
+        sections.append("\n".join(hh_lines))
+
     members_chunk = shared.render_family_members_section(all_members, exclude_id=g_fm_id)
     if members_chunk:
         sections.append(members_chunk)
@@ -192,14 +308,19 @@ async def _collect_for_goal(
         sections.insert(0, shared.ROMANIAN_INSTRUCTION)
 
     prompt = "\n\n".join(sections)
+    hh_issue_count = sum(len(hc["issues"]) for hc in household_context)
+    hh_obs_count = sum(len(hc["observations"]) for hc in household_context)
+    hh_journal_count = sum(len(hc["journals"]) for hc in household_context)
+    hh_contact_count = sum(len(hc["contact_fbs"]) for hc in household_context)
+    hh_teacher_count = sum(len(hc["teacher_fbs"]) for hc in household_context)
     data_snapshot = json.dumps({
-        "issueCount": len(issues),
-        "observationCount": len(behavior_observations),
-        "journalEntryCount": len(journal_entries),
-        "contactFeedbackCount": 0,
-        "teacherFeedbackCount": 0,
+        "issueCount": len(issues) + hh_issue_count,
+        "observationCount": len(behavior_observations) + hh_obs_count,
+        "journalEntryCount": len(journal_entries) + hh_journal_count,
+        "contactFeedbackCount": hh_contact_count,
+        "teacherFeedbackCount": hh_teacher_count,
         "researchPaperCount": len(therapy_research),
-        "relatedMemberIssueCount": 0,
+        "relatedMemberIssueCount": hh_issue_count,
         "issueContactCount": 0,
     })
 

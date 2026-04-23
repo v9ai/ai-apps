@@ -11,6 +11,15 @@ import { slugify } from "@/lib/slug";
 // Products are the SaaS's own catalog (see /products) — not per-tenant data.
 // Use the unscoped http db so the catalog is visible regardless of the
 // caller's tenant cookie. Write-side guard is isAdminEmail() in mutations.ts.
+//
+// READ ACCESS IS INTENTIONALLY PUBLIC — including the four AI-analysis jsonb
+// columns (icp_analysis, pricing_analysis, gtm_analysis, intel_report). These
+// power the marketing-facing /products page and case-study content, so anon
+// visitors need to see them. Anything that should NOT be public must live in
+// a tenant-scoped table, not on this row. Confirmed with user 2026-04-23.
+//
+// If this ever needs to change, the cheapest fix is a requireAuth() on each
+// resolver below — the rest of the API already assumes auth.
 
 export const productQueries = {
   async product(_parent: unknown, args: QueryProductArgs) {
