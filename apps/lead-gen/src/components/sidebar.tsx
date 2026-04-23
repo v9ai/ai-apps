@@ -11,7 +11,6 @@ import {
   PersonIcon,
   EnvelopeClosedIcon,
   Pencil2Icon,
-  BarChartIcon,
   CubeIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
@@ -42,7 +41,6 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/emails", label: "Emails", icon: EnvelopeClosedIcon },
   { href: "/admin/linkedin-posts", label: "Posts", icon: Pencil2Icon },
   { href: "/products", label: "Products", icon: CubeIcon, tenants: ["nyx"] },
-  { href: "/competitors", label: "Competitors", icon: BarChartIcon },
 ];
 
 export function Sidebar() {
