@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Any
+from typing import Annotated, Any
 
 import psycopg
 from langgraph.graph import END, START, StateGraph
@@ -30,7 +30,7 @@ from langgraph.graph import END, START, StateGraph
 from . import deep_icp_graph, gtm_graph, pricing_graph
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import ainvoke_json, make_llm
-from .notify import notify_complete
+from .notify import notify_complete, notify_error
 from .product_intel_schemas import (
     ProductIntelReport,
     ProductProfile,
@@ -39,7 +39,21 @@ from .product_intel_schemas import (
 from .state import ProductIntelState
 
 
+def _first_error(left: str | None, right: str | None) -> str | None:
+    """Reducer: keep the first error set by parallel fan-out nodes."""
+    return left or right
+
+
+class _ProductIntelStateWithError(ProductIntelState, total=False):
+    """Local extension of ProductIntelState carrying an ad-hoc ``_error`` channel
+    so exception-path routing survives across nodes without editing state.py."""
+
+    _error: Annotated[str, _first_error]
+
+
 async def load_and_profile(state: ProductIntelState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     product_id = state.get("product_id")
     if product_id is None:
@@ -84,25 +98,28 @@ async def load_and_profile(state: ProductIntelState) -> dict:
     # Minimal LLM-driven profile extraction (no scrape — the existing highlights
     # jsonb already carries what the landing page scraper extracted during
     # initial ingest).
-    llm = make_llm(temperature=0.1, provider="deepseek")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You extract a normalized ProductProfile from a product brief. "
-                    "Stay grounded — don't invent features. If a field cannot be "
-                    "inferred, leave it empty. "
-                    'Return strict JSON: {"name":string,"one_liner":string,"category":string,'
-                    '"core_jobs":[string],"key_features":[string],"stated_audience":string,'
-                    '"visible_pricing":string,"tech_signals":[string]}'
-                ),
-            },
-            {"role": "user", "content": f"Product brief:\n{_product_brief(product)}\n\nReturn JSON only."},
-        ],
-        provider="deepseek",
-    )
+    try:
+        llm = make_llm(temperature=0.1, provider="deepseek")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You extract a normalized ProductProfile from a product brief. "
+                        "Stay grounded — don't invent features. If a field cannot be "
+                        "inferred, leave it empty. "
+                        'Return strict JSON: {"name":string,"one_liner":string,"category":string,'
+                        '"core_jobs":[string],"key_features":[string],"stated_audience":string,'
+                        '"visible_pricing":string,"tech_signals":[string]}'
+                    ),
+                },
+                {"role": "user", "content": f"Product brief:\n{_product_brief(product)}\n\nReturn JSON only."},
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"load_and_profile: {e}"}
     try:
         profile = ProductProfile.model_validate(result or {}).model_dump()
     except Exception:
@@ -119,6 +136,8 @@ async def load_and_profile(state: ProductIntelState) -> dict:
 
 
 async def ensure_icp(state: ProductIntelState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     cached = state.get("icp") or {}
     force = bool(state.get("force_refresh"))
@@ -128,9 +147,12 @@ async def ensure_icp(state: ProductIntelState) -> dict:
             "agent_timings": {"ensure_icp": round(time.perf_counter() - t0, 3)},
         }
 
-    # Invoke the existing deep_icp subgraph to build fresh ICP.
-    sub = deep_icp_graph.build_graph()
-    icp = await sub.ainvoke({"product_id": state["product_id"]})
+    try:
+        # Invoke the existing deep_icp subgraph to build fresh ICP.
+        sub = deep_icp_graph.build_graph()
+        icp = await sub.ainvoke({"product_id": state["product_id"]})
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"ensure_icp: {e}"}
 
     # Persist so other graphs can pick it up immediately.
     with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
@@ -156,6 +178,8 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
     team graph implicitly — competitor scraping is heavy and the existing
     approve-then-scrape workflow (``/competitors`` UI) is the expected entry
     point. We just surface whether data is available for the downstream nodes."""
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     product_id = state["product_id"]
     with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
@@ -181,9 +205,14 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
 async def run_pricing(state: ProductIntelState) -> dict:
     """Invoke the pricing subgraph. The subgraph's write_rationale node
     persists pricing_analysis itself — no second write here."""
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
-    sub = pricing_graph.build_graph()
-    result = await sub.ainvoke({"product_id": state["product_id"]})
+    try:
+        sub = pricing_graph.build_graph()
+        result = await sub.ainvoke({"product_id": state["product_id"]})
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"run_pricing: {e}"}
     return {
         "pricing": result.get("pricing") or {},
         "agent_timings": {"run_pricing": round(time.perf_counter() - t0, 3)},
@@ -193,9 +222,14 @@ async def run_pricing(state: ProductIntelState) -> dict:
 async def run_gtm(state: ProductIntelState) -> dict:
     """Invoke the GTM subgraph. The subgraph's draft_plan node persists
     gtm_analysis itself — no second write here."""
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
-    sub = gtm_graph.build_graph()
-    result = await sub.ainvoke({"product_id": state["product_id"]})
+    try:
+        sub = gtm_graph.build_graph()
+        result = await sub.ainvoke({"product_id": state["product_id"]})
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"run_gtm: {e}"}
     return {
         "gtm": result.get("gtm") or {},
         "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
@@ -207,6 +241,8 @@ def _fan_out_pricing_gtm(_state: ProductIntelState) -> list[str]:
 
 
 async def synthesize_report(state: ProductIntelState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     profile = state.get("product_profile") or {}
@@ -215,42 +251,45 @@ async def synthesize_report(state: ProductIntelState) -> dict:
     gtm = state.get("gtm") or {}
     competitive = state.get("competitive") or {}
 
-    llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You synthesize an executive product-intelligence report. Be ruthless — "
-                    "founders read only the TL;DR. "
-                    "tldr: 3-4 sentences — who we serve, how we win, what to charge, where to start. "
-                    "top_3_priorities: single most important thing this week, this month, this quarter. "
-                    "key_risks: max 3, ordered by severity. "
-                    "quick_wins: 3-5 things doable THIS WEEK with a small team. "
-                    'Return strict JSON: {"tldr":string,"top_3_priorities":[string],'
-                    '"key_risks":[string],"quick_wins":[string]}'
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Product: {product.get('name', '?')} — {product.get('url', '?')}\n"
-                    f"Profile one-liner: {profile.get('one_liner', '')}\n\n"
-                    f"ICP summary: weighted_total={icp.get('weighted_total', '?')}, "
-                    f"segments={len(icp.get('segments') or [])}, personas={len(icp.get('personas') or [])}\n\n"
-                    f"Competitor data available: {competitive.get('has_completed_analysis', False)} "
-                    f"(count={competitive.get('competitor_count', 0)})\n\n"
-                    f"Pricing recommendation: "
-                    f"{(pricing.get('rationale') or {}).get('recommendation', 'none yet')}\n\n"
-                    f"GTM channels chosen: "
-                    f"{', '.join([c.get('name', '') for c in (gtm.get('channels') or [])][:5])}\n\n"
-                    "Return JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
+    try:
+        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You synthesize an executive product-intelligence report. Be ruthless — "
+                        "founders read only the TL;DR. "
+                        "tldr: 3-4 sentences — who we serve, how we win, what to charge, where to start. "
+                        "top_3_priorities: single most important thing this week, this month, this quarter. "
+                        "key_risks: max 3, ordered by severity. "
+                        "quick_wins: 3-5 things doable THIS WEEK with a small team. "
+                        'Return strict JSON: {"tldr":string,"top_3_priorities":[string],'
+                        '"key_risks":[string],"quick_wins":[string]}'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Product: {product.get('name', '?')} — {product.get('url', '?')}\n"
+                        f"Profile one-liner: {profile.get('one_liner', '')}\n\n"
+                        f"ICP summary: weighted_total={icp.get('weighted_total', '?')}, "
+                        f"segments={len(icp.get('segments') or [])}, personas={len(icp.get('personas') or [])}\n\n"
+                        f"Competitor data available: {competitive.get('has_completed_analysis', False)} "
+                        f"(count={competitive.get('competitor_count', 0)})\n\n"
+                        f"Pricing recommendation: "
+                        f"{(pricing.get('rationale') or {}).get('recommendation', 'none yet')}\n\n"
+                        f"GTM channels chosen: "
+                        f"{', '.join([c.get('name', '') for c in (gtm.get('channels') or [])][:5])}\n\n"
+                        "Return JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"synthesize_report: {e}"}
 
     meta = product_intel_graph_meta(
         graph="product_intel",
@@ -286,8 +325,18 @@ async def synthesize_report(state: ProductIntelState) -> dict:
     }
 
 
+async def notify_error_node(state: ProductIntelState) -> dict:
+    err = state.get("_error") or "unknown error"
+    await notify_error(state, err)
+    return {}
+
+
+def _route_final(state: ProductIntelState) -> str:
+    return "notify_error_node" if state.get("_error") else "notify_complete"
+
+
 def build_graph(checkpointer: Any = None) -> Any:
-    builder = StateGraph(ProductIntelState)
+    builder = StateGraph(_ProductIntelStateWithError)
     builder.add_node("load_and_profile", load_and_profile)
     builder.add_node("ensure_icp", ensure_icp)
     builder.add_node("ensure_competitors", ensure_competitors)
@@ -295,6 +344,7 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("run_gtm", run_gtm)
     builder.add_node("synthesize_report", synthesize_report)
     builder.add_node("notify_complete", notify_complete)
+    builder.add_node("notify_error_node", notify_error_node)
 
     builder.add_edge(START, "load_and_profile")
     builder.add_edge("load_and_profile", "ensure_icp")
@@ -304,8 +354,11 @@ def build_graph(checkpointer: Any = None) -> Any:
     )
     builder.add_edge("run_pricing", "synthesize_report")
     builder.add_edge("run_gtm", "synthesize_report")
-    builder.add_edge("synthesize_report", "notify_complete")
+    builder.add_conditional_edges(
+        "synthesize_report", _route_final, ["notify_complete", "notify_error_node"]
+    )
     builder.add_edge("notify_complete", END)
+    builder.add_edge("notify_error_node", END)
     return builder.compile(checkpointer=checkpointer)
 
 

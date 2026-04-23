@@ -286,39 +286,44 @@ def _fan_out(_state: GTMState) -> list[str]:
 
 
 async def write_templates(state: GTMState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     icp = state.get("icp") or {}
     personas = (icp.get("personas") or [])[:4]
     pillars = state.get("pillars") or []
 
-    llm = make_llm(temperature=0.3, provider="deepseek")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You write 3-6 short outreach templates across channels "
-                    "('cold_email'|'linkedin_dm'|'linkedin_connect'|'linkedin_post'|'reply_guy'|"
-                    "'community'|'webinar'). Each template: {channel, persona (title of target "
-                    "persona), hook (1-line reference to something specific), "
-                    "body (plain text, <100 words, no marketing fluff, use {{first_name}} and "
-                    "{{company}} placeholders), cta (one clear ask)}. Each template must be "
-                    "grounded in a messaging pillar. "
-                    'Return strict JSON: {"templates":[...]}'
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Personas:\n{json.dumps(personas)[:1500]}\n\n"
-                    f"Pillars:\n{json.dumps(pillars)[:2000]}\n\n"
-                    "Return JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
+    try:
+        llm = make_llm(temperature=0.3, provider="deepseek")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You write 3-6 short outreach templates across channels "
+                        "('cold_email'|'linkedin_dm'|'linkedin_connect'|'linkedin_post'|'reply_guy'|"
+                        "'community'|'webinar'). Each template: {channel, persona (title of target "
+                        "persona), hook (1-line reference to something specific), "
+                        "body (plain text, <100 words, no marketing fluff, use {{first_name}} and "
+                        "{{company}} placeholders), cta (one clear ask)}. Each template must be "
+                        "grounded in a messaging pillar. "
+                        'Return strict JSON: {"templates":[...]}'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Personas:\n{json.dumps(personas)[:1500]}\n\n"
+                        f"Pillars:\n{json.dumps(pillars)[:2000]}\n\n"
+                        "Return JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"write_templates: {e}"}
     raw = result.get("templates") if isinstance(result, dict) else None
     templates: list[dict[str, Any]] = []
     for t in raw or []:
@@ -335,38 +340,43 @@ async def write_templates(state: GTMState) -> dict:
 
 
 async def build_playbook(state: GTMState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     icp = state.get("icp") or {}
     comps = state.get("competitive") or {}
     pricing = state.get("pricing") or {}
 
-    llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You build the sales playbook: "
-                    "{discovery_questions:[6-8 questions that qualify fit AND surface pain], "
-                    "objections:[{objection, response, evidence_to_show:[string]}], "
-                    "battlecards:{competitor_name: 'one-paragraph differentiation vs them'}}. "
-                    "Don't bash competitors; position around gaps. "
-                    'Return strict JSON: {"discovery_questions":[],"objections":[],"battlecards":{}}'
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"ICP:\n{_icp_summary(icp)}\n\n"
-                    f"Competitors:\n{_competitive_summary(comps)}\n\n"
-                    f"Pricing:\n{_pricing_summary(pricing)}\n\n"
-                    "Return JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
+    try:
+        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You build the sales playbook: "
+                        "{discovery_questions:[6-8 questions that qualify fit AND surface pain], "
+                        "objections:[{objection, response, evidence_to_show:[string]}], "
+                        "battlecards:{competitor_name: 'one-paragraph differentiation vs them'}}. "
+                        "Don't bash competitors; position around gaps. "
+                        'Return strict JSON: {"discovery_questions":[],"objections":[],"battlecards":{}}'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"ICP:\n{_icp_summary(icp)}\n\n"
+                        f"Competitors:\n{_competitive_summary(comps)}\n\n"
+                        f"Pricing:\n{_pricing_summary(pricing)}\n\n"
+                        "Return JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"build_playbook: {e}"}
     if not isinstance(result, dict):
         result = {}
     try:
@@ -380,6 +390,8 @@ async def build_playbook(state: GTMState) -> dict:
 
 
 async def draft_plan(state: GTMState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     channels = state.get("channels") or []
     pillars = state.get("pillars") or []
@@ -387,35 +399,38 @@ async def draft_plan(state: GTMState) -> dict:
     playbook = state.get("playbook") or {}
     pricing = state.get("pricing") or {}
 
-    llm = make_llm(temperature=0.2, provider="deepseek")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You draft a concrete first-90-days GTM plan. 6-12 action items, each "
-                    "week-labelled (e.g. 'Week 1: …', 'Week 2-3: …', 'Month 2: …', 'Month 3: …'). "
-                    "Each item must be specific, owner-clear, and shippable by a small team. "
-                    "Tie items back to the channels and pillars chosen. "
-                    'Return strict JSON: {"first_90_days":[string]}'
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Channels:\n{json.dumps([c.get('name') for c in channels])}\n"
-                    f"Pillars:\n{json.dumps([p.get('theme') for p in pillars])}\n"
-                    f"Templates ready: {len(templates)}\n"
-                    f"Playbook ready: discovery_q={len(playbook.get('discovery_questions') or [])}, "
-                    f"objections={len(playbook.get('objections') or [])}\n"
-                    f"Pricing: {_pricing_summary(pricing)}\n\n"
-                    "Return JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
+    try:
+        llm = make_llm(temperature=0.2, provider="deepseek")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You draft a concrete first-90-days GTM plan. 6-12 action items, each "
+                        "week-labelled (e.g. 'Week 1: …', 'Week 2-3: …', 'Month 2: …', 'Month 3: …'). "
+                        "Each item must be specific, owner-clear, and shippable by a small team. "
+                        "Tie items back to the channels and pillars chosen. "
+                        'Return strict JSON: {"first_90_days":[string]}'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Channels:\n{json.dumps([c.get('name') for c in channels])}\n"
+                        f"Pillars:\n{json.dumps([p.get('theme') for p in pillars])}\n"
+                        f"Templates ready: {len(templates)}\n"
+                        f"Playbook ready: discovery_q={len(playbook.get('discovery_questions') or [])}, "
+                        f"objections={len(playbook.get('objections') or [])}\n"
+                        f"Pricing: {_pricing_summary(pricing)}\n\n"
+                        "Return JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"draft_plan: {e}"}
     raw = result.get("first_90_days") if isinstance(result, dict) else None
     plan = [str(x)[:400] for x in (raw or []) if isinstance(x, (str, int, float))][:12]
 
@@ -460,8 +475,18 @@ async def draft_plan(state: GTMState) -> dict:
     }
 
 
+async def notify_error_node(state: GTMState) -> dict:
+    err = state.get("_error") or "unknown error"
+    await notify_error(state, err)
+    return {}
+
+
+def _route_final(state: GTMState) -> str:
+    return "notify_error_node" if state.get("_error") else "notify_complete"
+
+
 def build_graph(checkpointer: Any = None) -> Any:
-    builder = StateGraph(GTMState)
+    builder = StateGraph(_GTMStateWithError)
     builder.add_node("load_inputs", load_inputs)
     builder.add_node("pick_channels", pick_channels)
     builder.add_node("craft_pillars", craft_pillars)
@@ -469,6 +494,7 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("build_playbook", build_playbook)
     builder.add_node("draft_plan", draft_plan)
     builder.add_node("notify_complete", notify_complete)
+    builder.add_node("notify_error_node", notify_error_node)
 
     builder.add_edge(START, "load_inputs")
     builder.add_conditional_edges(
@@ -479,8 +505,11 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_edge("craft_pillars", "build_playbook")
     builder.add_edge("write_templates", "draft_plan")
     builder.add_edge("build_playbook", "draft_plan")
-    builder.add_edge("draft_plan", "notify_complete")
+    builder.add_conditional_edges(
+        "draft_plan", _route_final, ["notify_complete", "notify_error_node"]
+    )
     builder.add_edge("notify_complete", END)
+    builder.add_edge("notify_error_node", END)
     return builder.compile(checkpointer=checkpointer)
 
 
