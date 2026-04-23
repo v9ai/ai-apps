@@ -1486,6 +1486,23 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
+  /**
+   * Replace a competitor's pricing tiers in bulk. Used by the Product team's
+   * Pricing Analyst (Claude agent) to write hand-extracted tiers without going
+   * through the deep_competitor scraper.
+   */
+  setCompetitorPricingTiers: Competitor;
+  /**
+   * Write a positioning statement authored by the Product team's Positioning
+   * Analyst (Claude agent). Merges authored_by='claude-team' into the jsonb so
+   * the UI can distinguish Claude-authored from Python-pipeline-authored rows.
+   */
+  setProductPositioning: Product;
+  /**
+   * Write a pricing analysis authored by the Product team's Pricing Analyst
+   * (Claude agent). Same provenance marker as setProductPositioning.
+   */
+  setProductPricingAnalysis: Product;
   setProductPublished: Product;
   snoozeReminder: Reminder;
   syncResendEmails: SyncResendResult;
@@ -1941,6 +1958,24 @@ export type MutationSendScheduledEmailNowArgs = {
 };
 
 
+export type MutationSetCompetitorPricingTiersArgs = {
+  competitorId: Scalars['Int']['input'];
+  tiers: Array<PricingTierInput>;
+};
+
+
+export type MutationSetProductPositioningArgs = {
+  id: Scalars['Int']['input'];
+  positioning: Scalars['JSON']['input'];
+};
+
+
+export type MutationSetProductPricingAnalysisArgs = {
+  id: Scalars['Int']['input'];
+  pricing: Scalars['JSON']['input'];
+};
+
+
 export type MutationSetProductPublishedArgs = {
   id: Scalars['Int']['input'];
   published: Scalars['Boolean']['input'];
@@ -2100,6 +2135,22 @@ export type PricingTier = {
   seatPriceUsd: Maybe<Scalars['Float']['output']>;
   sortOrder: Scalars['Int']['output'];
   tierName: Scalars['String']['output'];
+};
+
+/**
+ * Tier shape written by the Product team's Pricing Analyst (Claude agent).
+ * Mirrors PricingTier but as an input. Null numeric fields mean "not disclosed";
+ * set isCustomQuote=true for 'Contact Sales' tiers.
+ */
+export type PricingTierInput = {
+  annualPriceUsd?: InputMaybe<Scalars['Float']['input']>;
+  currency?: InputMaybe<Scalars['String']['input']>;
+  includedLimits?: InputMaybe<Scalars['JSON']['input']>;
+  isCustomQuote?: InputMaybe<Scalars['Boolean']['input']>;
+  monthlyPriceUsd?: InputMaybe<Scalars['Float']['input']>;
+  seatPriceUsd?: InputMaybe<Scalars['Float']['input']>;
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
+  tierName: Scalars['String']['input'];
 };
 
 export type Product = {
@@ -3976,6 +4027,7 @@ export type ResolversTypes = {
   Opportunity: ResolverTypeWrapper<Partial<Opportunity>>;
   PreviewEmailInput: ResolverTypeWrapper<Partial<PreviewEmailInput>>;
   PricingTier: ResolverTypeWrapper<Partial<PricingTier>>;
+  PricingTierInput: ResolverTypeWrapper<Partial<PricingTierInput>>;
   Product: ResolverTypeWrapper<Partial<Product>>;
   ProductInput: ResolverTypeWrapper<Partial<ProductInput>>;
   QualityGateResult: ResolverTypeWrapper<Partial<QualityGateResult>>;
@@ -4222,6 +4274,7 @@ export type ResolversParentTypes = {
   Opportunity: Partial<Opportunity>;
   PreviewEmailInput: Partial<PreviewEmailInput>;
   PricingTier: Partial<PricingTier>;
+  PricingTierInput: Partial<PricingTierInput>;
   Product: Partial<Product>;
   ProductInput: Partial<ProductInput>;
   QualityGateResult: Partial<QualityGateResult>;
@@ -5440,6 +5493,9 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   sendEmail?: Resolver<ResolversTypes['SendEmailResult'], ParentType, ContextType, RequireFields<MutationSendEmailArgs, 'input'>>;
   sendOutreachEmail?: Resolver<ResolversTypes['SendOutreachEmailResult'], ParentType, ContextType, RequireFields<MutationSendOutreachEmailArgs, 'input'>>;
   sendScheduledEmailNow?: Resolver<ResolversTypes['SendNowResult'], ParentType, ContextType, RequireFields<MutationSendScheduledEmailNowArgs, 'resendId'>>;
+  setCompetitorPricingTiers?: Resolver<ResolversTypes['Competitor'], ParentType, ContextType, RequireFields<MutationSetCompetitorPricingTiersArgs, 'competitorId' | 'tiers'>>;
+  setProductPositioning?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationSetProductPositioningArgs, 'id' | 'positioning'>>;
+  setProductPricingAnalysis?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationSetProductPricingAnalysisArgs, 'id' | 'pricing'>>;
   setProductPublished?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationSetProductPublishedArgs, 'id' | 'published'>>;
   snoozeReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationSnoozeReminderArgs, 'days' | 'id'>>;
   syncResendEmails?: Resolver<ResolversTypes['SyncResendResult'], ParentType, ContextType, Partial<MutationSyncResendEmailsArgs>>;

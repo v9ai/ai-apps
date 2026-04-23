@@ -1376,6 +1376,23 @@ type Mutation {
   sendEmail(input: SendEmailInput!): SendEmailResult!
   sendOutreachEmail(input: SendOutreachEmailInput!): SendOutreachEmailResult!
   sendScheduledEmailNow(resendId: String!): SendNowResult!
+  """
+  Replace a competitor's pricing tiers in bulk. Used by the Product team's
+  Pricing Analyst (Claude agent) to write hand-extracted tiers without going
+  through the deep_competitor scraper.
+  """
+  setCompetitorPricingTiers(competitorId: Int!, tiers: [PricingTierInput!]!): Competitor!
+  """
+  Write a positioning statement authored by the Product team's Positioning
+  Analyst (Claude agent). Merges authored_by='claude-team' into the jsonb so
+  the UI can distinguish Claude-authored from Python-pipeline-authored rows.
+  """
+  setProductPositioning(id: Int!, positioning: JSON!): Product!
+  """
+  Write a pricing analysis authored by the Product team's Pricing Analyst
+  (Claude agent). Same provenance marker as setProductPositioning.
+  """
+  setProductPricingAnalysis(id: Int!, pricing: JSON!): Product!
   setProductPublished(id: Int!, published: Boolean!): Product!
   snoozeReminder(days: Int!, id: Int!): Reminder!
   syncResendEmails(companyId: Int): SyncResendResult!
@@ -1452,6 +1469,22 @@ type PricingTier {
   monthlyPriceUsd: Float
   seatPriceUsd: Float
   sortOrder: Int!
+  tierName: String!
+}
+
+"""
+Tier shape written by the Product team's Pricing Analyst (Claude agent).
+Mirrors PricingTier but as an input. Null numeric fields mean "not disclosed";
+set isCustomQuote=true for 'Contact Sales' tiers.
+"""
+input PricingTierInput {
+  annualPriceUsd: Float
+  currency: String = "USD"
+  includedLimits: JSON
+  isCustomQuote: Boolean = false
+  monthlyPriceUsd: Float
+  seatPriceUsd: Float
+  sortOrder: Int = 0
   tierName: String!
 }
 
