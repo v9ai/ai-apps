@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from leadgen_agent.pricing_graph import build_graph
 from leadgen_agent.product_intel_schemas import (
     PRODUCT_INTEL_VERSION,
+    PriceAnchor,
     PriceTier,
     PricingModel,
     PricingRationale,
