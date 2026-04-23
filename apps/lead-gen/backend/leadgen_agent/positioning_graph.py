@@ -220,6 +220,36 @@ async def extract_category_conventions(state: PositioningState) -> dict:
     }
 
 
+def _competitive_block(competitive: dict[str, Any]) -> str:
+    """Render the competitive dict as a human-readable block for LLM prompts.
+
+    When the product_intel supervisor loaded named competitors from the DB,
+    they live in competitive["competitors"] as a list of {name, url,
+    description, positioning_headline, target_audience} dicts. Format them
+    explicitly so the LLM can build a real competitor_frame rather than
+    falling back to anti-pattern names like "naive chunking".
+    """
+    named: list[dict[str, Any]] = competitive.get("competitors") or []
+    if named:
+        lines = ["Known competitors (use these for competitor_frame):"]
+        for c in named[:8]:
+            headline = c.get("positioning_headline") or c.get("description") or ""
+            lines.append(
+                f"  - {c.get('name', '?')} ({c.get('url', '?')})"
+                + (f": {headline[:160]}" if headline else "")
+            )
+        return "\n".join(lines) + "\n\n"
+    # Fallback: minimal metadata only (no fabrication pressure)
+    count = competitive.get("competitor_count") or 0
+    has = competitive.get("has_completed_analysis", False)
+    return (
+        f"Competitive snapshot: analysis={'complete' if has else 'not run'}, "
+        f"known_count={count}. "
+        "If you cannot identify real named competitors with confidence, "
+        "return an empty competitor_frame list.\n\n"
+    )
+
+
 async def identify_white_space(state: PositioningState) -> dict:
     if state.get("_error"):
         return {}
@@ -264,8 +294,8 @@ async def identify_white_space(state: PositioningState) -> dict:
                     "content": (
                         f"Product brief:\n{_product_brief(product)}\n\n"
                         f"Category conventions already identified: {json.dumps(conventions)}\n\n"
-                        f"Competitive snapshot: {json.dumps(competitive)[:600]}\n\n"
-                        "Return JSON only."
+                        + _competitive_block(competitive)
+                        + "\nReturn JSON only."
                     ),
                 },
             ],

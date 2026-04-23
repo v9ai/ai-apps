@@ -324,12 +324,39 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
         and float(freshness.get("confidence") or 0) >= 0.7
     )
 
+    # Fetch named competitors so the positioning graph can build a real
+    # competitor_frame rather than fabricating anti-pattern names like
+    # "naive chunking" when the snapshot is empty.
+    named_competitors: list[dict[str, Any]] = []
+    if has_competitors:
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT c.name, c.url, c.domain, c.description,
+                           c.positioning_headline, c.target_audience
+                    FROM competitors c
+                    JOIN competitor_analyses a ON c.analysis_id = a.id
+                    WHERE a.product_id = %s
+                      AND a.status = 'done'
+                      AND c.status IN ('done', 'approved')
+                    ORDER BY c.id
+                    LIMIT 10
+                    """,
+                    (int(product_id),),
+                )
+                comp_rows = cur.fetchall()
+                comp_cols = [d[0] for d in cur.description or []]
+        for cr in comp_rows:
+            named_competitors.append(dict(zip(comp_cols, cr)))
+
     return {
         "competitive": {
             "has_completed_analysis": has_competitors,
             "competitor_count": row[0],
             "maybe_stale": maybe_stale,
             "freshness_reason": freshness.get("reason", ""),
+            "competitors": named_competitors,
         },
         "agent_timings": {"ensure_competitors": round(time.perf_counter() - t0, 3)},
     }
