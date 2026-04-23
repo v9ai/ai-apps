@@ -1482,6 +1482,7 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
+  setProductPublished: Product;
   snoozeReminder: Reminder;
   syncResendEmails: SyncResendResult;
   /**
@@ -1933,6 +1934,12 @@ export type MutationSendScheduledEmailNowArgs = {
 };
 
 
+export type MutationSetProductPublishedArgs = {
+  id: Scalars['Int']['input'];
+  published: Scalars['Boolean']['input'];
+};
+
+
 export type MutationSnoozeReminderArgs = {
   days: Scalars['Int']['input'];
   id: Scalars['Int']['input'];
@@ -2105,6 +2112,7 @@ export type Product = {
   name: Scalars['String']['output'];
   pricingAnalysis: Maybe<Scalars['JSON']['output']>;
   pricingAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
+  publishedAt: Maybe<Scalars['DateTime']['output']>;
   slug: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   url: Scalars['URL']['output'];
@@ -5422,6 +5430,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   sendEmail?: Resolver<ResolversTypes['SendEmailResult'], ParentType, ContextType, RequireFields<MutationSendEmailArgs, 'input'>>;
   sendOutreachEmail?: Resolver<ResolversTypes['SendOutreachEmailResult'], ParentType, ContextType, RequireFields<MutationSendOutreachEmailArgs, 'input'>>;
   sendScheduledEmailNow?: Resolver<ResolversTypes['SendNowResult'], ParentType, ContextType, RequireFields<MutationSendScheduledEmailNowArgs, 'resendId'>>;
+  setProductPublished?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationSetProductPublishedArgs, 'id' | 'published'>>;
   snoozeReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationSnoozeReminderArgs, 'days' | 'id'>>;
   syncResendEmails?: Resolver<ResolversTypes['SyncResendResult'], ParentType, ContextType, Partial<MutationSyncResendEmailsArgs>>;
   syncVoyagerJobs?: Resolver<ResolversTypes['SyncVoyagerJobsResult'], ParentType, ContextType, RequireFields<MutationSyncVoyagerJobsArgs, 'input'>>;
@@ -5498,6 +5507,7 @@ export type ProductResolvers<ContextType = GraphQLContext, ParentType extends Re
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   pricingAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   pricingAnalyzedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  publishedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['URL'], ParentType, ContextType>;

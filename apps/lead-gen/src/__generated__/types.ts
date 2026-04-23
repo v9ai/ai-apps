@@ -1479,6 +1479,7 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
+  setProductPublished: Product;
   snoozeReminder: Reminder;
   syncResendEmails: SyncResendResult;
   /**
@@ -1930,6 +1931,12 @@ export type MutationSendScheduledEmailNowArgs = {
 };
 
 
+export type MutationSetProductPublishedArgs = {
+  id: Scalars['Int']['input'];
+  published: Scalars['Boolean']['input'];
+};
+
+
 export type MutationSnoozeReminderArgs = {
   days: Scalars['Int']['input'];
   id: Scalars['Int']['input'];
@@ -2102,6 +2109,7 @@ export type Product = {
   name: Scalars['String']['output'];
   pricingAnalysis: Maybe<Scalars['JSON']['output']>;
   pricingAnalyzedAt: Maybe<Scalars['DateTime']['output']>;
+  publishedAt: Maybe<Scalars['DateTime']['output']>;
   slug: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   url: Scalars['URL']['output'];

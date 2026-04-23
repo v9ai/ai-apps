@@ -20,4 +20,6 @@ export const ProductField = {
   gtmAnalyzedAt: (p: DbProduct) => p.gtm_analyzed_at ?? null,
   intelReport: (p: DbProduct) => p.intel_report ?? null,
   intelReportAt: (p: DbProduct) => p.intel_report_at ?? null,
+  publishedAt: (p: DbProduct) =>
+    p.published_at ? new Date(p.published_at).toISOString() : null,
 };

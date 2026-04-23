@@ -14,6 +14,7 @@ fragment ProductCore on Product {
   gtmAnalyzedAt
   intelReport
   intelReportAt
+  publishedAt
   createdBy
   createdAt
   updatedAt
@@ -156,4 +157,8 @@ mutation RunFullProductIntelAsync($id: Int!, $forceRefresh: Boolean) {
     kind
     status
   }
+}
+
+mutation SetProductPublished($id: Int!, $published: Boolean!) {
+  setProductPublished(id: $id, published: $published) { ...ProductCore }
 }

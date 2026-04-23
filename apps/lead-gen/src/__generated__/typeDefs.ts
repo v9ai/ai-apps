@@ -1368,6 +1368,7 @@ type Mutation {
   sendEmail(input: SendEmailInput!): SendEmailResult!
   sendOutreachEmail(input: SendOutreachEmailInput!): SendOutreachEmailResult!
   sendScheduledEmailNow(resendId: String!): SendNowResult!
+  setProductPublished(id: Int!, published: Boolean!): Product!
   snoozeReminder(days: Int!, id: Int!): Reminder!
   syncResendEmails(companyId: Int): SyncResendResult!
   """
@@ -1462,6 +1463,7 @@ type Product {
   name: String!
   pricingAnalysis: JSON
   pricingAnalyzedAt: DateTime
+  publishedAt: DateTime
   slug: String!
   updatedAt: DateTime!
   url: URL!

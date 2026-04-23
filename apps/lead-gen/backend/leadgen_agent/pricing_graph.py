@@ -28,7 +28,7 @@ from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import ainvoke_json, make_llm
-from .notify import notify_complete
+from .notify import notify_complete, notify_error
 from .product_intel_schemas import (
     PricingModel,
     PricingRationale,
@@ -194,6 +194,8 @@ def _fmt_icp_block(icp: dict[str, Any]) -> str:
 
 
 async def benchmark_competitors(state: PricingState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     tiers = state.get("competitor_pricing") or []
     summary = state.get("competitor_summary") or []
@@ -207,31 +209,34 @@ async def benchmark_competitors(state: PricingState) -> dict:
             "agent_timings": {"benchmark_competitors": round(time.perf_counter() - t0, 3)},
         }
 
-    llm = make_llm(temperature=0.1, provider="deepseek")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You extract competitive pricing intelligence. Given competitor rows "
-                    "and their tier pricing from our DB, produce: "
-                    '{"category_summary":"1-2 sentence summary of how this category prices",'
-                    '"price_anchors":["lowest concrete price seen","median","highest"],'
-                    '"category_norms":["free_trial|no_free_trial","annual_discount|monthly_only","per_seat|per_usage|flat","pricing_opaque|pricing_public"]}. '
-                    "If any anchor cannot be inferred, say so explicitly in that slot."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Competitor rows + pricing tiers:\n{_fmt_competitor_block(summary, tiers)}"
-                    f"\n\nReturn JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
+    try:
+        llm = make_llm(temperature=0.1, provider="deepseek")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You extract competitive pricing intelligence. Given competitor rows "
+                        "and their tier pricing from our DB, produce: "
+                        '{"category_summary":"1-2 sentence summary of how this category prices",'
+                        '"price_anchors":["lowest concrete price seen","median","highest"],'
+                        '"category_norms":["free_trial|no_free_trial","annual_discount|monthly_only","per_seat|per_usage|flat","pricing_opaque|pricing_public"]}. '
+                        "If any anchor cannot be inferred, say so explicitly in that slot."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Competitor rows + pricing tiers:\n{_fmt_competitor_block(summary, tiers)}"
+                        f"\n\nReturn JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"benchmark_competitors: {e}"}
     if not isinstance(result, dict):
         result = {}
     return {

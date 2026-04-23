@@ -1101,6 +1101,9 @@ export const products = pgTable(
     gtm_analyzed_at: text("gtm_analyzed_at"),
     intel_report: jsonb("intel_report"),
     intel_report_at: text("intel_report_at"),
+    // Publish gate (see migrations/0060_add_product_published_at.sql). Rows with
+    // published_at IS NULL are admin-only drafts; non-admin reads must filter.
+    published_at: timestamp("published_at", { withTimezone: true }),
     // Generated column (see migrations/0059_public_intel_reads.sql) — mirrors
     // slugify(name) at the DB level, indexed for fast productBySlug.
     slug: text("slug").generatedAlwaysAs(

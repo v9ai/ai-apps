@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Badge,
   Box,
   Button,
+  Callout,
   Card,
   Flex,
   Heading,
@@ -12,6 +14,7 @@ import {
   Spinner,
   Text,
 } from "@radix-ui/themes";
+import { InfoCircledIcon } from "@radix-ui/react-icons";
 import {
   useDeleteRoutineAnalysisMutation,
   useGenerateRoutineAnalysisMutation,
@@ -29,6 +32,37 @@ const priorityColor: Record<string, "indigo" | "orange" | "gray"> = {
   short_term: "indigo",
   long_term: "gray",
 };
+
+/** Extract unique numeric IDs from [ID:N] citation patterns in a string. */
+function extractIssueIdCitations(text: string): number[] {
+  const seen = new Set<number>();
+  const re = /\[ID:(\d+)\]/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    seen.add(Number(m[1]));
+  }
+  return Array.from(seen);
+}
+
+/** Collect all cited issue IDs across summary, gap rationales, and suggestion rationales. */
+function collectAllCitedIssueIds(
+  summary: string,
+  gaps: Array<{ rationale: string }>,
+  suggestions: Array<{ rationale: string }>
+): number[] {
+  const allText = [
+    summary,
+    ...gaps.map((g) => g.rationale),
+    ...suggestions.map((s) => s.rationale),
+  ].join(" ");
+  return extractIssueIdCitations(allText);
+}
+
+/** Return true when the analysis is more than 7 days old. */
+function isOlderThanSevenDays(createdAt: string): boolean {
+  const MS_PER_DAY = 86_400_000;
+  return Date.now() - new Date(createdAt).getTime() > 7 * MS_PER_DAY;
+}
 
 export function RoutineAnalysisPanel({ familyMemberId, subjectLabel }: Props) {
   const [jobId, setJobId] = useState<string | null>(null);
@@ -112,24 +146,31 @@ export function RoutineAnalysisPanel({ familyMemberId, subjectLabel }: Props) {
               {subjectLabel ?? "this family member"}.
             </Text>
           </Box>
-          <Flex gap="2">
-            {latest && !isRunning && (
+          <Flex direction="column" gap="1" align="end">
+            <Flex gap="2">
+              {latest && !isRunning && (
+                <Button
+                  variant="soft"
+                  color="red"
+                  disabled={deleting}
+                  onClick={() => del({ variables: { id: latest.id } })}
+                >
+                  Delete
+                </Button>
+              )}
               <Button
-                variant="soft"
-                color="red"
-                disabled={deleting}
-                onClick={() => del({ variables: { id: latest.id } })}
+                disabled={generating || isRunning}
+                onClick={() => generate({ variables: { familyMemberId } })}
               >
-                Delete
+                {isRunning || generating ? <Spinner size="1" /> : null}
+                {latest ? "Regenerate" : "Generate"}
               </Button>
+            </Flex>
+            {latest && !isRunning && (
+              <Text size="1" color="gray" align="right">
+                Regenerating pulls the latest journal entries, issues, and prior analyses
+              </Text>
             )}
-            <Button
-              disabled={generating || isRunning}
-              onClick={() => generate({ variables: { familyMemberId } })}
-            >
-              {isRunning || generating ? <Spinner size="1" /> : null}
-              {latest ? "Regenerate" : "Generate"}
-            </Button>
           </Flex>
         </Flex>
 
@@ -199,6 +240,62 @@ export function RoutineAnalysisPanel({ familyMemberId, subjectLabel }: Props) {
                 {latest.summary}
               </Text>
             </Box>
+
+            {/* FIX 1 — "Based on" sources section */}
+            {(() => {
+              const citedIds = collectAllCitedIssueIds(
+                latest.summary,
+                latest.gaps,
+                latest.optimizationSuggestions
+              );
+              const hasCitations = citedIds.length > 0;
+              const stale = isOlderThanSevenDays(latest.createdAt);
+
+              if (!hasCitations && !stale) return null;
+
+              return (
+                <>
+                  <Separator size="4" />
+                  <Box>
+                    {hasCitations && (
+                      <>
+                        <Heading size="2" mb="2">
+                          Based on
+                        </Heading>
+                        <Flex gap="2" wrap="wrap" mb={stale ? "3" : "0"}>
+                          {citedIds.map((id) => (
+                            <Badge
+                              key={id}
+                              variant="surface"
+                              color="blue"
+                              asChild
+                            >
+                              <Link
+                                href={`/family/${familyMemberId}/issues/${id}`}
+                              >
+                                Issue #{id}
+                              </Link>
+                            </Badge>
+                          ))}
+                        </Flex>
+                      </>
+                    )}
+                    {stale && (
+                      <Callout.Root color="amber" variant="soft" size="1">
+                        <Callout.Icon>
+                          <InfoCircledIcon />
+                        </Callout.Icon>
+                        <Callout.Text>
+                          This analysis is more than 7 days old. Regenerating
+                          will incorporate newer journal entries, issues, and
+                          prior analyses.
+                        </Callout.Text>
+                      </Callout.Root>
+                    )}
+                  </Box>
+                </>
+              );
+            })()}
 
             {latest.optimizationSuggestions.length > 0 && (
               <>

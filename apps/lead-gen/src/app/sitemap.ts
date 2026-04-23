@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import { products } from "@/db/schema";
 import { slugify } from "@/lib/slug";
@@ -16,7 +17,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       slug: products.slug,
       updated_at: products.updated_at,
     })
-    .from(products);
+    .from(products)
+    .where(isNotNull(products.published_at));
 
   const staticEntries: MetadataRoute.Sitemap = [
     { url: `${BASE}/`, priority: 1.0, changeFrequency: "daily" },

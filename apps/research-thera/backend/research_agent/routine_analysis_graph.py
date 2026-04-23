@@ -281,10 +281,21 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
                 # feedbacks, related-member issues, research, issue_contacts,
                 # all_members) — reused from the deep-analysis loader.
                 ctx = await shared.load_family_member_full_context(
-                    cur, family_member_id, user_email
+                    cur, family_member_id, user_email, journal_limit=50
                 )
                 fm_tuple = ctx["fm"]
                 _fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio = fm_tuple[:6]
+
+                # Prior deep-issue analyses for this member (systemic context).
+                await cur.execute(
+                    "SELECT d.created_at, d.summary, d.trigger_issue_id, i.title "
+                    "FROM deep_issue_analyses d "
+                    "LEFT JOIN issues i ON i.id = d.trigger_issue_id "
+                    "WHERE d.family_member_id = %s AND d.user_id = %s "
+                    "ORDER BY d.created_at DESC LIMIT 5",
+                    (family_member_id, user_email),
+                )
+                prior_deep_analyses = await cur.fetchall()
 
                 # Habits + logs (specific to the routine graph — shared
                 # loader doesn't cover them).
@@ -439,9 +450,10 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
         shared.render_issues_section(
             issues,
             f"## Issues (primary substrate — what's actually happening · {len(issues)})",
+            issue_desc_chars=600,
         )
     )
-    journals_chunk = shared.render_journals_section(journals)
+    journals_chunk = shared.render_journals_section(journals, journal_content_chars=600)
     if journals_chunk:
         # Retitle to emphasize primary role.
         journals_chunk = journals_chunk.replace(
@@ -452,15 +464,33 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
         sections.append(journals_chunk)
 
     # ── Supporting substrate: observations + feedbacks + related ────────
-    for renderer, rows in [
-        (shared.render_observations_section, observations),
-        (shared.render_teacher_feedbacks_section, teacher_fbs),
-        (shared.render_contact_feedbacks_section, contact_fbs),
-        (shared.render_related_member_issues_section, related_issues),
-    ]:
-        chunk = renderer(rows)
-        if chunk:
-            sections.append(chunk)
+    obs_chunk = shared.render_observations_section(observations)
+    if obs_chunk:
+        sections.append(obs_chunk)
+    tf_chunk = shared.render_teacher_feedbacks_section(teacher_fbs, feedback_chars=800)
+    if tf_chunk:
+        sections.append(tf_chunk)
+    cf_chunk = shared.render_contact_feedbacks_section(contact_fbs, feedback_chars=800)
+    if cf_chunk:
+        sections.append(cf_chunk)
+    rmi_chunk = shared.render_related_member_issues_section(related_issues)
+    if rmi_chunk:
+        sections.append(rmi_chunk)
+
+    # ── Prior deep-issue analyses (systemic context) ────────────────────
+    if prior_deep_analyses:
+        prior_lines = []
+        for pda_created, pda_summary, pda_issue_id, pda_issue_title in prior_deep_analyses:
+            date_str = str(pda_created)[:10] if pda_created else "unknown"
+            title_label = (
+                f'"{pda_issue_title}"' if pda_issue_title else f"issue #{pda_issue_id}" if pda_issue_id else "general"
+            )
+            summary_text = (pda_summary or "")[:600]
+            prior_lines.append(f"- {date_str}: on issue {title_label} — {summary_text}")
+        sections.append(
+            "## Prior deep-issue analyses (systemic context — do not re-analyze, cite when relevant)\n"
+            + "\n".join(prior_lines)
+        )
 
     # ── Habits — explicitly demoted, split by narrow-therapy flag ───────
     if habit_stats:
@@ -536,10 +566,23 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
     if contacts_chunk:
         sections.append(contacts_chunk)
 
+    citation_mandate = (
+        "REGULĂ OBLIGATORIE DE CITARE: FIECARE element din `gaps` și `optimizationSuggestions` "
+        "TREBUIE să facă referință la cel puțin un ID de problemă (ex. [ID:42]) sau la o dată de jurnal "
+        "(ex. 'jurnal 2026-04-15'). Elementele fără citări concrete vor fi respinse ca fiind superficiale."
+        if state.get("language") == "ro"
+        else
+        "MANDATORY CITATION RULE: EVERY entry in `gaps` and `optimizationSuggestions` MUST reference "
+        "at least one issue ID (e.g., [ID:42]) or a journal date (e.g., 'journal 2026-04-15'). "
+        "Entries without concrete citations will be rejected as shallow."
+    )
+
     sections.append(
         f"""## Instructions
 
 PRIMARY SUBSTRATE = the Issues and Journal Entries sections above. The habit adherence numbers are supporting data only. If the only habits on file are narrow therapy protocols, the routine verdict must come from journal + issue patterns, NOT from habit adherence.
+
+{citation_mandate}
 
 Produce a structured JSON analysis with these fields:
 
@@ -600,7 +643,10 @@ async def analyze(state: RoutineAnalysisState) -> dict:
     try:
         prompt = state.get("_prompt", "")
         async with DeepSeekClient(DeepSeekConfig(timeout=300.0)) as client:
-            messages = [ChatMessage(role="user", content=prompt)]
+            messages = [
+                ChatMessage(role="system", content=ROUTINE_SYSTEM_PROMPT),
+                ChatMessage(role="user", content=prompt),
+            ]
             resp = await client.chat(
                 messages,
                 model="deepseek-chat",

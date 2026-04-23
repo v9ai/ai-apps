@@ -19,6 +19,7 @@ import type {
   MutationAnalyzeProductPricingArgs,
   MutationAnalyzeProductGtmArgs,
   MutationRunFullProductIntelArgs,
+  MutationSetProductPublishedArgs,
 } from "@/__generated__/resolvers-types";
 
 // Products are a global SaaS catalog (see queries.ts). Writes use the
@@ -208,6 +209,31 @@ export const productMutations = {
       .select()
       .from(products)
       .where(eq(products.id, args.id));
+
+    if (!row) {
+      throw new GraphQLError(`Product ${args.id} not found`, {
+        extensions: { code: "NOT_FOUND" },
+      });
+    }
+    return row;
+  },
+
+  async setProductPublished(
+    _parent: unknown,
+    args: MutationSetProductPublishedArgs,
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    const now = new Date().toISOString();
+    const [row] = await db
+      .update(products)
+      .set({
+        published_at: args.published ? new Date() : null,
+        updated_at: now,
+      })
+      .where(eq(products.id, args.id))
+      .returning();
 
     if (!row) {
       throw new GraphQLError(`Product ${args.id} not found`, {
