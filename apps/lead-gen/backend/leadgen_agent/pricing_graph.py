@@ -61,6 +61,12 @@ class _PricingStateWithError(PricingState, total=False):
 
 
 async def load_inputs(state: PricingState) -> dict:
+    # Checkpoint-aware short-circuit: when the supervisor resumes from a prior
+    # thread via `resume_from_run_id`, AsyncPostgresSaver rehydrates state
+    # before any node runs. If we already loaded product + competitor rows,
+    # skip the DB round-trip entirely.
+    if state.get("product") and state.get("competitor_summary") is not None:
+        return {}
     product_id = state.get("product_id")
     if product_id is None:
         raise ValueError("product_id is required")
