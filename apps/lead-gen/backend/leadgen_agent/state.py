@@ -417,6 +417,100 @@ class FreshnessState(TypedDict, total=False):
     graph_meta: dict[str, Any]
 
 
+class CompanyDiscoveryState(TypedDict, total=False):
+    """State for the seed-query → company candidates discovery graph.
+
+    Linear pipeline: expand_seed → brainstorm → dedupe → pre_score → persist.
+    LLM-only (no Brave) — brainstorm calls deepseek-reasoner with JSON mode and
+    returns 12-20 ``{name, domain, why}`` candidates. dedupe strikes rows
+    whose ``canonical_domain`` already exists; pre_score applies a keyword
+    heuristic (AI / consultancy / remote mentions) to the ``why`` text; persist
+    INSERTs with ``tags=['discovery-candidate', ...]`` and ``score=pre_score``.
+    """
+
+    # input
+    seed_query: str
+    vertical: str | None
+    geography: str | None
+    size_band: str | None
+    # loaded — populated by expand_seed
+    keywords: list[str]
+    # working
+    candidates: list[dict[str, Any]]  # {name, domain, why}
+    filtered: list[dict[str, Any]]    # after dedupe_vs_db
+    scored: list[dict[str, Any]]      # after pre_score, sorted desc
+    inserted_ids: list[int]
+    skipped_existing: int
+    summary: dict[str, Any]
+    # plumbing
+    _error: str
+    agent_timings: Annotated[dict[str, float], _merge_dict]
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
+
+
+class CompanyEnrichmentState(TypedDict, total=False):
+    """State for the by-id company enrichment graph.
+
+    Linear pipeline: load → fetch → classify → score → persist. Mirrors the
+    Rust ``crates/metal/src/teams/enrich.rs`` flow but writes ``company_facts``
+    with ``extractor_version='python-qwen-2026-04'`` so Python and Rust rows
+    coexist. Updates ``companies`` with category, ai_tier, score, score_reasons,
+    ai_classification_reason, ai_classification_confidence.
+    """
+
+    # input
+    company_id: int
+    # loaded
+    company: dict[str, Any]        # {id, name, canonical_domain, website}
+    # fetched — both markdown blobs live here
+    home_markdown: str
+    careers_markdown: str
+    careers_url: str               # e.g. "https://domain/careers" — empty if none found
+    # classified
+    classification: dict[str, Any]  # {category, ai_tier, industry, confidence, reason, remote_policy}
+    classify_source: str            # "llm" | "heuristic" — set to heuristic when LLM confidence < 0.4
+    # scored
+    scores: dict[str, Any]          # {score, reasons, needs_review}
+    # output
+    facts_persisted: int
+    updated: bool
+    # plumbing
+    _error: str
+    agent_timings: Annotated[dict[str, float], _merge_dict]
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
+
+
+class ContactDiscoveryState(TypedDict, total=False):
+    """State for the by-company contact discovery graph.
+
+    True fan-out graph: load → [gh_branch + papers_branch + team_branch in
+    parallel with ``operator.add`` reducers] → merge → dedupe_vs_db → persist.
+    GH fan-out is capped at 25 org members per batch (no ``gh_cache`` table).
+    Inserted contacts are picked up by the existing ``contact_enrich_graph``
+    via its ``papers_enriched_at IS NULL`` queue.
+    """
+
+    # input
+    company_id: int
+    # loaded
+    company: dict[str, Any]         # {id, name, canonical_domain, github_org}
+    # fan-out branches — each emits via Annotated[list, operator.add] reducer
+    gh: Annotated[list[dict[str, Any]], operator.add]
+    papers: Annotated[list[dict[str, Any]], operator.add]
+    team: Annotated[list[dict[str, Any]], operator.add]
+    # merged — dedupe by (first_name.lower(), last_name.lower()), union sources
+    merged: list[dict[str, Any]]
+    # after dedupe_vs_db
+    candidates: list[dict[str, Any]]
+    # output
+    candidates_inserted: int
+    skipped_existing: int
+    # plumbing
+    _error: str
+    agent_timings: Annotated[dict[str, float], _merge_dict]
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
+
+
 class ProductIntelState(TypedDict, total=False):
     # input
     product_id: int

@@ -95,24 +95,69 @@ async def _run_research(args: argparse.Namespace) -> None:
 
 
 async def _run_research_goal(args: argparse.Namespace) -> None:
-    from .generate_therapy_research_graph import graph as research_graph
+    """Invoke the same ReAct research graph the web app uses (research_agent.graph)."""
+    import os
 
-    state: dict = {"userId": args.user_email, "goalId": args.goal_id}
-    if args.language:
-        state["language"] = args.language
+    import psycopg
+
+    from .graph import graph as research_graph
+
+    conn_str = os.environ.get("NEON_DATABASE_URL", "")
+    async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT title, description, family_member_id FROM goals "
+                "WHERE id = %s AND user_id = %s",
+                (args.goal_id, args.user_email),
+            )
+            row = await cur.fetchone()
+            if not row:
+                print(f"❌ Goal {args.goal_id} not found for {args.user_email}", file=sys.stderr)
+                sys.exit(1)
+            goal_title, goal_desc, fm_id = row
+            fm_name = None
+            fm_age = None
+            if fm_id:
+                await cur.execute(
+                    "SELECT first_name, name, age_years FROM family_members WHERE id = %s",
+                    (fm_id,),
+                )
+                fm_row = await cur.fetchone()
+                if fm_row:
+                    fm_name = fm_row[0] or fm_row[1]
+                    fm_age = fm_row[2]
+
+    prompt_parts = [
+        f"Goal: {goal_title}",
+        f"Description: {goal_desc}" if goal_desc else "",
+        f"Subject: {fm_name}, age {fm_age}" if fm_name else "",
+        "",
+        f"Find high-quality academic research papers relevant to this therapeutic goal and save them via save_research_papers with goal_id: {args.goal_id}.",
+    ]
+    prompt = "\n".join(p for p in prompt_parts if p)
+
+    state: dict = {
+        "messages": [{"role": "user", "content": prompt}],
+        "userEmail": args.user_email,
+        "goalId": args.goal_id,
+        "hasRelatedMember": False,
+        "evalPromptContext": prompt,
+    }
 
     print(
-        f"Invoking generate_therapy_research: goal_id={args.goal_id} user={args.user_email}",
+        f"Invoking research graph: goal_id={args.goal_id} user={args.user_email}",
         file=sys.stderr,
     )
-    result = await research_graph.ainvoke(state)
+    result = await research_graph.ainvoke(state, config={"recursion_limit": 50})
     err = result.get("_error")
-    if err or result.get("success") is False:
-        msg = (err or {}).get("message") or result.get("message") or "research failed"
-        print(f"\n❌ {msg}", file=sys.stderr)
+    if err:
+        print(f"\n❌ {err.get('message') or 'research failed'}", file=sys.stderr)
         sys.exit(1)
-    count = result.get("count", 0)
-    print(f"\n✅ {result.get('message') or f'Persisted {count} research papers.'}")
+    count = result.get("_saved_count", 0)
+    summary = result.get("_summary") or ""
+    print(f"\n✅ Persisted {count} research papers.")
+    if summary:
+        print(summary[:500])
 
 
 async def _run_books(args: argparse.Namespace) -> None:

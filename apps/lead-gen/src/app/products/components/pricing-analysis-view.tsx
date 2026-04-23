@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { Badge, Box, Container, Flex, Heading, Separator, Text } from "@radix-ui/themes";
 import {
