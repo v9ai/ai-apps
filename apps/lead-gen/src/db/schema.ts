@@ -9,6 +9,7 @@ import {
   boolean,
   vector,
   jsonb,
+  timestamp,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
@@ -1261,8 +1262,54 @@ export const competitorIntegrations = pgTable(
 export type CompetitorIntegration = typeof competitorIntegrations.$inferSelect;
 export type NewCompetitorIntegration = typeof competitorIntegrations.$inferInsert;
 
+// ── Product Intel Runs (async LangGraph run tracking) ──
+
+export const productIntelRuns = pgTable(
+  "product_intel_runs",
+  {
+    id: text("id").primaryKey(), // UUID generated in startGraphRun
+    lg_run_id: text("lg_run_id"),
+    lg_thread_id: text("lg_thread_id"),
+    product_id: integer("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    tenant_id: tenantIdColumn(),
+    kind: text("kind", {
+      enum: ["pricing", "gtm", "product_intel", "icp"],
+    }).notNull(),
+    status: text("status", {
+      enum: ["queued", "running", "success", "error", "timeout"],
+    }).notNull().default("queued"),
+    webhook_secret: text("webhook_secret").notNull(),
+    started_at: timestamp("started_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    finished_at: timestamp("finished_at", { withTimezone: true }),
+    error: text("error"),
+    output: jsonb("output"),
+    created_by: text("created_by"),
+  },
+  (table) => [
+    index("idx_intel_runs_product_id").on(table.product_id),
+    index("idx_intel_runs_status").on(table.status),
+    index("idx_intel_runs_tenant").on(table.tenant_id),
+    index("idx_intel_runs_started").on(table.started_at.desc()),
+  ],
+);
+
+export type ProductIntelRun = typeof productIntelRuns.$inferSelect;
+export type NewProductIntelRun = typeof productIntelRuns.$inferInsert;
+
 export const productsRelations = relations(products, ({ many }) => ({
   analyses: many(competitorAnalyses),
+  intelRuns: many(productIntelRuns),
+}));
+
+export const productIntelRunsRelations = relations(productIntelRuns, ({ one }) => ({
+  product: one(products, {
+    fields: [productIntelRuns.product_id],
+    references: [products.id],
+  }),
 }));
 
 export const competitorAnalysesRelations = relations(competitorAnalyses, ({ one, many }) => ({
