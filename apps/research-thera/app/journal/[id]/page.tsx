@@ -1094,7 +1094,7 @@ export default function JournalEntryPage() {
       {/* Sticky Header */}
       <Box
         position="sticky"
-        top="0"
+        top={{ initial: "57px", md: "0" }}
         style={{
           zIndex: 20,
           background: "var(--color-panel)",
