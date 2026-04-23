@@ -22,7 +22,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { productIntelRuns, products } from "@/db/schema";
+import {
+  productIntelRuns,
+  productIntelRunSecrets,
+  products,
+} from "@/db/schema";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -74,12 +78,22 @@ export async function POST(req: NextRequest) {
     .where(eq(productIntelRuns.id, appRunId))
     .limit(1);
 
-  if (!run) {
+  // Secret now lives in a sibling table hidden from public_read RLS
+  // (migration 0061). Fall back to the legacy column for rows created before
+  // the dual-write deploy; a follow-up migration drops that column.
+  const [secretRow] = await db
+    .select()
+    .from(productIntelRunSecrets)
+    .where(eq(productIntelRunSecrets.run_id, appRunId))
+    .limit(1);
+  const secret = secretRow?.secret ?? run?.webhook_secret ?? null;
+
+  if (!run || !secret) {
     return NextResponse.json({ error: "unknown run" }, { status: 404 });
   }
 
   // Timing-safe HMAC verification against the per-run secret
-  const expected = createHmac("sha256", run.webhook_secret)
+  const expected = createHmac("sha256", secret)
     .update(body)
     .digest("hex");
   const sigBuf = Buffer.from(signature, "hex");

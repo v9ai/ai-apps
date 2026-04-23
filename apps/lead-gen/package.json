@@ -31,6 +31,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
+    "db:diff": "tsx scripts/db-diff.ts",
+    "db:hygiene": "bash scripts/check-migration-hygiene.sh",
     "panda": "panda",
     "panda:codegen": "panda codegen",
     "prepare": "panda codegen"
@@ -54,6 +56,7 @@
     "@react-email/components": "0.0.22",
     "@react-pdf/renderer": "^4.3.2",
     "@vanilla-extract/css": "^1.18.0",
+    "@vercel/og": "^0.11.1",
     "@xyflow/react": "^12.10.1",
     "ai": "^6.0.77",
     "better-sqlite3": "^12.6.2",

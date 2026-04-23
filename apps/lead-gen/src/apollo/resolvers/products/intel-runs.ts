@@ -12,7 +12,7 @@
 import { GraphQLError } from "graphql";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { productIntelRuns } from "@/db/schema";
+import { productIntelRuns, productIntelRunSecrets } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
 import { getRunStatus, startGraphRun } from "@/lib/langgraph-client";
@@ -61,8 +61,19 @@ async function kickoff(
     product_id: productId,
     kind,
     status: "running",
+    // Dual-write: old column stays populated for one deploy so webhooks from
+    // pre-deploy rows still verify. A follow-up migration drops the column
+    // after the sibling table is fully in service.
     webhook_secret: webhookSecret,
     created_by: context.userEmail ?? null,
+  });
+
+  // New home for the HMAC secret — sibling table with RLS forced and zero
+  // policies (see migration 0061). The public_read policy on
+  // product_intel_runs cannot traverse here, so SELECT * leaks are closed.
+  await db.insert(productIntelRunSecrets).values({
+    run_id: appRunId,
+    secret: webhookSecret,
   });
 
   return {

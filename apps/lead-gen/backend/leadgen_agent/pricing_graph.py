@@ -41,6 +41,19 @@ _COMPETITOR_BRIEF_CHARS = 3500
 _ICP_BRIEF_CHARS = 2500
 
 
+class _PricingStateWithError(PricingState, total=False):
+    """Local extension of PricingState that carries an optional ``_error`` key.
+
+    LangGraph only tracks channels declared on the state schema — unknown keys
+    are silently dropped. We need the error string to survive across nodes so
+    the final router can pick notify_error vs notify_complete, but the instruction
+    set forbids editing state.py. Extending here keeps the ad-hoc key local to
+    the graph module.
+    """
+
+    _error: str
+
+
 async def load_inputs(state: PricingState) -> dict:
     product_id = state.get("product_id")
     if product_id is None:
@@ -357,6 +370,8 @@ async def design_model(state: PricingState) -> dict:
 
 
 async def write_rationale(state: PricingState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
@@ -364,39 +379,42 @@ async def write_rationale(state: PricingState) -> dict:
     benchmark = state.get("benchmark") or {}
     pricing_model = state.get("model") or {}
 
-    llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You write the strategic rationale for a pricing model. Cover: "
-                    "value_basis (why this price reflects value delivered — time saved × $/hr, "
-                    "or $ earned, etc.), competitor_benchmark (how this compares vs competitors, "
-                    "where deliberately above/below), wtp_estimate (USD range for the primary "
-                    "persona), risks (array of 2-5 pricing pitfalls), recommendation (one-paragraph "
-                    "top-line call). Be concrete, cite numbers where possible."
-                    'Return strict JSON: {"value_basis":string,"competitor_benchmark":string,'
-                    '"wtp_estimate":string,"risks":[string],"recommendation":string}.'
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Product brief:\n{brief}\n\n"
-                    f"ICP context:\n{icp_block}\n\n"
-                    f"Benchmark:\n{json.dumps(benchmark)[:1500]}\n\n"
-                    f"Pricing model just designed:\n{json.dumps(pricing_model)[:2500]}\n\n"
-                    "Return JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
-    if not isinstance(result, dict):
-        result = {}
-    rationale = PricingRationale.model_validate(result)
+    try:
+        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You write the strategic rationale for a pricing model. Cover: "
+                        "value_basis (why this price reflects value delivered — time saved × $/hr, "
+                        "or $ earned, etc.), competitor_benchmark (how this compares vs competitors, "
+                        "where deliberately above/below), wtp_estimate (USD range for the primary "
+                        "persona), risks (array of 2-5 pricing pitfalls), recommendation (one-paragraph "
+                        "top-line call). Be concrete, cite numbers where possible."
+                        'Return strict JSON: {"value_basis":string,"competitor_benchmark":string,'
+                        '"wtp_estimate":string,"risks":[string],"recommendation":string}.'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Product brief:\n{brief}\n\n"
+                        f"ICP context:\n{icp_block}\n\n"
+                        f"Benchmark:\n{json.dumps(benchmark)[:1500]}\n\n"
+                        f"Pricing model just designed:\n{json.dumps(pricing_model)[:2500]}\n\n"
+                        "Return JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+        if not isinstance(result, dict):
+            result = {}
+        rationale = PricingRationale.model_validate(result)
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"write_rationale: {e}"}
 
     meta = product_intel_graph_meta(
         graph="pricing",
@@ -439,14 +457,25 @@ async def write_rationale(state: PricingState) -> dict:
     }
 
 
+async def notify_error_node(state: PricingState) -> dict:
+    err = state.get("_error") or "unknown error"
+    await notify_error(state, err)
+    return {}
+
+
+def _route_final(state: PricingState) -> str:
+    return "notify_error_node" if state.get("_error") else "notify_complete"
+
+
 def build_graph(checkpointer: Any = None) -> Any:
-    builder = StateGraph(PricingState)
+    builder = StateGraph(_PricingStateWithError)
     builder.add_node("load_inputs", load_inputs)
     builder.add_node("benchmark_competitors", benchmark_competitors)
     builder.add_node("choose_value_metric", choose_value_metric)
     builder.add_node("design_model", design_model)
     builder.add_node("write_rationale", write_rationale)
     builder.add_node("notify_complete", notify_complete)
+    builder.add_node("notify_error_node", notify_error_node)
 
     builder.add_edge(START, "load_inputs")
     builder.add_conditional_edges(
@@ -455,8 +484,11 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_edge("benchmark_competitors", "design_model")
     builder.add_edge("choose_value_metric", "design_model")
     builder.add_edge("design_model", "write_rationale")
-    builder.add_edge("write_rationale", "notify_complete")
+    builder.add_conditional_edges(
+        "write_rationale", _route_final, ["notify_complete", "notify_error_node"]
+    )
     builder.add_edge("notify_complete", END)
+    builder.add_edge("notify_error_node", END)
     return builder.compile(checkpointer=checkpointer)
 
 

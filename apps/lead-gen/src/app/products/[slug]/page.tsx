@@ -43,6 +43,7 @@ export async function generateMetadata({
     `AI-generated ICP, competitor, pricing, and GTM intelligence for ${row.name}.`;
   const title = `${row.name} — Product Intelligence`;
   const canonical = `${BASE}/products/${slug}`;
+  const ogImage = `${BASE}/api/og/product/${slug}`;
 
   return {
     title,
@@ -53,11 +54,13 @@ export async function generateMetadata({
       url: canonical,
       siteName: "Agentic Lead Gen",
       type: "article",
+      images: [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description: desc.slice(0, 200),
+      images: [ogImage],
     },
     alternates: { canonical },
   };

@@ -1309,6 +1309,23 @@ export const productIntelRuns = pgTable(
 export type ProductIntelRun = typeof productIntelRuns.$inferSelect;
 export type NewProductIntelRun = typeof productIntelRuns.$inferInsert;
 
+// Sibling table for per-run HMAC webhook secrets. Kept out of
+// product_intel_runs so the public_read RLS policy (migration 0059) cannot
+// leak the secret via SELECT *. RLS is enabled + forced with zero policies
+// (see migration 0061) so only the owning role reads it.
+export const productIntelRunSecrets = pgTable("product_intel_run_secrets", {
+  run_id: text("run_id")
+    .primaryKey()
+    .references(() => productIntelRuns.id, { onDelete: "cascade" }),
+  secret: text("secret").notNull(),
+  created_at: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type ProductIntelRunSecret = typeof productIntelRunSecrets.$inferSelect;
+export type NewProductIntelRunSecret = typeof productIntelRunSecrets.$inferInsert;
+
 export const productsRelations = relations(products, ({ many }) => ({
   analyses: many(competitorAnalyses),
   intelRuns: many(productIntelRuns),
@@ -1319,7 +1336,21 @@ export const productIntelRunsRelations = relations(productIntelRuns, ({ one }) =
     fields: [productIntelRuns.product_id],
     references: [products.id],
   }),
+  secret: one(productIntelRunSecrets, {
+    fields: [productIntelRuns.id],
+    references: [productIntelRunSecrets.run_id],
+  }),
 }));
+
+export const productIntelRunSecretsRelations = relations(
+  productIntelRunSecrets,
+  ({ one }) => ({
+    run: one(productIntelRuns, {
+      fields: [productIntelRunSecrets.run_id],
+      references: [productIntelRuns.id],
+    }),
+  }),
+);
 
 export const competitorAnalysesRelations = relations(competitorAnalyses, ({ one, many }) => ({
   product: one(products, {
