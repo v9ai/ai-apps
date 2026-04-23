@@ -45,6 +45,52 @@ def _none_to_empty_str(payload: dict[str, Any] | Any, fields: tuple[str, ...]) -
     return payload
 
 
+def _coerce_money(v: object) -> float | None:
+    """Coerce an LLM-provided monetary value to a non-negative float or None.
+
+    Handles: ``None``, ``""``, the strings ``"custom"`` / ``"contact"`` /
+    ``"contact sales"`` (all → ``None``), numeric strings, ints, and floats.
+    Negative values are clamped to 0.0. Shared by ``PriceTier`` and
+    ``PriceAnchor`` so the coercion rules stay in lockstep.
+    """
+    if v is None or v == "":
+        return None
+    if isinstance(v, str) and v.strip().lower() in {"custom", "contact", "contact sales"}:
+        return None
+    try:
+        return max(0.0, float(v))
+    except (TypeError, ValueError):
+        return None
+
+
+def _filter_dict_list(v: object) -> list[dict]:
+    """Keep only dict entries from an LLM-emitted list.
+
+    LLMs occasionally slip a stray ``None`` or stringified JSON into a list of
+    structured objects. Dropping malformed entries lets each item validate
+    itself downstream instead of crashing the whole run on a single bad row.
+    """
+    if not isinstance(v, list):
+        return []
+    return [item for item in v if isinstance(item, dict)]
+
+
+def _coerce_str_list(v: object, *, item_max_len: int = 240, cap: int | None = None) -> list[str]:
+    """Coerce an LLM-emitted list to a clean ``list[str]``.
+
+    Drops non-scalar entries, stringifies ints/floats, clamps each item to
+    ``item_max_len`` characters, and optionally caps the list length. Used by
+    PriceTier/Channel/etc. to keep every list-of-string field on a single,
+    predictable path.
+    """
+    if not isinstance(v, list):
+        return []
+    out = [str(x)[:item_max_len] for x in v if isinstance(x, (str, int, float))]
+    if cap is not None:
+        out = out[:cap]
+    return out
+
+
 __all__ = [
     "PRODUCT_INTEL_VERSION",
     "ProductProfile",
@@ -190,29 +236,21 @@ class PriceTier(BaseModel):
 
     @field_validator("included", "limits", mode="before")
     @classmethod
-    def _coerce_list(cls, v: object) -> list:
-        if v is None:
-            return []
-        return v if isinstance(v, list) else []
+    def _coerce_list(cls, v: object) -> list[str]:
+        # Stringify + clamp each entry so a stray int/float or overlong LLM
+        # bullet doesn't blow past max_length. Mirrors _truncate_list on other
+        # models for consistency.
+        return _coerce_str_list(v, item_max_len=240, cap=12)
 
     @field_validator("anchor_competitors", mode="before")
     @classmethod
-    def _coerce_anchor_competitors(cls, v: object) -> list:
-        if v is None or not isinstance(v, list):
-            return []
-        return [str(x)[:240] for x in v if isinstance(x, (str, int, float))]
+    def _coerce_anchor_competitors(cls, v: object) -> list[str]:
+        return _coerce_str_list(v, item_max_len=240, cap=4)
 
     @field_validator("price_monthly_usd", mode="before")
     @classmethod
     def _coerce_price(cls, v: object) -> float | None:
-        if v is None or v == "":
-            return None
-        if isinstance(v, str) and v.strip().lower() in {"custom", "contact", "contact sales"}:
-            return None
-        try:
-            return max(0.0, float(v))
-        except (TypeError, ValueError):
-            return None
+        return _coerce_money(v)
 
 
 class PricingModel(BaseModel):
@@ -249,6 +287,19 @@ class PricingModel(BaseModel):
         if v is None or v == "":
             return "subscription"
         return str(v)
+
+    @field_validator("tiers", mode="before")
+    @classmethod
+    def _coerce_tiers(cls, v: object) -> list:
+        # Drop non-dict entries so a malformed LLM row (string, None, nested
+        # list) doesn't break the whole pricing run; each surviving dict then
+        # validates through PriceTier on its own.
+        return _filter_dict_list(v)
+
+    @field_validator("addons", mode="before")
+    @classmethod
+    def _coerce_addons(cls, v: object) -> list[str]:
+        return _coerce_str_list(v, item_max_len=240, cap=8)
 
 
 PriceAnchorRelation = Literal["below", "at_parity", "premium", "undercut"]
@@ -297,14 +348,7 @@ class PriceAnchor(BaseModel):
     @field_validator("monthly_price_usd", mode="before")
     @classmethod
     def _coerce_price(cls, v: object) -> float | None:
-        if v is None or v == "":
-            return None
-        if isinstance(v, str) and v.strip().lower() in {"custom", "contact", "contact sales"}:
-            return None
-        try:
-            return max(0.0, float(v))
-        except (TypeError, ValueError):
-            return None
+        return _coerce_money(v)
 
 
 class PricingRationale(BaseModel):
@@ -329,11 +373,14 @@ class PricingRationale(BaseModel):
     @field_validator("price_anchors", mode="before")
     @classmethod
     def _coerce_anchors(cls, v: object) -> list:
-        if v is None or not isinstance(v, list):
-            return []
         # Drop non-dict entries so a malformed LLM response doesn't crash the
         # whole run — each PriceAnchor validates itself downstream.
-        return [item for item in v if isinstance(item, dict)]
+        return _filter_dict_list(v)
+
+    @field_validator("risks", mode="before")
+    @classmethod
+    def _coerce_risks(cls, v: object) -> list[str]:
+        return _coerce_str_list(v, item_max_len=400, cap=6)
 
 
 class PricingStrategy(BaseModel):
@@ -343,6 +390,10 @@ class PricingStrategy(BaseModel):
 
     model: PricingModel
     rationale: PricingRationale
+    # Free-form provenance stamped by ``product_intel_graph_meta`` — see
+    # ``GTMStrategy.graph_meta`` for the shape (version / model / timings /
+    # telemetry / totals). Plain dict so adding a key doesn't bump the
+    # contract version.
     graph_meta: dict = Field(default_factory=dict)
 
 
@@ -382,7 +433,22 @@ class Channel(BaseModel):
     def _coerce_effort(cls, v: object) -> str:
         if v is None or v == "":
             return "medium"
-        return str(v)
+        s = str(v).lower().strip()
+        if s in {"low", "medium", "high"}:
+            return s
+        # Common LLM variants → map instead of crashing.
+        if s in {"lo", "light", "minimal"}:
+            return "low"
+        if s in {"mid", "moderate", "med"}:
+            return "medium"
+        if s in {"hi", "heavy", "intense", "intensive"}:
+            return "high"
+        return "medium"
+
+    @field_validator("tactics", mode="before")
+    @classmethod
+    def _coerce_tactics(cls, v: object) -> list[str]:
+        return _coerce_str_list(v, item_max_len=400, cap=6)
 
 
 class MessagingPillar(BaseModel):
@@ -397,6 +463,11 @@ class MessagingPillar(BaseModel):
     @classmethod
     def _coerce_nulls(cls, v: Any) -> Any:
         return _none_to_empty_str(v, ("theme", "when_to_use", "avoid_when"))
+
+    @field_validator("proof_points", mode="before")
+    @classmethod
+    def _coerce_proof_points(cls, v: object) -> list[str]:
+        return _coerce_str_list(v, item_max_len=300, cap=6)
 
 
 class OutreachTemplate(BaseModel):
@@ -418,7 +489,34 @@ class OutreachTemplate(BaseModel):
     def _coerce_channel(cls, v: object) -> str:
         if v is None or v == "":
             return "cold_email"
-        return str(v)
+        s = str(v).lower().strip().replace("-", "_").replace(" ", "_")
+        valid = {
+            "cold_email",
+            "linkedin_dm",
+            "linkedin_connect",
+            "linkedin_post",
+            "reply_guy",
+            "community",
+            "webinar",
+        }
+        if s in valid:
+            return s
+        # Map common LLM variants onto the locked enum.
+        if s in {"email", "cold", "outbound_email"}:
+            return "cold_email"
+        if s in {"linkedin", "dm", "inmail", "linkedin_inmail"}:
+            return "linkedin_dm"
+        if s in {"linkedin_connection", "connect"}:
+            return "linkedin_connect"
+        if s in {"post", "content", "linkedin_content"}:
+            return "linkedin_post"
+        if s in {"reply", "replyguy", "twitter_reply"}:
+            return "reply_guy"
+        if s in {"slack", "discord", "forum"}:
+            return "community"
+        if s in {"webinars", "event", "events"}:
+            return "webinar"
+        return "cold_email"
 
 
 class Objection(BaseModel):
@@ -441,6 +539,11 @@ class Objection(BaseModel):
         # still enforces the final ceiling.
         return s[:900]
 
+    @field_validator("evidence_to_show", mode="before")
+    @classmethod
+    def _coerce_evidence(cls, v: object) -> list[str]:
+        return _coerce_str_list(v, item_max_len=300, cap=5)
+
 
 class SalesPlaybook(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -448,6 +551,29 @@ class SalesPlaybook(BaseModel):
     discovery_questions: list[str] = Field(default_factory=list, max_length=10)
     objections: list[Objection] = Field(default_factory=list, max_length=8)
     battlecards: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("discovery_questions", mode="before")
+    @classmethod
+    def _coerce_questions(cls, v: object) -> list[str]:
+        return _coerce_str_list(v, item_max_len=400, cap=10)
+
+    @field_validator("objections", mode="before")
+    @classmethod
+    def _coerce_objections(cls, v: object) -> list:
+        return _filter_dict_list(v)
+
+    @field_validator("battlecards", mode="before")
+    @classmethod
+    def _coerce_battlecards(cls, v: object) -> dict[str, str]:
+        # Dict-of-str; drop non-scalar values so one bad nested blob doesn't
+        # take down the whole playbook.
+        if not isinstance(v, dict):
+            return {}
+        return {
+            str(k)[:120]: str(val)[:900]
+            for k, val in v.items()
+            if isinstance(val, (str, int, float))
+        }
 
 
 class GTMStrategy(BaseModel):
@@ -460,7 +586,23 @@ class GTMStrategy(BaseModel):
     outreach_templates: list[OutreachTemplate] = Field(default_factory=list, max_length=8)
     sales_playbook: SalesPlaybook = Field(default_factory=SalesPlaybook)
     first_90_days: list[str] = Field(default_factory=list, max_length=12)
+    # Free-form provenance: version / model / timings / telemetry / totals as
+    # stamped by ``product_intel_graph_meta``. Kept as a plain ``dict`` so
+    # callers can add fields (cost, latency, eval score) without a schema
+    # bump; readers should treat every key as optional.
     graph_meta: dict = Field(default_factory=dict)
+
+    @field_validator("channels", "messaging_pillars", "outreach_templates", mode="before")
+    @classmethod
+    def _filter_struct_lists(cls, v: object) -> list:
+        # Drop malformed entries before per-model validation; one bad row
+        # shouldn't invalidate a whole GTM strategy.
+        return _filter_dict_list(v)
+
+    @field_validator("first_90_days", mode="before")
+    @classmethod
+    def _coerce_first_90_days(cls, v: object) -> list[str]:
+        return _coerce_str_list(v, item_max_len=300, cap=12)
 
 
 # ─── Positioning ──────────────────────────────────────────────────────────
@@ -532,6 +674,24 @@ class ProductIntelReport(BaseModel):
 
 
 def config_hash() -> str:
-    """Hash of the version + module tuple — lets callers detect prompt drift."""
-    payload = json.dumps({"version": PRODUCT_INTEL_VERSION}, sort_keys=True).encode()
+    """Hash of the active product-intel + ICP contract tuple.
+
+    Callers use this to detect drift in either contract without needing to
+    plumb both versions through. Changes whenever:
+
+    - ``PRODUCT_INTEL_VERSION`` bumps (pricing / gtm / positioning / intel)
+    - ``icp_schemas.GRAPH_VERSION`` bumps (deep_icp output shape)
+    - ``icp_schemas.WEIGHTS`` change (re-derived via ``weights_hash``)
+    """
+    # Import locally to avoid a circular import at module load time.
+    from .icp_schemas import GRAPH_VERSION as ICP_VERSION, weights_hash
+
+    payload = json.dumps(
+        {
+            "product_intel_version": PRODUCT_INTEL_VERSION,
+            "icp_version": ICP_VERSION,
+            "icp_weights_hash": weights_hash(),
+        },
+        sort_keys=True,
+    ).encode()
     return hashlib.sha256(payload).hexdigest()[:12]
