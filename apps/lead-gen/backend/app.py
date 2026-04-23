@@ -36,7 +36,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from leadgen_agent.admin_chat_graph import build_graph as build_admin_chat
 from leadgen_agent.classify_paper_graph import build_graph as build_classify_paper
+from leadgen_agent.company_discovery_graph import build_graph as build_company_discovery
+from leadgen_agent.company_enrichment_graph import build_graph as build_company_enrichment
 from leadgen_agent.competitors_team_graph import build_graph as build_competitors_team
+from leadgen_agent.contact_discovery_graph import build_graph as build_contact_discovery
 from leadgen_agent.contact_enrich_graph import build_graph as build_contact_enrich
 from leadgen_agent.contact_enrich_paper_author_graph import (
     build_batch_graph as build_contact_enrich_paper_authors_batch,
@@ -96,7 +99,10 @@ async def lifespan(app: FastAPI):
         app.state.graphs = {
             "admin_chat": build_admin_chat(checkpointer),
             "classify_paper": build_classify_paper(checkpointer),
+            "company_discovery": build_company_discovery(checkpointer),
+            "company_enrichment": build_company_enrichment(checkpointer),
             "competitors_team": build_competitors_team(checkpointer),
+            "contact_discovery": build_contact_discovery(checkpointer),
             "contact_enrich": build_contact_enrich(checkpointer),
             "contact_enrich_sales": build_contact_enrich_sales(checkpointer),
             "contact_enrich_paper_author": build_contact_enrich_paper_author(checkpointer),

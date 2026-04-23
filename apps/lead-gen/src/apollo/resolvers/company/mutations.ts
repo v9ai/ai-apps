@@ -19,6 +19,7 @@ import type {
 import { eq, and, inArray, ilike, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
+import { enrichCompany } from "@/lib/langgraph-client";
 import type {
   MutationCreateCompanyArgs,
   MutationUpdateCompanyArgs,
@@ -56,6 +57,30 @@ function requireAdmin(context: GraphQLContext): void {
   if (!isAdminEmail(context.userEmail)) {
     throw new GraphQLError("Admin access required", { extensions: { code: "FORBIDDEN" } });
   }
+}
+
+async function resolveCompanyIdKey(
+  context: GraphQLContext,
+  id: number | null,
+  key: string | null,
+): Promise<{ id: number; key: string | null } | null> {
+  if (id != null) {
+    const [row] = await context.db
+      .select({ id: companies.id, key: companies.key })
+      .from(companies)
+      .where(eq(companies.id, id))
+      .limit(1);
+    return row ?? null;
+  }
+  if (key) {
+    const [row] = await context.db
+      .select({ id: companies.id, key: companies.key })
+      .from(companies)
+      .where(eq(companies.key, key))
+      .limit(1);
+    return row ?? null;
+  }
+  return null;
 }
 
 export const companyMutations = {
@@ -680,22 +705,77 @@ export const companyMutations = {
     };
   },
 
-  async enhanceCompany(_parent: unknown, args: MutationEnhanceCompanyArgs) {
-    return {
-      success: false,
-      message: "Enhancement is currently unavailable.",
-      companyId: args.id ?? null,
-      companyKey: args.key ?? null,
-    };
+  async enhanceCompany(
+    _parent: unknown,
+    args: MutationEnhanceCompanyArgs,
+    context: GraphQLContext,
+  ) {
+    const resolved = await resolveCompanyIdKey(context, args.id ?? null, args.key ?? null);
+    if (!resolved) {
+      return {
+        success: false,
+        message: "Company not found.",
+        companyId: args.id ?? null,
+        companyKey: args.key ?? null,
+      };
+    }
+    try {
+      const result = await enrichCompany({ companyId: resolved.id });
+      const cls = result.classification;
+      const scores = result.scores;
+      const msg = cls
+        ? `Enriched: ${cls.category} / ai_tier=${cls.ai_tier} / score=${scores?.score ?? "?"}${scores?.needs_review ? " (review)" : ""}`
+        : "Enrichment ran.";
+      return {
+        success: !result._error,
+        message: result._error ?? msg,
+        companyId: resolved.id,
+        companyKey: resolved.key,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : String(err),
+        companyId: resolved.id,
+        companyKey: resolved.key,
+      };
+    }
   },
 
-  async analyzeCompany(_parent: unknown, args: MutationAnalyzeCompanyArgs) {
-    return {
-      success: false,
-      message: "Deep analysis is currently unavailable.",
-      companyId: args.id ?? null,
-      companyKey: args.key ?? null,
-    };
+  async analyzeCompany(
+    _parent: unknown,
+    args: MutationAnalyzeCompanyArgs,
+    context: GraphQLContext,
+  ) {
+    const resolved = await resolveCompanyIdKey(context, args.id ?? null, args.key ?? null);
+    if (!resolved) {
+      return {
+        success: false,
+        message: "Company not found.",
+        companyId: args.id ?? null,
+        companyKey: args.key ?? null,
+      };
+    }
+    try {
+      const result = await enrichCompany({ companyId: resolved.id });
+      const cls = result.classification;
+      const msg = cls
+        ? `Analyzed: ${cls.category} (ai_tier ${cls.ai_tier}, confidence ${cls.confidence.toFixed(2)})`
+        : "Analysis ran.";
+      return {
+        success: !result._error,
+        message: result._error ?? msg,
+        companyId: resolved.id,
+        companyKey: resolved.key,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : String(err),
+        companyId: resolved.id,
+        companyKey: resolved.key,
+      };
+    }
   },
 
   async blockCompany(

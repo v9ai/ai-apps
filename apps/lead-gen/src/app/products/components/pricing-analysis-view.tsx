@@ -33,6 +33,15 @@ function statusColor(s: string): "green" | "red" | "amber" | "blue" | "gray" {
   return "gray";
 }
 
+function relationColor(
+  r: string | undefined,
+): "green" | "blue" | "orange" | "gray" {
+  if (r === "below" || r === "undercut") return "green";
+  if (r === "at_parity") return "blue";
+  if (r === "premium") return "orange";
+  return "gray";
+}
+
 function formatPrice(p: number | null | undefined): string {
   if (p === null || p === undefined) return "Custom";
   if (p === 0) return "Free";
@@ -100,6 +109,89 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
             {data.rationale.recommendation}
           </Text>
         </Box>
+      )}
+
+      {(data.model?.value_metric_reasoning || data.model?.model_type_reasoning) && (
+        <div
+          className={css({
+            display: "grid",
+            gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" },
+            gap: "3",
+          })}
+        >
+          {data.model?.value_metric_reasoning && (
+            <Box
+              className={css({
+                border: "1px solid",
+                borderColor: "ui.border",
+                borderLeft: "3px solid",
+                borderLeftColor: "indigo.8",
+                borderRadius: "md",
+                p: "4",
+              })}
+            >
+              <Flex gap="2" align="center" mb="2">
+                <Text
+                  size="1"
+                  weight="bold"
+                  color="gray"
+                  as="div"
+                  className={eyebrow}
+                >
+                  Why this value metric
+                </Text>
+                {data.model.value_metric && (
+                  <Badge color="indigo" size="1" variant="soft">
+                    {data.model.value_metric}
+                  </Badge>
+                )}
+              </Flex>
+              <Text
+                size="2"
+                as="p"
+                className={css({ color: "gray.12", lineHeight: "1.6" })}
+              >
+                {data.model.value_metric_reasoning}
+              </Text>
+            </Box>
+          )}
+          {data.model?.model_type_reasoning && (
+            <Box
+              className={css({
+                border: "1px solid",
+                borderColor: "ui.border",
+                borderLeft: "3px solid",
+                borderLeftColor: "gray.8",
+                borderRadius: "md",
+                p: "4",
+              })}
+            >
+              <Flex gap="2" align="center" mb="2">
+                <Text
+                  size="1"
+                  weight="bold"
+                  color="gray"
+                  as="div"
+                  className={eyebrow}
+                >
+                  Why this model
+                </Text>
+                {data.model.model_type && (
+                  <Badge color="gray" size="1" variant="soft">
+                    {data.model.model_type}
+                  </Badge>
+                )}
+              </Flex>
+              <Text
+                size="2"
+                as="p"
+                className={css({ color: "gray.12", lineHeight: "1.6" })}
+              >
+                {data.model.model_type_reasoning}
+              </Text>
+            </Box>
+          )}
+        </div>
       )}
 
       <Box>
@@ -238,6 +330,78 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                   </Text>
                 </Box>
               )}
+
+              {(t.value_math ||
+                t.price_justification ||
+                (t.anchor_competitors && t.anchor_competitors.length > 0)) && (
+                <Box
+                  className={css({
+                    pt: "3",
+                    borderTop: "1px dashed",
+                    borderColor: "ui.border",
+                  })}
+                >
+                  <Text
+                    size="1"
+                    color="gray"
+                    as="div"
+                    weight="bold"
+                    mb="2"
+                    className={eyebrow}
+                  >
+                    Why this price
+                  </Text>
+                  {t.value_math && (
+                    <Text
+                      size="1"
+                      as="div"
+                      className={css({
+                        fontFamily: "mono",
+                        bg: "gray.2",
+                        border: "1px solid",
+                        borderColor: "ui.border",
+                        borderRadius: "sm",
+                        px: "2",
+                        py: "1",
+                        mb: "2",
+                        lineHeight: "1.4",
+                        color: "gray.12",
+                      })}
+                    >
+                      {t.value_math}
+                    </Text>
+                  )}
+                  {t.price_justification && (
+                    <Text
+                      size="2"
+                      as="p"
+                      className={css({
+                        lineHeight: "1.5",
+                        color: "gray.12",
+                      })}
+                      mb={
+                        t.anchor_competitors && t.anchor_competitors.length > 0
+                          ? "2"
+                          : "0"
+                      }
+                    >
+                      {t.price_justification}
+                    </Text>
+                  )}
+                  {t.anchor_competitors && t.anchor_competitors.length > 0 && (
+                    <Flex gap="1" wrap="wrap" align="center">
+                      <Text size="1" color="gray" className={eyebrow}>
+                        vs
+                      </Text>
+                      {t.anchor_competitors.map((a, k) => (
+                        <Badge key={k} color="gray" size="1" variant="soft">
+                          {a}
+                        </Badge>
+                      ))}
+                    </Flex>
+                  )}
+                </Box>
+              )}
             </Box>
           ))}
         </div>
@@ -260,7 +424,8 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
 
       {(data.rationale?.value_basis ||
         data.rationale?.competitor_benchmark ||
-        data.rationale?.wtp_estimate) && (
+        data.rationale?.wtp_estimate ||
+        (data.rationale?.price_anchors && data.rationale.price_anchors.length > 0)) && (
         <>
           <Separator size="4" />
           <Box>
@@ -268,6 +433,85 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
               Rationale
             </Heading>
             <Flex direction="column" gap="3">
+              {data.rationale?.price_anchors &&
+                data.rationale.price_anchors.length > 0 && (
+                  <Box
+                    className={css({
+                      border: "1px solid",
+                      borderColor: "ui.border",
+                      borderLeft: "3px solid",
+                      borderLeftColor: "plum.8",
+                      borderRadius: "md",
+                      p: "4",
+                    })}
+                  >
+                    <Text
+                      weight="bold"
+                      size="1"
+                      color="gray"
+                      as="div"
+                      mb="3"
+                      className={eyebrow}
+                    >
+                      Price anchors
+                    </Text>
+                    <div
+                      className={css({
+                        display: "grid",
+                        gridTemplateColumns: {
+                          base: "1fr",
+                          md: "1.4fr 1fr auto auto 2fr",
+                        },
+                        columnGap: "4",
+                        rowGap: "2",
+                        alignItems: "center",
+                      })}
+                    >
+                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
+                        Competitor
+                      </Text>
+                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
+                        Tier
+                      </Text>
+                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
+                        Price/mo
+                      </Text>
+                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
+                        Relation
+                      </Text>
+                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
+                        Note
+                      </Text>
+                      {data.rationale.price_anchors.map((anchor, i) => (
+                        <React.Fragment key={i}>
+                          <Text size="2" weight="medium" className={css({ color: "gray.12" })}>
+                            {anchor.competitor}
+                          </Text>
+                          <Text size="2" color="gray">
+                            {anchor.tier}
+                          </Text>
+                          <Text size="2" weight="bold" className={css({ color: "gray.12" })}>
+                            {formatPrice(anchor.monthly_price_usd)}
+                          </Text>
+                          <Badge
+                            color={relationColor(anchor.relation)}
+                            size="1"
+                            variant="soft"
+                          >
+                            {anchor.relation}
+                          </Badge>
+                          <Text
+                            size="2"
+                            color="gray"
+                            className={css({ lineHeight: "1.5" })}
+                          >
+                            {anchor.note}
+                          </Text>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </Box>
+                )}
               {data.rationale?.value_basis && (
                 <Box
                   className={css({

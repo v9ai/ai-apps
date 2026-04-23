@@ -53,33 +53,42 @@ const teamCardStyle = css({
   gap: "2",
 });
 
-// The three Claude agent teams, in dependency-graph order. Rendered in the
-// "How this was produced" explainer panel so end users understand the
-// provenance and methodology behind every number on the page.
+// The three LangGraph pipelines that populate this page, in the order they
+// run against a product. Rendered in the "How this was produced" explainer
+// panel so end users understand the provenance behind every number.
 const TEAMS = [
   {
-    name: "Competitor Analyst",
-    skill: "product-competitors",
+    name: "Discovery",
+    graph: "competitors_team",
+    file: "backend/leadgen_agent/competitors_team_graph.py",
     inputs: "Product description, highlights, ICP",
-    outputs: "competitors rows + positioning headlines + threat scores",
+    outputs: "competitors rows (name, URL, positioning headline, threat score)",
     method:
-      "WebSearch + WebFetch to find 5–7 direct rivals. Python-focused discovery biases toward PyPI / GitHub projects. Grounds every positioning claim in phrases from the competitor's site.",
+      "discovery_scout → competitor_loader → (differentiator ‖ threat_assessor) → synthesizer. Multi-agent LangGraph fan-out that returns 5–7 direct rivals with grounded positioning.",
+    trigger: "createCompetitorAnalysis(productId) mutation (admin-only)",
   },
   {
-    name: "Pricing Analyst",
-    skill: "product-pricing",
-    inputs: "competitors rows from team 1",
-    outputs: "competitor_pricing_tiers + pricing recommendation",
+    name: "Deep scrape",
+    graph: "deep_competitor",
+    file: "backend/leadgen_agent/deep_competitor_graph.py",
+    inputs: "one competitors.id per Send",
+    outputs:
+      "competitor_pricing_tiers, competitor_features, competitor_integrations",
     method:
-      "Scrapes /pricing, /plans, /enterprise pages per competitor. Normalizes to tiers (name, monthly/annual/seat USD, included limits). Synthesizes a pricing recommendation for the seed product grounded in market medians.",
+      "Six specialists fan out via Send API: pricing_deep · features_deep · integrations_deep · changelog · positioning_shift · funding_headcount. deepseek-reasoner extracts hard signals from each competitor's pages.",
+    trigger:
+      "approveCompetitors(analysisId, competitors) → /api/competitors/scrape",
   },
   {
-    name: "Positioning Analyst",
-    skill: "product-positioning",
-    inputs: "competitors + pricing from teams 1 and 2",
-    outputs: "products.positioning_analysis",
+    name: "Pricing synthesis",
+    graph: "pricing",
+    file: "backend/leadgen_agent/pricing_graph.py",
+    inputs:
+      "product + icp_analysis + competitor_pricing_tiers rows from teams 1–2",
+    outputs: "products.pricing_analysis jsonb",
     method:
-      "Identifies trade-off axes, picks the underserved gap, writes the seed's defensible positioning statement + anti-audience + moat hypotheses. Rejects parity positioning in favor of differentiation.",
+      "load_inputs → (benchmark_competitors ‖ choose_value_metric) → design_model → write_rationale. Produces a recommended pricing model with tiers and a rationale that references at least 3 competitors.",
+    trigger: "analyzeProductPricingAsync(id) mutation",
   },
 ] as const;
 
@@ -101,17 +110,16 @@ function provenance(analysis: Analysis | null | undefined): string {
 
 // ─── Sub-components ────────────────────────────────────────────────
 
-function ExplainerPanel({ slug, analysis }: { slug: string; analysis: Analysis | null | undefined }) {
+function ExplainerPanel({ analysis }: { analysis: Analysis | null | undefined }) {
   return (
     <Box className={cardStyle}>
       <Heading size="4" mb="2">
         How this analysis was produced
       </Heading>
       <Text size="2" color="gray" mb="4">
-        Three Claude agents run as a team. Each does one thing, then they debate
-        and reconcile before publishing. Run{" "}
-        <code>/agents product {slug} --python-focus</code> in Claude Code to
-        refresh.
+        Three LangGraph pipelines run in sequence. Each writes to its own DB
+        tables; the next one reads what the previous one produced. There&apos;s
+        an admin approval gate between teams 1 and 2.
       </Text>
       <Flex
         direction={{ initial: "column", md: "row" }}
@@ -119,7 +127,7 @@ function ExplainerPanel({ slug, analysis }: { slug: string; analysis: Analysis |
         align="stretch"
       >
         {TEAMS.map((team, idx) => (
-          <Box key={team.skill} className={teamCardStyle} style={{ flex: 1 }}>
+          <Box key={team.graph} className={teamCardStyle} style={{ flex: 1 }}>
             <Flex align="center" gap="2">
               <Badge color="indigo" size="2">
                 Team {idx + 1}
@@ -127,7 +135,7 @@ function ExplainerPanel({ slug, analysis }: { slug: string; analysis: Analysis |
               <Text weight="bold">{team.name}</Text>
             </Flex>
             <Text size="1" color="gray">
-              <code>{team.skill}</code>
+              <code>{team.graph}</code>
             </Text>
             <Separator size="4" />
             <Text size="2">
@@ -138,6 +146,9 @@ function ExplainerPanel({ slug, analysis }: { slug: string; analysis: Analysis |
             </Text>
             <Text size="2" color="gray">
               {team.method}
+            </Text>
+            <Text size="1" color="gray">
+              <strong>Trigger:</strong> {team.trigger}
             </Text>
           </Box>
         ))}
@@ -150,58 +161,67 @@ function ExplainerPanel({ slug, analysis }: { slug: string; analysis: Analysis |
   );
 }
 
-function RunCommandPanel({ slug }: { slug: string }) {
-  const [copied, setCopied] = useState(false);
-  const cmd = `/agents product ${slug} --python-focus`;
+function KickoffPanel({
+  productId,
+  hasAnalysis,
+  onDone,
+}: {
+  productId: number;
+  hasAnalysis: boolean;
+  onDone: () => void;
+}) {
+  const [run, { loading, error }] = useCreateCompetitorAnalysisMutation();
+  const [kickedAnalysisId, setKickedAnalysisId] = useState<number | null>(null);
 
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(cmd);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable — user can still select+copy the text */
+  async function onClick() {
+    const res = await run({ variables: { productId } });
+    const id = res.data?.createCompetitorAnalysis?.id ?? null;
+    if (id !== null) {
+      setKickedAnalysisId(id);
+      onDone();
     }
   }
 
   return (
     <Box className={cardStyle}>
       <Heading size="3" mb="2">
-        Run the 3-team deep dive
+        {hasAnalysis ? "Re-run team 1 (Discovery)" : "Run team 1 (Discovery)"}
       </Heading>
       <Text size="2" color="gray" mb="3">
-        The web UI can&apos;t spawn Claude agents directly. Copy this command and
-        paste it into a Claude Code session in this repo:
+        Kicks off the <code>competitors_team</code> LangGraph pipeline. It
+        returns 5–7 suggested competitors in <code>pending_approval</code>{" "}
+        status. An admin then runs{" "}
+        <code>approveCompetitors</code> (from the existing competitors admin
+        tools) to advance to team 2 (deep scrape). Team 3 (pricing) is a
+        separate kickoff from the products list.
       </Text>
-      <Flex
-        align="center"
-        gap="2"
-        className={css({
-          bg: "gray.3",
-          border: "1px solid",
-          borderColor: "ui.border",
-          borderRadius: "sm",
-          p: "2",
-          fontFamily: "mono",
-        })}
-      >
-        <Text size="2" style={{ flex: 1, fontFamily: "monospace" }}>
-          {cmd}
-        </Text>
+      <Flex align="center" gap="2">
         <button
-          onClick={copy}
-          className={button({ variant: "soft", size: "sm" })}
           type="button"
+          onClick={onClick}
+          disabled={loading}
+          className={button({ variant: "solid", size: "sm" })}
         >
-          <CopyIcon /> {copied ? "Copied" : "Copy"}
+          <MagicWandIcon />
+          <span className={css({ ml: "1" })}>
+            {loading
+              ? "Starting…"
+              : hasAnalysis
+                ? "Re-run discovery"
+                : "Run discovery"}
+          </span>
         </button>
+        {kickedAnalysisId !== null && !loading && !error && (
+          <Text size="2" color="gray">
+            Started analysis #{kickedAnalysisId}. Refresh in a minute.
+          </Text>
+        )}
+        {error && (
+          <Text size="2" color="red">
+            {error.message}
+          </Text>
+        )}
       </Flex>
-      <Text size="1" color="gray" mt="2">
-        Approximate cost per run: $1–2 of Claude spend. Writes to{" "}
-        <code>competitor_analyses</code>, <code>competitors</code>,{" "}
-        <code>competitor_pricing_tiers</code>, and{" "}
-        <code>products.positioning_analysis</code>.
-      </Text>
     </Box>
   );
 }
@@ -398,8 +418,9 @@ function FeatureMatrix({ competitors }: { competitors: Competitor[] }) {
 
 export function ProductCompetitorsPage({ slug }: { slug: string }) {
   const { user, loading: authLoading } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const { data, loading, error } = useProductCompetitorsBySlugQuery({
+  const { data, loading, error, refetch } = useProductCompetitorsBySlugQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
     skip: !user,
@@ -490,7 +511,7 @@ export function ProductCompetitorsPage({ slug }: { slug: string }) {
           </Heading>
         </Flex>
 
-        <ExplainerPanel slug={slug} analysis={analysis} />
+        <ExplainerPanel analysis={analysis} />
 
         {competitors.length === 0 ? (
           <Box className={cardStyle}>
@@ -498,8 +519,8 @@ export function ProductCompetitorsPage({ slug }: { slug: string }) {
               No analysis yet
             </Heading>
             <Text size="2" color="gray">
-              The 3-agent Claude team hasn&apos;t been run for this product. Use the
-              command below to kick it off.
+              No <code>competitor_analyses</code> row exists for this product
+              yet. {isAdmin ? "Use the panel below to start team 1." : "Ask an admin to kick off the discovery team."}
             </Text>
           </Box>
         ) : (
@@ -541,7 +562,15 @@ export function ProductCompetitorsPage({ slug }: { slug: string }) {
           </>
         )}
 
-        <RunCommandPanel slug={slug} />
+        {isAdmin && (
+          <KickoffPanel
+            productId={product.id}
+            hasAnalysis={Boolean(analysis)}
+            onDone={() => {
+              void refetch();
+            }}
+          />
+        )}
       </Flex>
     </Container>
   );

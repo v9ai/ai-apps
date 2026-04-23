@@ -98,6 +98,51 @@ export interface ContactEnrichResult {
   error?: string | null;
 }
 
+export interface CompanyDiscoveryResult {
+  inserted_ids: number[];
+  skipped_existing: number;
+  summary: {
+    seed_query: string;
+    vertical?: string | null;
+    keywords?: string[];
+    candidates_count: number;
+    filtered_count: number;
+    scored_count: number;
+    inserted_count: number;
+    inserted_ids: number[];
+    skipped_existing: number;
+    graph_meta?: Record<string, unknown>;
+  };
+  _error?: string;
+}
+
+export interface CompanyEnrichmentResult {
+  facts_persisted: number;
+  updated: boolean;
+  classification: {
+    category: "CONSULTANCY" | "STAFFING" | "AGENCY" | "PRODUCT" | "UNKNOWN";
+    ai_tier: 0 | 1 | 2;
+    industry: string;
+    confidence: number;
+    reason: string;
+    remote_policy: "full_remote" | "hybrid" | "onsite" | "unknown";
+    has_open_roles: boolean;
+  };
+  scores: {
+    score: number;
+    reasons: string[];
+    needs_review: boolean;
+  };
+  classify_source: "llm" | "heuristic";
+  _error?: string;
+}
+
+export interface ContactDiscoveryResult {
+  candidates_inserted: number;
+  skipped_existing: number;
+  _error?: string;
+}
+
 export interface ClassifyPaperResult {
   is_sales_leadgen: boolean;
   confidence: number;
@@ -268,6 +313,66 @@ export function enrichContactPapers(input: {
     // Paper search fans out to three APIs + one LLM call. Network bursts can
     // exceed the 60s default on cold OpenAlex responses.
     { timeoutMs: 120_000 },
+  );
+}
+
+/**
+ * Discover new companies from a fuzzy seed query. LLM-only — deepseek-reasoner
+ * brainstorms 12–20 real companies, the graph dedupes against existing
+ * `companies` rows by `canonical_domain` and inserts the rest with
+ * `tags=['discovery-candidate']` and `score=pre_score` (0.2–1.0).
+ * `company_enrichment` fills in category / ai_tier afterwards.
+ */
+export function discoverCompanies(input: {
+  seedQuery: string;
+  vertical?: string;
+  geography?: string;
+  sizeBand?: string;
+}): Promise<CompanyDiscoveryResult> {
+  return runGraph<CompanyDiscoveryResult>(
+    "company_discovery",
+    {
+      seed_query: input.seedQuery,
+      vertical: input.vertical ?? null,
+      geography: input.geography ?? null,
+      size_band: input.sizeBand ?? null,
+    },
+    { timeoutMs: 120_000 },
+  );
+}
+
+/**
+ * Enrich an existing company by id: fetch home + careers pages, classify
+ * (CONSULTANCY/STAFFING/AGENCY/PRODUCT) + ai_tier + score, UPDATE `companies`
+ * and append two provenance rows to `company_facts` with
+ * `extractor_version='python-qwen-2026-04'` so the Python rows coexist with
+ * the Rust enricher's `rust-bge-*` rows.
+ */
+export function enrichCompany(input: {
+  companyId: number;
+}): Promise<CompanyEnrichmentResult> {
+  return runGraph<CompanyEnrichmentResult>(
+    "company_enrichment",
+    { company_id: input.companyId },
+    { timeoutMs: 120_000 },
+  );
+}
+
+/**
+ * Discover new contacts for a company via three parallel sources: GitHub org
+ * members (capped at 25), paper authors from research_client.search_papers,
+ * and the company team/about page. Dedupes by name + email + github_handle,
+ * then inserts new rows with `tags=['contact-discovery', ...sources]`.
+ * Inserted contacts are picked up by `contact_enrich` via the
+ * `papers_enriched_at IS NULL` queue.
+ */
+export function discoverContacts(input: {
+  companyId: number;
+}): Promise<ContactDiscoveryResult> {
+  return runGraph<ContactDiscoveryResult>(
+    "contact_discovery",
+    { company_id: input.companyId },
+    { timeoutMs: 180_000 },
   );
 }
 
