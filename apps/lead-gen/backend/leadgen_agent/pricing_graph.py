@@ -395,6 +395,26 @@ async def write_rationale(state: PricingState) -> dict:
         }
     )
     dumped = pricing.model_dump()
+
+    # Persist to products row. The GraphQL resolver then SELECTs the updated
+    # row rather than issuing a second UPDATE (avoids the pricing_analyzed_at
+    # drift between the graph's clock and the resolver's clock).
+    product = state.get("product") or {}
+    product_id = product.get("id") or state.get("product_id")
+    if product_id is not None:
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE products
+                    SET pricing_analysis = %s::jsonb,
+                        pricing_analyzed_at = now()::text,
+                        updated_at = now()::text
+                    WHERE id = %s
+                    """,
+                    (json.dumps(dumped), int(product_id)),
+                )
+
     return {
         "pricing": dumped,
         "graph_meta": meta,
