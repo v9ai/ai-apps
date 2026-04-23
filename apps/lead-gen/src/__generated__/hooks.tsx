@@ -2167,6 +2167,8 @@ export type Product = {
   id: Scalars['Int']['output'];
   intelReport: Maybe<Scalars['JSON']['output']>;
   intelReportAt: Maybe<Scalars['DateTime']['output']>;
+  /** Latest (by created_at) competitor_analyses row for this product, if any. Used by the /products/[slug]/competitors UI. */
+  latestCompetitorAnalysis: Maybe<CompetitorAnalysis>;
   name: Scalars['String']['output'];
   positioningAnalysis: Maybe<Scalars['JSON']['output']>;
   pricingAnalysis: Maybe<Scalars['JSON']['output']>;
@@ -4059,6 +4061,13 @@ export type DeleteCompetitorAnalysisMutationVariables = Exact<{
 
 
 export type DeleteCompetitorAnalysisMutation = { __typename?: 'Mutation', deleteCompetitorAnalysis: boolean };
+
+export type ProductCompetitorsBySlugQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+}>;
+
+
+export type ProductCompetitorsBySlugQuery = { __typename?: 'Query', productBySlug: { __typename?: 'Product', pricingAnalysis: any | null, positioningAnalysis: any | null, pricingAnalyzedAt: string | null, updatedAt: string, id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, icpAnalysis: any | null, icpAnalyzedAt: string | null, gtmAnalysis: any | null, gtmAnalyzedAt: string | null, intelReport: any | null, intelReportAt: string | null, publishedAt: string | null, createdBy: string | null, createdAt: string, latestCompetitorAnalysis: { __typename?: 'CompetitorAnalysis', id: number, status: CompetitorAnalysisStatus, createdBy: string | null, error: string | null, createdAt: string, updatedAt: string, competitors: Array<{ __typename?: 'Competitor', id: number, analysisId: number, name: string, url: string, domain: string | null, logoUrl: string | null, description: string | null, positioningHeadline: string | null, positioningTagline: string | null, targetAudience: string | null, status: CompetitorStatus, scrapedAt: string | null, scrapeError: string | null, createdAt: string, pricingTiers: Array<{ __typename?: 'PricingTier', id: number, tierName: string, monthlyPriceUsd: number | null, annualPriceUsd: number | null, seatPriceUsd: number | null, currency: string, includedLimits: any | null, isCustomQuote: boolean, sortOrder: number }>, features: Array<{ __typename?: 'CompetitorFeature', id: number, tierName: string | null, featureText: string, category: string | null }>, integrations: Array<{ __typename?: 'CompetitorIntegration', id: number, integrationName: string, integrationUrl: string | null, category: string | null }> }>, product: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, icpAnalysis: any | null, icpAnalyzedAt: string | null, pricingAnalysis: any | null, pricingAnalyzedAt: string | null, gtmAnalysis: any | null, gtmAnalyzedAt: string | null, intelReport: any | null, intelReportAt: string | null, positioningAnalysis: any | null, publishedAt: string | null, createdBy: string | null, createdAt: string, updatedAt: string } } | null } | null };
 
 export type GetContactQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -6068,6 +6077,61 @@ export function useDeleteCompetitorAnalysisMutation(baseOptions?: Apollo.Mutatio
 export type DeleteCompetitorAnalysisMutationHookResult = ReturnType<typeof useDeleteCompetitorAnalysisMutation>;
 export type DeleteCompetitorAnalysisMutationResult = Apollo.MutationResult<DeleteCompetitorAnalysisMutation>;
 export type DeleteCompetitorAnalysisMutationOptions = Apollo.BaseMutationOptions<DeleteCompetitorAnalysisMutation, DeleteCompetitorAnalysisMutationVariables>;
+export const ProductCompetitorsBySlugDocument = gql`
+    query ProductCompetitorsBySlug($slug: String!) {
+  productBySlug(slug: $slug) {
+    ...ProductCore
+    pricingAnalysis
+    positioningAnalysis
+    pricingAnalyzedAt
+    updatedAt
+    latestCompetitorAnalysis {
+      ...CompetitorAnalysisCore
+      competitors {
+        ...CompetitorFull
+      }
+    }
+  }
+}
+    ${ProductCoreFragmentDoc}
+${CompetitorAnalysisCoreFragmentDoc}
+${CompetitorFullFragmentDoc}`;
+
+/**
+ * __useProductCompetitorsBySlugQuery__
+ *
+ * To run a query within a React component, call `useProductCompetitorsBySlugQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProductCompetitorsBySlugQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProductCompetitorsBySlugQuery({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *   },
+ * });
+ */
+export function useProductCompetitorsBySlugQuery(baseOptions: Apollo.QueryHookOptions<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables> & ({ variables: ProductCompetitorsBySlugQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables>(ProductCompetitorsBySlugDocument, options);
+      }
+export function useProductCompetitorsBySlugLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables>(ProductCompetitorsBySlugDocument, options);
+        }
+// @ts-ignore
+export function useProductCompetitorsBySlugSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables>): Apollo.UseSuspenseQueryResult<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables>;
+export function useProductCompetitorsBySlugSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables>): Apollo.UseSuspenseQueryResult<ProductCompetitorsBySlugQuery | undefined, ProductCompetitorsBySlugQueryVariables>;
+export function useProductCompetitorsBySlugSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables>(ProductCompetitorsBySlugDocument, options);
+        }
+export type ProductCompetitorsBySlugQueryHookResult = ReturnType<typeof useProductCompetitorsBySlugQuery>;
+export type ProductCompetitorsBySlugLazyQueryHookResult = ReturnType<typeof useProductCompetitorsBySlugLazyQuery>;
+export type ProductCompetitorsBySlugSuspenseQueryHookResult = ReturnType<typeof useProductCompetitorsBySlugSuspenseQuery>;
+export type ProductCompetitorsBySlugQueryResult = Apollo.QueryResult<ProductCompetitorsBySlugQuery, ProductCompetitorsBySlugQueryVariables>;
 export const GetContactDocument = gql`
     query GetContact($id: Int, $slug: String) {
   contact(id: $id, slug: $slug) {

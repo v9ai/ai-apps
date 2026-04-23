@@ -96,6 +96,11 @@ extend type Query {
   competitorAnalyses(limit: Int, offset: Int): [CompetitorAnalysis!]!
 }
 
+extend type Product {
+  "Latest (by created_at) competitor_analyses row for this product, if any. Used by the /products/[slug]/competitors UI."
+  latestCompetitorAnalysis: CompetitorAnalysis
+}
+
 extend type Mutation {
   createCompetitorAnalysis(productId: Int!): CompetitorAnalysis!
   approveCompetitors(analysisId: Int!, competitors: [CompetitorInput!]!): CompetitorAnalysis!

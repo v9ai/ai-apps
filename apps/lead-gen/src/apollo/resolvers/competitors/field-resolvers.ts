@@ -1,9 +1,12 @@
-import type {
-  CompetitorAnalysis as DbCompetitorAnalysis,
-  Competitor as DbCompetitor,
-  CompetitorPricingTier as DbPricingTier,
-  CompetitorFeature as DbFeature,
-  CompetitorIntegration as DbIntegration,
+import { desc, eq } from "drizzle-orm";
+import {
+  competitorAnalyses,
+  type CompetitorAnalysis as DbCompetitorAnalysis,
+  type Competitor as DbCompetitor,
+  type CompetitorPricingTier as DbPricingTier,
+  type CompetitorFeature as DbFeature,
+  type CompetitorIntegration as DbIntegration,
+  type Product as DbProduct,
 } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 
@@ -57,4 +60,20 @@ export const CompetitorFeatureField = {
 export const CompetitorIntegrationField = {
   integrationName: (p: DbIntegration) => p.integration_name,
   integrationUrl: (p: DbIntegration) => p.integration_url ?? null,
+};
+
+export const ProductCompetitorField = {
+  async latestCompetitorAnalysis(
+    p: DbProduct,
+    _a: unknown,
+    ctx: GraphQLContext,
+  ): Promise<DbCompetitorAnalysis | null> {
+    const [row] = await ctx.db
+      .select()
+      .from(competitorAnalyses)
+      .where(eq(competitorAnalyses.product_id, p.id))
+      .orderBy(desc(competitorAnalyses.created_at))
+      .limit(1);
+    return row ?? null;
+  },
 };

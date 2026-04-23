@@ -94,6 +94,45 @@ async def _run_research(args: argparse.Namespace) -> None:
             print("⚠️  No JSON output block found in research", file=sys.stderr)
 
 
+async def _run_books(args: argparse.Namespace) -> None:
+    from .books_graph import graph as books_graph
+
+    state: dict = {"user_email": args.user_email}
+    if args.goal_id is not None:
+        state["goal_id"] = args.goal_id
+    if args.journal_entry_id is not None:
+        state["journal_entry_id"] = args.journal_entry_id
+    if not args.persist:
+        state["_skip_persist"] = True
+
+    print(
+        f"Invoking books graph: goal_id={args.goal_id} journal_entry_id={args.journal_entry_id} "
+        f"user={args.user_email} persist={args.persist}",
+        file=sys.stderr,
+    )
+
+    result = await books_graph.ainvoke(state)
+
+    if not result.get("success"):
+        print(f"\n❌ {result.get('message') or 'Books graph failed'}", file=sys.stderr)
+        sys.exit(1)
+
+    books = result.get("books") or []
+    print(f"\n✅ {result.get('message')}\n")
+    for i, b in enumerate(books, 1):
+        year = f" ({b['year']})" if b.get("year") else ""
+        authors = ", ".join(b.get("authors") or [])
+        isbn = f" ISBN {b['isbn']}" if b.get("isbn") else ""
+        print(f"{i}. {b['title']}{year}")
+        print(f"   by {authors}")
+        print(f"   [{b.get('category')}]{isbn}")
+        if b.get("description"):
+            print(f"   {b['description']}")
+        if b.get("whyRecommended"):
+            print(f"   Why: {b['whyRecommended']}")
+        print()
+
+
 async def _run_story(args: argparse.Namespace) -> None:
     from .story import run_story_generation
 
@@ -151,6 +190,20 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     url_p.add_argument("path", help="App URL path")
 
+    # books
+    books_p = sub.add_parser(
+        "books",
+        help="Recommend books for a goal or journal entry via the books LangGraph",
+    )
+    books_p.add_argument("--user-email", required=True, help="Owner email (goals.user_id)")
+    books_p.add_argument("--goal-id", type=int, default=None, help="Goal id")
+    books_p.add_argument("--journal-entry-id", type=int, default=None, help="Journal entry id")
+    books_p.add_argument(
+        "--persist",
+        action="store_true",
+        help="Write results to recommended_books (default: dry-run, print only)",
+    )
+
     # story
     story_p = sub.add_parser(
         "story",
@@ -170,6 +223,8 @@ def main() -> None:
 
     if args.subcommand == "story":
         asyncio.run(_run_story(args))
+    elif args.subcommand == "books":
+        asyncio.run(_run_books(args))
     else:
         asyncio.run(_run_research(args))
 

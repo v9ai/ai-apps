@@ -2164,6 +2164,8 @@ export type Product = {
   id: Scalars['Int']['output'];
   intelReport: Maybe<Scalars['JSON']['output']>;
   intelReportAt: Maybe<Scalars['DateTime']['output']>;
+  /** Latest (by created_at) competitor_analyses row for this product, if any. Used by the /products/[slug]/competitors UI. */
+  latestCompetitorAnalysis: Maybe<CompetitorAnalysis>;
   name: Scalars['String']['output'];
   positioningAnalysis: Maybe<Scalars['JSON']['output']>;
   pricingAnalysis: Maybe<Scalars['JSON']['output']>;

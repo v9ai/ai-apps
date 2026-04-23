@@ -2167,6 +2167,8 @@ export type Product = {
   id: Scalars['Int']['output'];
   intelReport: Maybe<Scalars['JSON']['output']>;
   intelReportAt: Maybe<Scalars['DateTime']['output']>;
+  /** Latest (by created_at) competitor_analyses row for this product, if any. Used by the /products/[slug]/competitors UI. */
+  latestCompetitorAnalysis: Maybe<CompetitorAnalysis>;
   name: Scalars['String']['output'];
   positioningAnalysis: Maybe<Scalars['JSON']['output']>;
   pricingAnalysis: Maybe<Scalars['JSON']['output']>;
@@ -5570,6 +5572,7 @@ export type ProductResolvers<ContextType = GraphQLContext, ParentType extends Re
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   intelReport?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   intelReportAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  latestCompetitorAnalysis?: Resolver<Maybe<ResolversTypes['CompetitorAnalysis']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   positioningAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   pricingAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;

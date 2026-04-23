@@ -113,3 +113,19 @@ mutation RescrapeCompetitor($competitorId: Int!) {
 mutation DeleteCompetitorAnalysis($id: Int!) {
   deleteCompetitorAnalysis(id: $id)
 }
+
+query ProductCompetitorsBySlug($slug: String!) {
+  productBySlug(slug: $slug) {
+    ...ProductCore
+    pricingAnalysis
+    positioningAnalysis
+    pricingAnalyzedAt
+    updatedAt
+    latestCompetitorAnalysis {
+      ...CompetitorAnalysisCore
+      competitors {
+        ...CompetitorFull
+      }
+    }
+  }
+}

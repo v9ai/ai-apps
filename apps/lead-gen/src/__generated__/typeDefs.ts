@@ -1501,6 +1501,10 @@ type Product {
   id: Int!
   intelReport: JSON
   intelReportAt: DateTime
+  """
+  Latest (by created_at) competitor_analyses row for this product, if any. Used by the /products/[slug]/competitors UI.
+  """
+  latestCompetitorAnalysis: CompetitorAnalysis
   name: String!
   positioningAnalysis: JSON
   pricingAnalysis: JSON
