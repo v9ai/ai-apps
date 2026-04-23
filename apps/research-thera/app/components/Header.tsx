@@ -22,8 +22,6 @@ const NAV_LINKS = [
   { href: "/journal", label: "Journal" },
 ];
 
-export const SIDEBAR_WIDTH = 232;
-
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();

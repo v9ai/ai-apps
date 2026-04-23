@@ -2,7 +2,8 @@ import "@radix-ui/themes/styles.css";
 import type { Metadata } from "next";
 import { Box, Container, Theme } from "@radix-ui/themes";
 import { ApolloProvider } from "./providers/ApolloProvider";
-import { Header, SIDEBAR_WIDTH } from "./components/Header";
+import { Header } from "./components/Header";
+import { SIDEBAR_WIDTH } from "./components/sidebar-constants";
 import { GlobalJournalShortcut } from "./components/GlobalJournalShortcut";
 import { VaultShortcut } from "./components/VaultShortcut";
 
