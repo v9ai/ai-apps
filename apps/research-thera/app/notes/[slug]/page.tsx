@@ -33,6 +33,8 @@ import NextLink from "next/link";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { DeepAnalysisPanel } from "@/app/components/DeepAnalysisPanel";
+import { DeepAnalysisSubjectType } from "@/app/__generated__/hooks";
 import {
   useGetNoteQuery,
   useUpdateNoteMutation,
@@ -684,6 +686,12 @@ function NotePageContent() {
             </Flex>
           </Card>
         )}
+
+        <DeepAnalysisPanel
+          subjectType={DeepAnalysisSubjectType.Note}
+          subjectId={note.id}
+          subjectLabel={note.title ?? null}
+        />
       </Flex>
 
       {/* SIDEBAR */}

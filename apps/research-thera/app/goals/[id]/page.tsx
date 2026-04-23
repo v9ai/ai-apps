@@ -28,6 +28,8 @@ import RecommendedBooksSection from "./_components/RecommendedBooksSection";
 import RelatedIssuesSection from "./_components/RelatedIssuesSection";
 import JournalEntriesSection from "./_components/JournalEntriesSection";
 import ParentAdviceSection from "./_components/ParentAdviceSection";
+import { DeepAnalysisPanel } from "@/app/components/DeepAnalysisPanel";
+import { DeepAnalysisSubjectType } from "@/app/__generated__/hooks";
 
 function getStatusColor(status: string) {
   switch (status.toLowerCase()) {
@@ -154,6 +156,12 @@ function GoalPageContent() {
       )}
 
       <ParentAdviceSection goal={goal} />
+
+      <DeepAnalysisPanel
+        subjectType={DeepAnalysisSubjectType.Goal}
+        subjectId={goal.id}
+        subjectLabel={goal.title}
+      />
 
       <NotesSection goalId={goal.id} />
       <StoriesSection goal={goal} />

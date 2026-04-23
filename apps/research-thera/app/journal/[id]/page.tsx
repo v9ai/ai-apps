@@ -39,6 +39,8 @@ import {
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { DeepIssueAnalysisCard } from "@/app/components/DeepIssueAnalysisCard";
+import { DeepAnalysisPanel } from "@/app/components/DeepAnalysisPanel";
+import { DeepAnalysisSubjectType } from "@/app/__generated__/hooks";
 import JournalRecommendedBooksSection from "./_components/JournalRecommendedBooksSection";
 
 const moodColor = (mood: string) =>
@@ -777,6 +779,12 @@ function JournalEntryContent() {
           description={`Analyze all issues for ${entry.familyMember?.firstName ?? "this member"} in the context of this entry.`}
         />
       )}
+
+      <DeepAnalysisPanel
+        subjectType={DeepAnalysisSubjectType.JournalEntry}
+        subjectId={entry.id}
+        subjectLabel={entry.entryDate}
+      />
 
       {/* Discussion Guide */}
       <NextLink href={`/journal/${entry.id}/discussion-guide`} style={{ textDecoration: "none" }}>

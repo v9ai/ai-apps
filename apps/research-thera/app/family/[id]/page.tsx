@@ -40,6 +40,8 @@ import TeacherFeedbackList from "@/app/components/TeacherFeedbackList";
 import AddContactButton from "@/app/components/AddContactButton";
 import AddIssueButton from "@/app/components/AddIssueButton";
 import { getSeverityColor, getCategoryColor } from "@/app/lib/issue-colors";
+import { DeepAnalysisPanel } from "@/app/components/DeepAnalysisPanel";
+import { DeepAnalysisSubjectType } from "@/app/__generated__/hooks";
 
 const RELATIONSHIP_OPTIONS = [
   "self",
