@@ -38,7 +38,9 @@ class BooksState(TypedDict, total=False):
     _prompt: str
     _research_count: int
     _skip_persist: bool
-    _books_raw: list[dict]
+    _candidates: list[dict]  # pass-1 candidate books (pre-rank)
+    _books_raw: list[dict]  # pass-2 ranked top-N, rationales merged
+    _ordering_strategy: str  # overall curatorial arc
     # Output
     success: bool
     message: str
@@ -133,7 +135,7 @@ async def collect_data(state: BooksState) -> dict:
 
                     await cur.execute(
                         "SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level "
-                        "FROM therapy_research WHERE journal_entry_id = %s ORDER BY relevance_score DESC LIMIT 10",
+                        "FROM therapy_research WHERE journal_entry_id = %s ORDER BY relevance_score DESC LIMIT 20",
                         (journal_entry_id,),
                     )
                 else:
@@ -150,7 +152,7 @@ async def collect_data(state: BooksState) -> dict:
                     # Research papers for the goal
                     await cur.execute(
                         "SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level "
-                        "FROM therapy_research WHERE goal_id = %s ORDER BY relevance_score DESC LIMIT 10",
+                        "FROM therapy_research WHERE goal_id = %s ORDER BY relevance_score DESC LIMIT 20",
                         (goal_id,),
                     )
                 research_rows = await cur.fetchall()
