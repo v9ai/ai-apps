@@ -280,6 +280,42 @@ export function ProductsList() {
                       </button>
                       <button
                         type="button"
+                        onClick={() => onAnalyzePricing(p.id)}
+                        disabled={pendingId === p.id}
+                        className={button({ variant: "outline", size: "sm" })}
+                        aria-label="Analyze pricing"
+                      >
+                        <MagicWandIcon />
+                        <span className={css({ ml: "1" })}>
+                          {pendingId === p.id ? "Starting…" : "Analyze Pricing"}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onAnalyzeGtm(p.id)}
+                        disabled={pendingId === p.id}
+                        className={button({ variant: "outline", size: "sm" })}
+                        aria-label="Analyze GTM"
+                      >
+                        <MagicWandIcon />
+                        <span className={css({ ml: "1" })}>
+                          {pendingId === p.id ? "Starting…" : "Analyze GTM"}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onRunFullIntel(p.id)}
+                        disabled={pendingId === p.id}
+                        className={button({ variant: "gradient", size: "sm" })}
+                        aria-label="Run full intel"
+                      >
+                        <MagicWandIcon />
+                        <span className={css({ ml: "1" })}>
+                          {pendingId === p.id ? "Starting…" : "Run Full Intel"}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
                         onClick={async () => {
                           if (!window.confirm(`Delete product "${p.name}"?`))
                             return;

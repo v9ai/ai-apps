@@ -21,14 +21,14 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Any
+from typing import Annotated, Any
 
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import ainvoke_json, make_llm
-from .notify import notify_complete
+from .notify import notify_complete, notify_error
 from .product_intel_schemas import (
     Channel,
     GTMStrategy,
@@ -38,6 +38,18 @@ from .product_intel_schemas import (
     product_intel_graph_meta,
 )
 from .state import GTMState
+
+
+def _first_error(left: str | None, right: str | None) -> str | None:
+    """Reducer: keep the first error set by parallel fan-out nodes."""
+    return left or right
+
+
+class _GTMStateWithError(GTMState, total=False):
+    """Local extension of GTMState carrying an ad-hoc ``_error`` channel so
+    exception-path routing survives across nodes without editing state.py."""
+
+    _error: Annotated[str, _first_error]
 
 
 async def load_inputs(state: GTMState) -> dict:
@@ -161,40 +173,45 @@ def _pricing_summary(pricing: dict[str, Any]) -> str:
 
 
 async def pick_channels(state: GTMState) -> dict:
+    if state.get("_error"):
+        return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
     icp = state.get("icp") or {}
 
-    llm = make_llm(temperature=0.2, provider="deepseek")
-    result = await ainvoke_json(
-        llm,
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You choose 2-5 go-to-market channels that match the ICP. "
-                    "For each: {name, why (why this channel fits), "
-                    "icp_presence (evidence ICP is here — communities, hashtags, events), "
-                    "tactics (3-5 concrete plays), effort ('low'|'medium'|'high'), "
-                    "time_to_first_lead (e.g. '1-2 weeks')}. "
-                    "Bias toward high-leverage, founder-doable channels early. Do NOT list "
-                    "'paid ads' unless ICP actually converts on paid (most B2B ICPs don't). "
-                    'Return strict JSON: {"channels":[...]}'
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Product brief:\n{brief}\n\n"
-                    f"ICP:\n{_icp_summary(icp)}\n\n"
-                    f"Competitors:\n{_competitive_summary(state.get('competitive') or {})}\n\n"
-                    "Return JSON only."
-                ),
-            },
-        ],
-        provider="deepseek",
-    )
+    try:
+        llm = make_llm(temperature=0.2, provider="deepseek")
+        result = await ainvoke_json(
+            llm,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You choose 2-5 go-to-market channels that match the ICP. "
+                        "For each: {name, why (why this channel fits), "
+                        "icp_presence (evidence ICP is here — communities, hashtags, events), "
+                        "tactics (3-5 concrete plays), effort ('low'|'medium'|'high'), "
+                        "time_to_first_lead (e.g. '1-2 weeks')}. "
+                        "Bias toward high-leverage, founder-doable channels early. Do NOT list "
+                        "'paid ads' unless ICP actually converts on paid (most B2B ICPs don't). "
+                        'Return strict JSON: {"channels":[...]}'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Product brief:\n{brief}\n\n"
+                        f"ICP:\n{_icp_summary(icp)}\n\n"
+                        f"Competitors:\n{_competitive_summary(state.get('competitive') or {})}\n\n"
+                        "Return JSON only."
+                    ),
+                },
+            ],
+            provider="deepseek",
+        )
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"pick_channels: {e}"}
     raw = result.get("channels") if isinstance(result, dict) else None
     channels_validated: list[dict[str, Any]] = []
     for c in raw or []:
