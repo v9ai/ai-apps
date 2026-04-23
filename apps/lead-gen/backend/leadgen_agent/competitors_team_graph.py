@@ -70,20 +70,37 @@ async def discovery_scout(state: CompetitorsTeamState) -> dict:
     product = state.get("product") or {}
     brief = _product_brief(product)
     llm = make_llm(temperature=0.3)
+
+    # Python-centric products (e.g. document-ingestion libraries, ML frameworks)
+    # have Python OSS libraries as their real rivals, not SaaS platforms. The
+    # generic prompt's "revenue-generating with pricing page" gate filters those
+    # out, so we relax it when python_focus is requested.
+    if state.get("python_focus"):
+        system_prompt = (
+            "You are an OSS ecosystem analyst. Given a seed product from the "
+            "Python ecosystem, return 5-7 direct competitors. Prefer Python "
+            "libraries / frameworks / SDKs published on PyPI or hosted on GitHub. "
+            "Also include commercial products that serve the same job-to-be-done "
+            "(they compete for the same user's mindshare even if open-source). "
+            "For each: use the canonical docs site URL if one exists, otherwise "
+            "the GitHub repo URL. "
+            'Return strict JSON: {"competitors": [{"name","url","description"}]}. '
+            "URLs must use https and no query params."
+        )
+    else:
+        system_prompt = (
+            "You are a B2B market analyst. Given a seed product, return 5-7 "
+            "direct competitors. A direct competitor serves the same buyer, "
+            "use case, and job-to-be-done, is live and revenue-generating, "
+            "and has a public marketing site with pricing and features. "
+            'Return strict JSON: {"competitors": [{"name","url","description"}]}. '
+            "URLs must be the official marketing homepage (https, no params)."
+        )
+
     result = await ainvoke_json(
         llm,
         [
-            {
-                "role": "system",
-                "content": (
-                    "You are a B2B market analyst. Given a seed product, return 5-7 "
-                    "direct competitors. A direct competitor serves the same buyer, "
-                    "use case, and job-to-be-done, is live and revenue-generating, "
-                    "and has a public marketing site with pricing and features. "
-                    'Return strict JSON: {"competitors": [{"name","url","description"}]}. '
-                    "URLs must be the official marketing homepage (https, no params)."
-                ),
-            },
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"Seed product:\n{brief}\n\nReturn JSON only."},
         ],
     )
