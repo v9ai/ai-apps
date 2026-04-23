@@ -8,7 +8,7 @@ import {
   ExternalLinkIcon,
   CheckIcon,
   Cross2Icon,
-  CopyIcon,
+  MagicWandIcon,
 } from "@radix-ui/react-icons";
 import {
   Badge,
@@ -22,9 +22,13 @@ import {
 } from "@radix-ui/themes";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
-import { useProductCompetitorsBySlugQuery } from "@/__generated__/hooks";
+import {
+  useProductCompetitorsBySlugQuery,
+  useCreateCompetitorAnalysisMutation,
+} from "@/__generated__/hooks";
 import type { ProductCompetitorsBySlugQuery } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
+import { ADMIN_EMAIL } from "@/lib/constants";
 
 type Product = NonNullable<ProductCompetitorsBySlugQuery["productBySlug"]>;
 type Analysis = NonNullable<Product["latestCompetitorAnalysis"]>;

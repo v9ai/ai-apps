@@ -20,8 +20,6 @@ import type {
   MutationAnalyzeProductGtmArgs,
   MutationRunFullProductIntelArgs,
   MutationSetProductPublishedArgs,
-  MutationSetProductPositioningArgs,
-  MutationSetProductPricingAnalysisArgs,
 } from "@/__generated__/resolvers-types";
 
 // Products are a global SaaS catalog (see queries.ts). Writes use the
@@ -232,67 +230,6 @@ export const productMutations = {
       .update(products)
       .set({
         published_at: args.published ? new Date() : null,
-        updated_at: now,
-      })
-      .where(eq(products.id, args.id))
-      .returning();
-
-    if (!row) {
-      throw new GraphQLError(`Product ${args.id} not found`, {
-        extensions: { code: "NOT_FOUND" },
-      });
-    }
-    return row;
-  },
-
-  async setProductPositioning(
-    _parent: unknown,
-    args: MutationSetProductPositioningArgs,
-    context: GraphQLContext,
-  ) {
-    requireAdmin(context);
-
-    const input = (args.positioning ?? {}) as Record<string, unknown>;
-    const stamped = {
-      ...input,
-      authored_by: "claude-team",
-      authored_at: new Date().toISOString(),
-    };
-
-    const [row] = await db
-      .update(products)
-      .set({ positioning_analysis: stamped, updated_at: new Date().toISOString() })
-      .where(eq(products.id, args.id))
-      .returning();
-
-    if (!row) {
-      throw new GraphQLError(`Product ${args.id} not found`, {
-        extensions: { code: "NOT_FOUND" },
-      });
-    }
-    return row;
-  },
-
-  async setProductPricingAnalysis(
-    _parent: unknown,
-    args: MutationSetProductPricingAnalysisArgs,
-    context: GraphQLContext,
-  ) {
-    requireAdmin(context);
-
-    const input = (args.pricing ?? {}) as Record<string, unknown>;
-    const stamped = {
-      ...input,
-      authored_by: "claude-team",
-      authored_at: new Date().toISOString(),
-    };
-
-    const now = new Date().toISOString();
-    const [row] = await db
-      .update(products)
-      .set({
-        pricing_analysis: stamped,
-        pricing_analyzed_at: now,
         updated_at: now,
       })
       .where(eq(products.id, args.id))

@@ -69,15 +69,4 @@ extend type Mutation {
   analyzeProductGTMAsync(id: Int!, resumeFromRunId: ID): IntelRunAccepted!
   runFullProductIntelAsync(id: Int!, forceRefresh: Boolean, resumeFromRunId: ID): IntelRunAccepted!
   setProductPublished(id: Int!, published: Boolean!): Product!
-  """
-  Write a positioning statement authored by the Product team's Positioning
-  Analyst (Claude agent). Merges authored_by='claude-team' into the jsonb so
-  the UI can distinguish Claude-authored from Python-pipeline-authored rows.
-  """
-  setProductPositioning(id: Int!, positioning: JSON!): Product!
-  """
-  Write a pricing analysis authored by the Product team's Pricing Analyst
-  (Claude agent). Same provenance marker as setProductPositioning.
-  """
-  setProductPricingAnalysis(id: Int!, pricing: JSON!): Product!
 }
