@@ -30,7 +30,7 @@ sys.path.insert(
 from deepseek_client import ChatMessage, DeepSeekClient, DeepSeekConfig  # noqa: E402
 
 
-ALLOWED_CATEGORIES = ("gratitude", "strength", "encouragement", "growth", "self-worth")
+ALLOWED_CATEGORIES = ("gratitude", "strength", "encouragement", "growth", "self_worth")
 DEFAULT_CATEGORY = "encouragement"
 MAX_COUNT = 10
 
@@ -55,7 +55,7 @@ class AffirmationsState(TypedDict, total=False):
 def _normalise_category(raw: Any) -> str:
     if not raw:
         return DEFAULT_CATEGORY
-    v = str(raw).strip().lower().replace("_", "-")
+    v = str(raw).strip().lower().replace("-", "_")
     return v if v in ALLOWED_CATEGORIES else DEFAULT_CATEGORY
 
 

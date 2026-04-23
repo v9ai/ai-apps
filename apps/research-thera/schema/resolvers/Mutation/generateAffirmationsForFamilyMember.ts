@@ -3,20 +3,12 @@ import { db } from "@/src/db";
 import { runGraphAndWait } from "@/src/lib/langgraph-client";
 import { isRoGoal } from "@/src/lib/ro";
 
-const CATEGORY_TO_ENUM: Record<string, AffirmationCategory> = {
-  gratitude: "GRATITUDE",
-  strength: "STRENGTH",
-  encouragement: "ENCOURAGEMENT",
-  growth: "GROWTH",
-  "self-worth": "SELF_WORTH",
-};
-
 const ENUM_TO_CATEGORY: Record<AffirmationCategory, string> = {
   GRATITUDE: "gratitude",
   STRENGTH: "strength",
   ENCOURAGEMENT: "encouragement",
   GROWTH: "growth",
-  SELF_WORTH: "self-worth",
+  SELF_WORTH: "self_worth",
 };
 
 export const generateAffirmationsForFamilyMember: NonNullable<MutationResolvers['generateAffirmationsForFamilyMember']> = async (_parent, args, ctx) => {
@@ -52,7 +44,7 @@ export const generateAffirmationsForFamilyMember: NonNullable<MutationResolvers[
     count: created.length,
     affirmations: created.map((a) => ({
       ...a,
-      category: (CATEGORY_TO_ENUM[a.category.toLowerCase()] ?? "ENCOURAGEMENT") as AffirmationCategory,
+      category: (a.category.toUpperCase().replace(/-/g, "_") ?? "ENCOURAGEMENT") as AffirmationCategory,
     })),
   };
 };
