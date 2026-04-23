@@ -17,10 +17,15 @@ Apollo resolver can drop into analysis JSON.
 
 from __future__ import annotations
 
+import asyncio
+import json
+import logging
 import os
+import random
+import re
 import time
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 from langgraph.graph import END, START, StateGraph
 
@@ -30,13 +35,91 @@ from .llm import ainvoke_json, make_llm
 from .loaders import competitor_loader
 from .state import CompetitorsTeamState
 
+log = logging.getLogger(__name__)
+
+# LLM retry budget for transient failures (rate-limit / 5xx / socket blip).
+# Same shape as deep_competitor_graph / pricing_graph; JSON parse errors are
+# re-raised immediately since re-running the prompt doesn't unstick them.
+_MAX_LLM_ATTEMPTS = 3
+_RETRY_BASE_DELAY = 0.75
+
+
+async def _ainvoke_json_retry(
+    llm: Any,
+    messages: list[dict[str, str]],
+    *,
+    node: str,
+) -> Any:
+    last_exc: Exception | None = None
+    for attempt in range(1, _MAX_LLM_ATTEMPTS + 1):
+        try:
+            return await ainvoke_json(llm, messages)
+        except (json.JSONDecodeError, ValueError):
+            raise
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            if attempt >= _MAX_LLM_ATTEMPTS:
+                break
+            delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
+            delay *= random.uniform(0.75, 1.25)
+            log.warning(
+                "competitors_team.%s: transient LLM failure (attempt %d/%d): %s "
+                "— retrying in %.2fs",
+                node, attempt, _MAX_LLM_ATTEMPTS, exc, delay,
+            )
+            await asyncio.sleep(delay)
+    raise RuntimeError(
+        f"LLM failed after {_MAX_LLM_ATTEMPTS} attempts: {last_exc}"
+    ) from last_exc
+
 
 def _extract_domain(url: str) -> str:
     try:
-        host = urlparse(url).hostname or ""
+        host = (urlparse(url).hostname or "").lower()
         return host.removeprefix("www.")
     except Exception:
         return ""
+
+
+_WS_RE = re.compile(r"\s+")
+
+
+def _canonical_name(raw: str) -> str:
+    """Normalize a competitor name for dedup / join stability.
+
+    Downstream ``pricing_graph`` joins ``anchor_competitors`` and
+    ``price_anchors`` entries by ``competitors.name`` string-match, so any drift
+    here (trailing whitespace, collapsed case, hidden chars from scraped HTML)
+    silently drops those entries from the grounding block. We keep the
+    canonical name untouched in title-case for display but strip + collapse
+    whitespace so round-tripping through the DB yields byte-identical strings.
+    """
+    cleaned = _WS_RE.sub(" ", (raw or "").strip())
+    return cleaned[:160]
+
+
+def _canonical_url(raw: str) -> str:
+    """Canonicalize a competitor URL: scheme=https, host lowercased without
+    ``www.``, no query/fragment, single trailing slash removed.
+
+    The deep_competitor graph later joins ``urljoin(url, '/pricing')`` etc. on
+    this value — any inconsistency (mixed case host, trailing slash) breaks
+    downstream cache-hit detection on ``pages.pricing``/``pages.features``
+    checkpoints."""
+    if not raw:
+        return ""
+    try:
+        parsed = urlparse(raw.strip())
+    except Exception:
+        return raw.strip()
+    scheme = "https" if parsed.scheme in ("", "http") else parsed.scheme
+    netloc = (parsed.hostname or "").lower().removeprefix("www.")
+    if not netloc:
+        return raw.strip()
+    if parsed.port:
+        netloc = f"{netloc}:{parsed.port}"
+    path = (parsed.path or "").rstrip("/") or ""
+    return urlunparse((scheme, netloc, path, "", "", ""))
 
 
 SCRAPED_EXCERPT_CHARS = 4000
@@ -97,30 +180,40 @@ async def discovery_scout(state: CompetitorsTeamState) -> dict:
             "URLs must be the official marketing homepage (https, no params)."
         )
 
-    result = await ainvoke_json(
+    result = await _ainvoke_json_retry(
         llm,
         [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"Seed product:\n{brief}\n\nReturn JSON only."},
         ],
+        node="discovery_scout",
     )
     raw = result.get("competitors") or []
     candidates: list[dict[str, Any]] = []
-    seen: set[str] = set()
+    seen_domains: set[str] = set()
+    seen_names: set[str] = set()
     for c in raw:
         if not isinstance(c, dict):
             continue
-        url = str(c.get("url", "")).strip()
-        name = str(c.get("name", "")).strip()
+        url = _canonical_url(str(c.get("url", "")))
+        name = _canonical_name(str(c.get("name", "")))
         if not url or not name:
             continue
         domain = _extract_domain(url)
-        if not domain or domain in seen:
+        if not domain or domain in seen_domains:
             continue
-        seen.add(domain)
+        # Additional dedup by normalized name: LLMs sometimes return the same
+        # competitor twice at different URLs (e.g. ``apollo.io`` and
+        # ``www.apollo.io/product``); the canonical-URL pass already catches
+        # the www case but not the subpath variant. Keep first occurrence.
+        name_key = name.lower()
+        if name_key in seen_names:
+            continue
+        seen_domains.add(domain)
+        seen_names.add(name_key)
         candidates.append(
             {
-                "name": name[:160],
+                "name": name,
                 "url": url,
                 "domain": domain,
                 "description": str(c.get("description", ""))[:400],
@@ -148,7 +241,7 @@ async def differentiator(state: CompetitorsTeamState) -> dict:
         f"- {c['name']} ({c['url']}): {c.get('description', '')}" for c in candidates
     )
     grounding = _grounding_block(candidates, state.get("competitor_pages") or {})
-    result = await ainvoke_json(
+    result = await _ainvoke_json_retry(
         llm,
         [
             {
@@ -171,6 +264,7 @@ async def differentiator(state: CompetitorsTeamState) -> dict:
                 ),
             },
         ],
+        node="differentiator",
     )
     by_url = result.get("by_url") or {}
     if not isinstance(by_url, dict):
@@ -194,7 +288,7 @@ async def threat_assessor(state: CompetitorsTeamState) -> dict:
         f"- {c['name']} ({c['url']})" for c in candidates
     )
     grounding = _grounding_block(candidates, state.get("competitor_pages") or {})
-    result = await ainvoke_json(
+    result = await _ainvoke_json_retry(
         llm,
         [
             {
@@ -215,6 +309,7 @@ async def threat_assessor(state: CompetitorsTeamState) -> dict:
                 ),
             },
         ],
+        node="threat_assessor",
     )
     by_url = result.get("by_url") or {}
     if not isinstance(by_url, dict):
@@ -235,6 +330,11 @@ async def synthesizer(state: CompetitorsTeamState) -> dict:
     threat = state.get("threat_levels") or {}
 
     competitors: list[dict[str, Any]] = []
+    # Defensive final dedup: discovery_scout already canonicalizes, but the
+    # downstream Apollo resolver will happily insert two ``competitors`` rows
+    # for the same domain if both slip through. Keep the highest-threat
+    # record per (domain, name_lowercased) key.
+    seen: set[tuple[str, str]] = set()
     for c in candidates:
         url = c["url"]
         d = diff.get(url) or {}
@@ -251,6 +351,15 @@ async def synthesizer(state: CompetitorsTeamState) -> dict:
         angles = d.get("differentiation_angles") or []
         if not isinstance(angles, list):
             angles = []
+
+        key = (
+            (c.get("domain") or "").lower(),
+            (c.get("name") or "").strip().lower(),
+        )
+        if key[0] and key in seen:
+            continue
+        if key[0]:
+            seen.add(key)
 
         competitors.append(
             {

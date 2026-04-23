@@ -154,6 +154,9 @@ class ProductIntelV2State(ProductIntelState, total=False):
     positioning: dict[str, Any]
     # audit trail — which products.* columns each branch wrote to.
     db_writes: Annotated[list[str], _merge_writes]
+    # per-subgraph error log; non-fatal — synthesize_report still produces a
+    # report with a ``partial_failures`` marker in graph_meta.
+    subgraph_errors: Annotated[dict[str, str], _merge_subgraph_errors]
 
 
 # ── Module-level subgraph compilation ─────────────────────────────────
@@ -293,9 +296,13 @@ async def run_deep_competitor(state: ProductIntelV2State) -> dict:
         result = await _DEEP_COMPETITOR_GRAPH.ainvoke(
             {"product_id": state["product_id"]}
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001 — partial failure; keep going
+        # One flaky branch shouldn't cost the user the whole run. Emit an
+        # empty payload + subgraph_errors marker so positioning/synthesize can
+        # proceed and surface the gap in the final report.
         return {
-            "_error": f"run_deep_competitor: {e}",
+            "competitor_deep": {},
+            "subgraph_errors": {"run_deep_competitor": str(e)[:500]},
             "agent_timings": {"run_deep_competitor": round(time.perf_counter() - t0, 3)},
         }
     return {
@@ -317,9 +324,10 @@ async def run_pricing(state: ProductIntelV2State) -> dict:
     t0 = time.perf_counter()
     try:
         result = await _PRICING_GRAPH.ainvoke({"product_id": state["product_id"]})
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001 — partial failure; keep going
         return {
-            "_error": f"run_pricing: {e}",
+            "pricing": {},
+            "subgraph_errors": {"run_pricing": str(e)[:500]},
             "agent_timings": {"run_pricing": round(time.perf_counter() - t0, 3)},
         }
     return {
@@ -337,9 +345,10 @@ async def run_gtm(state: ProductIntelV2State) -> dict:
     t0 = time.perf_counter()
     try:
         result = await _GTM_GRAPH.ainvoke({"product_id": state["product_id"]})
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001 — partial failure; keep going
         return {
-            "_error": f"run_gtm: {e}",
+            "gtm": {},
+            "subgraph_errors": {"run_gtm": str(e)[:500]},
             "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
         }
     return {
@@ -373,9 +382,10 @@ async def run_positioning(state: ProductIntelV2State) -> dict:
                 "gtm": state.get("gtm") or {},
             }
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001 — partial failure; keep going
         return {
-            "_error": f"run_positioning: {e}",
+            "positioning": {},
+            "subgraph_errors": {"run_positioning": str(e)[:500]},
             "agent_timings": {"run_positioning": round(time.perf_counter() - t0, 3)},
         }
     return {
@@ -388,7 +398,12 @@ async def run_positioning(state: ProductIntelV2State) -> dict:
 async def synthesize_report(state: ProductIntelV2State) -> dict:
     """Final step — identical contract to v1 ``synthesize_report``: writes
     the rolled-up ``products.intel_report`` jsonb. Adds positioning +
-    competitor_deep into the executive TL;DR when available."""
+    competitor_deep into the executive TL;DR when available.
+
+    Partial-failure aware: upstream subgraph errors recorded in
+    ``state["subgraph_errors"]`` are surfaced both in the prompt (so the LLM
+    doesn't hallucinate around gaps) and in ``graph_meta.partial_failures``.
+    """
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -398,6 +413,28 @@ async def synthesize_report(state: ProductIntelV2State) -> dict:
     gtm = state.get("gtm") or {}
     competitor_deep = state.get("competitor_deep") or {}
     positioning = state.get("positioning") or {}
+    subgraph_errors = dict(state.get("subgraph_errors") or {})
+
+    # Shared with v1 — see product_intel_graph.synthesize_report for the
+    # reasoning on the partial_note pattern.
+    missing_lines: list[str] = []
+    if subgraph_errors:
+        for name, reason in subgraph_errors.items():
+            label = {
+                "run_pricing": "pricing",
+                "run_gtm": "GTM",
+                "run_deep_competitor": "competitor deep dive",
+                "run_positioning": "positioning",
+            }.get(name, name)
+            missing_lines.append(f"- {label}: {str(reason)[:160]}")
+    partial_note = (
+        "IMPORTANT: Some upstream analyses failed — do NOT invent content for "
+        "these; acknowledge the gap and focus on what IS available:\n"
+        + "\n".join(missing_lines)
+        + "\n\n"
+        if missing_lines
+        else ""
+    )
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
@@ -407,8 +444,14 @@ async def synthesize_report(state: ProductIntelV2State) -> dict:
                 {
                     "role": "system",
                     "content": (
-                        "You synthesize an executive product-intelligence report. "
-                        "Ruthlessly concise — founders read only the TL;DR. "
+                        "You synthesize an executive product-intelligence report. Be ruthless — "
+                        "founders read only the TL;DR. "
+                        "tldr: 3-4 sentences — who we serve, how we win, what to charge, where to start. "
+                        "top_3_priorities: single most important thing this week, this month, this quarter. "
+                        "key_risks: max 3, ordered by severity. "
+                        "quick_wins: 3-5 things doable THIS WEEK with a small team. "
+                        "If any upstream analysis is missing or failed, name the gap explicitly in the "
+                        "TL;DR rather than making up numbers. "
                         'Return strict JSON: {"tldr":string,"top_3_priorities":[string],'
                         '"key_risks":[string],"quick_wins":[string]}'
                     ),
@@ -416,6 +459,7 @@ async def synthesize_report(state: ProductIntelV2State) -> dict:
                 {
                     "role": "user",
                     "content": (
+                        f"{partial_note}"
                         f"Product: {product.get('name', '?')} — {product.get('url', '?')}\n"
                         f"ICP weighted_total: {icp.get('weighted_total', '?')}\n"
                         f"Pricing rec: {(pricing.get('rationale') or {}).get('recommendation', 'none')}\n"
@@ -432,11 +476,23 @@ async def synthesize_report(state: ProductIntelV2State) -> dict:
     except Exception as e:  # noqa: BLE001
         return {"_error": f"synthesize_report: {e}"}
 
+    # Aggregate telemetry across the whole run — the parallel branches each
+    # carry their own telemetry in state["graph_meta"]["telemetry"] via the
+    # _merge_graph_meta reducer in state.py. compute_totals(None) returns
+    # zeros, so this is safe when no branch recorded telemetry.
+    telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
+    totals = compute_totals(telemetry) if telemetry else None
     meta = product_intel_graph_meta(
         graph="product_intel_v2",
         model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner"),
         agent_timings=state.get("agent_timings") or {},
+        telemetry=telemetry if telemetry else None,
+        totals=totals,
     )
+    if subgraph_errors:
+        meta["partial_failures"] = [
+            {"subgraph": k, "reason": str(v)[:500]} for k, v in subgraph_errors.items()
+        ]
     report = ProductIntelReport.model_validate(
         {
             **(result if isinstance(result, dict) else {}),
