@@ -168,6 +168,12 @@ export function RoutineAnalysisPanel({ familyMemberId, subjectLabel }: Props) {
                     {latest.dataSnapshot.journalEntryCount === 1 ? "" : "s"}
                   </Badge>
                 )}
+                {latest.dataSnapshot.researchPaperCount > 0 && (
+                  <Badge color="gray" variant="soft">
+                    {latest.dataSnapshot.researchPaperCount} research paper
+                    {latest.dataSnapshot.researchPaperCount === 1 ? "" : "s"}
+                  </Badge>
+                )}
                 <Badge color="gray" variant="soft">
                   {Math.round(latest.dataSnapshot.overallAdherence * 100)}%
                   adherence

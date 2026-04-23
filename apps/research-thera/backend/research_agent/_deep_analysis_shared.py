@@ -220,7 +220,7 @@ async def analyze(state: dict) -> dict:
 # ── Section renderers (pure: rows → markdown chunk) ──────────────────────
 
 
-def render_issues_section(issues: list, header: str) -> str:
+def render_issues_section(issues: list, header: str, issue_desc_chars: int = 300) -> str:
     if not issues:
         return f"{header}\nNone"
     lines = []
@@ -228,7 +228,7 @@ def render_issues_section(issues: list, header: str) -> str:
         i_id, i_title, i_cat, i_sev, i_desc, i_recs, i_related, i_created = row
         line = f'- [ID:{i_id}] "{i_title}" ({i_cat}, {i_sev} severity, {str(i_created)[:10]})'
         if i_desc:
-            line += f"\n  {i_desc[:300]}"
+            line += f"\n  {i_desc[:issue_desc_chars]}"
         if i_recs:
             try:
                 recs = json.loads(i_recs)
@@ -259,7 +259,7 @@ def render_observations_section(rows: list) -> Optional[str]:
     return f"## Behavior Observations ({len(rows)})\n" + "\n".join(lines)
 
 
-def render_journals_section(rows: list) -> Optional[str]:
+def render_journals_section(rows: list, journal_content_chars: int = 300) -> Optional[str]:
     if not rows:
         return None
     lines = []
@@ -277,12 +277,12 @@ def render_journals_section(rows: list) -> Optional[str]:
                     line += f" | Tags: {', '.join(tags)}"
             except Exception:
                 pass
-        line += f"\n  {(j_content or '')[:300]}"
+        line += f"\n  {(j_content or '')[:journal_content_chars]}"
         lines.append(line)
     return f"## Journal Entries ({len(rows)})\n" + "\n".join(lines)
 
 
-def render_teacher_feedbacks_section(rows: list) -> Optional[str]:
+def render_teacher_feedbacks_section(rows: list, feedback_chars: int = 500) -> Optional[str]:
     if not rows:
         return None
     lines = []
@@ -291,12 +291,12 @@ def render_teacher_feedbacks_section(rows: list) -> Optional[str]:
         line = f"- {tf_date} from {tf_name}"
         if tf_subj:
             line += f" ({tf_subj})"
-        line += f"\n  {(tf_content or '')[:500]}"
+        line += f"\n  {(tf_content or '')[:feedback_chars]}"
         lines.append(line)
     return f"## Teacher Feedbacks ({len(rows)})\n" + "\n".join(lines)
 
 
-def render_contact_feedbacks_section(rows: list) -> Optional[str]:
+def render_contact_feedbacks_section(rows: list, feedback_chars: int = 500) -> Optional[str]:
     if not rows:
         return None
     lines = []
@@ -305,7 +305,7 @@ def render_contact_feedbacks_section(rows: list) -> Optional[str]:
         line = f"- {cf_date}"
         if cf_subj:
             line += f" ({cf_subj})"
-        line += f"\n  {(cf_content or '')[:500]}"
+        line += f"\n  {(cf_content or '')[:feedback_chars]}"
         lines.append(line)
     return f"## Contact Feedbacks ({len(rows)})\n" + "\n".join(lines)
 
@@ -426,7 +426,15 @@ def render_family_member_profile(
 # ── SQL loader: family-member full context ──────────────────────────────
 
 
-async def load_family_member_full_context(cur, family_member_id: int, user_email: str) -> dict:
+async def load_family_member_full_context(
+    cur,
+    family_member_id: int,
+    user_email: str,
+    journal_limit: int = 20,
+    observation_limit: int = 30,
+    teacher_feedback_limit: int = 15,
+    contact_feedback_limit: int = 15,
+) -> dict:
     """Load every row the deep-analysis prompt needs for a family member.
 
     Returns a dict with keys: fm (tuple), issues, observations, journals,
@@ -450,29 +458,29 @@ async def load_family_member_full_context(cur, family_member_id: int, user_email
 
     await cur.execute(
         "SELECT observed_at, observation_type, frequency, intensity, context, notes "
-        "FROM behavior_observations WHERE family_member_id = %s AND user_id = %s ORDER BY observed_at DESC LIMIT 30",
-        (family_member_id, user_email),
+        "FROM behavior_observations WHERE family_member_id = %s AND user_id = %s ORDER BY observed_at DESC LIMIT %s",
+        (family_member_id, user_email, observation_limit),
     )
     observations = await cur.fetchall()
 
     await cur.execute(
         "SELECT entry_date, mood, mood_score, tags, content "
-        "FROM journal_entries WHERE family_member_id = %s AND user_id = %s ORDER BY entry_date DESC LIMIT 20",
-        (family_member_id, user_email),
+        "FROM journal_entries WHERE family_member_id = %s AND user_id = %s ORDER BY entry_date DESC LIMIT %s",
+        (family_member_id, user_email, journal_limit),
     )
     journals = await cur.fetchall()
 
     await cur.execute(
         "SELECT feedback_date, teacher_name, subject, content, tags "
-        "FROM teacher_feedbacks WHERE family_member_id = %s AND user_id = %s ORDER BY feedback_date DESC LIMIT 15",
-        (family_member_id, user_email),
+        "FROM teacher_feedbacks WHERE family_member_id = %s AND user_id = %s ORDER BY feedback_date DESC LIMIT %s",
+        (family_member_id, user_email, teacher_feedback_limit),
     )
     teacher_fbs = await cur.fetchall()
 
     await cur.execute(
         "SELECT feedback_date, subject, content, tags "
-        "FROM contact_feedbacks WHERE family_member_id = %s AND user_id = %s ORDER BY feedback_date DESC LIMIT 15",
-        (family_member_id, user_email),
+        "FROM contact_feedbacks WHERE family_member_id = %s AND user_id = %s ORDER BY feedback_date DESC LIMIT %s",
+        (family_member_id, user_email, contact_feedback_limit),
     )
     contact_fbs = await cur.fetchall()
 
