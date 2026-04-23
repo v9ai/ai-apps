@@ -306,7 +306,7 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
                 FROM competitor_analyses a
                 JOIN competitors c ON c.analysis_id = a.id
                 WHERE a.product_id = %s
-                  AND a.status = 'done'
+                  AND c.status IN ('done', 'approved', 'suggested')
                 """,
                 (int(product_id),),
             )
@@ -339,7 +339,7 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
                     JOIN competitor_analyses a ON c.analysis_id = a.id
                     WHERE a.product_id = %s
                       AND a.status = 'done'
-                      AND c.status IN ('done', 'approved')
+                      AND c.status IN ('done', 'approved', 'suggested')
                     ORDER BY c.id
                     LIMIT 10
                     """,

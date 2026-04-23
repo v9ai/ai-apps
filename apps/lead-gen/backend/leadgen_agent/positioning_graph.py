@@ -156,7 +156,7 @@ def _load_competitive(product_id: int) -> dict[str, Any]:
                     JOIN competitor_analyses a ON c.analysis_id = a.id
                     WHERE a.product_id = %s
                       AND a.status = 'done'
-                      AND c.status IN ('done', 'approved')
+                      AND c.status IN ('done', 'approved', 'suggested')
                     ORDER BY c.id
                     LIMIT 10
                     """,

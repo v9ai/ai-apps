@@ -204,52 +204,241 @@ export function ProductDetail({ slug }: { slug: string }) {
         )}
 
         <Flex gap="2" mt="3" wrap="wrap">
-          {product.positioningAnalysis ? (
-            <Link
-              href={`/products/${product.slug}/positioning`}
-              className={button({ variant: "soft", size: "sm" })}
-            >
+          {positioning ? (
+            <Link href={`/products/${product.slug}/positioning`} className={navBtnBase}>
               <StarIcon />
               <span className={css({ ml: "1" })}>Positioning</span>
             </Link>
-          ) : null}
-          {product.icpAnalysis ? (
-            <Link
-              href={`/products/${product.slug}/icp`}
-              className={button({ variant: "soft", size: "sm" })}
-            >
+          ) : (
+            <span className={`${navBtnBase} ${navBtnDisabledCls}`}>
+              <StarIcon />
+              <span className={css({ ml: "1" })}>Positioning</span>
+            </span>
+          )}
+          {icp ? (
+            <Link href={`/products/${product.slug}/icp`} className={navBtnBase}>
               <ComponentInstanceIcon />
               <span className={css({ ml: "1" })}>ICP</span>
             </Link>
-          ) : null}
-          {product.pricingAnalysis ? (
-            <Link
-              href={`/products/${product.slug}/pricing`}
-              className={button({ variant: "soft", size: "sm" })}
-            >
+          ) : (
+            <span className={`${navBtnBase} ${navBtnDisabledCls}`}>
+              <ComponentInstanceIcon />
+              <span className={css({ ml: "1" })}>ICP</span>
+            </span>
+          )}
+          {pricing ? (
+            <Link href={`/products/${product.slug}/pricing`} className={navBtnBase}>
               <BarChartIcon />
               <span className={css({ ml: "1" })}>Pricing</span>
             </Link>
-          ) : null}
-          {product.gtmAnalysis ? (
-            <Link
-              href={`/products/${product.slug}/gtm`}
-              className={button({ variant: "soft", size: "sm" })}
-            >
+          ) : (
+            <span className={`${navBtnBase} ${navBtnDisabledCls}`}>
+              <BarChartIcon />
+              <span className={css({ ml: "1" })}>Pricing</span>
+            </span>
+          )}
+          {gtm ? (
+            <Link href={`/products/${product.slug}/gtm`} className={navBtnBase}>
               <RocketIcon />
               <span className={css({ ml: "1" })}>GTM</span>
             </Link>
-          ) : null}
-          {product.intelReport ? (
-            <Link
-              href={`/products/${product.slug}/intel`}
-              className={button({ variant: "soft", size: "sm" })}
-            >
+          ) : (
+            <span className={`${navBtnBase} ${navBtnDisabledCls}`}>
+              <RocketIcon />
+              <span className={css({ ml: "1" })}>GTM</span>
+            </span>
+          )}
+          {intel ? (
+            <Link href={`/products/${product.slug}/intel`} className={navBtnBase}>
               <MagicWandIcon />
               <span className={css({ ml: "1" })}>Intel report</span>
             </Link>
-          ) : null}
+          ) : (
+            <span className={`${navBtnBase} ${navBtnDisabledCls}`}>
+              <MagicWandIcon />
+              <span className={css({ ml: "1" })}>Intel report</span>
+            </span>
+          )}
         </Flex>
+
+        {/* Sneak-peek cards */}
+        {(positioning || icp || pricing || gtm || intel) && (
+          <div
+            className={css({
+              mt: "4",
+              display: "grid",
+              gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+              gap: "3",
+            })}
+          >
+            {positioning && (
+              <div className={cardCls}>
+                <Flex justify="between" align="center" mb="2">
+                  <Flex align="center" gap="2">
+                    <span className={css({ color: "accent.11" })}><StarIcon /></span>
+                    <Text size="2" weight="bold">Positioning</Text>
+                    {positioning.category && (
+                      <Badge color="indigo" size="1">{positioning.category}</Badge>
+                    )}
+                  </Flex>
+                  <Link
+                    href={`/products/${product.slug}/positioning`}
+                    className={css({ color: "accent.11", fontSize: "xs", textDecoration: "none", _hover: { textDecoration: "underline" } })}
+                  >
+                    View full →
+                  </Link>
+                </Flex>
+                {positioning.positioning_statement && (
+                  <Text size="2" color="gray" as="p" className={css({ lineHeight: "1.5", mb: "2" })}>
+                    {positioning.positioning_statement.length > 160
+                      ? positioning.positioning_statement.slice(0, 160) + "…"
+                      : positioning.positioning_statement}
+                  </Text>
+                )}
+                {(positioning.differentiators ?? []).slice(0, 3).map((d, i) => (
+                  <Flex key={i} align="start" gap="2" mb="1">
+                    <span className={css({ color: "accent.11", flexShrink: 0, mt: "1px" })}>
+                      <CheckIcon />
+                    </span>
+                    <Text size="1" color="gray">{d}</Text>
+                  </Flex>
+                ))}
+              </div>
+            )}
+
+            {icp && (
+              <div className={cardCls}>
+                <Flex justify="between" align="center" mb="2">
+                  <Flex align="center" gap="2">
+                    <span className={css({ color: "accent.11" })}><ComponentInstanceIcon /></span>
+                    <Text size="2" weight="bold">ICP</Text>
+                    {icp.weighted_total != null && (
+                      <Badge color="green" size="1">{Math.round(icp.weighted_total)}% fit</Badge>
+                    )}
+                  </Flex>
+                  <Link
+                    href={`/products/${product.slug}/icp`}
+                    className={css({ color: "accent.11", fontSize: "xs", textDecoration: "none", _hover: { textDecoration: "underline" } })}
+                  >
+                    View full →
+                  </Link>
+                </Flex>
+                {(icp.segments ?? []).slice(0, 2).map((s, i) => (
+                  <Flex key={i} align="center" gap="1" mb="1" wrap="wrap">
+                    <Text size="1" weight="medium">{s.name}</Text>
+                    {s.industry && <Badge color="gray" size="1">{s.industry}</Badge>}
+                    {s.stage && <Badge color="blue" size="1">{s.stage}</Badge>}
+                  </Flex>
+                ))}
+                {(icp.personas ?? []).slice(0, 2).map((p, i) => (
+                  <Flex key={i} align="center" gap="1" mb="1">
+                    <Text size="1" color="gray">{p.title}</Text>
+                    {p.seniority && <Badge color="gray" size="1">{p.seniority}</Badge>}
+                  </Flex>
+                ))}
+              </div>
+            )}
+
+            {pricing && (
+              <div className={cardCls}>
+                <Flex justify="between" align="center" mb="2">
+                  <Flex align="center" gap="2">
+                    <span className={css({ color: "accent.11" })}><BarChartIcon /></span>
+                    <Text size="2" weight="bold">Pricing</Text>
+                    {pricing.model?.model_type && (
+                      <Badge color="gray" size="1">{pricing.model.model_type}</Badge>
+                    )}
+                  </Flex>
+                  <Link
+                    href={`/products/${product.slug}/pricing`}
+                    className={css({ color: "accent.11", fontSize: "xs", textDecoration: "none", _hover: { textDecoration: "underline" } })}
+                  >
+                    View full →
+                  </Link>
+                </Flex>
+                {pricing.rationale?.recommendation && (
+                  <Text size="2" color="gray" as="p" className={css({ lineHeight: "1.5", mb: "2" })}>
+                    {pricing.rationale.recommendation.length > 140
+                      ? pricing.rationale.recommendation.slice(0, 140) + "…"
+                      : pricing.rationale.recommendation}
+                  </Text>
+                )}
+                {(pricing.model?.tiers ?? []).slice(0, 2).map((t, i) => (
+                  <Flex key={i} align="center" gap="2" mb="1">
+                    <Text size="1" weight="medium">{t.name}</Text>
+                    <Badge color="indigo" size="1">
+                      {t.price_monthly_usd === null ? "Custom" : t.price_monthly_usd === 0 ? "Free" : `$${t.price_monthly_usd}/mo`}
+                    </Badge>
+                  </Flex>
+                ))}
+              </div>
+            )}
+
+            {gtm && (
+              <div className={cardCls}>
+                <Flex justify="between" align="center" mb="2">
+                  <Flex align="center" gap="2">
+                    <span className={css({ color: "accent.11" })}><RocketIcon /></span>
+                    <Text size="2" weight="bold">GTM</Text>
+                    {gtm.channels?.length > 0 && (
+                      <Badge color="gray" size="1">{gtm.channels.length} channels</Badge>
+                    )}
+                  </Flex>
+                  <Link
+                    href={`/products/${product.slug}/gtm`}
+                    className={css({ color: "accent.11", fontSize: "xs", textDecoration: "none", _hover: { textDecoration: "underline" } })}
+                  >
+                    View full →
+                  </Link>
+                </Flex>
+                {(gtm.channels ?? []).slice(0, 2).map((c, i) => (
+                  <Flex key={i} align="center" gap="2" mb="1" wrap="wrap">
+                    <Text size="1" weight="medium">{c.name}</Text>
+                    <Badge
+                      color={c.effort === "low" ? "green" : c.effort === "medium" ? "yellow" : "orange"}
+                      size="1"
+                    >
+                      {c.effort}
+                    </Badge>
+                    {c.time_to_first_lead && (
+                      <Text size="1" color="gray">{c.time_to_first_lead}</Text>
+                    )}
+                  </Flex>
+                ))}
+              </div>
+            )}
+
+            {intel && (
+              <div className={cardCls}>
+                <Flex justify="between" align="center" mb="2">
+                  <Flex align="center" gap="2">
+                    <span className={css({ color: "accent.11" })}><MagicWandIcon /></span>
+                    <Text size="2" weight="bold">Intel</Text>
+                  </Flex>
+                  <Link
+                    href={`/products/${product.slug}/intel`}
+                    className={css({ color: "accent.11", fontSize: "xs", textDecoration: "none", _hover: { textDecoration: "underline" } })}
+                  >
+                    View full →
+                  </Link>
+                </Flex>
+                {intel.tldr && (
+                  <Text size="2" color="gray" as="p" className={css({ lineHeight: "1.5", mb: "2" })}>
+                    {intel.tldr.length > 180 ? intel.tldr.slice(0, 180) + "…" : intel.tldr}
+                  </Text>
+                )}
+                {(intel.top_3_priorities ?? []).slice(0, 3).map((p, i) => (
+                  <Flex key={i} align="start" gap="2" mb="1">
+                    <Text size="1" weight="bold" className={css({ color: "accent.11", flexShrink: 0 })}>
+                      {i + 1}.
+                    </Text>
+                    <Text size="1" color="gray">{p}</Text>
+                  </Flex>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {highlights?.stats && highlights.stats.length > 0 && (
           <div

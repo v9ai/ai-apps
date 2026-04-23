@@ -160,6 +160,57 @@ TEST_CASES = [
         ],
         "teacher_feedback": "",
     },
+    {
+        "id": "school-age-selective-mutism",
+        "family_member_name": "Bogdan",
+        "family_member_age": 7,
+        "date_of_birth_year": 2019,
+        "relationship": "son",
+        "trigger_issue_id": 501,
+        "issues": [
+            {
+                "id": 501,
+                "title": "Repetitive vocal sounds during lessons",
+                "category": "behavioral",
+                "severity": "medium",
+                "description": "Makes repetitive vocal sounds during math and reading, especially when asked to read aloud or answer questions directly.",
+            },
+            {
+                "id": 502,
+                "title": "Selective verbal communication at school",
+                "category": "communication",
+                "severity": "high",
+                "description": "Completely silent during group work and recess; responds to written instructions but does not speak with teachers.",
+            },
+            {
+                "id": 503,
+                "title": "Difficulty maintaining focus during math lessons",
+                "category": "behavioral",
+                "severity": "medium",
+                "description": "Frequently distracted by peers, struggles with multiplication tables and timed exercises.",
+            },
+            {
+                "id": 504,
+                "title": "Frustration during independent work",
+                "category": "emotional",
+                "severity": "medium",
+                "description": "Sighs, puts head down, sometimes refuses to attempt word problems when working alone.",
+            },
+        ],
+        "observations": [
+            "2026-03-15: vocal sounds during reading, freq=daily, intensity=medium, Context: asked to read aloud",
+            "2026-03-14: silence during group work, freq=daily, Context: group project at recess",
+            "2026-03-10: math focus difficulty, freq=3x/week, intensity=medium, Context: peer distraction",
+        ],
+        "teacher_feedback": (
+            "Bogdan continues to make repetitive vocal sounds during math and reading lessons. "
+            "The sounds increase when he is asked to read aloud or answer questions directly. "
+            "He is completely silent during group work and recess. He responds well to written instructions "
+            "and communicates through nodding and pointing. He has significant difficulty focusing during math, "
+            "is frequently distracted by nearby peers, struggles with multiplication tables and timed exercises. "
+            "Shows visible frustration (sighing, head down, refusal) during independent word problem work."
+        ),
+    },
 ]
 
 
