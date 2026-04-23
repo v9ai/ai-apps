@@ -157,9 +157,19 @@ class PriceTier(BaseModel):
     included: list[str] = Field(default_factory=list, max_length=12)
     limits: list[str] = Field(default_factory=list, max_length=8)
     upgrade_trigger: str = Field(default="", max_length=240)
+    # Grounding fields — additive, all default empty for backwards compat with
+    # rows persisted before these were introduced.
+    price_justification: str = Field(default="", max_length=500)
+    anchor_competitors: list[str] = Field(default_factory=list, max_length=4)
+    value_math: str = Field(default="", max_length=300)
 
     @field_validator(
-        "name", "target_persona", "upgrade_trigger", mode="before"
+        "name",
+        "target_persona",
+        "upgrade_trigger",
+        "price_justification",
+        "value_math",
+        mode="before",
     )
     @classmethod
     def _coerce_str(cls, v: object) -> str:
@@ -183,6 +193,13 @@ class PriceTier(BaseModel):
         if v is None:
             return []
         return v if isinstance(v, list) else []
+
+    @field_validator("anchor_competitors", mode="before")
+    @classmethod
+    def _coerce_anchor_competitors(cls, v: object) -> list:
+        if v is None or not isinstance(v, list):
+            return []
+        return [str(x)[:240] for x in v if isinstance(x, (str, int, float))]
 
     @field_validator("price_monthly_usd", mode="before")
     @classmethod
