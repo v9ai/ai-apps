@@ -53,7 +53,7 @@ async def collect_data(state: DeepAnalysisState) -> dict:
     except Exception as exc:
         return {"error": f"collect_data failed: {exc}"}
 
-    fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio = ctx["fm"]
+    fm_id, fm_first, fm_name, fm_age, fm_rel, fm_bio, fm_loc = ctx["fm"]
     issues = ctx["issues"]
     observations = ctx["observations"]
     journals = ctx["journals"]
@@ -122,7 +122,7 @@ async def collect_data(state: DeepAnalysisState) -> dict:
             "IMPORTANT: Only reference issue IDs, research IDs, and family member IDs that appear in the data below."
         )
 
-    sections.append(shared.render_family_member_profile(fm_first, fm_name, fm_age, fm_rel, fm_bio))
+    sections.append(shared.render_family_member_profile(fm_first, fm_name, fm_age, fm_rel, fm_bio, fm_loc))
 
     context_issues = other_issues if trigger_issue else issues
     header_title = "## Other Issues (Context)" if trigger_issue else f"## All Issues ({len(issues)})"

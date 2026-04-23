@@ -346,12 +346,18 @@ def render_research_section(rows: list) -> Optional[str]:
 
 
 def render_family_members_section(rows: list, exclude_id: Optional[int] = None) -> Optional[str]:
+    """rows: tuples of (id, first_name, name, age_years, relationship) or (id, first_name, name, age_years, relationship, location)."""
     others = [m for m in rows if exclude_id is None or m[0] != exclude_id]
     if not others:
         return None
     lines = []
     for row in others:
-        m_id, m_first, m_name, m_age, m_rel = row
+        m_id = row[0]
+        m_first = row[1]
+        m_name = row[2]
+        m_age = row[3]
+        m_rel = row[4]
+        m_location = row[5] if len(row) >= 6 else None
         line = f"- [ID:{m_id}] {m_first}"
         if m_name:
             line += f" {m_name}"
@@ -359,6 +365,8 @@ def render_family_members_section(rows: list, exclude_id: Optional[int] = None) 
             line += f", age {m_age}"
         if m_rel:
             line += f" ({m_rel})"
+        if m_location:
+            line += f" — lives in {m_location}"
         lines.append(line)
     return "## Other Family Members\n" + "\n".join(lines)
 
@@ -401,12 +409,15 @@ def render_family_member_profile(
     age_years: Optional[int],
     relationship: Optional[str],
     bio: Optional[str],
+    location: Optional[str] = None,
 ) -> str:
     parts = [f"Name: {first_name}" + (f" {name}" if name else "")]
     if age_years:
         parts.append(f"Age: {age_years}")
     if relationship:
         parts.append(f"Relationship: {relationship}")
+    if location:
+        parts.append(f"Location: {location}")
     if bio:
         parts.append(f"Bio: {bio[:500]}")
     return "## Family Member Profile\n" + "\n".join(parts)
@@ -423,7 +434,7 @@ async def load_family_member_full_context(cur, family_member_id: int, user_email
     Raises if the family_member is not found.
     """
     await cur.execute(
-        "SELECT id, first_name, name, age_years, relationship, bio FROM family_members WHERE id = %s",
+        "SELECT id, first_name, name, age_years, relationship, bio, location FROM family_members WHERE id = %s",
         (family_member_id,),
     )
     fm_row = await cur.fetchone()
@@ -496,7 +507,7 @@ async def load_family_member_full_context(cur, family_member_id: int, user_email
         issue_contacts = await cur.fetchall()
 
     await cur.execute(
-        "SELECT id, first_name, name, age_years, relationship FROM family_members WHERE user_id = %s",
+        "SELECT id, first_name, name, age_years, relationship, location FROM family_members WHERE user_id = %s",
         (user_email,),
     )
     all_members = await cur.fetchall()

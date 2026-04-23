@@ -78,7 +78,7 @@ async def _collect_for_goal(
 
     if g_fm_id:
         await cur.execute(
-            "SELECT id, first_name, name, age_years, relationship, bio FROM family_members WHERE id = %s",
+            "SELECT id, first_name, name, age_years, relationship, bio, location FROM family_members WHERE id = %s",
             (g_fm_id,),
         )
         fm_row = await cur.fetchone()
