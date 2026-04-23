@@ -43,7 +43,11 @@ export function ProductsList() {
 
   const [deleteProduct] = useDeleteProductMutation();
   const [analyzeIcp] = useAnalyzeProductIcpMutation();
+  const [analyzePricing] = useAnalyzeProductPricingAsyncMutation();
+  const [analyzeGtm] = useAnalyzeProductGtmAsyncMutation();
+  const [runFullIntel] = useRunFullProductIntelAsyncMutation();
   const [analyzingId, setAnalyzingId] = useState<number | null>(null);
+  const [pendingId, setPendingId] = useState<number | null>(null);
 
   if (authLoading) {
     return (
@@ -71,6 +75,39 @@ export function ProductsList() {
       router.push(`/products/${slug}/icp`);
     } finally {
       setAnalyzingId(null);
+    }
+  }
+
+  async function onAnalyzePricing(id: number) {
+    setPendingId(id);
+    try {
+      const res = await analyzePricing({ variables: { id } });
+      const runId = res.data?.analyzeProductPricingAsync?.runId;
+      if (runId) console.log("[pricing] started runId=", runId);
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function onAnalyzeGtm(id: number) {
+    setPendingId(id);
+    try {
+      const res = await analyzeGtm({ variables: { id } });
+      const runId = res.data?.analyzeProductGTMAsync?.runId;
+      if (runId) console.log("[gtm] started runId=", runId);
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function onRunFullIntel(id: number) {
+    setPendingId(id);
+    try {
+      const res = await runFullIntel({ variables: { id } });
+      const runId = res.data?.runFullProductIntelAsync?.runId;
+      if (runId) console.log("[intel] started runId=", runId);
+    } finally {
+      setPendingId(null);
     }
   }
 
