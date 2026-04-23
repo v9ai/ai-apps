@@ -56,7 +56,7 @@ from langgraph.graph import END, START, StateGraph
 
 from . import gtm_graph, pricing_graph
 from .deep_icp_graph import _dsn
-from .llm import ainvoke_json, make_llm
+from .llm import ainvoke_json, compute_totals, make_llm
 from .notify import notify_complete, notify_error
 from .product_intel_schemas import (
     ProductIntelReport,
@@ -117,6 +117,20 @@ def _merge_writes(
     out: list[str] = list(left or [])
     if right:
         out.extend(right)
+    return out
+
+
+def _merge_subgraph_errors(
+    left: dict[str, str] | None, right: dict[str, str] | None
+) -> dict[str, str]:
+    """Record per-subgraph failures without collapsing them into ``_error``.
+
+    Each branch writes its own key (subgraph name) so merges are disjoint.
+    Lets the DAG continue past one flaky branch and still synthesize a report.
+    """
+    out: dict[str, str] = dict(left or {})
+    if right:
+        out.update(right)
     return out
 
 

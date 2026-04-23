@@ -609,6 +609,7 @@ async def draft_plan(state: GTMState) -> dict:
         "gtm": dumped,
         "graph_meta": meta,
         "agent_timings": {"draft_plan": round(time.perf_counter() - t0, 3)},
+        "_completed_stages": ["draft_plan"],
     }
 
 

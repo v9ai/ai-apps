@@ -622,6 +622,29 @@ async def synthesize_report(state: ProductIntelState) -> dict:
     gtm = state.get("gtm") or {}
     competitive = state.get("competitive") or {}
     positioning = state.get("positioning") or {}
+    subgraph_errors = dict(state.get("subgraph_errors") or {})
+
+    # Build a human-readable partial-failure note so the LLM acknowledges
+    # missing sections in its TL;DR / priorities rather than hallucinating
+    # around gaps. Each entry maps subgraph→short reason; we truncate the
+    # reason so the prompt stays bounded.
+    missing_lines: list[str] = []
+    if subgraph_errors:
+        for name, reason in subgraph_errors.items():
+            label = {
+                "ensure_icp": "ICP",
+                "run_pricing": "pricing",
+                "run_gtm": "GTM",
+                "run_positioning": "positioning",
+            }.get(name, name)
+            missing_lines.append(f"- {label}: {str(reason)[:160]}")
+    partial_note = (
+        "IMPORTANT: Some upstream analyses failed — do NOT invent content for "
+        "these; acknowledge the gap and focus the TL;DR + priorities on what IS "
+        "available:\n" + "\n".join(missing_lines) + "\n\n"
+        if missing_lines
+        else ""
+    )
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
@@ -637,6 +660,8 @@ async def synthesize_report(state: ProductIntelState) -> dict:
                         "top_3_priorities: single most important thing this week, this month, this quarter. "
                         "key_risks: max 3, ordered by severity. "
                         "quick_wins: 3-5 things doable THIS WEEK with a small team. "
+                        "If any upstream analysis is missing or failed, name the gap explicitly in the "
+                        "TL;DR (e.g. \"pricing not yet analyzed\") rather than making up numbers. "
                         'Return strict JSON: {"tldr":string,"top_3_priorities":[string],'
                         '"key_risks":[string],"quick_wins":[string]}'
                     ),
@@ -644,6 +669,7 @@ async def synthesize_report(state: ProductIntelState) -> dict:
                 {
                     "role": "user",
                     "content": (
+                        f"{partial_note}"
                         f"Product: {product.get('name', '?')} — {product.get('url', '?')}\n"
                         f"Profile one-liner: {profile.get('one_liner', '')}\n\n"
                         f"ICP summary: weighted_total={icp.get('weighted_total', '?')}, "
@@ -675,6 +701,13 @@ async def synthesize_report(state: ProductIntelState) -> dict:
         telemetry=telemetry,
         totals=totals,
     )
+    # Stamp partial-failure list into graph_meta so consumers (UI, webhook,
+    # analytics) can surface "X section missing" without re-parsing the TL;DR.
+    # Non-breaking: ProductIntelReport.graph_meta is a loose jsonb dict.
+    if subgraph_errors:
+        meta["partial_failures"] = [
+            {"subgraph": k, "reason": str(v)[:500]} for k, v in subgraph_errors.items()
+        ]
     report = ProductIntelReport.model_validate(
         {
             **(result if isinstance(result, dict) else {}),

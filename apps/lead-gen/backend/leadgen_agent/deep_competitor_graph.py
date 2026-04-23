@@ -623,11 +623,27 @@ async def positioning_shift(state: DeepCompetitorState) -> dict:
         prev = None
 
     page = await fetch_url(url)
+    if not _page_is_usable(page):
+        # Homepage unreachable — record a minimal snapshot so the DB INSERT in
+        # synthesize has non-null fields, but skip the LLM.
+        return {
+            "positioning_shift": {
+                "headline": "",
+                "tagline": "",
+                "hero_copy": "",
+                "diff_summary": "homepage unreachable",
+                "shift_magnitude": 0.0,
+                "scrape_status": int(page.get("status") or 0),
+                "scrape_error": page.get("error"),
+            },
+            "pages": {"homepage": page},
+            "agent_timings": {"positioning_shift": round(time.perf_counter() - t0, 3)},
+        }
     markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
 
     try:
         llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result = await _ainvoke_json_retry(
             llm,
             [
                 {
@@ -653,6 +669,7 @@ async def positioning_shift(state: DeepCompetitorState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="positioning_shift",
         )
     except Exception as e:  # noqa: BLE001
         return {
@@ -690,15 +707,26 @@ async def funding_headcount(state: DeepCompetitorState) -> dict:
         return {"funding_headcount": {"events": [], "headcount": None}}
 
     page = await fetch_url(urljoin(url, "/about"))
-    markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
+    markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS] if _page_is_usable(page) else ""
     if not markdown:
         # fall back to homepage press mentions
         page = await fetch_url(url)
-        markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
+        markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS] if _page_is_usable(page) else ""
+
+    if not markdown:
+        return {
+            "funding_headcount": {
+                "events": [],
+                "headcount": None,
+                "note": "scrape_error",
+                "scrape_status": int(page.get("status") or 0) if page else 0,
+            },
+            "agent_timings": {"funding_headcount": round(time.perf_counter() - t0, 3)},
+        }
 
     try:
         llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result = await _ainvoke_json_retry(
             llm,
             [
                 {
@@ -723,6 +751,7 @@ async def funding_headcount(state: DeepCompetitorState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="funding_headcount",
         )
     except Exception as e:  # noqa: BLE001
         return {
