@@ -260,6 +260,12 @@ export function ProductsList() {
                       View ICP
                     </Link>
                   )}
+                  <Link
+                    href={`/products/${p.slug}/competitors`}
+                    className={button({ variant: "outline", size: "sm" })}
+                  >
+                    Competitors &amp; pricing
+                  </Link>
                   {isAdmin && (
                     <>
                       <button
