@@ -36,10 +36,29 @@ def test_build_graph_compiles() -> None:
 
 async def test_ensure_icp_uses_cache_when_present() -> None:
     """When state already carries an ``icp`` blob and ``force_refresh`` is off,
-    ``ensure_icp`` should echo the cache and NOT build the deep_icp subgraph."""
-    with patch(
-        "leadgen_agent.product_intel_graph.deep_icp_graph.build_graph"
-    ) as mock_build:
+    ``ensure_icp`` should echo the cache and NOT build the deep_icp subgraph.
+
+    Note: since the freshness-gate refactor, ``ensure_icp`` may call
+    ``freshness_graph.assess_product_freshness`` before committing to the
+    cache. We stub it to report "fresh" so the cache path is taken
+    deterministically. Without this stub, the freshness graph may fetch the
+    product URL and decide "stale" (e.g. "new pricing page"), which forces a
+    full re-run and makes the test flake depending on whether other tests
+    earlier in the session warmed any module-level caches."""
+    from unittest.mock import AsyncMock
+
+    fresh_stub = AsyncMock(
+        return_value={"stale": False, "confidence": 1.0, "reason": "same"}
+    )
+    with (
+        patch(
+            "leadgen_agent.product_intel_graph.deep_icp_graph.build_graph"
+        ) as mock_build,
+        patch(
+            "leadgen_agent.product_intel_graph.freshness_graph.assess_product_freshness",
+            new=fresh_stub,
+        ),
+    ):
         result = await ensure_icp(
             {
                 "product_id": 1,
