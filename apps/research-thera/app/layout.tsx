@@ -1,8 +1,8 @@
 import "@radix-ui/themes/styles.css";
 import type { Metadata } from "next";
-import { Container, Theme } from "@radix-ui/themes";
+import { Box, Container, Theme } from "@radix-ui/themes";
 import { ApolloProvider } from "./providers/ApolloProvider";
-import { Header } from "./components/Header";
+import { Header, SIDEBAR_WIDTH } from "./components/Header";
 import { GlobalJournalShortcut } from "./components/GlobalJournalShortcut";
 import { VaultShortcut } from "./components/VaultShortcut";
 
@@ -30,9 +30,21 @@ export default function RootLayout({
             <Header />
             <GlobalJournalShortcut />
             <VaultShortcut />
-            <Container size="3" pb="6" px={{ initial: "3", md: "5" }}>
-              {children}
-            </Container>
+            <Box
+              style={{
+                paddingLeft: `var(--sidebar-offset, 0px)`,
+              }}
+              pt={{ initial: "0", md: "5" }}
+            >
+              <Container size="3" pb="6" px={{ initial: "3", md: "5" }}>
+                {children}
+              </Container>
+            </Box>
+            <style>{`
+              @media (min-width: 768px) {
+                :root { --sidebar-offset: ${SIDEBAR_WIDTH}px; }
+              }
+            `}</style>
           </ApolloProvider>
         </Theme>
       </body>
