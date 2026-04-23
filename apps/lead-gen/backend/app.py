@@ -150,13 +150,47 @@ class DispatchPositioningRequest(BaseModel):
     limit: int | None = None
 
 
+# Bound positioning fan-out: deepseek-reasoner tolerates a few concurrent
+# requests but a 100-product dispatch with no cap would rate-limit us and
+# starve other graphs sharing the same LLM pool.
+_POSITIONING_CONCURRENCY = int(os.environ.get("POSITIONING_CONCURRENCY", "3"))
+_POSITIONING_TIMEOUT_S = float(os.environ.get("POSITIONING_TIMEOUT_S", "600"))
+_positioning_sem = asyncio.Semaphore(_POSITIONING_CONCURRENCY)
+
+# Strong refs for fire-and-forget tasks — `asyncio.create_task` only holds a
+# weak reference, so without this a GC pass mid-dispatch can cancel a run
+# (CPython 3.11+ behavior, see BPO-44665).
+_positioning_inflight: set[asyncio.Task[None]] = set()
+
+
 async def _run_positioning_bg(product_id: int, thread_id: str) -> None:
-    graph = app.state.graphs["positioning"]
+    graph = app.state.graphs.get("positioning") if hasattr(app.state, "graphs") else None
+    if graph is None:
+        log.error("positioning graph not compiled — dropping product_id=%s", product_id)
+        return
     config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
-    try:
-        await graph.ainvoke({"product_id": product_id}, config=config)
-    except Exception:
-        log.exception("positioning run failed for product_id=%s", product_id)
+    async with _positioning_sem:
+        try:
+            await asyncio.wait_for(
+                graph.ainvoke({"product_id": product_id}, config=config),
+                timeout=_POSITIONING_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:
+            log.error(
+                "positioning run timed out after %.0fs for product_id=%s (thread=%s)",
+                _POSITIONING_TIMEOUT_S,
+                product_id,
+                thread_id,
+            )
+        except asyncio.CancelledError:
+            # Shutdown / explicit cancel — re-raise so the loop can exit cleanly.
+            raise
+        except Exception:
+            log.exception(
+                "positioning run failed for product_id=%s (thread=%s)",
+                product_id,
+                thread_id,
+            )
 
 
 @app.post("/dispatch/positioning-all")
@@ -166,8 +200,18 @@ async def dispatch_positioning_all(req: DispatchPositioningRequest) -> dict[str,
     Returns immediately after scheduling; each run executes in a background
     asyncio task against the in-process ``positioning`` graph and persists its
     output to ``products.positioning_analysis`` via the graph's own terminal
-    node.
+    node. Concurrency is bounded by ``POSITIONING_CONCURRENCY`` (default 3) and
+    each run is capped at ``POSITIONING_TIMEOUT_S`` seconds (default 600).
     """
+    if req.limit is not None and req.limit <= 0:
+        raise HTTPException(status_code=400, detail="limit must be positive")
+
+    if not hasattr(app.state, "graphs") or "positioning" not in app.state.graphs:
+        raise HTTPException(
+            status_code=503,
+            detail="positioning graph not compiled — check startup logs",
+        )
+
     db_url = (
         os.environ.get("NEON_DATABASE_URL", "").strip()
         or os.environ.get("DATABASE_URL", "").strip()
@@ -175,19 +219,48 @@ async def dispatch_positioning_all(req: DispatchPositioningRequest) -> dict[str,
     if not db_url:
         raise HTTPException(status_code=500, detail="DATABASE_URL is not set")
 
-    where = "" if req.force else "WHERE positioning_analysis IS NULL"
-    limit_sql = f"LIMIT {int(req.limit)}" if req.limit else ""
+    where_sql = "" if req.force else "WHERE positioning_analysis IS NULL"
+    params: tuple[Any, ...] = ()
+    limit_sql = ""
+    if req.limit is not None:
+        limit_sql = "LIMIT %s"
+        params = (req.limit,)
 
-    with psycopg.connect(db_url, autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            cur.execute(f"SELECT id, name FROM products {where} ORDER BY id {limit_sql}")
-            rows = cur.fetchall()
+    try:
+        with psycopg.connect(db_url, autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT id, name FROM products {where_sql} ORDER BY id {limit_sql}",
+                    params,
+                )
+                rows = cur.fetchall()
+    except psycopg.Error as err:
+        log.exception("dispatch_positioning_all: products query failed")
+        raise HTTPException(
+            status_code=503, detail=f"products query failed: {err}"
+        ) from err
 
     dispatched: list[dict[str, Any]] = []
     for product_id, name in rows:
         thread_id = str(uuid.uuid4())
-        asyncio.create_task(_run_positioning_bg(int(product_id), thread_id))
-        dispatched.append({"product_id": int(product_id), "name": name, "thread_id": thread_id})
+        task = asyncio.create_task(_run_positioning_bg(int(product_id), thread_id))
+        _positioning_inflight.add(task)
+        task.add_done_callback(_positioning_inflight.discard)
+        dispatched.append(
+            {"product_id": int(product_id), "name": name, "thread_id": thread_id}
+        )
 
-    log.info("dispatched positioning runs for %d products (force=%s)", len(dispatched), req.force)
-    return {"dispatched": len(dispatched), "runs": dispatched}
+    log.info(
+        "dispatched positioning runs for %d products (force=%s, concurrency=%d, timeout=%.0fs)",
+        len(dispatched),
+        req.force,
+        _POSITIONING_CONCURRENCY,
+        _POSITIONING_TIMEOUT_S,
+    )
+    return {
+        "dispatched": len(dispatched),
+        "concurrency": _POSITIONING_CONCURRENCY,
+        "timeout_s": _POSITIONING_TIMEOUT_S,
+        "in_flight_before": len(_positioning_inflight) - len(dispatched),
+        "runs": dispatched,
+    }
