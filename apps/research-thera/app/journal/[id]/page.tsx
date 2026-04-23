@@ -400,14 +400,14 @@ function JournalEntryContent() {
                 )}
               </Flex>
             </Flex>
-            <Flex align="center" gap="4">
+            <Flex align="center" gap="3">
               <Button
                 variant="ghost"
-                size="3"
+                size="2"
                 style={{ cursor: "pointer" }}
                 onClick={() => router.push(`/journal/${entry.id}/edit`)}
               >
-                <Pencil1Icon width="20" height="20" />
+                <Pencil1Icon width="16" height="16" />
               </Button>
               <AlertDialog.Root>
                 <AlertDialog.Trigger>
