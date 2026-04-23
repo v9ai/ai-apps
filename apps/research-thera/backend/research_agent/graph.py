@@ -56,6 +56,11 @@ CRITICAL WORKFLOW — follow this exact order:
 4. IMMEDIATELY call save_research_papers with the curated papers JSON — do this BEFORE writing any summary
 5. After save_research_papers succeeds, write a brief summary (under 500 words)
 
+QUERY DESIGN:
+- If the user message contains a **Subject Profile** section (with Priority Concerns, Known Issues, Teacher Observations, Behavior Observations, Journal Entries, or Prior Clinical Analyses), USE those concrete behaviors and observations to shape your 3 queries — not just the goal title. The profile is the clinical picture you are searching for evidence about.
+- For parent-regulation goals, one query should target the parent skill (e.g. "parent emotion regulation", "parental burnout mindfulness"), one the child presentation surfaced by the profile (e.g. "oppositional defiant disorder child intervention", "collaborative problem solving Greene"), and one the dyadic interaction (e.g. "parent-child coregulation training RCT").
+- The 3 queries must be complementary, not redundant.
+
 IMPORTANT RULES:
 - You MUST call save_research_papers. Do NOT skip this step or just describe what you would save.
 - Do NOT write a long narrative before calling save_research_papers — the tool call must come first.

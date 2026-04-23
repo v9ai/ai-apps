@@ -20,6 +20,7 @@ the client is the only change needed to cut over.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import uuid
