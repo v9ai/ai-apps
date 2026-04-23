@@ -17,7 +17,7 @@ import {
   AlertDialog,
   Separator,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon, PlusIcon, Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, PlusIcon, Pencil1Icon, TrashIcon, MagicWandIcon } from "@radix-ui/react-icons";
 import { useParams } from "next/navigation";
 import NextLink from "next/link";
 import {
@@ -26,6 +26,7 @@ import {
   useCreateAffirmationMutation,
   useUpdateAffirmationMutation,
   useDeleteAffirmationMutation,
+  useGenerateAffirmationsForFamilyMemberMutation,
   AffirmationCategory,
 } from "@/app/__generated__/hooks";
 
@@ -111,6 +112,34 @@ function AffirmationsContent() {
   const [deleteAffirmation] = useDeleteAffirmationMutation({
     refetchQueries: ["GetAffirmations"],
   });
+
+  // AI generation dialog state
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [genCount, setGenCount] = useState(5);
+  const [genCategoryFocus, setGenCategoryFocus] = useState<AffirmationCategory | "ANY">("ANY");
+  const [genError, setGenError] = useState<string | null>(null);
+
+  const [generateAffirmations, { loading: generating }] =
+    useGenerateAffirmationsForFamilyMemberMutation({
+      onCompleted: () => {
+        setGenerateOpen(false);
+        setGenError(null);
+      },
+      onError: (err) => setGenError(err.message),
+      refetchQueries: ["GetAffirmations"],
+    });
+
+  const handleGenerate = () => {
+    if (isNaN(familyMemberId)) return;
+    setGenError(null);
+    generateAffirmations({
+      variables: {
+        familyMemberId,
+        count: genCount,
+        categoryFocus: genCategoryFocus === "ANY" ? null : genCategoryFocus,
+      },
+    });
+  };
 
   const handleCreate = () => {
     if (!newText.trim() || isNaN(familyMemberId)) return;
@@ -204,6 +233,86 @@ function AffirmationsContent() {
           </Box>
         </Flex>
 
+        <Flex gap="2">
+        {/* Generate with AI Dialog */}
+        <Dialog.Root open={generateOpen} onOpenChange={setGenerateOpen}>
+          <Dialog.Trigger>
+            <Button size="2" variant="soft" color="purple">
+              <MagicWandIcon /> Generate with AI
+            </Button>
+          </Dialog.Trigger>
+          <Dialog.Content maxWidth="480px">
+            <Dialog.Title>Generate Affirmations with AI</Dialog.Title>
+            <Dialog.Description size="2" color="gray" mb="4">
+              Creates personalized affirmations for {familyMember?.firstName ?? "this family member"} using
+              their goals, issues, observations, and linked research. Takes 15–30 seconds.
+            </Dialog.Description>
+            <Flex direction="column" gap="3">
+              <label>
+                <Text size="2" weight="bold" mb="1">
+                  How many?
+                </Text>
+                <TextField.Root
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={String(genCount)}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    if (!isNaN(n)) setGenCount(Math.max(1, Math.min(10, n)));
+                  }}
+                />
+              </label>
+              <label>
+                <Text size="2" weight="bold" mb="1">
+                  Category focus (optional)
+                </Text>
+                <Select.Root
+                  value={genCategoryFocus}
+                  onValueChange={(v) => setGenCategoryFocus(v as AffirmationCategory | "ANY")}
+                >
+                  <Select.Trigger style={{ width: "100%" }} />
+                  <Select.Content>
+                    <Select.Item value="ANY">Any (mixed)</Select.Item>
+                    {CATEGORY_OPTIONS.map((opt) => (
+                      <Select.Item key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Root>
+              </label>
+              {genError && (
+                <Text size="2" color="red">
+                  {genError}
+                </Text>
+              )}
+            </Flex>
+            <Flex gap="3" mt="4" justify="end">
+              <Dialog.Close>
+                <Button variant="soft" color="gray" disabled={generating}>
+                  Cancel
+                </Button>
+              </Dialog.Close>
+              <Button
+                color="purple"
+                onClick={handleGenerate}
+                disabled={generating || isNaN(familyMemberId)}
+              >
+                {generating ? (
+                  <>
+                    <Spinner size="1" /> Generating…
+                  </>
+                ) : (
+                  <>
+                    <MagicWandIcon /> Generate
+                  </>
+                )}
+              </Button>
+            </Flex>
+          </Dialog.Content>
+        </Dialog.Root>
+
         {/* Create Dialog */}
         <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
           <Dialog.Trigger>
@@ -259,6 +368,7 @@ function AffirmationsContent() {
             </Flex>
           </Dialog.Content>
         </Dialog.Root>
+        </Flex>
       </Flex>
 
       <Separator size="4" />

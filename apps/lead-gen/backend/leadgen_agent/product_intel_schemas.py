@@ -96,6 +96,13 @@ class ProductProfile(BaseModel):
     visible_pricing: str = Field(default="", max_length=240)
     tech_signals: list[str] = Field(default_factory=list, max_length=12)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_nulls(cls, v: Any) -> Any:
+        return _none_to_empty_str(
+            v, ("name", "one_liner", "category", "stated_audience", "visible_pricing")
+        )
+
     @field_validator("core_jobs", "key_features", "tech_signals", mode="before")
     @classmethod
     def _truncate_list(cls, v: object) -> list[str]:
@@ -173,6 +180,18 @@ class PricingModel(BaseModel):
     addons: list[str] = Field(default_factory=list, max_length=8)
     discounting_strategy: str = Field(default="", max_length=300)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_nulls(cls, v: Any) -> Any:
+        return _none_to_empty_str(v, ("value_metric", "free_offer", "discounting_strategy"))
+
+    @field_validator("model_type", mode="before")
+    @classmethod
+    def _coerce_model_type(cls, v: object) -> str:
+        if v is None or v == "":
+            return "subscription"
+        return str(v)
+
 
 class PricingRationale(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -182,6 +201,13 @@ class PricingRationale(BaseModel):
     wtp_estimate: str = Field(default="", max_length=300)
     risks: list[str] = Field(default_factory=list, max_length=6)
     recommendation: str = Field(default="", max_length=600)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_nulls(cls, v: Any) -> Any:
+        return _none_to_empty_str(
+            v, ("value_basis", "competitor_benchmark", "wtp_estimate", "recommendation")
+        )
 
 
 class PricingStrategy(BaseModel):
@@ -218,6 +244,20 @@ class Channel(BaseModel):
     effort: ChannelEffort = "medium"
     time_to_first_lead: str = Field(default="", max_length=80)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_nulls(cls, v: Any) -> Any:
+        return _none_to_empty_str(
+            v, ("name", "why", "icp_presence", "time_to_first_lead")
+        )
+
+    @field_validator("effort", mode="before")
+    @classmethod
+    def _coerce_effort(cls, v: object) -> str:
+        if v is None or v == "":
+            return "medium"
+        return str(v)
+
 
 class MessagingPillar(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -226,6 +266,11 @@ class MessagingPillar(BaseModel):
     proof_points: list[str] = Field(default_factory=list, max_length=6)
     when_to_use: str = Field(default="", max_length=240)
     avoid_when: str = Field(default="", max_length=240)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_nulls(cls, v: Any) -> Any:
+        return _none_to_empty_str(v, ("theme", "when_to_use", "avoid_when"))
 
 
 class OutreachTemplate(BaseModel):
@@ -236,6 +281,18 @@ class OutreachTemplate(BaseModel):
     hook: str = Field(default="", max_length=320)
     body: str = Field(default="", max_length=900)
     cta: str = Field(default="", max_length=200)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_nulls(cls, v: Any) -> Any:
+        return _none_to_empty_str(v, ("persona", "hook", "body", "cta"))
+
+    @field_validator("channel", mode="before")
+    @classmethod
+    def _coerce_channel(cls, v: object) -> str:
+        if v is None or v == "":
+            return "cold_email"
+        return str(v)
 
 
 class Objection(BaseModel):
@@ -293,6 +350,11 @@ class ProductIntelReport(BaseModel):
     quick_wins: list[str] = Field(default_factory=list, max_length=6)
     product_profile: ProductProfile | None = None
     graph_meta: dict = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_nulls(cls, v: Any) -> Any:
+        return _none_to_empty_str(v, ("tldr",))
 
     @field_validator("top_3_priorities", "key_risks", "quick_wins", mode="before")
     @classmethod

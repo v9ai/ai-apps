@@ -733,6 +733,14 @@ export type FollowUpStep = {
   timing: Scalars['String']['output'];
 };
 
+export type GenerateAffirmationsResult = {
+  __typename?: 'GenerateAffirmationsResult';
+  affirmations: Array<Affirmation>;
+  count: Scalars['Int']['output'];
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateAudioResult = {
   __typename?: 'GenerateAudioResult';
   audioUrl?: Maybe<Scalars['String']['output']>;
@@ -1129,6 +1137,7 @@ export type Mutation = {
   deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
   extractContactFeedbackIssues: ContactFeedback;
+  generateAffirmationsForFamilyMember: GenerateAffirmationsResult;
   generateAudio: GenerateAudioResult;
   generateDeepAnalysis: GenerateDeepAnalysisResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
@@ -1408,6 +1417,14 @@ export type MutationdeleteTherapeuticQuestionsArgs = {
 
 export type MutationextractContactFeedbackIssuesArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationgenerateAffirmationsForFamilyMemberArgs = {
+  categoryFocus?: InputMaybe<AffirmationCategory>;
+  count?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId: Scalars['Int']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2723,6 +2740,7 @@ export type ResolversTypes = {
   FamilySystemInsight: ResolverTypeWrapper<FamilySystemInsight>;
   FeedbackSource: ResolverTypeWrapper<'EMAIL' | 'MEETING' | 'REPORT' | 'PHONE' | 'NOTE' | 'OTHER'>;
   FollowUpStep: ResolverTypeWrapper<FollowUpStep>;
+  GenerateAffirmationsResult: ResolverTypeWrapper<Omit<GenerateAffirmationsResult, 'affirmations'> & { affirmations: Array<ResolversTypes['Affirmation']> }>;
   GenerateAudioResult: ResolverTypeWrapper<GenerateAudioResult>;
   GenerateDeepAnalysisResult: ResolverTypeWrapper<GenerateDeepAnalysisResult>;
   GenerateDiscussionGuideResult: ResolverTypeWrapper<GenerateDiscussionGuideResult>;
@@ -2893,6 +2911,7 @@ export type ResolversParentTypes = {
   FamilyMemberShare: FamilyMemberShare;
   FamilySystemInsight: FamilySystemInsight;
   FollowUpStep: FollowUpStep;
+  GenerateAffirmationsResult: Omit<GenerateAffirmationsResult, 'affirmations'> & { affirmations: Array<ResolversParentTypes['Affirmation']> };
   GenerateAudioResult: GenerateAudioResult;
   GenerateDeepAnalysisResult: GenerateDeepAnalysisResult;
   GenerateDiscussionGuideResult: GenerateDiscussionGuideResult;
@@ -3442,6 +3461,13 @@ export type FollowUpStepResolvers<ContextType = GraphQLContext, ParentType exten
   timing?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type GenerateAffirmationsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateAffirmationsResult'] = ResolversParentTypes['GenerateAffirmationsResult']> = {
+  affirmations?: Resolver<Array<ResolversTypes['Affirmation']>, ParentType, ContextType>;
+  count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type GenerateAudioResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateAudioResult'] = ResolversParentTypes['GenerateAudioResult']> = {
   audioUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   jobId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3783,6 +3809,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteTeacherFeedback?: Resolver<ResolversTypes['DeleteTeacherFeedbackResult'], ParentType, ContextType, RequireFields<MutationdeleteTeacherFeedbackArgs, 'id'>>;
   deleteTherapeuticQuestions?: Resolver<ResolversTypes['DeleteQuestionsResult'], ParentType, ContextType, Partial<MutationdeleteTherapeuticQuestionsArgs>>;
   extractContactFeedbackIssues?: Resolver<ResolversTypes['ContactFeedback'], ParentType, ContextType, RequireFields<MutationextractContactFeedbackIssuesArgs, 'id'>>;
+  generateAffirmationsForFamilyMember?: Resolver<ResolversTypes['GenerateAffirmationsResult'], ParentType, ContextType, RequireFields<MutationgenerateAffirmationsForFamilyMemberArgs, 'familyMemberId'>>;
   generateAudio?: Resolver<ResolversTypes['GenerateAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateAudioArgs, 'goalId'>>;
   generateDeepAnalysis?: Resolver<ResolversTypes['GenerateDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateDeepAnalysisArgs, 'subjectId' | 'subjectType'>>;
   generateDeepIssueAnalysis?: Resolver<ResolversTypes['GenerateDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateDeepIssueAnalysisArgs, 'familyMemberId'>>;
@@ -4332,6 +4359,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   FamilySystemInsight?: FamilySystemInsightResolvers<ContextType>;
   FeedbackSource?: FeedbackSourceResolvers;
   FollowUpStep?: FollowUpStepResolvers<ContextType>;
+  GenerateAffirmationsResult?: GenerateAffirmationsResultResolvers<ContextType>;
   GenerateAudioResult?: GenerateAudioResultResolvers<ContextType>;
   GenerateDeepAnalysisResult?: GenerateDeepAnalysisResultResolvers<ContextType>;
   GenerateDiscussionGuideResult?: GenerateDiscussionGuideResultResolvers<ContextType>;

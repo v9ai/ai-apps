@@ -741,6 +741,14 @@ export type FollowUpStep = {
   timing: Scalars['String']['output'];
 };
 
+export type GenerateAffirmationsResult = {
+  __typename?: 'GenerateAffirmationsResult';
+  affirmations: Array<Affirmation>;
+  count: Scalars['Int']['output'];
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateAudioResult = {
   __typename?: 'GenerateAudioResult';
   audioUrl?: Maybe<Scalars['String']['output']>;
@@ -1141,6 +1149,7 @@ export type Mutation = {
   deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
   extractContactFeedbackIssues: ContactFeedback;
+  generateAffirmationsForFamilyMember: GenerateAffirmationsResult;
   generateAudio: GenerateAudioResult;
   generateDeepAnalysis: GenerateDeepAnalysisResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
@@ -1420,6 +1429,14 @@ export type MutationDeleteTherapeuticQuestionsArgs = {
 
 export type MutationExtractContactFeedbackIssuesArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationGenerateAffirmationsForFamilyMemberArgs = {
+  categoryFocus?: InputMaybe<AffirmationCategory>;
+  count?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId: Scalars['Int']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2931,6 +2948,16 @@ export type ExtractContactFeedbackIssuesMutationVariables = Exact<{
 
 
 export type ExtractContactFeedbackIssuesMutation = { __typename?: 'Mutation', extractContactFeedbackIssues: { __typename?: 'ContactFeedback', id: number, extracted: boolean, extractedIssues?: Array<{ __typename?: 'ExtractedIssue', title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null }> | null } };
+
+export type GenerateAffirmationsForFamilyMemberMutationVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+  count?: InputMaybe<Scalars['Int']['input']>;
+  categoryFocus?: InputMaybe<AffirmationCategory>;
+  language?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GenerateAffirmationsForFamilyMemberMutation = { __typename?: 'Mutation', generateAffirmationsForFamilyMember: { __typename?: 'GenerateAffirmationsResult', success: boolean, message?: string | null, count: number, affirmations: Array<{ __typename?: 'Affirmation', id: number, familyMemberId: number, userId: string, text: string, category: AffirmationCategory, isActive: boolean, createdAt: string, updatedAt: string }> } };
 
 export type GenerateAudioMutationVariables = Exact<{
   goalId: Scalars['Int']['input'];
@@ -5634,6 +5661,59 @@ export function useExtractContactFeedbackIssuesMutation(baseOptions?: Apollo.Mut
 export type ExtractContactFeedbackIssuesMutationHookResult = ReturnType<typeof useExtractContactFeedbackIssuesMutation>;
 export type ExtractContactFeedbackIssuesMutationResult = Apollo.MutationResult<ExtractContactFeedbackIssuesMutation>;
 export type ExtractContactFeedbackIssuesMutationOptions = Apollo.BaseMutationOptions<ExtractContactFeedbackIssuesMutation, ExtractContactFeedbackIssuesMutationVariables>;
+export const GenerateAffirmationsForFamilyMemberDocument = gql`
+    mutation GenerateAffirmationsForFamilyMember($familyMemberId: Int!, $count: Int, $categoryFocus: AffirmationCategory, $language: String) {
+  generateAffirmationsForFamilyMember(
+    familyMemberId: $familyMemberId
+    count: $count
+    categoryFocus: $categoryFocus
+    language: $language
+  ) {
+    success
+    message
+    count
+    affirmations {
+      id
+      familyMemberId
+      userId
+      text
+      category
+      isActive
+      createdAt
+      updatedAt
+    }
+  }
+}
+    `;
+export type GenerateAffirmationsForFamilyMemberMutationFn = Apollo.MutationFunction<GenerateAffirmationsForFamilyMemberMutation, GenerateAffirmationsForFamilyMemberMutationVariables>;
+
+/**
+ * __useGenerateAffirmationsForFamilyMemberMutation__
+ *
+ * To run a mutation, you first call `useGenerateAffirmationsForFamilyMemberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateAffirmationsForFamilyMemberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateAffirmationsForFamilyMemberMutation, { data, loading, error }] = useGenerateAffirmationsForFamilyMemberMutation({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *      count: // value for 'count'
+ *      categoryFocus: // value for 'categoryFocus'
+ *      language: // value for 'language'
+ *   },
+ * });
+ */
+export function useGenerateAffirmationsForFamilyMemberMutation(baseOptions?: Apollo.MutationHookOptions<GenerateAffirmationsForFamilyMemberMutation, GenerateAffirmationsForFamilyMemberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateAffirmationsForFamilyMemberMutation, GenerateAffirmationsForFamilyMemberMutationVariables>(GenerateAffirmationsForFamilyMemberDocument, options);
+      }
+export type GenerateAffirmationsForFamilyMemberMutationHookResult = ReturnType<typeof useGenerateAffirmationsForFamilyMemberMutation>;
+export type GenerateAffirmationsForFamilyMemberMutationResult = Apollo.MutationResult<GenerateAffirmationsForFamilyMemberMutation>;
+export type GenerateAffirmationsForFamilyMemberMutationOptions = Apollo.BaseMutationOptions<GenerateAffirmationsForFamilyMemberMutation, GenerateAffirmationsForFamilyMemberMutationVariables>;
 export const GenerateAudioDocument = gql`
     mutation GenerateAudio($goalId: Int!, $storyId: Int, $text: String, $language: String, $voice: String) {
   generateAudio(

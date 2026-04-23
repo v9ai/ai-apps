@@ -19,9 +19,7 @@ const ENUM_TO_CATEGORY: Record<AffirmationCategory, string> = {
   SELF_WORTH: "self-worth",
 };
 
-export const generateAffirmationsForFamilyMember: NonNullable<
-  MutationResolvers["generateAffirmationsForFamilyMember"]
-> = async (_parent, args, ctx) => {
+export const generateAffirmationsForFamilyMember: NonNullable<MutationResolvers['generateAffirmationsForFamilyMember']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) throw new Error("Authentication required");
 

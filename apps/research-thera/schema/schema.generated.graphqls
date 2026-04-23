@@ -663,6 +663,13 @@ type FollowUpStep {
   timing: String!
 }
 
+type GenerateAffirmationsResult {
+  affirmations: [Affirmation!]!
+  count: Int!
+  message: String
+  success: Boolean!
+}
+
 type GenerateAudioResult {
   audioUrl: String
   jobId: String!
@@ -1035,6 +1042,7 @@ type Mutation {
   deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
+  generateAffirmationsForFamilyMember(categoryFocus: AffirmationCategory, count: Int, familyMemberId: Int!, language: String): GenerateAffirmationsResult!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateDeepAnalysis(subjectId: Int!, subjectType: DeepAnalysisSubjectType!, triggerId: Int, triggerType: DeepAnalysisTriggerType): GenerateDeepAnalysisResult!
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
