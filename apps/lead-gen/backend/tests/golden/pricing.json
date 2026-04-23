@@ -1,0 +1,226 @@
+[
+  {
+    "id": 2001,
+    "product": {
+      "id": 2001,
+      "name": "Stripe",
+      "url": "https://stripe.com",
+      "domain": "stripe.com",
+      "description": "Payments infrastructure for the internet. APIs for online payments, subscriptions, marketplaces, and financial services. Takes a per-transaction fee plus a fixed cent fee.",
+      "highlights": {"motion": "plg-to-sales", "pricing": "usage", "stack": ["api-first"]}
+    },
+    "expected_value_metric_signals": [
+      "per transaction",
+      "per successful charge",
+      "payment volume",
+      "TPV",
+      "processed"
+    ],
+    "expected_model_type": "usage",
+    "expected_tier_count_range": [2, 4],
+    "expected_wtp_signals": ["2.9%", "30 cents", "volume discount", "custom", "enterprise rate"],
+    "expected_free_offer": false,
+    "expected_billing_units": ["per_usage", "hybrid"],
+    "expected_risks": [
+      "race-to-bottom on fees",
+      "volume concentration",
+      "regulatory fee disclosure",
+      "FX exposure"
+    ]
+  },
+  {
+    "id": 2002,
+    "product": {
+      "id": 2002,
+      "name": "Linear",
+      "url": "https://linear.app",
+      "domain": "linear.app",
+      "description": "Issue tracking for modern software teams. Opinionated, fast, keyboard-first. Free for small teams, per-seat pricing for growing teams, custom for enterprise.",
+      "highlights": {"motion": "plg", "pricing": "per-seat"}
+    },
+    "expected_value_metric_signals": [
+      "per seat",
+      "per active user",
+      "per team member",
+      "editor"
+    ],
+    "expected_model_type": "subscription",
+    "expected_tier_count_range": [3, 4],
+    "expected_wtp_signals": ["$8-$14/user/mo", "$10/seat", "annual discount"],
+    "expected_free_offer": true,
+    "expected_billing_units": ["per_seat"],
+    "expected_risks": [
+      "seat creep resistance",
+      "free tier cannibalization",
+      "enterprise feature gating",
+      "SSO tax"
+    ]
+  },
+  {
+    "id": 2003,
+    "product": {
+      "id": 2003,
+      "name": "Notion",
+      "url": "https://notion.so",
+      "domain": "notion.so",
+      "description": "All-in-one workspace for notes, docs, wikis, and projects. Free for individuals, per-seat pricing for teams, enterprise SSO tier.",
+      "highlights": {"motion": "plg", "pricing": "per-seat"}
+    },
+    "expected_value_metric_signals": [
+      "per seat",
+      "per active user",
+      "per workspace member"
+    ],
+    "expected_model_type": "subscription",
+    "expected_tier_count_range": [3, 4],
+    "expected_wtp_signals": ["$8-$15/user/mo", "$10/seat", "annual discount", "enterprise custom"],
+    "expected_free_offer": true,
+    "expected_billing_units": ["per_seat"],
+    "expected_risks": [
+      "free tier substitutes paid",
+      "AI feature add-on cannibalizing base",
+      "SSO tax backlash",
+      "per-seat fatigue for large orgs"
+    ]
+  },
+  {
+    "id": 2004,
+    "product": {
+      "id": 2004,
+      "name": "Retool",
+      "url": "https://retool.com",
+      "domain": "retool.com",
+      "description": "Low-code platform to build internal tools fast. Drag-and-drop UI, connect any DB or API. Free for small usage, per-user pricing, enterprise for on-prem.",
+      "highlights": {"motion": "plg-to-sales", "pricing": "per-user"}
+    },
+    "expected_value_metric_signals": [
+      "per standard user",
+      "per end user",
+      "per use case",
+      "monthly active user"
+    ],
+    "expected_model_type": "subscription",
+    "expected_tier_count_range": [3, 5],
+    "expected_wtp_signals": ["$10-$50/user/mo", "$12 standard", "$50 end-user seat", "enterprise custom"],
+    "expected_free_offer": true,
+    "expected_billing_units": ["per_seat", "hybrid"],
+    "expected_risks": [
+      "complicated multi-user-type pricing",
+      "end-user seat gating friction",
+      "on-prem/self-host defection",
+      "build-vs-buy at scale"
+    ]
+  },
+  {
+    "id": 2005,
+    "product": {
+      "id": 2005,
+      "name": "Vercel",
+      "url": "https://vercel.com",
+      "domain": "vercel.com",
+      "description": "Frontend cloud platform for deploying Next.js and other frameworks. Free hobby tier, per-seat Pro plan plus bandwidth/compute overage, enterprise custom.",
+      "highlights": {"motion": "plg", "pricing": "hybrid"}
+    },
+    "expected_value_metric_signals": [
+      "per seat",
+      "per GB bandwidth",
+      "function invocation",
+      "build minutes"
+    ],
+    "expected_model_type": "hybrid",
+    "expected_tier_count_range": [3, 4],
+    "expected_wtp_signals": ["$20/seat + usage", "free hobby", "enterprise custom"],
+    "expected_free_offer": true,
+    "expected_billing_units": ["hybrid", "per_usage"],
+    "expected_risks": [
+      "bandwidth overage sticker shock",
+      "hobby-to-Pro conversion cliff",
+      "self-host alternative (Cloudflare / Netlify)",
+      "AI compute surprise billing"
+    ]
+  },
+  {
+    "id": 2006,
+    "product": {
+      "id": 2006,
+      "name": "Modal Labs",
+      "url": "https://modal.com",
+      "domain": "modal.com",
+      "description": "Serverless Python functions with instant GPU access. Pay per second of compute, no infra to manage. Popular with ML researchers and AI startups.",
+      "highlights": {"motion": "plg", "pricing": "usage"}
+    },
+    "expected_value_metric_signals": [
+      "per GPU-second",
+      "per compute hour",
+      "per invocation",
+      "per second"
+    ],
+    "expected_model_type": "usage",
+    "expected_tier_count_range": [2, 3],
+    "expected_wtp_signals": ["$0.000x/sec A100", "free monthly credits", "team/enterprise custom"],
+    "expected_free_offer": true,
+    "expected_billing_units": ["per_usage"],
+    "expected_risks": [
+      "GPU spot-price volatility",
+      "customer migrates to direct cloud at scale",
+      "cold-start perception",
+      "unpredictable bills"
+    ]
+  },
+  {
+    "id": 2007,
+    "product": {
+      "id": 2007,
+      "name": "PromptLoop",
+      "url": "https://promptloop.example",
+      "domain": "promptloop.example",
+      "description": "Airtable and Google Sheets plugin that adds LLM calls to any cell. $19/mo self-serve, no-code. Trusted by SMB operations teams.",
+      "highlights": {"motion": "plg", "pricing": "$19/mo"}
+    },
+    "expected_value_metric_signals": [
+      "per workspace",
+      "per active sheet",
+      "per LLM call",
+      "per row processed"
+    ],
+    "expected_model_type": "subscription",
+    "expected_tier_count_range": [2, 4],
+    "expected_wtp_signals": ["$19/mo", "$49/mo team", "per-call overage"],
+    "expected_free_offer": true,
+    "expected_billing_units": ["flat", "hybrid"],
+    "expected_risks": [
+      "LLM token cost squeezes margin",
+      "Airtable/Google policy change",
+      "DIY OpenAI + Zapier substitute",
+      "free tier too generous"
+    ]
+  },
+  {
+    "id": 2008,
+    "product": {
+      "id": 2008,
+      "name": "CareLink EHR",
+      "url": "https://carelinkehr.example",
+      "domain": "carelinkehr.example",
+      "description": "HIPAA-compliant electronic health record for independent clinics in the US. Includes scheduling, billing, and e-prescribing. Priced per provider.",
+      "highlights": {"compliance": ["hipaa"], "motion": "sales-led", "pricing": "per-provider"}
+    },
+    "expected_value_metric_signals": [
+      "per provider",
+      "per prescriber",
+      "per clinician",
+      "per seat"
+    ],
+    "expected_model_type": "subscription",
+    "expected_tier_count_range": [2, 4],
+    "expected_wtp_signals": ["$299-$599/provider/mo", "implementation fee", "annual contract"],
+    "expected_free_offer": false,
+    "expected_billing_units": ["per_seat"],
+    "expected_risks": [
+      "long sales cycle erodes LTV",
+      "HIPAA breach liability",
+      "switching-cost lock-in backlash",
+      "Medicaid/Medicare billing compliance"
+    ]
+  }
+]

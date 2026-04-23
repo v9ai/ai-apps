@@ -253,6 +253,9 @@ class PricingState(TypedDict, total=False):
     webhook_url: str
     webhook_secret: str
     app_run_id: str
+    # streaming progress — see notify.update_progress + migration 0063
+    _progress_started_at: float
+    _completed_stages: Annotated[list[str], operator.add]
     # internal — populated by load_inputs
     product: dict[str, Any]
     icp: dict[str, Any]                         # products.icp_analysis jsonb or {}
@@ -278,6 +281,9 @@ class GTMState(TypedDict, total=False):
     webhook_url: str
     webhook_secret: str
     app_run_id: str
+    # streaming progress — see notify.update_progress + migration 0063
+    _progress_started_at: float
+    _completed_stages: Annotated[list[str], operator.add]
     # internal
     product: dict[str, Any]
     icp: dict[str, Any]
@@ -330,6 +336,9 @@ class ProductIntelState(TypedDict, total=False):
     webhook_url: str
     webhook_secret: str
     app_run_id: str
+    # streaming progress — see notify.update_progress + migration 0063
+    _progress_started_at: float
+    _completed_stages: Annotated[list[str], operator.add]
     # internal
     product: dict[str, Any]
     product_profile: dict[str, Any]

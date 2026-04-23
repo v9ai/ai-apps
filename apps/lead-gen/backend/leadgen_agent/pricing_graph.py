@@ -221,6 +221,12 @@ def _fmt_icp_block(icp: dict[str, Any]) -> str:
 async def benchmark_competitors(state: PricingState) -> dict:
     if state.get("_error"):
         return {}
+    # Checkpoint-aware short-circuit: LLM call is the expensive bit. If a prior
+    # checkpoint already produced a benchmark payload (non-empty summary), skip
+    # the DeepSeek round-trip on resume.
+    existing = state.get("benchmark") or {}
+    if existing.get("category_summary"):
+        return {}
     t0 = time.perf_counter()
     tiers = state.get("competitor_pricing") or []
     summary = state.get("competitor_summary") or []
@@ -277,6 +283,10 @@ async def benchmark_competitors(state: PricingState) -> dict:
 async def choose_value_metric(state: PricingState) -> dict:
     if state.get("_error"):
         return {}
+    # Checkpoint-aware short-circuit (reasoner-tier call, ~$0.002 saved per resume).
+    existing = state.get("value_metric") or {}
+    if existing.get("recommended_metric"):
+        return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
     brief = _product_brief(product)
@@ -329,6 +339,12 @@ def _fan_out(_state: PricingState) -> list[str]:
 
 async def design_model(state: PricingState) -> dict:
     if state.get("_error"):
+        return {}
+    # Checkpoint-aware short-circuit: design_model is a reasoner-tier call with
+    # validated Pydantic output. If the model was already designed in a prior
+    # run on this thread, skip.
+    existing = state.get("model") or {}
+    if existing.get("tiers"):
         return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
@@ -383,6 +399,11 @@ async def design_model(state: PricingState) -> dict:
 
 async def write_rationale(state: PricingState) -> dict:
     if state.get("_error"):
+        return {}
+    # Checkpoint-aware short-circuit: if both `pricing` (the terminal dumped
+    # payload) and `rationale` are set on the checkpoint, the work is done —
+    # skip the reasoner-tier LLM call + the products UPDATE.
+    if state.get("pricing") and (state.get("rationale") or {}).get("recommendation"):
         return {}
     t0 = time.perf_counter()
     product = state.get("product") or {}
