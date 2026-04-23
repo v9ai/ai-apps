@@ -1101,6 +1101,11 @@ export const products = pgTable(
     gtm_analyzed_at: text("gtm_analyzed_at"),
     intel_report: jsonb("intel_report"),
     intel_report_at: text("intel_report_at"),
+    // Freshness snapshot — written by the `freshness` LangGraph endpoint
+    // (see migrations/0065_add_freshness_tracking.sql + backend/leadgen_agent/
+    // freshness_graph.py). Used by the product_intel supervisor to decide
+    // whether cached icp_analysis / competitors still reflect reality.
+    freshness_snapshot: jsonb("freshness_snapshot"),
     // Publish gate (see migrations/0060_add_product_published_at.sql). Rows with
     // published_at IS NULL are admin-only drafts; non-admin reads must filter.
     published_at: timestamp("published_at", { withTimezone: true }),
@@ -1180,6 +1185,11 @@ export const competitors = pgTable(
     }).notNull().default("suggested"),
     scraped_at: text("scraped_at"),
     scrape_error: text("scrape_error"),
+    // SHA-256 of the last normalized scraped markdown for this competitor's
+    // URL. See migrations/0065_add_freshness_tracking.sql. When the next
+    // freshness run produces a different hash, the competitor has moved —
+    // drives "competitor moved" alerts.
+    last_url_hash: text("last_url_hash"),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
@@ -1190,6 +1200,7 @@ export const competitors = pgTable(
   (table) => [
     index("idx_competitors_analysis_id").on(table.analysis_id),
     index("idx_competitors_status").on(table.status),
+    index("idx_competitors_last_url_hash").on(table.last_url_hash),
   ],
 );
 

@@ -296,6 +296,32 @@ class GTMState(TypedDict, total=False):
     graph_meta: dict[str, Any]
 
 
+class DeepCompetitorState(TypedDict, total=False):
+    # input
+    competitor_id: int
+    # async-run webhook contract (optional)
+    webhook_url: str
+    webhook_secret: str
+    app_run_id: str
+    # internal — populated by load_competitor
+    competitor: dict[str, Any]
+    product: dict[str, Any]
+    # page caches populated by individual specialists (via loaders.fetch_url)
+    pages: Annotated[dict[str, dict[str, Any]], _merge_dict]
+    # specialist outputs — each node writes its own slot
+    pricing_deep: dict[str, Any]
+    features_deep: dict[str, Any]
+    integrations_deep: dict[str, Any]
+    changelog: dict[str, Any]
+    positioning_shift: dict[str, Any]
+    funding_headcount: dict[str, Any]
+    # agent_timings is written by every parallel specialist — reducer merges.
+    agent_timings: Annotated[dict[str, float], _merge_dict]
+    # output
+    analysis: dict[str, Any]
+    graph_meta: dict[str, Any]
+
+
 class ProductIntelState(TypedDict, total=False):
     # input
     product_id: int

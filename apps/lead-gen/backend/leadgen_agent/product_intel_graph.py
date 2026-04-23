@@ -44,11 +44,77 @@ def _first_error(left: str | None, right: str | None) -> str | None:
     return left or right
 
 
+def _merge_progress(
+    left: dict[str, Any] | None, right: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Reducer for the per-subgraph progress channels.
+
+    Parallel fan-out writes from ``run_pricing`` and ``run_gtm`` land on the
+    same merge step. Each writes its own key (``pricing_subgraph_progress``
+    vs ``gtm_subgraph_progress``) so conflicts never overlap, but LangGraph
+    still needs a reducer on every channel written by more than one node.
+    The latest write wins per-key; ``completed`` lists are extended in node
+    code before the dict is emitted, so we don't need list concatenation here.
+    """
+    out: dict[str, Any] = dict(left or {})
+    if right:
+        out.update(right)
+    return out
+
+
 class _ProductIntelStateWithError(ProductIntelState, total=False):
     """Local extension of ProductIntelState carrying an ad-hoc ``_error`` channel
-    so exception-path routing survives across nodes without editing state.py."""
+    so exception-path routing survives across nodes without editing state.py.
+
+    Also carries ``pricing_subgraph_progress`` / ``gtm_subgraph_progress`` which
+    the subgraph-invocation nodes populate as they stream node-by-node events
+    out of the compiled subgraphs. These power "4/7 nodes done" progress
+    surfaces in ``notify_complete`` without changing the webhook contract.
+    """
 
     _error: Annotated[str, _first_error]
+    pricing_subgraph_progress: Annotated[dict[str, Any], _merge_progress]
+    gtm_subgraph_progress: Annotated[dict[str, Any], _merge_progress]
+
+
+# ── Module-level subgraph compilation ──────────────────────────────────
+#
+# Subgraphs are compiled exactly once, at import time, with ``checkpointer=None``.
+# LangGraph's composability contract says nested subgraphs inherit their
+# parent's checkpointer when invoked from a parent that has one — the
+# ``AsyncPostgresSaver`` used by ``backend/app.py`` flows through without
+# the child needing its own binding. Recompiling on every run (the prior
+# behavior) cost ~200ms per supervisor invocation, plus churned an async
+# context for the saver each time.
+#
+# Keep this at module scope; ``build_graph()`` below wires these in as the
+# async callables used by ``run_pricing`` / ``run_gtm``.
+_PRICING_GRAPH = pricing_graph.build_graph(checkpointer=None)
+_GTM_GRAPH = gtm_graph.build_graph(checkpointer=None)
+
+# The "real work" nodes inside each subgraph — we surface total counts so the
+# progress payload can render "4/5 nodes done" without the UI having to know
+# the graph topology. Excludes the terminal notify_complete / notify_error
+# bookkeeping nodes because those are plumbing, not pipeline steps.
+_PRICING_BUSINESS_NODES = frozenset(
+    {
+        "load_inputs",
+        "benchmark_competitors",
+        "choose_value_metric",
+        "design_model",
+        "write_rationale",
+    }
+)
+_GTM_BUSINESS_NODES = frozenset(
+    {
+        "load_inputs",
+        "pick_channels",
+        "craft_pillars",
+        "write_templates",
+        "build_playbook",
+        "draft_plan",
+    }
+)
 
 
 async def load_and_profile(state: ProductIntelState) -> dict:
@@ -202,36 +268,94 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
     }
 
 
+async def _stream_subgraph(
+    compiled: Any,
+    inputs: dict[str, Any],
+    business_nodes: frozenset[str],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Run a compiled subgraph via ``.astream(stream_mode='updates')`` and
+    collect both the final merged state and a live progress snapshot.
+
+    Returns ``(final_state, progress)`` where ``progress`` has the shape
+    ``{"current_node": str, "completed": [str,...], "total": int}``.
+    The ``total`` is the number of business nodes in the subgraph (notify_*
+    bookkeeping excluded) so UIs can render an accurate "N/M done" badge.
+
+    LangGraph's ``astream`` in ``stream_mode='updates'`` yields one dict per
+    node execution, keyed by the node name with that node's state-delta as
+    value. We fold those deltas into ``final_state`` to mirror what
+    ``ainvoke`` would have returned.
+    """
+    final_state: dict[str, Any] = {}
+    completed: list[str] = []
+    current: str = ""
+    async for chunk in compiled.astream(inputs, stream_mode="updates"):
+        # chunk is {node_name: state_delta} — one entry per step. Parallel
+        # fan-out emits multiple chunks, one per branch, so we just fold.
+        if not isinstance(chunk, dict):
+            continue
+        for node_name, delta in chunk.items():
+            current = node_name
+            if node_name in business_nodes and node_name not in completed:
+                completed.append(node_name)
+            if isinstance(delta, dict):
+                final_state.update(delta)
+    progress = {
+        "current_node": current,
+        "completed": completed,
+        "total": len(business_nodes),
+    }
+    return final_state, progress
+
+
 async def run_pricing(state: ProductIntelState) -> dict:
     """Invoke the pricing subgraph. The subgraph's write_rationale node
-    persists pricing_analysis itself — no second write here."""
+    persists pricing_analysis itself — no second write here.
+
+    Uses the module-level ``_PRICING_GRAPH`` so the subgraph is compiled
+    exactly once per process. Streams progress updates into
+    ``pricing_subgraph_progress`` so the supervisor's notify_complete can
+    surface per-node progress without changing the webhook contract.
+    """
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
     try:
-        sub = pricing_graph.build_graph()
-        result = await sub.ainvoke({"product_id": state["product_id"]})
+        result, progress = await _stream_subgraph(
+            _PRICING_GRAPH,
+            {"product_id": state["product_id"]},
+            _PRICING_BUSINESS_NODES,
+        )
     except Exception as e:  # noqa: BLE001
         return {"_error": f"run_pricing: {e}"}
     return {
         "pricing": result.get("pricing") or {},
+        "pricing_subgraph_progress": progress,
         "agent_timings": {"run_pricing": round(time.perf_counter() - t0, 3)},
     }
 
 
 async def run_gtm(state: ProductIntelState) -> dict:
     """Invoke the GTM subgraph. The subgraph's draft_plan node persists
-    gtm_analysis itself — no second write here."""
+    gtm_analysis itself — no second write here.
+
+    Uses the module-level ``_GTM_GRAPH`` so the subgraph is compiled exactly
+    once per process. Streams progress updates into ``gtm_subgraph_progress``.
+    """
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
     try:
-        sub = gtm_graph.build_graph()
-        result = await sub.ainvoke({"product_id": state["product_id"]})
+        result, progress = await _stream_subgraph(
+            _GTM_GRAPH,
+            {"product_id": state["product_id"]},
+            _GTM_BUSINESS_NODES,
+        )
     except Exception as e:  # noqa: BLE001
         return {"_error": f"run_gtm: {e}"}
     return {
         "gtm": result.get("gtm") or {},
+        "gtm_subgraph_progress": progress,
         "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
     }
 

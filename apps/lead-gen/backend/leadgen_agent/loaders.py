@@ -376,6 +376,44 @@ async def _load_one(
         }
 
 
+async def fetch_url(url: str, *, timeout: float = 10.0) -> dict[str, Any]:
+    """Lightweight single-URL fetcher returning ``{url, status, markdown, html, error}``.
+
+    Used by the deep_competitor graph's specialist nodes when they need a single
+    page (pricing, integrations, changelog) rather than the full site crawl
+    that ``competitor_loader`` performs. Falls back gracefully on network errors
+    — callers should tolerate an empty ``markdown`` string.
+    """
+    started = time.perf_counter()
+    try:
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(timeout),
+            headers={"User-Agent": USER_AGENT},
+            follow_redirects=True,
+        ) as client:
+            resp = await client.get(url)
+    except httpx.HTTPError as exc:
+        return {
+            "url": url,
+            "status": 0,
+            "markdown": "",
+            "html": "",
+            "error": str(exc)[:240],
+            "elapsed": round(time.perf_counter() - started, 3),
+        }
+
+    html = resp.text if resp.status_code == 200 else ""
+    markdown = _fallback_clean(html)[:MAX_MARKDOWN_CHARS] if html else ""
+    return {
+        "url": url,
+        "status": resp.status_code,
+        "markdown": markdown,
+        "html": html,
+        "error": None if resp.status_code == 200 else f"http {resp.status_code}",
+        "elapsed": round(time.perf_counter() - started, 3),
+    }
+
+
 async def competitor_loader(state: CompetitorsTeamState) -> dict:
     """The single node that uses all five loaders via a per-URL router."""
     t0 = time.perf_counter()

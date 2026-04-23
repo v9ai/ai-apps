@@ -15,10 +15,13 @@ When the three webhook_ keys are absent from state (sync invocation via
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import json
 import logging
+import os
+import time
 from typing import Any
 
 import httpx
@@ -106,3 +109,110 @@ async def notify_error(state: dict[str, Any], err: str) -> dict[str, Any]:
     body = json.dumps({"status": "error", "error": err[:1000]}).encode()
     await _post(url, secret, app_run_id, body)
     return {}
+
+
+# ── Streaming progress updates ────────────────────────────────────────────
+#
+# Each graph node writes a lightweight JSON snapshot to
+# product_intel_runs.progress (migration 0063) on entry. Vercel polls
+# productIntelRun(id).progress from the browser, avoiding a direct LangGraph
+# call.
+#
+# Writes are fire-and-forget: a failed UPDATE must never crash a graph node,
+# so we log and swallow every error path below. The helper is async but the
+# DB work runs in a thread executor (psycopg v3 sync driver — same pattern as
+# the rest of the graph modules).
+
+
+def _progress_dsn() -> str | None:
+    dsn = (
+        os.environ.get("NEON_DATABASE_URL", "").strip()
+        or os.environ.get("DATABASE_URL", "").strip()
+    )
+    return dsn or None
+
+
+def _write_progress_sync(run_id: str, payload: dict[str, Any]) -> None:
+    """Blocking psycopg UPDATE — intended to be called via asyncio.to_thread."""
+    import psycopg  # local import so test paths that stub psycopg still work
+
+    dsn = _progress_dsn()
+    if not dsn:
+        return
+    try:
+        with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE product_intel_runs
+                    SET progress = %s::jsonb
+                    WHERE id = %s
+                    """,
+                    (json.dumps(payload), run_id),
+                )
+    except Exception as e:  # noqa: BLE001 — progress writes are best-effort
+        log.warning("progress update failed (non-fatal): %s", e)
+
+
+async def update_progress(
+    state: dict[str, Any],
+    *,
+    stage: str,
+    subgraph_node: str | None = None,
+    completed_stages: list[str] | None = None,
+) -> None:
+    """Persist a progress snapshot for the current run.
+
+    Parameters
+    ----------
+    state
+        Full graph state. ``app_run_id`` (set by ``startGraphRun``) is the
+        product_intel_runs PK; absent on sync /runs/wait calls, in which case
+        this helper no-ops.
+    stage
+        Human-readable node name (pass ``__name__`` / ``fn.__name__`` at the
+        top of each node).
+    subgraph_node
+        For the supervisor graph: the name of the currently executing
+        sub-subgraph node. Optional.
+    completed_stages
+        Ordered list of stages already finished. Optional — callers that
+        already maintain ``agent_timings`` typically derive it from keys.
+
+    The function never raises — DB failures are logged and swallowed.
+    """
+    run_id = state.get("app_run_id")
+    if not run_id:
+        return  # sync invocation — no run row to update
+
+    start_raw = state.get("_progress_started_at")
+    try:
+        start = float(start_raw) if start_raw is not None else None
+    except (TypeError, ValueError):
+        start = None
+    elapsed_ms: int | None = None
+    if start is not None:
+        elapsed_ms = int((time.time() - start) * 1000)
+
+    payload: dict[str, Any] = {"stage": stage}
+    if subgraph_node:
+        payload["subgraph_node"] = subgraph_node
+    if elapsed_ms is not None:
+        payload["elapsed_ms"] = elapsed_ms
+    if completed_stages:
+        payload["completed_stages"] = list(completed_stages)
+
+    try:
+        await asyncio.to_thread(_write_progress_sync, str(run_id), payload)
+    except Exception as e:  # noqa: BLE001 — belt-and-braces; never crash node
+        log.warning("update_progress dispatch failed (non-fatal): %s", e)
+
+
+def progress_start_marker() -> dict[str, Any]:
+    """Seed state returned from the first node so elapsed_ms is meaningful.
+
+    Use in the first node of each graph:
+
+        return {"_progress_started_at": time.time(), ...}
+    """
+    return {"_progress_started_at": time.time()}
