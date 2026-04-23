@@ -18,8 +18,11 @@ falls back to product profile only and notes the gap in the rationale.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 import os
+import random
 import time
 from typing import Annotated, Any
 
@@ -28,7 +31,6 @@ from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import (
-    ainvoke_json,
     ainvoke_json_with_telemetry,
     compute_totals,
     make_llm,
@@ -48,8 +50,66 @@ from .product_intel_schemas import (
 )
 from .state import PricingState
 
+log = logging.getLogger(__name__)
+
 _COMPETITOR_BRIEF_CHARS = 3500
 _ICP_BRIEF_CHARS = 2500
+
+# Retry budget for transient DeepSeek failures (rate limits, 5xx, socket blips).
+# Empirically DeepSeek's public API hits short outages a few times per week;
+# a 3-attempt bounded retry with jitter recovers most of these without changing
+# the "one exception → abort" invariant for genuinely malformed prompts
+# (ValidationError / JSONDecodeError are raised from parse paths after the
+# response returns, not from the HTTP call, so they surface on attempt 1).
+_MAX_LLM_ATTEMPTS = 3
+_RETRY_BASE_DELAY = 0.75  # seconds; doubles each attempt, jittered ±25%
+
+
+async def _ainvoke_json_with_retry(
+    llm: Any,
+    messages: list[dict[str, str]],
+    *,
+    provider: str | None = None,
+    node: str,
+) -> tuple[Any, dict[str, Any]]:
+    """Wrap ``ainvoke_json_with_telemetry`` with bounded retries + jitter.
+
+    Only retries on network/provider transients — once the response has landed
+    and we're parsing JSON, any error there is deterministic so re-calling
+    burns money. We detect "worth retrying" via a short string-match on the
+    exception chain; if the exception bubbles from ``_parse_json`` the caller
+    sees it on attempt 1.
+
+    The telemetry dict returned belongs to the *successful* attempt only;
+    failed attempts are logged but not charged to the node's cost ledger
+    (they never produced usable tokens anyway).
+    """
+    last_exc: Exception | None = None
+    for attempt in range(1, _MAX_LLM_ATTEMPTS + 1):
+        try:
+            return await ainvoke_json_with_telemetry(
+                llm, messages, provider=provider
+            )
+        except (json.JSONDecodeError, ValueError) as e:
+            # Parse errors: the response came back, it's just malformed.
+            # Retrying won't help — the prompt is the problem.
+            raise
+        except Exception as e:  # noqa: BLE001
+            last_exc = e
+            if attempt >= _MAX_LLM_ATTEMPTS:
+                break
+            delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
+            delay *= random.uniform(0.75, 1.25)
+            log.warning(
+                "pricing_graph.%s: transient LLM failure (attempt %d/%d): %s "
+                "— retrying in %.2fs",
+                node, attempt, _MAX_LLM_ATTEMPTS, e, delay,
+            )
+            await asyncio.sleep(delay)
+    # Exhausted — re-raise with attempt context so the error node has signal.
+    raise RuntimeError(
+        f"LLM failed after {_MAX_LLM_ATTEMPTS} attempts: {last_exc}"
+    ) from last_exc
 
 
 def _first_error(left: str | None, right: str | None) -> str | None:
@@ -267,7 +327,7 @@ async def benchmark_competitors(state: PricingState) -> dict:
 
     try:
         llm = make_llm(temperature=0.1, provider="deepseek")
-        result = await ainvoke_json(
+        result, tel = await _ainvoke_json_with_retry(
             llm,
             [
                 {
@@ -278,7 +338,9 @@ async def benchmark_competitors(state: PricingState) -> dict:
                         '{"category_summary":"1-2 sentence summary of how this category prices",'
                         '"price_anchors":["lowest concrete price seen","median","highest"],'
                         '"category_norms":["free_trial|no_free_trial","annual_discount|monthly_only","per_seat|per_usage|flat","pricing_opaque|pricing_public"]}. '
-                        "If any anchor cannot be inferred, say so explicitly in that slot."
+                        "If any anchor cannot be inferred, say so explicitly in that slot. "
+                        "Respond with ONLY the JSON object — no prose, no markdown fences, "
+                        "no preamble like 'Here is...'."
                     ),
                 },
                 {
@@ -290,6 +352,7 @@ async def benchmark_competitors(state: PricingState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="benchmark_competitors",
         )
     except Exception as e:  # noqa: BLE001
         return {"_error": f"benchmark_competitors: {e}"}
@@ -302,6 +365,9 @@ async def benchmark_competitors(state: PricingState) -> dict:
             "category_norms": [str(x)[:200] for x in (result.get("category_norms") or [])][:8],
         },
         "agent_timings": {"benchmark_competitors": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {
+            "telemetry": merge_node_telemetry(None, "benchmark_competitors", tel)
+        },
         "_completed_stages": ["benchmark_competitors"],
     }
 
@@ -325,7 +391,7 @@ async def choose_value_metric(state: PricingState) -> dict:
 
     try:
         llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
-        result = await ainvoke_json(
+        result, tel = await _ainvoke_json_with_retry(
             llm,
             [
                 {
@@ -337,7 +403,9 @@ async def choose_value_metric(state: PricingState) -> dict:
                         "'per verified lead', 'per closed deal', 'per active workspace'. "
                         "Avoid 'per API call' (punishes success) or 'per feature' (arbitrary). "
                         "Return strict JSON: "
-                        '{"recommended_metric":string,"alternatives":[string],"reasoning":"1-3 sentences"}.'
+                        '{"recommended_metric":string,"alternatives":[string],"reasoning":"1-3 sentences"}. '
+                        "Respond with ONLY the JSON object — no prose, no markdown fences, "
+                        "no preamble like 'Here is...'."
                     ),
                 },
                 {
@@ -349,6 +417,7 @@ async def choose_value_metric(state: PricingState) -> dict:
                 },
             ],
             provider="deepseek",
+            node="choose_value_metric",
         )
     except Exception as e:  # noqa: BLE001
         return {"_error": f"choose_value_metric: {e}"}
@@ -361,6 +430,9 @@ async def choose_value_metric(state: PricingState) -> dict:
             "reasoning": str(result.get("reasoning", ""))[:600],
         },
         "agent_timings": {"choose_value_metric": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {
+            "telemetry": merge_node_telemetry(None, "choose_value_metric", tel)
+        },
         "_completed_stages": ["choose_value_metric"],
     }
 

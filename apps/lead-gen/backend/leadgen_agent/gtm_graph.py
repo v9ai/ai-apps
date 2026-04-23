@@ -27,7 +27,12 @@ import psycopg
 from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn, _product_brief
-from .llm import ainvoke_json, make_llm
+from .llm import (
+    ainvoke_json_with_telemetry,
+    compute_totals,
+    make_llm,
+    merge_node_telemetry,
+)
 from .notify import (
     notify_complete,
     notify_error,
@@ -38,6 +43,7 @@ from .product_intel_schemas import (
     Channel,
     GTMStrategy,
     MessagingPillar,
+    Objection,
     OutreachTemplate,
     SalesPlaybook,
     product_intel_graph_meta,

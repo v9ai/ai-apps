@@ -526,33 +526,45 @@ async def rank_and_explain(state: dict) -> dict:
     rank_prompt = "\n".join(
         [
             "You are the SECOND-PASS ranker for a clinical bibliotherapist curation.",
-            "Given 10-14 candidate books already shortlisted for a specific parent/family,",
-            "choose the FINAL top 6 AND put them in an intentional reading order.",
+            "From 10-14 candidate books already shortlisted for a specific parent/family,",
+            "choose the FINAL 6 and assign each to one of three TIERS. The UI renders these as:",
+            "  • TIER 1 (Essential)   — directly synthesize the core research; read these FIRST",
+            "  • TIER 2 (Deep Dives)  — specific domains of depth (e.g. polyvagal, CPS, DBT skills)",
+            "  • TIER 3 (Foundational)— classic works for long-term grounding",
             "",
-            "Ordering principles (apply in this priority):",
-            "1. Start with what gives the parent the fastest calming-in-the-moment leverage (self-regulation / framing / neuroscience), BEFORE action-heavy technique books.",
-            "2. Then move to active parenting frameworks (Collaborative Problem Solving / PMT / Emotion Coaching) matched to the specific profile.",
-            "3. Then condition-specific or script-level tools that slot into those frameworks.",
-            "4. Close with a sustainability / self-compassion / long-horizon book so the parent doesn't burn out.",
-            "5. Prefer diversity of facets over stacking same-type books.",
-            "6. Demote books with overlapping content to the one already ranked higher.",
+            "Tier allocation:",
+            "  • Tier 1: 2-3 books (the backbone of the reading plan)",
+            "  • Tier 2: 1-2 books",
+            "  • Tier 3: 1-2 books",
+            "  • Total = 6",
             "",
-            "## Original context (do NOT re-summarize; use it to ground your rationale)",
+            "Ranking principles (apply in this priority):",
+            "1. TIER 1 must give the parent the fastest leverage for the presenting profile (calming-in-the-moment, self-regulation, primary framework).",
+            "2. TIER 2 deepens specific facets that the profile or research makes salient (don't pick a Tier 2 book just because it's good — it has to earn depth over Tier 1).",
+            "3. TIER 3 provides long-horizon / sustainability / classics (self-compassion, identity, parent burnout).",
+            "4. Within each tier, order books by immediate usefulness (book 1 of Tier 1 = read FIRST).",
+            "5. Prefer diversity of facets; demote books whose content substantially overlaps one already chosen.",
+            "",
+            "## Original context (do NOT re-summarize; ground your rationale in it)",
             context_head,
             "",
             "## Candidate shortlist",
             digest,
             "",
             "## Your task",
-            "Select exactly 6 candidates and return them in the intentional reading order (position 1 = read first).",
+            "Select exactly 6 candidates, assign each a tier (1/2/3) and a within-tier position, and produce:",
+            "  • a short tag (ONE word, no spaces, no period inside — e.g. 'Framework', 'Neuroscience', 'Self-regulation', 'Classic')",
+            "  • a 2-sentence rankRationale tying THIS book to the profile + research (not generic)",
+            "  • an overall orderingStrategy narrating the arc (why this sequence for this parent)",
             "",
-            'Respond with a JSON object of the shape:',
+            "Respond with a JSON object of EXACTLY this shape:",
             '{',
-            '  "orderingStrategy": "<2-4 sentence overall arc — why THIS order for THIS parent. Must reference specifics from the profile (e.g. Bogdan, a teacher observation, a specific behavior).>",',
+            '  "orderingStrategy": "<2-4 sentences — the overall reading arc. Reference specifics from the profile.>",',
             '  "ranked": [',
-            '    { "candidate_id": "C3", "rank": 1, "rankRationale": "<2 sentences — why this book is FIRST for this parent. Cite something concrete from the profile or research>" },',
-            '    { "candidate_id": "C7", "rank": 2, "rankRationale": "..." },',
-            '    ... 6 entries total ...',
+            '    { "candidate_id": "C3", "tier": 1, "position": 1, "tag": "Neuroscience", "rankRationale": "<2 sentences — why this book at this tier/position, grounded in profile + research>" },',
+            '    { "candidate_id": "C7", "tier": 1, "position": 2, "tag": "Framework",    "rankRationale": "..." },',
+            '    { "candidate_id": "C5", "tier": 2, "position": 1, "tag": "Polyvagal",    "rankRationale": "..." },',
+            '    ... exactly 6 entries total, tier counts 2-3/1-2/1-2 summing to 6 ...',
             '  ]',
             '}',
         ]
@@ -596,13 +608,39 @@ async def rank_and_explain(state: dict) -> dict:
     # Build candidate lookup by "C{n}"
     cand_by_id = {f"C{i + 1}": c for i, c in enumerate(candidates)}
 
+    def _sanitize_tag(raw: Any) -> str:
+        """Short single word (no spaces, no '.') — page regex strips up to first '.'."""
+        tag = str(raw or "Recommended").strip()
+        tag = tag.replace(".", "").replace(" ", "-")
+        return tag or "Recommended"
+
+    # Sort ranked entries by (tier, position) so insertion order matches reading order.
+    def _sort_key(e: dict) -> tuple[int, int]:
+        try:
+            t = int(e.get("tier") or 3)
+        except (TypeError, ValueError):
+            t = 3
+        try:
+            p = int(e.get("position") or 99)
+        except (TypeError, ValueError):
+            p = 99
+        return (t, p)
+
+    valid_entries = [e for e in ranked if isinstance(e, dict)]
+    valid_entries.sort(key=_sort_key)
+
     ranked_books: list[dict] = []
     seen_titles: set[str] = set()
-    for entry in ranked[:6]:
-        if not isinstance(entry, dict):
-            continue
+    for entry in valid_entries[:6]:
         cid = str(entry.get("candidate_id") or "").strip()
-        rank = entry.get("rank")
+        tier_raw = entry.get("tier")
+        try:
+            tier = int(tier_raw) if tier_raw is not None else 3
+        except (TypeError, ValueError):
+            tier = 3
+        if tier not in (1, 2, 3):
+            tier = 3
+        tag = _sanitize_tag(entry.get("tag"))
         rationale = str(entry.get("rankRationale") or "").strip()
         cand = cand_by_id.get(cid)
         if not cand:
@@ -611,11 +649,10 @@ async def rank_and_explain(state: dict) -> dict:
         if title_key in seen_titles:
             continue
         seen_titles.add(title_key)
-        merged_why = (
-            f"[#{rank} — {rationale}]\n\n{cand['why_recommended']}"
-            if rationale
-            else cand["why_recommended"]
-        )
+        # Format the UI expects: "TIER N — <tag>. <rationale>\n\n<original why>"
+        # /goals/[id]/books/page.tsx uses /^TIER \d —\s*\S+\.\s*/ to strip the prefix.
+        prefix = f"TIER {tier} — {tag}. {rationale}".rstrip()
+        merged_why = f"{prefix}\n\n{cand['why_recommended']}" if rationale else f"TIER {tier} — {tag}. {cand['why_recommended']}"
         ranked_books.append({**cand, "why_recommended": merged_why})
 
     if len(ranked_books) < 4:
