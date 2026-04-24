@@ -1,24 +1,23 @@
 // Cloudflare Worker fronting Workers AI + Mistral LoRA for lead-gen email generation.
 //
-// DEPLOY STEPS (one-time):
-//   1. pnpm install
-//   2. wrangler secret put EMAIL_LLM_SHARED_SECRET   # random 32+ char token
-//   3. (optional, after LoRA upload) wrangler secret put FINETUNE_ID   # UUID from `wrangler ai finetune list`
-//   4. pnpm deploy
+// DEPLOY:
+//   pnpm install
+//   wrangler secret put EMAIL_LLM_SHARED_SECRET     # random 32+ char token
+//   pnpm deploy
+//   # optional, after LoRA upload:
+//   wrangler secret put FINETUNE_ID                 # UUID from `wrangler ai finetune list`
 //
-// UPLOAD LORA (one-time, after training via ../mlx-training/peft/train_modal.py):
-//   cd ../../mlx-training/peft/out/adapter/final/cf-upload
-//   npx wrangler ai finetune create @cf/mistral/mistral-7b-instruct-v0.2-lora email-lora-v1 .
-//   (record the returned UUID, set it as FINETUNE_ID in step 3 above)
+// UPLOAD LORA (after training produces ../mlx-training/peft/out/adapter/final/cf-upload/):
+//   npx wrangler ai finetune create \
+//     @cf/mistral/mistral-7b-instruct-v0.2-lora \
+//     email-lora-v1 \
+//     ../../mlx-training/peft/out/adapter/final/cf-upload
 //
 // BACKEND SWAP (flip backend/wrangler.jsonc to use this Worker as its LLM):
-//   In apps/lead-gen/backend/wrangler.jsonc `vars`, change:
-//     "LLM_BASE_URL": "https://lead-gen-email-llm.<SUBDOMAIN>.workers.dev/v1"
-//     "LLM_MODEL":    "mistral-email-lora"
-//   And:
-//     wrangler secret put LLM_API_KEY   # use the same value as EMAIL_LLM_SHARED_SECRET
-//   Do NOT apply the backend swap until this Worker is deployed + LoRA uploaded,
-//   or every LLM call in the LangGraph backend will 401 or 404.
+//   vars.LLM_BASE_URL -> "https://lead-gen-email-llm.<SUBDOMAIN>.workers.dev/v1"
+//   vars.LLM_MODEL    -> "mistral-email-lora"
+//   secret LLM_API_KEY = same value as EMAIL_LLM_SHARED_SECRET on this Worker
+//   Do not flip until this Worker is deployed or every backend LLM call will 401/404.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "lead-gen-email-llm",

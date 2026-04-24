@@ -800,7 +800,7 @@ function TechFoundations() {
 
 function MetricsGrid() {
   return (
-    <Card mb="5" style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+    <Card mb="5" style={cardSurface}>
       <Flex align="center" gap="2" mb="3">
         <BarChart3 size={13} style={{ color: "var(--gray-9)" }} />
         <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.07em" }}>
@@ -809,7 +809,7 @@ function MetricsGrid() {
       </Flex>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
         {stats.map((s) => (
-          <Card key={s.label} style={{ background: "var(--gray-1)", border: "1px solid var(--gray-a4)" }}>
+          <Card key={s.label} style={innerCardSurface}>
             <Text size="6" weight="bold" style={{ color: "var(--violet-9)", fontFamily: "var(--code-font-family, monospace)", fontVariantNumeric: "tabular-nums" }}>
               {s.number}
             </Text>
@@ -929,16 +929,45 @@ export function ArchitectureClient() {
           {stages.map((stage, i) => (
             <div key={stage.graphName} id={`stage-${stage.graphName}`} className="arch-stage">
               <div>
-                <Flex align="baseline" gap="3" mb="2">
-                  <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
+                <Flex align="center" gap="3" mb="2" wrap="wrap">
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 28,
+                      height: 28,
+                      borderRadius: 6,
+                      background: "var(--violet-a3)",
+                      color: "var(--violet-11)",
+                      fontWeight: 700,
+                      fontVariantNumeric: "tabular-nums",
+                      fontSize: 13,
+                      flexShrink: 0,
+                      fontFamily: "var(--code-font-family, monospace)",
+                    }}
+                  >
                     {i + 1}
-                  </Badge>
+                  </span>
                   <Heading size="4" style={{ fontFamily: "var(--code-font-family, monospace)" }}>
                     {stage.graphName}
                   </Heading>
                   <Badge variant="soft" color="violet" size="1">{stage.pattern}</Badge>
                 </Flex>
-                <Text size="2" color="gray" mb="3" as="p">{stage.description}</Text>
+                <Text
+                  size="2"
+                  color="gray"
+                  mb="3"
+                  as="p"
+                  style={{
+                    padding: "12px 14px",
+                    background: "var(--gray-1)",
+                    borderLeft: "2px solid var(--gray-a6)",
+                    borderRadius: "0 6px 6px 0",
+                  }}
+                >
+                  {stage.description}
+                </Text>
                 <StageFlow
                   nodes={stage.nodes}
                   edges={stage.edges}
