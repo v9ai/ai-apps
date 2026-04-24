@@ -1,0 +1,31 @@
+{
+  "name": "@ai-apps/company-intel",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "files": [
+    "src"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./schema": {
+      "types": "./src/schema.ts",
+      "default": "./src/schema.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "drizzle-orm": ">=0.41.0"
+  },
+  "devDependencies": {
+    "@ai-apps/typescript-config": "workspace:*",
+    "@types/node": "^22",
+    "drizzle-orm": "^0.45.1",
+    "typescript": "5.9.3"
+  }
+}
