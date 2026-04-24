@@ -239,6 +239,74 @@ async def _run_story(args: argparse.Namespace) -> None:
     print(f"📄 File: {out_path}")
 
 
+async def _run_bogdan_discussion(args: argparse.Namespace) -> None:
+    """Invoke the bogdan_discussion LangGraph in-process (no LangGraph server required)."""
+    import uuid
+
+    import psycopg
+
+    from .bogdan_discussion_graph import graph as bogdan_graph
+
+    conn_str = os.environ.get("NEON_DATABASE_URL", "")
+    if not conn_str:
+        print("Error: NEON_DATABASE_URL not set", file=sys.stderr)
+        sys.exit(1)
+
+    family_member_id = args.family_member_id
+    if family_member_id is None:
+        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT id FROM family_members "
+                    "WHERE user_id = %s AND LOWER(first_name) = LOWER(%s) LIMIT 1",
+                    (args.user_email, args.name),
+                )
+                row = await cur.fetchone()
+                if not row:
+                    print(
+                        f"❌ No family member named '{args.name}' for {args.user_email}",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+                family_member_id = row[0]
+
+    job_id = args.job_id or str(uuid.uuid4())
+    if args.create_job:
+        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO generation_jobs (id, user_id, type, status, progress) "
+                    "VALUES (%s, %s, 'BOGDAN_DISCUSSION', 'RUNNING', 0)",
+                    (job_id, args.user_email),
+                )
+        print(f"Created generation_jobs row: {job_id}", file=sys.stderr)
+
+    print(
+        f"Invoking bogdan_discussion graph: family_member_id={family_member_id} "
+        f"user={args.user_email} is_ro={args.is_ro} job_id={job_id}",
+        file=sys.stderr,
+    )
+
+    state = {
+        "family_member_id": family_member_id,
+        "user_email": args.user_email,
+        "job_id": job_id if args.create_job else "",
+        "is_ro": args.is_ro,
+    }
+    result = await bogdan_graph.ainvoke(state, config={"recursion_limit": 25})
+
+    if result.get("error"):
+        print(f"\n❌ {result['error']}", file=sys.stderr)
+        sys.exit(1)
+
+    guide = result.get("guide") or {}
+    guide_id = result.get("guide_id")
+    print(f"\n✅ Persisted bogdan_discussion_guides row id={guide_id}")
+
+    if args.stdout:
+        print(json.dumps(guide, ensure_ascii=False, indent=2))
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="research-agent",
@@ -307,6 +375,33 @@ def _build_parser() -> argparse.ArgumentParser:
     story_p.add_argument("--language", default="Romanian", help="Output language (default: Romanian)")
     story_p.add_argument("--minutes", type=int, default=10, help="Target duration in minutes (default: 10)")
 
+    # bogdan-discussion
+    bd_p = sub.add_parser(
+        "bogdan-discussion",
+        help="Generate a parent discussion guide for Bogdan via the bogdan_discussion graph",
+    )
+    bd_p.add_argument("--user-email", required=True, help="Owner email (family_members.user_id)")
+    bd_p.add_argument("--name", default="Bogdan", help='Family member first name (default: "Bogdan")')
+    bd_p.add_argument(
+        "--family-member-id",
+        type=int,
+        default=None,
+        help="Override: use this family_member_id directly instead of looking up by name",
+    )
+    bd_p.add_argument(
+        "--is-ro",
+        action="store_true",
+        default=True,
+        help="Generate guide in Romanian (default: true)",
+    )
+    bd_p.add_argument("--no-ro", dest="is_ro", action="store_false", help="Generate in English")
+    bd_p.add_argument(
+        "--create-job",
+        action="store_true",
+        help="Create a generation_jobs row and update its status (matches the web flow)",
+    )
+    bd_p.add_argument("--job-id", default=None, help="Reuse an existing job id (with --create-job off)")
+
     return parser
 
 
@@ -321,6 +416,8 @@ def main() -> None:
         asyncio.run(_run_books(args))
     elif args.subcommand == "research-goal":
         asyncio.run(_run_research_goal(args))
+    elif args.subcommand == "bogdan-discussion":
+        asyncio.run(_run_bogdan_discussion(args))
     else:
         asyncio.run(_run_research(args))
 

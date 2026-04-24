@@ -1,5 +1,7 @@
 -- Therapeutic games / exercises. One table with a type discriminator, JSON content.
 -- Types: CBT_REFRAME, MINDFULNESS, JOURNAL_PROMPT. Source: SEED | USER | AI.
+-- Seed content is designed for kids ~6-8 (evidence-based: Turtle Technique,
+-- Worry Bug externalization, glitter-jar visualization, feelings weather).
 
 BEGIN;
 
@@ -49,46 +51,58 @@ CREATE INDEX IF NOT EXISTS idx_game_completions_user
   ON game_completions (user_id, completed_at DESC);
 
 -- Seed games (shared across all users via user_id = '__seed__'; listGames unions them in).
+-- Designed for ~7-year-olds: concrete metaphors, playful cues, short sessions.
+
 INSERT INTO games (user_id, type, title, description, content, language, estimated_minutes, source)
 VALUES
   (
     '__seed__',
     'MINDFULNESS',
-    'Box breathing (4-4-4-4)',
-    'A grounding breath practice used by Navy SEALs and therapists alike. Four minutes.',
-    '{"steps":[{"durationSeconds":20,"instruction":"Settle in. Uncross your legs, relax your shoulders.","cue":"Settle"},{"durationSeconds":4,"instruction":"Inhale slowly through your nose.","cue":"Inhale"},{"durationSeconds":4,"instruction":"Hold.","cue":"Hold"},{"durationSeconds":4,"instruction":"Exhale slowly through your mouth.","cue":"Exhale"},{"durationSeconds":4,"instruction":"Hold empty.","cue":"Hold"},{"durationSeconds":4,"instruction":"Inhale.","cue":"Inhale"},{"durationSeconds":4,"instruction":"Hold.","cue":"Hold"},{"durationSeconds":4,"instruction":"Exhale.","cue":"Exhale"},{"durationSeconds":4,"instruction":"Hold.","cue":"Hold"},{"durationSeconds":4,"instruction":"Inhale.","cue":"Inhale"},{"durationSeconds":4,"instruction":"Hold.","cue":"Hold"},{"durationSeconds":4,"instruction":"Exhale.","cue":"Exhale"},{"durationSeconds":4,"instruction":"Hold.","cue":"Hold"},{"durationSeconds":30,"instruction":"Notice how you feel now compared to when you started.","cue":"Notice"}]}',
+    'Dragon Breath',
+    'Breathe like a dragon — fill up with fire, hold it strong, blow it out slow.',
+    '{"steps":[{"durationSeconds":10,"instruction":"Stand tall like a dragon. Feet on the ground, shoulders soft.","cue":"Stand tall"},{"durationSeconds":4,"instruction":"Breathe in through your nose… fill your belly with fire.","cue":"Fill up"},{"durationSeconds":4,"instruction":"Hold your fire strong.","cue":"Hold"},{"durationSeconds":4,"instruction":"Blow it out slow — a gentle dragon breath.","cue":"Blow"},{"durationSeconds":4,"instruction":"Rest. Feel your chest.","cue":"Rest"},{"durationSeconds":4,"instruction":"Fill up with fire.","cue":"Fill up"},{"durationSeconds":4,"instruction":"Hold.","cue":"Hold"},{"durationSeconds":4,"instruction":"Blow it out slow.","cue":"Blow"},{"durationSeconds":4,"instruction":"Rest.","cue":"Rest"},{"durationSeconds":4,"instruction":"Last time — fill up.","cue":"Fill up"},{"durationSeconds":4,"instruction":"Hold.","cue":"Hold"},{"durationSeconds":4,"instruction":"Blow it all out.","cue":"Blow"},{"durationSeconds":15,"instruction":"Notice — does your body feel a little softer now?","cue":"Notice"}]}',
     'en',
-    4,
+    2,
     'SEED'
   ),
   (
     '__seed__',
     'MINDFULNESS',
-    '5-4-3-2-1 grounding',
-    'A sensory check-in for anxious moments. Name what you can see, hear, feel, smell, taste.',
-    '{"steps":[{"durationSeconds":20,"instruction":"Pause. Feet on the floor.","cue":"Arrive"},{"durationSeconds":40,"instruction":"Look around. Name 5 things you can see.","cue":"See 5"},{"durationSeconds":40,"instruction":"Name 4 things you can feel — the chair, your breath, fabric, temperature.","cue":"Feel 4"},{"durationSeconds":40,"instruction":"Name 3 things you can hear.","cue":"Hear 3"},{"durationSeconds":40,"instruction":"Name 2 things you can smell (or 2 smells you like).","cue":"Smell 2"},{"durationSeconds":40,"instruction":"Name 1 thing you can taste (or 1 taste you enjoy).","cue":"Taste 1"},{"durationSeconds":20,"instruction":"Take one slow breath. You''re here.","cue":"Return"}]}',
+    'Turtle Shell',
+    'When feelings feel too big — tuck in like a turtle, breathe inside your shell, come out when you''re ready.',
+    '{"steps":[{"durationSeconds":15,"instruction":"Something feels really big right now. That''s okay.","cue":"It''s okay"},{"durationSeconds":15,"instruction":"Curl in tight, like a turtle in its shell. Arms tucked, chin down.","cue":"Tuck in"},{"durationSeconds":8,"instruction":"Breathe in slowly inside your shell.","cue":"Breathe in"},{"durationSeconds":8,"instruction":"Breathe out even slower.","cue":"Breathe out"},{"durationSeconds":8,"instruction":"Breathe in.","cue":"In"},{"durationSeconds":8,"instruction":"Breathe out.","cue":"Out"},{"durationSeconds":8,"instruction":"Breathe in.","cue":"In"},{"durationSeconds":8,"instruction":"Breathe out.","cue":"Out"},{"durationSeconds":15,"instruction":"What color is your shell right now? Picture it.","cue":"Imagine"},{"durationSeconds":10,"instruction":"Slowly… peek your eyes out.","cue":"Peek"},{"durationSeconds":10,"instruction":"Now your head, nice and slow.","cue":"Come out"},{"durationSeconds":15,"instruction":"Shake your body gently. Look around. You''re safe.","cue":"Safe"}]}',
     'en',
-    4,
+    3,
+    'SEED'
+  ),
+  (
+    '__seed__',
+    'MINDFULNESS',
+    'Calm Down Jar',
+    'Imagine a jar of glitter. Shake it wild, then watch the glitter settle — your mind can settle too.',
+    '{"steps":[{"durationSeconds":10,"instruction":"Sit comfortably. Imagine a jar — any shape or color you like.","cue":"Imagine"},{"durationSeconds":10,"instruction":"Fill it with glitter. Lots of swirly, shiny glitter.","cue":"Fill"},{"durationSeconds":15,"instruction":"Shake the jar hard. Feel how wild the glitter is — just like busy thoughts.","cue":"Shake"},{"durationSeconds":20,"instruction":"Now hold it still. Just watch.","cue":"Watch"},{"durationSeconds":25,"instruction":"The glitter is slowing down… piece by piece.","cue":"Settle"},{"durationSeconds":25,"instruction":"Notice the pieces landing at the bottom.","cue":"Settle"},{"durationSeconds":15,"instruction":"The jar is clear now. You can see through it.","cue":"Clear"},{"durationSeconds":10,"instruction":"Your mind can settle like that too. Well done.","cue":"Rest"}]}',
+    'en',
+    2,
     'SEED'
   ),
   (
     '__seed__',
     'CBT_REFRAME',
-    'Catch the distortion',
-    'A classic CBT exercise: notice the automatic thought, name the distortion, reframe it.',
-    '{"steps":[{"kind":"situation","prompt":"Describe the situation briefly. What happened, where, when?"},{"kind":"thought","prompt":"What went through your mind? Write the exact automatic thought."},{"kind":"distortion","prompt":"Which distortion fits best?","options":["All-or-nothing thinking","Catastrophizing","Mind reading","Fortune telling","Personalization","Should statements","Emotional reasoning","Labeling","Discounting the positive","Mental filter"]},{"kind":"reframe","prompt":"Write a more balanced, evidence-based thought. What would you tell a friend in this situation?"}]}',
+    'Catch the Worry Bug',
+    'Name the trick the Worry Bug is playing — then answer with your Brave Voice.',
+    '{"steps":[{"kind":"situation","prompt":"What happened that made you feel worried? Tell it in one or two sentences."},{"kind":"thought","prompt":"What did the Worry Bug whisper in your ear?"},{"kind":"distortion","prompt":"Which trick was the Worry Bug using?","options":["Monster Maker — makes tiny things feel huge","Crystal Ball — pretends to know the future","Mean Judge — calls you bad names","Always-Never — says things will always or never happen"]},{"kind":"reframe","prompt":"What would your Brave Voice say instead? Your Brave Voice tells the truth and is kind."}]}',
     'en',
-    6,
+    5,
     'SEED'
   ),
   (
     '__seed__',
     'JOURNAL_PROMPT',
-    'Evening reflection',
-    'Three prompts for the end of the day. Saves to your notes.',
-    '{"prompts":["What went better than expected today?","What drained you, and what would you do differently?","One small thing you''re grateful for right now."],"writeToNote":true}',
+    'My Feelings Weather',
+    'Describe today as weather — sunny, cloudy, stormy, or calm — and notice what helps the weather change.',
+    '{"prompts":["What was the weather inside you today? (sunny, cloudy, rainy, stormy, or foggy?)","What made that weather happen?","Was there a moment when the weather got sunnier? What helped?","What weather do you hope for tomorrow?"],"writeToNote":true}',
     'en',
-    8,
+    6,
     'SEED'
   );
 
