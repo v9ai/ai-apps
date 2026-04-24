@@ -99,7 +99,9 @@ async function handleChatCompletions(req: Request, env: Env): Promise<Response> 
     return errJson("streaming is not supported by this endpoint", 400);
   }
 
-  const aiInput: AiTextGenerationInput = {
+  // Workers AI accepts a `lora` field (finetune id or name) that @cloudflare/workers-types
+  // does not yet declare — cast to a loosened shape.
+  const aiInput: Record<string, unknown> = {
     messages: body.messages,
     raw: true,
     max_tokens: body.max_tokens ?? DEFAULT_MAX_TOKENS,
@@ -109,17 +111,22 @@ async function handleChatCompletions(req: Request, env: Env): Promise<Response> 
   if (body.top_p !== undefined) aiInput.top_p = body.top_p;
   if (env.FINETUNE_ID) aiInput.lora = env.FINETUNE_ID;
 
-  let aiResp: AiTextGenerationOutput;
+  type RunResp = { response?: string; usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } };
+  let aiResp: RunResp;
   try {
-    aiResp = await env.AI.run(env.MODEL_NAME as BaseAiTextGenerationModels, aiInput);
+    // Model slug + LoRA input are not in the generated type catalog; the
+    // runtime accepts strings at this binding.
+    aiResp = (await (env.AI.run as unknown as (m: string, i: unknown) => Promise<RunResp>)(
+      env.MODEL_NAME,
+      aiInput,
+    ));
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return errJson(`workers-ai error: ${msg}`, 502, "api_error");
   }
 
-  // Non-streaming Workers AI text-gen returns { response: string, usage?: {...} }.
-  const completion = (aiResp as { response?: string }).response ?? "";
-  const usage = (aiResp as { usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } }).usage;
+  const completion = aiResp.response ?? "";
+  const usage = aiResp.usage;
 
   return json({
     id: newCompletionId(),

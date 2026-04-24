@@ -617,27 +617,43 @@ function TechnicalDetailSection() {
 
           if (detail.type === "code" && detail.code) {
             return (
-              <Card key={detail.heading} style={{ background: "var(--gray-2)", borderLeft: "3px solid var(--green-9)" }}>
+              <Card
+                key={detail.heading}
+                style={{
+                  ...cardSurface,
+                  borderLeft: "3px solid var(--green-9)",
+                }}
+              >
                 <Heading size="3" mb="1">{detail.heading}</Heading>
                 <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
-                <pre style={{
-                  margin: 0, padding: 14, borderRadius: 6,
-                  background: "var(--gray-1)", border: "1px solid var(--green-a4)",
-                  fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
-                  color: "var(--gray-12)", overflow: "auto", lineHeight: 1.6,
-                }}>{detail.code}</pre>
+                <pre
+                  className="arch-code-block"
+                  style={{
+                    margin: 0,
+                    padding: 14,
+                    borderRadius: 8,
+                    background: "var(--gray-1)",
+                    border: "1px solid var(--gray-a4)",
+                    borderLeft: "3px solid var(--green-a8)",
+                    fontSize: 12,
+                    fontFamily: "var(--code-font-family, monospace)",
+                    color: "var(--gray-12)",
+                    overflow: "auto",
+                    lineHeight: 1.6,
+                  }}
+                >{detail.code}</pre>
               </Card>
             );
           }
 
           if (detail.type === "card-grid" && detail.items) {
             return (
-              <Card key={detail.heading} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+              <Card key={detail.heading} style={cardSurface}>
                 <Heading size="3" mb="1">{detail.heading}</Heading>
                 <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
                   {detail.items.map((item) => (
-                    <Card key={item.label} style={{ background: "var(--gray-1)", border: "1px solid var(--gray-a4)" }}>
+                    <Card key={item.label} style={innerCardSurface}>
                       <Text size="2" weight="medium" style={{ color: "var(--amber-9)" }}>{item.label}</Text>
                       <Text size="2" color="gray" as="p" mt="1">{item.value}</Text>
                     </Card>
@@ -660,7 +676,7 @@ const sectionColors = ["violet", "green", "purple", "red", "amber", "blue", "cya
 
 function DeepDive() {
   return (
-    <div>
+    <div className="arch-deepdive">
       <Flex align="center" gap="2" mb="3">
         <Brain size={16} style={{ color: "var(--violet-9)" }} />
         <Heading size="5">Deep Dive</Heading>
@@ -669,14 +685,18 @@ function DeepDive() {
         {extraSections.map((section, i) => {
           const color = sectionColors[i % sectionColors.length];
           return (
-            <details key={section.heading} style={{ borderRadius: 8, overflow: "hidden" }}>
+            <details
+              key={section.heading}
+              className={`sec-${color}`}
+              style={{ borderRadius: 12, overflow: "hidden" }}
+            >
               <summary
                 style={{
                   padding: "10px 16px",
                   background: "var(--gray-2)",
                   borderLeft: `3px solid var(--${color}-9)`,
                   border: "1px solid var(--gray-a4)",
-                  borderRadius: 8,
+                  borderRadius: 12,
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -686,6 +706,7 @@ function DeepDive() {
                   fontWeight: 600,
                   color: "var(--gray-12)",
                   fontFamily: "var(--default-font-family, system-ui)",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.08)",
                 }}
               >
                 <span style={{
@@ -703,25 +724,39 @@ function DeepDive() {
                   }}>code</span>
                 )}
               </summary>
-              <div style={{
-                padding: "12px 16px 16px",
-                background: "var(--gray-2)",
-                borderLeft: `3px solid var(--${color}-9)`,
-                borderRight: "1px solid var(--gray-a4)",
-                borderBottom: "1px solid var(--gray-a4)",
-                borderRadius: "0 0 8px 8px",
-                marginTop: -1,
-              }}>
+              <div
+                className="arch-deepdive-body"
+                style={{
+                  padding: "12px 16px 16px",
+                  background: "var(--gray-2)",
+                  borderLeft: `3px solid var(--${color}-9)`,
+                  borderRight: "1px solid var(--gray-a4)",
+                  borderBottom: "1px solid var(--gray-a4)",
+                  borderRadius: "0 0 12px 12px",
+                  marginTop: -1,
+                  transition: "border-left-color 180ms ease",
+                }}
+              >
                 <Text size="2" color="gray" as="p" style={{ lineHeight: 1.7, marginBottom: section.codeBlock ? 12 : 0 }}>
                   {section.content}
                 </Text>
                 {section.codeBlock && (
-                  <pre style={{
-                    margin: 0, padding: 14, borderRadius: 6,
-                    background: "var(--gray-1)", border: "1px solid var(--gray-a4)",
-                    fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
-                    color: "var(--gray-12)", overflow: "auto", lineHeight: 1.6,
-                  }}>{section.codeBlock}</pre>
+                  <pre
+                    className="arch-code-block"
+                    style={{
+                      margin: 0,
+                      padding: 14,
+                      borderRadius: 8,
+                      background: "var(--gray-1)",
+                      border: "1px solid var(--gray-a4)",
+                      borderLeft: "3px solid var(--green-a8)",
+                      fontSize: 12,
+                      fontFamily: "var(--code-font-family, monospace)",
+                      color: "var(--gray-12)",
+                      overflow: "auto",
+                      lineHeight: 1.6,
+                    }}
+                  >{section.codeBlock}</pre>
                 )}
               </div>
             </details>
@@ -743,7 +778,7 @@ function TechFoundations() {
       </Flex>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
         {papers.map((paper) => (
-          <Card key={paper.slug} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+          <Card key={paper.slug} style={cardSurface}>
             <Flex align="center" gap="2" mb="2">
               <Badge variant="soft" size="1" style={{ background: `color-mix(in srgb, ${paper.categoryColor} 20%, transparent)`, color: paper.categoryColor }}>
                 {paper.category}
