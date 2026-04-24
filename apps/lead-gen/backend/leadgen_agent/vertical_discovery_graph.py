@@ -4,8 +4,21 @@ Generic replacement for the old ``ingestible_discovery_graph``. Takes a
 ``vertical_slug`` via state, looks up the ``ProductVertical`` in the
 registry, and runs its ``github_code_queries`` against ``GET /search/code``.
 Filters against ``github_owner_deny`` + ``github_filter_out`` from the same
-registry. Returns surviving hits ready for Stage 2 (org-to-company
-resolution) to consume.
+registry.
+
+Pipeline:
+
+    fetch_code_search → filter_hits → resolve_orgs →
+      dedupe_existing → persist_candidates → build_summary → END
+
+- Stage 1 (fetch + filter): `GET /search/code` paginated + regex filter.
+- Stage 2 (resolve + dedupe + persist): `GET /orgs/{login}` for each unique
+  owner, drop rows already in `companies`, INSERT survivors with
+  `tags=['discovery-candidate', '<vertical_slug>']`. Seeds one
+  ``company_product_signals`` row per new company with the stack_label
+  pre-populated — the enrichment graph will fill in the rest.
+- Stage 3 (future): commit-message scanner to flip signal keys on existing
+  rows.
 
 Adding a new product's discovery pass is a one-file change in
 ``verticals/<slug>.py`` — no change needed here.
@@ -15,19 +28,24 @@ Rate-limit notes (GitHub REST):
   We respect it with a sleep between pages. Unlike other REST endpoints,
   code-search requires auth — unauthenticated requests return 401.
   ``GITHUB_TOKEN`` is required.
+- ``/orgs/{login}`` shares the core 5000 req/hr authenticated bucket — cheap.
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import re
 import time
 from typing import Annotated, Any, TypedDict
+from urllib.parse import urlparse
 
 import httpx
+import psycopg
 from langgraph.graph import END, START, StateGraph
 
+from .deep_icp_graph import _dsn
 from .verticals import ProductVertical, get_vertical
 
 
@@ -47,12 +65,19 @@ class VerticalDiscoveryState(TypedDict, total=False):
     max_pages_per_query: int          # default 3
     max_total_results: int            # default 1000
     queries: list[str] | None         # optional override of vertical.github_code_queries
+    dry_run: bool                     # if true, resolve + dedupe but do NOT INSERT
 
-    # Outputs
+    # Outputs — Stage 1
     raw_hits: Annotated[list[dict], _extend]
     filtered_hits: Annotated[list[dict], _extend]
-    summary: dict[str, Any]
 
+    # Outputs — Stage 2
+    resolved_orgs: list[dict]         # one entry per unique owner, post /orgs/{login}
+    new_candidates: list[dict]        # post-dedupe — rows that will be INSERTed
+    inserted_company_ids: list[int]
+    skipped_existing_count: int
+
+    summary: dict[str, Any]
     _error: Annotated[str, _first_error]
     agent_timings: dict[str, float]
 
@@ -264,10 +289,350 @@ async def filter_hits(state: VerticalDiscoveryState) -> dict:
     }
 
 
+def _canonicalize_domain(raw: str) -> str:
+    """Normalize a URL/blog string into a canonical domain.
+
+    Mirrors the convention used in ``company_discovery_graph`` so downstream
+    dedupe joins align. Returns ``""`` if nothing usable is present.
+    """
+    if not raw:
+        return ""
+    s = str(raw).strip().lower()
+    if "://" not in s:
+        s = "https://" + s
+    try:
+        host = urlparse(s).netloc
+    except ValueError:
+        return ""
+    host = host.split(":")[0].strip(".")
+    if host.startswith("www."):
+        host = host[4:]
+    # Drop bare GitHub-hosted pages — they're not the company's home.
+    if host in {"github.com", "github.io"}:
+        return ""
+    return host
+
+
+async def resolve_orgs(state: VerticalDiscoveryState) -> dict:
+    """Resolve each unique GitHub owner to an org profile via ``GET /orgs/{login}``.
+
+    Produces one entry per owner in ``resolved_orgs`` carrying the data
+    needed by ``persist_candidates``: ``{github_org, name, canonical_domain,
+    website, description, stack_label, evidence_hits}``. Users (personal
+    accounts) are **skipped** — a company-scoped lead-gen run should not
+    seed personal GitHub profiles into ``companies``.
+
+    Shares the core 5000 req/hr bucket (authenticated). Cheap compared to
+    the search bucket used by Stage 1.
+    """
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+    slug = state.get("vertical_slug") or ""
+    filtered = state.get("filtered_hits") or []
+    if not filtered:
+        return {
+            "resolved_orgs": [],
+            "agent_timings": {"resolve_orgs": round(time.perf_counter() - t0, 3)},
+        }
+
+    # Group filtered hits by owner so we fetch each org only once, and
+    # carry forward the union of stack_labels + example repos as evidence.
+    by_owner: dict[str, dict[str, Any]] = {}
+    for hit in filtered:
+        owner = (hit.get("owner") or "").strip()
+        if not owner:
+            continue
+        if hit.get("owner_type") != "Organization":
+            continue  # skip personal users — see docstring
+        slot = by_owner.setdefault(
+            owner,
+            {
+                "owner": owner,
+                "stack_labels": set(),
+                "evidence_hits": [],
+            },
+        )
+        if hit.get("stack_label"):
+            slot["stack_labels"].add(hit["stack_label"])
+        # Cap evidence to keep the persisted blob small.
+        if len(slot["evidence_hits"]) < 3:
+            slot["evidence_hits"].append(
+                {
+                    "repo": hit.get("repo_full_name") or "",
+                    "path": hit.get("path") or "",
+                    "url": hit.get("repo_url") or "",
+                    "stars": hit.get("stars") or 0,
+                }
+            )
+
+    if not by_owner:
+        return {
+            "resolved_orgs": [],
+            "agent_timings": {"resolve_orgs": round(time.perf_counter() - t0, 3)},
+        }
+
+    resolved: list[dict] = []
+    async with httpx.AsyncClient(
+        base_url=_GITHUB_API,
+        headers=_github_headers(),
+        timeout=httpx.Timeout(connect=5.0, read=15.0, write=10.0, pool=10.0),
+    ) as client:
+        for owner, slot in by_owner.items():
+            try:
+                res = await client.get(f"/orgs/{owner}")
+            except httpx.HTTPError:
+                continue  # single-org failure is non-fatal
+            if res.status_code == 404:
+                continue  # not an org after all (race with user-type orgs)
+            if res.status_code != 200:
+                continue
+            org = res.json() or {}
+            blog = (org.get("blog") or "").strip()
+            canonical_domain = _canonicalize_domain(blog)
+            # Pick the best display name: org's `name` field, fallback to login.
+            name = (org.get("name") or owner).strip()
+            description = (org.get("description") or "").strip()
+            website = blog or (org.get("html_url") or "")
+
+            resolved.append(
+                {
+                    "vertical_slug": slug,
+                    "github_org": owner,
+                    "github_url": org.get("html_url") or f"https://github.com/{owner}",
+                    "name": name,
+                    "canonical_domain": canonical_domain,
+                    "website": website,
+                    "description": description,
+                    "stack_labels": sorted(slot["stack_labels"]),
+                    "evidence_hits": slot["evidence_hits"],
+                }
+            )
+
+    return {
+        "resolved_orgs": resolved,
+        "agent_timings": {"resolve_orgs": round(time.perf_counter() - t0, 3)},
+    }
+
+
+async def dedupe_existing(state: VerticalDiscoveryState) -> dict:
+    """Drop resolved orgs that already exist in ``companies``.
+
+    Uses two cheap indexed lookups:
+      - ``canonical_domain = ANY(%s)`` — matches commercial sites already
+        seeded through other discovery paths.
+      - ``github_org = ANY(%s)`` — matches rows that carry the GH org
+        even if we never resolved their commercial domain.
+
+    Any match drops the candidate. ``new_candidates`` carries the survivors
+    into ``persist_candidates``.
+    """
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+    resolved = state.get("resolved_orgs") or []
+    if not resolved:
+        return {
+            "new_candidates": [],
+            "skipped_existing_count": 0,
+            "agent_timings": {"dedupe_existing": round(time.perf_counter() - t0, 3)},
+        }
+
+    domains = sorted({r["canonical_domain"] for r in resolved if r.get("canonical_domain")})
+    orgs = sorted({r["github_org"] for r in resolved if r.get("github_org")})
+
+    existing_domains: set[str] = set()
+    existing_orgs: set[str] = set()
+    try:
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                if domains:
+                    cur.execute(
+                        "SELECT DISTINCT canonical_domain FROM companies "
+                        "WHERE canonical_domain = ANY(%s)",
+                        (domains,),
+                    )
+                    existing_domains = {row[0] for row in cur.fetchall() if row[0]}
+                if orgs:
+                    cur.execute(
+                        "SELECT DISTINCT github_org FROM companies "
+                        "WHERE github_org = ANY(%s)",
+                        (orgs,),
+                    )
+                    existing_orgs = {row[0] for row in cur.fetchall() if row[0]}
+    except (psycopg.Error, RuntimeError) as e:
+        # Non-fatal. Two classes land here:
+        #   - RuntimeError from _dsn() when NEON_DATABASE_URL is unset (dev/repl
+        #     runs without the env). Candidates pass through unchanged.
+        #   - psycopg.Error from a live but misbehaving DB. persist_candidates
+        #     handles ON CONFLICT so duplicates won't corrupt; we just pay for
+        #     extra INSERTs that hit the conflict clause.
+        return {
+            "_error": f"dedupe_existing: {e}",
+            "new_candidates": resolved,
+            "skipped_existing_count": 0,
+            "agent_timings": {"dedupe_existing": round(time.perf_counter() - t0, 3)},
+        }
+
+    survivors = [
+        r
+        for r in resolved
+        if (r.get("canonical_domain") or "") not in existing_domains
+        and r.get("github_org") not in existing_orgs
+    ]
+    skipped = len(resolved) - len(survivors)
+
+    return {
+        "new_candidates": survivors,
+        "skipped_existing_count": skipped,
+        "agent_timings": {"dedupe_existing": round(time.perf_counter() - t0, 3)},
+    }
+
+
+async def persist_candidates(state: VerticalDiscoveryState) -> dict:
+    """INSERT new companies + seed their ``company_product_signals`` row.
+
+    Each surviving candidate becomes one ``companies`` row tagged
+    ``['discovery-candidate', '<vertical_slug>']`` and one
+    ``company_product_signals`` row carrying the stack_label the discovery
+    pass observed. The enrichment graph's ``score_verticals`` node will
+    later expand the signals jsonb from the company's homepage + careers
+    page, but having the initial row here means the hot-lead query has
+    something to read immediately.
+
+    ``dry_run=True`` in state skips all writes and returns what *would*
+    have been inserted — useful for REPL runs.
+    """
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+    slug = state.get("vertical_slug") or ""
+    candidates = state.get("new_candidates") or []
+    if not candidates or state.get("dry_run"):
+        return {
+            "inserted_company_ids": [],
+            "agent_timings": {"persist_candidates": round(time.perf_counter() - t0, 3)},
+        }
+
+    try:
+        vertical = get_vertical(slug)
+    except KeyError:
+        return {
+            "inserted_company_ids": [],
+            "agent_timings": {"persist_candidates": round(time.perf_counter() - t0, 3)},
+        }
+
+    from .verticals import compute_score_and_tier
+
+    inserted_ids: list[int] = []
+    try:
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                for cand in candidates:
+                    domain = cand.get("canonical_domain") or ""
+                    github_org = cand.get("github_org") or ""
+                    # `key` must be unique — prefer domain, fall back to github org.
+                    key = domain or (f"github.com/{github_org}" if github_org else "")
+                    if not key:
+                        continue
+                    tags = ["discovery-candidate", slug]
+                    stack_labels = cand.get("stack_labels") or []
+                    primary_stack = stack_labels[0] if stack_labels else None
+
+                    cur.execute(
+                        """
+                        INSERT INTO companies
+                          (tenant_id, key, name, canonical_domain, website,
+                           category, ai_tier, tags, score, score_reasons,
+                           github_url, github_org,
+                           created_at, updated_at)
+                        VALUES
+                          (COALESCE(NULLIF(current_setting('app.tenant', true), ''), 'vadim'),
+                           %s, %s, %s, %s,
+                           'UNKNOWN', 0, %s, %s, %s,
+                           %s, %s,
+                           now()::text, now()::text)
+                        ON CONFLICT (key) DO UPDATE
+                          SET github_org = COALESCE(companies.github_org, EXCLUDED.github_org),
+                              github_url = COALESCE(companies.github_url, EXCLUDED.github_url)
+                        RETURNING id, (xmax = 0) AS inserted
+                        """,
+                        (
+                            key,
+                            cand.get("name") or github_org or key,
+                            domain or None,
+                            cand.get("website") or None,
+                            json.dumps(tags),
+                            0.5,
+                            json.dumps(
+                                [f"discovered via {slug} GitHub code-search harvester"]
+                            ),
+                            cand.get("github_url") or None,
+                            github_org or None,
+                        ),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        continue
+                    company_id, was_inserted = int(row[0]), bool(row[1])
+                    if was_inserted:
+                        inserted_ids.append(company_id)
+
+                    # Seed company_product_signals with the observed stack_label.
+                    # Score + tier are computed from the initial signals only;
+                    # enrichment will expand them later.
+                    signals: dict[str, Any] = {
+                        "schema_version": vertical.schema_version,
+                    }
+                    if primary_stack:
+                        signals["rag_stack_detected"] = primary_stack
+                    if not any(k for k in signals if k != "schema_version"):
+                        # No meaningful signal to seed (shouldn't happen — filter_hits
+                        # already enforces stack_label IS NOT NULL).
+                        continue
+                    score, tier = compute_score_and_tier(vertical, signals)
+                    cur.execute(
+                        """
+                        INSERT INTO company_product_signals
+                          (company_id, product_id, signals, score, tier, updated_at)
+                        VALUES (%s, %s, %s::jsonb, %s, %s, now())
+                        ON CONFLICT (company_id, product_id) DO UPDATE
+                          SET signals    = company_product_signals.signals || EXCLUDED.signals,
+                              score      = GREATEST(company_product_signals.score, EXCLUDED.score),
+                              tier       = COALESCE(EXCLUDED.tier, company_product_signals.tier),
+                              updated_at = now()
+                        """,
+                        (
+                            company_id,
+                            int(vertical.product_id),
+                            json.dumps(signals),
+                            float(score),
+                            tier,
+                        ),
+                    )
+    except (psycopg.Error, RuntimeError) as e:
+        # RuntimeError covers missing NEON_DATABASE_URL from _dsn(); psycopg.Error
+        # covers live-DB failures. Both are non-fatal at the graph level — the
+        # caller sees the failure via summary.errors.
+        return {
+            "_error": f"persist_candidates: {e}",
+            "agent_timings": {"persist_candidates": round(time.perf_counter() - t0, 3)},
+        }
+
+    return {
+        "inserted_company_ids": inserted_ids,
+        "agent_timings": {"persist_candidates": round(time.perf_counter() - t0, 3)},
+    }
+
+
 async def build_summary(state: VerticalDiscoveryState) -> dict:
     """Terminal node — assemble a run summary for the caller."""
     raw = state.get("raw_hits") or []
     filtered = state.get("filtered_hits") or []
+    resolved = state.get("resolved_orgs") or []
+    new_candidates = state.get("new_candidates") or []
+    inserted_ids = state.get("inserted_company_ids") or []
+    skipped_existing = int(state.get("skipped_existing_count") or 0)
 
     by_stack: dict[str, int] = {}
     for hit in filtered:
@@ -276,13 +641,23 @@ async def build_summary(state: VerticalDiscoveryState) -> dict:
 
     unique_orgs = sorted({hit["owner"] for hit in filtered if hit.get("owner")})
     errors = [hit.get("_error") for hit in raw if isinstance(hit, dict) and "_error" in hit]
+    if state.get("_error"):
+        errors.append(state["_error"])
 
     summary = {
         "vertical_slug": state.get("vertical_slug"),
+        # Stage 1
         "raw_count": len([h for h in raw if "_error" not in h]),
         "filtered_count": len(filtered),
         "unique_orgs": unique_orgs,
         "by_stack": by_stack,
+        # Stage 2
+        "resolved_org_count": len(resolved),
+        "new_candidate_count": len(new_candidates),
+        "inserted_count": len(inserted_ids),
+        "inserted_company_ids": inserted_ids,
+        "skipped_existing": skipped_existing,
+        "dry_run": bool(state.get("dry_run")),
         "errors": errors,
     }
     return {"summary": summary}
@@ -294,10 +669,16 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(VerticalDiscoveryState)
     builder.add_node("fetch_code_search", fetch_code_search)
     builder.add_node("filter_hits", filter_hits)
+    builder.add_node("resolve_orgs", resolve_orgs)
+    builder.add_node("dedupe_existing", dedupe_existing)
+    builder.add_node("persist_candidates", persist_candidates)
     builder.add_node("build_summary", build_summary)
     builder.add_edge(START, "fetch_code_search")
     builder.add_edge("fetch_code_search", "filter_hits")
-    builder.add_edge("filter_hits", "build_summary")
+    builder.add_edge("filter_hits", "resolve_orgs")
+    builder.add_edge("resolve_orgs", "dedupe_existing")
+    builder.add_edge("dedupe_existing", "persist_candidates")
+    builder.add_edge("persist_candidates", "build_summary")
     builder.add_edge("build_summary", END)
     return builder.compile(checkpointer=checkpointer)
 
@@ -313,14 +694,21 @@ async def run(
     max_pages_per_query: int = _DEFAULT_MAX_PAGES,
     max_total_results: int = _DEFAULT_MAX_TOTAL,
     queries: list[str] | None = None,
+    dry_run: bool = False,
 ) -> dict:
-    """Standalone async entry point — convenient for REPL / one-off scripts."""
+    """Standalone async entry point — convenient for REPL / one-off scripts.
+
+    With ``dry_run=True`` the harvester walks all stages but does NOT INSERT
+    into ``companies`` / ``company_product_signals`` — useful for previewing
+    what *would* be persisted on a fresh vertical.
+    """
     result = await graph.ainvoke(
         {
             "vertical_slug": vertical_slug,
             "max_pages_per_query": max_pages_per_query,
             "max_total_results": max_total_results,
             "queries": queries,
+            "dry_run": dry_run,
         }
     )
     return result.get("summary") or {}
@@ -331,5 +719,8 @@ if __name__ == "__main__":
     import sys
 
     slug = sys.argv[1] if len(sys.argv) > 1 else "ingestible"
-    summary = asyncio.run(run(slug, max_pages_per_query=1, max_total_results=50))
+    dry = "--dry-run" in sys.argv[1:]
+    summary = asyncio.run(
+        run(slug, max_pages_per_query=1, max_total_results=50, dry_run=dry)
+    )
     print(_json.dumps(summary, indent=2))
