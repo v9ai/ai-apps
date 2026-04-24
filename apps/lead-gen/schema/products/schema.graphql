@@ -49,12 +49,43 @@ type IntelRunAccepted {
   status: String!
 }
 
+"One scored company for a given product — a row in company_product_signals joined with its company."
+type ProductLead {
+  companyId: Int!
+  companyKey: String!
+  companyName: String!
+  companyDomain: String
+  companyLogoUrl: String
+  companyDescription: String
+  companyIndustry: String
+  companySize: String
+  companyLocation: String
+  "'hot' | 'warm' | 'cold' | null"
+  tier: String
+  score: Float!
+  regexScore: Float!
+  semanticScore: Float
+  "Vertical-specific signal payload; always includes schema_version."
+  signals: JSON
+  updatedAt: DateTime!
+}
+
+type ProductLeadsConnection {
+  leads: [ProductLead!]!
+  totalCount: Int!
+  hotCount: Int!
+  warmCount: Int!
+  coldCount: Int!
+}
+
 extend type Query {
   products(limit: Int, offset: Int): [Product!]!
   product(id: Int!): Product
   productBySlug(slug: String!): Product
   productIntelRun(id: ID!): IntelRun
   productIntelRuns(productId: Int!, kind: String, minSchemaVersion: String, graphVersion: String): [IntelRun!]!
+  "Scored leads for a product, ordered by tier then score desc. Backed by company_product_signals."
+  productLeads(slug: String!, tier: String, limit: Int = 50, offset: Int = 0): ProductLeadsConnection!
 }
 
 extend type Mutation {

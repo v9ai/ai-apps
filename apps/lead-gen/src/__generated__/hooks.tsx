@@ -2155,6 +2155,37 @@ export type ProductInput = {
   url: Scalars['String']['input'];
 };
 
+/** One scored company for a given product — a row in company_product_signals joined with its company. */
+export type ProductLead = {
+  __typename?: 'ProductLead';
+  companyDescription: Maybe<Scalars['String']['output']>;
+  companyDomain: Maybe<Scalars['String']['output']>;
+  companyId: Scalars['Int']['output'];
+  companyIndustry: Maybe<Scalars['String']['output']>;
+  companyKey: Scalars['String']['output'];
+  companyLocation: Maybe<Scalars['String']['output']>;
+  companyLogoUrl: Maybe<Scalars['String']['output']>;
+  companyName: Scalars['String']['output'];
+  companySize: Maybe<Scalars['String']['output']>;
+  regexScore: Scalars['Float']['output'];
+  score: Scalars['Float']['output'];
+  semanticScore: Maybe<Scalars['Float']['output']>;
+  /** Vertical-specific signal payload; always includes schema_version. */
+  signals: Maybe<Scalars['JSON']['output']>;
+  /** 'hot' | 'warm' | 'cold' | null */
+  tier: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ProductLeadsConnection = {
+  __typename?: 'ProductLeadsConnection';
+  coldCount: Scalars['Int']['output'];
+  hotCount: Scalars['Int']['output'];
+  leads: Array<ProductLead>;
+  totalCount: Scalars['Int']['output'];
+  warmCount: Scalars['Int']['output'];
+};
+
 export type QualityGateResult = {
   __typename?: 'QualityGateResult';
   adjustedScore: Scalars['Float']['output'];
@@ -2209,6 +2240,8 @@ export type Query = {
   productBySlug: Maybe<Product>;
   productIntelRun: Maybe<IntelRun>;
   productIntelRuns: Array<IntelRun>;
+  /** Scored leads for a product, ordered by tier then score desc. Backed by company_product_signals. */
+  productLeads: ProductLeadsConnection;
   products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
@@ -2506,6 +2539,14 @@ export type QueryProductIntelRunsArgs = {
   kind?: InputMaybe<Scalars['String']['input']>;
   minSchemaVersion?: InputMaybe<Scalars['String']['input']>;
   productId: Scalars['Int']['input'];
+};
+
+
+export type QueryProductLeadsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  slug: Scalars['String']['input'];
+  tier?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -4587,6 +4628,25 @@ export type SetProductPublishedMutationVariables = Exact<{
 
 export type SetProductPublishedMutation = { __typename?: 'Mutation', setProductPublished: { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, icpAnalysis: any | null, icpAnalyzedAt: string | null, pricingAnalysis: any | null, pricingAnalyzedAt: string | null, gtmAnalysis: any | null, gtmAnalyzedAt: string | null, intelReport: any | null, intelReportAt: string | null, positioningAnalysis: any | null, publishedAt: string | null, createdBy: string | null, createdAt: string, updatedAt: string } };
 
+export type ProductLeadCoreFragment = { __typename?: 'ProductLead', companyId: number, companyKey: string, companyName: string, companyDomain: string | null, companyLogoUrl: string | null, companyDescription: string | null, companyIndustry: string | null, companySize: string | null, companyLocation: string | null, tier: string | null, score: number, regexScore: number, semanticScore: number | null, signals: any | null, updatedAt: string };
+
+export type ProductLeadsQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+  tier?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type ProductLeadsQuery = { __typename?: 'Query', productLeads: { __typename?: 'ProductLeadsConnection', totalCount: number, hotCount: number, warmCount: number, coldCount: number, leads: Array<{ __typename?: 'ProductLead', companyId: number, companyKey: string, companyName: string, companyDomain: string | null, companyLogoUrl: string | null, companyDescription: string | null, companyIndustry: string | null, companySize: string | null, companyLocation: string | null, tier: string | null, score: number, regexScore: number, semanticScore: number | null, signals: any | null, updatedAt: string }> } };
+
+export type ProductLeadsPreviewQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+}>;
+
+
+export type ProductLeadsPreviewQuery = { __typename?: 'Query', productLeads: { __typename?: 'ProductLeadsConnection', totalCount: number, hotCount: number, warmCount: number, leads: Array<{ __typename?: 'ProductLead', companyId: number, companyKey: string, companyName: string, companyDomain: string | null, companyLogoUrl: string | null, tier: string | null, score: number }> } };
+
 export type DueRemindersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -4925,6 +4985,25 @@ export const IntelRunCoreFragmentDoc = gql`
   finishedAt
   error
   output
+}
+    `;
+export const ProductLeadCoreFragmentDoc = gql`
+    fragment ProductLeadCore on ProductLead {
+  companyId
+  companyKey
+  companyName
+  companyDomain
+  companyLogoUrl
+  companyDescription
+  companyIndustry
+  companySize
+  companyLocation
+  tier
+  score
+  regexScore
+  semanticScore
+  signals
+  updatedAt
 }
     `;
 export const GetUserSettingsDocument = gql`
@@ -9277,6 +9356,112 @@ export function useSetProductPublishedMutation(baseOptions?: Apollo.MutationHook
 export type SetProductPublishedMutationHookResult = ReturnType<typeof useSetProductPublishedMutation>;
 export type SetProductPublishedMutationResult = Apollo.MutationResult<SetProductPublishedMutation>;
 export type SetProductPublishedMutationOptions = Apollo.BaseMutationOptions<SetProductPublishedMutation, SetProductPublishedMutationVariables>;
+export const ProductLeadsDocument = gql`
+    query ProductLeads($slug: String!, $tier: String, $limit: Int, $offset: Int) {
+  productLeads(slug: $slug, tier: $tier, limit: $limit, offset: $offset) {
+    leads {
+      ...ProductLeadCore
+    }
+    totalCount
+    hotCount
+    warmCount
+    coldCount
+  }
+}
+    ${ProductLeadCoreFragmentDoc}`;
+
+/**
+ * __useProductLeadsQuery__
+ *
+ * To run a query within a React component, call `useProductLeadsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProductLeadsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProductLeadsQuery({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *      tier: // value for 'tier'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useProductLeadsQuery(baseOptions: Apollo.QueryHookOptions<ProductLeadsQuery, ProductLeadsQueryVariables> & ({ variables: ProductLeadsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ProductLeadsQuery, ProductLeadsQueryVariables>(ProductLeadsDocument, options);
+      }
+export function useProductLeadsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ProductLeadsQuery, ProductLeadsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ProductLeadsQuery, ProductLeadsQueryVariables>(ProductLeadsDocument, options);
+        }
+// @ts-ignore
+export function useProductLeadsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ProductLeadsQuery, ProductLeadsQueryVariables>): Apollo.UseSuspenseQueryResult<ProductLeadsQuery, ProductLeadsQueryVariables>;
+export function useProductLeadsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductLeadsQuery, ProductLeadsQueryVariables>): Apollo.UseSuspenseQueryResult<ProductLeadsQuery | undefined, ProductLeadsQueryVariables>;
+export function useProductLeadsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductLeadsQuery, ProductLeadsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ProductLeadsQuery, ProductLeadsQueryVariables>(ProductLeadsDocument, options);
+        }
+export type ProductLeadsQueryHookResult = ReturnType<typeof useProductLeadsQuery>;
+export type ProductLeadsLazyQueryHookResult = ReturnType<typeof useProductLeadsLazyQuery>;
+export type ProductLeadsSuspenseQueryHookResult = ReturnType<typeof useProductLeadsSuspenseQuery>;
+export type ProductLeadsQueryResult = Apollo.QueryResult<ProductLeadsQuery, ProductLeadsQueryVariables>;
+export const ProductLeadsPreviewDocument = gql`
+    query ProductLeadsPreview($slug: String!) {
+  productLeads(slug: $slug, limit: 5, offset: 0) {
+    leads {
+      companyId
+      companyKey
+      companyName
+      companyDomain
+      companyLogoUrl
+      tier
+      score
+    }
+    totalCount
+    hotCount
+    warmCount
+  }
+}
+    `;
+
+/**
+ * __useProductLeadsPreviewQuery__
+ *
+ * To run a query within a React component, call `useProductLeadsPreviewQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProductLeadsPreviewQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProductLeadsPreviewQuery({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *   },
+ * });
+ */
+export function useProductLeadsPreviewQuery(baseOptions: Apollo.QueryHookOptions<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables> & ({ variables: ProductLeadsPreviewQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables>(ProductLeadsPreviewDocument, options);
+      }
+export function useProductLeadsPreviewLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables>(ProductLeadsPreviewDocument, options);
+        }
+// @ts-ignore
+export function useProductLeadsPreviewSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables>): Apollo.UseSuspenseQueryResult<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables>;
+export function useProductLeadsPreviewSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables>): Apollo.UseSuspenseQueryResult<ProductLeadsPreviewQuery | undefined, ProductLeadsPreviewQueryVariables>;
+export function useProductLeadsPreviewSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables>(ProductLeadsPreviewDocument, options);
+        }
+export type ProductLeadsPreviewQueryHookResult = ReturnType<typeof useProductLeadsPreviewQuery>;
+export type ProductLeadsPreviewLazyQueryHookResult = ReturnType<typeof useProductLeadsPreviewLazyQuery>;
+export type ProductLeadsPreviewSuspenseQueryHookResult = ReturnType<typeof useProductLeadsPreviewSuspenseQuery>;
+export type ProductLeadsPreviewQueryResult = Apollo.QueryResult<ProductLeadsPreviewQuery, ProductLeadsPreviewQueryVariables>;
 export const DueRemindersDocument = gql`
     query DueReminders {
   dueReminders {

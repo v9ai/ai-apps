@@ -6,6 +6,7 @@ import {
   intelRunMutations,
   intelRunQueries,
 } from "./intel-runs";
+import { productLeadsQueries } from "./leads";
 
 export const productResolvers = {
   Product: ProductField,
@@ -13,6 +14,7 @@ export const productResolvers = {
   Query: {
     ...productQueries,
     ...intelRunQueries,
+    ...productLeadsQueries,
   },
   Mutation: {
     ...productMutations,

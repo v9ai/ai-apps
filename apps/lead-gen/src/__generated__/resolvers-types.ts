@@ -2155,6 +2155,37 @@ export type ProductInput = {
   url: Scalars['String']['input'];
 };
 
+/** One scored company for a given product — a row in company_product_signals joined with its company. */
+export type ProductLead = {
+  __typename?: 'ProductLead';
+  companyDescription: Maybe<Scalars['String']['output']>;
+  companyDomain: Maybe<Scalars['String']['output']>;
+  companyId: Scalars['Int']['output'];
+  companyIndustry: Maybe<Scalars['String']['output']>;
+  companyKey: Scalars['String']['output'];
+  companyLocation: Maybe<Scalars['String']['output']>;
+  companyLogoUrl: Maybe<Scalars['String']['output']>;
+  companyName: Scalars['String']['output'];
+  companySize: Maybe<Scalars['String']['output']>;
+  regexScore: Scalars['Float']['output'];
+  score: Scalars['Float']['output'];
+  semanticScore: Maybe<Scalars['Float']['output']>;
+  /** Vertical-specific signal payload; always includes schema_version. */
+  signals: Maybe<Scalars['JSON']['output']>;
+  /** 'hot' | 'warm' | 'cold' | null */
+  tier: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ProductLeadsConnection = {
+  __typename?: 'ProductLeadsConnection';
+  coldCount: Scalars['Int']['output'];
+  hotCount: Scalars['Int']['output'];
+  leads: Array<ProductLead>;
+  totalCount: Scalars['Int']['output'];
+  warmCount: Scalars['Int']['output'];
+};
+
 export type QualityGateResult = {
   __typename?: 'QualityGateResult';
   adjustedScore: Scalars['Float']['output'];
@@ -2209,6 +2240,8 @@ export type Query = {
   productBySlug: Maybe<Product>;
   productIntelRun: Maybe<IntelRun>;
   productIntelRuns: Array<IntelRun>;
+  /** Scored leads for a product, ordered by tier then score desc. Backed by company_product_signals. */
+  productLeads: ProductLeadsConnection;
   products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
@@ -2506,6 +2539,14 @@ export type QueryProductIntelRunsArgs = {
   kind?: InputMaybe<Scalars['String']['input']>;
   minSchemaVersion?: InputMaybe<Scalars['String']['input']>;
   productId: Scalars['Int']['input'];
+};
+
+
+export type QueryProductLeadsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  slug: Scalars['String']['input'];
+  tier?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -4028,6 +4069,8 @@ export type ResolversTypes = {
   PricingTier: ResolverTypeWrapper<Partial<PricingTier>>;
   Product: ResolverTypeWrapper<Partial<Product>>;
   ProductInput: ResolverTypeWrapper<Partial<ProductInput>>;
+  ProductLead: ResolverTypeWrapper<Partial<ProductLead>>;
+  ProductLeadsConnection: ResolverTypeWrapper<Partial<ProductLeadsConnection>>;
   QualityGateResult: ResolverTypeWrapper<Partial<QualityGateResult>>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   RankedContact: ResolverTypeWrapper<Partial<RankedContact>>;
@@ -4274,6 +4317,8 @@ export type ResolversParentTypes = {
   PricingTier: Partial<PricingTier>;
   Product: Partial<Product>;
   ProductInput: Partial<ProductInput>;
+  ProductLead: Partial<ProductLead>;
+  ProductLeadsConnection: Partial<ProductLeadsConnection>;
   QualityGateResult: Partial<QualityGateResult>;
   Query: Record<PropertyKey, never>;
   RankedContact: Partial<RankedContact>;
@@ -5582,6 +5627,32 @@ export type ProductResolvers<ContextType = GraphQLContext, ParentType extends Re
   url?: Resolver<ResolversTypes['URL'], ParentType, ContextType>;
 };
 
+export type ProductLeadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProductLead'] = ResolversParentTypes['ProductLead']> = {
+  companyDescription?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  companyDomain?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  companyId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  companyIndustry?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  companyKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  companyLocation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  companyLogoUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  companyName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  companySize?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  regexScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  semanticScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  signals?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  tier?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+};
+
+export type ProductLeadsConnectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProductLeadsConnection'] = ResolversParentTypes['ProductLeadsConnection']> = {
+  coldCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  hotCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  leads?: Resolver<Array<ResolversTypes['ProductLead']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  warmCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type QualityGateResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['QualityGateResult'] = ResolversParentTypes['QualityGateResult']> = {
   adjustedScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   flags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5632,6 +5703,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   productBySlug?: Resolver<Maybe<ResolversTypes['Product']>, ParentType, ContextType, RequireFields<QueryProductBySlugArgs, 'slug'>>;
   productIntelRun?: Resolver<Maybe<ResolversTypes['IntelRun']>, ParentType, ContextType, RequireFields<QueryProductIntelRunArgs, 'id'>>;
   productIntelRuns?: Resolver<Array<ResolversTypes['IntelRun']>, ParentType, ContextType, RequireFields<QueryProductIntelRunsArgs, 'productId'>>;
+  productLeads?: Resolver<ResolversTypes['ProductLeadsConnection'], ParentType, ContextType, RequireFields<QueryProductLeadsArgs, 'limit' | 'offset' | 'slug'>>;
   products?: Resolver<Array<ResolversTypes['Product']>, ParentType, ContextType, Partial<QueryProductsArgs>>;
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
@@ -6566,6 +6638,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Opportunity?: OpportunityResolvers<ContextType>;
   PricingTier?: PricingTierResolvers<ContextType>;
   Product?: ProductResolvers<ContextType>;
+  ProductLead?: ProductLeadResolvers<ContextType>;
+  ProductLeadsConnection?: ProductLeadsConnectionResolvers<ContextType>;
   QualityGateResult?: QualityGateResultResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RankedContact?: RankedContactResolvers<ContextType>;

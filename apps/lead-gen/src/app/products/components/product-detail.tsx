@@ -20,10 +20,14 @@ import {
   CodeIcon,
   ReaderIcon,
   StarIcon,
+  PersonIcon,
 } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
-import { useProductBySlugQuery } from "@/__generated__/hooks";
+import {
+  useProductBySlugQuery,
+  useProductLeadsPreviewQuery,
+} from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import type {
   PricingStrategyResult,
@@ -71,6 +75,12 @@ export function ProductDetail({ slug }: { slug: string }) {
   const { user, loading: authLoading } = useAuth();
 
   const { data, loading, error } = useProductBySlugQuery({
+    variables: { slug },
+    fetchPolicy: "cache-and-network",
+    skip: !user,
+  });
+
+  const { data: leadsPreviewData } = useProductLeadsPreviewQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
     skip: !user,
@@ -129,6 +139,8 @@ export function ProductDetail({ slug }: { slug: string }) {
   const pricing = (product.pricingAnalysis ?? null) as PricingStrategyResult | null;
   const gtm = (product.gtmAnalysis ?? null) as GTMStrategyResult | null;
   const intel = (product.intelReport ?? null) as ProductIntelReportResult | null;
+  const leadsPreview = leadsPreviewData?.productLeads ?? null;
+  const hasLeads = (leadsPreview?.totalCount ?? 0) > 0;
 
   const navBtnBase = button({ variant: "soft", size: "sm" });
   const navBtnDisabledCls = css({ opacity: 0.38, cursor: "not-allowed", pointerEvents: "none" });
@@ -259,10 +271,23 @@ export function ProductDetail({ slug }: { slug: string }) {
               <span className={css({ ml: "1" })}>Intel report</span>
             </span>
           )}
+          {hasLeads ? (
+            <Link href={`/products/${product.slug}/leads`} className={navBtnBase}>
+              <PersonIcon />
+              <span className={css({ ml: "1" })}>
+                Leads{leadsPreview?.totalCount ? ` (${leadsPreview.totalCount})` : ""}
+              </span>
+            </Link>
+          ) : (
+            <Link href={`/products/${product.slug}/leads`} className={navBtnBase}>
+              <PersonIcon />
+              <span className={css({ ml: "1" })}>Leads</span>
+            </Link>
+          )}
         </Flex>
 
         {/* Sneak-peek cards */}
-        {(positioning || icp || pricing || gtm || intel) && (
+        {(positioning || icp || pricing || gtm || intel || hasLeads) && (
           <div
             className={css({
               mt: "4",
@@ -433,6 +458,57 @@ export function ProductDetail({ slug }: { slug: string }) {
                       {i + 1}.
                     </Text>
                     <Text size="1" color="gray">{p}</Text>
+                  </Flex>
+                ))}
+              </div>
+            )}
+
+            {hasLeads && leadsPreview && (
+              <div className={cardCls}>
+                <Flex justify="between" align="center" mb="2">
+                  <Flex align="center" gap="2">
+                    <span className={css({ color: "accent.11" })}><PersonIcon /></span>
+                    <Text size="2" weight="bold">Leads</Text>
+                    {leadsPreview.totalCount > 0 && (
+                      <Badge color="gray" size="1">{leadsPreview.totalCount} total</Badge>
+                    )}
+                    {leadsPreview.hotCount > 0 && (
+                      <Badge color="red" size="1">{leadsPreview.hotCount} hot</Badge>
+                    )}
+                    {leadsPreview.warmCount > 0 && (
+                      <Badge color="amber" size="1">{leadsPreview.warmCount} warm</Badge>
+                    )}
+                  </Flex>
+                  <Link
+                    href={`/products/${product.slug}/leads`}
+                    className={css({ color: "accent.11", fontSize: "xs", textDecoration: "none", _hover: { textDecoration: "underline" } })}
+                  >
+                    View full →
+                  </Link>
+                </Flex>
+                {leadsPreview.leads.slice(0, 4).map((lead) => (
+                  <Flex key={lead.companyId} align="center" gap="2" mb="1" wrap="wrap">
+                    <Link
+                      href={`/companies/${lead.companyKey}`}
+                      className={css({
+                        fontSize: "xs",
+                        fontWeight: 500,
+                        color: "gray.12",
+                        textDecoration: "none",
+                        _hover: { color: "accent.11", textDecoration: "underline" },
+                      })}
+                    >
+                      {lead.companyName}
+                    </Link>
+                    {lead.tier && (
+                      <Badge
+                        color={lead.tier === "hot" ? "red" : lead.tier === "warm" ? "amber" : "blue"}
+                        size="1"
+                      >
+                        {lead.tier}
+                      </Badge>
+                    )}
+                    <Text size="1" color="gray">{lead.score.toFixed(2)}</Text>
                   </Flex>
                 ))}
               </div>

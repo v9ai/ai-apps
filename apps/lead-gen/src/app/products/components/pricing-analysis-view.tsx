@@ -9,6 +9,8 @@ import {
   CubeIcon,
   ExternalLinkIcon,
   MagicWandIcon,
+  MinusIcon,
+  StarFilledIcon,
 } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
@@ -48,6 +50,46 @@ function formatPrice(p: number | null | undefined): string {
   return `$${p.toLocaleString()}`;
 }
 
+function extractRecommendedTierName(
+  recommendation: string | undefined | null,
+  tierNames: string[],
+): string | null {
+  if (!recommendation) return null;
+  const hints = [
+    "as the main growth driver",
+    "primary growth",
+    "main upsell",
+    "flagship tier",
+    "recommended tier",
+    "focus on",
+  ];
+  for (const name of tierNames) {
+    if (!name) continue;
+    const rx = new RegExp(
+      `${name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}\\b[^.]{0,80}?(${hints.join("|")})`,
+      "i",
+    );
+    if (rx.test(recommendation)) return name;
+  }
+  for (const name of tierNames) {
+    if (!name) continue;
+    const rx = new RegExp(
+      `upsell to ${name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}\\b`,
+      "i",
+    );
+    if (rx.test(recommendation)) return name;
+  }
+  return null;
+}
+
+function priceRangeSummary(
+  tiers: Array<{ price_monthly_usd: number | null | undefined }>,
+): string | null {
+  if (!tiers.length) return null;
+  const parts = tiers.map((t) => formatPrice(t.price_monthly_usd));
+  return parts.join(" / ");
+}
+
 const eyebrow = css({
   textTransform: "uppercase",
   letterSpacing: "0.08em",
@@ -57,6 +99,16 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
   const tiers = data.model?.tiers ?? [];
   const addons = data.model?.addons ?? [];
   const risks = data.rationale?.risks ?? [];
+
+  const recommendedTierName = React.useMemo(
+    () =>
+      extractRecommendedTierName(
+        data.rationale?.recommendation,
+        tiers.map((t) => t.name).filter(Boolean) as string[],
+      ),
+    [data.rationale?.recommendation, tiers],
+  );
+  const priceRange = priceRangeSummary(tiers);
 
   return (
     <Flex direction="column" gap="6">
@@ -76,6 +128,18 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
           <Badge color="green" size="1">
             {data.model.free_offer}
           </Badge>
+        )}
+        {priceRange && (
+          <Text
+            size="2"
+            color="gray"
+            className={css({
+              ml: "auto",
+              fontVariantNumeric: "tabular-nums",
+            })}
+          >
+            {priceRange}
+          </Text>
         )}
       </Flex>
 
@@ -204,17 +268,27 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
             gridTemplateColumns: {
               base: "1fr",
               md: "repeat(2, 1fr)",
-              xl: "repeat(3, 1fr)",
+              xl:
+                tiers.length >= 4
+                  ? "repeat(4, minmax(0, 1fr))"
+                  : "repeat(3, minmax(0, 1fr))",
             },
             gap: "4",
           })}
         >
-          {tiers.map((t, i) => (
+          {tiers.map((t, i) => {
+            const isRecommended =
+              !!recommendedTierName &&
+              !!t.name &&
+              t.name.toLowerCase() === recommendedTierName.toLowerCase();
+            return (
             <Box
               key={i}
               className={css({
+                position: "relative",
                 border: "1px solid",
-                borderColor: "ui.border",
+                borderColor: isRecommended ? "accent.9" : "ui.border",
+                boxShadow: isRecommended ? "0 0 0 1px token(colors.accent.9)" : "none",
                 borderRadius: "lg",
                 p: "5",
                 display: "flex",
@@ -229,6 +303,24 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                 },
               })}
             >
+              {isRecommended && (
+                <Badge
+                  color="indigo"
+                  variant="solid"
+                  size="1"
+                  className={css({
+                    position: "absolute",
+                    top: "-10px",
+                    left: "16px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "1",
+                  })}
+                >
+                  <StarFilledIcon aria-hidden width="10" height="10" />
+                  Recommended
+                </Badge>
+              )}
               <Flex direction="column" gap="1">
                 <Text weight="bold" size="4">
                   {t.name}
@@ -258,41 +350,73 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                 ) : null}
               </Flex>
 
+              {t.price_monthly_usd === null || t.price_monthly_usd === undefined ? (
+                <Text size="2" color="gray">
+                  Talk to sales
+                </Text>
+              ) : null}
+
               {t.target_persona && (
                 <Text size="2" color="gray">
+                  <span
+                    className={`${eyebrow} ${css({
+                      color: "gray.11",
+                      fontSize: "xs",
+                      fontWeight: "bold",
+                      mr: "1",
+                    })}`}
+                  >
+                    Best for
+                  </span>
                   {t.target_persona}
                 </Text>
               )}
 
               {t.included?.length > 0 && (
-                <Flex direction="column" gap="2" mt="1">
-                  {t.included.map((inc, j) => (
-                    <Flex key={j} gap="2" align="start">
-                      <CheckIcon
-                        className={css({
-                          color: "accent.10",
-                          mt: "1",
-                          flexShrink: 0,
-                        })}
-                      />
-                      <Text
-                        size="2"
-                        className={css({
-                          color: "gray.12",
-                          lineHeight: "1.5",
-                        })}
-                      >
-                        {inc}
-                      </Text>
-                    </Flex>
-                  ))}
+                <Flex direction="column" gap="2" mt="1" asChild>
+                  <ul className={css({ listStyle: "none", p: 0, m: 0 })}>
+                    {t.included.map((inc, j) => (
+                      <Flex key={j} gap="2" align="start" asChild>
+                        <li>
+                          <CheckIcon
+                            aria-hidden
+                            className={css({
+                              color: "accent.10",
+                              mt: "1",
+                              flexShrink: 0,
+                            })}
+                          />
+                          <Text
+                            size="2"
+                            className={css({
+                              color: "gray.12",
+                              lineHeight: "1.5",
+                            })}
+                          >
+                            {inc}
+                          </Text>
+                        </li>
+                      </Flex>
+                    ))}
+                  </ul>
                 </Flex>
               )}
 
               {t.limits?.length > 0 && (
                 <Flex gap="1" wrap="wrap">
                   {t.limits.map((l, j) => (
-                    <Badge key={j} color="gray" variant="soft" size="1">
+                    <Badge
+                      key={j}
+                      color="amber"
+                      variant="soft"
+                      size="1"
+                      className={css({
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "1",
+                      })}
+                    >
+                      <MinusIcon aria-hidden width="10" height="10" />
                       {l}
                     </Badge>
                   ))}
@@ -304,7 +428,7 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                   className={css({
                     mt: "auto",
                     pt: "3",
-                    borderTop: "1px dashed",
+                    borderTop: "1px solid",
                     borderColor: "ui.border",
                   })}
                 >
@@ -337,8 +461,9 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                 <Box
                   className={css({
                     pt: "3",
-                    borderTop: "1px dashed",
+                    borderTop: "1px solid",
                     borderColor: "ui.border",
+                    opacity: 0.9,
                   })}
                 >
                   <Text
@@ -403,13 +528,14 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                 </Box>
               )}
             </Box>
-          ))}
+            );
+          })}
         </div>
       </Box>
 
       {addons.length > 0 && (
         <Box>
-          <Heading size="5" mb="3">
+          <Heading size="4" mb="3">
             Add-ons
           </Heading>
           <Flex gap="2" wrap="wrap">
@@ -439,8 +565,6 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                     className={css({
                       border: "1px solid",
                       borderColor: "ui.border",
-                      borderLeft: "3px solid",
-                      borderLeftColor: "plum.8",
                       borderRadius: "md",
                       p: "4",
                     })}
@@ -457,58 +581,83 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                     </Text>
                     <div
                       className={css({
-                        display: "grid",
-                        gridTemplateColumns: {
-                          base: "1fr",
-                          md: "1.4fr 1fr auto auto 2fr",
-                        },
-                        columnGap: "4",
-                        rowGap: "2",
-                        alignItems: "center",
+                        overflowX: "auto",
                       })}
                     >
-                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
-                        Competitor
-                      </Text>
-                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
-                        Tier
-                      </Text>
-                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
-                        Price/mo
-                      </Text>
-                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
-                        Relation
-                      </Text>
-                      <Text size="1" color="gray" weight="bold" className={eyebrow}>
-                        Note
-                      </Text>
-                      {data.rationale.price_anchors.map((anchor, i) => (
-                        <React.Fragment key={i}>
-                          <Text size="2" weight="medium" className={css({ color: "gray.12" })}>
-                            {anchor.competitor}
-                          </Text>
-                          <Text size="2" color="gray">
-                            {anchor.tier}
-                          </Text>
-                          <Text size="2" weight="bold" className={css({ color: "gray.12" })}>
-                            {formatPrice(anchor.monthly_price_usd)}
-                          </Text>
-                          <Badge
-                            color={relationColor(anchor.relation)}
-                            size="1"
-                            variant="soft"
-                          >
-                            {anchor.relation}
-                          </Badge>
-                          <Text
-                            size="2"
-                            color="gray"
-                            className={css({ lineHeight: "1.5" })}
-                          >
-                            {anchor.note}
-                          </Text>
-                        </React.Fragment>
-                      ))}
+                      <table
+                        className={css({
+                          width: "100%",
+                          borderCollapse: "collapse",
+                          fontVariantNumeric: "tabular-nums",
+                          "& th": {
+                            textAlign: "left",
+                            fontSize: "xs",
+                            fontWeight: "bold",
+                            color: "gray.11",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            py: "2",
+                            pr: "3",
+                            borderBottom: "1px solid",
+                            borderColor: "ui.border",
+                            whiteSpace: "nowrap",
+                          },
+                          "& td": {
+                            fontSize: "sm",
+                            color: "gray.12",
+                            py: "2",
+                            pr: "3",
+                            borderBottom: "1px solid",
+                            borderColor: "ui.border",
+                            verticalAlign: "top",
+                          },
+                          "& tbody tr:last-child td": {
+                            borderBottom: "none",
+                          },
+                        })}
+                      >
+                        <thead>
+                          <tr>
+                            <th scope="col">Competitor</th>
+                            <th scope="col">Tier</th>
+                            <th scope="col">Price/mo</th>
+                            <th scope="col">Relation</th>
+                            <th scope="col">Note</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.rationale.price_anchors.map((anchor, i) => (
+                            <tr key={i}>
+                              <td className={css({ fontWeight: "medium" })}>
+                                {anchor.competitor}
+                              </td>
+                              <td className={css({ color: "gray.11" })}>
+                                {anchor.tier}
+                              </td>
+                              <td className={css({ fontWeight: "bold" })}>
+                                {formatPrice(anchor.monthly_price_usd)}
+                              </td>
+                              <td>
+                                <Badge
+                                  color={relationColor(anchor.relation)}
+                                  size="1"
+                                  variant="soft"
+                                >
+                                  {anchor.relation}
+                                </Badge>
+                              </td>
+                              <td
+                                className={css({
+                                  color: "gray.11",
+                                  lineHeight: "1.5",
+                                })}
+                              >
+                                {anchor.note}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </Box>
                 )}
@@ -517,8 +666,6 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                   className={css({
                     border: "1px solid",
                     borderColor: "ui.border",
-                    borderLeft: "3px solid",
-                    borderLeftColor: "indigo.8",
                     borderRadius: "md",
                     p: "4",
                   })}
@@ -547,8 +694,6 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                   className={css({
                     border: "1px solid",
                     borderColor: "ui.border",
-                    borderLeft: "3px solid",
-                    borderLeftColor: "cyan.8",
                     borderRadius: "md",
                     p: "4",
                   })}
@@ -577,8 +722,6 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                   className={css({
                     border: "1px solid",
                     borderColor: "ui.border",
-                    borderLeft: "3px solid",
-                    borderLeftColor: "jade.8",
                     borderRadius: "md",
                     p: "4",
                   })}
@@ -623,7 +766,6 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
                     borderColor: "ui.border",
                     borderLeft: "3px solid",
                     borderLeftColor: "orange.9",
-                    bg: "orange.2",
                     borderRadius: "md",
                     p: "4",
                   })}
@@ -654,7 +796,7 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
         <>
           <Separator size="4" />
           <Box>
-            <Heading size="5" mb="3">
+            <Heading size="4" mb="3">
               Discounting
             </Heading>
             <Box
@@ -711,7 +853,9 @@ export function ProductPricingPage({ slug }: { slug: string }) {
   if (authLoading) {
     return (
       <Container size="3" p="6">
-        <Text color="gray">Loading…</Text>
+        <Text color="gray" role="status" aria-live="polite">
+          Loading…
+        </Text>
       </Container>
     );
   }
@@ -727,7 +871,9 @@ export function ProductPricingPage({ slug }: { slug: string }) {
   if (loading && !data) {
     return (
       <Container size="3" p="6">
-        <Text color="gray">Loading…</Text>
+        <Text color="gray" role="status" aria-live="polite">
+          Loading…
+        </Text>
       </Container>
     );
   }
@@ -735,7 +881,9 @@ export function ProductPricingPage({ slug }: { slug: string }) {
   if (error) {
     return (
       <Container size="3" p="6">
-        <Text color="red">{error.message}</Text>
+        <Text color="red" role="alert">
+          {error.message}
+        </Text>
       </Container>
     );
   }
@@ -747,7 +895,7 @@ export function ProductPricingPage({ slug }: { slug: string }) {
       <Container size="3" p="6">
         <Flex direction="column" gap="3">
           <Link href="/products" className={button({ variant: "ghost", size: "sm" })}>
-            <ArrowLeftIcon /> Products
+            <ArrowLeftIcon aria-hidden /> Products
           </Link>
           <Text color="gray">Product &ldquo;{slug}&rdquo; not found.</Text>
         </Flex>
@@ -768,25 +916,44 @@ export function ProductPricingPage({ slug }: { slug: string }) {
   }
 
   return (
-    <Container size="3" p="6">
-      <Flex mb="5" gap="2" align="center">
-        <Link
-          href={`/products/${product.slug}`}
-          className={button({ variant: "ghost", size: "sm" })}
+    <Container size="3" p="6" asChild>
+      <main>
+        <nav
+          aria-label="Breadcrumb"
+          className={css({ mb: "5" })}
         >
-          <ArrowLeftIcon /> {product.name}
-        </Link>
-        <Text color="gray" size="2">
-          /
-        </Text>
-        <Text size="3" weight="medium">
-          Pricing
-        </Text>
-      </Flex>
+          <Flex
+            gap="2"
+            align="center"
+            asChild
+          >
+            <ol className={css({ listStyle: "none", p: 0, m: 0 })}>
+              <li>
+                <Link
+                  href={`/products/${product.slug}`}
+                  className={button({ variant: "ghost", size: "sm" })}
+                >
+                  <ArrowLeftIcon aria-hidden /> {product.name}
+                </Link>
+              </li>
+              <li aria-hidden="true">
+                <Text color="gray" size="2">
+                  /
+                </Text>
+              </li>
+              <li>
+                <Text size="3" weight="medium" aria-current="page">
+                  Pricing
+                </Text>
+              </li>
+            </ol>
+          </Flex>
+        </nav>
 
       <Flex direction="column" gap="4">
         <Flex align="center" gap="3" wrap="wrap">
           <span
+            aria-hidden="true"
             className={css({
               color: "accent.11",
               display: "inline-flex",
@@ -824,11 +991,17 @@ export function ProductPricingPage({ slug }: { slug: string }) {
               alignItems: "center",
               gap: "1",
               wordBreak: "break-all",
+              borderRadius: "sm",
               _hover: { textDecoration: "underline" },
+              _focusVisible: {
+                outline: "2px solid",
+                outlineColor: "accent.9",
+                outlineOffset: "2px",
+              },
             })}
           >
             {product.domain ?? product.url}
-            <ExternalLinkIcon />
+            <ExternalLinkIcon aria-hidden />
           </a>
           {analyzedAt && (
             <Text size="2" color="gray">
@@ -842,7 +1015,7 @@ export function ProductPricingPage({ slug }: { slug: string }) {
               disabled={analyzeState.loading || (latestRun && !terminal)}
               className={button({ variant: "solid", size: "sm" })}
             >
-              <MagicWandIcon />
+              <MagicWandIcon aria-hidden />
               <span className={css({ ml: "1" })}>
                 {analyzeState.loading
                   ? "Starting…"
@@ -855,12 +1028,12 @@ export function ProductPricingPage({ slug }: { slug: string }) {
         </Flex>
 
         {analyzeState.error && (
-          <Text color="red" as="p">
+          <Text color="red" as="p" role="alert">
             {analyzeState.error.message}
           </Text>
         )}
         {latestRun?.error && (
-          <Text color="red" as="p">
+          <Text color="red" as="p" role="alert">
             {latestRun.error}
           </Text>
         )}
@@ -876,7 +1049,9 @@ export function ProductPricingPage({ slug }: { slug: string }) {
           {pricing ? (
             <PricingAnalysisView data={pricing} />
           ) : latestRun && !terminal ? (
-            <Text color="gray">Running pricing analysis…</Text>
+            <Text color="gray" role="status" aria-live="polite">
+              Running pricing analysis…
+            </Text>
           ) : (
             <Box
               className={css({
@@ -892,6 +1067,7 @@ export function ProductPricingPage({ slug }: { slug: string }) {
               })}
             >
               <span
+                aria-hidden="true"
                 className={css({
                   color: "accent.11",
                   display: "inline-flex",
@@ -912,6 +1088,7 @@ export function ProductPricingPage({ slug }: { slug: string }) {
           )}
         </div>
       </Flex>
+      </main>
     </Container>
   );
 }

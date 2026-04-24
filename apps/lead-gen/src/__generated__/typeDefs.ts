@@ -1499,6 +1499,37 @@ input ProductInput {
   url: String!
 }
 
+"""
+One scored company for a given product — a row in company_product_signals joined with its company.
+"""
+type ProductLead {
+  companyDescription: String
+  companyDomain: String
+  companyId: Int!
+  companyIndustry: String
+  companyKey: String!
+  companyLocation: String
+  companyLogoUrl: String
+  companyName: String!
+  companySize: String
+  regexScore: Float!
+  score: Float!
+  semanticScore: Float
+  """Vertical-specific signal payload; always includes schema_version."""
+  signals: JSON
+  """'hot' | 'warm' | 'cold' | null"""
+  tier: String
+  updatedAt: DateTime!
+}
+
+type ProductLeadsConnection {
+  coldCount: Int!
+  hotCount: Int!
+  leads: [ProductLead!]!
+  totalCount: Int!
+  warmCount: Int!
+}
+
 type QualityGateResult {
   adjustedScore: Float!
   flags: [String!]!
@@ -1551,6 +1582,10 @@ type Query {
   productBySlug(slug: String!): Product
   productIntelRun(id: ID!): IntelRun
   productIntelRuns(graphVersion: String, kind: String, minSchemaVersion: String, productId: Int!): [IntelRun!]!
+  """
+  Scored leads for a product, ordered by tier then score desc. Backed by company_product_signals.
+  """
+  productLeads(limit: Int = 50, offset: Int = 0, slug: String!, tier: String): ProductLeadsConnection!
   products(limit: Int, offset: Int): [Product!]!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, classification: String, limit: Int, offset: Int): ReceivedEmailsResult!

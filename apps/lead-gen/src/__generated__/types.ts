@@ -2152,6 +2152,37 @@ export type ProductInput = {
   url: Scalars['String']['input'];
 };
 
+/** One scored company for a given product — a row in company_product_signals joined with its company. */
+export type ProductLead = {
+  __typename: 'ProductLead';
+  companyDescription: Maybe<Scalars['String']['output']>;
+  companyDomain: Maybe<Scalars['String']['output']>;
+  companyId: Scalars['Int']['output'];
+  companyIndustry: Maybe<Scalars['String']['output']>;
+  companyKey: Scalars['String']['output'];
+  companyLocation: Maybe<Scalars['String']['output']>;
+  companyLogoUrl: Maybe<Scalars['String']['output']>;
+  companyName: Scalars['String']['output'];
+  companySize: Maybe<Scalars['String']['output']>;
+  regexScore: Scalars['Float']['output'];
+  score: Scalars['Float']['output'];
+  semanticScore: Maybe<Scalars['Float']['output']>;
+  /** Vertical-specific signal payload; always includes schema_version. */
+  signals: Maybe<Scalars['JSON']['output']>;
+  /** 'hot' | 'warm' | 'cold' | null */
+  tier: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ProductLeadsConnection = {
+  __typename: 'ProductLeadsConnection';
+  coldCount: Scalars['Int']['output'];
+  hotCount: Scalars['Int']['output'];
+  leads: Array<ProductLead>;
+  totalCount: Scalars['Int']['output'];
+  warmCount: Scalars['Int']['output'];
+};
+
 export type QualityGateResult = {
   __typename: 'QualityGateResult';
   adjustedScore: Scalars['Float']['output'];
@@ -2206,6 +2237,8 @@ export type Query = {
   productBySlug: Maybe<Product>;
   productIntelRun: Maybe<IntelRun>;
   productIntelRuns: Array<IntelRun>;
+  /** Scored leads for a product, ordered by tier then score desc. Backed by company_product_signals. */
+  productLeads: ProductLeadsConnection;
   products: Array<Product>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
@@ -2503,6 +2536,14 @@ export type QueryProductIntelRunsArgs = {
   kind?: InputMaybe<Scalars['String']['input']>;
   minSchemaVersion?: InputMaybe<Scalars['String']['input']>;
   productId: Scalars['Int']['input'];
+};
+
+
+export type QueryProductLeadsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  slug: Scalars['String']['input'];
+  tier?: InputMaybe<Scalars['String']['input']>;
 };
 
 

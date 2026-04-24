@@ -163,3 +163,50 @@ mutation RunFullProductIntelAsync($id: Int!, $forceRefresh: Boolean) {
 mutation SetProductPublished($id: Int!, $published: Boolean!) {
   setProductPublished(id: $id, published: $published) { ...ProductCore }
 }
+
+fragment ProductLeadCore on ProductLead {
+  companyId
+  companyKey
+  companyName
+  companyDomain
+  companyLogoUrl
+  companyDescription
+  companyIndustry
+  companySize
+  companyLocation
+  tier
+  score
+  regexScore
+  semanticScore
+  signals
+  updatedAt
+}
+
+query ProductLeads($slug: String!, $tier: String, $limit: Int, $offset: Int) {
+  productLeads(slug: $slug, tier: $tier, limit: $limit, offset: $offset) {
+    leads {
+      ...ProductLeadCore
+    }
+    totalCount
+    hotCount
+    warmCount
+    coldCount
+  }
+}
+
+query ProductLeadsPreview($slug: String!) {
+  productLeads(slug: $slug, limit: 5, offset: 0) {
+    leads {
+      companyId
+      companyKey
+      companyName
+      companyDomain
+      companyLogoUrl
+      tier
+      score
+    }
+    totalCount
+    hotCount
+    warmCount
+  }
+}
