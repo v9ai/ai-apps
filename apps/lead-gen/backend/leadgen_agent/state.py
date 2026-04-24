@@ -480,6 +480,42 @@ class CompanyEnrichmentState(TypedDict, total=False):
     graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
 
 
+class DeepScrapeState(TypedDict, total=False):
+    """State for the single-company deep-scrape graph.
+
+    Shells out to ``consultancies/scrape_crawl4ai.py`` (Playwright-based
+    Crawl4AI deep crawl) in a subprocess. The script is kept outside the
+    backend image because crawl4ai + Chromium bloats the container to
+    ~1 GB and does not run on HF Spaces / CF Workers. LangGraph can still
+    trigger it in dev/local runs via this thin wrapper.
+    """
+
+    # input — one of {company_id, url} is required; if both are present the
+    # url overrides the company row's canonical_domain for this run.
+    company_id: int
+    url: str
+    max_pages: int     # default 15
+    max_depth: int     # default 2
+    provider: str      # LLM provider, default "anthropic/claude-sonnet-4-6"
+    dry_run: bool      # when true, skip Neon writes
+    # resolved
+    target_url: str
+    # output — mirrors the --json shape emitted by scrape_crawl4ai.py
+    domain: str
+    pages_crawled: int
+    emails: list[str]
+    has_careers: bool
+    has_pricing: bool
+    enrichment: dict[str, Any]
+    score: float
+    score_reasons: list[str]
+    # plumbing
+    script_exit_code: int
+    stderr_tail: str
+    _error: str
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
+
+
 class ContactDiscoveryState(TypedDict, total=False):
     """State for the by-company contact discovery graph.
 
