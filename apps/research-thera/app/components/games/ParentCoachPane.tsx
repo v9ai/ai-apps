@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Box, Card, Flex, Heading, Text } from "@radix-ui/themes";
+import { Badge, Box, Card, Flex, Text } from "@radix-ui/themes";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 
 export type ParentGuide = {

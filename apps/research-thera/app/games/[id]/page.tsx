@@ -111,13 +111,6 @@ function GameDetailContent({ id }: { id: number }) {
     });
   }, [familyData]);
 
-  // Auto-pick sole child when coach mode turns on.
-  useEffect(() => {
-    if (coachMode && partnerFamilyMemberId == null && children.length === 1) {
-      setPartnerFamilyMemberId(children[0].id);
-    }
-  }, [coachMode, partnerFamilyMemberId, children]);
-
   // Try to enter browser fullscreen when coach mode activates (best-effort).
   useEffect(() => {
     if (!coachMode) return;
@@ -444,6 +437,9 @@ function GameDetailContent({ id }: { id: number }) {
                   if (v) {
                     setRunnerStepIndex(0);
                     setRunnerCompleted(false);
+                    if (partnerFamilyMemberId == null && children.length > 0) {
+                      setPartnerFamilyMemberId(children[0].id);
+                    }
                   }
                 }}
                 size="2"
