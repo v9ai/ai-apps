@@ -30,6 +30,9 @@ function mapCampaign(row: typeof emailCampaigns.$inferSelect) {
   return {
     ...row,
     companyId: row.company_id ?? null,
+    productId: row.product_id ?? null,
+    productAwareMode: row.product_aware_mode ?? false,
+    personaMatchThreshold: row.persona_match_threshold ?? null,
     sequence: row.sequence ? JSON.parse(row.sequence) : null,
     delayDays: row.delay_days ? JSON.parse(row.delay_days) : null,
     startAt: row.start_at ?? null,

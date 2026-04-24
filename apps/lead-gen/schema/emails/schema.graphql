@@ -80,6 +80,10 @@ extend type Mutation {
 type EmailCampaign {
   id: String!
   companyId: Int
+  productId: Int
+  product: Product
+  productAwareMode: Boolean!
+  personaMatchThreshold: Float
   name: String!
   status: String!
   sequence: JSON
@@ -115,6 +119,9 @@ type DeleteCampaignResult {
 input CreateCampaignInput {
   name: String!
   companyId: Int
+  productId: Int
+  productAwareMode: Boolean
+  personaMatchThreshold: Float
   fromEmail: String
   replyTo: String
   mode: String
@@ -131,6 +138,9 @@ input CreateCampaignInput {
 input UpdateCampaignInput {
   name: String
   status: String
+  productId: Int
+  productAwareMode: Boolean
+  personaMatchThreshold: Float
   fromEmail: String
   replyTo: String
   mode: String
