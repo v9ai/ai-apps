@@ -13,6 +13,9 @@ export class LeadgenContainer extends Container {
       LANGGRAPH_AUTH_TOKEN: env.LANGGRAPH_AUTH_TOKEN ?? "",
       LLM_BASE_URL: env.LLM_BASE_URL ?? "https://api.deepseek.com",
       LLM_MODEL: env.LLM_MODEL ?? "deepseek-chat",
+      EMAIL_LLM_BASE_URL: env.EMAIL_LLM_BASE_URL ?? "",
+      EMAIL_LLM_API_KEY: env.EMAIL_LLM_API_KEY ?? "",
+      EMAIL_LLM_MODEL: env.EMAIL_LLM_MODEL ?? "",
     };
   }
 }

@@ -4,7 +4,50 @@ pub mod online_learner;
 pub use authority::{classify_contact, ContactClassification};
 pub use online_learner::OnlineLearner;
 
-pub use icp::IcpCriteria as IcpProfile;
+// Inlined from the formerly-separate lead-gen icp crate (now ported to
+// Python at backend/leadgen_agent/icp_scoring.py). Kept here so this
+// monorepo-root crate continues to build standalone.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct IcpProfile {
+    pub target_industries: Vec<String>,
+    pub min_employees: Option<i32>,
+    pub max_employees: Option<i32>,
+    pub target_seniorities: Vec<String>,
+    pub target_departments: Vec<String>,
+    pub target_tech_stack: Vec<String>,
+    pub target_locations: Vec<String>,
+    pub funding_stages: Vec<String>,
+    #[serde(default)]
+    pub topics: Vec<String>,
+    #[serde(default)]
+    pub min_stars: Option<u32>,
+    #[serde(default)]
+    pub min_repos: Option<u32>,
+    #[serde(default)]
+    pub required_languages: Vec<String>,
+    #[serde(default)]
+    pub active_within_days: Option<u32>,
+}
+
+impl Default for IcpProfile {
+    fn default() -> Self {
+        Self {
+            target_industries: vec!["ai".into(), "ml".into(), "saas".into(), "infrastructure".into()],
+            min_employees: Some(20),
+            max_employees: Some(500),
+            target_seniorities: vec!["vp".into(), "director".into(), "head".into(), "chief".into(), "cto".into(), "ceo".into()],
+            target_departments: vec!["engineering".into(), "ai".into(), "ml".into(), "data".into(), "platform".into()],
+            target_tech_stack: vec!["rust".into(), "python".into(), "kubernetes".into(), "pytorch".into(), "tensorflow".into()],
+            target_locations: vec![],
+            funding_stages: vec![],
+            topics: vec![],
+            min_stars: None,
+            min_repos: None,
+            required_languages: vec![],
+            active_within_days: None,
+        }
+    }
+}
 
 const RECENCY_HALF_LIFE_DAYS: f64 = 28.0;
 const RECENCY_K: f64 = std::f64::consts::LN_2 / RECENCY_HALF_LIFE_DAYS;

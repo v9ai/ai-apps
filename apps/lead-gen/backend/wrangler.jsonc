@@ -6,7 +6,9 @@
   "observability": { "enabled": true },
   "vars": {
     "LLM_BASE_URL": "https://api.deepseek.com",
-    "LLM_MODEL": "deepseek-chat"
+    "LLM_MODEL": "deepseek-chat",
+    "EMAIL_LLM_BASE_URL": "https://lead-gen-email-llm.eeeew.workers.dev/v1",
+    "EMAIL_LLM_MODEL": "mistral-email-lora"
   },
   "containers": [
     {

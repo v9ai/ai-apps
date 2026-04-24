@@ -78,6 +78,24 @@ def _deepseek_cfg(tier: str | None) -> tuple[str, str, str]:
     return base_url, api_key, model
 
 
+def _email_llm_cfg() -> tuple[str, str, str]:
+    """Resolve (base_url, api_key, model) for the email-llm CF Worker provider.
+
+    Points at `workers/email-llm/` — an OpenAI-compatible `/v1/chat/completions`
+    proxy to Workers AI (Mistral-7B-Instruct-v0.2, optionally LoRA-adapted on
+    outreach email data). Kept separate from the DeepSeek / default paths so
+    only the three email graphs opt in and every other graph keeps its current
+    provider.
+    """
+    base_url = os.environ.get(
+        "EMAIL_LLM_BASE_URL",
+        "https://lead-gen-email-llm.eeeew.workers.dev/v1",
+    )
+    api_key = os.environ.get("EMAIL_LLM_API_KEY", "")
+    model = os.environ.get("EMAIL_LLM_MODEL", "mistral-email-lora")
+    return base_url, api_key, model
+
+
 def make_llm(
     temperature: float | None = None,
     *,
@@ -96,6 +114,8 @@ def make_llm(
     """
     if provider == "deepseek":
         base_url, api_key, model = _deepseek_cfg(tier)
+    elif provider == "email_llm":
+        base_url, api_key, model = _email_llm_cfg()
     else:
         base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
         api_key = (
@@ -111,6 +131,11 @@ def make_llm(
 def supports_json_mode(*, provider: str | None = None) -> bool:
     if provider == "deepseek":
         return True
+    if provider == "email_llm":
+        # Mistral-7B-Instruct-v0.2 on Workers AI does not honor OpenAI-style
+        # response_format={"type":"json_object"}. Fall through to the regex /
+        # json_repair path in _parse_json().
+        return False
     base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
     return not _is_local(base_url)
 
