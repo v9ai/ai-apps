@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import time
 from datetime import datetime, timezone
 from typing import Any
@@ -245,6 +246,98 @@ async def score(state: CompanyEnrichmentState) -> dict:
 
 # ── Node 5: persist ───────────────────────────────────────────────────────────
 
+_RAG_STACK_PATTERNS: tuple[tuple[re.Pattern, str], ...] = (
+    # Order matters — first match wins. LlamaIndex patterns checked before
+    # LangChain because teams using both typically import LlamaIndex explicitly.
+    (re.compile(r"\bfrom\s+llama[_-]?index\b|\bllama[_-]?index\b", re.I), "llamaindex"),
+    (re.compile(r"\bfrom\s+langchain(_text_splitters|\.text_splitter|_core|_community)?\b|\blangchain\b", re.I), "langchain"),
+    (re.compile(r"\bfrom\s+haystack\b|\bhaystack\b(?!\s+(?:demo|tutorial))", re.I), "haystack"),
+)
+_ON_PREM_RE = re.compile(
+    r"\b(on[- ]prem(?:ise)?|air[- ]gapped|self[- ]hosted|customer[- ]deployed|private cloud|vpc deployment)\b",
+    re.I,
+)
+_COMPLIANCE_RE = re.compile(
+    r"\b(GDPR|EU AI Act|HIPAA|SOC[- ]?2|ISO[- ]?27001|HITRUST|FedRAMP)\b",
+    re.I,
+)
+_TOKEN_COST_RE = re.compile(
+    r"\b(token cost|context window|reduce tokens|token spend|llm bill|"
+    r"inference cost|prompt size|\$\s*/\s*query|cost per query)\b",
+    re.I,
+)
+
+
+async def score_ingestible(state: CompanyEnrichmentState) -> dict:
+    """Populate the 5 Ingestible signal columns on `companies`.
+
+    Runs after `persist` so a failure here does not roll back the core
+    enrichment UPDATE. Deterministic regex only — no LLM call, no external
+    API. Inputs: `home_markdown`, `careers_markdown` already fetched by
+    `fetch`. Signals set conservatively — only flipped true when the keyword
+    actually appears in the fetched text.
+
+    The two remaining HOT_LEAD_SIGNALS from seed_queries/ingestible.py
+    (GitHub code-search, HN/Reddit pain mining) require external API calls
+    and are not wired here — they're documented for a follow-up signal
+    harvester that can run out-of-band and UPDATE these columns later.
+    """
+    if state.get("_error"):
+        return {}
+    company_id = state.get("company_id")
+    if company_id is None:
+        return {}
+    t0 = time.perf_counter()
+
+    home_markdown = state.get("home_markdown") or ""
+    careers_markdown = state.get("careers_markdown") or ""
+    corpus = (home_markdown + "\n" + careers_markdown)
+    if not corpus.strip():
+        # Nothing to score against — leave signals at their defaults.
+        return {"agent_timings": {"score_ingestible": round(time.perf_counter() - t0, 3)}}
+
+    rag_stack: str | None = None
+    for pattern, label in _RAG_STACK_PATTERNS:
+        if pattern.search(corpus):
+            rag_stack = label
+            break
+
+    on_prem = bool(_ON_PREM_RE.search(corpus))
+    ai_act_exposure = bool(_COMPLIANCE_RE.search(corpus))
+    token_cost_complaint = bool(_TOKEN_COST_RE.search(corpus))
+
+    try:
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE companies
+                    SET rag_stack_detected   = COALESCE(%s, rag_stack_detected),
+                        on_prem_required     = on_prem_required OR %s,
+                        ai_act_exposure      = ai_act_exposure  OR %s,
+                        token_cost_complaint = token_cost_complaint OR %s,
+                        updated_at           = now()::text
+                    WHERE id = %s
+                    """,
+                    (rag_stack, on_prem, ai_act_exposure, token_cost_complaint, int(company_id)),
+                )
+    except psycopg.Error:
+        # Non-fatal — the core enrichment already committed in `persist`.
+        # Don't set `_error` because downstream routing would treat this run
+        # as a failure even though classification + scores landed.
+        return {"agent_timings": {"score_ingestible": round(time.perf_counter() - t0, 3)}}
+
+    return {
+        "ingestible_signals": {
+            "rag_stack_detected": rag_stack,
+            "on_prem_required": on_prem,
+            "ai_act_exposure": ai_act_exposure,
+            "token_cost_complaint": token_cost_complaint,
+        },
+        "agent_timings": {"score_ingestible": round(time.perf_counter() - t0, 3)},
+    }
+
+
 async def persist(state: CompanyEnrichmentState) -> dict:
     if state.get("_error"):
         return {}
@@ -395,12 +488,17 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("classify", classify)
     builder.add_node("score", score)
     builder.add_node("persist", persist)
+    builder.add_node("score_ingestible", score_ingestible)
     builder.add_edge(START, "load")
     builder.add_edge("load", "fetch")
     builder.add_edge("fetch", "classify")
     builder.add_edge("classify", "score")
     builder.add_edge("score", "persist")
-    builder.add_edge("persist", END)
+    # Per-vertical signal scorers run after core persist so their failures
+    # never roll back classification + score commits. Additive; safe to
+    # extend with future vertical nodes (archreview, onboardingtutor).
+    builder.add_edge("persist", "score_ingestible")
+    builder.add_edge("score_ingestible", END)
     return builder.compile(checkpointer=checkpointer)
 
 
