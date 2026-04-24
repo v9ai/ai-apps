@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -168,6 +168,23 @@ const edgeDefaults = {
   markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14 },
   style: { strokeWidth: 2 },
 };
+
+// ── Shared surface styles ────────────────────────────────────────────
+// Card elevation applied consistently across MetricsGrid, Technical Details,
+// Deep Dive summaries, Foundation papers, and NodeDetailPanel.
+const cardSurface = {
+  background: "var(--gray-2)",
+  border: "1px solid var(--gray-a4)",
+  borderRadius: 12,
+  boxShadow: "0 1px 2px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.08)",
+} as const;
+
+const innerCardSurface = {
+  background: "var(--gray-1)",
+  border: "1px solid var(--gray-a4)",
+  borderRadius: 10,
+  boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+} as const;
 
 // ── Stage 1: frontend ────────────────────────────────────────────────
 
@@ -395,19 +412,25 @@ function NodeDetailPanel({ nodeId }: { nodeId: string }) {
   const sublabel = node?.data?.sublabel as string | undefined;
 
   return (
-    <Card mt="4" style={{ borderLeft: `3px solid var(--${detail.color}-9)`, background: "var(--gray-2)" }}>
+    <Card
+      mt="4"
+      style={{
+        ...cardSurface,
+        borderLeft: `3px solid var(--${detail.color}-9)`,
+      }}
+    >
       <Flex direction="column" gap="3">
         <Flex align="center" gap="2" wrap="wrap">
           <Heading size="4"><Code>{label}</Code></Heading>
           {sublabel && <Text size="1" color="gray">{sublabel}</Text>}
         </Flex>
         <Text size="2" style={{ lineHeight: 1.65, color: "var(--gray-11)" }}>{detail.description}</Text>
-        <Flex gap="2" wrap="wrap">
+        <Flex gap="2" wrap="wrap" style={{ rowGap: 6 }}>
           {detail.tech.map((t) => (
             <Badge key={t.name} variant="outline" size="1">{t.name}{t.version ? ` ${t.version}` : ""}</Badge>
           ))}
         </Flex>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
           <Flex direction="column" gap="1">
             <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Input</Text>
             <Text size="2">{detail.dataIn}</Text>
@@ -417,7 +440,14 @@ function NodeDetailPanel({ nodeId }: { nodeId: string }) {
             <Text size="2">{detail.dataOut}</Text>
           </Flex>
         </div>
-        <Card style={{ background: `var(--${detail.color}-2)`, border: `1px solid var(--${detail.color}-6)` }}>
+        <Card
+          style={{
+            background: `var(--${detail.color}-2)`,
+            border: `1px solid var(--${detail.color}-6)`,
+            borderRadius: 10,
+            boxShadow: "0 1px 2px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.06)",
+          }}
+        >
           <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Key Insight</Text>
           <Text as="p" size="2" mt="1" style={{ lineHeight: 1.6 }}>{detail.insight}</Text>
         </Card>
@@ -439,10 +469,16 @@ function StageFlow({
   return (
     <div
       style={{
-        width: "100%", height, borderRadius: 8, overflow: "hidden",
+        width: "100%",
+        minHeight: Math.min(height, 520),
+        height,
+        maxHeight: "70vh",
+        borderRadius: 12,
+        overflow: "hidden",
         border: "1px solid var(--gray-a4)",
         background: "color-mix(in srgb, var(--color-background) 95%, var(--gray-3))",
-        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.15)",
+        boxShadow:
+          "inset 0 1px 1px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.18), 0 4px 14px rgba(0,0,0,0.08)",
       }}
     >
       <ReactFlow
@@ -496,7 +532,17 @@ function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: st
   return (
     <Flex align="center" justify="center" direction="column" gap="1" py="1">
       <div style={{ width: 2, height: 16, background: "linear-gradient(to bottom, var(--gray-a5), var(--gray-a7))", borderRadius: 4 }} />
-      <Flex align="center" gap="2" style={{ padding: "3px 10px", borderRadius: 4, background: "var(--gray-3)", border: "1px solid var(--gray-a5)" }}>
+      <Flex
+        align="center"
+        gap="2"
+        style={{
+          padding: "3px 10px",
+          borderRadius: 4,
+          background: "var(--gray-3)",
+          border: "1px solid var(--gray-a5)",
+          filter: "drop-shadow(0 0 8px var(--violet-a4))",
+        }}
+      >
         <Zap size={10} style={{ color: "var(--gray-9)" }} />
         <Text size="1" color="gray" style={{ whiteSpace: "nowrap" }}>
           <Code size="1">{fromStage}</Code>
@@ -534,7 +580,7 @@ function TechnicalDetailSection() {
         {technicalDetails.map((detail) => {
           if (detail.type === "table" && detail.items) {
             return (
-              <Card key={detail.heading} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+              <Card key={detail.heading} style={cardSurface}>
                 <Heading size="3" mb="1">{detail.heading}</Heading>
                 <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
                 <div style={{ overflowX: "auto" }}>
@@ -589,7 +635,7 @@ function TechnicalDetailSection() {
               <Card key={detail.heading} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
                 <Heading size="3" mb="1">{detail.heading}</Heading>
                 <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
                   {detail.items.map((item) => (
                     <Card key={item.label} style={{ background: "var(--gray-1)", border: "1px solid var(--gray-a4)" }}>
                       <Text size="2" weight="medium" style={{ color: "var(--amber-9)" }}>{item.label}</Text>
@@ -695,7 +741,7 @@ function TechFoundations() {
         <CodeIcon size={16} style={{ color: "var(--blue-9)" }} />
         <Heading size="5">Technical Foundations</Heading>
       </Flex>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
         {papers.map((paper) => (
           <Card key={paper.slug} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
             <Flex align="center" gap="2" mb="2">
@@ -726,7 +772,7 @@ function MetricsGrid() {
           System Metrics
         </Text>
       </Flex>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
         {stats.map((s) => (
           <Card key={s.label} style={{ background: "var(--gray-1)", border: "1px solid var(--gray-a4)" }}>
             <Text size="6" weight="bold" style={{ color: "var(--violet-9)", fontFamily: "var(--code-font-family, monospace)", fontVariantNumeric: "tabular-nums" }}>
@@ -751,7 +797,42 @@ export function ArchitectureClient() {
   }, []);
 
   return (
-    <div style={{ width: "100%", maxWidth: "100%", padding: "var(--space-4) var(--space-4)" }}>
+    <div
+      className="arch-root"
+      style={{
+        width: "100%",
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: "var(--space-4) var(--space-4)",
+      }}
+    >
+      <style jsx global>{`
+        @media (min-width: 768px) {
+          .arch-root {
+            padding: var(--space-5) var(--space-6) !important;
+          }
+        }
+        @media (max-width: 900px) {
+          .arch-legend {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: var(--space-2) !important;
+          }
+          .arch-legend-swatches {
+            border-left: 0 !important;
+            padding-left: 0 !important;
+          }
+        }
+        .arch-stage {
+          padding-top: var(--space-5);
+          padding-bottom: var(--space-4);
+        }
+        .arch-back-to-top {
+          position: sticky;
+          bottom: 16px;
+          margin-left: auto;
+        }
+      `}</style>
       <Flex align="center" gap="2" mb="2">
         <Layers width={22} height={22} style={{ color: "var(--violet-9)" }} />
         <Heading size="7">System Architecture</Heading>
@@ -780,12 +861,13 @@ export function ArchitectureClient() {
       <MetricsGrid />
 
       <Flex align="center" gap="4" wrap="wrap" mb="4" py="2" px="3"
+        className="arch-legend"
         style={{ borderRadius: 6, background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
         <Flex align="center" gap="2">
           <Badge color="blue" variant="soft" size="1">Interactive</Badge>
           <Text size="1" color="gray">Click nodes for details. Drag to rearrange.</Text>
         </Flex>
-        <Flex align="center" gap="3" style={{ borderLeft: "1px solid var(--gray-a5)", paddingLeft: 12 }}>
+        <Flex align="center" gap="3" className="arch-legend-swatches" style={{ borderLeft: "1px solid var(--gray-a5)", paddingLeft: 12 }}>
           <Flex align="center" gap="1">
             <div style={{ width: 18, height: 14, borderRadius: 3, background: "color-mix(in srgb, var(--violet-9) 14%, var(--color-background))", border: "1px solid color-mix(in srgb, var(--violet-9) 45%, transparent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Brain size={8} style={{ color: "var(--violet-9)" }} />
@@ -810,7 +892,7 @@ export function ArchitectureClient() {
       <section id="pipeline">
         <Flex direction="column" gap="0">
           {stages.map((stage, i) => (
-            <div key={stage.graphName} id={`stage-${stage.graphName}`}>
+            <div key={stage.graphName} id={`stage-${stage.graphName}`} className="arch-stage">
               <div>
                 <Flex align="baseline" gap="3" mb="2">
                   <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -857,15 +939,17 @@ export function ArchitectureClient() {
         <TechFoundations />
       </section>
 
-      <Flex justify="center" mt="7" mb="4">
+      <Flex justify="end" mt="7" mb="4">
         <a
           href="#pipeline"
+          className="arch-back-to-top"
           style={{
-            padding: "8px 20px", borderRadius: 6, textDecoration: "none",
+            padding: "12px 24px", borderRadius: 6, textDecoration: "none",
             background: "var(--gray-a3)", border: "1px solid var(--gray-a5)",
-            color: "var(--gray-11)", fontSize: 12,
+            color: "var(--gray-11)", fontSize: 13,
             fontFamily: "var(--code-font-family, monospace)",
-            display: "flex", alignItems: "center", gap: 6,
+            display: "inline-flex", alignItems: "center", gap: 8,
+            minHeight: 44,
           }}
         >
           <span style={{ fontSize: 14 }}>↑</span> back to top

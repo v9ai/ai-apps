@@ -101,3 +101,66 @@
   stroke-opacity: 0.9;
   fill-opacity: 0.9;
 }
+
+/* ─── Edge paths — boost default stroke opacity for contrast ─────
+ * Static edges (non-animated) were too dim on dark background.
+ */
+.react-flow__edge path {
+  stroke-opacity: 0.75;
+}
+
+/* ─── Architecture Deep Dive — open-state polish ─────────────────
+ * Smooth color transition + stronger accent when a section is open,
+ * plus a discreet "active" pull on the left border.
+ */
+.arch-deepdive details > summary {
+  transition: background-color 180ms ease, border-left-color 180ms ease;
+}
+.arch-deepdive details[open] > summary {
+  background: var(--gray-3) !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+.arch-deepdive details[open].sec-violet > summary { border-left-color: var(--violet-11) !important; }
+.arch-deepdive details[open].sec-green  > summary { border-left-color: var(--green-11)  !important; }
+.arch-deepdive details[open].sec-purple > summary { border-left-color: var(--purple-11) !important; }
+.arch-deepdive details[open].sec-red    > summary { border-left-color: var(--red-11)    !important; }
+.arch-deepdive details[open].sec-amber  > summary { border-left-color: var(--amber-11)  !important; }
+.arch-deepdive details[open].sec-blue   > summary { border-left-color: var(--blue-11)   !important; }
+.arch-deepdive details[open].sec-cyan   > summary { border-left-color: var(--cyan-11)   !important; }
+.arch-deepdive details[open].sec-teal   > summary { border-left-color: var(--teal-11)   !important; }
+
+.arch-deepdive details[open] .arch-deepdive-body {
+  border-left-color: var(--violet-11);
+}
+.arch-deepdive details[open].sec-violet .arch-deepdive-body { border-left-color: var(--violet-11) !important; }
+.arch-deepdive details[open].sec-green  .arch-deepdive-body { border-left-color: var(--green-11)  !important; }
+.arch-deepdive details[open].sec-purple .arch-deepdive-body { border-left-color: var(--purple-11) !important; }
+.arch-deepdive details[open].sec-red    .arch-deepdive-body { border-left-color: var(--red-11)    !important; }
+.arch-deepdive details[open].sec-amber  .arch-deepdive-body { border-left-color: var(--amber-11)  !important; }
+.arch-deepdive details[open].sec-blue   .arch-deepdive-body { border-left-color: var(--blue-11)   !important; }
+.arch-deepdive details[open].sec-cyan   .arch-deepdive-body { border-left-color: var(--cyan-11)   !important; }
+.arch-deepdive details[open].sec-teal   .arch-deepdive-body { border-left-color: var(--teal-11)   !important; }
+
+/* ─── Architecture code-block label ──────────────────────────────
+ * A tiny uppercase "code" marker in the top-right of every <pre>.
+ */
+.arch-code-block {
+  position: relative;
+}
+.arch-code-block::before {
+  content: "code";
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-9);
+  background: color-mix(in srgb, var(--color-background) 70%, transparent);
+  padding: 1px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+  font-family: var(--code-font-family, monospace);
+}
