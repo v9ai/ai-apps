@@ -199,7 +199,7 @@ async def test_pricing_graph_terminates_on_llm_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _install_common_stubs(monkeypatch, pricing_graph)
-    monkeypatch.setattr(pricing_graph, "ainvoke_json", _boom)
+    monkeypatch.setattr(pricing_graph, "ainvoke_json_with_telemetry", _boom)
 
     graph = pricing_graph.build_graph()
     secret = "test-secret"
@@ -234,7 +234,7 @@ async def test_gtm_graph_terminates_on_llm_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _install_common_stubs(monkeypatch, gtm_graph)
-    monkeypatch.setattr(gtm_graph, "ainvoke_json", _boom)
+    monkeypatch.setattr(gtm_graph, "ainvoke_json_with_telemetry", _boom)
 
     graph = gtm_graph.build_graph()
     secret = "test-secret-gtm"
@@ -268,7 +268,7 @@ async def test_product_intel_graph_terminates_on_loader_failure(
     downstream nodes must all short-circuit on ``_error`` and the graph must
     terminate via ``notify_error_node`` — not via an uncaught executor error."""
     _install_common_stubs(monkeypatch, product_intel_graph)
-    monkeypatch.setattr(product_intel_graph, "ainvoke_json", _boom)
+    monkeypatch.setattr(product_intel_graph, "ainvoke_json_with_telemetry", _boom)
 
     graph = product_intel_graph.build_graph()
     secret = "test-secret-intel"
@@ -301,7 +301,7 @@ async def test_pricing_graph_error_is_silent_without_webhook(
     no POST is attempted. The run still terminates cleanly with _error set.
     Mirrors how sync /runs/wait callers invoke the graph (no webhook config)."""
     _install_common_stubs(monkeypatch, pricing_graph)
-    monkeypatch.setattr(pricing_graph, "ainvoke_json", _boom)
+    monkeypatch.setattr(pricing_graph, "ainvoke_json_with_telemetry", _boom)
 
     graph = pricing_graph.build_graph()
     final = await graph.ainvoke({"product_id": 1})
