@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
+    "@ai-apps/company-intel": "workspace:*",
     "@ai-apps/db-backup": "workspace:*",
     "@ai-apps/resume": "workspace:*",
     "@ai-apps/ui": "workspace:*",

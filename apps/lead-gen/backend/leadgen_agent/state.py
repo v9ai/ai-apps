@@ -502,7 +502,9 @@ class DeepScrapeState(TypedDict, total=False):
     target_url: str
     # output — mirrors the --json shape emitted by scrape_crawl4ai.py
     domain: str
+    url: str                     # full URL actually crawled (incl. scheme + path)
     pages_crawled: int
+    pages: list[str]             # all URLs visited during the deep crawl
     emails: list[str]
     has_careers: bool
     has_pricing: bool

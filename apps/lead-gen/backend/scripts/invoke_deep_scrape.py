@@ -59,8 +59,10 @@ def _print_summary(result: dict) -> None:
 
     enrichment = result.get("enrichment") or {}
     emails = result.get("emails") or []
+    pages = result.get("pages") or []
+    full_url = result.get("url") or result.get("target_url") or result.get("domain") or "?"
     print("=" * 70)
-    print(f"  deep_scrape — {result.get('domain') or result.get('target_url') or '?'}")
+    print(f"  deep_scrape — {full_url}")
     print(
         f"  pages={result.get('pages_crawled', 0)} | "
         f"emails={len(emails)} | "
@@ -80,6 +82,11 @@ def _print_summary(result: dict) -> None:
         print(f"  tech:     {', '.join(enrichment['tech_stack'][:5])}")
     if emails:
         print(f"  emails:   {', '.join(emails[:5])}")
+    if pages:
+        print("-" * 70)
+        print(f"  pages crawled ({len(pages)}):")
+        for i, u in enumerate(pages, 1):
+            print(f"    {i:2d}. {u}")
     print("=" * 70)
 
 

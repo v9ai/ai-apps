@@ -765,7 +765,9 @@ async def main():
     if args.json:
         result = {
             "domain": output.domain,
+            "url": output.url,
             "pages_crawled": len(output.pages),
+            "pages": [p.url for p in output.pages],
             "emails": output.all_emails,
             "has_careers": output.has_careers,
             "has_pricing": output.has_pricing,
