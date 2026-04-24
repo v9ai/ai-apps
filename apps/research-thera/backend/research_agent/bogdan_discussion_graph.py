@@ -419,6 +419,15 @@ async def load_bogdan_context(state: BogdanDiscussionState) -> dict:
         f"- All language must be adapted to the child's age ({age_ref}).{lego_hint}",
         "- This guide should be something a parent can read in 5 minutes and feel prepared.",
         "",
+        "GROUNDING REQUIREMENTS (do NOT skip — this is what differentiates this guide from generic advice):",
+        "- The child's context above contains real IDs: GoalID:N, IssueID:N, JournalEntry:N, ResearchID:N, AnalysisID:N.",
+        "- Pick the 1–3 most pressing IssueIDs as the focus — name them in `behaviorSummary`.",
+        "- In `talkingPoints`, every `researchBacking` field MUST cite at least one real ResearchID:N from the Research Evidence Base above. Do NOT invent IDs.",
+        "- Where appropriate, populate `relatedResearchIds` (int array) with the actual numeric IDs.",
+        "- In `developmentalContext.researchBasis`, cite specific ResearchIDs.",
+        "- Reference specific JournalEntry:N or AnalysisID:N when explaining a pattern (e.g., 'as observed on JournalEntry:7').",
+        "- Synthesize ACROSS issues — if multiple issues share a root cause (frustration tolerance, opposition, peer conflict), say so.",
+        "",
         "Respond with a single JSON object containing EXACTLY these top-level keys: "
         + ", ".join(_REQUIRED_KEYS) + ".",
     ]
