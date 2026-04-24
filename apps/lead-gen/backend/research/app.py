@@ -44,8 +44,7 @@ from leadgen_agent.agentic_search_graph import (
     build_discovery_graph as _build_agentic_discovery,
     build_search_graph as _build_agentic_search,
 )
-from leadgen_agent.common_crawl_graph import _build_graph as _build_common_crawl_graph  # noqa: SLF001
-from leadgen_agent.gh_patterns_graph import build_graph as _build_gh_patterns
+from leadgen_agent.gh_patterns_graph import graph as _gh_patterns_graph
 from leadgen_agent.lead_papers_graph import build_graph as _build_lead_papers
 from leadgen_agent.research_agent_graph import build_graph as _build_research_agent
 
@@ -128,7 +127,12 @@ async def lifespan(app: FastAPI):
             "common_crawl": _build_common_crawl(checkpointer),
             "agentic_search": _build_agentic_search(checkpointer),
             "agentic_discovery": _build_agentic_discovery(checkpointer),
-            "gh_patterns": _build_gh_patterns(checkpointer),
+            # gh_patterns_graph.build_graph() doesn't accept a checkpointer
+            # argument today; reuse the module-level compiled graph. State is
+            # still persisted to Neon by the graph itself (gh_org_patterns /
+            # gh_contributor_embeddings tables), so missing checkpoint resume
+            # is not a correctness concern here.
+            "gh_patterns": _gh_patterns_graph,
         }
         log.info(
             "research container: compiled graphs=%s",

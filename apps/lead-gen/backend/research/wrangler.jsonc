@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lead-gen-research",
+  "main": "src/index.js",
+  "compatibility_date": "2026-04-01",
+  "observability": { "enabled": true },
+  "containers": [
+    {
+      "class_name": "ResearchContainer",
+      "image": "./Dockerfile",
+      "max_instances": 2,
+      "instance_type": "standard-1"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "RESEARCH_CONTAINER", "class_name": "ResearchContainer" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ResearchContainer"] }
+  ]
+}
