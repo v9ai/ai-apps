@@ -3,19 +3,6 @@ resolver = "2"
 exclude = ["crates/.claude"]
 members = [
   "crates/*",
-  "apps/lead-gen/crates/agentic-search",
-  "apps/lead-gen/crates/company-cleanup",
-  "apps/lead-gen/crates/email-verifier",
-  "apps/lead-gen/crates/gh",
-  "apps/lead-gen/crates/job-prep",
-  "apps/lead-gen/crates/icp-embed",
-  "apps/lead-gen/crates/jobbert",
-  "apps/lead-gen/crates/linkedin-posts",
-  "apps/lead-gen/crates/metal",
-  "apps/lead-gen/crates/companies-verify",
-  "apps/lead-gen/crates/consultancies",
-  "apps/lead-gen/crates/common-crawl",
-  "apps/lead-gen/crates/lead-papers",
 ]
 
 [workspace.dependencies]
@@ -74,4 +61,3 @@ qwen-vl    = { path = "crates/qwen-vl", default-features = false }
 research   = { path = "crates/research", default-features = false }
 sdd        = { path = "crates/sdd" }
 hf         = { path = "crates/hf" }
-jobbert    = { path = "apps/lead-gen/crates/jobbert", default-features = false }
