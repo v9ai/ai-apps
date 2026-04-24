@@ -711,11 +711,12 @@ def run_ingest_contact(
 
     Python port of the lightweight path in ``bin/ingest_contact.rs``.
 
-    The Rust binary also ran a JobBERT skill extractor (``jobbert`` crate)
-    to enrich ``tags``. That crate is not yet ported to Python — callers
-    that need the extracted skill tags can pass them in via the ``tags``
-    kwarg. All role/open-to-work tags from the Rust binary (e.g.
-    ``open-to-work``) must be supplied by the caller.
+    The Rust binary also ran a JobBERT skill extractor to enrich ``tags``.
+    The Python equivalent lives at ``leadgen_agent.jobbert_infer``
+    (``extract_skills(text)``). Callers that want the ingestion to auto-tag
+    should call ``jobbert_infer.extract_skills`` over the profile text and
+    pass the resulting labels via the ``tags`` kwarg; otherwise supply tags
+    manually (e.g. ``open-to-work`` from the Rust binary's role flags).
     """
     logging.basicConfig(
         level=os.environ.get("LOG_LEVEL", "INFO").upper(),

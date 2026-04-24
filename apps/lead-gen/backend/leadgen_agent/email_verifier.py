@@ -33,6 +33,7 @@ import aiosmtplib
 import dns.asyncresolver
 import dns.exception
 import dns.rdatatype
+import dns.resolver
 
 log = logging.getLogger(__name__)
 
