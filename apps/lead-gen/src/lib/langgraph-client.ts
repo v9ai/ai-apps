@@ -264,15 +264,22 @@ export function emailOutreach(input: {
   postText: string;
   postUrl?: string;
   tone?: string;
+  productId?: number;
+  personaMatchThreshold?: number;
 }): Promise<EmailOutreachResult> {
-  return runGraph<EmailOutreachResult>("email_outreach", {
+  const payload: Record<string, unknown> = {
     recipient_name: input.recipientName,
     recipient_role: input.recipientRole ?? "",
     recipient_email: input.recipientEmail,
     post_text: input.postText,
     post_url: input.postUrl ?? "",
     tone: input.tone ?? "professional and friendly",
-  });
+  };
+  if (input.productId !== undefined) payload.product_id = input.productId;
+  if (input.personaMatchThreshold !== undefined) {
+    payload.persona_match_threshold = input.personaMatchThreshold;
+  }
+  return runGraph<EmailOutreachResult>("email_outreach", payload);
 }
 
 /**

@@ -54,6 +54,16 @@ function mapCampaign(row: typeof emailCampaigns.$inferSelect) {
 }
 
 export const emailCampaignResolvers = {
+  EmailCampaign: {
+    async product(
+      parent: { productId: number | null },
+      _args: unknown,
+      context: GraphQLContext,
+    ) {
+      if (!parent.productId) return null;
+      return context.loaders.productsById.load(parent.productId);
+    },
+  },
   Query: {
     async emailCampaigns(
       _parent: unknown,
@@ -291,7 +301,7 @@ export const emailCampaignResolvers = {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
-      const { name, companyId, fromEmail, replyTo, mode, sequence, delayDays, recipientEmails, totalEmailsPlanned, addUnsubscribeHeaders, unsubscribeUrl, addAntiThreadHeader, createdBy } = args.input;
+      const { name, companyId, productId, productAwareMode, personaMatchThreshold, fromEmail, replyTo, mode, sequence, delayDays, recipientEmails, totalEmailsPlanned, addUnsubscribeHeaders, unsubscribeUrl, addAntiThreadHeader, createdBy } = args.input;
       const id = `campaign_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
       const rows = await context.db
@@ -300,6 +310,9 @@ export const emailCampaignResolvers = {
           id,
           name,
           company_id: companyId ?? null,
+          product_id: productId ?? null,
+          product_aware_mode: productAwareMode ?? false,
+          persona_match_threshold: personaMatchThreshold ?? null,
           from_email: fromEmail ?? null,
           reply_to: replyTo ?? null,
           mode: mode ?? "sequential",
@@ -325,7 +338,7 @@ export const emailCampaignResolvers = {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
-      const { fromEmail, replyTo, sequence, delayDays, startAt, recipientEmails, totalEmailsPlanned, addUnsubscribeHeaders, unsubscribeUrl, addAntiThreadHeader, ...rest } = args.input;
+      const { fromEmail, replyTo, sequence, delayDays, startAt, recipientEmails, totalEmailsPlanned, addUnsubscribeHeaders, unsubscribeUrl, addAntiThreadHeader, productId, productAwareMode, personaMatchThreshold, ...rest } = args.input;
       const patch: Record<string, unknown> = { ...rest };
       if (fromEmail !== undefined) patch.from_email = fromEmail;
       if (replyTo !== undefined) patch.reply_to = replyTo;
@@ -340,6 +353,9 @@ export const emailCampaignResolvers = {
       if (addUnsubscribeHeaders !== undefined) patch.add_unsubscribe_headers = addUnsubscribeHeaders ? 1 : 0;
       if (unsubscribeUrl !== undefined) patch.unsubscribe_url = unsubscribeUrl;
       if (addAntiThreadHeader !== undefined) patch.add_anti_thread_header = addAntiThreadHeader ? 1 : 0;
+      if (productId !== undefined) patch.product_id = productId;
+      if (productAwareMode !== undefined) patch.product_aware_mode = productAwareMode;
+      if (personaMatchThreshold !== undefined) patch.persona_match_threshold = personaMatchThreshold;
       patch.updated_at = new Date().toISOString();
 
       const rows = await context.db

@@ -31,6 +31,7 @@ const INTENT_WEIGHTS: Record<string, number> = {
   budget_cycle: 15,
   leadership_change: 5,
   product_launch: 5,
+  competitor_mention: 40,
 };
 
 function computeIntentScore(signals: Array<{ signal_type: string; confidence: number; detected_at: string; decay_days: number }>): number {

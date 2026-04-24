@@ -627,6 +627,9 @@ input CreateCampaignInput {
   fromEmail: String
   mode: String
   name: String!
+  personaMatchThreshold: Float
+  productAwareMode: Boolean
+  productId: Int
   recipientEmails: [String!]
   replyTo: String
   sequence: JSON
@@ -784,6 +787,10 @@ type EmailCampaign {
   id: String!
   mode: String
   name: String!
+  personaMatchThreshold: Float
+  product: Product
+  productAwareMode: Boolean!
+  productId: Int
   recipientEmails: [String!]!
   replyTo: String
   sequence: JSON
@@ -2367,6 +2374,9 @@ input UpdateCampaignInput {
   fromEmail: String
   mode: String
   name: String
+  personaMatchThreshold: Float
+  productAwareMode: Boolean
+  productId: Int
   recipientEmails: [String!]
   replyTo: String
   sequence: JSON

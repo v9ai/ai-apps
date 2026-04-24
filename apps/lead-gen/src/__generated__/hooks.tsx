@@ -694,6 +694,9 @@ export type CreateCampaignInput = {
   fromEmail?: InputMaybe<Scalars['String']['input']>;
   mode?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
+  personaMatchThreshold?: InputMaybe<Scalars['Float']['input']>;
+  productAwareMode?: InputMaybe<Scalars['Boolean']['input']>;
+  productId?: InputMaybe<Scalars['Int']['input']>;
   recipientEmails?: InputMaybe<Array<Scalars['String']['input']>>;
   replyTo?: InputMaybe<Scalars['String']['input']>;
   sequence?: InputMaybe<Scalars['JSON']['input']>;
@@ -858,6 +861,10 @@ export type EmailCampaign = {
   id: Scalars['String']['output'];
   mode: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  personaMatchThreshold: Maybe<Scalars['Float']['output']>;
+  product: Maybe<Product>;
+  productAwareMode: Scalars['Boolean']['output'];
+  productId: Maybe<Scalars['Int']['output']>;
   recipientEmails: Array<Scalars['String']['output']>;
   replyTo: Maybe<Scalars['String']['output']>;
   sequence: Maybe<Scalars['JSON']['output']>;
@@ -3502,6 +3509,9 @@ export type UpdateCampaignInput = {
   fromEmail?: InputMaybe<Scalars['String']['input']>;
   mode?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  personaMatchThreshold?: InputMaybe<Scalars['Float']['input']>;
+  productAwareMode?: InputMaybe<Scalars['Boolean']['input']>;
+  productId?: InputMaybe<Scalars['Int']['input']>;
   recipientEmails?: InputMaybe<Array<Scalars['String']['input']>>;
   replyTo?: InputMaybe<Scalars['String']['input']>;
   sequence?: InputMaybe<Scalars['JSON']['input']>;

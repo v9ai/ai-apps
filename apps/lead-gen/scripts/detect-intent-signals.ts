@@ -59,6 +59,7 @@ const INTENT_WEIGHTS: Record<string, number> = {
   budget_cycle: 15,
   leadership_change: 5,
   product_launch: 5,
+  competitor_mention: 40,
 };
 
 // ── Helpers ─────────────────────────────────────────────────────

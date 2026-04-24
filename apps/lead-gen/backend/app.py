@@ -154,6 +154,115 @@ async def runs_wait(req: RunRequest) -> dict[str, Any]:
     return await graph.ainvoke(req.input, config=config)
 
 
+# ── Async run pattern (LangGraph-compat REST surface) ─────────────────────
+#
+# Cloudflare Workers cap response wall time well below the 5+ minute runtime
+# of product_intel/gtm/pricing. The Next.js client (``startGraphRun``) relies
+# on the standard LangGraph routes /threads + /threads/{tid}/runs to schedule
+# work in the background and receive the result via the webhook in
+# ``leadgen_agent.notify``. We implement a minimal subset of those routes
+# here so the same client code runs against this FastAPI shim.
+
+# Tracks { run_id: { thread_id, assistant_id, status, output, error, task } }
+# In-process state — adequate because wrangler.jsonc pins max_instances=1 and
+# AsyncPostgresSaver is the source of truth for graph progression. A restart
+# loses the lookup, but the webhook callback + the GraphQL stale-run sweeper
+# handle that case.
+_async_runs: dict[str, dict[str, Any]] = {}
+_async_run_tasks: set[asyncio.Task[None]] = set()
+
+
+class ThreadCreateRequest(BaseModel):
+    metadata: dict[str, Any] | None = None
+
+
+class ThreadCreateResponse(BaseModel):
+    thread_id: str
+
+
+@app.post("/threads", response_model=ThreadCreateResponse)
+async def create_thread(req: ThreadCreateRequest | None = None) -> ThreadCreateResponse:
+    # AsyncPostgresSaver creates the underlying checkpoint row lazily on first
+    # write, so we only need to mint and return an id here.
+    return ThreadCreateResponse(thread_id=str(uuid.uuid4()))
+
+
+class ThreadRunRequest(BaseModel):
+    assistant_id: str
+    input: dict[str, Any]
+    multitask_strategy: str | None = None  # accepted for client parity, ignored
+
+
+class ThreadRunResponse(BaseModel):
+    run_id: str
+    thread_id: str
+    status: str
+
+
+async def _run_graph_bg(
+    run_id: str, thread_id: str, assistant_id: str, payload: dict[str, Any]
+) -> None:
+    record = _async_runs[run_id]
+    graph = app.state.graphs.get(assistant_id)
+    if graph is None:
+        record["status"] = "error"
+        record["error"] = f"Unknown assistant_id: {assistant_id}"
+        return
+    config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
+    try:
+        result = await graph.ainvoke(payload, config=config)
+        record["output"] = result
+        record["status"] = "success"
+    except asyncio.CancelledError:
+        raise
+    except Exception as e:  # noqa: BLE001 — surface to caller via /runs status
+        log.exception("background run failed (run_id=%s assistant=%s)", run_id, assistant_id)
+        record["status"] = "error"
+        record["error"] = str(e)[:1000]
+
+
+@app.post("/threads/{thread_id}/runs", response_model=ThreadRunResponse)
+async def create_thread_run(
+    thread_id: str, req: ThreadRunRequest
+) -> ThreadRunResponse:
+    if not hasattr(app.state, "graphs") or req.assistant_id not in app.state.graphs:
+        raise HTTPException(
+            status_code=404, detail=f"Unknown assistant_id: {req.assistant_id}"
+        )
+    run_id = str(uuid.uuid4())
+    _async_runs[run_id] = {
+        "thread_id": thread_id,
+        "assistant_id": req.assistant_id,
+        "status": "running",
+        "output": None,
+        "error": None,
+    }
+    task = asyncio.create_task(
+        _run_graph_bg(run_id, thread_id, req.assistant_id, req.input)
+    )
+    _async_run_tasks.add(task)
+    task.add_done_callback(_async_run_tasks.discard)
+    return ThreadRunResponse(run_id=run_id, thread_id=thread_id, status="pending")
+
+
+@app.get("/threads/{thread_id}/runs/{run_id}")
+async def get_thread_run(thread_id: str, run_id: str) -> dict[str, Any]:
+    record = _async_runs.get(run_id)
+    if record is None:
+        # The run may have been started before a restart — best-effort 'unknown'
+        # so the Next.js stale-run sweeper can transition the row to error.
+        return {"status": "unknown", "thread_id": thread_id, "run_id": run_id}
+    if record["thread_id"] != thread_id:
+        raise HTTPException(status_code=404, detail="run does not belong to thread")
+    return {
+        "run_id": run_id,
+        "thread_id": thread_id,
+        "status": record["status"],
+        "output": record.get("output"),
+        "error": record.get("error"),
+    }
+
+
 class DispatchPositioningRequest(BaseModel):
     force: bool = False
     limit: int | None = None

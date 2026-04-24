@@ -154,6 +154,7 @@ async def load_scaffold_context(state: BogdanDiscussionState) -> dict:
     try:
         async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
             async with conn.cursor() as cur:
+                # Profile
                 await cur.execute(
                     "SELECT first_name, name, age_years, relationship, date_of_birth, bio "
                     "FROM family_members WHERE id = %s AND user_id = %s",
@@ -174,8 +175,9 @@ async def load_scaffold_context(state: BogdanDiscussionState) -> dict:
                 profile_line = "### Child Profile\n" + " | ".join(parts)
                 if m_bio:
                     profile_line += f"\nBio: {m_bio[:300]}"
-                sections.append(profile_line)
+                scaffold["profile_section"] = profile_line
 
+                # Characteristics (small, stable, always relevant)
                 await cur.execute(
                     "SELECT category, title, description, severity "
                     "FROM family_member_characteristics "
@@ -191,24 +193,24 @@ async def load_scaffold_context(state: BogdanDiscussionState) -> dict:
                         if c_desc:
                             line += f"\n  {c_desc[:200]}"
                         ch_lines.append(line)
-                    sections.append(
+                    scaffold["characteristics_section"] = (
                         f"### Characteristics & Support Needs ({len(characteristics)})\n"
                         + "\n".join(ch_lines)
                     )
 
+                # Goals (small, stable, always relevant) — also capture id list for FK-scoped research retrieval
                 await cur.execute(
                     "SELECT id, title, description, status, priority, tags "
                     "FROM goals WHERE family_member_id = %s AND user_id = %s "
                     "ORDER BY CASE status WHEN 'active' THEN 1 WHEN 'in_progress' THEN 2 ELSE 3 END, "
-                    "created_at DESC LIMIT 10",
+                    "created_at DESC",
                     (family_member_id, user_email),
                 )
                 goals = await cur.fetchall()
-                goal_ids: list[int] = []
                 if goals:
                     g_lines = []
                     for g_id, g_title, g_desc, g_status, g_prio, g_tags in goals:
-                        goal_ids.append(g_id)
+                        scaffold["goal_ids"].append(g_id)
                         line = f"- [GoalID:{g_id}] **{g_title}**"
                         if g_status:
                             line += f" [{g_status}]"
@@ -223,174 +225,198 @@ async def load_scaffold_context(state: BogdanDiscussionState) -> dict:
                         except Exception:
                             pass
                         g_lines.append(line)
-                    sections.append(f"### Active Goals ({len(goals)})\n" + "\n".join(g_lines))
+                    scaffold["goals_section"] = f"### Active Goals ({len(goals)})\n" + "\n".join(g_lines)
 
+                # Issue/journal id lists — used later for FK-scoped research retrieval filter
                 await cur.execute(
-                    "SELECT id, title, category, severity, description, journal_entry_id "
-                    "FROM issues WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY CASE severity WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, "
-                    "created_at DESC LIMIT 25",
+                    "SELECT id FROM issues WHERE family_member_id = %s AND user_id = %s",
                     (family_member_id, user_email),
                 )
-                issues = await cur.fetchall()
-                issue_ids: list[int] = []
-                if issues:
-                    i_lines = []
-                    for row in issues:
-                        issue_ids.append(row[0])
-                        line = f"- [IssueID:{row[0]}] **{row[1]}** [{row[3]}/{row[2]}]: {(row[4] or '')[:250]}"
-                        if row[5]:
-                            line += f"  (extracted from JournalEntry:{row[5]})"
-                        i_lines.append(line)
-                    sections.append(f"### Known Issues ({len(issues)})\n" + "\n".join(i_lines))
+                scaffold["issue_ids"] = [r[0] for r in await cur.fetchall()]
 
                 await cur.execute(
-                    "SELECT observed_at, observation_type, intensity, context "
-                    "FROM behavior_observations WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY observed_at DESC LIMIT 8",
+                    "SELECT id FROM journal_entries WHERE family_member_id = %s AND user_id = %s",
                     (family_member_id, user_email),
                 )
-                observations = await cur.fetchall()
-                if observations:
-                    o_lines = []
-                    for o_date, o_type, o_int, o_ctx in observations:
-                        line = f"- {str(o_date)[:10]}: {o_type}"
-                        if o_int:
-                            line += f", intensity={o_int}"
-                        if o_ctx:
-                            line += f" | Context: {o_ctx[:120]}"
-                        o_lines.append(line)
-                    sections.append(
-                        f"### Behavior Observations ({len(observations)})\n" + "\n".join(o_lines)
-                    )
-
-                await cur.execute(
-                    "SELECT feedback_date, teacher_name, content "
-                    "FROM teacher_feedbacks WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY feedback_date DESC LIMIT 5",
-                    (family_member_id, user_email),
-                )
-                teacher_fbs = await cur.fetchall()
-                if teacher_fbs:
-                    tf_lines = [
-                        f"- {str(r[0])[:10]} from {r[1]}: {(r[2] or '')[:250]}" for r in teacher_fbs
-                    ]
-                    sections.append(f"### Teacher Feedbacks ({len(teacher_fbs)})\n" + "\n".join(tf_lines))
-
-                await cur.execute(
-                    "SELECT feedback_date, content "
-                    "FROM contact_feedbacks WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY feedback_date DESC LIMIT 10",
-                    (family_member_id, user_email),
-                )
-                contact_fbs = await cur.fetchall()
-                if contact_fbs:
-                    cf_lines = [f"- {str(r[0])[:10]}: {(r[1] or '')[:250]}" for r in contact_fbs]
-                    sections.append(f"### Contact Feedbacks ({len(contact_fbs)})\n" + "\n".join(cf_lines))
-
-                await cur.execute(
-                    "SELECT id, entry_date, title, content, mood, tags "
-                    "FROM journal_entries WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY entry_date DESC LIMIT 20",
-                    (family_member_id, user_email),
-                )
-                journals = await cur.fetchall()
-                if journals:
-                    j_lines = []
-                    for j_id, j_date, j_title, j_content, j_mood, j_tags in journals:
-                        line = f"- [JournalEntry:{j_id}] {str(j_date)[:10]}"
-                        if j_title:
-                            line += f" — {j_title}"
-                        if j_mood:
-                            line += f" ({j_mood})"
-                        if j_content:
-                            line += f"\n  {j_content[:300]}"
-                        try:
-                            tags = json.loads(j_tags) if isinstance(j_tags, str) else (j_tags or [])
-                            if tags:
-                                line += f"\n  Tags: {', '.join(tags[:8])}"
-                        except Exception:
-                            pass
-                        j_lines.append(line)
-                    sections.append(f"### Recent Journal Entries ({len(journals)})\n" + "\n".join(j_lines))
-
-                # Research papers linked to Bogdan's goals AND issues — the evidence base.
-                # Pull top-N by relevance so the LLM can ground recommendations with real ResearchID citations.
-                research_filter_ids = list(set(goal_ids + issue_ids))
-                if research_filter_ids:
-                    placeholders = ",".join(["%s"] * len(research_filter_ids))
-                    await cur.execute(
-                        f"SELECT id, title, evidence_level, key_findings, therapeutic_techniques, "
-                        f"goal_id, issue_id, year "
-                        f"FROM therapy_research "
-                        f"WHERE goal_id IN ({placeholders}) OR issue_id IN ({placeholders}) "
-                        f"ORDER BY "
-                        f"  CASE evidence_level "
-                        f"    WHEN 'meta-analysis' THEN 1 "
-                        f"    WHEN 'systematic_review' THEN 2 "
-                        f"    WHEN 'rct' THEN 3 "
-                        f"    ELSE 4 END, "
-                        f"  relevance_score DESC NULLS LAST "
-                        f"LIMIT 20",
-                        research_filter_ids + research_filter_ids,
-                    )
-                    research = await cur.fetchall()
-                    if research:
-                        r_lines = []
-                        for r_id, r_title, r_ev, r_kf, r_tt, r_goal, r_issue, r_year in research:
-                            line = f"- [ResearchID:{r_id}] \"{r_title}\""
-                            if r_year:
-                                line += f" ({r_year})"
-                            if r_ev:
-                                line += f" [{r_ev}]"
-                            link_parts = []
-                            if r_goal:
-                                link_parts.append(f"GoalID:{r_goal}")
-                            if r_issue:
-                                link_parts.append(f"IssueID:{r_issue}")
-                            if link_parts:
-                                line += f" → {', '.join(link_parts)}"
-                            try:
-                                kf = json.loads(r_kf) if isinstance(r_kf, str) else (r_kf or [])
-                                if kf:
-                                    line += f"\n  Key findings: {' | '.join(kf[:3])}"
-                            except Exception:
-                                pass
-                            try:
-                                tt = json.loads(r_tt) if isinstance(r_tt, str) else (r_tt or [])
-                                if tt:
-                                    line += f"\n  Techniques: {' | '.join(tt[:3])}"
-                            except Exception:
-                                pass
-                            r_lines.append(line)
-                        sections.append(
-                            f"### Research Evidence Base ({len(research)} papers)\n"
-                            + "\n".join(r_lines)
-                        )
-
-                await cur.execute(
-                    "SELECT id, summary, trigger_issue_id, created_at FROM deep_issue_analyses "
-                    "WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY created_at DESC LIMIT 6",
-                    (family_member_id, user_email),
-                )
-                analyses = await cur.fetchall()
-                if analyses:
-                    a_lines = []
-                    for a_id, a_summary, a_trigger, a_created in analyses:
-                        line = f"- [AnalysisID:{a_id}] {str(a_created)[:10]}"
-                        if a_trigger:
-                            line += f" → IssueID:{a_trigger}"
-                        if a_summary:
-                            line += f"\n  {(a_summary or '')[:400]}"
-                        a_lines.append(line)
-                    sections.append(
-                        f"### Prior Deep Analyses ({len(analyses)})\n" + "\n".join(a_lines)
-                    )
+                scaffold["journal_ids"] = [r[0] for r in await cur.fetchall()]
     except Exception as exc:
-        return {"error": f"load_bogdan_context failed: {exc}"}
+        return {"error": f"load_scaffold_context failed: {exc}"}
 
-    family_context = "\n\n".join(sections)
+    if job_id:
+        await _update_job_progress(job_id, 20)
+
+    return {"_scaffold": scaffold, "_child_age": child_age}
+
+
+def _build_query_text(scaffold: dict, child_age: Optional[int]) -> str:
+    """Synthesize a focused query string from the scaffold for semantic retrieval."""
+    parts = ["Parent seeking to have a therapeutic discussion with their child."]
+    if child_age:
+        parts.append(f"Child age: {child_age} years.")
+    if scaffold.get("goals_section"):
+        parts.append(scaffold["goals_section"])
+    if scaffold.get("characteristics_section"):
+        parts.append(scaffold["characteristics_section"])
+    parts.append(
+        "Focus: emotional regulation, frustration tolerance, opposition, peer conflict, "
+        "disruptive behavior, selective communication, evidence-based parenting strategies."
+    )
+    return "\n\n".join(parts)
+
+
+async def retrieve_and_compose(state: BogdanDiscussionState) -> dict:
+    """Embed a synthetic query → vector search across all Bogdan's embedded rows
+    + research papers → cross-encoder rerank → build prompt.
+    """
+    scaffold = state.get("_scaffold") or {}
+    family_member_id = state.get("family_member_id")
+    child_age = state.get("_child_age")
+    job_id = state.get("job_id")
+    is_ro = bool(state.get("is_ro"))
+
+    if not scaffold:
+        return {"error": "retrieve_and_compose requires _scaffold from the prior node"}
+
+    query_text = _build_query_text(scaffold, child_age)
+    try:
+        query_vec = await aembed_text(query_text)
+    except Exception as exc:
+        return {"error": f"embedding query failed: {exc}"}
+
+    if job_id:
+        await _update_job_progress(job_id, 30)
+
+    try:
+        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+            # Bogdan-scoped entities: issues/journals/feedbacks/observations/analyses
+            entity_candidates = await search_for_family_member(
+                conn,
+                family_member_id=family_member_id,
+                query_vec=query_vec,
+                top_k=40,
+                entity_types=[
+                    "issue",
+                    "journal_entry",
+                    "contact_feedback",
+                    "teacher_feedback",
+                    "behavior_observation",
+                    "deep_issue_analysis",
+                ],
+            )
+            # Research papers: FK-scoped via goal/issue/journal FKs (preserves topical scoping)
+            restrict_ids: list[int] = []
+            all_fk_ids = list(
+                set(scaffold.get("goal_ids", []) + scaffold.get("issue_ids", []) + scaffold.get("journal_ids", []))
+            )
+            if all_fk_ids:
+                async with conn.cursor() as cur:
+                    placeholders = ",".join(["%s"] * len(all_fk_ids))
+                    await cur.execute(
+                        f"SELECT DISTINCT id FROM therapy_research "
+                        f"WHERE goal_id IN ({placeholders}) "
+                        f"OR issue_id IN ({placeholders}) "
+                        f"OR journal_entry_id IN ({placeholders})",
+                        all_fk_ids + all_fk_ids + all_fk_ids,
+                    )
+                    restrict_ids = [r[0] for r in await cur.fetchall()]
+            research_candidates = await search_global_research(
+                conn,
+                query_vec=query_vec,
+                top_k=30,
+                restrict_ids=restrict_ids or None,
+            )
+    except Exception as exc:
+        return {"error": f"semantic retrieval failed: {exc}"}
+
+    if job_id:
+        await _update_job_progress(job_id, 45)
+
+    # Cross-encoder rerank in separate pools so we keep both categories
+    try:
+        reranked_entities = await rerank_passages(query_text, entity_candidates, top_k=20)
+        reranked_research = await rerank_passages(query_text, research_candidates, top_k=12)
+    except Exception as exc:
+        return {"error": f"rerank failed: {exc}"}
+
+    if job_id:
+        await _update_job_progress(job_id, 55)
+
+    prompt = _compose_prompt(
+        scaffold=scaffold,
+        retrieved_entities=reranked_entities,
+        retrieved_research=reranked_research,
+        child_age=child_age,
+        is_ro=is_ro,
+    )
+
+    return {
+        "_retrieved_entities": reranked_entities,
+        "_retrieved_research": reranked_research,
+        "_prompt": prompt,
+    }
+
+
+def _group_entities_by_type(entities: list[dict]) -> dict[str, list[dict]]:
+    buckets: dict[str, list[dict]] = {}
+    for e in entities:
+        buckets.setdefault(e["entity_type"], []).append(e)
+    return buckets
+
+
+_ENTITY_TYPE_LABELS = {
+    "issue": ("IssueID", "Issues"),
+    "journal_entry": ("JournalEntry", "Journal Entries"),
+    "contact_feedback": ("ContactFeedback", "Contact Feedbacks"),
+    "teacher_feedback": ("TeacherFeedback", "Teacher Feedbacks"),
+    "behavior_observation": ("Observation", "Behavior Observations"),
+    "deep_issue_analysis": ("AnalysisID", "Prior Deep Analyses"),
+}
+
+
+def _compose_prompt(
+    scaffold: dict,
+    retrieved_entities: list[dict],
+    retrieved_research: list[dict],
+    child_age: Optional[int],
+    is_ro: bool,
+) -> str:
+    sections: list[str] = []
+    if scaffold.get("profile_section"):
+        sections.append(scaffold["profile_section"])
+    if scaffold.get("characteristics_section"):
+        sections.append(scaffold["characteristics_section"])
+    if scaffold.get("goals_section"):
+        sections.append(scaffold["goals_section"])
+
+    # Grouped retrieved entities with similarity + rerank scores
+    buckets = _group_entities_by_type(retrieved_entities)
+    for etype, label_pair in _ENTITY_TYPE_LABELS.items():
+        rows = buckets.get(etype) or []
+        if not rows:
+            continue
+        id_label, header = label_pair
+        lines = []
+        for r in rows:
+            lines.append(
+                f"- [{id_label}:{r['entity_id']}] (sim={r['similarity']:.2f}, "
+                f"rerank={r['rerank_score']:.2f})\n  {r['text']}"
+            )
+        sections.append(f"### Semantically-Retrieved {header} ({len(rows)})\n" + "\n".join(lines))
+
+    # Retrieved research papers
+    if retrieved_research:
+        lines = []
+        for r in retrieved_research:
+            lines.append(
+                f"- [ResearchID:{r['entity_id']}] (sim={r['similarity']:.2f}, "
+                f"rerank={r['rerank_score']:.2f})\n  {r['text']}"
+            )
+        sections.append(
+            f"### Semantically-Retrieved Research Evidence ({len(retrieved_research)} papers)\n"
+            + "\n".join(lines)
+        )
+
+    full_context = "\n\n".join(sections)
     age_ref = f"{child_age} years old" if child_age else "school-age"
     lego_hint = (
         "\n- Bogdan responds well to LEGO-based play; you may suggest LEGO scenarios "
@@ -402,60 +428,44 @@ async def load_scaffold_context(state: BogdanDiscussionState) -> dict:
         "You are NOT writing clinical notes. You are creating a practical, warm, evidence-based discussion guide that the parent can actually use during a real conversation.",
         "",
         "## Full Child Context",
-        family_context,
+        "",
+        "Each retrieved section below shows items ranked by *semantic similarity* to the child's current therapeutic concerns (higher `rerank` score = more relevant). Use these as the primary source material.",
+        "",
+        full_context,
         "",
         "## Instructions",
         "",
-        f"Generate a parent discussion guide for an upcoming conversation with the child above ({age_ref}). The guide should synthesize the active goals, known issues, recent observations, teacher/contact feedback, and recent journal entries into a single coherent conversation plan.",
+        f"Generate a parent discussion guide for an upcoming conversation with the child above ({age_ref}). Synthesize the goals, retrieved issues, journal entries, feedback, observations, analyses, and research into a single coherent conversation plan.",
         "",
-        "1. **behaviorSummary** (string): A brief 1-2 sentence plain-language summary of the most pressing behavior or theme to discuss right now, drawn from the most recent context above.",
+        "1. **behaviorSummary** (string): 1-2 sentences naming the most pressing behavior/theme — cite specific IssueIDs.",
         "",
-        "2. **developmentalContext** (object): Help the parent understand WHY this behavior happens at this age.",
-        '   - stage (string): The developmental stage name (e.g., "Middle Childhood", "Early Adolescence")',
-        "   - explanation (string): What is developmentally normal vs. concerning — in parent-friendly language",
-        "   - normalizedBehavior (string): Reassure the parent about what part is age-typical",
-        "   - researchBasis (string, optional): Reference any research mentioned in the context above",
+        "2. **developmentalContext** (object): { stage, explanation, normalizedBehavior, researchBasis } — researchBasis MUST cite real ResearchID:N from the retrieved research above.",
         "",
-        "3. **conversationStarters** (array, 3-4 items): Age-appropriate ways to open the discussion.",
-        "   - opener (string): The exact words a parent could say to begin",
-        '   - context (string): When/where to use this opener (e.g., "during a calm moment after dinner", "on a walk")',
-        "   - ageAppropriateNote (string, optional): Why this approach works for the developmental stage",
+        "3. **conversationStarters** (array, 3-4 items): { opener, context, ageAppropriateNote (optional) }",
         "",
-        "4. **talkingPoints** (array, 3-5 items): Key things to cover.",
-        "   - point (string): The main idea to convey",
-        "   - explanation (string): How to explain it in age-appropriate terms",
-        "   - researchBacking (string, optional): What research supports this approach",
+        "4. **talkingPoints** (array, 3-5 items): { point, explanation, researchBacking (MUST cite real ResearchID:N) }",
         "",
-        "5. **languageGuide** (object): Concrete phrases to use and avoid.",
-        "   - whatToSay (array, 4-6 items): Helpful phrases with { phrase, reason, alternative (optional) }",
-        "   - whatNotToSay (array, 3-5 items): Harmful phrases with { phrase, reason, alternative (required) }",
+        "5. **languageGuide** (object): { whatToSay (4-6 items), whatNotToSay (3-5 items) } — each item { phrase, reason, alternative }",
         "",
-        "6. **anticipatedReactions** (array, 3-4 items): How the child might respond.",
-        "   - reaction (string): What the child might say or do",
-        '   - likelihood (string): "high", "medium", or "low"',
-        "   - howToRespond (string): How the parent should respond",
+        "6. **anticipatedReactions** (array, 3-4 items): { reaction, likelihood (high/medium/low), howToRespond }",
         "",
-        "7. **followUpPlan** (array, 3-4 items): Steps to reinforce the discussion over time.",
-        "   - action (string): What to do",
-        '   - timing (string): When (e.g., "same evening", "next day", "within a week")',
-        "   - description (string): How to do it practically",
+        "7. **followUpPlan** (array, 3-4 items): { action, timing, description }",
         "",
         "IMPORTANT RULES:",
-        "- Use warm, non-judgmental, empathetic language throughout.",
-        '- Never label the child — focus on the behavior, not the character ("what you did" not "you are").',
-        '- Be specific and practical — generic advice like "talk to your child" is unhelpful.',
-        "- Adapt to known characteristics (e.g., selective mutism, sensory needs).",
+        "- Warm, non-judgmental, empathetic language throughout.",
+        '- Never label the child — focus on behavior, not character ("what you did" not "you are").',
+        "- Be specific and practical — no generic advice.",
+        "- Adapt to known characteristics (see scaffold).",
         f"- All language must be adapted to the child's age ({age_ref}).{lego_hint}",
         "- This guide should be something a parent can read in 5 minutes and feel prepared.",
         "",
-        "GROUNDING REQUIREMENTS (do NOT skip — this is what differentiates this guide from generic advice):",
-        "- The child's context above contains real IDs: GoalID:N, IssueID:N, JournalEntry:N, ResearchID:N, AnalysisID:N.",
-        "- Pick the 1–3 most pressing IssueIDs as the focus — name them in `behaviorSummary`.",
-        "- In `talkingPoints`, every `researchBacking` field MUST cite at least one real ResearchID:N from the Research Evidence Base above. Do NOT invent IDs.",
-        "- Where appropriate, populate `relatedResearchIds` (int array) with the actual numeric IDs.",
-        "- In `developmentalContext.researchBasis`, cite specific ResearchIDs.",
-        "- Reference specific JournalEntry:N or AnalysisID:N when explaining a pattern (e.g., 'as observed on JournalEntry:7').",
-        "- Synthesize ACROSS issues — if multiple issues share a root cause (frustration tolerance, opposition, peer conflict), say so.",
+        "GROUNDING REQUIREMENTS (do NOT skip — this is what makes the guide different from generic advice):",
+        "- The context above contains real IDs: GoalID:N, IssueID:N, JournalEntry:N, ContactFeedback:N, TeacherFeedback:N, Observation:N, AnalysisID:N, ResearchID:N.",
+        "- Pick 1–3 most pressing IssueIDs (highest rerank) as focus — name them in behaviorSummary.",
+        "- Every talkingPoints.researchBacking MUST cite at least one real ResearchID:N from the retrieved research above. Do NOT invent IDs.",
+        "- developmentalContext.researchBasis MUST cite specific ResearchIDs.",
+        "- Reference specific JournalEntry:N or AnalysisID:N when explaining a pattern.",
+        "- Synthesize ACROSS issues when they share a root cause (frustration tolerance, opposition, peer conflict, etc.).",
         "",
         "Respond with a single JSON object containing EXACTLY these top-level keys: "
         + ", ".join(_REQUIRED_KEYS) + ".",
@@ -464,11 +474,7 @@ async def load_scaffold_context(state: BogdanDiscussionState) -> dict:
     prompt = "\n".join(p for p in prompt_parts if p is not None)
     if is_ro:
         prompt = f"{ROMANIAN_INSTRUCTION}\n\n{prompt}"
-
-    if job_id:
-        await _update_job_progress(job_id, 25)
-
-    return {"_prompt": prompt, "_child_age": child_age}
+    return prompt
 
 
 async def generate(state: dict) -> dict:
