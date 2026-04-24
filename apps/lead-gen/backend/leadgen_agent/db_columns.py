@@ -21,9 +21,12 @@ from typing import Any
 
 import psycopg
 
-from .deep_icp_graph import _dsn
-
 log = logging.getLogger(__name__)
+
+
+def _dsn() -> str:
+    from .deep_icp_graph import _dsn as _resolve_dsn
+    return _resolve_dsn()
 
 
 # Whitelist of (jsonb_column, timestamp_column) pairs that graphs may write.
