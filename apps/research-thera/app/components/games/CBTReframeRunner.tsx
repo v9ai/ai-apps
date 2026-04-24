@@ -1,31 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Box,
-  Button,
-  Card,
-  Flex,
-  Heading,
-  Text,
-  TextArea,
-  Callout,
-} from "@radix-ui/themes";
+import { Box, Button, Card, Flex, Heading, Text, Callout } from "@radix-ui/themes";
 import { CheckCircledIcon, CheckIcon } from "@radix-ui/react-icons";
-import { MicButton } from "@/app/components/games/MicButton";
 
 type Step = {
   kind: "situation" | "thought" | "distortion" | "reframe";
   prompt: string;
-  options?: string[];
+  options: string[];
+  allowCustom?: boolean;
 };
 
 type Content = { steps: Step[] };
 
-const STEP_KIND_LABEL: Record<
-  Step["kind"],
-  { ro: string; en: string }
-> = {
+const STEP_KIND_LABEL: Record<Step["kind"], { ro: string; en: string }> = {
   situation: { ro: "situație", en: "situation" },
   thought: { ro: "gând", en: "thought" },
   distortion: { ro: "capcană", en: "distortion" },
@@ -74,7 +62,6 @@ export function CBTReframeRunner({
         saving: "Se salvează…",
         completed: "Ai reușit!",
         savedMsg: "Reformularea ta a fost salvată.",
-        placeholder: "Scrie răspunsul tău…",
       }
     : {
         stepOf: (i: number, n: number) => `Step ${i + 1} of ${n}`,
@@ -84,10 +71,15 @@ export function CBTReframeRunner({
         saving: "Saving…",
         completed: "Completed",
         savedMsg: "Your reframe was saved.",
-        placeholder: "Type your answer…",
       };
 
-  if (!parsed || !Array.isArray(parsed.steps) || parsed.steps.length === 0) {
+  const invalid =
+    !parsed ||
+    !Array.isArray(parsed.steps) ||
+    parsed.steps.length === 0 ||
+    parsed.steps.some((s) => !Array.isArray(s.options) || s.options.length === 0);
+
+  if (invalid) {
     return (
       <Callout.Root color="red">
         <Callout.Text>
@@ -97,13 +89,13 @@ export function CBTReframeRunner({
     );
   }
 
-  const step = parsed.steps[idx];
+  const step = parsed!.steps[idx];
   const key = step.kind;
   const current = answers[key] ?? "";
-  const isLast = idx === parsed.steps.length - 1;
+  const isLast = idx === parsed!.steps.length - 1;
 
-  function setCurrent(v: string) {
-    setAnswers((a) => ({ ...a, [key]: v }));
+  function pick(opt: string) {
+    setAnswers((a) => ({ ...a, [key]: opt }));
   }
 
   function next() {
@@ -123,7 +115,14 @@ export function CBTReframeRunner({
   if (done) {
     return (
       <Card style={{ height: "100%" }}>
-        <Flex direction="column" align="center" justify="center" gap="3" p="5" style={{ minHeight: 240, height: "100%" }}>
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          gap="3"
+          p="5"
+          style={{ minHeight: 240, height: "100%" }}
+        >
           <CheckCircledIcon width="48" height="48" color="var(--green-9)" />
           <Heading size={large ? "8" : "5"}>{t.completed}</Heading>
           <Text size="3" color="gray" align="center">
@@ -136,12 +135,21 @@ export function CBTReframeRunner({
 
   return (
     <Card size={large ? "4" : "2"} style={{ height: "100%" }}>
-      <Flex direction="column" gap={large ? "6" : "4"} p={large ? "5" : "4"} height="100%">
+      <Flex
+        direction="column"
+        gap={large ? "6" : "4"}
+        p={large ? "5" : "4"}
+        height="100%"
+      >
         <Flex justify="between" align="center">
           <Text size={large ? "3" : "2"} color="gray">
-            {t.stepOf(idx, parsed.steps.length)}
+            {t.stepOf(idx, parsed!.steps.length)}
           </Text>
-          <Text size={large ? "3" : "2"} color="gray" style={{ textTransform: "capitalize" }}>
+          <Text
+            size={large ? "3" : "2"}
+            color="gray"
+            style={{ textTransform: "capitalize" }}
+          >
             {STEP_KIND_LABEL[step.kind][isRo ? "ro" : "en"]}
           </Text>
         </Flex>
@@ -150,91 +158,63 @@ export function CBTReframeRunner({
           {step.prompt}
         </Heading>
 
-        {step.kind === "distortion" && step.options ? (
-          <Flex direction="column" gap={large ? "3" : "2"}>
-            {step.options.map((opt) => {
-              const selected = current === opt;
-              return (
-                <Box
-                  key={opt}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setCurrent(opt)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setCurrent(opt);
-                    }
-                  }}
-                  style={{
-                    cursor: "pointer",
-                    padding: large ? "var(--space-4)" : "var(--space-3)",
-                    minHeight: large ? 64 : 56,
-                    borderRadius: "var(--radius-3)",
-                    background: selected ? "var(--indigo-a4)" : "var(--gray-a2)",
-                    border: selected
-                      ? "2px solid var(--indigo-9)"
-                      : "2px solid var(--gray-a4)",
-                    transition: "background 120ms, border-color 120ms",
-                    touchAction: "manipulation",
-                    userSelect: "none",
-                    WebkitTapHighlightColor: "transparent",
-                  }}
-                >
-                  <Flex gap="3" align="center">
-                    <Box
-                      style={{
-                        flex: "0 0 auto",
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        border: selected
-                          ? "2px solid var(--indigo-9)"
-                          : "2px solid var(--gray-a6)",
-                        background: selected ? "var(--indigo-9)" : "transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "white",
-                      }}
-                    >
-                      {selected && <CheckIcon width="18" height="18" />}
-                    </Box>
-                    <Text size={large ? "4" : "3"} style={{ lineHeight: 1.4 }}>
-                      {opt}
-                    </Text>
-                  </Flex>
-                </Box>
-              );
-            })}
-          </Flex>
-        ) : (
-          <Box style={{ position: "relative" }}>
-            <TextArea
-              value={current}
-              onChange={(e) => setCurrent(e.target.value)}
-              placeholder={t.placeholder}
-              rows={large ? 6 : 5}
-              size={large ? "3" : "2"}
-              style={{
-                fontSize: large ? "1.25rem" : "16px",
-                lineHeight: 1.5,
-                paddingRight: 56,
-              }}
-            />
-            <Box style={{ position: "absolute", right: 8, bottom: 8 }}>
-              <MicButton
-                language={language}
-                size={large ? "3" : "2"}
-                onTranscript={(delta, isFinal) => {
-                  if (!isFinal) return;
-                  const sep = current && !current.endsWith(" ") ? " " : "";
-                  setCurrent(current + sep + delta.trim());
+        <Flex direction="column" gap={large ? "3" : "2"}>
+          {step.options.map((opt) => {
+            const selected = current === opt;
+            return (
+              <Box
+                key={opt}
+                role="button"
+                tabIndex={0}
+                onClick={() => pick(opt)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    pick(opt);
+                  }
                 }}
-              />
-            </Box>
-          </Box>
-        )}
+                style={{
+                  cursor: "pointer",
+                  padding: large ? "var(--space-4)" : "var(--space-3)",
+                  minHeight: large ? 64 : 56,
+                  borderRadius: "var(--radius-3)",
+                  background: selected ? "var(--indigo-a4)" : "var(--gray-a2)",
+                  border: selected
+                    ? "2px solid var(--indigo-9)"
+                    : "2px solid var(--gray-a4)",
+                  transition: "background 120ms, border-color 120ms",
+                  touchAction: "manipulation",
+                  userSelect: "none",
+                  WebkitTapHighlightColor: "transparent",
+                }}
+              >
+                <Flex gap="3" align="center">
+                  <Box
+                    style={{
+                      flex: "0 0 auto",
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      border: selected
+                        ? "2px solid var(--indigo-9)"
+                        : "2px solid var(--gray-a6)",
+                      background: selected ? "var(--indigo-9)" : "transparent",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "white",
+                    }}
+                  >
+                    {selected && <CheckIcon width="18" height="18" />}
+                  </Box>
+                  <Text size={large ? "4" : "3"} style={{ lineHeight: 1.4 }}>
+                    {opt}
+                  </Text>
+                </Flex>
+              </Box>
+            );
+          })}
+        </Flex>
 
         <Flex justify="between" mt="auto">
           <Button

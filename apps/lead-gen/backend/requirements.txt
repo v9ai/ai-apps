@@ -16,3 +16,4 @@ beautifulsoup4>=4.12
 lxml>=5.3
 playwright>=1.48
 unstructured[html]>=0.16
+rapidfuzz>=3.14

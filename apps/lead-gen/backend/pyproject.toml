@@ -21,6 +21,7 @@ dependencies = [
     "playwright>=1.48",
     "unstructured[html]>=0.16",
     "json-repair>=0.59.4",
+    "rapidfuzz>=3.14",
     "research-client @ file:///Users/vadimnicolai/Public/ai-apps/pypackages/research",
 ]
 
