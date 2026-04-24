@@ -30,13 +30,25 @@ hooks-status:
 
 # ── App ────────────────────────────────────────────────────────
 
-.PHONY: dev backend-dev build lint codegen deploy db-generate db-migrate db-studio
+.PHONY: dev backend-dev deep-scrape build lint codegen deploy db-generate db-migrate db-studio
 
 dev:
 	pnpm dev
 
 backend-dev:
 	pnpm backend-dev
+
+# Fire the deep_scrape LangGraph graph against a URL or company_id.
+#   make deep-scrape TARGET=https://www.aiacquisition.com/
+#   make deep-scrape TARGET=40878 PAGES=20 DEPTH=3
+#   make deep-scrape TARGET=40878 DRY=1
+deep-scrape:
+	@test -n "$(TARGET)" || (echo "Usage: make deep-scrape TARGET=<url-or-company-id> [PAGES=15] [DEPTH=2] [DRY=1] [JSON=1]" && exit 1)
+	cd backend && uv run python scripts/invoke_deep_scrape.py "$(TARGET)" \
+		$(if $(PAGES),--pages $(PAGES)) \
+		$(if $(DEPTH),--depth $(DEPTH)) \
+		$(if $(DRY),--dry-run) \
+		$(if $(JSON),--json)
 
 build:
 	pnpm build

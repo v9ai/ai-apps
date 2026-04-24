@@ -90,15 +90,6 @@ export const companies = pgTable("companies", {
   hf_org_name: text("hf_org_name"),                        // resolved HF org
   hf_presence_score: real("hf_presence_score").default(0),  // 0..100
 
-  // Ingestible vertical signals (populated by Ingestible discovery + enrichment —
-  // see migration 0067). A "hot Ingestible lead" has rag_stack_detected set AND
-  // at least one of on_prem_required / ai_act_exposure / token_cost_complaint.
-  rag_stack_detected: text("rag_stack_detected"),          // 'langchain'|'llamaindex'|'haystack'|'custom'|'none'
-  token_cost_complaint: boolean("token_cost_complaint").notNull().default(false),
-  on_prem_required: boolean("on_prem_required").notNull().default(false),
-  ingestion_volume_hint: text("ingestion_volume_hint"),     // freeform: "millions of pages", "10k docs/month"
-  ai_act_exposure: boolean("ai_act_exposure").notNull().default(false),
-
   // Intent signal scoring (aggregated from intentSignals table)
   intent_score: real("intent_score").notNull().default(0), // 0..100
   intent_score_updated_at: text("intent_score_updated_at"),
@@ -1146,6 +1137,52 @@ export const products = pgTable(
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+
+// Denormalized per-(company, product) lead-gen signals (see migration 0067).
+// One row per pairing — latest snapshot of regex / heuristic / LLM signals
+// plus an aggregate `score` and `tier`. Provenance stays in `company_facts`.
+// Populated by the generic `score_verticals` node in company_enrichment_graph.
+// Queried for hot-lead lists via (product_id, tier, score DESC).
+export const companyProductSignals = pgTable(
+  "company_product_signals",
+  {
+    id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
+    company_id: integer("company_id")
+      .notNull()
+      .references(() => companies.id, { onDelete: "cascade" }),
+    product_id: integer("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    // Signals jsonb shape governed by ProductVertical.schema_version in
+    // backend/leadgen_agent/verticals/registry.py. Always includes
+    // `schema_version`; remaining keys are vertical-specific.
+    signals: jsonb("signals").notNull().default(sql`'{}'::jsonb`),
+    score: real("score").notNull().default(0),
+    tier: text("tier"), // 'hot' | 'warm' | 'cold' | null
+    updated_at: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("uq_company_product_signals_pair").on(
+      table.company_id,
+      table.product_id,
+    ),
+    index("idx_company_product_signals_hot").on(
+      table.product_id,
+      table.tier,
+      table.score,
+    ),
+    index("idx_company_product_signals_tenant").on(
+      table.tenant_id,
+      table.product_id,
+    ),
+  ],
+);
+
+export type CompanyProductSignals = typeof companyProductSignals.$inferSelect;
+export type NewCompanyProductSignals = typeof companyProductSignals.$inferInsert;
 
 // ── Competitor Analysis ──
 
