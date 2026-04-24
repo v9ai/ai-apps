@@ -23,6 +23,13 @@ dependencies = [
     "json-repair>=0.59.4",
     "rapidfuzz>=3.14",
     "research-client @ file:///Users/vadimnicolai/Public/ai-apps/pypackages/research",
+    "aiosmtplib>=5.1.0",
+    "dnspython>=2.8.0",
+    "sentence-transformers>=5.4.1",
+    "transformers>=5.5.4",
+    "torch>=2.11.0",
+    "numpy>=2.4.4",
+    "warcio>=1.8.1",
 ]
 
 [project.optional-dependencies]
