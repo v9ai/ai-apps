@@ -7,7 +7,24 @@
 //   # optional, after LoRA upload:
 //   wrangler secret put FINETUNE_ID                 # UUID from `wrangler ai finetune list`
 //
-// UPLOAD LORA (after training produces ../mlx-training/peft/out/adapter/final/cf-upload/):
+// TRAIN LORA ON M1 (local MLX — fully CF-compatible, no external compute):
+//   cd ../../mlx-training/peft
+//   pip install -r requirements.txt
+//   python convert_data.py                                    # -> ../data/outreach-email-mistral/{train,valid}.jsonl
+//   python -m mlx_lm lora \
+//     --model mlx-community/Mistral-7B-Instruct-v0.2-4bit \
+//     --train \
+//     --data ../data/outreach-email-mistral \
+//     --adapter-path ../models/outreach-email-mistral \
+//     --max-seq-length 512 --batch-size 2 --iters 200 \
+//     --learning-rate 1e-5 --lora-layers 16
+//   python mlx_adapter_to_peft.py \
+//     --mlx-adapter ../models/outreach-email-mistral/adapters.safetensors \
+//     --out ./out/adapter/final \
+//     --base-model mistralai/Mistral-7B-Instruct-v0.2
+//   python postprocess_adapter.py ./out/adapter/final --model-type mistral
+//
+// UPLOAD LORA TO CF (after training):
 //   npx wrangler ai finetune create \
 //     @cf/mistral/mistral-7b-instruct-v0.2-lora \
 //     email-lora-v1 \

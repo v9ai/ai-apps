@@ -61,9 +61,9 @@ def main() -> None:
 
     try:
         from safetensors import safe_open
-        from safetensors.numpy import save_file
+        from safetensors.torch import save_file
     except ImportError as e:
-        print(f"ERROR: missing dependency — `pip install safetensors numpy`: {e}", file=sys.stderr)
+        print(f"ERROR: missing dependency — `pip install safetensors torch`: {e}", file=sys.stderr)
         sys.exit(1)
 
     if not args.mlx_adapter.exists():

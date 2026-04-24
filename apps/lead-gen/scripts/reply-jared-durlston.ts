@@ -34,9 +34,7 @@ On the post-training side: local Qwen teachers via mlx_lm.server, LoRA distillat
 One hard constraint: I'm remote-only, globally. I know most of what you listed is UAE or London on-site — if any of the seven support fully remote, I'd love to hear which. If none do, no hard feelings, appreciate you reading this far.
 
 Best,
-Vadim Nicolai
-contact@vadim.blog
-vadim.blog`;
+Vadim`;
 
 async function upsertContact(): Promise<number> {
   const existing = (await sql`
