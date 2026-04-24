@@ -61,48 +61,56 @@ class _PricingStateWithError(PricingState, total=False):
 
 
 async def load_inputs(state: PricingState) -> dict:
-    product_id = state.get("product_id")
-    if product_id is None:
-        raise ValueError("product_id is required")
+    # Entry-node guard: any exception here (bad product_id, DB down, etc.) used
+    # to escape LangGraph's executor and leave product_intel_runs.status stuck
+    # on "running". We now catch + route via _error so the terminal
+    # notify_error_node fires and the webhook transitions the run to a clean
+    # terminal state.
+    try:
+        product_id = state.get("product_id")
+        if product_id is None:
+            raise ValueError("product_id is required")
 
-    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, name, url, domain, description, highlights, icp_analysis
-                FROM products
-                WHERE id = %s
-                LIMIT 1
-                """,
-                (int(product_id),),
-            )
-            row = cur.fetchone()
-            if not row:
-                raise RuntimeError(f"product id {product_id} not found")
-            cols = [d[0] for d in cur.description or []]
-            product_row = dict(zip(cols, row))
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, name, url, domain, description, highlights, icp_analysis
+                    FROM products
+                    WHERE id = %s
+                    LIMIT 1
+                    """,
+                    (int(product_id),),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise RuntimeError(f"product id {product_id} not found")
+                cols = [d[0] for d in cur.description or []]
+                product_row = dict(zip(cols, row))
 
-            # Pull competitor pricing from the most recent completed analysis for
-            # this product. Joining on status != 'failed' so partial runs still
-            # surface something useful.
-            cur.execute(
-                """
-                SELECT c.id, c.name, c.url, c.domain,
-                       c.positioning_headline, c.positioning_tagline, c.target_audience,
-                       t.tier_name, t.monthly_price_usd, t.annual_price_usd,
-                       t.seat_price_usd, t.currency, t.included_limits,
-                       t.is_custom_quote, t.sort_order
-                FROM competitor_analyses a
-                JOIN competitors c ON c.analysis_id = a.id
-                LEFT JOIN competitor_pricing_tiers t ON t.competitor_id = c.id
-                WHERE a.product_id = %s
-                  AND a.status <> 'failed'
-                ORDER BY a.created_at DESC, c.id ASC, t.sort_order ASC NULLS LAST
-                """,
-                (int(product_id),),
-            )
-            pricing_rows = cur.fetchall()
-            pricing_cols = [d[0] for d in cur.description or []]
+                # Pull competitor pricing from the most recent completed analysis for
+                # this product. Joining on status != 'failed' so partial runs still
+                # surface something useful.
+                cur.execute(
+                    """
+                    SELECT c.id, c.name, c.url, c.domain,
+                           c.positioning_headline, c.positioning_tagline, c.target_audience,
+                           t.tier_name, t.monthly_price_usd, t.annual_price_usd,
+                           t.seat_price_usd, t.currency, t.included_limits,
+                           t.is_custom_quote, t.sort_order
+                    FROM competitor_analyses a
+                    JOIN competitors c ON c.analysis_id = a.id
+                    LEFT JOIN competitor_pricing_tiers t ON t.competitor_id = c.id
+                    WHERE a.product_id = %s
+                      AND a.status <> 'failed'
+                    ORDER BY a.created_at DESC, c.id ASC, t.sort_order ASC NULLS LAST
+                    """,
+                    (int(product_id),),
+                )
+                pricing_rows = cur.fetchall()
+                pricing_cols = [d[0] for d in cur.description or []]
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"load_inputs: {repr(e)[:1000]}"}
 
     highlights = product_row.get("highlights")
     if isinstance(highlights, str):
@@ -255,7 +263,7 @@ async def benchmark_competitors(state: PricingState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"benchmark_competitors: {e}"}
+        return {"_error": f"benchmark_competitors: {repr(e)[:1000]}"}
     if not isinstance(result, dict):
         result = {}
     return {
@@ -304,7 +312,7 @@ async def choose_value_metric(state: PricingState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"choose_value_metric: {e}"}
+        return {"_error": f"choose_value_metric: {repr(e)[:1000]}"}
     if not isinstance(result, dict):
         result = {}
     return {
@@ -368,7 +376,7 @@ async def design_model(state: PricingState) -> dict:
         # Validate via Pydantic — turns bad LLM output into an early clean failure
         validated = PricingModel.model_validate(result)
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"design_model: {e}"}
+        return {"_error": f"design_model: {repr(e)[:1000]}"}
     return {
         "model": validated.model_dump(),
         "agent_timings": {"design_model": round(time.perf_counter() - t0, 3)},
@@ -420,7 +428,7 @@ async def write_rationale(state: PricingState) -> dict:
             result = {}
         rationale = PricingRationale.model_validate(result)
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"write_rationale: {e}"}
+        return {"_error": f"write_rationale: {repr(e)[:1000]}"}
 
     meta = product_intel_graph_meta(
         graph="pricing",

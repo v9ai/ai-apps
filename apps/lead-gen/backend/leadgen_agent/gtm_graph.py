@@ -53,44 +53,50 @@ class _GTMStateWithError(GTMState, total=False):
 
 
 async def load_inputs(state: GTMState) -> dict:
-    product_id = state.get("product_id")
-    if product_id is None:
-        raise ValueError("product_id is required")
+    # Entry-node guard — catches bad product_id / DB errors so the graph
+    # terminates via notify_error_node instead of leaving an unhandled
+    # exception in LangGraph's executor.
+    try:
+        product_id = state.get("product_id")
+        if product_id is None:
+            raise ValueError("product_id is required")
 
-    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, name, url, domain, description, highlights,
-                       icp_analysis, pricing_analysis
-                FROM products
-                WHERE id = %s
-                LIMIT 1
-                """,
-                (int(product_id),),
-            )
-            row = cur.fetchone()
-            if not row:
-                raise RuntimeError(f"product id {product_id} not found")
-            cols = [d[0] for d in cur.description or []]
-            product_row = dict(zip(cols, row))
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, name, url, domain, description, highlights,
+                           icp_analysis, pricing_analysis
+                    FROM products
+                    WHERE id = %s
+                    LIMIT 1
+                    """,
+                    (int(product_id),),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise RuntimeError(f"product id {product_id} not found")
+                cols = [d[0] for d in cur.description or []]
+                product_row = dict(zip(cols, row))
 
-            # Latest completed competitive analysis + its top-threat competitors
-            cur.execute(
-                """
-                SELECT c.name, c.url, c.positioning_headline, c.positioning_tagline,
-                       c.target_audience
-                FROM competitor_analyses a
-                JOIN competitors c ON c.analysis_id = a.id
-                WHERE a.product_id = %s
-                  AND a.status = 'done'
-                ORDER BY a.created_at DESC, c.id ASC
-                LIMIT 6
-                """,
-                (int(product_id),),
-            )
-            comp_rows = cur.fetchall()
-            comp_cols = [d[0] for d in cur.description or []]
+                # Latest completed competitive analysis + its top-threat competitors
+                cur.execute(
+                    """
+                    SELECT c.name, c.url, c.positioning_headline, c.positioning_tagline,
+                           c.target_audience
+                    FROM competitor_analyses a
+                    JOIN competitors c ON c.analysis_id = a.id
+                    WHERE a.product_id = %s
+                      AND a.status = 'done'
+                    ORDER BY a.created_at DESC, c.id ASC
+                    LIMIT 6
+                    """,
+                    (int(product_id),),
+                )
+                comp_rows = cur.fetchall()
+                comp_cols = [d[0] for d in cur.description or []]
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"load_inputs: {repr(e)[:1000]}"}
 
     def _maybe_json(v: Any) -> Any:
         if isinstance(v, str):
@@ -211,7 +217,7 @@ async def pick_channels(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"pick_channels: {e}"}
+        return {"_error": f"pick_channels: {repr(e)[:1000]}"}
     raw = result.get("channels") if isinstance(result, dict) else None
     channels_validated: list[dict[str, Any]] = []
     for c in raw or []:
@@ -265,7 +271,7 @@ async def craft_pillars(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"craft_pillars: {e}"}
+        return {"_error": f"craft_pillars: {repr(e)[:1000]}"}
     raw = result.get("pillars") if isinstance(result, dict) else None
     pillars: list[dict[str, Any]] = []
     for p in raw or []:
@@ -323,7 +329,7 @@ async def write_templates(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"write_templates: {e}"}
+        return {"_error": f"write_templates: {repr(e)[:1000]}"}
     raw = result.get("templates") if isinstance(result, dict) else None
     templates: list[dict[str, Any]] = []
     for t in raw or []:
@@ -376,7 +382,7 @@ async def build_playbook(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"build_playbook: {e}"}
+        return {"_error": f"build_playbook: {repr(e)[:1000]}"}
     if not isinstance(result, dict):
         result = {}
     try:
@@ -430,7 +436,7 @@ async def draft_plan(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"draft_plan: {e}"}
+        return {"_error": f"draft_plan: {repr(e)[:1000]}"}
     raw = result.get("first_90_days") if isinstance(result, dict) else None
     plan = [str(x)[:400] for x in (raw or []) if isinstance(x, (str, int, float))][:12]
 

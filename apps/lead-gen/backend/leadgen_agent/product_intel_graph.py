@@ -55,26 +55,32 @@ async def load_and_profile(state: ProductIntelState) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
-    product_id = state.get("product_id")
-    if product_id is None:
-        raise ValueError("product_id is required")
+    # Entry-node guard — catch missing product_id / DB failures so the graph
+    # terminates via notify_error_node. Without this, a bad id would raise
+    # before any error-route edge could fire, leaving the run stuck.
+    try:
+        product_id = state.get("product_id")
+        if product_id is None:
+            raise ValueError("product_id is required")
 
-    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, name, url, domain, description, highlights,
-                       icp_analysis, pricing_analysis, gtm_analysis
-                FROM products
-                WHERE id = %s
-                LIMIT 1
-                """,
-                (int(product_id),),
-            )
-            row = cur.fetchone()
-            if not row:
-                raise RuntimeError(f"product id {product_id} not found")
-            cols = [d[0] for d in cur.description or []]
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, name, url, domain, description, highlights,
+                           icp_analysis, pricing_analysis, gtm_analysis
+                    FROM products
+                    WHERE id = %s
+                    LIMIT 1
+                    """,
+                    (int(product_id),),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise RuntimeError(f"product id {product_id} not found")
+                cols = [d[0] for d in cur.description or []]
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"load_and_profile: {repr(e)[:1000]}"}
     rec = dict(zip(cols, row))
 
     def _maybe_json(v: Any) -> Any:
@@ -119,7 +125,7 @@ async def load_and_profile(state: ProductIntelState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"load_and_profile: {e}"}
+        return {"_error": f"load_and_profile: {repr(e)[:1000]}"}
     try:
         profile = ProductProfile.model_validate(result or {}).model_dump()
     except Exception:
@@ -152,7 +158,7 @@ async def ensure_icp(state: ProductIntelState) -> dict:
         sub = deep_icp_graph.build_graph()
         icp = await sub.ainvoke({"product_id": state["product_id"]})
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"ensure_icp: {e}"}
+        return {"_error": f"ensure_icp: {repr(e)[:1000]}"}
 
     # Persist so other graphs can pick it up immediately.
     with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
@@ -181,20 +187,23 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
-    product_id = state["product_id"]
-    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT COUNT(*)::int
-                FROM competitor_analyses a
-                JOIN competitors c ON c.analysis_id = a.id
-                WHERE a.product_id = %s
-                  AND a.status = 'done'
-                """,
-                (int(product_id),),
-            )
-            row = cur.fetchone() or (0,)
+    try:
+        product_id = state["product_id"]
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT COUNT(*)::int
+                    FROM competitor_analyses a
+                    JOIN competitors c ON c.analysis_id = a.id
+                    WHERE a.product_id = %s
+                      AND a.status = 'done'
+                    """,
+                    (int(product_id),),
+                )
+                row = cur.fetchone() or (0,)
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"ensure_competitors: {repr(e)[:1000]}"}
     has_competitors = bool(row[0])
     return {
         "competitive": {"has_completed_analysis": has_competitors, "competitor_count": row[0]},
@@ -212,7 +221,7 @@ async def run_pricing(state: ProductIntelState) -> dict:
         sub = pricing_graph.build_graph()
         result = await sub.ainvoke({"product_id": state["product_id"]})
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"run_pricing: {e}"}
+        return {"_error": f"run_pricing: {repr(e)[:1000]}"}
     return {
         "pricing": result.get("pricing") or {},
         "agent_timings": {"run_pricing": round(time.perf_counter() - t0, 3)},
@@ -229,7 +238,7 @@ async def run_gtm(state: ProductIntelState) -> dict:
         sub = gtm_graph.build_graph()
         result = await sub.ainvoke({"product_id": state["product_id"]})
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"run_gtm: {e}"}
+        return {"_error": f"run_gtm: {repr(e)[:1000]}"}
     return {
         "gtm": result.get("gtm") or {},
         "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
@@ -289,7 +298,7 @@ async def synthesize_report(state: ProductIntelState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"synthesize_report: {e}"}
+        return {"_error": f"synthesize_report: {repr(e)[:1000]}"}
 
     meta = product_intel_graph_meta(
         graph="product_intel",
