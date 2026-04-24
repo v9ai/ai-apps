@@ -9,6 +9,7 @@ members = [
   "apps/lead-gen/crates/email-verifier",
   "apps/lead-gen/crates/gh",
   "apps/lead-gen/crates/job-prep",
+  "apps/lead-gen/crates/icp-embed",
   "apps/lead-gen/crates/jobbert",
   "apps/lead-gen/crates/linkedin-posts",
   "apps/lead-gen/crates/metal",

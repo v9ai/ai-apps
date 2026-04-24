@@ -14,6 +14,17 @@ const LANGGRAPH_URL =
 // When set, must match LANGGRAPH_AUTH_TOKEN in backend/.env.
 const LANGGRAPH_AUTH_TOKEN = process.env.LANGGRAPH_AUTH_TOKEN;
 
+/**
+ * Resolves the LangGraph assistant id for the product-intel supervisor based
+ * on PRODUCT_INTEL_GRAPH_VERSION (default "v1"). v2 registers as the separate
+ * assistant "analyze_product_v2" in backend/langgraph.json and fans out deep
+ * competitor + pricing + GTM in parallel.
+ */
+export function productIntelAssistantId(): string {
+  const v = (process.env.PRODUCT_INTEL_GRAPH_VERSION ?? "v1").toLowerCase();
+  return v === "v2" ? "analyze_product_v2" : "product_intel";
+}
+
 async function runGraph<T>(
   assistantId: string,
   input: Record<string, unknown>,
@@ -634,7 +645,7 @@ export function runFullProductIntel(input: {
   forceRefresh?: boolean;
 }): Promise<{ report: ProductIntelReportResult; graph_meta?: Record<string, unknown> }> {
   return runGraph<{ report: ProductIntelReportResult; graph_meta?: Record<string, unknown> }>(
-    "product_intel",
+    productIntelAssistantId(),
     {
       product_id: input.productId,
       force_refresh: Boolean(input.forceRefresh),

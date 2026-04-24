@@ -2497,6 +2497,7 @@ export type QueryProductIntelRunArgs = {
 
 
 export type QueryProductIntelRunsArgs = {
+  graphVersion?: InputMaybe<Scalars['String']['input']>;
   kind?: InputMaybe<Scalars['String']['input']>;
   minSchemaVersion?: InputMaybe<Scalars['String']['input']>;
   productId: Scalars['Int']['input'];

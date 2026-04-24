@@ -84,6 +84,13 @@ export const companies = pgTable("companies", {
   last_seen_source_url: text("last_seen_source_url"),
 
   embedding: vector("embedding", { dimensions: 384 }),
+  // Canonical ICP-matching embedding (see migration 0073). 1024-dim, BGE-M3 via
+  // `crates/icp-embed`. Kept alongside the legacy 384-dim `embedding` so
+  // existing consumers keep working while semantic ICP scoring migrates over.
+  profile_embedding: vector("profile_embedding", { dimensions: 1024 }),
+  profile_embedding_model: text("profile_embedding_model"),
+  profile_embedding_source_hash: text("profile_embedding_source_hash"),
+  profile_embedding_updated_at: text("profile_embedding_updated_at"),
   rank_score: real("rank_score").default(0),
   rank_score_version: text("rank_score_version"),
   anomaly_score: real("anomaly_score"),

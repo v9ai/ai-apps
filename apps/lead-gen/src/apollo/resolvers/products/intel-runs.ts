@@ -10,13 +10,17 @@
  */
 
 import { GraphQLError } from "graphql";
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { productIntelRuns, productIntelRunSecrets } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
 import { PRODUCT_INTEL_VERSION } from "@/lib/intelVersion";
-import { getRunStatus, startGraphRun } from "@/lib/langgraph-client";
+import {
+  getRunStatus,
+  productIntelAssistantId,
+  startGraphRun,
+} from "@/lib/langgraph-client";
 import type {
   MutationAnalyzeProductPricingAsyncArgs,
   MutationAnalyzeProductGtmAsyncArgs,
@@ -150,9 +154,11 @@ export const intelRunMutations = {
     args: MutationRunFullProductIntelAsyncArgs,
     context: GraphQLContext,
   ) {
+    // kind stays "product_intel" — stable taxonomy across v1/v2. Only the
+    // LangGraph assistant id swaps based on PRODUCT_INTEL_GRAPH_VERSION.
     return kickoff(
       "product_intel",
-      "product_intel",
+      productIntelAssistantId(),
       { force_refresh: Boolean(args.forceRefresh) },
       args.id,
       context,
@@ -212,6 +218,11 @@ export const intelRunQueries = {
     }
     if (args.minSchemaVersion) {
       filters.push(gte(productIntelRuns.schema_version, args.minSchemaVersion));
+    }
+    if (args.graphVersion) {
+      filters.push(
+        sql`${productIntelRuns.output}->'graph_meta'->>'graph_version' = ${args.graphVersion}`,
+      );
     }
     return db
       .select()

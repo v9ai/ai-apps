@@ -232,23 +232,51 @@ async def collect_context(state: GamesState) -> dict:
                 if is_ro
                 else "Worry Bug, Grumpy Cloud, Angry Dragon"
             )
+            situation_examples = (
+                '"Am greșit la școală", "Cineva a râs de mine", "M-am certat cu un prieten", '
+                '"Am fost lăsat pe dinafară", "Ceva m-a speriat", "Nu am știut răspunsul"'
+                if is_ro
+                else '"I made a mistake at school", "Someone laughed at me", "I had a fight with a friend", '
+                '"I was left out", "Something scared me", "I didn\'t know the answer"'
+            )
+            thought_examples = (
+                '"Nu sunt destul de bun", "Nimeni nu mă place", "O să fie rău", '
+                '"Sunt prost", "Mereu greșesc", "Nu pot face asta"'
+                if is_ro
+                else '"I\'m not good enough", "Nobody likes me", "It\'ll be bad", '
+                '"I\'m stupid", "I always mess up", "I can\'t do this"'
+            )
+            reframe_examples = (
+                '"Am încercat tot ce pot", "Toți greșesc uneori", "Pot să fac lucruri grele", '
+                '"O dată nu înseamnă mereu", "Învăț lucruri noi", "Sunt în siguranță acum"'
+                if is_ro
+                else '"I tried my best", "Everyone makes mistakes", "I can do hard things", '
+                '"Once isn\'t always", "I\'m learning new things", "I\'m safe now"'
+            )
             schema_hint = (
-                'Respond ONLY with JSON. Design this for a young child (≈6–10). Use externalization: '
-                f'the worry is a character (e.g. {character_examples}), the reframe is a "{brave_voice}".\n'
+                'Respond ONLY with JSON. Design this for a young child (≈6–10), TAP-ONLY (no typing). '
+                f'The worry is a character (e.g. {character_examples}); the reframe is a "{brave_voice}". '
+                'EVERY step MUST have an `options` array of 4–6 kid-friendly predefined answers — the '
+                'child will TAP one, not type.\n'
                 '{\n'
                 '  "title": "playful, warm title",\n'
                 '  "description": "one short sentence a kid can understand",\n'
                 '  "estimated_minutes": 5,\n'
                 '  "content": {\n'
                 '    "steps": [\n'
-                '      {"kind": "situation", "prompt": "Tell the story in one or two sentences."},\n'
-                '      {"kind": "thought", "prompt": "What did the worry-character whisper?"},\n'
-                f'      {{"kind": "distortion", "prompt": "Which trick was it using?", "options": [{distortions}]}},\n'
-                f'      {{"kind": "reframe", "prompt": "What would your {brave_voice} say?"}}\n'
+                f'      {{"kind": "situation", "prompt": "Ce s-a întâmplat?", "options": [{situation_examples}]}},\n'
+                f'      {{"kind": "thought", "prompt": "Ce a șoptit gândăcelul?", "options": [{thought_examples}]}},\n'
+                f'      {{"kind": "distortion", "prompt": "Ce truc folosea?", "options": [{distortions}]}},\n'
+                f'      {{"kind": "reframe", "prompt": "Ce ar spune {brave_voice}?", "options": [{reframe_examples}]}}\n'
                 '    ]\n'
                 '  }\n'
                 '}\n'
-                f'The `options` list MUST be exactly those 4 kid-friendly character names (no clinical jargon). '
+                'RULES for options:\n'
+                '- Each step MUST have an `options` array of 4–6 short answers (≤ 60 chars each).\n'
+                '- Options should be realistic sentences a 6–10 year old would actually say about '
+                'their own life — tailor to the context (goal / issue / family member) shown above.\n'
+                f'- The distortion step\'s `options` MUST be the 4 character names shown above, verbatim.\n'
+                '- No medical terms, no clinical jargon.\n'
                 'Each prompt ≤ 18 words. Tailor wording to the child\'s situation.\n\n'
                 + PARENT_GUIDE_HINT_CHILD
             )
@@ -311,19 +339,42 @@ async def collect_context(state: GamesState) -> dict:
     else:  # JOURNAL_PROMPT
         if is_child:
             schema_hint = (
-                'Respond ONLY with JSON. Design this for a young child (≈6–10). Use imagery '
-                '(weather, colors, animals, superheroes) not abstract reflection.\n'
+                'Respond ONLY with JSON. Design this for a young child (≈6–10), TAP-ONLY (no typing). '
+                'Use imagery (weather, colors, animals, superheroes) not abstract reflection. Every '
+                'prompt MUST have an `options` list — the child TAPS one, no typing.\n'
                 '{\n'
                 '  "title": "playful title",\n'
                 '  "description": "one warm sentence",\n'
                 '  "estimated_minutes": 6,\n'
                 '  "content": {\n'
-                '    "prompts": ["imagery-based prompt 1", "imagery-based prompt 2", "imagery-based prompt 3"],\n'
+                '    "prompts": [\n'
+                '      {\n'
+                '        "prompt": "Cum a fost vremea înăuntrul tău azi?",\n'
+                '        "options": [\n'
+                '          {"emoji": "☀️", "label": "Însorită"},\n'
+                '          {"emoji": "⛅", "label": "Înnorată"},\n'
+                '          {"emoji": "🌧", "label": "Ploioasă"},\n'
+                '          {"emoji": "⛈", "label": "Furtună"},\n'
+                '          {"emoji": "🌫", "label": "Cețoasă"},\n'
+                '          {"emoji": "🌈", "label": "Curcubeu"}\n'
+                '        ]\n'
+                '      },\n'
+                '      {\n'
+                '        "prompt": "Ce a făcut vremea asta să apară?",\n'
+                '        "options": ["La școală s-a întâmplat ceva", "Acasă a fost greu", "Un prieten m-a supărat", "Ceva m-a bucurat", "Nu știu exact"]\n'
+                '      }\n'
+                '    ],\n'
                 '    "writeToNote": true\n'
                 '  }\n'
                 '}\n'
-                'Provide exactly 3–4 prompts. Each prompt ≤ 20 words and anchored in a concrete image '
-                '(e.g. "What was the weather inside you today?", "If your day was an animal, what animal?").\n\n'
+                'RULES:\n'
+                '- Provide exactly 3–4 prompts.\n'
+                '- Each prompt.text ≤ 20 words and anchored in a concrete image.\n'
+                '- Each prompt.options is a list of 4–6 items.\n'
+                '- For prompts about FEELINGS / MOOD / WEATHER / VIBE: use emoji objects '
+                '(`{"emoji": "<single unicode emoji>", "label": "<short name>"}`).\n'
+                '- For prompts about CAUSES, HELPERS, WHO, WHAT HAPPENED: use plain strings (≤ 60 chars).\n'
+                '- Options should be realistic child-world answers, tailored to the user\'s situation.\n\n'
                 + PARENT_GUIDE_HINT_CHILD
             )
         else:
@@ -393,10 +444,43 @@ async def generate(state: GamesState) -> dict:
         steps = content_obj.get("steps")
         if not isinstance(steps, list) or not steps:
             return {"error": f"{game_type} content.steps must be a non-empty array"}
+        # When an `options` field is present on a CBT step, it must be a non-empty
+        # list of strings. This catches degraded child generations without blocking
+        # the adult path where only the distortion step has options.
+        if game_type == "CBT_REFRAME":
+            for i, st in enumerate(steps):
+                if isinstance(st, dict) and "options" in st:
+                    opts = st.get("options")
+                    if not isinstance(opts, list) or not opts:
+                        return {"error": f"CBT_REFRAME step[{i}].options must be a non-empty list"}
+                    if not all(isinstance(o, str) and o.strip() for o in opts):
+                        return {"error": f"CBT_REFRAME step[{i}].options must be non-empty strings"}
     elif game_type == "JOURNAL_PROMPT":
         prompts = content_obj.get("prompts")
         if not isinstance(prompts, list) or not prompts:
             return {"error": "JOURNAL_PROMPT content.prompts must be a non-empty array"}
+        # Accept EITHER the legacy string-array shape (adult free-text) OR the new
+        # object-array shape (child tap-only).
+        for i, p in enumerate(prompts):
+            if isinstance(p, str):
+                continue  # adult free-text shape — fine
+            if isinstance(p, dict):
+                if not isinstance(p.get("prompt"), str) or not p.get("prompt", "").strip():
+                    return {"error": f"JOURNAL_PROMPT prompts[{i}].prompt must be a non-empty string"}
+                opts = p.get("options")
+                if not isinstance(opts, list) or not opts:
+                    return {"error": f"JOURNAL_PROMPT prompts[{i}].options must be a non-empty list"}
+                for j, o in enumerate(opts):
+                    if isinstance(o, str):
+                        if not o.strip():
+                            return {"error": f"JOURNAL_PROMPT prompts[{i}].options[{j}] is empty"}
+                    elif isinstance(o, dict):
+                        if not isinstance(o.get("label"), str) or not o.get("label", "").strip():
+                            return {"error": f"JOURNAL_PROMPT prompts[{i}].options[{j}].label must be a non-empty string"}
+                    else:
+                        return {"error": f"JOURNAL_PROMPT prompts[{i}].options[{j}] must be string or {{emoji,label}}"}
+            else:
+                return {"error": f"JOURNAL_PROMPT prompts[{i}] must be string or object"}
         if "writeToNote" not in content_obj:
             content_obj["writeToNote"] = True
 

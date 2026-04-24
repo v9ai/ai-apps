@@ -673,6 +673,7 @@ async def synthesize_report(state: ProductIntelState) -> dict:
         telemetry=telemetry,
         totals=totals,
     )
+    meta["graph_version"] = "v1"
     # Stamp partial-failure list into graph_meta so consumers (UI, webhook,
     # analytics) can surface "X section missing" without re-parsing the TL;DR.
     # Non-breaking: ProductIntelReport.graph_meta is a loose jsonb dict.

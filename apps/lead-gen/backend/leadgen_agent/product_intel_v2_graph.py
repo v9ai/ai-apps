@@ -276,7 +276,14 @@ async def check_freshness(state: ProductIntelV2State) -> dict:
 async def load_cached_outputs(state: ProductIntelV2State) -> dict:
     """Fresh path: read the already-persisted jsonb columns straight off the
     products row so synthesize has everything it needs without re-running
-    any analysis."""
+    any analysis.
+
+    Column parity with v1 ``load_and_profile``: also loads ``highlights`` and
+    ``positioning_analysis`` so ``synthesize_report`` doesn't regress against
+    v1 on the cache-hit path. ``competitor_analysis_deep`` is intentionally
+    NOT read — that column doesn't exist in the schema yet; the deep
+    competitor subgraph writes to the ``competitor_analyses`` table instead.
+    """
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -285,8 +292,9 @@ async def load_cached_outputs(state: ProductIntelV2State) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, name, url, domain, description,
-                       icp_analysis, pricing_analysis, gtm_analysis
+                SELECT id, name, url, domain, description, highlights,
+                       icp_analysis, pricing_analysis, gtm_analysis,
+                       positioning_analysis
                 FROM products
                 WHERE id = %s
                 LIMIT 1
@@ -307,19 +315,28 @@ async def load_cached_outputs(state: ProductIntelV2State) -> dict:
                 return None
         return v
 
-    return {
+    icp = _maybe_json(rec.get("icp_analysis")) or {}
+    out: dict[str, Any] = {
         "product": {
             "id": rec["id"],
             "name": rec.get("name") or "",
             "url": rec.get("url") or "",
             "domain": rec.get("domain") or "",
             "description": rec.get("description") or "",
+            "highlights": _maybe_json(rec.get("highlights")),
         },
-        "icp": _maybe_json(rec.get("icp_analysis")) or {},
+        "icp": icp,
         "pricing": _maybe_json(rec.get("pricing_analysis")) or {},
         "gtm": _maybe_json(rec.get("gtm_analysis")) or {},
+        "positioning": _maybe_json(rec.get("positioning_analysis")) or {},
         "agent_timings": {"load_cached_outputs": round(time.perf_counter() - t0, 3)},
     }
+    # Partial-failure signal on the fresh path: if ICP was never run (or the
+    # column is empty), flag it so synthesize_report notes the gap in the
+    # TL;DR rather than silently degrading.
+    if not icp:
+        out["subgraph_errors"] = {"icp": "no cached ICP"}
+    return out
 
 
 async def run_deep_competitor(state: ProductIntelV2State) -> dict:
@@ -479,6 +496,7 @@ async def synthesize_report(state: ProductIntelV2State) -> dict:
     if subgraph_errors:
         for name, reason in subgraph_errors.items():
             label = {
+                "icp": "ICP",
                 "run_pricing": "pricing",
                 "run_gtm": "GTM",
                 "run_deep_competitor": "competitor deep dive",
@@ -547,6 +565,7 @@ async def synthesize_report(state: ProductIntelV2State) -> dict:
         telemetry=telemetry if telemetry else None,
         totals=totals,
     )
+    meta["graph_version"] = "v2"
     if subgraph_errors:
         meta["partial_failures"] = [
             {"subgraph": k, "reason": str(v)[:500]} for k, v in subgraph_errors.items()
@@ -571,6 +590,20 @@ async def synthesize_report(state: ProductIntelV2State) -> dict:
                 """,
                 (json.dumps(dumped), int(state["product_id"])),
             )
+            # Mirror run-level cost into product_intel_runs — parity with v1.
+            run_id = state.get("app_run_id")
+            if run_id:
+                try:
+                    cur.execute(
+                        """
+                        UPDATE product_intel_runs
+                        SET total_cost_usd = %s
+                        WHERE id = %s
+                        """,
+                        ((totals or {}).get("total_cost_usd", 0.0), str(run_id)),
+                    )
+                except Exception:  # noqa: BLE001 — cost accounting is best-effort
+                    pass
 
     return {
         "report": dumped,

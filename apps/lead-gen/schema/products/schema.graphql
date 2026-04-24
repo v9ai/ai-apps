@@ -54,7 +54,7 @@ extend type Query {
   product(id: Int!): Product
   productBySlug(slug: String!): Product
   productIntelRun(id: ID!): IntelRun
-  productIntelRuns(productId: Int!, kind: String, minSchemaVersion: String): [IntelRun!]!
+  productIntelRuns(productId: Int!, kind: String, minSchemaVersion: String, graphVersion: String): [IntelRun!]!
 }
 
 extend type Mutation {

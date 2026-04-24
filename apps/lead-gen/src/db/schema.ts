@@ -947,6 +947,13 @@ export const products = pgTable(
     // because updated_at bumps on write and graph_meta.run_at carries the precise
     // completion time.
     positioning_analysis: jsonb("positioning_analysis"),
+    // ICP semantic embedding (see migration 0073). 1024-dim BGE-M3 vector
+    // derived from icp_analysis. Used for HNSW cosine lookups against
+    // companies.profile_embedding in semantic ICP scoring.
+    icp_embedding: vector("icp_embedding", { dimensions: 1024 }),
+    icp_embedding_model: text("icp_embedding_model"),
+    icp_embedding_source_hash: text("icp_embedding_source_hash"),
+    icp_embedding_updated_at: text("icp_embedding_updated_at"),
     // Freshness snapshot — written by the `freshness` LangGraph endpoint
     // (see migrations/0065_add_freshness_tracking.sql + backend/leadgen_agent/
     // freshness_graph.py). Used by the product_intel supervisor to decide
