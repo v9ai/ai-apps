@@ -212,7 +212,7 @@ _POSITIONING_BUSINESS_NODES = frozenset(
 )
 
 
-async def load_and_profile(state: ProductIntelState) -> dict:
+async def load_and_profile(state: _ProductIntelStateWithError) -> dict:
     if state.get("_error"):
         return {}
     # Checkpoint-aware short-circuit: on resume the checkpoint already carries
@@ -220,26 +220,32 @@ async def load_and_profile(state: ProductIntelState) -> dict:
     if state.get("product") and state.get("product_profile"):
         return {}
     t0 = time.perf_counter()
-    product_id = state.get("product_id")
-    if product_id is None:
-        raise ValueError("product_id is required")
+    # Entry-node guard — catch missing product_id / DB failures so the graph
+    # terminates via notify_error_node. Without this, a bad id would raise
+    # before any error-route edge could fire, leaving the run stuck.
+    try:
+        product_id = state.get("product_id")
+        if product_id is None:
+            raise ValueError("product_id is required")
 
-    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, name, url, domain, description, highlights,
-                       icp_analysis, pricing_analysis, gtm_analysis
-                FROM products
-                WHERE id = %s
-                LIMIT 1
-                """,
-                (int(product_id),),
-            )
-            row = cur.fetchone()
-            if not row:
-                raise RuntimeError(f"product id {product_id} not found")
-            cols = [d[0] for d in cur.description or []]
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, name, url, domain, description, highlights,
+                           icp_analysis, pricing_analysis, gtm_analysis
+                    FROM products
+                    WHERE id = %s
+                    LIMIT 1
+                    """,
+                    (int(product_id),),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise RuntimeError(f"product id {product_id} not found")
+                cols = [d[0] for d in cur.description or []]
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"load_and_profile: {repr(e)[:1000]}"}
     rec = dict(zip(cols, row))
 
     def _maybe_json(v: Any) -> Any:
@@ -284,7 +290,7 @@ async def load_and_profile(state: ProductIntelState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"load_and_profile: {e}"}
+        return {"_error": f"load_and_profile: {repr(e)[:1000]}"}
     try:
         profile = ProductProfile.model_validate(result or {}).model_dump()
     except Exception:
@@ -303,7 +309,7 @@ async def load_and_profile(state: ProductIntelState) -> dict:
     }
 
 
-async def ensure_icp(state: ProductIntelState) -> dict:
+async def ensure_icp(state: _ProductIntelStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -370,7 +376,7 @@ async def ensure_icp(state: ProductIntelState) -> dict:
     }
 
 
-async def ensure_competitors(state: ProductIntelState) -> dict:
+async def ensure_competitors(state: _ProductIntelStateWithError) -> dict:
     """Check whether a completed competitor analysis exists. Don't invoke the
     team graph implicitly — competitor scraping is heavy and the existing
     approve-then-scrape workflow (``/competitors`` UI) is the expected entry
@@ -387,20 +393,23 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
     if state.get("competitive") is not None:
         return {}
     t0 = time.perf_counter()
-    product_id = state["product_id"]
-    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT COUNT(*)::int
-                FROM competitor_analyses a
-                JOIN competitors c ON c.analysis_id = a.id
-                WHERE a.product_id = %s
-                  AND c.status IN ('done', 'approved', 'suggested')
-                """,
-                (int(product_id),),
-            )
-            row = cur.fetchone() or (0,)
+    try:
+        product_id = state["product_id"]
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT COUNT(*)::int
+                    FROM competitor_analyses a
+                    JOIN competitors c ON c.analysis_id = a.id
+                    WHERE a.product_id = %s
+                      AND c.status IN ('done', 'approved', 'suggested')
+                    """,
+                    (int(product_id),),
+                )
+                row = cur.fetchone() or (0,)
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"ensure_competitors: {repr(e)[:1000]}"}
     has_competitors = bool(row[0])
 
     # Surface freshness verdict so the UI can show a "re-scan competitors"
@@ -452,7 +461,7 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
     }
 
 
-async def run_pricing(state: ProductIntelState) -> dict:
+async def run_pricing(state: _ProductIntelStateWithError) -> dict:
     """Invoke the pricing subgraph. The subgraph's write_rationale node
     persists pricing_analysis itself — no second write here.
 
@@ -470,6 +479,7 @@ async def run_pricing(state: ProductIntelState) -> dict:
         return {}
     t0 = time.perf_counter()
     try:
+<<<<<<< HEAD
         result, progress = await stream_subgraph(
             _PRICING_GRAPH,
             {"product_id": state["product_id"]},
@@ -487,6 +497,12 @@ async def run_pricing(state: ProductIntelState) -> dict:
     # intel_report.graph_meta.totals reflects real costs (not just the
     # supervisor's own LLM calls).
     sub_tel = _fold_subgraph_telemetry(None, "run_pricing", result)
+=======
+        sub = pricing_graph.build_graph()
+        result = await sub.ainvoke({"product_id": state["product_id"]})
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"run_pricing: {repr(e)[:1000]}"}
+>>>>>>> worktree-agent-a4a73c42
     return {
         "pricing": result.get("pricing") or {},
         "pricing_subgraph_progress": progress,
@@ -495,7 +511,7 @@ async def run_pricing(state: ProductIntelState) -> dict:
     }
 
 
-async def run_gtm(state: ProductIntelState) -> dict:
+async def run_gtm(state: _ProductIntelStateWithError) -> dict:
     """Invoke the GTM subgraph. The subgraph's draft_plan node persists
     gtm_analysis itself — no second write here.
 
@@ -511,6 +527,7 @@ async def run_gtm(state: ProductIntelState) -> dict:
         return {}
     t0 = time.perf_counter()
     try:
+<<<<<<< HEAD
         result, progress = await stream_subgraph(
             _GTM_GRAPH,
             {"product_id": state["product_id"]},
@@ -523,6 +540,12 @@ async def run_gtm(state: ProductIntelState) -> dict:
             "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
         }
     sub_tel = _fold_subgraph_telemetry(None, "run_gtm", result)
+=======
+        sub = gtm_graph.build_graph()
+        result = await sub.ainvoke({"product_id": state["product_id"]})
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"run_gtm: {repr(e)[:1000]}"}
+>>>>>>> worktree-agent-a4a73c42
     return {
         "gtm": result.get("gtm") or {},
         "gtm_subgraph_progress": progress,
@@ -531,10 +554,11 @@ async def run_gtm(state: ProductIntelState) -> dict:
     }
 
 
-def _fan_out_pricing_gtm(_state: ProductIntelState) -> list[str]:
+def _fan_out_pricing_gtm(_state: _ProductIntelStateWithError) -> list[str]:
     return ["run_pricing", "run_gtm"]
 
 
+<<<<<<< HEAD
 async def run_positioning(state: ProductIntelState) -> dict:
     """Synthesize positioning after pricing/GTM finish.
 
@@ -579,6 +603,9 @@ async def run_positioning(state: ProductIntelState) -> dict:
 
 
 async def synthesize_report(state: ProductIntelState) -> dict:
+=======
+async def synthesize_report(state: _ProductIntelStateWithError) -> dict:
+>>>>>>> worktree-agent-a4a73c42
     if state.get("_error"):
         return {}
     # Checkpoint-aware short-circuit: terminal report writer. Skip the deep-tier
@@ -661,7 +688,7 @@ async def synthesize_report(state: ProductIntelState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"synthesize_report: {e}"}
+        return {"_error": f"synthesize_report: {repr(e)[:1000]}"}
 
     telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
     telemetry = merge_node_telemetry(telemetry, "synthesize_report", tel_synth)
@@ -727,13 +754,13 @@ async def synthesize_report(state: ProductIntelState) -> dict:
     }
 
 
-async def notify_error_node(state: ProductIntelState) -> dict:
+async def notify_error_node(state: _ProductIntelStateWithError) -> dict:
     err = state.get("_error") or "unknown error"
     await notify_error(state, err)
     return {}
 
 
-def _route_final(state: ProductIntelState) -> str:
+def _route_final(state: _ProductIntelStateWithError) -> str:
     return "notify_error_node" if state.get("_error") else "notify_complete"
 
 

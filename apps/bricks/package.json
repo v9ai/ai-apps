@@ -19,6 +19,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@xyflow/react": "^12.10.1",
     "drizzle-orm": "^0.45.1",
+    "lodash": "^4.17.23",
     "lucide-react": "^0.511.0",
     "next": "latest",
     "react": "^19",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@pandacss/dev": "^1.9.0",
+    "@types/lodash": "^4.17.24",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

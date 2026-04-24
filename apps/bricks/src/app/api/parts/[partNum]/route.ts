@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import orderBy from "lodash/orderBy";
 
 const API_KEY = process.env.REBRICKABLE_API_KEY;
 const PARTS_BASE = "https://rebrickable.com/api/v3/lego/parts";
@@ -42,19 +43,18 @@ export async function GET(
       const colorsRes = await fetch(`${PARTS_BASE}/${resolvedNum}/colors/`, { headers });
       if (colorsRes.ok) {
         const colorsData = await colorsRes.json();
-        colors = (colorsData.results ?? [])
-          .map(
-            (c: { color_id: number; color_name: string; part_img_url: string | null; elements: string[]; num_sets: number }) => ({
-              id: c.color_id,
-              name: c.color_name,
-              imageUrl: c.part_img_url
-                ?? (c.elements?.length
-                  ? `https://cdn.rebrickable.com/media/parts/elements/${c.elements[0]}.jpg`
-                  : null),
-              numSets: c.num_sets,
-            })
-          )
-          .sort((a: { numSets: number }, b: { numSets: number }) => b.numSets - a.numSets);
+        const mapped = (colorsData.results ?? []).map(
+          (c: { color_id: number; color_name: string; part_img_url: string | null; elements: string[]; num_sets: number }) => ({
+            id: c.color_id,
+            name: c.color_name,
+            imageUrl: c.part_img_url
+              ?? (c.elements?.length
+                ? `https://cdn.rebrickable.com/media/parts/elements/${c.elements[0]}.jpg`
+                : null),
+            numSets: c.num_sets,
+          })
+        );
+        colors = orderBy(mapped, ["numSets"], ["desc"]);
       }
     } catch {
       // colors are optional, continue without them

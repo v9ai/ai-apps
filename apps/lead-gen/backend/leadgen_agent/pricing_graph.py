@@ -133,7 +133,7 @@ class _PricingStateWithError(PricingState, total=False):
     _error: Annotated[str, _first_error]
 
 
-async def load_inputs(state: PricingState) -> dict:
+async def load_inputs(state: _PricingStateWithError) -> dict:
     # Seed the progress clock on first entry so update_progress can report
     # monotonic elapsed_ms even after sub-subgraph fan-outs.
     start_seed = {} if state.get("_progress_started_at") else progress_start_marker()
@@ -146,48 +146,57 @@ async def load_inputs(state: PricingState) -> dict:
     # skip the DB round-trip entirely.
     if state.get("product") and state.get("competitor_summary") is not None:
         return {**start_seed, "_completed_stages": ["load_inputs"]}
-    product_id = state.get("product_id")
-    if product_id is None:
-        raise ValueError("product_id is required")
 
-    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, name, url, domain, description, highlights, icp_analysis
-                FROM products
-                WHERE id = %s
-                LIMIT 1
-                """,
-                (int(product_id),),
-            )
-            row = cur.fetchone()
-            if not row:
-                raise RuntimeError(f"product id {product_id} not found")
-            cols = [d[0] for d in cur.description or []]
-            product_row = dict(zip(cols, row))
+    # Entry-node guard: any exception here (bad product_id, DB down, etc.) used
+    # to escape LangGraph's executor and leave product_intel_runs.status stuck
+    # on "running". We now catch + route via _error so the terminal
+    # notify_error_node fires and the webhook transitions the run to a clean
+    # terminal state.
+    try:
+        product_id = state.get("product_id")
+        if product_id is None:
+            raise ValueError("product_id is required")
 
-            # Pull competitor pricing from the most recent completed analysis for
-            # this product. Joining on status != 'failed' so partial runs still
-            # surface something useful.
-            cur.execute(
-                """
-                SELECT c.id, c.name, c.url, c.domain,
-                       c.positioning_headline, c.positioning_tagline, c.target_audience,
-                       t.tier_name, t.monthly_price_usd, t.annual_price_usd,
-                       t.seat_price_usd, t.currency, t.included_limits,
-                       t.is_custom_quote, t.sort_order
-                FROM competitor_analyses a
-                JOIN competitors c ON c.analysis_id = a.id
-                LEFT JOIN competitor_pricing_tiers t ON t.competitor_id = c.id
-                WHERE a.product_id = %s
-                  AND a.status <> 'failed'
-                ORDER BY a.created_at DESC, c.id ASC, t.sort_order ASC NULLS LAST
-                """,
-                (int(product_id),),
-            )
-            pricing_rows = cur.fetchall()
-            pricing_cols = [d[0] for d in cur.description or []]
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, name, url, domain, description, highlights, icp_analysis
+                    FROM products
+                    WHERE id = %s
+                    LIMIT 1
+                    """,
+                    (int(product_id),),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise RuntimeError(f"product id {product_id} not found")
+                cols = [d[0] for d in cur.description or []]
+                product_row = dict(zip(cols, row))
+
+                # Pull competitor pricing from the most recent completed analysis for
+                # this product. Joining on status != 'failed' so partial runs still
+                # surface something useful.
+                cur.execute(
+                    """
+                    SELECT c.id, c.name, c.url, c.domain,
+                           c.positioning_headline, c.positioning_tagline, c.target_audience,
+                           t.tier_name, t.monthly_price_usd, t.annual_price_usd,
+                           t.seat_price_usd, t.currency, t.included_limits,
+                           t.is_custom_quote, t.sort_order
+                    FROM competitor_analyses a
+                    JOIN competitors c ON c.analysis_id = a.id
+                    LEFT JOIN competitor_pricing_tiers t ON t.competitor_id = c.id
+                    WHERE a.product_id = %s
+                      AND a.status <> 'failed'
+                    ORDER BY a.created_at DESC, c.id ASC, t.sort_order ASC NULLS LAST
+                    """,
+                    (int(product_id),),
+                )
+                pricing_rows = cur.fetchall()
+                pricing_cols = [d[0] for d in cur.description or []]
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"load_inputs: {repr(e)[:1000]}"}
 
     highlights = product_row.get("highlights")
     if isinstance(highlights, str):
@@ -299,7 +308,7 @@ def _fmt_icp_block(icp: dict[str, Any]) -> str:
     )[:_ICP_BRIEF_CHARS]
 
 
-async def benchmark_competitors(state: PricingState) -> dict:
+async def benchmark_competitors(state: _PricingStateWithError) -> dict:
     if state.get("_error"):
         return {}
     await update_progress(
@@ -357,7 +366,7 @@ async def benchmark_competitors(state: PricingState) -> dict:
             node="benchmark_competitors",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"benchmark_competitors: {e}"}
+        return {"_error": f"benchmark_competitors: {repr(e)[:1000]}"}
     if not isinstance(result, dict):
         result = {}
     return {
@@ -374,7 +383,7 @@ async def benchmark_competitors(state: PricingState) -> dict:
     }
 
 
-async def choose_value_metric(state: PricingState) -> dict:
+async def choose_value_metric(state: _PricingStateWithError) -> dict:
     if state.get("_error"):
         return {}
     await update_progress(
@@ -422,7 +431,7 @@ async def choose_value_metric(state: PricingState) -> dict:
             node="choose_value_metric",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"choose_value_metric: {e}"}
+        return {"_error": f"choose_value_metric: {repr(e)[:1000]}"}
     if not isinstance(result, dict):
         result = {}
     return {
@@ -439,11 +448,11 @@ async def choose_value_metric(state: PricingState) -> dict:
     }
 
 
-def _fan_out(_state: PricingState) -> list[str]:
+def _fan_out(_state: _PricingStateWithError) -> list[str]:
     return ["benchmark_competitors", "choose_value_metric"]
 
 
-async def design_model(state: PricingState) -> dict:
+async def design_model(state: _PricingStateWithError) -> dict:
     if state.get("_error"):
         return {}
     await update_progress(
@@ -528,7 +537,7 @@ async def design_model(state: PricingState) -> dict:
         # Validate via Pydantic — turns bad LLM output into an early clean failure
         validated = PricingModel.model_validate(result)
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"design_model: {e}"}
+        return {"_error": f"design_model: {repr(e)[:1000]}"}
     return {
         "model": validated.model_dump(),
         "agent_timings": {"design_model": round(time.perf_counter() - t0, 3)},
@@ -543,7 +552,7 @@ async def design_model(state: PricingState) -> dict:
     }
 
 
-async def write_rationale(state: PricingState) -> dict:
+async def write_rationale(state: _PricingStateWithError) -> dict:
     if state.get("_error"):
         return {}
     await update_progress(
@@ -611,7 +620,7 @@ async def write_rationale(state: PricingState) -> dict:
             result = {}
         rationale = PricingRationale.model_validate(result)
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"write_rationale: {e}"}
+        return {"_error": f"write_rationale: {repr(e)[:1000]}"}
 
     # Fold this node's telemetry into the run-level ledger, then compute totals
     # so graph_meta.totals reflects the full pricing run (not just the last
@@ -659,7 +668,7 @@ async def write_rationale(state: PricingState) -> dict:
     }
 
 
-async def notify_error_node(state: PricingState) -> dict:
+async def notify_error_node(state: _PricingStateWithError) -> dict:
     """Emit an error webhook with structured node + stage context.
 
     The raw ``_error`` string is prefixed with ``node_name: <msg>`` by the
@@ -691,7 +700,7 @@ async def notify_error_node(state: PricingState) -> dict:
     return {}
 
 
-def _route_final(state: PricingState) -> str:
+def _route_final(state: _PricingStateWithError) -> str:
     return "notify_error_node" if state.get("_error") else "notify_complete"
 
 

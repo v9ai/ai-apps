@@ -64,7 +64,7 @@ class _GTMStateWithError(GTMState, total=False):
     _error: Annotated[str, _first_error]
 
 
-async def load_inputs(state: GTMState) -> dict:
+async def load_inputs(state: _GTMStateWithError) -> dict:
     start_seed = {} if state.get("_progress_started_at") else progress_start_marker()
     _seeded_state = {**state, **start_seed} if start_seed else state
     await update_progress(_seeded_state, stage="load_inputs")
@@ -74,44 +74,51 @@ async def load_inputs(state: GTMState) -> dict:
     # runs. Skip the DB round-trip in that case.
     if state.get("product") and state.get("competitive") is not None:
         return {**start_seed, "_completed_stages": ["load_inputs"]}
-    product_id = state.get("product_id")
-    if product_id is None:
-        raise ValueError("product_id is required")
 
-    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, name, url, domain, description, highlights,
-                       icp_analysis, pricing_analysis
-                FROM products
-                WHERE id = %s
-                LIMIT 1
-                """,
-                (int(product_id),),
-            )
-            row = cur.fetchone()
-            if not row:
-                raise RuntimeError(f"product id {product_id} not found")
-            cols = [d[0] for d in cur.description or []]
-            product_row = dict(zip(cols, row))
+    # Entry-node guard — catches bad product_id / DB errors so the graph
+    # terminates via notify_error_node instead of leaving an unhandled
+    # exception in LangGraph's executor.
+    try:
+        product_id = state.get("product_id")
+        if product_id is None:
+            raise ValueError("product_id is required")
 
-            # Latest completed competitive analysis + its top-threat competitors
-            cur.execute(
-                """
-                SELECT c.name, c.url, c.positioning_headline, c.positioning_tagline,
-                       c.target_audience
-                FROM competitor_analyses a
-                JOIN competitors c ON c.analysis_id = a.id
-                WHERE a.product_id = %s
-                  AND a.status = 'done'
-                ORDER BY a.created_at DESC, c.id ASC
-                LIMIT 6
-                """,
-                (int(product_id),),
-            )
-            comp_rows = cur.fetchall()
-            comp_cols = [d[0] for d in cur.description or []]
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, name, url, domain, description, highlights,
+                           icp_analysis, pricing_analysis
+                    FROM products
+                    WHERE id = %s
+                    LIMIT 1
+                    """,
+                    (int(product_id),),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise RuntimeError(f"product id {product_id} not found")
+                cols = [d[0] for d in cur.description or []]
+                product_row = dict(zip(cols, row))
+
+                # Latest completed competitive analysis + its top-threat competitors
+                cur.execute(
+                    """
+                    SELECT c.name, c.url, c.positioning_headline, c.positioning_tagline,
+                           c.target_audience
+                    FROM competitor_analyses a
+                    JOIN competitors c ON c.analysis_id = a.id
+                    WHERE a.product_id = %s
+                      AND a.status = 'done'
+                    ORDER BY a.created_at DESC, c.id ASC
+                    LIMIT 6
+                    """,
+                    (int(product_id),),
+                )
+                comp_rows = cur.fetchall()
+                comp_cols = [d[0] for d in cur.description or []]
+    except Exception as e:  # noqa: BLE001
+        return {"_error": f"load_inputs: {repr(e)[:1000]}"}
 
     def _maybe_json(v: Any) -> Any:
         if isinstance(v, str):
@@ -195,7 +202,7 @@ def _pricing_summary(pricing: dict[str, Any]) -> str:
     return f"Value metric: {model.get('value_metric', '?')}\nTiers: " + ", ".join(tier_strs)
 
 
-async def pick_channels(state: GTMState) -> dict:
+async def pick_channels(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     await update_progress(
@@ -249,7 +256,7 @@ async def pick_channels(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"pick_channels: {e}"}
+        return {"_error": f"pick_channels: {repr(e)[:1000]}"}
     raw = result.get("channels") if isinstance(result, dict) else None
     channels_validated: list[dict[str, Any]] = []
     for c in raw or []:
@@ -269,7 +276,7 @@ async def pick_channels(state: GTMState) -> dict:
     }
 
 
-async def craft_pillars(state: GTMState) -> dict:
+async def craft_pillars(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     await update_progress(
@@ -316,7 +323,7 @@ async def craft_pillars(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"craft_pillars: {e}"}
+        return {"_error": f"craft_pillars: {repr(e)[:1000]}"}
     raw = result.get("pillars") if isinstance(result, dict) else None
     pillars: list[dict[str, Any]] = []
     for p in raw or []:
@@ -336,11 +343,11 @@ async def craft_pillars(state: GTMState) -> dict:
     }
 
 
-def _fan_out(_state: GTMState) -> list[str]:
+def _fan_out(_state: _GTMStateWithError) -> list[str]:
     return ["pick_channels", "craft_pillars"]
 
 
-async def write_templates(state: GTMState) -> dict:
+async def write_templates(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     await update_progress(
@@ -387,7 +394,7 @@ async def write_templates(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"write_templates: {e}"}
+        return {"_error": f"write_templates: {repr(e)[:1000]}"}
     raw = result.get("templates") if isinstance(result, dict) else None
     templates: list[dict[str, Any]] = []
     for t in raw or []:
@@ -407,7 +414,7 @@ async def write_templates(state: GTMState) -> dict:
     }
 
 
-async def build_playbook(state: GTMState) -> dict:
+async def build_playbook(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     await update_progress(
@@ -455,7 +462,7 @@ async def build_playbook(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"build_playbook: {e}"}
+        return {"_error": f"build_playbook: {repr(e)[:1000]}"}
     if not isinstance(result, dict):
         result = {}
 
@@ -509,7 +516,7 @@ async def build_playbook(state: GTMState) -> dict:
     }
 
 
-async def draft_plan(state: GTMState) -> dict:
+async def draft_plan(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     await update_progress(
@@ -561,7 +568,7 @@ async def draft_plan(state: GTMState) -> dict:
             provider="deepseek",
         )
     except Exception as e:  # noqa: BLE001
-        return {"_error": f"draft_plan: {e}"}
+        return {"_error": f"draft_plan: {repr(e)[:1000]}"}
     raw = result.get("first_90_days") if isinstance(result, dict) else None
     plan = [str(x)[:400] for x in (raw or []) if isinstance(x, (str, int, float))][:12]
 
@@ -611,13 +618,13 @@ async def draft_plan(state: GTMState) -> dict:
     }
 
 
-async def notify_error_node(state: GTMState) -> dict:
+async def notify_error_node(state: _GTMStateWithError) -> dict:
     err = state.get("_error") or "unknown error"
     await notify_error(state, err)
     return {}
 
 
-def _route_final(state: GTMState) -> str:
+def _route_final(state: _GTMStateWithError) -> str:
     return "notify_error_node" if state.get("_error") else "notify_complete"
 
 
