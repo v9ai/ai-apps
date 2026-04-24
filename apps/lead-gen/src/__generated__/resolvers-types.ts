@@ -220,6 +220,11 @@ export type CompanyFactsArgs = {
 };
 
 
+export type CompanyIntentScoreDetailsArgs = {
+  productId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type CompanySnapshotsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -1299,6 +1304,7 @@ export type IntentScore = {
 export type IntentSignal = {
   __typename?: 'IntentSignal';
   companyId: Scalars['Int']['output'];
+  competitor: Maybe<Competitor>;
   confidence: Scalars['Float']['output'];
   createdAt: Scalars['String']['output'];
   decayDays: Scalars['Int']['output'];
@@ -1309,6 +1315,7 @@ export type IntentSignal = {
   id: Scalars['Int']['output'];
   metadata: Maybe<Scalars['JSON']['output']>;
   modelVersion: Maybe<Scalars['String']['output']>;
+  productId: Maybe<Scalars['Int']['output']>;
   rawText: Scalars['String']['output'];
   signalType: IntentSignalType;
   sourceType: Scalars['String']['output'];
@@ -1317,6 +1324,7 @@ export type IntentSignal = {
 
 export type IntentSignalType =
   | 'BUDGET_CYCLE'
+  | 'COMPETITOR_MENTION'
   | 'GROWTH_SIGNAL'
   | 'HIRING_INTENT'
   | 'LEADERSHIP_CHANGE'
@@ -1482,6 +1490,7 @@ export type Mutation = {
   refreshIntentScores: RefreshIntentResult;
   regenerateDraft: ReplyDraft;
   rescrapeCompetitor: Competitor;
+  retagIntentSignalProducts: RefreshIntentResult;
   runFullProductIntel: Product;
   runFullProductIntelAsync: IntelRunAccepted;
   salescueAnalyze: SalescueAnalyzeResult;
@@ -1890,6 +1899,11 @@ export type MutationRescrapeCompetitorArgs = {
 };
 
 
+export type MutationRetagIntentSignalProductsArgs = {
+  productId: Scalars['Int']['input'];
+};
+
+
 export type MutationRunFullProductIntelArgs = {
   id: Scalars['Int']['input'];
 };
@@ -2276,6 +2290,7 @@ export type QueryCompaniesArgs = {
 export type QueryCompaniesByIntentArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+  productId?: InputMaybe<Scalars['Int']['input']>;
   signalType?: InputMaybe<IntentSignalType>;
   threshold: Scalars['Float']['input'];
 };
@@ -2437,10 +2452,16 @@ export type QueryFindCompanyArgs = {
 };
 
 
+export type QueryIntentDashboardArgs = {
+  productId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryIntentSignalsArgs = {
   companyId: Scalars['Int']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+  productId?: InputMaybe<Scalars['Int']['input']>;
   signalType?: InputMaybe<IntentSignalType>;
 };
 
@@ -4483,7 +4504,7 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   industries?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   industry?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   intentScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  intentScoreDetails?: Resolver<Maybe<ResolversTypes['IntentScore']>, ParentType, ContextType>;
+  intentScoreDetails?: Resolver<Maybe<ResolversTypes['IntentScore']>, ParentType, ContextType, Partial<CompanyIntentScoreDetailsArgs>>;
   intentScoreUpdatedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   intentSignalsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   job_board_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5286,6 +5307,7 @@ export type IntentScoreResolvers<ContextType = GraphQLContext, ParentType extend
 
 export type IntentSignalResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntentSignal'] = ResolversParentTypes['IntentSignal']> = {
   companyId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  competitor?: Resolver<Maybe<ResolversTypes['Competitor']>, ParentType, ContextType>;
   confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   decayDays?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -5296,6 +5318,7 @@ export type IntentSignalResolvers<ContextType = GraphQLContext, ParentType exten
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   metadata?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   modelVersion?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  productId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   rawText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   signalType?: Resolver<ResolversTypes['IntentSignalType'], ParentType, ContextType>;
   sourceType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -5446,6 +5469,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   refreshIntentScores?: Resolver<ResolversTypes['RefreshIntentResult'], ParentType, ContextType>;
   regenerateDraft?: Resolver<ResolversTypes['ReplyDraft'], ParentType, ContextType, RequireFields<MutationRegenerateDraftArgs, 'draftId'>>;
   rescrapeCompetitor?: Resolver<ResolversTypes['Competitor'], ParentType, ContextType, RequireFields<MutationRescrapeCompetitorArgs, 'competitorId'>>;
+  retagIntentSignalProducts?: Resolver<ResolversTypes['RefreshIntentResult'], ParentType, ContextType, RequireFields<MutationRetagIntentSignalProductsArgs, 'productId'>>;
   runFullProductIntel?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationRunFullProductIntelArgs, 'id'>>;
   runFullProductIntelAsync?: Resolver<ResolversTypes['IntelRunAccepted'], ParentType, ContextType, RequireFields<MutationRunFullProductIntelAsyncArgs, 'id'>>;
   salescueAnalyze?: Resolver<ResolversTypes['SalescueAnalyzeResult'], ParentType, ContextType, RequireFields<MutationSalescueAnalyzeArgs, 'text'>>;
@@ -5582,7 +5606,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   emailThreads?: Resolver<ResolversTypes['EmailThreadsResult'], ParentType, ContextType, Partial<QueryEmailThreadsArgs>>;
   emailsNeedingFollowUp?: Resolver<ResolversTypes['FollowUpEmailsResult'], ParentType, ContextType, Partial<QueryEmailsNeedingFollowUpArgs>>;
   findCompany?: Resolver<ResolversTypes['FindCompanyResult'], ParentType, ContextType, Partial<QueryFindCompanyArgs>>;
-  intentDashboard?: Resolver<ResolversTypes['IntentDashboard'], ParentType, ContextType>;
+  intentDashboard?: Resolver<ResolversTypes['IntentDashboard'], ParentType, ContextType, Partial<QueryIntentDashboardArgs>>;
   intentSignals?: Resolver<ResolversTypes['IntentSignalsResponse'], ParentType, ContextType, RequireFields<QueryIntentSignalsArgs, 'companyId'>>;
   linkedinPost?: Resolver<Maybe<ResolversTypes['LinkedInPost']>, ParentType, ContextType, RequireFields<QueryLinkedinPostArgs, 'id'>>;
   linkedinPosts?: Resolver<Array<ResolversTypes['LinkedInPost']>, ParentType, ContextType, Partial<QueryLinkedinPostsArgs>>;

@@ -150,7 +150,7 @@ type Company {
   industries: [String!]!
   industry: String
   intentScore: Float!
-  intentScoreDetails: IntentScore
+  intentScoreDetails(productId: Int): IntentScore
   intentScoreUpdatedAt: String
   intentSignalsCount: Int!
   job_board_url: String
@@ -1194,6 +1194,7 @@ type IntentScore {
 
 type IntentSignal {
   companyId: Int!
+  competitor: Competitor
   confidence: Float!
   createdAt: String!
   decayDays: Int!
@@ -1204,6 +1205,7 @@ type IntentSignal {
   id: Int!
   metadata: JSON
   modelVersion: String
+  productId: Int
   rawText: String!
   signalType: IntentSignalType!
   sourceType: String!
@@ -1212,6 +1214,7 @@ type IntentSignal {
 
 enum IntentSignalType {
   BUDGET_CYCLE
+  COMPETITOR_MENTION
   GROWTH_SIGNAL
   HIRING_INTENT
   LEADERSHIP_CHANGE
@@ -1372,6 +1375,7 @@ type Mutation {
   refreshIntentScores: RefreshIntentResult!
   regenerateDraft(draftId: Int!, instructions: String): ReplyDraft!
   rescrapeCompetitor(competitorId: Int!): Competitor!
+  retagIntentSignalProducts(productId: Int!): RefreshIntentResult!
   runFullProductIntel(id: Int!): Product!
   runFullProductIntelAsync(forceRefresh: Boolean, id: Int!, resumeFromRunId: ID): IntelRunAccepted!
   salescueAnalyze(modules: [SalescueModule!], text: String!): SalescueAnalyzeResult!
@@ -1505,7 +1509,7 @@ type QualityGateResult {
 type Query {
   allCompanyTags: [String!]!
   companies(filter: CompanyFilterInput, limit: Int, offset: Int, order_by: CompanyOrderBy): CompaniesResponse!
-  companiesByIntent(limit: Int, offset: Int, signalType: IntentSignalType, threshold: Float!): CompaniesResponse!
+  companiesByIntent(limit: Int, offset: Int, productId: Int, signalType: IntentSignalType, threshold: Float!): CompaniesResponse!
   """Find companies similar to a given company by ID"""
   companiesLike(companyId: Int!, limit: Int, minScore: Float): [SimilarCompanyResult!]!
   company(id: Int, key: String): Company
@@ -1536,8 +1540,8 @@ type Query {
   emailThreads(classification: String, limit: Int, offset: Int, search: String, sortBy: String): EmailThreadsResult!
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
   findCompany(linkedinUrl: String, name: String, website: String): FindCompanyResult!
-  intentDashboard: IntentDashboard!
-  intentSignals(companyId: Int!, limit: Int, offset: Int, signalType: IntentSignalType): IntentSignalsResponse!
+  intentDashboard(productId: Int): IntentDashboard!
+  intentSignals(companyId: Int!, limit: Int, offset: Int, productId: Int, signalType: IntentSignalType): IntentSignalsResponse!
   linkedinPost(id: Int!): LinkedInPost
   linkedinPosts(companyId: Int, limit: Int, offset: Int, type: LinkedInPostType): [LinkedInPost!]!
   """ML model health and stats"""

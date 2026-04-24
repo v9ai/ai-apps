@@ -219,6 +219,11 @@ export type CompanyFactsArgs = {
 };
 
 
+export type CompanyIntentScoreDetailsArgs = {
+  productId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type CompanySnapshotsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -1298,6 +1303,7 @@ export type IntentScore = {
 export type IntentSignal = {
   __typename: 'IntentSignal';
   companyId: Scalars['Int']['output'];
+  competitor: Maybe<Competitor>;
   confidence: Scalars['Float']['output'];
   createdAt: Scalars['String']['output'];
   decayDays: Scalars['Int']['output'];
@@ -1308,6 +1314,7 @@ export type IntentSignal = {
   id: Scalars['Int']['output'];
   metadata: Maybe<Scalars['JSON']['output']>;
   modelVersion: Maybe<Scalars['String']['output']>;
+  productId: Maybe<Scalars['Int']['output']>;
   rawText: Scalars['String']['output'];
   signalType: IntentSignalType;
   sourceType: Scalars['String']['output'];
@@ -1316,6 +1323,7 @@ export type IntentSignal = {
 
 export type IntentSignalType =
   | 'BUDGET_CYCLE'
+  | 'COMPETITOR_MENTION'
   | 'GROWTH_SIGNAL'
   | 'HIRING_INTENT'
   | 'LEADERSHIP_CHANGE'
@@ -1481,6 +1489,7 @@ export type Mutation = {
   refreshIntentScores: RefreshIntentResult;
   regenerateDraft: ReplyDraft;
   rescrapeCompetitor: Competitor;
+  retagIntentSignalProducts: RefreshIntentResult;
   runFullProductIntel: Product;
   runFullProductIntelAsync: IntelRunAccepted;
   salescueAnalyze: SalescueAnalyzeResult;
@@ -1889,6 +1898,11 @@ export type MutationRescrapeCompetitorArgs = {
 };
 
 
+export type MutationRetagIntentSignalProductsArgs = {
+  productId: Scalars['Int']['input'];
+};
+
+
 export type MutationRunFullProductIntelArgs = {
   id: Scalars['Int']['input'];
 };
@@ -2275,6 +2289,7 @@ export type QueryCompaniesArgs = {
 export type QueryCompaniesByIntentArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+  productId?: InputMaybe<Scalars['Int']['input']>;
   signalType?: InputMaybe<IntentSignalType>;
   threshold: Scalars['Float']['input'];
 };
@@ -2436,10 +2451,16 @@ export type QueryFindCompanyArgs = {
 };
 
 
+export type QueryIntentDashboardArgs = {
+  productId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryIntentSignalsArgs = {
   companyId: Scalars['Int']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+  productId?: InputMaybe<Scalars['Int']['input']>;
   signalType?: InputMaybe<IntentSignalType>;
 };
 
