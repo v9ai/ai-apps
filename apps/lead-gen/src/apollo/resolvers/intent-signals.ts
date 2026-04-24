@@ -1,9 +1,15 @@
-import { eq, and, desc, gte, count } from "drizzle-orm";
+import { eq, and, desc, gte, count, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { companies, intentSignals } from "@/db/schema";
-import type { IntentSignal, Company } from "@/db/schema";
+import {
+  companies,
+  competitors,
+  intentSignals,
+  intentSignalProducts,
+} from "@/db/schema";
+import type { IntentSignal, Company, Competitor } from "@/db/schema";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import { tagIntentSignalsProducts } from "../../../scripts/tag-intent-signals-products";
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -67,13 +73,20 @@ export const intentSignalResolvers = {
   Query: {
     async intentSignals(
       _parent: unknown,
-      args: { companyId: number; signalType?: string; limit?: number; offset?: number },
+      args: { companyId: number; signalType?: string; productId?: number; limit?: number; offset?: number },
       _context: GraphQLContext,
     ) {
       const conditions = [eq(intentSignals.company_id, args.companyId)];
       const dbSignalType = mapSignalTypeToDb(args.signalType);
       if (dbSignalType) {
         conditions.push(eq(intentSignals.signal_type, dbSignalType as IntentSignal["signal_type"]));
+      }
+      if (args.productId != null) {
+        const signalIdsForProduct = db
+          .select({ id: intentSignalProducts.intent_signal_id })
+          .from(intentSignalProducts)
+          .where(eq(intentSignalProducts.product_id, args.productId));
+        conditions.push(inArray(intentSignals.id, signalIdsForProduct));
       }
 
       const [signals, countResult] = await Promise.all([
@@ -98,9 +111,38 @@ export const intentSignalResolvers = {
 
     async companiesByIntent(
       _parent: unknown,
-      args: { threshold: number; signalType?: string; limit?: number; offset?: number },
+      args: { threshold: number; signalType?: string; productId?: number; limit?: number; offset?: number },
       _context: GraphQLContext,
     ) {
+      if (args.productId != null) {
+        const companyIdsForProduct = db
+          .selectDistinct({ company_id: intentSignals.company_id })
+          .from(intentSignals)
+          .innerJoin(
+            intentSignalProducts,
+            eq(intentSignalProducts.intent_signal_id, intentSignals.id),
+          )
+          .where(eq(intentSignalProducts.product_id, args.productId));
+
+        const rows = await db
+          .select()
+          .from(companies)
+          .where(
+            and(
+              gte(companies.intent_score, args.threshold),
+              inArray(companies.id, companyIdsForProduct),
+            ),
+          )
+          .orderBy(desc(companies.intent_score))
+          .limit((args.limit ?? 20) + 1)
+          .offset(args.offset ?? 0);
+
+        const hasMore = rows.length > (args.limit ?? 20);
+        if (hasMore) rows.pop();
+
+        return { companies: rows, totalCount: rows.length };
+      }
+
       const rows = await db
         .select()
         .from(companies)
@@ -115,9 +157,26 @@ export const intentSignalResolvers = {
       return { companies: rows, totalCount: rows.length };
     },
 
-    async intentDashboard(_parent: unknown, _args: unknown, _context: GraphQLContext) {
+    async intentDashboard(
+      _parent: unknown,
+      args: { productId?: number },
+      _context: GraphQLContext,
+    ) {
+      const productFilter = args.productId != null
+        ? inArray(
+            intentSignals.id,
+            db
+              .select({ id: intentSignalProducts.intent_signal_id })
+              .from(intentSignalProducts)
+              .where(eq(intentSignalProducts.product_id, args.productId)),
+          )
+        : undefined;
+
       const [totalResult, companiesResult, byTypeResult, recentSignals] = await Promise.all([
-        db.select({ count: count() }).from(intentSignals),
+        db
+          .select({ count: count() })
+          .from(intentSignals)
+          .where(productFilter),
         db.select({ count: count() }).from(companies).where(gte(companies.intent_score, 10)),
         db
           .select({
@@ -125,10 +184,12 @@ export const intentSignalResolvers = {
             count: count(),
           })
           .from(intentSignals)
+          .where(productFilter)
           .groupBy(intentSignals.signal_type),
         db
           .select()
           .from(intentSignals)
+          .where(productFilter)
           .orderBy(desc(intentSignals.created_at))
           .limit(10),
       ]);
@@ -185,6 +246,18 @@ export const intentSignalResolvers = {
         signalsDetected: 0,
         errors: ["Use `make intent-detect` or the Rust CLI for batch detection"],
       };
+    },
+
+    async retagIntentSignalProducts(
+      _parent: unknown,
+      args: { productId: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+      const res = await tagIntentSignalsProducts({ productId: args.productId });
+      return { success: true, companiesUpdated: res.linked };
     },
 
     async refreshIntentScores(_parent: unknown, _args: unknown, context: GraphQLContext) {
@@ -244,17 +317,46 @@ export const intentSignalResolvers = {
     freshness: (parent: IntentSignal) => computeFreshness(parent.detected_at, parent.decay_days),
     modelVersion: (parent: IntentSignal) => parent.model_version,
     createdAt: (parent: IntentSignal) => parent.created_at,
+    async productId(parent: IntentSignal): Promise<number | null> {
+      const rows = await db
+        .select({ product_id: intentSignalProducts.product_id })
+        .from(intentSignalProducts)
+        .where(eq(intentSignalProducts.intent_signal_id, parent.id))
+        .orderBy(desc(intentSignalProducts.match_score))
+        .limit(1);
+      return rows[0]?.product_id ?? null;
+    },
+    async competitor(parent: IntentSignal): Promise<Competitor | null> {
+      if (parent.competitor_id == null) return null;
+      const rows = await db
+        .select()
+        .from(competitors)
+        .where(eq(competitors.id, parent.competitor_id))
+        .limit(1);
+      return rows[0] ?? null;
+    },
   },
 
   Company: {
     intentScore: (parent: Company) => parent.intent_score ?? 0,
     intentScoreUpdatedAt: (parent: Company) => parent.intent_score_updated_at,
     intentSignalsCount: (parent: Company) => parent.intent_signals_count ?? 0,
-    async intentScoreDetails(parent: Company) {
+    async intentScoreDetails(
+      parent: Company,
+      args: { productId?: number },
+    ) {
+      const conditions = [eq(intentSignals.company_id, parent.id)];
+      if (args?.productId != null) {
+        const signalIdsForProduct = db
+          .select({ id: intentSignalProducts.intent_signal_id })
+          .from(intentSignalProducts)
+          .where(eq(intentSignalProducts.product_id, args.productId));
+        conditions.push(inArray(intentSignals.id, signalIdsForProduct));
+      }
       const signals = await db
         .select()
         .from(intentSignals)
-        .where(eq(intentSignals.company_id, parent.id));
+        .where(and(...conditions));
 
       if (signals.length === 0) return null;
 

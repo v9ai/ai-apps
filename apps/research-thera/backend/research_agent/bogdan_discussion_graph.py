@@ -590,13 +590,15 @@ async def finalize(state: dict) -> dict:
 
 def create_bogdan_discussion_graph():
     builder = StateGraph(BogdanDiscussionState)
-    builder.add_node("load_bogdan_context", load_bogdan_context)
+    builder.add_node("load_scaffold_context", load_scaffold_context)
+    builder.add_node("retrieve_and_compose", retrieve_and_compose)
     builder.add_node("generate", generate)
     builder.add_node("persist", persist)
     builder.add_node("finalize", finalize)
 
-    builder.add_edge(START, "load_bogdan_context")
-    builder.add_edge("load_bogdan_context", "generate")
+    builder.add_edge(START, "load_scaffold_context")
+    builder.add_edge("load_scaffold_context", "retrieve_and_compose")
+    builder.add_edge("retrieve_and_compose", "generate")
     builder.add_edge("generate", "persist")
     builder.add_edge("persist", "finalize")
     builder.add_edge("finalize", END)

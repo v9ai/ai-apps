@@ -20,6 +20,7 @@ import {
   intentSignals,
 } from "@/db/schema";
 import { eq, and, desc, inArray, isNull, sql } from "drizzle-orm";
+import { tagIntentSignalsProducts } from "./tag-intent-signals-products";
 
 // ── Config ──────────────────────────────────────────────────────
 
@@ -315,24 +316,37 @@ async function main() {
         const now = new Date().toISOString();
 
         // Insert signals
+        const insertedIds: number[] = [];
         for (const signal of signals) {
           const decayDays = signal.decay_days ?? 30;
           const decaysAt = new Date(
             Date.now() + decayDays * 24 * 60 * 60 * 1000,
           ).toISOString();
 
-          await db.insert(intentSignals).values({
-            company_id: company.id,
-            signal_type: signal.signal_type as any,
-            source_type: "company_snapshot" as any,
-            raw_text: texts[0]?.slice(0, 500) ?? "",
-            evidence: JSON.stringify(signal.evidence ?? []),
-            confidence: signal.confidence,
-            detected_at: now,
-            decays_at: decaysAt,
-            decay_days: decayDays,
-            model_version: "intent-signal-v1",
-          });
+          const [inserted] = await db
+            .insert(intentSignals)
+            .values({
+              company_id: company.id,
+              signal_type: signal.signal_type as any,
+              source_type: "company_snapshot" as any,
+              raw_text: texts[0]?.slice(0, 500) ?? "",
+              evidence: JSON.stringify(signal.evidence ?? []),
+              confidence: signal.confidence,
+              detected_at: now,
+              decays_at: decaysAt,
+              decay_days: decayDays,
+              model_version: "intent-signal-v1",
+            })
+            .returning({ id: intentSignals.id });
+          if (inserted) insertedIds.push(inserted.id);
+        }
+
+        if (insertedIds.length > 0) {
+          try {
+            await tagIntentSignalsProducts({ signalIds: insertedIds });
+          } catch (tagErr: any) {
+            console.error(`  ${company.key}: tagger error: ${tagErr.message}`);
+          }
         }
 
         // Re-aggregate company intent score

@@ -5,11 +5,13 @@ enum IntentSignalType {
   BUDGET_CYCLE
   LEADERSHIP_CHANGE
   PRODUCT_LAUNCH
+  COMPETITOR_MENTION
 }
 
 type IntentSignal {
   id: Int!
   companyId: Int!
+  productId: Int
   signalType: IntentSignalType!
   sourceType: String!
   sourceUrl: String
@@ -22,6 +24,7 @@ type IntentSignal {
   freshness: Float!
   metadata: JSON
   modelVersion: String
+  competitor: Competitor
   createdAt: String!
 }
 
@@ -78,6 +81,7 @@ extend type Query {
   intentSignals(
     companyId: Int!
     signalType: IntentSignalType
+    productId: Int
     limit: Int
     offset: Int
   ): IntentSignalsResponse!
@@ -85,15 +89,17 @@ extend type Query {
   companiesByIntent(
     threshold: Float!
     signalType: IntentSignalType
+    productId: Int
     limit: Int
     offset: Int
   ): CompaniesResponse!
 
-  intentDashboard: IntentDashboard!
+  intentDashboard(productId: Int): IntentDashboard!
 }
 
 extend type Mutation {
   detectIntentSignals(companyId: Int!): DetectIntentResult!
   batchDetectIntent(companyIds: [Int!]!): BatchDetectIntentResult!
   refreshIntentScores: RefreshIntentResult!
+  retagIntentSignalProducts(productId: Int!): RefreshIntentResult!
 }

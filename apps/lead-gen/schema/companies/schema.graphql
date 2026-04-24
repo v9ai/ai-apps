@@ -176,7 +176,7 @@ type Company {
   intentScore: Float!
   intentScoreUpdatedAt: String
   intentSignalsCount: Int!
-  intentScoreDetails: IntentScore
+  intentScoreDetails(productId: Int): IntentScore
 }
 
 type CompaniesResponse {

@@ -1338,16 +1338,34 @@ export async function runVoyagerPipeline(options?: {
   }
 
   // ── Step 6: Insert signals ──────────────────────────────────────
+  const insertedSignalIds: number[] = [];
   if (!dryRun && allSignals.length > 0) {
     // Batch insert in chunks of 100 to avoid huge INSERT statements
     const insertChunkSize = 100;
     for (let i = 0; i < allSignals.length; i += insertChunkSize) {
       const chunk = allSignals.slice(i, i + insertChunkSize);
-      await db.insert(intentSignals).values(chunk);
+      const rows = await db
+        .insert(intentSignals)
+        .values(chunk)
+        .returning({ id: intentSignals.id });
+      for (const r of rows) insertedSignalIds.push(r.id);
     }
     summary.signalsGenerated = allSignals.length;
   } else if (dryRun) {
     summary.signalsGenerated = allSignals.length;
+  }
+
+  // ── Step 6b: Tag new signals with matching products ─────────────
+  if (!dryRun && insertedSignalIds.length > 0) {
+    try {
+      const { tagIntentSignalsProducts } = await import(
+        "../../../scripts/tag-intent-signals-products"
+      );
+      await tagIntentSignalsProducts({ signalIds: insertedSignalIds });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      summary.errors.push(`Product tagger: ${msg}`);
+    }
   }
 
   // ── Step 7: Recalculate company scores ──────────────────────────
