@@ -348,4 +348,4 @@ _Generated 2026-04-23 by a 10-expert parallel audit. Product-focused: one sectio
 3. **Local-first LLM stance** — Qwen2.5-3B via `mlx_lm.server`, sgai-qwen3-1.7b for structured extraction. DeepSeek still used as a fallback for competitor discovery.
 4. **Multiple agent teams layered on top** — Pipeline (`/agents pipeline`), Research (`/agents research`), Self-Improvement (`/improve`, `/codefix`) — all orchestrated via `.claude/commands/` + `.claude/skills/`, with state in `~/.claude/state/`.
 5. **Security posture gaps on GraphQL** — no query complexity/cost analysis, rate limiter is per-process, CORS is restrictive (by design), introspection disabled in prod.
-6. **Admin-heavy surface** — `/emails`, `/admin/linkedin-posts`, bulk-import, Competitor Discovery, Admin Chat all behind `isAdminEmail()` (hardcoded `nicolai.vadim@gmail.com`).
+6. **Admin-heavy surface** — `/emails`, `/admin/linkedin-posts`, Competitor Discovery, Admin Chat all behind `isAdminEmail()` (hardcoded `nicolai.vadim@gmail.com`).
