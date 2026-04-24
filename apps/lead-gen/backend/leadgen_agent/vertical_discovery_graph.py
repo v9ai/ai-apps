@@ -1,32 +1,20 @@
-"""Ingestible vertical — GitHub code-search harvester.
+"""Vertical-agnostic GitHub code-search harvester.
 
-Finds companies that use LangChain / LlamaIndex / Haystack by walking the
-``GET /search/code`` endpoint for the queries declared in
-``seed_queries/ingestible.py::HOT_LEAD_SIGNALS['github_code_search']``.
+Generic replacement for the old ``ingestible_discovery_graph``. Takes a
+``vertical_slug`` via state, looks up the ``ProductVertical`` in the
+registry, and runs its ``github_code_queries`` against ``GET /search/code``.
+Filters against ``github_owner_deny`` + ``github_filter_out`` from the same
+registry. Returns surviving hits ready for Stage 2 (org-to-company
+resolution) to consume.
 
-Stage 1 (this module): fetch + filter. Each hit gives us a
-``(owner, repo, path, stack_label)`` tuple. Tutorials, forks, and course
-repos are dropped via a regex deny-list.
+Adding a new product's discovery pass is a one-file change in
+``verticals/<slug>.py`` — no change needed here.
 
-Stage 2 (follow-up): resolve each unique ``owner`` to a company via
-``GET /orgs/{login}``, dedupe against existing ``companies`` rows, insert
-survivors with ``tags=['discovery-candidate','ingestible']`` and
-``rag_stack_detected`` pre-populated.
-
-Stage 3 (follow-up): for each matched repo, scan last 90 days of commit
-messages for ``token|cost|chunk|context`` and flip ``token_cost_complaint``
-on the owning company.
-
-Rate-limit notes (from GitHub REST docs):
-- ``/search/code`` has its own bucket: **30 req/min authenticated, 10/min
-  unauthenticated**. We respect it with ``_search_sleep`` between pages.
-- Unlike other REST endpoints, code-search requires auth — unauthenticated
-  requests return 401. ``GITHUB_TOKEN`` is required.
-
-This is a leaf graph — no LLM calls, deterministic HTTP. Composable into
-``company_discovery_graph`` supervisors later. The graph shell is kept so
-the harvester can be invoked via ``langgraph dev`` / ``/runs/wait`` the
-same way as the other discovery graphs.
+Rate-limit notes (GitHub REST):
+- ``/search/code`` bucket: **30 req/min authenticated, 10/min unauthenticated**.
+  We respect it with a sleep between pages. Unlike other REST endpoints,
+  code-search requires auth — unauthenticated requests return 401.
+  ``GITHUB_TOKEN`` is required.
 """
 
 from __future__ import annotations
@@ -40,7 +28,7 @@ from typing import Annotated, Any, TypedDict
 import httpx
 from langgraph.graph import END, START, StateGraph
 
-from .seed_queries.ingestible import HOT_LEAD_SIGNALS
+from .verticals import ProductVertical, get_vertical
 
 
 # ── State ─────────────────────────────────────────────────────────────────
@@ -49,25 +37,22 @@ def _first_error(left: str | None, right: str | None) -> str | None:
     return left or right
 
 
-def _extend(
-    left: list | None, right: list | None
-) -> list:
-    """Concat reducer for list channels written by multiple nodes."""
+def _extend(left: list | None, right: list | None) -> list:
     return (left or []) + (right or [])
 
 
-class IngestibleDiscoveryState(TypedDict, total=False):
+class VerticalDiscoveryState(TypedDict, total=False):
     # Inputs
-    max_pages_per_query: int          # pagination cap; default 3 → 300 hits/query
-    max_total_results: int            # hard cap across all queries; default 1000
-    queries: list[str] | None         # override HOT_LEAD_SIGNALS['queries'] if set
+    vertical_slug: str                # required — picks which ProductVertical to run
+    max_pages_per_query: int          # default 3
+    max_total_results: int            # default 1000
+    queries: list[str] | None         # optional override of vertical.github_code_queries
 
     # Outputs
-    raw_hits: Annotated[list[dict], _extend]       # every raw match, pre-filter
-    filtered_hits: Annotated[list[dict], _extend]  # post-filter, unique by (owner, repo)
+    raw_hits: Annotated[list[dict], _extend]
+    filtered_hits: Annotated[list[dict], _extend]
     summary: dict[str, Any]
 
-    # Error channel — consistent with sibling graphs
     _error: Annotated[str, _first_error]
     agent_timings: dict[str, float]
 
@@ -75,31 +60,17 @@ class IngestibleDiscoveryState(TypedDict, total=False):
 # ── Constants ─────────────────────────────────────────────────────────────
 
 _GITHUB_API = "https://api.github.com"
-_PER_PAGE = 100           # GitHub max for code-search
-_SEARCH_RATE_SLEEP = 2.1  # seconds between /search/code calls → stay under 30/min
+_PER_PAGE = 100
+_SEARCH_RATE_SLEEP = 2.1   # seconds between /search/code calls → under 30/min
 _DEFAULT_MAX_PAGES = 3
 _DEFAULT_MAX_TOTAL = 1000
-
-# Canonical owner names that are explicitly not-a-buyer — the framework
-# vendors themselves, their org forks, and known tutorial/awesome repos.
-_OWNER_DENY: frozenset[str] = frozenset(
-    {
-        "langchain-ai",
-        "langchain",
-        "run-llama",
-        "jerryjliu",           # LlamaIndex creator's personal org
-        "deepset-ai",
-        "haystack-tutorials",
-        "microsoft",           # AutoGen noise
-    }
-)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
 
 def _github_headers() -> dict[str, str]:
     headers = {
-        "User-Agent": "lead-gen-ingestible-discovery/1.0",
+        "User-Agent": "lead-gen-vertical-discovery/1.0",
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
@@ -109,59 +80,58 @@ def _github_headers() -> dict[str, str]:
     return headers
 
 
-def _classify_stack(text_sample: str) -> str | None:
-    """Pick the RAG-stack label from text that matched a code-search query.
+def _classify_stack(vertical: ProductVertical, text_sample: str) -> str | None:
+    """Pick a ``rag_stack_detected``-style label from the text sample.
 
-    Mirrors the regex table in ``company_enrichment_graph._RAG_STACK_PATTERNS``
-    but operates on the code-search ``text_matches`` fragments (which are
-    short — usually a single line). Returns ``None`` if no stack detected.
+    Runs the vertical's label-kind signal rules against the text. Returns
+    the first matching label (or None). Used during code-search result
+    normalization so each hit carries a ``stack_label`` for Stage 2 to
+    write into ``company_product_signals.signals``.
     """
-    stack_map: dict[str, str] = HOT_LEAD_SIGNALS["github_code_search"]["stack_map"]  # type: ignore[assignment]
-    for pattern, label in stack_map.items():
-        if re.search(pattern, text_sample, re.I):
-            return label
-    # Fallback heuristics when text_matches is empty (rare but possible).
-    lower = text_sample.lower()
-    if "llama_index" in lower or "llamaindex" in lower:
-        return "llamaindex"
-    if "langchain" in lower:
-        return "langchain"
-    if "haystack" in lower:
-        return "haystack"
+    for rule in vertical.signal_rules:
+        if rule.kind != "label" or not rule.label:
+            continue
+        if rule.pattern.search(text_sample):
+            return rule.label
     return None
 
 
-def _is_filtered_out(repo_name: str, owner: str, description: str) -> bool:
-    """Return True if this hit should be dropped as tutorial/fork/course noise."""
-    if owner.lower() in _OWNER_DENY:
+def _is_filtered_out(
+    vertical: ProductVertical, repo_name: str, owner: str, description: str
+) -> bool:
+    """Return True if this hit should be dropped as vendor/tutorial/fork noise."""
+    if owner.lower() in {o.lower() for o in vertical.github_owner_deny}:
         return True
-    filter_patterns: list[str] = HOT_LEAD_SIGNALS["github_code_search"]["filter_out"]  # type: ignore[assignment]
     haystack = f"{repo_name} {description or ''}"
-    for pat in filter_patterns:
-        if re.search(pat, haystack):
+    for pat in vertical.github_filter_out:
+        if pat.search(haystack):
             return True
     return False
 
 
 # ── Nodes ─────────────────────────────────────────────────────────────────
 
-async def fetch_code_search(state: IngestibleDiscoveryState) -> dict:
+async def fetch_code_search(state: VerticalDiscoveryState) -> dict:
     """Run GitHub code search for each configured query, paginate, collect hits.
 
-    Respects the 30-req/min code-search bucket via a sleep between calls.
+    Respects the 30 req/min code-search bucket via a sleep between calls.
     Caps at ``max_pages_per_query × len(queries)`` API calls and
-    ``max_total_results`` rows. Returns early on 401 (missing token) with
-    a clear ``_error``.
+    ``max_total_results`` rows. Bails cleanly on 401 / 403 / 422.
     """
     t0 = time.perf_counter()
+    slug = state.get("vertical_slug")
+    if not slug:
+        return {"_error": "fetch_code_search: vertical_slug is required"}
+    try:
+        vertical = get_vertical(slug)
+    except KeyError as e:
+        return {"_error": f"fetch_code_search: {e}"}
+
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     if not token:
         return {"_error": "fetch_code_search: GITHUB_TOKEN is required for /search/code"}
 
-    queries: list[str] = (
-        state.get("queries")
-        or HOT_LEAD_SIGNALS["github_code_search"]["queries"]  # type: ignore[assignment]
-    )
+    queries: list[str] = list(state.get("queries") or vertical.github_code_queries)
     max_pages = int(state.get("max_pages_per_query") or _DEFAULT_MAX_PAGES)
     max_total = int(state.get("max_total_results") or _DEFAULT_MAX_TOTAL)
 
@@ -182,15 +152,9 @@ async def fetch_code_search(state: IngestibleDiscoveryState) -> dict:
                 try:
                     res = await client.get(
                         "/search/code",
-                        params={
-                            "q": query,
-                            "per_page": _PER_PAGE,
-                            "page": page,
-                        },
+                        params={"q": query, "per_page": _PER_PAGE, "page": page},
                     )
                 except httpx.HTTPError as e:
-                    # Single-query failure shouldn't kill the whole harvester.
-                    # Log into summary via the error path but keep going.
                     hits.append(
                         {"_error": f"http error on query={query!r} page={page}: {e}"}
                     )
@@ -199,12 +163,10 @@ async def fetch_code_search(state: IngestibleDiscoveryState) -> dict:
                 if res.status_code == 401:
                     return {"_error": "fetch_code_search: 401 — GITHUB_TOKEN invalid or expired"}
                 if res.status_code == 403:
-                    # Rate-limited. Honor Retry-After header if present, then bail.
                     retry_after = int(res.headers.get("Retry-After", "60"))
                     await asyncio.sleep(min(retry_after, 60))
                     break
                 if res.status_code == 422:
-                    # Invalid query — log and move to next query.
                     break
                 if res.status_code != 200:
                     break
@@ -223,19 +185,17 @@ async def fetch_code_search(state: IngestibleDiscoveryState) -> dict:
                         continue
                     seen_repo_ids.add(repo_id)
 
-                    # Build a normalized hit. text_matches is an optional header
-                    # (need Accept: application/vnd.github.v3.text-match+json);
-                    # we fall back to the file path for classification.
                     path = item.get("path") or ""
                     owner_obj = repo.get("owner") or {}
                     owner = (owner_obj.get("login") or "").strip()
                     text_sample = " ".join([path, query])
-                    stack_label = _classify_stack(text_sample)
+                    stack_label = _classify_stack(vertical, text_sample)
 
                     hits.append(
                         {
+                            "vertical_slug": slug,
                             "owner": owner,
-                            "owner_type": owner_obj.get("type") or "",  # 'User'|'Organization'
+                            "owner_type": owner_obj.get("type") or "",
                             "repo_name": repo.get("name") or "",
                             "repo_full_name": repo.get("full_name") or "",
                             "repo_description": repo.get("description") or "",
@@ -248,7 +208,6 @@ async def fetch_code_search(state: IngestibleDiscoveryState) -> dict:
                         }
                     )
 
-                # Pagination politeness — stay under the 30/min code-search cap.
                 await asyncio.sleep(_SEARCH_RATE_SLEEP)
 
     return {
@@ -257,25 +216,29 @@ async def fetch_code_search(state: IngestibleDiscoveryState) -> dict:
     }
 
 
-async def filter_hits(state: IngestibleDiscoveryState) -> dict:
-    """Drop forks, tutorials, courses, and known framework-vendor orgs.
+async def filter_hits(state: VerticalDiscoveryState) -> dict:
+    """Drop forks, tutorials, courses, vendor orgs. Enforce unique (owner, repo).
 
-    Keep one hit per ``(owner, repo_full_name)`` — the first one wins (which
-    will be the highest-ranked match since GitHub orders by best-match).
-    Enforces ``stack_label IS NOT NULL`` so downstream Stage 2 knows which
-    value to put in ``companies.rag_stack_detected``.
+    Also enforces ``stack_label IS NOT NULL`` so Stage 2 knows which label
+    to put in ``company_product_signals.signals.rag_stack_detected``.
     """
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
-    raw = state.get("raw_hits") or []
+    slug = state.get("vertical_slug")
+    if not slug:
+        return {}
+    try:
+        vertical = get_vertical(slug)
+    except KeyError:
+        return {}
 
+    raw = state.get("raw_hits") or []
     seen_pairs: set[tuple[str, str]] = set()
     filtered: list[dict] = []
 
     for hit in raw:
         if "_error" in hit:
-            # Propagate upstream HTTP errors into summary but don't keep as a hit.
             continue
         owner = hit.get("owner") or ""
         repo_full = hit.get("repo_full_name") or ""
@@ -283,7 +246,9 @@ async def filter_hits(state: IngestibleDiscoveryState) -> dict:
             continue
         if hit.get("is_fork"):
             continue
-        if _is_filtered_out(hit.get("repo_name") or "", owner, hit.get("repo_description") or ""):
+        if _is_filtered_out(
+            vertical, hit.get("repo_name") or "", owner, hit.get("repo_description") or ""
+        ):
             continue
         if hit.get("stack_label") is None:
             continue
@@ -299,23 +264,21 @@ async def filter_hits(state: IngestibleDiscoveryState) -> dict:
     }
 
 
-async def build_summary(state: IngestibleDiscoveryState) -> dict:
+async def build_summary(state: VerticalDiscoveryState) -> dict:
     """Terminal node — assemble a run summary for the caller."""
     raw = state.get("raw_hits") or []
     filtered = state.get("filtered_hits") or []
 
-    # Per-stack tally.
     by_stack: dict[str, int] = {}
     for hit in filtered:
         label = hit.get("stack_label") or "unknown"
         by_stack[label] = by_stack.get(label, 0) + 1
 
-    # Unique orgs in the filtered set — candidates for Stage 2 resolution.
     unique_orgs = sorted({hit["owner"] for hit in filtered if hit.get("owner")})
-
     errors = [hit.get("_error") for hit in raw if isinstance(hit, dict) and "_error" in hit]
 
     summary = {
+        "vertical_slug": state.get("vertical_slug"),
         "raw_count": len([h for h in raw if "_error" not in h]),
         "filtered_count": len(filtered),
         "unique_orgs": unique_orgs,
@@ -328,7 +291,7 @@ async def build_summary(state: IngestibleDiscoveryState) -> dict:
 # ── Graph ─────────────────────────────────────────────────────────────────
 
 def build_graph(checkpointer: Any = None) -> Any:
-    builder = StateGraph(IngestibleDiscoveryState)
+    builder = StateGraph(VerticalDiscoveryState)
     builder.add_node("fetch_code_search", fetch_code_search)
     builder.add_node("filter_hits", filter_hits)
     builder.add_node("build_summary", build_summary)
@@ -345,6 +308,7 @@ graph = build_graph()
 # ── Optional CLI ──────────────────────────────────────────────────────────
 
 async def run(
+    vertical_slug: str,
     *,
     max_pages_per_query: int = _DEFAULT_MAX_PAGES,
     max_total_results: int = _DEFAULT_MAX_TOTAL,
@@ -353,6 +317,7 @@ async def run(
     """Standalone async entry point — convenient for REPL / one-off scripts."""
     result = await graph.ainvoke(
         {
+            "vertical_slug": vertical_slug,
             "max_pages_per_query": max_pages_per_query,
             "max_total_results": max_total_results,
             "queries": queries,
@@ -362,7 +327,9 @@ async def run(
 
 
 if __name__ == "__main__":
-    import json
+    import json as _json
+    import sys
 
-    summary = asyncio.run(run(max_pages_per_query=1, max_total_results=50))
-    print(json.dumps(summary, indent=2))
+    slug = sys.argv[1] if len(sys.argv) > 1 else "ingestible"
+    summary = asyncio.run(run(slug, max_pages_per_query=1, max_total_results=50))
+    print(_json.dumps(summary, indent=2))

@@ -15,7 +15,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import re
 import time
 from datetime import datetime, timezone
 from typing import Any
@@ -28,6 +27,7 @@ from .llm import ainvoke_json_with_telemetry, compute_totals, make_llm, merge_no
 from .loaders import fetch_url
 from .product_intel_schemas import product_intel_graph_meta
 from .state import CompanyEnrichmentState
+from .verticals import all_verticals, apply_signal_rules, compute_score_and_tier
 
 EXTRACTOR_VERSION = "python-qwen-2026-04"
 
@@ -246,41 +246,22 @@ async def score(state: CompanyEnrichmentState) -> dict:
 
 # ── Node 5: persist ───────────────────────────────────────────────────────────
 
-_RAG_STACK_PATTERNS: tuple[tuple[re.Pattern, str], ...] = (
-    # Order matters — first match wins. LlamaIndex patterns checked before
-    # LangChain because teams using both typically import LlamaIndex explicitly.
-    (re.compile(r"\bfrom\s+llama[_-]?index\b|\bllama[_-]?index\b", re.I), "llamaindex"),
-    (re.compile(r"\bfrom\s+langchain(_text_splitters|\.text_splitter|_core|_community)?\b|\blangchain\b", re.I), "langchain"),
-    (re.compile(r"\bfrom\s+haystack\b|\bhaystack\b(?!\s+(?:demo|tutorial))", re.I), "haystack"),
-)
-_ON_PREM_RE = re.compile(
-    r"\b(on[- ]prem(?:ise)?|air[- ]gapped|self[- ]hosted|customer[- ]deployed|private cloud|vpc deployment)\b",
-    re.I,
-)
-_COMPLIANCE_RE = re.compile(
-    r"\b(GDPR|EU AI Act|HIPAA|SOC[- ]?2|ISO[- ]?27001|HITRUST|FedRAMP)\b",
-    re.I,
-)
-_TOKEN_COST_RE = re.compile(
-    r"\b(token cost|context window|reduce tokens|token spend|llm bill|"
-    r"inference cost|prompt size|\$\s*/\s*query|cost per query)\b",
-    re.I,
-)
+async def score_verticals(state: CompanyEnrichmentState) -> dict:
+    """Score every registered ``ProductVertical`` against this company.
 
+    Runs after ``persist`` so a failure here does not roll back the core
+    enrichment UPDATE. Deterministic regex only — no LLM, no external API.
+    For each vertical:
+      1. Apply the vertical's ``signal_rules`` to ``home_markdown +
+         careers_markdown`` → a signals dict keyed by the rules' ``key``.
+      2. Compute aggregate ``score`` and ``tier`` via the default
+         weighted-sum + threshold algorithm (or a vertical-specific one in
+         future).
+      3. UPSERT one row into ``company_product_signals`` keyed by
+         ``(company_id, product_id)``.
 
-async def score_ingestible(state: CompanyEnrichmentState) -> dict:
-    """Populate the 5 Ingestible signal columns on `companies`.
-
-    Runs after `persist` so a failure here does not roll back the core
-    enrichment UPDATE. Deterministic regex only — no LLM call, no external
-    API. Inputs: `home_markdown`, `careers_markdown` already fetched by
-    `fetch`. Signals set conservatively — only flipped true when the keyword
-    actually appears in the fetched text.
-
-    The two remaining HOT_LEAD_SIGNALS from seed_queries/ingestible.py
-    (GitHub code-search, HN/Reddit pain mining) require external API calls
-    and are not wired here — they're documented for a follow-up signal
-    harvester that can run out-of-band and UPDATE these columns later.
+    Adding a new product is a one-file change under ``verticals/<slug>.py``;
+    no change needed here.
     """
     if state.get("_error"):
         return {}
@@ -291,50 +272,59 @@ async def score_ingestible(state: CompanyEnrichmentState) -> dict:
 
     home_markdown = state.get("home_markdown") or ""
     careers_markdown = state.get("careers_markdown") or ""
-    corpus = (home_markdown + "\n" + careers_markdown)
+    corpus = home_markdown + "\n" + careers_markdown
     if not corpus.strip():
-        # Nothing to score against — leave signals at their defaults.
-        return {"agent_timings": {"score_ingestible": round(time.perf_counter() - t0, 3)}}
+        # Nothing to score against. Skip all verticals uniformly.
+        return {"agent_timings": {"score_verticals": round(time.perf_counter() - t0, 3)}}
 
-    rag_stack: str | None = None
-    for pattern, label in _RAG_STACK_PATTERNS:
-        if pattern.search(corpus):
-            rag_stack = label
-            break
+    verticals = all_verticals()
+    if not verticals:
+        return {"agent_timings": {"score_verticals": round(time.perf_counter() - t0, 3)}}
 
-    on_prem = bool(_ON_PREM_RE.search(corpus))
-    ai_act_exposure = bool(_COMPLIANCE_RE.search(corpus))
-    token_cost_complaint = bool(_TOKEN_COST_RE.search(corpus))
-
+    persisted: dict[str, dict[str, Any]] = {}
     try:
         with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
             with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE companies
-                    SET rag_stack_detected   = COALESCE(%s, rag_stack_detected),
-                        on_prem_required     = on_prem_required OR %s,
-                        ai_act_exposure      = ai_act_exposure  OR %s,
-                        token_cost_complaint = token_cost_complaint OR %s,
-                        updated_at           = now()::text
-                    WHERE id = %s
-                    """,
-                    (rag_stack, on_prem, ai_act_exposure, token_cost_complaint, int(company_id)),
-                )
+                for vertical in verticals:
+                    signals = apply_signal_rules(vertical, corpus)
+                    score, tier = compute_score_and_tier(vertical, signals)
+                    # Skip writes where nothing fired — keeps the table lean,
+                    # and a missing row means "no signal" by convention.
+                    meaningful_keys = [k for k in signals if k != "schema_version"]
+                    if not meaningful_keys and score == 0:
+                        continue
+                    cur.execute(
+                        """
+                        INSERT INTO company_product_signals
+                          (company_id, product_id, signals, score, tier, updated_at)
+                        VALUES (%s, %s, %s::jsonb, %s, %s, now())
+                        ON CONFLICT (company_id, product_id) DO UPDATE
+                          SET signals    = EXCLUDED.signals,
+                              score      = EXCLUDED.score,
+                              tier       = EXCLUDED.tier,
+                              updated_at = now()
+                        """,
+                        (
+                            int(company_id),
+                            int(vertical.product_id),
+                            json.dumps(signals),
+                            float(score),
+                            tier,
+                        ),
+                    )
+                    persisted[vertical.slug] = {
+                        "signals": signals,
+                        "score": round(score, 3),
+                        "tier": tier,
+                    }
     except psycopg.Error:
         # Non-fatal — the core enrichment already committed in `persist`.
-        # Don't set `_error` because downstream routing would treat this run
-        # as a failure even though classification + scores landed.
-        return {"agent_timings": {"score_ingestible": round(time.perf_counter() - t0, 3)}}
+        # A failure to score doesn't invalidate classification + scores.
+        return {"agent_timings": {"score_verticals": round(time.perf_counter() - t0, 3)}}
 
     return {
-        "ingestible_signals": {
-            "rag_stack_detected": rag_stack,
-            "on_prem_required": on_prem,
-            "ai_act_exposure": ai_act_exposure,
-            "token_cost_complaint": token_cost_complaint,
-        },
-        "agent_timings": {"score_ingestible": round(time.perf_counter() - t0, 3)},
+        "vertical_signals": persisted,
+        "agent_timings": {"score_verticals": round(time.perf_counter() - t0, 3)},
     }
 
 
@@ -488,17 +478,18 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("classify", classify)
     builder.add_node("score", score)
     builder.add_node("persist", persist)
-    builder.add_node("score_ingestible", score_ingestible)
+    builder.add_node("score_verticals", score_verticals)
     builder.add_edge(START, "load")
     builder.add_edge("load", "fetch")
     builder.add_edge("fetch", "classify")
     builder.add_edge("classify", "score")
     builder.add_edge("score", "persist")
-    # Per-vertical signal scorers run after core persist so their failures
-    # never roll back classification + score commits. Additive; safe to
-    # extend with future vertical nodes (archreview, onboardingtutor).
-    builder.add_edge("persist", "score_ingestible")
-    builder.add_edge("score_ingestible", END)
+    # Vertical signal scorer runs after core persist so its failures never
+    # roll back classification + scores. The single node iterates all
+    # registered ProductVerticals internally — adding a new product is a
+    # file-drop under `verticals/`, not a graph change.
+    builder.add_edge("persist", "score_verticals")
+    builder.add_edge("score_verticals", END)
     return builder.compile(checkpointer=checkpointer)
 
 
