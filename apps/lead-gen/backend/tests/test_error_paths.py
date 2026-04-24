@@ -152,6 +152,12 @@ def _install_common_stubs(monkeypatch: pytest.MonkeyPatch, module: Any) -> None:
     cursor = _FakeCursor([row], cols)
     monkeypatch.setattr(module.psycopg, "connect", lambda *a, **k: _FakeConn(cursor))
 
+    # Neuter make_llm so its LangChain/httpx wiring (SDK-version-sensitive)
+    # doesn't run before ainvoke_json gets patched to _boom. ainvoke_json
+    # is what the test is trying to make raise; the llm handle it's passed
+    # is never used because _boom fires first.
+    monkeypatch.setattr(module, "make_llm", lambda *a, **k: None)
+
     # notify._post reaches for httpx.AsyncClient on the shared module import,
     # so patching it there covers all three graphs.
     from leadgen_agent import notify

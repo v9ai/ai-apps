@@ -52,7 +52,7 @@ class _GTMStateWithError(GTMState, total=False):
     _error: Annotated[str, _first_error]
 
 
-async def load_inputs(state: GTMState) -> dict:
+async def load_inputs(state: _GTMStateWithError) -> dict:
     # Entry-node guard — catches bad product_id / DB errors so the graph
     # terminates via notify_error_node instead of leaving an unhandled
     # exception in LangGraph's executor.
@@ -178,7 +178,7 @@ def _pricing_summary(pricing: dict[str, Any]) -> str:
     return f"Value metric: {model.get('value_metric', '?')}\nTiers: " + ", ".join(tier_strs)
 
 
-async def pick_channels(state: GTMState) -> dict:
+async def pick_channels(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -233,7 +233,7 @@ async def pick_channels(state: GTMState) -> dict:
     }
 
 
-async def craft_pillars(state: GTMState) -> dict:
+async def craft_pillars(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -287,11 +287,11 @@ async def craft_pillars(state: GTMState) -> dict:
     }
 
 
-def _fan_out(_state: GTMState) -> list[str]:
+def _fan_out(_state: _GTMStateWithError) -> list[str]:
     return ["pick_channels", "craft_pillars"]
 
 
-async def write_templates(state: GTMState) -> dict:
+async def write_templates(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -345,7 +345,7 @@ async def write_templates(state: GTMState) -> dict:
     }
 
 
-async def build_playbook(state: GTMState) -> dict:
+async def build_playbook(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -395,7 +395,7 @@ async def build_playbook(state: GTMState) -> dict:
     }
 
 
-async def draft_plan(state: GTMState) -> dict:
+async def draft_plan(state: _GTMStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -481,13 +481,13 @@ async def draft_plan(state: GTMState) -> dict:
     }
 
 
-async def notify_error_node(state: GTMState) -> dict:
+async def notify_error_node(state: _GTMStateWithError) -> dict:
     err = state.get("_error") or "unknown error"
     await notify_error(state, err)
     return {}
 
 
-def _route_final(state: GTMState) -> str:
+def _route_final(state: _GTMStateWithError) -> str:
     return "notify_error_node" if state.get("_error") else "notify_complete"
 
 

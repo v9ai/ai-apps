@@ -51,7 +51,7 @@ class _ProductIntelStateWithError(ProductIntelState, total=False):
     _error: Annotated[str, _first_error]
 
 
-async def load_and_profile(state: ProductIntelState) -> dict:
+async def load_and_profile(state: _ProductIntelStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -141,7 +141,7 @@ async def load_and_profile(state: ProductIntelState) -> dict:
     }
 
 
-async def ensure_icp(state: ProductIntelState) -> dict:
+async def ensure_icp(state: _ProductIntelStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -179,7 +179,7 @@ async def ensure_icp(state: ProductIntelState) -> dict:
     }
 
 
-async def ensure_competitors(state: ProductIntelState) -> dict:
+async def ensure_competitors(state: _ProductIntelStateWithError) -> dict:
     """Check whether a completed competitor analysis exists. Don't invoke the
     team graph implicitly — competitor scraping is heavy and the existing
     approve-then-scrape workflow (``/competitors`` UI) is the expected entry
@@ -211,7 +211,7 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
     }
 
 
-async def run_pricing(state: ProductIntelState) -> dict:
+async def run_pricing(state: _ProductIntelStateWithError) -> dict:
     """Invoke the pricing subgraph. The subgraph's write_rationale node
     persists pricing_analysis itself — no second write here."""
     if state.get("_error"):
@@ -228,7 +228,7 @@ async def run_pricing(state: ProductIntelState) -> dict:
     }
 
 
-async def run_gtm(state: ProductIntelState) -> dict:
+async def run_gtm(state: _ProductIntelStateWithError) -> dict:
     """Invoke the GTM subgraph. The subgraph's draft_plan node persists
     gtm_analysis itself — no second write here."""
     if state.get("_error"):
@@ -245,11 +245,11 @@ async def run_gtm(state: ProductIntelState) -> dict:
     }
 
 
-def _fan_out_pricing_gtm(_state: ProductIntelState) -> list[str]:
+def _fan_out_pricing_gtm(_state: _ProductIntelStateWithError) -> list[str]:
     return ["run_pricing", "run_gtm"]
 
 
-async def synthesize_report(state: ProductIntelState) -> dict:
+async def synthesize_report(state: _ProductIntelStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -334,13 +334,13 @@ async def synthesize_report(state: ProductIntelState) -> dict:
     }
 
 
-async def notify_error_node(state: ProductIntelState) -> dict:
+async def notify_error_node(state: _ProductIntelStateWithError) -> dict:
     err = state.get("_error") or "unknown error"
     await notify_error(state, err)
     return {}
 
 
-def _route_final(state: ProductIntelState) -> str:
+def _route_final(state: _ProductIntelStateWithError) -> str:
     return "notify_error_node" if state.get("_error") else "notify_complete"
 
 

@@ -60,7 +60,7 @@ class _PricingStateWithError(PricingState, total=False):
     _error: Annotated[str, _first_error]
 
 
-async def load_inputs(state: PricingState) -> dict:
+async def load_inputs(state: _PricingStateWithError) -> dict:
     # Entry-node guard: any exception here (bad product_id, DB down, etc.) used
     # to escape LangGraph's executor and leave product_intel_runs.status stuck
     # on "running". We now catch + route via _error so the terminal
@@ -220,7 +220,7 @@ def _fmt_icp_block(icp: dict[str, Any]) -> str:
     )[:_ICP_BRIEF_CHARS]
 
 
-async def benchmark_competitors(state: PricingState) -> dict:
+async def benchmark_competitors(state: _PricingStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -276,7 +276,7 @@ async def benchmark_competitors(state: PricingState) -> dict:
     }
 
 
-async def choose_value_metric(state: PricingState) -> dict:
+async def choose_value_metric(state: _PricingStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -325,11 +325,11 @@ async def choose_value_metric(state: PricingState) -> dict:
     }
 
 
-def _fan_out(_state: PricingState) -> list[str]:
+def _fan_out(_state: _PricingStateWithError) -> list[str]:
     return ["benchmark_competitors", "choose_value_metric"]
 
 
-async def design_model(state: PricingState) -> dict:
+async def design_model(state: _PricingStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -383,7 +383,7 @@ async def design_model(state: PricingState) -> dict:
     }
 
 
-async def write_rationale(state: PricingState) -> dict:
+async def write_rationale(state: _PricingStateWithError) -> dict:
     if state.get("_error"):
         return {}
     t0 = time.perf_counter()
@@ -471,13 +471,13 @@ async def write_rationale(state: PricingState) -> dict:
     }
 
 
-async def notify_error_node(state: PricingState) -> dict:
+async def notify_error_node(state: _PricingStateWithError) -> dict:
     err = state.get("_error") or "unknown error"
     await notify_error(state, err)
     return {}
 
 
-def _route_final(state: PricingState) -> str:
+def _route_final(state: _PricingStateWithError) -> str:
     return "notify_error_node" if state.get("_error") else "notify_complete"
 
 
