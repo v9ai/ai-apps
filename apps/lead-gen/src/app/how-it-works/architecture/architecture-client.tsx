@@ -1,0 +1,876 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  useNodesState,
+  useEdgesState,
+  type Node,
+  type Edge,
+  type NodeTypes,
+  type NodeMouseHandler,
+  Handle,
+  Position,
+  MarkerType,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import "../flow-dark.css";
+import {
+  Layers,
+  Globe,
+  Network,
+  Database,
+  Shield,
+  Search,
+  Brain,
+  Users,
+  Mail,
+  Server,
+  Cpu,
+  Zap,
+  Filter,
+  BarChart3,
+  Code as CodeIcon,
+  Key,
+  AlertTriangle,
+  Lock,
+  GitBranch,
+  Webhook,
+  Inbox,
+  Send,
+  Tag,
+  Activity,
+  HardDrive,
+  Workflow,
+  Bot,
+} from "lucide-react";
+import { Badge, Flex, Heading, Text, Card, Code, Separator } from "@radix-ui/themes";
+import Link from "next/link";
+import { papers, stats, technicalDetails, extraSections, nodeDetails } from "./data";
+
+// ── Custom Node Components (kept in parity with pipeline/recruitment) ─
+
+function AgentNode({ data }: { data: Record<string, unknown> }) {
+  const Icon = data.icon as React.ComponentType<{ size?: number }>;
+  const color = data.color as string;
+  const label = data.label as string;
+  const sublabel = data.sublabel as string | undefined;
+
+  return (
+    <div
+      style={{
+        padding: "10px 16px",
+        borderRadius: 8,
+        background: `color-mix(in srgb, ${color} 14%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 45%, transparent)`,
+        boxShadow: `0 0 12px color-mix(in srgb, ${color} 15%, transparent), 0 1px 3px rgba(0,0,0,0.3)`,
+        minWidth: 180,
+        textAlign: "center" as const,
+        fontFamily: "var(--default-font-family, system-ui)",
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <div
+          style={{
+            width: 32, height: 32, borderRadius: 6,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: `color-mix(in srgb, ${color} 22%, transparent)`,
+            color, flexShrink: 0,
+          }}
+        >
+          <Icon size={16} />
+        </div>
+        <div style={{ textAlign: "left" }}>
+          <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--gray-12)", lineHeight: 1.3 }}>
+            {label}
+          </div>
+          {sublabel && (
+            <div style={{ fontSize: "10px", color: "var(--gray-10)", marginTop: 1 }}>{sublabel}</div>
+          )}
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+function DataStoreNode({ data }: { data: Record<string, unknown> }) {
+  const Icon = data.icon as React.ComponentType<{ size?: number }>;
+  const color = data.color as string;
+  const label = data.label as string;
+  const sublabel = data.sublabel as string | undefined;
+
+  return (
+    <div
+      style={{
+        padding: "8px 14px", borderRadius: 6,
+        background: `color-mix(in srgb, ${color} 10%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
+        boxShadow: `0 0 8px color-mix(in srgb, ${color} 10%, transparent), 0 1px 2px rgba(0,0,0,0.25)`,
+        minWidth: 140, textAlign: "center" as const,
+        fontFamily: "var(--default-font-family, system-ui)",
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+        <div style={{ color, flexShrink: 0, display: "flex" }}>
+          <Icon size={14} />
+        </div>
+        <div>
+          <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--gray-12)" }}>{label}</div>
+          {sublabel && <div style={{ fontSize: "9px", color: "var(--gray-10)" }}>{sublabel}</div>}
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+function ConditionNode({ data }: { data: Record<string, unknown> }) {
+  const color = data.color as string;
+  const label = data.label as string;
+  return (
+    <div
+      style={{
+        padding: "5px 12px", borderRadius: 4,
+        background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
+        boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
+        display: "flex", alignItems: "center", gap: 5,
+        fontFamily: "var(--default-font-family, system-ui)",
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
+      <Filter size={12} style={{ color }} />
+      <span style={{ fontSize: "10px", fontWeight: 600, color }}>{label}</span>
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+const nodeTypes: NodeTypes = {
+  agent: AgentNode,
+  dataStore: DataStoreNode,
+  condition: ConditionNode,
+};
+
+const edgeDefaults = {
+  type: "smoothstep" as const,
+  markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14 },
+  style: { strokeWidth: 2 },
+};
+
+// ── Stage 1: frontend ────────────────────────────────────────────────
+
+const s1Nodes: Node[] = [
+  { id: "fe-next",   type: "agent", position: { x: 0,   y: 60 }, data: { label: "next.js app router",    sublabel: "Next 16.1 · React 19 · layout.tsx", icon: Globe,       color: "var(--blue-9)" } },
+  { id: "fe-radix",  type: "agent", position: { x: 340, y: 0   }, data: { label: "radix themes + panda",   sublabel: "@radix-ui/themes 3.3 · panda 1.9", icon: Layers,      color: "var(--violet-9)" } },
+  { id: "fe-apollo", type: "agent", position: { x: 340, y: 120 }, data: { label: "apollo client 3.14",     sublabel: "per-collection cache merges",      icon: Network,     color: "var(--purple-9)" } },
+];
+const s1Edges: Edge[] = [
+  { id: "s1-a", source: "fe-next", target: "fe-radix",  ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--violet-8)" } },
+  { id: "s1-b", source: "fe-next", target: "fe-apollo", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
+];
+
+// ── Stage 2: graphql_api ─────────────────────────────────────────────
+
+const s2Nodes: Node[] = [
+  { id: "gql-server",      type: "agent",     position: { x: 0,   y: 60  }, data: { label: "apollo server 5.3",  sublabel: "/api/graphql · context per req",    icon: Server,  color: "var(--purple-9)" } },
+  { id: "gql-resolvers",   type: "agent",     position: { x: 340, y: 0   }, data: { label: "23 resolver modules", sublabel: "schema-first · domain-bounded",    icon: CodeIcon, color: "var(--violet-9)" } },
+  { id: "gql-loaders",     type: "agent",     position: { x: 340, y: 120 }, data: { label: "18 dataloaders",      sublabel: "2 ms batch scheduler",              icon: Zap,     color: "var(--amber-9)" } },
+  { id: "gql-admin-guard", type: "condition", position: { x: 680, y: 60  }, data: { label: "isAdminEmail()",     color: "var(--red-9)" } },
+];
+const s2Edges: Edge[] = [
+  { id: "s2-a", source: "gql-server", target: "gql-resolvers", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--violet-8)" } },
+  { id: "s2-b", source: "gql-server", target: "gql-loaders",   ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "s2-c", source: "gql-resolvers", target: "gql-admin-guard", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
+];
+
+// ── Stage 3: database ────────────────────────────────────────────────
+
+const s3Nodes: Node[] = [
+  { id: "db-neon",     type: "agent",     position: { x: 0,   y: 110 }, data: { label: "neon serverless pg",    sublabel: "HTTP driver · RLS + app.tenant",  icon: Database,  color: "var(--cyan-9)" } },
+  { id: "db-drizzle",  type: "agent",     position: { x: 340, y: 110 }, data: { label: "drizzle orm",           sublabel: "0.45 · typed schema + migrations", icon: GitBranch, color: "var(--green-9)" } },
+  { id: "db-companies", type: "dataStore", position: { x: 680, y: 0   }, data: { label: "companies",   sublabel: "icp_embedding · jsonb signals",       icon: Database, color: "var(--green-9)" } },
+  { id: "db-contacts",  type: "dataStore", position: { x: 680, y: 80  }, data: { label: "contacts",    sublabel: "authority · lora_tier · CPN",          icon: Database, color: "var(--green-9)" } },
+  { id: "db-emails",    type: "dataStore", position: { x: 680, y: 160 }, data: { label: "contact_emails + received_emails", sublabel: "bidirectional edge", icon: Database, color: "var(--green-9)" } },
+];
+const s3Edges: Edge[] = [
+  { id: "s3-a", source: "db-neon",    target: "db-drizzle",   ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--green-8)" } },
+  { id: "s3-b", source: "db-drizzle", target: "db-companies", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--green-8)" } },
+  { id: "s3-c", source: "db-drizzle", target: "db-contacts",  ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--green-8)" } },
+  { id: "s3-d", source: "db-drizzle", target: "db-emails",    ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--green-8)" } },
+];
+
+// ── Stage 4: auth_security ───────────────────────────────────────────
+
+const s4Nodes: Node[] = [
+  { id: "auth-better", type: "agent",     position: { x: 0,   y: 40 }, data: { label: "better auth",        sublabel: "@ai-apps/auth · session cookie",   icon: Lock,            color: "var(--red-9)" } },
+  { id: "auth-admin",  type: "condition", position: { x: 340, y: 0  }, data: { label: "isAdminEmail(ctx)",   color: "var(--red-9)" } },
+  { id: "auth-gap",    type: "agent",     position: { x: 340, y: 90 }, data: { label: "known gaps",         sublabel: "no CORS · no depth gate",         icon: AlertTriangle,   color: "var(--orange-9)" } },
+];
+const s4Edges: Edge[] = [
+  { id: "s4-a", source: "auth-better", target: "auth-admin", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
+  { id: "s4-b", source: "auth-better", target: "auth-gap",   ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
+];
+
+// ── Stage 5: discovery ───────────────────────────────────────────────
+
+const s5Nodes: Node[] = [
+  { id: "disc-seeds",   type: "dataStore", position: { x: 0,   y: 40 }, data: { label: "domain seeds",       sublabel: "domains.txt · brave · gh",       icon: HardDrive, color: "var(--teal-9)" } },
+  { id: "disc-crawler", type: "agent",     position: { x: 280, y: 40 }, data: { label: "smart crawler",      sublabel: "reqwest · headless chromium",    icon: Search,    color: "var(--orange-9)" } },
+  { id: "disc-extract", type: "agent",     position: { x: 560, y: 0  }, data: { label: "ner → vlm → llm",    sublabel: "confidence cascade · qwen fallback", icon: Brain, color: "var(--amber-9)" } },
+  { id: "disc-resolve", type: "agent",     position: { x: 560, y: 90 }, data: { label: "entity resolver",    sublabel: "canonical_domain · ai_tier",     icon: Network,   color: "var(--teal-9)" } },
+];
+const s5Edges: Edge[] = [
+  { id: "s5-a", source: "disc-seeds",   target: "disc-crawler", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--teal-8)" } },
+  { id: "s5-b", source: "disc-crawler", target: "disc-extract", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
+  { id: "s5-c", source: "disc-extract", target: "disc-resolve", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+];
+
+// ── Stage 6: enrichment_llm ──────────────────────────────────────────
+
+const s6Nodes: Node[] = [
+  { id: "enr-graph",    type: "agent", position: { x: 0,   y: 60  }, data: { label: "langgraph enrich",       sublabel: "gather → categorize → price → gtm", icon: Workflow, color: "var(--violet-9)" } },
+  { id: "enr-cheap",    type: "agent", position: { x: 340, y: 0   }, data: { label: "deepseek chat",          sublabel: "$0.27 / $1.10 per 1M tok",         icon: Zap,      color: "var(--iris-9)" } },
+  { id: "enr-reasoner", type: "agent", position: { x: 340, y: 120 }, data: { label: "deepseek reasoner",      sublabel: "$0.55 / $2.19 · hard nodes only",  icon: Brain,    color: "var(--violet-9)" } },
+  { id: "enr-ground",   type: "agent", position: { x: 680, y: 60  }, data: { label: "pydantic + zod",         sublabel: "strategy-enforcer rule 2",          icon: Shield,   color: "var(--amber-9)" } },
+];
+const s6Edges: Edge[] = [
+  { id: "s6-a", source: "enr-graph",    target: "enr-cheap",    ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--iris-8)" } },
+  { id: "s6-b", source: "enr-graph",    target: "enr-reasoner", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--violet-8)" } },
+  { id: "s6-c", source: "enr-cheap",    target: "enr-ground",   ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "s6-d", source: "enr-reasoner", target: "enr-ground",   ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+];
+
+// ── Stage 7: contacts_ml ─────────────────────────────────────────────
+
+const s7Nodes: Node[] = [
+  { id: "cm-discover",  type: "agent",     position: { x: 0,   y: 0   }, data: { label: "email_discover",    sublabel: "pattern gen · page scrape",     icon: Mail,      color: "var(--cyan-9)" } },
+  { id: "cm-verify",    type: "agent",     position: { x: 0,   y: 90  }, data: { label: "neverbounce verify", sublabel: "+ local dns/smtp fallback",     icon: Filter,    color: "var(--green-9)" } },
+  { id: "cm-authority", type: "agent",     position: { x: 320, y: 0   }, data: { label: "title classifier",   sublabel: "sync · <100 ms · no cloud",     icon: Tag,       color: "var(--indigo-9)" } },
+  { id: "cm-engage",    type: "agent",     position: { x: 320, y: 90  }, data: { label: "engagement stumps",  sublabel: "12 features · sub-ms",          icon: BarChart3, color: "var(--amber-9)" } },
+  { id: "cm-lora",      type: "agent",     position: { x: 640, y: 0   }, data: { label: "lora persona rank",  sublabel: "mlx train · gated by logreg",   icon: Brain,     color: "var(--amber-9)" } },
+  { id: "cm-vector",    type: "dataStore", position: { x: 640, y: 90  }, data: { label: "pgvector hnsw",      sublabel: "bge-m3 · 1024-dim",             icon: Database,  color: "var(--cyan-9)" } },
+];
+const s7Edges: Edge[] = [
+  { id: "s7-a", source: "cm-discover",  target: "cm-verify",    ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--cyan-8)" } },
+  { id: "s7-b", source: "cm-verify",    target: "cm-authority", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" } },
+  { id: "s7-c", source: "cm-authority", target: "cm-engage",    ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "s7-d", source: "cm-engage",    target: "cm-lora",      ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "s7-e", source: "cm-lora",      target: "cm-vector",    ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--cyan-8)" } },
+];
+
+// ── Stage 8: outreach_email ──────────────────────────────────────────
+
+const s8Nodes: Node[] = [
+  { id: "out-resend",    type: "agent", position: { x: 0,   y: 0   }, data: { label: "resend send",       sublabel: "In-Reply-To · mustache body",   icon: Send,    color: "var(--cyan-9)" } },
+  { id: "out-cpn",       type: "agent", position: { x: 0,   y: 90  }, data: { label: "CPN alias",         sublabel: "{token}@vadim.blog",            icon: Tag,     color: "var(--teal-9)" } },
+  { id: "out-webhook",   type: "agent", position: { x: 340, y: 45  }, data: { label: "svix webhook",      sublabel: "inbound + classify",            icon: Webhook, color: "var(--cyan-9)" } },
+  { id: "out-langgraph", type: "agent", position: { x: 680, y: 45  }, data: { label: "compose / reply graph", sublabel: "email_compose · email_reply", icon: Workflow, color: "var(--violet-9)" } },
+];
+const s8Edges: Edge[] = [
+  { id: "s8-a", source: "out-resend",  target: "out-webhook",   ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--cyan-8)" } },
+  { id: "s8-b", source: "out-cpn",     target: "out-webhook",   ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--teal-8)" } },
+  { id: "s8-c", source: "out-webhook", target: "out-langgraph", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--violet-8)" } },
+];
+
+// ── Stage 9: langgraph_backend ───────────────────────────────────────
+
+const s9Nodes: Node[] = [
+  { id: "lg-runtime",  type: "agent",     position: { x: 0,   y: 90  }, data: { label: "fastapi runtime",     sublabel: "AsyncPostgresSaver · :7860",     icon: Server, color: "var(--violet-9)" } },
+  { id: "lg-core",     type: "agent",     position: { x: 340, y: 0   }, data: { label: "5 core graphs",       sublabel: "compose · reply · outreach · admin · sql", icon: Workflow, color: "var(--violet-9)" } },
+  { id: "lg-endpoint", type: "agent",     position: { x: 340, y: 90  }, data: { label: "/runs/wait",          sublabel: "sync up to 300 s",               icon: Activity, color: "var(--iris-9)" } },
+  { id: "lg-auth",     type: "condition", position: { x: 340, y: 180 }, data: { label: "bearer middleware",   color: "var(--red-9)" } },
+  { id: "lg-deploy",   type: "agent",     position: { x: 680, y: 90  }, data: { label: "docker deploy",       sublabel: "cloudflare workers (wrangler)",  icon: Cpu,    color: "var(--violet-9)" } },
+];
+const s9Edges: Edge[] = [
+  { id: "s9-a", source: "lg-runtime",  target: "lg-core",     ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--violet-8)" } },
+  { id: "s9-b", source: "lg-runtime",  target: "lg-endpoint", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--iris-8)" } },
+  { id: "s9-c", source: "lg-runtime",  target: "lg-auth",     ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
+  { id: "s9-d", source: "lg-endpoint", target: "lg-deploy",   ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--violet-8)" } },
+];
+
+// ── Stage 10: agent_teams ────────────────────────────────────────────
+
+const s10Nodes: Node[] = [
+  { id: "at-improve",  type: "agent", position: { x: 0,   y: 0   }, data: { label: "improve-* team",  sublabel: "pipeline · discover · classify · skills",  icon: Bot,           color: "var(--violet-9)" } },
+  { id: "at-codefix",  type: "agent", position: { x: 0,   y: 90  }, data: { label: "codefix-* team",  sublabel: "mine → audit → evolve → apply → verify",    icon: CodeIcon,       color: "var(--amber-9)" } },
+  { id: "at-pipeline", type: "agent", position: { x: 0,   y: 180 }, data: { label: "pipeline-* team", sublabel: "discover → enrich → contacts → outreach",   icon: Workflow,       color: "var(--green-9)" } },
+  { id: "at-research", type: "agent", position: { x: 0,   y: 270 }, data: { label: "research-* team", sublabel: "analyst · hiring · icp · debate protocol",  icon: Users,          color: "var(--blue-9)" } },
+  { id: "at-hook",     type: "agent", position: { x: 360, y: 90  }, data: { label: "stop_hook.py",    sublabel: "session score → improvement_queue.json",    icon: Inbox,          color: "var(--red-9)" } },
+  { id: "at-strategy", type: "agent", position: { x: 360, y: 180 }, data: { label: "strategy-enforcer", sublabel: "eval-first · grounding-first",             icon: Shield,         color: "var(--amber-9)" } },
+];
+const s10Edges: Edge[] = [
+  { id: "s10-a", source: "at-improve",  target: "at-hook",     ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
+  { id: "s10-b", source: "at-codefix",  target: "at-hook",     ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
+  { id: "s10-c", source: "at-pipeline", target: "at-strategy", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "s10-d", source: "at-research", target: "at-strategy", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "s10-e", source: "at-hook",     target: "at-strategy", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+];
+
+// ── Stage Definitions ────────────────────────────────────────────────
+
+const stages = [
+  {
+    graphName: "frontend",
+    description: "Next.js 16 App Router with React 19. Every route is a server component by default; interactivity lives in client islands (*-client.tsx). Apollo Client 3.14 sits in a provider at the layout root with per-collection cache merges that append paginated pages rather than replacing.",
+    pattern: "Server shell, client islands",
+    nodes: s1Nodes, edges: s1Edges, height: 260,
+  },
+  {
+    graphName: "graphql_api",
+    description: "Apollo Server 5.3 at /api/graphql. Schema-first across 16 domain-bounded subdirectories. 23 resolver modules. 18 DataLoaders with a custom 2 ms batch scheduler. Admin writes are gated inline at the top of every mutation by isAdminEmail(context.userEmail).",
+    pattern: "Schema-bounded resolvers + batched loaders",
+    nodes: s2Nodes, edges: s2Edges, height: 260,
+  },
+  {
+    graphName: "database",
+    description: "Neon serverless Postgres via @neondatabase/serverless over HTTP. Drizzle ORM owns every application query — raw SQL is reserved for pgvector operations. Multi-tenant isolation via RLS keyed on a per-request app.tenant GUC. Dual email tables (contact_emails outbound, received_emails inbound) joined through a bidirectional edge.",
+    pattern: "Serverless Postgres + typed ORM + RLS",
+    nodes: s3Nodes, edges: s3Edges, height: 300,
+  },
+  {
+    graphName: "auth_security",
+    description: "Better Auth via @ai-apps/auth populates context.userId + context.userEmail on every GraphQL request. Admin writes check an allow-list in src/lib/admin.ts inline at each mutation. CORS and query-complexity limits are known open gaps — acceptable under the current single-operator threat model, documented in CLAUDE.md.",
+    pattern: "Per-mutation admin guard",
+    nodes: s4Nodes, edges: s4Edges, height: 220,
+  },
+  {
+    graphName: "discovery",
+    description: "Rust crates/leadgen takes a domain seed list and walks each site through a smart crawler whose URL scheduler is reward-loop-boosted by past extraction success. A three-stage NER → VLM → Qwen fallback cascade hits the cheapest extractor first and escalates only on low confidence. Entity resolution writes canonical companies rows with ai_tier.",
+    pattern: "Reward-boosted crawl + extraction cascade",
+    nodes: s5Nodes, edges: s5Edges, height: 240,
+  },
+  {
+    graphName: "enrichment_llm",
+    description: "LangGraph nodes orchestrate enrichment. Cheap-first routing: DeepSeek chat for summary nodes, deepseek-reasoner only for value_metric / pricing_design / gtm_pillars. Pydantic (Python) + Zod (TS) bind every LLM output to a schema — strategy-enforcer Rule 2 blocks prompts that don't.",
+    pattern: "Cheap-first escalation + pre-commit grounding",
+    nodes: s6Nodes, edges: s6Edges, height: 280,
+  },
+  {
+    graphName: "contacts_ml",
+    description: "Three-pass local-first scoring: rule-based title classifier (sync, sub-100 ms), decision-stump engagement predictor (12 features, sub-ms), LoRA persona ranker gated by a logreg prefilter so it only fires on authority ≥ 0.5. BGE-M3 embeddings via Candle/Metal land in pgvector with an HNSW cosine index.",
+    pattern: "Local-first inference + logreg-gated semantic rank",
+    nodes: s7Nodes, edges: s7Edges, height: 260,
+  },
+  {
+    graphName: "outreach_email",
+    description: "Outbound via Resend with In-Reply-To threading. Inbound via Svix-signed webhook, routed by a CPN forwarding alias on vadim.blog — one DNS record, one-to-many trackable routing. Composition and reply drafting go through LangGraph's email_compose and email_reply graphs.",
+    pattern: "Dual-path: outbound templated send, inbound CPN-routed",
+    nodes: s8Nodes, edges: s8Edges, height: 240,
+  },
+  {
+    graphName: "langgraph_backend",
+    description: "22 graphs declared in backend/langgraph.json. Same code runs under `langgraph dev` locally (in-memory) and inside FastAPI + Uvicorn on :7860 (AsyncPostgresSaver on Neon). Bearer-token middleware is plugged into langgraph.json's http.app key so auth is uniform across runtimes. Deploys as Docker to Cloudflare Workers via wrangler.",
+    pattern: "Same code, two runtimes, one auth layer",
+    nodes: s9Nodes, edges: s9Edges, height: 320,
+  },
+  {
+    graphName: "agent_teams",
+    description: "Four Claude Code skill teams (improve / codefix / pipeline / research) are the control plane. stop_hook.py scores every session and auto-queues low-scoring runs into improvement_queue.json. Phase detection (BUILDING / IMPROVEMENT / SATURATION / COLLAPSE_RISK) emerges from real data — not declared thresholds — and gates what each team may do next.",
+    pattern: "Phase-aware orchestration + emergent alignment",
+    nodes: s10Nodes, edges: s10Edges, height: 400,
+  },
+];
+
+const allNodes = stages.flatMap((s) => s.nodes);
+
+// ── Detail Panel ─────────────────────────────────────────────────────
+
+function NodeDetailPanel({ nodeId }: { nodeId: string }) {
+  const detail = nodeDetails[nodeId];
+  if (!detail) return null;
+  const node = allNodes.find((n) => n.id === nodeId);
+  const label = (node?.data?.label as string) ?? nodeId;
+  const sublabel = node?.data?.sublabel as string | undefined;
+
+  return (
+    <Card mt="4" style={{ borderLeft: `3px solid var(--${detail.color}-9)`, background: "var(--gray-2)" }}>
+      <Flex direction="column" gap="3">
+        <Flex align="center" gap="2" wrap="wrap">
+          <Heading size="4"><Code>{label}</Code></Heading>
+          {sublabel && <Text size="1" color="gray">{sublabel}</Text>}
+        </Flex>
+        <Text size="2" style={{ lineHeight: 1.65, color: "var(--gray-11)" }}>{detail.description}</Text>
+        <Flex gap="2" wrap="wrap">
+          {detail.tech.map((t) => (
+            <Badge key={t.name} variant="outline" size="1">{t.name}{t.version ? ` ${t.version}` : ""}</Badge>
+          ))}
+        </Flex>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Flex direction="column" gap="1">
+            <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Input</Text>
+            <Text size="2">{detail.dataIn}</Text>
+          </Flex>
+          <Flex direction="column" gap="1">
+            <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Output</Text>
+            <Text size="2">{detail.dataOut}</Text>
+          </Flex>
+        </div>
+        <Card style={{ background: `var(--${detail.color}-2)`, border: `1px solid var(--${detail.color}-6)` }}>
+          <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Key Insight</Text>
+          <Text as="p" size="2" mt="1" style={{ lineHeight: 1.6 }}>{detail.insight}</Text>
+        </Card>
+      </Flex>
+    </Card>
+  );
+}
+
+// ── Stage Flow ───────────────────────────────────────────────────────
+
+function StageFlow({
+  nodes, edges, height, onNodeClick,
+}: {
+  nodes: Node[]; edges: Edge[]; height: number; onNodeClick: NodeMouseHandler;
+}) {
+  const [n, , onNodesChange] = useNodesState(nodes);
+  const [e, , onEdgesChange] = useEdgesState(edges);
+
+  return (
+    <div
+      style={{
+        width: "100%", height, borderRadius: 8, overflow: "hidden",
+        border: "1px solid var(--gray-a4)",
+        background: "color-mix(in srgb, var(--color-background) 95%, var(--gray-3))",
+        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.15)",
+      }}
+    >
+      <ReactFlow
+        nodes={n}
+        edges={e}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
+        nodeTypes={nodeTypes}
+        colorMode="dark"
+        fitView
+        fitViewOptions={{ padding: 0.25 }}
+        minZoom={0.3}
+        maxZoom={2}
+        panOnScroll={false}
+        proOptions={{ hideAttribution: false }}
+        defaultEdgeOptions={{ type: "smoothstep" }}
+      >
+        <Background gap={20} size={1} color="var(--gray-a3)" />
+        <Controls showInteractive={false} position="bottom-left" />
+      </ReactFlow>
+    </div>
+  );
+}
+
+// ── Stats Bar ────────────────────────────────────────────────────────
+
+const headerStats = [
+  { label: "10 layers", color: "violet" as const },
+  { label: "22 langgraph graphs", color: "purple" as const },
+  { label: "23 resolvers · 18 loaders", color: "amber" as const },
+  { label: "local-first ML", color: "green" as const },
+];
+
+function HeaderStats() {
+  return (
+    <Flex align="center" gap="2" wrap="wrap" mb="5">
+      {headerStats.map((stat) => (
+        <Badge key={stat.label} color={stat.color} variant="soft" size="2"
+          style={{ fontVariantNumeric: "tabular-nums", letterSpacing: "0.01em" }}>
+          {stat.label}
+        </Badge>
+      ))}
+    </Flex>
+  );
+}
+
+// ── Stage Connector ──────────────────────────────────────────────────
+
+function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: string }) {
+  return (
+    <Flex align="center" justify="center" direction="column" gap="1" py="1">
+      <div style={{ width: 2, height: 16, background: "linear-gradient(to bottom, var(--gray-a5), var(--gray-a7))", borderRadius: 4 }} />
+      <Flex align="center" gap="2" style={{ padding: "3px 10px", borderRadius: 4, background: "var(--gray-3)", border: "1px solid var(--gray-a5)" }}>
+        <Zap size={10} style={{ color: "var(--gray-9)" }} />
+        <Text size="1" color="gray" style={{ whiteSpace: "nowrap" }}>
+          <Code size="1">{fromStage}</Code>
+          <span style={{ margin: "0 4px", color: "var(--gray-7)" }}>→</span>
+          <Code size="1">{toStage}</Code>
+        </Text>
+      </Flex>
+      <div style={{ width: 2, height: 16, background: "linear-gradient(to bottom, var(--gray-a7), var(--gray-a5))", borderRadius: 4 }} />
+    </Flex>
+  );
+}
+
+const stageConnectors: { fromStage: string; toStage: string }[] = [
+  { fromStage: "react_queries", toStage: "graphql_ops" },
+  { fromStage: "resolvers", toStage: "drizzle_calls" },
+  { fromStage: "rows", toStage: "session_check" },
+  { fromStage: "authz_ok", toStage: "crawl_jobs" },
+  { fromStage: "crawled_text", toStage: "llm_input" },
+  { fromStage: "enriched_company", toStage: "contact_hunt" },
+  { fromStage: "verified_contacts", toStage: "outbox" },
+  { fromStage: "compose_request", toStage: "graph_run" },
+  { fromStage: "graph_runs", toStage: "team_state" },
+];
+
+// ── Technical Details ────────────────────────────────────────────────
+
+function TechnicalDetailSection() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <Zap size={16} style={{ color: "var(--amber-9)" }} />
+        <Heading size="5">Technical Details</Heading>
+      </Flex>
+      <Flex direction="column" gap="4">
+        {technicalDetails.map((detail) => {
+          if (detail.type === "table" && detail.items) {
+            return (
+              <Card key={detail.heading} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+                <Heading size="3" mb="1">{detail.heading}</Heading>
+                <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: "left", padding: "6px 10px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontWeight: 500, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>Layer</th>
+                        <th style={{ textAlign: "left", padding: "6px 10px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontWeight: 500, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>Description</th>
+                        <th style={{ textAlign: "left", padding: "6px 10px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontWeight: 500, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>Signal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detail.items.map((item) => (
+                        <tr key={item.label}>
+                          <td style={{ padding: "8px 10px", borderBottom: "1px solid var(--gray-a3)", fontFamily: "var(--code-font-family, monospace)", color: "var(--green-9)", fontWeight: 500 }}>{item.label}</td>
+                          <td style={{ padding: "8px 10px", borderBottom: "1px solid var(--gray-a3)", color: "var(--gray-11)" }}>{item.value}</td>
+                          <td style={{ padding: "8px 10px", borderBottom: "1px solid var(--gray-a3)" }}>
+                            {item.metadata && (
+                              <Flex gap="1" wrap="wrap">
+                                {Object.entries(item.metadata).map(([k, v]) => (
+                                  <Badge key={k} variant="outline" size="1"><Code size="1">{String(v)}</Code></Badge>
+                                ))}
+                              </Flex>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            );
+          }
+
+          if (detail.type === "code" && detail.code) {
+            return (
+              <Card key={detail.heading} style={{ background: "var(--gray-2)", borderLeft: "3px solid var(--green-9)" }}>
+                <Heading size="3" mb="1">{detail.heading}</Heading>
+                <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
+                <pre style={{
+                  margin: 0, padding: 14, borderRadius: 6,
+                  background: "var(--gray-1)", border: "1px solid var(--green-a4)",
+                  fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
+                  color: "var(--gray-12)", overflow: "auto", lineHeight: 1.6,
+                }}>{detail.code}</pre>
+              </Card>
+            );
+          }
+
+          if (detail.type === "card-grid" && detail.items) {
+            return (
+              <Card key={detail.heading} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+                <Heading size="3" mb="1">{detail.heading}</Heading>
+                <Text size="1" color="gray" mb="3" as="p">{detail.description}</Text>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
+                  {detail.items.map((item) => (
+                    <Card key={item.label} style={{ background: "var(--gray-1)", border: "1px solid var(--gray-a4)" }}>
+                      <Text size="2" weight="medium" style={{ color: "var(--amber-9)" }}>{item.label}</Text>
+                      <Text size="2" color="gray" as="p" mt="1">{item.value}</Text>
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+            );
+          }
+
+          return null;
+        })}
+      </Flex>
+    </div>
+  );
+}
+
+// ── Deep Dive ────────────────────────────────────────────────────────
+
+const sectionColors = ["violet", "green", "purple", "red", "amber", "blue", "cyan", "teal"] as const;
+
+function DeepDive() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <Brain size={16} style={{ color: "var(--violet-9)" }} />
+        <Heading size="5">Deep Dive</Heading>
+      </Flex>
+      <Flex direction="column" gap="2">
+        {extraSections.map((section, i) => {
+          const color = sectionColors[i % sectionColors.length];
+          return (
+            <details key={section.heading} style={{ borderRadius: 8, overflow: "hidden" }}>
+              <summary
+                style={{
+                  padding: "10px 16px",
+                  background: "var(--gray-2)",
+                  borderLeft: `3px solid var(--${color}-9)`,
+                  border: "1px solid var(--gray-a4)",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  listStyle: "none",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--gray-12)",
+                  fontFamily: "var(--default-font-family, system-ui)",
+                }}
+              >
+                <span style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  width: 22, height: 22, borderRadius: 4, flexShrink: 0,
+                  background: `color-mix(in srgb, var(--${color}-9) 18%, transparent)`,
+                  color: `var(--${color}-9)`, fontSize: 11, fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
+                }}>{i + 1}</span>
+                {section.heading}
+                {section.codeBlock && (
+                  <span style={{
+                    marginLeft: "auto", fontSize: 10, fontWeight: 500,
+                    color: "var(--gray-9)", textTransform: "uppercase", letterSpacing: "0.06em",
+                  }}>code</span>
+                )}
+              </summary>
+              <div style={{
+                padding: "12px 16px 16px",
+                background: "var(--gray-2)",
+                borderLeft: `3px solid var(--${color}-9)`,
+                borderRight: "1px solid var(--gray-a4)",
+                borderBottom: "1px solid var(--gray-a4)",
+                borderRadius: "0 0 8px 8px",
+                marginTop: -1,
+              }}>
+                <Text size="2" color="gray" as="p" style={{ lineHeight: 1.7, marginBottom: section.codeBlock ? 12 : 0 }}>
+                  {section.content}
+                </Text>
+                {section.codeBlock && (
+                  <pre style={{
+                    margin: 0, padding: 14, borderRadius: 6,
+                    background: "var(--gray-1)", border: "1px solid var(--gray-a4)",
+                    fontSize: 12, fontFamily: "var(--code-font-family, monospace)",
+                    color: "var(--gray-12)", overflow: "auto", lineHeight: 1.6,
+                  }}>{section.codeBlock}</pre>
+                )}
+              </div>
+            </details>
+          );
+        })}
+      </Flex>
+    </div>
+  );
+}
+
+// ── Tech Foundations ─────────────────────────────────────────────────
+
+function TechFoundations() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <CodeIcon size={16} style={{ color: "var(--blue-9)" }} />
+        <Heading size="5">Technical Foundations</Heading>
+      </Flex>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+        {papers.map((paper) => (
+          <Card key={paper.slug} style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+            <Flex align="center" gap="2" mb="2">
+              <Badge variant="soft" size="1" style={{ background: `color-mix(in srgb, ${paper.categoryColor} 20%, transparent)`, color: paper.categoryColor }}>
+                {paper.category}
+              </Badge>
+              <Text size="1" color="gray">{paper.year}</Text>
+            </Flex>
+            <Heading size="3" mb="1">{paper.title}</Heading>
+            <Text size="1" color="gray" mb="2" style={{ display: "block" }}>{paper.authors}</Text>
+            <Text size="2" as="p" style={{ lineHeight: 1.6, color: "var(--gray-11)" }}>{paper.finding}</Text>
+            <Text size="1" color="gray" as="p" mt="2" style={{ lineHeight: 1.5, fontStyle: "italic" }}>{paper.relevance}</Text>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Metrics Grid ─────────────────────────────────────────────────────
+
+function MetricsGrid() {
+  return (
+    <Card mb="5" style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+      <Flex align="center" gap="2" mb="3">
+        <BarChart3 size={13} style={{ color: "var(--gray-9)" }} />
+        <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.07em" }}>
+          System Metrics
+        </Text>
+      </Flex>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
+        {stats.map((s) => (
+          <Card key={s.label} style={{ background: "var(--gray-1)", border: "1px solid var(--gray-a4)" }}>
+            <Text size="6" weight="bold" style={{ color: "var(--violet-9)", fontFamily: "var(--code-font-family, monospace)", fontVariantNumeric: "tabular-nums" }}>
+              {s.number}
+            </Text>
+            <Text size="2" as="p" mt="1" style={{ color: "var(--gray-11)", lineHeight: 1.5 }}>{s.label}</Text>
+            {s.source && <Text size="1" color="gray" as="p" mt="2" style={{ fontStyle: "italic" }}>{s.source}</Text>}
+          </Card>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ── Root ─────────────────────────────────────────────────────────────
+
+export function ArchitectureClient() {
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+
+  const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
+    setSelectedNode((prev) => (prev === node.id ? null : node.id));
+  }, []);
+
+  return (
+    <div style={{ width: "100%", maxWidth: "100%", padding: "var(--space-4) var(--space-4)" }}>
+      <Flex align="center" gap="2" mb="2">
+        <Layers width={22} height={22} style={{ color: "var(--violet-9)" }} />
+        <Heading size="7">System Architecture</Heading>
+      </Flex>
+      <Text size="3" color="gray" as="p" mb="3" style={{ maxWidth: 780, lineHeight: 1.7 }}>
+        Ten architects, ten layers. Each Explore subagent surveyed one layer of the agentic lead-gen stack in
+        parallel — from the Next.js App Router shell down to the Claude Code agent teams that manage the system
+        itself. Click any node for the 2-sentence brief, the stack, the input/output, and the one non-obvious
+        insight that layer gave up.
+      </Text>
+
+      <Flex align="center" gap="2" mb="4">
+        <Link href="/how-it-works" style={{ textDecoration: "none" }}>
+          <Badge variant="soft" color="gray" size="1" style={{ cursor: "pointer" }}>
+            ← outreach pipeline
+          </Badge>
+        </Link>
+        <Link href="/how-it-works/recruitment" style={{ textDecoration: "none" }}>
+          <Badge variant="soft" color="gray" size="1" style={{ cursor: "pointer" }}>
+            ← recruitment pipeline
+          </Badge>
+        </Link>
+      </Flex>
+
+      <HeaderStats />
+      <MetricsGrid />
+
+      <Flex align="center" gap="4" wrap="wrap" mb="4" py="2" px="3"
+        style={{ borderRadius: 6, background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+        <Flex align="center" gap="2">
+          <Badge color="blue" variant="soft" size="1">Interactive</Badge>
+          <Text size="1" color="gray">Click nodes for details. Drag to rearrange.</Text>
+        </Flex>
+        <Flex align="center" gap="3" style={{ borderLeft: "1px solid var(--gray-a5)", paddingLeft: 12 }}>
+          <Flex align="center" gap="1">
+            <div style={{ width: 18, height: 14, borderRadius: 3, background: "color-mix(in srgb, var(--violet-9) 14%, var(--color-background))", border: "1px solid color-mix(in srgb, var(--violet-9) 45%, transparent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Brain size={8} style={{ color: "var(--violet-9)" }} />
+            </div>
+            <Text size="1" color="gray">agent</Text>
+          </Flex>
+          <Flex align="center" gap="1">
+            <div style={{ width: 18, height: 14, borderRadius: 3, background: "color-mix(in srgb, var(--green-9) 10%, var(--color-background))", border: "1px solid color-mix(in srgb, var(--green-9) 35%, transparent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Database size={8} style={{ color: "var(--green-9)" }} />
+            </div>
+            <Text size="1" color="gray">store</Text>
+          </Flex>
+          <Flex align="center" gap="1">
+            <div style={{ width: 18, height: 14, borderRadius: 3, background: "color-mix(in srgb, var(--red-9) 16%, var(--color-background))", border: "1px solid color-mix(in srgb, var(--red-9) 40%, transparent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Filter size={8} style={{ color: "var(--red-9)" }} />
+            </div>
+            <Text size="1" color="gray">gate</Text>
+          </Flex>
+        </Flex>
+      </Flex>
+
+      <section id="pipeline">
+        <Flex direction="column" gap="0">
+          {stages.map((stage, i) => (
+            <div key={stage.graphName} id={`stage-${stage.graphName}`}>
+              <div>
+                <Flex align="baseline" gap="3" mb="2">
+                  <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {i + 1}
+                  </Badge>
+                  <Heading size="4" style={{ fontFamily: "var(--code-font-family, monospace)" }}>
+                    {stage.graphName}
+                  </Heading>
+                  <Badge variant="soft" color="violet" size="1">{stage.pattern}</Badge>
+                </Flex>
+                <Text size="2" color="gray" mb="3" as="p">{stage.description}</Text>
+                <StageFlow
+                  nodes={stage.nodes}
+                  edges={stage.edges}
+                  height={stage.height}
+                  onNodeClick={onNodeClick}
+                />
+              </div>
+              {i < stageConnectors.length && (
+                <StageConnector
+                  fromStage={stageConnectors[i].fromStage}
+                  toStage={stageConnectors[i].toStage}
+                />
+              )}
+            </div>
+          ))}
+        </Flex>
+      </section>
+
+      {selectedNode && <NodeDetailPanel nodeId={selectedNode} />}
+
+      <Separator size="4" my="7" />
+      <section id="deep-dive">
+        <DeepDive />
+      </section>
+
+      <Separator size="4" my="7" />
+      <section id="technical">
+        <TechnicalDetailSection />
+      </section>
+
+      <Separator size="4" my="7" />
+      <section id="foundations">
+        <TechFoundations />
+      </section>
+
+      <Flex justify="center" mt="7" mb="4">
+        <a
+          href="#pipeline"
+          style={{
+            padding: "8px 20px", borderRadius: 6, textDecoration: "none",
+            background: "var(--gray-a3)", border: "1px solid var(--gray-a5)",
+            color: "var(--gray-11)", fontSize: 12,
+            fontFamily: "var(--code-font-family, monospace)",
+            display: "flex", alignItems: "center", gap: 6,
+          }}
+        >
+          <span style={{ fontSize: 14 }}>↑</span> back to top
+        </a>
+      </Flex>
+    </div>
+  );
+}

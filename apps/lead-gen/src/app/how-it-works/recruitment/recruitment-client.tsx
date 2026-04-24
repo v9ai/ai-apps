@@ -717,6 +717,11 @@ export function RecruitmentClient() {
             ← company outreach pipeline
           </Badge>
         </Link>
+        <Link href="/how-it-works/architecture" style={{ textDecoration: "none" }}>
+          <Badge variant="soft" color="violet" size="1" style={{ cursor: "pointer" }}>
+            system architecture →
+          </Badge>
+        </Link>
       </Flex>
 
       <HeaderStats />
