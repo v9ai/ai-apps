@@ -3,5 +3,7 @@
   "beta": 0.30,
   "gamma": 0.25,
   "delta": 0.15,
-  "_comment": "Weights for company_enrichment_graph.score_verticals composite score. alpha=regex, beta=weighted_total*evidence, gamma=segment_fit, delta=persona_fit. See backend/leadgen_agent/icp_fit_scorer.py."
+  "semantic_weight": 0.30,
+  "semantic_weight_regex": 0.40,
+  "_comment": "alpha/beta/gamma/delta feed icp_fit_scorer.compute_icp_fit (regex / weighted_total*evidence / segment_fit / persona_fit). semantic_weight blends pgvector cosine on top of the ICP composite when icp_analysis is present: final = (1-semantic_weight)*icp_composite + semantic_weight*cosine. semantic_weight_regex is used on the regex-only path: final = (1-semantic_weight_regex)*regex + semantic_weight_regex*cosine. See backend/leadgen_agent/icp_fit_scorer.py and backend/leadgen_agent/company_enrichment_graph.py."
 }

@@ -6,8 +6,9 @@ import {
   companies,
   companyFacts,
   companySnapshots,
+  products,
 } from "@/db/schema";
-import { eq, and, or, like, ilike, asc, desc, gte, sql } from "drizzle-orm";
+import { eq, and, or, like, ilike, asc, desc, gte, ne, sql, isNotNull } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
 import type {
   QueryCompaniesArgs,

@@ -434,62 +434,102 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                             weights=composite_weights,
                         )
 
+                    sem_score = semantic_scores.get(int(vertical.product_id))
+                    # Clamp semantic into [0,1] before blending (cosine can be
+                    # slightly negative on unrelated texts even with normed vecs).
+                    sem_clamped = (
+                        max(0.0, min(1.0, float(sem_score)))
+                        if sem_score is not None
+                        else None
+                    )
+
                     if fit_result is not None:
-                        composite_score = float(fit_result["composite_score"])
-                        composite_tier = fit_result["composite_tier"]
-                        # Skip writes where nothing fired AND the composite is
-                        # zero (e.g. no regex + no ICP evidence). Preserves the
-                        # v1 skip-if-empty guard.
+                        base_score = float(fit_result["composite_score"])
+                        base_tier = fit_result["composite_tier"]
+                        # Blend semantic on top of the ICP composite base.
+                        if sem_clamped is not None and base_tier != "disqualified":
+                            blended = (1.0 - semantic_weight_icp) * base_score + \
+                                semantic_weight_icp * sem_clamped
+                            final_score = round(max(0.0, min(1.0, blended)), 4)
+                            final_tier = tier_for(final_score)
+                        else:
+                            final_score = base_score
+                            final_tier = base_tier
                         if (
                             not meaningful_keys
-                            and composite_score == 0
-                            and composite_tier != "disqualified"
+                            and final_score == 0
+                            and final_tier != "disqualified"
+                            and sem_clamped is None
                         ):
                             continue
                         v2_signals = build_v2_signals(
                             schema_version=vertical.schema_version,
                             regex_signals=regex_signals,
                             icp_block=fit_result["icp_fit"],
-                            composite_score=composite_score,
-                            composite_tier=composite_tier,
+                            composite_score=final_score,
+                            composite_tier=final_tier,
                         )
-                        write_score = composite_score
-                        write_tier = composite_tier
+                        write_score = final_score
+                        write_tier = final_tier
                     else:
-                        if not meaningful_keys and regex_score == 0:
+                        # Regex-only path — blend with semantic if available.
+                        regex_only_score = float(regex_score)
+                        if sem_clamped is not None:
+                            blended = (1.0 - semantic_weight_regex) * regex_only_score + \
+                                semantic_weight_regex * sem_clamped
+                            final_score = round(max(0.0, min(1.0, blended)), 4)
+                            final_tier = tier_for(final_score)
+                        else:
+                            final_score = regex_only_score
+                            _, final_tier = compute_score_and_tier(vertical, regex_signals)
+                        if not meaningful_keys and final_score == 0 and sem_clamped is None:
                             continue
                         v2_signals = build_v2_signals(
                             schema_version=vertical.schema_version,
                             regex_signals=regex_signals,
                             icp_block=None,
-                            composite_score=None,
-                            composite_tier=None,
+                            composite_score=final_score if sem_clamped is not None else None,
+                            composite_tier=final_tier if sem_clamped is not None else None,
                         )
-                        write_score = float(regex_score)
-                        _, write_tier = compute_score_and_tier(vertical, regex_signals)
+                        write_score = final_score
+                        write_tier = final_tier
 
+                    sem_write = (
+                        round(sem_clamped, 4) if sem_clamped is not None else None
+                    )
                     cur.execute(
                         """
                         INSERT INTO company_product_signals
-                          (company_id, product_id, signals, score, tier, updated_at)
-                        VALUES (%s, %s, %s::jsonb, %s, %s, now())
+                          (company_id, product_id, signals, score, regex_score,
+                           semantic_score, semantic_score_computed_at, tier, updated_at)
+                        VALUES (%s, %s, %s::jsonb, %s, %s, %s,
+                                CASE WHEN %s IS NULL THEN NULL ELSE now() END,
+                                %s, now())
                         ON CONFLICT (company_id, product_id) DO UPDATE
-                          SET signals    = EXCLUDED.signals,
-                              score      = EXCLUDED.score,
-                              tier       = EXCLUDED.tier,
-                              updated_at = now()
+                          SET signals                     = EXCLUDED.signals,
+                              score                       = EXCLUDED.score,
+                              regex_score                 = EXCLUDED.regex_score,
+                              semantic_score              = EXCLUDED.semantic_score,
+                              semantic_score_computed_at  = EXCLUDED.semantic_score_computed_at,
+                              tier                        = EXCLUDED.tier,
+                              updated_at                  = now()
                         """,
                         (
                             int(company_id),
                             int(vertical.product_id),
                             json.dumps(v2_signals),
                             float(write_score),
+                            float(regex_score),
+                            sem_write,
+                            sem_write,
                             write_tier,
                         ),
                     )
                     persisted[vertical.slug] = {
                         "signals": v2_signals,
                         "score": round(float(write_score), 3),
+                        "regex_score": round(float(regex_score), 3),
+                        "semantic_score": sem_write,
                         "tier": write_tier,
                     }
     except psycopg.Error:

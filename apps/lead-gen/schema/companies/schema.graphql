@@ -19,6 +19,13 @@ extend type Query {
   ): [CompanySnapshot!]!
   allCompanyTags: [String!]!
   findCompany(name: String, website: String, linkedinUrl: String): FindCompanyResult!
+
+  # Semantic ICP matching (intervention #4). Cosine similarity via pgvector
+  # HNSW against companies.profile_embedding / products.icp_embedding.
+  # Only returns companies that have a profile_embedding set — run the
+  # backfill script first if the table is empty.
+  similarCompanies(companyId: Int!, limit: Int = 10): [Company!]!
+  topCompaniesForProduct(productId: Int!, limit: Int = 20, minScore: Float = 0.6): [Company!]!
 }
 
 extend type Mutation {
