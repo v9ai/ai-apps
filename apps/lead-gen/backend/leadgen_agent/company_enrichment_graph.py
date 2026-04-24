@@ -251,19 +251,75 @@ async def score(state: CompanyEnrichmentState) -> dict:
 
 # ── Node 5: persist ───────────────────────────────────────────────────────────
 
+def load_product_icps(
+    cur: Any, product_ids: list[int], tenant_id: str
+) -> dict[int, dict[str, Any]]:
+    """Fetch ``products.icp_analysis`` for all relevant products in one query.
+
+    Returns a ``{product_id: icp_analysis_dict}`` map. Rows without an
+    analysis are omitted. Narrowed to a single tenant so we never blend
+    analysis rows across tenants.
+    """
+    if not product_ids:
+        return {}
+    try:
+        cur.execute(
+            """
+            SELECT id, icp_analysis
+            FROM products
+            WHERE id = ANY(%s) AND tenant_id = %s AND icp_analysis IS NOT NULL
+            """,
+            (product_ids, tenant_id),
+        )
+        out: dict[int, dict[str, Any]] = {}
+        for row in cur.fetchall() or []:
+            pid, payload = row[0], row[1]
+            if isinstance(payload, str):
+                try:
+                    payload = json.loads(payload)
+                except Exception:  # noqa: BLE001
+                    continue
+            if isinstance(payload, dict):
+                out[int(pid)] = payload
+        return out
+    except psycopg.Error:
+        # Non-fatal — fall back to regex-only scoring.
+        return {}
+
+
+def _load_existing_weights_hashes(
+    cur: Any, company_id: int, product_ids: list[int]
+) -> dict[int, str]:
+    """Read each existing row's ``signals.icp_fit.weights_hash`` — used to
+    skip re-scoring when the ICP contract hasn't changed."""
+    if not product_ids:
+        return {}
+    try:
+        cur.execute(
+            """
+            SELECT product_id, signals->'icp_fit'->>'weights_hash'
+            FROM company_product_signals
+            WHERE company_id = %s AND product_id = ANY(%s)
+            """,
+            (int(company_id), product_ids),
+        )
+        return {int(r[0]): (r[1] or "") for r in cur.fetchall() or []}
+    except psycopg.Error:
+        return {}
+
+
 async def score_verticals(state: CompanyEnrichmentState) -> dict:
     """Score every registered ``ProductVertical`` against this company.
 
     Runs after ``persist`` so a failure here does not roll back the core
-    enrichment UPDATE. Deterministic regex only — no LLM, no external API.
-    For each vertical:
+    enrichment UPDATE. For each vertical:
       1. Apply the vertical's ``signal_rules`` to ``home_markdown +
          careers_markdown`` → a signals dict keyed by the rules' ``key``.
-      2. Compute aggregate ``score`` and ``tier`` via the default
-         weighted-sum + threshold algorithm (or a vertical-specific one in
-         future).
+      2. If ``products.icp_analysis`` is present for this product, compute
+         an ICP-fit block (segment / persona / deal-breakers) and blend it
+         with the regex score into a composite score.
       3. UPSERT one row into ``company_product_signals`` keyed by
-         ``(company_id, product_id)``.
+         ``(company_id, product_id)`` with the v2 signals jsonb shape.
 
     Adding a new product is a one-file change under ``verticals/<slug>.py``;
     no change needed here.
@@ -277,6 +333,7 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
 
     home_markdown = state.get("home_markdown") or ""
     careers_markdown = state.get("careers_markdown") or ""
+    classification = state.get("classification") or {}
     corpus = home_markdown + "\n" + careers_markdown
     if not corpus.strip():
         # Nothing to score against. Skip all verticals uniformly.
@@ -286,18 +343,79 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
     if not verticals:
         return {"agent_timings": {"score_verticals": round(time.perf_counter() - t0, 3)}}
 
+    tenant_id = "nyx"
+    product_ids = [int(v.product_id) for v in verticals]
+    composite_weights = load_composite_weights()
+
     persisted: dict[str, dict[str, Any]] = {}
     try:
         with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
             with conn.cursor() as cur:
+                icps = load_product_icps(cur, product_ids, tenant_id)
+                existing_hashes = _load_existing_weights_hashes(
+                    cur, int(company_id), product_ids
+                )
                 for vertical in verticals:
-                    signals = apply_signal_rules(vertical, corpus)
-                    score, tier = compute_score_and_tier(vertical, signals)
-                    # Skip writes where nothing fired — keeps the table lean,
-                    # and a missing row means "no signal" by convention.
-                    meaningful_keys = [k for k in signals if k != "schema_version"]
-                    if not meaningful_keys and score == 0:
-                        continue
+                    regex_signals = apply_signal_rules(vertical, corpus)
+                    regex_score, _regex_tier = compute_score_and_tier(
+                        vertical, regex_signals
+                    )
+                    meaningful_keys = [k for k in regex_signals if k != "schema_version"]
+
+                    icp_payload = icps.get(int(vertical.product_id))
+                    fit_result: dict[str, Any] | None = None
+                    if icp_payload is not None:
+                        current_hash = str(
+                            (icp_payload.get("graph_meta") or {}).get("weights_hash")
+                            or ""
+                        )
+                        prior_hash = existing_hashes.get(int(vertical.product_id), "")
+                        if current_hash and current_hash == prior_hash:
+                            # Idempotent skip — ICP hasn't changed since last score.
+                            continue
+                        fit_result = compute_icp_fit(
+                            icp_analysis=icp_payload,
+                            classification=classification,
+                            home_markdown=home_markdown,
+                            careers_markdown=careers_markdown,
+                            regex_score=float(regex_score),
+                            weights=composite_weights,
+                        )
+
+                    if fit_result is not None:
+                        composite_score = float(fit_result["composite_score"])
+                        composite_tier = fit_result["composite_tier"]
+                        # Skip writes where nothing fired AND the composite is
+                        # zero (e.g. no regex + no ICP evidence). Preserves the
+                        # v1 skip-if-empty guard.
+                        if (
+                            not meaningful_keys
+                            and composite_score == 0
+                            and composite_tier != "disqualified"
+                        ):
+                            continue
+                        v2_signals = build_v2_signals(
+                            schema_version=vertical.schema_version,
+                            regex_signals=regex_signals,
+                            icp_block=fit_result["icp_fit"],
+                            composite_score=composite_score,
+                            composite_tier=composite_tier,
+                        )
+                        write_score = composite_score
+                        write_tier = composite_tier
+                    else:
+                        if not meaningful_keys and regex_score == 0:
+                            continue
+                        v2_signals = build_v2_signals(
+                            schema_version=vertical.schema_version,
+                            regex_signals=regex_signals,
+                            icp_block=None,
+                            composite_score=None,
+                            composite_tier=None,
+                        )
+                        write_score = float(regex_score)
+                        _, write_tier = compute_score_and_tier(vertical, regex_signals)
+
                     cur.execute(
                         """
                         INSERT INTO company_product_signals
@@ -312,15 +430,15 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                         (
                             int(company_id),
                             int(vertical.product_id),
-                            json.dumps(signals),
-                            float(score),
-                            tier,
+                            json.dumps(v2_signals),
+                            float(write_score),
+                            write_tier,
                         ),
                     )
                     persisted[vertical.slug] = {
-                        "signals": signals,
-                        "score": round(score, 3),
-                        "tier": tier,
+                        "signals": v2_signals,
+                        "score": round(float(write_score), 3),
+                        "tier": write_tier,
                     }
     except psycopg.Error:
         # Non-fatal — the core enrichment already committed in `persist`.

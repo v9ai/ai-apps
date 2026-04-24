@@ -91,14 +91,22 @@ class EmailOutreachState(TypedDict, total=False):
     post_text: str
     post_url: str
     tone: str
+    product_id: int | None
+    persona_match_threshold: float  # default 0.55
     # internal
     hook: str
     draft: str
+    personas: list[dict[str, Any]]
+    templates: list[dict[str, Any]]
+    persona_match: dict[str, Any] | None  # {title, score, method}
+    template: dict[str, Any] | None
+    _contact_row: dict[str, Any]
     # output
     subject: str
     text: str
     html: str
     contact_id: int | None
+    product_aware: bool
 
 
 class AdminChatState(TypedDict, total=False):

@@ -473,6 +473,7 @@ export const intentSignals = pgTable(
         "budget_cycle",
         "leadership_change",
         "product_launch",
+        "competitor_mention",
       ],
     }).notNull(),
     source_type: text("source_type", {
@@ -495,6 +496,8 @@ export const intentSignals = pgTable(
     decay_days: integer("decay_days").notNull(), // half-life for exponential decay
     metadata: text("metadata"), // JSON blob for signal-specific data
     model_version: text("model_version"), // adapter version or "logistic-v1"
+    competitor_id: integer("competitor_id")
+      .references((): AnyPgColumn => competitors.id, { onDelete: "set null" }),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
@@ -503,11 +506,35 @@ export const intentSignals = pgTable(
     index("idx_intent_signals_company_type").on(table.company_id, table.signal_type),
     index("idx_intent_signals_company_detected").on(table.company_id, table.detected_at),
     index("idx_intent_signals_decays_at").on(table.decays_at),
+    index("idx_intent_signals_competitor").on(table.competitor_id, table.detected_at),
   ],
 );
 
 export type IntentSignal = typeof intentSignals.$inferSelect;
 export type NewIntentSignal = typeof intentSignals.$inferInsert;
+
+export const intentSignalProducts = pgTable(
+  "intent_signal_products",
+  {
+    intent_signal_id: integer("intent_signal_id")
+      .notNull()
+      .references(() => intentSignals.id, { onDelete: "cascade" }),
+    product_id: integer("product_id")
+      .notNull()
+      .references((): AnyPgColumn => products.id, { onDelete: "cascade" }),
+    match_reason: text("match_reason"),
+    match_score: real("match_score").notNull().default(1.0),
+    tenant_id: tenantIdColumn(),
+    created_at: text("created_at").default(sql`now()::text`),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.intent_signal_id, t.product_id] }),
+    productSignalIdx: index("idx_isp_product_signal").on(t.product_id, t.intent_signal_id),
+  }),
+);
+
+export type IntentSignalProduct = typeof intentSignalProducts.$inferSelect;
+export type NewIntentSignalProduct = typeof intentSignalProducts.$inferInsert;
 
 // Voyager Job Counts (remote job count snapshots per company/query over time)
 export const voyagerJobCounts = pgTable(
@@ -683,12 +710,31 @@ export const emailCampaignsRelations = relations(emailCampaigns, ({ one }) => ({
   }),
 }));
 
-export const intentSignalsRelations = relations(intentSignals, ({ one }) => ({
+export const intentSignalsRelations = relations(intentSignals, ({ one, many }) => ({
   company: one(companies, {
     fields: [intentSignals.company_id],
     references: [companies.id],
   }),
+  competitor: one(competitors, {
+    fields: [intentSignals.competitor_id],
+    references: [competitors.id],
+  }),
+  products: many(intentSignalProducts),
 }));
+
+export const intentSignalProductsRelations = relations(
+  intentSignalProducts,
+  ({ one }) => ({
+    signal: one(intentSignals, {
+      fields: [intentSignalProducts.intent_signal_id],
+      references: [intentSignals.id],
+    }),
+    product: one(products, {
+      fields: [intentSignalProducts.product_id],
+      references: [products.id],
+    }),
+  }),
+);
 
 export const linkedinPostsRelations = relations(linkedinPosts, ({ one }) => ({
   company: one(companies, {
@@ -931,6 +977,40 @@ export const products = pgTable(
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+
+// Per-(contact, product) persona match cache (see migration 0071).
+// Populated by the match_persona node in email_outreach_graph before draft.
+export const contactPersonaScores = pgTable(
+  "contact_persona_scores",
+  {
+    id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
+    contact_id: integer("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    product_id: integer("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    persona_title: text("persona_title").notNull(),
+    score: real("score").notNull(),
+    method: text("method").notNull(), // "title_fuzzy" | "embedding" | "title_exact"
+    rationale: text("rationale"),
+    scored_at: text("scored_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (t) => ({
+    contactProductUnique: uniqueIndex("idx_contact_persona_unique").on(
+      t.contact_id,
+      t.product_id,
+      t.persona_title,
+    ),
+    productScoreIdx: index("idx_cps_product_score").on(t.product_id, t.score),
+  }),
+);
+
+export type ContactPersonaScore = typeof contactPersonaScores.$inferSelect;
+export type NewContactPersonaScore = typeof contactPersonaScores.$inferInsert;
 
 // Denormalized per-(company, product) lead-gen signals (see migration 0067).
 // One row per pairing — latest snapshot of regex / heuristic / LLM signals

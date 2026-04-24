@@ -32,6 +32,19 @@ sys.path.insert(
 )
 from deepseek_client import ChatMessage, DeepSeekClient, DeepSeekConfig  # noqa: E402
 
+# ── research_client (local 384-dim embeddings) ────────────────────────────
+sys.path.insert(
+    0,
+    str(Path(__file__).resolve().parent.parent.parent.parent.parent / "pypackages" / "research" / "src"),
+)
+from research_client.embeddings import aembed_text  # noqa: E402
+
+from .entity_embeddings import (  # noqa: E402
+    rerank_passages,
+    search_for_family_member,
+    search_global_research,
+)
+
 
 _REQUIRED_KEYS = (
     "behaviorSummary",
@@ -55,9 +68,15 @@ class BogdanDiscussionState(TypedDict, total=False):
     user_email: str
     job_id: str
     is_ro: bool
-    # Internal
-    _prompt: str
+    # Internal — scaffold
+    _scaffold: dict
     _child_age: Optional[int]
+    # Internal — retrieval
+    _query: str
+    _retrieved_entities: list[dict]
+    _retrieved_research: list[dict]
+    # Internal — prompt
+    _prompt: str
     # Output
     guide: dict
     guide_id: int
@@ -106,11 +125,15 @@ async def _update_job_failed(job_id: str, error: dict) -> None:
         print(f"[bogdan_discussion._update_job_failed] failed: {exc}")
 
 
-async def load_bogdan_context(state: BogdanDiscussionState) -> dict:
+async def load_scaffold_context(state: BogdanDiscussionState) -> dict:
+    """Load the small, always-relevant scaffold: profile, goals, characteristics.
+
+    These are kept rule-based (no embedding retrieval) because there are only
+    a handful of each and ALL of them are relevant to ANY discussion.
+    """
     family_member_id = state.get("family_member_id")
     user_email = state.get("user_email")
     job_id = state.get("job_id")
-    is_ro = bool(state.get("is_ro"))
 
     if not family_member_id or not user_email:
         return {"error": "family_member_id and user_email are required"}
@@ -118,9 +141,15 @@ async def load_bogdan_context(state: BogdanDiscussionState) -> dict:
     if job_id:
         await _update_job_progress(job_id, 10)
 
+    scaffold: dict = {
+        "profile_section": "",
+        "characteristics_section": "",
+        "goals_section": "",
+        "goal_ids": [],
+        "issue_ids": [],
+        "journal_ids": [],
+    }
     child_age: Optional[int] = None
-    sections: list[str] = []
-    profile_line = ""
 
     try:
         async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
