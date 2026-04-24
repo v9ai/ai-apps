@@ -822,6 +822,590 @@ function MetricsGrid() {
   );
 }
 
+// ── Navigation Hooks ─────────────────────────────────────────────────
+
+function useActiveSection(ids: string[]): string | null {
+  const [activeId, setActiveId] = useState<string | null>(ids[0] ?? null);
+  const idsKey = ids.join("|");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const elements = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    if (elements.length === 0) return;
+
+    const visibleMap = new Map<string, number>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            visibleMap.set(entry.target.id, entry.intersectionRatio);
+          } else {
+            visibleMap.delete(entry.target.id);
+          }
+        }
+        if (visibleMap.size > 0) {
+          let bestId: string | null = null;
+          let bestTop = Number.POSITIVE_INFINITY;
+          for (const id of visibleMap.keys()) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            const top = el.getBoundingClientRect().top;
+            if (top >= -120 && top < bestTop) {
+              bestTop = top;
+              bestId = id;
+            }
+          }
+          if (bestId) setActiveId(bestId);
+        }
+      },
+      { rootMargin: "-80px 0px -55% 0px", threshold: [0, 0.1, 0.5, 1] }
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey]);
+
+  return activeId;
+}
+
+function useScrollProgress(): number {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        const total = document.body.scrollHeight - window.innerHeight;
+        const pct = total > 0 ? Math.min(1, Math.max(0, window.scrollY / total)) : 0;
+        setProgress(pct);
+        frame = 0;
+      });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return progress;
+}
+
+function useIsWide(breakpoint = 1024): boolean {
+  const [isWide, setIsWide] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia(`(min-width: ${breakpoint}px)`);
+    const update = () => setIsWide(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [breakpoint]);
+
+  return isWide;
+}
+
+// ── Navigation Components ────────────────────────────────────────────
+
+type NavItem = { id: string; label: string; kind: "stage" | "section" };
+
+function scrollToAnchor(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const top = el.getBoundingClientRect().top + window.scrollY - 72;
+  window.scrollTo({ top, behavior: "smooth" });
+  if (typeof window !== "undefined") {
+    window.history.replaceState(null, "", `#${id}`);
+  }
+}
+
+function TopProgressStrip({ progress }: { progress: number }) {
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 2,
+        zIndex: 100,
+        background: "var(--gray-a3)",
+        pointerEvents: "none",
+      }}
+    >
+      <div
+        style={{
+          height: "100%",
+          width: `${progress * 100}%`,
+          background: "var(--violet-9)",
+          transition: "width 60ms linear",
+          boxShadow: "0 0 8px color-mix(in srgb, var(--violet-9) 50%, transparent)",
+        }}
+      />
+    </div>
+  );
+}
+
+function Breadcrumb() {
+  return (
+    <Flex align="center" gap="1" mb="2" style={{ fontSize: 12 }}>
+      <Link
+        href="/how-it-works"
+        style={{
+          color: "var(--gray-10)",
+          textDecoration: "none",
+          fontFamily: "var(--code-font-family, monospace)",
+        }}
+      >
+        how it works
+      </Link>
+      <span style={{ color: "var(--gray-7)" }}>/</span>
+      <Text
+        size="1"
+        style={{
+          color: "var(--gray-12)",
+          fontFamily: "var(--code-font-family, monospace)",
+          fontWeight: 500,
+        }}
+      >
+        architecture
+      </Text>
+    </Flex>
+  );
+}
+
+function StageChipsGrid({
+  stageItems,
+  sectionItems,
+  activeId,
+}: {
+  stageItems: NavItem[];
+  sectionItems: NavItem[];
+  activeId: string | null;
+}) {
+  const onClick = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    scrollToAnchor(id);
+  };
+
+  return (
+    <div style={{ marginBottom: "var(--space-4)" }}>
+      <Text
+        size="1"
+        color="gray"
+        mb="2"
+        as="p"
+        style={{ textTransform: "uppercase", letterSpacing: "0.08em" }}
+      >
+        Ten stages
+      </Text>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+          gap: 6,
+          marginBottom: 12,
+        }}
+      >
+        {stageItems.map((item, i) => {
+          const active = activeId === item.id;
+          return (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              onClick={(e) => onClick(e, item.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: `1px solid ${active ? "var(--violet-8)" : "var(--gray-a4)"}`,
+                background: active
+                  ? "color-mix(in srgb, var(--violet-9) 14%, var(--gray-2))"
+                  : "var(--gray-2)",
+                textDecoration: "none",
+                fontFamily: "var(--code-font-family, monospace)",
+                fontSize: 12,
+                color: active ? "var(--violet-11)" : "var(--gray-11)",
+                minHeight: 38,
+                transition: "background 120ms, border-color 120ms",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  flexShrink: 0,
+                  background: active
+                    ? "var(--violet-9)"
+                    : "color-mix(in srgb, var(--gray-9) 22%, transparent)",
+                  color: active ? "white" : "var(--gray-11)",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {i + 1}
+              </span>
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.label}
+              </span>
+            </a>
+          );
+        })}
+      </div>
+      <Text
+        size="1"
+        color="gray"
+        mb="2"
+        as="p"
+        style={{ textTransform: "uppercase", letterSpacing: "0.08em" }}
+      >
+        Further reading
+      </Text>
+      <Flex gap="2" wrap="wrap">
+        {sectionItems.map((item) => {
+          const active = activeId === item.id;
+          return (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              onClick={(e) => onClick(e, item.id)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 999,
+                border: `1px solid ${active ? "var(--amber-8)" : "var(--gray-a5)"}`,
+                background: active
+                  ? "color-mix(in srgb, var(--amber-9) 16%, var(--gray-2))"
+                  : "var(--gray-2)",
+                textDecoration: "none",
+                fontFamily: "var(--code-font-family, monospace)",
+                fontSize: 11,
+                color: active ? "var(--amber-11)" : "var(--gray-11)",
+                minHeight: 30,
+                display: "inline-flex",
+                alignItems: "center",
+              }}
+            >
+              {item.label}
+            </a>
+          );
+        })}
+      </Flex>
+    </div>
+  );
+}
+
+function SideToc({
+  stageItems,
+  sectionItems,
+  activeId,
+}: {
+  stageItems: NavItem[];
+  sectionItems: NavItem[];
+  activeId: string | null;
+}) {
+  const onClick = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    scrollToAnchor(id);
+  };
+
+  const linkStyle = (active: boolean, kind: "stage" | "section"): React.CSSProperties => ({
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "5px 8px",
+    borderRadius: 4,
+    borderLeft: `2px solid ${
+      active
+        ? kind === "stage"
+          ? "var(--violet-9)"
+          : "var(--amber-9)"
+        : "transparent"
+    }`,
+    background: active ? "var(--gray-a3)" : "transparent",
+    textDecoration: "none",
+    fontFamily: "var(--code-font-family, monospace)",
+    fontSize: 11,
+    color: active ? "var(--gray-12)" : "var(--gray-10)",
+    lineHeight: 1.4,
+    minHeight: 28,
+    transition: "background 120ms, color 120ms, border-color 120ms",
+  });
+
+  return (
+    <nav
+      aria-label="On this page"
+      style={{
+        position: "sticky",
+        top: 80,
+        alignSelf: "flex-start",
+        width: 220,
+        flexShrink: 0,
+        maxHeight: "calc(100vh - 96px)",
+        overflowY: "auto",
+        paddingLeft: 12,
+        borderLeft: "1px solid var(--gray-a4)",
+      }}
+    >
+      <Text
+        size="1"
+        color="gray"
+        as="p"
+        mb="2"
+        style={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 500 }}
+      >
+        On this page
+      </Text>
+      <Flex direction="column" gap="1">
+        {stageItems.map((item, i) => {
+          const active = activeId === item.id;
+          return (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              onClick={(e) => onClick(e, item.id)}
+              style={linkStyle(active, "stage")}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 16,
+                  height: 16,
+                  borderRadius: 3,
+                  flexShrink: 0,
+                  background: active
+                    ? "var(--violet-9)"
+                    : "color-mix(in srgb, var(--gray-9) 18%, transparent)",
+                  color: active ? "white" : "var(--gray-10)",
+                  fontSize: 9,
+                  fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {i + 1}
+              </span>
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.label}
+              </span>
+            </a>
+          );
+        })}
+      </Flex>
+      <div style={{ height: 1, background: "var(--gray-a4)", margin: "10px 4px" }} />
+      <Flex direction="column" gap="1">
+        {sectionItems.map((item) => {
+          const active = activeId === item.id;
+          return (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              onClick={(e) => onClick(e, item.id)}
+              style={linkStyle(active, "section")}
+            >
+              <span style={{ color: "var(--amber-9)", fontSize: 10 }}>§</span>
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.label}
+              </span>
+            </a>
+          );
+        })}
+      </Flex>
+    </nav>
+  );
+}
+
+function CompactToc({
+  stageItems,
+  sectionItems,
+  activeId,
+}: {
+  stageItems: NavItem[];
+  sectionItems: NavItem[];
+  activeId: string | null;
+}) {
+  const detailsRef = useRef<HTMLDetailsElement | null>(null);
+
+  const onClick = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    scrollToAnchor(id);
+    if (detailsRef.current) detailsRef.current.open = false;
+  };
+
+  const activeLabel =
+    [...stageItems, ...sectionItems].find((it) => it.id === activeId)?.label ?? "overview";
+
+  return (
+    <details
+      ref={detailsRef}
+      style={{
+        position: "sticky",
+        top: 8,
+        zIndex: 20,
+        marginBottom: "var(--space-3)",
+        borderRadius: 8,
+        border: "1px solid var(--gray-a5)",
+        background: "color-mix(in srgb, var(--color-background) 92%, var(--gray-3))",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+      }}
+    >
+      <summary
+        style={{
+          listStyle: "none",
+          padding: "10px 14px",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+          fontFamily: "var(--code-font-family, monospace)",
+          fontSize: 12,
+          color: "var(--gray-12)",
+          minHeight: 40,
+        }}
+      >
+        <Flex align="center" gap="2" style={{ minWidth: 0 }}>
+          <Text
+            size="1"
+            color="gray"
+            style={{ textTransform: "uppercase", letterSpacing: "0.08em" }}
+          >
+            On this page
+          </Text>
+          <span
+            style={{
+              color: "var(--violet-11)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {activeLabel}
+          </span>
+        </Flex>
+        <span style={{ color: "var(--gray-9)" }}>▾</span>
+      </summary>
+      <div
+        style={{
+          padding: "4px 10px 10px",
+          borderTop: "1px solid var(--gray-a4)",
+          maxHeight: 360,
+          overflowY: "auto",
+        }}
+      >
+        <Flex direction="column" gap="1" mt="2">
+          {stageItems.map((item, i) => {
+            const active = activeId === item.id;
+            return (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={(e) => onClick(e, item.id)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "8px 8px",
+                  borderRadius: 4,
+                  textDecoration: "none",
+                  fontFamily: "var(--code-font-family, monospace)",
+                  fontSize: 12,
+                  color: active ? "var(--violet-11)" : "var(--gray-11)",
+                  background: active ? "var(--gray-a3)" : "transparent",
+                  minHeight: 32,
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 18,
+                    height: 18,
+                    borderRadius: 3,
+                    flexShrink: 0,
+                    background: active
+                      ? "var(--violet-9)"
+                      : "color-mix(in srgb, var(--gray-9) 18%, transparent)",
+                    color: active ? "white" : "var(--gray-10)",
+                    fontSize: 10,
+                    fontWeight: 700,
+                  }}
+                >
+                  {i + 1}
+                </span>
+                {item.label}
+              </a>
+            );
+          })}
+          <div style={{ height: 1, background: "var(--gray-a4)", margin: "6px 0" }} />
+          {sectionItems.map((item) => {
+            const active = activeId === item.id;
+            return (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={(e) => onClick(e, item.id)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "8px 8px",
+                  borderRadius: 4,
+                  textDecoration: "none",
+                  fontFamily: "var(--code-font-family, monospace)",
+                  fontSize: 12,
+                  color: active ? "var(--amber-11)" : "var(--gray-11)",
+                  background: active ? "var(--gray-a3)" : "transparent",
+                  minHeight: 32,
+                }}
+              >
+                <span style={{ color: "var(--amber-9)", fontSize: 10 }}>§</span>
+                {item.label}
+              </a>
+            );
+          })}
+        </Flex>
+      </div>
+    </details>
+  );
+}
+
 // ── Root ─────────────────────────────────────────────────────────────
 
 export function ArchitectureClient() {
@@ -830,6 +1414,22 @@ export function ArchitectureClient() {
   const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
     setSelectedNode((prev) => (prev === node.id ? null : node.id));
   }, []);
+
+  const stageItems: NavItem[] = stages.map((s) => ({
+    id: `stage-${s.graphName}`,
+    label: s.graphName,
+    kind: "stage",
+  }));
+  const sectionItems: NavItem[] = [
+    { id: "deep-dive", label: "deep dive", kind: "section" },
+    { id: "technical", label: "technical details", kind: "section" },
+    { id: "foundations", label: "foundations", kind: "section" },
+  ];
+  const allIds = [...stageItems.map((s) => s.id), ...sectionItems.map((s) => s.id)];
+
+  const activeId = useActiveSection(allIds);
+  const progress = useScrollProgress();
+  const isWide = useIsWide(1024);
 
   return (
     <div
@@ -868,6 +1468,8 @@ export function ArchitectureClient() {
           margin-left: auto;
         }
       `}</style>
+      <TopProgressStrip progress={progress} />
+      <Breadcrumb />
       <Flex align="center" gap="2" mb="2">
         <Layers width={22} height={22} style={{ color: "var(--violet-9)" }} />
         <Heading size="7">System Architecture</Heading>
@@ -891,6 +1493,20 @@ export function ArchitectureClient() {
           </Badge>
         </Link>
       </Flex>
+
+      <StageChipsGrid
+        stageItems={stageItems}
+        sectionItems={sectionItems}
+        activeId={activeId}
+      />
+
+      {!isWide && (
+        <CompactToc
+          stageItems={stageItems}
+          sectionItems={sectionItems}
+          activeId={activeId}
+        />
+      )}
 
       <HeaderStats />
       <MetricsGrid />
@@ -924,10 +1540,20 @@ export function ArchitectureClient() {
         </Flex>
       </Flex>
 
-      <section id="pipeline">
+      <div
+        style={{
+          display: "flex",
+          flexDirection: isWide ? "row" : "column",
+          alignItems: "flex-start",
+          gap: isWide ? 24 : 0,
+          width: "100%",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0, width: "100%" }}>
+      <section id="pipeline" style={{ scrollMarginTop: 80 }}>
         <Flex direction="column" gap="0">
           {stages.map((stage, i) => (
-            <div key={stage.graphName} id={`stage-${stage.graphName}`} className="arch-stage">
+            <div key={stage.graphName} id={`stage-${stage.graphName}`} className="arch-stage" style={{ scrollMarginTop: 80 }}>
               <div>
                 <Flex align="center" gap="3" mb="2" wrap="wrap">
                   <span
@@ -989,19 +1615,29 @@ export function ArchitectureClient() {
       {selectedNode && <NodeDetailPanel nodeId={selectedNode} />}
 
       <Separator size="4" my="7" />
-      <section id="deep-dive">
+      <section id="deep-dive" style={{ scrollMarginTop: 80 }}>
         <DeepDive />
       </section>
 
       <Separator size="4" my="7" />
-      <section id="technical">
+      <section id="technical" style={{ scrollMarginTop: 80 }}>
         <TechnicalDetailSection />
       </section>
 
       <Separator size="4" my="7" />
-      <section id="foundations">
+      <section id="foundations" style={{ scrollMarginTop: 80 }}>
         <TechFoundations />
       </section>
+        </div>
+
+        {isWide && (
+          <SideToc
+            stageItems={stageItems}
+            sectionItems={sectionItems}
+            activeId={activeId}
+          />
+        )}
+      </div>
 
       <Flex justify="end" mt="7" mb="4">
         <a

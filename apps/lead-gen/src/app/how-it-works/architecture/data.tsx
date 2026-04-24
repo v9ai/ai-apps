@@ -156,6 +156,9 @@ export const stats: Stat[] = [
   { number: "1024", label: "BGE-M3 embedding dimension via Candle/Metal, stored as pgvector + HNSW" },
   { number: "<100ms", label: "Title-based authority scoring inside resolvers (no cloud LLM call)" },
   { number: "0", label: "Per-contact DNS records — one CPN alias on vadim.blog routes all replies" },
+  { number: "20", label: "Claude Code team skills: improve-* (5) + codefix-* (6) + pipeline-* (6) + research-* (3)" },
+  { number: "3", label: "Team orchestrator commands: /improve, /codefix, /agents (pipeline | research)" },
+  { number: "7", label: "Strategy-enforcer rules (eval, grounding, taxonomy, multi-model, spec, observability, HITL)" },
 ];
 
 // ─── Technical Details ──────────────────────────────────────────────
@@ -174,8 +177,8 @@ export const technicalDetails: TechnicalDetail[] = [
       { label: "6. enrichment_llm", value: "LangGraph nodes + DeepSeek chat/reasoner; Pydantic + Zod grounding", metadata: { routing: "cheap-first", telemetry: "per-node cost" } },
       { label: "7. contacts_ml", value: "NeverBounce verify + BGE-M3 embeddings + LoRA persona tier on pgvector HNSW", metadata: { fast_path: "<100ms", train: "MLX" } },
       { label: "8. outreach_email", value: "Resend outbound + Svix inbound webhook + CPN forwarding alias", metadata: { threading: "In-Reply-To", alias: "{x}@vadim.blog" } },
-      { label: "9. langgraph_backend", value: "FastAPI + AsyncPostgresSaver on Neon; same code under langgraph dev", metadata: { graphs: "22", endpoint: "/runs/wait" } },
-      { label: "10. agent_teams", value: "Four Claude Code skill teams (improve / codefix / pipeline / research)", metadata: { hook: "stop_hook.py", phases: "BUILDING→SATURATION" } },
+      { label: "9. langgraph_backend", value: "FastAPI + Uvicorn :7860 + AsyncPostgresSaver on Neon; same code under langgraph dev :8002", metadata: { graphs: "22", endpoint: "/runs/wait", deploy: "Cloudflare Workers" } },
+      { label: "10. agent_teams", value: "4 Claude Code teams (improve / codefix / pipeline / research) + stop_hook scoring + strategy-enforcer gate", metadata: { skills: "20", hook: "stop_hook.py", rules: "7" } },
     ],
   },
   {
@@ -248,6 +251,49 @@ ORDER BY ce.sent_at;`,
   {
     heading: "The agent teams are the control plane",
     content: "The four Claude Code skill teams aren't sidecars — they're the control plane of the system. Pipeline decides when to run a batch and what vertical to target. Codefix decides what to refactor and when to stop (COLLAPSE_RISK). Improve decides when the discovery pipeline needs more sources and when the classifier needs retraining. Research decides whether a lead is worth outreach before it costs an email send. The meta skill in each team reads all team state and emits an action-plan.json; stop_hook.py scores the session and feeds the lowest-scoring runs back into the improve queue. The system self-corrects without rules engines because phase transitions (BUILDING → IMPROVEMENT → SATURATION) emerge from real data, not declared thresholds.",
+  },
+  {
+    heading: "One bearer middleware, two runtimes",
+    content: "The same BearerTokenMiddleware is loaded twice — once in backend/leadgen_agent/custom_app.py (wired via langgraph.json's http.app key so `langgraph dev` picks it up) and once inlined into backend/app.py (via app.add_middleware so Uvicorn picks it up). Both no-op when LANGGRAPH_AUTH_TOKEN is unset; both whitelist liveness paths so HF / Cloudflare tunnel providers can probe without a credential. The duplication is load-bearing — langgraph dev and FastAPI build different Starlette app trees, and a missing class in either would leak the /runs/wait surface.",
+    codeBlock: `# backend/leadgen_agent/custom_app.py
+class BearerTokenMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        expected = os.environ.get("LANGGRAPH_AUTH_TOKEN")
+        if not expected:
+            return await call_next(request)
+        if request.url.path in _PUBLIC_PATHS:   # {"/ok", "/info"}
+            return await call_next(request)
+        auth = request.headers.get("authorization", "")
+        scheme, _, token = auth.partition(" ")
+        if scheme.lower() != "bearer" or token != expected:
+            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
+        return await call_next(request)
+
+app = Starlette(middleware=[Middleware(BearerTokenMiddleware)])`,
+  },
+  {
+    heading: "Phase detection across the four teams",
+    content: "Each meta-skill emits a phase label into ~/.claude/state/*-action-plan.json. The labels are team-specific because the teams optimize for different targets — improve-* chases a hiring outcome, codefix-* chases codebase health, pipeline-* chases funnel throughput. The cross-team invariant is: a 'stop' phase (COLLAPSE_RISK / DEGRADED) halts writes, and a 'cold' phase (BUILDING) prioritizes input expansion.",
+    codeBlock: `Team         | Phases (in order)                                  | Example trigger
+improve-*    | BUILDING → OPTIMIZING → APPLYING → INTERVIEWING    | < 5 AI jobs/week → BUILDING
+codefix-*    | IMPROVEMENT → SATURATION → COLLAPSE_RISK           | score drop vs prior cycle → COLLAPSE_RISK
+pipeline-*   | BUILDING → FLOWING → BOTTLENECK → SATURATED → DEG. | bounce rate > 15% → DEGRADED
+research-*   | ad-hoc (per target, debate protocol)               | contradictory findings → re-debate`,
+  },
+  {
+    heading: "The improvement_queue.json lifecycle",
+    content: "Every Claude Code session ends by running .claude/hooks/stop_hook.py (Stop hook). It parses the JSONL transcript, collapses it into turns + tool_calls, sends that summary to claude-haiku-4-5 with a four-dimension rubric (task_completion, tool_efficiency, skill_adherence, routing_accuracy), and if min(scores) < CC_IMPROVE_THRESHOLD (0.65) it enqueues the session under ~/.claude/state/improvement_queue.json using an fcntl-locked tmp→rename for atomicity. When CC_AUTO_IMPROVE=true, stop_hook spawns improvement_agent.py as a detached subprocess which drains the queue, asks Claude Sonnet for concrete fixes, and drops them under ~/.claude/state/improvements/. The next /improve cycle reads that directory as its starting backlog — so the improve team's inbox is populated by the agent's own failures.",
+    codeBlock: `# session end  →  .claude/hooks/stop_hook.py
+#
+# 1. read transcript from transcriptPath
+# 2. build_session_summary(msgs)           # turns + tool_calls + model
+# 3. score_session(summary)                # haiku-4-5, 4 dims, JSON out
+# 4. if min(dim_scores) < CC_IMPROVE_THRESHOLD:
+#       enqueue_session(...)               # fcntl lock, atomic rename
+#       if CC_AUTO_IMPROVE:
+#           subprocess.Popen([improvement_agent.py], detached)
+#
+# later:  /improve  →  improve-meta reads queue  →  dispatches improve-evolve`,
   },
 ];
 
@@ -545,93 +591,93 @@ export const nodeDetails: Record<string, NodeDetail> = {
 
   // Stage 9: langgraph_backend
   "lg-runtime": {
-    description: "Python backend with 22 graphs declared in backend/langgraph.json. Local dev runs `langgraph dev` on :8002 (in-memory). Production runs backend/app.py on :7860 (FastAPI + Uvicorn, AsyncPostgresSaver on Neon for thread persistence). Same graph code; LANGGRAPH_URL env is the only switch.",
-    tech: [{ name: "langgraph", version: "0.4+" }, { name: "FastAPI" }, { name: "AsyncPostgresSaver" }],
+    description: "Python backend with 22 graphs declared in backend/langgraph.json. Local dev uses `langgraph dev` on :8002 (in-memory checkpointer). Production is backend/app.py served by Uvicorn as a single-worker FastAPI on :7860, with AsyncPostgresSaver (langgraph.checkpoint.postgres.aio) pointed at Neon's pooled connection so thread state survives restarts and free-tier sleep/wake cycles. Same graph code; flipping LANGGRAPH_URL at the Next.js client is the only cutover.",
+    tech: [{ name: "langgraph", version: "0.4+" }, { name: "FastAPI" }, { name: "Uvicorn" }, { name: "AsyncPostgresSaver" }],
     dataIn: "assistant_id + input",
-    dataOut: "ExecutionResult",
-    insight: "Same graph code, two runtimes, one client. The Python stays portable across langgraph dev, Docker, and Cloudflare Workers (via wrangler) with no code branch.",
+    dataOut: "final graph state",
+    insight: "Single Uvicorn worker is intentional, not a limitation — it keeps AsyncPostgresSaver's connection pool and app.state.graphs dict coherent across in-flight requests. Scaling is horizontal (more containers), not vertical.",
     color: "violet",
   },
   "lg-core": {
-    description: "Five core graphs: email_compose (gather_context → draft → format), email_reply (analyze → draft → polish), email_outreach (lookup_contact → match_persona → select_template → draft_html), admin_chat (tool-router: count_rows / inspect_schema / query_db), text_to_sql (understand → identify_tables → generate → validate; read-only SELECT).",
-    tech: [{ name: "5 core graphs" }, { name: "17 specialized agents" }],
+    description: "Five core graphs power the product surfaces: email_compose (gather_context → draft → format), email_reply (analyze_inbound → draft → polish), email_outreach (lookup_contact → match_persona → select_template → draft_html), admin_chat (JSON tool-router for count_rows / inspect_schema / query_db), and text_to_sql (understand → identify_tables → generate → validate, read-only SELECT enforced). Seventeen specialized graphs sit alongside them — deep_icp, icp_team, competitors_team, pricing, gtm, positioning, product_intel, freshness, lead_gen_team, classify_paper, contact_enrich (+ sales and paper-author variants), deep_scrape — bringing the declared total in langgraph.json to 22.",
+    tech: [{ name: "5 core graphs" }, { name: "17 specialized" }, { name: "22 declared" }],
     dataIn: "graph input state",
     dataOut: "graph output state",
-    insight: "admin_chat uses a JSON tool-router instead of ReAct to avoid LLM tool-call failures — this class of bug is worth designing around rather than retrying through.",
+    insight: "admin_chat uses a JSON tool-router instead of ReAct to avoid LLM tool-call malformed-JSON failures — a whole class of bug worth designing around rather than retrying through.",
     color: "violet",
   },
   "lg-endpoint": {
-    description: "POST /runs/wait is the main endpoint — synchronous, blocks up to 300s. startGraphRun + webhook is the async variant for long runs. runGraph in src/lib/langgraph-client.ts wraps both.",
-    tech: [{ name: "/runs/wait" }, { name: "webhook callback" }],
-    dataIn: "{ assistant_id, input }",
-    dataOut: "final state",
-    insight: "Vercel's 60s default function timeout is upped to 300s in vercel.json for graph routes — the graphs are designed to stay under it; anything longer is already async.",
+    description: "POST /runs/wait is the synchronous entry point — runGraph in src/lib/langgraph-client.ts forwards { assistant_id, input, thread_id? } exactly as the hosted LangGraph API expects, so the Next.js client is runtime-agnostic. Long-running graphs (product_intel, gtm, pricing) use the async variant via /threads + /threads/{tid}/runs + a webhook callback implemented in leadgen_agent.notify, because Cloudflare Workers cap response wall time below their 5+ minute runtime.",
+    tech: [{ name: "/runs/wait" }, { name: "/threads/{id}/runs" }, { name: "webhook callback" }],
+    dataIn: "{ assistant_id, input, thread_id? }",
+    dataOut: "final state or run_id",
+    insight: "In-process _async_runs dict tracks background runs — safe only because wrangler pins max_instances=1 and AsyncPostgresSaver is the source of truth; a restart loses the lookup but the GraphQL stale-run sweeper recovers.",
     color: "iris",
   },
   "lg-auth": {
-    description: "Bearer-token middleware in backend/leadgen_agent/custom_app.py, plugged into langgraph.json via the http.app key. FastAPI runtime duplicates it inline in backend/app.py. Same Authorization: Bearer contract across both.",
-    tech: [{ name: "Starlette middleware" }, { name: "http.app key" }],
-    dataIn: "Authorization header",
-    dataOut: "pass / 401",
-    insight: "Registering the middleware at LangGraph's platform hook means no separate API gateway is needed. The auth layer travels with the code whether it runs under langgraph dev or inside a Cloudflare Workers container.",
+    description: "Starlette BearerTokenMiddleware gates every non-health request when LANGGRAPH_AUTH_TOKEN is set. Under `langgraph dev`, it's wired in via the http.app key in langgraph.json → leadgen_agent.custom_app:app (public paths: /ok, /info). Under FastAPI, the identical class is inlined in backend/app.py and added with app.add_middleware (public paths: /health, /ok). Duplication is deliberate — the two runtimes load different Starlette app trees, and a missing token in either would expose a shared-secret surface to HF Spaces, Cloudflare tunnels, or any uptime prober.",
+    tech: [{ name: "Starlette middleware" }, { name: "langgraph.json http.app" }, { name: "FastAPI add_middleware" }],
+    dataIn: "Authorization: Bearer <token>",
+    dataOut: "pass / 401 Unauthorized",
+    insight: "No separate API gateway. The auth layer travels with the code whether it runs under langgraph dev, uvicorn, or a Cloudflare Workers container — and because both runtimes whitelist /health|/ok for probes, tunnel providers can still check liveness without a credential.",
     color: "red",
   },
   "lg-deploy": {
-    description: "Deploys as a Docker container — Cloudflare Workers via wrangler (current) or HuggingFace Spaces (legacy, abandoned after auto-abuse flag). The Dockerfile ships Python 3.12 + Playwright + the graph code. DATABASE_URL points at the Neon pooled URL for checkpointing.",
-    tech: [{ name: "Docker" }, { name: "Cloudflare Workers / wrangler" }, { name: "Playwright" }],
-    dataIn: "container image",
-    dataOut: "live FastAPI service",
-    insight: "Checkpointing on Neon (not local SQLite) means the container can restart without losing thread state — important for long-running graph runs that survive deploy bounces.",
+    description: "Current deploy target is Cloudflare Workers Containers via wrangler — backend/wrangler.jsonc binds a LeadgenContainer Durable Object to the Dockerfile (python:3.12-slim + Playwright Chromium), instance_type standard-1, max_instances=1. HuggingFace Spaces was the original target (Docker SDK) but was abandoned after an auto-abuse flag; the Dockerfile still reflects the HF constraint of binding 0.0.0.0:7860. DATABASE_URL points at the Neon pooled URL (hostname contains '-pooler') for AsyncPostgresSaver checkpointing.",
+    tech: [{ name: "Cloudflare Workers" }, { name: "wrangler" }, { name: "Dockerfile" }, { name: "Playwright Chromium" }],
+    dataIn: "container image + Neon URL",
+    dataOut: "live FastAPI service on lead-gen-langgraph.eeeew.workers.dev",
+    insight: "Checkpointing on Neon (not local SQLite) is what makes max_instances=1 survivable — the container restarts without losing thread state, so long-running graph runs that straddle a deploy bounce resume rather than restart from scratch.",
     color: "violet",
   },
 
   // Stage 10: agent_teams
   "at-improve": {
-    description: "Self-improvement team (improve-*): Pipeline Monitor, Discovery Expander, Classifier Tuner, Skill Optimizer, Strategy Brain. Goal: find a remote AI engineering role. Phase: BUILDING (<5 AI jobs/week) → OPTIMIZING (flowing but low relevance).",
-    tech: [{ name: "5 skills" }, { name: "phase-aware" }],
-    dataIn: "jobs pipeline state",
-    dataOut: "action-plan.json",
-    insight: "The team's meta skill reads all sibling state files and emits an action plan — the orchestrator is data-driven, not rule-driven.",
+    description: "Self-improvement team under .claude/skills/improve-*/SKILL.md: improve-mine (Pipeline Monitor — is the pipeline healthy?), improve-audit (Discovery Expander — find more AI-engineering sources), improve-evolve (Classifier Tuner — reduce missed remote-global matches), improve-apply (Skill Optimizer — better AI/ML taxonomy + extraction), improve-meta (Strategy Brain — coordinate toward the goal: get hired). Invoked by /improve [status|discover|classify|skills]; meta reads all sibling state files in ~/.claude/state/ and emits action-plan.json with a phase label.",
+    tech: [{ name: "5 skills" }, { name: "/improve orchestrator" }, { name: "phase-aware" }],
+    dataIn: "jobs pipeline state + session transcripts",
+    dataOut: "~/.claude/state/meta-state.json + action-plan.json",
+    insight: "Phase labels are team-specific: this team uses BUILDING (<5 AI jobs/week) → OPTIMIZING → APPLYING → INTERVIEWING, which is goal-shaped rather than code-shaped. The Strategy Brain reasons in terms of 'does this help Vadim get hired?', not 'is this a clean refactor?'.",
     color: "violet",
   },
   "at-codefix": {
-    description: "Codebase improvement team (codefix-*): Trajectory Miner, Codebase Auditor, Skill Evolver, Code Improver, Verification Gate, Meta-Optimizer. Pipeline: mine → audit → evolve/apply → verify. Hard caps: 3 code changes + 2 skill evolutions per cycle.",
-    tech: [{ name: "6 skills" }, { name: "verification gate" }],
+    description: "Codebase quality team under .claude/skills/codefix-*/SKILL.md: codefix-mine (mine transcripts for patterns), codefix-audit (file:line findings), codefix-evolve (improve SKILL.md + CLAUDE.md), codefix-apply (perf/types/security/dead-code edits), codefix-verify (builds + regressions), codefix-meta (ROMA/DyTopo/CASTER-grounded coordinator). Pipeline: mine → audit → evolve/apply → verify. Hard caps per /codefix cycle: 3 code changes + 2 skill evolutions; verification is mandatory after every apply.",
+    tech: [{ name: "6 skills" }, { name: "/codefix orchestrator" }, { name: "verification gate" }],
     dataIn: "session transcripts + audit findings",
-    dataOut: "code edits + skill improvements",
-    insight: "COLLAPSE_RISK phase halts codefix entirely — when recent edits start regressing, the team stops itself before it spirals. Self-limiting is the critical property.",
+    dataOut: "code edits + skill improvements + verification report",
+    insight: "codefix-meta's phase detection is IMPROVEMENT → SATURATION → COLLAPSE_RISK. COLLAPSE_RISK halts the team entirely when recent edits start regressing; self-limiting is the critical property that keeps the loop from grinding the codebase into dust.",
     color: "amber",
   },
   "at-pipeline": {
-    description: "Lead-gen pipeline team (pipeline-*): Coordinator, Discovery Scout, Enrichment Specialist, Contact Hunter, Outreach Composer, QA Auditor. Full cycle: discover → enrich → contacts + qa-audit → outreach (plan-approval required).",
-    tech: [{ name: "6 skills" }, { name: "plan-approval gate" }],
+    description: "B2B lead-gen pipeline team under .claude/skills/pipeline-*/SKILL.md: pipeline-meta (Coordinator — batch strategy, ICP targeting), pipeline-discover (Discovery Scout), pipeline-enrich (category + AI tier + ATS + stack), pipeline-contacts (email discovery + verification + scoring), pipeline-outreach (drafting + campaigns, plan-approval required), pipeline-qa (dedup + deliverability + score validation). Invoked by /agents pipeline [discover|enrich|outreach|status]; full cycle is discover → enrich → contacts + qa-audit → outreach.",
+    tech: [{ name: "6 skills" }, { name: "/agents pipeline" }, { name: "plan-approval gate" }],
     dataIn: "ICP + batch strategy",
     dataOut: "enriched contacts + draft campaigns",
-    insight: "Outreach requires plan approval before sending. The other stages run autonomously; the human stays in the loop exactly where it matters (anything that hits an inbox).",
+    insight: "Phase labels here are BUILDING → FLOWING → BOTTLENECK → SATURATED → DEGRADED. Outreach requires explicit plan approval before any email send — the other stages run autonomously, so the human stays in the loop exactly where it matters (anything that hits an inbox).",
     color: "green",
   },
   "at-research": {
-    description: "Research squad (research-*): Company Analyst, Hiring Intel, ICP Matcher. Runs on demand against a single target or as pipeline support. Debate protocol: agents cross-read findings, challenge weak claims, resolve conflicts, update confidence.",
-    tech: [{ name: "3 skills" }, { name: "competing hypotheses" }],
+    description: "Ad-hoc research squad under .claude/skills/research-*/SKILL.md: research-analyst (tech stack, funding, AI adoption), research-hiring (open roles, ATS boards, team growth), research-icp (score against ICP: remote? AI? stage? DM access?). Invoked by /agents research {company} for full competing-hypotheses debate, /agents research batch {c1 c2 ...} for parallel squads with comparative summary, or /agents research score {company} for single-agent ICP scoring.",
+    tech: [{ name: "3 skills" }, { name: "/agents research" }, { name: "competing hypotheses" }],
     dataIn: "company name / slug",
-    dataOut: "GO / NO-GO / NEEDS-MORE-INFO",
-    insight: "Adversarial debate between agents is the design choice — letting them agree is cheaper but worse; forcing one to challenge the other's findings is what makes the verdict actionable.",
+    dataOut: "GO / NO-GO / NEEDS-MORE-INFO + outreach strategy",
+    insight: "Debate protocol: agents cross-read each other's findings, challenge weak claims, resolve conflicts, update confidence. Letting them agree is cheaper but worse — forcing adversarial challenge is what makes the verdict actionable rather than sycophantic.",
     color: "blue",
   },
   "at-hook": {
-    description: "stop_hook.py scores every Claude Code session. Low-scoring sessions auto-queue an improvement run via improvement_agent.py. The queue is in ~/.claude/state/improvement_queue.json. This is how the agent teams self-correct without manual intervention.",
-    tech: [{ name: "stop_hook.py" }, { name: "improvement_agent.py" }, { name: "improvement_queue.json" }],
-    dataIn: "session transcript",
-    dataOut: "queued improvement task",
-    insight: "There is no explicit Strategy Enforcer between the user and the codebase — the phase field in action-plan.json plus the hook's scoring threshold naturally align the teams. Emergent alignment, not decreed alignment.",
+    description: "stop_hook.py runs after every Claude Code session. It parses the transcript, builds a session summary, and scores it on four dimensions (task_completion, tool_efficiency, skill_adherence, routing_accuracy) via claude-haiku-4-5. If any dimension falls below CC_IMPROVE_THRESHOLD (default 0.65), the session is enqueued atomically (fcntl-locked tmp→rename) into ~/.claude/state/improvement_queue.json. When CC_AUTO_IMPROVE=true, improvement_agent.py is spawned as a detached subprocess to drain the queue and write concrete suggestions under ~/.claude/state/improvements/.",
+    tech: [{ name: "stop_hook.py" }, { name: "improvement_agent.py" }, { name: "improvement_queue.json" }, { name: "claude-haiku-4-5" }],
+    dataIn: "transcriptPath + sessionId",
+    dataOut: "queue entry + subprocess",
+    insight: "Session-end scoring lets the system self-correct without a human labeling runs — every /improve cycle can dequeue the lowest-scoring transcripts and turn them into skill-evolution tasks, closing the loop between how the agent behaved and what rules get tightened next.",
     color: "red",
   },
   "at-strategy": {
-    description: "strategy-enforcer.ts sits at the change boundary. Rule 1: eval-first (no prompt change without evals ≥ 80% accuracy). Rule 2: grounding-first (no LLM call without structuredOutput / Zod). Rule 3: spec-driven (GraphQL + Drizzle + Zod as formal contracts).",
-    tech: [{ name: "strategy-enforcer.ts" }, { name: "3 rules" }],
-    dataIn: "staged changes",
-    dataOut: "pass / violation",
-    insight: "The enforcer is a plain async function, not a middleware — it's run explicitly, which means it can be invoked from a pre-commit hook, a CI step, or inline from a codefix agent depending on context.",
+    description: "strategy-enforcer.ts in src/agents/ is a plain async function (strategyEnforcerTool) that runs against staged changes. It layers seven checks grouped under the CLAUDE.md Two-Layer Model: Rule 1 Eval-First (prompt/model changes require pnpm test:evals ≥ 80%), Rule 2 Grounding-First (any LLM .generate/.chat without structuredOutput/response_format/generateObject/Pydantic is BLOCKING), Rule 3 taxonomy validation on extraction-workflow, Rule 4 Multi-Model routing (Opus on simple tasks = WARNING), Rule 5 Spec-Driven (schema changes require pnpm codegen), Rule 6 Observability (classification INSERTs must carry confidence + reason + source + evidence), Rule 7 HITL (batch/bulk tools need requireApproval).",
+    tech: [{ name: "strategy-enforcer.ts" }, { name: "7 rules" }, { name: "BLOCKING + WARNING" }],
+    dataIn: "changedFiles + fileContents map",
+    dataOut: "{ pass, violations[], summary }",
+    insight: "Exposed as a plain async function, not a hard-wired middleware — so a pre-commit hook, a CI step, the codefix-apply agent, or a one-off script can all call it with the same semantics. Grounding-First is the one that fires most: it's what keeps jsonb columns from accumulating shape-broken LLM output.",
     color: "amber",
   },
 };
