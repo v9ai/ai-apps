@@ -1539,7 +1539,7 @@ type Query {
   product(id: Int!): Product
   productBySlug(slug: String!): Product
   productIntelRun(id: ID!): IntelRun
-  productIntelRuns(kind: String, productId: Int!): [IntelRun!]!
+  productIntelRuns(kind: String, minSchemaVersion: String, productId: Int!): [IntelRun!]!
   products(limit: Int, offset: Int): [Product!]!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, classification: String, limit: Int, offset: Int): ReceivedEmailsResult!

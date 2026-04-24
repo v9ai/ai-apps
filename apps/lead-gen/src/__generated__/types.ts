@@ -2470,6 +2470,7 @@ export type QueryProductIntelRunArgs = {
 
 export type QueryProductIntelRunsArgs = {
   kind?: InputMaybe<Scalars['String']['input']>;
+  minSchemaVersion?: InputMaybe<Scalars['String']['input']>;
   productId: Scalars['Int']['input'];
 };
 

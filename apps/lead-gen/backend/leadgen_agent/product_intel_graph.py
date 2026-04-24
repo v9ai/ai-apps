@@ -452,46 +452,6 @@ async def ensure_competitors(state: ProductIntelState) -> dict:
     }
 
 
-async def _stream_subgraph(
-    compiled: Any,
-    inputs: dict[str, Any],
-    business_nodes: frozenset[str],
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Run a compiled subgraph via ``.astream(stream_mode='updates')`` and
-    collect both the final merged state and a live progress snapshot.
-
-    Returns ``(final_state, progress)`` where ``progress`` has the shape
-    ``{"current_node": str, "completed": [str,...], "total": int}``.
-    The ``total`` is the number of business nodes in the subgraph (notify_*
-    bookkeeping excluded) so UIs can render an accurate "N/M done" badge.
-
-    LangGraph's ``astream`` in ``stream_mode='updates'`` yields one dict per
-    node execution, keyed by the node name with that node's state-delta as
-    value. We fold those deltas into ``final_state`` to mirror what
-    ``ainvoke`` would have returned.
-    """
-    final_state: dict[str, Any] = {}
-    completed: list[str] = []
-    current: str = ""
-    async for chunk in compiled.astream(inputs, stream_mode="updates"):
-        # chunk is {node_name: state_delta} — one entry per step. Parallel
-        # fan-out emits multiple chunks, one per branch, so we just fold.
-        if not isinstance(chunk, dict):
-            continue
-        for node_name, delta in chunk.items():
-            current = node_name
-            if node_name in business_nodes and node_name not in completed:
-                completed.append(node_name)
-            if isinstance(delta, dict):
-                final_state.update(delta)
-    progress = {
-        "current_node": current,
-        "completed": completed,
-        "total": len(business_nodes),
-    }
-    return final_state, progress
-
-
 async def run_pricing(state: ProductIntelState) -> dict:
     """Invoke the pricing subgraph. The subgraph's write_rationale node
     persists pricing_analysis itself — no second write here.
@@ -510,7 +470,7 @@ async def run_pricing(state: ProductIntelState) -> dict:
         return {}
     t0 = time.perf_counter()
     try:
-        result, progress = await _stream_subgraph(
+        result, progress = await stream_subgraph(
             _PRICING_GRAPH,
             {"product_id": state["product_id"]},
             _PRICING_BUSINESS_NODES,
@@ -551,7 +511,7 @@ async def run_gtm(state: ProductIntelState) -> dict:
         return {}
     t0 = time.perf_counter()
     try:
-        result, progress = await _stream_subgraph(
+        result, progress = await stream_subgraph(
             _GTM_GRAPH,
             {"product_id": state["product_id"]},
             _GTM_BUSINESS_NODES,
@@ -590,7 +550,8 @@ async def run_positioning(state: ProductIntelState) -> dict:
         return {}  # checkpoint-aware short-circuit
     t0 = time.perf_counter()
     try:
-        result = await _POSITIONING_GRAPH.ainvoke(
+        result, _progress = await stream_subgraph(
+            _POSITIONING_GRAPH,
             {
                 "product_id": state["product_id"],
                 "product": state.get("product") or {},
@@ -598,7 +559,8 @@ async def run_positioning(state: ProductIntelState) -> dict:
                 "competitive": state.get("competitive") or {},
                 "pricing": state.get("pricing") or {},
                 "gtm": state.get("gtm") or {},
-            }
+            },
+            _POSITIONING_BUSINESS_NODES,
         )
     except Exception as e:  # noqa: BLE001 — partial failure, not fatal
         # Positioning is a bonus — never block the main report on its failure.

@@ -55,6 +55,7 @@ import psycopg
 from langgraph.graph import END, START, StateGraph
 
 from . import gtm_graph, pricing_graph
+from ._subgraph_stream import stream_subgraph
 from .deep_icp_graph import _dsn
 from .llm import ainvoke_json, compute_totals, make_llm
 from .notify import notify_complete, notify_error
@@ -186,6 +187,51 @@ _FRESHNESS_GRAPH = (
 )
 
 
+# Business-node sets for progress accounting via stream_subgraph. Kept in sync
+# with the node lists in pricing_graph.build_graph / gtm_graph.build_graph /
+# positioning_graph.build_graph / deep_competitor_graph.build_graph.
+_PRICING_BUSINESS_NODES = frozenset(
+    {
+        "load_inputs",
+        "benchmark_competitors",
+        "choose_value_metric",
+        "design_model",
+        "write_rationale",
+    }
+)
+_GTM_BUSINESS_NODES = frozenset(
+    {
+        "load_inputs",
+        "pick_channels",
+        "craft_pillars",
+        "write_templates",
+        "build_playbook",
+        "draft_plan",
+    }
+)
+_POSITIONING_BUSINESS_NODES = frozenset(
+    {
+        "load_inputs",
+        "extract_category_conventions",
+        "identify_white_space",
+        "draft_positioning_statement",
+        "stress_test",
+    }
+)
+_DEEP_COMPETITOR_BUSINESS_NODES = frozenset(
+    {
+        "load_competitor",
+        "pricing_deep",
+        "features_deep",
+        "integrations_deep",
+        "changelog",
+        "positioning_shift",
+        "funding_headcount",
+        "synthesize",
+    }
+)
+
+
 # ── Nodes ─────────────────────────────────────────────────────────────
 
 
@@ -293,8 +339,10 @@ async def run_deep_competitor(state: ProductIntelV2State) -> dict:
             "agent_timings": {"run_deep_competitor": round(time.perf_counter() - t0, 3)},
         }
     try:
-        result = await _DEEP_COMPETITOR_GRAPH.ainvoke(
-            {"product_id": state["product_id"]}
+        result, _progress = await stream_subgraph(
+            _DEEP_COMPETITOR_GRAPH,
+            {"product_id": state["product_id"]},
+            _DEEP_COMPETITOR_BUSINESS_NODES,
         )
     except Exception as e:  # noqa: BLE001 — partial failure; keep going
         # One flaky branch shouldn't cost the user the whole run. Emit an
@@ -323,7 +371,11 @@ async def run_pricing(state: ProductIntelV2State) -> dict:
         return {}
     t0 = time.perf_counter()
     try:
-        result = await _PRICING_GRAPH.ainvoke({"product_id": state["product_id"]})
+        result, _progress = await stream_subgraph(
+            _PRICING_GRAPH,
+            {"product_id": state["product_id"]},
+            _PRICING_BUSINESS_NODES,
+        )
     except Exception as e:  # noqa: BLE001 — partial failure; keep going
         return {
             "pricing": {},
@@ -344,7 +396,11 @@ async def run_gtm(state: ProductIntelV2State) -> dict:
         return {}
     t0 = time.perf_counter()
     try:
-        result = await _GTM_GRAPH.ainvoke({"product_id": state["product_id"]})
+        result, _progress = await stream_subgraph(
+            _GTM_GRAPH,
+            {"product_id": state["product_id"]},
+            _GTM_BUSINESS_NODES,
+        )
     except Exception as e:  # noqa: BLE001 — partial failure; keep going
         return {
             "gtm": {},
@@ -374,13 +430,15 @@ async def run_positioning(state: ProductIntelV2State) -> dict:
             "agent_timings": {"run_positioning": round(time.perf_counter() - t0, 3)},
         }
     try:
-        result = await _POSITIONING_GRAPH.ainvoke(
+        result, _progress = await stream_subgraph(
+            _POSITIONING_GRAPH,
             {
                 "product_id": state["product_id"],
                 "competitor_deep": state.get("competitor_deep") or {},
                 "pricing": state.get("pricing") or {},
                 "gtm": state.get("gtm") or {},
-            }
+            },
+            _POSITIONING_BUSINESS_NODES,
         )
     except Exception as e:  # noqa: BLE001 — partial failure; keep going
         return {

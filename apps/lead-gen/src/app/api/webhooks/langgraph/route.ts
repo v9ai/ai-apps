@@ -27,6 +27,7 @@ import {
   productIntelRunSecrets,
   products,
 } from "@/db/schema";
+import { PRODUCT_INTEL_VERSION } from "@/lib/intelVersion";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -135,6 +136,7 @@ export async function POST(req: NextRequest) {
       finished_at: now,
       error: payload.error ?? null,
       output: safeOutput,
+      schema_version: run.schema_version ?? PRODUCT_INTEL_VERSION,
     })
     .where(eq(productIntelRuns.id, appRunId));
 
