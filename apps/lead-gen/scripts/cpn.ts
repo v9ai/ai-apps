@@ -57,7 +57,11 @@ interface PartnerRow {
 }
 
 function readCsv(): PartnerRow[] {
-  const csvPath = resolve("crates/github-patterns/partners_export.csv");
+  // Legacy CSV output from the former Rust `gh` crate. Regenerate via the
+  // Python port at `backend/leadgen_agent/gh_patterns_graph.py`
+  // (`command: "export_contributors"`) and drop the result here, or override
+  // the path with CPN_PARTNERS_CSV=/path/to/partners_export.csv.
+  const csvPath = resolve(process.env.CPN_PARTNERS_CSV || "data/partners_export.csv");
   const csvText = readFileSync(csvPath, "utf-8");
   const { data } = Papa.parse<PartnerRow>(csvText, {
     header: true,

@@ -433,7 +433,7 @@ def main():
     if args.compare_rust:
         rust_path = args.rust_weights
         if not rust_path:
-            rust_path = Path("crates/metal/data/models/spam_classifier_weights.json")
+            rust_path = Path("backend/data/models/spam_classifier_weights.json")
         print(f"\n  Rust comparison ({rust_path}):")
         compare = compare_rust_weights(entries, classifiers, rust_path)
         if "error" in compare:

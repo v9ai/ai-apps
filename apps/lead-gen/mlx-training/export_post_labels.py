@@ -229,7 +229,7 @@ def main():
         posts = fetch_posts()
     except Exception as e:
         print(f"Error: Failed to fetch posts from {RUST_SERVER}: {e}", file=sys.stderr)
-        print("Make sure the Rust server is running (cargo run -p linkedin-posts)", file=sys.stderr)
+        print("Make sure the LinkedIn posts server is running (make -C chrome-extension server)", file=sys.stderr)
         sys.exit(1)
 
     print(f"Total posts in LanceDB: {len(posts)}")

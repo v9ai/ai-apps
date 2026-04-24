@@ -23,6 +23,7 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { useVaultSession } from "@/app/hooks/useVaultSession";
+import { splitEntryText, joinTitleAndContent } from "@/app/lib/journal-text";
 
 interface EditEntry {
   id: number;
@@ -46,8 +47,7 @@ interface AddJournalEntryButtonProps {
 const today = () => new Date().toISOString().split("T")[0];
 
 const defaultForm = () => ({
-  title: "",
-  content: "",
+  entry: "",
   mood: "",
   entryDate: today(),
   familyMemberId: "",
@@ -132,6 +132,7 @@ export default function AddJournalEntryButton({
     }
 
     const parsedTags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const { title, content } = splitEntryText(form.entry);
 
     try {
       if (isEdit && editEntry) {
@@ -139,8 +140,8 @@ export default function AddJournalEntryButton({
           variables: {
             id: editEntry.id,
             input: {
-              title: form.title.trim() || undefined,
-              content: form.content.trim(),
+              title: title ?? undefined,
+              content,
               mood: form.mood || undefined,
               entryDate: form.entryDate,
               familyMemberId: form.familyMemberId ? parseInt(form.familyMemberId, 10) : undefined,
@@ -155,8 +156,8 @@ export default function AddJournalEntryButton({
         await createJournalEntry({
           variables: {
             input: {
-              title: form.title.trim() || undefined,
-              content: form.content.trim(),
+              title: title ?? undefined,
+              content,
               mood: form.mood || undefined,
               entryDate: form.entryDate,
               familyMemberId: form.familyMemberId ? parseInt(form.familyMemberId, 10) : undefined,
@@ -184,8 +185,7 @@ export default function AddJournalEntryButton({
         setOpen(isOpen);
         if (isOpen && editEntry) {
           setForm({
-            title: editEntry.title || "",
-            content: editEntry.content || "",
+            entry: joinTitleAndContent(editEntry.title, editEntry.content),
             mood: editEntry.mood || "",
             entryDate: editEntry.entryDate || today(),
             familyMemberId: editEntry.familyMemberId ? String(editEntry.familyMemberId) : "",
@@ -241,25 +241,13 @@ export default function AddJournalEntryButton({
 
             <label>
               <Text as="div" size="2" mb="1" weight="medium">
-                Title
-              </Text>
-              <TextField.Root
-                placeholder="Entry title (optional)"
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                disabled={loading}
-              />
-            </label>
-
-            <label>
-              <Text as="div" size="2" mb="1" weight="medium">
-                Content
+                Entry
               </Text>
               <TextArea
-                placeholder="Write your thoughts, reflections, or observations..."
-                value={form.content}
-                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-                rows={6}
+                placeholder="First line becomes the title. Then write your thoughts, reflections, or observations..."
+                value={form.entry}
+                onChange={(e) => setForm((f) => ({ ...f, entry: e.target.value }))}
+                rows={8}
                 disabled={loading}
               />
             </label>

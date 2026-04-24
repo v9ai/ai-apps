@@ -28,6 +28,7 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
+import { splitEntryText, joinTitleAndContent } from "@/app/lib/journal-text";
 
 const today = () => new Date().toISOString().split("T")[0];
 
@@ -55,8 +56,7 @@ function JournalEditContent() {
   const allTags = allTagsData?.allTags ?? [];
 
   const [form, setForm] = useState({
-    title: "",
-    content: "",
+    entry: "",
     mood: "",
     entryDate: today(),
     familyMemberId: "",
@@ -69,8 +69,7 @@ function JournalEditContent() {
   useEffect(() => {
     if (entry && !initialized) {
       setForm({
-        title: entry.title || "",
-        content: entry.content || "",
+        entry: joinTitleAndContent(entry.title, entry.content),
         mood: entry.mood || "",
         entryDate: entry.entryDate || today(),
         familyMemberId: entry.familyMemberId ? String(entry.familyMemberId) : "",
@@ -101,8 +100,8 @@ function JournalEditContent() {
       return;
     }
 
-    if (!form.content.trim()) {
-      setFormError("Please enter some content for your journal entry");
+    if (!form.entry.trim()) {
+      setFormError("Please write something for your journal entry");
       return;
     }
 
@@ -112,14 +111,15 @@ function JournalEditContent() {
     }
 
     const parsedTags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const { title, content } = splitEntryText(form.entry);
 
     try {
       await updateJournalEntry({
         variables: {
           id,
           input: {
-            title: form.title.trim() || undefined,
-            content: form.content.trim(),
+            title: title ?? undefined,
+            content,
             mood: form.mood || undefined,
             entryDate: form.entryDate,
             familyMemberId: form.familyMemberId
@@ -195,27 +195,13 @@ function JournalEditContent() {
 
             <label>
               <Text as="div" size="2" mb="1" weight="medium">
-                Title
-              </Text>
-              <TextField.Root
-                placeholder="Entry title (optional)"
-                value={form.title}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, title: e.target.value }))
-                }
-                disabled={saving}
-              />
-            </label>
-
-            <label>
-              <Text as="div" size="2" mb="1" weight="medium">
-                Content *
+                Entry *
               </Text>
               <TextArea
-                placeholder="Write your thoughts, reflections, or observations..."
-                value={form.content}
+                placeholder="First line becomes the title. Then write your thoughts, reflections, or observations..."
+                value={form.entry}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, content: e.target.value }))
+                  setForm((f) => ({ ...f, entry: e.target.value }))
                 }
                 rows={10}
                 required

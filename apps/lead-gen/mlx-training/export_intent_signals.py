@@ -1,7 +1,7 @@
 """Export intent signal training data as JSONL for MLX LoRA fine-tuning.
 
 Sources (in priority order):
-  1. Greenhouse JSON files (e.g., crates/ats/data/anthropic-jobs.json)
+  1. Greenhouse JSON files (e.g., backend/data/ats/anthropic-jobs.json)
      — Rich job postings with structured fields (departments, offices, metadata)
   2. Neon PostgreSQL tables (company_snapshots, linkedin_posts, company_facts)
 
@@ -10,7 +10,7 @@ Usage:
   python3 mlx-training/export_intent_signals.py --task greenhouse       # Greenhouse JSON only
   python3 mlx-training/export_intent_signals.py --task neon             # Neon DB only
   python3 mlx-training/export_intent_signals.py --stats                 # counts only
-  python3 mlx-training/export_intent_signals.py --greenhouse-dir crates/ats/data
+  python3 mlx-training/export_intent_signals.py --greenhouse-dir backend/data/ats
 """
 
 from __future__ import annotations
@@ -849,7 +849,7 @@ def main():
     parser.add_argument(
         "--greenhouse-dir",
         type=Path,
-        default=Path("crates/ats/data"),
+        default=Path("backend/data/ats"),
         help="Directory containing *-jobs.json Greenhouse files",
     )
     parser.add_argument(

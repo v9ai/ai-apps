@@ -1,30 +1,28 @@
-RUST_CRATE := ../crates/linkedin-posts
-ENV_FILE   := ../.env.local
+BACKEND_DIR := ../backend
+ENV_FILE    := ../.env.local
 
 .PHONY: dev start server build clean
 
 # Extract NEON_DATABASE_URL from the Next.js env file (value contains & so must be quoted)
 load_env = export NEON_DATABASE_URL="$$(grep '^NEON_DATABASE_URL=' $(ENV_FILE) | cut -d= -f2-)"
 
-# Run both Rust server + Chrome extension dev in parallel
+# Run both LinkedIn posts server (Python) + Chrome extension dev in parallel
 dev:
 	@trap 'kill 0' EXIT; \
-	($(load_env) && cd $(RUST_CRATE) && cargo run --release) & \
+	($(load_env) && cd $(BACKEND_DIR) && uv run uvicorn scripts.linkedin_posts_server:app --host 127.0.0.1 --port 9876) & \
 	pnpm dev & \
 	wait
 
 # Alias for dev
 start: dev
 
-# Rust server only
+# Python server only
 server:
-	$(load_env) && cd $(RUST_CRATE) && cargo run --release
+	$(load_env) && cd $(BACKEND_DIR) && uv run uvicorn scripts.linkedin_posts_server:app --host 127.0.0.1 --port 9876
 
-# Build both
+# Build the extension (the Python server has no compile step)
 build:
-	cd $(RUST_CRATE) && cargo build --release
 	pnpm build
 
 clean:
-	cd $(RUST_CRATE) && cargo clean
 	rm -rf dist_chrome

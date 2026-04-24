@@ -18,7 +18,7 @@ CALENDLY_LINE = "Would any of these times work — https://calendly.com/nicolai-
 
 
 async def analyze_email(state: EmailReplyState) -> dict:
-    llm = make_llm()
+    llm = make_llm(provider="email_llm")
     original = state.get("original_email", "")[:6000]
     sender = state.get("sender", "")
     result = await ainvoke_json(
@@ -37,12 +37,13 @@ async def analyze_email(state: EmailReplyState) -> dict:
                 "content": f"From: {sender}\n\n{original}",
             },
         ],
+        provider="email_llm",
     )
     return {"analysis": result if isinstance(result, dict) else {}}
 
 
 async def draft_reply(state: EmailReplyState) -> dict:
-    llm = make_llm()
+    llm = make_llm(provider="email_llm")
     analysis = state.get("analysis", {}) or {}
     tone = state.get("tone") or "professional"
     reply_type = state.get("reply_type") or "followup"
@@ -75,6 +76,7 @@ async def draft_reply(state: EmailReplyState) -> dict:
                 ),
             },
         ],
+        provider="email_llm",
     )
     return {
         "draft": result.get("body", ""),

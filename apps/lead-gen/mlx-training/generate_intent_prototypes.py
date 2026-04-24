@@ -164,12 +164,12 @@ def compute_prototypes(embeddings_by_signal: dict[str, np.ndarray]) -> tuple[lis
 def main():
     parser = argparse.ArgumentParser(description="Generate intent prototype embeddings")
     parser.add_argument("--output", type=str, default=None,
-                        help="Output JSON path (default: crates/metal/data/models/intent_prototypes.json)")
+                        help="Output JSON path (default: backend/data/models/intent_prototypes.json)")
     parser.add_argument("--model", type=str, default="BAAI/bge-small-en-v1.5",
                         help="Embedding model name")
     args = parser.parse_args()
 
-    output_path = Path(args.output) if args.output else Path("crates/metal/data/models/intent_prototypes.json")
+    output_path = Path(args.output) if args.output else Path("backend/data/models/intent_prototypes.json")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Embed all representative texts

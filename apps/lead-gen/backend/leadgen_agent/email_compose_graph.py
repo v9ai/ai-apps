@@ -33,7 +33,7 @@ async def gather_context(state: EmailComposeState) -> dict:
 
 
 async def draft(state: EmailComposeState) -> dict:
-    llm = make_llm()
+    llm = make_llm(provider="email_llm")
     instructions = state.get("instructions", "").strip() or "Write a concise, warm cold email."
     result = await ainvoke_json(
         llm,
@@ -56,6 +56,7 @@ async def draft(state: EmailComposeState) -> dict:
                 ),
             },
         ],
+        provider="email_llm",
     )
     return {
         "draft": result.get("body", ""),

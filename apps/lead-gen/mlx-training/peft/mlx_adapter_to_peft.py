@@ -72,12 +72,12 @@ def main() -> None:
 
     args.out.mkdir(parents=True, exist_ok=True)
 
-    peft_tensors: dict[str, "torch.Tensor"] = {}
+    peft_tensors: dict[str, object] = {}  # numpy arrays
     seen_suffixes: set[str] = set()
     passed_through: list[str] = []
     skipped: list[str] = []
 
-    with safe_open(str(args.mlx_adapter), framework="pt") as f:  # type: ignore[arg-type]
+    with safe_open(str(args.mlx_adapter), framework="numpy") as f:  # type: ignore[arg-type]
         for key in f.keys():
             tensor = f.get_tensor(key)
             mapped = mlx_key_to_peft(key)

@@ -91,10 +91,13 @@ interface ICPWeightsConfig {
 }
 
 function loadWeightsConfig(): ICPWeightsConfig {
-  // Walk up from src/ml/ to find monorepo root's config/
+  // Weights live under backend/data/models/ after the Rust icp crate was
+  // ported to Python (backend/leadgen_agent/icp_scoring.py). The catch
+  // block below still provides hardcoded defaults for tests or when the
+  // file hasn't been regenerated yet.
   const configPath = resolve(
     import.meta.dirname ?? __dirname,
-    "../../crates/icp/data/company_icp_weights.json",
+    "../../backend/data/models/company_icp_weights.json",
   );
   try {
     const raw = readFileSync(configPath, "utf-8");

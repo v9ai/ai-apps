@@ -258,7 +258,7 @@ async def select_template(state: EmailOutreachState) -> dict:
 
 
 async def extract_hook(state: EmailOutreachState) -> dict:
-    llm = make_llm()
+    llm = make_llm(provider="email_llm")
     post = (state.get("post_text") or "")[:4000]
     if not post.strip():
         return {"hook": ""}
@@ -275,12 +275,13 @@ async def extract_hook(state: EmailOutreachState) -> dict:
             },
             {"role": "user", "content": post},
         ],
+        provider="email_llm",
     )
     return {"hook": (result or {}).get("hook", "") if isinstance(result, dict) else ""}
 
 
 async def draft(state: EmailOutreachState) -> dict:
-    llm = make_llm()
+    llm = make_llm(provider="email_llm")
     tone = state.get("tone") or "professional and friendly"
     template = state.get("template") if state.get("product_aware") else None
 
@@ -329,6 +330,7 @@ async def draft(state: EmailOutreachState) -> dict:
                     ),
                 },
             ],
+            provider="email_llm",
         )
         return {
             "subject": result.get("subject", "") if isinstance(result, dict) else "",
@@ -357,6 +359,7 @@ async def draft(state: EmailOutreachState) -> dict:
                 ),
             },
         ],
+        provider="email_llm",
     )
     return {
         "subject": result.get("subject", "") if isinstance(result, dict) else "",

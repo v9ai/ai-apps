@@ -208,7 +208,7 @@ def parse_training_data(jsonl_path: Path) -> tuple[list[str], list[str], list[di
 def main():
     parser = argparse.ArgumentParser(description="Distill MLX intent signal model to logistic regression for Rust")
     parser.add_argument("--output", type=str, default=None,
-                        help="Output JSON path (default: crates/metal/data/models/intent_signal_weights.json)")
+                        help="Output JSON path (default: backend/data/models/intent_signal_weights.json)")
     parser.add_argument("--mlx-labels", action="store_true",
                         help="Use MLX model for soft labels (requires trained adapter)")
     parser.add_argument("--labels-file", type=str, default=None,
@@ -219,7 +219,7 @@ def main():
     if args.output:
         output_path = Path(args.output)
     else:
-        output_path = Path("crates/metal/data/models/intent_signal_weights.json")
+        output_path = Path("backend/data/models/intent_signal_weights.json")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Load training data

@@ -207,17 +207,17 @@ def parse_training_data(jsonl_path: Path) -> tuple[list[str], list[str], list[di
 def main():
     parser = argparse.ArgumentParser(description="Distill 16-feature semantic intent classifier")
     parser.add_argument("--output", type=str, default=None,
-                        help="Output JSON path (default: crates/metal/data/models/semantic_intent_classifier.json)")
+                        help="Output JSON path (default: backend/data/models/semantic_intent_classifier.json)")
     parser.add_argument("--prototypes", type=str, default=None,
-                        help="Path to intent_prototypes.json (default: crates/metal/data/models/intent_prototypes.json)")
+                        help="Path to intent_prototypes.json (default: backend/data/models/intent_prototypes.json)")
     parser.add_argument("--model", type=str, default="BAAI/bge-small-en-v1.5",
                         help="BGE embedding model")
     args = parser.parse_args()
 
-    output_path = Path(args.output) if args.output else Path("crates/metal/data/models/semantic_intent_classifier.json")
+    output_path = Path(args.output) if args.output else Path("backend/data/models/semantic_intent_classifier.json")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    prototypes_path = Path(args.prototypes) if args.prototypes else Path("crates/metal/data/models/intent_prototypes.json")
+    prototypes_path = Path(args.prototypes) if args.prototypes else Path("backend/data/models/intent_prototypes.json")
 
     # Load prototypes
     if not prototypes_path.exists():
