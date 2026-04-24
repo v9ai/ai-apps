@@ -10,11 +10,12 @@
  */
 
 import { GraphQLError } from "graphql";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { db } from "@/db";
 import { productIntelRuns, productIntelRunSecrets } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
+import { PRODUCT_INTEL_VERSION } from "@/lib/intelVersion";
 import { getRunStatus, startGraphRun } from "@/lib/langgraph-client";
 import type {
   MutationAnalyzeProductPricingAsyncArgs,
@@ -94,6 +95,7 @@ async function kickoff(
     // after the sibling table is fully in service.
     webhook_secret: webhookSecret,
     created_by: context.userEmail ?? null,
+    schema_version: PRODUCT_INTEL_VERSION,
   });
 
   // New home for the HMAC secret — sibling table with RLS forced and zero
@@ -207,6 +209,9 @@ export const intelRunQueries = {
     const filters = [eq(productIntelRuns.product_id, args.productId)];
     if (args.kind) {
       filters.push(eq(productIntelRuns.kind, args.kind as IntelKind));
+    }
+    if (args.minSchemaVersion) {
+      filters.push(gte(productIntelRuns.schema_version, args.minSchemaVersion));
     }
     return db
       .select()

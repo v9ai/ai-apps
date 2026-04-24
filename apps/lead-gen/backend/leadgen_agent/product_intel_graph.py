@@ -55,6 +55,7 @@ from . import (
     positioning_graph,
     pricing_graph,
 )
+from ._subgraph_stream import stream_subgraph
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import (
     ainvoke_json_with_telemetry,
@@ -198,6 +199,15 @@ _GTM_BUSINESS_NODES = frozenset(
         "write_templates",
         "build_playbook",
         "draft_plan",
+    }
+)
+_POSITIONING_BUSINESS_NODES = frozenset(
+    {
+        "load_inputs",
+        "extract_category_conventions",
+        "identify_white_space",
+        "draft_positioning_statement",
+        "stress_test",
     }
 )
 

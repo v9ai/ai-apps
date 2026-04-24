@@ -26,6 +26,7 @@ from typing import Annotated, Any
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
+from .db_columns import persist_product_jsonb
 from .deep_icp_graph import _dsn, _product_brief
 from .llm import (
     ainvoke_json_with_telemetry,
@@ -591,18 +592,15 @@ async def draft_plan(state: GTMState) -> dict:
     product = state.get("product") or {}
     product_id = product.get("id") or state.get("product_id")
     if product_id is not None:
-        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE products
-                    SET gtm_analysis = %s::jsonb,
-                        gtm_analyzed_at = now()::text,
-                        updated_at = now()::text
-                    WHERE id = %s
-                    """,
-                    (json.dumps(dumped), int(product_id)),
-                )
+        try:
+            persist_product_jsonb(
+                int(product_id),
+                "gtm_analysis",
+                "gtm_analyzed_at",
+                dumped,
+            )
+        except Exception as e:  # noqa: BLE001
+            return {"_error": f"draft_plan: persist failed: {e}"}
 
     return {
         "first_90_days": plan,
