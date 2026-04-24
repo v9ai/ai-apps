@@ -1,0 +1,17 @@
+query GetGames($type: GameType, $goalId: Int, $issueId: Int, $familyMemberId: Int) {
+  games(type: $type, goalId: $goalId, issueId: $issueId, familyMemberId: $familyMemberId) {
+    id
+    userId
+    goalId
+    issueId
+    familyMemberId
+    type
+    title
+    description
+    language
+    estimatedMinutes
+    source
+    createdAt
+    updatedAt
+  }
+}

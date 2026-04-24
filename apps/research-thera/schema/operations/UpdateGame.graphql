@@ -1,0 +1,11 @@
+mutation UpdateGame($id: Int!, $input: UpdateGameInput!) {
+  updateGame(id: $id, input: $input) {
+    id
+    title
+    description
+    content
+    language
+    estimatedMinutes
+    updatedAt
+  }
+}

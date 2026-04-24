@@ -4105,6 +4105,11 @@ export const db = {
   getJournalEntryPublic,
   createDiscussionGuide,
   deleteDiscussionGuide,
+  // Bogdan Discussion Guides
+  findFamilyMemberByFirstName,
+  getLatestBogdanDiscussionGuide,
+  listBogdanDiscussionGuides,
+  createBogdanDiscussionGuide,
   // Conversations
   createConversation,
   getConversation,

@@ -1,0 +1,6 @@
+mutation DeleteGame($id: Int!) {
+  deleteGame(id: $id) {
+    success
+    message
+  }
+}

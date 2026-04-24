@@ -71,6 +71,92 @@ type GenerateHabitsResult {
   habits: [Habit!]
 }
 
+# ============================================
+# Games (therapeutic exercises)
+# ============================================
+
+enum GameType {
+  CBT_REFRAME
+  MINDFULNESS
+  JOURNAL_PROMPT
+}
+
+enum GameSource {
+  SEED
+  USER
+  AI
+}
+
+type Game {
+  id: Int!
+  userId: String!
+  goalId: Int
+  issueId: Int
+  familyMemberId: Int
+  type: GameType!
+  title: String!
+  description: String
+  content: String!
+  language: String
+  estimatedMinutes: Int
+  source: GameSource!
+  createdAt: String!
+  updatedAt: String!
+  goal: Goal
+  issue: Issue
+  completions: [GameCompletion!]!
+}
+
+type GameCompletion {
+  id: Int!
+  gameId: Int!
+  userId: String!
+  durationSeconds: Int
+  responses: String
+  linkedNoteId: Int
+  completedAt: String!
+}
+
+input CreateGameInput {
+  type: GameType!
+  title: String!
+  description: String
+  content: String!
+  goalId: Int
+  issueId: Int
+  familyMemberId: Int
+  language: String
+  estimatedMinutes: Int
+}
+
+input UpdateGameInput {
+  title: String
+  description: String
+  content: String
+  language: String
+  estimatedMinutes: Int
+}
+
+input LogGameCompletionInput {
+  gameId: Int!
+  durationSeconds: Int
+  responses: String
+  linkedNoteId: Int
+}
+
+input GenerateGameInput {
+  type: GameType!
+  goalId: Int
+  issueId: Int
+  familyMemberId: Int
+  language: String
+}
+
+type DeleteGameResult {
+  success: Boolean!
+  message: String
+}
+
 type Query {
   goals(familyMemberId: Int, status: String, tag: String): [Goal!]!
   goal(id: Int, slug: String): Goal
@@ -158,6 +244,11 @@ type Query {
   # Affirmations
   affirmations(familyMemberId: Int!): [Affirmation!]!
   affirmation(id: Int!): Affirmation
+
+  # Games
+  games(type: GameType, goalId: Int, issueId: Int, familyMemberId: Int): [Game!]!
+  game(id: Int!): Game
+  gameCompletions(gameId: Int!): [GameCompletion!]!
 
   # Public (no auth required)
   publicDiscussionGuide(journalEntryId: Int!): PublicDiscussionGuideResult
@@ -335,6 +426,13 @@ type Mutation {
 
   # Tag language rules
   setTagLanguage(tag: String!, language: String!): Boolean!
+
+  # Games
+  createGame(input: CreateGameInput!): Game!
+  updateGame(id: Int!, input: UpdateGameInput!): Game!
+  deleteGame(id: Int!): DeleteGameResult!
+  logGameCompletion(input: LogGameCompletionInput!): GameCompletion!
+  generateGame(input: GenerateGameInput!): Game!
 }
 
 type Subscription {

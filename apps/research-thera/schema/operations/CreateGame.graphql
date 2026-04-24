@@ -1,0 +1,17 @@
+mutation CreateGame($input: CreateGameInput!) {
+  createGame(input: $input) {
+    id
+    type
+    title
+    description
+    content
+    language
+    estimatedMinutes
+    source
+    goalId
+    issueId
+    familyMemberId
+    createdAt
+    updatedAt
+  }
+}

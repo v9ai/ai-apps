@@ -1,0 +1,10 @@
+mutation LogGameCompletion($input: LogGameCompletionInput!) {
+  logGameCompletion(input: $input) {
+    id
+    gameId
+    durationSeconds
+    responses
+    linkedNoteId
+    completedAt
+  }
+}

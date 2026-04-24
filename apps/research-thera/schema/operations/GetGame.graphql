@@ -1,0 +1,34 @@
+query GetGame($id: Int!) {
+  game(id: $id) {
+    id
+    userId
+    goalId
+    issueId
+    familyMemberId
+    type
+    title
+    description
+    content
+    language
+    estimatedMinutes
+    source
+    createdAt
+    updatedAt
+    goal {
+      id
+      title
+    }
+    issue {
+      id
+      title
+    }
+    completions {
+      id
+      gameId
+      durationSeconds
+      responses
+      linkedNoteId
+      completedAt
+    }
+  }
+}
