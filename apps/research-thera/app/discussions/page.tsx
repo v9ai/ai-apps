@@ -12,6 +12,8 @@ import {
   Button,
   Separator,
 } from "@radix-ui/themes";
+import { format } from "date-fns";
+import { ro } from "date-fns/locale";
 import {
   useGenerateBogdanDiscussionMutation,
   useLatestBogdanDiscussionQuery,
@@ -19,6 +21,10 @@ import {
   useGetGenerationJobQuery,
 } from "@/app/__generated__/hooks";
 import { AuthGate } from "../components/AuthGate";
+
+function formatRo(dateStr: string): string {
+  return format(new Date(dateStr), "d MMM yyyy, HH:mm", { locale: ro });
+}
 
 export default function DiscussionsPage() {
   return (
@@ -138,13 +144,7 @@ function BogdanDiscussion() {
             <Flex justify="between" align="start" wrap="wrap" gap="2">
               <Heading size="5">Ghid curent</Heading>
               <Badge variant="soft" color="indigo">
-                {new Date(guide.createdAt).toLocaleString("ro-RO", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatRo(guide.createdAt)}
               </Badge>
             </Flex>
 
@@ -319,13 +319,7 @@ function BogdanDiscussion() {
                     {h.behaviorSummary.length > 120 && "…"}
                   </Text>
                   <Text size="1" color="gray">
-                    {new Date(h.createdAt).toLocaleString("ro-RO", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatRo(h.createdAt)}
                   </Text>
                 </Box>
               ))}

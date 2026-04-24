@@ -8,10 +8,11 @@ import { useSession } from "@/lib/auth-client";
 import { ApplicationHeader } from "@/components/app-detail/ApplicationHeader";
 import { JobDescriptionTab } from "@/components/app-detail/JobDescriptionTab";
 import { TechStackTab } from "@/components/app-detail/TechStackTab";
+import { CompanyTab } from "@/components/app-detail/CompanyTab";
 import { InterviewPrepTab } from "@/components/app-detail/InterviewPrepTab";
 import type { AppData } from "@/components/app-detail/types";
 
-const TAB_VALUES = ["description", "tech", "prep", "interviewers", "notes"] as const;
+const TAB_VALUES = ["description", "tech", "company", "prep", "interviewers", "notes"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 function ApplicationDetailInner() {
@@ -138,22 +139,28 @@ function ApplicationDetailInner() {
               <span className="tab-shortcut-hint">2</span>
             </Flex>
           </Tabs.Trigger>
+          <Tabs.Trigger value="company">
+            <Flex direction="column" align="center" gap="0">
+              <Text>Company</Text>
+              <span className="tab-shortcut-hint">3</span>
+            </Flex>
+          </Tabs.Trigger>
           <Tabs.Trigger value="prep">
             <Flex direction="column" align="center" gap="0">
               <Text>Prep</Text>
-              <span className="tab-shortcut-hint">3</span>
+              <span className="tab-shortcut-hint">4</span>
             </Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="interviewers">
             <Flex direction="column" align="center" gap="0">
               <Text>Interviewers</Text>
-              <span className="tab-shortcut-hint">4</span>
+              <span className="tab-shortcut-hint">5</span>
             </Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="notes">
             <Flex direction="column" align="center" gap="0">
               <Text>Notes</Text>
-              <span className="tab-shortcut-hint">5</span>
+              <span className="tab-shortcut-hint">6</span>
             </Flex>
           </Tabs.Trigger>
         </Tabs.List>
@@ -164,6 +171,9 @@ function ApplicationDetailInner() {
           </Tabs.Content>
           <Tabs.Content value="tech">
             <TechStackTab app={app} isAdmin={isAdmin} />
+          </Tabs.Content>
+          <Tabs.Content value="company">
+            <CompanyTab app={app} isAdmin={isAdmin} />
           </Tabs.Content>
         </Box>
       </Tabs.Root>
