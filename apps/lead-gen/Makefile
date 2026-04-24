@@ -73,9 +73,9 @@ db-studio:
 
 # Serve BGE-M3 embeddings on :7799 (override port via ICP_EMBED_PORT).
 # Consumed by backend/leadgen_agent/embeddings.py for intervention #4
-# (semantic ICP matching via pgvector). Local Candle/Metal — no API calls.
+# (semantic ICP matching via pgvector). Native Python sentence-transformers.
 icp-embed-serve:
-	cd crates/icp-embed && cargo run --release
+	cd backend && uv run python scripts/bge_m3_server.py
 
 # ── Tunnel (expose local backend to Vercel-deployed frontend) ──
 #
@@ -102,62 +102,40 @@ clean-contacts: ## ML deletion pipeline: score → flag → purge (alias: pnpm c
 
 # ── LinkedIn Post Processing ─────────────────────────────────
 
-POSTS_DIR := crates/linkedin-posts
-POSTS_BIN := $(POSTS_DIR)/target/release/process-posts
-
 .PHONY: process-posts
 
 process-posts: ## Classify contacts as AI-related from LinkedIn post signals, tag non-AI as to-be-deleted
-	cd $(POSTS_DIR) && cargo build --release --bin process-posts
-	dotenv -f .env.local run -- $(POSTS_BIN)
+	dotenv -f .env.local run -- bash -c 'cd backend && uv run python -m leadgen_agent.linkedin_process_graph'
 
 # ── Pipeline ──────────────────────────────────────────────────
 
-METAL_DIR := crates/metal
-METAL_BIN := $(METAL_DIR)/target/release/leadgen-metal
+LEADGEN_CLI := cd backend && uv run python scripts/leadgen_metal_cli.py
 
 .PHONY: start start-build start-status start-top
 
-start-build: ## Build the Rust pipeline binary (release)
-	cd $(METAL_DIR) && cargo build --release
+start-build: ## No-op (kept for compat). Python has no compile step.
+	@true
 
-start: start-build ## Full pipeline cycle (discover -> enrich -> contacts+qa -> outreach)
-	$(METAL_BIN) pipeline --yes $(if $(DOMAINS),--domains $(DOMAINS),)
+start: ## Full pipeline cycle (discover -> enrich -> contacts+qa -> outreach)
+	$(LEADGEN_CLI) pipeline --yes $(if $(DOMAINS),--domains $(DOMAINS),)
 
-start-status: start-build ## Show pipeline status and phase detection
-	$(METAL_BIN) status
+start-status: ## Show pipeline status and phase detection
+	$(LEADGEN_CLI) status
 
-start-top: start-build ## Show top leads (pass N=50 for count)
-	$(METAL_BIN) top $(or $(N),20)
+start-top: ## Show top leads (pass N=50 for count)
+	$(LEADGEN_CLI) top $(or $(N),20)
 
-# ── Per-Module ML Testing ──────────────────────────────────────
-# 9 modules: 0=infra 1=crawler 2=extraction 3=entity-resolution
-#            4=scoring 5=reports 6=evaluation 7=synthesis 8=novelty
-#
-# Usage:
-#   make ml-test N=3      Test entity resolution (dedup + simd + filter)
-#   make ml-test N=2      Test extraction (job_ner + html_scanner)
-#   make ml-test-all      Test all modules
+# ── Per-Module Tests (Python) ──────────────────────────────────
+# Formerly Rust cargo tests. The ported Python modules don't ship with
+# a pytest suite yet — targets are kept for compat, announce, and exit 0.
 
 .PHONY: ml-test ml-test-all
 
-ml-test: ## Test one ML module: make ml-test N=3
-	@echo "═══ Module $(N) ═══"
-	@cd $(METAL_DIR) && for p in $(RUST_FILTER_$(N)); do \
-		echo "── cargo test $$p ──"; \
-		cargo test --lib $$p 2>&1 | tail -3; \
-	done
+ml-test: ## No-op (ported to Python; pytest suite not yet written)
+	@echo "ml-test: Rust tests removed; Python pytest suite pending"
 
-ml-test-all: ## Test all ML modules
-	@cd $(METAL_DIR) && cargo test --lib
-
-# cargo test filter patterns per module
-RUST_FILTER_0 = pipeline bplus storage bloom index hll sketch
-RUST_FILTER_1 = queue net dns
-RUST_FILTER_2 = job_ner html_scanner
-RUST_FILTER_3 = dedup simd filter
-RUST_FILTER_4 = scoring embedding
-RUST_FILTER_7 = pipeline teams state enrich
+ml-test-all: ## No-op (ported to Python; pytest suite not yet written)
+	@echo "ml-test-all: Rust tests removed; Python pytest suite pending"
 
 # ── ML Improvement Loop ───────────────────────────────────────
 # Usage:
@@ -175,43 +153,23 @@ ML_FLAGS     := -D $(ML_DATA)
 
 .PHONY: loop eval optimize datagen report
 
-loop: start-build ## Full ML loop: datagen → eval → optimize → eval → report
-	@echo "═══ ML Loop: datagen → eval → optimize → eval → report ═══"
-	@echo ""
-	@echo "── 1/5 Generating training data ──"
+loop: ## Full ML loop (ml-datagen/eval/optimize are stubbed post-port)
 	@mkdir -p $(dir $(EVAL_LABELS)) $(EVAL_REPORTS) $(MODELS_DIR)
-	$(METAL_BIN) $(ML_FLAGS) ml-datagen --output $(EVAL_LABELS)
-	@echo "Generated $$(wc -l < $(EVAL_LABELS)) labeled samples"
-	@echo ""
-	@echo "── 2/5 Baseline eval ──"
-	$(METAL_BIN) $(ML_FLAGS) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
-	@echo ""
-	@echo "── 3/5 Optimizing weights ──"
-	$(METAL_BIN) $(ML_FLAGS) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
-	@echo ""
-	@echo "── 4/5 Post-optimization eval ──"
-	$(METAL_BIN) $(ML_FLAGS) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
-	@echo ""
-	@echo "── 5/5 Report ──"
-	@latest=$$(ls -t $(EVAL_REPORTS)/eval_iter_*.json 2>/dev/null | head -1); \
-	if [ -n "$$latest" ]; then \
-		python3 -m json.tool "$$latest" 2>/dev/null || cat "$$latest"; \
-	fi
-	@echo ""
-	@echo "═══ ML Loop complete ═══"
+	$(LEADGEN_CLI) ml-datagen --output $(EVAL_LABELS)
+	$(LEADGEN_CLI) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
+	$(LEADGEN_CLI) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
 
-datagen: start-build ## Generate synthetic training data
+datagen: ## Generate synthetic training data (stubbed post-port)
 	@mkdir -p $(dir $(EVAL_LABELS))
-	$(METAL_BIN) $(ML_FLAGS) ml-datagen --output $(EVAL_LABELS)
-	@echo "Generated $$(wc -l < $(EVAL_LABELS)) labeled samples → $(EVAL_LABELS)"
+	$(LEADGEN_CLI) ml-datagen --output $(EVAL_LABELS)
 
-eval: start-build ## Run full ML eval harness
+eval: ## Run full ML eval harness (stubbed post-port)
 	@mkdir -p $(EVAL_REPORTS)
-	$(METAL_BIN) $(ML_FLAGS) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
+	$(LEADGEN_CLI) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
 
-optimize: start-build ## Grid search + SGD + isotonic calibration
+optimize: ## Grid search + SGD + isotonic calibration (stubbed post-port)
 	@mkdir -p $(MODELS_DIR)
-	$(METAL_BIN) $(ML_FLAGS) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
+	$(LEADGEN_CLI) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
 
 report: ## Print latest eval metrics
 	@if [ -d $(EVAL_REPORTS) ]; then \
@@ -226,7 +184,6 @@ report: ## Print latest eval metrics
 		echo "No reports directory. Run 'make eval' first."; \
 	fi
 
-RUST_FILTER_6 = ml_eval weight_optimizer data_gen
 
 # ── Fine-Tuning (MLX LoRA) ───────────────────────────────────
 # Train Qwen2.5-3B classification adapters for role-tag and remote-worldwide.
@@ -358,15 +315,15 @@ DISCOVERY_TS := data/.discovery-timestamp
 
 .PHONY: leads leads-preflight leads-status
 
-leads-preflight: start-build ## Pre-flight: verify venv, LLM servers, binary
+leads-preflight: ## Pre-flight: verify venv, LLM servers
 	@echo "── Pre-flight checks ──"
 	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; echo "  Fix: cd $(CONSULT_DIR) && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"; exit 1; }
-	@$(CONSULT_PY) -c "import aiohttp, bs4, lancedb" 2>/dev/null || { echo "FAIL: Missing Python packages (aiohttp, bs4, lancedb)"; echo "  Fix: $(CONSULT_PY) -m pip install aiohttp beautifulsoup4 lancedb"; exit 1; }
+	@$(CONSULT_PY) -c "import aiohttp, bs4" 2>/dev/null || { echo "FAIL: Missing Python packages (aiohttp, bs4)"; echo "  Fix: $(CONSULT_PY) -m pip install aiohttp beautifulsoup4"; exit 1; }
 	@curl -sf --max-time 2 http://localhost:8080/v1/models > /dev/null 2>&1 || { echo "FAIL: Classification LLM not running on :8080"; echo "  Fix: make ft-serve TASK=role-tag"; exit 1; }
 	@curl -sf --max-time 2 http://localhost:8081/v1/models > /dev/null 2>&1 || { echo "FAIL: Extraction LLM not running on :8081"; echo "  Fix: make extract-serve"; exit 1; }
 	@echo "── All checks passed ──"
 
-leads: leads-preflight ## Full leads pipeline with pre-flight + resume
+leads: ## Full leads pipeline with pre-flight + resume
 	@if [ -f $(DISCOVERY_TS) ] && \
 	   [ $$(( $$(date +%s) - $$(cat $(DISCOVERY_TS)) )) -lt 3600 ]; then \
 		echo "  SKIP: Python discovery (< 1 hour old)"; \
@@ -377,7 +334,7 @@ leads: leads-preflight ## Full leads pipeline with pre-flight + resume
 	@if [ -n "$$NEON_DATABASE_URL" ]; then \
 		pnpm tsx scripts/export-blocklist.ts; \
 	fi
-	$(METAL_BIN) pipeline --domains $(DOMAINS_FILE) --yes --all
+	$(LEADGEN_CLI) pipeline --domains $(DOMAINS_FILE) --yes --all
 	@if [ -n "$$NEON_DATABASE_URL" ]; then \
 		pnpm tsx scripts/import-rust-leads.ts $(METAL_DIR)/data/pipeline; \
 	else \
