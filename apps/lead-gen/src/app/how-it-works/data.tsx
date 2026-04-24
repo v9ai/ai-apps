@@ -4,16 +4,16 @@ import type { Paper, PipelineAgent, Stat, TechnicalDetail, ExtraSection } from "
 
 export const papers: Paper[] = [
   {
-    slug: "nextjs-15",
+    slug: "nextjs-16",
     number: 1,
-    title: "Next.js 15",
+    title: "Next.js 16",
     category: "Frontend",
     wordCount: 0,
     readingTimeMin: 2,
     authors: "Vercel",
-    year: 2024,
-    finding: "React framework with App Router for server-side rendering, static generation, and API routes",
-    relevance: "Used for the entire web application, with server components (e.g., src/app/contacts/contacts-client.tsx) and client components for interactive parts like CompanyContactsClient",
+    year: 2025,
+    finding: "React 19 framework with App Router — server components, streaming, and typed route handlers",
+    relevance: "Powers every surface of the app. Server components drive list pages (src/app/contacts/contacts-client.tsx); client components handle interactive pieces like CompanyContactsClient.",
     url: "https://nextjs.org/docs",
     categoryColor: "var(--blue-9)",
   },
@@ -158,17 +158,17 @@ export const papers: Paper[] = [
     categoryColor: "var(--blue-9)",
   },
   {
-    slug: "vanilla-extract",
+    slug: "pandacss",
     number: 12,
-    title: "Vanilla Extract",
+    title: "PandaCSS + Radix Themes",
     category: "Frontend",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Vanilla Extract",
-    year: 2024,
-    finding: "CSS-in-JS library with zero-runtime styles and TypeScript support",
-    relevance: "Styles the application with Next.js plugin, providing type-safe CSS for components like LandingPipeline",
-    url: "https://vanilla-extract.style/docs",
+    authors: "Chakra / Radix",
+    year: 2025,
+    finding: "Build-time atomic CSS with recipe variants, layered on top of Radix Themes primitives for accessible interaction patterns.",
+    relevance: "Recipes live in src/recipes/*.ts (badge, button, card, landing, nav, stepper, etc.); interactive primitives like Card, Badge, Heading come from @radix-ui/themes. Zero runtime CSS-in-JS cost.",
+    url: "https://panda-css.com/docs",
     categoryColor: "var(--blue-9)",
   },
 ];
@@ -688,7 +688,7 @@ return parsed.success ? parsed.data : null;`,
   },
   {
     heading: "LinkedIn Post Analysis Pipeline",
-    content: "Post analysis orchestrates two parallel inference calls: SalesCue (DeBERTa-based) for semantic skill extraction, and the local Candle server for JobBERT-v2 embeddings. Both run concurrently via Promise.all — the skill tags feed intent classification while embeddings enable similarity search. Batch processing analyzes up to 200 un-analyzed posts per mutation call, writing embeddings and skills back to the linkedin_posts table. The dual-model approach gives both structured tags (filterable) and dense vectors (searchable).",
+    content: "Post analysis orchestrates two parallel inference calls: SalesCue (DeBERTa-based) for semantic skill extraction, and a local JobBERT-v3 embedder served from the `jobbert` Rust crate (XLMRoberta → mean-pool → Dense 768→1024 Tanh → L2, 1024-dim, 64-token max). Both run concurrently via Promise.all — the skill tags feed intent classification while the dense vectors land in LanceDB for similarity search. Batch processing analyzes up to 200 un-analyzed posts per mutation call, writing embeddings and skills back to the linkedin_posts table. The dual-model approach gives both structured tags (filterable) and dense vectors (searchable).",
     codeBlock: `interface PostAnalysis {
   skills: ExtractedSkill[];
   jobEmbedding: number[];
@@ -792,6 +792,35 @@ class SkillExtractor(BaseModule):
         pooled = summed / mask.sum(dim=1).clamp(min=1e-9)
         self._skill_embeds = F.normalize(pooled, p=2, dim=1)
         return self._skill_embeds`,
+  },
+  {
+    heading: "NEON SIMD cosine similarity — ~10 ns per 384-dim vector",
+    content: "The workhorse Rust crate `metal` compiles its similarity kernel down to ARM NEON intrinsics on aarch64. `cosine_sim_int8_neon` reads 16 INT8 bytes per iteration, widens u8→u16→u32→f32 via `vmovl` lanes, dequantizes through fused multiply-add (`vfmaq_f32`), and accumulates dot + norm in a single pass. Four float32x4 accumulators give instruction-level parallelism on the M1's wide decode. Source comments claim ~30 cycles / ~10 ns at 3.2 GHz — a single cosine over 384 dimensions. This is the primitive under every INT8-quantized recall path: skill matching, post similarity, ICP centroid distance.",
+    codeBlock: `// crates/metal/src/similarity/simd.rs:412
+// For 384 dims: 24 iterations × 4 FMA = 96 FMAs ≈ 30 cycles ≈ 10 ns @ 3.2 GHz
+#[cfg(target_arch = "aarch64")]
+unsafe fn cosine_sim_int8_neon(
+    query: &[f32], quant_data: &[u8],
+    scale: f32, bias: f32, query_norm: f32, dim: usize,
+) -> f32 {
+    use core::arch::aarch64::*;
+    let scale_v = vdupq_n_f32(scale);
+    let bias_v  = vdupq_n_f32(bias);
+    let mut dot_acc    = vdupq_n_f32(0.0);
+    let mut norm_c_acc = vdupq_n_f32(0.0);
+    let mut i = 0;
+    while i + 16 <= dim {                              // 16 INT8 per iter
+        let raw  = vld1q_u8(quant_data.as_ptr().add(i));
+        let lo16 = vmovl_u8(vget_low_u8(raw));         // u8 → u16
+        let f0   = vcvtq_f32_u32(vmovl_u16(vget_low_u16(lo16)));
+        let c0   = vfmaq_f32(bias_v, f0, scale_v);     // dequantize via FMA
+        let q0   = vld1q_f32(query.as_ptr().add(i));
+        dot_acc    = vfmaq_f32(dot_acc, q0, c0);       // dot  += q * c
+        norm_c_acc = vfmaq_f32(norm_c_acc, c0, c0);    // norm += c * c
+        i += 16;
+    }
+    vaddvq_f32(dot_acc) / (query_norm * vaddvq_f32(norm_c_acc).sqrt() + 1e-10)
+}`,
   },
   {
     heading: "Follow-Up Scheduler Cron",
@@ -1190,5 +1219,61 @@ export function isAdminEmail(email: string | null | undefined): boolean {
       metadata: {"terminal": "true — no follow-ups, no auto-drafts"},
     },
     ],
+  },
+  {
+    type: "card-grid",
+    heading: "Rust crate inventory (crates/)",
+    description: "Sixteen working Rust crates handle every non-LLM workload: crawling, embedding, classification, ICP scoring, email verification, storage. All compile for M1 aarch64 with NEON SIMD in hot paths; ML crates use Candle with the Metal feature. The `candle` crate is a resolution stub only — real inference lives in `metal`, `icp-embed`, and `jobbert`.",
+    items: [
+      { label: "agentic-search", value: "Parallel codebase search — DeepSeek decomposes a query, spawns N tokio workers, each runs a Glob → Grep → Read tool loop, synthesizes.", metadata: { runtime: "bin", deps: "deepseek + tokio" } },
+      { label: "ats", value: "Greenhouse job-board API consumer with parallel fetch.", metadata: { runtime: "lib + bin", deps: "reqwest" } },
+      { label: "candle", value: "Resolution stub — real ML lives in metal, icp-embed, jobbert.", metadata: { runtime: "stub", deps: "n/a" } },
+      { label: "common-crawl", value: "Seed discovery: CDX lookup → WARC fetch → HTML scrape → Neon upsert.", metadata: { runtime: "bin", deps: "flate2 + scraper + sqlx" } },
+      { label: "companies-verify", value: "Candle BGE embeddings + LanceDB kNN to verify UK recruitment companies.", metadata: { runtime: "bin", deps: "candle + lancedb" } },
+      { label: "company-cleanup", value: "Same stack as companies-verify, inverted — purges crypto/blockchain companies.", metadata: { runtime: "bin", deps: "candle + lancedb" } },
+      { label: "consultancies", value: "Discover top-tier AI/ML consultancies across EU/UK/US and upsert to Neon.", metadata: { runtime: "2 bins", deps: "reqwest + scraper" } },
+      { label: "email-verifier", value: "Local DNS MX + SMTP RCPT-TO + catch-all canary — free NeverBounce alternative available as a library.", metadata: { runtime: "lib + bin", deps: "hickory-resolver" } },
+      { label: "gh", value: "GitHub API client for AI tier, tech-stack, and hiring-signal extraction.", metadata: { runtime: "lib + 5 bins", deps: "octocrab + feature flags" } },
+      { label: "icp", value: "Pure ICP scoring — 64-byte-aligned ContactBatch SoA for 256 contacts, logistic + isotonic calibration.", metadata: { runtime: "lib", deps: "serde only" } },
+      { label: "icp-embed", value: "BGE-M3 embedder (1024-dim, CLS-pooled) via Candle-Metal, served over axum HTTP.", metadata: { runtime: "lib + bin", deps: "candle + hf-hub + axum" } },
+      { label: "job-prep", value: "Eleven research-agent binaries — interview prep, market research, company deep-dives.", metadata: { runtime: "11 bins", deps: "deepseek + semantic-scholar" } },
+      { label: "jobbert", value: "JobBERT-v3 embedder: XLMRoberta → mean-pool → Dense(768→1024) tanh → L2-norm.", metadata: { runtime: "lib", deps: "candle + XLMRoberta" } },
+      { label: "lead-papers", value: "Academic paper → lead matcher: Semantic Scholar → LanceDB → Neon.", metadata: { runtime: "bin", deps: "candle + lancedb + strsim" } },
+      { label: "linkedin-posts", value: "axum HTTP + LanceDB store, JobBERT-v3 embeddings computed at write time.", metadata: { runtime: "lib + 3 bins", deps: "jobbert + lancedb + axum" } },
+      { label: "metal", value: "The kitchen sink: storage (WAL + pages + B+ tree), inverted index, bloom/HLL, dedup, email FSM, NEON SIMD kernels, ONNX-backed BGE / JobBERT-v3 / ConTeXT-Skill embedders.", metadata: { runtime: "lib + bin", deps: "~40+ modules" } },
+      { label: "scholar-graph", value: "Academic co-authorship graph ingest → Neon PostgreSQL.", metadata: { runtime: "bin", deps: "tokio-postgres-rustls" } },
+    ],
+  },
+  {
+    type: "code",
+    heading: "JobBERT-v3 asymmetric anchor head (Rust + Candle)",
+    description: "`crates/jobbert` loads TechWolf/JobBERT-v3 over Candle, then applies a linear Dense(768→1024) + Tanh projection — the 'anchor' head of the sentence-transformers Router. The positive head is training-only; at inference time anchor is the canonical embedding. Output is L2-normalized for cosine via dot product.",
+    code: `// crates/jobbert/src/embedder.rs:35
+// Dense projection: Linear(768 → 1024) + Tanh
+fn forward(&self, x: &Tensor) -> Result<Tensor> {
+    // x: [batch, 768] → [batch, 1024]
+    let out = x.broadcast_matmul(&self.weight.t()?)?;
+    let out = out.broadcast_add(&self.bias)?;
+    let out = out.tanh()?;              // asymmetric anchor head
+    Ok(out)
+}`,
+  },
+  {
+    type: "code",
+    heading: "Catch-all canary probe (email-verifier, local SMTP FSM)",
+    description: "Before SMTP-probing the real address, `email-verifier` probes a deterministically nonexistent canary like `xkzqpqxzqpq9zzz@<domain>`. If the MX host accepts that, every address will — the domain is flagged CatchAll and skipped for primary sends. The companion FSM lives in `metal::email_metal::smtp_fsm` (Banner → Ehlo → MailFrom → RcptTo → CatchAllTest → Quit → Done).",
+    code: `// crates/email-verifier/src/lib.rs:101 — catch-all canary probe
+let canary = format!("xkzqpqxzqpq9zzz@{domain}");
+if smtp::smtp_probe(&canary, mx_host, config.timeout_secs).await
+    == smtp::SmtpResult::Valid
+{
+    flags.push(VerificationFlag::CatchAll);
+    return VerificationOutcome::new(
+        VerificationResult::CatchAll, flags, None,
+        start.elapsed().as_millis() as u64,
+    );
+}
+// 7. SMTP probe for the real address
+let smtp_result = smtp::smtp_probe(&email, mx_host, config.timeout_secs).await;`,
   },
 ];
