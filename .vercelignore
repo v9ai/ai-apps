@@ -43,6 +43,12 @@ apps/knowledge/evals
 apps/knowledge/backend
 apps/bricks/.next
 apps/bricks/backend
+apps/research-thera/.next
+apps/research-thera/backend
+apps/research-thera/research-output
+apps/research-thera/evals
+apps/research-thera/better-auth
+apps/research-thera/.agents
 __pycache__
 *.egg-info
 .langgraph_api
