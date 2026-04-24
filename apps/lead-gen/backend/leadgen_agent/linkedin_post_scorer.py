@@ -478,7 +478,17 @@ class PostAnalysis:
 
 
 def analyze(post: dict[str, Any], scorer: PostIntentScorer) -> PostAnalysis:
-    """Port of ``analysis::analyze``."""
+    """Port of ``analysis::analyze``.
+
+    TODO(port): the Rust crate ran a companion NER FSM
+    (``crates/linkedin-posts/src/post_ner.rs``) that extracted companies,
+    roles, and skills from post text and stored them as a JSON blob
+    alongside the logistic features. That FSM is NOT ported — scoring
+    here is purely keyword-feature-based and ``entities_json`` writes
+    to the DB as NULL. If downstream consumers start reading structured
+    post entities, wire a Python NER pass (e.g. spaCy, JobBERT) and
+    populate that column from this function.
+    """
     text = post.get("post_text") or ""
     if not text:
         intents = PostIntents(noise=1.0)

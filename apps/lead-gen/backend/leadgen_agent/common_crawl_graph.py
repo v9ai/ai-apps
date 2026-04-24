@@ -868,7 +868,10 @@ def upsert_snapshot(
             return None
 
         text_sample = content.text[:500]
-        source_type = "LIVE" if not record.filename else "COMMONCRAWL"
+        # Drizzle enum (see packages/company-intel/src/schema.ts) is
+        # {"COMMONCRAWL","LIVE_FETCH","MANUAL","PARTNER","BRAVE_SEARCH"} —
+        # use "LIVE_FETCH" so TypeScript consumers type-check against this row.
+        source_type = "LIVE_FETCH" if not record.filename else "COMMONCRAWL"
         cur.execute(
             """
             INSERT INTO company_snapshots

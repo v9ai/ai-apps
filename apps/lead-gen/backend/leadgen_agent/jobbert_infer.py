@@ -313,6 +313,13 @@ def extract_skills(text: str) -> list[dict]:
     Returns list of dicts with keys: ``span`` (str), ``label`` (``"SKILL"``),
     ``score`` (float mean softmax over span tokens), ``start``/``end`` (char
     offsets in the original text).
+
+    TODO(port): the Rust crate's ``taxonomy.rs`` mapped raw NER spans to a
+    canonical ESCO / internal skill ID via fuzzy match against a curated
+    skill taxonomy. That mapping layer is NOT ported — the returned
+    ``label`` is always literal ``"SKILL"`` and ``span`` is the raw surface
+    form. Downstream callers that need canonical skill IDs must apply
+    their own taxonomy-mapping step.
     """
     return _get_classifier().extract(text)
 

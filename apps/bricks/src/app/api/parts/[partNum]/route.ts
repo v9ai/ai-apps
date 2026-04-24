@@ -42,17 +42,19 @@ export async function GET(
       const colorsRes = await fetch(`${PARTS_BASE}/${resolvedNum}/colors/`, { headers });
       if (colorsRes.ok) {
         const colorsData = await colorsRes.json();
-        colors = (colorsData.results ?? []).map(
-          (c: { color_id: number; color_name: string; part_img_url: string | null; elements: string[]; num_sets: number }) => ({
-            id: c.color_id,
-            name: c.color_name,
-            imageUrl: c.part_img_url
-              ?? (c.elements?.length
-                ? `https://cdn.rebrickable.com/media/parts/elements/${c.elements[0]}.jpg`
-                : null),
-            numSets: c.num_sets,
-          })
-        );
+        colors = (colorsData.results ?? [])
+          .map(
+            (c: { color_id: number; color_name: string; part_img_url: string | null; elements: string[]; num_sets: number }) => ({
+              id: c.color_id,
+              name: c.color_name,
+              imageUrl: c.part_img_url
+                ?? (c.elements?.length
+                  ? `https://cdn.rebrickable.com/media/parts/elements/${c.elements[0]}.jpg`
+                  : null),
+              numSets: c.num_sets,
+            })
+          )
+          .sort((a: { numSets: number }, b: { numSets: number }) => b.numSets - a.numSets);
       }
     } catch {
       // colors are optional, continue without them
