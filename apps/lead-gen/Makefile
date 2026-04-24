@@ -145,11 +145,11 @@ ml-test-all: ## No-op (ported to Python; pytest suite not yet written)
 #   make datagen              Generate synthetic training data
 #   make report               Print current metrics dashboard
 
-ML_DATA      := $(METAL_DIR)/data
+ML_DATA      := backend/data
 EVAL_LABELS  := $(ML_DATA)/eval_labels.jsonl
 EVAL_REPORTS := $(ML_DATA)/reports
 MODELS_DIR   := $(ML_DATA)/models
-ML_FLAGS     := -D $(ML_DATA)
+ML_FLAGS     :=
 
 .PHONY: loop eval optimize datagen report
 
@@ -277,7 +277,7 @@ intent-loop: ## Full cycle: export → train → distill
 	@echo ""
 	@echo "═══ Intent Signal training complete ═══"
 	@echo "Start serving: make intent-serve"
-	@echo "Distilled weights: crates/metal/data/models/intent_signal_weights.json"
+	@echo "Distilled weights: backend/data/models/intent_signal_weights.json"
 
 intent-detect: ## Run intent signal detection on all companies (TypeScript)
 	dotenv -f .env.local run -- pnpm tsx scripts/detect-intent-signals.ts
@@ -365,23 +365,23 @@ nl-search: ## NL company search via Qwen (QUERY="..." DISCOVER=1)
 	@curl -sf --max-time 2 http://localhost:8080/v1/models > /dev/null 2>&1 || { echo "FAIL: Qwen server not running on :8080"; echo "  Fix: make ft-serve TASK=role-tag"; exit 1; }
 	$(CONSULT_PY) $(CONSULT_DIR)/nl_search.py --query "$(QUERY)" $(if $(DISCOVER),--discover,)
 
-leads-status: start-build ## Show pipeline progress history
-	$(METAL_BIN) status
+leads-status: ## Show pipeline progress history
+	$(LEADGEN_CLI) status
 
 # ── Blocklist ────────────────────────────────────────────────
 
 .PHONY: block unblock blocklist export-blocklist
 
-block: start-build ## Block a domain: make block DOMAIN=example.com
+block: ## Block a domain: make block DOMAIN=example.com
 	@test -n "$(DOMAIN)" || { echo "Usage: make block DOMAIN=example.com"; exit 1; }
-	$(METAL_BIN) block add $(DOMAIN)
+	$(LEADGEN_CLI) block add $(DOMAIN)
 
-unblock: start-build ## Unblock a domain: make unblock DOMAIN=example.com
+unblock: ## Unblock a domain: make unblock DOMAIN=example.com
 	@test -n "$(DOMAIN)" || { echo "Usage: make unblock DOMAIN=example.com"; exit 1; }
-	$(METAL_BIN) block remove $(DOMAIN)
+	$(LEADGEN_CLI) block remove $(DOMAIN)
 
-blocklist: start-build ## Show blocked domains
-	$(METAL_BIN) block list
+blocklist: ## Show blocked domains
+	$(LEADGEN_CLI) block list
 
 export-blocklist: ## Export blocked domains from Neon → data/blocklist.txt
 	pnpm tsx scripts/export-blocklist.ts
