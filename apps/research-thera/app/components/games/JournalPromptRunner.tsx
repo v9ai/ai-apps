@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button, Card, Flex, Heading, Text, TextArea, Callout } from "@radix-ui/themes";
+import { Box, Button, Card, Flex, Heading, Text, TextArea, Callout } from "@radix-ui/themes";
 import { CheckCircledIcon } from "@radix-ui/react-icons";
+import { MicButton } from "@/app/components/games/MicButton";
 
 type Content = { prompts: string[]; writeToNote?: boolean };
 
@@ -125,14 +126,32 @@ export function JournalPromptRunner({
         <Heading size={promptSize} style={{ lineHeight: 1.35 }}>
           {prompt}
         </Heading>
-        <TextArea
-          value={current}
-          onChange={(e) => setCurrent(e.target.value)}
-          placeholder={t.placeholder}
-          rows={large ? 10 : 8}
-          size={large ? "3" : "2"}
-          style={{ fontSize: large ? "1.25rem" : undefined, lineHeight: 1.5, flex: 1 }}
-        />
+        <Box style={{ position: "relative", flex: 1, display: "flex" }}>
+          <TextArea
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            placeholder={t.placeholder}
+            rows={large ? 10 : 8}
+            size={large ? "3" : "2"}
+            style={{
+              fontSize: large ? "1.25rem" : "16px",
+              lineHeight: 1.5,
+              flex: 1,
+              paddingRight: 56,
+            }}
+          />
+          <Box style={{ position: "absolute", right: 8, bottom: 8 }}>
+            <MicButton
+              language={language}
+              size={large ? "3" : "2"}
+              onTranscript={(delta, isFinal) => {
+                if (!isFinal) return;
+                const sep = current && !current.endsWith(" ") ? " " : "";
+                setCurrent(current + sep + delta.trim());
+              }}
+            />
+          </Box>
+        </Box>
         <Flex justify="between" mt="auto">
           <Button
             variant="soft"

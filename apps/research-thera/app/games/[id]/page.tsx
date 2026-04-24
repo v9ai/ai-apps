@@ -279,9 +279,21 @@ function GameDetailContent({ id }: { id: number }) {
           zIndex: 200,
           background: "var(--color-background)",
           overflow: "hidden",
+          touchAction: "manipulation",
+          overscrollBehavior: "contain",
+          WebkitTouchCallout: "none",
         }}
       >
-        <Flex direction="column" style={{ height: "100dvh" }}>
+        <Flex
+          direction="column"
+          style={{
+            height: "100vh",
+            // @ts-expect-error - CSS env/-webkit custom values
+            height: "-webkit-fill-available",
+            minHeight: "100dvh",
+            paddingBottom: "env(safe-area-inset-bottom)",
+          }}
+        >
           {/* Slim header bar */}
           <Flex
             justify="between"

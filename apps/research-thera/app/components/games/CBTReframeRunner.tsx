@@ -2,16 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  Box,
   Button,
   Card,
   Flex,
   Heading,
   Text,
   TextArea,
-  RadioGroup,
   Callout,
 } from "@radix-ui/themes";
-import { CheckCircledIcon } from "@radix-ui/react-icons";
+import { CheckCircledIcon, CheckIcon } from "@radix-ui/react-icons";
+import { MicButton } from "@/app/components/games/MicButton";
 
 type Step = {
   kind: "situation" | "thought" | "distortion" | "reframe";
@@ -150,27 +151,89 @@ export function CBTReframeRunner({
         </Heading>
 
         {step.kind === "distortion" && step.options ? (
-          <RadioGroup.Root value={current} onValueChange={setCurrent} size={large ? "3" : "2"}>
-            <Flex direction="column" gap={large ? "3" : "2"}>
-              {step.options.map((opt) => (
-                <Text as="label" size={large ? "4" : "2"} key={opt} style={{ cursor: "pointer", lineHeight: 1.4 }}>
-                  <Flex gap="3" align="start">
-                    <RadioGroup.Item value={opt} style={{ marginTop: 4 }} />
-                    <span>{opt}</span>
+          <Flex direction="column" gap={large ? "3" : "2"}>
+            {step.options.map((opt) => {
+              const selected = current === opt;
+              return (
+                <Box
+                  key={opt}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setCurrent(opt)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setCurrent(opt);
+                    }
+                  }}
+                  style={{
+                    cursor: "pointer",
+                    padding: large ? "var(--space-4)" : "var(--space-3)",
+                    minHeight: large ? 64 : 56,
+                    borderRadius: "var(--radius-3)",
+                    background: selected ? "var(--indigo-a4)" : "var(--gray-a2)",
+                    border: selected
+                      ? "2px solid var(--indigo-9)"
+                      : "2px solid var(--gray-a4)",
+                    transition: "background 120ms, border-color 120ms",
+                    touchAction: "manipulation",
+                    userSelect: "none",
+                    WebkitTapHighlightColor: "transparent",
+                  }}
+                >
+                  <Flex gap="3" align="center">
+                    <Box
+                      style={{
+                        flex: "0 0 auto",
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        border: selected
+                          ? "2px solid var(--indigo-9)"
+                          : "2px solid var(--gray-a6)",
+                        background: selected ? "var(--indigo-9)" : "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                      }}
+                    >
+                      {selected && <CheckIcon width="18" height="18" />}
+                    </Box>
+                    <Text size={large ? "4" : "3"} style={{ lineHeight: 1.4 }}>
+                      {opt}
+                    </Text>
                   </Flex>
-                </Text>
-              ))}
-            </Flex>
-          </RadioGroup.Root>
+                </Box>
+              );
+            })}
+          </Flex>
         ) : (
-          <TextArea
-            value={current}
-            onChange={(e) => setCurrent(e.target.value)}
-            placeholder={t.placeholder}
-            rows={large ? 6 : 5}
-            size={large ? "3" : "2"}
-            style={{ fontSize: large ? "1.25rem" : undefined, lineHeight: 1.5 }}
-          />
+          <Box style={{ position: "relative" }}>
+            <TextArea
+              value={current}
+              onChange={(e) => setCurrent(e.target.value)}
+              placeholder={t.placeholder}
+              rows={large ? 6 : 5}
+              size={large ? "3" : "2"}
+              style={{
+                fontSize: large ? "1.25rem" : "16px",
+                lineHeight: 1.5,
+                paddingRight: 56,
+              }}
+            />
+            <Box style={{ position: "absolute", right: 8, bottom: 8 }}>
+              <MicButton
+                language={language}
+                size={large ? "3" : "2"}
+                onTranscript={(delta, isFinal) => {
+                  if (!isFinal) return;
+                  const sep = current && !current.endsWith(" ") ? " " : "";
+                  setCurrent(current + sep + delta.trim());
+                }}
+              />
+            </Box>
+          </Box>
         )}
 
         <Flex justify="between" mt="auto">

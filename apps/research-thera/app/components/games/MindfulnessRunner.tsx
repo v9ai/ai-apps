@@ -152,8 +152,11 @@ export function MindfulnessRunner({
               align="center"
               style={{
                 letterSpacing: "-0.02em",
-                fontSize: large ? "clamp(3rem, 7vw, 5.5rem)" : undefined,
-                lineHeight: 1.1,
+                fontSize: large ? "clamp(3rem, 8vw, 7rem)" : undefined,
+                lineHeight: 1.05,
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                WebkitTouchCallout: "none",
               }}
             >
               {step.cue}
@@ -163,9 +166,11 @@ export function MindfulnessRunner({
             size={large ? "6" : "4"}
             align="center"
             style={{
-              maxWidth: large ? 560 : 420,
+              maxWidth: large ? 620 : 420,
               lineHeight: 1.4,
-              fontSize: large ? "clamp(1.25rem, 2.5vw, 1.75rem)" : undefined,
+              fontSize: large ? "clamp(1.25rem, 2.5vw, 2rem)" : undefined,
+              userSelect: "none",
+              WebkitUserSelect: "none",
             }}
           >
             {step.instruction}
