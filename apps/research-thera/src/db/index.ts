@@ -3688,6 +3688,176 @@ export async function getCharacteristicsForFamilyMember(familyMemberId: number, 
 }
 
 // ============================================
+// Games
+// ============================================
+
+type GameRow = {
+  id: number;
+  userId: string;
+  goalId: number | null;
+  issueId: number | null;
+  familyMemberId: number | null;
+  type: string;
+  title: string;
+  description: string | null;
+  content: string;
+  language: string | null;
+  estimatedMinutes: number | null;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+function mapGameRow(row: Record<string, unknown>): GameRow {
+  return {
+    id: row.id as number,
+    userId: row.user_id as string,
+    goalId: (row.goal_id as number) ?? null,
+    issueId: (row.issue_id as number) ?? null,
+    familyMemberId: (row.family_member_id as number) ?? null,
+    type: row.type as string,
+    title: row.title as string,
+    description: (row.description as string) ?? null,
+    content: row.content as string,
+    language: (row.language as string) ?? null,
+    estimatedMinutes: (row.estimated_minutes as number) ?? null,
+    source: row.source as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function listGames(opts: {
+  userId: string;
+  type?: string;
+  goalId?: number;
+  issueId?: number;
+  familyMemberId?: number;
+}): Promise<GameRow[]> {
+  // Union of user's own games + shared SEED games.
+  const rows = await neonSql`
+    SELECT * FROM games
+    WHERE user_id = ${opts.userId} OR user_id = '__seed__'
+    ORDER BY
+      CASE WHEN user_id = '__seed__' THEN 1 ELSE 0 END,
+      created_at DESC
+  `;
+  let all = rows.map(mapGameRow);
+  if (opts.type) all = all.filter((g) => g.type === opts.type);
+  if (opts.goalId) all = all.filter((g) => g.goalId === opts.goalId);
+  if (opts.issueId) all = all.filter((g) => g.issueId === opts.issueId);
+  if (opts.familyMemberId) all = all.filter((g) => g.familyMemberId === opts.familyMemberId);
+  return all;
+}
+
+export async function getGame(id: number, userId: string): Promise<GameRow | null> {
+  const rows = await neonSql`
+    SELECT * FROM games WHERE id = ${id} AND (user_id = ${userId} OR user_id = '__seed__')
+  `;
+  if (rows.length === 0) return null;
+  return mapGameRow(rows[0]);
+}
+
+export async function createGame(input: {
+  userId: string;
+  type: string;
+  title: string;
+  content: string;
+  description?: string | null;
+  goalId?: number | null;
+  issueId?: number | null;
+  familyMemberId?: number | null;
+  language?: string | null;
+  estimatedMinutes?: number | null;
+  source?: string;
+}): Promise<number> {
+  const rows = await neonSql`
+    INSERT INTO games (user_id, goal_id, issue_id, family_member_id, type, title, description, content, language, estimated_minutes, source)
+    VALUES (
+      ${input.userId},
+      ${input.goalId ?? null},
+      ${input.issueId ?? null},
+      ${input.familyMemberId ?? null},
+      ${input.type},
+      ${input.title},
+      ${input.description ?? null},
+      ${input.content},
+      ${input.language ?? null},
+      ${input.estimatedMinutes ?? null},
+      ${input.source ?? "USER"}
+    )
+    RETURNING id
+  `;
+  return rows[0].id as number;
+}
+
+export async function updateGame(
+  id: number,
+  userId: string,
+  input: {
+    title?: string | null;
+    description?: string | null;
+    content?: string | null;
+    language?: string | null;
+    estimatedMinutes?: number | null;
+  },
+): Promise<void> {
+  await neonSql`
+    UPDATE games SET
+      title = COALESCE(${input.title ?? null}, title),
+      description = COALESCE(${input.description ?? null}, description),
+      content = COALESCE(${input.content ?? null}, content),
+      language = COALESCE(${input.language ?? null}, language),
+      estimated_minutes = COALESCE(${input.estimatedMinutes ?? null}, estimated_minutes),
+      updated_at = NOW()
+    WHERE id = ${id} AND user_id = ${userId}
+  `;
+}
+
+export async function deleteGame(id: number, userId: string): Promise<void> {
+  // Seed games can't be deleted by users — scope delete to user's own rows.
+  await neonSql`DELETE FROM games WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+export async function logGameCompletion(input: {
+  gameId: number;
+  userId: string;
+  durationSeconds?: number | null;
+  responses?: string | null;
+  linkedNoteId?: number | null;
+}): Promise<number> {
+  const rows = await neonSql`
+    INSERT INTO game_completions (game_id, user_id, duration_seconds, responses, linked_note_id)
+    VALUES (
+      ${input.gameId},
+      ${input.userId},
+      ${input.durationSeconds ?? null},
+      ${input.responses ?? null},
+      ${input.linkedNoteId ?? null}
+    )
+    RETURNING id
+  `;
+  return rows[0].id as number;
+}
+
+export async function listGameCompletions(gameId: number, userId: string) {
+  const rows = await neonSql`
+    SELECT * FROM game_completions
+    WHERE game_id = ${gameId} AND user_id = ${userId}
+    ORDER BY completed_at DESC
+  `;
+  return rows.map((row) => ({
+    id: row.id as number,
+    gameId: row.game_id as number,
+    userId: row.user_id as string,
+    durationSeconds: (row.duration_seconds as number) ?? null,
+    responses: (row.responses as string) ?? null,
+    linkedNoteId: (row.linked_note_id as number) ?? null,
+    completedAt: row.completed_at as string,
+  }));
+}
+
+// ============================================
 // Namespace export
 // ============================================
 
@@ -3872,5 +4042,13 @@ export const db = {
   deleteAffirmation,
   // Family Member Characteristics
   getCharacteristicsForFamilyMember,
+  // Games
+  listGames,
+  getGame,
+  createGame,
+  updateGame,
+  deleteGame,
+  logGameCompletion,
+  listGameCompletions,
 };
 
