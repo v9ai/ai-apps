@@ -170,42 +170,49 @@ async def load_bogdan_context(state: BogdanDiscussionState) -> dict:
                 await cur.execute(
                     "SELECT id, title, description, status, priority, tags "
                     "FROM goals WHERE family_member_id = %s AND user_id = %s "
-                    "AND (status IS NULL OR status != 'ARCHIVED') "
-                    "ORDER BY created_at DESC LIMIT 5",
+                    "ORDER BY CASE status WHEN 'active' THEN 1 WHEN 'in_progress' THEN 2 ELSE 3 END, "
+                    "created_at DESC LIMIT 10",
                     (family_member_id, user_email),
                 )
                 goals = await cur.fetchall()
+                goal_ids: list[int] = []
                 if goals:
                     g_lines = []
                     for g_id, g_title, g_desc, g_status, g_prio, g_tags in goals:
+                        goal_ids.append(g_id)
                         line = f"- [GoalID:{g_id}] **{g_title}**"
                         if g_status:
                             line += f" [{g_status}]"
                         if g_prio:
                             line += f" priority={g_prio}"
                         if g_desc:
-                            line += f"\n  {g_desc[:200]}"
+                            line += f"\n  {g_desc[:250]}"
                         try:
                             tags = json.loads(g_tags) if isinstance(g_tags, str) else (g_tags or [])
                             if tags:
-                                line += f"\n  Tags: {', '.join(tags[:6])}"
+                                line += f"\n  Tags: {', '.join(tags[:8])}"
                         except Exception:
                             pass
                         g_lines.append(line)
                     sections.append(f"### Active Goals ({len(goals)})\n" + "\n".join(g_lines))
 
                 await cur.execute(
-                    "SELECT id, title, category, severity, description "
+                    "SELECT id, title, category, severity, description, journal_entry_id "
                     "FROM issues WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY created_at DESC LIMIT 10",
+                    "ORDER BY CASE severity WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, "
+                    "created_at DESC LIMIT 25",
                     (family_member_id, user_email),
                 )
                 issues = await cur.fetchall()
+                issue_ids: list[int] = []
                 if issues:
-                    i_lines = [
-                        f"- [IssueID:{row[0]}] **{row[1]}** [{row[3]}/{row[2]}]: {(row[4] or '')[:200]}"
-                        for row in issues
-                    ]
+                    i_lines = []
+                    for row in issues:
+                        issue_ids.append(row[0])
+                        line = f"- [IssueID:{row[0]}] **{row[1]}** [{row[3]}/{row[2]}]: {(row[4] or '')[:250]}"
+                        if row[5]:
+                            line += f"  (extracted from JournalEntry:{row[5]})"
+                        i_lines.append(line)
                     sections.append(f"### Known Issues ({len(issues)})\n" + "\n".join(i_lines))
 
                 await cur.execute(
@@ -253,40 +260,104 @@ async def load_bogdan_context(state: BogdanDiscussionState) -> dict:
                     sections.append(f"### Contact Feedbacks ({len(contact_fbs)})\n" + "\n".join(cf_lines))
 
                 await cur.execute(
-                    "SELECT entry_date, title, content, mood, tags "
+                    "SELECT id, entry_date, title, content, mood, tags "
                     "FROM journal_entries WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY entry_date DESC LIMIT 5",
+                    "ORDER BY entry_date DESC LIMIT 20",
                     (family_member_id, user_email),
                 )
                 journals = await cur.fetchall()
                 if journals:
                     j_lines = []
-                    for j_date, j_title, j_content, j_mood, j_tags in journals:
-                        line = f"- {str(j_date)[:10]}"
+                    for j_id, j_date, j_title, j_content, j_mood, j_tags in journals:
+                        line = f"- [JournalEntry:{j_id}] {str(j_date)[:10]}"
                         if j_title:
                             line += f" — {j_title}"
                         if j_mood:
                             line += f" ({j_mood})"
                         if j_content:
-                            line += f"\n  {j_content[:250]}"
+                            line += f"\n  {j_content[:300]}"
                         try:
                             tags = json.loads(j_tags) if isinstance(j_tags, str) else (j_tags or [])
                             if tags:
-                                line += f"\n  Tags: {', '.join(tags[:6])}"
+                                line += f"\n  Tags: {', '.join(tags[:8])}"
                         except Exception:
                             pass
                         j_lines.append(line)
                     sections.append(f"### Recent Journal Entries ({len(journals)})\n" + "\n".join(j_lines))
 
+                # Research papers linked to Bogdan's goals AND issues — the evidence base.
+                # Pull top-N by relevance so the LLM can ground recommendations with real ResearchID citations.
+                research_filter_ids = list(set(goal_ids + issue_ids))
+                if research_filter_ids:
+                    placeholders = ",".join(["%s"] * len(research_filter_ids))
+                    await cur.execute(
+                        f"SELECT id, title, evidence_level, key_findings, therapeutic_techniques, "
+                        f"goal_id, issue_id, year "
+                        f"FROM therapy_research "
+                        f"WHERE goal_id IN ({placeholders}) OR issue_id IN ({placeholders}) "
+                        f"ORDER BY "
+                        f"  CASE evidence_level "
+                        f"    WHEN 'meta-analysis' THEN 1 "
+                        f"    WHEN 'systematic_review' THEN 2 "
+                        f"    WHEN 'rct' THEN 3 "
+                        f"    ELSE 4 END, "
+                        f"  relevance_score DESC NULLS LAST "
+                        f"LIMIT 20",
+                        research_filter_ids + research_filter_ids,
+                    )
+                    research = await cur.fetchall()
+                    if research:
+                        r_lines = []
+                        for r_id, r_title, r_ev, r_kf, r_tt, r_goal, r_issue, r_year in research:
+                            line = f"- [ResearchID:{r_id}] \"{r_title}\""
+                            if r_year:
+                                line += f" ({r_year})"
+                            if r_ev:
+                                line += f" [{r_ev}]"
+                            link_parts = []
+                            if r_goal:
+                                link_parts.append(f"GoalID:{r_goal}")
+                            if r_issue:
+                                link_parts.append(f"IssueID:{r_issue}")
+                            if link_parts:
+                                line += f" → {', '.join(link_parts)}"
+                            try:
+                                kf = json.loads(r_kf) if isinstance(r_kf, str) else (r_kf or [])
+                                if kf:
+                                    line += f"\n  Key findings: {' | '.join(kf[:3])}"
+                            except Exception:
+                                pass
+                            try:
+                                tt = json.loads(r_tt) if isinstance(r_tt, str) else (r_tt or [])
+                                if tt:
+                                    line += f"\n  Techniques: {' | '.join(tt[:3])}"
+                            except Exception:
+                                pass
+                            r_lines.append(line)
+                        sections.append(
+                            f"### Research Evidence Base ({len(research)} papers)\n"
+                            + "\n".join(r_lines)
+                        )
+
                 await cur.execute(
-                    "SELECT summary FROM deep_issue_analyses "
+                    "SELECT id, summary, trigger_issue_id, created_at FROM deep_issue_analyses "
                     "WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY created_at DESC LIMIT 1",
+                    "ORDER BY created_at DESC LIMIT 6",
                     (family_member_id, user_email),
                 )
-                da_row = await cur.fetchone()
-                if da_row and da_row[0]:
-                    sections.append(f"### Prior Deep Analysis Summary\n{(da_row[0] or '')[:500]}")
+                analyses = await cur.fetchall()
+                if analyses:
+                    a_lines = []
+                    for a_id, a_summary, a_trigger, a_created in analyses:
+                        line = f"- [AnalysisID:{a_id}] {str(a_created)[:10]}"
+                        if a_trigger:
+                            line += f" → IssueID:{a_trigger}"
+                        if a_summary:
+                            line += f"\n  {(a_summary or '')[:400]}"
+                        a_lines.append(line)
+                    sections.append(
+                        f"### Prior Deep Analyses ({len(analyses)})\n" + "\n".join(a_lines)
+                    )
     except Exception as exc:
         return {"error": f"load_bogdan_context failed: {exc}"}
 
