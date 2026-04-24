@@ -22,11 +22,20 @@ from typing import Any
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
+from .db_columns import persist_embedding
 from .deep_icp_graph import _dsn
+from .embeddings import (
+    EMBED_MODEL,
+    compose_company_profile_text,
+    content_hash,
+    embed_texts,
+    vector_to_pg_literal,
+)
 from .icp_fit_scorer import (
     build_v2_signals,
     compute_icp_fit,
     load_composite_weights,
+    tier_for,
 )
 from .llm import ainvoke_json_with_telemetry, compute_totals, make_llm, merge_node_telemetry
 from .loaders import fetch_url
@@ -308,6 +317,40 @@ def _load_existing_weights_hashes(
         return {}
 
 
+def _load_semantic_scores(
+    cur: Any, company_id: int, product_ids: list[int]
+) -> dict[int, float]:
+    """Return ``{product_id: cosine_similarity}`` for products with an
+    ICP embedding, when this company has a ``profile_embedding`` set.
+
+    ``<=>`` is pgvector cosine distance; ``1 - dist`` is cosine similarity
+    in ``[-1, 1]``. L2-normalized vectors on both sides keep this in
+    ``[0, 1]`` for all practical inputs.
+    """
+    if not product_ids:
+        return {}
+    try:
+        cur.execute(
+            """
+            WITH c AS (
+              SELECT profile_embedding AS v FROM companies
+              WHERE id = %s AND profile_embedding IS NOT NULL
+            )
+            SELECT p.id, 1 - (p.icp_embedding <=> c.v) AS sim
+            FROM products p CROSS JOIN c
+            WHERE p.id = ANY(%s) AND p.icp_embedding IS NOT NULL
+            """,
+            (int(company_id), product_ids),
+        )
+        return {int(r[0]): float(r[1]) for r in cur.fetchall() or []}
+    except psycopg.Error:
+        return {}
+
+
+_SEMANTIC_BLEND_WITH_ICP = 0.3      # β for (base_icp, semantic)
+_SEMANTIC_BLEND_REGEX_ONLY = 0.4    # β for (regex, semantic) when no ICP
+
+
 async def score_verticals(state: CompanyEnrichmentState) -> dict:
     """Score every registered ``ProductVertical`` against this company.
 
@@ -346,6 +389,12 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
     tenant_id = "nyx"
     product_ids = [int(v.product_id) for v in verticals]
     composite_weights = load_composite_weights()
+    semantic_weight_icp = float(
+        composite_weights.get("semantic_weight", _SEMANTIC_BLEND_WITH_ICP)
+    )
+    semantic_weight_regex = float(
+        composite_weights.get("semantic_weight_regex", _SEMANTIC_BLEND_REGEX_ONLY)
+    )
 
     persisted: dict[str, dict[str, Any]] = {}
     try:
@@ -353,6 +402,9 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
             with conn.cursor() as cur:
                 icps = load_product_icps(cur, product_ids, tenant_id)
                 existing_hashes = _load_existing_weights_hashes(
+                    cur, int(company_id), product_ids
+                )
+                semantic_scores = _load_semantic_scores(
                     cur, int(company_id), product_ids
                 )
                 for vertical in verticals:
@@ -592,6 +644,85 @@ async def persist(state: CompanyEnrichmentState) -> dict:
     }
 
 
+# ── Node 6: embed_profile ─────────────────────────────────────────────────────
+
+async def embed_profile(state: CompanyEnrichmentState) -> dict:
+    """Compute the company's ICP-matching profile embedding (intervention #4).
+
+    Runs between ``persist`` and ``score_verticals`` so ``score_verticals`` can
+    read the fresh embedding for semantic cosine against ``products.icp_embedding``.
+    Non-fatal — a failure here does not block scoring (regex-only still works).
+    """
+    if state.get("_error"):
+        return {}
+    company_id = state.get("company_id")
+    if company_id is None:
+        return {}
+    t0 = time.perf_counter()
+
+    company = state.get("company") or {}
+    classification = state.get("classification") or {}
+    home_markdown = state.get("home_markdown") or ""
+
+    # Hydrate the company dict with description / industry / tags so the
+    # composer can use them. classification carries the freshly-inferred industry.
+    company_row = {
+        "description": company.get("description") or "",
+        "industry": classification.get("industry") or company.get("industry") or "",
+        "tags": company.get("tags"),
+    }
+    facts = [
+        {
+            "field": "classification.home",
+            "value_json": {"home_markdown": home_markdown[:4000]},
+        }
+    ]
+    text = compose_company_profile_text(company_row, facts)
+    if not text.strip() or text == "query: ":
+        return {"agent_timings": {"embed_profile": round(time.perf_counter() - t0, 3)}}
+
+    new_hash = content_hash(text)
+    try:
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT profile_embedding_source_hash FROM companies WHERE id = %s",
+                    (int(company_id),),
+                )
+                row = cur.fetchone()
+                prior_hash = row[0] if row else None
+    except psycopg.Error:
+        prior_hash = None
+
+    if prior_hash and prior_hash == new_hash:
+        return {"agent_timings": {"embed_profile": round(time.perf_counter() - t0, 3)}}
+
+    try:
+        vectors = await embed_texts([text])
+    except Exception as e:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).warning("embed_profile: %s", e)
+        return {"agent_timings": {"embed_profile": round(time.perf_counter() - t0, 3)}}
+
+    if not vectors:
+        return {"agent_timings": {"embed_profile": round(time.perf_counter() - t0, 3)}}
+
+    try:
+        persist_embedding(
+            table="companies",
+            row_id=int(company_id),
+            column="profile_embedding",
+            vector_literal=vector_to_pg_literal(vectors[0]),
+            model=EMBED_MODEL,
+            source_hash=new_hash,
+        )
+    except Exception as e:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).warning("embed_profile persist: %s", e)
+
+    return {"agent_timings": {"embed_profile": round(time.perf_counter() - t0, 3)}}
+
+
 # ── Graph builder ─────────────────────────────────────────────────────────────
 
 def build_graph(checkpointer: Any = None) -> Any:
@@ -601,17 +732,20 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("classify", classify)
     builder.add_node("score", score)
     builder.add_node("persist", persist)
+    builder.add_node("embed_profile", embed_profile)
     builder.add_node("score_verticals", score_verticals)
     builder.add_edge(START, "load")
     builder.add_edge("load", "fetch")
     builder.add_edge("fetch", "classify")
     builder.add_edge("classify", "score")
     builder.add_edge("score", "persist")
-    # Vertical signal scorer runs after core persist so its failures never
-    # roll back classification + scores. The single node iterates all
-    # registered ProductVerticals internally — adding a new product is a
-    # file-drop under `verticals/`, not a graph change.
-    builder.add_edge("persist", "score_verticals")
+    # Embedding runs before vertical scoring so score_verticals can blend
+    # semantic cosine into the composite. Non-fatal on embed failure.
+    builder.add_edge("persist", "embed_profile")
+    # Vertical signal scorer runs after embed so its failures never roll back
+    # classification + scores. Adding a new product is a file-drop under
+    # `verticals/`, not a graph change.
+    builder.add_edge("embed_profile", "score_verticals")
     builder.add_edge("score_verticals", END)
     return builder.compile(checkpointer=checkpointer)
 

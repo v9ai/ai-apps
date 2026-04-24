@@ -37,6 +37,16 @@ _ALLOWED_COLUMN_PAIRS: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
+# Whitelist for the semantic embedding writer. Kept separate because embeddings
+# are a (vector, model, source_hash, timestamp) 4-tuple rather than the usual
+# (jsonb, timestamp) pair used by the analysis columns above.
+_ALLOWED_EMBEDDING_TARGETS: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("products", "icp_embedding"),
+        ("companies", "profile_embedding"),
+    }
+)
+
 
 class ProductWriteVerificationError(RuntimeError):
     """Raised when post-commit read-back does not confirm the update landed."""
@@ -112,4 +122,51 @@ def persist_product_jsonb(
     log.info(
         "persist_product_jsonb: wrote product_id=%s column=%s (%.3fs)",
         pid, payload_column, time.time() - t0,
+    )
+
+
+def persist_embedding(
+    *,
+    table: str,
+    row_id: int,
+    column: str,
+    vector_literal: str,
+    model: str,
+    source_hash: str,
+) -> None:
+    """Transactionally update a whitelisted (table, vector_column) target.
+
+    ``vector_literal`` must already be the pgvector text form
+    (``'[0.01,0.02,...]'``) — produced by
+    ``leadgen_agent.embeddings.vector_to_pg_literal``. Writes the sibling
+    ``{column}_model``, ``{column}_source_hash``, ``{column}_updated_at``
+    columns atomically with the vector.
+
+    Raises:
+        ValueError: if (table, column) is not whitelisted.
+        psycopg.Error: for DB failures.
+    """
+    target = (table, column)
+    if target not in _ALLOWED_EMBEDDING_TARGETS:
+        raise ValueError(
+            f"persist_embedding: target {target!r} is not whitelisted"
+        )
+    rid = int(row_id)
+    sql = (
+        f"UPDATE {table} SET "
+        f"  {column} = %s::vector, "
+        f"  {column}_model = %s, "
+        f"  {column}_source_hash = %s, "
+        f"  {column}_updated_at = now()::text, "
+        f"  updated_at = now()::text "
+        f"WHERE id = %s"
+    )
+    t0 = time.time()
+    with psycopg.connect(_dsn(), autocommit=False, connect_timeout=10) as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute(sql, (vector_literal, model, source_hash, rid))
+    log.info(
+        "persist_embedding: wrote %s.%s id=%s (%.3fs)",
+        table, column, rid, time.time() - t0,
     )

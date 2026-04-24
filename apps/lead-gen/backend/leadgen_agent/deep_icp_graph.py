@@ -20,6 +20,14 @@ from typing import Any
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
+from .db_columns import persist_embedding
+from .embeddings import (
+    EMBED_MODEL,
+    compose_product_icp_text,
+    content_hash,
+    embed_texts,
+    vector_to_pg_literal,
+)
 from .icp_schemas import WEIGHTS, DeepICPOutput, GraphMeta
 from .llm import ainvoke_json, make_llm
 from .state import DeepICPState
@@ -301,17 +309,89 @@ async def synthesize(state: DeepICPState) -> dict:
     return validated.model_dump()
 
 
+async def embed_icp(state: DeepICPState) -> dict:
+    """Compute the product's ICP semantic embedding (intervention #4).
+
+    Reads the freshly synthesized ICP payload off state, composes it into the
+    canonical passage string, hashes it, and skips the embed call when the
+    hash matches what's already stored. Otherwise calls the local Rust/Candle
+    embedder (``crates/icp-embed``, BAAI/bge-m3) and UPDATEs ``products``.
+
+    Non-fatal — a failure here does not invalidate the ICP synthesis above.
+    """
+    product = state.get("product") or {}
+    product_id = product.get("id") or state.get("product_id")
+    if not product_id:
+        return {}
+
+    icp_payload: dict[str, Any] = {
+        "segments": state.get("segments") or [],
+        "personas": state.get("personas") or [],
+        "anti_icp": state.get("anti_icp") or [],
+        "deal_breakers": state.get("deal_breakers") or [],
+    }
+    text = compose_product_icp_text(icp_payload)
+    if not text.strip() or text == "passage: ":
+        return {}
+
+    new_hash = content_hash(text)
+
+    # Idempotency — skip embed call when hash unchanged.
+    try:
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT icp_embedding_source_hash FROM products WHERE id = %s",
+                    (int(product_id),),
+                )
+                row = cur.fetchone()
+                prior_hash = row[0] if row else None
+    except psycopg.Error:
+        prior_hash = None
+
+    if prior_hash and prior_hash == new_hash:
+        return {}
+
+    try:
+        vectors = await embed_texts([text])
+    except Exception as e:  # noqa: BLE001
+        # Embedding server down / offline — non-fatal.
+        import logging as _logging
+        _logging.getLogger(__name__).warning("embed_icp: %s", e)
+        return {}
+
+    if not vectors:
+        return {}
+    vec = vectors[0]
+    try:
+        persist_embedding(
+            table="products",
+            row_id=int(product_id),
+            column="icp_embedding",
+            vector_literal=vector_to_pg_literal(vec),
+            model=EMBED_MODEL,
+            source_hash=new_hash,
+        )
+    except Exception as e:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).warning("embed_icp persist: %s", e)
+        return {}
+    return {}
+
+
 def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(DeepICPState)
     builder.add_node("load_product", load_product)
     builder.add_node("research_market", research_market)
     builder.add_node("score_criteria", score_criteria)
     builder.add_node("synthesize", synthesize)
+    builder.add_node("embed_icp", embed_icp)
     builder.add_edge(START, "load_product")
     builder.add_edge("load_product", "research_market")
     builder.add_edge("research_market", "score_criteria")
     builder.add_edge("score_criteria", "synthesize")
-    builder.add_edge("synthesize", END)
+    builder.add_edge("synthesize", "embed_icp")
+    builder.add_edge("embed_icp", END)
     return builder.compile(checkpointer=checkpointer)
 
 

@@ -1040,6 +1040,12 @@ export const companyProductSignals = pgTable(
     // `schema_version`; remaining keys are vertical-specific.
     signals: jsonb("signals").notNull().default(sql`'{}'::jsonb`),
     score: real("score").notNull().default(0),
+    // Separated component scores (see migration 0073). `score` stays the
+    // blended aggregate used for tiering; these two let us observe the
+    // regex-only vs semantic-only contribution without re-running the graph.
+    regex_score: real("regex_score").notNull().default(0),
+    semantic_score: real("semantic_score"),
+    semantic_score_computed_at: timestamp("semantic_score_computed_at", { withTimezone: true }),
     tier: text("tier"), // 'hot' | 'warm' | 'cold' | null
     updated_at: timestamp("updated_at", { withTimezone: true })
       .notNull()

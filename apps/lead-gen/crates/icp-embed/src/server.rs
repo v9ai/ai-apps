@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::{get, post}, Json, Router};
+use axum::{extract::State, http::StatusCode, routing::{get, post}, Json, Router};
 use serde::{Deserialize, Serialize};
 use tower_http::cors::CorsLayer;
 
@@ -50,11 +50,10 @@ async fn embed(
             model: "BAAI/bge-m3".to_string(),
         }));
     }
-    let refs: Vec<&str> = req.texts.iter().map(|s| s.as_str()).collect();
     // Candle inference is blocking — run on the blocking pool so we don't
     // starve the async runtime when the caller batches 32+ texts.
     let state_clone = state.clone();
-    let texts_owned: Vec<String> = req.texts.clone();
+    let texts_owned: Vec<String> = req.texts;
     let vectors = tokio::task::spawn_blocking(move || {
         let refs: Vec<&str> = texts_owned.iter().map(|s| s.as_str()).collect();
         state_clone.embed_batch(&refs)
@@ -63,7 +62,6 @@ async fn embed(
     .map_err(|e| internal(format!("join: {e}")))?
     .map_err(|e| internal(format!("embed: {e}")))?;
 
-    let _ = refs;
     Ok(Json(EmbedResponse {
         vectors,
         dim: state.dim(),
