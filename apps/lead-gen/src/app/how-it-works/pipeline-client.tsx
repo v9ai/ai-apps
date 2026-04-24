@@ -1161,12 +1161,448 @@ function TechFoundations() {
   );
 }
 
+// ── Agent Teams ──────────────────────────────────────────────────────────────
+
+type AgentTeam = {
+  slug: string;
+  name: string;
+  color: "violet" | "cyan" | "green" | "amber";
+  command: string;
+  mission: string;
+  agents: string[];
+  stateFile: string;
+  phases: string[];
+  graph: string;
+};
+
+const agentTeams: AgentTeam[] = [
+  {
+    slug: "pipeline",
+    name: "Pipeline Team",
+    color: "violet",
+    command: "/agents pipeline",
+    mission:
+      "Runs the full B2B batch cycle — discover → enrich → contacts → outreach — coordinated by pipeline-meta with phase-aware throttling.",
+    agents: ["pipeline-meta", "pipeline-discover", "pipeline-enrich", "pipeline-contacts", "pipeline-outreach", "pipeline-qa"],
+    stateFile: "~/.claude/state/pipeline-meta-state.json",
+    phases: ["BUILDING", "FLOWING", "BOTTLENECK", "SATURATED", "DEGRADED"],
+    graph: `T1: discover       (no deps)
+T2: enrich         addBlockedBy: [T1]
+T3: contacts       addBlockedBy: [T2]
+T4: outreach       addBlockedBy: [T3]
+T5: qa-audit       addBlockedBy: [T2]   # parallel`,
+  },
+  {
+    slug: "research",
+    name: "Research Squad",
+    color: "cyan",
+    command: "/agents research {company}",
+    mission:
+      "Per-company investigation using a competing-hypotheses debate protocol — agents challenge each other's claims and synthesize a GO / NO-GO / NEEDS-MORE-INFO verdict.",
+    agents: ["research-analyst", "research-hiring", "research-icp"],
+    stateFile: "~/.claude/state/research-{slug}.json",
+    phases: ["per-target (no phases)"],
+    graph: `research-analyst ──┐
+research-hiring  ──┼→ icp-matcher → debate → verdict
+research-icp     ──┘`,
+  },
+  {
+    slug: "codefix",
+    name: "Codefix Team",
+    color: "green",
+    command: "/agents codefix",
+    mission:
+      "Autonomous codebase self-improvement: mine session logs, audit files, evolve skills, apply safe patches, verify, coordinate.",
+    agents: ["codefix-mine", "codefix-audit", "codefix-evolve", "codefix-apply", "codefix-verify", "codefix-meta"],
+    stateFile: "~/.claude/state/codefix-meta-state.json",
+    phases: ["IMPROVEMENT", "SATURATION", "COLLAPSE_RISK"],
+    graph: `mine → audit → evolve / apply → verify → meta`,
+  },
+  {
+    slug: "improve",
+    name: "Improve Team",
+    color: "amber",
+    command: "/improve",
+    mission:
+      "Job-search self-improvement — tunes classifier + ICP keeping the goal 'get hired for a remote AI engineering role' honest across sessions.",
+    agents: ["improve-mine", "improve-audit", "improve-evolve", "improve-apply", "improve-meta"],
+    stateFile: "~/.claude/state/meta-state.json",
+    phases: ["BUILDING", "OPTIMIZING", "APPLYING", "INTERVIEWING"],
+    graph: `mine → audit → evolve → apply → meta`,
+  },
+];
+
+function AgentTeamsSection() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <Users size={16} style={{ color: "var(--violet-9)" }} />
+        <Heading size="5">Agent Teams</Heading>
+      </Flex>
+      <Text size="2" color="gray" as="p" mb="4" style={{ lineHeight: 1.7, maxWidth: 760 }}>
+        Beyond the five-stage data pipeline, lead-gen ships four autonomous agent teams defined as Claude Code skills in <Code size="1">.claude/skills/</Code>. Each team is a dependency graph of specialists coordinated by a <Code size="1">*-meta</Code> brain, dispatched via the unified <Code size="1">/agents</Code> command. Teams write JSON state to <Code size="1">~/.claude/state/</Code> between runs, so cycles are resumable and observable across sessions.
+      </Text>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 12 }}>
+        {agentTeams.map((team) => (
+          <Card key={team.slug} style={{ background: "var(--gray-2)", borderLeft: `3px solid var(--${team.color}-9)` }}>
+            <Flex align="baseline" justify="between" mb="1" gap="2" wrap="wrap">
+              <Heading size="3">{team.name}</Heading>
+              <Badge variant="soft" size="1" color={team.color}>{team.agents.length} agents</Badge>
+            </Flex>
+            <Text size="2" color="gray" as="p" mb="3" style={{ lineHeight: 1.6 }}>{team.mission}</Text>
+            <Flex direction="column" gap="2" mb="3">
+              <Flex align="center" gap="2" wrap="wrap">
+                <Text size="1" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em", minWidth: 60 }}>trigger</Text>
+                <Code size="1">{team.command}</Code>
+              </Flex>
+              <Flex align="center" gap="2" wrap="wrap">
+                <Text size="1" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em", minWidth: 60 }}>state</Text>
+                <Code size="1" style={{ fontSize: 10 }}>{team.stateFile}</Code>
+              </Flex>
+            </Flex>
+            <Flex gap="1" wrap="wrap" mb="3">
+              {team.agents.map((a) => <Code key={a} size="1" style={{ fontSize: 10 }}>{a}</Code>)}
+            </Flex>
+            <pre style={{
+              padding: 10, borderRadius: 4, margin: 0,
+              background: "var(--gray-1)", border: `1px solid var(--${team.color}-a5)`,
+              fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
+              color: `var(--${team.color}-11)`, overflow: "auto", lineHeight: 1.55,
+            }}>{team.graph}</pre>
+            <Flex gap="1" wrap="wrap" mt="3">
+              {team.phases.map((p) => <Badge key={p} variant="outline" size="1">{p}</Badge>)}
+            </Flex>
+          </Card>
+        ))}
+      </div>
+
+      <Card mt="4" style={{ background: "var(--cyan-2)", borderLeft: "3px solid var(--cyan-9)" }}>
+        <Flex align="center" gap="2" mb="2" wrap="wrap">
+          <Badge variant="soft" color="cyan" size="1">Research Squad only</Badge>
+          <Heading size="3">Competing-Hypotheses Debate Protocol</Heading>
+        </Flex>
+        <Text size="2" as="p" mb="3" style={{ lineHeight: 1.7, color: "var(--gray-11)" }}>
+          Squad agents form explicit hypotheses (H1 / H2 / H3), assign confidence 0.0–1.0, and challenge each other via bidirectional messaging. Each agent must actively seek disconfirming evidence and flag data gaps. The orchestrator synthesizes a verdict only after the debate settles or a silence timeout fires. Verdict rules: <Code size="1">icp_match ≥ 0.7 AND no deal-breakers AND confidence ≥ 0.6 → GO</Code>, any deal-breaker → <Code size="1">NO-GO</Code>, <Code size="1">icp_match ≥ 0.5 AND confidence &lt; 0.6 → NEEDS-MORE-INFO</Code>.
+        </Text>
+        <pre style={{
+          padding: 12, borderRadius: 6, margin: 0,
+          background: "var(--gray-1)", border: "1px solid var(--cyan-a5)",
+          fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
+          color: "var(--cyan-11)", overflow: "auto", lineHeight: 1.55,
+        }}>{`{
+  "agent": "icp_matcher",
+  "company": "acme.ai",
+  "weighted_total": 0.78,
+  "deal_breakers": [],
+  "hypotheses": [{
+    "claim": "Company is a good ICP fit",
+    "evidence_for":     ["remote-first careers page", "Series B AI product"],
+    "evidence_against": ["no public roadmap for AI roles"],
+    "confidence": 0.72,
+    "challenged": true,
+    "resolution": "analyst confirmed AI team via engineering blog"
+  }],
+  "verdict": "GO"
+}`}</pre>
+      </Card>
+    </div>
+  );
+}
+
+// ── Backend & Local Inference ────────────────────────────────────────────────
+
+const langgraphGraphs: { name: string; purpose: string }[] = [
+  { name: "email_compose", purpose: "Draft outbound email from contact + company signal" },
+  { name: "email_reply", purpose: "Classification-aware auto-draft for inbound replies" },
+  { name: "email_outreach", purpose: "Multi-step outreach sequence planner" },
+  { name: "admin_chat", purpose: "NL → read-only DB tool router for ops" },
+  { name: "text_to_sql", purpose: "NL → validated SELECT over the Drizzle schema" },
+  { name: "deep_icp / icp_team", purpose: "Multi-agent ICP scoring + debate" },
+  { name: "competitors_team / deep_competitor", purpose: "6-specialist competitor discovery + differentiation + threat assessment" },
+  { name: "pricing / gtm / positioning", purpose: "Per-product analysis graphs for pricing, go-to-market, and positioning artefacts" },
+  { name: "product_intel / analyze_product_v2 / freshness", purpose: "Product intel v1 + v2 + staleness detection" },
+  { name: "lead_gen_team", purpose: "Top-level coordinator across discovery + enrichment sub-graphs" },
+  { name: "contact_enrich (+ sales / paper_author / batch)", purpose: "Per-contact enrichment variants, plus batched author graph" },
+  { name: "classify_paper", purpose: "Sales-leadgen relevance gate for new papers" },
+  { name: "deep_scrape", purpose: "Targeted site scrape with structured extraction" },
+];
+
+const mlxClassifiers: { name: string; model: string; throughput: string }[] = [
+  { name: "classifyCompanyFast", model: "Aho-Corasick automaton", throughput: "O(n+m+z), single linear pass" },
+  { name: "classifyContactML", model: "12-feature logistic ranker", throughput: "4,618 contacts/sec on M1" },
+  { name: "classifyCompanyLLM", model: "Qwen2.5-3B-Instruct-4bit", throughput: "local; 10s timeout → AC fallback" },
+  { name: "classifyContactLLM", model: "Qwen2.5-1.5B-Instruct-4bit", throughput: "local JSON output" },
+  { name: "classifyOpportunityLLM", model: "Qwen2.5-3B + LoRA adapter", throughput: "local, no fallback" },
+  { name: "email composer drafts", model: "Qwen2.5-3B via mlx_lm.server", throughput: "local, OpenAI-compatible" },
+];
+
+function BackendInferenceSection() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <Zap size={16} style={{ color: "var(--green-9)" }} />
+        <Heading size="5">Backend &amp; Local Inference</Heading>
+      </Flex>
+      <Text size="2" color="gray" as="p" mb="4" style={{ lineHeight: 1.7, maxWidth: 760 }}>
+        Two runtimes carry work off the user's machine. <strong>LangGraph</strong> runs stateful multi-turn agents (admin chat, ICP research, text-to-SQL, email composition) with Postgres-checkpointed threads. <strong>MLX</strong> runs high-volume per-row classification on Apple Silicon via an OpenAI-compatible local server — zero cloud cost for contact, company, and opportunity scoring.
+      </Text>
+
+      <Flex gap="4" wrap="wrap" style={{ alignItems: "stretch" }}>
+        <Card style={{ flex: "1 1 480px", background: "var(--gray-2)", borderLeft: "3px solid var(--violet-9)" }}>
+          <Flex align="baseline" gap="2" mb="2" wrap="wrap">
+            <Heading size="3">LangGraph backend</Heading>
+            <Badge variant="soft" color="violet" size="1">{langgraphGraphs.length} graph families</Badge>
+          </Flex>
+          <Text size="2" color="gray" as="p" mb="3" style={{ lineHeight: 1.6 }}>
+            Registered in <Code size="1">backend/langgraph.json</Code>. Same graph code runs in two modes: <Code size="1">langgraph dev</Code> (port 8002, MemorySaver) for local iteration, and <Code size="1">app.py</Code> (FastAPI + <Code size="1">AsyncPostgresSaver</Code> on Neon) for Cloudflare Containers production. A shared-secret <Code size="1">BearerTokenMiddleware</Code> gates every non-health path when <Code size="1">LANGGRAPH_AUTH_TOKEN</Code> is set.
+          </Text>
+          <div style={{ overflowX: "auto", marginBottom: 12 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left", padding: "6px 8px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>graph</th>
+                  <th style={{ textAlign: "left", padding: "6px 8px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                {langgraphGraphs.map((g) => (
+                  <tr key={g.name}>
+                    <td style={{ padding: "5px 8px", borderBottom: "1px solid var(--gray-a3)", fontFamily: "var(--code-font-family, monospace)", color: "var(--violet-11)", fontSize: 11 }}>{g.name}</td>
+                    <td style={{ padding: "5px 8px", borderBottom: "1px solid var(--gray-a3)", color: "var(--gray-11)" }}>{g.purpose}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <pre style={{
+            padding: 10, borderRadius: 4, margin: 0,
+            background: "var(--gray-1)", border: "1px solid var(--violet-a5)",
+            fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
+            color: "var(--violet-11)", overflow: "auto", lineHeight: 1.55,
+          }}>{`# backend/leadgen_agent/text_to_sql_graph.py:116
+builder = StateGraph(TextToSqlState)
+builder.add_node("understand_question", understand_question)
+builder.add_node("identify_tables",     identify_tables)
+builder.add_node("generate_sql",        generate_sql)
+builder.add_node("validate_sql",        validate_sql)
+# START → understand → identify → generate → validate → END
+return builder.compile(checkpointer=checkpointer)`}</pre>
+        </Card>
+
+        <Card style={{ flex: "1 1 480px", background: "var(--gray-2)", borderLeft: "3px solid var(--green-9)" }}>
+          <Flex align="baseline" gap="2" mb="2" wrap="wrap">
+            <Heading size="3">MLX local inference</Heading>
+            <Badge variant="soft" color="green" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>zero API cost</Badge>
+          </Flex>
+          <Text size="2" color="gray" as="p" mb="3" style={{ lineHeight: 1.6 }}>
+            Six classifiers run through <Code size="1">mlx_lm.server</Code> exposing an OpenAI-compatible endpoint at <Code size="1">http://localhost:8080/v1</Code>. Contact scoring is the fast path — a 12-feature logistic ranker hits <strong>4,618 contacts/sec on M1</strong>. Harder classification routes to quantized Qwen checkpoints (1.5B / 3B, 4-bit) with LoRA adapters for fine-grained labels.
+          </Text>
+          <div style={{ overflowX: "auto", marginBottom: 12 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left", padding: "6px 8px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>classifier</th>
+                  <th style={{ textAlign: "left", padding: "6px 8px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>model</th>
+                  <th style={{ textAlign: "left", padding: "6px 8px", borderBottom: "1px solid var(--gray-a5)", color: "var(--gray-10)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>throughput</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mlxClassifiers.map((c) => (
+                  <tr key={c.name}>
+                    <td style={{ padding: "5px 8px", borderBottom: "1px solid var(--gray-a3)", fontFamily: "var(--code-font-family, monospace)", color: "var(--green-11)", fontSize: 11 }}>{c.name}</td>
+                    <td style={{ padding: "5px 8px", borderBottom: "1px solid var(--gray-a3)", color: "var(--gray-11)", fontSize: 11 }}>{c.model}</td>
+                    <td style={{ padding: "5px 8px", borderBottom: "1px solid var(--gray-a3)", color: "var(--gray-11)", fontSize: 11 }}>{c.throughput}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <pre style={{
+            padding: 10, borderRadius: 4, margin: 0,
+            background: "var(--gray-1)", border: "1px solid var(--green-a5)",
+            fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
+            color: "var(--green-11)", overflow: "auto", lineHeight: 1.55,
+          }}>{`// src/ml/opportunity-classifier.ts:83
+const url = process.env.LLM_BASE_URL;      // http://localhost:8080/v1
+const client = new OpenAI({ apiKey: "local", baseURL: url });
+const model = process.env.LLM_MODEL_OPPORTUNITY
+  ?? "mlx-community/Qwen2.5-3B-Instruct-4bit";
+
+const res = await client.chat.completions.create({
+  model,
+  messages: [
+    { role: "system", content: OPPORTUNITY_SYSTEM_PROMPT },
+    { role: "user",   content: userMsg },
+  ],
+  response_format: { type: "json_object" } as any,
+  temperature: 0.1,
+  max_tokens: 512,
+});`}</pre>
+        </Card>
+      </Flex>
+    </div>
+  );
+}
+
+// ── Strategy & Evaluation ────────────────────────────────────────────────────
+
+type MetaApproach = {
+  name: string;
+  status: "PRIMARY" | "SECONDARY" | "CROSS-CUTTING" | "EMERGING";
+  color: "green" | "blue" | "violet" | "amber";
+  definition: string;
+  rule: string;
+  reality: string;
+};
+
+const metaApproaches: MetaApproach[] = [
+  { name: "Eval-First", status: "PRIMARY", color: "green",
+    definition: "Every prompt/model change verified against an accuracy bar before merging.",
+    rule: "checkEvalFirst — BLOCKING on PROMPT_PATTERNS match",
+    reality: "The ≥80% bar is a warning string at strategy-enforcer.ts:111 — documented, manually verified, not an automated gate." },
+  { name: "Grounding-First", status: "PRIMARY", color: "green",
+    definition: "Every LLM output schema-constrained (Zod / response_format / output_schema) before persistence.",
+    rule: "checkGroundingFirst — BLOCKING when .generate()/.chat() lacks structured output",
+    reality: "Enforced by static regex scan over 8 schema patterns and 4 LLM-call patterns." },
+  { name: "Multi-Model Routing", status: "SECONDARY", color: "blue",
+    definition: "Cheap small model first; escalate to a larger model only when confidence is low.",
+    rule: "checkMultiModelRouting — WARNING when Opus-class used on a simple task",
+    reality: "Advisory. Most classification paths already hit local Qwen before any Claude call." },
+  { name: "Spec-Driven", status: "CROSS-CUTTING", color: "violet",
+    definition: "GraphQL + Drizzle + Zod schemas are the formal contract; codegen keeps TS types in lock-step.",
+    rule: "checkSpecDriven — BLOCKING on unsynced GraphQL schema files",
+    reality: "Every schema edit must pass through pnpm codegen; CI rejects drift." },
+  { name: "Observability", status: "EMERGING", color: "amber",
+    definition: "Every persisted AI decision carries confidence + reason + source + evidence.",
+    rule: "checkObservability — BLOCKING when classification insert omits any PROVENANCE_FIELDS",
+    reality: "Production tracing partial. LangSmith via LangGraph webhook today; Langfuse not wired, instrumentation.ts is a no-op." },
+];
+
+function StrategyAndEvaluationSection() {
+  return (
+    <div>
+      <Flex align="center" gap="2" mb="3">
+        <Shield size={16} style={{ color: "var(--green-9)" }} />
+        <Heading size="5">Strategy &amp; Evaluation</Heading>
+      </Flex>
+      <Text size="2" color="gray" as="p" mb="4" style={{ lineHeight: 1.7, maxWidth: 760 }}>
+        Five meta-approaches keep model outputs grounded and catch regressions before they ship. A static-analysis enforcer blocks prompt changes that lack schema constraints, an in-app eval endpoint scores the golden opportunity dataset, and every persisted AI decision carries provenance. Source of truth: the Two-Layer Model summary in <Code size="1">CLAUDE.md</Code> + <Code size="1">src/agents/strategy-enforcer.ts</Code>.
+      </Text>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10, marginBottom: 16 }}>
+        {metaApproaches.map((a) => (
+          <Card key={a.name} style={{ background: "var(--gray-2)", borderLeft: `3px solid var(--${a.color}-9)` }}>
+            <Flex align="baseline" justify="between" gap="2" mb="1" wrap="wrap">
+              <Heading size="3">{a.name}</Heading>
+              <Badge variant="soft" color={a.color} size="1">{a.status}</Badge>
+            </Flex>
+            <Text size="2" as="p" color="gray" mb="2" style={{ lineHeight: 1.6 }}>{a.definition}</Text>
+            <Flex direction="column" gap="1" mb="2">
+              <Text size="1" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>enforcer rule</Text>
+              <Code size="1" style={{ fontSize: 10 }}>{a.rule}</Code>
+            </Flex>
+            <Text size="1" as="p" style={{ lineHeight: 1.5, fontStyle: "italic", color: "var(--gray-10)" }}>{a.reality}</Text>
+          </Card>
+        ))}
+      </div>
+
+      <Card style={{ background: "var(--gray-2)", borderLeft: "3px solid var(--amber-9)" }}>
+        <Flex align="baseline" justify="between" gap="2" mb="2" wrap="wrap">
+          <Heading size="3">Strategy Enforcer — static analyzer</Heading>
+          <Code size="1">pnpm strategy:check</Code>
+        </Flex>
+        <Text size="2" color="gray" as="p" mb="3" style={{ lineHeight: 1.6 }}>
+          Analyzer at <Code size="1">src/agents/strategy-enforcer.ts</Code> scans staged files against eight pattern rules, returns BLOCKING + WARNING violations. BLOCKING fails the pre-merge check; WARNING surfaces in the summary.
+        </Text>
+        <pre style={{
+          padding: 12, borderRadius: 6, margin: 0,
+          background: "var(--gray-1)", border: "1px solid var(--amber-a5)",
+          fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
+          color: "var(--amber-11)", overflow: "auto", lineHeight: 1.55,
+        }}>{`// src/agents/strategy-enforcer.ts:41 — pattern arrays
+const LLM_CALL_PATTERNS = [
+  /\\.generate\\s*\\(/, /\\.chat\\s*\\(/,
+  /\\.complete\\s*\\(/, /ChatOpenAI\\s*\\(/,
+];
+const STRUCTURED_OUTPUT_PATTERNS = [
+  /structuredOutput/,  /response_format/,
+  /\\.object\\s*\\(/,    /output_schema/i,
+  /JsonOutputParser/,  /PydanticOutputParser/,
+  /model_validate/,    /generateObject/,
+];
+const PROVENANCE_FIELDS = ["confidence", "reason", "source", "evidence"];
+
+// Rule 2 (Grounding-First, line 130)
+if (hasLLMCall && !hasStructuredOutput) {
+  violations.push({
+    rule: "Rule 2: Grounding-First — LLM outputs must be schema-constrained",
+    severity: "BLOCKING", metaApproach: "Grounding-First",
+    fix: "Add structuredOutput: { schema: yourZodSchema } or response_format.",
+  });
+}`}</pre>
+      </Card>
+
+      <Flex gap="4" wrap="wrap" mt="4" style={{ alignItems: "stretch" }}>
+        <Card style={{ flex: "1 1 400px", background: "var(--gray-2)", borderLeft: "3px solid var(--green-9)" }}>
+          <Heading size="3" mb="1">Eval harness</Heading>
+          <Text size="2" color="gray" as="p" mb="3" style={{ lineHeight: 1.6 }}>
+            Admin-gated endpoint <Code size="1">GET /api/opportunities/eval?format=metrics</Code> scores the golden dataset and returns <Code size="1">{`{ accuracy, precision, recall, f1, aucRoc, ndcgAt10 }`}</Code>. The TS kernel at <Code size="1">src/lib/ml/eval-metrics.ts:148</Code> is a straight port of the Rust eval kernel, so cross-language results stay in sync.
+          </Text>
+          <pre style={{
+            padding: 10, borderRadius: 4, margin: 0,
+            background: "var(--gray-1)", border: "1px solid var(--green-a5)",
+            fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
+            color: "var(--green-11)", overflow: "auto", lineHeight: 1.55,
+          }}>{`// src/lib/ml/eval-metrics.ts:148
+const accuracy  = (tp + tn) / n;
+const precision = tp + fp === 0 ? 0 : tp / (tp + fp);
+const recall    = tp + fn === 0 ? 0 : tp / (tp + fn);
+const aucRoc    = computeAucRoc(predictions);
+const ndcgAt10  = computeNdcg(predictions, 10);`}</pre>
+        </Card>
+
+        <Card style={{ flex: "1 1 400px", background: "var(--gray-2)", borderLeft: "3px solid var(--amber-9)" }}>
+          <Flex align="baseline" gap="2" mb="1" wrap="wrap">
+            <Heading size="3">Observability</Heading>
+            <Badge variant="soft" color="amber" size="1">EMERGING</Badge>
+          </Flex>
+          <Text size="2" color="gray" as="p" mb="3" style={{ lineHeight: 1.6 }}>
+            Production tracing is partial. Today: <strong>LangSmith via LangGraph webhook</strong> (<Code size="1">/api/webhooks/langgraph</Code> persists <Code size="1">langsmith_trace_url</Code>). Langfuse has zero imports in the app — <Code size="1">instrumentation.ts</Code> is intentionally a no-op. The concrete enforcement mechanism is provenance-on-persist: every classification INSERT must carry confidence + reason + source + evidence, BLOCKING-level.
+          </Text>
+          <pre style={{
+            padding: 10, borderRadius: 4, margin: 0,
+            background: "var(--gray-1)", border: "1px solid var(--amber-a5)",
+            fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
+            color: "var(--amber-11)", overflow: "auto", lineHeight: 1.55,
+          }}>{`// src/agents/strategy-enforcer.ts:244
+if (hasInsertOrUpdate) {
+  const missingFields = PROVENANCE_FIELDS.filter(
+    (field) => !content.includes(field),
+  );
+  if (missingFields.length > 0) {
+    violations.push({
+      rule: "Rule 6: Observability — Classification decisions must carry provenance",
+      severity: "BLOCKING",
+      message: \`Missing: \${missingFields.join(", ")}. Every AI decision must carry confidence + reason + source.\`,
+    });
+  }
+}`}</pre>
+        </Card>
+      </Flex>
+    </div>
+  );
+}
+
 // ── Table of Contents ────────────────────────────────────────────────────────
 
 const tocSections = [
   { id: "pipeline", label: "Pipeline Diagrams", icon: "1–5" },
   { id: "deep-dive", label: "Deep Dive", icon: `${extraSections.length}` },
+  { id: "agent-teams", label: "Agent Teams", icon: `${agentTeams.length}` },
+  { id: "backend-inference", label: "Backend & Inference", icon: "2" },
   { id: "technical", label: "Technical Details", icon: `${technicalDetails.length}` },
+  { id: "strategy", label: "Strategy & Evaluation", icon: `${metaApproaches.length}` },
   { id: "foundations", label: "Foundations", icon: `${papers.length}` },
 ];
 
@@ -1306,8 +1742,23 @@ export function PipelineClient() {
       </section>
 
       <Separator size="4" my="7" />
+      <section id="agent-teams">
+        <AgentTeamsSection />
+      </section>
+
+      <Separator size="4" my="7" />
+      <section id="backend-inference">
+        <BackendInferenceSection />
+      </section>
+
+      <Separator size="4" my="7" />
       <section id="technical">
         <TechnicalDetailSection />
+      </section>
+
+      <Separator size="4" my="7" />
+      <section id="strategy">
+        <StrategyAndEvaluationSection />
       </section>
 
       <Separator size="4" my="7" />
