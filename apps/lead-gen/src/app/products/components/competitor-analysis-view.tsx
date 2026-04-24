@@ -460,7 +460,7 @@ export function ProductCompetitorsPage({ slug }: { slug: string }) {
         currentLabel="Competitors & pricing"
       />
 
-      <Flex direction="column" gap="5">
+      <Flex direction="column" gap="6">
         <SubpageHero
           productName={product.name}
           currentLabel="Competitors & pricing"

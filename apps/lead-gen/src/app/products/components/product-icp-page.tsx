@@ -61,7 +61,7 @@ export function ProductIcpPage({ slug }: { slug: string }) {
         currentLabel="ICP"
       />
 
-      <Flex direction="column" gap="3">
+      <Flex direction="column" gap="4">
         <SubpageHero
           productName={product.name}
           currentLabel="ICP"
@@ -112,8 +112,8 @@ export function ProductIcpPage({ slug }: { slug: string }) {
 
         <div
           className={css({
-            mt: "3",
-            pt: "4",
+            mt: "5",
+            pt: "6",
             borderTop: "1px solid",
             borderColor: "ui.border",
           })}

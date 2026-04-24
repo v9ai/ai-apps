@@ -41,7 +41,7 @@ export function GTMAnalysisView({ data }: { data: GTMAnalysis }) {
   const first90 = data.first_90_days ?? [];
 
   return (
-    <Flex direction="column" gap="5">
+    <Flex direction="column" gap="6">
       <Box>
         <Heading size="4" mb="2">
           Channels ({channels.length})
@@ -414,7 +414,7 @@ export function ProductGtmPage({ slug }: { slug: string }) {
         currentLabel="GTM"
       />
 
-      <Flex direction="column" gap="3">
+      <Flex direction="column" gap="4">
         <SubpageHero
           productName={product.name}
           currentLabel="GTM"
@@ -468,8 +468,8 @@ export function ProductGtmPage({ slug }: { slug: string }) {
 
         <div
           className={css({
-            mt: "3",
-            pt: "4",
+            mt: "5",
+            pt: "6",
             borderTop: "1px solid",
             borderColor: "ui.border",
           })}

@@ -138,7 +138,7 @@ export function ProductDetail({ slug }: { slug: string }) {
         </Flex>
       </nav>
 
-      <Flex direction="column" gap="3">
+      <Flex direction="column" gap="4">
         <Flex align="center" gap="3">
           <span
             aria-hidden="true"
@@ -280,7 +280,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               mt: "4",
               display: "grid",
               gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
-              gap: "3",
+              gap: "4",
             })}
           >
             {positioning && (

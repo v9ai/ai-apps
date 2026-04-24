@@ -62,7 +62,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
   const meta = data.graph_meta;
 
   return (
-    <Flex direction="column" gap="5">
+    <Flex direction="column" gap="6">
       {/* Hero: positioning statement + category */}
       <Box
         className={css({
@@ -337,7 +337,7 @@ export function ProductPositioningPage({ slug }: { slug: string }) {
         currentLabel="Positioning"
       />
 
-      <Flex direction="column" gap="3">
+      <Flex direction="column" gap="4">
         <SubpageHero
           productName={product.name}
           currentLabel="Positioning"
@@ -353,8 +353,8 @@ export function ProductPositioningPage({ slug }: { slug: string }) {
 
         <div
           className={css({
-            mt: "3",
-            pt: "4",
+            mt: "5",
+            pt: "6",
             borderTop: "1px solid",
             borderColor: "ui.border",
           })}

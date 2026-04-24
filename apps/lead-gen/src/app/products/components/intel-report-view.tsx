@@ -60,7 +60,7 @@ export function IntelReportView({
   const profile = data.product_profile;
 
   return (
-    <Flex direction="column" gap="5">
+    <Flex direction="column" gap="6">
       {data.tldr && (
         <Box
           className={css({
@@ -340,7 +340,7 @@ export function ProductIntelPage({ slug }: { slug: string }) {
         currentLabel="Intel"
       />
 
-      <Flex direction="column" gap="3">
+      <Flex direction="column" gap="4">
         <SubpageHero
           productName={product.name}
           currentLabel="Intel"
@@ -372,8 +372,8 @@ export function ProductIntelPage({ slug }: { slug: string }) {
 
         <div
           className={css({
-            mt: "3",
-            pt: "4",
+            mt: "5",
+            pt: "6",
             borderTop: "1px solid",
             borderColor: "ui.border",
           })}

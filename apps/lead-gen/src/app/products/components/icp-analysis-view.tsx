@@ -56,7 +56,7 @@ function severityColor(
 
 export function IcpAnalysisView({ data }: { data: IcpAnalysis }) {
   return (
-    <Flex direction="column" gap="4">
+    <Flex direction="column" gap="6">
       <Flex align="center" gap="3">
         <Heading size="4">Weighted fit</Heading>
         <Badge color="indigo" size="2">
