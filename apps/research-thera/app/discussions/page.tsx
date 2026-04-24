@@ -29,8 +29,11 @@ function formatRo(dateStr: string): string {
 export default function DiscussionsPage() {
   return (
     <AuthGate
-      pageName="Discussions"
-      description="Discussions are private. Sign in to participate."
+      pageName="Discuții"
+      description="Discuțiile sunt private. Conectează-te pentru a participa."
+      signInHeading="Conectează-te pentru a accesa Discuțiile"
+      signInLabel="Conectează-te"
+      createAccountLabel="Creează cont"
     >
       <BogdanDiscussion />
     </AuthGate>

@@ -100,33 +100,36 @@ def _fake_psycopg_connect(captured: list[tuple[str, tuple]]):
     return _connect
 
 
-async def _fake_pricing(inputs: dict[str, Any]) -> dict[str, Any]:
-    # Simulate a real multi-node subgraph taking some wall-clock time.
-    await asyncio.sleep(0.05)
-    return {"pricing": {"rationale": {"recommendation": "ship starter + team"}}}
+def _make_astream_fake(node_name: str, payload: dict[str, Any], delay: float = 0.05):
+    """Build an ``astream``-compatible async generator that mimics a compiled
+    subgraph yielding one ``{node_name: state_delta}`` chunk.
+
+    The supervisor's ``stream_subgraph`` helper iterates with
+    ``async for chunk in compiled.astream(inputs, stream_mode='updates')``
+    and folds ``delta`` dicts into the final state, so a single chunk is
+    enough to carry the payload the branch would have returned.
+    """
+    def _astream(inputs: dict[str, Any], stream_mode: str = "updates"):
+        async def _gen():
+            await asyncio.sleep(delay)
+            yield {node_name: payload}
+        return _gen()
+    return _astream
 
 
-async def _fake_gtm(inputs: dict[str, Any]) -> dict[str, Any]:
-    await asyncio.sleep(0.05)
-    return {"gtm": {"channels": [{"name": "cold_email"}, {"name": "linkedin_dm"}]}}
-
-
-async def _fake_deep_competitor(inputs: dict[str, Any]) -> dict[str, Any]:
-    await asyncio.sleep(0.05)
-    return {"competitor_deep": {"top_threat": "Competitor X", "score": 0.8}}
-
-
-async def _fake_positioning(inputs: dict[str, Any]) -> dict[str, Any]:
-    # Positioning join must see all three predecessors. We assert that here
-    # so if LangGraph were to schedule us before a predecessor flushed, the
-    # test would catch it.
-    assert inputs.get("pricing"), "positioning ran before pricing flushed"
-    assert inputs.get("gtm"), "positioning ran before gtm flushed"
-    assert inputs.get("competitor_deep"), (
-        "positioning ran before deep_competitor flushed"
-    )
-    await asyncio.sleep(0.01)
-    return {"positioning": {"angle": "speed + depth", "confidence": 0.9}}
+def _make_positioning_astream():
+    def _astream(inputs: dict[str, Any], stream_mode: str = "updates"):
+        async def _gen():
+            # Positioning join must see all three predecessors.
+            assert inputs.get("pricing"), "positioning ran before pricing flushed"
+            assert inputs.get("gtm"), "positioning ran before gtm flushed"
+            assert inputs.get("competitor_deep"), (
+                "positioning ran before deep_competitor flushed"
+            )
+            await asyncio.sleep(0.01)
+            yield {"stress_test": {"positioning": {"angle": "speed + depth", "confidence": 0.9}}}
+        return _gen()
+    return _astream
 
 
 async def _fake_synth_llm_response(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -145,16 +148,32 @@ async def test_parallel_writes_dont_clobber() -> None:
 
     captured_sql: list[tuple[str, tuple]] = []
 
-    # Swap the compiled subgraphs with our fakes. ``ainvoke`` is what the
-    # supervisor calls.
+    # Swap the compiled subgraphs with our fakes. The supervisor now calls
+    # ``astream`` (for progress events), so we mock that as an async generator
+    # rather than ``ainvoke``.
     fake_pricing_graph = MagicMock()
-    fake_pricing_graph.ainvoke = AsyncMock(side_effect=_fake_pricing)
+    fake_pricing_graph.astream = MagicMock(
+        side_effect=_make_astream_fake(
+            "write_rationale",
+            {"pricing": {"rationale": {"recommendation": "ship starter + team"}}},
+        )
+    )
     fake_gtm_graph = MagicMock()
-    fake_gtm_graph.ainvoke = AsyncMock(side_effect=_fake_gtm)
+    fake_gtm_graph.astream = MagicMock(
+        side_effect=_make_astream_fake(
+            "draft_plan",
+            {"gtm": {"channels": [{"name": "cold_email"}, {"name": "linkedin_dm"}]}},
+        )
+    )
     fake_deep_graph = MagicMock()
-    fake_deep_graph.ainvoke = AsyncMock(side_effect=_fake_deep_competitor)
+    fake_deep_graph.astream = MagicMock(
+        side_effect=_make_astream_fake(
+            "synthesize",
+            {"competitor_deep": {"top_threat": "Competitor X", "score": 0.8}},
+        )
+    )
     fake_positioning_graph = MagicMock()
-    fake_positioning_graph.ainvoke = AsyncMock(side_effect=_fake_positioning)
+    fake_positioning_graph.astream = MagicMock(side_effect=_make_positioning_astream())
 
     with (
         patch.object(v2, "_PRICING_GRAPH", fake_pricing_graph),
@@ -175,10 +194,10 @@ async def test_parallel_writes_dont_clobber() -> None:
         )
 
     # 1. All three parallel branches ran.
-    assert fake_pricing_graph.ainvoke.await_count == 1, "pricing did not run"
-    assert fake_gtm_graph.ainvoke.await_count == 1, "gtm did not run"
-    assert fake_deep_graph.ainvoke.await_count == 1, "deep_competitor did not run"
-    assert fake_positioning_graph.ainvoke.await_count == 1, "positioning join did not run"
+    assert fake_pricing_graph.astream.call_count == 1, "pricing did not run"
+    assert fake_gtm_graph.astream.call_count == 1, "gtm did not run"
+    assert fake_deep_graph.astream.call_count == 1, "deep_competitor did not run"
+    assert fake_positioning_graph.astream.call_count == 1, "positioning join did not run"
 
     # 2. Each branch recorded exactly one distinct column write. No collisions.
     db_writes = result.get("db_writes") or []
@@ -215,15 +234,15 @@ async def test_fresh_path_short_circuits_past_parallel_fanout() -> None:
     captured_sql: list[tuple[str, tuple]] = []
 
     fake_pricing_graph = MagicMock()
-    fake_pricing_graph.ainvoke = AsyncMock(
+    fake_pricing_graph.astream = MagicMock(
         side_effect=AssertionError("pricing ran on fresh path")
     )
     fake_gtm_graph = MagicMock()
-    fake_gtm_graph.ainvoke = AsyncMock(
+    fake_gtm_graph.astream = MagicMock(
         side_effect=AssertionError("gtm ran on fresh path")
     )
     fake_deep_graph = MagicMock()
-    fake_deep_graph.ainvoke = AsyncMock(
+    fake_deep_graph.astream = MagicMock(
         side_effect=AssertionError("deep_competitor ran on fresh path")
     )
     fake_freshness_graph = MagicMock()
@@ -248,8 +267,8 @@ async def test_fresh_path_short_circuits_past_parallel_fanout() -> None:
         result = await graph.ainvoke({"product_id": 1})
 
     assert result.get("is_fresh") is True
-    assert fake_pricing_graph.ainvoke.await_count == 0
-    assert fake_gtm_graph.ainvoke.await_count == 0
-    assert fake_deep_graph.ainvoke.await_count == 0
+    assert fake_pricing_graph.astream.call_count == 0
+    assert fake_gtm_graph.astream.call_count == 0
+    assert fake_deep_graph.astream.call_count == 0
     # synthesize still runs on the fresh path (it reads cached columns).
     assert result.get("report"), "fresh path failed to emit a report"

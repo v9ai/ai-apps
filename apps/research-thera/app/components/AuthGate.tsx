@@ -10,9 +10,19 @@ interface AuthGateProps {
   children: React.ReactNode;
   pageName: string;
   description?: string;
+  signInHeading?: string;
+  signInLabel?: string;
+  createAccountLabel?: string;
 }
 
-export function AuthGate({ children, pageName, description }: AuthGateProps) {
+export function AuthGate({
+  children,
+  pageName,
+  description,
+  signInHeading,
+  signInLabel,
+  createAccountLabel,
+}: AuthGateProps) {
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
 
@@ -60,7 +70,7 @@ export function AuthGate({ children, pageName, description }: AuthGateProps) {
 
             <Flex direction="column" align="center" gap="2">
               <Heading size="5" align="center">
-                Sign in to access {pageName}
+                {signInHeading ?? `Sign in to access ${pageName}`}
               </Heading>
               <Text size="2" color="gray" align="center">
                 {description ??
@@ -72,7 +82,7 @@ export function AuthGate({ children, pageName, description }: AuthGateProps) {
               <AuthDialog
                 trigger={
                   <Button size="3" color="indigo">
-                    Sign in
+                    {signInLabel ?? "Sign in"}
                   </Button>
                 }
                 defaultMode="signin"
@@ -80,7 +90,7 @@ export function AuthGate({ children, pageName, description }: AuthGateProps) {
               <AuthDialog
                 trigger={
                   <Button size="3" variant="soft" color="gray">
-                    Create account
+                    {createAccountLabel ?? "Create account"}
                   </Button>
                 }
                 defaultMode="signup"

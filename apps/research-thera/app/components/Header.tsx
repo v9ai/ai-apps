@@ -20,7 +20,7 @@ const NAV_LINKS = [
   { href: "/books", label: "Books" },
   { href: "/family", label: "Family" },
   { href: "/journal", label: "Journal" },
-  { href: "/discussions", label: "Discussions" },
+  { href: "/discussions", label: "Discuții" },
   { href: "/games", label: "Games" },
 ];
 
