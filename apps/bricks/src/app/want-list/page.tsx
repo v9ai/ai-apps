@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { css } from "styled-system/css";
 import { useSession } from "@/lib/auth-client";
 
@@ -37,6 +38,12 @@ function bricklinkUrl(item: WantListItem): string {
   if (item.url) return item.url;
   const param = item.itemType === "part" ? "P" : item.itemType === "set" ? "S" : "M";
   return `https://www.bricklink.com/v2/catalog/catalogitem.page?${param}=${encodeURIComponent(item.itemNum)}`;
+}
+
+function internalUrl(item: WantListItem): string | null {
+  if (item.itemType === "part") return `/parts/${encodeURIComponent(item.itemNum)}`;
+  if (item.itemType === "set") return `/sets/${encodeURIComponent(item.itemNum)}`;
+  return null;
 }
 
 function formatPrice(cents: number | null): string {
@@ -546,18 +553,34 @@ export default function WantListPage() {
                   {TYPE_LABELS[item.itemType]}
                 </span>
                 {item.imageUrl ? (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className={css({
-                      w: "16",
-                      h: "16",
-                      objectFit: "contain",
-                      rounded: "lg",
-                      bg: "white",
-                      flexShrink: 0,
-                    })}
-                  />
+                  internalUrl(item) ? (
+                    <Link href={internalUrl(item)!} className={css({ flexShrink: 0 })}>
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className={css({
+                          w: "16",
+                          h: "16",
+                          objectFit: "contain",
+                          rounded: "lg",
+                          bg: "white",
+                        })}
+                      />
+                    </Link>
+                  ) : (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className={css({
+                        w: "16",
+                        h: "16",
+                        objectFit: "contain",
+                        rounded: "lg",
+                        bg: "white",
+                        flexShrink: 0,
+                      })}
+                    />
+                  )
                 ) : (
                   <div
                     className={css({
@@ -582,21 +605,41 @@ export default function WantListPage() {
 
               {/* Info */}
               <div className={css({ flex: 1, minW: 0 })}>
-                <span
-                  className={css({
-                    fontSize: "sm",
-                    fontWeight: "700",
-                    fontFamily: "display",
-                    color: "ink.primary",
-                    display: "block",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    textDecoration: item.status === "purchased" ? "line-through" : "none",
-                  })}
-                >
-                  {item.name}
-                </span>
+                {internalUrl(item) ? (
+                  <Link
+                    href={internalUrl(item)!}
+                    className={css({
+                      fontSize: "sm",
+                      fontWeight: "700",
+                      fontFamily: "display",
+                      color: "ink.primary",
+                      display: "block",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      textDecoration: item.status === "purchased" ? "line-through" : "none",
+                      _hover: { color: "lego.blue", textDecoration: "underline" },
+                    })}
+                  >
+                    {item.name}
+                  </Link>
+                ) : (
+                  <span
+                    className={css({
+                      fontSize: "sm",
+                      fontWeight: "700",
+                      fontFamily: "display",
+                      color: "ink.primary",
+                      display: "block",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      textDecoration: item.status === "purchased" ? "line-through" : "none",
+                    })}
+                  >
+                    {item.name}
+                  </span>
+                )}
                 <span className={css({ fontSize: "xs", color: "ink.muted" })}>
                   #{item.itemNum}
                   {item.color && ` / ${item.color}`}
