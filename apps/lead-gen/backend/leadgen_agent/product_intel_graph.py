@@ -544,8 +544,7 @@ def _fan_out_pricing_gtm(_state: _ProductIntelStateWithError) -> list[str]:
     return ["run_pricing", "run_gtm"]
 
 
-<<<<<<< HEAD
-async def run_positioning(state: ProductIntelState) -> dict:
+async def run_positioning(state: _ProductIntelStateWithError) -> dict:
     """Synthesize positioning after pricing/GTM finish.
 
     Feeds the already-loaded product, icp, competitive, pricing, and gtm
@@ -588,10 +587,7 @@ async def run_positioning(state: ProductIntelState) -> dict:
     }
 
 
-async def synthesize_report(state: ProductIntelState) -> dict:
-=======
 async def synthesize_report(state: _ProductIntelStateWithError) -> dict:
->>>>>>> worktree-agent-a4a73c42
     if state.get("_error"):
         return {}
     # Checkpoint-aware short-circuit: terminal report writer. Skip the deep-tier
