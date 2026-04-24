@@ -479,7 +479,6 @@ async def run_pricing(state: _ProductIntelStateWithError) -> dict:
         return {}
     t0 = time.perf_counter()
     try:
-<<<<<<< HEAD
         result, progress = await stream_subgraph(
             _PRICING_GRAPH,
             {"product_id": state["product_id"]},
@@ -497,12 +496,6 @@ async def run_pricing(state: _ProductIntelStateWithError) -> dict:
     # intel_report.graph_meta.totals reflects real costs (not just the
     # supervisor's own LLM calls).
     sub_tel = _fold_subgraph_telemetry(None, "run_pricing", result)
-=======
-        sub = pricing_graph.build_graph()
-        result = await sub.ainvoke({"product_id": state["product_id"]})
-    except Exception as e:  # noqa: BLE001
-        return {"_error": f"run_pricing: {repr(e)[:1000]}"}
->>>>>>> worktree-agent-a4a73c42
     return {
         "pricing": result.get("pricing") or {},
         "pricing_subgraph_progress": progress,
@@ -527,7 +520,6 @@ async def run_gtm(state: _ProductIntelStateWithError) -> dict:
         return {}
     t0 = time.perf_counter()
     try:
-<<<<<<< HEAD
         result, progress = await stream_subgraph(
             _GTM_GRAPH,
             {"product_id": state["product_id"]},
@@ -540,12 +532,6 @@ async def run_gtm(state: _ProductIntelStateWithError) -> dict:
             "agent_timings": {"run_gtm": round(time.perf_counter() - t0, 3)},
         }
     sub_tel = _fold_subgraph_telemetry(None, "run_gtm", result)
-=======
-        sub = gtm_graph.build_graph()
-        result = await sub.ainvoke({"product_id": state["product_id"]})
-    except Exception as e:  # noqa: BLE001
-        return {"_error": f"run_gtm: {repr(e)[:1000]}"}
->>>>>>> worktree-agent-a4a73c42
     return {
         "gtm": result.get("gtm") or {},
         "gtm_subgraph_progress": progress,
