@@ -253,6 +253,10 @@ type Query {
   # Public (no auth required)
   publicDiscussionGuide(journalEntryId: Int!): PublicDiscussionGuideResult
 
+  # Bogdan-specific discussion guides
+  latestBogdanDiscussion: BogdanDiscussionGuide
+  bogdanDiscussions: [BogdanDiscussionGuide!]!
+
   # Tag language rules (per-user override for AI-generated content language)
   tagLanguage(tag: String!): String
 }
@@ -382,6 +386,9 @@ type Mutation {
   # Discussion Guide
   generateDiscussionGuide(journalEntryId: Int!): GenerateDiscussionGuideResult!
   deleteDiscussionGuide(journalEntryId: Int!): DeleteDiscussionGuideResult!
+
+  # Bogdan-specific discussion guide (one-shot, hard-wired to Bogdan)
+  generateBogdanDiscussion: GenerateBogdanDiscussionResult!
 
   # Conversations
   createConversation(issueId: Int!, message: String!): Conversation!
@@ -1850,6 +1857,31 @@ type GenerateDiscussionGuideResult {
 type DeleteDiscussionGuideResult {
   success: Boolean!
   message: String
+}
+
+# ============================================
+# Bogdan Discussion Guide
+# ============================================
+
+type BogdanDiscussionGuide {
+  id: Int!
+  familyMemberId: Int!
+  childAge: Int
+  behaviorSummary: String!
+  developmentalContext: DevelopmentalContext!
+  conversationStarters: [ConversationStarter!]!
+  talkingPoints: [TalkingPoint!]!
+  languageGuide: LanguageGuide!
+  anticipatedReactions: [AnticipatedReaction!]!
+  followUpPlan: [FollowUpStep!]!
+  model: String!
+  createdAt: String!
+}
+
+type GenerateBogdanDiscussionResult {
+  success: Boolean!
+  message: String
+  jobId: String
 }
 
 # ============================================
