@@ -1,16 +1,25 @@
 #!/usr/bin/env npx tsx
 /**
  * One-off: cold reply to Jared (Durlston Partners) re: AI roles in UAE / London.
- * Dry-run by default. Pass --send to actually fire via Resend.
+ * Upserts the contact, sends via Resend, logs the outbound to contact_emails.
+ * Dry-run by default. Pass --send to actually fire.
  */
 
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
+import { neon } from "@neondatabase/serverless";
 import { Resend } from "resend";
 import { FROM } from "@/lib/email/cpn-followup";
 
 const TO = "jared@durlstonpartners.com";
+const FIRST_NAME = "Jared";
+const LAST_NAME = "Durlston"; // best-guess; recruiter at Durlston Partners
+const COMPANY = "Durlston Partners";
+const POSITION = "Recruiter";
+const TAGS = '["recruiter","inbound-reply"]';
+
+const sql = neon(process.env.NEON_DATABASE_URL!);
 
 const subject = "Agentic systems in production — AI engineer, remote-only";
 
@@ -29,11 +38,34 @@ Vadim Nicolai
 contact@vadim.blog
 vadim.blog`;
 
+async function upsertContact(): Promise<number> {
+  const existing = (await sql`
+    SELECT id FROM contacts WHERE lower(email) = lower(${TO}) LIMIT 1
+  `) as unknown as { id: number }[];
+
+  if (existing[0]) {
+    console.log(`Contact exists (id=${existing[0].id}).`);
+    return existing[0].id;
+  }
+
+  const [row] = (await sql`
+    INSERT INTO contacts
+      (first_name, last_name, email, company, position, tags, created_at, updated_at)
+    VALUES
+      (${FIRST_NAME}, ${LAST_NAME}, ${TO}, ${COMPANY}, ${POSITION}, ${TAGS}, now()::text, now()::text)
+    RETURNING id
+  `) as unknown as { id: number }[];
+
+  console.log(`Contact inserted (id=${row.id}).`);
+  return row.id;
+}
+
 async function main() {
   const send = process.argv.includes("--send");
+  const name = `${FIRST_NAME} ${LAST_NAME}`.trim();
 
   console.log(`\nFrom:    ${FROM}`);
-  console.log(`To:      ${TO}`);
+  console.log(`To:      ${name} <${TO}>`);
   console.log(`Subject: ${subject}`);
   console.log(`\n${text}\n`);
 
@@ -41,6 +73,8 @@ async function main() {
     console.log("(dry-run — pass --send to actually send)");
     return;
   }
+
+  const contactId = await upsertContact();
 
   const resend = new Resend(process.env.RESEND_API_KEY);
   const result = await resend.emails.send({
@@ -55,7 +89,21 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Sent (resend_id=${result.data?.id ?? ""}).`);
+  const resendId = result.data?.id ?? "";
+
+  await sql`
+    INSERT INTO contact_emails
+      (contact_id, resend_id, from_email, to_emails, subject, text_content, status,
+       sent_at, tags, recipient_name, sequence_type, sequence_number,
+       created_at, updated_at)
+    VALUES
+      (${contactId}, ${resendId}, 'contact@vadim.blog',
+       ${JSON.stringify([TO])}, ${subject}, ${text}, 'sent',
+       now()::text, ${TAGS}, ${name},
+       'initial', '0', now()::text, now()::text)
+  `;
+
+  console.log(`Sent (resend_id=${resendId}), logged to contact_emails.`);
 }
 
 main().catch((err) => {
