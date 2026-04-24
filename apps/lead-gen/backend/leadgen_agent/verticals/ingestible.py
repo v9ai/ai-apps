@@ -193,7 +193,7 @@ INGESTIBLE = register(
     ProductVertical(
         slug="ingestible",
         product_id=1,
-        schema_version="1.0.0",
+        schema_version="2.0.0",
         seed_query=(
             "RAG-native SaaS and AI platform teams bleeding tokens on document "
             "retrieval, or shipping on-prem / GDPR / EU-AI-Act-compliant document "

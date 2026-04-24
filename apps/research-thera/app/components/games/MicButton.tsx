@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { IconButton, Tooltip } from "@radix-ui/themes";
 
 type SpeechRecognitionLike = {
@@ -35,13 +35,13 @@ export function MicButton({
   language?: string;
   size?: "2" | "3" | "4";
 }) {
-  const [supported, setSupported] = useState(false);
+  const supported = useSyncExternalStore(
+    () => () => {},
+    () => getSpeechRecognition() != null,
+    () => false,
+  );
   const [active, setActive] = useState(false);
   const recRef = useRef<SpeechRecognitionLike | null>(null);
-
-  useEffect(() => {
-    setSupported(getSpeechRecognition() != null);
-  }, []);
 
   useEffect(() => {
     return () => {
