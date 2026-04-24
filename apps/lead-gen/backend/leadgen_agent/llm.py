@@ -150,6 +150,13 @@ MODEL_PRICING: dict[str, dict[str, float]] = {
     # DeepSeek — standard per-API-call pricing, cache-miss tier.
     "deepseek-chat":     {"input_per_1m": 0.27, "output_per_1m": 1.10},
     "deepseek-reasoner": {"input_per_1m": 0.55, "output_per_1m": 2.19},
+    # Cloudflare Workers AI — @cf/mistral/mistral-7b-instruct-v0.2-lora behind
+    # workers/email-llm. CF bills $0.011 / 1000 Neurons; per the pricing page
+    # (https://developers.cloudflare.com/workers-ai/platform/pricing/) the
+    # documented v0.1 variant lists 10,000 Neurons/M input + 17,300 Neurons/M
+    # output → $0.110 / $0.190 per 1M tokens. v0.2-lora isn't in the table
+    # yet; assume parity with v0.1 until CF publishes updated numbers.
+    "mistral-email-lora": {"input_per_1m": 0.11, "output_per_1m": 0.19},
     # Placeholders for the local Qwen/MLX mode — zero cost, but we still want
     # token counts to flow through the same pipeline for "which prompt balloons
     # output tokens" diagnostics.
