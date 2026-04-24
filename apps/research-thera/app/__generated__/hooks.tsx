@@ -136,8 +136,10 @@ export type BogdanDiscussionGuide = {
   anticipatedReactions: Array<AnticipatedReaction>;
   behaviorSummary: Scalars['String']['output'];
   childAge?: Maybe<Scalars['Int']['output']>;
+  citations: Array<Citation>;
   conversationStarters: Array<ConversationStarter>;
   createdAt: Scalars['String']['output'];
+  critique?: Maybe<DiscussionGuideCritique>;
   developmentalContext: DevelopmentalContext;
   familyMemberId: Scalars['Int']['output'];
   followUpPlan: Array<FollowUpStep>;
@@ -176,6 +178,16 @@ export type CheckNoteClaimsResult = {
   message?: Maybe<Scalars['String']['output']>;
   noteId: Scalars['Int']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type Citation = {
+  __typename?: 'Citation';
+  authors?: Maybe<Scalars['String']['output']>;
+  doi?: Maybe<Scalars['String']['output']>;
+  researchId: Scalars['Int']['output'];
+  title: Scalars['String']['output'];
+  url?: Maybe<Scalars['String']['output']>;
+  year?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ClaimCard = {
@@ -421,6 +433,15 @@ export type CreateTeacherFeedbackInput = {
   teacherName: Scalars['String']['input'];
 };
 
+export type CritiqueScores = {
+  __typename?: 'CritiqueScores';
+  actionability: Scalars['Int']['output'];
+  ageAppropriateness: Scalars['Int']['output'];
+  citationCoverage: Scalars['Int']['output'];
+  internalConsistency: Scalars['Int']['output'];
+  romanianFluency: Scalars['Int']['output'];
+};
+
 export type DataSnapshot = {
   __typename?: 'DataSnapshot';
   contactFeedbackCount: Scalars['Int']['output'];
@@ -662,6 +683,13 @@ export type DiscussionGuide = {
   languageGuide: LanguageGuide;
   model: Scalars['String']['output'];
   talkingPoints: Array<TalkingPoint>;
+};
+
+export type DiscussionGuideCritique = {
+  __typename?: 'DiscussionGuideCritique';
+  refined: Scalars['Boolean']['output'];
+  scores: CritiqueScores;
+  weakSections: Array<Scalars['String']['output']>;
 };
 
 export type EmotionalLandscape = {
@@ -2543,6 +2571,7 @@ export type SubscriptionResearchJobStatusArgs = {
 
 export type TalkingPoint = {
   __typename?: 'TalkingPoint';
+  citations?: Maybe<Array<Citation>>;
   explanation: Scalars['String']['output'];
   point: Scalars['String']['output'];
   relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
@@ -3637,7 +3666,7 @@ export type GetTherapeuticQuestionsQuery = { __typename?: 'Query', therapeuticQu
 export type LatestBogdanDiscussionQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LatestBogdanDiscussionQuery = { __typename?: 'Query', latestBogdanDiscussion?: { __typename?: 'BogdanDiscussionGuide', id: number, familyMemberId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } | null };
+export type LatestBogdanDiscussionQuery = { __typename?: 'Query', latestBogdanDiscussion?: { __typename?: 'BogdanDiscussionGuide', id: number, familyMemberId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, citations?: Array<{ __typename?: 'Citation', researchId: number, doi?: string | null, title: string, year?: number | null, authors?: string | null, url?: string | null }> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }>, citations: Array<{ __typename?: 'Citation', researchId: number, doi?: string | null, title: string, year?: number | null, authors?: string | null, url?: string | null }>, critique?: { __typename?: 'DiscussionGuideCritique', weakSections: Array<string>, refined: boolean, scores: { __typename?: 'CritiqueScores', romanianFluency: number, actionability: number, citationCoverage: number, ageAppropriateness: number, internalConsistency: number } } | null } | null };
 
 export type LinkContactToIssueMutationVariables = Exact<{
   issueId: Scalars['Int']['input'];
@@ -10361,6 +10390,14 @@ export const LatestBogdanDiscussionDocument = gql`
       point
       explanation
       researchBacking
+      citations {
+        researchId
+        doi
+        title
+        year
+        authors
+        url
+      }
     }
     languageGuide {
       whatToSay {
@@ -10383,6 +10420,25 @@ export const LatestBogdanDiscussionDocument = gql`
       action
       timing
       description
+    }
+    citations {
+      researchId
+      doi
+      title
+      year
+      authors
+      url
+    }
+    critique {
+      scores {
+        romanianFluency
+        actionability
+        citationCoverage
+        ageAppropriateness
+        internalConsistency
+      }
+      weakSections
+      refined
     }
     model
     createdAt

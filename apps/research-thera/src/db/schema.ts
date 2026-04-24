@@ -721,6 +721,8 @@ export const bogdanDiscussionGuides = pgTable("bogdan_discussion_guides", {
   languageGuide: text("language_guide").notNull(), // JSON {whatToSay, whatNotToSay}
   anticipatedReactions: text("anticipated_reactions").notNull(), // JSON array
   followUpPlan: text("follow_up_plan").notNull(), // JSON array
+  citations: text("citations").notNull().default("[]"), // JSON array of Citation
+  critique: text("critique"), // JSON nullable — { scores, weakSections, refined }
   model: text("model").notNull().default("deepseek-chat"),
   createdAt: text("created_at")
     .notNull()

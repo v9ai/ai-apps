@@ -1823,6 +1823,30 @@ type TalkingPoint {
   explanation: String!
   researchBacking: String
   relatedResearchIds: [Int!]
+  citations: [Citation!]
+}
+
+type Citation {
+  researchId: Int!
+  doi: String
+  title: String!
+  year: Int
+  authors: String
+  url: String
+}
+
+type CritiqueScores {
+  romanianFluency: Int!
+  actionability: Int!
+  citationCoverage: Int!
+  ageAppropriateness: Int!
+  internalConsistency: Int!
+}
+
+type DiscussionGuideCritique {
+  scores: CritiqueScores!
+  weakSections: [String!]!
+  refined: Boolean!
 }
 
 type LanguageGuide {
@@ -1874,6 +1898,8 @@ type BogdanDiscussionGuide {
   languageGuide: LanguageGuide!
   anticipatedReactions: [AnticipatedReaction!]!
   followUpPlan: [FollowUpStep!]!
+  citations: [Citation!]!
+  critique: DiscussionGuideCritique
   model: String!
   createdAt: String!
 }

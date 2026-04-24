@@ -19,6 +19,14 @@ query LatestBogdanDiscussion {
       point
       explanation
       researchBacking
+      citations {
+        researchId
+        doi
+        title
+        year
+        authors
+        url
+      }
     }
     languageGuide {
       whatToSay {
@@ -41,6 +49,25 @@ query LatestBogdanDiscussion {
       action
       timing
       description
+    }
+    citations {
+      researchId
+      doi
+      title
+      year
+      authors
+      url
+    }
+    critique {
+      scores {
+        romanianFluency
+        actionability
+        citationCoverage
+        ageAppropriateness
+        internalConsistency
+      }
+      weakSections
+      refined
     }
     model
     createdAt

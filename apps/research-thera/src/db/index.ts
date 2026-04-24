@@ -3496,6 +3496,8 @@ function mapBogdanDiscussionRow(r: any) {
     languageGuide: safeJsonParse(r.language_guide as string, { whatToSay: [], whatNotToSay: [] }),
     anticipatedReactions: safeJsonParse(r.anticipated_reactions as string, []),
     followUpPlan: safeJsonParse(r.follow_up_plan as string, []),
+    citations: safeJsonParse((r.citations as string) ?? "[]", []),
+    critique: r.critique ? safeJsonParse(r.critique as string, null) : null,
     model: r.model as string,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,

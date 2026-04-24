@@ -135,8 +135,10 @@ export type BogdanDiscussionGuide = {
   anticipatedReactions: Array<AnticipatedReaction>;
   behaviorSummary: Scalars['String']['output'];
   childAge?: Maybe<Scalars['Int']['output']>;
+  citations: Array<Citation>;
   conversationStarters: Array<ConversationStarter>;
   createdAt: Scalars['String']['output'];
+  critique?: Maybe<DiscussionGuideCritique>;
   developmentalContext: DevelopmentalContext;
   familyMemberId: Scalars['Int']['output'];
   followUpPlan: Array<FollowUpStep>;
@@ -175,6 +177,16 @@ export type CheckNoteClaimsResult = {
   message?: Maybe<Scalars['String']['output']>;
   noteId: Scalars['Int']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type Citation = {
+  __typename?: 'Citation';
+  authors?: Maybe<Scalars['String']['output']>;
+  doi?: Maybe<Scalars['String']['output']>;
+  researchId: Scalars['Int']['output'];
+  title: Scalars['String']['output'];
+  url?: Maybe<Scalars['String']['output']>;
+  year?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ClaimCard = {
@@ -419,6 +431,15 @@ export type CreateTeacherFeedbackInput = {
   teacherName: Scalars['String']['input'];
 };
 
+export type CritiqueScores = {
+  __typename?: 'CritiqueScores';
+  actionability: Scalars['Int']['output'];
+  ageAppropriateness: Scalars['Int']['output'];
+  citationCoverage: Scalars['Int']['output'];
+  internalConsistency: Scalars['Int']['output'];
+  romanianFluency: Scalars['Int']['output'];
+};
+
 export type DataSnapshot = {
   __typename?: 'DataSnapshot';
   contactFeedbackCount: Scalars['Int']['output'];
@@ -657,6 +678,13 @@ export type DiscussionGuide = {
   languageGuide: LanguageGuide;
   model: Scalars['String']['output'];
   talkingPoints: Array<TalkingPoint>;
+};
+
+export type DiscussionGuideCritique = {
+  __typename?: 'DiscussionGuideCritique';
+  refined: Scalars['Boolean']['output'];
+  scores: CritiqueScores;
+  weakSections: Array<Scalars['String']['output']>;
 };
 
 export type EmotionalLandscape = {
@@ -2520,6 +2548,7 @@ export type SubscriptionresearchJobStatusArgs = {
 
 export type TalkingPoint = {
   __typename?: 'TalkingPoint';
+  citations?: Maybe<Array<Citation>>;
   explanation: Scalars['String']['output'];
   point: Scalars['String']['output'];
   relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
@@ -2843,6 +2872,7 @@ export type ResolversTypes = {
   BuildClaimCardsResult: ResolverTypeWrapper<Omit<BuildClaimCardsResult, 'cards'> & { cards: Array<ResolversTypes['ClaimCard']> }>;
   CheckNoteClaimsInput: CheckNoteClaimsInput;
   CheckNoteClaimsResult: ResolverTypeWrapper<Omit<CheckNoteClaimsResult, 'cards'> & { cards: Array<ResolversTypes['ClaimCard']> }>;
+  Citation: ResolverTypeWrapper<Citation>;
   ClaimCard: ResolverTypeWrapper<Omit<ClaimCard, 'evidence' | 'verdict'> & { evidence: Array<ResolversTypes['EvidenceItem']>, verdict: ResolversTypes['ClaimVerdict'] }>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   ClaimProvenance: ResolverTypeWrapper<ClaimProvenance>;
@@ -2868,6 +2898,7 @@ export type ResolversTypes = {
   CreateStoryInput: CreateStoryInput;
   CreateSubGoalInput: CreateSubGoalInput;
   CreateTeacherFeedbackInput: CreateTeacherFeedbackInput;
+  CritiqueScores: ResolverTypeWrapper<CritiqueScores>;
   DataSnapshot: ResolverTypeWrapper<DataSnapshot>;
   DeepAnalysis: ResolverTypeWrapper<Omit<DeepAnalysis, 'familyMember' | 'goal' | 'journalEntry' | 'note' | 'subjectType' | 'triggerType'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, goal?: Maybe<ResolversTypes['Goal']>, journalEntry?: Maybe<ResolversTypes['JournalEntry']>, note?: Maybe<ResolversTypes['Note']>, subjectType: ResolversTypes['DeepAnalysisSubjectType'], triggerType?: Maybe<ResolversTypes['DeepAnalysisTriggerType']> }>;
   DeepAnalysisSubjectType: ResolverTypeWrapper<'GOAL' | 'NOTE' | 'JOURNAL_ENTRY' | 'FAMILY_MEMBER'>;
@@ -2899,6 +2930,7 @@ export type ResolversTypes = {
   DevelopmentalContext: ResolverTypeWrapper<DevelopmentalContext>;
   DevelopmentalTier: ResolverTypeWrapper<'EARLY_CHILDHOOD' | 'MIDDLE_CHILDHOOD' | 'EARLY_ADOLESCENCE' | 'LATE_ADOLESCENCE' | 'ADULT'>;
   DiscussionGuide: ResolverTypeWrapper<DiscussionGuide>;
+  DiscussionGuideCritique: ResolverTypeWrapper<DiscussionGuideCritique>;
   EmotionalLandscape: ResolverTypeWrapper<EmotionalLandscape>;
   EvidenceItem: ResolverTypeWrapper<Omit<EvidenceItem, 'polarity'> & { polarity: ResolversTypes['EvidencePolarity'] }>;
   EvidenceLocator: ResolverTypeWrapper<EvidenceLocator>;
@@ -3032,6 +3064,7 @@ export type ResolversParentTypes = {
   BuildClaimCardsResult: Omit<BuildClaimCardsResult, 'cards'> & { cards: Array<ResolversParentTypes['ClaimCard']> };
   CheckNoteClaimsInput: CheckNoteClaimsInput;
   CheckNoteClaimsResult: Omit<CheckNoteClaimsResult, 'cards'> & { cards: Array<ResolversParentTypes['ClaimCard']> };
+  Citation: Citation;
   ClaimCard: Omit<ClaimCard, 'evidence'> & { evidence: Array<ResolversParentTypes['EvidenceItem']> };
   ID: Scalars['ID']['output'];
   ClaimProvenance: ClaimProvenance;
@@ -3056,6 +3089,7 @@ export type ResolversParentTypes = {
   CreateStoryInput: CreateStoryInput;
   CreateSubGoalInput: CreateSubGoalInput;
   CreateTeacherFeedbackInput: CreateTeacherFeedbackInput;
+  CritiqueScores: CritiqueScores;
   DataSnapshot: DataSnapshot;
   DeepAnalysis: Omit<DeepAnalysis, 'familyMember' | 'goal' | 'journalEntry' | 'note'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, goal?: Maybe<ResolversParentTypes['Goal']>, journalEntry?: Maybe<ResolversParentTypes['JournalEntry']>, note?: Maybe<ResolversParentTypes['Note']> };
   DeepIssueAnalysis: Omit<DeepIssueAnalysis, 'familyMember' | 'triggerIssue'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, triggerIssue?: Maybe<ResolversParentTypes['Issue']> };
@@ -3084,6 +3118,7 @@ export type ResolversParentTypes = {
   DeleteTeacherFeedbackResult: DeleteTeacherFeedbackResult;
   DevelopmentalContext: DevelopmentalContext;
   DiscussionGuide: DiscussionGuide;
+  DiscussionGuideCritique: DiscussionGuideCritique;
   EmotionalLandscape: EmotionalLandscape;
   EvidenceItem: EvidenceItem;
   EvidenceLocator: EvidenceLocator;
@@ -3273,8 +3308,10 @@ export type BogdanDiscussionGuideResolvers<ContextType = GraphQLContext, ParentT
   anticipatedReactions?: Resolver<Array<ResolversTypes['AnticipatedReaction']>, ParentType, ContextType>;
   behaviorSummary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   childAge?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  citations?: Resolver<Array<ResolversTypes['Citation']>, ParentType, ContextType>;
   conversationStarters?: Resolver<Array<ResolversTypes['ConversationStarter']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  critique?: Resolver<Maybe<ResolversTypes['DiscussionGuideCritique']>, ParentType, ContextType>;
   developmentalContext?: Resolver<ResolversTypes['DevelopmentalContext'], ParentType, ContextType>;
   familyMemberId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   followUpPlan?: Resolver<Array<ResolversTypes['FollowUpStep']>, ParentType, ContextType>;
@@ -3293,6 +3330,15 @@ export type CheckNoteClaimsResultResolvers<ContextType = GraphQLContext, ParentT
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   noteId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type CitationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Citation'] = ResolversParentTypes['Citation']> = {
+  authors?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  doi?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  researchId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
 };
 
 export type ClaimCardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ClaimCard'] = ResolversParentTypes['ClaimCard']> = {
@@ -3382,6 +3428,14 @@ export type ConversationStarterResolvers<ContextType = GraphQLContext, ParentTyp
   ageAppropriateNote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   context?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   opener?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type CritiqueScoresResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CritiqueScores'] = ResolversParentTypes['CritiqueScores']> = {
+  actionability?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  ageAppropriateness?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  citationCoverage?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  internalConsistency?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  romanianFluency?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type DataSnapshotResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DataSnapshot'] = ResolversParentTypes['DataSnapshot']> = {
@@ -3582,6 +3636,12 @@ export type DiscussionGuideResolvers<ContextType = GraphQLContext, ParentType ex
   languageGuide?: Resolver<ResolversTypes['LanguageGuide'], ParentType, ContextType>;
   model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   talkingPoints?: Resolver<Array<ResolversTypes['TalkingPoint']>, ParentType, ContextType>;
+};
+
+export type DiscussionGuideCritiqueResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DiscussionGuideCritique'] = ResolversParentTypes['DiscussionGuideCritique']> = {
+  refined?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  scores?: Resolver<ResolversTypes['CritiqueScores'], ParentType, ContextType>;
+  weakSections?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type EmotionalLandscapeResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmotionalLandscape'] = ResolversParentTypes['EmotionalLandscape']> = {
@@ -4466,6 +4526,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
 };
 
 export type TalkingPointResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TalkingPoint'] = ResolversParentTypes['TalkingPoint']> = {
+  citations?: Resolver<Maybe<Array<ResolversTypes['Citation']>>, ParentType, ContextType>;
   explanation?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   point?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   relatedResearchIds?: Resolver<Maybe<Array<ResolversTypes['Int']>>, ParentType, ContextType>;
@@ -4574,6 +4635,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   BogdanDiscussionGuide?: BogdanDiscussionGuideResolvers<ContextType>;
   BuildClaimCardsResult?: BuildClaimCardsResultResolvers<ContextType>;
   CheckNoteClaimsResult?: CheckNoteClaimsResultResolvers<ContextType>;
+  Citation?: CitationResolvers<ContextType>;
   ClaimCard?: ClaimCardResolvers<ContextType>;
   ClaimProvenance?: ClaimProvenanceResolvers<ContextType>;
   ClaimScope?: ClaimScopeResolvers<ContextType>;
@@ -4583,6 +4645,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Conversation?: ConversationResolvers<ContextType>;
   ConversationMessage?: ConversationMessageResolvers<ContextType>;
   ConversationStarter?: ConversationStarterResolvers<ContextType>;
+  CritiqueScores?: CritiqueScoresResolvers<ContextType>;
   DataSnapshot?: DataSnapshotResolvers<ContextType>;
   DeepAnalysis?: DeepAnalysisResolvers<ContextType>;
   DeepAnalysisSubjectType?: DeepAnalysisSubjectTypeResolvers;
@@ -4614,6 +4677,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DevelopmentalContext?: DevelopmentalContextResolvers<ContextType>;
   DevelopmentalTier?: DevelopmentalTierResolvers;
   DiscussionGuide?: DiscussionGuideResolvers<ContextType>;
+  DiscussionGuideCritique?: DiscussionGuideCritiqueResolvers<ContextType>;
   EmotionalLandscape?: EmotionalLandscapeResolvers<ContextType>;
   EvidenceItem?: EvidenceItemResolvers<ContextType>;
   EvidenceLocator?: EvidenceLocatorResolvers<ContextType>;

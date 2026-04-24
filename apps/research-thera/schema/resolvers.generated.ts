@@ -169,6 +169,7 @@ import    { BehaviorObservation } from './resolvers/BehaviorObservation';
 import    { BogdanDiscussionGuide } from './resolvers/BogdanDiscussionGuide';
 import    { BuildClaimCardsResult } from './resolvers/BuildClaimCardsResult';
 import    { CheckNoteClaimsResult } from './resolvers/CheckNoteClaimsResult';
+import    { Citation } from './resolvers/Citation';
 import    { ClaimCard } from './resolvers/ClaimCard';
 import    { ClaimProvenance } from './resolvers/ClaimProvenance';
 import    { ClaimScope } from './resolvers/ClaimScope';
@@ -177,6 +178,7 @@ import    { ContactFeedback } from './resolvers/ContactFeedback';
 import    { Conversation } from './resolvers/Conversation';
 import    { ConversationMessage } from './resolvers/ConversationMessage';
 import    { ConversationStarter } from './resolvers/ConversationStarter';
+import    { CritiqueScores } from './resolvers/CritiqueScores';
 import    { DataSnapshot } from './resolvers/DataSnapshot';
 import    { DeepAnalysis } from './resolvers/DeepAnalysis';
 import    { DeepIssueAnalysis } from './resolvers/DeepIssueAnalysis';
@@ -205,6 +207,7 @@ import    { DeleteStoryResult } from './resolvers/DeleteStoryResult';
 import    { DeleteTeacherFeedbackResult } from './resolvers/DeleteTeacherFeedbackResult';
 import    { DevelopmentalContext } from './resolvers/DevelopmentalContext';
 import    { DiscussionGuide } from './resolvers/DiscussionGuide';
+import    { DiscussionGuideCritique } from './resolvers/DiscussionGuideCritique';
 import    { EmotionalLandscape } from './resolvers/EmotionalLandscape';
 import    { EvidenceItem } from './resolvers/EvidenceItem';
 import    { EvidenceLocator } from './resolvers/EvidenceLocator';
@@ -294,6 +297,7 @@ BehaviorObservation: BehaviorObservation,
 BogdanDiscussionGuide: BogdanDiscussionGuide,
 BuildClaimCardsResult: BuildClaimCardsResult,
 CheckNoteClaimsResult: CheckNoteClaimsResult,
+Citation: Citation,
 ClaimCard: ClaimCard,
 ClaimProvenance: ClaimProvenance,
 ClaimScope: ClaimScope,
@@ -302,6 +306,7 @@ ContactFeedback: ContactFeedback,
 Conversation: Conversation,
 ConversationMessage: ConversationMessage,
 ConversationStarter: ConversationStarter,
+CritiqueScores: CritiqueScores,
 DataSnapshot: DataSnapshot,
 DeepAnalysis: DeepAnalysis,
 DeepIssueAnalysis: DeepIssueAnalysis,
@@ -330,6 +335,7 @@ DeleteStoryResult: DeleteStoryResult,
 DeleteTeacherFeedbackResult: DeleteTeacherFeedbackResult,
 DevelopmentalContext: DevelopmentalContext,
 DiscussionGuide: DiscussionGuide,
+DiscussionGuideCritique: DiscussionGuideCritique,
 EmotionalLandscape: EmotionalLandscape,
 EvidenceItem: EvidenceItem,
 EvidenceLocator: EvidenceLocator,

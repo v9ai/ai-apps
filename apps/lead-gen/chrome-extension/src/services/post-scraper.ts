@@ -16,7 +16,14 @@ import { fetchAllConnections, type ScrapedConnection } from "./connection-scrape
 import { gqlRequest, GRAPHQL_URL } from "./graphql";
 import { parseJobFields, isJobRelatedPost } from "../lib/job-field-parser";
 
-const RUST_SERVER = import.meta.env.VITE_RUST_SERVER_URL || "http://localhost:9876";
+// LinkedIn posts API base URL. Historically a Rust server on :9876; now a
+// Python FastAPI router mounted at /linkedin/* on the CF dispatcher Worker.
+// VITE_RUST_SERVER_URL is kept as a fallback env-var name for back-compat
+// with existing dev setups.
+const LINKEDIN_API =
+  import.meta.env.VITE_LINKEDIN_API_URL ||
+  import.meta.env.VITE_RUST_SERVER_URL ||
+  "http://localhost:9876";
 
 // ── Types ──
 
@@ -113,10 +120,10 @@ function randomDelay(min: number, max: number): Promise<void> {
   return sleep(min + Math.random() * (max - min));
 }
 
-// ── Fetch contacts from Rust server (which queries Neon directly) ──
+// ── Fetch contacts from LinkedIn API (which queries Neon directly) ──
 
 async function fetchContactsWithLinkedIn(): Promise<ScrapedContact[]> {
-  const res = await fetch(`${RUST_SERVER}/contacts`);
+  const res = await fetch(`${LINKEDIN_API}/contacts`);
   if (!res.ok) throw new Error(`Failed to fetch contacts: ${res.status}`);
 
   const contacts: Array<{
@@ -137,15 +144,15 @@ async function fetchContactsWithLinkedIn(): Promise<ScrapedContact[]> {
     position: c.position,
   }));
 
-  console.log(`[PostScraper] Fetched ${mapped.length} contacts from Rust server`);
+  console.log(`[PostScraper] Fetched ${mapped.length} contacts from LinkedIn API`);
   return mapped;
 }
 
-// ── Check Rust server health ──
+// ── Check LinkedIn API health ──
 
 export async function checkServerHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${RUST_SERVER}/stats`);
+    const res = await fetch(`${LINKEDIN_API}/stats`);
     return res.ok;
   } catch {
     return false;
@@ -157,7 +164,7 @@ export async function getServerStats(): Promise<{
   posts: number;
 } | null> {
   try {
-    const res = await fetch(`${RUST_SERVER}/stats`);
+    const res = await fetch(`${LINKEDIN_API}/stats`);
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -165,7 +172,7 @@ export async function getServerStats(): Promise<{
   }
 }
 
-// ── Post to Rust server ──
+// ── Post to LinkedIn API ──
 
 interface PostResult {
   inserted: number;
@@ -176,7 +183,7 @@ export async function postPosts(
   contactId: number,
   posts: ScrapedPost[],
 ): Promise<PostResult> {
-  const res = await fetch(`${RUST_SERVER}/posts`, {
+  const res = await fetch(`${LINKEDIN_API}/posts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contact_id: contactId, posts }),
@@ -207,19 +214,19 @@ export async function postPosts(
       );
     }
   } catch {
-    // Non-critical: Rust server is primary store
+    // Non-critical: LinkedIn API is primary store
   }
 
   return { inserted: data.inserted, filtered: data.filtered || 0 };
 }
 
-// ── Post likes to Rust server ──
+// ── Post likes to LinkedIn API ──
 
 async function postLikes(
   contactId: number,
   likes: ScrapedLike[],
 ): Promise<{ inserted: number }> {
-  const res = await fetch(`${RUST_SERVER}/likes`, {
+  const res = await fetch(`${LINKEDIN_API}/likes`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contact_id: contactId, likes }),
@@ -491,7 +498,7 @@ export async function browseContactPosts(tabId: number): Promise<void> {
   // Check server
   const healthy = await checkServerHealth();
   if (!healthy) {
-    sendProgress({ error: "Rust server not running on localhost:9876" });
+    sendProgress({ error: "LinkedIn API not running on localhost:9876" });
     return;
   }
 
@@ -633,7 +640,7 @@ export async function scrapeContactPostsSingle(
   // Check server
   const healthy = await checkServerHealth();
   if (!healthy) {
-    await notifyWebApp({ error: "Rust server not running on localhost:9876", source: "contactScrape" });
+    await notifyWebApp({ error: "LinkedIn API not running on localhost:9876", source: "contactScrape" });
     return;
   }
 
@@ -773,7 +780,7 @@ function sendJobProgress(data: Record<string, unknown>) {
 // ── Job search scraping ──
 
 async function postJobPosts(posts: ScrapedPost[]): Promise<PostResult> {
-  const res = await fetch(`${RUST_SERVER}/jobs`, {
+  const res = await fetch(`${LINKEDIN_API}/jobs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ posts }),
@@ -864,7 +871,7 @@ export async function scrapeJobSearchPosts(tabId: number, searchUrl: string): Pr
     console.error("[JobScraper] Neon save failed:", err);
   }
 
-  // Optionally send to Rust server for ML scoring (non-blocking)
+  // Optionally send to LinkedIn API for ML scoring (non-blocking)
   try {
     if (await checkServerHealth()) await postJobPosts(jobPosts);
   } catch { /* non-critical */ }
@@ -1012,7 +1019,7 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
   // Check server
   const healthy = await checkServerHealth();
   if (!healthy) {
-    sendProgress({ error: "Rust server not running on localhost:9876" });
+    sendProgress({ error: "LinkedIn API not running on localhost:9876" });
     return;
   }
 
@@ -1051,7 +1058,7 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
 
   sendProgress({ phase: "import", status: "Checking existing contacts..." });
 
-  // Get existing contacts from Rust server (which reads from Neon)
+  // Get existing contacts from LinkedIn API (which reads from Neon)
   let existingUrls: Set<string>;
   try {
     const existing = await fetchContactsWithLinkedIn();
@@ -1272,7 +1279,7 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
 // ── Recruiter-only post scraping ──
 
 async function fetchRecruiterContacts(): Promise<ScrapedContact[]> {
-  const res = await fetch(`${RUST_SERVER}/contacts/recruiters`);
+  const res = await fetch(`${LINKEDIN_API}/contacts/recruiters`);
   if (!res.ok) throw new Error(`Failed to fetch recruiter contacts: ${res.status}`);
 
   const contacts: Array<{
@@ -1302,7 +1309,7 @@ export async function scrapeRecruiterPosts(tabId: number): Promise<void> {
 
   const healthy = await checkServerHealth();
   if (!healthy) {
-    sendProgress({ error: "Rust server not running on localhost:9876" });
+    sendProgress({ error: "LinkedIn API not running on localhost:9876" });
     return;
   }
 
@@ -1484,7 +1491,7 @@ export async function runUnifiedPipeline(tabId: number, searchUrl: string): Prom
       console.error("[UnifiedPipeline] Neon save failed:", err);
     }
 
-    // Optional: send to Rust server for ML scoring
+    // Optional: send to LinkedIn API for ML scoring
     try {
       if (await checkServerHealth()) await postJobPosts(jobPosts);
     } catch { /* non-critical */ }
@@ -1603,7 +1610,7 @@ export async function runUnifiedPipeline(tabId: number, searchUrl: string): Prom
     return;
   }
 
-  // ── Phase 4: Scrape posts for all contacts (requires Rust server) ──
+  // ── Phase 4: Scrape posts for all contacts (requires LinkedIn API) ──
 
   const healthy = await checkServerHealth();
   if (!healthy) {

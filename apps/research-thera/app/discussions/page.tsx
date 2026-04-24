@@ -11,6 +11,8 @@ import {
   Spinner,
   Button,
   Separator,
+  Tooltip,
+  Link as RadixLink,
 } from "@radix-ui/themes";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
@@ -24,6 +26,108 @@ import { AuthGate } from "../components/AuthGate";
 
 function formatRo(dateStr: string): string {
   return format(new Date(dateStr), "d MMM yyyy, HH:mm", { locale: ro });
+}
+
+type Citation = {
+  researchId: number;
+  doi?: string | null;
+  title: string;
+  year?: number | null;
+  authors?: string | null;
+  url?: string | null;
+};
+
+function citationHref(c: Citation): string | undefined {
+  if (c.url) return c.url;
+  if (c.doi) return `https://doi.org/${c.doi}`;
+  return undefined;
+}
+
+function CitationsRow({ citations }: { citations: Citation[] }) {
+  if (!citations.length) return null;
+  return (
+    <Box mt="2">
+      <Text size="1" color="gray" weight="medium" as="div" mb="1">
+        Surse
+      </Text>
+      <Flex gap="1" wrap="wrap">
+        {citations.map((c) => {
+          const href = citationHref(c);
+          const label = `${c.title.length > 60 ? c.title.slice(0, 60) + "…" : c.title}${c.year ? ` (${c.year})` : ""}`;
+          const badge = (
+            <Badge size="1" variant="soft" color="indigo">
+              {label}
+            </Badge>
+          );
+          return href ? (
+            <RadixLink key={c.researchId} href={href} target="_blank" rel="noopener noreferrer" underline="none">
+              {badge}
+            </RadixLink>
+          ) : (
+            <span key={c.researchId}>{badge}</span>
+          );
+        })}
+      </Flex>
+    </Box>
+  );
+}
+
+type CritiqueScores = {
+  romanianFluency: number;
+  actionability: number;
+  citationCoverage: number;
+  ageAppropriateness: number;
+  internalConsistency: number;
+};
+
+type Critique = {
+  scores: CritiqueScores;
+  weakSections: string[];
+  refined: boolean;
+};
+
+function averageScore(s: CritiqueScores): number {
+  const vals = [
+    s.romanianFluency,
+    s.actionability,
+    s.citationCoverage,
+    s.ageAppropriateness,
+    s.internalConsistency,
+  ];
+  const sum = vals.reduce((a, b) => a + b, 0);
+  return sum / vals.length;
+}
+
+function qualityColor(avg: number): "green" | "amber" | "red" {
+  if (avg >= 8) return "green";
+  if (avg >= 6) return "amber";
+  return "red";
+}
+
+const SCORE_LABELS_RO: Record<keyof CritiqueScores, string> = {
+  romanianFluency: "Fluență română",
+  actionability: "Aplicabilitate",
+  citationCoverage: "Acoperire surse",
+  ageAppropriateness: "Adecvare vârstă",
+  internalConsistency: "Coerență internă",
+};
+
+function QualityBadge({ critique }: { critique: Critique }) {
+  const avg = averageScore(critique.scores);
+  const color = qualityColor(avg);
+  const scoreKeys = Object.keys(SCORE_LABELS_RO) as Array<keyof CritiqueScores>;
+  const tooltip = scoreKeys
+    .map((k) => `${SCORE_LABELS_RO[k]}: ${critique.scores[k]}/10`)
+    .concat(critique.refined ? ["Rafinat după critică: da"] : [])
+    .join("\n");
+  return (
+    <Tooltip content={tooltip}>
+      <Badge size="2" variant="soft" color={color}>
+        Calitate: {avg.toFixed(1)}/10
+        {critique.refined ? " ✨" : ""}
+      </Badge>
+    </Tooltip>
+  );
 }
 
 export default function DiscussionsPage() {
@@ -146,9 +250,12 @@ function BogdanDiscussion() {
           <Flex direction="column" gap="4" p="2">
             <Flex justify="between" align="start" wrap="wrap" gap="2">
               <Heading size="5">Ghid curent</Heading>
-              <Badge variant="soft" color="indigo">
-                {formatRo(guide.createdAt)}
-              </Badge>
+              <Flex gap="2" align="center" wrap="wrap">
+                {guide.critique && <QualityBadge critique={guide.critique as Critique} />}
+                <Badge variant="soft" color="indigo">
+                  {formatRo(guide.createdAt)}
+                </Badge>
+              </Flex>
             </Flex>
 
             <Box>
@@ -214,6 +321,7 @@ function BogdanDiscussion() {
                         <em>{t.researchBacking}</em>
                       </Text>
                     )}
+                    <CitationsRow citations={(t.citations ?? []) as Citation[]} />
                   </Box>
                 ))}
               </Flex>

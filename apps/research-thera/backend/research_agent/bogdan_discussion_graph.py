@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Optional, TypedDict
@@ -77,10 +78,19 @@ class BogdanDiscussionState(TypedDict, total=False):
     _retrieved_research: list[dict]
     # Internal — prompt
     _prompt: str
+    # Internal — critique loop
+    _critique: dict
+    _refined: bool
+    # Internal — citations
+    _citations: list[dict]
     # Output
     guide: dict
     guide_id: int
     error: str
+
+
+_CRITIQUE_THRESHOLD = 7
+_RESEARCH_ID_RE = re.compile(r"ResearchID:(\d+)")
 
 
 def _conn_str() -> str:
@@ -529,9 +539,303 @@ async def generate(state: dict) -> dict:
         return {"error": f"DeepSeek response missing required keys: {missing}. Got: {list(parsed.keys())}"}
 
     if job_id:
-        await _update_job_progress(job_id, 75)
+        await _update_job_progress(job_id, 65)
 
     return {"guide": parsed}
+
+
+# ── Critique ─────────────────────────────────────────────────────────────
+
+def _build_critique_prompt(guide: dict, is_ro: bool) -> str:
+    rubric = (
+        "You are an expert reviewer of parent–child discussion guides. "
+        "Given the draft guide JSON below, score it on five axes from 0 to 10 "
+        "and list the keys of sections that need a rewrite.\n\n"
+        "Axes:\n"
+        "- romanianFluency: is every string natural, fluent Romanian? (If non-Romanian text leaks in, score < 5.)\n"
+        "- actionability: are talking points and language examples concrete enough that a parent can say them verbatim?\n"
+        "- citationCoverage: does every talkingPoints[i].researchBacking and developmentalContext.researchBasis cite at least one ResearchID:N token?\n"
+        "- ageAppropriateness: is the tone and vocabulary suitable for the stated child age?\n"
+        "- internalConsistency: do the sections tell one coherent story (same behaviors, same goals)?\n\n"
+        "Return a SINGLE JSON object with this exact shape:\n"
+        "{\n"
+        '  "scores": { "romanianFluency": 0-10, "actionability": 0-10, "citationCoverage": 0-10, "ageAppropriateness": 0-10, "internalConsistency": 0-10 },\n'
+        '  "sectionNotes": { "<sectionKey>": "<short Romanian critique note>", ... },\n'
+        '  "weakSections": [ "<sectionKey>", ... ]   // any section with score < 7, by top-level key\n'
+        "}\n\n"
+        "Valid section keys: behaviorSummary, developmentalContext, conversationStarters, talkingPoints, "
+        "languageGuide, anticipatedReactions, followUpPlan.\n"
+    )
+    body = "## Draft guide\n\n```json\n" + json.dumps(guide, ensure_ascii=False, indent=2) + "\n```"
+    prompt = f"{rubric}\n{body}"
+    if is_ro:
+        prompt = f"{ROMANIAN_INSTRUCTION}\n\n{prompt}"
+    return prompt
+
+
+async def critique(state: BogdanDiscussionState) -> dict:
+    if state.get("error") or not state.get("guide"):
+        return {}
+
+    job_id = state.get("job_id")
+    is_ro = bool(state.get("is_ro"))
+    guide = state["guide"]
+
+    prompt = _build_critique_prompt(guide, is_ro)
+    base_url = os.environ.get("LLM_BASE_URL") or None
+    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY") or ""
+    model = os.environ.get("LLM_MODEL", "deepseek-chat")
+
+    try:
+        config = DeepSeekConfig(api_key=api_key, base_url=base_url, timeout=120.0, default_model=model)
+    except Exception as exc:
+        return {"error": f"critique failed (config): {exc}"}
+
+    parsed: Optional[dict] = None
+    try:
+        async with DeepSeekClient(config) as client:
+            resp = await client.chat(
+                [ChatMessage(role="user", content=prompt)],
+                model=model,
+                temperature=0.0,
+                max_tokens=2048,
+                response_format={"type": "json_object"},
+            )
+            parsed = json.loads(resp.choices[0].message.content)
+    except Exception as exc:
+        # Non-fatal — if critique fails, skip refine and proceed to resolve_citations
+        print(f"[bogdan_discussion.critique] failed (continuing without critique): {exc}")
+        return {"_critique": {}}
+
+    if not isinstance(parsed, dict) or "scores" not in parsed:
+        return {"_critique": {}}
+
+    # Normalize
+    scores = parsed.get("scores") or {}
+    critique_obj = {
+        "scores": {
+            "romanianFluency": int(scores.get("romanianFluency", 0) or 0),
+            "actionability": int(scores.get("actionability", 0) or 0),
+            "citationCoverage": int(scores.get("citationCoverage", 0) or 0),
+            "ageAppropriateness": int(scores.get("ageAppropriateness", 0) or 0),
+            "internalConsistency": int(scores.get("internalConsistency", 0) or 0),
+        },
+        "sectionNotes": parsed.get("sectionNotes") or {},
+        "weakSections": [s for s in (parsed.get("weakSections") or []) if isinstance(s, str)],
+        "refined": bool(state.get("_refined")),
+    }
+
+    if job_id:
+        await _update_job_progress(job_id, 75)
+
+    return {"_critique": critique_obj}
+
+
+def should_refine(state: BogdanDiscussionState) -> str:
+    critique_obj = state.get("_critique") or {}
+    if state.get("_refined"):
+        return "resolve_citations"
+    scores = (critique_obj.get("scores") or {}).values()
+    if scores and any(s < _CRITIQUE_THRESHOLD for s in scores):
+        return "refine"
+    return "resolve_citations"
+
+
+# ── Refine ───────────────────────────────────────────────────────────────
+
+_VALID_SECTION_KEYS = set(_REQUIRED_KEYS)
+
+
+def _build_refine_prompt(guide: dict, critique_obj: dict, is_ro: bool) -> str:
+    weak = [s for s in critique_obj.get("weakSections", []) if s in _VALID_SECTION_KEYS]
+    if not weak:
+        # Fallback: pick lowest-scoring axis and rewrite the two most-related sections
+        weak = ["talkingPoints", "languageGuide"]
+    notes = critique_obj.get("sectionNotes") or {}
+    notes_text = "\n".join(
+        f"- **{k}**: {notes.get(k, '(no specific note — rewrite for higher actionability and citation coverage)')}"
+        for k in weak
+    )
+
+    prompt_parts = [
+        "You are refining a parent discussion guide. Below is the current draft, a list of weak sections, and specific critique notes per section.",
+        "Your task: rewrite ONLY the weak sections, preserving their exact JSON shape and field names. Every talkingPoints.researchBacking must still cite at least one ResearchID:N from the context already used. Be specific, warm, evidence-backed. No generic advice.",
+        "",
+        "## Current draft",
+        "```json",
+        json.dumps(guide, ensure_ascii=False, indent=2),
+        "```",
+        "",
+        "## Weak sections + critique notes",
+        notes_text,
+        "",
+        "## Output format",
+        "Return a SINGLE JSON object containing ONLY the rewritten weak section keys — do NOT include sections that don't need changes. Keys MUST be from: "
+        + ", ".join(sorted(_VALID_SECTION_KEYS))
+        + ". The shape under each key MUST match the original draft exactly.",
+    ]
+    prompt = "\n".join(prompt_parts)
+    if is_ro:
+        prompt = f"{ROMANIAN_INSTRUCTION}\n\n{prompt}"
+    return prompt
+
+
+async def refine(state: BogdanDiscussionState) -> dict:
+    if state.get("error") or not state.get("guide"):
+        return {}
+
+    job_id = state.get("job_id")
+    is_ro = bool(state.get("is_ro"))
+    guide = dict(state["guide"])
+    critique_obj = state.get("_critique") or {}
+
+    prompt = _build_refine_prompt(guide, critique_obj, is_ro)
+    base_url = os.environ.get("LLM_BASE_URL") or None
+    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY") or ""
+    model = os.environ.get("LLM_MODEL", "deepseek-chat")
+
+    try:
+        config = DeepSeekConfig(api_key=api_key, base_url=base_url, timeout=180.0, default_model=model)
+    except Exception as exc:
+        # Non-fatal
+        print(f"[bogdan_discussion.refine] config failed (skipping refine): {exc}")
+        return {"_refined": True}
+
+    patch: Optional[dict] = None
+    try:
+        async with DeepSeekClient(config) as client:
+            resp = await client.chat(
+                [ChatMessage(role="user", content=prompt)],
+                model=model,
+                temperature=0.2,
+                max_tokens=6144,
+                response_format={"type": "json_object"},
+            )
+            patch = json.loads(resp.choices[0].message.content)
+    except Exception as exc:
+        print(f"[bogdan_discussion.refine] generation failed (keeping original guide): {exc}")
+        return {"_refined": True}
+
+    if isinstance(patch, dict):
+        for k, v in patch.items():
+            if k in _VALID_SECTION_KEYS:
+                guide[k] = v
+
+    if job_id:
+        await _update_job_progress(job_id, 85)
+
+    return {"guide": guide, "_refined": True}
+
+
+# ── Resolve citations ────────────────────────────────────────────────────
+
+async def _fetch_research_by_ids(ids: list[int]) -> dict[int, dict]:
+    if not ids:
+        return {}
+    try:
+        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+            async with conn.cursor() as cur:
+                placeholders = ",".join(["%s"] * len(ids))
+                await cur.execute(
+                    f"SELECT id, doi, title, year, authors, url FROM therapy_research WHERE id IN ({placeholders})",
+                    ids,
+                )
+                rows = await cur.fetchall()
+    except Exception as exc:
+        print(f"[bogdan_discussion._fetch_research_by_ids] failed: {exc}")
+        return {}
+
+    out: dict[int, dict] = {}
+    for r_id, r_doi, r_title, r_year, r_authors, r_url in rows:
+        # authors is stored as JSON array in TEXT; keep as compact string "A; B; C"
+        authors_str = r_authors or ""
+        try:
+            parsed = json.loads(r_authors) if r_authors else None
+            if isinstance(parsed, list):
+                authors_str = "; ".join(str(a) for a in parsed[:4])
+        except Exception:
+            pass
+        out[int(r_id)] = {
+            "researchId": int(r_id),
+            "doi": r_doi,
+            "title": r_title or f"Paper #{r_id}",
+            "year": int(r_year) if r_year else None,
+            "authors": authors_str or None,
+            "url": r_url,
+        }
+    return out
+
+
+def _extract_research_ids(guide: dict) -> tuple[list[int], dict[int, list[int]]]:
+    """Returns (unique_ids_in_order, per_talking_point_ids). The list index of
+    per_talking_point_ids aligns with guide['talkingPoints']."""
+    seen: list[int] = []
+    seen_set: set[int] = set()
+
+    def _scan(text: Optional[str]) -> list[int]:
+        if not text:
+            return []
+        ids = [int(m.group(1)) for m in _RESEARCH_ID_RE.finditer(text)]
+        out: list[int] = []
+        for i in ids:
+            if i not in seen_set:
+                seen.append(i)
+                seen_set.add(i)
+            out.append(i)
+        return out
+
+    dc = guide.get("developmentalContext") or {}
+    _scan(dc.get("researchBasis") if isinstance(dc, dict) else None)
+
+    per_tp: dict[int, list[int]] = {}
+    for idx, tp in enumerate(guide.get("talkingPoints") or []):
+        if not isinstance(tp, dict):
+            per_tp[idx] = []
+            continue
+        ids = _scan(tp.get("researchBacking"))
+        # also pull from relatedResearchIds if model used the structured path
+        for rid in tp.get("relatedResearchIds") or []:
+            try:
+                rid_int = int(rid)
+                if rid_int not in seen_set:
+                    seen.append(rid_int)
+                    seen_set.add(rid_int)
+                if rid_int not in ids:
+                    ids.append(rid_int)
+            except Exception:
+                continue
+        per_tp[idx] = ids
+
+    return seen, per_tp
+
+
+async def resolve_citations(state: BogdanDiscussionState) -> dict:
+    if state.get("error") or not state.get("guide"):
+        return {}
+    guide = dict(state["guide"])
+    job_id = state.get("job_id")
+
+    unique_ids, per_tp_ids = _extract_research_ids(guide)
+    meta = await _fetch_research_by_ids(unique_ids)
+
+    # Guide-level citations (ordered, deduped)
+    citations = [meta[i] for i in unique_ids if i in meta]
+
+    # Attach per-talking-point citations
+    tps = list(guide.get("talkingPoints") or [])
+    for idx, tp in enumerate(tps):
+        if not isinstance(tp, dict):
+            continue
+        ids = per_tp_ids.get(idx) or []
+        tp_citations = [meta[i] for i in ids if i in meta]
+        tp["citations"] = tp_citations
+        tps[idx] = tp
+    guide["talkingPoints"] = tps
+
+    if job_id:
+        await _update_job_progress(job_id, 95)
+
+    return {"guide": guide, "_citations": citations}
 
 
 async def persist(state: dict) -> dict:
@@ -542,6 +846,17 @@ async def persist(state: dict) -> dict:
     user_email = state.get("user_email")
     guide = state["guide"]
     child_age = state.get("_child_age")
+    citations = state.get("_citations") or []
+    critique_obj = state.get("_critique") or None
+    # Only persist the fields the frontend consumes
+    if critique_obj:
+        critique_payload = {
+            "scores": critique_obj.get("scores", {}),
+            "weakSections": critique_obj.get("weakSections", []),
+            "refined": bool(state.get("_refined")),
+        }
+    else:
+        critique_payload = None
 
     try:
         async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
@@ -550,8 +865,8 @@ async def persist(state: dict) -> dict:
                     "INSERT INTO bogdan_discussion_guides ("
                     "user_id, family_member_id, child_age, behavior_summary, developmental_context, "
                     "conversation_starters, talking_points, language_guide, anticipated_reactions, "
-                    "follow_up_plan, model) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                    "follow_up_plan, citations, critique, model) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
                     (
                         user_email,
                         family_member_id,
@@ -563,6 +878,8 @@ async def persist(state: dict) -> dict:
                         json.dumps(guide.get("languageGuide", {"whatToSay": [], "whatNotToSay": []})),
                         json.dumps(guide.get("anticipatedReactions", [])),
                         json.dumps(guide.get("followUpPlan", [])),
+                        json.dumps(citations),
+                        json.dumps(critique_payload) if critique_payload is not None else None,
                         "deepseek-chat",
                     ),
                 )
@@ -593,13 +910,24 @@ def create_bogdan_discussion_graph():
     builder.add_node("load_scaffold_context", load_scaffold_context)
     builder.add_node("retrieve_and_compose", retrieve_and_compose)
     builder.add_node("generate", generate)
+    builder.add_node("critique", critique)
+    builder.add_node("refine", refine)
+    builder.add_node("resolve_citations", resolve_citations)
     builder.add_node("persist", persist)
     builder.add_node("finalize", finalize)
 
     builder.add_edge(START, "load_scaffold_context")
     builder.add_edge("load_scaffold_context", "retrieve_and_compose")
     builder.add_edge("retrieve_and_compose", "generate")
-    builder.add_edge("generate", "persist")
+    builder.add_edge("generate", "critique")
+    builder.add_conditional_edges(
+        "critique",
+        should_refine,
+        {"refine": "refine", "resolve_citations": "resolve_citations"},
+    )
+    # After refine, re-critique once; should_refine then falls through because _refined=True
+    builder.add_edge("refine", "critique")
+    builder.add_edge("resolve_citations", "persist")
     builder.add_edge("persist", "finalize")
     builder.add_edge("finalize", END)
 

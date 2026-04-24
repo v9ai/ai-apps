@@ -30,13 +30,35 @@ hooks-status:
 
 # ── App ────────────────────────────────────────────────────────
 
-.PHONY: dev backend-dev deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve
+.PHONY: dev backend-dev backend-dev-ml backend-dev-research backend-dev-full deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve
 
 dev:
 	pnpm dev
 
+# Core container's langgraph dev server on :8002 (28 hot-path graphs).
+# For cross-container graphs (ml/research), either run those containers
+# locally in parallel via backend-dev-full, or point the core process
+# at the deployed CF endpoints with ML_URL / RESEARCH_URL env vars.
 backend-dev:
 	pnpm backend-dev
+
+# ml container's langgraph dev on :8003 — torch + transformers required.
+# Prerequisite: `cd backend && uv sync --extra ml` to install the ml deps.
+backend-dev-ml:
+	cd backend && uv run --extra ml langgraph dev --config ml/langgraph.json --no-browser --port 8003
+
+# research container's langgraph dev on :8004 — lean (no torch).
+backend-dev-research:
+	cd backend && uv run langgraph dev --config research/langgraph.json --no-browser --port 8004
+
+# Run all three sub-container langgraph dev servers in parallel (Ctrl-C
+# kills all). Requires the ml extras.
+backend-dev-full:
+	@trap 'kill 0' EXIT; \
+	$(MAKE) backend-dev & \
+	$(MAKE) backend-dev-ml & \
+	$(MAKE) backend-dev-research & \
+	wait
 
 # Fire the deep_scrape LangGraph graph against a URL or company_id.
 #   make deep-scrape TARGET=https://www.aiacquisition.com/

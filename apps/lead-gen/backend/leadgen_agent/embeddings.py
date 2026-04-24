@@ -37,15 +37,44 @@ def _url() -> str:
     return raw.rstrip("/") + "/embed"
 
 
-async def embed_texts(texts: list[str], timeout: float = 120.0) -> list[list[float]]:
-    """Embed a batch of texts. Returns L2-normalized 1024-dim vectors."""
+class EmbeddingsUnreachable(RuntimeError):
+    """Raised when the BGE-M3 embedding server is configured but not reachable.
+
+    Surfaces fast (5-10 s connect timeout) with an actionable message so
+    callers don't hang waiting on a loopback URL that isn't listening —
+    e.g. in CF Container where :7799 never runs locally; embed calls go
+    to the ml container via ``ICP_EMBED_URL``.
+    """
+
+
+async def embed_texts(
+    texts: list[str],
+    timeout: float = 120.0,
+    connect_timeout: float = 8.0,
+) -> list[list[float]]:
+    """Embed a batch of texts. Returns L2-normalized 1024-dim vectors.
+
+    Raises :class:`EmbeddingsUnreachable` when the server cannot be reached
+    (DNS failure / connection refused / connect timeout) — previously this
+    would block for the full ``timeout`` hanging on ``127.0.0.1:7799`` when
+    the local sidecar isn't running.
+    """
     if not texts:
         return []
+    url = _url()
     payload = {"texts": texts}
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        resp = await client.post(_url(), json=payload)
-        resp.raise_for_status()
-        data = resp.json()
+    tout = httpx.Timeout(timeout, connect=connect_timeout)
+    try:
+        async with httpx.AsyncClient(timeout=tout) as client:
+            resp = await client.post(url, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+    except (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout) as exc:
+        raise EmbeddingsUnreachable(
+            f"embed_texts: BGE-M3 server unreachable at {url} ({exc.__class__.__name__}). "
+            "Set ICP_EMBED_URL to a reachable endpoint "
+            "(e.g. https://lead-gen-ml for CF, or run `make icp-embed-serve` locally)."
+        ) from exc
     vecs = data.get("vectors") or []
     if len(vecs) != len(texts):
         raise RuntimeError(

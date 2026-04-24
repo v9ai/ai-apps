@@ -25,7 +25,7 @@ export default function PostsSection() {
 
   // Check server health on mount
   useEffect(() => {
-    fetch("http://localhost:9876/stats")
+    fetch((import.meta.env.VITE_LINKEDIN_API_URL || "http://localhost:9876") + "/stats")
       .then((res) => {
         if (res.ok) {
           setServerUp(true);
@@ -63,7 +63,7 @@ export default function PostsSection() {
         setLoading(false);
         setPhase(null);
         setProgress(null);
-        fetch("http://localhost:9876/stats")
+        fetch((import.meta.env.VITE_LINKEDIN_API_URL || "http://localhost:9876") + "/stats")
           .then((r) => r.json())
           .then(setStats)
           .catch(() => {});

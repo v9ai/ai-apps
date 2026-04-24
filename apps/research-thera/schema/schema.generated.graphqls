@@ -107,8 +107,10 @@ type BogdanDiscussionGuide {
   anticipatedReactions: [AnticipatedReaction!]!
   behaviorSummary: String!
   childAge: Int
+  citations: [Citation!]!
   conversationStarters: [ConversationStarter!]!
   createdAt: String!
+  critique: DiscussionGuideCritique
   developmentalContext: DevelopmentalContext!
   familyMemberId: Int!
   followUpPlan: [FollowUpStep!]!
@@ -145,6 +147,15 @@ type CheckNoteClaimsResult {
   message: String
   noteId: Int!
   success: Boolean!
+}
+
+type Citation {
+  authors: String
+  doi: String
+  researchId: Int!
+  title: String!
+  url: String
+  year: Int
 }
 
 type ClaimCard {
@@ -382,6 +393,14 @@ input CreateTeacherFeedbackInput {
   teacherName: String!
 }
 
+type CritiqueScores {
+  actionability: Int!
+  ageAppropriateness: Int!
+  citationCoverage: Int!
+  internalConsistency: Int!
+  romanianFluency: Int!
+}
+
 type DataSnapshot {
   contactFeedbackCount: Int!
   issueCount: Int!
@@ -595,6 +614,12 @@ type DiscussionGuide {
   languageGuide: LanguageGuide!
   model: String!
   talkingPoints: [TalkingPoint!]!
+}
+
+type DiscussionGuideCritique {
+  refined: Boolean!
+  scores: CritiqueScores!
+  weakSections: [String!]!
 }
 
 type EmotionalLandscape {
@@ -1595,6 +1620,7 @@ type Subscription {
 }
 
 type TalkingPoint {
+  citations: [Citation!]
   explanation: String!
   point: String!
   relatedResearchIds: [Int!]
