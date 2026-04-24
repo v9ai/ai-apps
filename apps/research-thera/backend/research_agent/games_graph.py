@@ -97,7 +97,7 @@ async def collect_context(state: GamesState) -> dict:
                         )
                 if family_member_id:
                     await cur.execute(
-                        "SELECT first_name, age_years, relationship, bio "
+                        "SELECT first_name, age_years, relationship, bio, date_of_birth "
                         "FROM family_members WHERE id = %s AND user_id = %s",
                         (family_member_id, user_email),
                     )
@@ -108,8 +108,23 @@ async def collect_context(state: GamesState) -> dict:
                             fm_age = int(row[1]) if row[1] is not None else None
                         except (TypeError, ValueError):
                             fm_age = None
+                        # Fallback: compute age from date_of_birth when age_years is NULL.
+                        if fm_age is None and row[4]:
+                            try:
+                                from datetime import date
+                                dob = row[4]
+                                if isinstance(dob, str):
+                                    from datetime import datetime as _dt
+                                    dob = _dt.strptime(dob[:10], "%Y-%m-%d").date()
+                                today = date.today()
+                                fm_age = today.year - dob.year - (
+                                    (today.month, today.day) < (dob.month, dob.day)
+                                )
+                            except Exception:
+                                fm_age = None
                         context_lines.append(
-                            f"## Family member\n- Name: {row[0]}\n- Age: {row[1] or '?'}\n"
+                            f"## Family member\n- Name: {row[0]}\n"
+                            f"- Age: {fm_age if fm_age is not None else (row[1] or '?')}\n"
                             f"- Relationship: {row[2] or ''}\n- Bio: {(row[3] or '')[:400]}"
                         )
     except Exception as exc:
@@ -175,12 +190,51 @@ async def collect_context(state: GamesState) -> dict:
     )
 
     is_child = audience == "child"
+    is_ro = language == "ro"
+
+    # When the audience is a child, the model must also produce a parentGuide object
+    # so the split-screen coach view has per-step guidance for the parent.
+    PARENT_GUIDE_HINT_CHILD = (
+        'ALSO include a `parentGuide` object INSIDE `content` with this shape:\n'
+        '  "parentGuide": {\n'
+        '    "intro": "1–2 sentences — what the parent does BEFORE the exercise",\n'
+        '    "stepsGuide": ["one coaching note per step/prompt, aligned by index"],\n'
+        '    "tips": ["2–3 general tips for the parent"],\n'
+        '    "outro": "what the parent says/does at the end"\n'
+        '  }\n'
+        '`parentGuide.stepsGuide.length` MUST equal `content.steps.length` (or `content.prompts.length` for journal). '
+        'Write all parentGuide strings in the same language as the rest of the game. '
+        'Voice: warm, practical, concrete. Tell the parent what to DO and what NOT to say. '
+        'Evidence base: PCIT (Parent-Child Interaction Therapy), Incredible Years, Coping Cat. '
+        'Never preach — guide.'
+    )
+
+    # Romanian child-specific distortion character names (must match seed voice).
+    RO_DISTORTIONS = (
+        '"Mărețul Monstru — face lucrurile mici să pară uriașe", '
+        '"Globul de Cristal — se preface că știe viitorul", '
+        '"Judecătorul Rău — te numește cu cuvinte urâte", '
+        '"Mereu-Niciodată — spune că așa va fi mereu sau niciodată"'
+    )
+    EN_DISTORTIONS = (
+        '"Monster Maker — makes tiny things feel huge", '
+        '"Crystal Ball — pretends to know the future", '
+        '"Mean Judge — calls you bad names", '
+        '"Always-Never — says things will always or never happen"'
+    )
 
     if game_type == "CBT_REFRAME":
         if is_child:
+            distortions = RO_DISTORTIONS if is_ro else EN_DISTORTIONS
+            brave_voice = "Vocea Curajoasă" if is_ro else "Brave Voice"
+            character_examples = (
+                "Gândăcelul Grijii, Norul Supărat, Dragonul Furios"
+                if is_ro
+                else "Worry Bug, Grumpy Cloud, Angry Dragon"
+            )
             schema_hint = (
                 'Respond ONLY with JSON. Design this for a young child (≈6–10). Use externalization: '
-                'the worry is a character, the reframe is a "Brave Voice".\n'
+                f'the worry is a character (e.g. {character_examples}), the reframe is a "{brave_voice}".\n'
                 '{\n'
                 '  "title": "playful, warm title",\n'
                 '  "description": "one short sentence a kid can understand",\n'
@@ -188,15 +242,15 @@ async def collect_context(state: GamesState) -> dict:
                 '  "content": {\n'
                 '    "steps": [\n'
                 '      {"kind": "situation", "prompt": "Tell the story in one or two sentences."},\n'
-                '      {"kind": "thought", "prompt": "What did the Worry Bug (or Grumpy Cloud / Angry Dragon / etc.) whisper?"},\n'
-                '      {"kind": "distortion", "prompt": "Which trick was it using?", '
-                '"options": ["Monster Maker — makes tiny things feel huge", "Crystal Ball — pretends to know the future", "Mean Judge — calls you bad names", "Always-Never — says things will always or never happen"]},\n'
-                '      {"kind": "reframe", "prompt": "What would your Brave Voice say? Brave Voice tells the truth and is kind."}\n'
+                '      {"kind": "thought", "prompt": "What did the worry-character whisper?"},\n'
+                f'      {{"kind": "distortion", "prompt": "Which trick was it using?", "options": [{distortions}]}},\n'
+                f'      {{"kind": "reframe", "prompt": "What would your {brave_voice} say?"}}\n'
                 '    ]\n'
                 '  }\n'
                 '}\n'
-                'The `options` list MUST be exactly those 4 kid-friendly character names (no clinical jargon). '
-                'Each prompt ≤ 18 words. Tailor wording to the child\'s situation.'
+                f'The `options` list MUST be exactly those 4 kid-friendly character names (no clinical jargon). '
+                'Each prompt ≤ 18 words. Tailor wording to the child\'s situation.\n\n'
+                + PARENT_GUIDE_HINT_CHILD
             )
         else:
             schema_hint = (
@@ -235,7 +289,8 @@ async def collect_context(state: GamesState) -> dict:
                 '  }\n'
                 '}\n'
                 'Provide 8–14 steps. Each `durationSeconds` is 4–30. `cue` is 1–3 words a child can whisper. '
-                'Total duration ≈ estimated_minutes × 60 (aim 120–240s for kids).'
+                'Total duration ≈ estimated_minutes × 60 (aim 120–240s for kids).\n\n'
+                + PARENT_GUIDE_HINT_CHILD
             )
         else:
             schema_hint = (
@@ -268,7 +323,8 @@ async def collect_context(state: GamesState) -> dict:
                 '  }\n'
                 '}\n'
                 'Provide exactly 3–4 prompts. Each prompt ≤ 20 words and anchored in a concrete image '
-                '(e.g. "What was the weather inside you today?", "If your day was an animal, what animal?").'
+                '(e.g. "What was the weather inside you today?", "If your day was an animal, what animal?").\n\n'
+                + PARENT_GUIDE_HINT_CHILD
             )
         else:
             schema_hint = (

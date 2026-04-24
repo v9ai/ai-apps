@@ -16,10 +16,16 @@ export function MindfulnessRunner({
   content,
   onFinish,
   submitting,
+  onStepChange,
+  language = "en",
+  large = false,
 }: {
   content: string;
   onFinish: (responses: Record<string, unknown>, durationSeconds: number) => void;
   submitting: boolean;
+  onStepChange?: (index: number, done: boolean) => void;
+  language?: string;
+  large?: boolean;
 }) {
   const parsed = useMemo<Content | null>(() => {
     try {
@@ -37,10 +43,14 @@ export function MindfulnessRunner({
 
   const [startedAt] = useState(() => Date.now());
   const [idx, setIdx] = useState(0);
-  const [elapsed, setElapsed] = useState(0); // seconds elapsed within the current step
+  const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    onStepChange?.(idx, done);
+  }, [idx, done, onStepChange]);
 
   useEffect(() => {
     if (!running || done || steps.length === 0) return;
@@ -68,22 +78,45 @@ export function MindfulnessRunner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elapsed, idx]);
 
+  const isRo = language === "ro";
+  const t = isRo
+    ? {
+        stepOf: (i: number, n: number) => `Pasul ${i + 1} din ${n}`,
+        secondsLeft: (s: number) => `${s}s rămase`,
+        start: "Începe",
+        resume: "Continuă",
+        pause: "Pauză",
+        complete: "Bravo!",
+        completeMsg: "Bravo — mai ia o respirație înainte să mergi mai departe.",
+      }
+    : {
+        stepOf: (i: number, n: number) => `Step ${i + 1} of ${n}`,
+        secondsLeft: (s: number) => `${s}s left`,
+        start: "Start",
+        resume: "Resume",
+        pause: "Pause",
+        complete: "Practice complete",
+        completeMsg: "Nice work — take one more slow breath before you move on.",
+      };
+
   if (!parsed || steps.length === 0) {
     return (
       <Callout.Root color="red">
-        <Callout.Text>This mindfulness game has invalid content.</Callout.Text>
+        <Callout.Text>
+          {isRo ? "Acest joc are conținut invalid." : "This mindfulness game has invalid content."}
+        </Callout.Text>
       </Callout.Root>
     );
   }
 
   if (done) {
     return (
-      <Card>
-        <Flex direction="column" align="center" gap="3" p="5">
-          <CheckCircledIcon width="32" height="32" color="var(--green-9)" />
-          <Heading size="5">Practice complete</Heading>
-          <Text size="2" color="gray">
-            Nice work — take one more slow breath before you move on.
+      <Card style={{ height: "100%" }}>
+        <Flex direction="column" align="center" justify="center" gap="3" p="5" style={{ height: "100%", minHeight: 240 }}>
+          <CheckCircledIcon width={large ? 64 : 32} height={large ? 64 : 32} color="var(--green-9)" />
+          <Heading size={large ? "9" : "5"}>{t.complete}</Heading>
+          <Text size={large ? "4" : "2"} color="gray" align="center" style={{ maxWidth: 420 }}>
+            {t.completeMsg}
           </Text>
         </Flex>
       </Card>
@@ -97,14 +130,14 @@ export function MindfulnessRunner({
   const overallProgress = Math.min(100, (overallSecondsDone / totalSeconds) * 100);
 
   return (
-    <Card>
-      <Flex direction="column" gap="4" p="4">
+    <Card size={large ? "4" : "2"} style={{ height: "100%" }}>
+      <Flex direction="column" gap={large ? "6" : "4"} p={large ? "5" : "4"} height="100%">
         <Flex justify="between" align="center">
-          <Text size="2" color="gray">
-            Step {idx + 1} of {steps.length}
+          <Text size={large ? "3" : "2"} color="gray">
+            {t.stepOf(idx, steps.length)}
           </Text>
-          <Text size="2" color="gray">
-            {Math.ceil(totalSeconds - overallSecondsDone)}s left
+          <Text size={large ? "3" : "2"} color="gray">
+            {t.secondsLeft(Math.ceil(totalSeconds - overallSecondsDone))}
           </Text>
         </Flex>
 
@@ -112,17 +145,35 @@ export function MindfulnessRunner({
           <Progress value={overallProgress} size="1" />
         </Box>
 
-        {step.cue && (
-          <Heading size="8" align="center" style={{ letterSpacing: "-0.02em" }}>
-            {step.cue}
-          </Heading>
-        )}
-        <Text size="4" align="center">
-          {step.instruction}
-        </Text>
+        <Flex direction="column" align="center" justify="center" gap={large ? "5" : "3"} style={{ flex: 1, minHeight: 0 }}>
+          {step.cue && (
+            <Heading
+              size={large ? "9" : "8"}
+              align="center"
+              style={{
+                letterSpacing: "-0.02em",
+                fontSize: large ? "clamp(3rem, 7vw, 5.5rem)" : undefined,
+                lineHeight: 1.1,
+              }}
+            >
+              {step.cue}
+            </Heading>
+          )}
+          <Text
+            size={large ? "6" : "4"}
+            align="center"
+            style={{
+              maxWidth: large ? 560 : 420,
+              lineHeight: 1.4,
+              fontSize: large ? "clamp(1.25rem, 2.5vw, 1.75rem)" : undefined,
+            }}
+          >
+            {step.instruction}
+          </Text>
+        </Flex>
 
         <Box>
-          <Progress value={stepProgress} size="2" color="indigo" />
+          <Progress value={stepProgress} size={large ? "3" : "2"} color="indigo" />
           <Flex justify="between" mt="1">
             <Text size="1" color="gray">
               {elapsed}s
@@ -135,12 +186,12 @@ export function MindfulnessRunner({
 
         <Flex justify="center" gap="3">
           {!running ? (
-            <Button onClick={() => setRunning(true)} disabled={submitting}>
-              <PlayIcon /> {elapsed === 0 && idx === 0 ? "Start" : "Resume"}
+            <Button onClick={() => setRunning(true)} disabled={submitting} size={large ? "4" : "3"}>
+              <PlayIcon /> {elapsed === 0 && idx === 0 ? t.start : t.resume}
             </Button>
           ) : (
-            <Button variant="soft" color="gray" onClick={() => setRunning(false)}>
-              <PauseIcon /> Pause
+            <Button variant="soft" color="gray" onClick={() => setRunning(false)} size={large ? "4" : "3"}>
+              <PauseIcon /> {t.pause}
             </Button>
           )}
         </Flex>

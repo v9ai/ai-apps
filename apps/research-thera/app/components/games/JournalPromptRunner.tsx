@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Card, Flex, Heading, Text, TextArea, Callout } from "@radix-ui/themes";
 import { CheckCircledIcon } from "@radix-ui/react-icons";
 
@@ -10,10 +10,16 @@ export function JournalPromptRunner({
   content,
   onFinish,
   submitting,
+  onStepChange,
+  language = "en",
+  large = false,
 }: {
   content: string;
   onFinish: (responsesText: string, durationSeconds: number) => void;
   submitting: boolean;
+  onStepChange?: (index: number, done: boolean) => void;
+  language?: string;
+  large?: boolean;
 }) {
   const parsed = useMemo<Content | null>(() => {
     try {
@@ -28,10 +34,41 @@ export function JournalPromptRunner({
   const [answers, setAnswers] = useState<string[]>([]);
   const [done, setDone] = useState(false);
 
+  useEffect(() => {
+    onStepChange?.(idx, done);
+  }, [idx, done, onStepChange]);
+
+  const isRo = language === "ro";
+  const t = isRo
+    ? {
+        promptOf: (i: number, n: number) => `Întrebarea ${i + 1} din ${n}`,
+        back: "Înapoi",
+        next: "Mai departe",
+        finish: "Gata",
+        saving: "Se salvează…",
+        saved: "Salvat",
+        savedToNotes: "Reflecția ta a fost salvată în Notițe.",
+        savedMsg: "Reflecția ta a fost salvată.",
+        placeholder: "Scrie liber. Nimeni altcineva nu va vedea.",
+      }
+    : {
+        promptOf: (i: number, n: number) => `Prompt ${i + 1} of ${n}`,
+        back: "Back",
+        next: "Next",
+        finish: "Finish",
+        saving: "Saving…",
+        saved: "Saved",
+        savedToNotes: "Your reflection was saved to Notes.",
+        savedMsg: "Your reflection was saved.",
+        placeholder: "Write freely. No one else will see this.",
+      };
+
   if (!parsed || !Array.isArray(parsed.prompts) || parsed.prompts.length === 0) {
     return (
       <Callout.Root color="red">
-        <Callout.Text>This journal game has invalid content.</Callout.Text>
+        <Callout.Text>
+          {isRo ? "Acest joc are conținut invalid." : "This journal game has invalid content."}
+        </Callout.Text>
       </Callout.Root>
     );
   }
@@ -61,44 +98,53 @@ export function JournalPromptRunner({
 
   if (done) {
     return (
-      <Card>
-        <Flex direction="column" align="center" gap="3" p="5">
-          <CheckCircledIcon width="32" height="32" color="var(--green-9)" />
-          <Heading size="5">Saved</Heading>
-          <Text size="2" color="gray">
-            {parsed.writeToNote ? "Your reflection was saved to Notes." : "Your reflection was saved."}
+      <Card style={{ height: "100%" }}>
+        <Flex direction="column" align="center" justify="center" gap="3" p="5" style={{ height: "100%", minHeight: 240 }}>
+          <CheckCircledIcon width={large ? 48 : 32} height={large ? 48 : 32} color="var(--green-9)" />
+          <Heading size={large ? "8" : "5"}>{t.saved}</Heading>
+          <Text size={large ? "4" : "2"} color="gray" align="center">
+            {parsed.writeToNote ? t.savedToNotes : t.savedMsg}
           </Text>
         </Flex>
       </Card>
     );
   }
 
+  const promptSize = large
+    ? ({ initial: "5", md: "7" } as const)
+    : ({ initial: "4", md: "4" } as const);
+
   return (
-    <Card>
-      <Flex direction="column" gap="4" p="4">
+    <Card size={large ? "4" : "2"} style={{ height: "100%" }}>
+      <Flex direction="column" gap={large ? "5" : "4"} p={large ? "5" : "4"} height="100%">
         <Flex justify="between" align="center">
-          <Text size="2" color="gray">
-            Prompt {idx + 1} of {parsed.prompts.length}
+          <Text size={large ? "3" : "2"} color="gray">
+            {t.promptOf(idx, parsed.prompts.length)}
           </Text>
         </Flex>
-        <Heading size="4">{prompt}</Heading>
+        <Heading size={promptSize} style={{ lineHeight: 1.35 }}>
+          {prompt}
+        </Heading>
         <TextArea
           value={current}
           onChange={(e) => setCurrent(e.target.value)}
-          placeholder="Write freely. No one else will see this."
-          rows={8}
+          placeholder={t.placeholder}
+          rows={large ? 10 : 8}
+          size={large ? "3" : "2"}
+          style={{ fontSize: large ? "1.25rem" : undefined, lineHeight: 1.5, flex: 1 }}
         />
-        <Flex justify="between">
+        <Flex justify="between" mt="auto">
           <Button
             variant="soft"
             color="gray"
+            size={large ? "4" : "3"}
             disabled={idx === 0}
             onClick={() => setIdx(Math.max(0, idx - 1))}
           >
-            Back
+            {t.back}
           </Button>
-          <Button onClick={advance} disabled={!current.trim() || submitting}>
-            {isLast ? (submitting ? "Saving…" : "Finish") : "Next"}
+          <Button onClick={advance} disabled={!current.trim() || submitting} size={large ? "4" : "3"}>
+            {isLast ? (submitting ? t.saving : t.finish) : t.next}
           </Button>
         </Flex>
       </Flex>

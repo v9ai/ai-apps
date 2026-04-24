@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Button,
   Card,
@@ -21,14 +21,30 @@ type Step = {
 
 type Content = { steps: Step[] };
 
+const STEP_KIND_LABEL: Record<
+  Step["kind"],
+  { ro: string; en: string }
+> = {
+  situation: { ro: "situație", en: "situation" },
+  thought: { ro: "gând", en: "thought" },
+  distortion: { ro: "capcană", en: "distortion" },
+  reframe: { ro: "reformulare", en: "reframe" },
+};
+
 export function CBTReframeRunner({
   content,
   onFinish,
   submitting,
+  onStepChange,
+  language = "en",
+  large = false,
 }: {
   content: string;
   onFinish: (responses: Record<string, string>, durationSeconds: number) => void;
   submitting: boolean;
+  onStepChange?: (index: number, done: boolean) => void;
+  language?: string;
+  large?: boolean;
 }) {
   const parsed = useMemo<Content | null>(() => {
     try {
@@ -43,10 +59,39 @@ export function CBTReframeRunner({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
 
+  useEffect(() => {
+    onStepChange?.(idx, done);
+  }, [idx, done, onStepChange]);
+
+  const isRo = language === "ro";
+  const t = isRo
+    ? {
+        stepOf: (i: number, n: number) => `Pasul ${i + 1} din ${n}`,
+        back: "Înapoi",
+        next: "Mai departe",
+        finish: "Gata",
+        saving: "Se salvează…",
+        completed: "Ai reușit!",
+        savedMsg: "Reformularea ta a fost salvată.",
+        placeholder: "Scrie răspunsul tău…",
+      }
+    : {
+        stepOf: (i: number, n: number) => `Step ${i + 1} of ${n}`,
+        back: "Back",
+        next: "Next",
+        finish: "Finish",
+        saving: "Saving…",
+        completed: "Completed",
+        savedMsg: "Your reframe was saved.",
+        placeholder: "Type your answer…",
+      };
+
   if (!parsed || !Array.isArray(parsed.steps) || parsed.steps.length === 0) {
     return (
       <Callout.Root color="red">
-        <Callout.Text>This CBT game has invalid content.</Callout.Text>
+        <Callout.Text>
+          {isRo ? "Acest joc are conținut invalid." : "This CBT game has invalid content."}
+        </Callout.Text>
       </Callout.Root>
     );
   }
@@ -70,14 +115,18 @@ export function CBTReframeRunner({
     }
   }
 
+  const promptSize = large
+    ? ({ initial: "5", md: "7" } as const)
+    : ({ initial: "4", md: "4" } as const);
+
   if (done) {
     return (
-      <Card>
-        <Flex direction="column" align="center" gap="3" p="5">
-          <CheckCircledIcon width="32" height="32" color="var(--green-9)" />
-          <Heading size="5">Completed</Heading>
-          <Text size="2" color="gray">
-            Your reframe was saved.
+      <Card style={{ height: "100%" }}>
+        <Flex direction="column" align="center" justify="center" gap="3" p="5" style={{ minHeight: 240, height: "100%" }}>
+          <CheckCircledIcon width="48" height="48" color="var(--green-9)" />
+          <Heading size={large ? "8" : "5"}>{t.completed}</Heading>
+          <Text size="3" color="gray" align="center">
+            {t.savedMsg}
           </Text>
         </Flex>
       </Card>
@@ -85,27 +134,29 @@ export function CBTReframeRunner({
   }
 
   return (
-    <Card>
-      <Flex direction="column" gap="4" p="4">
+    <Card size={large ? "4" : "2"} style={{ height: "100%" }}>
+      <Flex direction="column" gap={large ? "6" : "4"} p={large ? "5" : "4"} height="100%">
         <Flex justify="between" align="center">
-          <Text size="2" color="gray">
-            Step {idx + 1} of {parsed.steps.length}
+          <Text size={large ? "3" : "2"} color="gray">
+            {t.stepOf(idx, parsed.steps.length)}
           </Text>
-          <Text size="2" color="gray" style={{ textTransform: "capitalize" }}>
-            {step.kind.replace("_", " ")}
+          <Text size={large ? "3" : "2"} color="gray" style={{ textTransform: "capitalize" }}>
+            {STEP_KIND_LABEL[step.kind][isRo ? "ro" : "en"]}
           </Text>
         </Flex>
 
-        <Heading size="4">{step.prompt}</Heading>
+        <Heading size={promptSize} style={{ lineHeight: 1.3 }}>
+          {step.prompt}
+        </Heading>
 
         {step.kind === "distortion" && step.options ? (
-          <RadioGroup.Root value={current} onValueChange={setCurrent}>
-            <Flex direction="column" gap="2">
+          <RadioGroup.Root value={current} onValueChange={setCurrent} size={large ? "3" : "2"}>
+            <Flex direction="column" gap={large ? "3" : "2"}>
               {step.options.map((opt) => (
-                <Text as="label" size="2" key={opt}>
-                  <Flex gap="2" align="center">
-                    <RadioGroup.Item value={opt} />
-                    {opt}
+                <Text as="label" size={large ? "4" : "2"} key={opt} style={{ cursor: "pointer", lineHeight: 1.4 }}>
+                  <Flex gap="3" align="start">
+                    <RadioGroup.Item value={opt} style={{ marginTop: 4 }} />
+                    <span>{opt}</span>
                   </Flex>
                 </Text>
               ))}
@@ -115,22 +166,29 @@ export function CBTReframeRunner({
           <TextArea
             value={current}
             onChange={(e) => setCurrent(e.target.value)}
-            placeholder="Type your answer…"
-            rows={5}
+            placeholder={t.placeholder}
+            rows={large ? 6 : 5}
+            size={large ? "3" : "2"}
+            style={{ fontSize: large ? "1.25rem" : undefined, lineHeight: 1.5 }}
           />
         )}
 
-        <Flex justify="between">
+        <Flex justify="between" mt="auto">
           <Button
             variant="soft"
             color="gray"
+            size={large ? "4" : "3"}
             disabled={idx === 0}
             onClick={() => setIdx(Math.max(0, idx - 1))}
           >
-            Back
+            {t.back}
           </Button>
-          <Button onClick={next} disabled={!current.trim() || submitting}>
-            {isLast ? (submitting ? "Saving…" : "Finish") : "Next"}
+          <Button
+            onClick={next}
+            disabled={!current.trim() || submitting}
+            size={large ? "4" : "3"}
+          >
+            {isLast ? (submitting ? t.saving : t.finish) : t.next}
           </Button>
         </Flex>
       </Flex>
