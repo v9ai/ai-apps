@@ -68,7 +68,6 @@ Custom scalars: `DateTime`/`URL`/`EmailAddress` → `string`, `Upload` → `File
 |---|---|
 | `/api/graphql` | Apollo Server GraphQL endpoint (main API) |
 | `/api/text-to-sql` | Natural language → SQL query |
-| `/api/companies/bulk-import` | Bulk import companies |
 | `/api/companies/enhance` | Enhance company data |
 
 GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s max duration (`vercel.json`).

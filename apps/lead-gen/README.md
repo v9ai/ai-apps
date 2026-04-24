@@ -126,7 +126,6 @@ src/
 | `/api/auth/[...path]` | Better Auth |
 | `/api/emails/send` | Send emails |
 | `/api/emails/generate-stream` | Streaming email generation |
-| `/api/companies/bulk-import` | Bulk import companies |
 | `/api/companies/enhance` | AI company enhancement |
 | `/api/email-outreach/generate` | Outreach email generation |
 | `/api/text-to-sql` | Natural language → SQL query |

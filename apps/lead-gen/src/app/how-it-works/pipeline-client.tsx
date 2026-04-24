@@ -22,7 +22,6 @@ import {
   Database,
   Brain,
   Search,
-  FileText,
   Users,
   Mail,
   Shield,
@@ -212,14 +211,6 @@ const nodeDetails: Record<string, NodeDetail> = {
     dataOut: "Company candidates with discovery confidence score",
     insight: "Recency bias is intentional: Common Crawl covers old companies well, so live search budget is concentrated on the trailing edge where competitive density is lowest.",
     color: "blue",
-  },
-  "bulk-csv": {
-    description: "Ingests CSV exports from LinkedIn Sales Navigator, Apollo.io, or ZoomInfo via the /api/companies/bulk-import route. Normalizes heterogeneous column schemas (aliased headers, inconsistent phone formats, URL variants) to the Drizzle companies schema using a field-mapping layer. Row-level validation via Zod rejects malformed records without aborting the batch.",
-    tech: [{ name: "/api/companies/bulk-import" }, { name: "Zod row validation" }, { name: "Drizzle ORM" }, { name: "papaparse" }],
-    dataIn: "CSV file (LinkedIn Sales Nav / Apollo / ZoomInfo export format)",
-    dataOut: "Validated, schema-normalized company records",
-    insight: "Field-mapping is intentionally declarative rather than inferred — LLM-assisted column mapping was prototyped but produced silent misalignments on ambiguous headers like 'location' vs. 'hq_city'.",
-    color: "violet",
   },
   "dedup-companies": {
     description: "Entity resolution layer that canonicalizes domains (strips www, trailing slashes, common redirect prefixes) and computes a deterministic slug before the Neon upsert. Uses ON CONFLICT (slug) DO NOTHING semantics — no fuzzy matching, intentionally. Fuzzy dedup (edit distance on company names) was benchmarked but produced too many false positives on subsidiary/parent pairs.",
@@ -425,15 +416,13 @@ const nodeDetails: Record<string, NodeDetail> = {
 const discoveryNodes: Node[] = [
   { id: "ccrawl", type: "agent", position: { x: 0, y: 0 }, data: { label: "common_crawl", sublabel: "CDX index query", icon: Globe, color: "var(--red-9)" } },
   { id: "live-fetch", type: "agent", position: { x: 0, y: 90 }, data: { label: "live_fetch", sublabel: "Web search + HTTP", icon: Search, color: "var(--blue-9)" } },
-  { id: "bulk-csv", type: "agent", position: { x: 0, y: 180 }, data: { label: "bulk_csv_import", sublabel: "/api/companies/bulk-import", icon: FileText, color: "var(--violet-9)" } },
-  { id: "dedup-companies", type: "condition", position: { x: 320, y: 85 }, data: { label: "dedup (domain/slug)", color: "var(--orange-9)" } },
-  { id: "neon-companies", type: "dataStore", position: { x: 560, y: 90 }, data: { label: "companies", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
+  { id: "dedup-companies", type: "condition", position: { x: 320, y: 45 }, data: { label: "dedup (domain/slug)", color: "var(--orange-9)" } },
+  { id: "neon-companies", type: "dataStore", position: { x: 560, y: 45 }, data: { label: "companies", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
 ];
 
 const discoveryEdges: Edge[] = [
   { id: "e-cc-dedup", source: "ccrawl", target: "dedup-companies", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
   { id: "e-lf-dedup", source: "live-fetch", target: "dedup-companies", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
-  { id: "e-csv-dedup", source: "bulk-csv", target: "dedup-companies", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--violet-8)" } },
   { id: "e-dedup-neon", source: "dedup-companies", target: "neon-companies", ...edgeDefaults, label: "net-new", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
 ];
 
@@ -725,37 +714,6 @@ const stageConnectors: { fromStage: string; toStage: string }[] = [
   { fromStage: "scored_leads", toStage: "contact_pipeline" },
   { fromStage: "verified_contacts", toStage: "outreach_pipeline" },
 ];
-
-// ── Empty State Panel ────────────────────────────────────────────────────────
-
-function EmptyDetailPanel() {
-  return (
-    <Card mt="4" style={{ border: "1px dashed var(--gray-a6)", background: "var(--gray-2)" }}>
-      <Flex align="center" justify="center" direction="column" gap="3" py="5">
-        <div style={{
-          width: 40, height: 40, borderRadius: 6,
-          background: "var(--gray-3)",
-          border: "1px solid var(--gray-a5)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <Search size={18} style={{ color: "var(--gray-9)" }} />
-        </div>
-        <Flex direction="column" align="center" gap="1">
-          <Text size="2" weight="medium">Click any node to inspect</Text>
-          <Text size="1" color="gray" style={{ textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
-            Select a node in any stage diagram to see its description, tech stack, input/output shape, and design insight.
-          </Text>
-        </Flex>
-        <Flex gap="2">
-          <Badge variant="outline" size="1" color="gray">description</Badge>
-          <Badge variant="outline" size="1" color="gray">tech stack</Badge>
-          <Badge variant="outline" size="1" color="gray">input / output</Badge>
-          <Badge variant="outline" size="1" color="gray">key insight</Badge>
-        </Flex>
-      </Flex>
-    </Card>
-  );
-}
 
 // ── Syntax Highlighting ─────────────────────────────────────────────────────
 
@@ -1734,7 +1692,7 @@ export function PipelineClient() {
         </Flex>
       </section>
 
-      {selectedNode ? <NodeDetailPanel nodeId={selectedNode} /> : <EmptyDetailPanel />}
+      {selectedNode && <NodeDetailPanel nodeId={selectedNode} />}
 
       <Separator size="4" my="7" />
       <section id="deep-dive">

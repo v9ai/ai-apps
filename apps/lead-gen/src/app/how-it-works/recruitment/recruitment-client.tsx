@@ -340,29 +340,6 @@ function NodeDetailPanel({ nodeId }: { nodeId: string }) {
   );
 }
 
-function EmptyDetailPanel() {
-  return (
-    <Card mt="4" style={{ border: "1px dashed var(--gray-a6)", background: "var(--gray-2)" }}>
-      <Flex align="center" justify="center" direction="column" gap="3" py="5">
-        <div style={{
-          width: 40, height: 40, borderRadius: 6,
-          background: "var(--gray-3)",
-          border: "1px solid var(--gray-a5)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <Search size={18} style={{ color: "var(--gray-9)" }} />
-        </div>
-        <Flex direction="column" align="center" gap="1">
-          <Text size="2" weight="medium">Click any node to inspect</Text>
-          <Text size="1" color="gray" style={{ textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
-            Select a node in any stage diagram to see its description, tech stack, input/output shape, and design insight.
-          </Text>
-        </Flex>
-      </Flex>
-    </Card>
-  );
-}
-
 // ── Stage Flow ───────────────────────────────────────────────────────────────
 
 function StageFlow({
@@ -806,7 +783,7 @@ export function RecruitmentClient() {
         </Flex>
       </section>
 
-      {selectedNode ? <NodeDetailPanel nodeId={selectedNode} /> : <EmptyDetailPanel />}
+      {selectedNode && <NodeDetailPanel nodeId={selectedNode} />}
 
       <Separator size="4" my="7" />
       <section id="deep-dive">

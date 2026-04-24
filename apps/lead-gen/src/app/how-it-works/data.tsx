@@ -985,8 +985,7 @@ export const technicalDetails: TechnicalDetail[] = [
     code: `┌─────────────────────────────────────────────────────────────────┐
 │  DISCOVERY                                                      │
 │  Common Crawl CDX ─┐                                            │
-│  Live Web Search ──┼─→ Domain Dedup ─→ Neon PostgreSQL          │
-│  Bulk CSV Import ──┘                                            │
+│  Live Web Search ──┴─→ Domain Dedup ─→ Neon PostgreSQL          │
 ├─────────────────────────────────────────────────────────────────┤
 │  ENRICHMENT                                                     │
 │  Fetch Site ─→ DeepSeek Extract ─→ Zod Gate ─→ AI Classify     │

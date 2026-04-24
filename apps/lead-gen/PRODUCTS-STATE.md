@@ -192,9 +192,8 @@ _Generated 2026-04-23 by a 10-expert parallel audit. Product-focused: one sectio
 
 **Endpoints:**
 - `POST/GET /api/graphql` — Apollo Server (`src/app/api/graphql/route.ts:1-258`).
-- `POST /api/companies/bulk-import` — admin-only company ingestion (`src/app/api/companies/bulk-import/route.ts:1-51`).
 
-**Auth model:** Session-based via Auth.js (`resolveSession` at 131-152). `context.userId/userEmail` from HTTP headers; dev mode accepts `ADMIN_EMAIL`. Mutations guard with `if (!context.userId)`. Bulk-import requires `isAdminEmail()`. Rate limit: 100 req/min per user/IP (in-memory, not distributed).
+**Auth model:** Session-based via Auth.js (`resolveSession` at 131-152). `context.userId/userEmail` from HTTP headers; dev mode accepts `ADMIN_EMAIL`. Mutations guard with `if (!context.userId)`. Rate limit: 100 req/min per user/IP (in-memory, not distributed).
 
 **Major resolver domains** (`src/apollo/resolvers.ts:1-47`, merged via lodash):
 - **Company** — filtered/paginated queries, CRUD, snapshot ingestion, merge dup, enhance, analyze, block.
@@ -344,7 +343,7 @@ _Generated 2026-04-23 by a 10-expert parallel audit. Product-focused: one sectio
 
 ## Cross-cutting observations
 
-1. **"Discovery" as a user-facing product does not exist yet** — the only "Discovery" in the codebase is Competitor Discovery (admin-only, LLM-seeded). Lead/company discovery happens via the Rust `crates/metal` pipeline or bulk-import REST, not a user surface.
+1. **"Discovery" as a user-facing product does not exist yet** — the only "Discovery" in the codebase is Competitor Discovery (admin-only, LLM-seeded). Lead/company discovery happens via the Rust `crates/metal` pipeline, not a user surface.
 2. **Enrichment is stronger at the Rust/pipeline layer than the GraphQL surface** — `enhanceCompany` / `analyzeCompany` GraphQL mutations are stubbed; real enrichment runs via `make start` / `leadgen-metal pipeline`.
 3. **Local-first LLM stance** — Qwen2.5-3B via `mlx_lm.server`, sgai-qwen3-1.7b for structured extraction. DeepSeek still used as a fallback for competitor discovery.
 4. **Multiple agent teams layered on top** — Pipeline (`/agents pipeline`), Research (`/agents research`), Self-Improvement (`/improve`, `/codefix`) — all orchestrated via `.claude/commands/` + `.claude/skills/`, with state in `~/.claude/state/`.
