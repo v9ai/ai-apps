@@ -1,0 +1,34 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "lead-gen-core",
+  "main": "src/index.js",
+  "compatibility_date": "2026-04-01",
+  "observability": { "enabled": true },
+  "vars": {
+    "LLM_BASE_URL": "https://api.deepseek.com",
+    "LLM_MODEL": "deepseek-chat",
+    "EMAIL_LLM_BASE_URL": "https://lead-gen-email-llm.eeeew.workers.dev/v1",
+    "EMAIL_LLM_MODEL": "mistral-email-lora",
+    // Service-binding hostnames — the dispatcher Worker routes these; Core's
+    // RemoteGraph adapters fetch to lead-gen-ml / lead-gen-research via CF's
+    // internal service DNS. Override at deploy-time if needed.
+    "ML_URL": "http://lead-gen-ml",
+    "RESEARCH_URL": "http://lead-gen-research"
+  },
+  "containers": [
+    {
+      "class_name": "CoreContainer",
+      "image": "./Dockerfile",
+      "max_instances": 1,
+      "instance_type": "standard-1"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "CONTAINER", "class_name": "CoreContainer" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["CoreContainer"] }
+  ]
+}
