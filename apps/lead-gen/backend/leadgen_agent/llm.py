@@ -34,9 +34,11 @@ completes, we just miss cost accounting for that call.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
+import random
 import time
 from pathlib import Path
 from typing import Any
@@ -231,6 +233,90 @@ def _extract_usage(resp: Any) -> tuple[int, int]:
     return (0, 0)
 
 
+# ── Retry / backoff ──────────────────────────────────────────────────────
+#
+# Transient DeepSeek failures (502/503/504, request timeouts, TCP resets) are
+# common enough that every graph was effectively flaking on them. The retry
+# policy below bounds attempts and applies exponential backoff with jitter —
+# never retries 4xx validation errors (the prompt is the problem, not the
+# network) and never retries auth/permission errors (401/403/404/422).
+#
+# Tunable via env:
+#   LLM_MAX_RETRIES     – total attempts per call, default 3 (i.e. up to 2 retries)
+#   LLM_BACKOFF_BASE_S  – initial sleep before the first retry, default 1.0
+#   LLM_BACKOFF_CAP_S   – cap per individual sleep, default 20.0
+#
+# Tests can set LLM_MAX_RETRIES=1 to disable retries entirely (single attempt)
+# or LLM_BACKOFF_BASE_S=0 to run retries with zero delay.
+_RETRYABLE_STATUS = frozenset({408, 409, 425, 429, 500, 502, 503, 504, 520, 522, 524})
+
+
+def _is_retryable_exception(exc: BaseException) -> bool:
+    """True if ``exc`` is a transient error worth retrying.
+
+    Covers the openai-python exception hierarchy (APIConnectionError /
+    APITimeoutError / APIStatusError with retryable status), raw httpx network
+    errors, and plain asyncio.TimeoutError. 4xx validation / auth errors are
+    NOT retryable — the prompt is the problem.
+    """
+    # Plain timeouts
+    if isinstance(exc, asyncio.TimeoutError):
+        return True
+
+    # openai-python exceptions — import lazily so this module stays importable
+    # even if openai is not installed (it ships via langchain-openai).
+    try:
+        from openai import APIConnectionError, APIStatusError, APITimeoutError
+    except ImportError:  # pragma: no cover — openai always installed alongside langchain-openai
+        APIConnectionError = APIStatusError = APITimeoutError = ()  # type: ignore[misc,assignment]
+
+    if APIConnectionError and isinstance(exc, (APIConnectionError, APITimeoutError)):
+        return True
+    if APIStatusError and isinstance(exc, APIStatusError):
+        status = getattr(exc, "status_code", None)
+        return status in _RETRYABLE_STATUS
+
+    # httpx network errors surface when the openai client isn't wrapping them
+    try:
+        import httpx
+
+        if isinstance(exc, (httpx.TimeoutException, httpx.ConnectError, httpx.RemoteProtocolError)):
+            return True
+        if isinstance(exc, httpx.HTTPStatusError):
+            return exc.response.status_code in _RETRYABLE_STATUS
+    except ImportError:  # pragma: no cover
+        pass
+
+    return False
+
+
+def _retry_config() -> tuple[int, float, float]:
+    """Read retry tuning from env. Returns (max_attempts, base_seconds, cap_seconds)."""
+    try:
+        max_attempts = max(1, int(os.environ.get("LLM_MAX_RETRIES", "3")))
+    except ValueError:
+        max_attempts = 3
+    try:
+        base = max(0.0, float(os.environ.get("LLM_BACKOFF_BASE_S", "1.0")))
+    except ValueError:
+        base = 1.0
+    try:
+        cap = max(base, float(os.environ.get("LLM_BACKOFF_CAP_S", "20.0")))
+    except ValueError:
+        cap = 20.0
+    return max_attempts, base, cap
+
+
+async def _sleep_with_backoff(attempt: int, base: float, cap: float) -> None:
+    """Exponential backoff with full jitter. ``attempt`` is the 1-indexed
+    failed attempt count — 1 after the first failure, 2 after the second, …"""
+    if base <= 0:
+        return
+    high = min(cap, base * (2 ** (attempt - 1)))
+    delay = random.uniform(0, high)
+    await asyncio.sleep(delay)
+
+
 async def ainvoke_json_with_telemetry(
     llm: ChatOpenAI,
     messages: list[dict[str, str]],
@@ -249,13 +335,40 @@ async def ainvoke_json_with_telemetry(
 
     The ``_merge_graph_meta_telemetry`` reducer on ``graph_meta`` (see state.py)
     folds per-node entries without clobbering parallel writes.
+
+    Automatically retries transient upstream failures (connection resets,
+    timeouts, 5xx, 429) with exponential backoff + full jitter — up to
+    ``LLM_MAX_RETRIES`` attempts. ``latency_ms`` in the telemetry reflects the
+    total wall-clock time across retries so cost-per-node diagnostics still
+    surface pathologically slow nodes.
     """
     kwargs: dict[str, Any] = {}
     if supports_json_mode(provider=provider):
         kwargs["response_format"] = {"type": "json_object"}
 
+    max_attempts, base, cap = _retry_config()
     t0 = time.perf_counter()
-    resp = await llm.ainvoke(messages, **kwargs)
+    last_exc: BaseException | None = None
+    resp = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            resp = await llm.ainvoke(messages, **kwargs)
+            break
+        except BaseException as exc:  # noqa: BLE001 — we selectively re-raise
+            if not _is_retryable_exception(exc) or attempt >= max_attempts:
+                raise
+            last_exc = exc
+            log.warning(
+                "LLM call transient failure (attempt %d/%d): %s: %s — retrying",
+                attempt,
+                max_attempts,
+                type(exc).__name__,
+                str(exc)[:200],
+            )
+            await _sleep_with_backoff(attempt, base, cap)
+    if resp is None:  # pragma: no cover — loop invariant: either break or raise
+        raise RuntimeError(f"LLM call failed after retries: {last_exc!r}")
+
     latency_ms = int((time.perf_counter() - t0) * 1000)
 
     input_tokens, output_tokens = _extract_usage(resp)
@@ -267,6 +380,11 @@ async def ainvoke_json_with_telemetry(
         "total_tokens": input_tokens + output_tokens,
         "cost_usd": _cost_usd(str(model), input_tokens, output_tokens),
         "latency_ms": latency_ms,
+        # Emitting calls=1 here makes the single-call case explicit — before,
+        # merge_node_telemetry was the only place calls ever got set, so nodes
+        # that bypassed merge_node_telemetry recorded zero calls. Safe to sum
+        # in merge_node_telemetry (it reads calls with a 0 default).
+        "calls": 1,
     }
     return _parse_json(resp.content), telemetry
 
@@ -282,9 +400,15 @@ def merge_node_telemetry(
     cost, and latency so the per-node totals stay meaningful. Callers pass the
     current ``state["graph_meta"].get("telemetry")`` dict (or None) and get back
     an updated dict they can drop straight into the returned state fragment.
+
+    ``call`` may carry a ``calls`` field (as emitted by
+    ``ainvoke_json_with_telemetry``); we honor it so batch-merged telemetry
+    (e.g. fan-in of parallel branches into a single node's record) doesn't
+    under-count. Falls back to +1 for callers that pre-date the calls field.
     """
     tel = dict(existing or {})
     prev = tel.get(node_name) or {}
+    call_delta = int(call.get("calls", 1) or 1)
     tel[node_name] = {
         "model": call.get("model") or prev.get("model") or "unknown",
         "input_tokens": int(prev.get("input_tokens", 0)) + int(call.get("input_tokens", 0)),
@@ -294,7 +418,7 @@ def merge_node_telemetry(
             float(prev.get("cost_usd", 0.0)) + float(call.get("cost_usd", 0.0)), 7
         ),
         "latency_ms": int(prev.get("latency_ms", 0)) + int(call.get("latency_ms", 0)),
-        "calls": int(prev.get("calls", 0)) + 1,
+        "calls": int(prev.get("calls", 0)) + call_delta,
     }
     return tel
 
@@ -328,7 +452,24 @@ def compute_totals(telemetry: dict[str, Any] | None) -> dict[str, Any]:
 
 
 def _parse_json(text: str) -> Any:
+    """Parse an LLM-emitted response as JSON, tolerating common quirks.
+
+    Ladder of fallbacks, each more forgiving than the last:
+      1. Strip ```json``` fences, try ``json.loads`` on the whole blob.
+      2. Extract the outermost balanced ``{...}`` or ``[...]`` span — handles
+         DeepSeek/Qwen preamble ("Here's the JSON: ...") and trailing commentary.
+      3. ``json_repair`` — heals unescaped quotes, trailing commas, truncated
+         output. Only called when earlier passes have something parseable.
+
+    Raises ``json.JSONDecodeError`` on truly unparseable input (empty string,
+    garbage) so callers can surface a clear error rather than silently getting
+    ``None`` or an empty string from ``json_repair``.
+    """
+    if text is None:
+        raise json.JSONDecodeError("Empty LLM response (None)", "", 0)
     text = text.strip()
+    if not text:
+        raise json.JSONDecodeError("Empty LLM response", text, 0)
     if text.startswith("```"):
         lines = text.split("\n")
         lines = lines[1:]

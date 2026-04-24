@@ -53,6 +53,7 @@ from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn
 from .loaders import USER_AGENT, _load_basic, _to_markdown
+from .product_intel_schemas import config_hash
 from .state import FreshnessState
 
 # Volatile regions in marketing pages that flip on every deploy but don't
@@ -133,6 +134,11 @@ async def load_product_freshness(state: FreshnessState) -> dict:
         or (icp.get("graph_meta") or {}).get("run_at")
         or ""
     )
+    # Version-drift detection: if the product_intel schema version changed
+    # since the last snapshot, content is effectively stale even when the
+    # landing page bytes are identical — new prompt contract ⇒ re-run.
+    # Stashed inside the ``product`` dict to avoid touching FreshnessState.
+    previous_config_hash = str(snap.get("config_hash") or "")
 
     return {
         "product": {
@@ -140,6 +146,7 @@ async def load_product_freshness(state: FreshnessState) -> dict:
             "name": rec.get("name") or "",
             "url": rec.get("url") or "",
             "domain": rec.get("domain") or "",
+            "previous_config_hash": previous_config_hash,
         },
         "previous_hash": previous_hash,
         "previous_run_at": previous_run_at,
@@ -204,11 +211,26 @@ def _classify_reason(previous_markdown_hash: str, current_markdown: str) -> str:
 
 
 async def decide_freshness(state: FreshnessState) -> dict:
-    """Compare previous vs current hash → stale / confidence / reason."""
+    """Compare previous vs current hash → stale / confidence / reason.
+
+    Order of checks:
+      1. Unreachable → trust cache (low confidence).
+      2. No previous hash → "no baseline" (first-ever check).
+      3. Schema drift (``previous_config_hash`` missing or != current
+         ``config_hash()``) → stale with high confidence regardless of content.
+         Rationale: a new product_intel_schemas version means the prompt
+         contract changed, so cached analyses are derived from an obsolete
+         schema even when the landing page bytes are unchanged.
+      4. Content-hash equality → "same".
+      5. Otherwise → content drift with heuristic reason.
+    """
     previous = str(state.get("previous_hash") or "")
     current = str(state.get("current_hash") or "")
     reachable = bool(state.get("reachable"))
     current_markdown = str(state.get("current_markdown") or "")
+    product = state.get("product") or {}
+    previous_config_hash = str(product.get("previous_config_hash") or "")
+    current_config_hash = config_hash()
 
     if not reachable:
         # Treat outages as "trust the cache" — a transient fetch failure is
@@ -227,6 +249,15 @@ async def decide_freshness(state: FreshnessState) -> dict:
             "stale": True,
             "confidence": 0.5,
             "reason": "no baseline",
+        }
+
+    # Version-drift check runs BEFORE content equality so bumping
+    # PRODUCT_INTEL_VERSION forces a re-run even on unchanged pages.
+    if previous_config_hash and previous_config_hash != current_config_hash:
+        return {
+            "stale": True,
+            "confidence": 0.9,
+            "reason": "schema version drift",
         }
 
     if previous == current:
@@ -318,7 +349,11 @@ async def check_competitor_freshness(state: FreshnessState) -> dict:
 
 
 async def persist_snapshot(state: FreshnessState) -> dict:
-    """Write the final snapshot to products.freshness_snapshot."""
+    """Write the final snapshot to products.freshness_snapshot.
+
+    ``config_hash`` is stamped alongside ``content_hash`` so the next run can
+    detect schema-version drift even when the landing page is unchanged.
+    """
     product = state.get("product") or {}
     snapshot = {
         "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -329,6 +364,7 @@ async def persist_snapshot(state: FreshnessState) -> dict:
         "content_hash": state.get("current_hash") or "",
         "previous_hash": state.get("previous_hash") or "",
         "previous_run_at": state.get("previous_run_at") or "",
+        "config_hash": config_hash(),
         "competitor_movements": state.get("competitor_movements") or [],
     }
 
