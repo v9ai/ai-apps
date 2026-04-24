@@ -8,6 +8,15 @@ hooks/
 langgraph/
 llamaindex/
 consultancies/
+backend/
+
+# Local data / embeddings / lance tables (not deployed)
+data/
+contributors.lance/
+*.lance/
+
+# Cloudflare Workers (deployed separately via wrangler)
+edge/
 
 # Chrome extension (deployed separately)
 chrome-extension/
@@ -19,6 +28,10 @@ chrome-extension/
 # Build artifacts
 **/target/
 .next/
+out/
+
+# Rust prebuilt libs
+*.rlib
 
 # Dependencies (Vercel installs its own)
 node_modules/
@@ -38,3 +51,14 @@ results/
 .mastra/
 .vercel/
 .playwright-mcp/
+.deepeval/
+.qwen/
+.turbo/
+
+# Local state files
+*.sqlite
+.sqlite
+
+# Local docs / status dumps
+PRODUCTS-STATE.md
+lora-serve/
