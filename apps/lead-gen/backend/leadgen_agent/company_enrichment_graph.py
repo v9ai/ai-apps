@@ -23,6 +23,11 @@ import psycopg
 from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn
+from .icp_fit_scorer import (
+    build_v2_signals,
+    compute_icp_fit,
+    load_composite_weights,
+)
 from .llm import ainvoke_json_with_telemetry, compute_totals, make_llm, merge_node_telemetry
 from .loaders import fetch_url
 from .product_intel_schemas import product_intel_graph_meta

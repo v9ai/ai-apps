@@ -11,6 +11,7 @@ import {
   jsonb,
   timestamp,
   numeric,
+  primaryKey,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
@@ -229,6 +230,9 @@ export const emailCampaigns = pgTable(
     id: text("id").primaryKey(), // campaign_<timestamp>_<random>
     tenant_id: tenantIdColumn(),
     company_id: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+    product_id: integer("product_id").references(() => products.id, { onDelete: "set null" }),
+    product_aware_mode: boolean("product_aware_mode").notNull().default(false),
+    persona_match_threshold: real("persona_match_threshold"),
     name: text("name").notNull(),
     status: text("status", {
       enum: ["draft", "pending", "running", "completed", "failed", "stopped"],
@@ -259,6 +263,7 @@ export const emailCampaigns = pgTable(
   },
   (table) => ({
     companyIdIdx: index("idx_email_campaigns_company_id").on(table.company_id),
+    productIdIdx: index("idx_email_campaigns_product_id").on(table.product_id),
     statusIdx: index("idx_email_campaigns_status").on(table.status),
   }),
 );
@@ -282,6 +287,11 @@ export const emailTemplates = pgTable(
     variables: text("variables"), // JSON array of variable names
     is_active: boolean("is_active").notNull().default(true),
     user_id: text("user_id"), // Template owner
+    product_id: integer("product_id").references(() => products.id, { onDelete: "set null" }),
+    persona_title: text("persona_title"),
+    channel: text("channel"),
+    source: text("source"), // "gtm_graph" | "user"
+    template_key: text("template_key"),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
@@ -291,6 +301,7 @@ export const emailTemplates = pgTable(
   },
   (table) => ({
     categoryIdx: index("idx_email_templates_category").on(table.category),
+    templateKeyIdx: uniqueIndex("idx_email_templates_template_key").on(table.template_key),
   }),
 );
 
