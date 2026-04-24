@@ -90,6 +90,15 @@ export const companies = pgTable("companies", {
   hf_org_name: text("hf_org_name"),                        // resolved HF org
   hf_presence_score: real("hf_presence_score").default(0),  // 0..100
 
+  // Ingestible vertical signals (populated by Ingestible discovery + enrichment —
+  // see migration 0067). A "hot Ingestible lead" has rag_stack_detected set AND
+  // at least one of on_prem_required / ai_act_exposure / token_cost_complaint.
+  rag_stack_detected: text("rag_stack_detected"),          // 'langchain'|'llamaindex'|'haystack'|'custom'|'none'
+  token_cost_complaint: boolean("token_cost_complaint").notNull().default(false),
+  on_prem_required: boolean("on_prem_required").notNull().default(false),
+  ingestion_volume_hint: text("ingestion_volume_hint"),     // freeform: "millions of pages", "10k docs/month"
+  ai_act_exposure: boolean("ai_act_exposure").notNull().default(false),
+
   // Intent signal scoring (aggregated from intentSignals table)
   intent_score: real("intent_score").notNull().default(0), // 0..100
   intent_score_updated_at: text("intent_score_updated_at"),
