@@ -26,10 +26,11 @@ DAG shape::
                                  END
 
 Concurrency safety:
-    - Each subgraph writes to a disjoint set of ``products.*_analysis`` columns
-      (pricing_analysis / gtm_analysis / competitor_analysis_deep /
-      positioning_analysis). No two parallel branches ever touch the same
-      column, so write ordering doesn't matter.
+    - Each subgraph writes to a disjoint target: pricing_analysis /
+      gtm_analysis / positioning_analysis jsonb columns on products, plus
+      the separate ``competitor_analyses`` table that ``deep_competitor_graph``
+      owns. No two parallel branches ever touch the same target, so write
+      ordering doesn't matter.
     - All supervisor-level state merges use ``operator``-style reducers
       (``_merge_dict``, ``_first_error``) so concurrent updates fold cleanly
       rather than raising ``INVALID_CONCURRENT_GRAPH_UPDATE``.
@@ -68,10 +69,11 @@ from .state import ProductIntelState
 # ── Graceful imports for teams 3, 4, 7 ────────────────────────────────
 #
 # Coupling notes — where v2 assumes DB shape that other teams ship:
-#   • team 3 (deep_competitor_graph) writes to products.competitor_analysis_deep
-#     (jsonb). If that column doesn't exist yet, the subgraph itself will
-#     fail; v2 surfaces the error via _error and still produces a partial
-#     report from pricing+gtm.
+#   • team 3 (deep_competitor_graph) writes to the ``competitor_analyses``
+#     table (plus related child tables like competitor_pricing_tiers,
+#     competitor_features, etc.) — NOT a products.* column. If those tables
+#     are missing, the subgraph surfaces the error via subgraph_errors and
+#     v2 still produces a partial report from pricing+gtm.
 #   • team 4 (positioning_graph) writes to products.positioning_analysis.
 #   • team 7 (freshness_graph) reads *_analyzed_at timestamp columns only —
 #     no writes — so it's safe to run even if downstream columns are missing.
@@ -278,11 +280,12 @@ async def load_cached_outputs(state: ProductIntelV2State) -> dict:
     products row so synthesize has everything it needs without re-running
     any analysis.
 
-    Column parity with v1 ``load_and_profile``: also loads ``highlights`` and
-    ``positioning_analysis`` so ``synthesize_report`` doesn't regress against
-    v1 on the cache-hit path. ``competitor_analysis_deep`` is intentionally
-    NOT read — that column doesn't exist in the schema yet; the deep
-    competitor subgraph writes to the ``competitor_analyses`` table instead.
+    Column parity with v1 ``load_and_profile`` + ``ensure_competitors``: also
+    loads ``highlights``, ``positioning_analysis``, and the named
+    ``competitors`` list so ``synthesize_report`` doesn't regress against v1
+    on the cache-hit path. The deep competitor subgraph writes to the
+    ``competitor_analyses`` table (not a products column), so we read
+    competitors from that table to populate ``state["competitive"]``.
     """
     if state.get("_error"):
         return {}
@@ -315,6 +318,45 @@ async def load_cached_outputs(state: ProductIntelV2State) -> dict:
                 return None
         return v
 
+    # Mirror v1 ensure_competitors: count completed competitor_analyses and
+    # fetch the named competitors list so the positioning-adjacent shape is
+    # identical across v1 and v2. Safe even if the tables are empty.
+    competitor_count = 0
+    named_competitors: list[dict[str, Any]] = []
+    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*)::int
+                FROM competitor_analyses a
+                JOIN competitors c ON c.analysis_id = a.id
+                WHERE a.product_id = %s
+                  AND c.status IN ('done', 'approved', 'suggested')
+                """,
+                (int(product_id),),
+            )
+            crow = cur.fetchone() or (0,)
+            competitor_count = int(crow[0])
+            if competitor_count:
+                cur.execute(
+                    """
+                    SELECT c.name, c.url, c.domain, c.description,
+                           c.positioning_headline, c.target_audience
+                    FROM competitors c
+                    JOIN competitor_analyses a ON c.analysis_id = a.id
+                    WHERE a.product_id = %s
+                      AND a.status = 'done'
+                      AND c.status IN ('done', 'approved', 'suggested')
+                    ORDER BY c.id
+                    LIMIT 10
+                    """,
+                    (int(product_id),),
+                )
+                comp_rows = cur.fetchall()
+                comp_cols = [d[0] for d in cur.description or []]
+                for cr in comp_rows:
+                    named_competitors.append(dict(zip(comp_cols, cr)))
+
     icp = _maybe_json(rec.get("icp_analysis")) or {}
     out: dict[str, Any] = {
         "product": {
@@ -329,6 +371,13 @@ async def load_cached_outputs(state: ProductIntelV2State) -> dict:
         "pricing": _maybe_json(rec.get("pricing_analysis")) or {},
         "gtm": _maybe_json(rec.get("gtm_analysis")) or {},
         "positioning": _maybe_json(rec.get("positioning_analysis")) or {},
+        "competitive": {
+            "has_completed_analysis": bool(competitor_count),
+            "competitor_count": competitor_count,
+            "maybe_stale": False,
+            "freshness_reason": "",
+            "competitors": named_competitors,
+        },
         "agent_timings": {"load_cached_outputs": round(time.perf_counter() - t0, 3)},
     }
     # Partial-failure signal on the fresh path: if ICP was never run (or the
@@ -342,9 +391,11 @@ async def load_cached_outputs(state: ProductIntelV2State) -> dict:
 async def run_deep_competitor(state: ProductIntelV2State) -> dict:
     """Invoke team-3 deep_competitor_graph if available, else no-op.
 
-    Idempotent: the subgraph is expected to write only to
-    ``products.competitor_analysis_deep``. Our supervisor performs no
-    additional writes here; we just bubble up the payload.
+    Idempotent: the subgraph writes to the ``competitor_analyses`` table
+    (plus related child tables — competitor_pricing_tiers, competitor_features,
+    competitor_integrations, competitor_changelog, competitor_funding_events,
+    competitor_positioning_snapshots, competitor_feature_parity). Our
+    supervisor performs no additional writes here; we just bubble up the payload.
     """
     if state.get("_error"):
         return {}
@@ -374,7 +425,7 @@ async def run_deep_competitor(state: ProductIntelV2State) -> dict:
         "competitor_deep": result.get("competitor_deep")
         or result.get("competitors")
         or {},
-        "db_writes": ["competitor_analysis_deep"],
+        "db_writes": ["competitor_analyses"],
         "agent_timings": {"run_deep_competitor": round(time.perf_counter() - t0, 3)},
     }
 
