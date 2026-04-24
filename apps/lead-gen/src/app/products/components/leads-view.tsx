@@ -7,12 +7,10 @@ import {
   Box,
   Container,
   Flex,
-  Heading,
   Separator,
   Text,
 } from "@radix-ui/themes";
 import {
-  ArrowLeftIcon,
   CubeIcon,
   ExternalLinkIcon,
   GlobeIcon,
@@ -21,12 +19,18 @@ import {
   StarFilledIcon,
 } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
-import { button } from "@/recipes/button";
 import {
   useProductBySlugQuery,
   useProductLeadsQuery,
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
+import {
+  LoadingShell,
+  SignInGate,
+  ProductNotFound,
+  SubpageBreadcrumb,
+  SubpageHero,
+} from "./view-chrome";
 
 type TierFilter = "all" | "hot" | "warm" | "cold";
 
@@ -93,42 +97,10 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
   const conn = leadsData?.productLeads;
   const leads = useMemo(() => conn?.leads ?? [], [conn]);
 
-  if (authLoading) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Please sign in to view this product&apos;s leads.</Text>
-      </Container>
-    );
-  }
-
-  if (productLoading && !productData) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (!product) {
-    return (
-      <Container size="4" p="6">
-        <Flex direction="column" gap="3">
-          <Link href="/products" className={button({ variant: "ghost", size: "sm" })}>
-            <ArrowLeftIcon /> Products
-          </Link>
-          <Text color="gray">Product &ldquo;{slug}&rdquo; not found.</Text>
-        </Flex>
-      </Container>
-    );
-  }
+  if (authLoading) return <LoadingShell />;
+  if (!user) return <SignInGate message="Please sign in to view this product's leads." />;
+  if (productLoading && !productData) return <LoadingShell />;
+  if (!product) return <ProductNotFound slug={slug} />;
 
   const tierChipBase = css({
     fontSize: "xs",
@@ -158,38 +130,16 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
   });
 
   return (
-    <Container size="4" p="6">
-      <Flex mb="5" gap="2" align="center">
-        <Link
-          href={`/products/${product.slug}`}
-          className={button({ variant: "ghost", size: "sm" })}
-        >
-          <ArrowLeftIcon /> {product.name}
-        </Link>
-        <Text color="gray" size="2">/</Text>
-        <Text size="3" weight="medium">Leads</Text>
-      </Flex>
+    <Container size="4" p="6" asChild>
+      <main>
+      <SubpageBreadcrumb
+        productSlug={product.slug}
+        productName={product.name}
+        currentLabel="Leads"
+      />
 
       <Flex direction="column" gap="4">
-        <Flex align="center" gap="3" wrap="wrap">
-          <span
-            className={css({
-              color: "accent.11",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bg: "accent.3",
-              borderRadius: "md",
-              p: "3",
-              boxShadow: "inset 0 0 0 1px token(colors.accent.6)",
-            })}
-          >
-            <CubeIcon width="24" height="24" />
-          </span>
-          <Heading size="7">
-            {product.name} · <Text color="gray">Leads</Text>
-          </Heading>
-        </Flex>
+        <SubpageHero productName={product.name} currentLabel="Leads" />
 
         <Text as="p" size="2" color="gray" className={css({ lineHeight: "1.6" })}>
           Companies scored for this product by the vertical signal pipeline.
@@ -199,7 +149,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
         <Flex gap="4" wrap="wrap" mt="2">
           <div className={cardCls} style={{ flex: "1 1 140px" }}>
             <Flex align="center" gap="2" mb="1">
-              <span className={css({ color: "red.11" })}><StarFilledIcon /></span>
+              <span aria-hidden="true" className={css({ color: "red.11" })}><StarFilledIcon /></span>
               <Text size="1" color="gray">Hot</Text>
             </Flex>
             <Text size="6" weight="bold" className={css({ color: "red.11" })}>
@@ -208,7 +158,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
           </div>
           <div className={cardCls} style={{ flex: "1 1 140px" }}>
             <Flex align="center" gap="2" mb="1">
-              <span className={css({ color: "amber.11" })}><RocketIcon /></span>
+              <span aria-hidden="true" className={css({ color: "amber.11" })}><RocketIcon /></span>
               <Text size="1" color="gray">Warm</Text>
             </Flex>
             <Text size="6" weight="bold" className={css({ color: "amber.11" })}>
@@ -217,7 +167,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
           </div>
           <div className={cardCls} style={{ flex: "1 1 140px" }}>
             <Flex align="center" gap="2" mb="1">
-              <span className={css({ color: "blue.11" })}><PersonIcon /></span>
+              <span aria-hidden="true" className={css({ color: "blue.11" })}><PersonIcon /></span>
               <Text size="1" color="gray">Cold</Text>
             </Flex>
             <Text size="6" weight="bold" className={css({ color: "blue.11" })}>
@@ -226,7 +176,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
           </div>
           <div className={cardCls} style={{ flex: "1 1 140px" }}>
             <Flex align="center" gap="2" mb="1">
-              <span className={css({ color: "gray.11" })}><GlobeIcon /></span>
+              <span aria-hidden="true" className={css({ color: "gray.11" })}><GlobeIcon /></span>
               <Text size="1" color="gray">Total</Text>
             </Flex>
             <Text size="6" weight="bold">
@@ -252,11 +202,11 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
         </Flex>
 
         {error && (
-          <Text color="red" as="p">{error.message}</Text>
+          <Text color="red" as="p" role="alert">{error.message}</Text>
         )}
 
         {leadsLoading && !leadsData ? (
-          <Text color="gray">Loading leads…</Text>
+          <Text color="gray" role="status" aria-live="polite">Loading leads…</Text>
         ) : leads.length === 0 ? (
           <Box
             className={css({
@@ -290,7 +240,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={lead.companyLogoUrl}
-                          alt=""
+                          alt={`${lead.companyName} logo`}
                           className={css({
                             width: "36px",
                             height: "36px",
@@ -302,6 +252,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                         />
                       ) : (
                         <span
+                          aria-hidden="true"
                           className={css({
                             width: "36px",
                             height: "36px",
@@ -335,6 +286,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                               href={`https://${lead.companyDomain}`}
                               target="_blank"
                               rel="noopener noreferrer"
+                              aria-label={`Open ${lead.companyName} website in new tab`}
                               className={css({
                                 color: "accent.11",
                                 fontSize: "xs",
@@ -342,11 +294,17 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                                 alignItems: "center",
                                 gap: "1",
                                 textDecoration: "none",
+                                borderRadius: "sm",
                                 _hover: { textDecoration: "underline" },
+                                _focusVisible: {
+                                  outline: "2px solid",
+                                  outlineColor: "accent.9",
+                                  outlineOffset: "2px",
+                                },
                               })}
                             >
                               {lead.companyDomain}
-                              <ExternalLinkIcon />
+                              <ExternalLinkIcon aria-hidden />
                             </a>
                           )}
                         </Flex>
@@ -392,6 +350,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
           </Flex>
         )}
       </Flex>
+      </main>
     </Container>
   );
 }

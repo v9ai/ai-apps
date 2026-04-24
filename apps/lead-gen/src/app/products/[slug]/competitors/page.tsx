@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Container, Text } from "@radix-ui/themes";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { products } from "@/db/schema";
 import { ProductCompetitorsPage } from "../../components/competitor-analysis-view";
+import { LoadingShell } from "../../components/view-chrome";
 
 type Params = { slug: string };
 
@@ -61,13 +61,7 @@ export default async function ProductCompetitorsRoute({
   const { slug } = await params;
 
   return (
-    <Suspense
-      fallback={
-        <Container size="4" p="8">
-          <Text color="gray">Loading…</Text>
-        </Container>
-      }
-    >
+    <Suspense fallback={<LoadingShell />}>
       <ProductCompetitorsPage slug={slug} />
     </Suspense>
   );

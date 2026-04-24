@@ -30,6 +30,7 @@ import {
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import type { IcpAnalysis } from "./icp-analysis-view";
+import { LoadingShell, SignInGate } from "./view-chrome";
 
 export function ProductsList() {
   const router = useRouter();
@@ -50,19 +51,11 @@ export function ProductsList() {
   const [pendingId, setPendingId] = useState<number | null>(null);
 
   if (authLoading) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
+    return <LoadingShell size="3" />;
   }
 
   if (!user) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Please sign in to view products.</Text>
-      </Container>
-    );
+    return <SignInGate message="Please sign in to view products." />;
   }
 
   const rows = data?.products ?? [];
@@ -112,9 +105,11 @@ export function ProductsList() {
   }
 
   return (
-    <Container size="4" p="6">
+    <Container size="4" p="6" asChild>
+      <main>
       <Flex align="center" gap="3" mb="5">
         <span
+          aria-hidden="true"
           className={css({
             color: "accent.11",
             display: "inline-flex",
@@ -123,6 +118,7 @@ export function ProductsList() {
             bg: "accent.3",
             borderRadius: "md",
             p: "2",
+            boxShadow: "inset 0 0 0 1px token(colors.accent.6)",
           })}
         >
           <CubeIcon width="20" height="20" />
@@ -131,12 +127,16 @@ export function ProductsList() {
       </Flex>
 
       {error && (
-        <Text color="red" as="p" mb="3">
+        <Text color="red" as="p" mb="3" role="alert">
           {error.message}
         </Text>
       )}
 
-      {loading && rows.length === 0 && <Text color="gray">Loading…</Text>}
+      {loading && rows.length === 0 && (
+        <Text color="gray" role="status" aria-live="polite">
+          Loading…
+        </Text>
+      )}
 
       {!loading && rows.length === 0 && (
         <Text color="gray">No products yet.</Text>
@@ -184,7 +184,7 @@ export function ProductsList() {
                       gap: "2",
                     })}
                   >
-                    <span className={css({ color: "accent.11" })}>
+                    <span aria-hidden="true" className={css({ color: "accent.11" })}>
                       <CubeIcon />
                     </span>
                     <Text
@@ -196,7 +196,7 @@ export function ProductsList() {
                     >
                       {p.name}
                     </Text>
-                    <span className={css({ color: "gray.10", ml: "1" })}>
+                    <span aria-hidden="true" className={css({ color: "gray.10", ml: "1" })}>
                       <ArrowRightIcon />
                     </span>
                   </Link>
@@ -204,6 +204,7 @@ export function ProductsList() {
                     href={p.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`Open ${p.name} website in new tab`}
                     className={css({
                       color: "gray.11",
                       fontSize: "sm",
@@ -211,13 +212,19 @@ export function ProductsList() {
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "1",
+                      borderRadius: "sm",
                       _hover: {
                         textDecoration: "underline",
                         color: "accent.11",
                       },
+                      _focusVisible: {
+                        outline: "2px solid",
+                        outlineColor: "accent.9",
+                        outlineOffset: "2px",
+                      },
                     })}
                   >
-                    <ExternalLinkIcon />
+                    <ExternalLinkIcon aria-hidden />
                     <span
                       className={css({
                         overflow: "hidden",
@@ -275,7 +282,7 @@ export function ProductsList() {
                         className={button({ variant: "solid", size: "sm" })}
                         aria-label="Analyze ICP"
                       >
-                        <MagicWandIcon />
+                        <MagicWandIcon aria-hidden />
                         <span className={css({ ml: "1" })}>
                           {analyzing
                             ? "Analyzing…"
@@ -291,7 +298,7 @@ export function ProductsList() {
                         className={button({ variant: "outline", size: "sm" })}
                         aria-label="Analyze pricing"
                       >
-                        <MagicWandIcon />
+                        <MagicWandIcon aria-hidden />
                         <span className={css({ ml: "1" })}>
                           {pendingId === p.id ? "Starting…" : "Analyze Pricing"}
                         </span>
@@ -303,7 +310,7 @@ export function ProductsList() {
                         className={button({ variant: "outline", size: "sm" })}
                         aria-label="Analyze GTM"
                       >
-                        <MagicWandIcon />
+                        <MagicWandIcon aria-hidden />
                         <span className={css({ ml: "1" })}>
                           {pendingId === p.id ? "Starting…" : "Analyze GTM"}
                         </span>
@@ -315,7 +322,7 @@ export function ProductsList() {
                         className={button({ variant: "gradient", size: "sm" })}
                         aria-label="Run full intel"
                       >
-                        <MagicWandIcon />
+                        <MagicWandIcon aria-hidden />
                         <span className={css({ ml: "1" })}>
                           {pendingId === p.id ? "Starting…" : "Run Full Intel"}
                         </span>
@@ -331,7 +338,7 @@ export function ProductsList() {
                         className={button({ variant: "ghost", size: "sm" })}
                         aria-label="Delete product"
                       >
-                        <TrashIcon />
+                        <TrashIcon aria-hidden />
                       </button>
                     </>
                   )}
@@ -341,6 +348,7 @@ export function ProductsList() {
           );
         })}
       </div>
+      </main>
     </Container>
   );
 }

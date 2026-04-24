@@ -34,6 +34,12 @@ import type {
   GTMStrategyResult,
   ProductIntelReportResult,
 } from "@/lib/langgraph-client";
+import {
+  LoadingShell,
+  ErrorShell,
+  SignInGate,
+  ProductNotFound,
+} from "./view-chrome";
 
 type PositioningSneak = {
   category?: string;
@@ -86,52 +92,14 @@ export function ProductDetail({ slug }: { slug: string }) {
     skip: !user,
   });
 
-  if (authLoading) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Please sign in to view this product.</Text>
-      </Container>
-    );
-  }
-
-  if (loading && !data) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container size="4" p="6">
-        <Text color="red">{error.message}</Text>
-      </Container>
-    );
-  }
+  if (authLoading) return <LoadingShell />;
+  if (!user) return <SignInGate />;
+  if (loading && !data) return <LoadingShell />;
+  if (error) return <ErrorShell message={error.message} />;
 
   const product = data?.productBySlug;
 
-  if (!product) {
-    return (
-      <Container size="4" p="6">
-        <Flex direction="column" gap="3">
-          <Link href="/products" className={button({ variant: "ghost", size: "sm" })}>
-            <ArrowLeftIcon /> Products
-          </Link>
-          <Text color="gray">Product &ldquo;{slug}&rdquo; not found.</Text>
-        </Flex>
-      </Container>
-    );
-  }
+  if (!product) return <ProductNotFound slug={slug} />;
 
   const highlights = (product.highlights ?? null) as Highlights | null;
   const positioning = (product.positioningAnalysis ?? null) as PositioningSneak | null;
@@ -153,16 +121,27 @@ export function ProductDetail({ slug }: { slug: string }) {
   });
 
   return (
-    <Container size="4" p="6">
-      <Flex mb="4">
-        <Link href="/products" className={button({ variant: "ghost", size: "sm" })}>
-          <ArrowLeftIcon /> Products
-        </Link>
-      </Flex>
+    <Container size="4" p="6" asChild>
+      <main>
+      <nav aria-label="Breadcrumb" className={css({ mb: "4" })}>
+        <Flex asChild>
+          <ol className={css({ listStyle: "none", p: 0, m: 0 })}>
+            <li>
+              <Link
+                href="/products"
+                className={button({ variant: "ghost", size: "sm" })}
+              >
+                <ArrowLeftIcon aria-hidden /> Products
+              </Link>
+            </li>
+          </ol>
+        </Flex>
+      </nav>
 
       <Flex direction="column" gap="3">
         <Flex align="center" gap="3">
           <span
+            aria-hidden="true"
             className={css({
               color: "accent.11",
               display: "inline-flex",
@@ -171,6 +150,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               bg: "accent.3",
               borderRadius: "md",
               p: "3",
+              boxShadow: "inset 0 0 0 1px token(colors.accent.6)",
             })}
           >
             <CubeIcon width="24" height="24" />
@@ -194,6 +174,7 @@ export function ProductDetail({ slug }: { slug: string }) {
           href={product.url}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={`Open ${product.name} website in new tab`}
           className={css({
             color: "accent.11",
             fontSize: "sm",
@@ -201,12 +182,18 @@ export function ProductDetail({ slug }: { slug: string }) {
             display: "inline-flex",
             alignItems: "center",
             gap: "1",
+            borderRadius: "sm",
             _hover: { textDecoration: "underline" },
+            _focusVisible: {
+              outline: "2px solid",
+              outlineColor: "accent.9",
+              outlineOffset: "2px",
+            },
           })}
         >
-          <GlobeIcon />
+          <GlobeIcon aria-hidden />
           {product.url}
-          <ExternalLinkIcon />
+          <ExternalLinkIcon aria-hidden />
         </a>
 
         {product.description && !highlights?.tagline && (
@@ -300,7 +287,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               <div className={cardCls}>
                 <Flex justify="between" align="center" mb="2">
                   <Flex align="center" gap="2">
-                    <span className={css({ color: "accent.11" })}><StarIcon /></span>
+                    <span aria-hidden="true" className={css({ color: "accent.11" })}><StarIcon /></span>
                     <Text size="2" weight="bold">Positioning</Text>
                     {positioning.category && (
                       <Badge color="indigo" size="1">{positioning.category}</Badge>
@@ -322,7 +309,7 @@ export function ProductDetail({ slug }: { slug: string }) {
                 )}
                 {(positioning.differentiators ?? []).slice(0, 3).map((d, i) => (
                   <Flex key={i} align="start" gap="2" mb="1">
-                    <span className={css({ color: "accent.11", flexShrink: 0, mt: "1px" })}>
+                    <span aria-hidden="true" className={css({ color: "accent.11", flexShrink: 0, mt: "1px" })}>
                       <CheckIcon />
                     </span>
                     <Text size="1" color="gray">{d}</Text>
@@ -335,7 +322,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               <div className={cardCls}>
                 <Flex justify="between" align="center" mb="2">
                   <Flex align="center" gap="2">
-                    <span className={css({ color: "accent.11" })}><ComponentInstanceIcon /></span>
+                    <span aria-hidden="true" className={css({ color: "accent.11" })}><ComponentInstanceIcon /></span>
                     <Text size="2" weight="bold">ICP</Text>
                     {icp.weighted_total != null && (
                       <Badge color="green" size="1">{Math.round(icp.weighted_total)}% fit</Badge>
@@ -368,7 +355,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               <div className={cardCls}>
                 <Flex justify="between" align="center" mb="2">
                   <Flex align="center" gap="2">
-                    <span className={css({ color: "accent.11" })}><BarChartIcon /></span>
+                    <span aria-hidden="true" className={css({ color: "accent.11" })}><BarChartIcon /></span>
                     <Text size="2" weight="bold">Pricing</Text>
                     {pricing.model?.model_type && (
                       <Badge color="gray" size="1">{pricing.model.model_type}</Badge>
@@ -403,7 +390,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               <div className={cardCls}>
                 <Flex justify="between" align="center" mb="2">
                   <Flex align="center" gap="2">
-                    <span className={css({ color: "accent.11" })}><RocketIcon /></span>
+                    <span aria-hidden="true" className={css({ color: "accent.11" })}><RocketIcon /></span>
                     <Text size="2" weight="bold">GTM</Text>
                     {gtm.channels?.length > 0 && (
                       <Badge color="gray" size="1">{gtm.channels.length} channels</Badge>
@@ -437,7 +424,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               <div className={cardCls}>
                 <Flex justify="between" align="center" mb="2">
                   <Flex align="center" gap="2">
-                    <span className={css({ color: "accent.11" })}><MagicWandIcon /></span>
+                    <span aria-hidden="true" className={css({ color: "accent.11" })}><MagicWandIcon /></span>
                     <Text size="2" weight="bold">Intel</Text>
                   </Flex>
                   <Link
@@ -467,7 +454,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               <div className={cardCls}>
                 <Flex justify="between" align="center" mb="2">
                   <Flex align="center" gap="2">
-                    <span className={css({ color: "accent.11" })}><PersonIcon /></span>
+                    <span aria-hidden="true" className={css({ color: "accent.11" })}><PersonIcon /></span>
                     <Text size="2" weight="bold">Leads</Text>
                     {leadsPreview.totalCount > 0 && (
                       <Badge color="gray" size="1">{leadsPreview.totalCount} total</Badge>
@@ -537,7 +524,7 @@ export function ProductDetail({ slug }: { slug: string }) {
                 })}
               >
                 <Flex align="center" gap="2" mb="1">
-                  <span className={css({ color: "accent.11" })}>
+                  <span aria-hidden="true" className={css({ color: "accent.11" })}>
                     <BarChartIcon />
                   </span>
                   <Text size="5" weight="bold" className={css({ color: "accent.11" })}>
@@ -555,10 +542,10 @@ export function ProductDetail({ slug }: { slug: string }) {
         {highlights?.pipeline && highlights.pipeline.length > 0 && (
           <div className={css({ mt: "5" })}>
             <Flex align="center" gap="2" mb="3">
-              <span className={css({ color: "accent.11" })}>
+              <span aria-hidden="true" className={css({ color: "accent.11" })}>
                 <GearIcon width="20" height="20" />
               </span>
-              <Heading size="5">Pipeline</Heading>
+              <Heading size="4">Pipeline</Heading>
             </Flex>
             <div
               className={css({
@@ -626,7 +613,7 @@ export function ProductDetail({ slug }: { slug: string }) {
                 })}
               >
                 <Flex align="center" gap="2" mb="3">
-                  <span className={css({ color: "accent.11" })}>
+                  <span aria-hidden="true" className={css({ color: "accent.11" })}>
                     {sectionIcon(section.title)}
                   </span>
                   <Heading size="4">{section.title}</Heading>
@@ -643,6 +630,7 @@ export function ProductDetail({ slug }: { slug: string }) {
                         })}
                       >
                         <span
+                          aria-hidden="true"
                           className={css({
                             color: "accent.11",
                             mt: "1",
@@ -674,7 +662,7 @@ export function ProductDetail({ slug }: { slug: string }) {
           <Flex direction="column" gap="2">
             {product.domain && (
               <Flex align="center" gap="2">
-                <span className={css({ color: "gray.10" })}>
+                <span aria-hidden="true" className={css({ color: "gray.10" })}>
                   <GlobeIcon />
                 </span>
                 <Text size="2" color="gray">
@@ -684,7 +672,7 @@ export function ProductDetail({ slug }: { slug: string }) {
             )}
             {product.createdBy && (
               <Flex align="center" gap="2">
-                <span className={css({ color: "gray.10" })}>
+                <span aria-hidden="true" className={css({ color: "gray.10" })}>
                   <CodeIcon />
                 </span>
                 <Text size="2" color="gray">
@@ -693,7 +681,7 @@ export function ProductDetail({ slug }: { slug: string }) {
               </Flex>
             )}
             <Flex align="center" gap="2">
-              <span className={css({ color: "gray.10" })}>
+              <span aria-hidden="true" className={css({ color: "gray.10" })}>
                 <ReaderIcon />
               </span>
               <Text size="2" color="gray">
@@ -703,6 +691,7 @@ export function ProductDetail({ slug }: { slug: string }) {
           </Flex>
         </div>
       </Flex>
+      </main>
     </Container>
   );
 }

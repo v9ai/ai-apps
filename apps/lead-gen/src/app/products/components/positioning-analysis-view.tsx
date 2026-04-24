@@ -1,12 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeftIcon, CubeIcon, ExternalLinkIcon } from "@radix-ui/react-icons";
 import { Badge, Box, Container, Flex, Heading, Separator, Text } from "@radix-ui/themes";
 import { css } from "styled-system/css";
-import { button } from "@/recipes/button";
 import { useProductBySlugQuery } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
+import {
+  LoadingShell,
+  ErrorShell,
+  SignInGate,
+  ProductNotFound,
+  SubpageBreadcrumb,
+  SubpageHero,
+  ProductExternalLink,
+} from "./view-chrome";
 
 export interface PositioningAnalysis {
   category?: string;
@@ -87,7 +93,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
       {/* Differentiators */}
       {differentiators.length > 0 && (
         <Box>
-          <Heading size="3" mb="2">
+          <Heading size="4" mb="2">
             Differentiators ({differentiators.length})
           </Heading>
           <Flex direction="column" gap="2">
@@ -126,7 +132,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
         {competitorFrame.length > 0 ? (
           <Flex gap="2" wrap="wrap">
             {competitorFrame.map((c, i) => (
-              <Badge key={i} color="orange" size="2">
+              <Badge key={i} color="gray" size="2" variant="soft">
                 {c}
               </Badge>
             ))}
@@ -142,7 +148,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
       {/* White space */}
       {whiteSpace.length > 0 && (
         <Box>
-          <Heading size="3" mb="2">
+          <Heading size="4" mb="2">
             White space
           </Heading>
           <Text size="2" color="gray" mb="2" as="p">
@@ -159,7 +165,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
                   py: "1",
                 })}
               >
-                <span className={css({ color: "accent.11", mt: "1" })}>◆</span>
+                <span aria-hidden="true" className={css({ color: "accent.11", mt: "1" })}>◆</span>
                 <Text size="2" className={css({ lineHeight: "1.5" })}>
                   {w}
                 </Text>
@@ -172,7 +178,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
       {/* Positioning axes */}
       {axes.length > 0 && (
         <Box>
-          <Heading size="3" mb="2">
+          <Heading size="4" mb="2">
             Positioning axes
           </Heading>
           <Text size="2" color="gray" mb="2" as="p">
@@ -191,7 +197,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
       {/* Narrative hooks */}
       {hooks.length > 0 && (
         <Box>
-          <Heading size="3" mb="2">
+          <Heading size="4" mb="2">
             Narrative hooks
           </Heading>
           <Flex direction="column" gap="2">
@@ -250,7 +256,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
                   py: "1",
                 })}
               >
-                <span className={css({ color: "gray.10", mt: "1" })}>•</span>
+                <span aria-hidden="true" className={css({ color: "gray.10", mt: "1" })}>•</span>
                 <Text size="2" color="gray">
                   {c}
                 </Text>
@@ -311,108 +317,38 @@ export function ProductPositioningPage({ slug }: { slug: string }) {
     skip: !user,
   });
 
-  if (authLoading) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Please sign in to view this product.</Text>
-      </Container>
-    );
-  }
-
-  if (loading && !data) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container size="4" p="6">
-        <Text color="red">{error.message}</Text>
-      </Container>
-    );
-  }
+  if (authLoading) return <LoadingShell />;
+  if (!user) return <SignInGate />;
+  if (loading && !data) return <LoadingShell />;
+  if (error) return <ErrorShell message={error.message} />;
 
   const product = data?.productBySlug;
 
-  if (!product) {
-    return (
-      <Container size="4" p="6">
-        <Flex direction="column" gap="3">
-          <Link href="/products" className={button({ variant: "ghost", size: "sm" })}>
-            <ArrowLeftIcon /> Products
-          </Link>
-          <Text color="gray">Product &ldquo;{slug}&rdquo; not found.</Text>
-        </Flex>
-      </Container>
-    );
-  }
+  if (!product) return <ProductNotFound slug={slug} />;
 
   const positioning = (product.positioningAnalysis ?? null) as PositioningAnalysis | null;
 
   return (
-    <Container size="4" p="6">
-      <Flex mb="4" gap="2" align="center">
-        <Link
-          href={`/products/${product.slug}`}
-          className={button({ variant: "ghost", size: "sm" })}
-        >
-          <ArrowLeftIcon /> {product.name}
-        </Link>
-        <Text color="gray" size="2">
-          /
-        </Text>
-        <Text size="2">Positioning</Text>
-      </Flex>
+    <Container size="4" p="6" asChild>
+      <main>
+      <SubpageBreadcrumb
+        productSlug={product.slug}
+        productName={product.name}
+        currentLabel="Positioning"
+      />
 
       <Flex direction="column" gap="3">
-        <Flex align="center" gap="3" wrap="wrap">
-          <span
-            className={css({
-              color: "accent.11",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bg: "accent.3",
-              borderRadius: "md",
-              p: "3",
-            })}
-          >
-            <CubeIcon width="24" height="24" />
-          </span>
-          <Heading size="7">
-            {product.name} · <Text color="gray">Positioning</Text>
-          </Heading>
-        </Flex>
+        <SubpageHero
+          productName={product.name}
+          currentLabel="Positioning"
+        />
 
         <Flex gap="3" wrap="wrap" align="center">
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={css({
-              color: "accent.11",
-              fontSize: "sm",
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "1",
-              _hover: { textDecoration: "underline" },
-            })}
-          >
-            {product.domain ?? product.url}
-            <ExternalLinkIcon />
-          </a>
+          <ProductExternalLink
+            url={product.url}
+            domain={product.domain}
+            productName={product.name}
+          />
         </Flex>
 
         <div
@@ -434,6 +370,7 @@ export function ProductPositioningPage({ slug }: { slug: string }) {
           )}
         </div>
       </Flex>
+      </main>
     </Container>
   );
 }

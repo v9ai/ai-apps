@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { Container, Text } from "@radix-ui/themes";
 import { ProductIcpPage } from "../../components/product-icp-page";
+import { LoadingShell } from "../../components/view-chrome";
 
 type Params = { slug: string };
 
@@ -12,13 +12,7 @@ export default async function ProductIcpRoute({
   const { slug } = await params;
 
   return (
-    <Suspense
-      fallback={
-        <Container size="4" p="8">
-          <Text color="gray">Loading…</Text>
-        </Container>
-      }
-    >
+    <Suspense fallback={<LoadingShell />}>
       <ProductIcpPage slug={slug} />
     </Suspense>
   );

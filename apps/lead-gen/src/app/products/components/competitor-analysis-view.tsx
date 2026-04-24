@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
-  ArrowLeftIcon,
-  CubeIcon,
   ExternalLinkIcon,
   CheckIcon,
   Cross2Icon,
@@ -29,6 +26,14 @@ import {
 import type { ProductCompetitorsBySlugQuery } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
+import {
+  LoadingShell,
+  ErrorShell,
+  SignInGate,
+  ProductNotFound,
+  SubpageBreadcrumb,
+  SubpageHero,
+} from "./view-chrome";
 
 type Product = NonNullable<ProductCompetitorsBySlugQuery["productBySlug"]>;
 type Analysis = NonNullable<Product["latestCompetitorAnalysis"]>;
@@ -202,7 +207,7 @@ function KickoffPanel({
           disabled={loading}
           className={button({ variant: "solid", size: "sm" })}
         >
-          <MagicWandIcon />
+          <MagicWandIcon aria-hidden />
           <span className={css({ ml: "1" })}>
             {loading
               ? "Starting…"
@@ -212,12 +217,12 @@ function KickoffPanel({
           </span>
         </button>
         {kickedAnalysisId !== null && !loading && !error && (
-          <Text size="2" color="gray">
+          <Text size="2" color="gray" role="status" aria-live="polite">
             Started analysis #{kickedAnalysisId}. Refresh in a minute.
           </Text>
         )}
         {error && (
-          <Text size="2" color="red">
+          <Text size="2" color="red" role="alert">
             {error.message}
           </Text>
         )}
@@ -238,7 +243,7 @@ function CompetitorCard({ c }: { c: Competitor }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={c.logoUrl}
-              alt=""
+              alt={`${c.name} logo`}
               width={24}
               height={24}
               style={{ borderRadius: 4 }}
@@ -250,15 +255,23 @@ function CompetitorCard({ c }: { c: Competitor }) {
           href={c.url}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={`Visit ${c.name} website in new tab`}
           className={css({
             color: "accent.11",
             fontSize: "xs",
             display: "inline-flex",
             alignItems: "center",
             gap: "1",
+            borderRadius: "sm",
+            _hover: { textDecoration: "underline" },
+            _focusVisible: {
+              outline: "2px solid",
+              outlineColor: "accent.9",
+              outlineOffset: "2px",
+            },
           })}
         >
-          {c.domain ?? "visit"} <ExternalLinkIcon />
+          {c.domain ?? "visit"} <ExternalLinkIcon aria-hidden />
         </a>
       </Flex>
       {c.positioningHeadline && (
@@ -399,9 +412,9 @@ function FeatureMatrix({ competitors }: { competitors: Competitor[] }) {
                 return (
                   <Table.Cell key={c.id}>
                     {has ? (
-                      <CheckIcon className={css({ color: "green.10" })} />
+                      <CheckIcon aria-hidden className={css({ color: "green.10" })} />
                     ) : (
-                      <Cross2Icon className={css({ color: "gray.8" })} />
+                      <Cross2Icon aria-hidden className={css({ color: "gray.8" })} />
                     )}
                   </Table.Cell>
                 );
@@ -426,90 +439,32 @@ export function ProductCompetitorsPage({ slug }: { slug: string }) {
     skip: !user,
   });
 
-  if (authLoading) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Please sign in to view this product.</Text>
-      </Container>
-    );
-  }
-
-  if (loading && !data) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container size="4" p="6">
-        <Text color="red">{error.message}</Text>
-      </Container>
-    );
-  }
+  if (authLoading) return <LoadingShell />;
+  if (!user) return <SignInGate />;
+  if (loading && !data) return <LoadingShell />;
+  if (error) return <ErrorShell message={error.message} />;
 
   const product = data?.productBySlug;
 
-  if (!product) {
-    return (
-      <Container size="4" p="6">
-        <Flex direction="column" gap="3">
-          <Link href="/products" className={button({ variant: "ghost", size: "sm" })}>
-            <ArrowLeftIcon /> Products
-          </Link>
-          <Text color="gray">Product &ldquo;{slug}&rdquo; not found.</Text>
-        </Flex>
-      </Container>
-    );
-  }
+  if (!product) return <ProductNotFound slug={slug} />;
 
   const analysis = product.latestCompetitorAnalysis;
   const competitors = analysis?.competitors ?? [];
 
   return (
-    <Container size="4" p="6">
-      <Flex mb="4" gap="2" align="center">
-        <Link
-          href={`/products/${product.slug}`}
-          className={button({ variant: "ghost", size: "sm" })}
-        >
-          <ArrowLeftIcon /> {product.name}
-        </Link>
-        <Text color="gray" size="2">
-          /
-        </Text>
-        <Text size="2">Competitors &amp; pricing</Text>
-      </Flex>
+    <Container size="4" p="6" asChild>
+      <main>
+      <SubpageBreadcrumb
+        productSlug={product.slug}
+        productName={product.name}
+        currentLabel="Competitors & pricing"
+      />
 
       <Flex direction="column" gap="5">
-        <Flex align="center" gap="3" wrap="wrap">
-          <span
-            className={css({
-              color: "accent.11",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bg: "accent.3",
-              borderRadius: "md",
-              p: "3",
-            })}
-          >
-            <CubeIcon width="24" height="24" />
-          </span>
-          <Heading size="7">
-            {product.name} · <Text color="gray">Competitors &amp; pricing</Text>
-          </Heading>
-        </Flex>
+        <SubpageHero
+          productName={product.name}
+          currentLabel="Competitors & pricing"
+        />
 
         <ExplainerPanel analysis={analysis} />
 
@@ -572,6 +527,7 @@ export function ProductCompetitorsPage({ slug }: { slug: string }) {
           />
         )}
       </Flex>
+      </main>
     </Container>
   );
 }

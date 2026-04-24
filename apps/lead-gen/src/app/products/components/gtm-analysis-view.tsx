@@ -1,13 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { Badge, Box, Container, Flex, Heading, Separator, Text } from "@radix-ui/themes";
-import {
-  ArrowLeftIcon,
-  CubeIcon,
-  ExternalLinkIcon,
-  MagicWandIcon,
-} from "@radix-ui/react-icons";
+import { MagicWandIcon } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import {
@@ -18,18 +12,20 @@ import {
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import type { GTMStrategyResult } from "@/lib/langgraph-client";
+import {
+  LoadingShell,
+  ErrorShell,
+  SignInGate,
+  ProductNotFound,
+  SubpageBreadcrumb,
+  SubpageHero,
+  ProductExternalLink,
+  StatusBadge,
+} from "./view-chrome";
 
 export type GTMAnalysis = GTMStrategyResult;
 
 const TERMINAL_STATUSES = new Set(["success", "error", "timeout"]);
-
-function statusColor(s: string): "green" | "red" | "orange" | "blue" | "gray" {
-  if (s === "success") return "green";
-  if (s === "error") return "red";
-  if (s === "timeout") return "orange";
-  if (s === "running" || s === "pending") return "blue";
-  return "gray";
-}
 
 function effortColor(e: "low" | "medium" | "high"): "green" | "yellow" | "orange" {
   if (e === "low") return "green";
@@ -47,7 +43,7 @@ export function GTMAnalysisView({ data }: { data: GTMAnalysis }) {
   return (
     <Flex direction="column" gap="5">
       <Box>
-        <Heading size="3" mb="2">
+        <Heading size="4" mb="2">
           Channels ({channels.length})
         </Heading>
         <Flex direction="column" gap="2">
@@ -109,7 +105,7 @@ export function GTMAnalysisView({ data }: { data: GTMAnalysis }) {
       <Separator size="4" />
 
       <Box>
-        <Heading size="3" mb="2">
+        <Heading size="4" mb="2">
           Messaging pillars ({pillars.length})
         </Heading>
         <div
@@ -165,7 +161,7 @@ export function GTMAnalysisView({ data }: { data: GTMAnalysis }) {
       <Separator size="4" />
 
       <Box>
-        <Heading size="3" mb="2">
+        <Heading size="4" mb="2">
           Outreach templates ({templates.length})
         </Heading>
         <Flex direction="column" gap="2">
@@ -232,7 +228,7 @@ export function GTMAnalysisView({ data }: { data: GTMAnalysis }) {
         <>
           <Separator size="4" />
           <Box>
-            <Heading size="3" mb="2">
+            <Heading size="4" mb="2">
               Sales playbook
             </Heading>
             <Flex direction="column" gap="3">
@@ -317,7 +313,7 @@ export function GTMAnalysisView({ data }: { data: GTMAnalysis }) {
         <>
           <Separator size="4" />
           <Box>
-            <Heading size="3" mb="2">
+            <Heading size="4" mb="2">
               First 90 days
             </Heading>
             <Flex direction="column" gap="2">
@@ -388,52 +384,14 @@ export function ProductGtmPage({ slug }: { slug: string }) {
     stopPolling();
   }
 
-  if (authLoading) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Please sign in to view this product.</Text>
-      </Container>
-    );
-  }
-
-  if (loading && !data) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container size="4" p="6">
-        <Text color="red">{error.message}</Text>
-      </Container>
-    );
-  }
+  if (authLoading) return <LoadingShell />;
+  if (!user) return <SignInGate />;
+  if (loading && !data) return <LoadingShell />;
+  if (error) return <ErrorShell message={error.message} />;
 
   const product = data?.productBySlug;
 
-  if (!product) {
-    return (
-      <Container size="4" p="6">
-        <Flex direction="column" gap="3">
-          <Link href="/products" className={button({ variant: "ghost", size: "sm" })}>
-            <ArrowLeftIcon /> Products
-          </Link>
-          <Text color="gray">Product &ldquo;{slug}&rdquo; not found.</Text>
-        </Flex>
-      </Container>
-    );
-  }
+  if (!product) return <ProductNotFound slug={slug} />;
 
   const gtm = (product.gtmAnalysis ?? null) as GTMAnalysis | null;
   const analyzedAt = product.gtmAnalyzedAt
@@ -448,63 +406,31 @@ export function ProductGtmPage({ slug }: { slug: string }) {
   }
 
   return (
-    <Container size="4" p="6">
-      <Flex mb="4" gap="2" align="center">
-        <Link
-          href={`/products/${product.slug}`}
-          className={button({ variant: "ghost", size: "sm" })}
-        >
-          <ArrowLeftIcon /> {product.name}
-        </Link>
-        <Text color="gray" size="2">
-          /
-        </Text>
-        <Text size="2">GTM</Text>
-      </Flex>
+    <Container size="4" p="6" asChild>
+      <main>
+      <SubpageBreadcrumb
+        productSlug={product.slug}
+        productName={product.name}
+        currentLabel="GTM"
+      />
 
       <Flex direction="column" gap="3">
-        <Flex align="center" gap="3" wrap="wrap">
-          <span
-            className={css({
-              color: "accent.11",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bg: "accent.3",
-              borderRadius: "md",
-              p: "3",
-            })}
-          >
-            <CubeIcon width="24" height="24" />
-          </span>
-          <Heading size="7">
-            {product.name} · <Text color="gray">GTM</Text>
-          </Heading>
-          {latestRun && !terminal && (
-            <Badge color={statusColor(latestRun.status)} size="2">
-              {latestRun.status}…
-            </Badge>
-          )}
-        </Flex>
+        <SubpageHero
+          productName={product.name}
+          currentLabel="GTM"
+          trailing={
+            latestRun && !terminal ? (
+              <StatusBadge status={latestRun.status} />
+            ) : null
+          }
+        />
 
         <Flex gap="3" wrap="wrap" align="center">
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={css({
-              color: "accent.11",
-              fontSize: "sm",
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "1",
-              _hover: { textDecoration: "underline" },
-            })}
-          >
-            {product.domain ?? product.url}
-            <ExternalLinkIcon />
-          </a>
+          <ProductExternalLink
+            url={product.url}
+            domain={product.domain}
+            productName={product.name}
+          />
           {analyzedAt && (
             <Text size="2" color="gray">
               Analyzed {analyzedAt.toLocaleString()}
@@ -517,7 +443,7 @@ export function ProductGtmPage({ slug }: { slug: string }) {
               disabled={analyzeState.loading || (latestRun && !terminal)}
               className={button({ variant: "solid", size: "sm" })}
             >
-              <MagicWandIcon />
+              <MagicWandIcon aria-hidden />
               <span className={css({ ml: "1" })}>
                 {analyzeState.loading
                   ? "Starting…"
@@ -530,12 +456,12 @@ export function ProductGtmPage({ slug }: { slug: string }) {
         </Flex>
 
         {analyzeState.error && (
-          <Text color="red" as="p">
+          <Text color="red" as="p" role="alert">
             {analyzeState.error.message}
           </Text>
         )}
         {latestRun?.error && (
-          <Text color="red" as="p">
+          <Text color="red" as="p" role="alert">
             {latestRun.error}
           </Text>
         )}
@@ -551,7 +477,9 @@ export function ProductGtmPage({ slug }: { slug: string }) {
           {gtm ? (
             <GTMAnalysisView data={gtm} />
           ) : latestRun && !terminal ? (
-            <Text color="gray">Running GTM analysis…</Text>
+            <Text color="gray" role="status" aria-live="polite">
+              Running GTM analysis…
+            </Text>
           ) : (
             <Text color="gray">
               No analysis yet.
@@ -562,6 +490,7 @@ export function ProductGtmPage({ slug }: { slug: string }) {
           )}
         </div>
       </Flex>
+      </main>
     </Container>
   );
 }

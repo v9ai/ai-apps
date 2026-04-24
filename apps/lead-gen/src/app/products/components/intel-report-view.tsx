@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   Badge,
   Box,
@@ -10,12 +9,7 @@ import {
   Separator,
   Text,
 } from "@radix-ui/themes";
-import {
-  ArrowLeftIcon,
-  CubeIcon,
-  ExternalLinkIcon,
-  MagicWandIcon,
-} from "@radix-ui/react-icons";
+import { MagicWandIcon } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import {
@@ -26,18 +20,20 @@ import {
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import type { ProductIntelReportResult } from "@/lib/langgraph-client";
+import {
+  LoadingShell,
+  ErrorShell,
+  SignInGate,
+  ProductNotFound,
+  SubpageBreadcrumb,
+  SubpageHero,
+  ProductExternalLink,
+  StatusBadge,
+} from "./view-chrome";
 
 export type IntelReport = ProductIntelReportResult;
 
 const TERMINAL_STATUSES = new Set(["success", "error", "timeout"]);
-
-function statusColor(s: string): "green" | "red" | "orange" | "blue" | "gray" {
-  if (s === "success") return "green";
-  if (s === "error") return "red";
-  if (s === "timeout") return "orange";
-  if (s === "running" || s === "pending") return "blue";
-  return "gray";
-}
 
 export function IntelReportView({
   data,
@@ -92,7 +88,7 @@ export function IntelReportView({
             disabled={runIntelState.loading}
             className={button({ variant: "solid", size: "sm" })}
           >
-            <MagicWandIcon />
+            <MagicWandIcon aria-hidden />
             <span className={css({ ml: "1" })}>
               {runIntelState.loading ? "Starting…" : "Re-run full pipeline"}
             </span>
@@ -106,14 +102,14 @@ export function IntelReportView({
       )}
 
       {runIntelState.error && (
-        <Text color="red" as="p">
+        <Text color="red" as="p" role="alert">
           {runIntelState.error.message}
         </Text>
       )}
 
       {priorities.length > 0 && (
         <Box>
-          <Heading size="3" mb="2">
+          <Heading size="4" mb="2">
             Top 3 priorities
           </Heading>
           <Flex direction="column" gap="2">
@@ -154,7 +150,7 @@ export function IntelReportView({
 
       {risks.length > 0 && (
         <Box>
-          <Heading size="3" mb="2">
+          <Heading size="4" mb="2">
             Key risks
           </Heading>
           <Flex direction="column" gap="2">
@@ -184,7 +180,7 @@ export function IntelReportView({
 
       {wins.length > 0 && (
         <Box>
-          <Heading size="3" mb="2">
+          <Heading size="4" mb="2">
             Quick wins
           </Heading>
           <Flex direction="column" gap="2">
@@ -216,7 +212,7 @@ export function IntelReportView({
         <>
           <Separator size="4" />
           <Box>
-            <Heading size="3" mb="2">
+            <Heading size="4" mb="2">
               Product profile
             </Heading>
             <Flex direction="column" gap="2">
@@ -323,114 +319,44 @@ export function ProductIntelPage({ slug }: { slug: string }) {
     stopPolling();
   }
 
-  if (authLoading) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Please sign in to view this product.</Text>
-      </Container>
-    );
-  }
-
-  if (loading && !data) {
-    return (
-      <Container size="4" p="6">
-        <Text color="gray">Loading…</Text>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container size="4" p="6">
-        <Text color="red">{error.message}</Text>
-      </Container>
-    );
-  }
+  if (authLoading) return <LoadingShell />;
+  if (!user) return <SignInGate />;
+  if (loading && !data) return <LoadingShell />;
+  if (error) return <ErrorShell message={error.message} />;
 
   const product = data?.productBySlug;
 
-  if (!product) {
-    return (
-      <Container size="4" p="6">
-        <Flex direction="column" gap="3">
-          <Link href="/products" className={button({ variant: "ghost", size: "sm" })}>
-            <ArrowLeftIcon /> Products
-          </Link>
-          <Text color="gray">Product &ldquo;{slug}&rdquo; not found.</Text>
-        </Flex>
-      </Container>
-    );
-  }
+  if (!product) return <ProductNotFound slug={slug} />;
 
   const report = (product.intelReport ?? null) as IntelReport | null;
   const analyzedAt = product.intelReportAt ? new Date(product.intelReportAt) : null;
 
   return (
-    <Container size="4" p="6">
-      <Flex mb="4" gap="2" align="center">
-        <Link
-          href={`/products/${product.slug}`}
-          className={button({ variant: "ghost", size: "sm" })}
-        >
-          <ArrowLeftIcon /> {product.name}
-        </Link>
-        <Text color="gray" size="2">
-          /
-        </Text>
-        <Text size="2">Intel</Text>
-      </Flex>
+    <Container size="4" p="6" asChild>
+      <main>
+      <SubpageBreadcrumb
+        productSlug={product.slug}
+        productName={product.name}
+        currentLabel="Intel"
+      />
 
       <Flex direction="column" gap="3">
-        <Flex align="center" gap="3" wrap="wrap">
-          <span
-            className={css({
-              color: "accent.11",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bg: "accent.3",
-              borderRadius: "md",
-              p: "3",
-            })}
-          >
-            <CubeIcon width="24" height="24" />
-          </span>
-          <Heading size="7">
-            {product.name} · <Text color="gray">Intel</Text>
-          </Heading>
-          {latestRun && !terminal && (
-            <Badge color={statusColor(latestRun.status)} size="2">
-              {latestRun.status}…
-            </Badge>
-          )}
-        </Flex>
+        <SubpageHero
+          productName={product.name}
+          currentLabel="Intel"
+          trailing={
+            latestRun && !terminal ? (
+              <StatusBadge status={latestRun.status} />
+            ) : null
+          }
+        />
 
         <Flex gap="3" wrap="wrap" align="center">
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={css({
-              color: "accent.11",
-              fontSize: "sm",
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "1",
-              _hover: { textDecoration: "underline" },
-            })}
-          >
-            {product.domain ?? product.url}
-            <ExternalLinkIcon />
-          </a>
+          <ProductExternalLink
+            url={product.url}
+            domain={product.domain}
+            productName={product.name}
+          />
           {analyzedAt && (
             <Text size="2" color="gray">
               Updated {analyzedAt.toLocaleString()}
@@ -439,7 +365,7 @@ export function ProductIntelPage({ slug }: { slug: string }) {
         </Flex>
 
         {latestRun?.error && (
-          <Text color="red" as="p">
+          <Text color="red" as="p" role="alert">
             {latestRun.error}
           </Text>
         )}
@@ -459,7 +385,9 @@ export function ProductIntelPage({ slug }: { slug: string }) {
               isAdmin={isAdmin}
             />
           ) : latestRun && !terminal ? (
-            <Text color="gray">Running full intel pipeline…</Text>
+            <Text color="gray" role="status" aria-live="polite">
+              Running full intel pipeline…
+            </Text>
           ) : (
             <Text color="gray">
               No intel report yet.
@@ -470,6 +398,7 @@ export function ProductIntelPage({ slug }: { slug: string }) {
           )}
         </div>
       </Flex>
+      </main>
     </Container>
   );
 }

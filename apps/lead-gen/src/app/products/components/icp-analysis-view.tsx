@@ -58,14 +58,14 @@ export function IcpAnalysisView({ data }: { data: IcpAnalysis }) {
   return (
     <Flex direction="column" gap="4">
       <Flex align="center" gap="3">
-        <Heading size="3">Weighted fit</Heading>
+        <Heading size="4">Weighted fit</Heading>
         <Badge color="indigo" size="2">
           {(data.weighted_total * 100).toFixed(0)}%
         </Badge>
       </Flex>
 
       <Box>
-        <Heading size="3" mb="2">
+        <Heading size="4" mb="2">
           Criteria
         </Heading>
         <Flex direction="column" gap="2">
@@ -120,7 +120,7 @@ export function IcpAnalysisView({ data }: { data: IcpAnalysis }) {
       <Separator size="4" />
 
       <Box>
-        <Heading size="3" mb="2">
+        <Heading size="4" mb="2">
           Segments ({data.segments.length})
         </Heading>
         <Flex direction="column" gap="2">
@@ -170,7 +170,7 @@ export function IcpAnalysisView({ data }: { data: IcpAnalysis }) {
       </Box>
 
       <Box>
-        <Heading size="3" mb="2">
+        <Heading size="4" mb="2">
           Personas ({data.personas.length})
         </Heading>
         <Flex direction="column" gap="2">
@@ -215,7 +215,7 @@ export function IcpAnalysisView({ data }: { data: IcpAnalysis }) {
       </Box>
 
       <Box>
-        <Heading size="3" mb="2">
+        <Heading size="4" mb="2">
           Anti-ICP (who it is NOT for)
         </Heading>
         <ul
@@ -234,7 +234,7 @@ export function IcpAnalysisView({ data }: { data: IcpAnalysis }) {
 
       {data.deal_breakers.length > 0 && (
         <Box>
-          <Heading size="3" mb="2">
+          <Heading size="4" mb="2">
             Deal-breakers
           </Heading>
           <Flex direction="column" gap="2">
