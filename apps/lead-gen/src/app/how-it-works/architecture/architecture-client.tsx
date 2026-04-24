@@ -388,13 +388,13 @@ const stages = [
   },
   {
     graphName: "langgraph_backend",
-    description: "22 graphs declared in backend/langgraph.json. Same code runs under `langgraph dev` locally (in-memory) and inside FastAPI + Uvicorn on :7860 (AsyncPostgresSaver on Neon). Bearer-token middleware is plugged into langgraph.json's http.app key so auth is uniform across runtimes. Deploys as Docker to Cloudflare Workers via wrangler.",
-    pattern: "Same code, two runtimes, one auth layer",
+    description: "22 graphs declared in backend/langgraph.json — 5 core (email_compose, email_reply, email_outreach, admin_chat, text_to_sql) plus 17 specialized (deep_icp, icp_team, competitors_team, pricing, gtm, positioning, product_intel, lead_gen_team, contact_enrich variants, classify_paper, deep_scrape, …). Local dev uses `langgraph dev` on :8002 with an in-memory checkpointer. Production runs backend/app.py under a single-worker Uvicorn on :7860, wiring AsyncPostgresSaver (langgraph.checkpoint.postgres.aio) to Neon's pooled URL so thread state survives restarts. The Starlette BearerTokenMiddleware is loaded twice — once via langgraph.json's `http.app` key (custom_app.py, whitelists /ok + /info) and once inline in app.py (whitelists /health + /ok) — so both runtimes share the same Authorization: Bearer contract. Deploy target is Cloudflare Workers Containers via wrangler (Dockerfile: python:3.12-slim + Playwright Chromium, max_instances=1); HuggingFace Spaces was the prior target, abandoned after an auto-abuse flag.",
+    pattern: "22 graphs · same code, two runtimes, one auth layer",
     nodes: s9Nodes, edges: s9Edges, height: 320,
   },
   {
     graphName: "agent_teams",
-    description: "Four Claude Code skill teams (improve / codefix / pipeline / research) are the control plane. stop_hook.py scores every session and auto-queues low-scoring runs into improvement_queue.json. Phase detection (BUILDING / IMPROVEMENT / SATURATION / COLLAPSE_RISK) emerges from real data — not declared thresholds — and gates what each team may do next.",
+    description: "Four Claude Code skill teams are the control plane — 20 SKILL.md files across .claude/skills/: improve-* (5 skills, /improve — self-improvement toward a remote AI role), codefix-* (6 skills, /codefix — code quality with mine → audit → evolve/apply → verify pipeline and hard caps of 3 edits + 2 evolutions per cycle), pipeline-* (6 skills, /agents pipeline — discover → enrich → contacts + qa → outreach with plan-approval gate), research-* (3 skills, /agents research — competing-hypotheses debate). stop_hook.py scores every session on four dimensions via claude-haiku-4-5 and enqueues sub-threshold runs (CC_IMPROVE_THRESHOLD default 0.65) into ~/.claude/state/improvement_queue.json, which the next /improve cycle drains. strategy-enforcer.ts runs seven rules against staged changes (eval-first, grounding-first, taxonomy, multi-model, spec-driven, observability, HITL). Phase labels emerge from real data and vary per team: BUILDING→OPTIMIZING→APPLYING→INTERVIEWING for improve, IMPROVEMENT→SATURATION→COLLAPSE_RISK for codefix, BUILDING→FLOWING→BOTTLENECK→SATURATED→DEGRADED for pipeline.",
     pattern: "Phase-aware orchestration + emergent alignment",
     nodes: s10Nodes, edges: s10Edges, height: 400,
   },
