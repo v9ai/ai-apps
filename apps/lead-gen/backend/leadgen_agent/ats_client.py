@@ -116,20 +116,34 @@ class GreenhouseClient:
         return await asyncio.gather(*(_one(j["id"]) for j in jobs))
 
 
-async def _main() -> None:
+async def _main(board: str, out_path: str | None) -> None:
     import json
     from pathlib import Path
 
     logging.basicConfig(level=logging.INFO)
-    out_dir = Path(__file__).resolve().parent.parent / "data"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / "anthropic-jobs.json"
+    if out_path:
+        out = Path(out_path)
+    else:
+        out = Path(__file__).resolve().parent.parent / "data" / f"{board}-jobs.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
 
-    async with GreenhouseClient("anthropic") as client:
+    async with GreenhouseClient(board) as client:
         jobs = await client.fetch_jobs_detailed()
     out.write_text(json.dumps(jobs, indent=2))
     print(f"{len(jobs)} jobs → {out}")
 
 
 if __name__ == "__main__":
-    asyncio.run(_main())
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="ats-fetch",
+        description="Fetch Greenhouse job board and write to <board>-jobs.json.",
+    )
+    parser.add_argument("board", nargs="?", default="anthropic",
+                        help="Greenhouse board token (default: anthropic)")
+    parser.add_argument("-o", "--output", default=None,
+                        help="Output path (default: backend/data/<board>-jobs.json)")
+    args = parser.parse_args()
+
+    asyncio.run(_main(args.board, args.output))
