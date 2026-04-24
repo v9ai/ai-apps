@@ -3480,6 +3480,83 @@ export async function deleteDiscussionGuide(journalEntryId: number, userId: stri
 }
 
 // ============================================
+// Bogdan Discussion Guides
+// ============================================
+
+function mapBogdanDiscussionRow(r: any) {
+  return {
+    id: r.id as number,
+    userId: r.user_id as string,
+    familyMemberId: r.family_member_id as number,
+    childAge: (r.child_age as number) || null,
+    behaviorSummary: r.behavior_summary as string,
+    developmentalContext: safeJsonParse(r.developmental_context as string, {}),
+    conversationStarters: safeJsonParse(r.conversation_starters as string, []),
+    talkingPoints: safeJsonParse(r.talking_points as string, []),
+    languageGuide: safeJsonParse(r.language_guide as string, { whatToSay: [], whatNotToSay: [] }),
+    anticipatedReactions: safeJsonParse(r.anticipated_reactions as string, []),
+    followUpPlan: safeJsonParse(r.follow_up_plan as string, []),
+    model: r.model as string,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+export async function findFamilyMemberByFirstName(userId: string, firstName: string) {
+  const rows = await neonSql`SELECT * FROM family_members WHERE user_id = ${userId} AND LOWER(first_name) = LOWER(${firstName}) LIMIT 1`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: row.id as number,
+    userId: row.user_id as string,
+    slug: (row.slug as string) || null,
+    firstName: row.first_name as string,
+    name: (row.name as string) || null,
+    ageYears: (row.age_years as number) || null,
+    relationship: (row.relationship as string) || null,
+    dateOfBirth: (row.date_of_birth as string) || null,
+    bio: (row.bio as string) || null,
+    email: (row.email as string) || null,
+    phone: (row.phone as string) || null,
+    location: (row.location as string) || null,
+    occupation: (row.occupation as string) || null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function getLatestBogdanDiscussionGuide(userId: string) {
+  const rows = await neonSql`SELECT * FROM bogdan_discussion_guides WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return null;
+  return mapBogdanDiscussionRow(rows[0]);
+}
+
+export async function listBogdanDiscussionGuides(userId: string) {
+  const rows = await neonSql`SELECT * FROM bogdan_discussion_guides WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  return rows.map(mapBogdanDiscussionRow);
+}
+
+export async function createBogdanDiscussionGuide(data: {
+  userId: string;
+  familyMemberId: number;
+  childAge?: number | null;
+  behaviorSummary: string;
+  developmentalContext: unknown;
+  conversationStarters: unknown;
+  talkingPoints: unknown;
+  languageGuide: unknown;
+  anticipatedReactions: unknown;
+  followUpPlan: unknown;
+  model?: string;
+}) {
+  const rows = await neonSql`
+    INSERT INTO bogdan_discussion_guides (user_id, family_member_id, child_age, behavior_summary, developmental_context, conversation_starters, talking_points, language_guide, anticipated_reactions, follow_up_plan, model)
+    VALUES (${data.userId}, ${data.familyMemberId}, ${data.childAge ?? null}, ${data.behaviorSummary}, ${JSON.stringify(data.developmentalContext)}, ${JSON.stringify(data.conversationStarters)}, ${JSON.stringify(data.talkingPoints)}, ${JSON.stringify(data.languageGuide)}, ${JSON.stringify(data.anticipatedReactions)}, ${JSON.stringify(data.followUpPlan)}, ${data.model ?? "deepseek-chat"})
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
+// ============================================
 // Conversations
 // ============================================
 
