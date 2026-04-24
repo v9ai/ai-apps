@@ -4,7 +4,6 @@ exclude = ["crates/.claude"]
 members = [
   "crates/*",
   "apps/lead-gen/crates/agentic-search",
-  "apps/lead-gen/crates/ats",
   "apps/lead-gen/crates/company-cleanup",
   "apps/lead-gen/crates/email-verifier",
   "apps/lead-gen/crates/gh",
@@ -15,9 +14,7 @@ members = [
   "apps/lead-gen/crates/metal",
   "apps/lead-gen/crates/companies-verify",
   "apps/lead-gen/crates/consultancies",
-  "apps/lead-gen/crates/scholar-graph",
   "apps/lead-gen/crates/common-crawl",
-  "apps/lead-gen/crates/icp",
   "apps/lead-gen/crates/lead-papers",
 ]
 
