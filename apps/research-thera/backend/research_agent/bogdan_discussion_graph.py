@@ -13,18 +13,24 @@ from __future__ import annotations
 
 import json
 import os
+import sys
+from pathlib import Path
 from typing import Optional, TypedDict
 
 from langgraph.graph import StateGraph, START, END
 
-from deepseek_client import ChatMessage, DeepSeekClient, DeepSeekConfig
-
 import psycopg
 
 from dotenv import load_dotenv
-from pathlib import Path
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+# ── deepseek_client from shared pypackages ────────────────────────────────
+sys.path.insert(
+    0,
+    str(Path(__file__).resolve().parent.parent.parent.parent.parent / "pypackages" / "deepseek" / "src"),
+)
+from deepseek_client import ChatMessage, DeepSeekClient, DeepSeekConfig  # noqa: E402
 
 
 _REQUIRED_KEYS = (
@@ -163,7 +169,7 @@ async def load_bogdan_context(state: BogdanDiscussionState) -> dict:
 
                 await cur.execute(
                     "SELECT id, title, description, status, priority, tags "
-                    "FROM goals WHERE family_member_id = %s AND created_by = %s "
+                    "FROM goals WHERE family_member_id = %s AND user_id = %s "
                     "AND (status IS NULL OR status != 'ARCHIVED') "
                     "ORDER BY created_at DESC LIMIT 5",
                     (family_member_id, user_email),
