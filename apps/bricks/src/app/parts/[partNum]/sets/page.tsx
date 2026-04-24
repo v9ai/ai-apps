@@ -18,6 +18,14 @@ interface AggregatedSet {
   numParts: number;
   imageUrl: string | null;
   colors: { id: number; name: string }[];
+  usdRetail: number | null;
+  gbpRetail: number | null;
+  eurRetail: number | null;
+}
+
+function formatPrice(cents: number | null): string | null {
+  if (cents == null) return null;
+  return `$${(cents / 100).toFixed(2)}`;
 }
 
 export default function PartAllSetsPage() {
@@ -147,7 +155,7 @@ export default function PartAllSetsPage() {
             {part.name}
           </h1>
           <p className={css({ mt: "1", fontSize: "sm", color: "ink.muted" })}>
-            Part #{part.partNum} · {sets.length} sets across all colors
+            Part #{part.partNum} · {sets.length} sets across all colors · sorted by cheapest first
           </p>
         </div>
       </div>
@@ -235,6 +243,19 @@ export default function PartAllSetsPage() {
                 </span>
 
                 <div className={css({ display: "flex", gap: "2", mt: "2", flexWrap: "wrap" })}>
+                  <span
+                    className={css({
+                      fontSize: "xs",
+                      fontWeight: "700",
+                      color: formatPrice(set.usdRetail) ? "lego.green" : "ink.faint",
+                      bg: formatPrice(set.usdRetail) ? "rgba(0, 175, 79, 0.12)" : "rgba(255,255,255,0.04)",
+                      px: "2",
+                      py: "0.5",
+                      rounded: "md",
+                    })}
+                  >
+                    {formatPrice(set.usdRetail) ?? "no price"}
+                  </span>
                   <span
                     className={css({
                       fontSize: "xs",

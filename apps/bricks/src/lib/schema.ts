@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, jsonb, timestamp, unique } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, jsonb, timestamp, unique, boolean } from "drizzle-orm/pg-core";
 
 export const topicResearch = pgTable("topic_research", {
   id: serial("id").primaryKey(),
@@ -102,6 +102,16 @@ export const favoriteStores = pgTable("favorite_stores", {
 }, (t) => [
   unique().on(t.userId, t.url),
 ]);
+
+export const setPricesCache = pgTable("set_prices_cache", {
+  setNum: text("set_num").primaryKey(),
+  usdRetail: integer("usd_retail"),
+  gbpRetail: integer("gbp_retail"),
+  eurRetail: integer("eur_retail"),
+  bricklinkId: integer("bricklink_id"),
+  found: boolean("found").notNull().default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const partMocsCache = pgTable("part_mocs_cache", {
   id: serial("id").primaryKey(),

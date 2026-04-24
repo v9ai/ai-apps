@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import orderBy from "lodash/orderBy";
+import { inArray, sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { setPricesCache } from "@/lib/schema";
+import { fetchBricksetPrices } from "@/lib/brickset";
 
 const API_KEY = process.env.REBRICKABLE_API_KEY;
 const PARTS_BASE = "https://rebrickable.com/api/v3/lego/parts";
 const PAGE_SIZE = 1000;
+const CACHE_TTL_DAYS = 30;
 
 interface RbSet {
   set_num: string;
@@ -20,6 +25,9 @@ interface AggregatedSet {
   numParts: number;
   imageUrl: string | null;
   colors: { id: number; name: string }[];
+  usdRetail: number | null;
+  gbpRetail: number | null;
+  eurRetail: number | null;
 }
 
 export async function GET(
@@ -71,15 +79,90 @@ export async function GET(
           numParts: s.num_parts,
           imageUrl: s.set_img_url,
           colors: [{ id: color.color_id, name: color.color_name }],
+          usdRetail: null,
+          gbpRetail: null,
+          eurRetail: null,
         });
+      }
+    }
+  }
+
+  const allSetNums = Array.from(byNum.keys());
+
+  if (allSetNums.length > 0) {
+    const cached = await db
+      .select()
+      .from(setPricesCache)
+      .where(inArray(setPricesCache.setNum, allSetNums));
+
+    const now = Date.now();
+    const ttlMs = CACHE_TTL_DAYS * 24 * 60 * 60 * 1000;
+    const fresh = new Map<string, typeof cached[number]>();
+    for (const row of cached) {
+      if (now - row.updatedAt.getTime() < ttlMs) {
+        fresh.set(row.setNum, row);
+      }
+    }
+
+    for (const [setNum, row] of fresh) {
+      const entry = byNum.get(setNum);
+      if (entry) {
+        entry.usdRetail = row.usdRetail;
+        entry.gbpRetail = row.gbpRetail;
+        entry.eurRetail = row.eurRetail;
+      }
+    }
+
+    const missing = allSetNums.filter((n) => !fresh.has(n));
+    if (missing.length > 0 && process.env.BRICKSET_API_KEY) {
+      const fetched = await fetchBricksetPrices(missing);
+      if (fetched.length > 0) {
+        await db
+          .insert(setPricesCache)
+          .values(
+            fetched.map((p) => ({
+              setNum: p.setNum,
+              usdRetail: p.usdRetail,
+              gbpRetail: p.gbpRetail,
+              eurRetail: p.eurRetail,
+              bricklinkId: p.bricklinkId,
+              found: p.found,
+              updatedAt: new Date(),
+            }))
+          )
+          .onConflictDoUpdate({
+            target: setPricesCache.setNum,
+            set: {
+              usdRetail: sql`excluded.usd_retail`,
+              gbpRetail: sql`excluded.gbp_retail`,
+              eurRetail: sql`excluded.eur_retail`,
+              bricklinkId: sql`excluded.bricklink_id`,
+              found: sql`excluded.found`,
+              updatedAt: sql`excluded.updated_at`,
+            },
+          })
+          .catch(() => {});
+
+        for (const p of fetched) {
+          const entry = byNum.get(p.setNum);
+          if (entry) {
+            entry.usdRetail = p.usdRetail;
+            entry.gbpRetail = p.gbpRetail;
+            entry.eurRetail = p.eurRetail;
+          }
+        }
       }
     }
   }
 
   const sets = orderBy(
     Array.from(byNum.values()),
-    ["year", "numParts"],
-    ["desc", "desc"]
+    [
+      (s: AggregatedSet) => (s.usdRetail ?? Number.POSITIVE_INFINITY),
+      "year",
+      "numParts",
+    ],
+    ["asc", "desc", "desc"]
   );
 
   return NextResponse.json({ count: sets.length, sets });
