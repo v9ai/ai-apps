@@ -1,0 +1,9 @@
+query BogdanDiscussions {
+  bogdanDiscussions {
+    id
+    familyMemberId
+    childAge
+    behaviorSummary
+    createdAt
+  }
+}

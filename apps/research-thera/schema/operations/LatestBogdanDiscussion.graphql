@@ -1,0 +1,48 @@
+query LatestBogdanDiscussion {
+  latestBogdanDiscussion {
+    id
+    familyMemberId
+    childAge
+    behaviorSummary
+    developmentalContext {
+      stage
+      explanation
+      normalizedBehavior
+      researchBasis
+    }
+    conversationStarters {
+      opener
+      context
+      ageAppropriateNote
+    }
+    talkingPoints {
+      point
+      explanation
+      researchBacking
+    }
+    languageGuide {
+      whatToSay {
+        phrase
+        reason
+        alternative
+      }
+      whatNotToSay {
+        phrase
+        reason
+        alternative
+      }
+    }
+    anticipatedReactions {
+      reaction
+      likelihood
+      howToRespond
+    }
+    followUpPlan {
+      action
+      timing
+      description
+    }
+    model
+    createdAt
+  }
+}

@@ -6,15 +6,36 @@ export const Game: GameResolvers = {
     if (!parent.goalId) return null;
     const userEmail = ctx.userEmail;
     if (!userEmail) return null;
-    const goal = await db.getGoalById(parent.goalId, userEmail);
-    return goal ?? null;
+    try {
+      const goal = await db.getGoal(parent.goalId, userEmail);
+      return {
+        ...goal,
+        notes: [],
+        research: [],
+        questions: [],
+        stories: [],
+      } as any;
+    } catch {
+      return null;
+    }
   },
   issue: async (parent, _args, ctx) => {
     if (!parent.issueId) return null;
     const userEmail = ctx.userEmail;
     if (!userEmail) return null;
-    const issue = await db.getIssue(parent.issueId, userEmail);
-    return (issue as any) ?? null;
+    try {
+      const issue = await db.getIssue(parent.issueId, userEmail);
+      if (!issue) return null;
+      return {
+        ...issue,
+        feedback: null,
+        familyMember: null,
+        relatedFamilyMember: null,
+        stories: [],
+      } as any;
+    } catch {
+      return null;
+    }
   },
   completions: async (parent, _args, ctx) => {
     const userEmail = ctx.userEmail;

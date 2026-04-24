@@ -103,6 +103,21 @@ enum BehaviorObservationType {
   TARGET_OCCURRED
 }
 
+type BogdanDiscussionGuide {
+  anticipatedReactions: [AnticipatedReaction!]!
+  behaviorSummary: String!
+  childAge: Int
+  conversationStarters: [ConversationStarter!]!
+  createdAt: String!
+  developmentalContext: DevelopmentalContext!
+  familyMemberId: Int!
+  followUpPlan: [FollowUpStep!]!
+  id: Int!
+  languageGuide: LanguageGuide!
+  model: String!
+  talkingPoints: [TalkingPoint!]!
+}
+
 input BuildClaimCardsInput {
   claims: [String!]
   perSourceLimit: Int
@@ -272,6 +287,18 @@ input CreateFamilyMemberInput {
   occupation: String
   phone: String
   relationship: String
+}
+
+input CreateGameInput {
+  content: String!
+  description: String
+  estimatedMinutes: Int
+  familyMemberId: Int
+  goalId: Int
+  issueId: Int
+  language: String
+  title: String!
+  type: GameType!
 }
 
 input CreateGoalInput {
@@ -459,6 +486,11 @@ type DeleteDiscussionGuideResult {
 }
 
 type DeleteFamilyMemberResult {
+  message: String
+  success: Boolean!
+}
+
+type DeleteGameResult {
   message: String
   success: Boolean!
 }
@@ -663,6 +695,48 @@ type FollowUpStep {
   timing: String!
 }
 
+type Game {
+  completions: [GameCompletion!]!
+  content: String!
+  createdAt: String!
+  description: String
+  estimatedMinutes: Int
+  familyMemberId: Int
+  goal: Goal
+  goalId: Int
+  id: Int!
+  issue: Issue
+  issueId: Int
+  language: String
+  source: GameSource!
+  title: String!
+  type: GameType!
+  updatedAt: String!
+  userId: String!
+}
+
+type GameCompletion {
+  completedAt: String!
+  durationSeconds: Int
+  gameId: Int!
+  id: Int!
+  linkedNoteId: Int
+  responses: String
+  userId: String!
+}
+
+enum GameSource {
+  AI
+  SEED
+  USER
+}
+
+enum GameType {
+  CBT_REFRAME
+  JOURNAL_PROMPT
+  MINDFULNESS
+}
+
 type GenerateAffirmationsResult {
   affirmations: [Affirmation!]!
   count: Int!
@@ -677,6 +751,12 @@ type GenerateAudioResult {
   success: Boolean!
 }
 
+type GenerateBogdanDiscussionResult {
+  jobId: String
+  message: String
+  success: Boolean!
+}
+
 type GenerateDeepAnalysisResult {
   jobId: String
   message: String
@@ -687,6 +767,14 @@ type GenerateDiscussionGuideResult {
   jobId: String
   message: String
   success: Boolean!
+}
+
+input GenerateGameInput {
+  familyMemberId: Int
+  goalId: Int
+  issueId: Int
+  language: String
+  type: GameType!
 }
 
 type GenerateHabitsResult {
@@ -996,6 +1084,13 @@ type LanguageGuide {
   whatToSay: [LanguageExample!]!
 }
 
+input LogGameCompletionInput {
+  durationSeconds: Int
+  gameId: Int!
+  linkedNoteId: Int
+  responses: String
+}
+
 type Mutation {
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
@@ -1006,6 +1101,7 @@ type Mutation {
   createContactFeedback(input: CreateContactFeedbackInput!): ContactFeedback!
   createConversation(issueId: Int!, message: String!): Conversation!
   createFamilyMember(input: CreateFamilyMemberInput!): FamilyMember!
+  createGame(input: CreateGameInput!): Game!
   createGoal(input: CreateGoalInput!): Goal!
   createHabit(input: CreateHabitInput!): Habit!
   createIssue(input: CreateIssueInput!): Issue!
@@ -1026,6 +1122,7 @@ type Mutation {
   deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
   deleteDiscussionGuide(journalEntryId: Int!): DeleteDiscussionGuideResult!
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
+  deleteGame(id: Int!): DeleteGameResult!
   deleteGoal(id: Int!): DeleteGoalResult!
   deleteHabit(id: Int!): DeleteHabitResult!
   deleteHabitLog(id: Int!): Boolean!
@@ -1044,9 +1141,11 @@ type Mutation {
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAffirmationsForFamilyMember(categoryFocus: AffirmationCategory, count: Int, familyMemberId: Int!, language: String): GenerateAffirmationsResult!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
+  generateBogdanDiscussion: GenerateBogdanDiscussionResult!
   generateDeepAnalysis(subjectId: Int!, subjectType: DeepAnalysisSubjectType!, triggerId: Int, triggerType: DeepAnalysisTriggerType): GenerateDeepAnalysisResult!
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
   generateDiscussionGuide(journalEntryId: Int!): GenerateDiscussionGuideResult!
+  generateGame(input: GenerateGameInput!): Game!
   generateHabitsForFamilyMember(count: Int, familyMemberId: Int!): GenerateHabitsResult!
   generateHabitsFromIssue(count: Int, issueId: Int!): GenerateHabitsResult!
   generateJournalAnalysis(journalEntryId: Int!): GenerateJournalAnalysisResult!
@@ -1060,6 +1159,7 @@ type Mutation {
   linkContactToIssue(contactId: Int!, issueId: Int!): IssueContactLink!
   linkIssues(issueId: Int!, linkType: String, linkedIssueId: Int!): IssueLink!
   lockVault: VaultStatus!
+  logGameCompletion(input: LogGameCompletionInput!): GameCompletion!
   logHabit(count: Int, habitId: Int!, loggedDate: String!, notes: String): HabitLog!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
   refreshClaimCard(id: ID!): ClaimCard!
@@ -1079,6 +1179,7 @@ type Mutation {
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
   updateContactFeedback(id: Int!, input: UpdateContactFeedbackInput!): ContactFeedback!
   updateFamilyMember(id: Int!, input: UpdateFamilyMemberInput!): FamilyMember!
+  updateGame(id: Int!, input: UpdateGameInput!): Game!
   updateGoal(id: Int!, input: UpdateGoalInput!): Goal!
   updateHabit(id: Int!, input: UpdateHabitInput!): Habit!
   updateIssue(id: Int!, input: UpdateIssueInput!): Issue!
@@ -1250,6 +1351,7 @@ type Query {
   audioFromR2(key: String!): AudioFromR2Result
   behaviorObservation(id: Int!): BehaviorObservation
   behaviorObservations(familyMemberId: Int!, goalId: Int): [BehaviorObservation!]!
+  bogdanDiscussions: [BogdanDiscussionGuide!]!
   claimCard(id: ID!): ClaimCard
   claimCardsForNote(noteId: Int!): [ClaimCard!]!
   contact(id: Int, slug: String): Contact
@@ -1264,6 +1366,9 @@ type Query {
   deepIssueAnalysis(id: Int!): DeepIssueAnalysis
   familyMember(id: Int, slug: String): FamilyMember
   familyMembers: [FamilyMember!]!
+  game(id: Int!): Game
+  gameCompletions(gameId: Int!): [GameCompletion!]!
+  games(familyMemberId: Int, goalId: Int, issueId: Int, type: GameType): [Game!]!
   generationJob(id: String!): GenerationJob
   generationJobs(goalId: Int, status: String): [GenerationJob!]!
   goal(id: Int, slug: String): Goal
@@ -1274,6 +1379,7 @@ type Query {
   issues(familyMemberId: Int!, feedbackId: Int): [Issue!]!
   journalEntries(familyMemberId: Int, fromDate: String, goalId: Int, mood: String, tag: String, toDate: String): [JournalEntry!]!
   journalEntry(id: Int!): JournalEntry
+  latestBogdanDiscussion: BogdanDiscussionGuide
   mySharedFamilyMembers: [FamilyMember!]!
   mySharedNotes: [Note!]!
   note(id: Int, slug: String): Note
@@ -1608,6 +1714,14 @@ input UpdateFamilyMemberInput {
   occupation: String
   phone: String
   relationship: String
+}
+
+input UpdateGameInput {
+  content: String
+  description: String
+  estimatedMinutes: Int
+  language: String
+  title: String
 }
 
 input UpdateGoalInput {

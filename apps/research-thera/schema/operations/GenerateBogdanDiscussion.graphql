@@ -1,0 +1,7 @@
+mutation GenerateBogdanDiscussion {
+  generateBogdanDiscussion {
+    success
+    message
+    jobId
+  }
+}

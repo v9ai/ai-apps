@@ -131,6 +131,22 @@ export enum BehaviorObservationType {
   TargetOccurred = 'TARGET_OCCURRED'
 }
 
+export type BogdanDiscussionGuide = {
+  __typename?: 'BogdanDiscussionGuide';
+  anticipatedReactions: Array<AnticipatedReaction>;
+  behaviorSummary: Scalars['String']['output'];
+  childAge?: Maybe<Scalars['Int']['output']>;
+  conversationStarters: Array<ConversationStarter>;
+  createdAt: Scalars['String']['output'];
+  developmentalContext: DevelopmentalContext;
+  familyMemberId: Scalars['Int']['output'];
+  followUpPlan: Array<FollowUpStep>;
+  id: Scalars['Int']['output'];
+  languageGuide: LanguageGuide;
+  model: Scalars['String']['output'];
+  talkingPoints: Array<TalkingPoint>;
+};
+
 export type BuildClaimCardsInput = {
   claims?: InputMaybe<Array<Scalars['String']['input']>>;
   perSourceLimit?: InputMaybe<Scalars['Int']['input']>;
@@ -310,6 +326,18 @@ export type CreateFamilyMemberInput = {
   occupation?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
   relationship?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreateGameInput = {
+  content: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  estimatedMinutes?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
+  language?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
+  type: GameType;
 };
 
 export type CreateGoalInput = {
@@ -508,6 +536,12 @@ export type DeleteDiscussionGuideResult = {
 
 export type DeleteFamilyMemberResult = {
   __typename?: 'DeleteFamilyMemberResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteGameResult = {
+  __typename?: 'DeleteGameResult';
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -741,6 +775,50 @@ export type FollowUpStep = {
   timing: Scalars['String']['output'];
 };
 
+export type Game = {
+  __typename?: 'Game';
+  completions: Array<GameCompletion>;
+  content: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  estimatedMinutes?: Maybe<Scalars['Int']['output']>;
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
+  goal?: Maybe<Goal>;
+  goalId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  issue?: Maybe<Issue>;
+  issueId?: Maybe<Scalars['Int']['output']>;
+  language?: Maybe<Scalars['String']['output']>;
+  source: GameSource;
+  title: Scalars['String']['output'];
+  type: GameType;
+  updatedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
+export type GameCompletion = {
+  __typename?: 'GameCompletion';
+  completedAt: Scalars['String']['output'];
+  durationSeconds?: Maybe<Scalars['Int']['output']>;
+  gameId: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
+  linkedNoteId?: Maybe<Scalars['Int']['output']>;
+  responses?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
+
+export enum GameSource {
+  Ai = 'AI',
+  Seed = 'SEED',
+  User = 'USER'
+}
+
+export enum GameType {
+  CbtReframe = 'CBT_REFRAME',
+  JournalPrompt = 'JOURNAL_PROMPT',
+  Mindfulness = 'MINDFULNESS'
+}
+
 export type GenerateAffirmationsResult = {
   __typename?: 'GenerateAffirmationsResult';
   affirmations: Array<Affirmation>;
@@ -757,6 +835,13 @@ export type GenerateAudioResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GenerateBogdanDiscussionResult = {
+  __typename?: 'GenerateBogdanDiscussionResult';
+  jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateDeepAnalysisResult = {
   __typename?: 'GenerateDeepAnalysisResult';
   jobId?: Maybe<Scalars['String']['output']>;
@@ -769,6 +854,14 @@ export type GenerateDiscussionGuideResult = {
   jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type GenerateGameInput = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
+  language?: InputMaybe<Scalars['String']['input']>;
+  type: GameType;
 };
 
 export type GenerateHabitsResult = {
@@ -1102,6 +1195,13 @@ export type LanguageGuide = {
   whatToSay: Array<LanguageExample>;
 };
 
+export type LogGameCompletionInput = {
+  durationSeconds?: InputMaybe<Scalars['Int']['input']>;
+  gameId: Scalars['Int']['input'];
+  linkedNoteId?: InputMaybe<Scalars['Int']['input']>;
+  responses?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   buildClaimCards: BuildClaimCardsResult;
@@ -1113,6 +1213,7 @@ export type Mutation = {
   createContactFeedback: ContactFeedback;
   createConversation: Conversation;
   createFamilyMember: FamilyMember;
+  createGame: Game;
   createGoal: Goal;
   createHabit: Habit;
   createIssue: Issue;
@@ -1133,6 +1234,7 @@ export type Mutation = {
   deleteDeepIssueAnalysis: DeleteDeepAnalysisResult;
   deleteDiscussionGuide: DeleteDiscussionGuideResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
+  deleteGame: DeleteGameResult;
   deleteGoal: DeleteGoalResult;
   deleteHabit: DeleteHabitResult;
   deleteHabitLog: Scalars['Boolean']['output'];
@@ -1151,9 +1253,11 @@ export type Mutation = {
   extractContactFeedbackIssues: ContactFeedback;
   generateAffirmationsForFamilyMember: GenerateAffirmationsResult;
   generateAudio: GenerateAudioResult;
+  generateBogdanDiscussion: GenerateBogdanDiscussionResult;
   generateDeepAnalysis: GenerateDeepAnalysisResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
   generateDiscussionGuide: GenerateDiscussionGuideResult;
+  generateGame: Game;
   generateHabitsForFamilyMember: GenerateHabitsResult;
   generateHabitsFromIssue: GenerateHabitsResult;
   generateJournalAnalysis: GenerateJournalAnalysisResult;
@@ -1167,6 +1271,7 @@ export type Mutation = {
   linkContactToIssue: IssueContactLink;
   linkIssues: IssueLink;
   lockVault: VaultStatus;
+  logGameCompletion: GameCompletion;
   logHabit: HabitLog;
   markTeacherFeedbackExtracted: TeacherFeedback;
   refreshClaimCard: ClaimCard;
@@ -1186,6 +1291,7 @@ export type Mutation = {
   updateContact: Contact;
   updateContactFeedback: ContactFeedback;
   updateFamilyMember: FamilyMember;
+  updateGame: Game;
   updateGoal: Goal;
   updateHabit: Habit;
   updateIssue: Issue;
@@ -1243,6 +1349,11 @@ export type MutationCreateConversationArgs = {
 
 export type MutationCreateFamilyMemberArgs = {
   input: CreateFamilyMemberInput;
+};
+
+
+export type MutationCreateGameArgs = {
+  input: CreateGameInput;
 };
 
 
@@ -1345,6 +1456,11 @@ export type MutationDeleteDiscussionGuideArgs = {
 
 
 export type MutationDeleteFamilyMemberArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteGameArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1468,6 +1584,11 @@ export type MutationGenerateDiscussionGuideArgs = {
 };
 
 
+export type MutationGenerateGameArgs = {
+  input: GenerateGameInput;
+};
+
+
 export type MutationGenerateHabitsForFamilyMemberArgs = {
   count?: InputMaybe<Scalars['Int']['input']>;
   familyMemberId: Scalars['Int']['input'];
@@ -1544,6 +1665,11 @@ export type MutationLinkIssuesArgs = {
   issueId: Scalars['Int']['input'];
   linkType?: InputMaybe<Scalars['String']['input']>;
   linkedIssueId: Scalars['Int']['input'];
+};
+
+
+export type MutationLogGameCompletionArgs = {
+  input: LogGameCompletionInput;
 };
 
 
@@ -1658,6 +1784,12 @@ export type MutationUpdateContactFeedbackArgs = {
 export type MutationUpdateFamilyMemberArgs = {
   id: Scalars['Int']['input'];
   input: UpdateFamilyMemberInput;
+};
+
+
+export type MutationUpdateGameArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateGameInput;
 };
 
 
@@ -1884,6 +2016,7 @@ export type Query = {
   audioFromR2?: Maybe<AudioFromR2Result>;
   behaviorObservation?: Maybe<BehaviorObservation>;
   behaviorObservations: Array<BehaviorObservation>;
+  bogdanDiscussions: Array<BogdanDiscussionGuide>;
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
   contact?: Maybe<Contact>;
@@ -1898,6 +2031,9 @@ export type Query = {
   deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
   familyMember?: Maybe<FamilyMember>;
   familyMembers: Array<FamilyMember>;
+  game?: Maybe<Game>;
+  gameCompletions: Array<GameCompletion>;
+  games: Array<Game>;
   generationJob?: Maybe<GenerationJob>;
   generationJobs: Array<GenerationJob>;
   goal?: Maybe<Goal>;
@@ -1908,6 +2044,7 @@ export type Query = {
   issues: Array<Issue>;
   journalEntries: Array<JournalEntry>;
   journalEntry?: Maybe<JournalEntry>;
+  latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
   mySharedFamilyMembers: Array<FamilyMember>;
   mySharedNotes: Array<Note>;
   note?: Maybe<Note>;
@@ -2022,6 +2159,24 @@ export type QueryDeepIssueAnalysisArgs = {
 export type QueryFamilyMemberArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryGameArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryGameCompletionsArgs = {
+  gameId: Scalars['Int']['input'];
+};
+
+
+export type QueryGamesArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
+  type?: InputMaybe<GameType>;
 };
 
 
@@ -2517,6 +2672,14 @@ export type UpdateFamilyMemberInput = {
   relationship?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateGameInput = {
+  content?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  estimatedMinutes?: InputMaybe<Scalars['Int']['input']>;
+  language?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateGoalInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
@@ -2609,6 +2772,11 @@ export type VaultUnlockResult = {
   unlocked: Scalars['Boolean']['output'];
 };
 
+export type BogdanDiscussionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BogdanDiscussionsQuery = { __typename?: 'Query', bogdanDiscussions: Array<{ __typename?: 'BogdanDiscussionGuide', id: number, familyMemberId: number, childAge?: number | null, behaviorSummary: string, createdAt: string }> };
+
 export type CheckNoteClaimsMutationVariables = Exact<{
   input: CheckNoteClaimsInput;
 }>;
@@ -2697,6 +2865,13 @@ export type CreateFamilyMemberMutationVariables = Exact<{
 
 
 export type CreateFamilyMemberMutation = { __typename?: 'Mutation', createFamilyMember: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, ageYears?: number | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string } };
+
+export type CreateGameMutationVariables = Exact<{
+  input: CreateGameInput;
+}>;
+
+
+export type CreateGameMutation = { __typename?: 'Mutation', createGame: { __typename?: 'Game', id: number, type: GameType, title: string, description?: string | null, content: string, language?: string | null, estimatedMinutes?: number | null, source: GameSource, goalId?: number | null, issueId?: number | null, familyMemberId?: number | null, createdAt: string, updatedAt: string } };
 
 export type CreateGoalMutationVariables = Exact<{
   input: CreateGoalInput;
@@ -2833,6 +3008,13 @@ export type DeleteFamilyMemberMutationVariables = Exact<{
 
 
 export type DeleteFamilyMemberMutation = { __typename?: 'Mutation', deleteFamilyMember: { __typename?: 'DeleteFamilyMemberResult', success: boolean, message?: string | null } };
+
+export type DeleteGameMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteGameMutation = { __typename?: 'Mutation', deleteGame: { __typename?: 'DeleteGameResult', success: boolean, message?: string | null } };
 
 export type DeleteGoalMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2976,6 +3158,11 @@ export type GenerateAudioMutationVariables = Exact<{
 
 export type GenerateAudioMutation = { __typename?: 'Mutation', generateAudio: { __typename?: 'GenerateAudioResult', success: boolean, message?: string | null, jobId: string, audioUrl?: string | null } };
 
+export type GenerateBogdanDiscussionMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GenerateBogdanDiscussionMutation = { __typename?: 'Mutation', generateBogdanDiscussion: { __typename?: 'GenerateBogdanDiscussionResult', success: boolean, message?: string | null, jobId?: string | null } };
+
 export type GenerateDeepAnalysisMutationVariables = Exact<{
   subjectType: DeepAnalysisSubjectType;
   subjectId: Scalars['Int']['input'];
@@ -3000,6 +3187,13 @@ export type GenerateDiscussionGuideMutationVariables = Exact<{
 
 
 export type GenerateDiscussionGuideMutation = { __typename?: 'Mutation', generateDiscussionGuide: { __typename?: 'GenerateDiscussionGuideResult', success: boolean, message?: string | null, jobId?: string | null } };
+
+export type GenerateGameMutationVariables = Exact<{
+  input: GenerateGameInput;
+}>;
+
+
+export type GenerateGameMutation = { __typename?: 'Mutation', generateGame: { __typename?: 'Game', id: number, type: GameType, title: string, description?: string | null, content: string, language?: string | null, estimatedMinutes?: number | null, source: GameSource, goalId?: number | null, issueId?: number | null, familyMemberId?: number | null, createdAt: string } };
 
 export type GenerateHabitsForFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -3226,6 +3420,23 @@ export type GetFamilyMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetFamilyMembersQuery = { __typename?: 'Query', familyMembers: Array<{ __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, relationships: Array<{ __typename?: 'Relationship', id: number, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, status: RelationshipStatus, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null }> }> };
 
+export type GetGameQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type GetGameQuery = { __typename?: 'Query', game?: { __typename?: 'Game', id: number, userId: string, goalId?: number | null, issueId?: number | null, familyMemberId?: number | null, type: GameType, title: string, description?: string | null, content: string, language?: string | null, estimatedMinutes?: number | null, source: GameSource, createdAt: string, updatedAt: string, goal?: { __typename?: 'Goal', id: number, title: string } | null, issue?: { __typename?: 'Issue', id: number, title: string } | null, completions: Array<{ __typename?: 'GameCompletion', id: number, gameId: number, durationSeconds?: number | null, responses?: string | null, linkedNoteId?: number | null, completedAt: string }> } | null };
+
+export type GetGamesQueryVariables = Exact<{
+  type?: InputMaybe<GameType>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetGamesQuery = { __typename?: 'Query', games: Array<{ __typename?: 'Game', id: number, userId: string, goalId?: number | null, issueId?: number | null, familyMemberId?: number | null, type: GameType, title: string, description?: string | null, language?: string | null, estimatedMinutes?: number | null, source: GameSource, createdAt: string, updatedAt: string }> };
+
 export type GetGenerationJobQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
@@ -3423,6 +3634,11 @@ export type GetTherapeuticQuestionsQueryVariables = Exact<{
 
 export type GetTherapeuticQuestionsQuery = { __typename?: 'Query', therapeuticQuestions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, journalEntryId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> };
 
+export type LatestBogdanDiscussionQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LatestBogdanDiscussionQuery = { __typename?: 'Query', latestBogdanDiscussion?: { __typename?: 'BogdanDiscussionGuide', id: number, familyMemberId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }> } | null };
+
 export type LinkContactToIssueMutationVariables = Exact<{
   issueId: Scalars['Int']['input'];
   contactId: Scalars['Int']['input'];
@@ -3444,6 +3660,13 @@ export type LockVaultMutationVariables = Exact<{ [key: string]: never; }>;
 
 
 export type LockVaultMutation = { __typename?: 'Mutation', lockVault: { __typename?: 'VaultStatus', unlocked: boolean } };
+
+export type LogGameCompletionMutationVariables = Exact<{
+  input: LogGameCompletionInput;
+}>;
+
+
+export type LogGameCompletionMutation = { __typename?: 'Mutation', logGameCompletion: { __typename?: 'GameCompletion', id: number, gameId: number, durationSeconds?: number | null, responses?: string | null, linkedNoteId?: number | null, completedAt: string } };
 
 export type LogHabitMutationVariables = Exact<{
   habitId: Scalars['Int']['input'];
@@ -3565,6 +3788,14 @@ export type UpdateFamilyMemberMutationVariables = Exact<{
 
 export type UpdateFamilyMemberMutation = { __typename?: 'Mutation', updateFamilyMember: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, ageYears?: number | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string } };
 
+export type UpdateGameMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  input: UpdateGameInput;
+}>;
+
+
+export type UpdateGameMutation = { __typename?: 'Mutation', updateGame: { __typename?: 'Game', id: number, title: string, description?: string | null, content: string, language?: string | null, estimatedMinutes?: number | null, updatedAt: string } };
+
 export type UpdateGoalMutationVariables = Exact<{
   id: Scalars['Int']['input'];
   input: UpdateGoalInput;
@@ -3648,6 +3879,52 @@ export type VaultStatusQueryVariables = Exact<{ [key: string]: never; }>;
 export type VaultStatusQuery = { __typename?: 'Query', vaultStatus: { __typename?: 'VaultStatus', unlocked: boolean, available: boolean } };
 
 
+export const BogdanDiscussionsDocument = gql`
+    query BogdanDiscussions {
+  bogdanDiscussions {
+    id
+    familyMemberId
+    childAge
+    behaviorSummary
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useBogdanDiscussionsQuery__
+ *
+ * To run a query within a React component, call `useBogdanDiscussionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useBogdanDiscussionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBogdanDiscussionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useBogdanDiscussionsQuery(baseOptions?: Apollo.QueryHookOptions<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>(BogdanDiscussionsDocument, options);
+      }
+export function useBogdanDiscussionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>(BogdanDiscussionsDocument, options);
+        }
+// @ts-ignore
+export function useBogdanDiscussionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>): Apollo.UseSuspenseQueryResult<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>;
+export function useBogdanDiscussionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>): Apollo.UseSuspenseQueryResult<BogdanDiscussionsQuery | undefined, BogdanDiscussionsQueryVariables>;
+export function useBogdanDiscussionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>(BogdanDiscussionsDocument, options);
+        }
+export type BogdanDiscussionsQueryHookResult = ReturnType<typeof useBogdanDiscussionsQuery>;
+export type BogdanDiscussionsLazyQueryHookResult = ReturnType<typeof useBogdanDiscussionsLazyQuery>;
+export type BogdanDiscussionsSuspenseQueryHookResult = ReturnType<typeof useBogdanDiscussionsSuspenseQuery>;
+export type BogdanDiscussionsQueryResult = Apollo.QueryResult<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>;
 export const CheckNoteClaimsDocument = gql`
     mutation CheckNoteClaims($input: CheckNoteClaimsInput!) {
   checkNoteClaims(input: $input) {
@@ -4343,6 +4620,51 @@ export function useCreateFamilyMemberMutation(baseOptions?: Apollo.MutationHookO
 export type CreateFamilyMemberMutationHookResult = ReturnType<typeof useCreateFamilyMemberMutation>;
 export type CreateFamilyMemberMutationResult = Apollo.MutationResult<CreateFamilyMemberMutation>;
 export type CreateFamilyMemberMutationOptions = Apollo.BaseMutationOptions<CreateFamilyMemberMutation, CreateFamilyMemberMutationVariables>;
+export const CreateGameDocument = gql`
+    mutation CreateGame($input: CreateGameInput!) {
+  createGame(input: $input) {
+    id
+    type
+    title
+    description
+    content
+    language
+    estimatedMinutes
+    source
+    goalId
+    issueId
+    familyMemberId
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type CreateGameMutationFn = Apollo.MutationFunction<CreateGameMutation, CreateGameMutationVariables>;
+
+/**
+ * __useCreateGameMutation__
+ *
+ * To run a mutation, you first call `useCreateGameMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateGameMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createGameMutation, { data, loading, error }] = useCreateGameMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateGameMutation(baseOptions?: Apollo.MutationHookOptions<CreateGameMutation, CreateGameMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateGameMutation, CreateGameMutationVariables>(CreateGameDocument, options);
+      }
+export type CreateGameMutationHookResult = ReturnType<typeof useCreateGameMutation>;
+export type CreateGameMutationResult = Apollo.MutationResult<CreateGameMutation>;
+export type CreateGameMutationOptions = Apollo.BaseMutationOptions<CreateGameMutation, CreateGameMutationVariables>;
 export const CreateGoalDocument = gql`
     mutation CreateGoal($input: CreateGoalInput!) {
   createGoal(input: $input) {
@@ -5076,6 +5398,40 @@ export function useDeleteFamilyMemberMutation(baseOptions?: Apollo.MutationHookO
 export type DeleteFamilyMemberMutationHookResult = ReturnType<typeof useDeleteFamilyMemberMutation>;
 export type DeleteFamilyMemberMutationResult = Apollo.MutationResult<DeleteFamilyMemberMutation>;
 export type DeleteFamilyMemberMutationOptions = Apollo.BaseMutationOptions<DeleteFamilyMemberMutation, DeleteFamilyMemberMutationVariables>;
+export const DeleteGameDocument = gql`
+    mutation DeleteGame($id: Int!) {
+  deleteGame(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteGameMutationFn = Apollo.MutationFunction<DeleteGameMutation, DeleteGameMutationVariables>;
+
+/**
+ * __useDeleteGameMutation__
+ *
+ * To run a mutation, you first call `useDeleteGameMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteGameMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteGameMutation, { data, loading, error }] = useDeleteGameMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteGameMutation(baseOptions?: Apollo.MutationHookOptions<DeleteGameMutation, DeleteGameMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteGameMutation, DeleteGameMutationVariables>(DeleteGameDocument, options);
+      }
+export type DeleteGameMutationHookResult = ReturnType<typeof useDeleteGameMutation>;
+export type DeleteGameMutationResult = Apollo.MutationResult<DeleteGameMutation>;
+export type DeleteGameMutationOptions = Apollo.BaseMutationOptions<DeleteGameMutation, DeleteGameMutationVariables>;
 export const DeleteGoalDocument = gql`
     mutation DeleteGoal($id: Int!) {
   deleteGoal(id: $id) {
@@ -5766,6 +6122,40 @@ export function useGenerateAudioMutation(baseOptions?: Apollo.MutationHookOption
 export type GenerateAudioMutationHookResult = ReturnType<typeof useGenerateAudioMutation>;
 export type GenerateAudioMutationResult = Apollo.MutationResult<GenerateAudioMutation>;
 export type GenerateAudioMutationOptions = Apollo.BaseMutationOptions<GenerateAudioMutation, GenerateAudioMutationVariables>;
+export const GenerateBogdanDiscussionDocument = gql`
+    mutation GenerateBogdanDiscussion {
+  generateBogdanDiscussion {
+    success
+    message
+    jobId
+  }
+}
+    `;
+export type GenerateBogdanDiscussionMutationFn = Apollo.MutationFunction<GenerateBogdanDiscussionMutation, GenerateBogdanDiscussionMutationVariables>;
+
+/**
+ * __useGenerateBogdanDiscussionMutation__
+ *
+ * To run a mutation, you first call `useGenerateBogdanDiscussionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateBogdanDiscussionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateBogdanDiscussionMutation, { data, loading, error }] = useGenerateBogdanDiscussionMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGenerateBogdanDiscussionMutation(baseOptions?: Apollo.MutationHookOptions<GenerateBogdanDiscussionMutation, GenerateBogdanDiscussionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateBogdanDiscussionMutation, GenerateBogdanDiscussionMutationVariables>(GenerateBogdanDiscussionDocument, options);
+      }
+export type GenerateBogdanDiscussionMutationHookResult = ReturnType<typeof useGenerateBogdanDiscussionMutation>;
+export type GenerateBogdanDiscussionMutationResult = Apollo.MutationResult<GenerateBogdanDiscussionMutation>;
+export type GenerateBogdanDiscussionMutationOptions = Apollo.BaseMutationOptions<GenerateBogdanDiscussionMutation, GenerateBogdanDiscussionMutationVariables>;
 export const GenerateDeepAnalysisDocument = gql`
     mutation GenerateDeepAnalysis($subjectType: DeepAnalysisSubjectType!, $subjectId: Int!, $triggerType: DeepAnalysisTriggerType, $triggerId: Int) {
   generateDeepAnalysis(
@@ -5883,6 +6273,50 @@ export function useGenerateDiscussionGuideMutation(baseOptions?: Apollo.Mutation
 export type GenerateDiscussionGuideMutationHookResult = ReturnType<typeof useGenerateDiscussionGuideMutation>;
 export type GenerateDiscussionGuideMutationResult = Apollo.MutationResult<GenerateDiscussionGuideMutation>;
 export type GenerateDiscussionGuideMutationOptions = Apollo.BaseMutationOptions<GenerateDiscussionGuideMutation, GenerateDiscussionGuideMutationVariables>;
+export const GenerateGameDocument = gql`
+    mutation GenerateGame($input: GenerateGameInput!) {
+  generateGame(input: $input) {
+    id
+    type
+    title
+    description
+    content
+    language
+    estimatedMinutes
+    source
+    goalId
+    issueId
+    familyMemberId
+    createdAt
+  }
+}
+    `;
+export type GenerateGameMutationFn = Apollo.MutationFunction<GenerateGameMutation, GenerateGameMutationVariables>;
+
+/**
+ * __useGenerateGameMutation__
+ *
+ * To run a mutation, you first call `useGenerateGameMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateGameMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateGameMutation, { data, loading, error }] = useGenerateGameMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useGenerateGameMutation(baseOptions?: Apollo.MutationHookOptions<GenerateGameMutation, GenerateGameMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateGameMutation, GenerateGameMutationVariables>(GenerateGameDocument, options);
+      }
+export type GenerateGameMutationHookResult = ReturnType<typeof useGenerateGameMutation>;
+export type GenerateGameMutationResult = Apollo.MutationResult<GenerateGameMutation>;
+export type GenerateGameMutationOptions = Apollo.BaseMutationOptions<GenerateGameMutation, GenerateGameMutationVariables>;
 export const GenerateHabitsForFamilyMemberDocument = gql`
     mutation GenerateHabitsForFamilyMember($familyMemberId: Int!, $count: Int) {
   generateHabitsForFamilyMember(familyMemberId: $familyMemberId, count: $count) {
@@ -7733,6 +8167,141 @@ export type GetFamilyMembersQueryHookResult = ReturnType<typeof useGetFamilyMemb
 export type GetFamilyMembersLazyQueryHookResult = ReturnType<typeof useGetFamilyMembersLazyQuery>;
 export type GetFamilyMembersSuspenseQueryHookResult = ReturnType<typeof useGetFamilyMembersSuspenseQuery>;
 export type GetFamilyMembersQueryResult = Apollo.QueryResult<GetFamilyMembersQuery, GetFamilyMembersQueryVariables>;
+export const GetGameDocument = gql`
+    query GetGame($id: Int!) {
+  game(id: $id) {
+    id
+    userId
+    goalId
+    issueId
+    familyMemberId
+    type
+    title
+    description
+    content
+    language
+    estimatedMinutes
+    source
+    createdAt
+    updatedAt
+    goal {
+      id
+      title
+    }
+    issue {
+      id
+      title
+    }
+    completions {
+      id
+      gameId
+      durationSeconds
+      responses
+      linkedNoteId
+      completedAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetGameQuery__
+ *
+ * To run a query within a React component, call `useGetGameQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetGameQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetGameQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetGameQuery(baseOptions: Apollo.QueryHookOptions<GetGameQuery, GetGameQueryVariables> & ({ variables: GetGameQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetGameQuery, GetGameQueryVariables>(GetGameDocument, options);
+      }
+export function useGetGameLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGameQuery, GetGameQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetGameQuery, GetGameQueryVariables>(GetGameDocument, options);
+        }
+// @ts-ignore
+export function useGetGameSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetGameQuery, GetGameQueryVariables>): Apollo.UseSuspenseQueryResult<GetGameQuery, GetGameQueryVariables>;
+export function useGetGameSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGameQuery, GetGameQueryVariables>): Apollo.UseSuspenseQueryResult<GetGameQuery | undefined, GetGameQueryVariables>;
+export function useGetGameSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGameQuery, GetGameQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetGameQuery, GetGameQueryVariables>(GetGameDocument, options);
+        }
+export type GetGameQueryHookResult = ReturnType<typeof useGetGameQuery>;
+export type GetGameLazyQueryHookResult = ReturnType<typeof useGetGameLazyQuery>;
+export type GetGameSuspenseQueryHookResult = ReturnType<typeof useGetGameSuspenseQuery>;
+export type GetGameQueryResult = Apollo.QueryResult<GetGameQuery, GetGameQueryVariables>;
+export const GetGamesDocument = gql`
+    query GetGames($type: GameType, $goalId: Int, $issueId: Int, $familyMemberId: Int) {
+  games(
+    type: $type
+    goalId: $goalId
+    issueId: $issueId
+    familyMemberId: $familyMemberId
+  ) {
+    id
+    userId
+    goalId
+    issueId
+    familyMemberId
+    type
+    title
+    description
+    language
+    estimatedMinutes
+    source
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetGamesQuery__
+ *
+ * To run a query within a React component, call `useGetGamesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetGamesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetGamesQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *      goalId: // value for 'goalId'
+ *      issueId: // value for 'issueId'
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGetGamesQuery(baseOptions?: Apollo.QueryHookOptions<GetGamesQuery, GetGamesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetGamesQuery, GetGamesQueryVariables>(GetGamesDocument, options);
+      }
+export function useGetGamesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGamesQuery, GetGamesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetGamesQuery, GetGamesQueryVariables>(GetGamesDocument, options);
+        }
+// @ts-ignore
+export function useGetGamesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetGamesQuery, GetGamesQueryVariables>): Apollo.UseSuspenseQueryResult<GetGamesQuery, GetGamesQueryVariables>;
+export function useGetGamesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGamesQuery, GetGamesQueryVariables>): Apollo.UseSuspenseQueryResult<GetGamesQuery | undefined, GetGamesQueryVariables>;
+export function useGetGamesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGamesQuery, GetGamesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetGamesQuery, GetGamesQueryVariables>(GetGamesDocument, options);
+        }
+export type GetGamesQueryHookResult = ReturnType<typeof useGetGamesQuery>;
+export type GetGamesLazyQueryHookResult = ReturnType<typeof useGetGamesLazyQuery>;
+export type GetGamesSuspenseQueryHookResult = ReturnType<typeof useGetGamesSuspenseQuery>;
+export type GetGamesQueryResult = Apollo.QueryResult<GetGamesQuery, GetGamesQueryVariables>;
 export const GetGenerationJobDocument = gql`
     query GetGenerationJob($id: String!) {
   generationJob(id: $id) {
@@ -9770,6 +10339,91 @@ export type GetTherapeuticQuestionsQueryHookResult = ReturnType<typeof useGetThe
 export type GetTherapeuticQuestionsLazyQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsLazyQuery>;
 export type GetTherapeuticQuestionsSuspenseQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsSuspenseQuery>;
 export type GetTherapeuticQuestionsQueryResult = Apollo.QueryResult<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>;
+export const LatestBogdanDiscussionDocument = gql`
+    query LatestBogdanDiscussion {
+  latestBogdanDiscussion {
+    id
+    familyMemberId
+    childAge
+    behaviorSummary
+    developmentalContext {
+      stage
+      explanation
+      normalizedBehavior
+      researchBasis
+    }
+    conversationStarters {
+      opener
+      context
+      ageAppropriateNote
+    }
+    talkingPoints {
+      point
+      explanation
+      researchBacking
+    }
+    languageGuide {
+      whatToSay {
+        phrase
+        reason
+        alternative
+      }
+      whatNotToSay {
+        phrase
+        reason
+        alternative
+      }
+    }
+    anticipatedReactions {
+      reaction
+      likelihood
+      howToRespond
+    }
+    followUpPlan {
+      action
+      timing
+      description
+    }
+    model
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useLatestBogdanDiscussionQuery__
+ *
+ * To run a query within a React component, call `useLatestBogdanDiscussionQuery` and pass it any options that fit your needs.
+ * When your component renders, `useLatestBogdanDiscussionQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useLatestBogdanDiscussionQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useLatestBogdanDiscussionQuery(baseOptions?: Apollo.QueryHookOptions<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>(LatestBogdanDiscussionDocument, options);
+      }
+export function useLatestBogdanDiscussionLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>(LatestBogdanDiscussionDocument, options);
+        }
+// @ts-ignore
+export function useLatestBogdanDiscussionSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>): Apollo.UseSuspenseQueryResult<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>;
+export function useLatestBogdanDiscussionSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>): Apollo.UseSuspenseQueryResult<LatestBogdanDiscussionQuery | undefined, LatestBogdanDiscussionQueryVariables>;
+export function useLatestBogdanDiscussionSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>(LatestBogdanDiscussionDocument, options);
+        }
+export type LatestBogdanDiscussionQueryHookResult = ReturnType<typeof useLatestBogdanDiscussionQuery>;
+export type LatestBogdanDiscussionLazyQueryHookResult = ReturnType<typeof useLatestBogdanDiscussionLazyQuery>;
+export type LatestBogdanDiscussionSuspenseQueryHookResult = ReturnType<typeof useLatestBogdanDiscussionSuspenseQuery>;
+export type LatestBogdanDiscussionQueryResult = Apollo.QueryResult<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>;
 export const LinkContactToIssueDocument = gql`
     mutation LinkContactToIssue($issueId: Int!, $contactId: Int!) {
   linkContactToIssue(issueId: $issueId, contactId: $contactId) {
@@ -9891,6 +10545,44 @@ export function useLockVaultMutation(baseOptions?: Apollo.MutationHookOptions<Lo
 export type LockVaultMutationHookResult = ReturnType<typeof useLockVaultMutation>;
 export type LockVaultMutationResult = Apollo.MutationResult<LockVaultMutation>;
 export type LockVaultMutationOptions = Apollo.BaseMutationOptions<LockVaultMutation, LockVaultMutationVariables>;
+export const LogGameCompletionDocument = gql`
+    mutation LogGameCompletion($input: LogGameCompletionInput!) {
+  logGameCompletion(input: $input) {
+    id
+    gameId
+    durationSeconds
+    responses
+    linkedNoteId
+    completedAt
+  }
+}
+    `;
+export type LogGameCompletionMutationFn = Apollo.MutationFunction<LogGameCompletionMutation, LogGameCompletionMutationVariables>;
+
+/**
+ * __useLogGameCompletionMutation__
+ *
+ * To run a mutation, you first call `useLogGameCompletionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLogGameCompletionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [logGameCompletionMutation, { data, loading, error }] = useLogGameCompletionMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useLogGameCompletionMutation(baseOptions?: Apollo.MutationHookOptions<LogGameCompletionMutation, LogGameCompletionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LogGameCompletionMutation, LogGameCompletionMutationVariables>(LogGameCompletionDocument, options);
+      }
+export type LogGameCompletionMutationHookResult = ReturnType<typeof useLogGameCompletionMutation>;
+export type LogGameCompletionMutationResult = Apollo.MutationResult<LogGameCompletionMutation>;
+export type LogGameCompletionMutationOptions = Apollo.BaseMutationOptions<LogGameCompletionMutation, LogGameCompletionMutationVariables>;
 export const LogHabitDocument = gql`
     mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {
   logHabit(
@@ -10489,6 +11181,46 @@ export function useUpdateFamilyMemberMutation(baseOptions?: Apollo.MutationHookO
 export type UpdateFamilyMemberMutationHookResult = ReturnType<typeof useUpdateFamilyMemberMutation>;
 export type UpdateFamilyMemberMutationResult = Apollo.MutationResult<UpdateFamilyMemberMutation>;
 export type UpdateFamilyMemberMutationOptions = Apollo.BaseMutationOptions<UpdateFamilyMemberMutation, UpdateFamilyMemberMutationVariables>;
+export const UpdateGameDocument = gql`
+    mutation UpdateGame($id: Int!, $input: UpdateGameInput!) {
+  updateGame(id: $id, input: $input) {
+    id
+    title
+    description
+    content
+    language
+    estimatedMinutes
+    updatedAt
+  }
+}
+    `;
+export type UpdateGameMutationFn = Apollo.MutationFunction<UpdateGameMutation, UpdateGameMutationVariables>;
+
+/**
+ * __useUpdateGameMutation__
+ *
+ * To run a mutation, you first call `useUpdateGameMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateGameMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateGameMutation, { data, loading, error }] = useUpdateGameMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateGameMutation(baseOptions?: Apollo.MutationHookOptions<UpdateGameMutation, UpdateGameMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateGameMutation, UpdateGameMutationVariables>(UpdateGameDocument, options);
+      }
+export type UpdateGameMutationHookResult = ReturnType<typeof useUpdateGameMutation>;
+export type UpdateGameMutationResult = Apollo.MutationResult<UpdateGameMutation>;
+export type UpdateGameMutationOptions = Apollo.BaseMutationOptions<UpdateGameMutation, UpdateGameMutationVariables>;
 export const UpdateGoalDocument = gql`
     mutation UpdateGoal($id: Int!, $input: UpdateGoalInput!) {
   updateGoal(id: $id, input: $input) {
