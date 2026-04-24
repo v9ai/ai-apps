@@ -1151,6 +1151,11 @@ export const productIntelRuns = pgTable(
     // Stored as numeric; drizzle returns it as string — parseFloat at the
     // resolver boundary when you need a number.
     total_cost_usd: numeric("total_cost_usd", { precision: 10, scale: 6 }),
+    // Stamped from PRODUCT_INTEL_VERSION at write time so old-schema outputs
+    // can be filtered/invalidated later without backfill. Source of truth is
+    // backend/leadgen_agent/product_intel_schemas.py; mirrored in
+    // src/lib/intelVersion.ts (parity enforced by a test).
+    schema_version: text("schema_version"),
   },
   (table) => [
     index("idx_intel_runs_product_id").on(table.product_id),
