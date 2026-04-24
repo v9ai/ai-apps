@@ -284,13 +284,20 @@ function GameDetailContent({ id }: { id: number }) {
           WebkitTouchCallout: "none",
         }}
       >
+        <style>{`
+          /* Stacked on portrait: divider is a bottom border. Landscape: right border. */
+          @media (min-width: 1024px) {
+            .coach-left-pane {
+              border-right: 1px solid var(--gray-a4);
+              border-bottom: 0 !important;
+            }
+          }
+        `}</style>
         <Flex
           direction="column"
           style={{
-            height: "100vh",
-            // @ts-expect-error - CSS env/-webkit custom values
-            height: "-webkit-fill-available",
-            minHeight: "100dvh",
+            height: "100dvh",
+            minHeight: "100vh",
             paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
@@ -347,17 +354,19 @@ function GameDetailContent({ id }: { id: number }) {
 
           {/* Split grid — stacks on portrait phones/tablets (initial), splits from sm breakpoint */}
           <Grid
-            columns={{ initial: "1", sm: "1fr 1.15fr" }}
+            columns={{ initial: "1", md: "1fr 1.15fr" }}
             gap="0"
             style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden" }}
           >
             <Box
               p={{ initial: "3", md: "4" }}
               style={{
-                borderRight: "1px solid var(--gray-a4)",
+                borderBottom: "1px solid var(--gray-a4)",
                 overflow: "auto",
                 minHeight: 0,
+                WebkitOverflowScrolling: "touch",
               }}
+              className="coach-left-pane"
             >
               {parentGuide && (
                 <ParentCoachPane
@@ -375,6 +384,7 @@ function GameDetailContent({ id }: { id: number }) {
                 overflow: "auto",
                 minHeight: 0,
                 background: "var(--gray-a2)",
+                WebkitOverflowScrolling: "touch",
               }}
             >
               {runner(true)}
@@ -454,7 +464,7 @@ function GameDetailContent({ id }: { id: number }) {
                     }
                   }
                 }}
-                size="2"
+                size="3"
               />
               <Text size="3" weight="medium">
                 {chrome.coachModeLabel}

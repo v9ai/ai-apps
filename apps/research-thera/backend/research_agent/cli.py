@@ -239,6 +239,12 @@ async def _run_story(args: argparse.Namespace) -> None:
     print(f"📄 File: {out_path}")
 
 
+async def _run_backfill_bogdan_embeddings(args: argparse.Namespace) -> None:
+    from .backfill_bogdan_embeddings import backfill
+
+    await backfill(args.user_email, args.name)
+
+
 async def _run_bogdan_discussion(args: argparse.Namespace) -> None:
     """Invoke the bogdan_discussion LangGraph in-process (no LangGraph server required)."""
     import uuid
@@ -402,6 +408,14 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     bd_p.add_argument("--job-id", default=None, help="Reuse an existing job id (with --create-job off)")
 
+    # backfill-bogdan-embeddings
+    bbe_p = sub.add_parser(
+        "backfill-bogdan-embeddings",
+        help="Embed all Bogdan-relevant rows + linked therapy_research papers (idempotent)",
+    )
+    bbe_p.add_argument("--user-email", required=True)
+    bbe_p.add_argument("--name", default="Bogdan")
+
     return parser
 
 
@@ -418,6 +432,8 @@ def main() -> None:
         asyncio.run(_run_research_goal(args))
     elif args.subcommand == "bogdan-discussion":
         asyncio.run(_run_bogdan_discussion(args))
+    elif args.subcommand == "backfill-bogdan-embeddings":
+        asyncio.run(_run_backfill_bogdan_embeddings(args))
     else:
         asyncio.run(_run_research(args))
 

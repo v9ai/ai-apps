@@ -98,11 +98,19 @@ function GamesListContent() {
               href={`/games/${g.id}`}
               style={{ textDecoration: "none", color: "inherit" }}
             >
-              <Card style={{ cursor: "pointer" }}>
-                <Flex direction="column" gap="2" p="4">
+              <Card
+                size="3"
+                style={{
+                  cursor: "pointer",
+                  minHeight: 120,
+                  touchAction: "manipulation",
+                  WebkitTapHighlightColor: "transparent",
+                }}
+              >
+                <Flex direction="column" gap="3" p="4">
                   <Flex align="center" gap="2" wrap="wrap">
-                    <Heading size="4">{g.title}</Heading>
-                    <Badge color={TYPE_COLOR[g.type]} variant="soft">
+                    <Heading size={{ initial: "5", md: "5" }}>{g.title}</Heading>
+                    <Badge color={TYPE_COLOR[g.type]} variant="soft" size="2">
                       {TYPE_LABEL[g.type]}
                     </Badge>
                     {g.source === GameSource.Seed && (
@@ -117,17 +125,17 @@ function GamesListContent() {
                     )}
                   </Flex>
                   {g.description && (
-                    <Text size="2" color="gray">
+                    <Text size="3" color="gray" style={{ lineHeight: 1.4 }}>
                       {g.description}
                     </Text>
                   )}
                   <Flex gap="3">
                     {g.estimatedMinutes != null && (
-                      <Text size="1" color="gray">
+                      <Text size="2" color="gray">
                         ~{g.estimatedMinutes} min
                       </Text>
                     )}
-                    <Text size="1" color="gray">
+                    <Text size="2" color="gray">
                       {new Date(g.createdAt).toLocaleDateString()}
                     </Text>
                   </Flex>
