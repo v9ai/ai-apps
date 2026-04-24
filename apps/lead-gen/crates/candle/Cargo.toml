@@ -1,8 +1,0 @@
-[package]
-name = "candle-leadgen"
-version = "0.1.0"
-edition = "2021"
-description = "Stub — real candle crate lives elsewhere; this satisfies Cargo path resolution"
-
-[features]
-default = []
