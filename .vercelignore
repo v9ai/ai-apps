@@ -49,6 +49,11 @@ apps/research-thera/research-output
 apps/research-thera/evals
 apps/research-thera/better-auth
 apps/research-thera/.agents
+
+# Claude Code worktrees (dangling symlinks break vercel tar)
+.claude/worktrees
+.claude
+apps/research-thera/.claude
 __pycache__
 *.egg-info
 .langgraph_api
