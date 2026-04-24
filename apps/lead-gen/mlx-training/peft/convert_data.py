@@ -9,13 +9,16 @@ This script:
      emit JSON directly with no reasoning prefix.
   2. Splits 90/10 into train / valid with a deterministic shuffle.
   3. Applies Mistral-v0.2's chat template via `tokenizer.apply_chat_template`
-     to produce a single `text` field per row, ready for `SFTTrainer`.
+     to produce a single `text` field per row, ready for `mlx_lm.lora`.
+
+Output filenames (`train.jsonl` / `valid.jsonl`) match what `mlx_lm.lora`
+expects when `--data <dir>` is passed.
 
 Run once before training:
-    python convert_data.py --out ./out
+    python convert_data.py --out ../data/outreach-email-mistral
 Emits:
-    out/peft-train.jsonl
-    out/peft-valid.jsonl
+    <out>/train.jsonl
+    <out>/valid.jsonl
 """
 
 from __future__ import annotations
@@ -84,7 +87,7 @@ def split(rows: list[dict], seed: int, valid_frac: float) -> tuple[list[dict], l
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--src", type=Path, default=Path(__file__).parent.parent / "data" / "outreach-email" / "resend.jsonl")
-    parser.add_argument("--out", type=Path, default=Path(__file__).parent / "out")
+    parser.add_argument("--out", type=Path, default=Path(__file__).parent.parent / "data" / "outreach-email-mistral")
     parser.add_argument("--base-model", default="mistralai/Mistral-7B-Instruct-v0.2")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--valid-frac", type=float, default=0.1)
@@ -99,7 +102,7 @@ def main() -> None:
     train, valid = split(rendered, args.seed, args.valid_frac)
 
     args.out.mkdir(parents=True, exist_ok=True)
-    for name, split_rows in (("peft-train.jsonl", train), ("peft-valid.jsonl", valid)):
+    for name, split_rows in (("train.jsonl", train), ("valid.jsonl", valid)):
         path = args.out / name
         with path.open("w") as f:
             for row in split_rows:
