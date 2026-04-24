@@ -1576,7 +1576,9 @@ type Query {
   Semantic similarity search: find companies matching a natural language query
   """
   similarCompanies(limit: Int, minAiTier: Int, minScore: Float, query: String!): [SimilarCompanyResult!]!
+  similarCompaniesByProfile(companyId: Int!, limit: Int = 10): [Company!]!
   similarPosts(limit: Int, minScore: Float, postId: Int!): [SimilarPost!]!
+  topCompaniesForProduct(limit: Int = 20, minScore: Float = 0.6, productId: Int!): [Company!]!
   userSettings(userId: String!): UserSettings
   """Full analytics dashboard — runs all 10 metrics in parallel."""
   voyagerAnalyticsDashboard(query: String): VoyagerAnalyticsDashboard!

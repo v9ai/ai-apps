@@ -30,7 +30,7 @@ hooks-status:
 
 # ── App ────────────────────────────────────────────────────────
 
-.PHONY: dev backend-dev deep-scrape build lint codegen deploy db-generate db-migrate db-studio
+.PHONY: dev backend-dev deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve
 
 dev:
 	pnpm dev
@@ -70,6 +70,12 @@ db-migrate:
 
 db-studio:
 	pnpm db:studio
+
+# Serve BGE-M3 embeddings on :7799 (override port via ICP_EMBED_PORT).
+# Consumed by backend/leadgen_agent/embeddings.py for intervention #4
+# (semantic ICP matching via pgvector). Local Candle/Metal — no API calls.
+icp-embed-serve:
+	cd crates/icp-embed && cargo run --release
 
 # ── Tunnel (expose local backend to Vercel-deployed frontend) ──
 #

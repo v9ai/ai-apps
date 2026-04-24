@@ -21,10 +21,13 @@ extend type Query {
   findCompany(name: String, website: String, linkedinUrl: String): FindCompanyResult!
 
   # Semantic ICP matching (intervention #4). Cosine similarity via pgvector
-  # HNSW against companies.profile_embedding / products.icp_embedding.
-  # Only returns companies that have a profile_embedding set — run the
-  # backfill script first if the table is empty.
-  similarCompanies(companyId: Int!, limit: Int = 10): [Company!]!
+  # HNSW against companies.profile_embedding / products.icp_embedding
+  # (both 1024-dim BGE-M3). Only returns companies with a profile_embedding
+  # set — run `backend/scripts/backfill_embeddings.py` first if empty.
+  #
+  # Distinct from the ml.schema `similarCompanies(query: String!)` (NL search)
+  # and `companiesLike(companyId)` (legacy 384-dim embedding).
+  similarCompaniesByProfile(companyId: Int!, limit: Int = 10): [Company!]!
   topCompaniesForProduct(productId: Int!, limit: Int = 20, minScore: Float = 0.6): [Company!]!
 }
 

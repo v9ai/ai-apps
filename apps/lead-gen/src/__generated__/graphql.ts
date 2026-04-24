@@ -2231,7 +2231,9 @@ export type Query = {
   salescueTriggers: SalescueTriggersResult;
   /** Semantic similarity search: find companies matching a natural language query */
   similarCompanies: Array<SimilarCompanyResult>;
+  similarCompaniesByProfile: Array<Company>;
   similarPosts: Array<SimilarPost>;
+  topCompaniesForProduct: Array<Company>;
   userSettings: Maybe<UserSettings>;
   /** Full analytics dashboard — runs all 10 metrics in parallel. */
   voyagerAnalyticsDashboard: VoyagerAnalyticsDashboard;
@@ -2616,10 +2618,23 @@ export type QuerySimilarCompaniesArgs = {
 };
 
 
+export type QuerySimilarCompaniesByProfileArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QuerySimilarPostsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   minScore?: InputMaybe<Scalars['Float']['input']>;
   postId: Scalars['Int']['input'];
+};
+
+
+export type QueryTopCompaniesForProductArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+  productId: Scalars['Int']['input'];
 };
 
 

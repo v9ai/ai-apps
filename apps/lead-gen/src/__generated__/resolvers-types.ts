@@ -2232,7 +2232,9 @@ export type Query = {
   salescueTriggers: SalescueTriggersResult;
   /** Semantic similarity search: find companies matching a natural language query */
   similarCompanies: Array<SimilarCompanyResult>;
+  similarCompaniesByProfile: Array<Company>;
   similarPosts: Array<SimilarPost>;
+  topCompaniesForProduct: Array<Company>;
   userSettings: Maybe<UserSettings>;
   /** Full analytics dashboard — runs all 10 metrics in parallel. */
   voyagerAnalyticsDashboard: VoyagerAnalyticsDashboard;
@@ -2617,10 +2619,23 @@ export type QuerySimilarCompaniesArgs = {
 };
 
 
+export type QuerySimilarCompaniesByProfileArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QuerySimilarPostsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   minScore?: InputMaybe<Scalars['Float']['input']>;
   postId: Scalars['Int']['input'];
+};
+
+
+export type QueryTopCompaniesForProductArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+  productId: Scalars['Int']['input'];
 };
 
 
@@ -5637,7 +5652,9 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   salescueSubject?: Resolver<ResolversTypes['SalescueSubjectResult'], ParentType, ContextType, RequireFields<QuerySalescueSubjectArgs, 'subjects'>>;
   salescueTriggers?: Resolver<ResolversTypes['SalescueTriggersResult'], ParentType, ContextType, RequireFields<QuerySalescueTriggersArgs, 'text'>>;
   similarCompanies?: Resolver<Array<ResolversTypes['SimilarCompanyResult']>, ParentType, ContextType, RequireFields<QuerySimilarCompaniesArgs, 'query'>>;
+  similarCompaniesByProfile?: Resolver<Array<ResolversTypes['Company']>, ParentType, ContextType, RequireFields<QuerySimilarCompaniesByProfileArgs, 'companyId' | 'limit'>>;
   similarPosts?: Resolver<Array<ResolversTypes['SimilarPost']>, ParentType, ContextType, RequireFields<QuerySimilarPostsArgs, 'postId'>>;
+  topCompaniesForProduct?: Resolver<Array<ResolversTypes['Company']>, ParentType, ContextType, RequireFields<QueryTopCompaniesForProductArgs, 'limit' | 'minScore' | 'productId'>>;
   userSettings?: Resolver<Maybe<ResolversTypes['UserSettings']>, ParentType, ContextType, RequireFields<QueryUserSettingsArgs, 'userId'>>;
   voyagerAnalyticsDashboard?: Resolver<ResolversTypes['VoyagerAnalyticsDashboard'], ParentType, ContextType, Partial<QueryVoyagerAnalyticsDashboardArgs>>;
   voyagerArbitrage?: Resolver<ResolversTypes['ArbitrageReport'], ParentType, ContextType, Partial<QueryVoyagerArbitrageArgs>>;

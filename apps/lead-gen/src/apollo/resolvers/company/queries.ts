@@ -269,4 +269,83 @@ export const companyQueries = {
       return { found: false, company: null };
     }
   },
+
+  async similarCompaniesByProfile(
+    _parent: unknown,
+    args: { companyId: number; limit?: number | null },
+    context: GraphQLContext,
+  ) {
+    try {
+      const limit = Math.min(Math.max(args.limit ?? 10, 1), 100);
+
+      // Look up the source company's profile_embedding so we can compare
+      // against it. We cast to ::vector in the sub-select so pgvector knows
+      // the operand type on the cosine operator.
+      const rows = await context.db
+        .select()
+        .from(companies)
+        .where(
+          and(
+            ne(companies.id, args.companyId),
+            eq(companies.blocked, false),
+            isNotNull(companies.profile_embedding),
+            sql`(SELECT profile_embedding FROM companies WHERE id = ${args.companyId}) IS NOT NULL`,
+          )!,
+        )
+        .orderBy(
+          sql`${companies.profile_embedding} <=> (SELECT profile_embedding FROM companies WHERE id = ${args.companyId})::vector`,
+        )
+        .limit(limit);
+
+      for (const c of rows) {
+        context.loaders.company.prime(c.id, c);
+      }
+      return rows;
+    } catch (error) {
+      console.error("Error fetching similar companies:", error);
+      return [];
+    }
+  },
+
+  async topCompaniesForProduct(
+    _parent: unknown,
+    args: { productId: number; limit?: number | null; minScore?: number | null },
+    context: GraphQLContext,
+  ) {
+    try {
+      const limit = Math.min(Math.max(args.limit ?? 20, 1), 200);
+      const minScore = args.minScore ?? 0.6;
+
+      const productRow = await context.db
+        .select({ emb: products.icp_embedding })
+        .from(products)
+        .where(and(eq(products.id, args.productId), isNotNull(products.icp_embedding))!)
+        .limit(1);
+      if (!productRow[0]) return [];
+
+      // 1 - cosine_distance = cosine_similarity for L2-normalized vectors.
+      const rows = await context.db
+        .select()
+        .from(companies)
+        .where(
+          and(
+            eq(companies.blocked, false),
+            isNotNull(companies.profile_embedding),
+            sql`1 - (${companies.profile_embedding} <=> (SELECT icp_embedding FROM products WHERE id = ${args.productId})::vector) >= ${minScore}`,
+          )!,
+        )
+        .orderBy(
+          sql`${companies.profile_embedding} <=> (SELECT icp_embedding FROM products WHERE id = ${args.productId})::vector`,
+        )
+        .limit(limit);
+
+      for (const c of rows) {
+        context.loaders.company.prime(c.id, c);
+      }
+      return rows;
+    } catch (error) {
+      console.error("Error fetching top companies for product:", error);
+      return [];
+    }
+  },
 };
