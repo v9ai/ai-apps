@@ -1128,7 +1128,7 @@ export async function cleanupStaleJobs(minutes = 15): Promise<void> {
 export async function createGenerationJob(
   id: string,
   userId: string,
-  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS",
+  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS" | "BOGDAN_DISCUSSION",
   goalId?: number | null,
   storyId?: number,
 ) {

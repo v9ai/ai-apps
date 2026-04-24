@@ -436,6 +436,9 @@ export const applications = pgTable(
     techDismissedTags: text("tech_dismissed_tags"),
     aiInterviewers: text("ai_interviewers"),
     aiMemorizeCategories: text("ai_memorize_categories"),
+    // Soft FK into lead-gen's companies.key (see @ai-apps/company-intel).
+    // Populated by resolveCompanyKey() on create/update; null when no match.
+    leadgenCompanyKey: text("leadgen_company_key"),
     public: boolean("public").notNull().default(false),
     appliedAt: timestamp("applied_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
