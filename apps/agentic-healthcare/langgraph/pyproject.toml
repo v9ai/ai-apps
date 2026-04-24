@@ -49,3 +49,10 @@ py-modules = [
 where = ["."]
 include = ["routes*"]
 
+<<<<<<< Updated upstream
+=======
+[dependency-groups]
+dev = [
+    "langgraph-cli[inmem]>=0.4.14",
+]
+>>>>>>> Stashed changes

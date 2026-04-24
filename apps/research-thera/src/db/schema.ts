@@ -748,3 +748,36 @@ export const familyMemberCharacteristics = pgTable("family_member_characteristic
     .default(sql`NOW()`),
 });
 
+export const games = pgTable("games", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  goalId: integer("goal_id"),
+  issueId: integer("issue_id"),
+  familyMemberId: integer("family_member_id"),
+  type: text("type").notNull(), // CBT_REFRAME | MINDFULNESS | JOURNAL_PROMPT
+  title: text("title").notNull(),
+  description: text("description"),
+  content: text("content").notNull(), // JSON — shape depends on type
+  language: text("language"),
+  estimatedMinutes: integer("estimated_minutes"),
+  source: text("source").notNull().default("USER"), // SEED | USER | AI
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
+export const gameCompletions = pgTable("game_completions", {
+  id: serial("id").primaryKey(),
+  gameId: integer("game_id").notNull(),
+  userId: text("user_id").notNull(),
+  durationSeconds: integer("duration_seconds"),
+  responses: text("responses"), // JSON — user's reframes / journal text / etc.
+  linkedNoteId: integer("linked_note_id"),
+  completedAt: text("completed_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
