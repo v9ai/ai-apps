@@ -625,6 +625,7 @@ def _compose_prompt(
     retrieved_research: list[dict],
     child_age: Optional[int],
     is_ro: bool,
+    extended: Optional[dict] = None,
 ) -> str:
     sections: list[str] = []
     if scaffold.get("profile_section"):
@@ -633,6 +634,21 @@ def _compose_prompt(
         sections.append(scaffold["characteristics_section"])
     if scaffold.get("goals_section"):
         sections.append(scaffold["goals_section"])
+
+    # Extended context (rule-based, fully relevant) — append in stable order
+    extended = extended or {}
+    for key in (
+        "affirmations_block",
+        "habits_block",
+        "routine_block",
+        "goal_analyses_block",
+        "games_block",
+        "questions_block",
+        "prior_guides_block",
+    ):
+        block = extended.get(key)
+        if block:
+            sections.append(block)
 
     # Grouped retrieved entities with similarity + rerank scores
     buckets = _group_entities_by_type(retrieved_entities)
@@ -683,19 +699,26 @@ def _compose_prompt(
         "",
         f"Generate a parent discussion guide for an upcoming conversation with the child above ({age_ref}). Synthesize the goals, retrieved issues, journal entries, feedback, observations, analyses, and research into a single coherent conversation plan.",
         "",
+        "REUSE THE EXISTING RESOURCES (from sections above): if affirmations exist, echo their phrasing into languageGuide.whatToSay and into microScript.parentOpener (the parent already uses these words). If active habits exist, reference them with concrete adherence numbers in talkingPoints (\"ai ținut rutina de respirație 6 din 14 zile\"). If pre-curated therapeutic questions exist, seed them into conversationStarters. If therapeutic games exist, suggest one of them (by title) inside followUpPlan instead of inventing new activities. If prior guides exist, BUILD ON them — do NOT repeat the same talkingPoints[].point verbatim, and do NOT use the same opener stems as last time.",
+        "",
         "1. **behaviorSummary** (string): 1-2 sentences naming the most pressing behavior/theme — cite specific IssueIDs.",
         "",
         "2. **developmentalContext** (object): { stage, explanation, normalizedBehavior, researchBasis } — researchBasis MUST cite real ResearchID:N from the retrieved research above.",
         "",
         "3. **conversationStarters** (array, 3-4 items): { opener, context, ageAppropriateNote (optional) }",
         "",
-        "4. **talkingPoints** (array, 3-5 items): { point, explanation, researchBacking (MUST cite real ResearchID:N) }",
+        "4. **talkingPoints** (array, 3-5 items): { point, explanation, researchBacking (MUST cite real ResearchID:N), microScript }",
+        "   where **microScript** is { parentOpener, childResponse, parentFollowUp } — all three MUST be natural Romanian sentences:",
+        "   - parentOpener: a verbatim sentence the parent can read aloud, naming a CONCRETE recent moment from the context (e.g., \"Am citit în jurnal că ieri la matematică ai aruncat creionul…\") — do NOT start with generic stems like \"Vreau să vorbim despre…\".",
+        "   - childResponse: a realistic, slightly emotional reply a child of this age would actually give — not a perfect \"da, înțeleg\".",
+        "   - parentFollowUp: parent's calm, validating, warm response that lands the talkingPoint without lecturing.",
+        "   Constraint: every microScript must vary — no two parentOpeners may share the same opening stem.",
         "",
         "5. **languageGuide** (object): { whatToSay (4-6 items), whatNotToSay (3-5 items) } — each item { phrase, reason, alternative }",
         "",
         "6. **anticipatedReactions** (array, 3-4 items): { reaction, likelihood (high/medium/low), howToRespond }",
         "",
-        "7. **followUpPlan** (array, 3-4 items): { action, timing, description }",
+        "7. **followUpPlan** (array, 3-4 items): { action, timing, description } — prefer suggesting an existing therapeutic game by title when one fits.",
         "",
         "IMPORTANT RULES:",
         "- Warm, non-judgmental, empathetic language throughout.",

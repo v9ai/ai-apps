@@ -51,5 +51,38 @@ check "linkedin /stats" \
 check "dispatcher /ok" \
     curl -sf "$HOST/ok" --max-time 5 --output /dev/null
 
+expect_status() {
+    local name="$1" want="$2"; shift 2
+    echo "── $name (expect $want) ──"
+    local got
+    got=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$@")
+    if [[ "$got" == "$want" ]]; then
+        echo "  ok ($got)"
+    else
+        echo "  FAIL (got $got, want $want)"
+        exit 1
+    fi
+}
+
+# 6. Auth: missing bearer → 401.
+expect_status "auth missing → 401" 401 \
+    "${json[@]}" "$HOST/runs/wait" \
+    -d '{"assistant_id":"classify_paper","input":{"title":"x","abstract":"y"}}'
+
+# 7. Auth: wrong bearer → 401.
+expect_status "auth wrong → 401" 401 \
+    -H "Authorization: Bearer not-the-real-token" "${json[@]}" "$HOST/runs/wait" \
+    -d '{"assistant_id":"classify_paper","input":{"title":"x","abstract":"y"}}'
+
+# 8. Internal-only path /_ml/* hit externally → 403 (even with valid bearer).
+expect_status "internal /_ml/* external → 403" 403 \
+    "${auth[@]}" "${json[@]}" "$HOST/_ml/runs/wait" \
+    -d '{"assistant_id":"bge_m3_embed","input":{"texts":["x"]}}'
+
+# 9. Internal-only path /_research/* hit externally → 403.
+expect_status "internal /_research/* external → 403" 403 \
+    "${auth[@]}" "${json[@]}" "$HOST/_research/runs/wait" \
+    -d '{"assistant_id":"scholar","input":{"command":"migrate"}}'
+
 echo ""
-echo "All 5 smoke tests passed."
+echo "All 9 smoke tests passed."
