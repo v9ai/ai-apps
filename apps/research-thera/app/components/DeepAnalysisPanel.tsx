@@ -250,7 +250,12 @@ export function DeepAnalysisPanel({
                       <Badge variant="soft" color={cluster.pattern === "escalating" ? "red" : cluster.pattern === "recurring" ? "orange" : "blue"} size="1">
                         {cluster.pattern}
                       </Badge>
-                      <Badge variant="outline" color="gray" size="1">
+                      <Badge
+                        variant="outline"
+                        color="gray"
+                        size="1"
+                        aria-label={`Confidence ${Math.round(cluster.confidence * 100)} percent`}
+                      >
                         {Math.round(cluster.confidence * 100)}% confidence
                       </Badge>
                     </Flex>
@@ -366,6 +371,10 @@ export function DeepAnalysisPanel({
               </Card>
             ))}
 
+            {activeTab === "research" && latest.researchRelevance.length === 0 && (
+              <Text size="2" color="gray">No research relevance mapped for this analysis yet.</Text>
+            )}
+
             {activeTab === "research" && latest.researchRelevance.map((rr, idx) => (
               <Card key={idx} variant="surface">
                 <Flex direction="column" gap="2" p="3">
@@ -389,6 +398,9 @@ export function DeepAnalysisPanel({
                         ))}
                       </ul>
                     </Box>
+                  )}
+                  {rr.relevantResearchTitles.length === 0 && rr.coverageGaps.length === 0 && (
+                    <Text size="1" color="gray">No research mapped to this pattern yet.</Text>
                   )}
                 </Flex>
               </Card>
