@@ -40,7 +40,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/contacts", label: "Contacts", icon: PersonIcon },
   { href: "/emails", label: "Emails", icon: EnvelopeClosedIcon },
   { href: "/admin/linkedin-posts", label: "Posts", icon: Pencil2Icon },
-  { href: "/products", label: "Products", icon: CubeIcon, tenants: ["nyx"] },
+  { href: "/products", label: "Products", icon: CubeIcon },
 ];
 
 export function Sidebar() {

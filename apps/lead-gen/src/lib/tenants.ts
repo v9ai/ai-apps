@@ -1,6 +1,5 @@
 export const TENANTS = [
   { key: "vadim", label: "Vadim Nicolai", initial: "V" },
-  { key: "nyx", label: "NYX", initial: "N" },
 ] as const;
 
 export type TenantKey = (typeof TENANTS)[number]["key"];
