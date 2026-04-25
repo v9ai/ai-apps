@@ -89,7 +89,7 @@ from leadgen_agent.score_contact_graph import build_graph as build_score_contact
 from leadgen_agent.text_to_sql_graph import build_graph as build_text_to_sql
 
 from core.linkedin_api import ensure_linkedin_tables, router as linkedin_router
-from core.remote_graphs import build_all_remote_adapters
+from core.remote_graphs import aclose_all_adapters, build_all_remote_adapters
 
 log = logging.getLogger("leadgen_agent")
 
@@ -236,7 +236,16 @@ async def lifespan(app: FastAPI):
             "Graphs compiled with AsyncPostgresSaver: %s",
             list(app.state.graphs),
         )
-        yield
+        try:
+            yield
+        finally:
+            # Close pooled httpx connections held by the cached RemoteGraph
+            # adapters. Best-effort: each adapter's aclose() already swallows
+            # per-client errors so a misbehaving remote can't block shutdown.
+            try:
+                await aclose_all_adapters()
+            except Exception:  # noqa: BLE001
+                log.exception("aclose_all_adapters raised during shutdown")
 
 
 app = FastAPI(title="lead-gen-core", lifespan=lifespan)
