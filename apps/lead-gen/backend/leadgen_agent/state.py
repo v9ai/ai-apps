@@ -187,6 +187,8 @@ class ContactEnrichPaperAuthorState(TypedDict, total=False):
     display_name: str
     institution: str
     institution_country: str
+    institution_id: str  # OpenAlex institution ID, e.g. https://openalex.org/I12345
+    institution_ror: str  # ROR ID, e.g. https://ror.org/05k89ew48
     works_count: int
     cited_by_count: int
     h_index: int

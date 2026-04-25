@@ -186,6 +186,8 @@ async def resolve_openalex_author(state: ContactEnrichPaperAuthorState) -> dict:
             "display_name": existing.get("display_name", ""),
             "institution": existing.get("institution", ""),
             "institution_country": existing.get("institution_country", ""),
+            "institution_id": existing.get("institution_id", ""),
+            "institution_ror": existing.get("institution_ror", ""),
             "works_count": int(existing.get("works_count") or 0),
             "cited_by_count": int(existing.get("cited_by_count") or 0),
             "h_index": int(existing.get("h_index") or 0),
@@ -256,11 +258,40 @@ async def resolve_openalex_author(state: ContactEnrichPaperAuthorState) -> dict:
     h_index = int(summary.get("h_index") or 0)
     i10_index = int(summary.get("i10_index") or 0)
 
-    inst = picked.get("last_known_institution") or {}
-    institution = (inst.get("display_name") if isinstance(inst, dict) else "") or ""
+    # OpenAlex deprecated `last_known_institution` (singular) in favor of
+    # `last_known_institutions` (plural array) in 2024 — the singular field now
+    # returns null on every response, which is why earlier runs persisted empty
+    # institution strings. Read the plural field first, fall back to the first
+    # non-null entry of `affiliations[].institution` for older author records
+    # that still lack the plural field.
+    inst: dict[str, Any] = {}
+    lki_list = picked.get("last_known_institutions")
+    if isinstance(lki_list, list):
+        for item in lki_list:
+            if isinstance(item, dict) and item.get("display_name"):
+                inst = item
+                break
+    if not inst:
+        legacy = picked.get("last_known_institution")
+        if isinstance(legacy, dict) and legacy.get("display_name"):
+            inst = legacy
+    if not inst:
+        affiliations = picked.get("affiliations")
+        if isinstance(affiliations, list):
+            for aff in affiliations:
+                if not isinstance(aff, dict):
+                    continue
+                inst_obj = aff.get("institution")
+                if isinstance(inst_obj, dict) and inst_obj.get("display_name"):
+                    inst = inst_obj
+                    break
+
+    institution = (inst.get("display_name") or "") if isinstance(inst, dict) else ""
     institution_country = (
-        inst.get("country_code") if isinstance(inst, dict) else ""
-    ) or ""
+        (inst.get("country_code") or "") if isinstance(inst, dict) else ""
+    )
+    institution_id = (inst.get("id") or "") if isinstance(inst, dict) else ""
+    institution_ror = (inst.get("ror") or "") if isinstance(inst, dict) else ""
 
     # x_concepts: keep top-N with score >= threshold.
     concepts = picked.get("x_concepts") or []
@@ -285,6 +316,8 @@ async def resolve_openalex_author(state: ContactEnrichPaperAuthorState) -> dict:
         "display_name": display_name,
         "institution": institution,
         "institution_country": institution_country,
+        "institution_id": institution_id,
+        "institution_ror": institution_ror,
         "works_count": works_count,
         "cited_by_count": cited_by_count,
         "h_index": h_index,
@@ -377,6 +410,8 @@ async def synthesize(state: ContactEnrichPaperAuthorState) -> dict:
         "display_name": state.get("display_name") or "",
         "institution": state.get("institution") or "",
         "institution_country": state.get("institution_country") or "",
+        "institution_id": state.get("institution_id") or "",
+        "institution_ror": state.get("institution_ror") or "",
         "works_count": int(state.get("works_count") or 0),
         "cited_by_count": int(state.get("cited_by_count") or 0),
         "h_index": int(state.get("h_index") or 0),
