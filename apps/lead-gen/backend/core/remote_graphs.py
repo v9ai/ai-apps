@@ -31,11 +31,15 @@ via ``ML_INTERNAL_AUTH_TOKEN`` / ``RESEARCH_INTERNAL_AUTH_TOKEN``.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import random
+import time
 from typing import Any
 
-from pydantic import BaseModel
+import httpx
+from pydantic import BaseModel, ValidationError
 
 from langgraph.pregel.remote import RemoteGraph
 
@@ -46,6 +50,7 @@ from leadgen_agent.contracts import (
     BgeM3EmbedOutput,
     CommonCrawlInput,
     CommonCrawlOutput,
+    ContractsVersionMismatch,
     GhPatternsInput,
     GhPatternsOutput,
     JobbertNerInput,
@@ -60,6 +65,124 @@ from leadgen_agent.contracts import (
 )
 
 log = logging.getLogger(__name__)
+
+
+# ─── Retry / circuit breaker primitives ───────────────────────────────────
+
+
+class RemoteUnavailable(RuntimeError):
+    """Raised when the circuit breaker is open and short-circuits a call.
+
+    Distinct from network/HTTP errors so callers can choose to degrade rather
+    than retry: while the breaker is open every adapter call fails fast with
+    this exception until the cool-down elapses.
+    """
+
+
+class _CircuitBreaker:
+    """Per-adapter consecutive-failure breaker.
+
+    State is keyed by adapter name on the class so multiple adapter instances
+    pointing at the same remote share one breaker (cold-start outages tend to
+    affect every adapter routed at the same container). Opens after
+    ``failure_threshold`` consecutive failures and stays open for
+    ``cool_down_s`` seconds, after which the next call is allowed through as a
+    half-open probe; success closes the breaker, another failure re-opens it.
+    """
+
+    _registry: dict[str, "_CircuitBreaker"] = {}
+
+    def __init__(self, name: str, failure_threshold: int, cool_down_s: float) -> None:
+        self.name = name
+        self.failure_threshold = failure_threshold
+        self.cool_down_s = cool_down_s
+        self.consecutive_failures = 0
+        self.opened_at: float | None = None
+
+    @classmethod
+    def for_name(
+        cls, name: str, failure_threshold: int, cool_down_s: float
+    ) -> "_CircuitBreaker":
+        existing = cls._registry.get(name)
+        if existing is None:
+            existing = cls(name, failure_threshold, cool_down_s)
+            cls._registry[name] = existing
+        else:
+            # Allow newer adapter instances to update thresholds; primarily
+            # useful for tests that tweak knobs between cases.
+            existing.failure_threshold = failure_threshold
+            existing.cool_down_s = cool_down_s
+        return existing
+
+    @classmethod
+    def reset_all(cls) -> None:
+        """Test hook: clear all breaker state."""
+        cls._registry.clear()
+
+    def allow(self) -> bool:
+        if self.opened_at is None:
+            return True
+        if (time.monotonic() - self.opened_at) >= self.cool_down_s:
+            # Half-open probe: let one call through. We do NOT reset
+            # consecutive_failures here — only ``record_success`` does.
+            self.opened_at = None
+            return True
+        return False
+
+    def record_success(self) -> None:
+        self.consecutive_failures = 0
+        self.opened_at = None
+
+    def record_failure(self) -> None:
+        self.consecutive_failures += 1
+        if self.consecutive_failures >= self.failure_threshold and self.opened_at is None:
+            self.opened_at = time.monotonic()
+            log.error(
+                "circuit OPEN: adapter=%s consecutive_failures=%d cool_down_s=%.1f",
+                self.name,
+                self.consecutive_failures,
+                self.cool_down_s,
+            )
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    """Decide whether a failure from ``RemoteGraph.ainvoke`` is transient.
+
+    Retryable: connection errors, timeouts, generic transport errors, HTTP 5xx,
+    HTTP 429.
+    Non-retryable (fail fast): Pydantic ``ValidationError``,
+    ``ContractsVersionMismatch``, and any non-429 4xx HTTP status.
+    """
+    # Permanent errors — never retry.
+    if isinstance(exc, (ValidationError, ContractsVersionMismatch)):
+        return False
+
+    if isinstance(exc, httpx.HTTPStatusError):
+        status = exc.response.status_code if exc.response is not None else 0
+        if status == 429:
+            return True
+        if 500 <= status < 600:
+            return True
+        return False
+
+    # httpx.RequestError covers connect / read / write / pool timeouts and
+    # transport-level network failures.
+    if isinstance(exc, httpx.RequestError):
+        return True
+
+    if isinstance(exc, (asyncio.TimeoutError, ConnectionError)):
+        return True
+
+    # Anything else — surface immediately so unknown errors don't get masked
+    # behind silent retries.
+    return False
+
+
+async def _sleep_backoff(attempt: int, base: float, cap: float) -> None:
+    """Exponential backoff with full jitter. ``attempt`` is 1-indexed."""
+    expo = min(cap, base * (2 ** (attempt - 1)))
+    delay = random.uniform(0, expo)
+    await asyncio.sleep(delay)
 
 
 # ─── Env helpers ──────────────────────────────────────────────────────────
@@ -117,11 +240,71 @@ class _ValidatedRemoteGraph:
         headers: dict[str, str],
         input_cls: type[BaseModel],
         output_cls: type[BaseModel],
+        *,
+        max_attempts: int = 3,
+        backoff_base_s: float = 0.5,
+        backoff_cap_s: float = 8.0,
+        breaker_failure_threshold: int = 5,
+        breaker_cool_down_s: float = 30.0,
     ) -> None:
         self._name = name
         self._input_cls = input_cls
         self._output_cls = output_cls
         self._remote = RemoteGraph(name, url=url, headers=headers)
+        self._max_attempts = max(1, max_attempts)
+        self._backoff_base_s = backoff_base_s
+        self._backoff_cap_s = backoff_cap_s
+        self._breaker = _CircuitBreaker.for_name(
+            name,
+            failure_threshold=breaker_failure_threshold,
+            cool_down_s=breaker_cool_down_s,
+        )
+
+    async def _invoke_remote_with_retry(
+        self, state: dict[str, Any], config: dict[str, Any] | None
+    ) -> Any:
+        """Call ``_remote.ainvoke`` with exponential backoff + circuit breaker.
+
+        Only the network call is wrapped — input/output validation happens in
+        the caller and is intentionally outside the retry loop so transient
+        retries cannot mask permanent contract failures.
+        """
+        if not self._breaker.allow():
+            raise RemoteUnavailable(
+                f"{self._name}: circuit breaker open; refusing call until cool-down elapses"
+            )
+
+        last_exc: BaseException | None = None
+        for attempt in range(1, self._max_attempts + 1):
+            try:
+                result = await self._remote.ainvoke(state, config=config)
+            except BaseException as exc:  # noqa: BLE001 — re-raised below
+                last_exc = exc
+                if not _is_retryable(exc):
+                    self._breaker.record_failure()
+                    raise
+                if attempt >= self._max_attempts:
+                    self._breaker.record_failure()
+                    raise
+                log.warning(
+                    "remote retry: adapter=%s attempt=%d/%d reason=%s: %s",
+                    self._name,
+                    attempt,
+                    self._max_attempts,
+                    type(exc).__name__,
+                    exc,
+                )
+                await _sleep_backoff(
+                    attempt, self._backoff_base_s, self._backoff_cap_s
+                )
+                continue
+            else:
+                self._breaker.record_success()
+                return result
+
+        # Defensive: loop above either returns or raises. This is unreachable.
+        assert last_exc is not None
+        raise last_exc
 
     async def ainvoke(
         self, state: dict[str, Any], config: dict[str, Any] | None = None
@@ -130,7 +313,7 @@ class _ValidatedRemoteGraph:
         validate_remote_call(self._input_cls, self._output_cls, state, None)
         log.debug("remote invoke → %s (keys=%s)", self._name, list(state))
 
-        raw_output = await self._remote.ainvoke(state, config=config)
+        raw_output = await self._invoke_remote_with_retry(state, config=config)
         if not isinstance(raw_output, dict):
             # Defensive — LangGraph Server always returns a state dict, but a
             # bad deploy could return a raw string/null. Wrap so the Pydantic
@@ -279,6 +462,7 @@ def build_all_remote_adapters() -> dict[str, _ValidatedRemoteGraph]:
 
 
 __all__ = [
+    "RemoteUnavailable",
     "build_all_remote_adapters",
     "get_agentic_search_adapter",
     "get_bge_m3_embed_adapter",
