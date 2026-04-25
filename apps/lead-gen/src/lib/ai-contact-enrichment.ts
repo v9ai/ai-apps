@@ -1,5 +1,5 @@
-import OpenAI from "openai";
 import ogs from "open-graph-scraper";
+import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
 import { z } from "zod";
 import type { Contact } from "@/db/schema";
 
@@ -373,8 +373,7 @@ interface SynthesisInput {
 async function synthesizeAIProfile(
   input: SynthesisInput,
 ): Promise<z.infer<typeof SynthesisOutputSchema> | null> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return null;
+  if (!process.env.DEEPSEEK_API_KEY) return null;
 
   const hasData =
     input.position ||
@@ -404,13 +403,10 @@ Return JSON with exactly these fields:
 - synthesis_rationale: string or null — one sentence explaining the classification`;
 
   try {
-    const client = new OpenAI({
-      apiKey,
-      baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
-    });
+    const client = getDeepSeekClient();
 
     const response = await client.chat.completions.create({
-      model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro",
+      model: getDeepSeekModel(),
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: `Profile:\n${contextLines}` },
