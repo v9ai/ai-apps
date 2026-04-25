@@ -3,19 +3,21 @@
   "dependencies": ["."],
   "graphs": {
     "affirmations": "research_agent.affirmations_graph:graph",
-    "research": "research_agent.graph:graph",
-    "story": "research_agent.story_graph:graph",
-    "tts": "research_agent.tts_graph:graph",
+    "bogdan_discussion": "research_agent.bogdan_discussion_graph:graph",
+    "books": "research_agent.books_graph:graph",
     "deep_analysis": "research_agent.deep_analysis_graph:graph",
     "deep_analysis_v2": "research_agent.deep_analysis_v2_graph:graph",
+    "deep_goal_analysis": "research_agent.deep_goal_analysis_graph:graph",
+    "discussion_guide": "research_agent.discussion_guide_graph:graph",
+    "games": "research_agent.games_graph:graph",
+    "generate_therapy_research": "research_agent.generate_therapy_research_graph:graph",
+    "habits": "research_agent.habits_graph:graph",
     "journal_analysis": "research_agent.journal_analysis_graph:graph",
     "parent_advice": "research_agent.parent_advice_graph:graph",
-    "habits": "research_agent.habits_graph:graph",
-    "games": "research_agent.games_graph:graph",
+    "research": "research_agent.graph:graph",
     "routine_analysis": "research_agent.routine_analysis_graph:graph",
-    "books": "research_agent.books_graph:graph",
-    "generate_therapy_research": "research_agent.generate_therapy_research_graph:graph",
-    "bogdan_discussion": "research_agent.bogdan_discussion_graph:graph"
+    "story": "research_agent.story_graph:graph",
+    "tts": "research_agent.tts_graph:graph"
   },
   "env": ".env"
 }

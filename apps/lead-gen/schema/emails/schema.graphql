@@ -473,7 +473,7 @@ extend type Mutation {
 
 type ReplyDraft {
   id: Int!
-  receivedEmailId: Int!
+  receivedEmailId: Int
   contactId: Int!
   status: String!
   draftType: String!

@@ -44,7 +44,7 @@ from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
     deepseek_model_name,
-    make_llm,
+    make_deepseek_pro,
     merge_node_telemetry,
 )
 from .notify import notify_complete, notify_error
@@ -234,7 +234,7 @@ async def extract_category_conventions(state: PositioningState) -> dict:
     icp = state.get("icp") or {}
 
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.1)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
@@ -326,7 +326,7 @@ async def identify_white_space(state: PositioningState) -> dict:
     conventions = state.get("category_conventions") or []
 
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.1)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
@@ -489,7 +489,7 @@ async def draft_positioning_statement(state: PositioningState) -> dict:
     ]
 
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.1)
         result, tel = await ainvoke_json_with_telemetry(
             llm, messages, provider="deepseek"
         )
@@ -630,7 +630,7 @@ async def stress_test(state: PositioningState) -> dict:
         }
 
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.1)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [

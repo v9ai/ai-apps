@@ -22,6 +22,8 @@ from langgraph.graph import StateGraph, START, END
 
 import psycopg
 
+from research_agent import neon
+
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -101,7 +103,7 @@ def _conn_str() -> str:
 
 async def _update_job_progress(job_id: str, progress: int) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET progress = %s, updated_at = NOW() WHERE id = %s",
@@ -113,7 +115,7 @@ async def _update_job_progress(job_id: str, progress: int) -> None:
 
 async def _update_job_succeeded(job_id: str, payload: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'SUCCEEDED', progress = 100, "
@@ -126,7 +128,7 @@ async def _update_job_succeeded(job_id: str, payload: dict) -> None:
 
 async def _update_job_failed(job_id: str, error: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'FAILED', error = %s, "
@@ -164,7 +166,7 @@ async def load_scaffold_context(state: BogdanDiscussionState) -> dict:
     child_age: Optional[int] = None
 
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 # Profile
                 await cur.execute(
@@ -283,7 +285,7 @@ async def load_extended_context(state: BogdanDiscussionState) -> dict:
 
     ext: dict[str, str] = {}
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 # 1. Affirmations (active)
                 await cur.execute(
@@ -531,7 +533,7 @@ async def retrieve_and_compose(state: BogdanDiscussionState) -> dict:
         await _update_job_progress(job_id, 30)
 
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             # Bogdan-scoped entities: issues/journals/feedbacks/observations/analyses
             entity_candidates = await search_for_family_member(
                 conn,
@@ -994,7 +996,7 @@ async def _fetch_research_by_ids(ids: list[int]) -> dict[int, dict]:
     if not ids:
         return {}
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 placeholders = ",".join(["%s"] * len(ids))
                 await cur.execute(
@@ -1120,7 +1122,7 @@ async def persist(state: dict) -> dict:
         critique_payload = None
 
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "INSERT INTO bogdan_discussion_guides ("
@@ -1166,7 +1168,7 @@ async def finalize(state: dict) -> dict:
     return {"success": True, "message": "Bogdan discussion guide generated successfully."}
 
 
-def create_bogdan_discussion_graph():
+def create_bogdan_discussion_graph(checkpointer=None):
     builder = StateGraph(BogdanDiscussionState)
     builder.add_node("load_scaffold_context", load_scaffold_context)
     builder.add_node("load_extended_context", load_extended_context)
@@ -1194,7 +1196,11 @@ def create_bogdan_discussion_graph():
     builder.add_edge("persist", "finalize")
     builder.add_edge("finalize", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
 graph = create_bogdan_discussion_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_bogdan_discussion_graph, graph)

@@ -225,3 +225,29 @@ curl -X POST "$BASE/runs/wait" \
   -H 'content-type: application/json' \
   -d '{"assistant_id":"admin_chat","input":{"prompt":"ping","system":""}}'
 ```
+
+### DeepSeek secrets — where each lives
+
+The model catalog (`src/lib/deepseek/constants.ts`, `leadgen_agent/llm.py`,
+`mlx-training/_deepseek.py`, `backend/_shared/deepseek-constants.js`) is
+centralized, but the *runtime credentials* — `DEEPSEEK_API_KEY`,
+`DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`, `DEEPSEEK_MODEL_DEEP` — are set
+independently per deploy target. The mapping below is the source of truth so
+nobody has to grep five different config trees to figure out where the
+production key actually lives.
+
+| Deploy target | `DEEPSEEK_API_KEY` | `DEEPSEEK_BASE_URL` | `DEEPSEEK_MODEL[_DEEP]` |
+|---|---|---|---|
+| Local Next.js dev | `apps/lead-gen/.env.local` (gitignored) | unset → defaults to `https://api.deepseek.com/v1` (`leadgen_agent/llm.py:133`) | unset → defaults to `deepseek-v4-pro` (`.env.example:20-21`) |
+| Local LangGraph Python (`pnpm backend-dev`) | `backend/.env:14` (falls back to `.env.local`; `_deepseek.py:19` loads both) | `backend/.env:15` = `https://api.deepseek.com/v1` | `backend/.env:16-17` = `deepseek-v4-pro` |
+| Vercel (Next.js prod) | dashboard secret `DEEPSEEK_API_KEY` (not in repo) | dashboard env (optional — defaults match local) | dashboard env (optional) |
+| HF Space (LangGraph, `backend/Dockerfile` + `app.py`) | Space secret `DEEPSEEK_API_KEY` *(read directly by `leadgen_agent/llm.py:134` — no OpenAI alias)* | Space env `LLM_BASE_URL` = `https://api.deepseek.com` (used as `LLM_BASE_URL` for the OpenAI-compatible client) | Space env `LLM_MODEL` = `deepseek-v4-pro` |
+| CF Worker `lead-gen-core` | `wrangler secret put DEEPSEEK_API_KEY` → forwarded by `backend/core/src/index.js:21` | `vars.LLM_BASE_URL` in `backend/core/wrangler.jsonc:8` | `vars.LLM_MODEL` in `wrangler.jsonc:12` (no `_DEEP` variant — single tier) |
+| CF Worker `lead-gen-research` | `wrangler secret put DEEPSEEK_API_KEY` → forwarded by `backend/research/src/index.js:25` | `wrangler secret put DEEPSEEK_BASE_URL` (forwarded `index.js:26`) + `vars.LLM_BASE_URL` in `backend/research/wrangler.jsonc:12` | `vars.LLM_MODEL` in `wrangler.jsonc:16` |
+| Chrome extension | proxies through Next.js `/api/deepseek` (see `chrome-extension/src/services/deepseek.ts:21`) — never sees the key | n/a | n/a |
+| MLX scripts (`mlx-training/`) | reads `apps/lead-gen/.env.local` then `apps/lead-gen/.env` via `python-dotenv` (`_deepseek.py:18-20`) | same | same |
+
+Leak guard: `pnpm check:secret-leaks` scans staged diffs for the DeepSeek
+key shape (`sk-` + 32 hex). Run before every commit; wire it into a
+pre-commit hook on your own machine if you want it enforced (no global
+hook installed by default).

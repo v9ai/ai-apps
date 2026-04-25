@@ -123,6 +123,37 @@ def _is_local(base_url: str) -> bool:
     return "localhost" in base_url or "127.0.0.1" in base_url
 
 
+def deepseek_api_key() -> str:
+    """Return DEEPSEEK_API_KEY, raising RuntimeError if unset.
+
+    Use at the top of routes/scripts that genuinely require DeepSeek so the
+    failure mode is a clear configuration error instead of a downstream
+    "Bearer  " 401 from the API. Mirrors ``mlx-training/_deepseek.py``'s
+    ``deepseek_api_key()`` so the two Python entry points share one shape.
+    """
+    key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if not key:
+        raise RuntimeError(
+            "DEEPSEEK_API_KEY not set. Add it to backend/.env or the deploy "
+            "target's secrets."
+        )
+    return key
+
+
+def is_deepseek_configured() -> bool:
+    """Non-raising form for code paths with a non-DeepSeek fallback (e.g.
+    local-Qwen-first paths in the email graphs / classifier)."""
+    return bool(os.environ.get("DEEPSEEK_API_KEY"))
+
+
+def deepseek_base_url() -> str:
+    """Return DEEPSEEK_BASE_URL with the conventional default. Trailing
+    slash stripped so callers can append ``/chat/completions`` cleanly.
+
+    Mirrors ``mlx-training/_deepseek.py``'s ``deepseek_base_url()``."""
+    return os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1").rstrip("/")
+
+
 def _deepseek_cfg(tier: str | None) -> tuple[str, str, str]:
     """Resolve (base_url, api_key, model) for the DeepSeek provider.
 
@@ -130,10 +161,11 @@ def _deepseek_cfg(tier: str | None) -> tuple[str, str, str]:
     pin to DeepSeek without disturbing existing graphs that still default to
     local Qwen via LLM_BASE_URL.
     """
-    base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
+    # Note: api_key is read non-strictly here so the LRU cache still builds
+    # the client — _make_llm_cached's downstream openai SDK call surfaces
+    # the missing-key error consistently with how legacy callers expected.
     api_key = os.environ.get("DEEPSEEK_API_KEY", "")
-    model = deepseek_model_name(tier)
-    return base_url, api_key, model
+    return deepseek_base_url(), api_key, deepseek_model_name(tier)
 
 
 def _email_llm_cfg() -> tuple[str, str, str]:
@@ -233,6 +265,28 @@ def make_llm(
             temperature = 0.2
     # Round so float-noise doesn't blow the cache (0.2000001 vs 0.2).
     return _make_llm_cached(provider, tier, round(temperature, 3))
+
+
+def make_deepseek_pro(temperature: float | None = None) -> ChatOpenAI:
+    """Shortcut for ``make_llm(provider="deepseek", tier="deep", temperature=...)``.
+
+    Most product-intelligence graphs reach for the deep tier — this saves the
+    repeated keyword args and reads better at call sites where the model
+    choice is already implied by context.
+    """
+    return make_llm(temperature=temperature, provider="deepseek", tier="deep")
+
+
+def make_deepseek_flash(temperature: float | None = None) -> ChatOpenAI:
+    """Shortcut for ``make_llm(provider="deepseek", tier="standard", temperature=...)``.
+
+    Use for summary / classification nodes where reasoning depth isn't needed.
+    Both tiers currently default to ``deepseek-v4-pro`` (see
+    ``deepseek_model_name``); the standard tier exists so deployments can
+    cheaply override via ``DEEPSEEK_MODEL`` independently of
+    ``DEEPSEEK_MODEL_DEEP``.
+    """
+    return make_llm(temperature=temperature, provider="deepseek", tier="standard")
 
 
 def supports_json_mode(*, provider: str | None = None) -> bool:

@@ -54,10 +54,12 @@ def judge_model_label() -> str:
 
 def judge_available() -> bool:
     """At least one judge path is usable."""
+    from leadgen_agent.llm import is_deepseek_configured
+
     if strong_judge_requested() and _anthropic_available() and os.environ.get("ANTHROPIC_API_KEY"):
         return True
     # DeepSeek fallback — needs the key.
-    return bool(os.environ.get("DEEPSEEK_API_KEY"))
+    return is_deepseek_configured()
 
 
 # ── Judge prompt template ───────────────────────────────────────────────

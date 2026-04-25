@@ -15,6 +15,8 @@ from deepseek_client import ChatMessage, DeepSeekClient, DeepSeekConfig
 
 import psycopg
 
+from research_agent import neon
+
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -58,7 +60,7 @@ def _conn_str() -> str:
 
 async def _update_job_progress(job_id: str, progress: int) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET progress = %s, updated_at = NOW() WHERE id = %s",
@@ -70,7 +72,7 @@ async def _update_job_progress(job_id: str, progress: int) -> None:
 
 async def _update_job_succeeded(job_id: str, payload: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'SUCCEEDED', progress = 100, "
@@ -83,7 +85,7 @@ async def _update_job_succeeded(job_id: str, payload: dict) -> None:
 
 async def _update_job_failed(job_id: str, error: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'FAILED', error = %s, "
@@ -112,7 +114,7 @@ async def collect_data(state: BooksState) -> dict:
 
     conn_str = _conn_str()
     try:
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 goal_title: str
                 goal_desc: Optional[str] = None
@@ -809,9 +811,19 @@ async def verify_books(state: dict) -> dict:
     async with httpx.AsyncClient(
         timeout=timeout, headers={"User-Agent": "research-thera books_graph (+verify)"}
     ) as client:
-        verdicts = await asyncio.gather(
-            *[_verify_one_book(b["title"], b.get("authors") or [], client, semaphore) for b in books]
+        verdicts_raw = await asyncio.gather(
+            *[_verify_one_book(b["title"], b.get("authors") or [], client, semaphore) for b in books],
+            return_exceptions=True,
         )
+        # Normalize any exceptions into rejection-shaped dicts so downstream .get()
+        # calls keep working and transient failures roll into the api_errors tally.
+        verdicts: list[dict] = []
+        for b, v in zip(books, verdicts_raw):
+            if isinstance(v, BaseException):
+                print(f"[books.verify_books] verify raised for \"{b['title']}\": {type(v).__name__}: {v}")
+                verdicts.append({"verified": False, "reason": f"api error: {type(v).__name__}: {v}"})
+            else:
+                verdicts.append(v)
 
         verified: list[dict] = []
         rejections: list[dict] = []
@@ -849,9 +861,17 @@ async def verify_books(state: dict) -> dict:
             used = {b["title"].lower() for b in books}
             leftover = [c for c in (state.get("_candidates") or []) if c["title"].lower() not in used]
             if leftover:
-                leftover_verdicts = await asyncio.gather(
-                    *[_verify_one_book(c["title"], c.get("authors") or [], client, semaphore) for c in leftover[:8]]
+                leftover_verdicts_raw = await asyncio.gather(
+                    *[_verify_one_book(c["title"], c.get("authors") or [], client, semaphore) for c in leftover[:8]],
+                    return_exceptions=True,
                 )
+                leftover_verdicts: list[dict] = []
+                for c, v in zip(leftover[:8], leftover_verdicts_raw):
+                    if isinstance(v, BaseException):
+                        print(f"[books.verify_books] backfill verify raised for \"{c['title']}\": {type(v).__name__}: {v}")
+                        leftover_verdicts.append({"verified": False, "reason": f"api error: {type(v).__name__}: {v}"})
+                    else:
+                        leftover_verdicts.append(v)
                 for cand, verdict in zip(leftover[:8], leftover_verdicts):
                     if len(verified) >= 6:
                         break
@@ -958,7 +978,7 @@ async def persist(state: dict) -> dict:
         }
 
     try:
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 for b in books_raw:
                     await cur.execute(
@@ -1045,7 +1065,7 @@ async def _finalize(state: dict) -> dict:
     }
 
 
-def create_books_graph():
+def create_books_graph(checkpointer=None):
     builder = StateGraph(BooksState)
     builder.add_node("collect_data", collect_data)
     builder.add_node("generate_candidates", generate_candidates)
@@ -1062,8 +1082,12 @@ def create_books_graph():
     builder.add_edge("persist", "finalize")
     builder.add_edge("finalize", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
-# Module-level instance for LangGraph server
+# Module-level instance for LangGraph server (eager, no checkpointer).
 graph = create_books_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_books_graph, graph)

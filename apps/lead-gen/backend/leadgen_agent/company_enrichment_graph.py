@@ -41,7 +41,7 @@ from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
     deepseek_model_name,
-    make_llm,
+    make_deepseek_pro,
     merge_node_telemetry,
 )
 from .loaders import fetch_url
@@ -225,7 +225,7 @@ async def classify(state: CompanyEnrichmentState) -> dict:
     classify_source = "llm"
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [

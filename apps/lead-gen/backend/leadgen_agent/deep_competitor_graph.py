@@ -55,7 +55,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
 from .deep_icp_graph import _dsn, _product_brief
-from .llm import ainvoke_json, deepseek_model_name, make_llm
+from .llm import ainvoke_json, deepseek_model_name, make_deepseek_pro
 from .loaders import fetch_url
 from .notify import notify_complete, notify_error
 from .product_intel_schemas import product_intel_graph_meta
@@ -295,7 +295,7 @@ async def pricing_deep(state: DeepCompetitorState) -> dict:
     markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
 
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.1)
         result = await _ainvoke_json_retry(
             llm,
             [
@@ -385,7 +385,7 @@ async def features_deep(state: DeepCompetitorState) -> dict:
     markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result = await _ainvoke_json_retry(
             llm,
             [
@@ -457,7 +457,7 @@ async def integrations_deep(state: DeepCompetitorState) -> dict:
     markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
 
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.1)
         result = await _ainvoke_json_retry(
             llm,
             [
@@ -544,7 +544,7 @@ async def changelog(state: DeepCompetitorState) -> dict:
         }
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result = await _ainvoke_json_retry(
             llm,
             [
@@ -642,7 +642,7 @@ async def positioning_shift(state: DeepCompetitorState) -> dict:
     markdown = (page.get("markdown") or "")[:_PAGE_EXCERPT_CHARS]
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result = await _ainvoke_json_retry(
             llm,
             [
@@ -725,7 +725,7 @@ async def funding_headcount(state: DeepCompetitorState) -> dict:
         }
 
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.1)
         result = await _ainvoke_json_retry(
             llm,
             [

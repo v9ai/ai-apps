@@ -1,7 +1,27 @@
 "use client";
 
-import { useState } from "react";
-import { Badge, Box, Button, Callout, Flex, Spinner, Text, TextArea } from "@radix-ui/themes";
+import { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  Badge,
+  Box,
+  Button,
+  Callout,
+  Flex,
+  IconButton,
+  SegmentedControl,
+  Spinner,
+  Text,
+  TextArea,
+} from "@radix-ui/themes";
+import {
+  CheckIcon,
+  Cross2Icon,
+  ExclamationTriangleIcon,
+  Pencil1Icon,
+  PaperPlaneIcon,
+  ReloadIcon,
+} from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
 import {
   useGetReplyDraftsQuery,
@@ -20,10 +40,75 @@ const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "blue" | "gray"> =
   info_request: "blue",
 };
 
+const STATUS_FILTERS = ["pending", "sent", "dismissed"] as const;
+type StatusFilter = (typeof STATUS_FILTERS)[number];
+
+function titleCase(s: string): string {
+  return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function pluralize(n: number, one: string, many: string = `${one}s`): string {
+  return n === 1 ? one : many;
+}
+
+function relativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  const now = Date.now();
+  const diff = Math.max(0, now - then);
+  const min = Math.floor(diff / 60_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+const draftCardCss = css({
+  position: "relative",
+  border: "1px solid var(--gray-5)",
+  borderRadius: "var(--radius-3)",
+  padding: "16px",
+  transition: "border-color 120ms ease, background-color 120ms ease",
+  _hover: {
+    borderColor: "var(--gray-7)",
+    backgroundColor: "var(--gray-a2)",
+  },
+});
+
+const bodyCollapsedCss = css({
+  position: "relative",
+  display: "block",
+  whiteSpace: "pre-wrap",
+  maxHeight: "120px",
+  overflow: "hidden",
+  marginBottom: "8px",
+  _after: {
+    content: '""',
+    position: "absolute",
+    insetX: 0,
+    bottom: 0,
+    height: "36px",
+    background:
+      "linear-gradient(to bottom, transparent, var(--color-panel-solid))",
+    pointerEvents: "none",
+  },
+});
+
+const bodyExpandedCss = css({
+  display: "block",
+  whiteSpace: "pre-wrap",
+  marginBottom: "8px",
+});
+
 export function DraftReviewPanel() {
   const [editingDraftId, setEditingDraftId] = useState<number | null>(null);
   const [editedBody, setEditedBody] = useState("");
-  const [statusFilter, setStatusFilter] = useState("pending");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("pending");
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [pendingActionId, setPendingActionId] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { data, loading, refetch } = useGetReplyDraftsQuery({
     variables: { status: statusFilter, limit: 50 },
@@ -34,102 +119,268 @@ export function DraftReviewPanel() {
     fetchPolicy: "cache-and-network",
   });
 
-  const [approveDraft, { loading: approving }] = useApproveAndSendDraftMutation();
+  const [approveDraft] = useApproveAndSendDraftMutation();
   const [dismissDraft] = useDismissDraftMutation();
   const [approveAll, { loading: approvingAll }] = useApproveAllDraftsMutation();
-  const [dismissAll] = useDismissAllDraftsMutation();
+  const [dismissAll, { loading: dismissingAll }] = useDismissAllDraftsMutation();
   const [generatePending, { loading: generating }] = useGenerateDraftsForPendingMutation();
   const [generateFollowUps, { loading: generatingFollowUps }] = useGenerateFollowUpDraftsMutation();
 
   const drafts = data?.replyDrafts?.drafts ?? [];
   const summary = summaryData?.draftSummary;
+  const pendingCount = summary?.pending ?? 0;
 
   const pendingDraftIds = drafts.filter((d) => d.status === "pending").map((d) => d.id);
 
-  const handleApprove = async (draftId: number) => {
-    const body = editingDraftId === draftId ? editedBody : undefined;
-    await approveDraft({
-      variables: { draftId, editedBody: body },
-    });
+  // Reset edit state if user switches filter mid-edit
+  useEffect(() => {
     setEditingDraftId(null);
+    setEditedBody("");
+  }, [statusFilter]);
+
+  const refetchAll = () => {
     refetch();
     refetchSummary();
+  };
+
+  const reportError = (e: unknown, fallback: string) => {
+    const msg = e instanceof Error ? e.message : fallback;
+    setErrorMessage(msg);
+  };
+
+  const handleApprove = async (draftId: number) => {
+    setErrorMessage(null);
+    setPendingActionId(draftId);
+    try {
+      const body = editingDraftId === draftId ? editedBody : undefined;
+      await approveDraft({ variables: { draftId, editedBody: body } });
+      setEditingDraftId(null);
+      refetchAll();
+    } catch (e) {
+      reportError(e, "Failed to send draft.");
+    } finally {
+      setPendingActionId(null);
+    }
   };
 
   const handleDismiss = async (draftId: number) => {
-    await dismissDraft({ variables: { draftId } });
-    refetch();
-    refetchSummary();
+    setErrorMessage(null);
+    setPendingActionId(draftId);
+    try {
+      await dismissDraft({ variables: { draftId } });
+      refetchAll();
+    } catch (e) {
+      reportError(e, "Failed to dismiss draft.");
+    } finally {
+      setPendingActionId(null);
+    }
   };
 
   const handleApproveAll = async () => {
-    if (!confirm(`Send ${pendingDraftIds.length} drafts?`)) return;
-    await approveAll({ variables: { draftIds: pendingDraftIds } });
-    refetch();
-    refetchSummary();
+    setErrorMessage(null);
+    try {
+      await approveAll({ variables: { draftIds: pendingDraftIds } });
+      refetchAll();
+    } catch (e) {
+      reportError(e, "Failed to send drafts.");
+    }
   };
 
   const handleDismissAll = async () => {
-    if (!confirm(`Dismiss ${pendingDraftIds.length} drafts?`)) return;
-    await dismissAll({ variables: { draftIds: pendingDraftIds } });
-    refetch();
-    refetchSummary();
+    setErrorMessage(null);
+    try {
+      await dismissAll({ variables: { draftIds: pendingDraftIds } });
+      refetchAll();
+    } catch (e) {
+      reportError(e, "Failed to dismiss drafts.");
+    }
   };
 
   const handleGeneratePending = async () => {
-    await generatePending();
-    refetch();
-    refetchSummary();
+    setErrorMessage(null);
+    try {
+      await generatePending();
+      refetchAll();
+    } catch (e) {
+      reportError(e, "Failed to generate reply drafts.");
+    }
   };
 
   const handleGenerateFollowUps = async () => {
-    await generateFollowUps();
-    refetch();
-    refetchSummary();
+    setErrorMessage(null);
+    try {
+      await generateFollowUps();
+      refetchAll();
+    } catch (e) {
+      reportError(e, "Failed to generate follow-ups.");
+    }
   };
+
+  const toggleExpanded = (id: number) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const showBulkActions = statusFilter === "pending";
 
   return (
     <Box>
       {/* Summary bar */}
       {summary && (
         <Flex gap="3" mb="4" wrap="wrap" align="center">
-          <Badge size="2" color="orange">{summary.pending} pending</Badge>
-          <Badge size="2" color="green">{summary.sent} sent</Badge>
-          <Badge size="2" color="gray">{summary.dismissed} dismissed</Badge>
-          {summary.byClassification.map((c) => (
-            <Badge
-              key={c.classification}
-              size="1"
-              color={CLASSIFICATION_COLORS[c.classification] ?? "gray"}
-              variant="soft"
-            >
-              {c.classification}: {c.count}
+          <Flex gap="2" align="center">
+            <Badge size="2" color="orange" variant="soft">
+              {summary.pending} pending
             </Badge>
-          ))}
+            <Badge size="2" color="green" variant="soft">
+              {summary.sent} sent
+            </Badge>
+            <Badge size="2" color="gray" variant="soft">
+              {summary.dismissed} dismissed
+            </Badge>
+          </Flex>
+          {summary.byClassification.length > 0 && (
+            <>
+              <Box
+                className={css({
+                  width: "1px",
+                  alignSelf: "stretch",
+                  backgroundColor: "var(--gray-6)",
+                })}
+              />
+              <Flex gap="2" align="center" wrap="wrap">
+                {summary.byClassification.map((c) => (
+                  <Badge
+                    key={c.classification}
+                    size="1"
+                    color={CLASSIFICATION_COLORS[c.classification] ?? "gray"}
+                    variant="soft"
+                  >
+                    {titleCase(c.classification)}: {c.count}
+                  </Badge>
+                ))}
+              </Flex>
+            </>
+          )}
+          <Box flexGrow="1" />
+          <IconButton
+            size="2"
+            variant="ghost"
+            color="gray"
+            aria-label="Refresh drafts"
+            onClick={refetchAll}
+          >
+            <ReloadIcon />
+          </IconButton>
         </Flex>
       )}
 
+      {/* Error surface */}
+      {errorMessage && (
+        <Callout.Root color="red" role="alert" mb="3">
+          <Callout.Icon>
+            <ExclamationTriangleIcon />
+          </Callout.Icon>
+          <Callout.Text>
+            {errorMessage}{" "}
+            <Button
+              size="1"
+              variant="ghost"
+              onClick={() => setErrorMessage(null)}
+              aria-label="Dismiss error"
+            >
+              Dismiss
+            </Button>
+          </Callout.Text>
+        </Callout.Root>
+      )}
+
       {/* Actions */}
-      <Flex gap="2" mb="4" wrap="wrap">
-        <Button
-          size="2"
-          variant="solid"
-          color="green"
-          disabled={pendingDraftIds.length === 0 || approvingAll}
-          onClick={handleApproveAll}
-        >
-          {approvingAll ? <Spinner size="1" /> : null}
-          Send All ({pendingDraftIds.length})
-        </Button>
-        <Button
-          size="2"
-          variant="soft"
-          color="red"
-          disabled={pendingDraftIds.length === 0}
-          onClick={handleDismissAll}
-        >
-          Dismiss All
-        </Button>
+      <Flex gap="2" mb="4" wrap="wrap" align="center">
+        {showBulkActions && (
+          <>
+            <AlertDialog.Root>
+              <AlertDialog.Trigger>
+                <Button
+                  size="2"
+                  variant="solid"
+                  color="green"
+                  disabled={pendingDraftIds.length === 0 || approvingAll}
+                >
+                  {approvingAll ? <Spinner size="1" /> : <PaperPlaneIcon />}
+                  Send {pendingDraftIds.length}{" "}
+                  {pluralize(pendingDraftIds.length, "draft")}
+                </Button>
+              </AlertDialog.Trigger>
+              <AlertDialog.Content maxWidth="440px">
+                <AlertDialog.Title>
+                  Send {pendingDraftIds.length}{" "}
+                  {pluralize(pendingDraftIds.length, "draft")}?
+                </AlertDialog.Title>
+                <AlertDialog.Description size="2">
+                  This will deliver {pendingDraftIds.length}{" "}
+                  {pluralize(pendingDraftIds.length, "email")} to real
+                  prospects. This action cannot be undone.
+                </AlertDialog.Description>
+                <Flex gap="3" mt="4" justify="end">
+                  <AlertDialog.Cancel>
+                    <Button variant="soft" color="gray">
+                      Cancel
+                    </Button>
+                  </AlertDialog.Cancel>
+                  <AlertDialog.Action>
+                    <Button variant="solid" color="green" onClick={handleApproveAll}>
+                      Send {pluralize(pendingDraftIds.length, "draft")}
+                    </Button>
+                  </AlertDialog.Action>
+                </Flex>
+              </AlertDialog.Content>
+            </AlertDialog.Root>
+
+            <AlertDialog.Root>
+              <AlertDialog.Trigger>
+                <Button
+                  size="2"
+                  variant="soft"
+                  color="red"
+                  disabled={pendingDraftIds.length === 0 || dismissingAll}
+                >
+                  {dismissingAll ? <Spinner size="1" /> : null}
+                  Dismiss {pendingDraftIds.length}
+                </Button>
+              </AlertDialog.Trigger>
+              <AlertDialog.Content maxWidth="440px">
+                <AlertDialog.Title>
+                  Dismiss {pendingDraftIds.length}{" "}
+                  {pluralize(pendingDraftIds.length, "draft")}?
+                </AlertDialog.Title>
+                <AlertDialog.Description size="2">
+                  Drafts will be archived without sending. You can regenerate
+                  them later.
+                </AlertDialog.Description>
+                <Flex gap="3" mt="4" justify="end">
+                  <AlertDialog.Cancel>
+                    <Button variant="soft" color="gray">
+                      Cancel
+                    </Button>
+                  </AlertDialog.Cancel>
+                  <AlertDialog.Action>
+                    <Button variant="solid" color="red" onClick={handleDismissAll}>
+                      Dismiss
+                    </Button>
+                  </AlertDialog.Action>
+                </Flex>
+              </AlertDialog.Content>
+            </AlertDialog.Root>
+
+            <Box flexGrow="1" />
+          </>
+        )}
+
         <Button
           size="2"
           variant="soft"
@@ -151,18 +402,20 @@ export function DraftReviewPanel() {
       </Flex>
 
       {/* Status filter */}
-      <Flex gap="1" mb="3">
-        {["pending", "sent", "dismissed"].map((s) => (
-          <Button
-            key={s}
-            size="1"
-            variant={statusFilter === s ? "solid" : "ghost"}
-            onClick={() => setStatusFilter(s)}
-          >
-            {s}
-          </Button>
-        ))}
-      </Flex>
+      <Box mb="3">
+        <SegmentedControl.Root
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+          size="1"
+        >
+          {STATUS_FILTERS.map((s) => (
+            <SegmentedControl.Item key={s} value={s}>
+              {titleCase(s)}
+              {s === "pending" && pendingCount > 0 ? ` (${pendingCount})` : ""}
+            </SegmentedControl.Item>
+          ))}
+        </SegmentedControl.Root>
+      </Box>
 
       {/* Draft list */}
       {loading && !data ? (
@@ -171,118 +424,173 @@ export function DraftReviewPanel() {
         </Flex>
       ) : drafts.length === 0 ? (
         <Callout.Root color="gray">
-          <Callout.Text>No {statusFilter} drafts.</Callout.Text>
+          <Callout.Text>
+            <Text as="div" weight="medium" mb="1">
+              No {statusFilter} drafts.
+            </Text>
+            {statusFilter === "pending" && (
+              <Flex gap="2" mt="2" wrap="wrap">
+                <Button size="1" variant="soft" onClick={handleGeneratePending} disabled={generating}>
+                  {generating ? <Spinner size="1" /> : null}
+                  Generate Reply Drafts
+                </Button>
+                <Button size="1" variant="soft" onClick={handleGenerateFollowUps} disabled={generatingFollowUps}>
+                  {generatingFollowUps ? <Spinner size="1" /> : null}
+                  Generate Follow-ups
+                </Button>
+              </Flex>
+            )}
+          </Callout.Text>
         </Callout.Root>
       ) : (
         <Flex direction="column" gap="3">
-          {drafts.map((draft) => (
-            <Box
-              key={draft.id}
-              className={css({
-                border: "1px solid var(--gray-5)",
-                borderRadius: "var(--radius-3)",
-                padding: "16px",
-              })}
-            >
-              <Flex justify="between" align="start" mb="2">
-                <Box>
-                  <Flex gap="2" align="center" mb="1">
-                    <Text size="2" weight="bold">{draft.contactName}</Text>
-                    {draft.classification && (
+          {drafts.map((draft) => {
+            const isEditing = editingDraftId === draft.id;
+            const isExpanded = expandedIds.has(draft.id);
+            const isThisRowPending = pendingActionId === draft.id;
+            const classificationColor =
+              CLASSIFICATION_COLORS[draft.classification ?? ""] ?? "gray";
+            return (
+              <Box
+                key={draft.id}
+                className={draftCardCss}
+                style={{
+                  opacity: isThisRowPending ? 0.6 : 1,
+                  pointerEvents: isThisRowPending ? "none" : "auto",
+                }}
+              >
+                <Flex justify="between" align="start" mb="2" gap="3">
+                  <Box>
+                    <Flex gap="2" align="center" mb="1" wrap="wrap">
+                      <Text size="3" weight="bold">
+                        {draft.contactName}
+                      </Text>
+                      {draft.classification && (
+                        <Badge
+                          size="1"
+                          color={classificationColor}
+                          variant="soft"
+                        >
+                          {titleCase(draft.classification)}
+                          {draft.classificationConfidence != null &&
+                            ` · ${Math.round(draft.classificationConfidence * 100)}%`}
+                        </Badge>
+                      )}
                       <Badge
                         size="1"
-                        color={CLASSIFICATION_COLORS[draft.classification] ?? "gray"}
-                        variant="soft"
+                        variant="outline"
+                        color={draft.draftType === "follow_up" ? "orange" : "blue"}
                       >
-                        {draft.classification}
-                        {draft.classificationConfidence != null &&
-                          ` ${Math.round(draft.classificationConfidence * 100)}%`}
+                        {draft.draftType === "follow_up" ? "Follow-up" : "Reply"}
                       </Badge>
-                    )}
-                    <Badge size="1" variant="surface" color={draft.draftType === "follow_up" ? "orange" : "blue"}>
-                      {draft.draftType === "follow_up" ? "Follow-up" : "Reply"}
-                    </Badge>
-                  </Flex>
-                  <Text size="1" color="gray">{draft.contactEmail}</Text>
-                  {draft.companyName && (
-                    <Text size="1" color="gray"> - {draft.companyName}</Text>
-                  )}
-                </Box>
-                <Text size="1" color="gray">
-                  {new Date(draft.createdAt).toLocaleDateString()}
-                </Text>
-              </Flex>
-
-              <Text size="2" weight="medium" mb="1" style={{ display: "block" }}>
-                {draft.subject}
-              </Text>
-
-              {editingDraftId === draft.id ? (
-                <TextArea
-                  size="2"
-                  value={editedBody}
-                  onChange={(e) => setEditedBody(e.target.value)}
-                  style={{ minHeight: "120px", marginBottom: "8px" }}
-                />
-              ) : (
-                <Text
-                  size="1"
-                  color="gray"
-                  className={css({
-                    display: "block",
-                    whiteSpace: "pre-wrap",
-                    maxHeight: "120px",
-                    overflow: "hidden",
-                    marginBottom: "8px",
-                  })}
-                >
-                  {draft.bodyText}
-                </Text>
-              )}
-
-              {draft.status === "pending" && (
-                <Flex gap="2">
-                  <Button
+                    </Flex>
+                    <Text size="1" color="gray">
+                      {draft.contactEmail}
+                      {draft.companyName ? ` · ${draft.companyName}` : ""}
+                    </Text>
+                  </Box>
+                  <Text
                     size="1"
-                    color="green"
-                    disabled={approving}
-                    onClick={() => handleApprove(draft.id)}
+                    color="gray"
+                    title={new Date(draft.createdAt).toLocaleString()}
                   >
-                    {approving ? <Spinner size="1" /> : null}
-                    Send
-                  </Button>
-                  {editingDraftId === draft.id ? (
+                    <time dateTime={draft.createdAt}>
+                      {relativeTime(draft.createdAt)}
+                    </time>
+                  </Text>
+                </Flex>
+
+                <Text size="2" weight="medium" mb="1" style={{ display: "block" }}>
+                  {draft.subject}
+                </Text>
+
+                {isEditing ? (
+                  <TextArea
+                    size="2"
+                    value={editedBody}
+                    onChange={(e) => setEditedBody(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setEditingDraftId(null);
+                      }
+                    }}
+                    aria-label={`Edit draft to ${draft.contactName}`}
+                    style={{ minHeight: "160px", marginBottom: "8px" }}
+                  />
+                ) : (
+                  <>
+                    <Text
+                      size="1"
+                      color="gray"
+                      className={isExpanded ? bodyExpandedCss : bodyCollapsedCss}
+                    >
+                      {draft.bodyText}
+                    </Text>
+                    {(draft.bodyText?.length ?? 0) > 200 && (
+                      <Button
+                        size="1"
+                        variant="ghost"
+                        color="gray"
+                        mb="2"
+                        onClick={() => toggleExpanded(draft.id)}
+                      >
+                        {isExpanded ? "Show less" : "Show full draft"}
+                      </Button>
+                    )}
+                  </>
+                )}
+
+                {draft.status === "pending" && (
+                  <Flex gap="2" wrap="wrap">
                     <Button
                       size="1"
-                      variant="ghost"
-                      onClick={() => setEditingDraftId(null)}
+                      color="green"
+                      disabled={isThisRowPending}
+                      onClick={() => handleApprove(draft.id)}
+                      aria-label={`Send draft to ${draft.contactName}`}
                     >
-                      Cancel Edit
+                      {isThisRowPending ? <Spinner size="1" /> : <CheckIcon />}
+                      Send
                     </Button>
-                  ) : (
+                    {isEditing ? (
+                      <Button
+                        size="1"
+                        variant="ghost"
+                        onClick={() => setEditingDraftId(null)}
+                        aria-label="Cancel edit"
+                      >
+                        Cancel edit
+                      </Button>
+                    ) : (
+                      <Button
+                        size="1"
+                        variant="soft"
+                        onClick={() => {
+                          setEditingDraftId(draft.id);
+                          setEditedBody(draft.bodyText ?? "");
+                        }}
+                        aria-label={`Edit draft to ${draft.contactName}`}
+                      >
+                        <Pencil1Icon />
+                        Edit
+                      </Button>
+                    )}
                     <Button
                       size="1"
                       variant="soft"
-                      onClick={() => {
-                        setEditingDraftId(draft.id);
-                        setEditedBody(draft.bodyText);
-                      }}
+                      color="red"
+                      disabled={isThisRowPending}
+                      onClick={() => handleDismiss(draft.id)}
+                      aria-label={`Dismiss draft to ${draft.contactName}`}
                     >
-                      Edit
+                      <Cross2Icon />
+                      Dismiss
                     </Button>
-                  )}
-                  <Button
-                    size="1"
-                    variant="soft"
-                    color="red"
-                    onClick={() => handleDismiss(draft.id)}
-                  >
-                    Dismiss
-                  </Button>
-                </Flex>
-              )}
-            </Box>
-          ))}
+                  </Flex>
+                )}
+              </Box>
+            );
+          })}
         </Flex>
       )}
     </Box>

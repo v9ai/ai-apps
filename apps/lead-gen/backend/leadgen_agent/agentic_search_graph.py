@@ -52,7 +52,7 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from .llm import ainvoke_json, make_llm
+from .llm import ainvoke_json, make_deepseek_flash
 
 log = logging.getLogger(__name__)
 
@@ -491,7 +491,7 @@ async def decompose_node(state: AgenticSearchState) -> dict:
     if not query:
         return {"sub_queries": []}
 
-    llm = make_llm(provider="deepseek")
+    llm = make_deepseek_flash()
     system = (
         f"You decompose a codebase search query into up to {workers} parallel, independent "
         "sub-queries. Each sub-query investigates a different angle simultaneously. "
@@ -591,7 +591,7 @@ async def synthesize_node(state: AgenticSearchState) -> dict:
         f"### {f['angle']} angle\n{f['findings']}" for f in findings
     )
 
-    llm = make_llm(provider="deepseek")
+    llm = make_deepseek_flash()
     system = (
         "You are a synthesis agent. Multiple parallel workers each investigated a different "
         "angle of a codebase search query. Merge their findings into one concise, deduplicated "

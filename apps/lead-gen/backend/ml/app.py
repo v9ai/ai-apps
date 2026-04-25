@@ -53,6 +53,50 @@ _models_ready: bool = False
 # letting one container's secret rotate without invalidating the other.
 BearerTokenMiddleware = make_bearer_token_middleware("ML_INTERNAL_AUTH_TOKEN")
 
+# Module-level readiness flag flipped by the lifespan after model warm-up
+# completes. /health reports it so CF / load balancers don't route traffic to
+# a Container whose JobBERT singletons are still downloading multi-GB weights.
+_models_ready: bool = False
+
+
+async def _warm_models() -> None:
+    """Force singleton load for both model stacks before /health reports OK.
+
+    bge_m3_embed already eager-loads on import (gated by ML_EAGER_LOAD), but
+    jobbert_ner is purely lazy — the first /runs/wait pays the JobBERT-v3 +
+    skill-classifier load cost (multi-GB on a cold image with no baked
+    weights). Run both warmups off the event loop so the lifespan stays
+    snappy and exceptions surface in logs without aborting startup (the
+    Container should still come up; first request will retry the load).
+    """
+    global _models_ready
+    if os.environ.get("ML_EAGER_LOAD", "1") != "1":
+        log.info("ML_EAGER_LOAD=0 — skipping model warm-up")
+        _models_ready = True
+        return
+
+    import anyio  # local import keeps lifespan import graph slim
+
+    def _warm_bge() -> None:
+        from ml_graphs.bge_m3_embed import _get_model
+
+        _get_model()
+
+    def _warm_jobbert() -> None:
+        # Touch both the embedder and the NER classifier singletons.
+        from leadgen_agent.jobbert_infer import _get_classifier, _get_embedder
+
+        _get_embedder()
+        _get_classifier()
+
+    try:
+        await anyio.to_thread.run_sync(_warm_bge)
+        await anyio.to_thread.run_sync(_warm_jobbert)
+        _models_ready = True
+        log.info("ml model singletons warm")
+    except Exception:  # noqa: BLE001 — surface in logs, don't kill the process
+        log.exception("model warm-up failed; first request will retry")
+
 
 async def _warm_models() -> None:
     """Force singleton load for both model stacks before /health reports OK.

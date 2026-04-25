@@ -14,12 +14,22 @@ from pathlib import Path
 from typing import Any, Optional, TypedDict
 
 import httpx
-import psycopg
+
+from research_agent import neon
+from psycopg import sql
 from dotenv import load_dotenv
+
+# Whitelist of columns allowed in dynamic WHERE-clause composition for the
+# saved-paper count query. Values composed via psycopg.sql.Identifier into a
+# query MUST be checked against this set first.
+_ALLOWED_COUNT_COLS = frozenset(
+    {"journal_entry_id", "issue_id", "feedback_id", "goal_id"}
+)
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import create_react_agent
+from langgraph.types import RetryPolicy
 
 # Load .env from langgraph directory before anything reads env vars
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -478,13 +488,13 @@ async def _run_research_evals(
     Mirrors `runResearchEvals` in research.workflow.ts.
     """
     if journal_entry_id is not None:
-        where, val = "journal_entry_id = %s", journal_entry_id
+        col, val = "journal_entry_id", journal_entry_id
     elif issue_id is not None:
-        where, val = "issue_id = %s", issue_id
+        col, val = "issue_id", issue_id
     elif feedback_id is not None:
-        where, val = "feedback_id = %s", feedback_id
+        col, val = "feedback_id", feedback_id
     elif goal_id is not None:
-        where, val = "goal_id = %s", goal_id
+        col, val = "goal_id", goal_id
     else:
         return {
             "relevance": 0,
@@ -496,16 +506,19 @@ async def _run_research_evals(
             "error": "no ids provided",
         }
 
+    if col not in _ALLOWED_COUNT_COLS:
+        raise ValueError(f"invalid filter column: {col!r}")
+    eval_query = sql.SQL(
+        "SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level "
+        "FROM therapy_research WHERE {col} = %s "
+        "ORDER BY relevance_score DESC LIMIT 10"
+    ).format(col=sql.Identifier(col))
+
     rows: list[tuple] = []
     try:
-        async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(
-                    f"SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level "
-                    f"FROM therapy_research WHERE {where} "
-                    f"ORDER BY relevance_score DESC LIMIT 10",
-                    (val,),
-                )
+                await cur.execute(eval_query, (val,))
                 rows = await cur.fetchall()
     except Exception as exc:
         print(f"[run_research_evals] query failed: {exc}")
@@ -598,22 +611,26 @@ async def _count_saved_papers(
 ) -> int:
     """Count therapy_research rows persisted for the active context id."""
     if journal_entry_id is not None:
-        where, val = "journal_entry_id = %s", journal_entry_id
+        col, val = "journal_entry_id", journal_entry_id
     elif issue_id is not None:
-        where, val = "issue_id = %s", issue_id
+        col, val = "issue_id", issue_id
     elif feedback_id is not None:
-        where, val = "feedback_id = %s", feedback_id
+        col, val = "feedback_id", feedback_id
     elif goal_id is not None:
-        where, val = "goal_id = %s", goal_id
+        col, val = "goal_id", goal_id
     else:
         return 0
+    # Defence in depth: validate against the explicit whitelist before
+    # composing into SQL via psycopg.sql.Identifier.
+    if col not in _ALLOWED_COUNT_COLS:
+        raise ValueError(f"invalid count column: {col!r}")
     try:
-        async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(
-                    f"SELECT COUNT(*) FROM therapy_research WHERE {where}",
-                    (val,),
-                )
+                query = sql.SQL(
+                    "SELECT COUNT(*) FROM therapy_research WHERE {} = %s"
+                ).format(sql.Identifier(col))
+                await cur.execute(query, (val,))
                 row = await cur.fetchone()
                 return int(row[0]) if row else 0
     except Exception as exc:
@@ -623,7 +640,7 @@ async def _count_saved_papers(
 
 async def _update_job_succeeded(job_id: str, payload: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'SUCCEEDED', progress = 100, "
@@ -636,7 +653,7 @@ async def _update_job_succeeded(job_id: str, payload: dict) -> None:
 
 async def _update_job_failed(job_id: str, error: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'FAILED', error = %s, "
@@ -774,12 +791,22 @@ def _node_finalize(state: ResearchPipelineState) -> dict:
     return {"messages": [{"type": "ai", "content": summary}]}
 
 
-def create_research_pipeline():
+# RetryPolicy for the multi-source ReAct agent — the only node that fans out
+# to OpenAlex/Crossref/Semantic Scholar/PubMed via tools. Transient 5xx /
+# rate-limit / network errors here would otherwise propagate up and fail the
+# whole job. 3 attempts with exponential backoff keeps total wall time bounded.
+_AGENT_RETRY = RetryPolicy(max_attempts=3, initial_interval=1.0, backoff_factor=2.0)
+# Best-effort eval pass — DeepSeek JSON mode + Neon read; same transient-error
+# profile.
+_EVALS_RETRY = RetryPolicy(max_attempts=2, initial_interval=1.0, backoff_factor=2.0)
+
+
+def create_research_pipeline(checkpointer=None):
     """Compile the ReAct-agent wrapper that also manages generation_jobs + evals."""
     builder = StateGraph(ResearchPipelineState)
-    builder.add_node("run_agent", _node_run_agent)
+    builder.add_node("run_agent", _node_run_agent, retry=_AGENT_RETRY)
     builder.add_node("tally_and_save", _node_tally_and_save)
-    builder.add_node("evals", _node_evals)
+    builder.add_node("evals", _node_evals, retry=_EVALS_RETRY)
     builder.add_node("finalize", _node_finalize)
 
     builder.add_edge(START, "run_agent")
@@ -787,10 +814,14 @@ def create_research_pipeline():
     builder.add_edge("tally_and_save", "evals")
     builder.add_edge("evals", "finalize")
     builder.add_edge("finalize", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
-# Module-level graph instance for LangGraph server (reads keys from env).
+# Module-level graph instance for LangGraph server (eager, no checkpointer).
 # Wraps the ReAct research agent with parity-matching job-tracking + evals
 # (ported from the retired `src/workflows/research.workflow.ts`).
 graph = create_research_pipeline()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_research_pipeline, graph)

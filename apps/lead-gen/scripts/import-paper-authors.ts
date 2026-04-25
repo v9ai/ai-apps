@@ -27,10 +27,21 @@ import { createHash } from "crypto";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const UPDATE = process.argv.includes("--update");
+const FORCE = process.argv.includes("--force");
+const FORCE_BULK = process.argv.includes("--force-bulk");
 const LIMIT = (() => {
   const i = process.argv.indexOf("--limit");
   return i !== -1 ? parseInt(process.argv[i + 1], 10) : Infinity;
 })();
+
+// ── Entry guards ─────────────────────────────────────────────────────────
+// Defense-in-depth so a stray `pnpm tsx scripts/import-paper-authors.ts`
+// can't recreate the 1,404 dead-end contacts from 2026-04-22 again.
+//
+// Verified: with no flags / env vars set, this guard fires, prints the
+// stderr line below, and exits 1 before any DB connection is opened.
+const PAPER_IMPORT_ENABLED =
+  process.env.LEADGEN_ALLOW_PAPER_IMPORT === "1" || FORCE;
 
 // ── Types matching papers.json ───────────────────────────────────────────
 
@@ -188,6 +199,14 @@ function renderNotes(author: string, entries: PaperEntry[]): string {
 // ── Main ─────────────────────────────────────────────────────────────────
 
 async function main() {
+  // Entry guard — refuse to run unless explicitly opted in.
+  if (!PAPER_IMPORT_ENABLED && !DRY_RUN) {
+    process.stderr.write(
+      "Refusing to run: paper-author import is gated. Set LEADGEN_ALLOW_PAPER_IMPORT=1 or pass --force.\n",
+    );
+    process.exit(1);
+  }
+
   const jsonPath = resolve(
     "docs/papers/2025-2026-sales-leadgen/papers.json",
   );
@@ -213,8 +232,49 @@ async function main() {
     }
   }
 
-  const authors = Array.from(byAuthor.values());
-  console.log(`Unique authors: ${authors.length}`);
+  const authorsAll = Array.from(byAuthor.values());
+  console.log(`Unique authors: ${authorsAll.length}`);
+
+  // ── Per-author affiliation pre-filter ─────────────────────────────────
+  // Drop authors whose source papers carry zero affiliation signal AND no
+  // contact channel (email / linkedin / github). Without either, the
+  // downstream enrichment graph has nothing to resolve and the contact
+  // becomes a dead-end (see 2026-04-22 cohort, 1,404 unreachable rows).
+  const beforeFilter = authorsAll.length;
+  const authors: typeof authorsAll = [];
+  for (const a of authorsAll) {
+    const affUnion = new Set<string>();
+    let hasChannel = false;
+    for (const e of a.entries) {
+      for (const aff of e.paper.affiliations ?? []) {
+        const t = aff.trim();
+        if (t) affUnion.add(t);
+      }
+      // The corpus type doesn't model contact-channel fields, but inspect
+      // the raw paper object defensively in case a future ingestor adds them.
+      const rawPaper = e.paper as unknown as Record<string, unknown>;
+      const email = rawPaper.email;
+      const linkedin = rawPaper.linkedin;
+      const github = rawPaper.github_username;
+      if (
+        (typeof email === "string" && email.trim()) ||
+        (typeof linkedin === "string" && linkedin.trim()) ||
+        (typeof github === "string" && github.trim())
+      ) {
+        hasChannel = true;
+      }
+    }
+    if (affUnion.size === 0 && !hasChannel) {
+      const { first, last } = splitName(a.canonical);
+      console.log(`[skip] ${first} ${last} — no affiliation, no contact channel`);
+      continue;
+    }
+    authors.push(a);
+  }
+  const dropped = beforeFilter - authors.length;
+  console.log(
+    `Filtered ${beforeFilter} → ${authors.length} (${dropped} dropped: no signal)`,
+  );
 
   // Stable-sort by paper count desc (most prolific first)
   authors.sort((a, b) => b.entries.length - a.entries.length);
@@ -242,6 +302,15 @@ async function main() {
   console.log(`  → median notes length: ${medianNotesLen(rows)} chars`);
   console.log(`  → total notes payload: ${totalNotesLen(rows).toLocaleString()} chars`);
   console.log(`  → tag: ["papers"] (single tag for all)`);
+
+  // Count cap — refuse to insert > 100 rows in one run unless --force-bulk.
+  // Skip the cap on dry-runs since they don't write anything.
+  if (!DRY_RUN && rows.length > 100 && !FORCE_BULK) {
+    process.stderr.write(
+      `Refusing to insert ${rows.length} contacts in one run (cap=100). Pass --force-bulk to override.\n`,
+    );
+    process.exit(1);
+  }
 
   if (DRY_RUN) {
     console.log("\n--dry-run — sample row:\n");
@@ -271,6 +340,7 @@ async function main() {
   let inserted = 0;
   let skipped = 0;
   let updated = 0;
+  const insertedIds: number[] = [];
 
   for (let i = 0; i < rows.length; i += BATCH) {
     const chunk = rows.slice(i, i + BATCH);
@@ -318,9 +388,12 @@ async function main() {
       updated += upd;
       skipped += chunk.length - rs.length;
     } else {
-      const n = (result as Array<{ id: number }>).length;
-      inserted += n;
-      skipped += chunk.length - n;
+      const rs = result as Array<{ id: number }>;
+      inserted += rs.length;
+      skipped += chunk.length - rs.length;
+      for (const r of rs) {
+        if (typeof r.id === "number") insertedIds.push(r.id);
+      }
     }
     console.log(
       `  batch ${Math.floor(i / BATCH) + 1}/${Math.ceil(rows.length / BATCH)} — ins+upd so far: ${inserted}+${updated}, skipped: ${skipped}`,
@@ -338,6 +411,77 @@ async function main() {
     WHERE tags::text LIKE '%"papers"%'
   `) as Array<{ count: number }>;
   console.log(`Contacts tagged "papers" in DB: ${total}`);
+
+  // ── Auto-trigger enrichment (LangGraph) ─────────────────────────────────
+  // Hand off to the Python `contact_enrich_paper_authors_batch` graph, which
+  // drains the unenriched papers-tagged cohort server-side in a single HTTP
+  // call — Teams A/B/C (classify_affiliation, classify_buyer_fit_node,
+  // auto_flag_unreachable_node) run per contact and dead-ends get auto-flagged
+  // for the 30-day deletion sweep. One round-trip, not 1,404.
+  if (insertedIds.length === 0) {
+    console.log("\nNo new contacts inserted; skipping enrichment trigger.");
+    return;
+  }
+  await triggerBatchEnrichment(insertedIds.length);
+}
+
+// ── LangGraph trigger ──────────────────────────────────────────────────────
+// Inline mini-client mirroring src/lib/langgraph-client.ts:runGraph (which
+// isn't exported). We only need POST /runs/wait with optional bearer auth.
+async function triggerBatchEnrichment(insertedCount: number): Promise<void> {
+  const lgUrl = process.env.LANGGRAPH_URL || "http://127.0.0.1:8002";
+  const token = process.env.LANGGRAPH_AUTH_TOKEN;
+  const assistantId = "contact_enrich_paper_authors_batch";
+
+  console.log(
+    `\nTriggering ${assistantId} on ${lgUrl} (cohort: ${insertedCount} new + any prior unenriched)…`,
+  );
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const result = await Promise.allSettled([
+    fetch(`${lgUrl}/runs/wait`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        assistant_id: assistantId,
+        // The batch graph auto-picks unenriched papers-tagged contacts;
+        // count/deadline_seconds are optional knobs (server defaults: drain
+        // until empty / 8-min wall-clock). Pass an explicit cap aligned with
+        // what we just inserted so the run terminates predictably.
+        input: { count: insertedCount, deadline_seconds: 8 * 60 },
+      }),
+      // Container budget is ~10 min; allow 12 for HTTP framing.
+      signal: AbortSignal.timeout(12 * 60_000),
+    }),
+  ]);
+
+  const r = result[0];
+  if (r.status === "rejected") {
+    console.error(`Enrichment trigger failed: ${String(r.reason)}`);
+    console.error("New contacts are inserted but unenriched — re-run later.");
+    return;
+  }
+  const res = r.value;
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.error(`Enrichment HTTP ${res.status}: ${text.slice(0, 500)}`);
+    console.error("New contacts are inserted but unenriched — re-run later.");
+    return;
+  }
+  const body = (await res.json().catch(() => ({}))) as {
+    enriched?: unknown[];
+    resolve_counts?: Record<string, number>;
+    stop_reason?: string;
+  };
+  const enriched = Array.isArray(body.enriched) ? body.enriched.length : 0;
+  console.log(
+    `Enriched: ${enriched} / ${insertedCount} (stop_reason=${body.stop_reason ?? "?"})`,
+  );
+  if (body.resolve_counts) {
+    console.log(`  resolve_counts: ${JSON.stringify(body.resolve_counts)}`);
+  }
 }
 
 function medianNotesLen(rows: Array<{ notes: string }>): number {

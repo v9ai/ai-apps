@@ -35,7 +35,8 @@ from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
     deepseek_model_name,
-    make_llm,
+    make_deepseek_flash,
+    make_deepseek_pro,
     merge_node_telemetry,
 )
 from .notify import (
@@ -338,7 +339,7 @@ async def benchmark_competitors(state: _PricingStateWithError) -> dict:
         }
 
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek")
+        llm = make_deepseek_flash(temperature=0.1)
         result, tel = await _ainvoke_json_with_retry(
             llm,
             [
@@ -402,7 +403,7 @@ async def choose_value_metric(state: _PricingStateWithError) -> dict:
     icp_block = _fmt_icp_block(state.get("icp") or {})
 
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.1)
         result, tel = await _ainvoke_json_with_retry(
             llm,
             [
@@ -475,7 +476,7 @@ async def design_model(state: _PricingStateWithError) -> dict:
     metric = state.get("value_metric") or {}
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result, tel = await _ainvoke_json_with_retry(
             llm,
             [
@@ -574,7 +575,7 @@ async def write_rationale(state: _PricingStateWithError) -> dict:
     pricing_model = state.get("model") or {}
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result, tel = await _ainvoke_json_with_retry(
             llm,
             [

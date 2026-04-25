@@ -11,6 +11,8 @@ from pydantic import BaseModel, Field
 
 import psycopg
 
+from research_agent import neon
+
 from .therapy_context import IssueData, StoryContext, build_therapeutic_system_prompt
 from .embeddings import aembed_text, query_to_embedding_text
 
@@ -65,7 +67,7 @@ async def load_context(state: StoryState) -> dict:
     issue_category: Optional[str] = None
 
     try:
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 if issue_id:
                     # Load directly from the issue — also fetch related_family_member_id
@@ -343,7 +345,7 @@ async def save_story(state: dict) -> dict:
         story_text = state["story_text"]
         conn_str = _conn_str()
 
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 user_id = None
                 if goal_id:
@@ -579,7 +581,7 @@ async def prepare_retry(state: dict) -> dict:
     }
 
 
-def create_story_graph():
+def create_story_graph(checkpointer=None):
     """Build the story generation LangGraph."""
     builder = StateGraph(StoryState)
     builder.add_node("load_context", load_context)
@@ -595,8 +597,12 @@ def create_story_graph():
     builder.add_edge("prepare_retry", "generate_story")
     builder.add_edge("save_story", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
-# Module-level graph instance for LangGraph server
+# Module-level graph instance for LangGraph server (eager, no checkpointer).
 graph = create_story_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_story_graph, graph)

@@ -10,6 +10,8 @@ from langgraph.graph import StateGraph, START, END
 
 import psycopg
 
+from research_agent import neon
+
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -48,7 +50,7 @@ async def collect_data(state: ParentAdviceState) -> dict:
 
     conn_str = _conn_str()
     try:
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 # Goal
                 await cur.execute(
@@ -286,7 +288,7 @@ async def persist(state: dict) -> dict:
 
     try:
         conn_str = _conn_str()
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE goals SET parent_advice = %s, parent_advice_language = %s, "
@@ -300,7 +302,7 @@ async def persist(state: dict) -> dict:
     return {}
 
 
-def create_parent_advice_graph():
+def create_parent_advice_graph(checkpointer=None):
     """Build the parent advice LangGraph."""
     builder = StateGraph(ParentAdviceState)
     builder.add_node("collect_data", collect_data)
@@ -312,8 +314,12 @@ def create_parent_advice_graph():
     builder.add_edge("generate", "persist")
     builder.add_edge("persist", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
-# Module-level graph instance for LangGraph server
+# Module-level graph instance for LangGraph server (eager, no checkpointer).
 graph = create_parent_advice_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_parent_advice_graph, graph)

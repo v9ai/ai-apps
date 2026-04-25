@@ -14,6 +14,8 @@ from langgraph.graph import StateGraph, START, END
 
 import psycopg
 
+from research_agent import neon
+
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -45,7 +47,7 @@ async def collect_data(state: DeepAnalysisState) -> dict:
         return {"error": "family_member_id and user_email are required"}
 
     try:
-        async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 ctx = await shared.load_family_member_full_context(
                     cur, family_member_id, user_email
@@ -226,7 +228,7 @@ async def persist(state: dict) -> dict:
         user_email = state.get("user_email")
         data_snapshot = state.get("_data_snapshot", "{}")
 
-        async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "INSERT INTO deep_issue_analyses "
@@ -257,7 +259,7 @@ async def persist(state: dict) -> dict:
         return {"error": f"persist failed: {exc}"}
 
 
-def create_deep_analysis_graph():
+def create_deep_analysis_graph(checkpointer=None):
     """Build the deep issue analysis LangGraph."""
     builder = StateGraph(DeepAnalysisState)
     builder.add_node("collect_data", collect_data)
@@ -269,7 +271,11 @@ def create_deep_analysis_graph():
     builder.add_edge("analyze", "persist")
     builder.add_edge("persist", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
 graph = create_deep_analysis_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_deep_analysis_graph, graph)

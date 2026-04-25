@@ -32,3 +32,27 @@ export const DEEPSEEK_REASONING_DEFAULTS = {
   // @ts-expect-error — DeepSeek extension, not in OpenAI types
   thinking: { type: "enabled" as const },
 };
+
+/** Throws if DEEPSEEK_API_KEY is missing. Use at API route entry points
+ * before doing work that depends on the DeepSeek client, so the failure
+ * mode is a clear 500 with a useful message instead of a downstream
+ * "client.chat.completions.create is not a function" tangle.
+ *
+ * The lazy `getDeepSeekClient()` already throws the same error on first
+ * use — this helper exists for routes that want to fail fast at the top
+ * (before doing DB work, building prompts, etc.) so the user sees the
+ * config error before any side effects fire. */
+export function assertDeepSeekConfigured(): void {
+  if (!process.env.DEEPSEEK_API_KEY) {
+    throw new Error(
+      "DEEPSEEK_API_KEY not set. Add it to .env.local (dev) or the deploy target's environment.",
+    );
+  }
+}
+
+/** Non-throwing variant for code paths that have a non-DeepSeek fallback
+ * (e.g. local Qwen first, DeepSeek as fallback). Returns true when the
+ * DeepSeek client can be constructed. */
+export function isDeepSeekConfigured(): boolean {
+  return Boolean(process.env.DEEPSEEK_API_KEY);
+}

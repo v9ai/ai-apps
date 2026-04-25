@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
 import { checkIsAdmin } from "@/lib/admin";
-import { buildBatchPrompt, parseJsonContent } from "@/lib/email/prompt-builder";
+import { buildBatchPrompt } from "@/lib/email/prompt-builder";
+import { streamDeepSeekChat } from "@/lib/deepseek/streaming";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,79 +37,16 @@ export async function POST(request: NextRequest) {
       ? `You are an email composer. Recipient: ${input.recipientName}. Context: ${input.recipientContext}${input.linkedinPostContent ? `\nLinkedIn post: ${input.linkedinPostContent}` : ""}`
       : `You are an email composer. Recipient: ${input.recipientName}.${input.linkedinPostContent ? `\nLinkedIn post: ${input.linkedinPostContent}` : ""}`;
 
-    const client = getDeepSeekClient();
-    const model = getDeepSeekModel();
-
-    const completion = await client.chat.completions.create({
-      model,
+    return await streamDeepSeekChat({
+      client: getDeepSeekClient(),
+      model: getDeepSeekModel(),
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: prompt },
       ],
       temperature: 0.7,
       max_tokens: 1024,
-      stream: true,
-    });
-
-    const encoder = new TextEncoder();
-    let accumulated = "";
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of completion) {
-            const delta = chunk.choices?.[0]?.delta?.content;
-            if (delta) {
-              accumulated += delta;
-              controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({ type: "chunk", content: delta, accumulated })}\n\n`,
-                ),
-              );
-            }
-          }
-
-          // Parse the accumulated JSON response into structured email content
-          const parsed = parseJsonContent(accumulated);
-          if (parsed) {
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({ type: "complete", data: parsed })}\n\n`,
-              ),
-            );
-          } else {
-            // Fallback: send raw accumulated text as body
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  type: "complete",
-                  data: { subject: "Generated Email", body: accumulated },
-                })}\n\n`,
-              ),
-            );
-          }
-
-          controller.close();
-        } catch (error) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: "error",
-                error: error instanceof Error ? error.message : "Unknown error",
-              })}\n\n`,
-            ),
-          );
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-      },
+      fallbackSubject: "Generated Email",
     });
   } catch (error) {
     return new Response(

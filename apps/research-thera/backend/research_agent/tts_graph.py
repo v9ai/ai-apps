@@ -13,6 +13,8 @@ import boto3
 import httpx
 import psycopg
 
+from research_agent import neon
+
 from dotenv import load_dotenv
 from pathlib import Path
 from langgraph.graph import StateGraph, START, END
@@ -263,7 +265,7 @@ async def load_story(state: TTSState) -> dict:
         return {"error": "story_id is required"}
 
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "SELECT content, language FROM stories WHERE id = %s", (story_id,)
@@ -362,7 +364,7 @@ async def upload_and_save(state: dict) -> dict:
     if story_id:
         try:
             now = datetime.now(timezone.utc).isoformat()
-            async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+            async with neon.connection() as conn:
                 async with conn.cursor() as cur:
                     await cur.execute(
                         "UPDATE stories SET audio_key = %s, audio_url = %s, audio_generated_at = %s, updated_at = %s WHERE id = %s",
@@ -378,7 +380,7 @@ async def upload_and_save(state: dict) -> dict:
 # Graph
 # ---------------------------------------------------------------------------
 
-def create_tts_graph():
+def create_tts_graph(checkpointer=None):
     builder = StateGraph(TTSState)
     builder.add_node("load_story", load_story)
     builder.add_node("synthesize", synthesize)
@@ -389,7 +391,11 @@ def create_tts_graph():
     builder.add_edge("synthesize", "upload_and_save")
     builder.add_edge("upload_and_save", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
 graph = create_tts_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_tts_graph, graph)

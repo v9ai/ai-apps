@@ -13,6 +13,8 @@ from pydantic import BaseModel, Field, field_validator
 
 import psycopg
 
+from research_agent import neon
+
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -52,7 +54,7 @@ async def collect_data(state: JournalAnalysisState) -> dict:
 
     conn_str = _conn_str()
     try:
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "SELECT id, title, entry_date, content, mood, mood_score, tags, "
@@ -563,7 +565,7 @@ async def persist(state: dict) -> dict:
         user_email = state.get("user_email")
 
         conn_str = _conn_str()
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 # Replace any existing analysis for this entry
                 await cur.execute(
@@ -594,7 +596,7 @@ async def persist(state: dict) -> dict:
         return {"error": f"persist failed: {exc}"}
 
 
-def create_journal_analysis_graph():
+def create_journal_analysis_graph(checkpointer=None):
     builder = StateGraph(JournalAnalysisState)
     builder.add_node("collect_data", collect_data)
     builder.add_node("analyze", analyze)
@@ -605,7 +607,11 @@ def create_journal_analysis_graph():
     builder.add_edge("analyze", "persist")
     builder.add_edge("persist", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
 graph = create_journal_analysis_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_journal_analysis_graph, graph)

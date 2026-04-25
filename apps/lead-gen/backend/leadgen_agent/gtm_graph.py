@@ -32,7 +32,8 @@ from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
     deepseek_model_name,
-    make_llm,
+    make_deepseek_flash,
+    make_deepseek_pro,
     merge_node_telemetry,
 )
 from .notify import (
@@ -223,7 +224,7 @@ async def pick_channels(state: _GTMStateWithError) -> dict:
     icp_has_signal = bool((icp.get("segments") or icp.get("personas")))
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek")
+        llm = make_deepseek_flash(temperature=0.2)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
@@ -296,7 +297,7 @@ async def craft_pillars(state: _GTMStateWithError) -> dict:
     comps = state.get("competitive") or {}
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
@@ -366,7 +367,7 @@ async def write_templates(state: _GTMStateWithError) -> dict:
     pillars = state.get("pillars") or []
 
     try:
-        llm = make_llm(temperature=0.3, provider="deepseek")
+        llm = make_deepseek_flash(temperature=0.3)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
@@ -434,7 +435,7 @@ async def build_playbook(state: _GTMStateWithError) -> dict:
     pricing = state.get("pricing") or {}
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
@@ -538,7 +539,7 @@ async def draft_plan(state: _GTMStateWithError) -> dict:
     pricing = state.get("pricing") or {}
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek")
+        llm = make_deepseek_flash(temperature=0.2)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [

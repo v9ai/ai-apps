@@ -634,6 +634,12 @@ export type ContactPaper = {
   year: Maybe<Scalars['Int']['output']>;
 };
 
+export type ContactTagOption = {
+  __typename: 'ContactTagOption';
+  count: Scalars['Int']['output'];
+  tag: Scalars['String']['output'];
+};
+
 export type ContactWorkExperience = {
   __typename: 'ContactWorkExperience';
   company: Scalars['String']['output'];
@@ -2212,6 +2218,7 @@ export type Query = {
   contactMessages: Array<ContactMessage>;
   contactOpportunities: Array<Opportunity>;
   contactReceivedEmails: Array<ReceivedEmail>;
+  contactTags: Array<ContactTagOption>;
   contacts: ContactsResult;
   crawlLog: Maybe<CrawlLog>;
   crawlLogs: Array<CrawlLog>;
@@ -2855,7 +2862,7 @@ export type ReplyDraft = {
   draftType: Scalars['String']['output'];
   generationModel: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
-  receivedEmailId: Scalars['Int']['output'];
+  receivedEmailId: Maybe<Scalars['Int']['output']>;
   sentAt: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
   subject: Scalars['String']['output'];

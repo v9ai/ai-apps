@@ -309,6 +309,14 @@ app.add_middleware(make_request_id_middleware())
 app.state.graphs = {}
 app.state.remote_adapters = {}
 
+# Pre-populate ``app.state`` with empty defaults so any handler that imports
+# the module before lifespan completes (e.g. a CF Container readiness probe
+# arriving while uvicorn is still binding) sees a typed-empty dict instead of
+# raising ``AttributeError``. ``lifespan`` will replace these atomically once
+# the AsyncPostgresSaver + graph compilation finishes.
+app.state.graphs = {}
+app.state.remote_adapters = {}
+
 # Mount the 13 Chrome-extension routes under /linkedin/*. They share the
 # container's Neon pool; auth is handled at the perimeter.
 app.include_router(linkedin_router, prefix="/linkedin")

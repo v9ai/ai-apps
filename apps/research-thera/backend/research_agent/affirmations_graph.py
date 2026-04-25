@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Any, Optional, TypedDict
 
 import psycopg
+
+from research_agent import neon
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
 
@@ -79,7 +81,7 @@ async def collect_context(state: AffirmationsState) -> dict:
         return {"error": "family_member_id and user_email are required"}
 
     try:
-        async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 ctx = await shared.load_family_member_full_context(cur, family_member_id, user_email)
 
@@ -246,7 +248,7 @@ async def persist(state: AffirmationsState) -> dict:
 
     ids: list[int] = []
     try:
-        async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 for item in affirmations:
                     await cur.execute(
@@ -262,7 +264,7 @@ async def persist(state: AffirmationsState) -> dict:
     return {"persisted_ids": ids}
 
 
-def create_affirmations_graph():
+def create_affirmations_graph(checkpointer=None):
     builder = StateGraph(AffirmationsState)
     builder.add_node("collect_context", collect_context)
     builder.add_node("generate", generate)
@@ -271,7 +273,13 @@ def create_affirmations_graph():
     builder.add_edge("collect_context", "generate")
     builder.add_edge("generate", "persist")
     builder.add_edge("persist", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
+# Eager compile (no checkpointer) for synchronous imports.
 graph = create_affirmations_graph()
+
+# Lazy compile with shared AsyncPostgresSaver for runtime use via app.py.
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_affirmations_graph, graph)

@@ -20,6 +20,7 @@ from typing import Any
 import pytest
 
 from leadgen_agent.deep_icp_graph import WEIGHTS, build_graph
+from leadgen_agent.llm import is_deepseek_configured
 
 # ── Deterministic layer ────────────────────────────────────────────────
 
@@ -119,7 +120,7 @@ def _deepeval_available() -> bool:
 def _judge_available() -> bool:
     # The judge runs via the same ChatOpenAI factory the graph uses. Local
     # mlx_lm.server is the default; CI swaps in DeepSeek via LLM_BASE_URL.
-    return bool(os.environ.get("LLM_BASE_URL") or os.environ.get("DEEPSEEK_API_KEY"))
+    return bool(os.environ.get("LLM_BASE_URL") or is_deepseek_configured())
 
 
 deepeval_required = pytest.mark.skipif(

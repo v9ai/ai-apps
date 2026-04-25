@@ -637,6 +637,12 @@ export type ContactPaper = {
   year: Maybe<Scalars['Int']['output']>;
 };
 
+export type ContactTagOption = {
+  __typename?: 'ContactTagOption';
+  count: Scalars['Int']['output'];
+  tag: Scalars['String']['output'];
+};
+
 export type ContactWorkExperience = {
   __typename?: 'ContactWorkExperience';
   company: Scalars['String']['output'];
@@ -2215,6 +2221,7 @@ export type Query = {
   contactMessages: Array<ContactMessage>;
   contactOpportunities: Array<Opportunity>;
   contactReceivedEmails: Array<ReceivedEmail>;
+  contactTags: Array<ContactTagOption>;
   contacts: ContactsResult;
   crawlLog: Maybe<CrawlLog>;
   crawlLogs: Array<CrawlLog>;
@@ -2858,7 +2865,7 @@ export type ReplyDraft = {
   draftType: Scalars['String']['output'];
   generationModel: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
-  receivedEmailId: Scalars['Int']['output'];
+  receivedEmailId: Maybe<Scalars['Int']['output']>;
   sentAt: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
   subject: Scalars['String']['output'];
@@ -3983,6 +3990,7 @@ export type ResolversTypes = {
   ContactMessage: ResolverTypeWrapper<Partial<ContactMessage>>;
   ContactNextTouch: ResolverTypeWrapper<Partial<ContactNextTouch>>;
   ContactPaper: ResolverTypeWrapper<Partial<ContactPaper>>;
+  ContactTagOption: ResolverTypeWrapper<Partial<ContactTagOption>>;
   ContactWorkExperience: ResolverTypeWrapper<Partial<ContactWorkExperience>>;
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
   CountRemoteVoyagerJobsInput: ResolverTypeWrapper<Partial<CountRemoteVoyagerJobsInput>>;
@@ -4234,6 +4242,7 @@ export type ResolversParentTypes = {
   ContactMessage: Partial<ContactMessage>;
   ContactNextTouch: Partial<ContactNextTouch>;
   ContactPaper: Partial<ContactPaper>;
+  ContactTagOption: Partial<ContactTagOption>;
   ContactWorkExperience: Partial<ContactWorkExperience>;
   ContactsResult: Partial<ContactsResult>;
   CountRemoteVoyagerJobsInput: Partial<CountRemoteVoyagerJobsInput>;
@@ -4904,6 +4913,11 @@ export type ContactPaperResolvers<ContextType = GraphQLContext, ParentType exten
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   venue?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+};
+
+export type ContactTagOptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactTagOption'] = ResolversParentTypes['ContactTagOption']> = {
+  count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  tag?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type ContactWorkExperienceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactWorkExperience'] = ResolversParentTypes['ContactWorkExperience']> = {
@@ -5680,6 +5694,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contactMessages?: Resolver<Array<ResolversTypes['ContactMessage']>, ParentType, ContextType, RequireFields<QueryContactMessagesArgs, 'contactId'>>;
   contactOpportunities?: Resolver<Array<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryContactOpportunitiesArgs, 'contactId'>>;
   contactReceivedEmails?: Resolver<Array<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryContactReceivedEmailsArgs, 'contactId'>>;
+  contactTags?: Resolver<Array<ResolversTypes['ContactTagOption']>, ParentType, ContextType>;
   contacts?: Resolver<ResolversTypes['ContactsResult'], ParentType, ContextType, RequireFields<QueryContactsArgs, 'includeFlagged'>>;
   crawlLog?: Resolver<Maybe<ResolversTypes['CrawlLog']>, ParentType, ContextType, RequireFields<QueryCrawlLogArgs, 'id'>>;
   crawlLogs?: Resolver<Array<ResolversTypes['CrawlLog']>, ParentType, ContextType, Partial<QueryCrawlLogsArgs>>;
@@ -5834,7 +5849,7 @@ export type ReplyDraftResolvers<ContextType = GraphQLContext, ParentType extends
   draftType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   generationModel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  receivedEmailId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  receivedEmailId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   sentAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -6573,6 +6588,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactMessage?: ContactMessageResolvers<ContextType>;
   ContactNextTouch?: ContactNextTouchResolvers<ContextType>;
   ContactPaper?: ContactPaperResolvers<ContextType>;
+  ContactTagOption?: ContactTagOptionResolvers<ContextType>;
   ContactWorkExperience?: ContactWorkExperienceResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
   CountRemoteVoyagerJobsResult?: CountRemoteVoyagerJobsResultResolvers<ContextType>;

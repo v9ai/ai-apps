@@ -6,7 +6,7 @@
  */
 
 import OpenAI from "openai";
-import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
+import { getDeepSeekClient, getDeepSeekModel, isDeepSeekConfigured } from "@/lib/deepseek/client";
 import { stripQuotedText, type ReplyClass, type ClassificationResult } from "./reply-classifier";
 import { CLASSIFICATION_SYSTEM_PROMPT, CLASSIFICATION_FEW_SHOT } from "./classification-prompts";
 
@@ -92,6 +92,6 @@ export async function classifyReplyWithLLM(
     }
   }
 
-  if (!process.env.DEEPSEEK_API_KEY) throw new Error("No LLM available (LLM_BASE_URL and DEEPSEEK_API_KEY both unset)");
+  if (!isDeepSeekConfigured()) throw new Error("No LLM available (LLM_BASE_URL and DEEPSEEK_API_KEY both unset)");
   return await callLLM(getDeepSeekClient(), getDeepSeekModel(), messages);
 }

@@ -6,6 +6,8 @@ import os
 from typing import Optional
 
 import psycopg
+from psycopg import sql
+from psycopg_pool import AsyncConnectionPool
 
 from .d1 import (
     ContactFeedback,
@@ -13,6 +15,20 @@ from .d1 import (
     Issue,
     ResearchPaper,
 )
+
+# Whitelist of dedup columns allowed in dynamic SQL composition.
+# Any value composed via psycopg.sql.Identifier into a query MUST be checked
+# against this set first — defence in depth against future regressions that
+# might allow caller-controlled column names to flow into SQL.
+_ALLOWED_DEDUP_COLS = frozenset(
+    {"journal_entry_id", "issue_id", "feedback_id", "goal_id"}
+)
+
+
+# Module-level pool. Initialized in the FastAPI lifespan in ``app.py``. When
+# ``None`` (e.g. CLI scripts, tests, ad-hoc usage) ``_conn_ctx`` falls back to a
+# direct connect so callers don't have to know about pool wiring.
+POOL: AsyncConnectionPool | None = None
 
 
 def _get_conn_str() -> str:
@@ -22,8 +38,46 @@ def _get_conn_str() -> str:
     return url
 
 
+def _conn_ctx():
+    """Return an async context manager yielding a pooled connection.
+
+    If the module-level ``POOL`` has been initialized (production / FastAPI
+    lifespan), borrow from it; otherwise open a one-shot connection so CLI
+    scripts and tests still work without pool wiring.
+    """
+    if POOL is not None:
+        return POOL.connection()
+    return _OneShotConn()
+
+
+class _OneShotConn:
+    """Tiny async-context wrapper that opens-and-closes a single connection.
+
+    Mirrors ``async with await psycopg.AsyncConnection.connect(...) as conn``
+    so call sites can use the same ``async with _conn_ctx() as conn`` shape
+    regardless of whether the pool is active.
+    """
+
+    def __init__(self) -> None:
+        self._conn: psycopg.AsyncConnection | None = None
+
+    async def __aenter__(self) -> psycopg.AsyncConnection:
+        self._conn = await psycopg.AsyncConnection.connect(_get_conn_str())
+        return self._conn
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        if self._conn is not None:
+            await self._conn.close()
+            self._conn = None
+
+
+# Public alias so external callers (graph modules) don't dip into the leading
+# underscore. Both names resolve to the same callable.
+connection = _conn_ctx
+
+
 async def fetch_contact_feedback(feedback_id: int) -> ContactFeedback:
-    async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+    async with _conn_ctx() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 "SELECT id, contact_id, family_member_id, subject, content, "
@@ -42,7 +96,7 @@ async def fetch_contact_feedback(feedback_id: int) -> ContactFeedback:
 
 
 async def fetch_issues_for_feedback(feedback_id: int) -> list[Issue]:
-    async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+    async with _conn_ctx() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 "SELECT id, title, description, category, severity, recommendations "
@@ -58,7 +112,7 @@ async def fetch_issues_for_feedback(feedback_id: int) -> list[Issue]:
 
 
 async def fetch_family_member(family_member_id: int) -> FamilyMember:
-    async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+    async with _conn_ctx() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 "SELECT id, \"firstName\", name, date_of_birth, age_years "
@@ -73,7 +127,7 @@ async def fetch_family_member(family_member_id: int) -> FamilyMember:
 
 
 async def fetch_first_goal_id(family_member_id: int) -> Optional[int]:
-    async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+    async with _conn_ctx() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 "SELECT id FROM goals WHERE family_member_id = %s ORDER BY created_at DESC LIMIT 1",
@@ -93,7 +147,7 @@ async def fetch_research_papers(
         where, val = "goal_id = %s", goal_id
     else:
         return []
-    async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+    async with _conn_ctx() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 f"SELECT id, title, authors, year, key_findings, therapeutic_techniques, "
@@ -117,7 +171,7 @@ async def insert_story(
     minutes: int,
     content: str,
 ) -> int:
-    async with await psycopg.AsyncConnection.connect(_get_conn_str()) as conn:
+    async with _conn_ctx() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 "INSERT INTO stories (goal_id, feedback_id, user_id, content, language, minutes, created_at, updated_at) "
@@ -146,7 +200,6 @@ async def upsert_research_paper(
     journal_entry_id: int | None = None,
 ) -> int:
     """Insert or skip a research paper into Neon therapy_research table."""
-    conn_str = _get_conn_str()
     authors_json = json.dumps(authors or [])
     findings_json = json.dumps(key_findings or [])
     techniques_json = json.dumps(therapeutic_techniques or [])
@@ -167,23 +220,31 @@ async def upsert_research_paper(
     else:
         dedup_col, dedup_val = "goal_id", goal_id
 
-    async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+    # Defence in depth: even though dedup_col is set from a closed set above,
+    # validate against the explicit whitelist before composing it into SQL via
+    # psycopg.sql.Identifier. Prevents future regressions where a careless
+    # edit lets caller-controlled column names flow into the query.
+    if dedup_col not in _ALLOWED_DEDUP_COLS:
+        raise ValueError(f"invalid dedup_col: {dedup_col!r}")
+    dedup_ident = sql.Identifier(dedup_col)
+
+    async with _conn_ctx() as conn:
         async with conn.cursor() as cur:
             # Deduplicate by DOI
             if doi:
-                await cur.execute(
-                    f"SELECT id FROM therapy_research WHERE doi = %s AND {dedup_col} = %s LIMIT 1",
-                    (doi, dedup_val),
-                )
+                doi_query = sql.SQL(
+                    "SELECT id FROM therapy_research WHERE doi = %s AND {} = %s LIMIT 1"
+                ).format(dedup_ident)
+                await cur.execute(doi_query, (doi, dedup_val))
                 row = await cur.fetchone()
                 if row:
                     return row[0]
 
             # Deduplicate by title
-            await cur.execute(
-                f"SELECT id FROM therapy_research WHERE title = %s AND {dedup_col} = %s LIMIT 1",
-                (title, dedup_val),
-            )
+            title_query = sql.SQL(
+                "SELECT id FROM therapy_research WHERE title = %s AND {} = %s LIMIT 1"
+            ).format(dedup_ident)
+            await cur.execute(title_query, (title, dedup_val))
             row = await cur.fetchone()
             if row:
                 return row[0]

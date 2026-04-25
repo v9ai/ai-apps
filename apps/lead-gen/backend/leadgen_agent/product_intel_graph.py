@@ -61,7 +61,8 @@ from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
     deepseek_model_name,
-    make_llm,
+    make_deepseek_flash,
+    make_deepseek_pro,
     merge_node_telemetry,
 )
 from .notify import notify_complete, notify_error
@@ -272,7 +273,7 @@ async def load_and_profile(state: _ProductIntelStateWithError) -> dict:
     # jsonb already carries what the landing page scraper extracted during
     # initial ingest).
     try:
-        llm = make_llm(temperature=0.1, provider="deepseek")
+        llm = make_deepseek_flash(temperature=0.1)
         result, tel_profile = await ainvoke_json_with_telemetry(
             llm,
             [
@@ -630,7 +631,7 @@ async def synthesize_report(state: _ProductIntelStateWithError) -> dict:
     )
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result, tel_synth = await ainvoke_json_with_telemetry(
             llm,
             [

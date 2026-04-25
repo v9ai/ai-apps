@@ -66,7 +66,7 @@ export const replyDraftResolvers = {
           .from(replyDrafts)
           .innerJoin(contacts, eq(replyDrafts.contact_id, contacts.id))
           .leftJoin(companies, eq(contacts.company_id, companies.id))
-          .innerJoin(receivedEmails, eq(replyDrafts.received_email_id, receivedEmails.id))
+          .leftJoin(receivedEmails, eq(replyDrafts.received_email_id, receivedEmails.id))
           .where(where)
           .orderBy(desc(replyDrafts.created_at))
           .limit(limit)
@@ -121,13 +121,13 @@ export const replyDraftResolvers = {
           .groupBy(replyDrafts.status),
         context.db
           .select({
-            classification: receivedEmails.classification,
+            classification: sql<string>`coalesce(${receivedEmails.classification}, 'outreach')`.as('classification'),
             count: count(),
           })
           .from(replyDrafts)
-          .innerJoin(receivedEmails, eq(replyDrafts.received_email_id, receivedEmails.id))
+          .leftJoin(receivedEmails, eq(replyDrafts.received_email_id, receivedEmails.id))
           .where(eq(replyDrafts.status, "pending"))
-          .groupBy(receivedEmails.classification),
+          .groupBy(sql`coalesce(${receivedEmails.classification}, 'outreach')`),
       ]);
 
       const statusMap: Record<string, number> = {};
@@ -272,6 +272,12 @@ export const replyDraftResolvers = {
         .limit(1);
 
       if (!draft) throw new Error(`Draft ${args.draftId} not found`);
+      if (draft.received_email_id === null) {
+        throw new Error(
+          `Draft ${args.draftId} has no inbound email (cold-outreach draft); regeneration not supported`,
+        );
+      }
+      const receivedEmailId = draft.received_email_id;
 
       // Delete old draft and regenerate
       await context.db
@@ -282,12 +288,12 @@ export const replyDraftResolvers = {
       const [received] = await context.db
         .select({ classification: receivedEmails.classification })
         .from(receivedEmails)
-        .where(eq(receivedEmails.id, draft.received_email_id))
+        .where(eq(receivedEmails.id, receivedEmailId))
         .limit(1);
 
       const { generateReplyDraft } = await import("@/lib/email/auto-draft");
       await generateReplyDraft(
-        draft.received_email_id,
+        receivedEmailId,
         (received?.classification as any) || "interested",
         draft.contact_id,
       );
@@ -296,7 +302,7 @@ export const replyDraftResolvers = {
       const [newDraft] = await context.db
         .select()
         .from(replyDrafts)
-        .where(eq(replyDrafts.received_email_id, draft.received_email_id))
+        .where(eq(replyDrafts.received_email_id, receivedEmailId))
         .orderBy(desc(replyDrafts.created_at))
         .limit(1);
 

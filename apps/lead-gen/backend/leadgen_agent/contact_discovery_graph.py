@@ -27,7 +27,7 @@ import psycopg
 from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn
-from .llm import ainvoke_json_with_telemetry, make_llm, merge_node_telemetry
+from .llm import ainvoke_json_with_telemetry, make_deepseek_pro, merge_node_telemetry
 from .loaders import fetch_url
 from .state import ContactDiscoveryState
 
@@ -294,7 +294,7 @@ async def team_branch(state: ContactDiscoveryState) -> dict:
         return {"team": [], "agent_timings": {"team_branch": round(time.perf_counter() - t0, 3)}}
 
     # LLM extraction
-    llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+    llm = make_deepseek_pro(temperature=0.2)
     system_msg = (
         "Extract the list of people from this company team/about page. "
         "Return strict JSON: "

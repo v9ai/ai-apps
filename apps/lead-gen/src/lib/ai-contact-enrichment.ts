@@ -1,5 +1,5 @@
 import ogs from "open-graph-scraper";
-import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
+import { getDeepSeekClient, getDeepSeekModel, isDeepSeekConfigured } from "@/lib/deepseek/client";
 import { z } from "zod";
 import type { Contact } from "@/db/schema";
 
@@ -373,7 +373,7 @@ interface SynthesisInput {
 async function synthesizeAIProfile(
   input: SynthesisInput,
 ): Promise<z.infer<typeof SynthesisOutputSchema> | null> {
-  if (!process.env.DEEPSEEK_API_KEY) return null;
+  if (!isDeepSeekConfigured()) return null;
 
   const hasData =
     input.position ||

@@ -763,7 +763,6 @@ export const replyDrafts = pgTable(
     id: serial("id").primaryKey(),
     tenant_id: tenantIdColumn(),
     received_email_id: integer("received_email_id")
-      .notNull()
       .references(() => receivedEmails.id, { onDelete: "cascade" }),
     contact_id: integer("contact_id")
       .notNull()
@@ -772,7 +771,7 @@ export const replyDrafts = pgTable(
       enum: ["pending", "approved", "sent", "dismissed"],
     }).notNull().default("pending"),
     draft_type: text("draft_type", {
-      enum: ["reply", "follow_up"],
+      enum: ["reply", "follow_up", "outreach"],
     }).notNull().default("reply"),
     subject: text("subject").notNull(),
     body_text: text("body_text").notNull(),

@@ -37,7 +37,7 @@ from typing import Any, TypedDict
 import httpx
 from langgraph.graph import END, START, StateGraph
 
-from .llm import ainvoke_json, make_llm
+from .llm import ainvoke_json, is_deepseek_configured, make_llm
 
 log = logging.getLogger(__name__)
 
@@ -944,7 +944,7 @@ async def run_tasks_node(state: ResearchAgentState) -> dict[str, Any]:
     if not specs:
         return {"findings": []}
 
-    provider: str | None = "deepseek" if os.environ.get("DEEPSEEK_API_KEY") else None
+    provider: str | None = "deepseek" if is_deepseek_configured() else None
     all_findings: list[dict[str, Any]] = []
 
     for spec_data in specs:
@@ -979,7 +979,7 @@ async def synthesize_node(state: ResearchAgentState) -> dict[str, Any]:
     if not findings:
         return {"report": "_No findings produced._"}
 
-    provider: str | None = "deepseek" if os.environ.get("DEEPSEEK_API_KEY") else None
+    provider: str | None = "deepseek" if is_deepseek_configured() else None
     llm = make_llm(provider=provider)
 
     sections = []

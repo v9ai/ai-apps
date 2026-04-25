@@ -50,11 +50,12 @@ def main():
 
         with psycopg.connect(conn_str) as conn:
             with conn.cursor() as cur:
-                for paper_id, emb in zip(ids, embeddings):
-                    cur.execute(
-                        "UPDATE therapy_research SET embedding = %s WHERE id = %s",
-                        (str(emb), paper_id),
-                    )
+                # Batched UPDATE: one round-trip instead of N. Pairs are
+                # (embedding_str, paper_id) per row.
+                cur.executemany(
+                    "UPDATE therapy_research SET embedding = %s WHERE id = %s",
+                    [(str(emb), paper_id) for paper_id, emb in zip(ids, embeddings)],
+                )
             conn.commit()
 
         print(f"  Embedded {i + len(batch)}/{len(rows)} papers")

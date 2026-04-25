@@ -94,6 +94,19 @@ export const contactQueries = {
     };
   },
 
+  async contactTags(_parent: unknown, _args: unknown, context: GraphQLContext) {
+    requireAdmin(context);
+    const result = await context.db.execute(sql`
+      SELECT tag, COUNT(*)::int AS count
+      FROM contacts, jsonb_array_elements_text(${contacts.tags}::jsonb) AS tag
+      WHERE ${contacts.tags} IS NOT NULL
+        AND (${contacts.to_be_deleted} = false OR ${contacts.to_be_deleted} IS NULL)
+      GROUP BY tag
+      ORDER BY count DESC, tag ASC
+    `);
+    return (result.rows ?? []) as { tag: string; count: number }[];
+  },
+
   async contact(_parent: unknown, args: { id?: number; slug?: string }, context: GraphQLContext) {
     if (!args.id && !args.slug) return null;
     const condition = args.id ? eq(contacts.id, args.id) : eq(contacts.slug, args.slug!);

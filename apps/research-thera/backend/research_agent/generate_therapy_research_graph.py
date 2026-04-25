@@ -44,10 +44,19 @@ from typing import Any, Optional, TypedDict
 
 import httpx
 import psycopg
+from psycopg import sql
+
+from research_agent import neon
 from dotenv import load_dotenv
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import RetryPolicy
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+# Whitelist of columns allowed in dynamic WHERE-clause composition for the
+# therapy-research eval lookup. Values composed via psycopg.sql.Identifier
+# into a query MUST be checked against this set first.
+_ALLOWED_EVAL_COLS = frozenset({"issue_id", "feedback_id", "goal_id"})
 
 # ── deepseek_client from shared pypackages ────────────────────────────────
 sys.path.insert(
@@ -233,7 +242,7 @@ async def _deepseek_json(
 # ---------------------------------------------------------------------------
 async def _update_job_progress(job_id: str, progress: int) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET progress = %s, updated_at = NOW() WHERE id = %s",
@@ -245,7 +254,7 @@ async def _update_job_progress(job_id: str, progress: int) -> None:
 
 async def _update_job_succeeded(job_id: str, payload: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'SUCCEEDED', progress = 100, "
@@ -258,7 +267,7 @@ async def _update_job_succeeded(job_id: str, payload: dict) -> None:
 
 async def _update_job_failed(job_id: str, error: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'FAILED', error = %s, "
@@ -292,7 +301,7 @@ async def load_context(state: GenerateTherapyResearchState) -> dict:
     family_member_age: Optional[int] = state.get("familyMemberAge")
 
     try:
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 if goal_id:
                     await cur.execute(
@@ -983,23 +992,26 @@ async def evals(state: GenerateTherapyResearchState) -> dict:
 
     # Identify which id column to filter by
     if state.get("issueId"):
-        where, val = "issue_id = %s", state["issueId"]
+        col, val = "issue_id", state["issueId"]
     elif state.get("feedbackId"):
-        where, val = "feedback_id = %s", state["feedbackId"]
+        col, val = "feedback_id", state["feedbackId"]
     elif state.get("goalId"):
-        where, val = "goal_id = %s", state["goalId"]
+        col, val = "goal_id", state["goalId"]
     else:
         return {}
 
+    if col not in _ALLOWED_EVAL_COLS:
+        raise ValueError(f"invalid filter column: {col!r}")
+    eval_query = sql.SQL(
+        "SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level "
+        "FROM therapy_research WHERE {col} = %s "
+        "ORDER BY relevance_score DESC LIMIT 10"
+    ).format(col=sql.Identifier(col))
+
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(
-                    f"SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level "
-                    f"FROM therapy_research WHERE {where} "
-                    f"ORDER BY relevance_score DESC LIMIT 10",
-                    (val,),
-                )
+                await cur.execute(eval_query, (val,))
                 rows = await cur.fetchall()
     except Exception as exc:
         print(f"[generate_therapy_research] eval query failed: {exc}")
@@ -1071,17 +1083,25 @@ async def evals(state: GenerateTherapyResearchState) -> dict:
 # ---------------------------------------------------------------------------
 # Graph assembly
 # ---------------------------------------------------------------------------
-def create_generate_therapy_research_graph():
+# RetryPolicy for the high-value external-API nodes. `search` fans out to
+# OpenAlex / Crossref / Semantic Scholar / PubMed and is by far the most
+# failure-prone step (rate limits, network blips). `extract_all` and the LLM
+# planning steps go to DeepSeek and benefit from a softer retry envelope.
+_SEARCH_RETRY = RetryPolicy(max_attempts=3, initial_interval=1.0, backoff_factor=2.0)
+_LLM_RETRY = RetryPolicy(max_attempts=2, initial_interval=1.0, backoff_factor=2.0)
+
+
+def create_generate_therapy_research_graph(checkpointer=None):
     """Build the multi-step therapy research pipeline graph."""
     builder = StateGraph(GenerateTherapyResearchState)
     builder.add_node("load_context", load_context)
-    builder.add_node("normalize_goal", normalize_goal)
-    builder.add_node("plan_query", plan_query)
-    builder.add_node("search", search)
+    builder.add_node("normalize_goal", normalize_goal, retry=_LLM_RETRY)
+    builder.add_node("plan_query", plan_query, retry=_LLM_RETRY)
+    builder.add_node("search", search, retry=_SEARCH_RETRY)
     builder.add_node("rerank", rerank_candidates)
-    builder.add_node("extract_all", extract_all)
+    builder.add_node("extract_all", extract_all, retry=_LLM_RETRY)
     builder.add_node("persist", persist)
-    builder.add_node("evals", evals)
+    builder.add_node("evals", evals, retry=_LLM_RETRY)
 
     builder.add_edge(START, "load_context")
     builder.add_edge("load_context", "normalize_goal")
@@ -1092,8 +1112,12 @@ def create_generate_therapy_research_graph():
     builder.add_edge("extract_all", "persist")
     builder.add_edge("persist", "evals")
     builder.add_edge("evals", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
-# Module-level graph instance for LangGraph server
+# Module-level graph instance for LangGraph server (eager, no checkpointer).
 graph = create_generate_therapy_research_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_generate_therapy_research_graph, graph)

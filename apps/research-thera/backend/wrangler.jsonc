@@ -6,14 +6,16 @@
   "observability": { "enabled": true },
   "vars": {
     "LLM_BASE_URL": "https://api.deepseek.com",
-    "LLM_MODEL": "deepseek-chat"
+    "LLM_MODEL": "deepseek-chat",
+    "LANGCHAIN_TRACING_V2": "true",
+    "ENVIRONMENT": "production"
   },
   "containers": [
     {
       "class_name": "ResearchTheraContainer",
       "image": "./Dockerfile",
       "max_instances": 1,
-      "instance_type": "standard-2"
+      "instance_type": "standard-4"
     }
   ],
   "durable_objects": {

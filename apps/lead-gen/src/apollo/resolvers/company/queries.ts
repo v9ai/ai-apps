@@ -8,6 +8,7 @@ import {
   companySnapshots,
   products,
 } from "@/db/schema";
+import { db as httpDb } from "@/db";
 import { eq, and, or, like, ilike, asc, desc, gte, ne, sql, isNotNull } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
 import type {
@@ -18,6 +19,81 @@ import type {
   QueryFindCompanyArgs,
 } from "@/__generated__/resolvers-types";
 import { safeJsonParse } from "./utils";
+import { withEdgeCache } from "../../cache";
+
+// Pure fetcher for the companies list — no `context` capture so unstable_cache
+// can serialize the args into a stable cache key. Uses the module-scoped
+// httpDb; single-tenant deployment makes RLS scoping equivalent.
+const fetchCompaniesList = withEdgeCache(
+  async (args: QueryCompaniesArgs) => {
+    const conditions = [];
+    conditions.push(eq(companies.blocked, false));
+
+    if (args.filter) {
+      if (args.filter.text) {
+        const searchPattern = `%${args.filter.text}%`;
+        conditions.push(
+          or(
+            ilike(companies.name, searchPattern),
+            ilike(companies.key, searchPattern),
+            ilike(companies.description, searchPattern),
+          )!,
+        );
+      }
+      if (args.filter.category) {
+        conditions.push(eq(companies.category, args.filter.category));
+      }
+      if (args.filter.min_score != null) {
+        conditions.push(gte(companies.score, args.filter.min_score));
+      }
+      if (args.filter.min_ai_tier != null) {
+        conditions.push(gte(companies.ai_tier, args.filter.min_ai_tier));
+      }
+      if (
+        args.filter.service_taxonomy_any &&
+        args.filter.service_taxonomy_any.length > 0
+      ) {
+        const values = args.filter.service_taxonomy_any.map((v) => sql`${v}`);
+        conditions.push(
+          sql`${companies.service_taxonomy}::jsonb ?| array[${sql.join(values, sql.raw(","))}]`,
+        );
+      }
+    }
+
+    const limit = args.limit ?? 50;
+    const offset = args.offset ?? 0;
+
+    let query = httpDb.select().from(companies).$dynamic();
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)!);
+    }
+
+    const orderBy = args.order_by ?? "SCORE_DESC";
+    if (orderBy === "NAME_ASC") {
+      query = query.orderBy(asc(companies.name));
+    } else if (orderBy === "SCORE_DESC") {
+      query = query.orderBy(desc(companies.score));
+    } else if (orderBy === "UPDATED_AT_DESC") {
+      query = query.orderBy(desc(companies.updated_at));
+    } else if (orderBy === "CREATED_AT_DESC") {
+      query = query.orderBy(desc(companies.created_at));
+    }
+
+    const countQuery = httpDb
+      .select({ count: sql<number>`count(*)` })
+      .from(companies)
+      .$dynamic();
+    const countConditions = [...conditions];
+    const [{ count: totalCount }] = countConditions.length > 0
+      ? await countQuery.where(and(...countConditions)!)
+      : await countQuery;
+
+    const paginatedCompanies = await query.limit(limit).offset(offset);
+
+    return { companies: paginatedCompanies, totalCount };
+  },
+  ["companies-list-v1"],
+);
 
 export const companyQueries = {
   async companies(
@@ -26,93 +102,13 @@ export const companyQueries = {
     context: GraphQLContext,
   ) {
     try {
-      const conditions = [];
-
-      // Always exclude blocked companies unless explicitly filtered
-      conditions.push(eq(companies.blocked, false));
-
-      if (args.filter) {
-        if (args.filter.text) {
-          const searchPattern = `%${args.filter.text}%`;
-          conditions.push(
-            or(
-              ilike(companies.name, searchPattern),
-              ilike(companies.key, searchPattern),
-              ilike(companies.description, searchPattern),
-            )!,
-          );
-        }
-
-        if (args.filter.category) {
-          conditions.push(eq(companies.category, args.filter.category));
-        }
-
-        if (args.filter.min_score != null) {
-          conditions.push(gte(companies.score, args.filter.min_score));
-        }
-
-        if (args.filter.min_ai_tier != null) {
-          conditions.push(gte(companies.ai_tier, args.filter.min_ai_tier));
-        }
-
-        // Push service_taxonomy_any filter to SQL (jsonb overlap)
-        if (
-          args.filter.service_taxonomy_any &&
-          args.filter.service_taxonomy_any.length > 0
-        ) {
-          const values = args.filter.service_taxonomy_any.map(
-            (v) => sql`${v}`,
-          );
-          conditions.push(
-            sql`${companies.service_taxonomy}::jsonb ?| array[${sql.join(values, sql.raw(","))}]`,
-          );
-        }
-      }
-
-      const limit = args.limit ?? 50;
-      const offset = args.offset ?? 0;
-
-      let query = context.db.select().from(companies).$dynamic();
-
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions)!);
-      }
-
-      // Order by
-      const orderBy = args.order_by ?? "SCORE_DESC";
-      if (orderBy === "NAME_ASC") {
-        query = query.orderBy(asc(companies.name));
-      } else if (orderBy === "SCORE_DESC") {
-        query = query.orderBy(desc(companies.score));
-      } else if (orderBy === "UPDATED_AT_DESC") {
-        query = query.orderBy(desc(companies.updated_at));
-      } else if (orderBy === "CREATED_AT_DESC") {
-        query = query.orderBy(desc(companies.created_at));
-      }
-
-      // Count total matches at the DB level (single aggregate, no full scan)
-      const countQuery = context.db
-        .select({ count: sql<number>`count(*)` })
-        .from(companies)
-        .$dynamic();
-      const countConditions = [...conditions];
-      const [{ count: totalCount }] = countConditions.length > 0
-        ? await countQuery.where(and(...countConditions)!)
-        : await countQuery;
-
-      // Pagination pushed to SQL
-      const paginatedCompanies = await query.limit(limit).offset(offset);
-
-      // Prime the company loader cache so field resolvers that later request
-      // the same company by ID get an instant hit instead of a DB round-trip.
-      for (const c of paginatedCompanies) {
+      const result = await fetchCompaniesList(args);
+      // Prime the per-request loader cache so field resolvers don't re-fetch
+      // the same companies by ID inside this request.
+      for (const c of result.companies) {
         context.loaders.company.prime(c.id, c);
       }
-
-      return {
-        companies: paginatedCompanies,
-        totalCount,
-      };
+      return result;
     } catch (error) {
       console.error("Error fetching companies:", error);
       return { companies: [], totalCount: 0 };

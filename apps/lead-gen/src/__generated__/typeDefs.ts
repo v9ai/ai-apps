@@ -569,6 +569,11 @@ type ContactPaper {
   year: Int
 }
 
+type ContactTagOption {
+  count: Int!
+  tag: String!
+}
+
 type ContactWorkExperience {
   company: String!
   companyLogo: String
@@ -1557,6 +1562,7 @@ type Query {
   contactMessages(contactId: Int!): [ContactMessage!]!
   contactOpportunities(contactId: Int!): [Opportunity!]!
   contactReceivedEmails(contactId: Int!): [ReceivedEmail!]!
+  contactTags: [ContactTagOption!]!
   contacts(companyId: Int, includeFlagged: Boolean = false, limit: Int, offset: Int, search: String, tag: String): ContactsResult!
   crawlLog(id: Int!): CrawlLog
   crawlLogs(limit: Int, offset: Int): [CrawlLog!]!
@@ -1750,7 +1756,7 @@ type ReplyDraft {
   draftType: String!
   generationModel: String
   id: Int!
-  receivedEmailId: Int!
+  receivedEmailId: Int
   sentAt: String
   status: String!
   subject: String!

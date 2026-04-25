@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Any, Optional, TypedDict
 
 import psycopg
+
+from research_agent import neon
 from dotenv import load_dotenv
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field, field_validator
@@ -275,7 +277,7 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
     since = today - timedelta(days=window_days)
 
     try:
-        async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 # Full family-member context (issues, journals, observations,
                 # feedbacks, related-member issues, research, issue_contacts,
@@ -346,7 +348,7 @@ async def collect_data(state: RoutineAnalysisState) -> dict:
     linked_goals: list[tuple] = []
     if goal_ids:
         try:
-            async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+            async with neon.connection() as conn:
                 async with conn.cursor() as cur:
                     placeholders = ",".join(["%s"] * len(goal_ids))
                     await cur.execute(
@@ -683,7 +685,7 @@ async def persist(state: RoutineAnalysisState) -> dict:
         user_email = state.get("user_email")
         data_snapshot = state.get("_data_snapshot", "{}")
 
-        async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "INSERT INTO routine_analyses "
@@ -715,7 +717,7 @@ async def persist(state: RoutineAnalysisState) -> dict:
         return {"error": f"persist failed: {exc}"}
 
 
-def create_routine_analysis_graph():
+def create_routine_analysis_graph(checkpointer=None):
     builder = StateGraph(RoutineAnalysisState)
     builder.add_node("collect_data", collect_data)
     builder.add_node("analyze", analyze)
@@ -726,7 +728,11 @@ def create_routine_analysis_graph():
     builder.add_edge("analyze", "persist")
     builder.add_edge("persist", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
 graph = create_routine_analysis_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_routine_analysis_graph, graph)

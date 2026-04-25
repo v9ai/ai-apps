@@ -33,6 +33,8 @@
     "db:studio": "drizzle-kit studio",
     "db:diff": "tsx scripts/db-diff.ts",
     "db:hygiene": "bash scripts/check-migration-hygiene.sh",
+    "check:deepseek-parity": "tsx scripts/check-deepseek-parity.ts",
+    "check:secret-leaks": "tsx scripts/check-secret-leaks.ts",
     "panda": "panda",
     "panda:codegen": "panda codegen",
     "prepare": "panda codegen"

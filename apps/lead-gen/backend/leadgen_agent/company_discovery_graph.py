@@ -22,7 +22,7 @@ from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
     deepseek_model_name,
-    make_llm,
+    make_deepseek_pro,
     merge_node_telemetry,
 )
 from .product_intel_schemas import product_intel_graph_meta
@@ -57,7 +57,7 @@ async def expand_seed(state: CompanyDiscoveryState) -> dict:
         return {}
     t0 = time.perf_counter()
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [
@@ -112,7 +112,7 @@ async def brainstorm(state: CompanyDiscoveryState) -> dict:
     keywords = state.get("keywords") or []
 
     try:
-        llm = make_llm(temperature=0.2, provider="deepseek", tier="deep")
+        llm = make_deepseek_pro(temperature=0.2)
         result, tel = await ainvoke_json_with_telemetry(
             llm,
             [

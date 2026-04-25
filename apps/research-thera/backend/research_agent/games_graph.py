@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any, Optional, TypedDict
 
 import psycopg
+
+from research_agent import neon
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
 
@@ -73,7 +75,7 @@ async def collect_context(state: GamesState) -> dict:
     fm_first_name: Optional[str] = None
 
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 if goal_id:
                     await cur.execute(
@@ -500,7 +502,7 @@ async def persist(state: GamesState) -> dict:
     estimated_minutes = state.get("estimated_minutes")
 
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "INSERT INTO games (user_id, goal_id, issue_id, family_member_id, type, title, "
@@ -528,7 +530,7 @@ async def persist(state: GamesState) -> dict:
         return {"error": f"persist failed: {exc}"}
 
 
-def create_games_graph():
+def create_games_graph(checkpointer=None):
     builder = StateGraph(GamesState)
     builder.add_node("collect_context", collect_context)
     builder.add_node("generate", generate)
@@ -537,7 +539,11 @@ def create_games_graph():
     builder.add_edge("collect_context", "generate")
     builder.add_edge("generate", "persist")
     builder.add_edge("persist", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
 graph = create_games_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_games_graph, graph)

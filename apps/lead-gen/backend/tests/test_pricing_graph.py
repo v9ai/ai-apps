@@ -13,6 +13,7 @@ import os
 import pytest
 from pydantic import ValidationError
 
+from leadgen_agent.llm import is_deepseek_configured
 from leadgen_agent.pricing_graph import build_graph
 from leadgen_agent.product_intel_schemas import (
     PRODUCT_INTEL_VERSION,
@@ -26,7 +27,7 @@ from leadgen_agent.product_intel_schemas import (
 
 def _live_available() -> bool:
     return bool(
-        os.environ.get("DEEPSEEK_API_KEY")
+        is_deepseek_configured()
         and (os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL"))
         and os.environ.get("PRICING_LIVE_PRODUCT_ID")
     )

@@ -44,10 +44,11 @@ from leadgen_agent.icp_schemas import (
     DeepICPOutput,
     weights_hash,
 )
+from leadgen_agent.llm import is_deepseek_configured
 
 
 def _judge_available() -> bool:
-    return bool(os.environ.get("LLM_BASE_URL") or os.environ.get("DEEPSEEK_API_KEY"))
+    return bool(os.environ.get("LLM_BASE_URL") or is_deepseek_configured())
 
 
 judge_required = pytest.mark.skipif(

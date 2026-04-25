@@ -722,20 +722,38 @@ _BATCH_WALL_CLOCK_SECS_DEFAULT = 8 * 60
 
 
 async def _resolve_one(contact: dict[str, Any]) -> tuple[dict[str, Any], str]:
-    """Run one contact through resolve_openalex_author + synthesize inline.
+    """Run one contact through the full single-contact pipeline inline.
 
-    Returns (summary_record, resolve_source). summary_record contains the
-    compact per-contact result we surface up to the batch caller.
+    Mirrors ``build_graph`` 1:1 (load → resolve → synthesize → classify_affiliation
+    → classify_buyer_fit → auto_flag_unreachable) but reuses the per-contact
+    state dict instead of re-invoking the compiled graph — cheaper and avoids
+    checkpointer round-trips inside the batch loop. Any node added to the
+    single-contact graph must also be wired here, otherwise the batch path
+    silently skips it.
+
+    Returns (summary_record, resolve_source). summary_record carries the
+    compact per-contact result surfaced up to the batch caller.
     """
-    # Wrap the single-contact state and call the existing nodes directly to
-    # avoid re-invoking the compiled graph (cheaper and avoids checkpointer
-    # round-trips inside the loop).
     per_state: ContactEnrichPaperAuthorState = {"contact": contact}
     resolved = await resolve_openalex_author(per_state)
     per_state.update(resolved)  # type: ignore[typeddict-item]
 
     synth = await synthesize(per_state)
     per_state.update(synth)  # type: ignore[typeddict-item]
+
+    # Team A — affiliation classification (pure, reads institution_type).
+    aff = await classify_affiliation(per_state)
+    per_state.update(aff)  # type: ignore[typeddict-item]
+
+    # Team B — buyer-fit classification (pure, reads affiliation + profile).
+    fit = await classify_buyer_fit_node(per_state)
+    per_state.update(fit)  # type: ignore[typeddict-item]
+
+    # Team C — auto-flag unreachable. Writes contacts.to_be_deleted via
+    # _flag_contact_for_deletion when the contact is academic / non-buyer
+    # AND has no email / linkedin_url / github_handle. Idempotent.
+    flagged = await auto_flag_unreachable_node(per_state)
+    per_state.update(flagged)  # type: ignore[typeddict-item]
 
     return (
         {
@@ -749,6 +767,11 @@ async def _resolve_one(contact: dict[str, Any]) -> tuple[dict[str, Any], str]:
             "institution": per_state.get("institution") or "",
             "h_index": per_state.get("h_index") or 0,
             "match_confidence": per_state.get("match_confidence") or 0.0,
+            "affiliation_type": per_state.get("affiliation_type") or "",
+            "buyer_verdict": per_state.get("buyer_verdict") or "",
+            "auto_flagged_for_deletion": bool(
+                per_state.get("auto_flagged_for_deletion")
+            ),
         },
         per_state.get("resolve_source") or "",
     )

@@ -10,7 +10,7 @@ import { eq, and, or, isNull, desc } from "drizzle-orm";
 import { db } from "@/db";
 import { contactEmails, contacts, replyDrafts, receivedEmails } from "@/db/schema";
 import { buildFollowUpInstructions } from "@/lib/email/followup";
-import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
+import { getDeepSeekClient, getDeepSeekModel, isDeepSeekConfigured } from "@/lib/deepseek/client";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -81,7 +81,7 @@ export async function GET(req: Request) {
   let skipped = 0;
   let failed = 0;
 
-  if (!process.env.DEEPSEEK_API_KEY) {
+  if (!isDeepSeekConfigured()) {
     return NextResponse.json({ error: "DEEPSEEK_API_KEY not set" }, { status: 500 });
   }
 

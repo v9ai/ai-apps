@@ -637,6 +637,12 @@ export type ContactPaper = {
   year: Maybe<Scalars['Int']['output']>;
 };
 
+export type ContactTagOption = {
+  __typename?: 'ContactTagOption';
+  count: Scalars['Int']['output'];
+  tag: Scalars['String']['output'];
+};
+
 export type ContactWorkExperience = {
   __typename?: 'ContactWorkExperience';
   company: Scalars['String']['output'];
@@ -2215,6 +2221,7 @@ export type Query = {
   contactMessages: Array<ContactMessage>;
   contactOpportunities: Array<Opportunity>;
   contactReceivedEmails: Array<ReceivedEmail>;
+  contactTags: Array<ContactTagOption>;
   contacts: ContactsResult;
   crawlLog: Maybe<CrawlLog>;
   crawlLogs: Array<CrawlLog>;
@@ -2858,7 +2865,7 @@ export type ReplyDraft = {
   draftType: Scalars['String']['output'];
   generationModel: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
-  receivedEmailId: Scalars['Int']['output'];
+  receivedEmailId: Maybe<Scalars['Int']['output']>;
   sentAt: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
   subject: Scalars['String']['output'];
@@ -4201,6 +4208,11 @@ export type CancelScheduledEmailMutationVariables = Exact<{
 
 export type CancelScheduledEmailMutation = { __typename?: 'Mutation', cancelScheduledEmail: { __typename?: 'CancelEmailResult', success: boolean, error: string | null } };
 
+export type GetContactTagsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetContactTagsQuery = { __typename?: 'Query', contactTags: Array<{ __typename?: 'ContactTagOption', tag: string, count: number }> };
+
 export type GetContactsQueryVariables = Exact<{
   companyId?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -4714,7 +4726,7 @@ export type GetReplyDraftsQueryVariables = Exact<{
 }>;
 
 
-export type GetReplyDraftsQuery = { __typename?: 'Query', replyDrafts: { __typename?: 'ReplyDraftsResult', totalCount: number, drafts: Array<{ __typename?: 'ReplyDraft', id: number, receivedEmailId: number, contactId: number, status: string, draftType: string, subject: string, bodyText: string, bodyHtml: string | null, generationModel: string | null, contactName: string | null, contactEmail: string | null, companyName: string | null, classification: string | null, classificationConfidence: number | null, approvedAt: string | null, sentAt: string | null, createdAt: string, updatedAt: string }> } };
+export type GetReplyDraftsQuery = { __typename?: 'Query', replyDrafts: { __typename?: 'ReplyDraftsResult', totalCount: number, drafts: Array<{ __typename?: 'ReplyDraft', id: number, receivedEmailId: number | null, contactId: number, status: string, draftType: string, subject: string, bodyText: string, bodyHtml: string | null, generationModel: string | null, contactName: string | null, contactEmail: string | null, companyName: string | null, classification: string | null, classificationConfidence: number | null, approvedAt: string | null, sentAt: string | null, createdAt: string, updatedAt: string }> } };
 
 export type GetDraftSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -6865,6 +6877,49 @@ export function useCancelScheduledEmailMutation(baseOptions?: Apollo.MutationHoo
 export type CancelScheduledEmailMutationHookResult = ReturnType<typeof useCancelScheduledEmailMutation>;
 export type CancelScheduledEmailMutationResult = Apollo.MutationResult<CancelScheduledEmailMutation>;
 export type CancelScheduledEmailMutationOptions = Apollo.BaseMutationOptions<CancelScheduledEmailMutation, CancelScheduledEmailMutationVariables>;
+export const GetContactTagsDocument = gql`
+    query GetContactTags {
+  contactTags {
+    tag
+    count
+  }
+}
+    `;
+
+/**
+ * __useGetContactTagsQuery__
+ *
+ * To run a query within a React component, call `useGetContactTagsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetContactTagsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetContactTagsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetContactTagsQuery(baseOptions?: Apollo.QueryHookOptions<GetContactTagsQuery, GetContactTagsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetContactTagsQuery, GetContactTagsQueryVariables>(GetContactTagsDocument, options);
+      }
+export function useGetContactTagsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetContactTagsQuery, GetContactTagsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetContactTagsQuery, GetContactTagsQueryVariables>(GetContactTagsDocument, options);
+        }
+// @ts-ignore
+export function useGetContactTagsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetContactTagsQuery, GetContactTagsQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactTagsQuery, GetContactTagsQueryVariables>;
+export function useGetContactTagsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactTagsQuery, GetContactTagsQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactTagsQuery | undefined, GetContactTagsQueryVariables>;
+export function useGetContactTagsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactTagsQuery, GetContactTagsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetContactTagsQuery, GetContactTagsQueryVariables>(GetContactTagsDocument, options);
+        }
+export type GetContactTagsQueryHookResult = ReturnType<typeof useGetContactTagsQuery>;
+export type GetContactTagsLazyQueryHookResult = ReturnType<typeof useGetContactTagsLazyQuery>;
+export type GetContactTagsSuspenseQueryHookResult = ReturnType<typeof useGetContactTagsSuspenseQuery>;
+export type GetContactTagsQueryResult = Apollo.QueryResult<GetContactTagsQuery, GetContactTagsQueryVariables>;
 export const GetContactsDocument = gql`
     query GetContacts($companyId: Int, $search: String, $tag: String, $limit: Int, $offset: Int, $includeFlagged: Boolean) {
   contacts(

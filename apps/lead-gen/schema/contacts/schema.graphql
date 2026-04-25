@@ -3,6 +3,7 @@ extend type Query {
   # outreach paths must keep the default. Admin/debug list views pass `true`
   # so flagged rows remain visible in the UI.
   contacts(companyId: Int, search: String, tag: String, limit: Int, offset: Int, includeFlagged: Boolean = false): ContactsResult!
+  contactTags: [ContactTagOption!]!
   contact(id: Int, slug: String): Contact
   contactByEmail(email: String!): Contact
   contactByLinkedinUrl(linkedinUrl: String!): Contact
@@ -11,6 +12,11 @@ extend type Query {
   contactMessages(contactId: Int!): [ContactMessage!]!
   companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
   resendEmail(resendId: String!): ResendEmailDetail
+}
+
+type ContactTagOption {
+  tag: String!
+  count: Int!
 }
 
 type ContactMessage {

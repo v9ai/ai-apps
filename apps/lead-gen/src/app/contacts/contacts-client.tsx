@@ -23,6 +23,7 @@ import {
   TextField,
 } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
+import { ContactTagSelect } from "@/components/contact-tag-select";
 import {
   EnvelopeClosedIcon,
   InfoCircledIcon,
@@ -146,26 +147,7 @@ export function ContactsClient() {
           <Text size="2" color="gray">
             {loading ? "Loading…" : `${totalCount} contact${totalCount !== 1 ? "s" : ""}`}
           </Text>
-          <button
-            className={button({ variant: activeTag === "papers" ? "solid" : "outline", size: "sm" })}
-            onClick={() => setTag(activeTag === "papers" ? null : "papers")}
-            aria-pressed={activeTag === "papers"}
-          >
-            Papers
-          </button>
-          {activeTag && activeTag !== "papers" && (
-            <Badge color="blue" variant="soft" size="1">
-              tag: {activeTag}
-              <button
-                className={button({ variant: "ghost", size: "sm" })}
-                onClick={() => setTag(null)}
-                style={{ padding: 0, marginLeft: 4 }}
-                aria-label="Clear tag filter"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
+          <ContactTagSelect value={activeTag} onChange={setTag} />
         </Flex>
         <Box style={{ width: 280 }}>
           <TextField.Root

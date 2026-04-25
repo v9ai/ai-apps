@@ -9,6 +9,23 @@
 
 const LANGGRAPH_URL = (process.env.LANGGRAPH_URL || "http://localhost:2024").trim();
 
+const AUTH_TOKEN = process.env.LANGGRAPH_AUTH_TOKEN ?? "";
+
+function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { ...extra };
+  if (AUTH_TOKEN) headers["Authorization"] = `Bearer ${AUTH_TOKEN}`;
+  return headers;
+}
+
+function authHeadersForUser(
+  userEmail: string | null | undefined,
+  extra: Record<string, string> = {},
+): Record<string, string> {
+  const headers = authHeaders(extra);
+  if (userEmail) headers["X-User-Email"] = userEmail;
+  return headers;
+}
+
 function normalizeBase(baseUrl: string): string {
   return baseUrl.trim().replace(/\/+$/, "");
 }
@@ -33,10 +50,11 @@ export async function runGraphAndWait(
   graphName: string,
   options: LangGraphRunOptions,
   baseUrl: string = LANGGRAPH_URL,
+  userEmail?: string | null,
 ): Promise<Record<string, unknown>> {
   const response = await fetch(`${normalizeBase(baseUrl)}/runs/wait`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeadersForUser(userEmail, { "Content-Type": "application/json" }),
     body: JSON.stringify({
       assistant_id: graphName,
       input: options.input,
@@ -65,13 +83,14 @@ export async function startGraphRun(
   graphName: string,
   options: LangGraphRunOptions,
   baseUrl: string = LANGGRAPH_URL,
+  userEmail?: string | null,
 ): Promise<BackgroundRun> {
   const base = normalizeBase(baseUrl);
 
   // 1. Create a thread to host the run.
   const threadRes = await fetch(`${base}/threads`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeadersForUser(userEmail, { "Content-Type": "application/json" }),
     body: JSON.stringify({}),
   });
   if (!threadRes.ok) {
@@ -83,7 +102,7 @@ export async function startGraphRun(
   // 2. Kick off the run. Server returns immediately; run executes in background.
   const runRes = await fetch(`${base}/threads/${thread.thread_id}/runs`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeadersForUser(userEmail, { "Content-Type": "application/json" }),
     body: JSON.stringify({
       assistant_id: graphName,
       input: options.input,
@@ -119,8 +138,11 @@ export async function getGraphRunStatus(
   threadId: string,
   runId: string,
   baseUrl: string = LANGGRAPH_URL,
+  userEmail?: string | null,
 ): Promise<RunStatus> {
-  const res = await fetch(`${normalizeBase(baseUrl)}/threads/${threadId}/runs/${runId}`);
+  const res = await fetch(`${normalizeBase(baseUrl)}/threads/${threadId}/runs/${runId}`, {
+    headers: authHeadersForUser(userEmail),
+  });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new LangGraphHttpError(
@@ -144,11 +166,37 @@ export async function getGraphRunStatus(
   return { status, raw };
 }
 
+/**
+ * Cancel a running LangGraph background run. Frees container resources
+ * (DeepSeek tokens, source-API quotas) when the user navigates away mid-run.
+ */
+export async function cancelGraphRun(
+  threadId: string,
+  runId: string,
+  baseUrl: string = LANGGRAPH_URL,
+  userEmail?: string | null,
+): Promise<void> {
+  const res = await fetch(
+    `${normalizeBase(baseUrl)}/threads/${threadId}/runs/${runId}`,
+    { method: "DELETE", headers: authHeadersForUser(userEmail) },
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new LangGraphHttpError(
+      res.status,
+      `LangGraph DELETE run failed (${res.status}): ${text}`,
+    );
+  }
+}
+
 export async function getGraphState(
   threadId: string,
   baseUrl: string = LANGGRAPH_URL,
+  userEmail?: string | null,
 ): Promise<Record<string, unknown>> {
-  const res = await fetch(`${normalizeBase(baseUrl)}/threads/${threadId}/state`);
+  const res = await fetch(`${normalizeBase(baseUrl)}/threads/${threadId}/state`, {
+    headers: authHeadersForUser(userEmail),
+  });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new LangGraphHttpError(

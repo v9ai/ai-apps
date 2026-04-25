@@ -33,6 +33,7 @@ import {
   PaperPlaneIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { getSentEmails, getEmailSubscribers } from "./actions";
@@ -42,7 +43,6 @@ import { ComposeFromLinkedIn } from "@/components/admin/ComposeFromLinkedIn";
 import { EditCampaignDialog } from "@/components/admin/EditCampaignDialog";
 import { ThreadInbox } from "@/components/emails/thread-inbox";
 import { CpnFollowupPanel } from "@/components/admin/CpnFollowupPanel";
-import { DraftReviewPanel } from "@/components/emails/draft-review-panel";
 import {
   useGetEmailCampaignsQuery,
   useCreateDraftCampaignMutation,
@@ -660,8 +660,24 @@ function WebhookEventsList() {
   );
 }
 
+const TAB_VALUES = new Set([
+  "inbox",
+  "sent",
+  "campaigns",
+  "templates",
+  "compose",
+  "drafts",
+  "cpn",
+  "stats",
+  "logs",
+]);
+
 function EmailsPageContent() {
-  const [tab, setTab] = useState("inbox");
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab");
+  const [tab, setTab] = useState(
+    initialTab && TAB_VALUES.has(initialTab) ? initialTab : "inbox",
+  );
 
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
@@ -735,9 +751,11 @@ function EmailsPageContent() {
             <LinkedInLogoIcon />
             &nbsp;Compose
           </Tabs.Trigger>
-          <Tabs.Trigger value="drafts">
-            <Pencil1Icon />
-            &nbsp;Drafts
+          <Tabs.Trigger value="drafts" asChild>
+            <Link href="/emails/drafts">
+              <Pencil1Icon />
+              &nbsp;Drafts
+            </Link>
           </Tabs.Trigger>
           <Tabs.Trigger value="cpn">
             <PaperPlaneIcon />
@@ -771,10 +789,6 @@ function EmailsPageContent() {
 
         <Tabs.Content value="compose">
           <ComposeFromLinkedIn />
-        </Tabs.Content>
-
-        <Tabs.Content value="drafts">
-          <DraftReviewPanel />
         </Tabs.Content>
 
         <Tabs.Content value="cpn">

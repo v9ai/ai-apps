@@ -1,7 +1,7 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { z } from "zod";
 import { db } from "@/src/db";
-import { runGraphAndWait } from "@/src/lib/langgraph-client";
+import { startGraphRun } from "@/src/lib/langgraph-client";
 import { generateObject } from "@/src/lib/deepseek";
 
 const PLANNER_SYSTEM_PROMPT = [
@@ -352,28 +352,34 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
 
   const plannedQueries = await planQueries(prompt);
 
-  // Fire-and-forget: CF Worker accepts request via ctx.waitUntil and updates the job row itself when done.
-  runGraphAndWait("research", {
-    input: {
-      messages: [{ role: "user", content: prompt }],
-      jobId,
+  try {
+    const { threadId, runId } = await startGraphRun(
+      "research",
+      {
+        input: {
+          messages: [{ role: "user", content: prompt }],
+          jobId,
+          userEmail,
+          goalId: goalId ?? null,
+          issueId: issueId ?? null,
+          feedbackId: feedbackId ?? null,
+          journalEntryId: journalEntryId ?? null,
+          hasRelatedMember,
+          evalPromptContext,
+          plannedQueries: plannedQueries ?? undefined,
+        },
+      },
       userEmail,
-      goalId: goalId ?? null,
-      issueId: issueId ?? null,
-      feedbackId: feedbackId ?? null,
-      journalEntryId: journalEntryId ?? null,
-      hasRelatedMember,
-      evalPromptContext,
-      plannedQueries: plannedQueries ?? undefined,
-    },
-  }).catch(async (err) => {
+    );
+    await db.setGenerationJobLangGraphIds(jobId, threadId, runId);
+  } catch (err) {
     const message = err instanceof Error ? err.message : "LangGraph dispatch failed";
     console.error("[generateResearch] dispatch error:", message);
     await db.updateGenerationJob(jobId, {
       status: "FAILED",
       error: JSON.stringify({ message, code: "DISPATCH_FAILED" }),
     });
-  });
+  }
 
   return {
     success: true,

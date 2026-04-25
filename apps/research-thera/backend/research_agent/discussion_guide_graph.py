@@ -20,6 +20,8 @@ from deepseek_client import ChatMessage, DeepSeekClient, DeepSeekConfig
 
 import psycopg
 
+from research_agent import neon
+
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -62,7 +64,7 @@ def _conn_str() -> str:
 
 async def _update_job_progress(job_id: str, progress: int) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET progress = %s, updated_at = NOW() WHERE id = %s",
@@ -74,7 +76,7 @@ async def _update_job_progress(job_id: str, progress: int) -> None:
 
 async def _update_job_succeeded(job_id: str, payload: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'SUCCEEDED', progress = 100, "
@@ -87,7 +89,7 @@ async def _update_job_succeeded(job_id: str, payload: dict) -> None:
 
 async def _update_job_failed(job_id: str, error: dict) -> None:
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "UPDATE generation_jobs SET status = 'FAILED', error = %s, "
@@ -116,7 +118,7 @@ async def collect_data(state: DiscussionGuideState) -> dict:
     research_context = ""
 
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "SELECT id, title, entry_date, content, mood, mood_score, tags, family_member_id "
@@ -462,7 +464,7 @@ async def persist(state: dict) -> dict:
     child_age = state.get("_child_age")
 
     try:
-        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "DELETE FROM discussion_guides WHERE journal_entry_id = %s AND user_id = %s",
@@ -510,7 +512,7 @@ async def finalize(state: dict) -> dict:
     return {"success": True, "message": "Discussion guide generated successfully."}
 
 
-def create_discussion_guide_graph():
+def create_discussion_guide_graph(checkpointer=None):
     builder = StateGraph(DiscussionGuideState)
     builder.add_node("collect_data", collect_data)
     builder.add_node("generate", generate)
@@ -523,7 +525,11 @@ def create_discussion_guide_graph():
     builder.add_edge("persist", "finalize")
     builder.add_edge("finalize", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
 graph = create_discussion_guide_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_discussion_guide_graph, graph)

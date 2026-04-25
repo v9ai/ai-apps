@@ -11,6 +11,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from research_agent import neon
+
 
 def load_env() -> None:
     load_dotenv(".env.local")
@@ -98,12 +100,12 @@ async def _run_research_goal(args: argparse.Namespace) -> None:
     """Invoke the same ReAct research graph the web app uses (research_agent.graph)."""
     import os
 
-    import psycopg
+    import psycopg  # noqa: F401  — kept for type-erased downstream usage
 
     from .graph import graph as research_graph
 
     conn_str = os.environ.get("NEON_DATABASE_URL", "")
-    async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+    async with neon.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 "SELECT title, description, family_member_id FROM goals "
@@ -260,7 +262,7 @@ async def _run_bogdan_discussion(args: argparse.Namespace) -> None:
 
     family_member_id = args.family_member_id
     if family_member_id is None:
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "SELECT id FROM family_members "
@@ -278,7 +280,7 @@ async def _run_bogdan_discussion(args: argparse.Namespace) -> None:
 
     job_id = args.job_id or str(uuid.uuid4())
     if args.create_job:
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "INSERT INTO generation_jobs (id, user_id, type, status, progress) "

@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Optional, TypedDict
 
 import psycopg
+
+from research_agent import neon
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
 
@@ -626,7 +628,7 @@ async def collect_data(state: DeepAnalysisV2State) -> dict:
         return {"error": "subject_type, subject_id, and user_email are required"}
 
     try:
-        async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 if subject_type == "goal":
                     return await _collect_for_goal(cur, subject_id, user_email, language)
@@ -653,7 +655,7 @@ async def persist(state: dict) -> dict:
         user_email = state.get("user_email")
         data_snapshot = state.get("_data_snapshot", "{}")
 
-        async with await psycopg.AsyncConnection.connect(shared.conn_str()) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "INSERT INTO deep_analyses "
@@ -685,7 +687,7 @@ async def persist(state: dict) -> dict:
         return {"error": f"persist failed: {exc}"}
 
 
-def create_deep_analysis_v2_graph():
+def create_deep_analysis_v2_graph(checkpointer=None):
     builder = StateGraph(DeepAnalysisV2State)
     builder.add_node("collect_data", collect_data)
     builder.add_node("analyze", shared.analyze)
@@ -694,7 +696,11 @@ def create_deep_analysis_v2_graph():
     builder.add_edge("collect_data", "analyze")
     builder.add_edge("analyze", "persist")
     builder.add_edge("persist", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
 graph = create_deep_analysis_v2_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_deep_analysis_v2_graph, graph)

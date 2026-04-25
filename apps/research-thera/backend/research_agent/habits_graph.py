@@ -10,6 +10,8 @@ from langgraph.graph import StateGraph, START, END
 
 import psycopg
 
+from research_agent import neon
+
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -67,7 +69,7 @@ async def collect_data(state: HabitsState) -> dict:
     resolved_family_member_id = family_member_id
 
     try:
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
 
                 # ── If issue_id provided, load the focal issue ─────────────
@@ -339,7 +341,7 @@ async def persist(state: HabitsState) -> dict:
 
     try:
         conn_str = _conn_str()
-        async with await psycopg.AsyncConnection.connect(conn_str) as conn:
+        async with neon.connection() as conn:
             async with conn.cursor() as cur:
                 for habit in habits:
                     await cur.execute(
@@ -361,7 +363,7 @@ async def persist(state: HabitsState) -> dict:
     return {}
 
 
-def create_habits_graph():
+def create_habits_graph(checkpointer=None):
     """Build the habits generation LangGraph."""
     builder = StateGraph(HabitsState)
     builder.add_node("collect_data", collect_data)
@@ -373,8 +375,12 @@ def create_habits_graph():
     builder.add_edge("generate", "persist")
     builder.add_edge("persist", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
 
-# Module-level graph instance for LangGraph server
+# Module-level graph instance for LangGraph server (eager, no checkpointer).
 graph = create_habits_graph()
+
+from .checkpointer import make_lazy_compiler  # noqa: E402
+
+get_graph = make_lazy_compiler(create_habits_graph, graph)

@@ -5,7 +5,7 @@ import { checkIsAdmin } from "@/lib/admin";
 import { db } from "@/db";
 import { contactEmails, receivedEmails } from "@/db/schema";
 import { stripQuotedText } from "@/lib/email/reply-classifier";
-import { parseJsonContent } from "@/lib/email/prompt-builder";
+import { streamDeepSeekChat } from "@/lib/deepseek/streaming";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,62 +99,16 @@ ${threadText}
 
 Respond with ONLY valid JSON: {"subject": "Re: ...", "body": "..."}`;
 
-    const client = getDeepSeekClient();
-    const model = getDeepSeekModel();
-
-    const completion = await client.chat.completions.create({
-      model,
+    return await streamDeepSeekChat({
+      client: getDeepSeekClient(),
+      model: getDeepSeekModel(),
       messages: [
         { role: "system", content: `You are composing an email reply on behalf of Vadim Nicolai to ${input.contactName}. Use the conversation thread for context.` },
         { role: "user", content: prompt },
       ],
       temperature: 0.7,
       max_tokens: 1024,
-      stream: true,
-    });
-
-    const encoder = new TextEncoder();
-    let accumulated = "";
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of completion) {
-            const delta = chunk.choices?.[0]?.delta?.content;
-            if (delta) {
-              accumulated += delta;
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ type: "chunk", content: delta, accumulated })}\n\n`),
-              );
-            }
-          }
-
-          const parsed = parseJsonContent(accumulated);
-          if (parsed) {
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ type: "complete", data: parsed })}\n\n`),
-            );
-          } else {
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ type: "complete", data: { subject: `Re: reply`, body: accumulated } })}\n\n`),
-            );
-          }
-          controller.close();
-        } catch (error) {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "error", error: error instanceof Error ? error.message : "Unknown error" })}\n\n`),
-          );
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-      },
+      fallbackSubject: `Re: reply`,
     });
   } catch (error) {
     return new Response(
