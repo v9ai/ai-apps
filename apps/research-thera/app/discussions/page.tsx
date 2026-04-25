@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Box,
   Flex,
@@ -9,7 +8,6 @@ import {
   Card,
   Badge,
   Spinner,
-  Button,
   Separator,
   Tooltip,
   Link as RadixLink,
@@ -17,10 +15,8 @@ import {
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
-  useGenerateBogdanDiscussionMutation,
   useLatestBogdanDiscussionQuery,
   useBogdanDiscussionsQuery,
-  useGetGenerationJobQuery,
 } from "@/app/__generated__/hooks";
 import { AuthGate } from "../components/AuthGate";
 
@@ -155,58 +151,12 @@ export default function DiscussionsPage() {
 }
 
 function BogdanDiscussion() {
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
-
-  const { data: latestData, loading: latestLoading, refetch: refetchLatest } =
+  const { data: latestData, loading: latestLoading } =
     useLatestBogdanDiscussionQuery({ fetchPolicy: "cache-and-network" });
-  const { data: historyData, refetch: refetchHistory } = useBogdanDiscussionsQuery({
+  const { data: historyData } = useBogdanDiscussionsQuery({
     fetchPolicy: "cache-and-network",
   });
 
-  const { data: jobData, stopPolling } = useGetGenerationJobQuery({
-    variables: { id: jobId! },
-    skip: !jobId,
-    pollInterval: 2000,
-    notifyOnNetworkStatusChange: true,
-    fetchPolicy: "network-only",
-    onCompleted: (d) => {
-      const status = d.generationJob?.status;
-      if (status === "SUCCEEDED" || status === "FAILED") {
-        stopPolling();
-        if (status === "SUCCEEDED") {
-          setMessage({ text: "Ghidul de discuție a fost generat.", type: "success" });
-          refetchLatest();
-          refetchHistory();
-        } else {
-          setMessage({
-            text: d.generationJob?.error?.message ?? "Generarea a eșuat.",
-            type: "error",
-          });
-        }
-        setJobId(null);
-      }
-    },
-  });
-
-  const jobProgress = jobData?.generationJob?.progress ?? 0;
-
-  const [generate, { loading: starting }] = useGenerateBogdanDiscussionMutation({
-    onCompleted: (d) => {
-      if (d.generateBogdanDiscussion.success && d.generateBogdanDiscussion.jobId) {
-        setMessage(null);
-        setJobId(d.generateBogdanDiscussion.jobId);
-      } else {
-        setMessage({
-          text: d.generateBogdanDiscussion.message || "Nu am putut porni generarea.",
-          type: "error",
-        });
-      }
-    },
-    onError: (err) => setMessage({ text: err.message, type: "error" }),
-  });
-
-  const generating = starting || Boolean(jobId);
   const guide = latestData?.latestBogdanDiscussion;
   const history = historyData?.bogdanDiscussions ?? [];
 
@@ -215,39 +165,10 @@ function BogdanDiscussion() {
       <Flex direction="column" gap="1">
         <Heading size={{ initial: "6", md: "8" }}>Discuții cu Bogdan</Heading>
         <Text size="3" color="gray">
-          Generează un ghid de discuție personalizat, bazat pe contextul lui Bogdan
+          Ghid de discuție personalizat, bazat pe contextul lui Bogdan
           (obiective active, comportamente recente, feedback de la profesori și contacte).
         </Text>
       </Flex>
-
-      <Card>
-        <Flex direction="column" gap="3" p="2">
-          <Flex justify="between" align="center" wrap="wrap" gap="3">
-            <Box>
-              <Text size="2" weight="medium">
-                Generare nouă
-              </Text>
-              <Text size="1" color="gray" as="div">
-                Folosește contextul cel mai recent. Durează ~30–60 secunde.
-              </Text>
-            </Box>
-            <Button onClick={() => generate()} disabled={generating} size="3">
-              {generating ? (
-                <>
-                  <Spinner size="2" /> Se generează… {jobProgress}%
-                </>
-              ) : (
-                "Generează ghid de discuție pentru Bogdan"
-              )}
-            </Button>
-          </Flex>
-          {message && (
-            <Text size="2" color={message.type === "error" ? "red" : "green"}>
-              {message.text}
-            </Text>
-          )}
-        </Flex>
-      </Card>
 
       {latestLoading && !guide && (
         <Flex justify="center" p="6">
@@ -448,14 +369,14 @@ function BogdanDiscussion() {
         </Card>
       )}
 
-      {!guide && !latestLoading && !generating && (
+      {!guide && !latestLoading && (
         <Card>
           <Flex direction="column" align="center" p="6" gap="2">
             <Text size="3" weight="bold">
-              Niciun ghid generat încă
+              Niciun ghid disponibil
             </Text>
             <Text size="2" color="gray">
-              Apasă butonul de mai sus pentru a crea primul ghid.
+              Ghidurile sunt generate din terminal.
             </Text>
           </Flex>
         </Card>
