@@ -509,7 +509,7 @@ export const replyDraftResolvers = {
             .limit(1);
 
           const res = await client.chat.completions.create({
-            model: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
+            model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro",
             messages: [
               {
                 role: "user",
@@ -555,7 +555,7 @@ Respond with ONLY valid JSON: {"subject": "Re: ...", "body": "..."}`,
             draft_type: "follow_up",
             subject: parsed.subject,
             body_text: bodyWithGreeting,
-            generation_model: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
+            generation_model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro",
           });
 
           generated++;

@@ -5,7 +5,7 @@ Everything in this module is opt-in; importing it does not trigger graph
 runs or network calls.
 
 Judge strategy:
-  * Default judge: ``deepseek-reasoner`` via the existing ``make_llm`` factory
+  * Default judge: ``deepseek-v4-pro`` via the existing ``make_llm`` factory
     with ``provider="deepseek", tier="deep"``. Cheap, already wired to
     ``DEEPSEEK_API_KEY``, and matches the models the graphs themselves use.
   * ``STRONG_JUDGE=1`` + ``ANTHROPIC_API_KEY``: swap in Claude Opus
@@ -47,7 +47,7 @@ def _anthropic_available() -> bool:
 def judge_model_label() -> str:
     if strong_judge_requested() and _anthropic_available() and os.environ.get("ANTHROPIC_API_KEY"):
         return os.environ.get("STRONG_JUDGE_MODEL", "claude-opus-4-7")
-    return os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner")
+    return os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
 
 
 def judge_available() -> bool:

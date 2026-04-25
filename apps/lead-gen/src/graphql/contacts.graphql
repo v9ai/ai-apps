@@ -238,8 +238,8 @@ mutation CancelScheduledEmail($resendId: String!) {
   }
 }
 
-query GetContacts($companyId: Int, $search: String, $tag: String, $limit: Int, $offset: Int) {
-  contacts(companyId: $companyId, search: $search, tag: $tag, limit: $limit, offset: $offset) {
+query GetContacts($companyId: Int, $search: String, $tag: String, $limit: Int, $offset: Int, $includeFlagged: Boolean) {
+  contacts(companyId: $companyId, search: $search, tag: $tag, limit: $limit, offset: $offset, includeFlagged: $includeFlagged) {
     contacts {
       id
       slug

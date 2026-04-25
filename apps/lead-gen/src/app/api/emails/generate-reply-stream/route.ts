@@ -109,7 +109,7 @@ ${threadText}
 Respond with ONLY valid JSON: {"subject": "Re: ...", "body": "..."}`;
 
     const client = getDeepSeekClient();
-    const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+    const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro";
 
     const completion = await client.chat.completions.create({
       model,

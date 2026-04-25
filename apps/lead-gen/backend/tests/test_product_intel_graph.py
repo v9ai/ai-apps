@@ -175,7 +175,7 @@ def test_schema_roundtrip_product_intel_report() -> None:
         },
         "graph_meta": {
             "graph": "product_intel",
-            "model": "deepseek-reasoner",
+            "model": "deepseek-v4-pro",
             "version": "1.0.0",
         },
     }

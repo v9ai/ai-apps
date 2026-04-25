@@ -410,7 +410,7 @@ Return JSON with exactly these fields:
     });
 
     const response = await client.chat.completions.create({
-      model: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
+      model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: `Profile:\n${contextLines}` },

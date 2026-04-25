@@ -5,7 +5,7 @@
 import { GraphQLError } from "graphql";
 import { contacts, contactEmails, messages, receivedEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";
-import { eq, and, like, or, count, desc, asc, sql } from "drizzle-orm";
+import { eq, and, like, or, count, desc, asc, sql, isNull } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -31,6 +31,7 @@ export const contactQueries = {
       tag?: string;
       limit?: number;
       offset?: number;
+      includeFlagged?: boolean | null;
     },
     context: GraphQLContext,
   ) {
@@ -40,6 +41,14 @@ export const contactQueries = {
     const offset = args.offset ?? 0;
 
     const conditions = [];
+    // Soft filter: exclude contacts flagged for deletion unless caller opts in.
+    // Outreach paths (e.g. email composers) must keep the default `false` so
+    // flagged rows are not reachable. Admin/debug list views pass `true`.
+    if (!args.includeFlagged) {
+      conditions.push(
+        or(eq(contacts.to_be_deleted, false), isNull(contacts.to_be_deleted)),
+      );
+    }
     if (args.companyId != null) {
       conditions.push(eq(contacts.company_id, args.companyId));
     }

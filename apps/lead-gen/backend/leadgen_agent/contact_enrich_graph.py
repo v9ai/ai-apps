@@ -405,6 +405,103 @@ Rules:
     return {"tags": derived}
 
 
+def _normalize_doi(doi: Any) -> str:
+    """Normalize a DOI for use as a merge key.
+
+    Lowercases, strips whitespace, and removes the ``https://doi.org/`` prefix
+    so equivalent DOIs ("10.1/X" vs "https://doi.org/10.1/x") collide. Returns
+    "" for None / non-string / empty input — callers treat empty as "no key".
+    """
+    if not isinstance(doi, str):
+        return ""
+    s = doi.strip().lower()
+    if not s:
+        return ""
+    for prefix in ("https://doi.org/", "http://doi.org/", "doi:"):
+        if s.startswith(prefix):
+            s = s[len(prefix) :]
+            break
+    return s.strip()
+
+
+def _paper_key(p: dict[str, Any]) -> tuple[str, str]:
+    """Compute a stable merge key for a paper row.
+
+    Precedence:
+      1. ``doi`` (lowercased, normalized) when present and non-empty.
+      2. ``(source, source_id)`` tuple when DOI absent and both fields set.
+      3. ``title`` (lowercased, trimmed) — last-resort dedupe.
+
+    Returns a ``(kind, value)`` tuple so different key kinds never collide
+    (e.g. a DOI string can't accidentally match a title string).
+    """
+    doi = _normalize_doi(p.get("doi"))
+    if doi:
+        return ("doi", doi)
+    source = str(p.get("source") or "").strip().lower()
+    source_id = str(p.get("source_id") or "").strip()
+    if source and source_id:
+        return ("src", f"{source}::{source_id}")
+    title = str(p.get("title") or "").strip().lower()
+    return ("title", title)
+
+
+def _merge_papers(
+    existing: list[dict[str, Any]],
+    incoming: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Merge ``incoming`` papers into ``existing`` using paper keys.
+
+    Contract:
+      - On collision, the existing row wins — curated corpus metadata is never
+        overwritten by OpenAlex/Crossref/Semantic Scholar projections.
+      - Missing fields on the existing row are filled from the incoming row
+        (e.g. an existing corpus entry without ``citation_count`` will pick up
+        the count from OpenAlex).
+      - Rows whose key resolves to ``("title", "")`` (no doi, no source/id, no
+        title) are kept as-is and never deduped — we have nothing to key on.
+      - Output is sorted by ``(kind, value)`` so the result is deterministic
+        across runs (eval / diff stability).
+    """
+    by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    unkeyed: list[dict[str, Any]] = []
+
+    def _add(p: dict[str, Any], *, prefer_existing: bool) -> None:
+        if not isinstance(p, dict):
+            return
+        key = _paper_key(p)
+        if key[1] == "":
+            unkeyed.append(p)
+            return
+        prior = by_key.get(key)
+        if prior is None:
+            by_key[key] = dict(p)
+            return
+        if prefer_existing:
+            # Existing wins: only fill gaps where the prior value is missing /
+            # empty / None. ``0`` and ``False`` count as set values.
+            for k, v in p.items():
+                if k in prior:
+                    pv = prior[k]
+                    if pv is None or pv == "" or pv == []:
+                        prior[k] = v
+                else:
+                    prior[k] = v
+        else:
+            # Incoming wins (only used when merging two incoming rows that
+            # share a key — keep the latest-seen).
+            prior.update(p)
+
+    for p in existing or []:
+        _add(p, prefer_existing=False)
+    for p in incoming or []:
+        _add(p, prefer_existing=True)
+
+    merged = list(by_key.values())
+    merged.sort(key=lambda row: _paper_key(row))
+    return merged + unkeyed
+
+
 def _persist_papers_and_tags(
     contact_id: int,
     papers: list[dict[str, Any]],
@@ -418,6 +515,12 @@ def _persist_papers_and_tags(
     would have written — safe to run alongside it (same data, idempotent).
     ``tags`` is stored as a JSON string (the column is ``text``-typed with
     stringified JSON, not ``jsonb``) to match the existing convention.
+
+    The ``papers`` column is dual-write: the corpus seeder
+    (``scripts/classify-paper-contacts.ts``) populates curated rows and this
+    pipeline appends OpenAlex/Crossref/SemanticScholar discoveries. We
+    SELECT-then-merge by paper key (see ``_merge_papers``) so curated
+    metadata is never overwritten.
     """
     dsn = os.environ.get("NEON_DATABASE_URL", "").strip()
     if not dsn:
@@ -426,12 +529,32 @@ def _persist_papers_and_tags(
         with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
             with conn.cursor() as cur:
                 cur.execute(
+                    "SELECT papers FROM contacts WHERE id = %s",
+                    (contact_id,),
+                )
+                row = cur.fetchone()
+                existing_raw = row[0] if row else None
+                if isinstance(existing_raw, str):
+                    try:
+                        existing_papers = json.loads(existing_raw)
+                    except json.JSONDecodeError:
+                        existing_papers = []
+                elif isinstance(existing_raw, list):
+                    existing_papers = existing_raw
+                else:
+                    existing_papers = []
+                if not isinstance(existing_papers, list):
+                    existing_papers = []
+
+                merged = _merge_papers(existing_papers, papers)
+
+                cur.execute(
                     "UPDATE contacts "
                     "SET papers = %s::jsonb, papers_enriched_at = %s, "
                     "    tags = %s, updated_at = NOW() "
                     "WHERE id = %s",
                     (
-                        json.dumps(papers),
+                        json.dumps(merged),
                         enriched_at,
                         json.dumps(tags),
                         contact_id,
@@ -504,3 +627,59 @@ def build_graph(checkpointer: Any = None) -> Any:
 
 
 graph = build_graph()
+
+
+if __name__ == "__main__":
+    # Smoke tests for _merge_papers — run via:
+    #   python -m leadgen_agent.contact_enrich_graph
+    # Assertions cover the three-tier key precedence and the
+    # "existing wins, fill gaps" collision rule.
+
+    # 1. DOI collision (case-insensitive, https prefix tolerated):
+    #    existing corpus row wins, but missing fields are filled from incoming.
+    existing = [
+        {"title": "X", "doi": "10.1/x", "source": "corpus-leadgen"},
+    ]
+    incoming = [
+        {"title": "X", "doi": "10.1/X", "source": "openalex", "citation_count": 42},
+        {"title": "Y", "doi": "10.1/y", "source": "openalex"},
+    ]
+    merged = _merge_papers(existing, incoming)
+    assert len(merged) == 2, f"expected 2 rows, got {len(merged)}: {merged}"
+    by_doi = {_normalize_doi(p["doi"]): p for p in merged}
+    assert by_doi["10.1/x"]["source"] == "corpus-leadgen", "existing must win on DOI collision"
+    assert by_doi["10.1/x"]["citation_count"] == 42, "missing field must be filled from incoming"
+    assert by_doi["10.1/y"]["source"] == "openalex", "non-colliding incoming row must be added"
+
+    # 2. (source, source_id) fallback when DOI absent.
+    existing = [{"title": "A", "source": "corpus-leadgen", "source_id": "abc"}]
+    incoming = [{"title": "A", "source": "corpus-leadgen", "source_id": "abc", "year": 2024}]
+    merged = _merge_papers(existing, incoming)
+    assert len(merged) == 1
+    assert merged[0]["year"] == 2024
+
+    # 3. Title fallback (last-resort dedupe).
+    existing = [{"title": "  Paper Z  "}]
+    incoming = [{"title": "paper z", "year": 2025}]
+    merged = _merge_papers(existing, incoming)
+    assert len(merged) == 1, f"title-keyed dedupe failed: {merged}"
+
+    # 4. DOI prefix normalization.
+    assert _normalize_doi("https://doi.org/10.1/X") == "10.1/x"
+    assert _normalize_doi("DOI:10.1/X") == "10.1/x"
+    assert _normalize_doi("") == ""
+    assert _normalize_doi(None) == ""
+
+    # 5. Determinism: merging twice in different incoming orders yields the
+    #    same sorted output (eval-stable).
+    a = _merge_papers(
+        [{"title": "X", "doi": "10.1/x"}],
+        [{"title": "Y", "doi": "10.1/y"}, {"title": "Z", "doi": "10.1/z"}],
+    )
+    b = _merge_papers(
+        [{"title": "X", "doi": "10.1/x"}],
+        [{"title": "Z", "doi": "10.1/z"}, {"title": "Y", "doi": "10.1/y"}],
+    )
+    assert a == b, "merge must be order-independent for deterministic eval diffs"
+
+    print("OK: _merge_papers smoke tests passed")

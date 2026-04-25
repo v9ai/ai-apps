@@ -286,7 +286,18 @@ async function main() {
       // (title, authors, year, venue, doi, url, citation_count, source).
       // Extra fields on the source Paper (abstract_text, pdf_url, ...) are
       // harmless — the resolver picks only the keys it knows.
-      const papersJson = JSON.stringify(papers);
+      //
+      // Tag with provenance so the OpenAlex enrichment pipeline (which writes
+      // the same column) can merge-by-key instead of overwriting. The corpus
+      // Paper.source already carries the original discovery channel
+      // (e.g. "openalex", "semanticscholar"); we only stamp "corpus-leadgen"
+      // when the source field is empty/missing so the curated origin is
+      // preserved as the merge anchor on collisions.
+      const taggedPapers = papers.map((p) => ({
+        ...p,
+        source: p.source && p.source.trim() ? p.source : "corpus-leadgen",
+      }));
+      const papersJson = JSON.stringify(taggedPapers);
       await sql`
         UPDATE contacts
         SET paper_classifications = ${JSON.stringify(verdicts)}::jsonb,

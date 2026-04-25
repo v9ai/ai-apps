@@ -1,5 +1,8 @@
 extend type Query {
-  contacts(companyId: Int, search: String, tag: String, limit: Int, offset: Int): ContactsResult!
+  # `includeFlagged: false` (default) excludes contacts with `to_be_deleted = true` —
+  # outreach paths must keep the default. Admin/debug list views pass `true`
+  # so flagged rows remain visible in the UI.
+  contacts(companyId: Int, search: String, tag: String, limit: Int, offset: Int, includeFlagged: Boolean = false): ContactsResult!
   contact(id: Int, slug: String): Contact
   contactByEmail(email: String!): Contact
   contactByLinkedinUrl(linkedinUrl: String!): Contact

@@ -74,6 +74,8 @@ export function ContactsClient() {
       tag: activeTag || undefined,
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
+      // Admin list — show flagged rows so admins can review/unflag them.
+      includeFlagged: true,
     },
     fetchPolicy: "cache-and-network",
   });

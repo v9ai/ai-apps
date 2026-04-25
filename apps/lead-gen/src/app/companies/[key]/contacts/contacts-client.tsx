@@ -593,6 +593,8 @@ export function CompanyContactsClient({
       companyId: company?.id ?? 0,
       search: debouncedSearch || undefined,
       limit: 100,
+      // Admin per-company list — show flagged rows so admins can review/unflag them.
+      includeFlagged: true,
     },
     skip: !isAdmin || !company?.id,
     fetchPolicy: "cache-and-network",

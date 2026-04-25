@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       : `You are an email composer. Recipient: ${input.recipientName}.${input.linkedinPostContent ? `\nLinkedIn post: ${input.linkedinPostContent}` : ""}`;
 
     const client = getDeepSeekClient();
-    const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+    const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro";
 
     const completion = await client.chat.completions.create({
       model,

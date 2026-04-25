@@ -97,7 +97,7 @@ When `LANGGRAPH_AUTH_TOKEN` is set, a bearer-token middleware requires `Authoriz
 | ORM | Drizzle ORM |
 | API | Apollo Server 5 (GraphQL) |
 | Auth | Better Auth (`@ai-apps/auth`) |
-| AI/ML | Vercel AI SDK, DeepSeek, OpenRouter |
+| AI/ML | Vercel AI SDK, DeepSeek V4-Pro (thinking mode, `reasoning_effort=high`), OpenRouter |
 | Deployment | Vercel |
 | Package manager | pnpm 10.10 |
 | UI | Radix UI (Themes + Icons) |

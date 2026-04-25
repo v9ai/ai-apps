@@ -102,6 +102,6 @@ export async function classifyReplyWithLLM(
 
   const dsClient = getDeepSeekClient();
   if (!dsClient) throw new Error("No LLM available (LLM_BASE_URL and DEEPSEEK_API_KEY both unset)");
-  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro";
   return await callLLM(dsClient, model, messages);
 }

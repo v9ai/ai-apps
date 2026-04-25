@@ -13,6 +13,10 @@ pub fn build_request(
     effort: &EffortLevel,
 ) -> ChatRequest {
     let has_tools = tools.is_some();
+    let reasoning_effort = match effort {
+        EffortLevel::Max => Some("max".to_string()),
+        _ => Some("high".to_string()),
+    };
     ChatRequest {
         model: model.as_str().to_string(),
         messages,
@@ -21,6 +25,8 @@ pub fn build_request(
         temperature: Some(effort.temperature()),
         max_tokens: Some(effort.max_tokens()),
         stream: Some(false),
+        reasoning_effort,
+        thinking: Some(json!({"type": "enabled"})),
     }
 }
 

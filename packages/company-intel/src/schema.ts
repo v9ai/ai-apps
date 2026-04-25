@@ -202,7 +202,7 @@ export const contacts = pgTable(
     lora_tier: text("lora_tier"),
     lora_reasons: jsonb("lora_reasons"),
     lora_scored_at: text("lora_scored_at"),
-    papers: jsonb("papers"),
+    papers: jsonb("papers"), // Append-only multi-pipeline array; merge by doi || (source, source_id) || title. Never overwrite.
     papers_enriched_at: text("papers_enriched_at"),
     paper_classifications: jsonb("paper_classifications"),
     paper_classifications_at: text("paper_classifications_at"),

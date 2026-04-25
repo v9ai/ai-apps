@@ -194,7 +194,7 @@ export async function generateReplyDraft(
 
   // Generate the reply
   const client = getClient();
-  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro";
   const prompt = buildDraftPrompt(classification, thread, contactName, isCpn);
 
   const res = await client.chat.completions.create({
