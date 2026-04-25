@@ -5,7 +5,6 @@ import { GitHubLogoIcon, HamburgerMenuIcon } from "@radix-ui/react-icons";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import UserMenu from "./UserMenu";
-import { JobsIndicator } from "./JobsIndicator";
 import { SIDEBAR_WIDTH } from "./sidebar-constants";
 
 export { SIDEBAR_WIDTH };
@@ -79,8 +78,7 @@ export function Header() {
           </nav>
 
           <Flex direction="column" gap="3">
-            <Flex align="center" justify="between" gap="2">
-              <JobsIndicator />
+            <Flex align="center" justify="end" gap="2">
               <IconButton
                 asChild
                 variant="ghost"
@@ -129,7 +127,6 @@ export function Header() {
               </Heading>
             </Link>
             <Flex align="center" gap="3">
-              <JobsIndicator />
               <UserMenu />
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger>
