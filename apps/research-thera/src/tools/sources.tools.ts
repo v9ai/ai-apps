@@ -643,7 +643,9 @@ export async function searchOpenAlex(
       process.env.UNPAYWALL_EMAIL || "research@example.com",
     );
 
-    const response = await fetch(url.toString(), {
+    // Use fetchWithRetry so transient 429s from OpenAlex don't silently drop
+    // an entire source's results from the multi-source search.
+    const response = await fetchWithRetry(url.toString(), {
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
