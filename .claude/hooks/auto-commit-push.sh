@@ -17,10 +17,21 @@ done
 
 git rev-parse --is-inside-work-tree > /dev/null 2>&1 || exit 0
 
+# Skip if a merge / rebase / cherry-pick / revert / bisect is in progress —
+# auto-committing mid-operation can ship conflict markers or partial state.
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || exit 0
+for _f in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD BISECT_LOG; do
+    [ -e "$GIT_DIR/$_f" ] && exit 0
+done
+[ -d "$GIT_DIR/rebase-merge" ] || [ -d "$GIT_DIR/rebase-apply" ] && exit 0
+
 # Nothing to commit?
 if git diff --quiet HEAD 2>/dev/null && [ -z "$(git ls-files --others --exclude-standard)" ]; then
     exit 0
 fi
+
+# Refuse to commit if any tracked file has unresolved conflict markers.
+git diff --check > /dev/null 2>&1 || exit 0
 
 git add -A -- . ':!.env*' ':!*.local'
 

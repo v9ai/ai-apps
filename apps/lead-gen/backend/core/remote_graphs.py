@@ -77,15 +77,31 @@ log = logging.getLogger(__name__)
 # which leaves a hung remote able to wedge a graph node for five minutes.
 # The values below are the hard ceiling; per-adapter overrides bump ``read``
 # for endpoints that legitimately stream big payloads.
+#
+# Cloudflare alignment:
+# * CF Workers have a 30 s wall-clock — anything fronted only by a Worker
+#   (no Container) cannot legitimately run longer; we cap ``DEFAULT_TIMEOUT``
+#   read just below that so we surface a clear timeout client-side instead
+#   of letting CF emit an opaque 524.
+# * CF Containers have a ~5 min ceiling and a 5–15 s cold-start; we widen
+#   ``connect`` to 10 s so a cold-start doesn't masquerade as a connect
+#   failure and trigger a retry storm.
+# * Research adapters legitimately do multi-minute agentic crawls in a
+#   Container; we keep read large but stay under the 5 min ceiling.
 
 # (connect, read, write, pool) in seconds.
 TimeoutTuple = tuple[float, float, float, float]
 
-DEFAULT_TIMEOUT: TimeoutTuple = (5.0, 60.0, 10.0, 5.0)
-# ML adapters can stream embedding batches; bump read to 90 s.
-ML_TIMEOUT: TimeoutTuple = (5.0, 90.0, 10.0, 5.0)
-# Research adapters do agentic web crawls; allow 120 s read.
-RESEARCH_TIMEOUT: TimeoutTuple = (5.0, 120.0, 10.0, 5.0)
+# CF Worker wall-clock is 30 s. Use 28 s read so the client gives up just
+# before CF emits a 524, producing a controlled httpx.ReadTimeout we can
+# surface in logs with adapter context.
+DEFAULT_TIMEOUT: TimeoutTuple = (10.0, 28.0, 10.0, 5.0)
+# ML adapters run inside a CF Container; reads can stream embedding batches.
+# 90 s is well under the 5 min container cap.
+ML_TIMEOUT: TimeoutTuple = (10.0, 90.0, 10.0, 5.0)
+# Research adapters do agentic web crawls inside a Container; allow 240 s
+# (still under the 5 min CF Container ceiling).
+RESEARCH_TIMEOUT: TimeoutTuple = (10.0, 240.0, 10.0, 5.0)
 
 
 # ─── Retry / circuit breaker primitives ───────────────────────────────────
@@ -199,8 +215,50 @@ def _is_retryable(exc: BaseException) -> bool:
     return False
 
 
-async def _sleep_backoff(attempt: int, base: float, cap: float) -> None:
-    """Exponential backoff with full jitter. ``attempt`` is 1-indexed."""
+def _retry_after_seconds(exc: BaseException) -> float | None:
+    """Parse ``Retry-After`` from a 429/503 response, if present.
+
+    Cloudflare emits ``Retry-After`` (seconds) when a Worker is rate-limited
+    or when a Container is briefly overloaded. Honoring it lets us back off
+    in lockstep with CF's window instead of hammering during a 60-second
+    rate-limit period with random sub-second jitter.
+
+    Returns the delay in seconds, or ``None`` if no usable header was sent.
+    Capped at 60 s to keep a misbehaving header from wedging a graph node.
+    """
+    if not isinstance(exc, httpx.HTTPStatusError) or exc.response is None:
+        return None
+    raw = exc.response.headers.get("retry-after")
+    if not raw:
+        return None
+    try:
+        # Numeric seconds — by far the most common form from CF.
+        return min(60.0, max(0.0, float(raw.strip())))
+    except (TypeError, ValueError):
+        # HTTP-date form is technically allowed but CF doesn't emit it for
+        # internal rate limits; treat as missing rather than parsing dates.
+        return None
+
+
+async def _sleep_backoff(
+    attempt: int,
+    base: float,
+    cap: float,
+    *,
+    retry_after_s: float | None = None,
+) -> None:
+    """Exponential backoff with full jitter, plus ``Retry-After`` override.
+
+    ``attempt`` is 1-indexed. When the remote sent a ``Retry-After`` we honor
+    that as a floor and add a small random jitter on top so a thundering
+    herd of adapters doesn't all wake at the same instant.
+    """
+    if retry_after_s is not None and retry_after_s > 0:
+        # Honor the server's window + a small random jitter (0–500 ms) so
+        # parallel adapters don't synchronize their wake-up.
+        delay = retry_after_s + random.uniform(0.0, 0.5)
+        await asyncio.sleep(delay)
+        return
     expo = min(cap, base * (2 ** (attempt - 1)))
     delay = random.uniform(0, expo)
     await asyncio.sleep(delay)
@@ -328,34 +386,62 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         Only the network call is wrapped — input/output validation happens in
         the caller and is intentionally outside the retry loop so transient
         retries cannot mask permanent contract failures.
+
+        Half-open behaviour: when ``_breaker.allow()`` returns true after the
+        cool-down elapsed, this is a single-shot probe — we cap the attempt
+        budget to 1 so a still-unhealthy remote does not eat the full retry
+        budget on every recovery probe.
         """
         if not self._breaker.allow():
             raise RemoteUnavailable(
                 f"{self._name}: circuit breaker open; refusing call until cool-down elapses"
             )
 
+        # If the breaker just transitioned to half-open the call we're about
+        # to issue is a probe. Limit it to a single attempt so a brief CF
+        # outage that hasn't fully recovered doesn't burn 3 retries every
+        # time the cool-down elapses.
+        is_half_open_probe = (
+            self._breaker.consecutive_failures >= self._breaker.failure_threshold
+        )
+        attempts_budget = 1 if is_half_open_probe else self._max_attempts
+
         last_exc: BaseException | None = None
-        for attempt in range(1, self._max_attempts + 1):
+        for attempt in range(1, attempts_budget + 1):
             try:
                 result = await self._remote.ainvoke(state, config=config)
             except BaseException as exc:  # noqa: BLE001 — re-raised below
                 last_exc = exc
                 if not _is_retryable(exc):
+                    # Surface CF Worker error envelope context if present —
+                    # CF dispatcher Workers emit ``{"error": "..."}`` on auth
+                    # failure, while LangGraph Server uses ``{"detail": ...}``.
+                    # Logging both shapes turns an opaque ``HTTPStatusError:
+                    # 500`` into an actionable message at the breakpoint.
+                    self._log_cf_error_envelope(exc)
                     self._breaker.record_failure()
                     raise
-                if attempt >= self._max_attempts:
+                if attempt >= attempts_budget:
+                    self._log_cf_error_envelope(exc)
                     self._breaker.record_failure()
                     raise
                 log.warning(
                     "remote retry: adapter=%s attempt=%d/%d reason=%s: %s",
                     self._name,
                     attempt,
-                    self._max_attempts,
+                    attempts_budget,
                     type(exc).__name__,
                     exc,
                 )
+                # Honor Retry-After on 429/503 from CF rate limiting; falls
+                # back to exponential jitter for transport errors / 5xx
+                # without a Retry-After hint.
+                retry_after = _retry_after_seconds(exc)
                 await _sleep_backoff(
-                    attempt, self._backoff_base_s, self._backoff_cap_s
+                    attempt,
+                    self._backoff_base_s,
+                    self._backoff_cap_s,
+                    retry_after_s=retry_after,
                 )
                 continue
             else:
@@ -365,6 +451,33 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         # Defensive: loop above either returns or raises. This is unreachable.
         assert last_exc is not None
         raise last_exc
+
+    def _log_cf_error_envelope(self, exc: BaseException) -> None:
+        """Surface the CF Worker / LangGraph error body at WARN level.
+
+        CF Workers fronting our Containers emit a plain JSON envelope on
+        non-2xx — most commonly ``{"error": "..."}`` for dispatcher / auth
+        problems and ``{"detail": "..."}`` for LangGraph Server errors.
+        Without this, all an operator sees in logs is the
+        ``httpx.HTTPStatusError`` class name with no body, which makes
+        diagnosing CF dispatcher misconfig (wrong token hash, missing
+        binding) effectively impossible from the core container's logs.
+        """
+        if not isinstance(exc, httpx.HTTPStatusError) or exc.response is None:
+            return
+        try:
+            body = exc.response.text
+        except Exception:  # noqa: BLE001 — never raise from the logger
+            return
+        # Truncate aggressively — CF errors are short; LangGraph stack traces
+        # can be long but we only need the head for triage.
+        snippet = body[:512].replace("\n", " ")
+        log.warning(
+            "remote http error: adapter=%s status=%d body=%s",
+            self._name,
+            exc.response.status_code,
+            snippet,
+        )
 
     def _coerce_state(self, state: InT | dict[str, Any]) -> dict[str, Any]:
         """Accept either a typed Input model or a legacy dict; return a dict.
@@ -484,16 +597,34 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
                   ``messages`` events). Skips end-of-stream output validation
                   because the payload shape is messages, not state.
 
+                Any other value is rejected up-front: silently accepting an
+                unknown mode (``"debug"`` / ``"custom"`` / ``"events"``)
+                would skip both the per-event accumulator and the post-stream
+                validator, masking schema drift across a CF rolling deploy.
+
         Yields:
             Each event from ``RemoteGraph.astream`` is forwarded byte-identical.
 
         Raises:
             pydantic.ValidationError: pre-flight on bad input, or post-stream
                 if the accumulated final state does not match ``output_cls``.
-            ContractsVersionMismatch: post-stream if the final state's
-                ``schema_version`` disagrees with the caller's
-                ``SCHEMA_VERSION``.
+            ContractsVersionMismatch: mid-stream as soon as any event carries
+                a ``schema_version`` that disagrees with the caller's
+                ``SCHEMA_VERSION``, or post-stream against the accumulated
+                final state. Catching drift on the FIRST event with a
+                schema_version is the early-warning signal during a rolling
+                CF Container deploy where some replicas serve the new
+                schema and others still serve the old one.
+            ValueError: if ``stream_mode`` is not one of the supported modes.
         """
+        # Reject unknown modes up-front so a caller asking for "debug" /
+        # "custom" / "events" doesn't silently bypass validation.
+        if stream_mode not in {"updates", "values", "messages"}:
+            raise ValueError(
+                f"{self._name}: unsupported stream_mode={stream_mode!r}; "
+                "expected one of 'updates' | 'values' | 'messages'"
+            )
+
         state_dict = self._coerce_state(state)
         # Pre-flight input validation — never open a stream we can't trust.
         validate_remote_call(self._input_cls, self._output_cls, state_dict, None)
@@ -504,24 +635,65 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
             stream_mode,
         )
 
-        accumulated: dict[str, Any] = {}
-        async for event in self._remote.astream(
-            state_dict, config=config, stream_mode=stream_mode
-        ):
-            # Pass-through: the dispatcher sees exactly what RemoteGraph emits.
-            yield event
+        def _check_drift(payload: dict[str, Any]) -> None:
+            """Mid-stream schema_version sentinel.
 
-            # Accumulate the running final state for post-stream validation.
-            # ``updates`` mode payloads are ``{node_name: partial_state_dict}``;
-            # ``values`` mode payloads are the full state dict per step.
-            if stream_mode == "updates" and isinstance(event, dict):
-                for node_partial in event.values():
-                    if isinstance(node_partial, dict):
-                        accumulated.update(node_partial)
-            elif stream_mode == "values" and isinstance(event, dict):
-                accumulated = dict(event)
-            # ``messages`` mode emits LLM tokens, not state — skip validation
-            # below by leaving ``accumulated`` empty.
+            ``payload`` is the per-event partial-state dict. If it carries
+            an explicit ``schema_version`` that disagrees with ours, surface
+            drift NOW rather than waiting for the post-stream accumulator
+            (which only sees the *last* writer's value and silently masks
+            drift on intermediate nodes during a rolling deploy).
+            """
+            sv = payload.get("schema_version")
+            if isinstance(sv, str) and sv != SCHEMA_VERSION:
+                raise ContractsVersionMismatch(
+                    f"{self._output_cls.__name__} schema_version={sv!r} "
+                    f"does not match caller {SCHEMA_VERSION!r} (mid-stream)"
+                )
+
+        accumulated: dict[str, Any] = {}
+        # Hold an explicit reference to the underlying async iterator so we
+        # can ``aclose()`` it on early exit (parent task cancellation, mid-
+        # stream drift, client disconnect). Without this the CF Container
+        # keeps streaming events into a half-open httpx connection — long
+        # research nodes hold the connection open until the read timeout
+        # fires, leaking pool slots in the dispatcher.
+        stream = self._remote.astream(
+            state_dict, config=config, stream_mode=stream_mode
+        )
+        try:
+            async for event in stream:
+                # Pass-through: the dispatcher sees exactly what RemoteGraph emits.
+                yield event
+
+                # Accumulate the running final state for post-stream validation
+                # AND check for mid-stream schema_version drift.
+                # ``updates`` mode payloads are ``{node_name: partial_state_dict}``;
+                # ``values`` mode payloads are the full state dict per step.
+                if stream_mode == "updates" and isinstance(event, dict):
+                    for node_partial in event.values():
+                        if isinstance(node_partial, dict):
+                            _check_drift(node_partial)
+                            accumulated.update(node_partial)
+                elif stream_mode == "values" and isinstance(event, dict):
+                    _check_drift(event)
+                    accumulated = dict(event)
+                # ``messages`` mode emits LLM tokens, not state — skip
+                # accumulator/validator below by leaving ``accumulated`` empty.
+        finally:
+            # Best-effort close: covers parent cancellation, drift exception,
+            # and natural completion. Idempotent — RemoteGraph's underlying
+            # generator no-ops if already closed.
+            aclose = getattr(stream, "aclose", None)
+            if aclose is not None:
+                try:
+                    await aclose()
+                except Exception:  # noqa: BLE001 — never block teardown
+                    log.debug(
+                        "astream aclose() raised on adapter %s — ignoring",
+                        self._name,
+                        exc_info=True,
+                    )
 
         if stream_mode == "messages":
             return

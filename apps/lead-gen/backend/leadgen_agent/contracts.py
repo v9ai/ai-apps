@@ -6,22 +6,76 @@ ml/research side validates its initial state against the matching ``*Input``
 model and its final state against ``*Output`` before returning. The core
 side does the same through ``validate_remote_call``.
 
-Change the shape of any model → bump ``SCHEMA_VERSION`` → both sides must
-redeploy. A mismatch raises at the first call rather than partway through a
-response stream.
-
 Cross-cutting rule: never put ``interrupt()`` inside a graph reachable via
 ``RemoteGraph``. The core hub owns all human-in-the-loop gates; ml and
 research graphs run to completion.
+
+──────────────────────────────────────────────────────────────────────────────
+SCHEMA_VERSION bump policy
+──────────────────────────────────────────────────────────────────────────────
+
+Format: ``YYYY-MM-DD.N`` (UTC date + same-day counter).
+
+CF Workers + Containers deploys are *not* atomic — there is always a window
+where the core container is on version ``X`` and ml/research is on ``X+1``
+(or vice versa). The bump policy below decides what that window looks like.
+
+* **MAJOR (date change, e.g. 2026-04-24 → 2026-04-25):**
+  Wire-incompatible — a removed field, a renamed field, a stricter type, or
+  a removed enum variant. Both sides MUST redeploy in lock-step. The mismatch
+  is caught at the first call by ``validate_remote_call`` (raises
+  :class:`ContractsVersionMismatch`) — no silent corruption.
+
+* **MINOR (suffix bump, e.g. 2026-04-24.1 → 2026-04-24.2):**
+  Wire-compatible additive change — a *new optional output field with a
+  default*, a new enum variant on an *input* (producer is permissive). Older
+  consumers ignore extra output fields (we set ``extra="ignore"`` on every
+  ``*Output``); the producer is the only side that needs the bump.
+
+* **NO BUMP:**
+  Doc/comment changes, internal refactors that do not change ``model_dump()``
+  output, test-only changes.
+
+Forward-compat guarantees enforced by this module:
+
+1. Every ``*Input`` uses ``extra="forbid"``: a stale producer (older CF
+   Worker) cannot accept a request from a newer consumer with extra fields.
+   This is the *desired* failure mode — better to 422 than silently drop.
+2. Every ``*Output`` uses ``extra="ignore"``: a newer producer rolling out
+   ahead of consumers can add fields without breaking the older callers.
+3. ``schema_version`` is pattern-validated (``YYYY-MM-DD.N``) at parse time,
+   so junk values fail with ``ValidationError`` *before*
+   ``validate_remote_call`` ever runs the manual equality check.
+
+The wire carries ``schema_version`` in the response payload only. There is
+*no* duplicate header — the payload is the single source of truth, so
+header/body split-brain is impossible.
 """
 
 from __future__ import annotations
 
 from typing import Any, Literal, TypeVar
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 SCHEMA_VERSION = "2026-04-24.1"
+
+# Pattern for the ``schema_version`` field on every ``*Output`` model. Must
+# match the format documented above; enforced by ``Field(pattern=...)`` so a
+# malformed version string fails at ``model_validate`` rather than slipping
+# through to the manual equality check in ``validate_remote_call``.
+_SCHEMA_VERSION_RE = r"^\d{4}-\d{2}-\d{2}\.\d+$"
+
+
+# ─── Shared model_config presets ──────────────────────────────────────────
+#
+# ``_INPUT_CONFIG`` is strict (``extra="forbid"``): a stale producer must
+# reject a request with unknown fields rather than silently dropping them.
+# ``_OUTPUT_CONFIG`` is permissive (``extra="ignore"``): a newer producer can
+# add fields ahead of a consumer rollout without breaking the older caller.
+
+_INPUT_CONFIG = ConfigDict(extra="forbid")
+_OUTPUT_CONFIG = ConfigDict(extra="ignore")
 
 
 class ContractsVersionMismatch(RuntimeError):
@@ -32,11 +86,15 @@ class ContractsVersionMismatch(RuntimeError):
 
 
 class JobbertNerInput(BaseModel):
+    model_config = _INPUT_CONFIG
+
     text: str = Field(min_length=1, max_length=4000)
     max_len: int = Field(default=64, ge=8, le=256)
 
 
 class JobbertNerSpan(BaseModel):
+    model_config = _OUTPUT_CONFIG
+
     span: str
     label: Literal["SKILL"]
     score: float = Field(ge=0.0, le=1.0)
@@ -45,7 +103,9 @@ class JobbertNerSpan(BaseModel):
 
 
 class JobbertNerOutput(BaseModel):
-    schema_version: str = Field(default=SCHEMA_VERSION)
+    model_config = _OUTPUT_CONFIG
+
+    schema_version: str = Field(default=SCHEMA_VERSION, pattern=_SCHEMA_VERSION_RE)
     spans: list[JobbertNerSpan] = Field(default_factory=list)
 
 
@@ -53,11 +113,15 @@ class JobbertNerOutput(BaseModel):
 
 
 class BgeM3EmbedInput(BaseModel):
+    model_config = _INPUT_CONFIG
+
     texts: list[str] = Field(min_length=1, max_length=128)
 
 
 class BgeM3EmbedOutput(BaseModel):
-    schema_version: str = Field(default=SCHEMA_VERSION)
+    model_config = _OUTPUT_CONFIG
+
+    schema_version: str = Field(default=SCHEMA_VERSION, pattern=_SCHEMA_VERSION_RE)
     vectors: list[list[float]]
     dim: Literal[1024] = 1024
     model: Literal["BAAI/bge-m3"] = "BAAI/bge-m3"
@@ -83,13 +147,17 @@ ResearchMode = Literal[
 
 
 class ResearchAgentInput(BaseModel):
+    model_config = _INPUT_CONFIG
+
     mode: ResearchMode
     query: str = Field(min_length=1, max_length=4000)
     context: dict[str, Any] = Field(default_factory=dict)
 
 
 class ResearchAgentOutput(BaseModel):
-    schema_version: str = Field(default=SCHEMA_VERSION)
+    model_config = _OUTPUT_CONFIG
+
+    schema_version: str = Field(default=SCHEMA_VERSION, pattern=_SCHEMA_VERSION_RE)
     report: str
     citations: list[str] = Field(default_factory=list)
 
@@ -103,13 +171,17 @@ ScholarCommand = Literal[
 
 
 class ScholarInput(BaseModel):
+    model_config = _INPUT_CONFIG
+
     command: ScholarCommand
     arxiv_id: str | None = None
     author_id: int | None = None
 
 
 class ScholarOutput(BaseModel):
-    schema_version: str = Field(default=SCHEMA_VERSION)
+    model_config = _OUTPUT_CONFIG
+
+    schema_version: str = Field(default=SCHEMA_VERSION, pattern=_SCHEMA_VERSION_RE)
     ok: bool = True
     message: str = ""
     # Shape varies by command; keep permissive
@@ -123,13 +195,17 @@ LeadPapersCommand = Literal["migrate", "match", "run", "promote", "dossier"]
 
 
 class LeadPapersInput(BaseModel):
+    model_config = _INPUT_CONFIG
+
     command: LeadPapersCommand
     contact_id: int | None = None
     limit: int | None = Field(default=None, ge=1, le=10000)
 
 
 class LeadPapersOutput(BaseModel):
-    schema_version: str = Field(default=SCHEMA_VERSION)
+    model_config = _OUTPUT_CONFIG
+
+    schema_version: str = Field(default=SCHEMA_VERSION, pattern=_SCHEMA_VERSION_RE)
     ok: bool = True
     matched: int = 0
     promoted: int = 0
@@ -143,6 +219,8 @@ CommonCrawlCommand = Literal["seed", "fetch", "backfill"]
 
 
 class CommonCrawlInput(BaseModel):
+    model_config = _INPUT_CONFIG
+
     command: CommonCrawlCommand
     domain: str | None = None
     domains: list[str] | None = None
@@ -151,6 +229,8 @@ class CommonCrawlInput(BaseModel):
 
 
 class CommonCrawlStats(BaseModel):
+    model_config = _OUTPUT_CONFIG
+
     cdx_records: int = 0
     pages_fetched: int = 0
     pages_skipped_dedup: int = 0
@@ -161,7 +241,9 @@ class CommonCrawlStats(BaseModel):
 
 
 class CommonCrawlOutput(BaseModel):
-    schema_version: str = Field(default=SCHEMA_VERSION)
+    model_config = _OUTPUT_CONFIG
+
+    schema_version: str = Field(default=SCHEMA_VERSION, pattern=_SCHEMA_VERSION_RE)
     ok: bool = True
     stats: CommonCrawlStats = Field(default_factory=CommonCrawlStats)
 
@@ -173,19 +255,25 @@ AgenticSearchMode = Literal["search", "discover"]
 
 
 class AgenticSearchInput(BaseModel):
+    model_config = _INPUT_CONFIG
+
     mode: AgenticSearchMode
     query: str | None = None
     root: str | None = None
 
 
 class AgenticSearchCitation(BaseModel):
+    model_config = _OUTPUT_CONFIG
+
     path: str
     line_range: tuple[int, int] | None = None
     snippet: str | None = None
 
 
 class AgenticSearchOutput(BaseModel):
-    schema_version: str = Field(default=SCHEMA_VERSION)
+    model_config = _OUTPUT_CONFIG
+
+    schema_version: str = Field(default=SCHEMA_VERSION, pattern=_SCHEMA_VERSION_RE)
     answer: str | None = None
     citations: list[AgenticSearchCitation] = Field(default_factory=list)
     discovery: dict[str, Any] | None = None
@@ -204,6 +292,8 @@ GhPatternsCommand = Literal[
 
 
 class GhPatternsInput(BaseModel):
+    model_config = _INPUT_CONFIG
+
     command: GhPatternsCommand
     orgs: list[str] | None = None
     query: str | None = None
@@ -211,7 +301,9 @@ class GhPatternsInput(BaseModel):
 
 
 class GhPatternsOutput(BaseModel):
-    schema_version: str = Field(default=SCHEMA_VERSION)
+    model_config = _OUTPUT_CONFIG
+
+    schema_version: str = Field(default=SCHEMA_VERSION, pattern=_SCHEMA_VERSION_RE)
     ok: bool = True
     orgs_scanned: int = 0
     contributors_indexed: int = 0

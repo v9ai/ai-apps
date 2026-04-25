@@ -79,13 +79,29 @@ async def test_app_imports_and_starts(patched_research_app: Any) -> None:
 
 
 async def test_health_endpoint(patched_research_app: Any) -> None:
+    """``/health`` is reachable without auth before AND after lifespan boots.
+
+    Pre-lifespan it reports ``starting`` (graphs not compiled yet);
+    post-lifespan it reports ``ok`` with the compiled-graph count.
+    """
+    # Pre-lifespan: no graphs yet, but probe must be public + 200.
     async with AsyncClient(
         transport=ASGITransport(app=patched_research_app.app),
         base_url="http://test",
     ) as client:
         r = await client.get("/health")
     assert r.status_code == 200
-    assert r.json() == {"status": "ok"}
+    body = r.json()
+    assert body["status"] == "starting"
+    assert body["graphs_compiled"] == 0
+
+    # Post-lifespan: graphs compiled, status flips to ok.
+    async with _booted_app(patched_research_app) as client:
+        r = await client.get("/health")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "ok"
+    assert body["graphs_compiled"] >= 6
 
 
 async def test_research_graphs_registered(patched_research_app: Any) -> None:

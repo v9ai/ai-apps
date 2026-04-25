@@ -9,35 +9,15 @@ to a Vercel-deployed frontend), every non-health request must present
 
 from __future__ import annotations
 
-import os
-import secrets
-
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse
 
-# Paths that bypass the bearer check so tunnel providers and langgraph's own
-# boot loop can probe liveness without a credential. ``/health`` matches the
-# FastAPI runtime in ``core/app.py`` so HF / Cloudflare healthchecks work
-# against either binary.
-_PUBLIC_PATHS = frozenset({"/ok", "/info", "/health"})
+from leadgen_agent.auth import make_bearer_token_middleware
 
-
-class BearerTokenMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        expected = os.environ.get("LANGGRAPH_AUTH_TOKEN")
-        if not expected:
-            return await call_next(request)
-        if request.url.path in _PUBLIC_PATHS:
-            return await call_next(request)
-
-        auth = request.headers.get("authorization", "")
-        scheme, _, token = auth.partition(" ")
-        if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
-            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-        return await call_next(request)
+# Single shared factory — see ``leadgen_agent/auth.py`` for the implementation.
+# Tests still import ``BearerTokenMiddleware`` from this module, so we keep the
+# name exported for backwards compatibility.
+BearerTokenMiddleware = make_bearer_token_middleware("LANGGRAPH_AUTH_TOKEN")
 
 
 app = Starlette(middleware=[Middleware(BearerTokenMiddleware)])

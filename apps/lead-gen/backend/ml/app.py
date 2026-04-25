@@ -19,43 +19,77 @@ from __future__ import annotations
 
 import logging
 import os
-import secrets
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from pydantic import BaseModel
-from starlette.middleware.base import BaseHTTPMiddleware
+# CF Container has no MPS/CUDA hardware; lock to CPU and enable the MPS-fallback
+# hint BEFORE any torch / sentence-transformers import sees the env. This must
+# precede the graph imports below (which transitively import torch). Setting
+# PYTORCH_ENABLE_MPS_FALLBACK after torch import is a no-op on some builds.
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
+from fastapi import FastAPI, HTTPException  # noqa: E402
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver  # noqa: E402
+from pydantic import BaseModel  # noqa: E402
+
+from leadgen_agent.auth import make_bearer_token_middleware  # noqa: E402
 
 # Import the compiled graphs. Each module eagerly loads its model at import
 # time (gated by ML_EAGER_LOAD) so the first request is fast.
-from ml_graphs.bge_m3_embed import graph as bge_m3_embed_graph
-from ml_graphs.jobbert_ner import graph as jobbert_ner_graph
+from ml_graphs.bge_m3_embed import graph as bge_m3_embed_graph  # noqa: E402
+from ml_graphs.jobbert_ner import graph as jobbert_ner_graph  # noqa: E402
 
 log = logging.getLogger("leadgen_ml")
 
-_PUBLIC_PATHS = frozenset({"/health", "/ok"})
+# Module-level readiness flag flipped by the lifespan after model warm-up
+# completes. /health reports it so CF / load balancers don't route traffic to
+# a Container whose JobBERT singletons are still downloading multi-GB weights.
+_models_ready: bool = False
+
+# Uses its own env var (``ML_INTERNAL_AUTH_TOKEN``) distinct from the core
+# container's ``LANGGRAPH_AUTH_TOKEN`` — the dispatcher Worker holds both,
+# letting one container's secret rotate without invalidating the other.
+BearerTokenMiddleware = make_bearer_token_middleware("ML_INTERNAL_AUTH_TOKEN")
 
 
-class BearerTokenMiddleware(BaseHTTPMiddleware):
-    """Shared-secret gate. No-op when ``ML_INTERNAL_AUTH_TOKEN`` is unset.
+async def _warm_models() -> None:
+    """Force singleton load for both model stacks before /health reports OK.
 
-    Uses its own env var (``ML_INTERNAL_AUTH_TOKEN``) distinct from the core
-    container's ``LANGGRAPH_AUTH_TOKEN`` — the dispatcher Worker holds both.
+    bge_m3_embed already eager-loads on import (gated by ML_EAGER_LOAD), but
+    jobbert_ner is purely lazy — the first /runs/wait pays the JobBERT-v3 +
+    skill-classifier load cost (multi-GB on a cold image with no baked
+    weights). Run both warmups off the event loop so the lifespan stays
+    snappy and exceptions surface in logs without aborting startup (the
+    Container should still come up; first request will retry the load).
     """
+    global _models_ready
+    if os.environ.get("ML_EAGER_LOAD", "1") != "1":
+        log.info("ML_EAGER_LOAD=0 — skipping model warm-up")
+        _models_ready = True
+        return
 
-    async def dispatch(self, request: Request, call_next):
-        expected = os.environ.get("ML_INTERNAL_AUTH_TOKEN")
-        if not expected or request.url.path in _PUBLIC_PATHS:
-            return await call_next(request)
-        auth = request.headers.get("authorization", "")
-        scheme, _, token = auth.partition(" ")
-        if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
-            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-        return await call_next(request)
+    import anyio  # local import keeps lifespan import graph slim
+
+    def _warm_bge() -> None:
+        from ml_graphs.bge_m3_embed import _get_model
+
+        _get_model()
+
+    def _warm_jobbert() -> None:
+        # Touch both the embedder and the NER classifier singletons.
+        from leadgen_agent.jobbert_infer import _get_classifier, _get_embedder
+
+        _get_embedder()
+        _get_classifier()
+
+    try:
+        await anyio.to_thread.run_sync(_warm_bge)
+        await anyio.to_thread.run_sync(_warm_jobbert)
+        _models_ready = True
+        log.info("ml model singletons warm")
+    except Exception:  # noqa: BLE001 — surface in logs, don't kill the process
+        log.exception("model warm-up failed; first request will retry")
 
 
 @asynccontextmanager
@@ -75,6 +109,7 @@ async def lifespan(app: FastAPI):
             "bge_m3_embed": bge_m3_embed_graph,
             "jobbert_ner": jobbert_ner_graph,
         }
+        await _warm_models()
         yield
         return
 
@@ -90,6 +125,7 @@ async def lifespan(app: FastAPI):
             "bge_m3_embed": bge_m3_embed_graph,
             "jobbert_ner": jobbert_ner_graph,
         }
+        await _warm_models()
         log.info("ml graphs ready: %s", list(app.state.graphs))
         yield
 
@@ -106,11 +142,20 @@ class RunRequest(BaseModel):
 
 @app.get("/health")
 async def health() -> dict[str, bool]:
-    return {"ok": True}
+    # Liveness only — never touches DB/models. ``ready`` reflects whether the
+    # lifespan warm-up has finished loading model singletons; CF / load
+    # balancers can route on it to avoid serving cold instances.
+    return {"ok": True, "ready": _models_ready}
 
 
 @app.post("/runs/wait")
 async def runs_wait(req: RunRequest) -> dict[str, Any]:
+    if not _models_ready:
+        # Fail fast with 503 so the dispatcher Worker can retry, rather than
+        # letting the request block on a multi-GB HF download mid-flight.
+        raise HTTPException(
+            status_code=503, detail="ml models not ready; warm-up in progress"
+        )
     graph = app.state.graphs.get(req.assistant_id)
     if graph is None:
         raise HTTPException(

@@ -42,19 +42,17 @@ import asyncio
 import json
 import logging
 import os
-import secrets
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
 
 import psycopg
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import BaseModel
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from leadgen_agent.admin_chat_graph import build_graph as build_admin_chat
+from leadgen_agent.auth import make_bearer_token_middleware
 from leadgen_agent.classify_paper_graph import build_graph as build_classify_paper
 from leadgen_agent.company_discovery_graph import (
     build_graph as build_company_discovery,
@@ -95,22 +93,15 @@ from core.remote_graphs import aclose_all_adapters, build_all_remote_adapters
 log = logging.getLogger("leadgen_agent")
 
 # Paths the bearer middleware lets through so uptime monitors and the
-# dispatcher Worker's health probe can run without credentials.
-_PUBLIC_PATHS = frozenset({"/health", "/ok"})
+# dispatcher Worker's health probe can run without credentials. Includes
+# ``/ready`` (FastAPI readiness probe) on top of the shared default set.
+_PUBLIC_PATHS = frozenset({"/health", "/ready", "/ok", "/info"})
 
-
-class BearerTokenMiddleware(BaseHTTPMiddleware):
-    """Shared-secret gate. No-op when ``LANGGRAPH_AUTH_TOKEN`` is unset."""
-
-    async def dispatch(self, request: Request, call_next):
-        expected = os.environ.get("LANGGRAPH_AUTH_TOKEN")
-        if not expected or request.url.path in _PUBLIC_PATHS:
-            return await call_next(request)
-        auth = request.headers.get("authorization", "")
-        scheme, _, token = auth.partition(" ")
-        if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
-            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-        return await call_next(request)
+# Shared factory — single source of truth lives in ``leadgen_agent/auth.py``.
+# We re-export the class name so existing imports/tests keep working.
+BearerTokenMiddleware = make_bearer_token_middleware(
+    "LANGGRAPH_AUTH_TOKEN", public_paths=_PUBLIC_PATHS
+)
 
 
 def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
@@ -170,8 +161,13 @@ async def lifespan(app: FastAPI):
     # Ensure LinkedIn cache tables exist before the Chrome-extension routes
     # start serving traffic. Idempotent — runs the CREATE TABLE IF NOT EXISTS
     # once per cold start.
+    #
+    # ``ensure_linkedin_tables`` opens a sync ``psycopg.connect`` which would
+    # block the asyncio event loop on cold-start (CF marks the Container
+    # "alive" while uvicorn cannot service /health). Push the blocking call
+    # into a worker thread so the loop stays responsive.
     try:
-        ensure_linkedin_tables()
+        await asyncio.to_thread(ensure_linkedin_tables)
     except Exception:  # noqa: BLE001
         log.exception(
             "ensure_linkedin_tables failed — /linkedin/* endpoints may 500 "
@@ -240,6 +236,52 @@ async def lifespan(app: FastAPI):
         try:
             yield
         finally:
+            # Graceful shutdown: drain in-flight background tasks so any
+            # AsyncPostgresSaver writes commit before the checkpointer
+            # context exits. CF Containers send SIGTERM on abandonment;
+            # uvicorn translates that into lifespan-shutdown — without an
+            # explicit drain, partially-applied graph state would be lost.
+            #
+            # Time-bounded so a stuck graph cannot block container teardown
+            # past CF's grace period (~30s).
+            _GRACEFUL_SHUTDOWN_S = float(
+                os.environ.get("GRACEFUL_SHUTDOWN_S", "20")
+            )
+            inflight = [
+                t
+                for t in (
+                    *_async_run_tasks,
+                    *_positioning_inflight,
+                    *_lead_gen_inflight,
+                )
+                if not t.done()
+            ]
+            if inflight:
+                log.info(
+                    "draining %d in-flight background tasks (timeout=%.0fs)",
+                    len(inflight),
+                    _GRACEFUL_SHUTDOWN_S,
+                )
+                try:
+                    await asyncio.wait_for(
+                        asyncio.gather(*inflight, return_exceptions=True),
+                        timeout=_GRACEFUL_SHUTDOWN_S,
+                    )
+                except asyncio.TimeoutError:
+                    log.warning(
+                        "graceful drain timed out after %.0fs — cancelling "
+                        "%d remaining tasks",
+                        _GRACEFUL_SHUTDOWN_S,
+                        sum(1 for t in inflight if not t.done()),
+                    )
+                    for t in inflight:
+                        if not t.done():
+                            t.cancel()
+                    # Give cancellations a tick to propagate so
+                    # ``CancelledError`` raises inside the graph and lets
+                    # ``finally`` clauses release pool connections.
+                    await asyncio.gather(*inflight, return_exceptions=True)
+
             # Close pooled httpx connections held by the cached RemoteGraph
             # adapters. Best-effort: each adapter's aclose() already swallows
             # per-client errors so a misbehaving remote can't block shutdown.
@@ -251,6 +293,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="lead-gen-core", lifespan=lifespan)
 app.add_middleware(BearerTokenMiddleware)
+
+# Pre-populate ``app.state`` with empty defaults so any handler that imports
+# the module before lifespan completes (e.g. a CF Container readiness probe
+# arriving while uvicorn is still binding) sees a typed-empty dict instead of
+# raising ``AttributeError``. ``lifespan`` will replace these atomically once
+# the AsyncPostgresSaver + graph compilation finishes.
+app.state.graphs = {}
+app.state.remote_adapters = {}
 
 # Mount the 13 Chrome-extension routes under /linkedin/*. They share the
 # container's Neon pool; auth is handled at the perimeter.
@@ -268,7 +318,33 @@ class RunRequest(BaseModel):
 
 @app.get("/health")
 async def health() -> dict[str, str]:
+    """Cheap liveness — uvicorn is up. Does not touch DB or graphs.
+
+    CF Containers use this to decide whether to keep the instance running;
+    a 500 here would trigger a forced restart loop. Use ``/ready`` for a
+    deeper readiness probe that fails when graphs are not yet compiled.
+    """
     return {"status": "ok"}
+
+
+@app.get("/ready")
+async def ready() -> JSONResponse:
+    """Deeper readiness check — graphs compiled and remote adapters built.
+
+    Returns 503 until ``lifespan`` finishes wiring ``app.state.graphs``, so
+    the dispatcher Worker (or a fronting LB) can hold traffic off a cold
+    instance instead of letting requests 500 inside ``/runs/wait``.
+    """
+    graphs = getattr(app.state, "graphs", {}) or {}
+    if not graphs:
+        return JSONResponse(
+            {"status": "starting", "graphs": 0},
+            status_code=503,
+        )
+    return JSONResponse(
+        {"status": "ready", "graphs": len(graphs)},
+        status_code=200,
+    )
 
 
 @app.post("/runs/wait")

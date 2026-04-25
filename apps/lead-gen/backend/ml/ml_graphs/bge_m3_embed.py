@@ -33,15 +33,26 @@ MAX_SEQ_LEN = 512
 
 
 def _pick_device() -> str:
-    """CUDA > MPS > CPU. Mirrors ``scripts/bge_m3_server.py``."""
+    """CUDA > MPS > CPU. Mirrors ``scripts/bge_m3_server.py``.
+
+    Probes MPS with a tiny tensor allocation: on CF Containers (Linux x86) and
+    Linux/Intel macs, ``torch.backends.mps.is_available()`` can return True
+    when torch was built without functional Metal support, then crash on the
+    first real op. Fall back to CPU rather than killing the lifespan warm-up.
+    """
     try:
         import torch
     except ImportError:  # pragma: no cover — torch is a hard dep
         return "cpu"
     if torch.cuda.is_available():
         return "cuda"
-    if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
-        return "mps"
+    mps = getattr(torch.backends, "mps", None)
+    if mps is not None and mps.is_available():
+        try:
+            torch.zeros(1, device="mps")
+            return "mps"
+        except Exception:  # noqa: BLE001 — any failure → CPU
+            log.warning("MPS reported available but probe failed; using CPU")
     return "cpu"
 
 

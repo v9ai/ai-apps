@@ -53,7 +53,22 @@ from research_graphs.scholar import build_graph as _build_scholar
 
 log = logging.getLogger("leadgen_research")
 
-_PUBLIC_PATHS = frozenset({"/health", "/ok"})
+# Only paths actually defined below should bypass auth. `/ok` was listed
+# historically but no handler exists, so leaving it in the allow-list is dead
+# config that confuses the bearer-token gate's audit surface.
+_PUBLIC_PATHS = frozenset({"/health"})
+
+# CF Container wall-clock is 5 min (default). A WARC fetch over Common Crawl
+# averages ~2–4s per record at WARC_CONCURRENCY=8, so anything beyond ~80
+# pages cannot reliably finish before the Container is killed — and the
+# common_crawl graph has only a single node so the checkpointer cannot
+# resume mid-fetch. Cap aggressively here to fail fast instead of silently
+# truncating mid-run.
+_COMMON_CRAWL_MAX_PAGES_LIMIT = 80
+
+# Bound the in-memory async-run registry to avoid unbounded growth across the
+# Container's 30-minute idle window when many fire-and-forget runs are issued.
+_ASYNC_RUNS_CAP = 256
 
 
 class BearerTokenMiddleware(BaseHTTPMiddleware):
@@ -85,6 +100,15 @@ def _build_common_crawl(checkpointer: Any) -> Any:
         if not isinstance(domain, str) or not domain:
             raise ValueError("domain is required")
         max_pages = int(state.get("max_pages") or 15)
+        if max_pages > _COMMON_CRAWL_MAX_PAGES_LIMIT:
+            log.warning(
+                "common_crawl: capping max_pages from %s to %s (CF Container wall-clock budget)",
+                max_pages,
+                _COMMON_CRAWL_MAX_PAGES_LIMIT,
+            )
+            max_pages = _COMMON_CRAWL_MAX_PAGES_LIMIT
+        if max_pages < 1:
+            raise ValueError("max_pages must be >= 1")
         dry_run = bool(state.get("dry_run") or False)
         stats = await fetch_domain(domain, max_pages, dry_run)
         return {
@@ -153,8 +177,22 @@ class RunRequest(BaseModel):
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> dict[str, Any]:
+    """Liveness + readiness for the CF Container probe.
+
+    We deliberately do NOT contact Neon here — the lifespan already verified
+    ``NEON_DATABASE_URL`` is set and that ``AsyncPostgresSaver.setup()``
+    succeeded; if either had failed, the worker process would have exited and
+    Cloudflare would not be routing traffic to us anyway. Reporting the
+    compiled-graph count is enough to distinguish "process up but lifespan
+    crashed" from a healthy container.
+    """
+    graphs = getattr(app.state, "graphs", None) or {}
+    if not graphs:
+        # 200 with status=starting so CF doesn't immediately recycle us during
+        # cold-start; the readiness signal is graphs_compiled > 0.
+        return {"status": "starting", "graphs_compiled": 0}
+    return {"status": "ok", "graphs_compiled": len(graphs)}
 
 
 @app.post("/runs/wait")
@@ -252,6 +290,15 @@ async def create_thread_run(
             detail=f"Unknown assistant_id: {req.assistant_id}",
         )
     run_id = str(uuid.uuid4())
+    # Bound the in-memory registry: when over cap, evict the oldest *terminal*
+    # entries first (success/error) before touching anything still running. We
+    # rely on dict insertion order, which is stable in Python 3.7+.
+    if len(_async_runs) >= _ASYNC_RUNS_CAP:
+        for stale_id in list(_async_runs.keys()):
+            if len(_async_runs) < _ASYNC_RUNS_CAP:
+                break
+            if _async_runs[stale_id].get("status") in ("success", "error"):
+                _async_runs.pop(stale_id, None)
     _async_runs[run_id] = {
         "thread_id": thread_id,
         "assistant_id": req.assistant_id,

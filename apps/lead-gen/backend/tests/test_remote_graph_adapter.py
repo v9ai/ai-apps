@@ -97,18 +97,20 @@ async def test_invalid_input_empty_text() -> None:
 
 
 @pytest.mark.asyncio
-async def test_invalid_input_extra_fields_allowed_by_default() -> None:
-    """Pydantic v2 BaseModel ignores unknown keys by default — the contract
-    classes do not set ``model_config = ConfigDict(extra="forbid")`` so an
-    unexpected ``garbage`` key is silently dropped by the validator and the
-    call still goes through. This documents the actual current behaviour.
+async def test_invalid_input_extra_fields_rejected() -> None:
+    """Every ``*Input`` model now carries ``extra="forbid"`` (see contracts.py
+    SCHEMA_VERSION bump policy) so a stale producer cannot accept a request
+    from a newer consumer with extra fields — better to 422 than silently
+    drop. The adapter raises ValidationError pre-flight without ever calling
+    the remote.
     """
     fake = FakeRemote({"schema_version": SCHEMA_VERSION, "spans": []})
     adapter = _build_adapter(fake)
 
-    out = await adapter.ainvoke({"text": "react", "garbage": "ignored"})
-    assert out["schema_version"] == SCHEMA_VERSION
-    assert len(fake.calls) == 1
+    with pytest.raises(ValidationError):
+        await adapter.ainvoke({"text": "react", "garbage": "ignored"})
+
+    assert fake.calls == []  # rejected pre-flight, remote not called
 
 
 @pytest.mark.asyncio
