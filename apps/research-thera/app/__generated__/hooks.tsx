@@ -2224,6 +2224,7 @@ export type QueryGenerationJobArgs = {
 export type QueryGenerationJobsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3387,6 +3388,11 @@ export type GetBehaviorObservationsQueryVariables = Exact<{
 
 
 export type GetBehaviorObservationsQuery = { __typename?: 'Query', behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, familyMemberId: number, goalId?: number | null, createdBy: string, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string } | null }> };
+
+export type GetBogdanDiscussionJobsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetBogdanDiscussionJobsQuery = { __typename?: 'Query', generationJobs: Array<{ __typename?: 'GenerationJob', id: string, type: JobType, status: JobStatus, progress: number, createdAt: string, updatedAt: string, error?: { __typename?: 'JobError', message: string } | null }> };
 
 export type GetContactQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -7379,6 +7385,56 @@ export type GetBehaviorObservationsQueryHookResult = ReturnType<typeof useGetBeh
 export type GetBehaviorObservationsLazyQueryHookResult = ReturnType<typeof useGetBehaviorObservationsLazyQuery>;
 export type GetBehaviorObservationsSuspenseQueryHookResult = ReturnType<typeof useGetBehaviorObservationsSuspenseQuery>;
 export type GetBehaviorObservationsQueryResult = Apollo.QueryResult<GetBehaviorObservationsQuery, GetBehaviorObservationsQueryVariables>;
+export const GetBogdanDiscussionJobsDocument = gql`
+    query GetBogdanDiscussionJobs {
+  generationJobs(type: "BOGDAN_DISCUSSION") {
+    id
+    type
+    status
+    progress
+    error {
+      message
+    }
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetBogdanDiscussionJobsQuery__
+ *
+ * To run a query within a React component, call `useGetBogdanDiscussionJobsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetBogdanDiscussionJobsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetBogdanDiscussionJobsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetBogdanDiscussionJobsQuery(baseOptions?: Apollo.QueryHookOptions<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>(GetBogdanDiscussionJobsDocument, options);
+      }
+export function useGetBogdanDiscussionJobsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>(GetBogdanDiscussionJobsDocument, options);
+        }
+// @ts-ignore
+export function useGetBogdanDiscussionJobsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>): Apollo.UseSuspenseQueryResult<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>;
+export function useGetBogdanDiscussionJobsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>): Apollo.UseSuspenseQueryResult<GetBogdanDiscussionJobsQuery | undefined, GetBogdanDiscussionJobsQueryVariables>;
+export function useGetBogdanDiscussionJobsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>(GetBogdanDiscussionJobsDocument, options);
+        }
+export type GetBogdanDiscussionJobsQueryHookResult = ReturnType<typeof useGetBogdanDiscussionJobsQuery>;
+export type GetBogdanDiscussionJobsLazyQueryHookResult = ReturnType<typeof useGetBogdanDiscussionJobsLazyQuery>;
+export type GetBogdanDiscussionJobsSuspenseQueryHookResult = ReturnType<typeof useGetBogdanDiscussionJobsSuspenseQuery>;
+export type GetBogdanDiscussionJobsQueryResult = Apollo.QueryResult<GetBogdanDiscussionJobsQuery, GetBogdanDiscussionJobsQueryVariables>;
 export const GetContactDocument = gql`
     query GetContact($id: Int, $slug: String) {
   contact(id: $id, slug: $slug) {

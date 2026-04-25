@@ -1,0 +1,13 @@
+query GetBogdanDiscussionJobs {
+  generationJobs(type: "BOGDAN_DISCUSSION") {
+    id
+    type
+    status
+    progress
+    error {
+      message
+    }
+    createdAt
+    updatedAt
+  }
+}

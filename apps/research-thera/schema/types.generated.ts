@@ -2203,6 +2203,7 @@ export type QuerygenerationJobArgs = {
 export type QuerygenerationJobsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
 };
 
 

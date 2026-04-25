@@ -1402,7 +1402,7 @@ type Query {
   gameCompletions(gameId: Int!): [GameCompletion!]!
   games(familyMemberId: Int, goalId: Int, issueId: Int, type: GameType): [Game!]!
   generationJob(id: String!): GenerationJob
-  generationJobs(goalId: Int, status: String): [GenerationJob!]!
+  generationJobs(goalId: Int, status: String, type: String): [GenerationJob!]!
   goal(id: Int, slug: String): Goal
   goals(familyMemberId: Int, status: String, tag: String): [Goal!]!
   habit(id: Int!): Habit

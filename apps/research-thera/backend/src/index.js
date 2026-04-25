@@ -2,7 +2,7 @@ import { Container, getContainer } from "@cloudflare/containers";
 
 export class ResearchTheraContainer extends Container {
   defaultPort = 8080;
-  sleepAfter = "5s";
+  sleepAfter = "10m";
 
   constructor(ctx, env) {
     super(ctx, env);

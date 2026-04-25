@@ -1204,13 +1204,14 @@ function parseJobError(raw: string): { message: string; code?: string; details?:
   }
 }
 
-export async function listGenerationJobs(filters: { userId?: string; goalId?: number; status?: string } = {}) {
+export async function listGenerationJobs(filters: { userId?: string; goalId?: number; status?: string; type?: string } = {}) {
   const conditions: string[] = [];
   const args: any[] = [];
 
   if (filters.userId) { conditions.push("user_id = ?"); args.push(filters.userId); }
   if (filters.goalId) { conditions.push("goal_id = ?"); args.push(filters.goalId); }
   if (filters.status) { conditions.push("status = ?"); args.push(filters.status); }
+  if (filters.type) { conditions.push("type = ?"); args.push(filters.type); }
 
   let query = "SELECT * FROM generation_jobs";
   if (conditions.length > 0) query += ` WHERE ${conditions.join(" AND ")}`;

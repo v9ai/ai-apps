@@ -14,8 +14,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "codegen": "graphql-codegen",
-    "trigger:bogdan": "tsx scripts/trigger-bogdan-discussion.ts"
+    "codegen": "graphql-codegen"
   },
   "dependencies": {
     "@ai-apps/r2": "workspace:*",
