@@ -440,6 +440,123 @@ def _persist_openalex(
         return False
 
 
+def _flag_contact_for_deletion(
+    contact_id: int, reason: str, db: Any = None
+) -> bool:
+    """Flag ``contacts.to_be_deleted = true`` with ``deletion_reasons`` set.
+
+    Idempotent: the WHERE clause filters on ``to_be_deleted IS NOT TRUE``,
+    so a second call against an already-flagged row is a no-op (rowcount
+    will be 0). Stores ``deletion_reasons`` as a JSON-array-style text
+    column in the same shape Team B used for the manual 2026-04-22 sweep:
+    ``["auto-flag: <reason>"]``.
+
+    ``db`` accepts an injected psycopg-compatible connection (used by tests
+    via ``unittest.mock``). When ``None``, opens a fresh connection from
+    ``NEON_DATABASE_URL``. Returns True iff a row was newly flagged.
+    """
+    payload = json.dumps([f"auto-flag: {reason}"])
+    update_sql = (
+        "UPDATE contacts "
+        "SET to_be_deleted = true, "
+        "    deletion_reasons = %s, "
+        "    deletion_flagged_at = NOW()::text, "
+        "    updated_at = NOW()::text "
+        "WHERE id = %s "
+        "  AND to_be_deleted IS NOT TRUE"
+    )
+
+    if db is not None:
+        try:
+            with db.cursor() as cur:
+                cur.execute(update_sql, (payload, contact_id))
+                return (cur.rowcount or 0) > 0
+        except Exception as e:  # noqa: BLE001 — surface mock errors uniformly
+            log.warning(
+                "failed to flag contact %s for deletion (injected db): %s",
+                contact_id,
+                e,
+            )
+            return False
+
+    dsn = os.environ.get("NEON_DATABASE_URL", "").strip()
+    if not dsn:
+        return False
+    try:
+        with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
+            with conn.cursor() as cur:
+                cur.execute(update_sql, (payload, contact_id))
+                return (cur.rowcount or 0) > 0
+    except psycopg.Error as e:
+        log.warning("failed to flag contact %s for deletion: %s", contact_id, e)
+        return False
+
+
+def _has_contact_channel(contact: dict[str, Any]) -> bool:
+    """True iff at least one of email / linkedin_url / github_handle is set."""
+    if not isinstance(contact, dict):
+        return False
+    email = (contact.get("email") or "").strip()
+    linkedin = (contact.get("linkedin_url") or "").strip()
+    github = (contact.get("github_handle") or "").strip()
+    return bool(email or linkedin or github)
+
+
+async def auto_flag_unreachable_node(
+    state: ContactEnrichPaperAuthorState,
+) -> dict:
+    """Auto-flag contacts for deletion when non-buyer AND unreachable.
+
+    Predicate (verbatim):
+        (buyer_verdict == "not_buyer" OR affiliation_type == "academic")
+        AND no contact channel is present
+
+    "No contact channel" = ``contact.email`` IS NULL/empty AND
+    ``contact.linkedin_url`` IS NULL/empty AND ``contact.github_handle``
+    IS NULL/empty.
+
+    Runs LAST in the graph (after Team A's ``classify_affiliation`` and
+    Team B's ``classify_buyer_fit_node``). Falls back to ``"unknown"`` for
+    either field if upstream Teams A/B haven't landed their nodes yet —
+    in that case the predicate is False and nothing is flagged ("don't
+    flag on unknown").
+
+    Idempotent: SQL is gated by ``WHERE to_be_deleted IS NOT TRUE`` so a
+    second run against an already-flagged row is a no-op (rowcount = 0).
+    """
+    if state.get("error"):
+        return {"auto_flagged_for_deletion": False, "auto_flag_reason": ""}
+
+    contact = state.get("contact") or {}
+    contact_id = contact.get("id")
+    if not isinstance(contact_id, int):
+        return {"auto_flagged_for_deletion": False, "auto_flag_reason": ""}
+
+    affiliation_type = state.get("affiliation_type") or "unknown"
+    buyer_verdict = state.get("buyer_verdict") or "unknown"
+
+    is_non_buyer = (
+        buyer_verdict == "not_buyer" or affiliation_type == "academic"
+    )
+    has_channel = _has_contact_channel(contact)
+
+    if not (is_non_buyer and not has_channel):
+        return {"auto_flagged_for_deletion": False, "auto_flag_reason": ""}
+
+    # Build human-readable reason — caller stores it on the contact row.
+    parts: list[str] = []
+    if buyer_verdict == "not_buyer":
+        parts.append("buyer_verdict=not_buyer")
+    if affiliation_type == "academic":
+        parts.append("affiliation_type=academic")
+    parts.append("no contact channels")
+    reason = ", ".join(parts)
+
+    _flag_contact_for_deletion(contact_id, reason)
+
+    return {"auto_flagged_for_deletion": True, "auto_flag_reason": reason}
+
+
 async def synthesize(state: ContactEnrichPaperAuthorState) -> dict:
     enriched_at = datetime.now(timezone.utc).isoformat()
 
@@ -506,6 +623,27 @@ async def synthesize(state: ContactEnrichPaperAuthorState) -> dict:
     }
 
 
+async def classify_affiliation(state: ContactEnrichPaperAuthorState) -> dict:
+    """Compute ``affiliation_type`` from the resolved openalex_profile.
+
+    Reads ``institution_type`` (and any ``additional_institution_types``) the
+    resolver persisted into state. Defaults to ``"unknown"`` when the resolver
+    short-circuited (no match, error) or no institution-type info is present.
+    The B2B ICP can only buy from ``industry`` or ``mixed`` profiles;
+    ``academic`` is a hard non-buyer.
+    """
+    if state.get("error"):
+        return {"affiliation_type": "unknown"}
+
+    profile: dict[str, Any] = {
+        "institution_type": state.get("institution_type") or "",
+        "additional_institution_types": list(
+            state.get("additional_institution_types") or []
+        ),
+    }
+    return {"affiliation_type": _classify_affiliation_type(profile)}
+
+
 async def classify_buyer_fit_node(
     state: ContactEnrichPaperAuthorState,
 ) -> dict:
@@ -550,16 +688,24 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("load_contact", load_contact)
     builder.add_node("resolve_openalex_author", resolve_openalex_author)
     builder.add_node("synthesize", synthesize)
+    builder.add_node("classify_affiliation", classify_affiliation)
     builder.add_node("classify_buyer_fit_node", classify_buyer_fit_node)
+    builder.add_node("auto_flag_unreachable_node", auto_flag_unreachable_node)
     builder.add_edge(START, "load_contact")
     builder.add_edge("load_contact", "resolve_openalex_author")
     builder.add_edge("resolve_openalex_author", "synthesize")
-    # classify_buyer_fit_node runs after synthesize. When Team A's
-    # `classify_affiliation` lands, slot it between synthesize and this node;
-    # the classifier reads `affiliation_type` defensively so either ordering
-    # works without code changes here.
-    builder.add_edge("synthesize", "classify_buyer_fit_node")
-    builder.add_edge("classify_buyer_fit_node", END)
+    # classify_affiliation slots between synthesize and the buyer-fit node so
+    # the latter can read its ``affiliation_type`` output. Both classifiers are
+    # pure (no DB / network); ordering is purely informational.
+    builder.add_edge("synthesize", "classify_affiliation")
+    builder.add_edge("classify_affiliation", "classify_buyer_fit_node")
+    # auto_flag_unreachable_node runs LAST — it reads Team A's
+    # ``affiliation_type`` and Team B's ``buyer_verdict`` and, if the contact
+    # is non-buyer-or-academic AND has no email / linkedin_url / github_handle,
+    # sets ``contacts.to_be_deleted = true`` with a deletion reason. Idempotent
+    # via SQL guard; safe to re-run.
+    builder.add_edge("classify_buyer_fit_node", "auto_flag_unreachable_node")
+    builder.add_edge("auto_flag_unreachable_node", END)
     return builder.compile(checkpointer=checkpointer)
 
 

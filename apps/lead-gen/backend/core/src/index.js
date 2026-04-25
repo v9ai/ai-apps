@@ -4,6 +4,7 @@
 // is what handles Bearer auth + path routing; this file only wires env vars
 // that the Python process reads via os.environ.
 import { Container, getContainer } from "@cloudflare/containers";
+import { DEEPSEEK_PRO } from "../../_shared/deepseek-constants.js";
 
 export class CoreContainer extends Container {
   defaultPort = 8000;
@@ -19,7 +20,7 @@ export class CoreContainer extends Container {
       // LLM — DeepSeek for reasoning, email-llm worker for outbound drafts.
       DEEPSEEK_API_KEY: env.DEEPSEEK_API_KEY ?? "",
       LLM_BASE_URL: env.LLM_BASE_URL ?? "https://api.deepseek.com",
-      LLM_MODEL: env.LLM_MODEL ?? "deepseek-v4-pro",
+      LLM_MODEL: env.LLM_MODEL ?? DEEPSEEK_PRO,
       EMAIL_LLM_BASE_URL: env.EMAIL_LLM_BASE_URL ?? "",
       EMAIL_LLM_API_KEY: env.EMAIL_LLM_API_KEY ?? "",
       EMAIL_LLM_MODEL: env.EMAIL_LLM_MODEL ?? "",
