@@ -808,17 +808,18 @@ async def generate(state: dict) -> dict:
 def _build_critique_prompt(guide: dict, is_ro: bool) -> str:
     rubric = (
         "You are an expert reviewer of parent–child discussion guides. "
-        "Given the draft guide JSON below, score it on five axes from 0 to 10 "
+        "Given the draft guide JSON below, score it on six axes from 0 to 10 "
         "and list the keys of sections that need a rewrite.\n\n"
         "Axes:\n"
         "- romanianFluency: is every string natural, fluent Romanian? (If non-Romanian text leaks in, score < 5.)\n"
         "- actionability: are talking points and language examples concrete enough that a parent can say them verbatim?\n"
         "- citationCoverage: does every talkingPoints[i].researchBacking and developmentalContext.researchBasis cite at least one ResearchID:N token?\n"
         "- ageAppropriateness: is the tone and vocabulary suitable for the stated child age?\n"
-        "- internalConsistency: do the sections tell one coherent story (same behaviors, same goals)?\n\n"
+        "- internalConsistency: do the sections tell one coherent story (same behaviors, same goals)?\n"
+        "- microScriptDepth: does every talkingPoints[i].microScript exist with all three fields, reference a CONCRETE recent moment (IssueID/JournalEntry/Observation), and avoid generic stems? (10 = each opener names a specific moment; 5 = warm but generic; 0 = absent or robotic. Two openers sharing the same stem = score < 5.)\n\n"
         "Return a SINGLE JSON object with this exact shape:\n"
         "{\n"
-        '  "scores": { "romanianFluency": 0-10, "actionability": 0-10, "citationCoverage": 0-10, "ageAppropriateness": 0-10, "internalConsistency": 0-10 },\n'
+        '  "scores": { "romanianFluency": 0-10, "actionability": 0-10, "citationCoverage": 0-10, "ageAppropriateness": 0-10, "internalConsistency": 0-10, "microScriptDepth": 0-10 },\n'
         '  "sectionNotes": { "<sectionKey>": "<short Romanian critique note>", ... },\n'
         '  "weakSections": [ "<sectionKey>", ... ]   // any section with score < 7, by top-level key\n'
         "}\n\n"
@@ -878,6 +879,7 @@ async def critique(state: BogdanDiscussionState) -> dict:
             "citationCoverage": int(scores.get("citationCoverage", 0) or 0),
             "ageAppropriateness": int(scores.get("ageAppropriateness", 0) or 0),
             "internalConsistency": int(scores.get("internalConsistency", 0) or 0),
+            "microScriptDepth": int(scores.get("microScriptDepth", 0) or 0),
         },
         "sectionNotes": parsed.get("sectionNotes") or {},
         "weakSections": [s for s in (parsed.get("weakSections") or []) if isinstance(s, str)],
@@ -1167,6 +1169,7 @@ async def finalize(state: dict) -> dict:
 def create_bogdan_discussion_graph():
     builder = StateGraph(BogdanDiscussionState)
     builder.add_node("load_scaffold_context", load_scaffold_context)
+    builder.add_node("load_extended_context", load_extended_context)
     builder.add_node("retrieve_and_compose", retrieve_and_compose)
     builder.add_node("generate", generate)
     builder.add_node("critique", critique)
@@ -1176,7 +1179,8 @@ def create_bogdan_discussion_graph():
     builder.add_node("finalize", finalize)
 
     builder.add_edge(START, "load_scaffold_context")
-    builder.add_edge("load_scaffold_context", "retrieve_and_compose")
+    builder.add_edge("load_scaffold_context", "load_extended_context")
+    builder.add_edge("load_extended_context", "retrieve_and_compose")
     builder.add_edge("retrieve_and_compose", "generate")
     builder.add_edge("generate", "critique")
     builder.add_conditional_edges(
