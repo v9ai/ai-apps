@@ -1557,7 +1557,7 @@ type Query {
   contactMessages(contactId: Int!): [ContactMessage!]!
   contactOpportunities(contactId: Int!): [Opportunity!]!
   contactReceivedEmails(contactId: Int!): [ReceivedEmail!]!
-  contacts(companyId: Int, limit: Int, offset: Int, search: String, tag: String): ContactsResult!
+  contacts(companyId: Int, includeFlagged: Boolean = false, limit: Int, offset: Int, search: String, tag: String): ContactsResult!
   crawlLog(id: Int!): CrawlLog
   crawlLogs(limit: Int, offset: Int): [CrawlLog!]!
   draftSummary: DraftSummary!

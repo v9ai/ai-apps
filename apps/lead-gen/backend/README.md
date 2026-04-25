@@ -166,7 +166,7 @@ threads persist across the free-tier Space's sleep/wake cycle.
    | `DATABASE_URL` | the Neon pooled URL above |
    | `LANGGRAPH_AUTH_TOKEN` | `openssl rand -hex 32` |
    | `LLM_BASE_URL` | `https://api.deepseek.com` |
-   | `LLM_MODEL` | `deepseek-chat` |
+   | `LLM_MODEL` | `deepseek-v4-pro` |
    | `OPENAI_API_KEY` | your DeepSeek API key (the OpenAI-compatible client reads this name) |
    | `NEON_DATABASE_URL` | same as `DATABASE_URL` *(used by `admin_chat` / `email_outreach` read-only queries)* |
 

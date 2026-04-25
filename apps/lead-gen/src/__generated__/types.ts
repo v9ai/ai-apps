@@ -2415,6 +2415,7 @@ export type QueryContactReceivedEmailsArgs = {
 
 export type QueryContactsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
+  includeFlagged?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;

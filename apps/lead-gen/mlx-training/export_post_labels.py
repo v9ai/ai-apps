@@ -134,7 +134,7 @@ def deepseek_label(text: str, metadata: dict) -> dict[str, float] | None:
             f"{base_url}/chat/completions",
             headers={"Authorization": f"Bearer {api_key}"},
             json={
-                "model": "deepseek-chat",
+                "model": "deepseek-v4-pro",
                 "messages": [
                     {"role": "system", "content": POST_INTENT_SYSTEM},
                     {"role": "user", "content": user_msg},

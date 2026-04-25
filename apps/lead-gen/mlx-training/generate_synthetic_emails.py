@@ -199,7 +199,7 @@ def call_deepseek_with_system(client: httpx.Client, api_key: str, system_prompt:
             DEEPSEEK_URL,
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={
-                "model": "deepseek-chat",
+                "model": "deepseek-v4-pro",
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},

@@ -92,10 +92,10 @@ Each graph defines a local TypedDict extension (`_PricingStateWithError` / `_GTM
 
 ### `llm.py` — LLM factory with cost telemetry (new)
 
-`make_llm(temperature, *, provider, tier)` (llm.py:81-108): `provider="deepseek"` + `tier="deep"` → `deepseek-reasoner`; otherwise `deepseek-chat`. Default provider keeps legacy graphs on `LLM_BASE_URL` (local Qwen).
+`make_llm(temperature, *, provider, tier)` (llm.py:81-108): `provider="deepseek"` defaults both tiers to `deepseek-v4-pro` (latest v4 thinking-mode model, `reasoning_effort=high`); `tier="deep"` reads `DEEPSEEK_MODEL_DEEP` for environments that want a different deep-tier model. Default provider keeps legacy graphs on `LLM_BASE_URL` (local Qwen).
 
 **New telemetry path** (llm.py:149-363+):
-- `MODEL_PRICING` (`:149-158`) — per-1M-token rates. DeepSeek: `deepseek-chat` $0.27/$1.10, `deepseek-reasoner` $0.55/$2.19.
+- `MODEL_PRICING` (`:149-158`) — per-1M-token rates. DeepSeek v4: `deepseek-v4-flash` $0.27/$1.10, `deepseek-v4-pro` $0.55/$2.19. Legacy `deepseek-chat` / `deepseek-reasoner` keys retained until 2026-07-24 deprecation.
 - `ainvoke_json_with_telemetry(llm, messages, provider)` returns `(parsed_json, telemetry_dict)` where telemetry is `{model, input_tokens, output_tokens, total_tokens, cost_usd, latency_ms}`.
 - `ainvoke_json` now delegates to the telemetry version and discards the second tuple element.
 - `record_node_telemetry`, `merge_node_telemetry`, `compute_totals` helpers accumulate into `state["graph_meta"]["telemetry"][node_name]`.

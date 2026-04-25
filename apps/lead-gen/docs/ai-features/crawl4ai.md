@@ -199,7 +199,7 @@ Supported provider prefixes (auto-detected from `provider` string prefix):
 - `openai/` — gpt-4o, gpt-4o-mini, o1-mini, o1-preview, o3-mini, o3-mini-high
 - `anthropic/` — claude-3-haiku, claude-3-opus, claude-3-sonnet, claude-3-5-sonnet
 - `gemini/` — gemini-pro, gemini-1.5-pro, gemini-2.0-flash
-- `deepseek/` — deepseek-chat
+- `deepseek/` — deepseek-v4-pro, deepseek-v4-flash
 - `groq/` — llama3-70b-8192, llama3-8b-8192
 - `ollama/` — any local model (no API token required)
 

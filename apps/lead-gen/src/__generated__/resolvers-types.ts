@@ -2418,6 +2418,7 @@ export type QueryContactReceivedEmailsArgs = {
 
 export type QueryContactsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
+  includeFlagged?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -5679,7 +5680,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contactMessages?: Resolver<Array<ResolversTypes['ContactMessage']>, ParentType, ContextType, RequireFields<QueryContactMessagesArgs, 'contactId'>>;
   contactOpportunities?: Resolver<Array<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryContactOpportunitiesArgs, 'contactId'>>;
   contactReceivedEmails?: Resolver<Array<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryContactReceivedEmailsArgs, 'contactId'>>;
-  contacts?: Resolver<ResolversTypes['ContactsResult'], ParentType, ContextType, Partial<QueryContactsArgs>>;
+  contacts?: Resolver<ResolversTypes['ContactsResult'], ParentType, ContextType, RequireFields<QueryContactsArgs, 'includeFlagged'>>;
   crawlLog?: Resolver<Maybe<ResolversTypes['CrawlLog']>, ParentType, ContextType, RequireFields<QueryCrawlLogArgs, 'id'>>;
   crawlLogs?: Resolver<Array<ResolversTypes['CrawlLog']>, ParentType, ContextType, Partial<QueryCrawlLogsArgs>>;
   draftSummary?: Resolver<ResolversTypes['DraftSummary'], ParentType, ContextType>;

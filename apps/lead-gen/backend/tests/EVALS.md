@@ -34,7 +34,7 @@ The `-s` flag surfaces the per-graph pass-rate header and failure list.
 
 ### Switching to a stronger judge
 
-By default the judge is `deepseek-reasoner` (cheap, already funding the graphs themselves). To use Claude Opus 4.7 as a second-opinion judge:
+By default the judge is `deepseek-v4-pro` (cheap, already funding the graphs themselves). To use Claude Opus 4.7 as a second-opinion judge:
 
 ```bash
 EVAL=1 STRONG_JUDGE=1 ANTHROPIC_API_KEY=... pytest tests/test_pricing_eval.py -s
@@ -175,6 +175,6 @@ The deep_icp eval uses `deepeval.metrics` (AnswerRelevancy, Faithfulness, GEval)
 
 The trade-off: the evals here don't benefit from deepeval's telemetry / report dashboard. If that matters, the `_eval_utils.run_judge` function is a drop-in replacement point — swap in `deepeval.metrics.GEval.a_measure(...)`.
 
-**Rate limiting.** DeepSeek's `deepseek-reasoner` can be slow (5-30s per call). A full sweep of all three new tests costs ~200 judge calls, so expect 10-20 minutes on a clean run. The tests are async but call the judge serially to keep the output log readable.
+**Rate limiting.** DeepSeek's `deepseek-v4-pro` can be slow (5-30s per call). A full sweep of all three new tests costs ~200 judge calls, so expect 10-20 minutes on a clean run. The tests are async but call the judge serially to keep the output log readable.
 
 **JSON repair.** The judge is prompted for strict JSON but DeepSeek occasionally wraps with markdown fences — `_eval_utils._run_deepseek_judge` routes through `leadgen_agent.llm.ainvoke_json`, which handles both fences and the `json-repair` fallback. Anthropic replies have been clean in testing but go through the same `_normalize_judge_response` defensive parser.

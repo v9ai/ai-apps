@@ -335,7 +335,7 @@ export function enrichContactPapers(input: {
 }
 
 /**
- * Discover new companies from a fuzzy seed query. LLM-only — deepseek-reasoner
+ * Discover new companies from a fuzzy seed query. LLM-only — deepseek-v4-pro
  * brainstorms 12–20 real companies, the graph dedupes against existing
  * `companies` rows by `canonical_domain` and inserts the rest with
  * `tags=['discovery-candidate']` and `score=pre_score` (0.2–1.0).

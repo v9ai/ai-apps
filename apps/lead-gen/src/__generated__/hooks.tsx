@@ -2418,6 +2418,7 @@ export type QueryContactReceivedEmailsArgs = {
 
 export type QueryContactsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
+  includeFlagged?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -4206,6 +4207,7 @@ export type GetContactsQueryVariables = Exact<{
   tag?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+  includeFlagged?: InputMaybe<Scalars['Boolean']['input']>;
 }>;
 
 
@@ -6862,13 +6864,14 @@ export type CancelScheduledEmailMutationHookResult = ReturnType<typeof useCancel
 export type CancelScheduledEmailMutationResult = Apollo.MutationResult<CancelScheduledEmailMutation>;
 export type CancelScheduledEmailMutationOptions = Apollo.BaseMutationOptions<CancelScheduledEmailMutation, CancelScheduledEmailMutationVariables>;
 export const GetContactsDocument = gql`
-    query GetContacts($companyId: Int, $search: String, $tag: String, $limit: Int, $offset: Int) {
+    query GetContacts($companyId: Int, $search: String, $tag: String, $limit: Int, $offset: Int, $includeFlagged: Boolean) {
   contacts(
     companyId: $companyId
     search: $search
     tag: $tag
     limit: $limit
     offset: $offset
+    includeFlagged: $includeFlagged
   ) {
     contacts {
       id
@@ -6918,6 +6921,7 @@ export const GetContactsDocument = gql`
  *      tag: // value for 'tag'
  *      limit: // value for 'limit'
  *      offset: // value for 'offset'
+ *      includeFlagged: // value for 'includeFlagged'
  *   },
  * });
  */
