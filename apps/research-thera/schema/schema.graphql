@@ -1824,6 +1824,13 @@ type TalkingPoint {
   researchBacking: String
   relatedResearchIds: [Int!]
   citations: [Citation!]
+  microScript: MicroScript
+}
+
+type MicroScript {
+  parentOpener: String!
+  childResponse: String!
+  parentFollowUp: String!
 }
 
 type Citation {
@@ -1841,6 +1848,7 @@ type CritiqueScores {
   citationCoverage: Int!
   ageAppropriateness: Int!
   internalConsistency: Int!
+  microScriptDepth: Int!
 }
 
 type DiscussionGuideCritique {
