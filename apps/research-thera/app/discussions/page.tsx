@@ -78,6 +78,13 @@ type CritiqueScores = {
   citationCoverage: number;
   ageAppropriateness: number;
   internalConsistency: number;
+  microScriptDepth: number;
+};
+
+type MicroScript = {
+  parentOpener: string;
+  childResponse: string;
+  parentFollowUp: string;
 };
 
 type Critique = {
@@ -93,7 +100,9 @@ function averageScore(s: CritiqueScores): number {
     s.citationCoverage,
     s.ageAppropriateness,
     s.internalConsistency,
-  ];
+    s.microScriptDepth,
+  ].filter((v) => typeof v === "number" && !Number.isNaN(v));
+  if (!vals.length) return 0;
   const sum = vals.reduce((a, b) => a + b, 0);
   return sum / vals.length;
 }
@@ -110,6 +119,7 @@ const SCORE_LABELS_RO: Record<keyof CritiqueScores, string> = {
   citationCoverage: "Acoperire surse",
   ageAppropriateness: "Adecvare vârstă",
   internalConsistency: "Coerență internă",
+  microScriptDepth: "Adâncime mini-dialog",
 };
 
 function QualityBadge({ critique }: { critique: Critique }) {
@@ -322,6 +332,39 @@ function BogdanDiscussion() {
                       </Text>
                     )}
                     <CitationsRow citations={(t.citations ?? []) as Citation[]} />
+                    {t.microScript && (
+                      <Box mt="3" p="3" style={{ background: "var(--gray-2)", borderRadius: 6 }}>
+                        <Text size="1" color="gray" weight="medium" as="div" mb="2">
+                          Mini-dialog
+                        </Text>
+                        <Flex direction="column" gap="2">
+                          <Box>
+                            <Badge size="1" color="indigo" variant="soft">
+                              Părinte
+                            </Badge>
+                            <Text size="2" as="div" mt="1">
+                              "{t.microScript.parentOpener}"
+                            </Text>
+                          </Box>
+                          <Box>
+                            <Badge size="1" color="amber" variant="soft">
+                              Bogdan
+                            </Badge>
+                            <Text size="2" as="div" mt="1" color="gray">
+                              "{t.microScript.childResponse}"
+                            </Text>
+                          </Box>
+                          <Box>
+                            <Badge size="1" color="indigo" variant="soft">
+                              Părinte
+                            </Badge>
+                            <Text size="2" as="div" mt="1">
+                              "{t.microScript.parentFollowUp}"
+                            </Text>
+                          </Box>
+                        </Flex>
+                      </Box>
+                    )}
                   </Box>
                 ))}
               </Flex>
