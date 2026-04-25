@@ -38,6 +38,7 @@ import os
 import random
 import threading
 import time
+import uuid
 from typing import Any, AsyncIterator, Callable
 
 import httpx
@@ -362,13 +363,22 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
             )
 
     async def _invoke_remote_with_retry(
-        self, state: dict[str, Any], config: dict[str, Any] | None
-    ) -> Any:
+        self,
+        state: dict[str, Any],
+        config: dict[str, Any] | None,
+        *,
+        call_id: str,
+    ) -> tuple[Any, int]:
         """Call ``_remote.ainvoke`` with exponential backoff + circuit breaker.
 
         Only the network call is wrapped — input/output validation happens in
         the caller and is intentionally outside the retry loop so transient
         retries cannot mask permanent contract failures.
+
+        Returns ``(result, attempts_used)`` so the caller can include the
+        attempt count in its end-of-call observability line. ``call_id`` is
+        threaded into every retry-warn so a logical call's full lifecycle is
+        greppable as one logical unit in production logs.
         """
         if not self._breaker.allow():
             raise RemoteUnavailable(
@@ -388,7 +398,8 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
                     self._breaker.record_failure()
                     raise
                 log.warning(
-                    "remote retry: adapter=%s attempt=%d/%d reason=%s: %s",
+                    "remote retry: call_id=%s adapter=%s attempt=%d/%d reason=%s: %s",
+                    call_id,
                     self._name,
                     attempt,
                     self._max_attempts,
@@ -401,7 +412,7 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
                 continue
             else:
                 self._breaker.record_success()
-                return result
+                return result, attempt
 
         # Defensive: loop above either returns or raises. This is unreachable.
         assert last_exc is not None
@@ -431,9 +442,25 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         state_dict = self._coerce_state(state)
         # Validate input shape before paying for the HTTP round-trip.
         validate_remote_call(self._input_cls, self._output_cls, state_dict, None)
-        log.debug("remote invoke → %s (keys=%s)", self._name, list(state_dict))
 
-        raw_output = await self._invoke_remote_with_retry(state_dict, config=config)
+        call_id = uuid.uuid4().hex[:8]
+        start = time.monotonic()
+        log.debug(
+            "remote invoke → call_id=%s adapter=%s keys=%s",
+            call_id,
+            self._name,
+            list(state_dict),
+        )
+        try:
+            raw_output, attempts = await self._invoke_remote_with_retry(
+                state_dict, config=config, call_id=call_id
+            )
+        except RemoteUnavailable:
+            self._log_call_summary(call_id, start, 0, "breaker_open")
+            raise
+        except BaseException:
+            self._log_call_summary(call_id, start, self._max_attempts, "failed")
+            raise
         if not isinstance(raw_output, dict):
             # Defensive: LangGraph Server always returns a state dict; a bare
             # string / None means the remote side served a broken deploy. We
@@ -442,6 +469,7 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
             # silently validated to an empty success — a false positive that
             # hid the real problem. A typed error surfaces the protocol
             # violation regardless of the Output schema.
+            self._log_call_summary(call_id, start, attempts, "protocol_error")
             raise RemoteGraphProtocolError(
                 f"{self._name}: expected a state dict, got {type(raw_output).__name__}"
             )
@@ -455,6 +483,8 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
             # validate_remote_call only returns None when raw_output is None,
             # which we already guarded against above.
             raise RuntimeError(f"{self._name}: unexpected None output after validation")
+        outcome = "success" if attempts == 1 else "retried_success"
+        self._log_call_summary(call_id, start, attempts, outcome)
         return out.model_dump()
 
     async def ainvoke_typed(
@@ -469,10 +499,27 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         """
         state_dict = self._coerce_state(state)
         validate_remote_call(self._input_cls, self._output_cls, state_dict, None)
-        log.debug("remote invoke (typed) → %s (keys=%s)", self._name, list(state_dict))
 
-        raw_output = await self._invoke_remote_with_retry(state_dict, config=config)
+        call_id = uuid.uuid4().hex[:8]
+        start = time.monotonic()
+        log.debug(
+            "remote invoke (typed) → call_id=%s adapter=%s keys=%s",
+            call_id,
+            self._name,
+            list(state_dict),
+        )
+        try:
+            raw_output, attempts = await self._invoke_remote_with_retry(
+                state_dict, config=config, call_id=call_id
+            )
+        except RemoteUnavailable:
+            self._log_call_summary(call_id, start, 0, "breaker_open")
+            raise
+        except BaseException:
+            self._log_call_summary(call_id, start, self._max_attempts, "failed")
+            raise
         if not isinstance(raw_output, dict):
+            self._log_call_summary(call_id, start, attempts, "protocol_error")
             raise RemoteGraphProtocolError(
                 f"{self._name}: expected a state dict, got {type(raw_output).__name__}"
             )
@@ -482,7 +529,28 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         )
         if out is None:
             raise RuntimeError(f"{self._name}: unexpected None output after validation")
+        outcome = "success" if attempts == 1 else "retried_success"
+        self._log_call_summary(call_id, start, attempts, outcome)
         return out
+
+    def _log_call_summary(
+        self, call_id: str, start: float, attempts: int, outcome: str
+    ) -> None:
+        """One INFO line per logical adapter call, post-validation.
+
+        ``outcome`` is one of: ``success``, ``retried_success``, ``failed``,
+        ``breaker_open``, ``protocol_error``. ``attempts`` is the number of
+        HTTP attempts spent (0 when the breaker short-circuited the call).
+        """
+        duration_ms = round((time.monotonic() - start) * 1000.0, 2)
+        log.info(
+            "remote call: call_id=%s adapter=%s outcome=%s attempts=%d duration_ms=%s",
+            call_id,
+            self._name,
+            outcome,
+            attempts,
+            duration_ms,
+        )
 
     # LangGraph's StateGraph.add_node accepts any awaitable callable; expose a
     # plain __call__ delegate so older code paths that call ``node(state)``
@@ -554,23 +622,38 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         )
 
         accumulated: dict[str, Any] = {}
-        async for event in self._remote.astream(
+        # Hold an explicit reference to the underlying async iterator so we
+        # can ``aclose()`` it on early exit (parent-task cancellation, client
+        # disconnect, exception inside the consumer). Without this, the
+        # underlying httpx chunked-transfer connection lingers until GC, and
+        # the remote keeps emitting events into a closed pipe. Mirrors
+        # ``leadgen_agent._subgraph_stream.run_subgraph`` (lines 35-60).
+        stream = self._remote.astream(
             state_dict, config=config, stream_mode=stream_mode
-        ):
-            # Pass-through: the dispatcher sees exactly what RemoteGraph emits.
-            yield event
+        )
+        try:
+            async for event in stream:
+                # Pass-through: the dispatcher sees exactly what RemoteGraph emits.
+                yield event
 
-            # Accumulate the running final state for post-stream validation.
-            # ``updates`` mode payloads are ``{node_name: partial_state_dict}``;
-            # ``values`` mode payloads are the full state dict per step.
-            if stream_mode == "updates" and isinstance(event, dict):
-                for node_partial in event.values():
-                    if isinstance(node_partial, dict):
-                        accumulated.update(node_partial)
-            elif stream_mode == "values" and isinstance(event, dict):
-                accumulated = dict(event)
-            # ``messages`` mode emits LLM tokens, not state — skip validation
-            # below by leaving ``accumulated`` empty.
+                # Accumulate the running final state for post-stream validation.
+                # ``updates`` mode payloads are ``{node_name: partial_state_dict}``;
+                # ``values`` mode payloads are the full state dict per step.
+                if stream_mode == "updates" and isinstance(event, dict):
+                    for node_partial in event.values():
+                        if isinstance(node_partial, dict):
+                            accumulated.update(node_partial)
+                elif stream_mode == "values" and isinstance(event, dict):
+                    accumulated = dict(event)
+                # ``messages`` mode emits LLM tokens, not state — skip validation
+                # below by leaving ``accumulated`` empty.
+        finally:
+            aclose = getattr(stream, "aclose", None)
+            if aclose is not None:
+                try:
+                    await aclose()
+                except Exception:  # noqa: BLE001 — close-on-exit is best-effort
+                    pass
 
         if stream_mode == "messages":
             return
@@ -579,8 +662,15 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         # drift surfaces here as ContractsVersionMismatch instead of silently
         # corrupting downstream state.
         if not accumulated:
-            # Empty stream — nothing to validate. A graph that legitimately
-            # emits no updates also has nothing to drift, so we let it pass.
+            # Empty stream in a non-``messages`` mode is suspicious — a healthy
+            # graph emits at least one update. Surface a WARNING so a
+            # misbehaving remote that opened the stream and yielded zero
+            # events shows up in logs instead of silently passing.
+            log.warning(
+                "remote astream emitted zero events: adapter=%s mode=%s",
+                self._name,
+                stream_mode,
+            )
             return
 
         sv = accumulated.get("schema_version")
@@ -607,6 +697,8 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
 
 
 _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
+    # ML adapters: fast pure-inference calls. Default 3 attempts is fine
+    # — each attempt costs a few ms + tokenizer time, no model spin-up.
     "jobbert_ner": {
         "url_fn": _ml_url,
         "headers_fn": _ml_headers,
@@ -621,12 +713,17 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "output_cls": BgeM3EmbedOutput,
         "timeout": ML_TIMEOUT,
     },
+    # Research adapters: expensive (60-120 s LLM crawls) and many of them
+    # write — duplicate calls aren't free. Cap retries at 2 and widen the
+    # breaker cool-down so a flaky upstream doesn't burn budget.
     "research_agent": {
         "url_fn": _research_url,
         "headers_fn": _research_headers,
         "input_cls": ResearchAgentInput,
         "output_cls": ResearchAgentOutput,
         "timeout": RESEARCH_TIMEOUT,
+        "max_attempts": 2,
+        "breaker_cool_down_s": 60.0,
     },
     "lead_papers": {
         "url_fn": _research_url,
@@ -634,6 +731,8 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "input_cls": LeadPapersInput,
         "output_cls": LeadPapersOutput,
         "timeout": RESEARCH_TIMEOUT,
+        "max_attempts": 2,
+        "breaker_cool_down_s": 60.0,
     },
     "scholar": {
         "url_fn": _research_url,
@@ -648,6 +747,8 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "input_cls": CommonCrawlInput,
         "output_cls": CommonCrawlOutput,
         "timeout": RESEARCH_TIMEOUT,
+        "max_attempts": 2,
+        "breaker_cool_down_s": 60.0,
     },
     "agentic_search": {
         "url_fn": _research_url,
@@ -655,6 +756,8 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "input_cls": AgenticSearchInput,
         "output_cls": AgenticSearchOutput,
         "timeout": RESEARCH_TIMEOUT,
+        "max_attempts": 2,
+        "breaker_cool_down_s": 60.0,
     },
     "gh_patterns": {
         "url_fn": _research_url,
@@ -662,6 +765,8 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "input_cls": GhPatternsInput,
         "output_cls": GhPatternsOutput,
         "timeout": RESEARCH_TIMEOUT,
+        "max_attempts": 2,
+        "breaker_cool_down_s": 60.0,
     },
 }
 
@@ -680,14 +785,33 @@ _BUILD_LOCK = threading.Lock()
 def _build_adapter_from_spec(
     name: str, spec: dict[str, Any]
 ) -> _ValidatedRemoteGraph[BaseModel, BaseModel]:
-    return _ValidatedRemoteGraph(
-        name=name,
-        url=spec["url_fn"](),
-        headers=spec["headers_fn"](),
-        input_cls=spec["input_cls"],
-        output_cls=spec["output_cls"],
-        timeout=spec["timeout"],
-    )
+    """Build one adapter from its spec, picking up any per-adapter overrides.
+
+    The spec table lets callers tune retry / breaker knobs per adapter — a
+    fast cheap call (``bge_m3_embed``) can retry aggressively, while an
+    expensive 120 s LLM call (``research_agent``, ``agentic_search``)
+    should retry once at most because each attempt costs real money.
+    Missing keys fall back to the constructor defaults so an unmodified
+    spec is identical to the previous behaviour.
+    """
+    kwargs: dict[str, Any] = {
+        "name": name,
+        "url": spec["url_fn"](),
+        "headers": spec["headers_fn"](),
+        "input_cls": spec["input_cls"],
+        "output_cls": spec["output_cls"],
+        "timeout": spec["timeout"],
+    }
+    for knob in (
+        "max_attempts",
+        "backoff_base_s",
+        "backoff_cap_s",
+        "breaker_failure_threshold",
+        "breaker_cool_down_s",
+    ):
+        if knob in spec:
+            kwargs[knob] = spec[knob]
+    return _ValidatedRemoteGraph(**kwargs)
 
 
 def _get_or_build(name: str) -> _ValidatedRemoteGraph[BaseModel, BaseModel]:
@@ -725,18 +849,35 @@ def reset_adapter_cache() -> None:
     _WARNED_AUTH.clear()
 
 
+# Per-adapter shutdown budget. Each ``aclose`` call gets this many seconds
+# before we give up and move on to the next adapter — a hung remote (TLS
+# close-notify never lands) used to block the whole teardown indefinitely.
+# 5 s × 8 adapters = 40 s worst-case, comfortably inside the 60 s SIGTERM
+# grace common to k8s / Cloudflare Containers / HF Spaces.
+ACLOSE_TIMEOUT_S: float = 5.0
+
+
 async def aclose_all_adapters() -> None:
     """Close pooled httpx clients on every cached adapter, then drop the cache.
 
     Wired into the FastAPI ``lifespan`` teardown in ``core/app.py`` so the
-    container exits without leaking connections / TLS sessions.
+    container exits without leaking connections / TLS sessions. Each
+    per-adapter ``aclose`` is bounded by :data:`ACLOSE_TIMEOUT_S` so a single
+    hung remote can't block the whole shutdown.
     """
     # Snapshot before clear: aclose may raise on one adapter and we still
     # want every other cached adapter to be closed and the dict to be empty.
     adapters = list(_ADAPTER_CACHE.values())
     _ADAPTER_CACHE.clear()
     for adapter in adapters:
-        await adapter.aclose()
+        try:
+            await asyncio.wait_for(adapter.aclose(), timeout=ACLOSE_TIMEOUT_S)
+        except asyncio.TimeoutError:
+            log.warning(
+                "aclose timed out after %.1fs for adapter %s — moving on",
+                ACLOSE_TIMEOUT_S,
+                getattr(adapter, "_name", "?"),
+            )
 
 
 # ─── ML adapters ──────────────────────────────────────────────────────────

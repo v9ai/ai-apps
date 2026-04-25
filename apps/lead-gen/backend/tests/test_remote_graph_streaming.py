@@ -344,3 +344,94 @@ async def test_dunder_call_still_works_alongside_astream() -> None:
     out = await adapter({"text": "react"})
     assert out["schema_version"] == SCHEMA_VERSION
     assert len(fake.ainvoke_calls) == 1
+
+
+# ─── Cleanup + empty-stream observability ─────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_astream_empty_stream_emits_warning(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Zero events in a non-``messages`` stream is suspicious — a healthy
+    graph emits at least one update. We surface a WARNING so a misbehaving
+    remote that opens the stream and yields nothing shows up in production
+    logs instead of silently passing."""
+    import logging
+
+    fake = FakeStreamingRemote(stream_events=[])
+    adapter = _build_adapter(fake)
+
+    with caplog.at_level(logging.WARNING, logger="core.remote_graphs"):
+        events = [e async for e in adapter.astream({"text": "react"})]
+
+    assert events == []
+    matches = [r for r in caplog.records if "emitted zero events" in r.message]
+    assert len(matches) == 1
+    assert "adapter=jobbert_ner" in matches[0].message
+
+
+@pytest.mark.asyncio
+async def test_astream_messages_mode_does_not_warn_on_empty(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """``messages`` mode is allowed to emit zero events (no LLM tokens) — no
+    warning, since the absence of state validation is by design."""
+    import logging
+
+    fake = FakeStreamingRemote(stream_events=[])
+    adapter = _build_adapter(fake)
+
+    with caplog.at_level(logging.WARNING, logger="core.remote_graphs"):
+        events = [
+            e async for e in adapter.astream({"text": "react"}, stream_mode="messages")
+        ]
+
+    assert events == []
+    assert not [r for r in caplog.records if "emitted zero events" in r.message]
+
+
+@pytest.mark.asyncio
+async def test_astream_calls_aclose_on_underlying_iterator_after_normal_completion() -> None:
+    """The astream wrapper now mirrors ``_subgraph_stream`` and explicitly
+    holds the inner async-iterator so it can ``aclose()`` it on exit. This
+    closes the httpx chunked-transfer connection immediately instead of
+    waiting for GC, which matters under parent-task cancellation."""
+    aclose_called = {"count": 0}
+
+    class _RecordingAsyncGen:
+        def __init__(self, events: list[Any]) -> None:
+            self._events = list(events)
+
+        def __aiter__(self) -> Any:
+            return self
+
+        async def __anext__(self) -> Any:
+            if not self._events:
+                raise StopAsyncIteration
+            return self._events.pop(0)
+
+        async def aclose(self) -> None:
+            aclose_called["count"] += 1
+
+    class _Remote:
+        def astream(self, *_a: Any, **_k: Any) -> _RecordingAsyncGen:
+            return _RecordingAsyncGen(
+                [{"node": {"schema_version": SCHEMA_VERSION, "spans": []}}]
+            )
+
+    adapter = _ValidatedRemoteGraph(
+        name="jobbert_ner",
+        url="http://stub",
+        headers={},
+        input_cls=JobbertNerInput,
+        output_cls=JobbertNerOutput,
+    )
+    adapter._remote = _Remote()  # type: ignore[assignment]
+
+    events = [e async for e in adapter.astream({"text": "react"})]
+
+    assert len(events) == 1
+    assert aclose_called["count"] == 1, (
+        "astream must call aclose on the underlying async iterator on exit"
+    )

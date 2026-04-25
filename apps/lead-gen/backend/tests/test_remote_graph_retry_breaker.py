@@ -306,6 +306,54 @@ async def test_breaker_shared_across_adapter_instances_by_name() -> None:
 # ─── astream pass-through (regression guard) ──────────────────────────────
 
 
+async def test_summary_log_emits_outcome_attempts_duration(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Every logical adapter call emits one INFO line post-validation with
+    ``call_id``, ``adapter``, ``outcome``, ``attempts``, ``duration_ms`` so
+    operators can grep a single call's lifecycle without needing LangSmith.
+    """
+    import logging
+
+    fake = FakeRemote([_http_error(500), _ok_response()])
+    adapter = _build_adapter(fake, max_attempts=3)
+
+    with caplog.at_level(logging.INFO, logger="core.remote_graphs"):
+        await adapter.ainvoke({"text": "react"})
+
+    summary = [r for r in caplog.records if r.message.startswith("remote call:")]
+    assert len(summary) == 1, f"expected one summary line, got {summary}"
+    msg = summary[0].message
+    assert "outcome=retried_success" in msg
+    assert "attempts=2" in msg
+    assert "adapter=jobbert_ner" in msg
+    assert "call_id=" in msg
+    assert "duration_ms=" in msg
+
+
+async def test_summary_log_marks_breaker_open(caplog: pytest.LogCaptureFixture) -> None:
+    """When the breaker short-circuits, the outcome is ``breaker_open`` with
+    ``attempts=0`` (no HTTP attempt was made) so the log line is unambiguous."""
+    import logging
+
+    fake = FakeRemote([])  # never called
+    adapter = _build_adapter(
+        fake, max_attempts=1, breaker_failure_threshold=1, breaker_cool_down_s=30.0
+    )
+    # Manually open breaker.
+    adapter._breaker.consecutive_failures = 1
+    adapter._breaker.opened_at = time.monotonic()
+
+    with caplog.at_level(logging.INFO, logger="core.remote_graphs"):
+        with pytest.raises(RemoteUnavailable):
+            await adapter.ainvoke({"text": "react"})
+
+    summary = [r for r in caplog.records if r.message.startswith("remote call:")]
+    assert len(summary) == 1
+    assert "outcome=breaker_open" in summary[0].message
+    assert "attempts=0" in summary[0].message
+
+
 async def test_astream_path_is_not_wrapped_by_retry() -> None:
     """The ``astream`` path is intentionally NOT wrapped by the retry loop —
     a half-streamed response cannot be safely replayed mid-flight (would

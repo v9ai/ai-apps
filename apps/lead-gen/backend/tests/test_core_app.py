@@ -110,6 +110,73 @@ async def test_health_endpoint(patched_core_app: Any) -> None:
     assert body["adapters_ready"] is False
 
 
+async def test_health_deep_returns_200_when_no_breaker_open(
+    patched_core_app: Any,
+) -> None:
+    """``/health/deep`` is a readiness probe — green when every adapter's
+    breaker is closed, red when any is open. Distinct from ``/health``
+    (liveness only) so transient outages don't trigger pod restarts."""
+
+    class _StubAdapter:
+        def __init__(self) -> None:
+            class _B:
+                opened_at: float | None = None
+
+            self._breaker = _B()
+
+    ca = patched_core_app
+    ca.app.state.remote_adapters = {
+        "jobbert_ner": _StubAdapter(),
+        "bge_m3_embed": _StubAdapter(),
+    }
+    async with AsyncClient(
+        transport=ASGITransport(app=ca.app), base_url="http://test"
+    ) as client:
+        r = await client.get("/health/deep")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "ok"
+    assert body["breakers"]["jobbert_ner"] == "closed"
+    assert body["breakers"]["bge_m3_embed"] == "closed"
+
+
+async def test_health_deep_returns_503_when_any_breaker_open(
+    patched_core_app: Any,
+) -> None:
+    """Readiness flips red on any open breaker so a Kubernetes / Cloudflare
+    readinessProbe drains traffic until the breaker recovers. Liveness
+    (``/health``) stays green so the pod is not restarted."""
+
+    class _ClosedAdapter:
+        def __init__(self) -> None:
+            class _B:
+                opened_at: float | None = None
+
+            self._breaker = _B()
+
+    class _OpenAdapter:
+        def __init__(self) -> None:
+            class _B:
+                opened_at: float = 1.0  # any non-None value means "open"
+
+            self._breaker = _B()
+
+    ca = patched_core_app
+    ca.app.state.remote_adapters = {
+        "jobbert_ner": _ClosedAdapter(),
+        "research_agent": _OpenAdapter(),
+    }
+    async with AsyncClient(
+        transport=ASGITransport(app=ca.app), base_url="http://test"
+    ) as client:
+        r = await client.get("/health/deep")
+    assert r.status_code == 503
+    body = r.json()
+    assert body["status"] == "degraded"
+    assert body["breakers"]["jobbert_ner"] == "closed"
+    assert body["breakers"]["research_agent"] == "open"
+
+
 async def test_health_endpoint_lists_warmed_adapters(patched_core_app: Any) -> None:
     """When the lifespan has wired adapters, ``/health`` exposes the names so
     a dispatcher can distinguish a clean boot from a degraded one (no

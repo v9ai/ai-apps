@@ -302,6 +302,82 @@ async def test_aclose_propagates_first_error_but_clears_cache() -> None:
     assert remote_graphs._ADAPTER_CACHE == {}
 
 
+def test_per_adapter_spec_overrides_reach_constructor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``_ADAPTER_SPECS`` carries optional ``max_attempts`` /
+    ``breaker_cool_down_s`` per adapter so expensive remotes can retry less
+    aggressively without changing the caller surface. Verify the values
+    actually reach ``_ValidatedRemoteGraph.__init__``.
+    """
+    monkeypatch.setenv("ML_URL", "http://lead-gen-ml")
+    monkeypatch.setenv("RESEARCH_URL", "http://lead-gen-research")
+    reset_adapter_cache()
+
+    # Default knobs on jobbert_ner (no overrides in spec).
+    jobbert = remote_graphs.get_jobbert_ner_adapter()
+    assert jobbert._max_attempts == 3
+    assert jobbert._breaker.cool_down_s == 30.0
+
+    # Tightened knobs on research_agent (max_attempts=2, cool_down=60s).
+    research = remote_graphs.get_research_agent_adapter()
+    assert research._max_attempts == 2
+    assert research._breaker.cool_down_s == 60.0
+
+    # gh_patterns mirrors research_agent.
+    gh = remote_graphs.get_gh_patterns_adapter()
+    assert gh._max_attempts == 2
+    assert gh._breaker.cool_down_s == 60.0
+
+
+async def test_aclose_all_adapters_timeout_does_not_block_other_adapters(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A hanging adapter (TLS close-notify never lands) used to block the
+    whole shutdown indefinitely. Wrapping each aclose in asyncio.wait_for
+    bounds it to ``ACLOSE_TIMEOUT_S`` so the next adapter still gets closed.
+    """
+    import asyncio
+    import logging
+
+    # Drop the timeout for the test so we don't actually wait 5 seconds.
+    monkeypatch.setattr(remote_graphs, "ACLOSE_TIMEOUT_S", 0.05)
+
+    class _HangingAdapter:
+        def __init__(self) -> None:
+            self._name = "hanging"
+            self.aclose_call_count = 0
+
+        async def aclose(self) -> None:
+            self.aclose_call_count += 1
+            await asyncio.sleep(10)  # never resolves within the test budget
+
+    class _FastAdapter:
+        def __init__(self) -> None:
+            self._name = "fast"
+            self.aclose_call_count = 0
+
+        async def aclose(self) -> None:
+            self.aclose_call_count += 1
+
+    hanging = _HangingAdapter()
+    fast = _FastAdapter()
+    remote_graphs._ADAPTER_CACHE.clear()
+    remote_graphs._ADAPTER_CACHE["hanging"] = hanging  # type: ignore[assignment]
+    remote_graphs._ADAPTER_CACHE["fast"] = fast  # type: ignore[assignment]
+
+    with caplog.at_level(logging.WARNING, logger="core.remote_graphs"):
+        await aclose_all_adapters()
+
+    # The hanging adapter timed out, but the next one still closed.
+    assert hanging.aclose_call_count == 1
+    assert fast.aclose_call_count == 1
+    assert remote_graphs._ADAPTER_CACHE == {}
+    timeouts = [r for r in caplog.records if "aclose timed out" in r.message]
+    assert len(timeouts) == 1
+
+
 # ─── Concurrent build (defense-in-depth) ──────────────────────────────────
 
 

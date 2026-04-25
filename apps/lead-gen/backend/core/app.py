@@ -96,7 +96,7 @@ log = logging.getLogger("leadgen_agent")
 
 # Paths the bearer middleware lets through so uptime monitors and the
 # dispatcher Worker's health probe can run without credentials.
-_PUBLIC_PATHS = frozenset({"/health", "/ok"})
+_PUBLIC_PATHS = frozenset({"/health", "/health/deep", "/ok"})
 
 
 class BearerTokenMiddleware(BaseHTTPMiddleware):
@@ -286,6 +286,42 @@ def _build_run_configurable(assistant_id: str, thread_id: str) -> dict[str, Any]
         if jobbert is not None:
             configurable["jobbert_ner_adapter"] = jobbert
     return configurable
+
+
+@app.get("/health/deep")
+async def health_deep() -> JSONResponse:
+    """Readiness probe with circuit-breaker awareness.
+
+    Distinct from ``/health`` (a dumb liveness probe that must stay green
+    even when a remote is briefly down): ``/health/deep`` returns ``503``
+    when any cached adapter's breaker is currently open. Reads the local
+    ``_breaker.opened_at`` rather than pinging the remote so the probe
+    stays cheap and scales with load — the breaker state is already updated
+    on every adapter call, so it IS the real-time signal.
+
+    Kubernetes / Cloudflare ``readinessProbe`` respects 5xx and will drain
+    traffic until the breaker recovers; ``livenessProbe`` should stay on
+    plain ``/health`` so a transient outage doesn't trigger pod restarts.
+    """
+    adapters = getattr(app.state, "remote_adapters", {}) or {}
+    breakers: dict[str, str] = {}
+    any_open = False
+    for name, adapter in adapters.items():
+        breaker = getattr(adapter, "_breaker", None)
+        if breaker is None:
+            breakers[name] = "unknown"
+            continue
+        if breaker.opened_at is not None:
+            breakers[name] = "open"
+            any_open = True
+        else:
+            breakers[name] = "closed"
+    body = {
+        "status": "degraded" if any_open else "ok",
+        "breakers": breakers,
+    }
+    status_code = 503 if any_open else 200
+    return JSONResponse(content=body, status_code=status_code)
 
 
 @app.get("/health")
