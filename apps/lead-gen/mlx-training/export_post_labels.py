@@ -21,6 +21,8 @@ from pathlib import Path
 
 import requests
 
+from _deepseek import deepseek_auth_headers, deepseek_chat_payload, deepseek_chat_url
+
 # ── Constants ────────────────────────────────────────────────────────────────
 
 RUST_SERVER = "http://localhost:9876"
@@ -114,13 +116,6 @@ def bootstrap_label(text: str) -> dict[str, float]:
 
 def deepseek_label(text: str, metadata: dict) -> dict[str, float] | None:
     """Label a post using DeepSeek API."""
-    api_key = os.environ.get("DEEPSEEK_API_KEY")
-    if not api_key:
-        print("Error: DEEPSEEK_API_KEY not set", file=sys.stderr)
-        return None
-
-    base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
-
     user_msg = (
         f"Classify this LinkedIn post:\n\n{text[:2000]}\n\n"
         f"Metadata: {metadata.get('reactions_count', 0)} reactions, "
@@ -131,17 +126,15 @@ def deepseek_label(text: str, metadata: dict) -> dict[str, float] | None:
 
     try:
         resp = requests.post(
-            f"{base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}"},
-            json={
-                "model": "deepseek-v4-pro",
-                "messages": [
+            deepseek_chat_url(),
+            headers=deepseek_auth_headers(),
+            json=deepseek_chat_payload(
+                [
                     {"role": "system", "content": POST_INTENT_SYSTEM},
                     {"role": "user", "content": user_msg},
                 ],
-                "temperature": 0.1,
-                "max_tokens": 200,
-            },
+                extra={"temperature": 0.1, "max_tokens": 200},
+            ),
             timeout=30,
         )
         resp.raise_for_status()

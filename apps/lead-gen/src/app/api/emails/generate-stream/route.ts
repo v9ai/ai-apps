@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
 import { checkIsAdmin } from "@/lib/admin";
 import { buildBatchPrompt, parseJsonContent } from "@/lib/email/prompt-builder";
 
@@ -13,17 +13,6 @@ interface EmailGenerationRequest {
   companyName?: string;
   instructions?: string;
   linkedinPostContent?: string;
-}
-
-function getDeepSeekClient(): OpenAI {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
-    throw new Error("DEEPSEEK_API_KEY not set");
-  }
-  return new OpenAI({
-    apiKey,
-    baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
-  });
 }
 
 export async function POST(request: NextRequest) {
@@ -48,7 +37,7 @@ export async function POST(request: NextRequest) {
       : `You are an email composer. Recipient: ${input.recipientName}.${input.linkedinPostContent ? `\nLinkedIn post: ${input.linkedinPostContent}` : ""}`;
 
     const client = getDeepSeekClient();
-    const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro";
+    const model = getDeepSeekModel();
 
     const completion = await client.chat.completions.create({
       model,

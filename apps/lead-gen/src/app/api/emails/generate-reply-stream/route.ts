@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
 import { eq, desc } from "drizzle-orm";
 import { checkIsAdmin } from "@/lib/admin";
 import { db } from "@/db";
@@ -23,15 +23,6 @@ interface ThreadMessage {
   subject: string;
   body: string;
   sentAt: string;
-}
-
-function getDeepSeekClient(): OpenAI {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new Error("DEEPSEEK_API_KEY not set");
-  return new OpenAI({
-    apiKey,
-    baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
-  });
 }
 
 async function getThreadContext(contactId: number): Promise<ThreadMessage[]> {

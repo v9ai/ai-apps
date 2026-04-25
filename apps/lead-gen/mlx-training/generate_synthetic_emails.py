@@ -23,6 +23,8 @@ from pathlib import Path
 
 import httpx
 
+from _deepseek import deepseek_auth_headers, deepseek_chat_payload, deepseek_chat_url
+
 # ── Constants ────────────────────────────────────────────────────────────────
 
 SYSTEM_PROMPT = (
@@ -184,8 +186,6 @@ STYLE_VARIANTS = ["concise", "formal", "casual"]
 
 # ── DeepSeek API ─────────────────────────────────────────────────────────────
 
-DEEPSEEK_URL = os.environ.get("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
-
 
 def call_deepseek(client: httpx.Client, api_key: str, user_prompt: str) -> str | None:
     """Call DeepSeek API and return the assistant content."""
@@ -196,17 +196,15 @@ def call_deepseek_with_system(client: httpx.Client, api_key: str, system_prompt:
     """Call DeepSeek API with a custom system prompt and return the assistant content."""
     try:
         resp = client.post(
-            DEEPSEEK_URL,
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={
-                "model": "deepseek-v4-pro",
-                "messages": [
+            deepseek_chat_url(),
+            headers=deepseek_auth_headers(),
+            json=deepseek_chat_payload(
+                [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
-                "temperature": 0.8,
-                "max_tokens": 1024,
-            },
+                extra={"temperature": 0.8, "max_tokens": 1024},
+            ),
             timeout=60.0,
         )
         resp.raise_for_status()

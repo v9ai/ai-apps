@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { DEEPSEEK_MODELS, formatDeepSeekPrice } from "@/lib/deepseek/constants";
 import {
   ReactFlow,
   Background,
@@ -258,8 +259,8 @@ const s5Edges: Edge[] = [
 
 const s6Nodes: Node[] = [
   { id: "enr-graph",    type: "agent", position: { x: 0,   y: 60  }, data: { label: "langgraph enrich",       sublabel: "gather → categorize → price → gtm", icon: Workflow, color: "var(--violet-9)" } },
-  { id: "enr-cheap",    type: "agent", position: { x: 340, y: 0   }, data: { label: "deepseek chat",          sublabel: "$0.27 / $1.10 per 1M tok",         icon: Zap,      color: "var(--iris-9)" } },
-  { id: "enr-reasoner", type: "agent", position: { x: 340, y: 120 }, data: { label: "deepseek reasoner",      sublabel: "$0.55 / $2.19 · hard nodes only",  icon: Brain,    color: "var(--violet-9)" } },
+  { id: "enr-cheap",    type: "agent", position: { x: 340, y: 0   }, data: { label: "deepseek chat",          sublabel: `${formatDeepSeekPrice("flash")} per 1M tok`,        icon: Zap,      color: "var(--iris-9)" } },
+  { id: "enr-reasoner", type: "agent", position: { x: 340, y: 120 }, data: { label: "deepseek reasoner",      sublabel: `${formatDeepSeekPrice("pro")} · hard nodes only`,   icon: Brain,    color: "var(--violet-9)" } },
   { id: "enr-ground",   type: "agent", position: { x: 680, y: 60  }, data: { label: "pydantic + zod",         sublabel: "strategy-enforcer rule 2",          icon: Shield,   color: "var(--amber-9)" } },
 ];
 const s6Edges: Edge[] = [

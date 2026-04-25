@@ -6,21 +6,12 @@
  * Drafts require user approval before sending.
  */
 
-import OpenAI from "openai";
 import { eq, desc } from "drizzle-orm";
+import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
 import { db } from "@/db";
 import { replyDrafts, receivedEmails, contactEmails, contacts } from "@/db/schema";
 import type { ReplyClass } from "./reply-classifier";
 import { stripQuotedText } from "./reply-classifier";
-
-function getClient() {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new Error("DEEPSEEK_API_KEY not set");
-  return new OpenAI({
-    apiKey,
-    baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
-  });
-}
 
 interface ThreadMessage {
   direction: "outbound" | "inbound";
@@ -193,8 +184,8 @@ export async function generateReplyDraft(
   ]);
 
   // Generate the reply
-  const client = getClient();
-  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro";
+  const client = getDeepSeekClient();
+  const model = getDeepSeekModel();
   const prompt = buildDraftPrompt(classification, thread, contactName, isCpn);
 
   const res = await client.chat.completions.create({

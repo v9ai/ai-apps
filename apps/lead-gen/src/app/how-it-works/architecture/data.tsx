@@ -1,4 +1,5 @@
 import type { Paper, Stat, TechnicalDetail, ExtraSection } from "@ai-apps/ui/how-it-works";
+import { DEEPSEEK_MODELS, formatDeepSeekPrice } from "@/lib/deepseek/constants";
 
 // ─── Technical Foundations (the stack) ──────────────────────────────
 
@@ -124,7 +125,7 @@ export const papers: Paper[] = [
     readingTimeMin: 2,
     authors: "DeepSeek",
     year: 2025,
-    finding: "deepseek-v4-flash ($0.27/$1.10 per 1M tok) for summary nodes; deepseek-v4-pro ($0.55/$2.19, thinking mode + reasoning_effort=high) for value-metric / pricing / GTM pillars. Per-node token and cost telemetry aggregates into product_intel_runs.total_cost_usd.",
+    finding: `${DEEPSEEK_MODELS.flash.label} (${formatDeepSeekPrice("flash")} per 1M tok) for summary nodes; ${DEEPSEEK_MODELS.pro.label} (${formatDeepSeekPrice("pro")}, thinking mode + reasoning_effort=high) for value-metric / pricing / GTM pillars. Per-node token and cost telemetry aggregates into product_intel_runs.total_cost_usd.`,
     relevance: "Cheap-first model routing is an enforced rule, not a convention — strategy-enforcer.ts Rule 2 blocks any LLM call that isn't schema-constrained (Pydantic server-side, Zod client-side).",
     url: "https://api-docs.deepseek.com",
     categoryColor: "var(--iris-9)",
@@ -219,7 +220,7 @@ export async function runGraph<TState>(
       { label: "Dual email tables", value: "contact_emails (outbound, Resend) and received_emails (inbound, Svix webhook) are separate. matched_outbound_id + in_reply_to_received_id bridge them, giving bidirectional thread reconstruction without a single `messages` table." },
       { label: "CPN forwarding alias", value: "Instead of per-contact email addresses, a single namespace on vadim.blog routes all replies. The local part is the CPN token. Zero DNS changes per contact; still one-to-many trackable routing." },
       { label: "AdaptiveUrlScorer as RL-lite", value: "The Rust crawler boosts URL paths whose LLM extractions yielded a contact. No model, no training — just a reward counter. Good enough for 'find the /team page reliably'." },
-      { label: "DeepSeek-reasoner only on hard nodes", value: "Value metric, pricing design, GTM pillars use the reasoner ($2.19/1M out). Everything else runs on chat ($1.10/1M out). Routing is declared in the graph, not discovered at runtime." },
+      { label: "DeepSeek-reasoner only on hard nodes", value: `Value metric, pricing design, GTM pillars use the reasoner ($${DEEPSEEK_MODELS.pro.outputPer1M.toFixed(2)}/1M out). Everything else runs on chat ($${DEEPSEEK_MODELS.flash.outputPer1M.toFixed(2)}/1M out). Routing is declared in the graph, not discovered at runtime.` },
       { label: "Grounding is a pre-commit check", value: "strategy-enforcer.ts Rule 2 blocks an LLM call that isn't wrapped in structuredOutput (Pydantic) or response_format (Zod). Drift is caught before the prompt ships, not after it corrupts a jsonb column." },
       { label: "One auth layer, two runtimes", value: "Starlette bearer-token middleware is registered via langgraph.json's http.app key. `langgraph dev` and the container both wear it. No API gateway, no duplicate code." },
       { label: "Phase detection gates agent teams", value: "action-plan.json carries a phase field. stop_hook.py scores sessions. COLLAPSE_RISK stops codefix; BUILDING pushes improve to discover more sources. The alignment is emergent, not rule-enforced." },
@@ -246,7 +247,7 @@ ORDER BY ce.sent_at;`,
   },
   {
     heading: "Cheap-first escalation is a cost contract",
-    content: "Every graph node in backend/leadgen_agent declares its model. Summary nodes use deepseek-v4-flash; high-reasoning nodes (value_metric, pricing_design, gtm_pillars) use deepseek-v4-pro with thinking mode + reasoning_effort=high. Per-node telemetry (input_tokens, output_tokens, cost_usd, latency_ms) flows into graph_meta and terminal nodes persist totals to product_intel_runs.total_cost_usd. The per-node declaration means you can see the cost budget of a run before it starts — and reject runs that exceed a ceiling, which is how the pipeline keeps enrichment under $0.50 / company on average.",
+    content: `Every graph node in backend/leadgen_agent declares its model. Summary nodes use ${DEEPSEEK_MODELS.flash.label}; high-reasoning nodes (value_metric, pricing_design, gtm_pillars) use ${DEEPSEEK_MODELS.pro.label} with thinking mode + reasoning_effort=high. Per-node telemetry (input_tokens, output_tokens, cost_usd, latency_ms) flows into graph_meta and terminal nodes persist totals to product_intel_runs.total_cost_usd. The per-node declaration means you can see the cost budget of a run before it starts — and reject runs that exceed a ceiling, which is how the pipeline keeps enrichment under $0.50 / company on average.`,
   },
   {
     heading: "Local-first ML, and why not Ollama",
@@ -529,16 +530,16 @@ export const nodeDetails: Record<string, NodeDetail> = {
     color: "violet",
   },
   "enr-cheap": {
-    description: "deepseek-v4-flash handles summary nodes (context gathering, category detection, ai_tier classification). Cost: $0.27/M input, $1.10/M output. Response format constrained via Pydantic schemas passed through the LangChain OpenAI adapter.",
-    tech: [{ name: "deepseek-v4-flash" }, { name: "pydantic schema" }],
+    description: `${DEEPSEEK_MODELS.flash.label} handles summary nodes (context gathering, category detection, ai_tier classification). Cost: $${DEEPSEEK_MODELS.flash.inputPer1M.toFixed(2)}/M input, $${DEEPSEEK_MODELS.flash.outputPer1M.toFixed(2)}/M output. Response format constrained via Pydantic schemas passed through the LangChain OpenAI adapter.`,
+    tech: [{ name: DEEPSEEK_MODELS.flash.label }, { name: "pydantic schema" }],
     dataIn: "prompt + schema",
     dataOut: "schema-valid JSON",
     insight: "Cheap-first is the default, not an optimization — strategy-enforcer.ts Rule 2 rejects prompts that don't bind to a schema, which means cheap models can't drift into free-text outputs.",
     color: "iris",
   },
   "enr-reasoner": {
-    description: "deepseek-v4-pro (thinking mode, reasoning_effort=high) is reserved for the reasoning-heavy nodes: value_metric, pricing_design, gtm_pillars. Cost: $0.55/M input, $2.19/M output. Gated by a confidence threshold on the cheap model's output — escalation is declared in the graph, not picked at runtime.",
-    tech: [{ name: "deepseek-v4-pro" }, { name: "confidence gate" }],
+    description: `${DEEPSEEK_MODELS.pro.label} (thinking mode, reasoning_effort=high) is reserved for the reasoning-heavy nodes: value_metric, pricing_design, gtm_pillars. Cost: $${DEEPSEEK_MODELS.pro.inputPer1M.toFixed(2)}/M input, $${DEEPSEEK_MODELS.pro.outputPer1M.toFixed(2)}/M output. Gated by a confidence threshold on the cheap model's output — escalation is declared in the graph, not picked at runtime.`,
+    tech: [{ name: DEEPSEEK_MODELS.pro.label }, { name: "confidence gate" }],
     dataIn: "pre-processed context + schema",
     dataOut: "reasoned structured output",
     insight: "Escalation declared in the graph (not the LLM's self-report) means cost is deterministic per company — you don't get surprise $5 runs because the cheap model decided it was unsure.",
