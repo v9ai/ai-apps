@@ -219,11 +219,47 @@ class ContactEnrichPaperAuthorState(TypedDict, total=False):
     # output
     enriched_at: str
     error: str | None
-    # per-contact output surfaced when graph is called single-contact
+    # per-contact output surfaced when graph is called single-contact (also
+    # written by resolve_github_handle in the new fan-out topology — same field
+    # names, the new node just reuses the slot).
     github_login: str
     github_confidence: float
     github_evidence: str
     match_status: str  # "matched" | "no_relevant_papers" | "no_github"
+    # ── Fan-out enrichment branches (v2 paper-author topology) ──────────────
+    # Each branch writes its own DB column independently and reports a
+    # *_status sentinel. Branches catch their own exceptions so a 429 from
+    # one source never aborts a sibling.
+    #
+    # GitHub branch
+    github_handle_status: str       # ok | low_conf | no_match | api_error
+    github_handle_arm: str          # which Search Users arm produced the hit
+    github_profile: dict[str, Any]  # bio, blog, twitter, top_languages, …
+    github_profile_status: str      # ok | not_found | legal_hold | rate_limited | auth_error | transient_error
+    # ORCID branch
+    orcid_profile: dict[str, Any]
+    orcid_profile_status: str
+    orcid_researcher_urls: list[dict[str, str]]   # [{kind, url, raw_name}, …]
+    # Semantic Scholar branch
+    scholar_profile: dict[str, Any]
+    scholar_profile_status: str
+    # Personal homepage branch
+    homepage_url: str
+    homepage_extract: dict[str, Any]
+    homepage_status: str
+    # PDF email-extract branch
+    email_candidates: list[dict[str, Any]]
+    pdf_email_status: str
+    # LinkedIn branch
+    linkedin_url_resolved: str
+    linkedin_url_status: str          # direct_url | cache_hit_name_employer | cache_hit_name_only | no_match | skipped_already_set
+    linkedin_match_confidence: float
+    # Affiliation re-classification (Team A audit trail)
+    affiliation_reclassified_from: str
+    affiliation_reclassify_reason: str
+    # Fan-in counter — every branch appends its own name when it terminates.
+    # Annotated reducer makes parallel writes safe.
+    enrichers_completed: Annotated[list[str], operator.add]
 
 
 class ContactEnrichSalesState(TypedDict, total=False):
