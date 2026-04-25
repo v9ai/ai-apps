@@ -170,6 +170,15 @@ threads persist across the free-tier Space's sleep/wake cycle.
    | `OPENAI_API_KEY` | your DeepSeek API key (the OpenAI-compatible client reads this name) |
    | `NEON_DATABASE_URL` | same as `DATABASE_URL` *(used by `admin_chat` / `email_outreach` read-only queries)* |
 
+> DeepSeek model IDs and pricing for graph code live in
+> `leadgen_agent/llm.py` (`DEEPSEEK_MODELS`, `MODEL_PRICING`, `make_llm()`,
+> `deepseek_model_name(tier)`) — that file is the source of truth for the
+> Python runtime, mirroring `src/lib/deepseek/constants.ts` on the TS side.
+> The `mlx-training/_deepseek.py` helpers (`deepseek_chat_url()`,
+> `deepseek_chat_payload()`) own the same wiring for MLX synthetic-data
+> scripts. Override per-environment with `DEEPSEEK_MODEL` /
+> `DEEPSEEK_MODEL_DEEP` instead of editing call sites.
+
 ### Push
 
 ```bash

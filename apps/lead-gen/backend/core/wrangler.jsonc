@@ -6,6 +6,9 @@
   "observability": { "enabled": true },
   "vars": {
     "LLM_BASE_URL": "https://api.deepseek.com",
+    // Source of truth: src/lib/deepseek/constants.ts (DEEPSEEK_MODELS.pro.id),
+    // mirrored in backend/_shared/deepseek-constants.js. wrangler.jsonc cannot
+    // import code, so the literal is duplicated here — keep in sync.
     "LLM_MODEL": "deepseek-v4-pro",
     "EMAIL_LLM_BASE_URL": "https://lead-gen-email-llm.eeeew.workers.dev/v1",
     "EMAIL_LLM_MODEL": "mistral-email-lora",
