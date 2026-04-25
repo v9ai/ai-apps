@@ -26,6 +26,7 @@ from typing import Any
 import httpx
 import psycopg
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import RunnableConfig
 
 from .llm import ainvoke_json, make_llm
 from .state import ContactEnrichState
@@ -298,6 +299,39 @@ async def fetch_papers(state: ContactEnrichState) -> dict:
     return {"papers": filtered[:10]}
 
 
+async def extract_skills(state: ContactEnrichState, config: RunnableConfig) -> dict:
+    """Run jobbert NER over paper abstracts/summaries to extract skill spans.
+
+    The jobbert_ner adapter is injected via ``config["configurable"]`` to avoid
+    a circular import (``core.remote_graphs`` imports from ``leadgen_agent``).
+    Returns ``{"extracted_skills": [...]}`` or ``{}`` when the adapter is absent
+    or there are no usable paper texts.
+    """
+    adapter = (config.get("configurable") or {}).get("jobbert_ner_adapter")
+    if adapter is None:
+        return {}
+    papers = state.get("papers") or []
+    texts = [
+        str(p.get("abstract") or p.get("summary") or "")
+        for p in papers
+        if p.get("abstract") or p.get("summary")
+    ]
+    if not texts:
+        return {}
+    from leadgen_agent.contracts import JobbertNerInput, JobbertNerOutput
+
+    spans = []
+    for text in texts[:10]:
+        try:
+            result = await adapter.ainvoke(JobbertNerInput(text=text[:512]).model_dump())
+            output = JobbertNerOutput.model_validate(result)
+            spans.extend(output.spans)
+        except Exception:
+            pass
+    skills = list({s.span.lower() for s in spans if s.score >= 0.7})
+    return {"extracted_skills": skills}
+
+
 async def extract_tags(state: ContactEnrichState) -> dict:
     if state.get("error"):
         return {"tags": state.get("existing_tags") or []}
@@ -320,12 +354,19 @@ async def extract_tags(state: ContactEnrichState) -> dict:
         ", ".join(existing_research_areas) if existing_research_areas else "(none)"
     )
 
+    extracted_skills = state.get("extracted_skills") or []
+    ner_line = (
+        f"Previously extracted skills (from paper NER): {', '.join(extracted_skills)}\n\n"
+        if extracted_skills
+        else ""
+    )
+
     prompt = f"""You label AI/ML researchers with topical tags drawn from a fixed taxonomy.
 
 TAXONOMY (pick ONLY from these, exact casing):
 {taxonomy_list}
 
-INPUT — existing research areas (from prior enrichment):
+{ner_line}INPUT — existing research areas (from prior enrichment):
 {research_areas_line}
 
 INPUT — recent papers (title, year, venue):

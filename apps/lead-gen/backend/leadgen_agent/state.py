@@ -168,6 +168,8 @@ class ContactEnrichState(TypedDict, total=False):
     # source is "existing" | "search" | "" (empty when lookup found no match)
     github_handle: str
     github_handle_source: str
+    # populated by extract_skills (jobbert NER over paper abstracts)
+    extracted_skills: list[str]
 
 
 class ContactEnrichPaperAuthorState(TypedDict, total=False):
