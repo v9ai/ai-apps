@@ -20,8 +20,6 @@ import type { ComponentType } from "react";
 import { AuthHeader } from "@/components/auth-header";
 import { useSidebar } from "@/components/sidebar-provider";
 import { TenantSelect } from "@/components/tenant-select";
-import { useTenant } from "@/components/tenant-provider";
-import type { TenantKey } from "@/lib/tenants";
 
 const SIDEBAR_WIDTH = 200;
 const SIDEBAR_COLLAPSED_WIDTH = 56;
@@ -30,7 +28,6 @@ type NavItem = {
   href: string;
   label: string;
   icon: ComponentType<{ width?: number; height?: number; style?: React.CSSProperties }>;
-  tenants?: readonly TenantKey[];
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
@@ -45,12 +42,8 @@ const NAV_ITEMS: readonly NavItem[] = [
 
 export function Sidebar() {
   const { collapsed, toggle } = useSidebar();
-  const { tenant } = useTenant();
   const pathname = usePathname();
   const isHomepage = pathname === "/";
-  const visibleNavItems = NAV_ITEMS.filter(
-    (item) => !item.tenants || item.tenants.includes(tenant),
-  );
 
   if (isHomepage) return null;
 
@@ -92,7 +85,7 @@ export function Sidebar() {
 
         {/* nav links */}
         <Flex direction="column" gap="1" pt="4" pb="2" style={{ flex: 1, overflowY: "auto" }}>
-          {visibleNavItems.map(({ href, label, icon: Icon }) => {
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = pathname.startsWith(href);
             return (
               <Link

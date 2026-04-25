@@ -269,7 +269,15 @@ async def runs_wait(req: RunRequest) -> dict[str, Any]:
             status_code=404, detail=f"Unknown assistant_id: {req.assistant_id}"
         )
     thread_id = req.thread_id or str(uuid.uuid4())
-    config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
+    configurable: dict[str, Any] = {"thread_id": thread_id}
+    # Inject the jobbert NER adapter for the contact_enrich graph so the
+    # extract_skills node can call the ML container without a circular import.
+    if req.assistant_id == "contact_enrich":
+        remote_adapters = getattr(app.state, "remote_adapters", {})
+        jobbert = remote_adapters.get("jobbert_ner")
+        if jobbert is not None:
+            configurable["jobbert_ner_adapter"] = jobbert
+    config: dict[str, Any] = {"configurable": configurable}
     return await graph.ainvoke(req.input, config=config)
 
 
