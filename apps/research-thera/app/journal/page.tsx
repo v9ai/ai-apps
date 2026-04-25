@@ -35,6 +35,9 @@ const moodColor = (mood: string) =>
     }) as Record<string, string>
   )[mood] ?? "gray";
 
+const formatMood = (mood: string) =>
+  mood ? mood.charAt(0).toUpperCase() + mood.slice(1) : mood;
+
 function JournalListContent() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
@@ -185,8 +188,9 @@ function JournalListContent() {
                         color={moodColor(entry.mood) as any}
                         variant="soft"
                         size="1"
+                        aria-label={`Mood: ${entry.mood}`}
                       >
-                        {entry.mood}
+                        Mood: {formatMood(entry.mood)}
                       </Badge>
                     )}
                     {entry.isVault && (
