@@ -81,7 +81,7 @@ export default function PartAllSetsPage() {
     router.replace(`/parts/${encodeURIComponent(partNum)}/sets?${sp.toString()}`, { scroll: false });
   };
 
-  if (loading) {
+  if (loading && !part) {
     return (
       <main className={css({ mx: "auto", maxW: "100%", px: "4", py: "16", textAlign: "center" })}>
         <div
