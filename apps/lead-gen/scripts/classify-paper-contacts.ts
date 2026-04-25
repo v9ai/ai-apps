@@ -274,10 +274,25 @@ async function main() {
         if (sample.reasons.length) console.log(`    reasons: ${sample.reasons.join(" | ")}`);
       }
     } else {
+      // Persist the source `papers` jsonb alongside the classifier verdicts.
+      // The classifier reads paper data from the in-memory corpus
+      // (papers.json), runs the LangGraph, and writes verdicts. Without also
+      // writing `papers` here, the DB ends up with a classification result
+      // whose source document is never captured on the contact row — which is
+      // exactly the "papers IS NULL but paper_classifications populated" state
+      // observed across all 1,404 rows tagged "papers".
+      //
+      // Shape matches contacts.papers field-resolver expectations
+      // (title, authors, year, venue, doi, url, citation_count, source).
+      // Extra fields on the source Paper (abstract_text, pdf_url, ...) are
+      // harmless — the resolver picks only the keys it knows.
+      const papersJson = JSON.stringify(papers);
       await sql`
         UPDATE contacts
         SET paper_classifications = ${JSON.stringify(verdicts)}::jsonb,
             paper_classifications_at = now()::text,
+            papers = ${papersJson}::jsonb,
+            papers_enriched_at = now()::text,
             updated_at = now()::text
         WHERE id = ${contact.id}
       `;
