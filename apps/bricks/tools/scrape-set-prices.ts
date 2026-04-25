@@ -204,7 +204,7 @@ async function main() {
     const ttlMs = TTL_DAYS * 24 * 60 * 60 * 1000;
     const cutoff = new Date(Date.now() - ttlMs).toISOString();
     const placeholders = setNums.map((_, i) => `$${i + 2}`).join(",");
-    const cached = (await db(
+    const cached = (await db.query(
       `SELECT set_num FROM set_prices_cache WHERE updated_at >= $1 AND set_num IN (${placeholders})`,
       [cutoff, ...setNums],
     )) as { set_num: string }[];
@@ -232,7 +232,7 @@ async function main() {
     if (result.found) okCount++;
     else missCount++;
 
-    await db(
+    await db.query(
       `INSERT INTO set_prices_cache
          (set_num, usd_retail, gbp_retail, eur_retail,
           usd_market, gbp_market, eur_market,
