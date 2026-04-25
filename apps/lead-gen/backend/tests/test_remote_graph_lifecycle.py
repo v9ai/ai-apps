@@ -300,3 +300,49 @@ async def test_aclose_propagates_first_error_but_clears_cache() -> None:
 
     # Cache cleared regardless.
     assert remote_graphs._ADAPTER_CACHE == {}
+
+
+# ─── Concurrent build (defense-in-depth) ──────────────────────────────────
+
+
+def test_concurrent_first_calls_build_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``_get_or_build`` is wrapped in a ``threading.Lock`` so that N parallel
+    threads racing the same first-call do not each construct a ``_Validated``
+    instance and leak the losers' httpx pools.
+
+    We instrument ``_build_adapter_from_spec`` with a counter and a tiny
+    sleep that widens the check-then-set window, then launch 16 threads
+    against ``get_jobbert_ner_adapter()``. Without the lock, the counter
+    would land >= 2 nondeterministically; with it, the lock collapses every
+    racing thread to one build.
+    """
+    import time as _time
+    from concurrent.futures import ThreadPoolExecutor
+
+    monkeypatch.setenv("ML_URL", "http://lead-gen-ml")
+
+    real_build = remote_graphs._build_adapter_from_spec
+    counter = {"n": 0}
+    counter_lock = __import__("threading").Lock()
+
+    def _slow_build(name: str, spec: dict[str, Any]) -> Any:
+        with counter_lock:
+            counter["n"] += 1
+        # Widen the check-then-set window so an unlocked impl would
+        # nondeterministically see counter > 1.
+        _time.sleep(0.01)
+        return real_build(name, spec)
+
+    monkeypatch.setattr(remote_graphs, "_build_adapter_from_spec", _slow_build)
+
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        futures = [pool.submit(get_jobbert_ner_adapter) for _ in range(16)]
+        results = [f.result() for f in futures]
+
+    assert counter["n"] == 1, (
+        f"expected exactly one build under the lock, got {counter['n']}"
+    )
+    # Every thread observed the same cached singleton.
+    first = results[0]
+    for r in results[1:]:
+        assert r is first

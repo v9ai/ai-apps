@@ -51,6 +51,12 @@ TAG_TAXONOMY = [
     "MLOps",
 ]
 
+# jobbert_ner is best-effort enrichment, not the critical path. We cap both
+# the per-paper budget and the per-text length so a 50-paper contact does not
+# fan out 50 × 3 retries × ML_TIMEOUT against a shared remote.
+_MAX_PAPERS_FOR_NER = 10
+_NER_TEXT_CHAR_BUDGET = 512
+
 
 def _parse_json_text(raw: Any) -> Any:
     if isinstance(raw, str) and raw:
@@ -318,16 +324,41 @@ async def extract_skills(state: ContactEnrichState, config: RunnableConfig) -> d
     ]
     if not texts:
         return {}
-    from leadgen_agent.contracts import JobbertNerInput, JobbertNerOutput
+    from core.remote_graphs import RemoteUnavailable
+    from leadgen_agent.contracts import (
+        ContractsVersionMismatch,
+        JobbertNerInput,
+        JobbertNerOutput,
+    )
+    from pydantic import ValidationError as _PydValidationError
 
     spans = []
-    for text in texts[:10]:
+    for text in texts[:_MAX_PAPERS_FOR_NER]:
         try:
-            result = await adapter.ainvoke(JobbertNerInput(text=text[:512]).model_dump())
+            result = await adapter.ainvoke(
+                JobbertNerInput(text=text[:_NER_TEXT_CHAR_BUDGET]).model_dump()
+            )
             output = JobbertNerOutput.model_validate(result)
             spans.extend(output.spans)
-        except Exception:
-            pass
+        except RemoteUnavailable as exc:
+            log.warning(
+                "extract_skills: jobbert_ner breaker open, abandoning remaining texts: %s",
+                exc,
+            )
+            break
+        except (ContractsVersionMismatch, _PydValidationError) as exc:
+            log.error(
+                "extract_skills: jobbert_ner contract failure (%s): %s",
+                type(exc).__name__,
+                exc,
+            )
+            break
+        except Exception as exc:  # noqa: BLE001 — degrade per-text on transient error
+            log.warning(
+                "extract_skills: jobbert_ner failed for one text (%s): %s",
+                type(exc).__name__,
+                exc,
+            )
     skills = list({s.span.lower() for s in spans if s.score >= 0.7})
     return {"extracted_skills": skills}
 

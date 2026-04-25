@@ -36,6 +36,7 @@ import json
 import logging
 import os
 import random
+import threading
 import time
 from typing import Any, AsyncIterator, Callable
 
@@ -228,17 +229,45 @@ def _research_url() -> str:
     return url.rstrip("/")
 
 
+# Set of env-var names we've already logged a "token unset" warning for —
+# without this, every adapter build would re-warn and the production logs
+# would drown in a repeat that conveys nothing new. Cleared by
+# ``reset_adapter_cache()`` so tests that monkeypatch env can re-observe.
+_WARNED_AUTH: set[str] = set()
+
+
+def _resolve_auth_token(env_var: str, scope: str) -> str | None:
+    """Read ``env_var`` and warn-once if it's unset/blank.
+
+    Returns the token (None if absent). Misconfigured deploys would otherwise
+    silently 401-loop with no signal in core logs — emit one WARNING per env
+    var so it shows up immediately.
+    """
+    token = os.environ.get(env_var, "").strip()
+    if token:
+        return token
+    if env_var not in _WARNED_AUTH:
+        log.warning(
+            "auth token unset: env=%s scope=%s — calls into %s will be unauthenticated",
+            env_var,
+            scope,
+            scope,
+        )
+        _WARNED_AUTH.add(env_var)
+    return None
+
+
 def _ml_headers() -> dict[str, str]:
-    token = os.environ.get("ML_INTERNAL_AUTH_TOKEN", "").strip()
     headers: dict[str, str] = {"X-Internal-Caller": "core"}
+    token = _resolve_auth_token("ML_INTERNAL_AUTH_TOKEN", "lead-gen-ml")
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
 
 
 def _research_headers() -> dict[str, str]:
-    token = os.environ.get("RESEARCH_INTERNAL_AUTH_TOKEN", "").strip()
     headers: dict[str, str] = {"X-Internal-Caller": "core"}
+    token = _resolve_auth_token("RESEARCH_INTERNAL_AUTH_TOKEN", "lead-gen-research")
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
@@ -619,6 +648,14 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
 
 _ADAPTER_CACHE: dict[str, _ValidatedRemoteGraph[BaseModel, BaseModel]] = {}
 
+# Defense-in-depth against concurrent first-call builds. A single asyncio
+# event loop cannot interleave inside ``_get_or_build`` (it has no ``await``),
+# but any caller that reaches the factories from a thread — ``run_in_executor``,
+# a sync background helper, a test ThreadPoolExecutor — could race the
+# check-then-set and leak the loser's ``_ValidatedRemoteGraph`` (and therefore
+# its httpx pool + TLS session) until process shutdown.
+_BUILD_LOCK = threading.Lock()
+
 
 def _build_adapter_from_spec(
     name: str, spec: dict[str, Any]
@@ -637,14 +674,21 @@ def _get_or_build(name: str) -> _ValidatedRemoteGraph[BaseModel, BaseModel]:
     cached = _ADAPTER_CACHE.get(name)
     if cached is not None:
         return cached
-    spec = _ADAPTER_SPECS.get(name)
-    if spec is None:
-        raise KeyError(
-            f"unknown remote adapter {name!r}; available: {sorted(_ADAPTER_SPECS)}"
-        )
-    adapter = _build_adapter_from_spec(name, spec)
-    _ADAPTER_CACHE[name] = adapter
-    return adapter
+    with _BUILD_LOCK:
+        # Re-check under the lock: another caller may have built it while we
+        # were waiting. Without this, the lock just serialises N concurrent
+        # builds instead of collapsing them to one.
+        cached = _ADAPTER_CACHE.get(name)
+        if cached is not None:
+            return cached
+        spec = _ADAPTER_SPECS.get(name)
+        if spec is None:
+            raise KeyError(
+                f"unknown remote adapter {name!r}; available: {sorted(_ADAPTER_SPECS)}"
+            )
+        adapter = _build_adapter_from_spec(name, spec)
+        _ADAPTER_CACHE[name] = adapter
+        return adapter
 
 
 def reset_adapter_cache() -> None:
@@ -652,10 +696,13 @@ def reset_adapter_cache() -> None:
 
     Tests rely on this when they monkeypatch ``ML_URL`` / ``RESEARCH_URL`` —
     without it, the cached adapter from a previous test would mask the env
-    change. Production callers should use :func:`aclose_all_adapters`
-    instead, which also closes pooled connections before clearing.
+    change. The warn-once auth-token set is cleared too so a subsequent test
+    that swaps the token env var can re-observe the warning. Production
+    callers should use :func:`aclose_all_adapters` instead, which also
+    closes pooled connections before clearing.
     """
     _ADAPTER_CACHE.clear()
+    _WARNED_AUTH.clear()
 
 
 async def aclose_all_adapters() -> None:

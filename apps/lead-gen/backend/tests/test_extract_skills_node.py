@@ -2,13 +2,19 @@
 
 Covers: adapter-absence short-circuits, no-papers / no-abstract gating,
 threshold filtering, lowercase dedup, the 10-paper cap, the 512-char
-truncation, and per-call exception handling.
+truncation, per-call exception handling, and typed-error short-circuits
+(circuit-open, contract drift) introduced to stop swallowing them silently.
 """
 
 from __future__ import annotations
 
+import logging
+
+import pytest
+
+from core.remote_graphs import RemoteUnavailable
 from leadgen_agent.contact_enrich_graph import extract_skills
-from leadgen_agent.contracts import SCHEMA_VERSION
+from leadgen_agent.contracts import SCHEMA_VERSION, ContractsVersionMismatch
 
 
 class FakeAdapter:
@@ -174,3 +180,52 @@ async def test_partial_failure_keeps_successful_spans():
     skills = set(result["extracted_skills"])
     assert skills == {"react", "python"}
     assert len(adapter.calls) == 3
+
+
+async def test_breaker_open_aborts_loop(caplog: pytest.LogCaptureFixture):
+    """``RemoteUnavailable`` (breaker open) must break the loop immediately —
+    looping the remaining papers would just queue more no-op short-circuits."""
+    adapter = FakeAdapter(RemoteUnavailable("circuit breaker open: jobbert_ner"))
+    papers = [{"abstract": f"paper {i}"} for i in range(5)]
+    state = {"papers": papers}
+    config = {"configurable": {"jobbert_ner_adapter": adapter}}
+
+    with caplog.at_level(logging.WARNING, logger="leadgen_agent.contact_enrich_graph"):
+        result = await extract_skills(state, config)
+
+    assert result == {"extracted_skills": []}
+    assert len(adapter.calls) == 1, "loop must break on RemoteUnavailable"
+    assert any("breaker open" in r.message for r in caplog.records)
+
+
+async def test_contract_version_mismatch_aborts_loop(caplog: pytest.LogCaptureFixture):
+    """Schema-drift errors are deploy-skew — looping the rest of the papers
+    cannot recover. Surface at ERROR and break out."""
+    adapter = FakeAdapter(ContractsVersionMismatch("schema drift"))
+    papers = [{"abstract": f"paper {i}"} for i in range(5)]
+    state = {"papers": papers}
+    config = {"configurable": {"jobbert_ner_adapter": adapter}}
+
+    with caplog.at_level(logging.ERROR, logger="leadgen_agent.contact_enrich_graph"):
+        result = await extract_skills(state, config)
+
+    assert result == {"extracted_skills": []}
+    assert len(adapter.calls) == 1
+    assert any("contract failure" in r.message for r in caplog.records)
+
+
+async def test_logs_warning_on_transient_error(caplog: pytest.LogCaptureFixture):
+    """Per-text RuntimeError no longer silently passes — every failure must
+    surface a WARNING. The loop still completes so partial successes survive."""
+    adapter = FakeAdapter(RuntimeError("transient"))
+    papers = [{"abstract": f"paper {i}"} for i in range(3)]
+    state = {"papers": papers}
+    config = {"configurable": {"jobbert_ner_adapter": adapter}}
+
+    with caplog.at_level(logging.WARNING, logger="leadgen_agent.contact_enrich_graph"):
+        result = await extract_skills(state, config)
+
+    assert result == {"extracted_skills": []}
+    assert len(adapter.calls) == 3, "transient errors must not abort the loop"
+    warnings = [r for r in caplog.records if "RuntimeError" in r.message]
+    assert len(warnings) == 3
