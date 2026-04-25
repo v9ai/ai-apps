@@ -648,29 +648,43 @@ def get_gh_patterns_adapter() -> _ValidatedRemoteGraph[
 # ─── Convenience lookup ───────────────────────────────────────────────────
 
 
-_ADAPTER_BUILDERS = {
-    "jobbert_ner": get_jobbert_ner_adapter,
-    "bge_m3_embed": get_bge_m3_embed_adapter,
-    "research_agent": get_research_agent_adapter,
-    "lead_papers": get_lead_papers_adapter,
-    "scholar": get_scholar_adapter,
-    "common_crawl": get_common_crawl_adapter,
-    "agentic_search": get_agentic_search_adapter,
-    "gh_patterns": get_gh_patterns_adapter,
+_ADAPTER_BUILDERS: dict[
+    str, Callable[[], _ValidatedRemoteGraph[BaseModel, BaseModel]]
+] = {
+    # Static type erasure: at runtime each builder still returns its precise
+    # ``_ValidatedRemoteGraph[FooInput, FooOutput]`` instance. We widen here so
+    # ``get_remote_adapter`` can return them under a uniform key/value type.
+    "jobbert_ner": get_jobbert_ner_adapter,  # type: ignore[dict-item]
+    "bge_m3_embed": get_bge_m3_embed_adapter,  # type: ignore[dict-item]
+    "research_agent": get_research_agent_adapter,  # type: ignore[dict-item]
+    "lead_papers": get_lead_papers_adapter,  # type: ignore[dict-item]
+    "scholar": get_scholar_adapter,  # type: ignore[dict-item]
+    "common_crawl": get_common_crawl_adapter,  # type: ignore[dict-item]
+    "agentic_search": get_agentic_search_adapter,  # type: ignore[dict-item]
+    "gh_patterns": get_gh_patterns_adapter,  # type: ignore[dict-item]
 }
 
 
-def get_remote_adapter(name: str) -> _ValidatedRemoteGraph:
-    """Return a RemoteGraph adapter by registered name, or raise KeyError."""
+def get_remote_adapter(name: str) -> _ValidatedRemoteGraph[BaseModel, BaseModel]:
+    """Return a RemoteGraph adapter by registered name, or raise KeyError.
+
+    Note: the by-name lookup intentionally erases the precise generic
+    parameters — callers that need ``_ValidatedRemoteGraph[FooInput, FooOutput]``
+    typing should call the corresponding ``get_*_adapter()`` builder directly.
+    The adapter still validates with the exact contract classes registered at
+    build time; only the static type is loosened to ``BaseModel``.
+    """
     builder = _ADAPTER_BUILDERS.get(name)
     if builder is None:
         raise KeyError(
             f"unknown remote adapter {name!r}; available: {sorted(_ADAPTER_BUILDERS)}"
         )
+    # The runtime instance is the same; we only widen the static parameters
+    # for the by-name escape hatch.
     return builder()
 
 
-def build_all_remote_adapters() -> dict[str, _ValidatedRemoteGraph]:
+def build_all_remote_adapters() -> dict[str, _ValidatedRemoteGraph[BaseModel, BaseModel]]:
     """Build every registered adapter — useful for startup wiring in app.py.
 
     Raises at startup if ``ML_URL`` / ``RESEARCH_URL`` are missing, which is
