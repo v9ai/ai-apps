@@ -10,7 +10,7 @@ import { eq, and, or, isNull, desc } from "drizzle-orm";
 import { db } from "@/db";
 import { contactEmails, contacts, replyDrafts, receivedEmails } from "@/db/schema";
 import { buildFollowUpInstructions } from "@/lib/email/followup";
-import OpenAI from "openai";
+import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -81,16 +81,12 @@ export async function GET(req: Request) {
   let skipped = 0;
   let failed = 0;
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
+  if (!process.env.DEEPSEEK_API_KEY) {
     return NextResponse.json({ error: "DEEPSEEK_API_KEY not set" }, { status: 500 });
   }
 
-  const client = new OpenAI({
-    apiKey,
-    baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
-  });
-  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro";
+  const client = getDeepSeekClient();
+  const model = getDeepSeekModel();
 
   for (const email of needsFollowUp) {
     // Check for existing pending draft

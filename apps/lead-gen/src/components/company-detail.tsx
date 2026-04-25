@@ -81,6 +81,27 @@ function prettyUrl(raw?: string | null): string {
   return raw.trim().replace(/^https?:\/\//i, "").replace(/\/+$/g, "");
 }
 
+function extractCompetitors(markdown?: string | null): string[] {
+  if (!markdown) return [];
+  const match = markdown.match(/\*\*Competitors:\*\*\s*([^\n]+)/i);
+  if (!match) return [];
+  return match[1]
+    .split(/[,;]/)
+    .map((s) => s.trim().replace(/\.$/, ""))
+    .filter(Boolean);
+}
+
+function extractCrawlMeta(
+  markdown?: string | null,
+): { pages: number; date: string } | null {
+  if (!markdown) return null;
+  const match = markdown.match(
+    /Enriched via Crawl4AI deep crawl \((\d+) pages?\) on (\d{4}-\d{2}-\d{2})/i,
+  );
+  if (!match) return null;
+  return { pages: Number(match[1]), date: match[2] };
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   PRODUCT: "blue",
   CONSULTANCY: "violet",

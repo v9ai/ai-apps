@@ -81,6 +81,8 @@ fragment CompanyFields on Company {
   score_reasons
   blocked
   deep_analysis
+  emailsList
+  ai_classification_confidence
 
   # Common Crawl metadata
   last_seen_crawl_id

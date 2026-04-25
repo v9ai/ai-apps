@@ -25,6 +25,7 @@ import {
 } from "@/__generated__/hooks";
 import type { ProductCompetitorsBySlugQuery } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
+import { DEEPSEEK_MODELS } from "@/lib/deepseek/constants";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import {
   LoadingShell,
@@ -80,7 +81,7 @@ const TEAMS = [
     outputs:
       "competitor_pricing_tiers, competitor_features, competitor_integrations",
     method:
-      "Six specialists fan out via Send API: pricing_deep · features_deep · integrations_deep · changelog · positioning_shift · funding_headcount. deepseek-v4-pro extracts hard signals from each competitor's pages.",
+      `Six specialists fan out via Send API: pricing_deep · features_deep · integrations_deep · changelog · positioning_shift · funding_headcount. ${DEEPSEEK_MODELS.pro.label} extracts hard signals from each competitor's pages.`,
     trigger:
       "approveCompetitors(analysisId, competitors) → /api/competitors/scrape",
   },

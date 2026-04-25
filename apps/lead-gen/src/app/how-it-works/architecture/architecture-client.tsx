@@ -371,7 +371,7 @@ const stages = [
   },
   {
     graphName: "enrichment_llm",
-    description: "LangGraph nodes orchestrate enrichment. Cheap-first routing: deepseek-v4-flash for summary nodes, deepseek-v4-pro (thinking mode + reasoning_effort=high) only for value_metric / pricing_design / gtm_pillars. Pydantic (Python) + Zod (TS) bind every LLM output to a schema — strategy-enforcer Rule 2 blocks prompts that don't.",
+    description: `LangGraph nodes orchestrate enrichment. Cheap-first routing: ${DEEPSEEK_MODELS.flash.label} for summary nodes, ${DEEPSEEK_MODELS.pro.label} (thinking mode + reasoning_effort=high) only for value_metric / pricing_design / gtm_pillars. Pydantic (Python) + Zod (TS) bind every LLM output to a schema — strategy-enforcer Rule 2 blocks prompts that don't.`,
     pattern: "Cheap-first escalation + pre-commit grounding",
     nodes: s6Nodes, edges: s6Edges, height: 280,
   },

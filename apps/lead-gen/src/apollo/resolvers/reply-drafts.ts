@@ -6,6 +6,7 @@ import { eq, and, count, desc, sql, isNull, or } from "drizzle-orm";
 import { replyDrafts, receivedEmails, contacts, companies, contactEmails } from "@/db/schema";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import { getDeepSeekClient, getDeepSeekModel } from "@/lib/deepseek/client";
 
 const SENDER_EMAIL = "contact@vadim.blog";
 
@@ -496,11 +497,8 @@ export const replyDraftResolvers = {
           );
 
           // Generate draft using DeepSeek
-          const OpenAI = (await import("openai")).default;
-          const client = new OpenAI({
-            apiKey: process.env.DEEPSEEK_API_KEY!,
-            baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
-          });
+          const client = getDeepSeekClient();
+          const model = getDeepSeekModel();
 
           const [contact] = await context.db
             .select({ first_name: contacts.first_name })
@@ -509,7 +507,7 @@ export const replyDraftResolvers = {
             .limit(1);
 
           const res = await client.chat.completions.create({
-            model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro",
+            model,
             messages: [
               {
                 role: "user",
@@ -555,7 +553,7 @@ Respond with ONLY valid JSON: {"subject": "Re: ...", "body": "..."}`,
             draft_type: "follow_up",
             subject: parsed.subject,
             body_text: bodyWithGreeting,
-            generation_model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro",
+            generation_model: model,
           });
 
           generated++;
