@@ -133,6 +133,16 @@ class _CircuitBreaker:
         self.cool_down_s = cool_down_s
         self.consecutive_failures = 0
         self.opened_at: float | None = None
+        # Lazy-initialised on first state-mutating call. Initialising here
+        # would attach the lock to the import-time event loop, which is
+        # different from the FastAPI loop and would silently make every
+        # ``async with`` raise once the lock crossed loops.
+        self._lock: asyncio.Lock | None = None
+
+    def _get_lock(self) -> asyncio.Lock:
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
 
     @classmethod
     def for_name(
@@ -154,30 +164,45 @@ class _CircuitBreaker:
         """Test hook: clear all breaker state."""
         cls._registry.clear()
 
-    def allow(self) -> bool:
-        if self.opened_at is None:
-            return True
-        if (time.monotonic() - self.opened_at) >= self.cool_down_s:
-            # Half-open probe: let one call through. We do NOT reset
-            # consecutive_failures here — only ``record_success`` does.
+    async def allow(self) -> bool:
+        """Half-open probe gate.
+
+        Without the lock, two coroutines past the cool-down both ran the
+        ``opened_at = None`` write and both returned ``True``, firing two
+        probes instead of one. Today's call sites are sequential so the
+        race is unobservable, but adding the lock makes the breaker safe
+        for any future caller that fans out via ``asyncio.gather`` over
+        the same adapter instance.
+        """
+        async with self._get_lock():
+            if self.opened_at is None:
+                return True
+            if (time.monotonic() - self.opened_at) >= self.cool_down_s:
+                # Half-open probe: let one call through. We do NOT reset
+                # consecutive_failures here — only ``record_success`` does.
+                self.opened_at = None
+                return True
+            return False
+
+    async def record_success(self) -> None:
+        async with self._get_lock():
+            self.consecutive_failures = 0
             self.opened_at = None
-            return True
-        return False
 
-    def record_success(self) -> None:
-        self.consecutive_failures = 0
-        self.opened_at = None
-
-    def record_failure(self) -> None:
-        self.consecutive_failures += 1
-        if self.consecutive_failures >= self.failure_threshold and self.opened_at is None:
-            self.opened_at = time.monotonic()
-            log.error(
-                "circuit OPEN: adapter=%s consecutive_failures=%d cool_down_s=%.1f",
-                self.name,
-                self.consecutive_failures,
-                self.cool_down_s,
-            )
+    async def record_failure(self) -> None:
+        async with self._get_lock():
+            self.consecutive_failures += 1
+            if (
+                self.consecutive_failures >= self.failure_threshold
+                and self.opened_at is None
+            ):
+                self.opened_at = time.monotonic()
+                log.error(
+                    "circuit OPEN: adapter=%s consecutive_failures=%d cool_down_s=%.1f",
+                    self.name,
+                    self.consecutive_failures,
+                    self.cool_down_s,
+                )
 
 
 def _is_retryable(exc: BaseException) -> bool:
@@ -380,7 +405,7 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         threaded into every retry-warn so a logical call's full lifecycle is
         greppable as one logical unit in production logs.
         """
-        if not self._breaker.allow():
+        if not await self._breaker.allow():
             raise RemoteUnavailable(
                 f"{self._name}: circuit breaker open; refusing call until cool-down elapses"
             )
@@ -392,10 +417,10 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
             except BaseException as exc:  # noqa: BLE001 — re-raised below
                 last_exc = exc
                 if not _is_retryable(exc):
-                    self._breaker.record_failure()
+                    await self._breaker.record_failure()
                     raise
                 if attempt >= self._max_attempts:
-                    self._breaker.record_failure()
+                    await self._breaker.record_failure()
                     raise
                 log.warning(
                     "remote retry: call_id=%s adapter=%s attempt=%d/%d reason=%s: %s",
@@ -411,7 +436,7 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
                 )
                 continue
             else:
-                self._breaker.record_success()
+                await self._breaker.record_success()
                 return result, attempt
 
         # Defensive: loop above either returns or raises. This is unreachable.
@@ -423,10 +448,23 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
 
         This is the only place that bridges the two call styles — keep it
         narrow so the rest of the adapter speaks dicts (the wire format).
+        Reject ``None`` and non-dict / non-BaseModel arguments at this
+        boundary so the failure surfaces with adapter context instead of
+        crashing later inside Pydantic with a generic validation error.
         """
+        if state is None:
+            raise TypeError(
+                f"{self._name}: state is None; expected "
+                f"{self._input_cls.__name__} or dict"
+            )
         if isinstance(state, BaseModel):
             return state.model_dump()
-        return state
+        if isinstance(state, dict):
+            return state
+        raise TypeError(
+            f"{self._name}: state must be {self._input_cls.__name__} or "
+            f"dict, got {type(state).__name__}"
+        )
 
     async def ainvoke(
         self,
@@ -864,11 +902,19 @@ async def aclose_all_adapters() -> None:
     container exits without leaking connections / TLS sessions. Each
     per-adapter ``aclose`` is bounded by :data:`ACLOSE_TIMEOUT_S` so a single
     hung remote can't block the whole shutdown.
+
+    Also clears ``_CircuitBreaker._registry`` so a graceful FastAPI lifespan
+    reload (lifespan exits + re-enters within the same process — distinct
+    from a container restart) does not inherit stale ``consecutive_failures``
+    counts. The reload usually happens because someone is fixing the
+    upstream; the new lifespan's adapters should fire a fresh probe instead
+    of being short-circuited by the previous lifespan's breaker state.
     """
     # Snapshot before clear: aclose may raise on one adapter and we still
     # want every other cached adapter to be closed and the dict to be empty.
     adapters = list(_ADAPTER_CACHE.values())
     _ADAPTER_CACHE.clear()
+    _CircuitBreaker.reset_all()
     for adapter in adapters:
         try:
             await asyncio.wait_for(adapter.aclose(), timeout=ACLOSE_TIMEOUT_S)
@@ -967,15 +1013,36 @@ def get_remote_adapter(name: str) -> _ValidatedRemoteGraph[BaseModel, BaseModel]
     return _get_or_build(name)
 
 
-def build_all_remote_adapters() -> dict[str, _ValidatedRemoteGraph[BaseModel, BaseModel]]:
-    """Build every registered adapter — useful for startup wiring in app.py.
+def build_all_remote_adapters() -> tuple[
+    dict[str, _ValidatedRemoteGraph[BaseModel, BaseModel]], dict[str, str]
+]:
+    """Build every registered adapter; return ``(built, failures)``.
 
     Populates the module-level cache so subsequent ``get_*_adapter()`` calls
-    return the warmed instances. Raises at startup if ``ML_URL`` /
-    ``RESEARCH_URL`` are missing, which is what we want: failing the
-    container boot beats silently hanging on the first cross-container call.
+    return the warmed instances. Each adapter is built independently — if
+    ``ML_URL`` is missing the ML adapters skip but research adapters can
+    still wire successfully (and vice versa). The previous all-or-nothing
+    behaviour silently dropped every adapter when the first env var was
+    absent, which made research-only deploys impossible.
+
+    ``failures`` is ``{adapter_name: short_reason}`` — fed into
+    ``app.state.adapter_failures`` so the readiness probe can distinguish
+    "unbuilt" from "circuit open".
     """
-    return {name: _get_or_build(name) for name in _ADAPTER_SPECS}
+    built: dict[str, _ValidatedRemoteGraph[BaseModel, BaseModel]] = {}
+    failures: dict[str, str] = {}
+    for name in _ADAPTER_SPECS:
+        try:
+            built[name] = _get_or_build(name)
+        except Exception as exc:  # noqa: BLE001 — partial success is the whole point
+            failures[name] = f"{type(exc).__name__}: {exc}"
+            log.warning(
+                "adapter %s failed to build: %s: %s",
+                name,
+                type(exc).__name__,
+                exc,
+            )
+    return built, failures
 
 
 __all__ = [

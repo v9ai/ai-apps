@@ -109,6 +109,20 @@ class BearerTokenMiddleware(BaseHTTPMiddleware):
         auth = request.headers.get("authorization", "")
         scheme, _, token = auth.partition(" ")
         if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
+            # Log the rejection with path + method so brute-force probes
+            # leave an audit trail. Token value never logged. Client info
+            # comes from the X-Forwarded-For header (Cloudflare / reverse
+            # proxy populates it) with a fallback to the direct peer.
+            client = request.headers.get("x-forwarded-for", "") or (
+                request.client.host if request.client else "unknown"
+            )
+            log.warning(
+                "auth rejected: path=%s method=%s scheme=%s client=%s",
+                request.url.path,
+                request.method,
+                scheme.lower() or "<missing>",
+                client,
+            )
             return JSONResponse({"detail": "Unauthorized"}, status_code=401)
         return await call_next(request)
 
@@ -213,25 +227,31 @@ async def lifespan(app: FastAPI):
         app.state.graphs = graphs
 
         # Build RemoteGraph adapters once at startup so a missing ML_URL /
-        # RESEARCH_URL env var fails fast instead of at the first call.
-        # Individual graphs that need them read from ``app.state.remote_adapters``
-        # or import the helpers from ``core.remote_graphs`` directly.
+        # RESEARCH_URL env var surfaces in the boot log instead of at the
+        # first call. Each adapter builds independently — research adapters
+        # still wire when only ML_URL is missing, and vice versa. Failures
+        # land in ``app.state.adapter_failures`` so the readiness probe can
+        # surface them per-adapter.
         try:
-            app.state.remote_adapters = build_all_remote_adapters()
-            log.info(
-                "Remote adapters wired: %s", list(app.state.remote_adapters)
-            )
-        except Exception as exc:  # noqa: BLE001
-            # Don't kill the container if ML_URL/RESEARCH_URL are absent in
-            # local dev — log loudly and leave the adapters empty so any graph
-            # that tries to invoke one raises a clear error instead.
+            built, failures = build_all_remote_adapters()
+        except Exception as exc:  # noqa: BLE001 — defensive; per-adapter try is inside
             log.warning(
-                "build_all_remote_adapters failed (%s: %s) — cross-container "
-                "graphs will 500 until ML_URL/RESEARCH_URL are set",
+                "build_all_remote_adapters raised (%s: %s) — booting with "
+                "no remote adapters wired",
                 type(exc).__name__,
                 exc,
             )
-            app.state.remote_adapters = {}
+            built, failures = {}, {"_all_": f"{type(exc).__name__}: {exc}"}
+        app.state.remote_adapters = built
+        app.state.adapter_failures = failures
+        if failures:
+            log.warning(
+                "Remote adapters partial: built=%s failed=%s",
+                list(built),
+                list(failures),
+            )
+        else:
+            log.info("Remote adapters wired: %s", list(built))
 
         log.info(
             "Graphs compiled with AsyncPostgresSaver: %s",
@@ -304,8 +324,9 @@ async def health_deep() -> JSONResponse:
     plain ``/health`` so a transient outage doesn't trigger pod restarts.
     """
     adapters = getattr(app.state, "remote_adapters", {}) or {}
+    failures = getattr(app.state, "adapter_failures", {}) or {}
     breakers: dict[str, str] = {}
-    any_open = False
+    any_problem = False
     for name, adapter in adapters.items():
         breaker = getattr(adapter, "_breaker", None)
         if breaker is None:
@@ -313,14 +334,22 @@ async def health_deep() -> JSONResponse:
             continue
         if breaker.opened_at is not None:
             breakers[name] = "open"
-            any_open = True
+            any_problem = True
         else:
             breakers[name] = "closed"
+    # Partial-build surface: an adapter that never built (missing env var,
+    # remote unreachable at boot) is reported distinctly from one whose
+    # breaker is open. Both flip the route to 503 so a Kubernetes /
+    # Cloudflare readinessProbe drains traffic until the operator
+    # intervenes.
+    for name, reason in failures.items():
+        breakers[name] = f"unbuilt: {reason[:80]}"
+        any_problem = True
     body = {
-        "status": "degraded" if any_open else "ok",
+        "status": "degraded" if any_problem else "ok",
         "breakers": breakers,
     }
-    status_code = 503 if any_open else 200
+    status_code = 503 if any_problem else 200
     return JSONResponse(content=body, status_code=status_code)
 
 

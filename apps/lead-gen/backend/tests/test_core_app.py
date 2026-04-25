@@ -177,6 +177,40 @@ async def test_health_deep_returns_503_when_any_breaker_open(
     assert body["breakers"]["research_agent"] == "open"
 
 
+async def test_health_deep_surfaces_unbuilt_adapters(
+    patched_core_app: Any,
+) -> None:
+    """When a research-only env booted with ``ML_URL`` unset, the partial
+    build leaves some adapters in ``app.state.adapter_failures``. The
+    readiness route must label those as ``unbuilt:`` (distinct from
+    ``open``) so an operator can chase the missing env var without
+    confusing it with a circuit-breaker outage."""
+
+    class _ClosedAdapter:
+        def __init__(self) -> None:
+            class _B:
+                opened_at: float | None = None
+
+            self._breaker = _B()
+
+    ca = patched_core_app
+    ca.app.state.remote_adapters = {"research_agent": _ClosedAdapter()}
+    ca.app.state.adapter_failures = {
+        "jobbert_ner": "RuntimeError: ML_URL env var is required",
+        "bge_m3_embed": "RuntimeError: ML_URL env var is required",
+    }
+    async with AsyncClient(
+        transport=ASGITransport(app=ca.app), base_url="http://test"
+    ) as client:
+        r = await client.get("/health/deep")
+    assert r.status_code == 503  # any unbuilt adapter flips readiness red
+    body = r.json()
+    assert body["status"] == "degraded"
+    assert body["breakers"]["research_agent"] == "closed"
+    assert body["breakers"]["jobbert_ner"].startswith("unbuilt:")
+    assert "ML_URL" in body["breakers"]["jobbert_ner"]
+
+
 async def test_health_endpoint_lists_warmed_adapters(patched_core_app: Any) -> None:
     """When the lifespan has wired adapters, ``/health`` exposes the names so
     a dispatcher can distinguish a clean boot from a degraded one (no

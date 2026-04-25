@@ -116,21 +116,31 @@ def test_get_remote_adapter_uses_loose_basemodel_typing() -> None:
     assert args == (BaseModel, BaseModel)
 
 
-def test_build_all_returns_loose_dict_typing() -> None:
-    """``build_all_remote_adapters`` returns a uniform dict whose value type
-    is the loose ``_ValidatedRemoteGraph[BaseModel, BaseModel]``."""
+def test_build_all_returns_built_and_failures_tuple_typing() -> None:
+    """``build_all_remote_adapters`` returns ``(built, failures)`` where
+    ``built`` is the warmed-adapter dict and ``failures`` is a per-name
+    error-string dict — the partial-failure surface that lets
+    research-only deploys boot when ``ML_URL`` is unset (and vice versa).
+    """
     hints = get_type_hints(build_all_remote_adapters)
     ret = hints["return"]
     origin = typing.get_origin(ret)
-    assert origin is dict
+    assert origin is tuple
 
-    key_t, val_t = get_args(ret)
-    assert key_t is str
+    built_t, failures_t = get_args(ret)
 
-    val_origin = typing.get_origin(val_t)
-    val_args = get_args(val_t)
-    assert val_origin is _ValidatedRemoteGraph
-    assert val_args == (BaseModel, BaseModel)
+    # built: dict[str, _ValidatedRemoteGraph[BaseModel, BaseModel]]
+    assert typing.get_origin(built_t) is dict
+    built_key, built_val = get_args(built_t)
+    assert built_key is str
+    assert typing.get_origin(built_val) is _ValidatedRemoteGraph
+    assert get_args(built_val) == (BaseModel, BaseModel)
+
+    # failures: dict[str, str]
+    assert typing.get_origin(failures_t) is dict
+    failures_key, failures_val = get_args(failures_t)
+    assert failures_key is str
+    assert failures_val is str
 
 
 def test_class_is_pep695_generic() -> None:

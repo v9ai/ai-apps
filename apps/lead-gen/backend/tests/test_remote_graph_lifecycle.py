@@ -102,7 +102,8 @@ def test_build_all_warms_the_same_cache(
     monkeypatch.setenv("ML_URL", "http://lead-gen-ml")
     monkeypatch.setenv("RESEARCH_URL", "http://lead-gen-research")
 
-    built = build_all_remote_adapters()
+    built, failures = build_all_remote_adapters()
+    assert failures == {}
     # Subsequent factory calls return the warmed instances.
     assert get_jobbert_ner_adapter() is built["jobbert_ner"]
     assert get_research_agent_adapter() is built["research_agent"]

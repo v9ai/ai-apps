@@ -9,6 +9,7 @@ to a Vercel-deployed frontend), every non-health request must present
 
 from __future__ import annotations
 
+import logging
 import os
 import secrets
 
@@ -17,6 +18,8 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+log = logging.getLogger(__name__)
 
 # Paths that bypass the bearer check so tunnel providers and langgraph's own
 # boot loop can probe liveness without a credential. ``/health`` matches the
@@ -36,6 +39,16 @@ class BearerTokenMiddleware(BaseHTTPMiddleware):
         auth = request.headers.get("authorization", "")
         scheme, _, token = auth.partition(" ")
         if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
+            client = request.headers.get("x-forwarded-for", "") or (
+                request.client.host if request.client else "unknown"
+            )
+            log.warning(
+                "auth rejected: path=%s method=%s scheme=%s client=%s",
+                request.url.path,
+                request.method,
+                scheme.lower() or "<missing>",
+                client,
+            )
             return JSONResponse({"detail": "Unauthorized"}, status_code=401)
         return await call_next(request)
 

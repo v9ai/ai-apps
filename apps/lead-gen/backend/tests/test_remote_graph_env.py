@@ -90,23 +90,63 @@ def test_get_remote_adapter_known_name(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_build_all_returns_eight_keys(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ML_URL", "http://lead-gen-ml")
     monkeypatch.setenv("RESEARCH_URL", "http://lead-gen-research")
-    adapters = build_all_remote_adapters()
-    assert set(adapters.keys()) == EXPECTED_ADAPTER_NAMES
-    for name, adapter in adapters.items():
+    built, failures = build_all_remote_adapters()
+    assert set(built.keys()) == EXPECTED_ADAPTER_NAMES
+    assert failures == {}
+    for name, adapter in built.items():
         assert isinstance(adapter, _ValidatedRemoteGraph), (
             f"{name} did not return a _ValidatedRemoteGraph"
         )
 
 
-def test_build_all_fails_fast_without_research_url(
+def test_build_all_partial_success_when_research_url_absent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """A research-only env that omits ``ML_URL``, or an ML-only env that
+    omits ``RESEARCH_URL``, used to drop every adapter because the first
+    failing call raised and the lifespan caught it. Now each adapter
+    builds independently — failures are reported in a side dict so the
+    surviving adapters still wire."""
     monkeypatch.setenv("ML_URL", "http://lead-gen-ml")
     monkeypatch.delenv("RESEARCH_URL", raising=False)
-    # ML adapters build first; the first research adapter trips the boot.
-    with pytest.raises(RuntimeError) as exc_info:
-        build_all_remote_adapters()
-    assert "RESEARCH_URL" in str(exc_info.value)
+
+    built, failures = build_all_remote_adapters()
+
+    # ML adapters build successfully.
+    assert "jobbert_ner" in built
+    assert "bge_m3_embed" in built
+    # Every research adapter lands in the failure dict with a clear reason.
+    research_names = {
+        "research_agent",
+        "lead_papers",
+        "scholar",
+        "common_crawl",
+        "agentic_search",
+        "gh_patterns",
+    }
+    for name in research_names:
+        assert name in failures, f"{name} should be in the failures dict"
+        assert "RESEARCH_URL" in failures[name]
+        assert name not in built
+
+
+def test_build_all_partial_success_when_ml_url_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Mirror: research-only deploys keep their 6 adapters when ``ML_URL``
+    is unset."""
+    monkeypatch.delenv("ML_URL", raising=False)
+    monkeypatch.setenv("RESEARCH_URL", "http://lead-gen-research")
+
+    built, failures = build_all_remote_adapters()
+
+    assert "jobbert_ner" not in built
+    assert "bge_m3_embed" not in built
+    assert "ML_URL" in failures["jobbert_ner"]
+    assert "ML_URL" in failures["bge_m3_embed"]
+    # Research adapters still wire.
+    assert "research_agent" in built
+    assert "lead_papers" in built
 
 
 def test_adapter_builders_registry() -> None:

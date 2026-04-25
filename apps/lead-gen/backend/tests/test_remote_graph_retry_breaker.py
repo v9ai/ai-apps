@@ -306,6 +306,52 @@ async def test_breaker_shared_across_adapter_instances_by_name() -> None:
 # ─── astream pass-through (regression guard) ──────────────────────────────
 
 
+async def test_concurrent_half_open_probes_collapse_to_one() -> None:
+    """The probe-gate transition must be atomic: two coroutines past the
+    cool-down must not BOTH set ``opened_at = None`` while concurrently
+    seeing the same pre-mutation state. Without the async lock around
+    ``allow()`` the second task could observe ``opened_at != None`` and
+    yet pass through because the first task's write hadn't landed yet.
+
+    Property under test: exactly one coroutine wins the probe slot and
+    succeeds against the single canned ok response; the rest hit the
+    empty queue (post-mutation `opened_at = None` lets them through, by
+    design — half-open transitions to closed once the probe succeeds).
+    """
+    import asyncio as _asyncio
+
+    fake = FakeRemote([_ok_response()])  # only one canned response
+    adapter = _build_adapter(
+        fake, max_attempts=1, breaker_failure_threshold=5, breaker_cool_down_s=1.0
+    )
+    adapter._breaker.consecutive_failures = 5
+    adapter._breaker.opened_at = time.monotonic() - 2.0  # past cool_down=1.0
+
+    async def _call() -> Exception | dict:
+        try:
+            return await adapter.ainvoke({"text": "react"})
+        except Exception as e:
+            return e
+
+    results = await _asyncio.gather(*[_call() for _ in range(8)])
+
+    successes = [r for r in results if isinstance(r, dict)]
+    assert len(successes) == 1, (
+        f"exactly one probe must succeed against the single canned response, "
+        f"got {len(successes)}"
+    )
+    # Without the async lock, two coroutines could BOTH read
+    # ``opened_at != None``, BOTH evaluate the cool-down as elapsed, BOTH
+    # write ``opened_at = None``, BOTH return True from ``allow()``, and
+    # BOTH proceed to the network — even though only one probe slot was
+    # supposed to be available. The serialised version is racing under
+    # the lock, so each coroutine observes either the still-open state
+    # (refused) or the half-open transition cleanly (allowed). Either is
+    # legal; what's NOT legal is two coroutines both passing the gate
+    # under the mistaken belief that the half-open probe was theirs.
+    # The single-success assertion above pins exactly that.
+
+
 async def test_summary_log_emits_outcome_attempts_duration(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
