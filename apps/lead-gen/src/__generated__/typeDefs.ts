@@ -938,9 +938,17 @@ type EnrichAIContactsBulkResult {
 
 type EnrichContactPapersResult {
   contactId: Int!
+  enrichersCompleted: [String!]
+  githubHandleResolved: String
+  githubProfileStatus: String
+  homepageStatus: String
+  linkedinUrlResolved: String
   message: String!
+  orcidProfileStatus: String
   papers: [ContactPaper!]!
   papersEnrichedAt: String
+  pdfEmailStatus: String
+  scholarProfileStatus: String
   success: Boolean!
   tags: [String!]!
   tagsAdded: [String!]!

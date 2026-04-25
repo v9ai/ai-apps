@@ -1032,9 +1032,17 @@ export type EnrichAiContactsBulkResult = {
 export type EnrichContactPapersResult = {
   __typename?: 'EnrichContactPapersResult';
   contactId: Scalars['Int']['output'];
+  enrichersCompleted: Maybe<Array<Scalars['String']['output']>>;
+  githubHandleResolved: Maybe<Scalars['String']['output']>;
+  githubProfileStatus: Maybe<Scalars['String']['output']>;
+  homepageStatus: Maybe<Scalars['String']['output']>;
+  linkedinUrlResolved: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
+  orcidProfileStatus: Maybe<Scalars['String']['output']>;
   papers: Array<ContactPaper>;
   papersEnrichedAt: Maybe<Scalars['String']['output']>;
+  pdfEmailStatus: Maybe<Scalars['String']['output']>;
+  scholarProfileStatus: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
   tags: Array<Scalars['String']['output']>;
   tagsAdded: Array<Scalars['String']['output']>;
@@ -5193,9 +5201,17 @@ export type EnrichAiContactsBulkResultResolvers<ContextType = GraphQLContext, Pa
 
 export type EnrichContactPapersResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EnrichContactPapersResult'] = ResolversParentTypes['EnrichContactPapersResult']> = {
   contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  enrichersCompleted?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  githubHandleResolved?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  githubProfileStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  homepageStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  linkedinUrlResolved?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  orcidProfileStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   papers?: Resolver<Array<ResolversTypes['ContactPaper']>, ParentType, ContextType>;
   papersEnrichedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  pdfEmailStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  scholarProfileStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   tagsAdded?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;

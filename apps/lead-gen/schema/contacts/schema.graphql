@@ -161,6 +161,16 @@ type EnrichContactPapersResult {
   tags: [String!]!
   tagsAdded: [String!]!
   papersEnrichedAt: String
+  # v2 paper-author enrichment fan-out branches. All nullable so older
+  # clients ignore them; newer clients can render the per-source breakdown.
+  githubHandleResolved: String
+  githubProfileStatus: String
+  orcidProfileStatus: String
+  scholarProfileStatus: String
+  homepageStatus: String
+  pdfEmailStatus: String
+  linkedinUrlResolved: String
+  enrichersCompleted: [String!]
 }
 
 type ContactAIGitHubRepo {

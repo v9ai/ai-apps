@@ -1032,9 +1032,17 @@ export type EnrichAiContactsBulkResult = {
 export type EnrichContactPapersResult = {
   __typename?: 'EnrichContactPapersResult';
   contactId: Scalars['Int']['output'];
+  enrichersCompleted: Maybe<Array<Scalars['String']['output']>>;
+  githubHandleResolved: Maybe<Scalars['String']['output']>;
+  githubProfileStatus: Maybe<Scalars['String']['output']>;
+  homepageStatus: Maybe<Scalars['String']['output']>;
+  linkedinUrlResolved: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
+  orcidProfileStatus: Maybe<Scalars['String']['output']>;
   papers: Array<ContactPaper>;
   papersEnrichedAt: Maybe<Scalars['String']['output']>;
+  pdfEmailStatus: Maybe<Scalars['String']['output']>;
+  scholarProfileStatus: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
   tags: Array<Scalars['String']['output']>;
   tagsAdded: Array<Scalars['String']['output']>;
