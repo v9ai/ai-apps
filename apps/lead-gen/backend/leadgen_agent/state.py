@@ -189,6 +189,8 @@ class ContactEnrichPaperAuthorState(TypedDict, total=False):
     institution_country: str
     institution_id: str  # OpenAlex institution ID, e.g. https://openalex.org/I12345
     institution_ror: str  # ROR ID, e.g. https://ror.org/05k89ew48
+    institution_type: str  # OpenAlex enum: "education" | "company" | "government" | ...
+    additional_institution_types: list[str]  # types of secondary last_known_institutions[]
     works_count: int
     cited_by_count: int
     h_index: int
@@ -199,6 +201,13 @@ class ContactEnrichPaperAuthorState(TypedDict, total=False):
     # populated by classify_affiliation — the B2B ICP can only buy from
     # `industry` or `mixed` profiles; `academic` is a hard non-buyer.
     affiliation_type: Literal["industry", "academic", "mixed", "unknown"]
+    # populated by classify_buyer_fit_node — independent ICP verdict on whether
+    # the affiliation is a plausible B2B AI-engineering buyer. A `mixed`
+    # affiliation_type may still be `not_buyer` if the industry side is, e.g.,
+    # a 1-person consultancy.
+    buyer_verdict: Literal["buyer", "not_buyer", "unknown"]
+    buyer_score: float  # 0.0 to 1.0; >= 0.6 buyer, <= 0.3 not_buyer, else unknown
+    buyer_reasons: list[str]  # short bullet strings explaining the verdict
     # populated by process_contact (inverted flow)
     enriched: Annotated[list[dict[str, Any]], operator.add]
     # output

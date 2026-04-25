@@ -1302,13 +1302,14 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           <KeyFactsCard
             linkedinUrl={company.linkedin_url}
             jobBoardUrl={company.job_board_url}
-            score={company.score}
             isAdmin={isAdmin}
             updatedAt={company.updated_at}
+            aiConfidence={company.ai_classification_confidence}
+            crawlMeta={crawlMeta}
           />
 
-          {/* Industries + Tags — inline */}
-          {(company.industries?.length || (company.tags ?? []).some((t: string) => !t.startsWith('leadgen-'))) && (
+          {/* Industries + Tags — only when deep analysis is missing (otherwise it duplicates the markdown body) */}
+          {!hasDeepAnalysis && (company.industries?.length || (company.tags ?? []).some((t: string) => !t.startsWith('leadgen-'))) && (
             <Flex gap="2" wrap="wrap" align="center">
               {(company.industries ?? []).map((ind) => (
                 <Badge key={ind} color="blue" variant="soft" size="1">{ind}</Badge>
@@ -1462,7 +1463,34 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             </SectionCard>
           )}
 
-          {company.description ? (
+          {/* Competitors — parsed from deep_analysis markdown */}
+          {competitors.length > 0 && (
+            <SectionCard title={`Competitors (${competitors.length})`}>
+              <Flex gap="2" wrap="wrap">
+                {competitors.map((c) => (
+                  <Badge key={c} asChild color="violet" variant="soft" radius="full">
+                    <Link href={`/companies?q=${encodeURIComponent(c)}`}>{c}</Link>
+                  </Badge>
+                ))}
+              </Flex>
+            </SectionCard>
+          )}
+
+          {/* Scraped emails — surfaces inboxes deep_scrape pulled off the site */}
+          {scrapedEmails.length > 0 && (
+            <SectionCard title={`Scraped emails (${scrapedEmails.length})`}>
+              <Flex direction="column" gap="1">
+                {scrapedEmails.map((email) => (
+                  <RadixLink key={email} href={`mailto:${email}`} size="2">
+                    {email}
+                  </RadixLink>
+                ))}
+              </Flex>
+            </SectionCard>
+          )}
+
+          {/* About / Services / Score breakdown — only when deep_analysis is missing (otherwise redundant) */}
+          {!hasDeepAnalysis && company.description ? (
             <SectionCard title="About">
               <Text
                 as="p"
@@ -1475,14 +1503,13 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             </SectionCard>
           ) : null}
 
-          {company.services?.length ? (
+          {!hasDeepAnalysis && company.services?.length ? (
             <SectionCard title="Services">
               <CollapsibleChips items={company.services} visibleCount={8} />
             </SectionCard>
           ) : null}
 
-          {/* Admin-only: Score breakdown */}
-          {isAdmin && company.score_reasons?.length ? (
+          {!hasDeepAnalysis && isAdmin && company.score_reasons?.length ? (
             <SectionCard title="Score breakdown">
               <Flex direction="column" gap="2">
                 {company.score_reasons.map((reason: string, idx: number) => (

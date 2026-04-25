@@ -53,6 +53,45 @@ def _parse_json_text(raw: Any) -> Any:
     return raw
 
 
+def _classify_affiliation_type(profile: dict) -> str:
+    """Classify the contact's affiliation as industry / academic / mixed / unknown.
+
+    Reads ``institution_type`` (the OpenAlex enum string for the resolver's
+    primary pick) and ``additional_institution_types`` (types of every other
+    last_known_institutions entry). The B2B lead-gen ICP can only buy from
+    ``industry`` or ``mixed`` profiles; ``academic`` is a hard non-buyer.
+
+    OpenAlex institution types: ``"education"``, ``"company"``,
+    ``"government"``, ``"healthcare"``, ``"archive"``, ``"other"``, or ``""``.
+    Anything non-empty and != ``"education"`` counts as non-academic.
+    """
+    if not isinstance(profile, dict):
+        return "unknown"
+
+    primary = (profile.get("institution_type") or "").strip().lower()
+    additional_raw = profile.get("additional_institution_types") or []
+    if not isinstance(additional_raw, list):
+        additional_raw = []
+    additional = [
+        (t or "").strip().lower() for t in additional_raw if isinstance(t, str)
+    ]
+
+    all_types = [t for t in [primary, *additional] if t]
+    if not all_types:
+        return "unknown"
+
+    has_academic = any(t == "education" for t in all_types)
+    has_industry = any(t and t != "education" for t in all_types)
+
+    if has_academic and has_industry:
+        return "mixed"
+    if has_industry:
+        return "industry"
+    if has_academic:
+        return "academic"
+    return "unknown"
+
+
 async def load_contact(state: ContactEnrichPaperAuthorState) -> dict:
     """Load target contact. If ``contact_id`` is missing from input, pick the
     next un-enriched papers-tagged contact ourselves — keeps the caller stateless
@@ -265,12 +304,19 @@ async def resolve_openalex_author(state: ContactEnrichPaperAuthorState) -> dict:
     # non-null entry of `affiliations[].institution` for older author records
     # that still lack the plural field.
     inst: dict[str, Any] = {}
+    additional_institution_types: list[str] = []
     lki_list = picked.get("last_known_institutions")
     if isinstance(lki_list, list):
         for item in lki_list:
             if isinstance(item, dict) and item.get("display_name"):
-                inst = item
-                break
+                if not inst:
+                    inst = item
+                else:
+                    # Collect types of every other entry so the affiliation
+                    # classifier can detect "mixed" (academic + industry).
+                    t = item.get("type")
+                    if isinstance(t, str) and t:
+                        additional_institution_types.append(t)
     if not inst:
         legacy = picked.get("last_known_institution")
         if isinstance(legacy, dict) and legacy.get("display_name"):
@@ -292,6 +338,9 @@ async def resolve_openalex_author(state: ContactEnrichPaperAuthorState) -> dict:
     )
     institution_id = (inst.get("id") or "") if isinstance(inst, dict) else ""
     institution_ror = (inst.get("ror") or "") if isinstance(inst, dict) else ""
+    # OpenAlex enum: "education" | "company" | "government" | "healthcare" |
+    # "archive" | "other" | "". Used by `_classify_affiliation_type`.
+    institution_type = (inst.get("type") or "") if isinstance(inst, dict) else ""
 
     # x_concepts: keep top-N with score >= threshold.
     concepts = picked.get("x_concepts") or []
@@ -318,6 +367,8 @@ async def resolve_openalex_author(state: ContactEnrichPaperAuthorState) -> dict:
         "institution_country": institution_country,
         "institution_id": institution_id,
         "institution_ror": institution_ror,
+        "institution_type": institution_type,
+        "additional_institution_types": additional_institution_types,
         "works_count": works_count,
         "cited_by_count": cited_by_count,
         "h_index": h_index,
