@@ -707,7 +707,9 @@ export async function searchArxiv(
   limit: number = 10,
 ): Promise<PaperCandidate[]> {
   try {
-    const url = new URL("http://export.arxiv.org/api/query");
+    // Use HTTPS — http://export.arxiv.org now 301-redirects, and some
+    // serverless runtimes (including Vercel/edge) block plaintext outbound.
+    const url = new URL("https://export.arxiv.org/api/query");
     url.searchParams.set("search_query", `all:${query}`);
     url.searchParams.set("start", "0");
     url.searchParams.set("max_results", limit.toString());
