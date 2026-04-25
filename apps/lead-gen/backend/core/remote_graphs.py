@@ -549,27 +549,143 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         )
 
 
+# ─── Adapter cache + lifecycle ────────────────────────────────────────────
+#
+# Adapters are cached per name so a long-running graph node that calls
+# ``get_jobbert_ner_adapter()`` repeatedly reuses one ``RemoteGraph`` (and
+# therefore one httpx connection pool + TLS session) instead of paying the
+# handshake cost on every invocation. ``build_all_remote_adapters`` warms
+# the cache from ``app.py`` at startup; ``reset_adapter_cache`` is the
+# test-only escape hatch; ``aclose_all_adapters`` is the shutdown hook.
+
+
+_ADAPTER_SPECS: dict[str, dict[str, Any]] = {
+    "jobbert_ner": {
+        "url_fn": _ml_url,
+        "headers_fn": _ml_headers,
+        "input_cls": JobbertNerInput,
+        "output_cls": JobbertNerOutput,
+        "timeout": ML_TIMEOUT,
+    },
+    "bge_m3_embed": {
+        "url_fn": _ml_url,
+        "headers_fn": _ml_headers,
+        "input_cls": BgeM3EmbedInput,
+        "output_cls": BgeM3EmbedOutput,
+        "timeout": ML_TIMEOUT,
+    },
+    "research_agent": {
+        "url_fn": _research_url,
+        "headers_fn": _research_headers,
+        "input_cls": ResearchAgentInput,
+        "output_cls": ResearchAgentOutput,
+        "timeout": RESEARCH_TIMEOUT,
+    },
+    "lead_papers": {
+        "url_fn": _research_url,
+        "headers_fn": _research_headers,
+        "input_cls": LeadPapersInput,
+        "output_cls": LeadPapersOutput,
+        "timeout": RESEARCH_TIMEOUT,
+    },
+    "scholar": {
+        "url_fn": _research_url,
+        "headers_fn": _research_headers,
+        "input_cls": ScholarInput,
+        "output_cls": ScholarOutput,
+        "timeout": RESEARCH_TIMEOUT,
+    },
+    "common_crawl": {
+        "url_fn": _research_url,
+        "headers_fn": _research_headers,
+        "input_cls": CommonCrawlInput,
+        "output_cls": CommonCrawlOutput,
+        "timeout": RESEARCH_TIMEOUT,
+    },
+    "agentic_search": {
+        "url_fn": _research_url,
+        "headers_fn": _research_headers,
+        "input_cls": AgenticSearchInput,
+        "output_cls": AgenticSearchOutput,
+        "timeout": RESEARCH_TIMEOUT,
+    },
+    "gh_patterns": {
+        "url_fn": _research_url,
+        "headers_fn": _research_headers,
+        "input_cls": GhPatternsInput,
+        "output_cls": GhPatternsOutput,
+        "timeout": RESEARCH_TIMEOUT,
+    },
+}
+
+
+_ADAPTER_CACHE: dict[str, _ValidatedRemoteGraph[BaseModel, BaseModel]] = {}
+
+
+def _build_adapter_from_spec(
+    name: str, spec: dict[str, Any]
+) -> _ValidatedRemoteGraph[BaseModel, BaseModel]:
+    return _ValidatedRemoteGraph(
+        name=name,
+        url=spec["url_fn"](),
+        headers=spec["headers_fn"](),
+        input_cls=spec["input_cls"],
+        output_cls=spec["output_cls"],
+        timeout=spec["timeout"],
+    )
+
+
+def _get_or_build(name: str) -> _ValidatedRemoteGraph[BaseModel, BaseModel]:
+    cached = _ADAPTER_CACHE.get(name)
+    if cached is not None:
+        return cached
+    spec = _ADAPTER_SPECS.get(name)
+    if spec is None:
+        raise KeyError(
+            f"unknown remote adapter {name!r}; available: {sorted(_ADAPTER_SPECS)}"
+        )
+    adapter = _build_adapter_from_spec(name, spec)
+    _ADAPTER_CACHE[name] = adapter
+    return adapter
+
+
+def reset_adapter_cache() -> None:
+    """Drop every cached adapter so the next ``get_*_adapter()`` rebuilds.
+
+    Tests rely on this when they monkeypatch ``ML_URL`` / ``RESEARCH_URL`` —
+    without it, the cached adapter from a previous test would mask the env
+    change. Production callers should use :func:`aclose_all_adapters`
+    instead, which also closes pooled connections before clearing.
+    """
+    _ADAPTER_CACHE.clear()
+
+
+async def aclose_all_adapters() -> None:
+    """Close pooled httpx clients on every cached adapter, then drop the cache.
+
+    Wired into the FastAPI ``lifespan`` teardown in ``core/app.py`` so the
+    container exits without leaking connections / TLS sessions.
+    """
+    # Snapshot before clear: aclose may raise on one adapter and we still
+    # want every other cached adapter to be closed and the dict to be empty.
+    adapters = list(_ADAPTER_CACHE.values())
+    _ADAPTER_CACHE.clear()
+    for adapter in adapters:
+        await adapter.aclose()
+
+
 # ─── ML adapters ──────────────────────────────────────────────────────────
+#
+# All factories return *cached* singletons. Repeated calls within a process
+# return the same object (and therefore the same httpx connection pool).
 
 
 def get_jobbert_ner_adapter() -> _ValidatedRemoteGraph[JobbertNerInput, JobbertNerOutput]:
-    return _ValidatedRemoteGraph[JobbertNerInput, JobbertNerOutput](
-        name="jobbert_ner",
-        url=_ml_url(),
-        headers=_ml_headers(),
-        input_cls=JobbertNerInput,
-        output_cls=JobbertNerOutput,
-    )
+    return _get_or_build("jobbert_ner")  # type: ignore[return-value]
 
 
 def get_bge_m3_embed_adapter() -> _ValidatedRemoteGraph[BgeM3EmbedInput, BgeM3EmbedOutput]:
-    return _ValidatedRemoteGraph[BgeM3EmbedInput, BgeM3EmbedOutput](
-        name="bge_m3_embed",
-        url=_ml_url(),
-        headers=_ml_headers(),
-        input_cls=BgeM3EmbedInput,
-        output_cls=BgeM3EmbedOutput,
-    )
+    return _get_or_build("bge_m3_embed")  # type: ignore[return-value]
 
 
 # ─── Research adapters ────────────────────────────────────────────────────
@@ -578,71 +694,35 @@ def get_bge_m3_embed_adapter() -> _ValidatedRemoteGraph[BgeM3EmbedInput, BgeM3Em
 def get_research_agent_adapter() -> _ValidatedRemoteGraph[
     ResearchAgentInput, ResearchAgentOutput
 ]:
-    return _ValidatedRemoteGraph[ResearchAgentInput, ResearchAgentOutput](
-        name="research_agent",
-        url=_research_url(),
-        headers=_research_headers(),
-        input_cls=ResearchAgentInput,
-        output_cls=ResearchAgentOutput,
-    )
+    return _get_or_build("research_agent")  # type: ignore[return-value]
 
 
 def get_lead_papers_adapter() -> _ValidatedRemoteGraph[
     LeadPapersInput, LeadPapersOutput
 ]:
-    return _ValidatedRemoteGraph[LeadPapersInput, LeadPapersOutput](
-        name="lead_papers",
-        url=_research_url(),
-        headers=_research_headers(),
-        input_cls=LeadPapersInput,
-        output_cls=LeadPapersOutput,
-    )
+    return _get_or_build("lead_papers")  # type: ignore[return-value]
 
 
 def get_scholar_adapter() -> _ValidatedRemoteGraph[ScholarInput, ScholarOutput]:
-    return _ValidatedRemoteGraph[ScholarInput, ScholarOutput](
-        name="scholar",
-        url=_research_url(),
-        headers=_research_headers(),
-        input_cls=ScholarInput,
-        output_cls=ScholarOutput,
-    )
+    return _get_or_build("scholar")  # type: ignore[return-value]
 
 
 def get_common_crawl_adapter() -> _ValidatedRemoteGraph[
     CommonCrawlInput, CommonCrawlOutput
 ]:
-    return _ValidatedRemoteGraph[CommonCrawlInput, CommonCrawlOutput](
-        name="common_crawl",
-        url=_research_url(),
-        headers=_research_headers(),
-        input_cls=CommonCrawlInput,
-        output_cls=CommonCrawlOutput,
-    )
+    return _get_or_build("common_crawl")  # type: ignore[return-value]
 
 
 def get_agentic_search_adapter() -> _ValidatedRemoteGraph[
     AgenticSearchInput, AgenticSearchOutput
 ]:
-    return _ValidatedRemoteGraph[AgenticSearchInput, AgenticSearchOutput](
-        name="agentic_search",
-        url=_research_url(),
-        headers=_research_headers(),
-        input_cls=AgenticSearchInput,
-        output_cls=AgenticSearchOutput,
-    )
+    return _get_or_build("agentic_search")  # type: ignore[return-value]
 
 
 def get_gh_patterns_adapter() -> _ValidatedRemoteGraph[
     GhPatternsInput, GhPatternsOutput
 ]:
-    return _ValidatedRemoteGraph[GhPatternsInput, GhPatternsOutput](
-        name="gh_patterns",
-        url=_research_url(),
-        headers=_research_headers(),
-        input_cls=GhPatternsInput,
-        output_cls=GhPatternsOutput,
-    )
+    return _get_or_build("gh_patterns")  # type: ignore[return-value]
 
 
 # ─── Convenience lookup ───────────────────────────────────────────────────
@@ -674,28 +754,31 @@ def get_remote_adapter(name: str) -> _ValidatedRemoteGraph[BaseModel, BaseModel]
     The adapter still validates with the exact contract classes registered at
     build time; only the static type is loosened to ``BaseModel``.
     """
-    builder = _ADAPTER_BUILDERS.get(name)
-    if builder is None:
+    if name not in _ADAPTER_SPECS:
         raise KeyError(
-            f"unknown remote adapter {name!r}; available: {sorted(_ADAPTER_BUILDERS)}"
+            f"unknown remote adapter {name!r}; available: {sorted(_ADAPTER_SPECS)}"
         )
-    # The runtime instance is the same; we only widen the static parameters
-    # for the by-name escape hatch.
-    return builder()
+    return _get_or_build(name)
 
 
 def build_all_remote_adapters() -> dict[str, _ValidatedRemoteGraph[BaseModel, BaseModel]]:
     """Build every registered adapter — useful for startup wiring in app.py.
 
-    Raises at startup if ``ML_URL`` / ``RESEARCH_URL`` are missing, which is
-    what we want: failing the container boot beats silently hanging on the
-    first cross-container call.
+    Populates the module-level cache so subsequent ``get_*_adapter()`` calls
+    return the warmed instances. Raises at startup if ``ML_URL`` /
+    ``RESEARCH_URL`` are missing, which is what we want: failing the
+    container boot beats silently hanging on the first cross-container call.
     """
-    return {name: build() for name, build in _ADAPTER_BUILDERS.items()}
+    return {name: _get_or_build(name) for name in _ADAPTER_SPECS}
 
 
 __all__ = [
+    "DEFAULT_TIMEOUT",
+    "ML_TIMEOUT",
+    "RESEARCH_TIMEOUT",
     "RemoteUnavailable",
+    "TimeoutTuple",
+    "aclose_all_adapters",
     "build_all_remote_adapters",
     "get_agentic_search_adapter",
     "get_bge_m3_embed_adapter",
@@ -706,4 +789,5 @@ __all__ = [
     "get_remote_adapter",
     "get_research_agent_adapter",
     "get_scholar_adapter",
+    "reset_adapter_cache",
 ]
