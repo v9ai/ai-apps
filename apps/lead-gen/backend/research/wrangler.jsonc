@@ -10,7 +10,7 @@
     // and the graphs fail at request-time. Mirrors core's defaults so the two
     // containers reason against the same model unless overridden by a secret.
     "LLM_BASE_URL": "https://api.deepseek.com",
-    "LLM_MODEL": "deepseek-chat"
+    "LLM_MODEL": "deepseek-v4-pro"
   },
   "containers": [
     {
