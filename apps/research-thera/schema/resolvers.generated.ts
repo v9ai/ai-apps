@@ -247,6 +247,7 @@ import    { JournalAnalysis } from './resolvers/JournalAnalysis';
 import    { JournalEntry } from './resolvers/JournalEntry';
 import    { LanguageExample } from './resolvers/LanguageExample';
 import    { LanguageGuide } from './resolvers/LanguageGuide';
+import    { MicroScript } from './resolvers/MicroScript';
 import    { Note } from './resolvers/Note';
 import    { NoteAccess } from './resolvers/NoteAccess';
 import    { NoteShare } from './resolvers/NoteShare';
@@ -375,6 +376,7 @@ JournalAnalysis: JournalAnalysis,
 JournalEntry: JournalEntry,
 LanguageExample: LanguageExample,
 LanguageGuide: LanguageGuide,
+MicroScript: MicroScript,
 Note: Note,
 NoteAccess: NoteAccess,
 NoteShare: NoteShare,

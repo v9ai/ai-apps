@@ -439,6 +439,7 @@ export type CritiqueScores = {
   ageAppropriateness: Scalars['Int']['output'];
   citationCoverage: Scalars['Int']['output'];
   internalConsistency: Scalars['Int']['output'];
+  microScriptDepth: Scalars['Int']['output'];
   romanianFluency: Scalars['Int']['output'];
 };
 
@@ -1228,6 +1229,13 @@ export type LogGameCompletionInput = {
   gameId: Scalars['Int']['input'];
   linkedNoteId?: InputMaybe<Scalars['Int']['input']>;
   responses?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MicroScript = {
+  __typename?: 'MicroScript';
+  childResponse: Scalars['String']['output'];
+  parentFollowUp: Scalars['String']['output'];
+  parentOpener: Scalars['String']['output'];
 };
 
 export type Mutation = {
@@ -2573,6 +2581,7 @@ export type TalkingPoint = {
   __typename?: 'TalkingPoint';
   citations?: Maybe<Array<Citation>>;
   explanation: Scalars['String']['output'];
+  microScript?: Maybe<MicroScript>;
   point: Scalars['String']['output'];
   relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
   researchBacking?: Maybe<Scalars['String']['output']>;
@@ -3666,7 +3675,7 @@ export type GetTherapeuticQuestionsQuery = { __typename?: 'Query', therapeuticQu
 export type LatestBogdanDiscussionQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LatestBogdanDiscussionQuery = { __typename?: 'Query', latestBogdanDiscussion?: { __typename?: 'BogdanDiscussionGuide', id: number, familyMemberId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, citations?: Array<{ __typename?: 'Citation', researchId: number, doi?: string | null, title: string, year?: number | null, authors?: string | null, url?: string | null }> | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }>, citations: Array<{ __typename?: 'Citation', researchId: number, doi?: string | null, title: string, year?: number | null, authors?: string | null, url?: string | null }>, critique?: { __typename?: 'DiscussionGuideCritique', weakSections: Array<string>, refined: boolean, scores: { __typename?: 'CritiqueScores', romanianFluency: number, actionability: number, citationCoverage: number, ageAppropriateness: number, internalConsistency: number } } | null } | null };
+export type LatestBogdanDiscussionQuery = { __typename?: 'Query', latestBogdanDiscussion?: { __typename?: 'BogdanDiscussionGuide', id: number, familyMemberId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, citations?: Array<{ __typename?: 'Citation', researchId: number, doi?: string | null, title: string, year?: number | null, authors?: string | null, url?: string | null }> | null, microScript?: { __typename?: 'MicroScript', parentOpener: string, childResponse: string, parentFollowUp: string } | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }>, citations: Array<{ __typename?: 'Citation', researchId: number, doi?: string | null, title: string, year?: number | null, authors?: string | null, url?: string | null }>, critique?: { __typename?: 'DiscussionGuideCritique', weakSections: Array<string>, refined: boolean, scores: { __typename?: 'CritiqueScores', romanianFluency: number, actionability: number, citationCoverage: number, ageAppropriateness: number, internalConsistency: number, microScriptDepth: number } } | null } | null };
 
 export type LinkContactToIssueMutationVariables = Exact<{
   issueId: Scalars['Int']['input'];
@@ -10398,6 +10407,11 @@ export const LatestBogdanDiscussionDocument = gql`
         authors
         url
       }
+      microScript {
+        parentOpener
+        childResponse
+        parentFollowUp
+      }
     }
     languageGuide {
       whatToSay {
@@ -10436,6 +10450,7 @@ export const LatestBogdanDiscussionDocument = gql`
         citationCoverage
         ageAppropriateness
         internalConsistency
+        microScriptDepth
       }
       weakSections
       refined

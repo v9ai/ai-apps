@@ -398,6 +398,7 @@ type CritiqueScores {
   ageAppropriateness: Int!
   citationCoverage: Int!
   internalConsistency: Int!
+  microScriptDepth: Int!
   romanianFluency: Int!
 }
 
@@ -1116,6 +1117,12 @@ input LogGameCompletionInput {
   responses: String
 }
 
+type MicroScript {
+  childResponse: String!
+  parentFollowUp: String!
+  parentOpener: String!
+}
+
 type Mutation {
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
@@ -1622,6 +1629,7 @@ type Subscription {
 type TalkingPoint {
   citations: [Citation!]
   explanation: String!
+  microScript: MicroScript
   point: String!
   relatedResearchIds: [Int!]
   researchBacking: String

@@ -437,6 +437,7 @@ export type CritiqueScores = {
   ageAppropriateness: Scalars['Int']['output'];
   citationCoverage: Scalars['Int']['output'];
   internalConsistency: Scalars['Int']['output'];
+  microScriptDepth: Scalars['Int']['output'];
   romanianFluency: Scalars['Int']['output'];
 };
 
@@ -1214,6 +1215,13 @@ export type LogGameCompletionInput = {
   gameId: Scalars['Int']['input'];
   linkedNoteId?: InputMaybe<Scalars['Int']['input']>;
   responses?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MicroScript = {
+  __typename?: 'MicroScript';
+  childResponse: Scalars['String']['output'];
+  parentFollowUp: Scalars['String']['output'];
+  parentOpener: Scalars['String']['output'];
 };
 
 export type Mutation = {
@@ -2550,6 +2558,7 @@ export type TalkingPoint = {
   __typename?: 'TalkingPoint';
   citations?: Maybe<Array<Citation>>;
   explanation: Scalars['String']['output'];
+  microScript?: Maybe<MicroScript>;
   point: Scalars['String']['output'];
   relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
   researchBacking?: Maybe<Scalars['String']['output']>;
@@ -2982,6 +2991,7 @@ export type ResolversTypes = {
   LanguageExample: ResolverTypeWrapper<LanguageExample>;
   LanguageGuide: ResolverTypeWrapper<LanguageGuide>;
   LogGameCompletionInput: LogGameCompletionInput;
+  MicroScript: ResolverTypeWrapper<MicroScript>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Note: ResolverTypeWrapper<Omit<Note, 'claimCards' | 'goal' | 'linkedResearch' | 'shares' | 'visibility'> & { claimCards?: Maybe<Array<ResolversTypes['ClaimCard']>>, goal?: Maybe<ResolversTypes['Goal']>, linkedResearch?: Maybe<Array<ResolversTypes['Research']>>, shares: Array<ResolversTypes['NoteShare']>, visibility: ResolversTypes['NoteVisibility'] }>;
   NoteAccess: ResolverTypeWrapper<NoteAccess>;
@@ -3161,6 +3171,7 @@ export type ResolversParentTypes = {
   LanguageExample: LanguageExample;
   LanguageGuide: LanguageGuide;
   LogGameCompletionInput: LogGameCompletionInput;
+  MicroScript: MicroScript;
   Mutation: Record<PropertyKey, never>;
   Note: Omit<Note, 'claimCards' | 'goal' | 'linkedResearch' | 'shares'> & { claimCards?: Maybe<Array<ResolversParentTypes['ClaimCard']>>, goal?: Maybe<ResolversParentTypes['Goal']>, linkedResearch?: Maybe<Array<ResolversParentTypes['Research']>>, shares: Array<ResolversParentTypes['NoteShare']> };
   NoteAccess: NoteAccess;
@@ -3435,6 +3446,7 @@ export type CritiqueScoresResolvers<ContextType = GraphQLContext, ParentType ext
   ageAppropriateness?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   citationCoverage?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   internalConsistency?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  microScriptDepth?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   romanianFluency?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
@@ -4070,6 +4082,12 @@ export type LanguageGuideResolvers<ContextType = GraphQLContext, ParentType exte
   whatToSay?: Resolver<Array<ResolversTypes['LanguageExample']>, ParentType, ContextType>;
 };
 
+export type MicroScriptResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MicroScript'] = ResolversParentTypes['MicroScript']> = {
+  childResponse?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  parentFollowUp?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  parentOpener?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type MutationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   buildClaimCards?: Resolver<ResolversTypes['BuildClaimCardsResult'], ParentType, ContextType, RequireFields<MutationbuildClaimCardsArgs, 'input'>>;
   checkNoteClaims?: Resolver<ResolversTypes['CheckNoteClaimsResult'], ParentType, ContextType, RequireFields<MutationcheckNoteClaimsArgs, 'input'>>;
@@ -4528,6 +4546,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
 export type TalkingPointResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TalkingPoint'] = ResolversParentTypes['TalkingPoint']> = {
   citations?: Resolver<Maybe<Array<ResolversTypes['Citation']>>, ParentType, ContextType>;
   explanation?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  microScript?: Resolver<Maybe<ResolversTypes['MicroScript']>, ParentType, ContextType>;
   point?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   relatedResearchIds?: Resolver<Maybe<Array<ResolversTypes['Int']>>, ParentType, ContextType>;
   researchBacking?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -4726,6 +4745,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   JournalEntry?: JournalEntryResolvers<ContextType>;
   LanguageExample?: LanguageExampleResolvers<ContextType>;
   LanguageGuide?: LanguageGuideResolvers<ContextType>;
+  MicroScript?: MicroScriptResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Note?: NoteResolvers<ContextType>;
   NoteAccess?: NoteAccessResolvers<ContextType>;
