@@ -9,7 +9,8 @@
       "class_name": "ResearchContainer",
       "image": "./Dockerfile",
       "max_instances": 2,
-      "instance_type": "standard-1"
+      "instance_type": "standard-1",
+      "sleepAfter": "30m"
     }
   ],
   "durable_objects": {
