@@ -40,12 +40,15 @@ export async function fetchOpenAlexAbstractByDoi(doi: string): Promise<{
 }> {
   try {
     const clean = doi.toLowerCase().replace(/^doi:\s*/i, "").trim();
-    const url = `https://api.openalex.org/works/doi:${encodeURIComponent(clean)}`;
+    // OpenAlex polite-pool: requests with a real mailto get ~10x the rate
+    // limit and faster routing. https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication#the-polite-pool
+    const mailto = process.env.UNPAYWALL_EMAIL?.trim() || "research@example.com";
+    const url = `https://api.openalex.org/works/doi:${encodeURIComponent(clean)}?mailto=${encodeURIComponent(mailto)}`;
 
     const res = await fetch(url, {
       headers: {
         "accept": "application/json",
-        "user-agent": "AI-Therapist/1.0 (mailto:research@example.com)",
+        "user-agent": `AI-Therapist/1.0 (mailto:${mailto})`,
       },
     });
 
