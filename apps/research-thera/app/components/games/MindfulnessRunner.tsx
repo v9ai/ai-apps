@@ -145,6 +145,25 @@ export function MindfulnessRunner({
           <Progress value={overallProgress} size="1" />
         </Box>
 
+        {/* Screen-reader-only announcement so eyes-closed clients hear step transitions */}
+        <Box
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: -1,
+            overflow: "hidden",
+            clip: "rect(0,0,0,0)",
+            whiteSpace: "nowrap",
+            border: 0,
+          }}
+        >
+          {`${t.stepOf(idx, steps.length)}${step.cue ? `: ${step.cue}` : ""}. ${step.instruction}`}
+        </Box>
+
         <Flex direction="column" align="center" justify="center" gap={large ? "5" : "3"} style={{ flex: 1, minHeight: 0 }}>
           {step.cue && (
             <Heading
