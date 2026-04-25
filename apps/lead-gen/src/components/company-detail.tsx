@@ -247,17 +247,19 @@ function formatScore(score?: number | null): string {
 type KeyFactsCardProps = {
   linkedinUrl?: string | null;
   jobBoardUrl?: string | null;
-  score?: number | null;
   isAdmin?: boolean;
   updatedAt?: string | null;
+  aiConfidence?: number | null;
+  crawlMeta?: { pages: number; date: string } | null;
 };
 
 function KeyFactsCard({
   linkedinUrl,
   jobBoardUrl,
-  score,
   isAdmin = false,
   updatedAt,
+  aiConfidence,
+  crawlMeta,
 }: KeyFactsCardProps) {
   const linkedinHref = useMemo(
     () => coerceExternalUrl(linkedinUrl),
@@ -300,9 +302,21 @@ function KeyFactsCard({
         </Flex>
       ) : null}
 
-      {isAdmin && (
+      {crawlMeta && (
         <Text size="2" color="gray">
-          Confidence: <Strong>{formatScore(score)}</Strong>
+          Crawled <Strong>{crawlMeta.pages}</Strong>{" "}
+          {crawlMeta.pages === 1 ? "page" : "pages"} ·{" "}
+          {new Date(`${crawlMeta.date}T00:00:00Z`).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
+        </Text>
+      )}
+
+      {isAdmin && aiConfidence != null && (
+        <Text size="2" color="gray">
+          AI confidence: <Strong>{aiConfidence.toFixed(2)}</Strong>
         </Text>
       )}
 
@@ -904,6 +918,17 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     () => prettyUrl(company?.website),
     [company?.website]
   );
+
+  const competitors = useMemo(
+    () => extractCompetitors(company?.deep_analysis),
+    [company?.deep_analysis],
+  );
+  const crawlMeta = useMemo(
+    () => extractCrawlMeta(company?.deep_analysis),
+    [company?.deep_analysis],
+  );
+  const hasDeepAnalysis = Boolean(company?.deep_analysis);
+  const scrapedEmails = (company?.emailsList ?? []).filter(Boolean);
 
   const handleEnhance = useCallback(async () => {
     if (!company) return;

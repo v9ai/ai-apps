@@ -8,7 +8,7 @@ graph nodes. Intermediate keys (e.g. `analysis`, `hook`) are internal.
 from __future__ import annotations
 
 import operator
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 
 def _merge_dict(left: dict[str, Any] | None, right: dict[str, Any] | None) -> dict[str, Any]:
@@ -196,6 +196,9 @@ class ContactEnrichPaperAuthorState(TypedDict, total=False):
     topics: list[str]  # names of x_concepts with score >= threshold
     match_confidence: float  # 0..1 heuristic
     resolve_source: str  # "openalex" | "" if failed / no match
+    # populated by classify_affiliation — the B2B ICP can only buy from
+    # `industry` or `mixed` profiles; `academic` is a hard non-buyer.
+    affiliation_type: Literal["industry", "academic", "mixed", "unknown"]
     # populated by process_contact (inverted flow)
     enriched: Annotated[list[dict[str, Any]], operator.add]
     # output
