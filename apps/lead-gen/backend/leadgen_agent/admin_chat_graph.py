@@ -15,13 +15,26 @@ Tools (all read-only): count_rows(table), inspect_schema(table), query_db(sql).
 from __future__ import annotations
 
 import os
+import re
 from typing import Any
 
 import psycopg
 from langgraph.graph import END, START, StateGraph
+from psycopg import sql as psql
 
 from .llm import ainvoke_json, make_llm
 from .state import AdminChatState
+
+# Postgres identifier rule: starts with letter or underscore, then letters,
+# digits, or underscores. The previous ``table.replace("_","").isalnum()`` test
+# accepted ``pg_authid`` (system catalog) and any other underscore-bearing
+# identifier the LLM cared to emit. ``psql.Identifier`` quotes the value, but
+# we still want to refuse anything that doesn't look like a regular table.
+_TABLE_IDENT_RE = re.compile(r"^[a-z_][a-z0-9_]*$", re.IGNORECASE)
+
+
+def _is_valid_table_ident(table: str) -> bool:
+    return bool(_TABLE_IDENT_RE.match(table or ""))
 
 DEFAULT_SYSTEM = (
     "You are the lead-gen ops assistant. Answer database questions using the available tools. "
@@ -52,7 +65,7 @@ def _dsn() -> str:
 
 
 def _count_rows(table: str) -> str:
-    if not table.replace("_", "").isalnum():
+    if not _is_valid_table_ident(table):
         return "Error: invalid table name."
     dsn = _dsn()
     if not dsn:
@@ -60,14 +73,19 @@ def _count_rows(table: str) -> str:
     try:
         with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
             with conn.cursor() as cur:
-                cur.execute(f"SELECT count(*) FROM {table}")
+                # Identifier-quote the table name so an LLM-supplied value
+                # cannot break out of the FROM clause; the regex gate above
+                # already rejects non-identifier inputs.
+                cur.execute(
+                    psql.SQL("SELECT count(*) FROM {}").format(psql.Identifier(table))
+                )
                 return f"{table}: {cur.fetchone()[0]} rows"
     except Exception as exc:
         return f"Error: {exc}"
 
 
 def _inspect_schema(table: str) -> str:
-    if not table.replace("_", "").isalnum():
+    if not _is_valid_table_ident(table):
         return "Error: invalid table name."
     dsn = _dsn()
     if not dsn:
@@ -99,8 +117,17 @@ def _query_db(sql: str) -> str:
     if not dsn:
         return "Error: NEON_DATABASE_URL not configured."
     try:
-        with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
+        # NOTE: ``autocommit=False`` so the ``SET LOCAL`` statements below take
+        # effect — they're scoped to the current transaction. The ``with`` block
+        # commits on clean exit / rolls back on exception.
+        with psycopg.connect(dsn, autocommit=False, connect_timeout=5) as conn:
             with conn.cursor() as cur:
+                # Defence-in-depth: the substring deny-list above is bypass-prone
+                # (CTE-RETURNING, comment tricks, ``pg_read_file``); pin the
+                # transaction read-only with a hard statement timeout so a
+                # crafted SELECT can't write or stall.
+                cur.execute("SET LOCAL TRANSACTION READ ONLY")
+                cur.execute("SET LOCAL statement_timeout = '5s'")
                 cur.execute(sql)
                 rows = cur.fetchmany(MAX_ROWS)
                 cols = [desc[0] for desc in cur.description or []]

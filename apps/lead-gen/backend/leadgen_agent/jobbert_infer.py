@@ -45,14 +45,35 @@ EMBED_DENSE_PATH = "2_Asym/6235903824_Dense/model.safetensors"
 
 NER_REPO_ID = "jjzha/jobbert_knowledge_extraction"
 NER_LABELS = {0: "B", 1: "I", 2: "O"}
+# Cap NER input length so the tokenizer doesn't accept a 4 000-char string and
+# explode into 8 000+ tokens (jobbert_knowledge_extraction's model_max_length is
+# unset on some HF revisions). 256 covers the common single-sentence skill
+# inputs and matches the contract's text-length budget.
+NER_MAX_SEQ_LEN = 256
+
+# Best-effort CPU fallback hint for MPS ops not yet implemented in PyTorch's
+# Metal backend (e.g. some scaled_dot_product_attention dtypes). Set before any
+# torch op runs on MPS so the fallback path actually engages.
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
 
 def _select_device() -> torch.device:
-    """Pick the best available device (CUDA > MPS > CPU)."""
+    """Pick the best available device (CUDA > MPS > CPU).
+
+    Probes MPS with a tiny allocation: on Linux/Intel macs ``mps.is_available()``
+    can lie when torch was built without Metal (or when the user disabled it via
+    ``PYTORCH_ENABLE_MPS_FALLBACK=0`` after import); fall back to CPU rather
+    than crashing on the first model forward.
+    """
     if torch.cuda.is_available():
         return torch.device("cuda")
-    if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
-        return torch.device("mps")
+    mps = getattr(torch.backends, "mps", None)
+    if mps is not None and mps.is_available():
+        try:
+            torch.zeros(1, device="mps")
+            return torch.device("mps")
+        except Exception:  # noqa: BLE001 — any failure → CPU
+            pass
     return torch.device("cpu")
 
 
@@ -163,6 +184,7 @@ class _SkillClassifier:
             texts,
             padding=True,
             truncation=True,
+            max_length=NER_MAX_SEQ_LEN,
             return_tensors="pt",
             return_offsets_mapping=True,
         )

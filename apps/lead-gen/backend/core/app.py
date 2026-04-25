@@ -360,6 +360,15 @@ async def _run_graph_bg(
         )
         record["status"] = "error"
         record["error"] = str(e)[:1000]
+        # Async clients poll /threads/{tid}/runs/{rid} which only sees the
+        # status flip; without an explicit webhook fire, callers that opted
+        # into ``webhook_url`` would wait forever for an error signal.
+        try:
+            from leadgen_agent.notify import notify_error
+
+            await notify_error(payload, str(e))
+        except Exception:  # noqa: BLE001 — webhook delivery is best-effort
+            log.warning("notify_error webhook failed for run_id=%s", run_id)
 
 
 @app.post("/threads/{thread_id}/runs", response_model=ThreadRunResponse)

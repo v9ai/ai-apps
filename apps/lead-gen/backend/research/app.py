@@ -233,6 +233,12 @@ async def _run_graph_bg(
         )
         record["status"] = "error"
         record["error"] = str(exc)[:1000]
+        try:
+            from leadgen_agent.notify import notify_error
+
+            await notify_error(payload, str(exc))
+        except Exception:  # noqa: BLE001 — webhook delivery is best-effort
+            log.warning("notify_error webhook failed for run_id=%s", run_id)
 
 
 @app.post("/threads/{thread_id}/runs", response_model=ThreadRunResponse)

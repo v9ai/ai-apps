@@ -35,6 +35,7 @@ completes, we just miss cost accounting for that call.
 from __future__ import annotations
 
 import asyncio
+import functools
 import json
 import logging
 import os
@@ -43,21 +44,37 @@ import time
 from pathlib import Path
 from typing import Any
 
+import httpx
 from dotenv import dotenv_values, load_dotenv
 from langchain_openai import ChatOpenAI
 
 log = logging.getLogger(__name__)
 
-# Load backend/.env first (LLM + auth secrets) without clobbering shell exports,
-# then fill in any missing keys (e.g. NEON_DATABASE_URL) from the Next.js
-# app's .env.local. Using `dotenv_values` for the second pass lets us only set
-# keys that are empty/unset — backend/.env ships with NEON_DATABASE_URL= as a
-# placeholder which would otherwise shadow the real value.
+# ── env loading ────────────────────────────────────────────────────────────
+#
+# Run at import time so callers that read env (e.g. ``deep_icp_graph._dsn``)
+# see the values without having to call ``make_llm`` first. ``load_dotenv``
+# does NOT clobber shell exports, and the second pass via ``dotenv_values``
+# only fills keys that are still unset — so a test monkeypatching env via
+# ``monkeypatch.setenv`` continues to win because its export already exists by
+# the time the test imports this module.
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(_BACKEND_DIR / ".env")
-for _k, _v in dotenv_values(_BACKEND_DIR.parent / ".env.local").items():
-    if _v and not os.environ.get(_k):
-        os.environ[_k] = _v
+_ENV_LOADED = False
+
+
+def _load_env_once() -> None:
+    global _ENV_LOADED
+    if _ENV_LOADED:
+        return
+    load_dotenv(_BACKEND_DIR / ".env")
+    for _k, _v in dotenv_values(_BACKEND_DIR.parent / ".env.local").items():
+        if _v and not os.environ.get(_k):
+            os.environ[_k] = _v
+    _ENV_LOADED = True
+
+
+# Eager load so other modules don't need to call _load_env_once explicitly.
+_load_env_once()
 
 
 def _is_local(base_url: str) -> bool:
@@ -98,6 +115,55 @@ def _email_llm_cfg() -> tuple[str, str, str]:
     return base_url, api_key, model
 
 
+def _llm_http_timeout() -> float:
+    try:
+        return float(os.environ.get("LLM_HTTP_TIMEOUT_S", "90"))
+    except ValueError:
+        return 90.0
+
+
+@functools.lru_cache(maxsize=32)
+def _make_llm_cached(
+    provider: str | None,
+    tier: str | None,
+    temp_key: float,
+) -> ChatOpenAI:
+    """Build (and cache) the ChatOpenAI client for a (provider, tier, temp) tuple.
+
+    Caching avoids rebuilding the underlying httpx connection pool on every node
+    invocation — the prior behaviour churned 20+ pools per supervisor run. Env
+    is read here so tests that mutate env between calls still see fresh values
+    on the first lookup of a new (provider, tier, temp) combination.
+    """
+    _load_env_once()
+    if provider == "deepseek":
+        base_url, api_key, model = _deepseek_cfg(tier)
+    elif provider == "email_llm":
+        base_url, api_key, model = _email_llm_cfg()
+    else:
+        base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
+        api_key = (
+            os.environ.get("DEEPSEEK_API_KEY")
+            or os.environ.get("LLM_API_KEY")
+            or "local"
+        )
+        model = os.environ.get("LLM_MODEL", "default_model")
+
+    timeout = _llm_http_timeout()
+    return ChatOpenAI(
+        model=model,
+        api_key=api_key,
+        base_url=base_url,
+        temperature=temp_key,
+        # We own retries via ainvoke_json_with_telemetry. Without max_retries=0
+        # the openai SDK silently retried 2× on top of our 3, amplifying load
+        # under transient outages and turning a flaky upstream into a 9-attempt
+        # storm.
+        max_retries=0,
+        timeout=httpx.Timeout(timeout, connect=10.0, read=timeout),
+    )
+
+
 def make_llm(
     temperature: float | None = None,
     *,
@@ -114,20 +180,14 @@ def make_llm(
     ``deepseek-reasoner`` — use for higher-reasoning nodes (value metric,
     differentiation, pricing rationale, GTM pillars, final synthesis).
     """
-    if provider == "deepseek":
-        base_url, api_key, model = _deepseek_cfg(tier)
-    elif provider == "email_llm":
-        base_url, api_key, model = _email_llm_cfg()
-    else:
-        base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
-        api_key = (
-            os.environ.get("DEEPSEEK_API_KEY")
-            or os.environ.get("LLM_API_KEY")
-            or "local"
-        )
-        model = os.environ.get("LLM_MODEL", "default_model")
-    temp = temperature if temperature is not None else float(os.environ.get("LLM_TEMPERATURE", "0.2"))
-    return ChatOpenAI(model=model, api_key=api_key, base_url=base_url, temperature=temp)
+    _load_env_once()
+    if temperature is None:
+        try:
+            temperature = float(os.environ.get("LLM_TEMPERATURE", "0.2"))
+        except ValueError:
+            temperature = 0.2
+    # Round so float-noise doesn't blow the cache (0.2000001 vs 0.2).
+    return _make_llm_cached(provider, tier, round(temperature, 3))
 
 
 def supports_json_mode(*, provider: str | None = None) -> bool:
@@ -307,9 +367,62 @@ def _retry_config() -> tuple[int, float, float]:
     return max_attempts, base, cap
 
 
-async def _sleep_with_backoff(attempt: int, base: float, cap: float) -> None:
+def _retry_after_seconds(exc: BaseException, cap: float) -> float | None:
+    """Extract a ``Retry-After`` hint from a 429/503 response, if present.
+
+    Honors both the integer-seconds form (``Retry-After: 30``) and the HTTP-date
+    form. Returns ``None`` when the header is absent or unparseable so the
+    caller falls back to the standard jittered backoff. The value is clamped
+    to ``cap`` so a buggy server can't park us for an hour.
+    """
+    response = getattr(exc, "response", None)
+    headers = getattr(response, "headers", None)
+    if not headers:
+        return None
+    raw = headers.get("retry-after") or headers.get("Retry-After")
+    if not raw:
+        return None
+    try:
+        return min(cap, max(0.0, float(raw)))
+    except (TypeError, ValueError):
+        pass
+    # HTTP-date form — parse via email.utils so we don't pull a heavy dep.
+    try:
+        from email.utils import parsedate_to_datetime
+
+        target = parsedate_to_datetime(raw)
+    except (TypeError, ValueError):
+        return None
+    if target is None:
+        return None
+    import datetime as _dt
+
+    now = _dt.datetime.now(target.tzinfo) if target.tzinfo else _dt.datetime.utcnow()
+    delta = (target - now).total_seconds()
+    if delta <= 0:
+        return 0.0
+    return min(cap, delta)
+
+
+async def _sleep_with_backoff(
+    attempt: int,
+    base: float,
+    cap: float,
+    *,
+    exc: BaseException | None = None,
+) -> None:
     """Exponential backoff with full jitter. ``attempt`` is the 1-indexed
-    failed attempt count — 1 after the first failure, 2 after the second, …"""
+    failed attempt count — 1 after the first failure, 2 after the second, …
+
+    When the upstream returns a ``Retry-After`` header (typical for 429 and
+    occasionally 503) we honor it instead of the jittered backoff so we don't
+    keep hammering past the rate-limit window.
+    """
+    if exc is not None:
+        hint = _retry_after_seconds(exc, cap)
+        if hint is not None:
+            await asyncio.sleep(hint)
+            return
     if base <= 0:
         return
     high = min(cap, base * (2 ** (attempt - 1)))
@@ -365,7 +478,7 @@ async def ainvoke_json_with_telemetry(
                 type(exc).__name__,
                 str(exc)[:200],
             )
-            await _sleep_with_backoff(attempt, base, cap)
+            await _sleep_with_backoff(attempt, base, cap, exc=exc)
     if resp is None:  # pragma: no cover — loop invariant: either break or raise
         raise RuntimeError(f"LLM call failed after retries: {last_exc!r}")
 

@@ -47,13 +47,27 @@ EXTRACTOR_VERSION = "python-qwen-2026-04"
 
 # ── Node 1: load ──────────────────────────────────────────────────────────────
 
+# Re-classify a company at most once per FRESHNESS_DAYS unless the caller
+# explicitly opts in via ``force_refresh``. Tunable via env so a discovery
+# backfill can lower it without a code change.
+try:
+    _FRESHNESS_DAYS = max(1, int(os.environ.get("ENRICHMENT_FRESHNESS_DAYS", "30")))
+except ValueError:
+    _FRESHNESS_DAYS = 30
+_FRESHNESS_MIN_CONFIDENCE = 0.6
+
+
 async def load(state: CompanyEnrichmentState) -> dict:
-    if state.get("_error"):
+    if state.get("_error") or state.get("_skip_reason"):
         return {}
     company_id = state.get("company_id")
     if company_id is None:
         return {"_error": "load: company_id is required"}
-    sql = "SELECT id, name, canonical_domain, website FROM companies WHERE id = %s LIMIT 1"
+    sql = (
+        "SELECT id, name, canonical_domain, website, category, ai_tier, "
+        "       ai_classification_confidence, updated_at "
+        "FROM companies WHERE id = %s LIMIT 1"
+    )
     try:
         with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
             with conn.cursor() as cur:
@@ -70,20 +84,41 @@ async def load(state: CompanyEnrichmentState) -> dict:
     if not domain:
         return {"_error": "load: company has no canonical_domain"}
 
-    return {
-        "company": {
-            "id": rec["id"],
-            "name": rec.get("name") or "",
-            "canonical_domain": domain,
-            "website": rec.get("website") or "",
-        }
+    company = {
+        "id": rec["id"],
+        "name": rec.get("name") or "",
+        "canonical_domain": domain,
+        "website": rec.get("website") or "",
     }
+
+    # Fresh-skip gate: don't re-pay LLM tokens to re-derive a category we
+    # already have at decent confidence and recent updated_at. Caller can
+    # bypass with force_refresh=True (e.g. taxonomy migration).
+    if not state.get("force_refresh"):
+        category = (rec.get("category") or "").strip().upper()
+        confidence = float(rec.get("ai_classification_confidence") or 0.0)
+        updated_at = rec.get("updated_at")
+        is_classified = category and category != "UNKNOWN" and confidence >= _FRESHNESS_MIN_CONFIDENCE
+        is_recent = False
+        if updated_at is not None:
+            try:
+                age_days = (datetime.now(timezone.utc) - updated_at).days
+                is_recent = age_days < _FRESHNESS_DAYS
+            except (TypeError, ValueError):
+                is_recent = False
+        if is_classified and is_recent:
+            return {
+                "company": company,
+                "_skip_reason": "fresh",
+            }
+
+    return {"company": company}
 
 
 # ── Node 2: fetch ─────────────────────────────────────────────────────────────
 
 async def fetch(state: CompanyEnrichmentState) -> dict:
-    if state.get("_error"):
+    if state.get("_error") or state.get("_skip_reason"):
         return {}
     t0 = time.perf_counter()
     domain = state["company"]["canonical_domain"]
@@ -154,7 +189,7 @@ def _heuristic_classify(home_markdown: str, careers_markdown: str) -> dict[str, 
 
 
 async def classify(state: CompanyEnrichmentState) -> dict:
-    if state.get("_error"):
+    if state.get("_error") or state.get("_skip_reason"):
         return {}
     t0 = time.perf_counter()
     company = state.get("company") or {}
@@ -218,7 +253,7 @@ async def classify(state: CompanyEnrichmentState) -> dict:
 # ── Node 4: score ─────────────────────────────────────────────────────────────
 
 async def score(state: CompanyEnrichmentState) -> dict:
-    if state.get("_error"):
+    if state.get("_error") or state.get("_skip_reason"):
         return {}
     t0 = time.perf_counter()
     c = state.get("classification") or {}
@@ -367,7 +402,7 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
     Adding a new product is a one-file change under ``verticals/<slug>.py``;
     no change needed here.
     """
-    if state.get("_error"):
+    if state.get("_error") or state.get("_skip_reason"):
         return {}
     company_id = state.get("company_id")
     if company_id is None:
@@ -544,7 +579,7 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
 
 
 async def persist(state: CompanyEnrichmentState) -> dict:
-    if state.get("_error"):
+    if state.get("_error") or state.get("_skip_reason"):
         return {}
     t0 = time.perf_counter()
     company = state.get("company") or {}
@@ -693,7 +728,7 @@ async def embed_profile(state: CompanyEnrichmentState) -> dict:
     read the fresh embedding for semantic cosine against ``products.icp_embedding``.
     Non-fatal — a failure here does not block scoring (regex-only still works).
     """
-    if state.get("_error"):
+    if state.get("_error") or state.get("_skip_reason"):
         return {}
     company_id = state.get("company_id")
     if company_id is None:

@@ -486,6 +486,8 @@ class CompanyEnrichmentState(TypedDict, total=False):
     updated: bool
     # plumbing
     _error: str
+    _skip_reason: str               # set when load() short-circuits the run as fresh
+    force_refresh: bool             # caller opt-in: re-run even when DB row is fresh
     agent_timings: Annotated[dict[str, float], _merge_dict]
     graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
 
