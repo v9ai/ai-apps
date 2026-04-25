@@ -63,4 +63,5 @@ dev = [
 asyncio_mode = "auto"
 markers = [
     "hypothesis: property-based tests using the Hypothesis library",
+    "live: live e2e probes against a deployed LangGraph URL — gated by RUN_LIVE_E2E=1",
 ]

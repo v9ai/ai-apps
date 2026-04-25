@@ -7,5 +7,6 @@ export const generationJobs: NonNullable<QueryResolvers['generationJobs']> = asy
     goalId: args.goalId ?? undefined,
     status: args.status ?? undefined,
     type: args.type ?? undefined,
+    limit: 20,
   });
 };

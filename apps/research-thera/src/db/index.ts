@@ -1204,7 +1204,7 @@ function parseJobError(raw: string): { message: string; code?: string; details?:
   }
 }
 
-export async function listGenerationJobs(filters: { userId?: string; goalId?: number; status?: string; type?: string } = {}) {
+export async function listGenerationJobs(filters: { userId?: string; goalId?: number; status?: string; type?: string; limit?: number } = {}) {
   const conditions: string[] = [];
   const args: any[] = [];
 
@@ -1213,28 +1213,42 @@ export async function listGenerationJobs(filters: { userId?: string; goalId?: nu
   if (filters.status) { conditions.push("status = ?"); args.push(filters.status); }
   if (filters.type) { conditions.push("type = ?"); args.push(filters.type); }
 
-  let query = "SELECT * FROM generation_jobs";
+  // Narrow projection: skip the full `result` JSONB and `langgraph_*` ids; only project the
+  // three result fields actually consumed by GetRecentJobs.graphql to keep Neon egress low.
+  let query =
+    "SELECT id, user_id, type, goal_id, story_id, status, progress, " +
+    "result->>'count' AS result_count, " +
+    "result->>'stage' AS result_stage, " +
+    "result->>'audioUrl' AS result_audio_url, " +
+    "error, created_at, updated_at FROM generation_jobs";
   if (conditions.length > 0) query += ` WHERE ${conditions.join(" AND ")}`;
-  query += " ORDER BY created_at DESC";
+  query += " ORDER BY created_at DESC LIMIT ?";
+  args.push(filters.limit ?? 20);
 
   const [q, params] = p(query, args);
   const rows = await neonSql(q, params);
 
-  return rows.map((row) => ({
-    id: row.id as string,
-    userId: row.user_id as string,
-    type: row.type as any,
-    goalId: row.goal_id as number,
-    storyId: (row.story_id as number) || null,
-    status: row.status as any,
-    progress: row.progress as number,
-    result: safeJsonParse(row.result as string, null),
-    error: row.error ? parseJobError(row.error as string) : null,
-    langgraphThreadId: (row.langgraph_thread_id as string) || null,
-    langgraphRunId: (row.langgraph_run_id as string) || null,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
+  return rows.map((row) => {
+    const count = row.result_count != null ? Number(row.result_count) : null;
+    const stage = (row.result_stage as string) ?? null;
+    const audioUrl = (row.result_audio_url as string) ?? null;
+    const hasResult = count !== null || stage !== null || audioUrl !== null;
+    return {
+      id: row.id as string,
+      userId: row.user_id as string,
+      type: row.type as any,
+      goalId: row.goal_id as number,
+      storyId: (row.story_id as number) || null,
+      status: row.status as any,
+      progress: row.progress as number,
+      result: hasResult ? { count, stage, audioUrl } : null,
+      error: row.error ? parseJobError(row.error as string) : null,
+      langgraphThreadId: null,
+      langgraphRunId: null,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    };
+  });
 }
 
 export async function getGenerationJob(id: string) {

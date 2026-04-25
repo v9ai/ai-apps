@@ -151,7 +151,7 @@ start-top: ## Show top leads (pass N=50 for count)
 # Formerly Rust cargo tests. The ported Python modules don't ship with
 # a pytest suite yet — targets are kept for compat, announce, and exit 0.
 
-.PHONY: ml-test ml-test-all backend-test-remote
+.PHONY: ml-test ml-test-all backend-test-remote backend-test-live
 
 ml-test: ## No-op (ported to Python; pytest suite not yet written)
 	@echo "ml-test: Rust tests removed; Python pytest suite pending"
@@ -171,6 +171,9 @@ backend-test-remote: ## Run RemoteGraph + contract test suite
 		tests/test_core_app.py \
 		tests/test_research_app.py \
 		-v
+
+backend-test-live: ## Live e2e against deployed CF URL (LANGGRAPH_AUTH_TOKEN from .env.local; real DeepSeek)
+	dotenv -f .env.local run -- bash -c 'cd backend && RUN_LIVE_E2E=1 uv run pytest tests/test_remote_langgraph_e2e.py -v'
 
 # ── ML Improvement Loop ───────────────────────────────────────
 # Usage:

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Badge,
   Box,
@@ -54,14 +54,30 @@ function jobHref(job: { id: string }): string {
   return `/jobs/${job.id}`;
 }
 
+const POLL_INTERVAL_MS = 15000;
+
 export function JobsIndicator() {
   const [open, setOpen] = useState(false);
 
-  const { data, loading } = useGetRecentJobsQuery({
-    pollInterval: 3000,
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
+  const { data, loading, startPolling, stopPolling, refetch } = useGetRecentJobsQuery({
+    pollInterval: POLL_INTERVAL_MS,
+    fetchPolicy: "cache-first",
   });
+
+  // Pause polling when tab is hidden; resume + refetch on visibility return.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const handle = () => {
+      if (document.visibilityState === "hidden") {
+        stopPolling();
+      } else {
+        refetch();
+        startPolling(POLL_INTERVAL_MS);
+      }
+    };
+    document.addEventListener("visibilitychange", handle);
+    return () => document.removeEventListener("visibilitychange", handle);
+  }, [startPolling, stopPolling, refetch]);
 
   const jobs = useMemo(() => (data?.generationJobs ?? []).slice(0, 20), [data?.generationJobs]);
   const runningCount = useMemo(

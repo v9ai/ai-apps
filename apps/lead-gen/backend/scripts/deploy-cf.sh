@@ -181,6 +181,28 @@ probe() {
     warn "$name did not respond in 12s (may still be cold-starting)"
 }
 
+# ── post-deploy live e2e gate ──────────────────────────────────────────────
+# Runs the test suite in backend/tests/test_remote_langgraph_e2e.py against
+# the deployed dispatcher. Skipped (with a warn) when LANGGRAPH_AUTH_TOKEN is
+# absent from the environment — load it via `.env.local` before running this
+# script, e.g. `dotenv -f .env.local run -- bash backend/scripts/deploy-cf.sh all`.
+# Failure here exits the script non-zero so a broken deploy is loud.
+live_e2e() {
+    if [ -z "${LANGGRAPH_AUTH_TOKEN:-}" ]; then
+        warn "LANGGRAPH_AUTH_TOKEN not set — skipping live e2e gate "\
+"(load .env.local or run: dotenv -f .env.local run -- $0 $TARGET)"
+        return 0
+    fi
+    say "running live e2e suite against deployed dispatcher..."
+    if RUN_LIVE_E2E=1 uv run --project "$BACKEND_DIR" pytest \
+            "$BACKEND_DIR/tests/test_remote_langgraph_e2e.py" \
+            --maxfail=1 -q; then
+        ok "live e2e passed"
+    else
+        die "live e2e failed — deploy is broken"
+    fi
+}
+
 # ── dispatch ───────────────────────────────────────────────────────────────
 case "$TARGET" in
     secrets-check)
@@ -215,6 +237,7 @@ case "$TARGET" in
 
         say "post-deploy smoke:"
         probe "https://lead-gen-langgraph.eeeew.workers.dev/ok" "dispatcher /ok"
+        live_e2e
         ;;
     *)
         die "unknown target: $TARGET (expected: all | ml | research | core | dispatcher | secrets-check)"

@@ -262,10 +262,16 @@ async function main() {
   if (toScrape.length === 0) return;
 
   const browser: Browser = await chromium.launch({ headless: true });
+  // Force a US locale so BrickEconomy serves prices in USD instead of falling
+  // back to the host machine's geo-IP (which yields EUR for EU runs and leaves
+  // usd_retail / usd_market columns empty).
   const ctx = await browser.newContext({
     userAgent:
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
     viewport: { width: 1280, height: 800 },
+    locale: "en-US",
+    timezoneId: "America/New_York",
+    extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9" },
   });
   const page = await ctx.newPage();
 
