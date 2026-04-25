@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from typing import Annotated, Any, TypedDict
 
@@ -577,6 +578,26 @@ def _hard_validate_draft(draft: dict[str, Any], competitive: dict[str, Any]) -> 
             )
             break
 
+    # Bold percentage claims (≥95%) read as overreach to technical buyers and
+    # have surfaced in real reviewer feedback. Force a redraft that uses a
+    # conservative range (e.g. '80-90%') with a corpus qualifier.
+    bold_pct_strings: list[str] = [stmt]
+    for x in (draft.get("differentiators") or []):
+        bold_pct_strings.append(str(x))
+    for x in (draft.get("narrative_hooks") or []):
+        bold_pct_strings.append(str(x))
+    bold_pct_re = re.compile(r"\b(9[5-9](?:\.\d+)?|100(?:\.0+)?)\s*%")
+    for s in bold_pct_strings:
+        m = bold_pct_re.search(s)
+        if m:
+            issues.append(
+                f"bold percentage claim ({m.group(0)}) — replace with a "
+                "conservative range (e.g. '80-90%') and qualify the corpus "
+                "type ('on document-heavy corpora'); avoid headline claims "
+                "at or above 95% unless the brief supplies a published benchmark"
+            )
+            break
+
     return issues
 
 
@@ -631,10 +652,16 @@ async def stress_test(state: PositioningState) -> dict:
                         "  5. Category accuracy: does the stated category match the "
                         "product's actual buyer journey (e.g. developer onboarding, not "
                         "generic 'Employee Onboarding Software' if product is code-aware)?\n"
-                        "If ALL five pass, return "
+                        "  6. Quantitative claims: any percentage in the statement, "
+                        "differentiators, or hooks must be conservative and corpus-"
+                        "qualified — reject headline claims at or above 95% (e.g. "
+                        "'99% reduction', '97% accuracy') unless the brief itself "
+                        "supplies a published benchmark. Prefer ranges (e.g. '80-90%') "
+                        "and qualify the corpus type ('on document-heavy corpora').\n"
+                        "If ALL six pass, return "
                         '{"approved":true,"critique":""}. Otherwise list the failing '
                         'checks: {"approved":false,"critique":"<one bullet per failed '
-                        'check, 3-6 bullets total>"}. Return JSON only.'
+                        'check, 3-7 bullets total>"}. Return JSON only.'
                     ),
                 },
                 {

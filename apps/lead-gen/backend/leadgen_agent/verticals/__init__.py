@@ -27,6 +27,7 @@ from .registry import (  # noqa: F401 — re-exports
 
 # Import each vertical module to register it. Order determines default
 # iteration order only when sorted() is bypassed — all_verticals() sorts by slug.
+from . import compliance_audit  # noqa: F401,E402
 from . import ingestible  # noqa: F401,E402
 
 __all__ = [
@@ -39,5 +40,6 @@ __all__ = [
     "compute_score_and_tier",
     "get_vertical",
     "register",
+    "compliance_audit",
     "ingestible",
 ]
