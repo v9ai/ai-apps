@@ -151,13 +151,26 @@ start-top: ## Show top leads (pass N=50 for count)
 # Formerly Rust cargo tests. The ported Python modules don't ship with
 # a pytest suite yet — targets are kept for compat, announce, and exit 0.
 
-.PHONY: ml-test ml-test-all
+.PHONY: ml-test ml-test-all backend-test-remote
 
 ml-test: ## No-op (ported to Python; pytest suite not yet written)
 	@echo "ml-test: Rust tests removed; Python pytest suite pending"
 
 ml-test-all: ## No-op (ported to Python; pytest suite not yet written)
 	@echo "ml-test-all: Rust tests removed; Python pytest suite pending"
+
+backend-test-remote: ## Run RemoteGraph + contract test suite
+	cd backend && ML_EAGER_LOAD=0 uv run pytest \
+		tests/test_contracts_validation.py \
+		tests/test_remote_graph_adapter.py \
+		tests/test_remote_graph_env.py \
+		tests/test_ml_graphs.py \
+		tests/test_extract_skills_node.py \
+		tests/test_dispatcher_logic.py \
+		tests/test_remote_graph_http.py \
+		tests/test_core_app.py \
+		tests/test_research_app.py \
+		-v
 
 # ── ML Improvement Loop ───────────────────────────────────────
 # Usage:

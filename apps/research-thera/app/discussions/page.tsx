@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Box,
   Flex,
@@ -8,6 +9,7 @@ import {
   Card,
   Badge,
   Spinner,
+  Button,
   Separator,
   Tooltip,
   Link as RadixLink,
@@ -15,8 +17,10 @@ import {
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
+  useGenerateBogdanDiscussionMutation,
   useLatestBogdanDiscussionQuery,
   useBogdanDiscussionsQuery,
+  useGetGenerationJobQuery,
 } from "@/app/__generated__/hooks";
 import { AuthGate } from "../components/AuthGate";
 

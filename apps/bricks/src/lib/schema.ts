@@ -108,7 +108,11 @@ export const setPricesCache = pgTable("set_prices_cache", {
   usdRetail: integer("usd_retail"),
   gbpRetail: integer("gbp_retail"),
   eurRetail: integer("eur_retail"),
+  usdMarket: integer("usd_market"),
+  gbpMarket: integer("gbp_market"),
+  eurMarket: integer("eur_market"),
   bricklinkId: integer("bricklink_id"),
+  source: text("source").notNull().default("brickset"),
   found: boolean("found").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
