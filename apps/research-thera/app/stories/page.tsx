@@ -77,23 +77,11 @@ function StoriesListContent() {
           year: "numeric",
         });
 
-        const ariaLabel = story.goal
-          ? `Open story for goal ${story.goal.title}, created ${date}`
-          : `Open story created ${date}`;
         return (
           <Card
             key={story.id}
-            role="link"
-            tabIndex={0}
-            aria-label={ariaLabel}
             style={{ cursor: "pointer" }}
             onClick={() => router.push(`/stories/${story.id}`)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                router.push(`/stories/${story.id}`);
-              }
-            }}
           >
             <Flex direction="column" gap="3" p="2">
               <Flex justify="between" align="start" gap="3">

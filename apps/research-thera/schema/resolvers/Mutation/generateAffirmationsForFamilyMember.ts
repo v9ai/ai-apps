@@ -44,7 +44,7 @@ export const generateAffirmationsForFamilyMember: NonNullable<MutationResolvers[
     count: created.length,
     affirmations: created.map((a) => ({
       ...a,
-      category: (a.category.toUpperCase().replace(/-/g, "_") ?? "ENCOURAGEMENT") as AffirmationCategory,
+      category: ((a.category ?? "encouragement").toUpperCase().replace(/-/g, "_")) as AffirmationCategory,
     })),
   };
 };
