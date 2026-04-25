@@ -50,6 +50,48 @@ from langchain_openai import ChatOpenAI
 
 log = logging.getLogger(__name__)
 
+# ── DeepSeek model catalog ─────────────────────────────────────────────────
+#
+# Single source of truth for DeepSeek model IDs. Mirrors
+# src/lib/deepseek/constants.ts (DEEPSEEK_MODELS) on the TS side — keep them
+# in sync when DeepSeek ships a new generation. Prices below feed
+# MODEL_PRICING; bumping the catalog auto-updates cost telemetry.
+
+DEEPSEEK_FLASH = "deepseek-v4-flash"
+DEEPSEEK_PRO   = "deepseek-v4-pro"
+
+DEEPSEEK_MODELS: dict[str, dict[str, Any]] = {
+    DEEPSEEK_FLASH: {
+        "input_per_1m":  0.27,
+        "output_per_1m": 1.10,
+        "note": "non-thinking, summary nodes",
+    },
+    DEEPSEEK_PRO: {
+        "input_per_1m":  0.55,
+        "output_per_1m": 2.19,
+        "note": "thinking mode, reasoning_effort=high",
+    },
+}
+
+
+def deepseek_model_name(tier: str | None = None) -> str:
+    """Resolve the DeepSeek model string for a given tier.
+
+    Mirrors the logic inside ``_deepseek_cfg()`` so callers that only need
+    the model name — e.g. recording it on ``graph_meta.model`` for
+    telemetry — don't have to duplicate the env read.
+
+    - ``tier="deep"`` → ``DEEPSEEK_MODEL_DEEP`` env var, default ``DEEPSEEK_PRO``
+    - otherwise      → ``DEEPSEEK_MODEL`` env var, default ``DEEPSEEK_PRO``
+
+    Both tiers default to ``DEEPSEEK_PRO`` because the project standardized
+    on v4-pro everywhere; the two env knobs let deployments diverge.
+    """
+    if tier == "deep":
+        return os.environ.get("DEEPSEEK_MODEL_DEEP", DEEPSEEK_PRO)
+    return os.environ.get("DEEPSEEK_MODEL", DEEPSEEK_PRO)
+
+
 # ── env loading ────────────────────────────────────────────────────────────
 #
 # Run at import time so callers that read env (e.g. ``deep_icp_graph._dsn``)
@@ -90,10 +132,7 @@ def _deepseek_cfg(tier: str | None) -> tuple[str, str, str]:
     """
     base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
     api_key = os.environ.get("DEEPSEEK_API_KEY", "")
-    if tier == "deep":
-        model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
-    else:
-        model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-pro")
+    model = deepseek_model_name(tier)
     return base_url, api_key, model
 
 
@@ -232,19 +271,24 @@ async def ainvoke_json(
 
 # ── Cost + latency telemetry ─────────────────────────────────────────────
 #
-# Per-1M-token list pricing (USD). Keep in sync with provider pricing pages
-# when rates change. Verified 2026-04 from the DeepSeek pricing docs:
+# Per-1M-token list pricing (USD). DeepSeek v4 entries are derived from the
+# DEEPSEEK_MODELS catalog above so a price bump only needs to land in one
+# place. Other providers (CF Workers, local Qwen) are listed as literals.
+# Verified 2026-04 from the DeepSeek pricing docs:
 #   https://api-docs.deepseek.com/quick_start/pricing
 # (Cache-hit / off-peak discounts are NOT factored in — this is the pessimistic
 # price, so real spend is ≤ computed cost_usd. Close enough for "which node is
 # expensive" questions; swap in actual billed amounts if/when we ingest the
 # provider's billing API.)
 MODEL_PRICING: dict[str, dict[str, float]] = {
-    # DeepSeek v4 — current models, cache-miss tier.
-    "deepseek-v4-flash": {"input_per_1m": 0.27, "output_per_1m": 1.10},
-    "deepseek-v4-pro":   {"input_per_1m": 0.55, "output_per_1m": 2.19},
-    # Legacy IDs — deprecated 2026-07-24, retained so historical telemetry and
-    # any in-flight calls still cost-account correctly.
+    # DeepSeek v4 — derived from the catalog above so a price change
+    # updates one source of truth.
+    **{
+        model_id: {"input_per_1m": meta["input_per_1m"], "output_per_1m": meta["output_per_1m"]}
+        for model_id, meta in DEEPSEEK_MODELS.items()
+    },
+    # Legacy IDs — deprecated 2026-07-24, retained so historical telemetry
+    # and any in-flight calls still cost-account correctly.
     "deepseek-chat":     {"input_per_1m": 0.27, "output_per_1m": 1.10},
     "deepseek-reasoner": {"input_per_1m": 0.55, "output_per_1m": 2.19},
     # Cloudflare Workers AI — @cf/mistral/mistral-7b-instruct-v0.2-lora behind

@@ -10,6 +10,9 @@
     // and the graphs fail at request-time. Mirrors core's defaults so the two
     // containers reason against the same model unless overridden by a secret.
     "LLM_BASE_URL": "https://api.deepseek.com",
+    // Source of truth: src/lib/deepseek/constants.ts (DEEPSEEK_MODELS.pro.id),
+    // mirrored in backend/_shared/deepseek-constants.js. wrangler.jsonc cannot
+    // import code, so the literal is duplicated here — keep in sync.
     "LLM_MODEL": "deepseek-v4-pro"
   },
   "containers": [

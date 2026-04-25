@@ -37,7 +37,13 @@ from .icp_fit_scorer import (
     load_composite_weights,
     tier_for,
 )
-from .llm import ainvoke_json_with_telemetry, compute_totals, make_llm, merge_node_telemetry
+from .llm import (
+    ainvoke_json_with_telemetry,
+    compute_totals,
+    deepseek_model_name,
+    make_llm,
+    merge_node_telemetry,
+)
 from .loaders import fetch_url
 from .product_intel_schemas import product_intel_graph_meta
 from .state import CompanyEnrichmentState
@@ -689,7 +695,7 @@ async def persist(state: CompanyEnrichmentState) -> dict:
     except psycopg.Error as e:
         return {"_error": f"persist: {e}"}
 
-    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
+    model = deepseek_model_name("deep")
     telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
     meta = product_intel_graph_meta(
         graph="company_enrichment",

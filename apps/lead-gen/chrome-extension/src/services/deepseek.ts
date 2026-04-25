@@ -25,6 +25,9 @@ class DeepSeekServiceImpl implements DeepSeekService {
       },
       body: JSON.stringify({
         prompt,
+        // Mirror of src/lib/deepseek/constants.ts (DEEPSEEK_MODELS.pro.id).
+        // Keep in sync — chrome-extension is a separate Vite build with no
+        // shared types path into the parent Next.js app.
         model: "deepseek-v4-pro",
       }),
     });

@@ -18,7 +18,13 @@ import psycopg
 from langgraph.graph import END, START, StateGraph
 
 from .deep_icp_graph import _dsn
-from .llm import ainvoke_json_with_telemetry, compute_totals, make_llm, merge_node_telemetry
+from .llm import (
+    ainvoke_json_with_telemetry,
+    compute_totals,
+    deepseek_model_name,
+    make_llm,
+    merge_node_telemetry,
+)
 from .product_intel_schemas import product_intel_graph_meta
 from .state import CompanyDiscoveryState
 
@@ -284,7 +290,7 @@ async def persist(state: CompanyDiscoveryState) -> dict:
         except psycopg.Error as e:
             return {"_error": f"persist: {e}"}
 
-    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
+    model = deepseek_model_name("deep")
     telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
     agent_timings_so_far = dict(state.get("agent_timings") or {})
     agent_timings_so_far["persist"] = round(time.perf_counter() - t0, 3)
