@@ -28,16 +28,15 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import secrets
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import BaseModel
-from starlette.middleware.base import BaseHTTPMiddleware
+
+from leadgen_agent.auth import make_bearer_token_middleware
 
 # Import the 6 source graphs. Five have ``build_graph(checkpointer)``; the
 # scholar wrapper defined in research_graphs.scholar does too.
@@ -58,6 +57,12 @@ log = logging.getLogger("leadgen_research")
 # config that confuses the bearer-token gate's audit surface.
 _PUBLIC_PATHS = frozenset({"/health"})
 
+# Shared factory — single source of truth in ``leadgen_agent/auth.py``. The
+# class name is re-exported so existing imports keep working.
+BearerTokenMiddleware = make_bearer_token_middleware(
+    "RESEARCH_INTERNAL_AUTH_TOKEN", public_paths=_PUBLIC_PATHS
+)
+
 # CF Container wall-clock is 5 min (default). A WARC fetch over Common Crawl
 # averages ~2–4s per record at WARC_CONCURRENCY=8, so anything beyond ~80
 # pages cannot reliably finish before the Container is killed — and the
@@ -69,20 +74,6 @@ _COMMON_CRAWL_MAX_PAGES_LIMIT = 80
 # Bound the in-memory async-run registry to avoid unbounded growth across the
 # Container's 30-minute idle window when many fire-and-forget runs are issued.
 _ASYNC_RUNS_CAP = 256
-
-
-class BearerTokenMiddleware(BaseHTTPMiddleware):
-    """Shared-secret gate. No-op when the token env var is unset."""
-
-    async def dispatch(self, request: Request, call_next):
-        expected = os.environ.get("RESEARCH_INTERNAL_AUTH_TOKEN")
-        if not expected or request.url.path in _PUBLIC_PATHS:
-            return await call_next(request)
-        auth = request.headers.get("authorization", "")
-        scheme, _, token = auth.partition(" ")
-        if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
-            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-        return await call_next(request)
 
 
 def _build_common_crawl(checkpointer: Any) -> Any:
