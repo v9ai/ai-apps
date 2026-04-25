@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -21,3 +22,20 @@ def golden_products() -> list[dict]:
     assert isinstance(data, list)
     assert len(data) >= 15, "golden set must have at least 15 products"
     return data
+
+
+@pytest.fixture(autouse=True)
+def _reset_remote_adapter_cache() -> Any:
+    """Adapter factories cache RemoteGraph instances by name. Tests that
+    monkeypatch ``ML_URL`` / ``RESEARCH_URL`` would otherwise see a cached
+    adapter built under a previous test's env. Reset before and after each
+    test so isolation matches the pre-cache behaviour.
+    """
+    try:
+        from core.remote_graphs import reset_adapter_cache
+    except Exception:  # noqa: BLE001 — torch/transitive imports may fail in some envs
+        yield
+        return
+    reset_adapter_cache()
+    yield
+    reset_adapter_cache()
