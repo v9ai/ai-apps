@@ -19,7 +19,7 @@ Pipeline:
                       ▼
                    notify_complete | notify_error_node
 
-All specialists pin to ``deepseek-reasoner`` (``provider="deepseek", tier="deep"``)
+All specialists pin to ``deepseek-v4-pro`` (``provider="deepseek", tier="deep"``)
 because extracting hard signals from noisy marketing pages benefits from the
 reasoning model.
 
@@ -1016,7 +1016,7 @@ async def synthesize(state: DeepCompetitorState) -> dict:
 
     meta = product_intel_graph_meta(
         graph="deep_competitor",
-        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner"),
+        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro"),
         agent_timings=state.get("agent_timings") or {},
     )
     analysis = {

@@ -689,7 +689,7 @@ async def persist(state: CompanyEnrichmentState) -> dict:
     except psycopg.Error as e:
         return {"_error": f"persist: {e}"}
 
-    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner")
+    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
     telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
     meta = product_intel_graph_meta(
         graph="company_enrichment",

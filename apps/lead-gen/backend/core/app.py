@@ -503,7 +503,7 @@ class DispatchPositioningRequest(BaseModel):
     limit: int | None = None
 
 
-# Bound positioning fan-out: deepseek-reasoner tolerates a few concurrent
+# Bound positioning fan-out: deepseek-v4-pro tolerates a few concurrent
 # requests but a 100-product dispatch with no cap would rate-limit us and
 # starve other graphs sharing the same LLM pool.
 _POSITIONING_CONCURRENCY = int(os.environ.get("POSITIONING_CONCURRENCY", "3"))

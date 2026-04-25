@@ -34,7 +34,7 @@ export async function generateDeepSeek(
   input: GenerateInput,
 ): Promise<string> {
   const model =
-    input.model ?? process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+    input.model ?? process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro";
 
   const client = getDeepSeekClient();
 
@@ -43,12 +43,14 @@ export async function generateDeepSeek(
       ? (input.promptText as unknown as OpenAI.Chat.ChatCompletionCreateParams["messages"])
       : [{ role: "user", content: String(input.promptText) }];
 
+  // Thinking mode: temperature / top_p / penalties are silently ignored upstream.
   const res = await client.chat.completions.create({
     model,
     messages,
     max_tokens: input.max_tokens,
-    temperature: input.temperature,
-    top_p: input.top_p,
+    reasoning_effort: "high",
+    // @ts-expect-error — DeepSeek extension, not in OpenAI types
+    thinking: { type: "enabled" },
   });
 
   return res.choices?.[0]?.message?.content ?? "";

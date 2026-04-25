@@ -1,7 +1,7 @@
 """Lead-generation team graph — per (product, segment) discovery.
 
 One run = one team. Given a ``product_id`` and a ``segment_index`` (0-based
-into ``products.icp_analysis.segments``), the graph asks deepseek-reasoner
+into ``products.icp_analysis.segments``), the graph asks deepseek-v4-pro
 for 12–15 real companies that fit the segment, deduplicates them against
 existing ``companies`` rows by ``canonical_domain``, and inserts the rest
 with ``tenant_id='nyx'``.
@@ -13,7 +13,7 @@ Flow:
 
     load_inputs         — product + icp_analysis.segments[segment_index]
         ↓
-    generate_candidates — deepseek-reasoner JSON list of real companies
+    generate_candidates — deepseek-v4-pro JSON list of real companies
         ↓
     dedupe              — strike rows whose canonical_domain already exists
         ↓
@@ -326,7 +326,7 @@ async def persist(state: LeadGenTeamState) -> dict:
         except psycopg.Error as e:
             return {"_error": f"persist: {e}"}
 
-    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner")
+    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
     telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
     meta = product_intel_graph_meta(
         graph="lead_gen_team",

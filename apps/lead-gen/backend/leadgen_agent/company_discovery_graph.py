@@ -1,7 +1,7 @@
 """Seed-query → company candidates discovery graph.
 
 Takes a fuzzy seed query (e.g. "AI consultancies in Europe doing RAG"),
-expands it into facets, brainstorms 12-20 real companies via deepseek-reasoner,
+expands it into facets, brainstorms 12-20 real companies via deepseek-v4-pro,
 deduplicates against existing DB rows, applies a keyword heuristic pre-score,
 and INSERTs survivors into the ``companies`` table with ``tags=['discovery-candidate']``.
 """
@@ -284,7 +284,7 @@ async def persist(state: CompanyDiscoveryState) -> dict:
         except psycopg.Error as e:
             return {"_error": f"persist: {e}"}
 
-    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner")
+    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
     telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
     agent_timings_so_far = dict(state.get("agent_timings") or {})
     agent_timings_so_far["persist"] = round(time.perf_counter() - t0, 3)

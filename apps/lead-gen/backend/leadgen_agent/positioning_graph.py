@@ -23,7 +23,7 @@ Output: ``PositioningStatement`` → ``products.positioning_analysis`` jsonb
 (migration 0064). Also consumed inline by ``product_intel_graph`` between
 ``run_gtm`` and ``synthesize_report``.
 
-Pinned to ``deepseek-reasoner`` with ``temperature=0.1`` — this is a reasoning
+Pinned to ``deepseek-v4-pro`` with ``temperature=0.1`` — this is a reasoning
 task, not a copy task. The critic loop is bounded at 2 rewrites so a
 pathologically unhappy critic can't run up the bill.
 """
@@ -704,7 +704,7 @@ async def stress_test(state: PositioningState) -> dict:
         return delta
 
     # Final — assemble PositioningStatement and persist.
-    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner")
+    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
     telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
     # include this node's own call in the telemetry we persist
     telemetry = merge_node_telemetry(telemetry, "stress_test", tel)

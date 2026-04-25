@@ -78,6 +78,8 @@ pub async fn reason(
         temperature: Some(0.6),
         max_tokens: Some(8192),
         stream: Some(false),
+        reasoning_effort: Some("high".to_string()),
+        thinking: Some(serde_json::json!({"type": "enabled"})),
     };
 
     let resp = client

@@ -615,7 +615,7 @@ async def synthesize_report(state: ProductIntelV2State) -> dict:
     totals = compute_totals(telemetry) if telemetry else None
     meta = product_intel_graph_meta(
         graph="product_intel_v2",
-        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner"),
+        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro"),
         agent_timings=state.get("agent_timings") or {},
         telemetry=telemetry if telemetry else None,
         totals=totals,

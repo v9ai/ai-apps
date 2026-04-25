@@ -12,7 +12,7 @@ Cost + latency telemetry
 ``(parsed_json, telemetry_dict)`` where ``telemetry_dict`` has the shape::
 
     {
-      "model": "deepseek-v4-flash",
+      "model": "deepseek-v4-pro",
       "input_tokens":   123,
       "output_tokens":  456,
       "total_tokens":   579,
@@ -93,7 +93,7 @@ def _deepseek_cfg(tier: str | None) -> tuple[str, str, str]:
     if tier == "deep":
         model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
     else:
-        model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
+        model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-pro")
     return base_url, api_key, model
 
 
@@ -136,8 +136,12 @@ def _make_llm_cached(
     on the first lookup of a new (provider, tier, temp) combination.
     """
     _load_env_once()
+    extra_kwargs: dict[str, Any] = {}
     if provider == "deepseek":
         base_url, api_key, model = _deepseek_cfg(tier)
+        # Thinking mode silently ignores temperature / top_p / penalties.
+        extra_kwargs["reasoning_effort"] = "high"
+        extra_kwargs["model_kwargs"] = {"extra_body": {"thinking": {"type": "enabled"}}}
     elif provider == "email_llm":
         base_url, api_key, model = _email_llm_cfg()
     else:
@@ -161,6 +165,7 @@ def _make_llm_cached(
         # storm.
         max_retries=0,
         timeout=httpx.Timeout(timeout, connect=10.0, read=timeout),
+        **extra_kwargs,
     )
 
 
@@ -176,9 +181,10 @@ def make_llm(
     ``LLM_MODEL`` — the existing path, points at local Qwen for legacy graphs.
 
     ``provider="deepseek"`` pins to DeepSeek's public API (or the proxy set via
-    ``DEEPSEEK_BASE_URL``). ``tier="deep"`` swaps ``deepseek-v4-flash`` for
-    ``deepseek-v4-pro`` — use for higher-reasoning nodes (value metric,
-    differentiation, pricing rationale, GTM pillars, final synthesis).
+    ``DEEPSEEK_BASE_URL``). Both tiers default to ``deepseek-v4-pro`` (the
+    latest v4 model). ``tier="deep"`` reads ``DEEPSEEK_MODEL_DEEP`` so deployed
+    environments can override deep-reasoning nodes to a different model
+    independently of the standard ``DEEPSEEK_MODEL`` knob.
     """
     _load_env_once()
     if temperature is None:

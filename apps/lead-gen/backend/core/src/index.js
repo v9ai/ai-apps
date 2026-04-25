@@ -19,7 +19,7 @@ export class CoreContainer extends Container {
       // LLM — DeepSeek for reasoning, email-llm worker for outbound drafts.
       DEEPSEEK_API_KEY: env.DEEPSEEK_API_KEY ?? "",
       LLM_BASE_URL: env.LLM_BASE_URL ?? "https://api.deepseek.com",
-      LLM_MODEL: env.LLM_MODEL ?? "deepseek-chat",
+      LLM_MODEL: env.LLM_MODEL ?? "deepseek-v4-pro",
       EMAIL_LLM_BASE_URL: env.EMAIL_LLM_BASE_URL ?? "",
       EMAIL_LLM_API_KEY: env.EMAIL_LLM_API_KEY ?? "",
       EMAIL_LLM_MODEL: env.EMAIL_LLM_MODEL ?? "",

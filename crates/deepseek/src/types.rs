@@ -5,18 +5,22 @@ use serde::{Deserialize, Serialize};
 /// DeepSeek model identifiers — parity with Anthropic's multi-model routing
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub enum DeepSeekModel {
-    /// DeepSeek-R1 — Reasoning model (equivalent to Opus for deep thinking)
+    /// DeepSeek V4-Pro — flagship with thinking mode + reasoning_effort.
+    #[serde(rename = "deepseek-v4-pro")]
+    #[default]
+    V4Pro,
+    /// DeepSeek-R1 — kept for back-compat. New code should prefer V4Pro.
     #[serde(rename = "deepseek-reasoner")]
     Reasoner,
-    /// DeepSeek-V3 — Fast chat model (equivalent to Sonnet for speed)
+    /// DeepSeek-V3 — kept for back-compat.
     #[serde(rename = "deepseek-chat")]
-    #[default]
     Chat,
 }
 
 impl DeepSeekModel {
     pub fn as_str(&self) -> &'static str {
         match self {
+            Self::V4Pro => "deepseek-v4-pro",
             Self::Reasoner => "deepseek-reasoner",
             Self::Chat => "deepseek-chat",
         }
@@ -24,9 +28,10 @@ impl DeepSeekModel {
 
     pub fn from_alias(alias: &str) -> Self {
         match alias {
+            "v4" | "v4-pro" | "pro" | "latest" => Self::V4Pro,
             "reasoner" | "r1" | "deep" | "opus" => Self::Reasoner,
             "chat" | "v3" | "fast" | "sonnet" | "haiku" => Self::Chat,
-            _ => Self::Chat,
+            _ => Self::V4Pro,
         }
     }
 }
@@ -109,6 +114,10 @@ pub struct ChatRequest {
     pub max_tokens: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reasoning_effort: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thinking: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

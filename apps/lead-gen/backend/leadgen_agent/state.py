@@ -433,7 +433,7 @@ class CompanyDiscoveryState(TypedDict, total=False):
     """State for the seed-query → company candidates discovery graph.
 
     Linear pipeline: expand_seed → brainstorm → dedupe → pre_score → persist.
-    LLM-only (no Brave) — brainstorm calls deepseek-reasoner with JSON mode and
+    LLM-only (no Brave) — brainstorm calls deepseek-v4-pro with JSON mode and
     returns 12-20 ``{name, domain, why}`` candidates. dedupe strikes rows
     whose ``canonical_domain`` already exists; pre_score applies a keyword
     heuristic (AI / consultancy / remote mentions) to the ``why`` text; persist

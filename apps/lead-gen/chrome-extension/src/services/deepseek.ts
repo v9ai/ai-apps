@@ -25,7 +25,7 @@ class DeepSeekServiceImpl implements DeepSeekService {
       },
       body: JSON.stringify({
         prompt,
-        model: "deepseek-chat",
+        model: "deepseek-v4-pro",
       }),
     });
 

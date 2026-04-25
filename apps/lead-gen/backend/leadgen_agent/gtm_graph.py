@@ -579,7 +579,7 @@ async def draft_plan(state: _GTMStateWithError) -> dict:
     telemetry = merge_node_telemetry(telemetry, "draft_plan", tel)
     meta = product_intel_graph_meta(
         graph="gtm",
-        model=os.environ.get("DEEPSEEK_MODEL", "deepseek-chat"),
+        model=os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-pro"),
         agent_timings=state.get("agent_timings") or {},
         telemetry=telemetry,
         totals=compute_totals(telemetry),

@@ -629,7 +629,7 @@ async def write_rationale(state: _PricingStateWithError) -> dict:
     telemetry = merge_node_telemetry(telemetry, "write_rationale", tel)
     meta = product_intel_graph_meta(
         graph="pricing",
-        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner"),
+        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro"),
         agent_timings=state.get("agent_timings") or {},
         telemetry=telemetry,
         totals=compute_totals(telemetry),
