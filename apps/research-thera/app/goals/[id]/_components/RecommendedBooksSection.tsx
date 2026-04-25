@@ -68,7 +68,7 @@ export default function RecommendedBooksSection({ goalId, hasResearch }: Recomme
   const { data: jobData, stopPolling } = useGetGenerationJobQuery({
     variables: { id: jobId! },
     skip: !jobId,
-    pollInterval: 2000,
+    pollInterval: 5000,
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "network-only",
   });

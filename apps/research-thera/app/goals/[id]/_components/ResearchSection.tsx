@@ -56,7 +56,7 @@ export default function ResearchSection({ goal }: { goal: Goal }) {
   const { data: jobData, stopPolling } = useGetGenerationJobQuery({
     variables: { id: researchJobId! },
     skip: !researchJobId,
-    pollInterval: 2000,
+    pollInterval: 5000,
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "network-only",
     onCompleted: (d) => {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { gzipSync } from "node:zlib";
 import { neon } from "@neondatabase/serverless";
 import {
   S3Client,
@@ -14,6 +15,18 @@ const APP_NAME = "research-thera";
 const BUCKET = "db-backups";
 const RETENTION_DAYS = 30;
 const MAX_DURATION_MS = 280_000;
+
+// Columns we omit from daily SELECTs because they are huge JSON / free-text and
+// dominate Neon egress. A weekly full-fidelity backup is still desirable; this
+// routine runs daily, so the trade-off is acceptable for incremental recovery.
+const OMIT_COLUMNS_DAILY: Record<string, string[]> = {
+  deep_analyses: ["data_snapshot"],
+  deep_issue_analyses: ["data_snapshot"],
+  deep_goal_analyses: ["data_snapshot"],
+  journal_entries: ["content"],
+  notes: ["content"],
+  stories: ["content"],
+};
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
@@ -64,22 +77,30 @@ export async function GET(request: Request) {
           ORDER BY ordinal_position
         `;
         const schemaJson = JSON.stringify({ tableName, columns }, null, 2);
-        await upload(r2, `${prefix}/schema/${tableName}.json`, schemaJson);
+        await upload(r2, `${prefix}/schema/${tableName}.json`, schemaJson, "application/json");
 
-        // Dynamic table name from information_schema — safe to interpolate
-        const queryParts = [`SELECT * FROM "${tableName}"`] as string[] & { raw: string[] };
+        const omit = new Set(OMIT_COLUMNS_DAILY[tableName] ?? []);
+        const allColumnNames = (columns as { column_name: string }[]).map((c) => c.column_name);
+        const selectColumnNames = allColumnNames.filter((c) => !omit.has(c));
+        const selectList =
+          selectColumnNames.length === allColumnNames.length
+            ? "*"
+            : selectColumnNames.map((c) => `"${c}"`).join(", ");
+
+        // Dynamic table name and column list from information_schema — safe to interpolate.
+        const queryParts = [`SELECT ${selectList} FROM "${tableName}"`] as string[] & { raw: string[] };
         queryParts.raw = [...queryParts];
         const rows = await sql(queryParts as TemplateStringsArray);
         const jsonl = rows.map((row: Record<string, unknown>) => JSON.stringify(row)).join("\n");
         let sizeBytes = 0;
         if (jsonl.length > 0) {
-          const buf = Buffer.from(jsonl, "utf-8");
-          await upload(r2, `${prefix}/data/${tableName}.jsonl`, jsonl);
-          sizeBytes = buf.length;
+          const gz = gzipSync(Buffer.from(jsonl, "utf-8"));
+          await uploadBuffer(r2, `${prefix}/data/${tableName}.jsonl.gz`, gz, "application/x-ndjson", "gzip");
+          sizeBytes = gz.length;
         }
 
         tables[tableName] = { tableName, rowCount: rows.length, sizeBytes, status: "complete" };
-        console.log(`[backup] ${tableName}: ${rows.length} rows, ${sizeBytes} bytes`);
+        console.log(`[backup] ${tableName}: ${rows.length} rows, ${sizeBytes} bytes (gzip)`);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         tables[tableName] = { tableName, rowCount: 0, sizeBytes: 0, status: "failed", error: message };
@@ -104,7 +125,7 @@ export async function GET(request: Request) {
   };
 
   try {
-    await upload(r2, `${prefix}/manifest.json`, JSON.stringify(manifest, null, 2));
+    await upload(r2, `${prefix}/manifest.json`, JSON.stringify(manifest, null, 2), "application/json");
   } catch (err) {
     console.error(`[backup] manifest upload failed: ${err}`);
   }
@@ -120,13 +141,31 @@ export async function GET(request: Request) {
   });
 }
 
-async function upload(client: S3Client, key: string, body: string) {
+async function upload(client: S3Client, key: string, body: string, contentType: string) {
   await client.send(
     new PutObjectCommand({
       Bucket: BUCKET,
       Key: key,
       Body: Buffer.from(body, "utf-8"),
-      ContentType: "application/json",
+      ContentType: contentType,
+    }),
+  );
+}
+
+async function uploadBuffer(
+  client: S3Client,
+  key: string,
+  body: Buffer,
+  contentType: string,
+  contentEncoding?: string,
+) {
+  await client.send(
+    new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+      ...(contentEncoding ? { ContentEncoding: contentEncoding } : {}),
     }),
   );
 }

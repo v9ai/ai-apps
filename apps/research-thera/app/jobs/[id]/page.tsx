@@ -61,7 +61,7 @@ export default function JobDetailPage() {
   const { data, loading, error } = useGetGenerationJobQuery({
     variables: { id },
     skip: !id,
-    pollInterval: 2000,
+    pollInterval: 5000,
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "cache-and-network",
   });

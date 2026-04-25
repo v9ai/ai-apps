@@ -49,7 +49,7 @@ export default function StoriesSection({ goal }: { goal: Goal }) {
   const { data: storyJobData, stopPolling: stopStoryPolling } = useGetGenerationJobQuery({
     variables: { id: storyJobId! },
     skip: !storyJobId,
-    pollInterval: 2000,
+    pollInterval: 5000,
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "network-only",
     onCompleted: (d) => {

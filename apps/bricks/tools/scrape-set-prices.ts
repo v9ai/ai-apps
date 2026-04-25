@@ -262,9 +262,11 @@ async function main() {
   if (toScrape.length === 0) return;
 
   const browser: Browser = await chromium.launch({ headless: true });
-  // Force a US locale so BrickEconomy serves prices in USD instead of falling
-  // back to the host machine's geo-IP (which yields EUR for EU runs and leaves
-  // usd_retail / usd_market columns empty).
+  // Force USD by pinning BrickEconomy's `Region` cookie to "US". Their site
+  // otherwise picks region from geo-IP (defaulting EU runs to EUR), which
+  // leaves usd_retail / usd_market columns empty. Locale + Accept-Language
+  // are belt-and-braces — the cookie is what actually flips the currency
+  // (verified via the footer reading "Region · United States (USD)").
   const ctx = await browser.newContext({
     userAgent:
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
@@ -273,6 +275,9 @@ async function main() {
     timezoneId: "America/New_York",
     extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9" },
   });
+  await ctx.addCookies([
+    { name: "Region", value: "US", domain: "www.brickeconomy.com", path: "/" },
+  ]);
   const page = await ctx.newPage();
 
   let okCount = 0;
@@ -290,20 +295,23 @@ async function main() {
     else missCount++;
 
     await db.query(
+      // COALESCE so a US-locale scrape (writes USD, leaves EUR/GBP null) does
+      // not erase a prior EU-locale scrape's EUR data, and vice-versa. `found`
+      // is sticky once true so a transient miss can't unset a known price.
       `INSERT INTO set_prices_cache
          (set_num, usd_retail, gbp_retail, eur_retail,
           usd_market, gbp_market, eur_market,
           source, found, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'brickeconomy', $8, NOW())
        ON CONFLICT (set_num) DO UPDATE SET
-         usd_retail = EXCLUDED.usd_retail,
-         gbp_retail = EXCLUDED.gbp_retail,
-         eur_retail = EXCLUDED.eur_retail,
-         usd_market = EXCLUDED.usd_market,
-         gbp_market = EXCLUDED.gbp_market,
-         eur_market = EXCLUDED.eur_market,
+         usd_retail = COALESCE(EXCLUDED.usd_retail, set_prices_cache.usd_retail),
+         gbp_retail = COALESCE(EXCLUDED.gbp_retail, set_prices_cache.gbp_retail),
+         eur_retail = COALESCE(EXCLUDED.eur_retail, set_prices_cache.eur_retail),
+         usd_market = COALESCE(EXCLUDED.usd_market, set_prices_cache.usd_market),
+         gbp_market = COALESCE(EXCLUDED.gbp_market, set_prices_cache.gbp_market),
+         eur_market = COALESCE(EXCLUDED.eur_market, set_prices_cache.eur_market),
          source = EXCLUDED.source,
-         found = EXCLUDED.found,
+         found = set_prices_cache.found OR EXCLUDED.found,
          updated_at = NOW()`,
       [
         result.setNum,

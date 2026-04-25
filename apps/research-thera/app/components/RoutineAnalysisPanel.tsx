@@ -98,7 +98,7 @@ export function RoutineAnalysisPanel({ familyMemberId, subjectLabel }: Props) {
   const { data: jobData, stopPolling } = useGetGenerationJobQuery({
     variables: { id: jobId! },
     skip: !jobId,
-    pollInterval: 3000,
+    pollInterval: 5000,
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "network-only",
   });
