@@ -13,31 +13,38 @@ export const DEEPSEEK_API_BETA_URL = 'https://api.deepseek.com/beta';
  */
 export const DEEPSEEK_MODELS = {
   /**
-   * DeepSeek-V3.2 Chat (128K context)
-   * Non-thinking mode for general conversations
+   * DeepSeek V4-Pro — flagship with thinking mode + reasoning_effort knob.
+   * Default. Note: thinking mode silently ignores temperature / top_p /
+   * presence_penalty / frequency_penalty.
+   */
+  V4_PRO: 'deepseek-v4-pro',
+
+  /**
+   * DeepSeek-V3.2 Chat (128K context). Kept for back-compat with downstream
+   * apps that pin the model string. New code should prefer V4_PRO.
    */
   CHAT: 'deepseek-chat',
 
   /**
-   * DeepSeek-V3.2 Reasoner (128K context)
-   * Thinking mode with chain-of-thought reasoning
+   * DeepSeek-V3.2 Reasoner (128K context). Kept for back-compat. V4_PRO
+   * supersedes this for new reasoning-heavy work.
    */
   REASONER: 'deepseek-reasoner',
 } as const;
 
 export type DeepSeekModel = typeof DEEPSEEK_MODELS[keyof typeof DEEPSEEK_MODELS];
 
+export type ReasoningEffort = 'high' | 'max';
+
 /**
  * Default API configuration
  */
 export const DEFAULT_CONFIG = {
   maxRetries: 3,
-  timeout: 60000, // 60 seconds
-  temperature: 1.0,
+  timeout: 60000,
   maxTokens: 4096,
-  topP: 1.0,
-  frequencyPenalty: 0,
-  presencePenalty: 0,
+  reasoningEffort: 'high' as ReasoningEffort,
+  thinkingEnabled: true,
 } as const;
 
 /**

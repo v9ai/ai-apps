@@ -12,7 +12,7 @@ Cost + latency telemetry
 ``(parsed_json, telemetry_dict)`` where ``telemetry_dict`` has the shape::
 
     {
-      "model": "deepseek-chat",
+      "model": "deepseek-v4-flash",
       "input_tokens":   123,
       "output_tokens":  456,
       "total_tokens":   579,
@@ -91,9 +91,9 @@ def _deepseek_cfg(tier: str | None) -> tuple[str, str, str]:
     base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
     api_key = os.environ.get("DEEPSEEK_API_KEY", "")
     if tier == "deep":
-        model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-reasoner")
+        model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
     else:
-        model = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+        model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
     return base_url, api_key, model
 
 
@@ -176,8 +176,8 @@ def make_llm(
     ``LLM_MODEL`` — the existing path, points at local Qwen for legacy graphs.
 
     ``provider="deepseek"`` pins to DeepSeek's public API (or the proxy set via
-    ``DEEPSEEK_BASE_URL``). ``tier="deep"`` swaps ``deepseek-chat`` for
-    ``deepseek-reasoner`` — use for higher-reasoning nodes (value metric,
+    ``DEEPSEEK_BASE_URL``). ``tier="deep"`` swaps ``deepseek-v4-flash`` for
+    ``deepseek-v4-pro`` — use for higher-reasoning nodes (value metric,
     differentiation, pricing rationale, GTM pillars, final synthesis).
     """
     _load_env_once()
@@ -234,7 +234,11 @@ async def ainvoke_json(
 # expensive" questions; swap in actual billed amounts if/when we ingest the
 # provider's billing API.)
 MODEL_PRICING: dict[str, dict[str, float]] = {
-    # DeepSeek — standard per-API-call pricing, cache-miss tier.
+    # DeepSeek v4 — current models, cache-miss tier.
+    "deepseek-v4-flash": {"input_per_1m": 0.27, "output_per_1m": 1.10},
+    "deepseek-v4-pro":   {"input_per_1m": 0.55, "output_per_1m": 2.19},
+    # Legacy IDs — deprecated 2026-07-24, retained so historical telemetry and
+    # any in-flight calls still cost-account correctly.
     "deepseek-chat":     {"input_per_1m": 0.27, "output_per_1m": 1.10},
     "deepseek-reasoner": {"input_per_1m": 0.55, "output_per_1m": 2.19},
     # Cloudflare Workers AI — @cf/mistral/mistral-7b-instruct-v0.2-lora behind

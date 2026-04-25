@@ -36,7 +36,7 @@ import type {
  * });
  *
  * const response = await client.chat({
- *   model: 'deepseek-chat',
+ *   model: 'deepseek-v4-pro',
  *   messages: [{ role: 'user', content: 'Hello!' }],
  * });
  * ```
@@ -60,7 +60,7 @@ export class DeepSeekClient {
     this.baseURL = config.baseURL || defaultBaseURL;
     this.maxRetries = config.maxRetries ?? DEFAULT_CONFIG.maxRetries;
     this.timeout = config.timeout ?? DEFAULT_CONFIG.timeout;
-    this.defaultModel = config.defaultModel || DEEPSEEK_MODELS.CHAT;
+    this.defaultModel = config.defaultModel || DEEPSEEK_MODELS.V4_PRO;
   }
 
   /**
@@ -86,6 +86,8 @@ export class DeepSeekClient {
       top_logprobs: request.top_logprobs,
       n: request.n,
       user: request.user,
+      reasoning_effort: request.reasoning_effort ?? DEFAULT_CONFIG.reasoningEffort,
+      thinking: request.thinking ?? { type: DEFAULT_CONFIG.thinkingEnabled ? 'enabled' : 'disabled' },
     };
 
     return this.makeRequest<ChatCompletionResponse>(
@@ -104,6 +106,8 @@ export class DeepSeekClient {
     const fullRequest: ChatCompletionRequest = {
       ...request,
       model: request.model || this.defaultModel,
+      reasoning_effort: request.reasoning_effort ?? DEFAULT_CONFIG.reasoningEffort,
+      thinking: request.thinking ?? { type: DEFAULT_CONFIG.thinkingEnabled ? 'enabled' : 'disabled' },
       stream: true,
     };
 

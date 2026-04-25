@@ -68,6 +68,8 @@ export interface ChatCompletionRequest {
   top_logprobs?: number;
   n?: number;
   user?: string;
+  reasoning_effort?: 'high' | 'max';
+  thinking?: { type: 'enabled' | 'disabled' };
 }
 
 /**
@@ -119,6 +121,7 @@ export interface ChatCompletionResponse {
 export interface ChatCompletionChunkDelta {
   role?: MessageRole;
   content?: string;
+  reasoning_content?: string;
   tool_calls?: Array<{
     index: number;
     id?: string;
