@@ -49,7 +49,7 @@ function formatElapsedRo(iso: string): string {
 
 export function BogdanJobsSection() {
   const { data, loading } = useGetBogdanDiscussionJobsQuery({
-    pollInterval: 2000,
+    pollInterval: 5000,
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
   });

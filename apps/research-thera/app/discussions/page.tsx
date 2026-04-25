@@ -168,7 +168,7 @@ function BogdanDiscussion() {
   const { data: jobData, stopPolling } = useGetGenerationJobQuery({
     variables: { id: jobId! },
     skip: !jobId,
-    pollInterval: 2000,
+    pollInterval: 5000,
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "network-only",
     onCompleted: (d) => {
