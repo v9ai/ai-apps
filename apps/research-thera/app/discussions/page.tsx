@@ -336,12 +336,18 @@ function BogdanDiscussion() {
                     )}
                     <CitationsRow citations={(t.citations ?? []) as Citation[]} />
                     {t.microScript && (
-                      <Box mt="3" p="3" style={{ background: "var(--gray-2)", borderRadius: 6 }}>
+                      <Box
+                        mt="3"
+                        p="3"
+                        role="group"
+                        aria-label="Mini-dialog părinte și Bogdan"
+                        style={{ background: "var(--gray-2)", borderRadius: 6 }}
+                      >
                         <Text size="1" color="gray" weight="medium" as="div" mb="2">
                           Mini-dialog
                         </Text>
                         <Flex direction="column" gap="2">
-                          <Box>
+                          <Box role="group" aria-label="Părinte spune">
                             <Badge size="1" color="indigo" variant="soft">
                               Părinte
                             </Badge>
@@ -349,15 +355,15 @@ function BogdanDiscussion() {
                               "{t.microScript.parentOpener}"
                             </Text>
                           </Box>
-                          <Box>
+                          <Box role="group" aria-label="Bogdan răspunde">
                             <Badge size="1" color="amber" variant="soft">
                               Bogdan
                             </Badge>
-                            <Text size="2" as="div" mt="1" color="gray">
+                            <Text size="2" as="div" mt="1" style={{ color: "var(--gray-11)" }}>
                               "{t.microScript.childResponse}"
                             </Text>
                           </Box>
-                          <Box>
+                          <Box role="group" aria-label="Părinte continuă">
                             <Badge size="1" color="indigo" variant="soft">
                               Părinte
                             </Badge>
