@@ -21,3 +21,10 @@ numpy>=1.26
 warcio>=1.7
 aiosmtplib>=3.0
 dnspython>=2.6
+
+# ─── Test-only deps ───────────────────────────────────────────────────────
+# `hypothesis` is used by tests/test_remote_graph_properties.py for
+# property-based fuzzing of RemoteGraph contracts. NOT required at runtime
+# in the core CF Container; pinned here so CI/dev installs include it.
+# (Production-only requirements should stay above this divider.)
+hypothesis>=6.100

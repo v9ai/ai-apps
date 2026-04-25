@@ -61,3 +61,6 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+markers = [
+    "hypothesis: property-based tests using the Hypothesis library",
+]

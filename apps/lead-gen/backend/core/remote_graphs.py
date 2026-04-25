@@ -230,8 +230,15 @@ def _research_headers() -> dict[str, str]:
 # ─── Base adapter ─────────────────────────────────────────────────────────
 
 
-class _ValidatedRemoteGraph:
+class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
     """Wraps a ``RemoteGraph`` with Pydantic input/output validation.
+
+    Generic over the input/output Pydantic contract types so callers retain
+    precise type information when they hold an adapter reference (e.g.
+    ``_ValidatedRemoteGraph[JobbertNerInput, JobbertNerOutput]``). The
+    by-name ``get_remote_adapter`` lookup intentionally erases the parameters
+    to ``BaseModel`` — callers that need precise types should call the
+    individual builders.
 
     Drops into ``builder.add_node("foo", adapter)`` exactly like a compiled
     subgraph thanks to ``.ainvoke(state, config=...)``.
@@ -242,8 +249,8 @@ class _ValidatedRemoteGraph:
         name: str,
         url: str,
         headers: dict[str, str],
-        input_cls: type[BaseModel],
-        output_cls: type[BaseModel],
+        input_cls: type[InT],
+        output_cls: type[OutT],
         *,
         max_attempts: int = 3,
         backoff_base_s: float = 0.5,
@@ -252,8 +259,8 @@ class _ValidatedRemoteGraph:
         breaker_cool_down_s: float = 30.0,
     ) -> None:
         self._name = name
-        self._input_cls = input_cls
-        self._output_cls = output_cls
+        self._input_cls: type[InT] = input_cls
+        self._output_cls: type[OutT] = output_cls
         self._remote = RemoteGraph(name, url=url, headers=headers)
         self._max_attempts = max(1, max_attempts)
         self._backoff_base_s = backoff_base_s
@@ -310,14 +317,33 @@ class _ValidatedRemoteGraph:
         assert last_exc is not None
         raise last_exc
 
-    async def ainvoke(
-        self, state: dict[str, Any], config: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
-        # Validate input shape before paying for the HTTP round-trip.
-        validate_remote_call(self._input_cls, self._output_cls, state, None)
-        log.debug("remote invoke → %s (keys=%s)", self._name, list(state))
+    def _coerce_state(self, state: InT | dict[str, Any]) -> dict[str, Any]:
+        """Accept either a typed Input model or a legacy dict; return a dict.
 
-        raw_output = await self._invoke_remote_with_retry(state, config=config)
+        This is the only place that bridges the two call styles — keep it
+        narrow so the rest of the adapter speaks dicts (the wire format).
+        """
+        if isinstance(state, BaseModel):
+            return state.model_dump()
+        return state
+
+    async def ainvoke(
+        self,
+        state: InT | dict[str, Any],
+        config: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Invoke the remote graph and return the validated output as a dict.
+
+        Backwards-compatible: existing callers that destructure the return
+        value as ``result["foo"]`` continue to work. For typed model access,
+        use :meth:`ainvoke_typed` which returns the Pydantic ``OutT`` instance.
+        """
+        state_dict = self._coerce_state(state)
+        # Validate input shape before paying for the HTTP round-trip.
+        validate_remote_call(self._input_cls, self._output_cls, state_dict, None)
+        log.debug("remote invoke → %s (keys=%s)", self._name, list(state_dict))
+
+        raw_output = await self._invoke_remote_with_retry(state_dict, config=config)
         if not isinstance(raw_output, dict):
             # Defensive — LangGraph Server always returns a state dict, but a
             # bad deploy could return a raw string/null. Wrap so the Pydantic
@@ -327,7 +353,7 @@ class _ValidatedRemoteGraph:
         # Validates both shape and schema_version; raises ContractsVersionMismatch
         # on drift so the next deploy fails fast instead of corrupting state.
         _, out = validate_remote_call(
-            self._input_cls, self._output_cls, state, raw_output
+            self._input_cls, self._output_cls, state_dict, raw_output
         )
         if out is None:
             # validate_remote_call only returns None when raw_output is None,
@@ -335,17 +361,44 @@ class _ValidatedRemoteGraph:
             raise RuntimeError(f"{self._name}: unexpected None output after validation")
         return out.model_dump()
 
+    async def ainvoke_typed(
+        self,
+        state: InT | dict[str, Any],
+        config: dict[str, Any] | None = None,
+    ) -> OutT:
+        """Like :meth:`ainvoke` but returns the parsed ``OutT`` model instance.
+
+        Prefer this in new code where you want static type checkers to see
+        the precise output shape (e.g. ``JobbertNerOutput.spans``).
+        """
+        state_dict = self._coerce_state(state)
+        validate_remote_call(self._input_cls, self._output_cls, state_dict, None)
+        log.debug("remote invoke (typed) → %s (keys=%s)", self._name, list(state_dict))
+
+        raw_output = await self._invoke_remote_with_retry(state_dict, config=config)
+        if not isinstance(raw_output, dict):
+            raw_output = {"__raw__": raw_output}
+
+        _, out = validate_remote_call(
+            self._input_cls, self._output_cls, state_dict, raw_output
+        )
+        if out is None:
+            raise RuntimeError(f"{self._name}: unexpected None output after validation")
+        return out
+
     # LangGraph's StateGraph.add_node accepts any awaitable callable; expose a
     # plain __call__ delegate so older code paths that call ``node(state)``
     # still work.
     async def __call__(
-        self, state: dict[str, Any], config: dict[str, Any] | None = None
+        self,
+        state: InT | dict[str, Any],
+        config: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         return await self.ainvoke(state, config=config)
 
     async def astream(
         self,
-        state: dict[str, Any],
+        state: InT | dict[str, Any],
         config: dict[str, Any] | None = None,
         stream_mode: str = "updates",
     ) -> AsyncIterator[Any]:
@@ -392,18 +445,19 @@ class _ValidatedRemoteGraph:
                 ``schema_version`` disagrees with the caller's
                 ``SCHEMA_VERSION``.
         """
+        state_dict = self._coerce_state(state)
         # Pre-flight input validation — never open a stream we can't trust.
-        validate_remote_call(self._input_cls, self._output_cls, state, None)
+        validate_remote_call(self._input_cls, self._output_cls, state_dict, None)
         log.debug(
             "remote astream → %s (keys=%s, mode=%s)",
             self._name,
-            list(state),
+            list(state_dict),
             stream_mode,
         )
 
         accumulated: dict[str, Any] = {}
         async for event in self._remote.astream(
-            state, config=config, stream_mode=stream_mode
+            state_dict, config=config, stream_mode=stream_mode
         ):
             # Pass-through: the dispatcher sees exactly what RemoteGraph emits.
             yield event
@@ -440,7 +494,7 @@ class _ValidatedRemoteGraph:
 
         # Final shape check — re-uses the same validator path as ainvoke.
         validate_remote_call(
-            self._input_cls, self._output_cls, state, accumulated
+            self._input_cls, self._output_cls, state_dict, accumulated
         )
 
 
