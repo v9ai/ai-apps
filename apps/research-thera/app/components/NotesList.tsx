@@ -313,12 +313,16 @@ export default function NotesList({ entityId, entityType }: NotesListProps) {
                           size="1"
                           variant="ghost"
                           color="red"
+                          aria-label={`Delete note${note.title ? `: ${note.title}` : ""}`}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <TrashIcon />
                         </IconButton>
                       </AlertDialog.Trigger>
-                      <AlertDialog.Content maxWidth="400px">
+                      <AlertDialog.Content
+                        maxWidth="400px"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <AlertDialog.Title>Delete Note</AlertDialog.Title>
                         <AlertDialog.Description size="2">
                           Are you sure you want to delete &quot;{note.title || "this note"}&quot;? This cannot be undone.
@@ -331,7 +335,8 @@ export default function NotesList({ entityId, entityType }: NotesListProps) {
                             <Button
                               variant="solid"
                               color="red"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 deleteNote({ variables: { id: note.id } });
                               }}
                             >

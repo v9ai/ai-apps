@@ -28,15 +28,27 @@ interface AggregatedSet {
   usdRetail: number | null;
   gbpRetail: number | null;
   eurRetail: number | null;
+  usdMarket: number | null;
+  gbpMarket: number | null;
+  eurMarket: number | null;
+  // Single-value fields the UI sorts and renders on. Cents.
+  // `displayPrice` is the most-relevant available price (market preferred over
+  // retail) in the priority order USD → EUR → GBP. `displayCurrency` tells the
+  // UI which symbol to render. Both are null when no price is known.
+  displayPrice: number | null;
+  displayCurrency: "USD" | "EUR" | "GBP" | null;
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ partNum: string }> }
 ) {
   if (!API_KEY) {
     return NextResponse.json({ error: "Rebrickable API key not configured" }, { status: 500 });
   }
+
+  const sortParam = req.nextUrl.searchParams.get("sort");
+  const sortDir: "asc" | "desc" = sortParam === "priceDesc" ? "desc" : "asc";
 
   const { partNum } = await params;
   const headers = { Authorization: `key ${API_KEY}` };
@@ -82,6 +94,11 @@ export async function GET(
           usdRetail: null,
           gbpRetail: null,
           eurRetail: null,
+          usdMarket: null,
+          gbpMarket: null,
+          eurMarket: null,
+          displayPrice: null,
+          displayCurrency: null,
         });
       }
     }
@@ -110,6 +127,9 @@ export async function GET(
         entry.usdRetail = row.usdRetail;
         entry.gbpRetail = row.gbpRetail;
         entry.eurRetail = row.eurRetail;
+        entry.usdMarket = row.usdMarket;
+        entry.gbpMarket = row.gbpMarket;
+        entry.eurMarket = row.eurMarket;
       }
     }
 
@@ -155,15 +175,41 @@ export async function GET(
     }
   }
 
+  // Pick the single best price for each set: market preferred (more relevant
+  // than launch-day retail) and USD preferred to keep one currency dominant
+  // when the user has a mixed cache.
+  const pickDisplay = (s: AggregatedSet): { price: number | null; currency: "USD" | "EUR" | "GBP" | null } => {
+    if (s.usdMarket != null) return { price: s.usdMarket, currency: "USD" };
+    if (s.eurMarket != null) return { price: s.eurMarket, currency: "EUR" };
+    if (s.gbpMarket != null) return { price: s.gbpMarket, currency: "GBP" };
+    if (s.usdRetail != null) return { price: s.usdRetail, currency: "USD" };
+    if (s.eurRetail != null) return { price: s.eurRetail, currency: "EUR" };
+    if (s.gbpRetail != null) return { price: s.gbpRetail, currency: "GBP" };
+    return { price: null, currency: null };
+  };
+  for (const entry of byNum.values()) {
+    const pick = pickDisplay(entry);
+    entry.displayPrice = pick.price;
+    entry.displayCurrency = pick.currency;
+  }
+
+  // Null prices always sink to the bottom regardless of direction so the user
+  // never has to scroll past "unknown" rows to find priced ones.
+  const NULL_RANK = Number.POSITIVE_INFINITY;
   const sets = orderBy(
     Array.from(byNum.values()),
     [
-      (s: AggregatedSet) => (s.usdRetail ?? Number.POSITIVE_INFINITY),
+      (s: AggregatedSet) =>
+        s.displayPrice == null
+          ? NULL_RANK
+          : sortDir === "asc"
+            ? s.displayPrice
+            : -s.displayPrice,
       "year",
       "numParts",
     ],
-    ["asc", "desc", "desc"]
+    ["asc", "desc", "desc"],
   );
 
-  return NextResponse.json({ count: sets.length, sets });
+  return NextResponse.json({ count: sets.length, sort: sortDir === "desc" ? "priceDesc" : "priceAsc", sets });
 }

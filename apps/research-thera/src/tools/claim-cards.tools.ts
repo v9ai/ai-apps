@@ -402,10 +402,13 @@ export async function buildClaimCardsFromClaims(
       const allCandidates = results.flat();
       const candidates = sourceTools.dedupeCandidates(allCandidates);
 
-      for (const c of candidates.slice(0, topK)) {
-        const details = await sourceTools.fetchPaperDetails(c);
-        enriched.push(details);
-      }
+      // Bounded-concurrency enrichment to respect upstream rate limits.
+      // Mirrors the pool path which already uses sourceTools.mapLimit.
+      enriched = await sourceTools.mapLimit(
+        candidates.slice(0, topK),
+        poolConcurrency,
+        (c) => fetchDetailsCached(c),
+      );
     }
 
     // Judge evidence vs claim

@@ -22,7 +22,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-COPY core/requirements.txt ./
+COPY requirements.txt ./
 # Vendored local-path deps referenced by requirements.txt (e.g. research-client).
 # Copied before `pip install` so the `./vendor/research-client` entry resolves.
 COPY vendor ./vendor
@@ -37,10 +37,10 @@ RUN python -m playwright install --with-deps chromium
 COPY leadgen_agent ./leadgen_agent
 
 # Core-specific files.
-COPY core/app.py ./app.py
-COPY core/linkedin_api.py ./core/linkedin_api.py
-COPY core/remote_graphs.py ./core/remote_graphs.py
-COPY core/langgraph.json ./langgraph.json
+COPY app.py ./app.py
+COPY linkedin_api.py ./core/linkedin_api.py
+COPY remote_graphs.py ./core/remote_graphs.py
+COPY langgraph.json ./langgraph.json
 RUN touch ./core/__init__.py
 
 EXPOSE 8000

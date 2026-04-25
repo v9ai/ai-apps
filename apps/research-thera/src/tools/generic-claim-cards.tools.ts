@@ -594,16 +594,29 @@ export async function buildClaimCardsFromItem(
       const judged = await mapWithConcurrency(
         topSources,
         opts.evidenceJudgeConcurrency ?? 6,
-        async (s) => {
-          const j = await judge.judge(c.claim, s);
-          return {
-            source: s,
-            polarity: j.polarity,
-            excerpt: bestSnippet(s),
-            rationale: j.rationale,
-            score: j.score,
-            locator: { url: s.url },
-          };
+        async (s): Promise<EvidenceItem> => {
+          try {
+            const j = await judge.judge(c.claim, s);
+            return {
+              source: s,
+              polarity: j.polarity,
+              excerpt: bestSnippet(s),
+              rationale: j.rationale,
+              score: j.score,
+              locator: { url: s.url },
+            };
+          } catch (err) {
+            // Judge call failed (LLM/network error). Fall back to heuristic
+            // so a single bad source doesn't crash the whole claim card.
+            return {
+              source: s,
+              polarity: "mixed" as const,
+              excerpt: bestSnippet(s),
+              rationale: `Judge failed (${err instanceof Error ? err.message : "unknown"}); fell back to heuristic`,
+              score: basicRelevanceScore(c.claim, s),
+              locator: { url: s.url },
+            };
+          }
         },
       );
       evidence = judged;
@@ -706,16 +719,28 @@ export async function refreshClaimCardForItem(
     const judged = await mapWithConcurrency(
       ranked,
       opts.evidenceJudgeConcurrency ?? 6,
-      async (s) => {
-        const j = await opts.judge!.judge(card.claim, s);
-        return {
-          source: s,
-          polarity: j.polarity,
-          excerpt: bestSnippet(s),
-          rationale: j.rationale,
-          score: j.score,
-          locator: { url: s.url },
-        };
+      async (s): Promise<EvidenceItem> => {
+        try {
+          const j = await opts.judge!.judge(card.claim, s);
+          return {
+            source: s,
+            polarity: j.polarity,
+            excerpt: bestSnippet(s),
+            rationale: j.rationale,
+            score: j.score,
+            locator: { url: s.url },
+          };
+        } catch (err) {
+          // Judge call failed; fall back to heuristic so refresh stays resilient.
+          return {
+            source: s,
+            polarity: "mixed" as const,
+            excerpt: bestSnippet(s),
+            rationale: `Judge failed (${err instanceof Error ? err.message : "unknown"}); fell back to heuristic`,
+            score: basicRelevanceScore(card.claim, s),
+            locator: { url: s.url },
+          };
+        }
       },
     );
     evidence = judged;

@@ -49,9 +49,9 @@ PY
 # the dockerfile path. See wrangler.jsonc `image` field.
 COPY leadgen_agent ./leadgen_agent
 
-COPY ml/app.py ./app.py
-COPY ml/ml_graphs ./ml_graphs
-COPY ml/langgraph.json ./langgraph.json
+COPY app.py ./app.py
+COPY ml_graphs ./ml_graphs
+COPY langgraph.json ./langgraph.json
 
 EXPOSE 8000
 

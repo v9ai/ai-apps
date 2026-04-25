@@ -263,6 +263,15 @@ export function pickBestCandidate(
 }
 
 /**
+ * Build a Crossref polite-pool User-Agent using UNPAYWALL_EMAIL when set.
+ * Crossref routes requests with a real mailto to a faster, more reliable pool.
+ * https://api.crossref.org/swagger-ui/index.html#/Etiquette
+ */
+function crossrefPoliteContact(): string {
+  return process.env.UNPAYWALL_EMAIL?.trim() || "research@example.com";
+}
+
+/**
  * Search Crossref for papers
  */
 export async function searchCrossref(
@@ -270,6 +279,7 @@ export async function searchCrossref(
   limit: number = 10,
 ): Promise<PaperCandidate[]> {
   try {
+    const mailto = crossrefPoliteContact();
     const url = new URL("https://api.crossref.org/works");
     url.searchParams.set("query", query);
     url.searchParams.set("rows", limit.toString());
@@ -277,10 +287,11 @@ export async function searchCrossref(
       "select",
       "DOI,title,author,published,container-title,abstract,URL,type",
     );
+    url.searchParams.set("mailto", mailto);
 
     const response = await fetch(url.toString(), {
       headers: {
-        "User-Agent": "AI-Therapist/1.0 (mailto:research@example.com)",
+        "User-Agent": `AI-Therapist/1.0 (mailto:${mailto})`,
       },
     });
 
@@ -1080,10 +1091,11 @@ export async function fetchPaperDetails(
 
     // Try to enrich from Crossref if we have a DOI
     if (candidate.doi) {
-      const url = `https://api.crossref.org/works/${encodeURIComponent(candidate.doi)}`;
+      const mailto = crossrefPoliteContact();
+      const url = `https://api.crossref.org/works/${encodeURIComponent(candidate.doi)}?mailto=${encodeURIComponent(mailto)}`;
       const response = await fetch(url, {
         headers: {
-          "User-Agent": "AI-Therapist/1.0 (mailto:research@example.com)",
+          "User-Agent": `AI-Therapist/1.0 (mailto:${mailto})`,
         },
       });
 

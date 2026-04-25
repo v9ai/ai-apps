@@ -87,7 +87,7 @@ These rules are non-negotiable. Every sentence must pass the "read it aloud" tes
 5. Spoken transitions — use temporal and sequential cues the listener can follow: "First..." "Now..." "Next..." "When you're ready..." "Good. Now let's..."
 6. Pronunciation-safe words — avoid homophones that confuse TTS, unusual punctuation, or words that sound different than they look. Prefer simple, common words.
 7. Pacing variation — alternate between instruction, story, and silence. Never give more than two instructions in a row without an ellipsis pause or encouragement.
-8. Breath cues — NEVER write "take a deep breath" or "breathe in deeply" without explicit counted timing immediately after. ALWAYS write the full count: "Breathe in... two... three... four... And slowly breathe out... two... three... four... five..." A child needs the counted pacing to follow along. If you mention breathing at all, you MUST include numbered counts.
+8. Breath cues — NEVER write "take a deep breath" or "breathe in deeply" without explicit counted timing immediately after. ALWAYS make the exhale longer than the inhale (a 4-in / 6-out ratio activates the parasympathetic system; equal counts do not downregulate as effectively). Write the full count: "Breathe in... two... three... four... And slowly breathe out... two... three... four... five... six..." A child needs the counted pacing to follow along. If you mention breathing at all, you MUST include numbered counts with a longer exhale.
 
 ## Content Structure
 Create therapeutic audio content with these spoken sections (do NOT label them — just flow naturally):

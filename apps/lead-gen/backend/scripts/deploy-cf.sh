@@ -44,11 +44,11 @@ CORE_REQUIRED=(
     NEON_DATABASE_URL
     DEEPSEEK_API_KEY
     LANGGRAPH_AUTH_TOKEN
-    EMAIL_LLM_API_KEY
     ML_INTERNAL_AUTH_TOKEN
     RESEARCH_INTERNAL_AUTH_TOKEN
 )
 CORE_OPTIONAL=(
+    EMAIL_LLM_API_KEY
     SCORER_AUTH_TOKEN
     GITHUB_TOKEN
 )
@@ -112,6 +112,17 @@ stage_shared() {
         --exclude '*.pyc' \
         "$BACKEND_DIR/$SHARED_PKG/" \
         "$BACKEND_DIR/$subdir/$SHARED_PKG/"
+    # core's requirements.txt references ./vendor/research-client (local path
+    # install). Stage vendor/ alongside leadgen_agent so the build context
+    # contains it.
+    if [ "$subdir" = "core" ] && [ -d "$BACKEND_DIR/vendor" ]; then
+        say "staging vendor → core/"
+        rsync -a --delete \
+            --exclude '__pycache__' \
+            --exclude '*.pyc' \
+            "$BACKEND_DIR/vendor/" \
+            "$BACKEND_DIR/core/vendor/"
+    fi
 }
 
 unstage_shared() {
@@ -119,6 +130,10 @@ unstage_shared() {
     if [ -d "$BACKEND_DIR/$subdir/$SHARED_PKG" ]; then
         say "cleaning $subdir/$SHARED_PKG"
         rm -rf "$BACKEND_DIR/$subdir/$SHARED_PKG"
+    fi
+    if [ "$subdir" = "core" ] && [ -d "$BACKEND_DIR/core/vendor" ]; then
+        say "cleaning core/vendor"
+        rm -rf "$BACKEND_DIR/core/vendor"
     fi
 }
 

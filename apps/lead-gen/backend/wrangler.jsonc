@@ -29,6 +29,6 @@
     //   echo -n "<token>" | shasum -a 256
     // and `wrangler deploy` (the digest is non-secret — just a hash).
     // The raw token lives in sub-Worker secrets only.
-    "LANGGRAPH_AUTH_TOKEN_HASH": ""
+    "LANGGRAPH_AUTH_TOKEN_HASH": "3c4c65d4a6e6e818fa0e55a4b3fdd314189c65b3c66d50d52622d0539f6e75ab"
   }
 }

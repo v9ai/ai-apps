@@ -71,12 +71,22 @@ export default function VaultUnlockDialog({
               autoFocus
               disabled={loading}
               autoComplete="off"
+              type="password"
+              inputMode="numeric"
+              name="vault-pin"
+              enterKeyHint="go"
+              aria-label="Vault session PIN"
+              aria-invalid={error ? true : undefined}
             />
-            {error && (
-              <Text color="red" size="2">
-                {error}
-              </Text>
-            )}
+            <Text
+              color="red"
+              size="2"
+              role="alert"
+              aria-live="polite"
+              style={{ minHeight: error ? undefined : 0 }}
+            >
+              {error ?? ""}
+            </Text>
             <Flex gap="3" justify="end" mt="2">
               <Dialog.Close>
                 <Button variant="soft" color="gray" disabled={loading} type="button">

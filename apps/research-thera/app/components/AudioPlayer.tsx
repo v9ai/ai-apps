@@ -320,6 +320,8 @@ export function AudioPlayer({
               variant="solid"
               onClick={() => void handleTextToSpeech(false)}
               disabled={isGenerating}
+              aria-label={isPlaying ? "Stop audio playback" : "Play audio"}
+              aria-pressed={isPlaying}
             >
               {isGenerating ? (
                 <Spinner />
@@ -357,7 +359,7 @@ export function AudioPlayer({
           </Flex>
 
           {ttsError && (
-            <Text size="2" color="red">
+            <Text size="2" color="red" role="alert">
               {ttsError}
             </Text>
           )}
@@ -371,6 +373,9 @@ export function AudioPlayer({
     <Flex direction="column" gap="2" align="start">
       {isGenerating ? (
         <Card
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
           style={{
             background: "var(--amber-2)",
             borderColor: "var(--amber-6)",
@@ -414,7 +419,7 @@ export function AudioPlayer({
         </Flex>
       )}
       {ttsError && (
-        <Text size="2" color="red">
+        <Text size="2" color="red" role="alert">
           {ttsError}
         </Text>
       )}

@@ -77,12 +77,15 @@ export async function retrieveGoalContext(
 
   const queryEmbedding = await embed(query);
 
+  // Use pgvector cosine distance operator <=> (range 0..2);
+  // cosine similarity = 1 - cosine_distance. The L2 operator <-> would
+  // give Euclidean distance, for which `1 - dist` is not a similarity.
   const rows = await sql(
     `SELECT entity_type, entity_id, title, content, metadata,
-            1 - (embedding <-> $1) AS similarity
+            1 - (embedding <=> $1) AS similarity
      FROM research_embeddings
      WHERE goal_id = $2
-     ORDER BY embedding <-> $1
+     ORDER BY embedding <=> $1
      LIMIT $3`,
     [JSON.stringify(queryEmbedding), goalId, topK],
   );

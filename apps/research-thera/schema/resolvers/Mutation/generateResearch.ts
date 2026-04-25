@@ -18,22 +18,27 @@ const plannerSchema = z.object({
 });
 
 async function planQueries(userPrompt: string): Promise<string[] | null> {
+  // generateObject does not accept an AbortSignal, so race a real timeout
+  // promise to guarantee the resolver can't hang on a stalled DeepSeek call.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("planner timeout after 20000ms")), 20000);
+  });
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
-    try {
-      const { object } = await generateObject({
+    const { object } = await Promise.race([
+      generateObject({
         schema: plannerSchema,
         prompt: `${PLANNER_SYSTEM_PROMPT}\n\n${userPrompt}`,
         temperature: 0,
-      });
-      return object.queries.map((q) => q.trim().slice(0, 200));
-    } finally {
-      clearTimeout(timer);
-    }
+      }),
+      timeout,
+    ]);
+    return object.queries.map((q) => q.trim().slice(0, 200));
   } catch (err) {
     console.warn("[generateResearch] planner failed, falling back:", err instanceof Error ? err.message : err);
     return null;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 

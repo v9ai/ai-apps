@@ -295,8 +295,8 @@ export default function GoalMainCard({ goal }: { goal: Goal }) {
                   {goal.parentGoalId ? "sub-goal" : "goal"} and all its associated data.
                   {goal.subGoals && goal.subGoals.length > 0 && (
                     <Text as="p" size="2" color="red" weight="bold" mt="2">
-                      Warning: This goal has {goal.subGoals.length} sub-goal
-                      {goal.subGoals.length !== 1 ? "s" : ""} that will also be orphaned.
+                      Heads up: {goal.subGoals.length} sub-goal
+                      {goal.subGoals.length !== 1 ? "s" : ""} will remain but no longer be linked to a parent goal.
                     </Text>
                   )}
                 </AlertDialog.Description>

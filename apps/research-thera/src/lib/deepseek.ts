@@ -98,6 +98,14 @@ export async function generateObject<T>({
     throw new Error(`DeepSeek returned no choices: ${JSON.stringify(response).slice(0, 300)}`);
   }
   const content = response.choices[0]?.message?.content ?? "{}";
-  const parsed = JSON.parse(content);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `DeepSeek (${model}) returned invalid JSON: ${msg}. Content (first 300 chars): ${content.slice(0, 300)}`
+    );
+  }
   return { object: schema.parse(parsed) };
 }
