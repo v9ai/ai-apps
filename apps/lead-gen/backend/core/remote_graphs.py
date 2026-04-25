@@ -271,6 +271,7 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         input_cls: type[InT],
         output_cls: type[OutT],
         *,
+        timeout: TimeoutTuple = DEFAULT_TIMEOUT,
         max_attempts: int = 3,
         backoff_base_s: float = 0.5,
         backoff_cap_s: float = 8.0,
@@ -280,7 +281,15 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         self._name = name
         self._input_cls: type[InT] = input_cls
         self._output_cls: type[OutT] = output_cls
-        self._remote = RemoteGraph(name, url=url, headers=headers)
+        self._timeout: TimeoutTuple = timeout
+        # Build a LangGraphClient with our explicit (connect, read, write, pool)
+        # timeout, then hand it to RemoteGraph via ``client=`` so the SDK does
+        # not silently fall back to its 300-second read default. Without this
+        # a hung remote can wedge a long-running graph node indefinitely.
+        sdk_client = get_client(url=url, headers=headers, timeout=timeout)
+        self._remote = RemoteGraph(
+            name, url=url, headers=headers, client=sdk_client
+        )
         self._max_attempts = max(1, max_attempts)
         self._backoff_base_s = backoff_base_s
         self._backoff_cap_s = backoff_cap_s
@@ -289,6 +298,29 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
             failure_threshold=breaker_failure_threshold,
             cool_down_s=breaker_cool_down_s,
         )
+
+    async def aclose(self) -> None:
+        """Close the pooled httpx client owned by the underlying RemoteGraph.
+
+        Idempotent and exception-tolerant: safe to call multiple times and
+        from a shutdown hook where partial errors should not block teardown.
+        Wired by :func:`aclose_all_adapters` from the FastAPI lifespan.
+        """
+        client = getattr(self._remote, "client", None)
+        # The async httpx.AsyncClient lives at LangGraphClient.http.client —
+        # see langgraph_sdk.client.LangGraphClient / HttpClient.
+        http = getattr(client, "http", None)
+        async_httpx = getattr(http, "client", None)
+        if async_httpx is None:
+            return
+        try:
+            await async_httpx.aclose()
+        except Exception:  # noqa: BLE001 — never block shutdown on close errors
+            log.warning(
+                "aclose() on adapter %s raised — ignoring during shutdown",
+                self._name,
+                exc_info=True,
+            )
 
     async def _invoke_remote_with_retry(
         self, state: dict[str, Any], config: dict[str, Any] | None
@@ -520,8 +552,8 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
 # ─── ML adapters ──────────────────────────────────────────────────────────
 
 
-def get_jobbert_ner_adapter() -> _ValidatedRemoteGraph:
-    return _ValidatedRemoteGraph(
+def get_jobbert_ner_adapter() -> _ValidatedRemoteGraph[JobbertNerInput, JobbertNerOutput]:
+    return _ValidatedRemoteGraph[JobbertNerInput, JobbertNerOutput](
         name="jobbert_ner",
         url=_ml_url(),
         headers=_ml_headers(),
@@ -530,8 +562,8 @@ def get_jobbert_ner_adapter() -> _ValidatedRemoteGraph:
     )
 
 
-def get_bge_m3_embed_adapter() -> _ValidatedRemoteGraph:
-    return _ValidatedRemoteGraph(
+def get_bge_m3_embed_adapter() -> _ValidatedRemoteGraph[BgeM3EmbedInput, BgeM3EmbedOutput]:
+    return _ValidatedRemoteGraph[BgeM3EmbedInput, BgeM3EmbedOutput](
         name="bge_m3_embed",
         url=_ml_url(),
         headers=_ml_headers(),
@@ -543,8 +575,10 @@ def get_bge_m3_embed_adapter() -> _ValidatedRemoteGraph:
 # ─── Research adapters ────────────────────────────────────────────────────
 
 
-def get_research_agent_adapter() -> _ValidatedRemoteGraph:
-    return _ValidatedRemoteGraph(
+def get_research_agent_adapter() -> _ValidatedRemoteGraph[
+    ResearchAgentInput, ResearchAgentOutput
+]:
+    return _ValidatedRemoteGraph[ResearchAgentInput, ResearchAgentOutput](
         name="research_agent",
         url=_research_url(),
         headers=_research_headers(),
@@ -553,8 +587,10 @@ def get_research_agent_adapter() -> _ValidatedRemoteGraph:
     )
 
 
-def get_lead_papers_adapter() -> _ValidatedRemoteGraph:
-    return _ValidatedRemoteGraph(
+def get_lead_papers_adapter() -> _ValidatedRemoteGraph[
+    LeadPapersInput, LeadPapersOutput
+]:
+    return _ValidatedRemoteGraph[LeadPapersInput, LeadPapersOutput](
         name="lead_papers",
         url=_research_url(),
         headers=_research_headers(),
@@ -563,8 +599,8 @@ def get_lead_papers_adapter() -> _ValidatedRemoteGraph:
     )
 
 
-def get_scholar_adapter() -> _ValidatedRemoteGraph:
-    return _ValidatedRemoteGraph(
+def get_scholar_adapter() -> _ValidatedRemoteGraph[ScholarInput, ScholarOutput]:
+    return _ValidatedRemoteGraph[ScholarInput, ScholarOutput](
         name="scholar",
         url=_research_url(),
         headers=_research_headers(),
@@ -573,8 +609,10 @@ def get_scholar_adapter() -> _ValidatedRemoteGraph:
     )
 
 
-def get_common_crawl_adapter() -> _ValidatedRemoteGraph:
-    return _ValidatedRemoteGraph(
+def get_common_crawl_adapter() -> _ValidatedRemoteGraph[
+    CommonCrawlInput, CommonCrawlOutput
+]:
+    return _ValidatedRemoteGraph[CommonCrawlInput, CommonCrawlOutput](
         name="common_crawl",
         url=_research_url(),
         headers=_research_headers(),
@@ -583,8 +621,10 @@ def get_common_crawl_adapter() -> _ValidatedRemoteGraph:
     )
 
 
-def get_agentic_search_adapter() -> _ValidatedRemoteGraph:
-    return _ValidatedRemoteGraph(
+def get_agentic_search_adapter() -> _ValidatedRemoteGraph[
+    AgenticSearchInput, AgenticSearchOutput
+]:
+    return _ValidatedRemoteGraph[AgenticSearchInput, AgenticSearchOutput](
         name="agentic_search",
         url=_research_url(),
         headers=_research_headers(),
@@ -593,8 +633,10 @@ def get_agentic_search_adapter() -> _ValidatedRemoteGraph:
     )
 
 
-def get_gh_patterns_adapter() -> _ValidatedRemoteGraph:
-    return _ValidatedRemoteGraph(
+def get_gh_patterns_adapter() -> _ValidatedRemoteGraph[
+    GhPatternsInput, GhPatternsOutput
+]:
+    return _ValidatedRemoteGraph[GhPatternsInput, GhPatternsOutput](
         name="gh_patterns",
         url=_research_url(),
         headers=_research_headers(),
