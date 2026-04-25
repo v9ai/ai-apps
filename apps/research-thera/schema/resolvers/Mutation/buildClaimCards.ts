@@ -332,9 +332,11 @@ export const buildClaimCards: NonNullable<MutationResolvers['buildClaimCards']> 
     console.log(
       `💾 Saving ${cards.length} claim cards into DB (noteId=${noteId})...`,
     );
-    for (const card of cards) {
-      await claimCardsTools.saveClaimCard(card, noteId);
-    }
+    // Parallelize independent UPSERTs; cap concurrency to avoid Neon
+    // HTTP connection exhaustion when a note yields many claim cards.
+    await sourceTools.mapLimit(cards, 5, (card: any) =>
+      claimCardsTools.saveClaimCard(card, noteId),
+    );
     console.log(
       `✅ Saved ${cards.length}/${cards.length} claim cards (noteId=${noteId})\n`,
     );

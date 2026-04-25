@@ -61,6 +61,17 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
     ].filter(Boolean).join("\n");
   }
 
+  // Fetch existing research first — short-circuit before doing 7 holistic-context DB calls
+  // if there's nothing to ground the questions in.
+  const research = await listTherapyResearch(goalId, issueId, undefined, journalEntryId);
+  if (!research.length) {
+    return {
+      success: false,
+      message: "No research found. Generate research first before creating questions.",
+      questions: [],
+    };
+  }
+
   // Build holistic family member context if available
   let familyContextText = "";
   if (familyMemberId) {
@@ -135,16 +146,6 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
     if (sections.length > 0) {
       familyContextText = `\n## Full Profile Context\n${sections.join("\n\n")}`;
     }
-  }
-
-  // Fetch existing research
-  const research = await listTherapyResearch(goalId, issueId, undefined, journalEntryId);
-  if (!research.length) {
-    return {
-      success: false,
-      message: "No research found. Generate research first before creating questions.",
-      questions: [],
-    };
   }
 
   // Build research summary for the prompt

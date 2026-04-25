@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { css } from "styled-system/css";
 
@@ -10,6 +10,8 @@ interface PartSummary {
   name: string;
   imageUrl: string | null;
 }
+
+type Currency = "USD" | "EUR" | "GBP";
 
 interface AggregatedSet {
   setNum: string;
@@ -21,15 +23,27 @@ interface AggregatedSet {
   usdRetail: number | null;
   gbpRetail: number | null;
   eurRetail: number | null;
+  usdMarket: number | null;
+  gbpMarket: number | null;
+  eurMarket: number | null;
+  displayPrice: number | null;
+  displayCurrency: Currency | null;
 }
 
-function formatPrice(cents: number | null): string | null {
-  if (cents == null) return null;
-  return `$${(cents / 100).toFixed(2)}`;
+const CURRENCY_SYMBOL: Record<Currency, string> = { USD: "$", EUR: "€", GBP: "£" };
+
+function formatPrice(cents: number | null, currency: Currency | null = "USD"): string | null {
+  if (cents == null || currency == null) return null;
+  return `${CURRENCY_SYMBOL[currency]}${(cents / 100).toFixed(2)}`;
 }
+
+type Sort = "priceAsc" | "priceDesc";
 
 export default function PartAllSetsPage() {
   const { partNum } = useParams<{ partNum: string }>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const sort: Sort = searchParams.get("sort") === "priceDesc" ? "priceDesc" : "priceAsc";
   const [part, setPart] = useState<PartSummary | null>(null);
   const [sets, setSets] = useState<AggregatedSet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,10 +51,11 @@ export default function PartAllSetsPage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    setLoading(true);
     Promise.all([
       fetch(`/api/parts/${encodeURIComponent(partNum)}`, { signal: controller.signal })
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Part not found")))),
-      fetch(`/api/parts/${encodeURIComponent(partNum)}/all-sets`, { signal: controller.signal })
+      fetch(`/api/parts/${encodeURIComponent(partNum)}/all-sets?sort=${sort}`, { signal: controller.signal })
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Failed to load sets")))),
     ])
       .then(([partData, setsData]) => {
@@ -53,7 +68,13 @@ export default function PartAllSetsPage() {
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [partNum]);
+  }, [partNum, sort]);
+
+  const setSort = (next: Sort) => {
+    const sp = new URLSearchParams(searchParams.toString());
+    sp.set("sort", next);
+    router.replace(`/parts/${encodeURIComponent(partNum)}/sets?${sp.toString()}`, { scroll: false });
+  };
 
   if (loading) {
     return (
@@ -155,9 +176,53 @@ export default function PartAllSetsPage() {
             {part.name}
           </h1>
           <p className={css({ mt: "1", fontSize: "sm", color: "ink.muted" })}>
-            Part #{part.partNum} · {sets.length} sets across all colors · sorted by cheapest first
+            Part #{part.partNum} · {sets.length} sets across all colors
           </p>
         </div>
+      </div>
+
+      <div
+        className={css({
+          mt: "4",
+          display: "flex",
+          gap: "2",
+          alignItems: "center",
+        })}
+      >
+        <span className={css({ fontSize: "xs", fontWeight: "700", color: "ink.muted", textTransform: "uppercase", letterSpacing: "0.05em" })}>
+          Sort
+        </span>
+        {([
+          ["priceAsc", "Cheapest first"],
+          ["priceDesc", "Most expensive first"],
+        ] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setSort(value)}
+            disabled={loading && sort === value}
+            className={css({
+              fontSize: "xs",
+              fontWeight: "700",
+              fontFamily: "display",
+              px: "3",
+              py: "1.5",
+              rounded: "md",
+              border: "1px solid",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              bg: sort === value ? "lego.orange" : "plate.raised",
+              borderColor: sort === value ? "lego.orange" : "plate.border",
+              color: sort === value ? "white" : "ink.primary",
+              _hover: {
+                borderColor: sort === value ? "lego.orange" : "plate.borderHover",
+                bg: sort === value ? "lego.orange" : "plate.hover",
+              },
+            })}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {sets.length === 0 ? (
@@ -247,14 +312,28 @@ export default function PartAllSetsPage() {
                     className={css({
                       fontSize: "xs",
                       fontWeight: "700",
-                      color: formatPrice(set.usdRetail) ? "lego.green" : "ink.faint",
-                      bg: formatPrice(set.usdRetail) ? "rgba(0, 175, 79, 0.12)" : "rgba(255,255,255,0.04)",
+                      color: set.displayPrice != null ? "lego.green" : "ink.faint",
+                      bg: set.displayPrice != null ? "rgba(0, 175, 79, 0.12)" : "rgba(255,255,255,0.04)",
                       px: "2",
                       py: "0.5",
                       rounded: "md",
                     })}
+                    title={
+                      set.displayPrice != null
+                        ? [
+                            formatPrice(set.usdRetail, "USD") && `Retail USD ${formatPrice(set.usdRetail, "USD")}`,
+                            formatPrice(set.eurRetail, "EUR") && `Retail EUR ${formatPrice(set.eurRetail, "EUR")}`,
+                            formatPrice(set.gbpRetail, "GBP") && `Retail GBP ${formatPrice(set.gbpRetail, "GBP")}`,
+                            formatPrice(set.usdMarket, "USD") && `Market USD ${formatPrice(set.usdMarket, "USD")}`,
+                            formatPrice(set.eurMarket, "EUR") && `Market EUR ${formatPrice(set.eurMarket, "EUR")}`,
+                            formatPrice(set.gbpMarket, "GBP") && `Market GBP ${formatPrice(set.gbpMarket, "GBP")}`,
+                          ]
+                            .filter(Boolean)
+                            .join("\n")
+                        : "Price unavailable"
+                    }
                   >
-                    {formatPrice(set.usdRetail) ?? "no price"}
+                    {formatPrice(set.displayPrice, set.displayCurrency) ?? "no price"}
                   </span>
                   <span
                     className={css({
