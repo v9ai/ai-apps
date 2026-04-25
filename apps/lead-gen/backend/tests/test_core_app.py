@@ -177,6 +177,72 @@ async def test_health_deep_returns_503_when_any_breaker_open(
     assert body["breakers"]["research_agent"] == "open"
 
 
+async def test_runs_wait_returns_504_on_timeout(patched_core_app: Any) -> None:
+    """``/runs/wait`` must surface 504 when the graph blows past
+    ``RUNS_WAIT_TIMEOUT_S`` so a Cloudflare 30s-edge timeout cannot
+    hide the real cause from the Next.js client."""
+    import asyncio as _asyncio
+
+    ca = patched_core_app
+
+    class _SlowGraph:
+        async def ainvoke(self, *_a: Any, **_k: Any) -> dict[str, Any]:
+            await _asyncio.sleep(5)  # well past the patched budget
+            return {}
+
+    ca.RUNS_WAIT_TIMEOUT_S = 0.05  # tighten so the test stays fast
+
+    async with _booted_app(ca) as client:
+        ca.app.state.graphs["email_compose"] = _SlowGraph()
+        r = await client.post(
+            "/runs/wait", json={"assistant_id": "email_compose", "input": {}}
+        )
+    assert r.status_code == 504
+    assert "exceeded" in r.text
+
+
+async def test_get_thread_run_evicts_terminal_record(patched_core_app: Any) -> None:
+    """A terminal poll (``success`` or ``error``) must remove the entry from
+    the in-process ``_async_runs`` dict so the happy path doesn't leak
+    memory until the TTL sweeper fires."""
+    ca = patched_core_app
+    ca._async_runs.clear()
+    ca._async_runs["rid-1"] = {
+        "thread_id": "tid-A",
+        "assistant_id": "email_compose",
+        "status": "success",
+        "output": {"sent": True},
+        "error": None,
+        "_created_at": 1.0,
+    }
+    async with _booted_app(ca) as client:
+        r = await client.get("/threads/tid-A/runs/rid-1")
+    assert r.status_code == 200
+    assert r.json()["status"] == "success"
+    # Terminal poll evicted the record.
+    assert "rid-1" not in ca._async_runs
+
+
+async def test_get_thread_run_keeps_running_record(patched_core_app: Any) -> None:
+    """Non-terminal polls (status=running) must leave the entry intact so
+    subsequent polls still see the in-flight run."""
+    ca = patched_core_app
+    ca._async_runs.clear()
+    ca._async_runs["rid-2"] = {
+        "thread_id": "tid-B",
+        "assistant_id": "email_compose",
+        "status": "running",
+        "output": None,
+        "error": None,
+        "_created_at": 1.0,
+    }
+    async with _booted_app(ca) as client:
+        r = await client.get("/threads/tid-B/runs/rid-2")
+    assert r.status_code == 200
+    assert r.json()["status"] == "running"
+    assert "rid-2" in ca._async_runs
+
+
 async def test_health_deep_surfaces_unbuilt_adapters(
     patched_core_app: Any,
 ) -> None:

@@ -5,21 +5,17 @@ no-op when ``LANGGRAPH_AUTH_TOKEN`` is unset, so pure-local dev keeps working.
 When the env var is set (e.g. the server is exposed through a Cloudflare tunnel
 to a Vercel-deployed frontend), every non-health request must present
 ``Authorization: Bearer <token>`` or receive a 401.
+
+The actual middleware lives in :mod:`leadgen_agent.auth` so all four binaries
+(``core``, ``ml``, ``research``, langgraph-dev) share one implementation.
 """
 
 from __future__ import annotations
 
-import logging
-import os
-import secrets
-
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse
 
-log = logging.getLogger(__name__)
+from leadgen_agent.auth import bearer_middleware_factory
 
 # Paths that bypass the bearer check so tunnel providers and langgraph's own
 # boot loop can probe liveness without a credential. ``/health`` matches the
@@ -27,30 +23,9 @@ log = logging.getLogger(__name__)
 # against either binary.
 _PUBLIC_PATHS = frozenset({"/ok", "/info", "/health"})
 
-
-class BearerTokenMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        expected = os.environ.get("LANGGRAPH_AUTH_TOKEN")
-        if not expected:
-            return await call_next(request)
-        if request.url.path in _PUBLIC_PATHS:
-            return await call_next(request)
-
-        auth = request.headers.get("authorization", "")
-        scheme, _, token = auth.partition(" ")
-        if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
-            client = request.headers.get("x-forwarded-for", "") or (
-                request.client.host if request.client else "unknown"
-            )
-            log.warning(
-                "auth rejected: path=%s method=%s scheme=%s client=%s",
-                request.url.path,
-                request.method,
-                scheme.lower() or "<missing>",
-                client,
-            )
-            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-        return await call_next(request)
+BearerTokenMiddleware = bearer_middleware_factory(
+    env_var="LANGGRAPH_AUTH_TOKEN", public_paths=_PUBLIC_PATHS
+)
 
 
 app = Starlette(middleware=[Middleware(BearerTokenMiddleware)])

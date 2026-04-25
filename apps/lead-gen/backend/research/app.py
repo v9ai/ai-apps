@@ -28,16 +28,15 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import secrets
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import BaseModel
-from starlette.middleware.base import BaseHTTPMiddleware
+
+from leadgen_agent.auth import bearer_middleware_factory
 
 # Import the 6 source graphs. Five have ``build_graph(checkpointer)``; the
 # scholar wrapper defined in research_graphs.scholar does too.
@@ -55,19 +54,11 @@ log = logging.getLogger("leadgen_research")
 
 _PUBLIC_PATHS = frozenset({"/health", "/ok"})
 
-
-class BearerTokenMiddleware(BaseHTTPMiddleware):
-    """Shared-secret gate. No-op when the token env var is unset."""
-
-    async def dispatch(self, request: Request, call_next):
-        expected = os.environ.get("RESEARCH_INTERNAL_AUTH_TOKEN")
-        if not expected or request.url.path in _PUBLIC_PATHS:
-            return await call_next(request)
-        auth = request.headers.get("authorization", "")
-        scheme, _, token = auth.partition(" ")
-        if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
-            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-        return await call_next(request)
+# Bearer middleware lives in leadgen_agent.auth so all four binaries share
+# one implementation.
+BearerTokenMiddleware = bearer_middleware_factory(
+    env_var="RESEARCH_INTERNAL_AUTH_TOKEN", public_paths=_PUBLIC_PATHS
+)
 
 
 def _build_common_crawl(checkpointer: Any) -> Any:

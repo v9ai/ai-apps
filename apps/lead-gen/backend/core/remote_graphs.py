@@ -342,6 +342,7 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         backoff_cap_s: float = 8.0,
         breaker_failure_threshold: int = 5,
         breaker_cool_down_s: float = 30.0,
+        concurrent_call_limit: int = 8,
     ) -> None:
         self._name = name
         self._input_cls: type[InT] = input_cls
@@ -358,6 +359,13 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         self._max_attempts = max(1, max_attempts)
         self._backoff_base_s = backoff_base_s
         self._backoff_cap_s = backoff_cap_s
+        # Concurrency gate around ``_remote.ainvoke``. The httpx pool has 5
+        # slots; without this, a graph that fans out via ``asyncio.gather``
+        # would queue past the pool and either time out or thrash. Lazily
+        # initialised on first call so the semaphore binds to the running
+        # event loop, not the import-time loop.
+        self._concurrent_call_limit = max(1, concurrent_call_limit)
+        self._call_sem: asyncio.Semaphore | None = None
         self._breaker = _CircuitBreaker.for_name(
             name,
             failure_threshold=breaker_failure_threshold,
@@ -411,9 +419,12 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
             )
 
         last_exc: BaseException | None = None
+        if self._call_sem is None:
+            self._call_sem = asyncio.Semaphore(self._concurrent_call_limit)
         for attempt in range(1, self._max_attempts + 1):
             try:
-                result = await self._remote.ainvoke(state, config=config)
+                async with self._call_sem:
+                    result = await self._remote.ainvoke(state, config=config)
             except BaseException as exc:  # noqa: BLE001 — re-raised below
                 last_exc = exc
                 if not _is_retryable(exc):
@@ -762,6 +773,7 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "timeout": RESEARCH_TIMEOUT,
         "max_attempts": 2,
         "breaker_cool_down_s": 60.0,
+        "concurrent_call_limit": 3,
     },
     "lead_papers": {
         "url_fn": _research_url,
@@ -771,6 +783,7 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "timeout": RESEARCH_TIMEOUT,
         "max_attempts": 2,
         "breaker_cool_down_s": 60.0,
+        "concurrent_call_limit": 3,
     },
     "scholar": {
         "url_fn": _research_url,
@@ -787,6 +800,7 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "timeout": RESEARCH_TIMEOUT,
         "max_attempts": 2,
         "breaker_cool_down_s": 60.0,
+        "concurrent_call_limit": 3,
     },
     "agentic_search": {
         "url_fn": _research_url,
@@ -796,6 +810,7 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "timeout": RESEARCH_TIMEOUT,
         "max_attempts": 2,
         "breaker_cool_down_s": 60.0,
+        "concurrent_call_limit": 3,
     },
     "gh_patterns": {
         "url_fn": _research_url,
@@ -805,6 +820,7 @@ _ADAPTER_SPECS: dict[str, dict[str, Any]] = {
         "timeout": RESEARCH_TIMEOUT,
         "max_attempts": 2,
         "breaker_cool_down_s": 60.0,
+        "concurrent_call_limit": 3,
     },
 }
 
@@ -846,6 +862,7 @@ def _build_adapter_from_spec(
         "backoff_cap_s",
         "breaker_failure_threshold",
         "breaker_cool_down_s",
+        "concurrent_call_limit",
     ):
         if knob in spec:
             kwargs[knob] = spec[knob]
@@ -1011,6 +1028,62 @@ def get_remote_adapter(name: str) -> _ValidatedRemoteGraph[BaseModel, BaseModel]
             f"unknown remote adapter {name!r}; available: {sorted(_ADAPTER_SPECS)}"
         )
     return _get_or_build(name)
+
+
+# Per-probe budget for the boot-time reachability check below. Total
+# wall-clock impact is bounded by ``asyncio.gather``: 8 adapters × 2 s
+# concurrent ≈ 2 s extra at boot.
+PROBE_TIMEOUT_S: float = 2.0
+
+
+async def probe_remote_adapters(
+    adapters: dict[str, _ValidatedRemoteGraph[BaseModel, BaseModel]],
+) -> dict[str, str]:
+    """Issue a parallel ``GET /health`` against every wired adapter's URL.
+
+    Returns ``{adapter_name: "reachable" | "unreachable: <reason>"}``. Used
+    at boot to surface URL typos and DNS failures in the lifespan log
+    instead of having them appear at the first user-driven adapter call.
+    Each probe is bounded by :data:`PROBE_TIMEOUT_S` so ``asyncio.gather``
+    completes within ~2 s even if every remote is unreachable.
+
+    Failures are NOT fatal: the adapter stays in ``app.state.remote_adapters``
+    so a transient boot-time outage doesn't permanently disable the
+    container. The readiness route can later flag the failure separately.
+    """
+    if not adapters:
+        return {}
+
+    async def _probe_one(name: str, adapter: _ValidatedRemoteGraph[BaseModel, BaseModel]) -> tuple[str, str]:
+        client = getattr(adapter._remote, "client", None)
+        http = getattr(client, "http", None)
+        async_httpx = getattr(http, "client", None)
+        url = getattr(adapter._remote, "url", None) or getattr(adapter, "_url", "")
+        # The SDK doesn't expose the base URL on RemoteGraph directly; fall
+        # back to walking httpx.AsyncClient.base_url which the SDK does
+        # populate at construction time (see langgraph_sdk.client).
+        if not url and async_httpx is not None:
+            url = str(getattr(async_httpx, "base_url", "") or "")
+        if not url:
+            return name, "unreachable: no base URL on adapter"
+        target = url.rstrip("/") + "/health"
+        try:
+            async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_S) as probe:
+                resp = await probe.get(target)
+            if 200 <= resp.status_code < 300:
+                return name, "reachable"
+            return name, f"unreachable: HTTP {resp.status_code}"
+        except asyncio.TimeoutError:
+            return name, f"unreachable: timeout after {PROBE_TIMEOUT_S:.0f}s"
+        except httpx.RequestError as exc:
+            return name, f"unreachable: {type(exc).__name__}"
+        except Exception as exc:  # noqa: BLE001 — probe is best-effort
+            return name, f"unreachable: {type(exc).__name__}: {exc}"
+
+    pairs = await asyncio.gather(
+        *[_probe_one(name, adapter) for name, adapter in adapters.items()]
+    )
+    return dict(pairs)
 
 
 def build_all_remote_adapters() -> tuple[

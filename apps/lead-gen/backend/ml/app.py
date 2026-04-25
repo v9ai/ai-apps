@@ -18,17 +18,15 @@ but we wire the checkpointer anyway for shape-parity with the core container.
 from __future__ import annotations
 
 import logging
-import os
-import secrets
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import BaseModel
-from starlette.middleware.base import BaseHTTPMiddleware
+
+from leadgen_agent.auth import bearer_middleware_factory
 
 # Import the compiled graphs. Each module eagerly loads its model at import
 # time (gated by ML_EAGER_LOAD) so the first request is fast.
@@ -39,23 +37,13 @@ log = logging.getLogger("leadgen_ml")
 
 _PUBLIC_PATHS = frozenset({"/health", "/ok"})
 
-
-class BearerTokenMiddleware(BaseHTTPMiddleware):
-    """Shared-secret gate. No-op when ``ML_INTERNAL_AUTH_TOKEN`` is unset.
-
-    Uses its own env var (``ML_INTERNAL_AUTH_TOKEN``) distinct from the core
-    container's ``LANGGRAPH_AUTH_TOKEN`` — the dispatcher Worker holds both.
-    """
-
-    async def dispatch(self, request: Request, call_next):
-        expected = os.environ.get("ML_INTERNAL_AUTH_TOKEN")
-        if not expected or request.url.path in _PUBLIC_PATHS:
-            return await call_next(request)
-        auth = request.headers.get("authorization", "")
-        scheme, _, token = auth.partition(" ")
-        if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
-            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-        return await call_next(request)
+# Bearer middleware lives in leadgen_agent.auth so all four binaries share
+# one implementation. Uses its own env var (``ML_INTERNAL_AUTH_TOKEN``)
+# distinct from the core container's ``LANGGRAPH_AUTH_TOKEN`` — the
+# dispatcher Worker holds both.
+BearerTokenMiddleware = bearer_middleware_factory(
+    env_var="ML_INTERNAL_AUTH_TOKEN", public_paths=_PUBLIC_PATHS
+)
 
 
 @asynccontextmanager

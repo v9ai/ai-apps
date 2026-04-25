@@ -306,6 +306,48 @@ async def test_breaker_shared_across_adapter_instances_by_name() -> None:
 # ─── astream pass-through (regression guard) ──────────────────────────────
 
 
+async def test_concurrent_call_semaphore_caps_in_flight() -> None:
+    """The per-adapter semaphore caps how many ``_remote.ainvoke`` coroutines
+    can be in-flight simultaneously. A graph that fans out via
+    ``asyncio.gather`` with 20 tasks against an adapter whose pool=5 used to
+    queue past the pool and time out. The lock-protected counter below
+    confirms the limit is enforced regardless of fan-in size."""
+    import asyncio as _asyncio
+
+    in_flight = {"now": 0, "peak": 0}
+    in_flight_lock = _asyncio.Lock()
+
+    class _CountingRemote:
+        async def ainvoke(self, *_a: object, **_k: object) -> dict[str, object]:
+            async with in_flight_lock:
+                in_flight["now"] += 1
+                in_flight["peak"] = max(in_flight["peak"], in_flight["now"])
+            try:
+                # Hold the call long enough for siblings to race the gate.
+                await _asyncio.sleep(0.01)
+                return _ok_response()
+            finally:
+                async with in_flight_lock:
+                    in_flight["now"] -= 1
+
+    adapter = _ValidatedRemoteGraph(
+        name="jobbert_ner",
+        url="http://stub",
+        headers={},
+        input_cls=JobbertNerInput,
+        output_cls=JobbertNerOutput,
+        max_attempts=1,
+        concurrent_call_limit=3,
+    )
+    adapter._remote = _CountingRemote()  # type: ignore[assignment]
+
+    await _asyncio.gather(*[adapter.ainvoke({"text": "x"}) for _ in range(20)])
+
+    assert in_flight["peak"] <= 3, (
+        f"semaphore should cap concurrent calls at 3, observed {in_flight['peak']}"
+    )
+
+
 async def test_concurrent_half_open_probes_collapse_to_one() -> None:
     """The probe-gate transition must be atomic: two coroutines past the
     cool-down must not BOTH set ``opened_at = None`` while concurrently

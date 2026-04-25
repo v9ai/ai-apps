@@ -39,10 +39,10 @@ Run locally:
 from __future__ import annotations
 
 import asyncio
+import time
 import json
 import logging
 import os
-import secrets
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
@@ -52,7 +52,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import BaseModel
-from starlette.middleware.base import BaseHTTPMiddleware
+from leadgen_agent.auth import bearer_middleware_factory
 
 from leadgen_agent.admin_chat_graph import build_graph as build_admin_chat
 from leadgen_agent.classify_paper_graph import build_graph as build_classify_paper
@@ -90,7 +90,11 @@ from leadgen_agent.score_contact_graph import build_graph as build_score_contact
 from leadgen_agent.text_to_sql_graph import build_graph as build_text_to_sql
 
 from core.linkedin_api import ensure_linkedin_tables, router as linkedin_router
-from core.remote_graphs import aclose_all_adapters, build_all_remote_adapters
+from core.remote_graphs import (
+    aclose_all_adapters,
+    build_all_remote_adapters,
+    probe_remote_adapters,
+)
 
 log = logging.getLogger("leadgen_agent")
 
@@ -98,33 +102,12 @@ log = logging.getLogger("leadgen_agent")
 # dispatcher Worker's health probe can run without credentials.
 _PUBLIC_PATHS = frozenset({"/health", "/health/deep", "/ok"})
 
-
-class BearerTokenMiddleware(BaseHTTPMiddleware):
-    """Shared-secret gate. No-op when ``LANGGRAPH_AUTH_TOKEN`` is unset."""
-
-    async def dispatch(self, request: Request, call_next):
-        expected = os.environ.get("LANGGRAPH_AUTH_TOKEN")
-        if not expected or request.url.path in _PUBLIC_PATHS:
-            return await call_next(request)
-        auth = request.headers.get("authorization", "")
-        scheme, _, token = auth.partition(" ")
-        if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
-            # Log the rejection with path + method so brute-force probes
-            # leave an audit trail. Token value never logged. Client info
-            # comes from the X-Forwarded-For header (Cloudflare / reverse
-            # proxy populates it) with a fallback to the direct peer.
-            client = request.headers.get("x-forwarded-for", "") or (
-                request.client.host if request.client else "unknown"
-            )
-            log.warning(
-                "auth rejected: path=%s method=%s scheme=%s client=%s",
-                request.url.path,
-                request.method,
-                scheme.lower() or "<missing>",
-                client,
-            )
-            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-        return await call_next(request)
+# Shared bearer-token middleware lives in leadgen_agent/auth.py; this module
+# parameterises it with the LANGGRAPH_AUTH_TOKEN env var and the public-path
+# allowlist above. Same audit-logging semantics as before.
+BearerTokenMiddleware = bearer_middleware_factory(
+    env_var="LANGGRAPH_AUTH_TOKEN", public_paths=_PUBLIC_PATHS
+)
 
 
 def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
@@ -253,13 +236,53 @@ async def lifespan(app: FastAPI):
         else:
             log.info("Remote adapters wired: %s", list(built))
 
+        # Boot-time reachability probe so a typo in ML_URL / RESEARCH_URL
+        # surfaces in the lifespan log instead of at the first user request.
+        # Best-effort: a failure here does NOT block boot — the adapter
+        # stays wired and the readiness route reports the probe result.
+        try:
+            app.state.adapter_probes = await probe_remote_adapters(built)
+            unreachable = {
+                n: r
+                for n, r in app.state.adapter_probes.items()
+                if r != "reachable"
+            }
+            if unreachable:
+                log.warning(
+                    "Remote adapter probes: unreachable=%s reachable=%d",
+                    unreachable,
+                    len(app.state.adapter_probes) - len(unreachable),
+                )
+            else:
+                log.info(
+                    "Remote adapter probes: all %d reachable",
+                    len(app.state.adapter_probes),
+                )
+        except Exception as exc:  # noqa: BLE001 — probe must not block boot
+            log.warning(
+                "Boot probe raised (%s: %s) — skipping adapter reachability check",
+                type(exc).__name__,
+                exc,
+            )
+            app.state.adapter_probes = {}
+
         log.info(
             "Graphs compiled with AsyncPostgresSaver: %s",
             list(app.state.graphs),
         )
+        # Background TTL sweeper for ``_async_runs`` so the in-process index
+        # stays bounded across long-lived containers. The eviction in
+        # ``get_thread_run`` covers the poll-then-discard happy path; this
+        # task covers webhook-only clients and orphaned runs.
+        sweeper_task = asyncio.create_task(_sweep_async_runs())
         try:
             yield
         finally:
+            sweeper_task.cancel()
+            try:
+                await sweeper_task
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass
             # Close pooled httpx connections held by the cached RemoteGraph
             # adapters. Best-effort: each adapter's aclose() already swallows
             # per-client errors so a misbehaving remote can't block shutdown.
@@ -308,6 +331,24 @@ def _build_run_configurable(assistant_id: str, thread_id: str) -> dict[str, Any]
     return configurable
 
 
+def _build_run_metadata(assistant_id: str, thread_id: str) -> dict[str, Any]:
+    """Attach LangSmith trace context so a single user request stitches into
+    one trace across the core / ml / research containers.
+
+    Today every container starts a fresh top-level run when LANGCHAIN_TRACING_V2
+    is set, fragmenting cross-container observability. Including
+    ``thread_id`` and ``assistant_id`` in ``config["metadata"]`` lets the
+    LangSmith UI pivot on those keys; each child run records the same pair
+    so the parent-child relationship is recoverable from the metadata even
+    when LangSmith doesn't auto-propagate. Safe no-op when tracing is
+    disabled (the metadata is just ignored by the runtime).
+    """
+    return {
+        "thread_id": thread_id,
+        "assistant_id": assistant_id,
+    }
+
+
 @app.get("/health/deep")
 async def health_deep() -> JSONResponse:
     """Readiness probe with circuit-breaker awareness.
@@ -325,6 +366,7 @@ async def health_deep() -> JSONResponse:
     """
     adapters = getattr(app.state, "remote_adapters", {}) or {}
     failures = getattr(app.state, "adapter_failures", {}) or {}
+    probes = getattr(app.state, "adapter_probes", {}) or {}
     breakers: dict[str, str] = {}
     any_problem = False
     for name, adapter in adapters.items():
@@ -345,10 +387,12 @@ async def health_deep() -> JSONResponse:
     for name, reason in failures.items():
         breakers[name] = f"unbuilt: {reason[:80]}"
         any_problem = True
-    body = {
+    body: dict[str, Any] = {
         "status": "degraded" if any_problem else "ok",
         "breakers": breakers,
     }
+    if probes:
+        body["probes"] = probes
     status_code = 503 if any_problem else 200
     return JSONResponse(content=body, status_code=status_code)
 
@@ -378,6 +422,17 @@ async def health() -> dict[str, Any]:
     }
 
 
+# Wall-clock cap on a single ``/runs/wait`` request. Worst-case retry budget
+# inside ``_invoke_remote_with_retry`` (3 × 120s read = ~370s) used to be able
+# to wedge a request long past the upstream Cloudflare Worker's 30 s ceiling,
+# returning 504 to the client. We cap server-side at 28 s so the timeout
+# surfaces here as a clean 504 with a meaningful message rather than as a
+# Cloudflare-emitted gateway-timeout that the Next.js retry policy mistakes
+# for an outage. Long-running graphs (positioning, gtm, pricing,
+# product_intel) are required to use the async path ``/threads/{tid}/runs``.
+RUNS_WAIT_TIMEOUT_S: float = float(os.environ.get("RUNS_WAIT_TIMEOUT_S", "28"))
+
+
 @app.post("/runs/wait")
 async def runs_wait(req: RunRequest) -> dict[str, Any]:
     graph = app.state.graphs.get(req.assistant_id)
@@ -387,8 +442,27 @@ async def runs_wait(req: RunRequest) -> dict[str, Any]:
         )
     thread_id = req.thread_id or str(uuid.uuid4())
     configurable = _build_run_configurable(req.assistant_id, thread_id)
-    config: dict[str, Any] = {"configurable": configurable}
-    return await graph.ainvoke(req.input, config=config)
+    metadata = _build_run_metadata(req.assistant_id, thread_id)
+    config: dict[str, Any] = {"configurable": configurable, "metadata": metadata}
+    try:
+        return await asyncio.wait_for(
+            graph.ainvoke(req.input, config=config),
+            timeout=RUNS_WAIT_TIMEOUT_S,
+        )
+    except asyncio.TimeoutError:
+        log.warning(
+            "/runs/wait timed out: assistant=%s thread=%s budget=%.1fs",
+            req.assistant_id,
+            thread_id,
+            RUNS_WAIT_TIMEOUT_S,
+        )
+        raise HTTPException(
+            status_code=504,
+            detail=(
+                f"Graph {req.assistant_id} exceeded the {RUNS_WAIT_TIMEOUT_S:.0f}s "
+                f"sync budget; use /threads/{{tid}}/runs for long-running graphs."
+            ),
+        )
 
 
 # ── Async run pattern (LangGraph-compat REST surface) ─────────────────────
@@ -448,7 +522,8 @@ async def _run_graph_bg(
         record["error"] = f"Unknown assistant_id: {assistant_id}"
         return
     config: dict[str, Any] = {
-        "configurable": _build_run_configurable(assistant_id, thread_id)
+        "configurable": _build_run_configurable(assistant_id, thread_id),
+        "metadata": _build_run_metadata(assistant_id, thread_id),
     }
     try:
         result = await graph.ainvoke(payload, config=config)
@@ -464,13 +539,29 @@ async def _run_graph_bg(
         record["error"] = str(e)[:1000]
         # Async clients poll /threads/{tid}/runs/{rid} which only sees the
         # status flip; without an explicit webhook fire, callers that opted
-        # into ``webhook_url`` would wait forever for an error signal.
+        # into ``webhook_url`` would wait forever for an error signal. Try
+        # twice (one quick retry after a 1 s backoff) before swallowing —
+        # network blips on the customer's webhook endpoint shouldn't lose
+        # the error notification entirely. The DB record is already the
+        # source of truth so this stays best-effort, just less brittle.
         try:
             from leadgen_agent.notify import notify_error
 
-            await notify_error(payload, str(e))
+            try:
+                await notify_error(payload, str(e))
+            except Exception as werr:  # noqa: BLE001 — falls through to retry
+                log.warning(
+                    "notify_error webhook attempt 1 failed for run_id=%s: %s — retrying once",
+                    run_id,
+                    werr,
+                )
+                await asyncio.sleep(1.0)
+                await notify_error(payload, str(e))
         except Exception:  # noqa: BLE001 — webhook delivery is best-effort
-            log.warning("notify_error webhook failed for run_id=%s", run_id)
+            log.warning(
+                "notify_error webhook failed twice for run_id=%s — giving up",
+                run_id,
+            )
 
 
 @app.post("/threads/{thread_id}/runs", response_model=ThreadRunResponse)
@@ -488,6 +579,11 @@ async def create_thread_run(
         "status": "running",
         "output": None,
         "error": None,
+        # Wall-clock timestamp for the TTL sweeper. Without this the dict grew
+        # unbounded — every completed run lived in-process until container
+        # restart. The sweeper at the bottom of this module evicts entries
+        # past the TTL so a long-lived process stays bounded.
+        "_created_at": time.time(),
     }
     task = asyncio.create_task(
         _run_graph_bg(run_id, thread_id, req.assistant_id, req.input)
@@ -508,13 +604,56 @@ async def get_thread_run(thread_id: str, run_id: str) -> dict[str, Any]:
         raise HTTPException(
             status_code=404, detail="run does not belong to thread"
         )
-    return {
+    response = {
         "run_id": run_id,
         "thread_id": thread_id,
         "status": record["status"],
         "output": record.get("output"),
         "error": record.get("error"),
     }
+    # Evict on terminal poll so the in-process dict stays bounded for the
+    # poll-then-discard happy path. The TTL sweeper covers webhook-only
+    # clients that never poll.
+    if record["status"] in ("success", "error"):
+        _async_runs.pop(run_id, None)
+    return response
+
+
+# In-process index of async runs is bounded by ``_ASYNC_RUN_TTL_S`` plus the
+# evict-on-terminal-poll path above. The sweeper below catches webhook-only
+# clients (no poll ever happens) and runs that finished but the client
+# disconnected before reading the terminal status. Defaults: 1 h TTL,
+# 5 min sweeper interval. Both env-overridable for ops tuning.
+_ASYNC_RUN_TTL_S: float = float(os.environ.get("ASYNC_RUN_TTL_S", "3600"))
+_ASYNC_RUN_SWEEP_INTERVAL_S: float = float(
+    os.environ.get("ASYNC_RUN_SWEEP_INTERVAL_S", "300")
+)
+
+
+async def _sweep_async_runs() -> None:
+    """Evict entries past ``_ASYNC_RUN_TTL_S`` from ``_async_runs``."""
+    while True:
+        try:
+            await asyncio.sleep(_ASYNC_RUN_SWEEP_INTERVAL_S)
+            cutoff = time.time() - _ASYNC_RUN_TTL_S
+            stale = [
+                rid
+                for rid, rec in _async_runs.items()
+                if rec.get("_created_at", time.time()) < cutoff
+            ]
+            for rid in stale:
+                _async_runs.pop(rid, None)
+            if stale:
+                log.info(
+                    "async runs sweeper: evicted=%d remaining=%d ttl_s=%.0f",
+                    len(stale),
+                    len(_async_runs),
+                    _ASYNC_RUN_TTL_S,
+                )
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 — sweeper must never abort
+            log.exception("async runs sweeper iteration failed")
 
 
 class DispatchPositioningRequest(BaseModel):
