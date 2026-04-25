@@ -208,6 +208,12 @@ class ContactEnrichPaperAuthorState(TypedDict, total=False):
     buyer_verdict: Literal["buyer", "not_buyer", "unknown"]
     buyer_score: float  # 0.0 to 1.0; >= 0.6 buyer, <= 0.3 not_buyer, else unknown
     buyer_reasons: list[str]  # short bullet strings explaining the verdict
+    # populated by auto_flag_unreachable_node — sets contacts.to_be_deleted=true
+    # for paper-author contacts that are academic-or-non-buyer AND have no
+    # contact channel (no email / linkedin_url / github_handle). Idempotent;
+    # the Sun 04:00 UTC purge cron then sweeps after the 30-day grace.
+    auto_flagged_for_deletion: bool  # default False
+    auto_flag_reason: str  # default ""
     # populated by process_contact (inverted flow)
     enriched: Annotated[list[dict[str, Any]], operator.add]
     # output

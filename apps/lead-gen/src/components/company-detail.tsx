@@ -239,11 +239,6 @@ function CompanyAvatar({
   );
 }
 
-function formatScore(score?: number | null): string {
-  if (typeof score !== "number" || !Number.isFinite(score)) return "—";
-  return score.toFixed(2);
-}
-
 type KeyFactsCardProps = {
   linkedinUrl?: string | null;
   jobBoardUrl?: string | null;

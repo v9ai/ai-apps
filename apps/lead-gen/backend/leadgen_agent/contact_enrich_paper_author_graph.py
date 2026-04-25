@@ -30,6 +30,7 @@ import httpx
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
+from .buyer_fit_classifier import classify_buyer_fit
 from .state import ContactEnrichPaperAuthorState
 
 log = logging.getLogger(__name__)
@@ -108,7 +109,8 @@ async def load_contact(state: ContactEnrichPaperAuthorState) -> dict:
         # Parameterize the ILIKE pattern — psycopg3 treats raw `%` as a
         # placeholder marker and would otherwise error on `%"papers"%` literal.
         select_sql = (
-            "SELECT id, first_name, last_name, tags, openalex_profile "
+            "SELECT id, first_name, last_name, tags, openalex_profile, "
+            "       email, linkedin_url, github_handle "
             "FROM contacts "
             "WHERE tags ILIKE %s AND openalex_profile IS NULL "
             "ORDER BY id LIMIT 1"
@@ -116,7 +118,8 @@ async def load_contact(state: ContactEnrichPaperAuthorState) -> dict:
         params: tuple[Any, ...] = ('%"papers"%',)
     else:
         select_sql = (
-            "SELECT id, first_name, last_name, tags, openalex_profile "
+            "SELECT id, first_name, last_name, tags, openalex_profile, "
+            "       email, linkedin_url, github_handle "
             "FROM contacts WHERE id = %s LIMIT 1"
         )
         params = (contact_id,)
@@ -149,6 +152,9 @@ async def load_contact(state: ContactEnrichPaperAuthorState) -> dict:
             "last_name": rec.get("last_name") or "",
             "tags": tags,
             "openalex_profile": openalex_profile,
+            "email": rec.get("email") or "",
+            "linkedin_url": rec.get("linkedin_url") or "",
+            "github_handle": rec.get("github_handle") or "",
         }
     }
 
@@ -219,6 +225,9 @@ async def resolve_openalex_author(state: ContactEnrichPaperAuthorState) -> dict:
     # Skip if already resolved with a non-empty profile (idempotent re-runs).
     existing = contact.get("openalex_profile") or {}
     if isinstance(existing, dict) and existing.get("openalex_id"):
+        existing_addl = existing.get("additional_institution_types") or []
+        if not isinstance(existing_addl, list):
+            existing_addl = []
         return {
             "openalex_id": existing.get("openalex_id", ""),
             "orcid": existing.get("orcid", ""),
@@ -227,6 +236,8 @@ async def resolve_openalex_author(state: ContactEnrichPaperAuthorState) -> dict:
             "institution_country": existing.get("institution_country", ""),
             "institution_id": existing.get("institution_id", ""),
             "institution_ror": existing.get("institution_ror", ""),
+            "institution_type": existing.get("institution_type", ""),
+            "additional_institution_types": list(existing_addl),
             "works_count": int(existing.get("works_count") or 0),
             "cited_by_count": int(existing.get("cited_by_count") or 0),
             "h_index": int(existing.get("h_index") or 0),
@@ -463,6 +474,10 @@ async def synthesize(state: ContactEnrichPaperAuthorState) -> dict:
         "institution_country": state.get("institution_country") or "",
         "institution_id": state.get("institution_id") or "",
         "institution_ror": state.get("institution_ror") or "",
+        "institution_type": state.get("institution_type") or "",
+        "additional_institution_types": list(
+            state.get("additional_institution_types") or []
+        ),
         "works_count": int(state.get("works_count") or 0),
         "cited_by_count": int(state.get("cited_by_count") or 0),
         "h_index": int(state.get("h_index") or 0),
@@ -491,15 +506,60 @@ async def synthesize(state: ContactEnrichPaperAuthorState) -> dict:
     }
 
 
+async def classify_buyer_fit_node(
+    state: ContactEnrichPaperAuthorState,
+) -> dict:
+    """Run the heuristic buyer-fit classifier over the resolved profile.
+
+    Reads OpenAlex fields off the state (institution, institution_id,
+    institution_country, institution_type, institution_ror) plus Team A's
+    ``affiliation_type`` if present. No DB or network calls — pure heuristic.
+
+    Designed to run after ``classify_affiliation`` (Team A) when present, but
+    works correctly when wired immediately after ``synthesize`` because it
+    reads ``affiliation_type`` defensively via ``getattr``.
+    """
+    if state.get("error"):
+        return {
+            "buyer_verdict": "unknown",
+            "buyer_score": 0.5,
+            "buyer_reasons": ["upstream error — no profile available"],
+        }
+
+    profile: dict[str, Any] = {
+        "institution": state.get("institution") or "",
+        "institution_id": state.get("institution_id") or "",
+        "institution_country": state.get("institution_country") or "",
+        "institution_type": state.get("institution_type") or "",
+        "institution_ror": state.get("institution_ror") or "",
+    }
+    affiliation_type = getattr(state, "affiliation_type", None)
+    if affiliation_type is None and isinstance(state, dict):
+        affiliation_type = state.get("affiliation_type")
+
+    verdict, score, reasons = classify_buyer_fit(profile, affiliation_type)
+    return {
+        "buyer_verdict": verdict,
+        "buyer_score": score,
+        "buyer_reasons": reasons,
+    }
+
+
 def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(ContactEnrichPaperAuthorState)
     builder.add_node("load_contact", load_contact)
     builder.add_node("resolve_openalex_author", resolve_openalex_author)
     builder.add_node("synthesize", synthesize)
+    builder.add_node("classify_buyer_fit_node", classify_buyer_fit_node)
     builder.add_edge(START, "load_contact")
     builder.add_edge("load_contact", "resolve_openalex_author")
     builder.add_edge("resolve_openalex_author", "synthesize")
-    builder.add_edge("synthesize", END)
+    # classify_buyer_fit_node runs after synthesize. When Team A's
+    # `classify_affiliation` lands, slot it between synthesize and this node;
+    # the classifier reads `affiliation_type` defensively so either ordering
+    # works without code changes here.
+    builder.add_edge("synthesize", "classify_buyer_fit_node")
+    builder.add_edge("classify_buyer_fit_node", END)
     return builder.compile(checkpointer=checkpointer)
 
 
