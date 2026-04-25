@@ -48,7 +48,11 @@ export async function GET(
   }
 
   const sortParam = req.nextUrl.searchParams.get("sort");
-  const sortDir: "asc" | "desc" = sortParam === "priceDesc" ? "desc" : "asc";
+  type SortKey = "priceAsc" | "priceDesc" | "partsAsc" | "partsDesc";
+  const sort: SortKey =
+    sortParam === "priceDesc" || sortParam === "partsAsc" || sortParam === "partsDesc"
+      ? sortParam
+      : "priceAsc";
 
   const { partNum } = await params;
   const headers = { Authorization: `key ${API_KEY}` };
@@ -196,20 +200,26 @@ export async function GET(
   // Null prices always sink to the bottom regardless of direction so the user
   // never has to scroll past "unknown" rows to find priced ones.
   const NULL_RANK = Number.POSITIVE_INFINITY;
-  const sets = orderBy(
-    Array.from(byNum.values()),
-    [
-      (s: AggregatedSet) =>
-        s.displayPrice == null
-          ? NULL_RANK
-          : sortDir === "asc"
-            ? s.displayPrice
-            : -s.displayPrice,
-      "year",
-      "numParts",
-    ],
-    ["asc", "desc", "desc"],
-  );
+  const priceKey = (s: AggregatedSet, dir: "asc" | "desc") =>
+    s.displayPrice == null
+      ? NULL_RANK
+      : dir === "asc"
+        ? s.displayPrice
+        : -s.displayPrice;
 
-  return NextResponse.json({ count: sets.length, sort: sortDir === "desc" ? "priceDesc" : "priceAsc", sets });
+  const values = Array.from(byNum.values());
+  const sets =
+    sort === "partsAsc" || sort === "partsDesc"
+      ? orderBy(
+          values,
+          ["numParts", "year", (s: AggregatedSet) => priceKey(s, "asc")],
+          [sort === "partsAsc" ? "asc" : "desc", "desc", "asc"],
+        )
+      : orderBy(
+          values,
+          [(s: AggregatedSet) => priceKey(s, sort === "priceDesc" ? "desc" : "asc"), "year", "numParts"],
+          ["asc", "desc", "desc"],
+        );
+
+  return NextResponse.json({ count: sets.length, sort, sets });
 }

@@ -37,13 +37,18 @@ function formatPrice(cents: number | null, currency: Currency | null = "USD"): s
   return `${CURRENCY_SYMBOL[currency]}${(cents / 100).toFixed(2)}`;
 }
 
-type Sort = "priceAsc" | "priceDesc";
+type Sort = "priceAsc" | "priceDesc" | "partsAsc" | "partsDesc";
+
+const SORT_VALUES: readonly Sort[] = ["priceAsc", "priceDesc", "partsAsc", "partsDesc"] as const;
 
 export default function PartAllSetsPage() {
   const { partNum } = useParams<{ partNum: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sort: Sort = searchParams.get("sort") === "priceDesc" ? "priceDesc" : "priceAsc";
+  const sortParam = searchParams.get("sort");
+  const sort: Sort = (SORT_VALUES as readonly string[]).includes(sortParam ?? "")
+    ? (sortParam as Sort)
+    : "priceAsc";
   const [part, setPart] = useState<PartSummary | null>(null);
   const [sets, setSets] = useState<AggregatedSet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,6 +200,8 @@ export default function PartAllSetsPage() {
         {([
           ["priceAsc", "Cheapest first"],
           ["priceDesc", "Most expensive first"],
+          ["partsAsc", "Fewest pieces first"],
+          ["partsDesc", "Most pieces first"],
         ] as const).map(([value, label]) => (
           <button
             key={value}
