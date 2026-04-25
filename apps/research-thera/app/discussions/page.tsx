@@ -23,6 +23,7 @@ import {
   useGetGenerationJobQuery,
 } from "@/app/__generated__/hooks";
 import { AuthGate } from "../components/AuthGate";
+import { BogdanJobsSection } from "./_components/BogdanJobsSection";
 
 function formatRo(dateStr: string): string {
   return format(new Date(dateStr), "d MMM yyyy, HH:mm", { locale: ro });
@@ -248,6 +249,8 @@ function BogdanDiscussion() {
           )}
         </Flex>
       </Card>
+
+      <BogdanJobsSection />
 
       {latestLoading && !guide && (
         <Flex justify="center" p="6">

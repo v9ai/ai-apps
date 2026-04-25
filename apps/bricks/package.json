@@ -9,7 +9,8 @@
     "codegen-dev": "cd backend && bash start-codegen.sh",
     "build": "next build --webpack",
     "prepare": "panda codegen",
-    "start": "next start"
+    "start": "next start",
+    "prices:scrape": "node --env-file=.env.local --import tsx tools/scrape-set-prices.ts"
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
@@ -34,7 +35,9 @@
     "@types/web-bluetooth": "^0.0.21",
     "autoprefixer": "^10.4.19",
     "concurrently": "^9.2.1",
+    "playwright": "^1.50.1",
     "postcss": "^8",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }
