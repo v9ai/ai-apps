@@ -72,6 +72,24 @@ from leadgen_agent.contracts import (
 log = logging.getLogger(__name__)
 
 
+# ─── HTTP client lifetime / timeout defaults ──────────────────────────────
+#
+# httpx ``Timeout`` is constructed from a 4-tuple ``(connect, read, write, pool)``
+# (see ``langgraph_sdk.get_client``). The SDK default is (5, 300, 300, 5)
+# which leaves a hung remote able to wedge a graph node for five minutes.
+# The values below are the hard ceiling; per-adapter overrides bump ``read``
+# for endpoints that legitimately stream big payloads.
+
+# (connect, read, write, pool) in seconds.
+TimeoutTuple = tuple[float, float, float, float]
+
+DEFAULT_TIMEOUT: TimeoutTuple = (5.0, 60.0, 10.0, 5.0)
+# ML adapters can stream embedding batches; bump read to 90 s.
+ML_TIMEOUT: TimeoutTuple = (5.0, 90.0, 10.0, 5.0)
+# Research adapters do agentic web crawls; allow 120 s read.
+RESEARCH_TIMEOUT: TimeoutTuple = (5.0, 120.0, 10.0, 5.0)
+
+
 # ─── Retry / circuit breaker primitives ───────────────────────────────────
 
 
