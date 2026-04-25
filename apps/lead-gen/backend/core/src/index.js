@@ -29,6 +29,9 @@ export class CoreContainer extends Container {
       // hit directly (e.g. via `wrangler dev`).
       LANGGRAPH_AUTH_TOKEN: env.LANGGRAPH_AUTH_TOKEN ?? "",
 
+      // GitHub API — vertical_discovery + consultancies_discovery hit /search/code.
+      GITHUB_TOKEN: env.GITHUB_TOKEN ?? "",
+
       // Cross-container URLs (service bindings resolve to these hostnames).
       ML_URL: env.ML_URL ?? "http://lead-gen-ml",
       RESEARCH_URL: env.RESEARCH_URL ?? "http://lead-gen-research",
