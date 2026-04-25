@@ -32,18 +32,22 @@ via ``ML_INTERNAL_AUTH_TOKEN`` / ``RESEARCH_INTERNAL_AUTH_TOKEN``.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import logging
 import os
 import random
 import time
-from typing import Any
+from typing import Any, AsyncIterator, Callable
 
 import httpx
+from cachetools import TTLCache
 from pydantic import BaseModel, ValidationError
 
 from langgraph.pregel.remote import RemoteGraph
 
 from leadgen_agent.contracts import (
+    SCHEMA_VERSION,
     AgenticSearchInput,
     AgenticSearchOutput,
     BgeM3EmbedInput,
@@ -338,6 +342,106 @@ class _ValidatedRemoteGraph:
         self, state: dict[str, Any], config: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         return await self.ainvoke(state, config=config)
+
+    async def astream(
+        self,
+        state: dict[str, Any],
+        config: dict[str, Any] | None = None,
+        stream_mode: str = "updates",
+    ) -> AsyncIterator[Any]:
+        """Stream incremental events from the underlying ``RemoteGraph``.
+
+        Long-running research nodes (``agentic_search``, ``research_agent``)
+        otherwise block end-to-end before any partial state reaches the caller.
+        ``astream`` lets the dispatcher emit interim progress as each node
+        finishes inside the remote graph.
+
+        Validation contract:
+
+        * Input is validated against ``input_cls`` **before** the stream is
+          opened. A ``ValidationError`` raises pre-flight; the underlying
+          ``_remote.astream`` is never called.
+        * The final accumulated state is validated against ``output_cls``
+          **after** the stream closes — yielding ``ContractsVersionMismatch``
+          on schema drift, exactly like ``ainvoke``.
+
+        Streaming itself is *not* wrapped by the retry/circuit-breaker layer
+        used by ``ainvoke``: a half-streamed response cannot be safely
+        replayed mid-flight without producing duplicate events to the caller.
+
+        Args:
+            state: Initial state dict; validated against ``input_cls``.
+            config: Optional ``RunnableConfig`` forwarded untouched.
+            stream_mode: One of:
+
+                * ``"updates"`` (default) — only the keys changed by each
+                  node. Each yielded payload looks like
+                  ``{node_name: {key: value, ...}}``. Used for accumulation.
+                * ``"values"`` — the full state after each step.
+                * ``"messages"`` — token-level LLM stream (LangChain
+                  ``messages`` events). Skips end-of-stream output validation
+                  because the payload shape is messages, not state.
+
+        Yields:
+            Each event from ``RemoteGraph.astream`` is forwarded byte-identical.
+
+        Raises:
+            pydantic.ValidationError: pre-flight on bad input, or post-stream
+                if the accumulated final state does not match ``output_cls``.
+            ContractsVersionMismatch: post-stream if the final state's
+                ``schema_version`` disagrees with the caller's
+                ``SCHEMA_VERSION``.
+        """
+        # Pre-flight input validation — never open a stream we can't trust.
+        validate_remote_call(self._input_cls, self._output_cls, state, None)
+        log.debug(
+            "remote astream → %s (keys=%s, mode=%s)",
+            self._name,
+            list(state),
+            stream_mode,
+        )
+
+        accumulated: dict[str, Any] = {}
+        async for event in self._remote.astream(
+            state, config=config, stream_mode=stream_mode
+        ):
+            # Pass-through: the dispatcher sees exactly what RemoteGraph emits.
+            yield event
+
+            # Accumulate the running final state for post-stream validation.
+            # ``updates`` mode payloads are ``{node_name: partial_state_dict}``;
+            # ``values`` mode payloads are the full state dict per step.
+            if stream_mode == "updates" and isinstance(event, dict):
+                for node_partial in event.values():
+                    if isinstance(node_partial, dict):
+                        accumulated.update(node_partial)
+            elif stream_mode == "values" and isinstance(event, dict):
+                accumulated = dict(event)
+            # ``messages`` mode emits LLM tokens, not state — skip validation
+            # below by leaving ``accumulated`` empty.
+
+        if stream_mode == "messages":
+            return
+
+        # Post-stream output validation. Mirrors the ainvoke path: schema
+        # drift surfaces here as ContractsVersionMismatch instead of silently
+        # corrupting downstream state.
+        if not accumulated:
+            # Empty stream — nothing to validate. A graph that legitimately
+            # emits no updates also has nothing to drift, so we let it pass.
+            return
+
+        sv = accumulated.get("schema_version")
+        if isinstance(sv, str) and sv != SCHEMA_VERSION:
+            raise ContractsVersionMismatch(
+                f"{self._output_cls.__name__} schema_version={sv!r} "
+                f"does not match caller {SCHEMA_VERSION!r}"
+            )
+
+        # Final shape check — re-uses the same validator path as ainvoke.
+        validate_remote_call(
+            self._input_cls, self._output_cls, state, accumulated
+        )
 
 
 # ─── ML adapters ──────────────────────────────────────────────────────────
