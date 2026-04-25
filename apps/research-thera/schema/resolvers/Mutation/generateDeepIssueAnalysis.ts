@@ -10,10 +10,15 @@ export const generateDeepIssueAnalysis: NonNullable<MutationResolvers['generateD
   const { familyMemberId, triggerIssueId } = args;
   await db.assertOwnsFamilyMember(familyMemberId, userEmail);
 
-  // If a trigger issue was supplied, it must also belong to the caller.
+  // If a trigger issue was supplied, it must belong to the caller AND to the
+  // supplied familyMemberId — otherwise an owner of multiple family members could
+  // mis-route an analysis (issue belongs to family member B, analysis filed under A).
   if (triggerIssueId) {
     const issue = await db.getIssue(triggerIssueId, userEmail);
     if (!issue) throw new Error("Issue not found");
+    if (issue.familyMemberId !== familyMemberId) {
+      throw new Error("Issue does not belong to the specified family member");
+    }
   }
 
   // Clean up stale jobs
