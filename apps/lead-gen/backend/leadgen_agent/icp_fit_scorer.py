@@ -102,8 +102,23 @@ def _count_tokens_hits(text: str, tokens: str, max_expected: int = 3) -> float:
     return min(hits / max(max_expected, 1), 1.0)
 
 
+_SEVERITY_SYNONYMS = {
+    "low": "low", "minor": "low", "trivial": "low", "small": "low",
+    "medium": "medium", "mid": "medium", "moderate": "medium", "med": "medium",
+    "high": "high", "critical": "high", "severe": "high",
+    "blocker": "high", "showstopper": "high", "major": "high",
+}
+
+
+def _normalize_severity(sev: str) -> str:
+    return _SEVERITY_SYNONYMS.get((sev or "medium").strip().lower(), "medium")
+
+
 def _severity_order(sev: str) -> int:
-    return {"high": 3, "medium": 2, "low": 1}.get((sev or "").lower(), 0)
+    # Accept LLM-emitted synonyms (``critical``, ``blocker``, …) so the
+    # high-severity short-circuit upstream actually fires; without
+    # normalisation the lookup returned 0 and the gate silently no-opped.
+    return {"high": 3, "medium": 2, "low": 1}.get(_normalize_severity(sev), 0)
 
 
 def evaluate_deal_breakers(
@@ -115,7 +130,7 @@ def evaluate_deal_breakers(
         if not isinstance(db_item, dict):
             continue
         name = (db_item.get("name") or "").strip()
-        severity = (db_item.get("severity") or "medium").strip().lower()
+        severity = _normalize_severity(db_item.get("severity") or "")
         reason = (db_item.get("reason") or "").strip()
         if not name:
             continue

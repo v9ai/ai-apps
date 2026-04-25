@@ -267,10 +267,14 @@ async def check_freshness(state: ProductIntelV2State) -> dict:
             "agent_timings": {"check_freshness": round(time.perf_counter() - t0, 3)},
         }
 
-    is_fresh = bool(result.get("is_fresh", False))
+    # FreshnessState emits ``stale`` (bool) and ``snapshot`` (dict) — translate
+    # to v2's ``is_fresh`` / ``freshness_report`` contract here. Reading the
+    # legacy keys directly silently returned False on every run, killing the
+    # fresh-cache short-circuit.
+    is_fresh = not bool(result.get("stale", True))
     return {
         "is_fresh": is_fresh,
-        "freshness_report": result.get("freshness_report") or {},
+        "freshness_report": result.get("snapshot") or result.get("freshness_report") or {},
         "agent_timings": {"check_freshness": round(time.perf_counter() - t0, 3)},
     }
 

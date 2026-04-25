@@ -59,7 +59,7 @@ from .llm import ainvoke_json, make_llm
 from .loaders import fetch_url
 from .notify import notify_complete, notify_error
 from .product_intel_schemas import product_intel_graph_meta
-from .state import DeepCompetitorState
+from .state import DeepCompetitorState, _merge_dict
 
 log = logging.getLogger(__name__)
 
@@ -1089,7 +1089,7 @@ class DeepAnalysisSupervisorState(DeepCompetitorState, total=False):
 
     product_id: int
     competitor_ids: list[int]
-    per_competitor: Annotated[dict[int, dict[str, Any]], _first_error]
+    per_competitor: Annotated[dict[int, dict[str, Any]], _merge_dict]
 
 
 async def load_product_competitors(state: dict[str, Any]) -> dict:

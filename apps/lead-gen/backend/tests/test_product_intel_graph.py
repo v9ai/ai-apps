@@ -84,18 +84,18 @@ _CAN_FORCE_REFRESH = bool(
     reason="force_refresh branch persists via psycopg; set NEON_DATABASE_URL or DATABASE_URL to exercise it (we stub the connect call, but _dsn() still reads env)",
 )
 async def test_ensure_icp_ignores_cache_when_force_refresh() -> None:
-    """With ``force_refresh=True``, cached icp must be discarded and
-    ``deep_icp_graph.build_graph()`` MUST be invoked. We stub the subgraph to
-    return a minimal dict and stub psycopg so no DB write actually happens."""
+    """With ``force_refresh=True``, cached icp must be discarded and the
+    deep-ICP subgraph MUST be invoked. The subgraph is now compiled once at
+    module import (``_DEEP_ICP_GRAPH``) so we patch its ``ainvoke`` directly
+    rather than ``build_graph`` — the latter would only fire on a cold reload.
+    """
     fake_icp = {
         "weighted_total": 0.42,
         "segments": [],
         "personas": [],
     }
-    fake_subgraph = MagicMock()
-    fake_subgraph.ainvoke = AsyncMock(return_value=fake_icp)
+    fake_ainvoke = AsyncMock(return_value=fake_icp)
 
-    # Stub psycopg.connect to a context-manager noop so the UPDATE doesn't hit Neon.
     fake_conn = MagicMock()
     fake_conn.__enter__ = MagicMock(return_value=fake_conn)
     fake_conn.__exit__ = MagicMock(return_value=False)
@@ -106,9 +106,9 @@ async def test_ensure_icp_ignores_cache_when_force_refresh() -> None:
 
     with (
         patch(
-            "leadgen_agent.product_intel_graph.deep_icp_graph.build_graph",
-            return_value=fake_subgraph,
-        ) as mock_build,
+            "leadgen_agent.product_intel_graph._DEEP_ICP_GRAPH.ainvoke",
+            new=fake_ainvoke,
+        ),
         patch(
             "leadgen_agent.product_intel_graph.psycopg.connect",
             return_value=fake_conn,
@@ -121,8 +121,7 @@ async def test_ensure_icp_ignores_cache_when_force_refresh() -> None:
                 "force_refresh": True,
             }
         )
-        mock_build.assert_called_once()
-        fake_subgraph.ainvoke.assert_awaited_once()
+        fake_ainvoke.assert_awaited_once()
 
     # Key assertion: the fresh icp from the subgraph replaces the cached one.
     assert result["icp"]["weighted_total"] == 0.42

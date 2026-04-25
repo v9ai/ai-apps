@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import logging
 import os
+import secrets
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
@@ -52,7 +53,7 @@ class BearerTokenMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         auth = request.headers.get("authorization", "")
         scheme, _, token = auth.partition(" ")
-        if scheme.lower() != "bearer" or token != expected:
+        if scheme.lower() != "bearer" or not secrets.compare_digest(token, expected):
             return JSONResponse({"detail": "Unauthorized"}, status_code=401)
         return await call_next(request)
 

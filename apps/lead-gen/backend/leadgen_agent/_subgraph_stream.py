@@ -32,15 +32,32 @@ async def stream_subgraph(
     final_state: dict[str, Any] = {}
     completed: list[str] = []
     current: str = ""
-    async for chunk in compiled.astream(inputs, stream_mode="updates"):
-        if not isinstance(chunk, dict):
-            continue
-        for node_name, delta in chunk.items():
-            current = node_name
-            if node_name in business_nodes and node_name not in completed:
-                completed.append(node_name)
-            if isinstance(delta, dict):
-                final_state.update(delta)
+    # Hold an explicit reference to the async iterator so we can ``aclose()``
+    # it on early exit (parent task cancellation, timeout, client disconnect).
+    # Without this the subgraph keeps issuing LLM calls and DB writes after
+    # the parent has moved on.
+    stream = compiled.astream(inputs, stream_mode="updates")
+    try:
+        async for chunk in stream:
+            if not isinstance(chunk, dict):
+                continue
+            for node_name, delta in chunk.items():
+                current = node_name
+                if node_name in business_nodes and node_name not in completed:
+                    completed.append(node_name)
+                if isinstance(delta, dict):
+                    # Sticky ``_error`` — once a child node reports a failure
+                    # don't let a later partial-state delta clobber it.
+                    if delta.get("_error") and final_state.get("_error"):
+                        delta = {k: v for k, v in delta.items() if k != "_error"}
+                    final_state.update(delta)
+    finally:
+        aclose = getattr(stream, "aclose", None)
+        if aclose is not None:
+            try:
+                await aclose()
+            except Exception:  # noqa: BLE001 — close-on-exit is best-effort
+                pass
     progress = {
         "current_node": current,
         "completed": completed,

@@ -246,8 +246,10 @@ async def test_fresh_path_short_circuits_past_parallel_fanout() -> None:
         side_effect=AssertionError("deep_competitor ran on fresh path")
     )
     fake_freshness_graph = MagicMock()
+    # FreshnessState emits ``stale`` + ``snapshot`` — the v2 supervisor
+    # translates those into ``is_fresh`` / ``freshness_report``.
     fake_freshness_graph.ainvoke = AsyncMock(
-        return_value={"is_fresh": True, "freshness_report": {"age_days": 2}}
+        return_value={"stale": False, "snapshot": {"age_days": 2}}
     )
 
     with (

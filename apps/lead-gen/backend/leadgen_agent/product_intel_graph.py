@@ -177,6 +177,7 @@ class _ProductIntelStateWithError(ProductIntelState, total=False):
 _PRICING_GRAPH = pricing_graph.build_graph(checkpointer=None)
 _GTM_GRAPH = gtm_graph.build_graph(checkpointer=None)
 _POSITIONING_GRAPH = positioning_graph.build_graph(checkpointer=None)
+_DEEP_ICP_GRAPH = deep_icp_graph.build_graph(checkpointer=None)
 
 # The "real work" nodes inside each subgraph — we surface total counts so the
 # progress payload can render "4/5 nodes done" without the UI having to know
@@ -343,9 +344,9 @@ async def ensure_icp(state: _ProductIntelStateWithError) -> dict:
         }
 
     try:
-        # Invoke the existing deep_icp subgraph to build fresh ICP.
-        sub = deep_icp_graph.build_graph()
-        icp = await sub.ainvoke({"product_id": state["product_id"]})
+        # Reuse the module-scope compiled subgraph; rebuilding cost ~50–200 ms
+        # per supervisor run and churned the async checkpointer context.
+        icp = await _DEEP_ICP_GRAPH.ainvoke({"product_id": state["product_id"]})
     except Exception as e:  # noqa: BLE001 — partial failure, not fatal
         # Fall back to whatever's cached (possibly {}). Record the error so the
         # final report surfaces the missing/stale ICP section, but keep going.
