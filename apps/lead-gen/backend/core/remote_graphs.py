@@ -406,10 +406,23 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         )
         attempts_budget = 1 if is_half_open_probe else self._max_attempts
 
+        # Forward the calling graph's request id so the remote container can
+        # join its log lines to ours. ``RemoteGraph.ainvoke(headers=...)``
+        # merges per-call headers on top of the constructor-time ones — we
+        # only set it when the caller's config carries an explicit id, so
+        # adapters used outside an HTTP-bound request keep their existing
+        # ``X-Internal-Caller`` constructor headers untouched.
+        per_call_headers = self._extract_request_id_header(config)
+
         last_exc: BaseException | None = None
         for attempt in range(1, attempts_budget + 1):
             try:
-                result = await self._remote.ainvoke(state, config=config)
+                if per_call_headers is None:
+                    result = await self._remote.ainvoke(state, config=config)
+                else:
+                    result = await self._remote.ainvoke(
+                        state, config=config, headers=per_call_headers
+                    )
             except BaseException as exc:  # noqa: BLE001 — re-raised below
                 last_exc = exc
                 if not _is_retryable(exc):
@@ -451,6 +464,36 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
         # Defensive: loop above either returns or raises. This is unreachable.
         assert last_exc is not None
         raise last_exc
+
+    @staticmethod
+    def _extract_request_id_header(
+        config: dict[str, Any] | None,
+    ) -> dict[str, str] | None:
+        """Pull ``metadata.request_id`` from a LangGraph config, if present.
+
+        Returns ``{"x-request-id": <id>}`` so the caller can pass it straight
+        to ``RemoteGraph.ainvoke(headers=...)`` for cross-container log
+        correlation. Returns ``None`` when the config has no metadata or the
+        request id is missing — never invents one here, since the request-id
+        middleware on the inbound side is responsible for minting.
+
+        Defensive about shape: any non-string id is ignored rather than
+        passed to the remote (which would 4xx with a header validation
+        error). Caps length at 128 chars to mirror the inbound coercion in
+        ``observability.py``.
+        """
+        if not isinstance(config, dict):
+            return None
+        meta = config.get("metadata")
+        if not isinstance(meta, dict):
+            return None
+        rid = meta.get("request_id")
+        if not isinstance(rid, str):
+            return None
+        cleaned = rid.strip()
+        if not cleaned or len(cleaned) > 128:
+            return None
+        return {"x-request-id": cleaned}
 
     def _log_cf_error_envelope(self, exc: BaseException) -> None:
         """Surface the CF Worker / LangGraph error body at WARN level.

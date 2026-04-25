@@ -242,3 +242,70 @@ async def test_config_passed_through_to_remote() -> None:
     cfg = {"configurable": {"thread_id": "t1"}}
     await adapter.ainvoke({"text": "react"}, config=cfg)
     assert fake.configs == [cfg]
+
+
+@pytest.mark.asyncio
+async def test_request_id_forwarded_as_header() -> None:
+    """A request_id in config.metadata becomes an x-request-id header.
+
+    Closes the observability loop: the inbound request-id middleware stashes
+    the id, the calling graph propagates it via ``config.metadata``, and the
+    adapter forwards it to the remote container as ``x-request-id`` so the
+    same id appears on both sides of the wire.
+    """
+
+    class HeaderCapturingRemote(FakeRemote):
+        def __init__(self, response: Any) -> None:
+            super().__init__(response)
+            self.headers_seen: list[dict[str, str] | None] = []
+
+        async def ainvoke(
+            self,
+            state: dict[str, Any],
+            config: dict[str, Any] | None = None,
+            *,
+            headers: dict[str, str] | None = None,
+        ) -> Any:
+            self.headers_seen.append(headers)
+            return await super().ainvoke(state, config=config)
+
+    fake = HeaderCapturingRemote({"schema_version": SCHEMA_VERSION, "spans": []})
+    adapter = _build_adapter(fake)
+
+    cfg = {
+        "configurable": {"thread_id": "t1"},
+        "metadata": {"request_id": "rid-deadbeef"},
+    }
+    await adapter.ainvoke({"text": "react"}, config=cfg)
+    assert fake.headers_seen == [{"x-request-id": "rid-deadbeef"}]
+
+
+@pytest.mark.asyncio
+async def test_request_id_absent_when_metadata_missing() -> None:
+    """No metadata.request_id → no per-call headers passed to RemoteGraph.
+
+    Important: the constructor-time ``X-Internal-Caller`` headers must not be
+    overridden when there is no caller-provided id, otherwise an adapter
+    used outside an HTTP request (background dispatch) would lose its
+    bearer-auth header.
+    """
+
+    class HeaderCapturingRemote(FakeRemote):
+        def __init__(self, response: Any) -> None:
+            super().__init__(response)
+            self.headers_kw_used: list[bool] = []
+
+        async def ainvoke(
+            self,
+            state: dict[str, Any],
+            config: dict[str, Any] | None = None,
+            **kwargs: Any,
+        ) -> Any:
+            self.headers_kw_used.append("headers" in kwargs)
+            return await super().ainvoke(state, config=config)
+
+    fake = HeaderCapturingRemote({"schema_version": SCHEMA_VERSION, "spans": []})
+    adapter = _build_adapter(fake)
+
+    await adapter.ainvoke({"text": "react"}, config={"configurable": {"thread_id": "t1"}})
+    assert fake.headers_kw_used == [False]

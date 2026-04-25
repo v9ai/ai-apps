@@ -9,6 +9,7 @@ const API_KEY = process.env.REBRICKABLE_API_KEY;
 const PARTS_BASE = "https://rebrickable.com/api/v3/lego/parts";
 const PAGE_SIZE = 1000;
 const CACHE_TTL_DAYS = 30;
+const NOT_FOUND_RETRY_TTL_DAYS = Number(process.env.BRICKSET_RETRY_TTL_DAYS ?? 7);
 
 interface RbSet {
   set_num: string;
@@ -118,11 +119,16 @@ export async function GET(
 
     const now = Date.now();
     const ttlMs = CACHE_TTL_DAYS * 24 * 60 * 60 * 1000;
+    const retryMs = NOT_FOUND_RETRY_TTL_DAYS * 24 * 60 * 60 * 1000;
     const fresh = new Map<string, typeof cached[number]>();
+    // Stale not-found rows that we'll re-probe via Brickset; tracked so the
+    // in-memory entry can carry forward any market data already on the row.
+    const stale = new Map<string, typeof cached[number]>();
     for (const row of cached) {
-      if (now - row.updatedAt.getTime() < ttlMs) {
-        fresh.set(row.setNum, row);
-      }
+      const age = now - row.updatedAt.getTime();
+      const isFresh = row.found ? age < ttlMs : age < retryMs;
+      if (isFresh) fresh.set(row.setNum, row);
+      else stale.set(row.setNum, row);
     }
 
     for (const [setNum, row] of fresh) {
@@ -157,11 +163,14 @@ export async function GET(
           .onConflictDoUpdate({
             target: setPricesCache.setNum,
             set: {
-              usdRetail: sql`excluded.usd_retail`,
-              gbpRetail: sql`excluded.gbp_retail`,
-              eurRetail: sql`excluded.eur_retail`,
-              bricklinkId: sql`excluded.bricklink_id`,
-              found: sql`excluded.found`,
+              // COALESCE preserves prior non-null values (e.g. EUR market/retail
+              // populated by the BrickEconomy scraper) when Brickset returns
+              // partial data — avoids regressing rows that already had prices.
+              usdRetail: sql`COALESCE(${setPricesCache.usdRetail}, excluded.usd_retail)`,
+              gbpRetail: sql`COALESCE(${setPricesCache.gbpRetail}, excluded.gbp_retail)`,
+              eurRetail: sql`COALESCE(${setPricesCache.eurRetail}, excluded.eur_retail)`,
+              bricklinkId: sql`COALESCE(${setPricesCache.bricklinkId}, excluded.bricklink_id)`,
+              found: sql`${setPricesCache.found} OR excluded.found`,
               updatedAt: sql`excluded.updated_at`,
             },
           })
@@ -169,11 +178,19 @@ export async function GET(
 
         for (const p of fetched) {
           const entry = byNum.get(p.setNum);
-          if (entry) {
-            entry.usdRetail = p.usdRetail;
-            entry.gbpRetail = p.gbpRetail;
-            entry.eurRetail = p.eurRetail;
+          if (!entry) continue;
+          const prev = stale.get(p.setNum);
+          if (prev) {
+            entry.usdMarket = prev.usdMarket;
+            entry.gbpMarket = prev.gbpMarket;
+            entry.eurMarket = prev.eurMarket;
+            entry.usdRetail = prev.usdRetail;
+            entry.gbpRetail = prev.gbpRetail;
+            entry.eurRetail = prev.eurRetail;
           }
+          entry.usdRetail = entry.usdRetail ?? p.usdRetail;
+          entry.gbpRetail = entry.gbpRetail ?? p.gbpRetail;
+          entry.eurRetail = entry.eurRetail ?? p.eurRetail;
         }
       }
     }

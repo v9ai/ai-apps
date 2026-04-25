@@ -168,3 +168,35 @@ async def test_runs_wait_validates_assistant_id_required(patched_core_app: Any) 
     # Missing assistant_id and input both surface in the error list.
     locations = {tuple(err["loc"]) for err in body["detail"]}
     assert ("body", "assistant_id") in locations
+
+
+async def test_request_id_minted_when_missing(patched_core_app: Any) -> None:
+    """Every response must echo an ``x-request-id`` even if none was sent.
+
+    The request-id middleware mints ``uuid4().hex`` when the inbound header
+    is absent so a CF dispatcher Worker that forgot to forward an id still
+    produces correlatable log lines.
+    """
+    async with AsyncClient(
+        transport=ASGITransport(app=patched_core_app.app), base_url="http://test"
+    ) as client:
+        r = await client.get("/health")
+    assert r.status_code == 200
+    rid = r.headers.get("x-request-id")
+    assert rid is not None and len(rid) >= 8
+
+
+async def test_request_id_propagated_when_present(patched_core_app: Any) -> None:
+    """An inbound ``x-request-id`` is preserved untouched in the response.
+
+    Critical for the dispatcher → sub-Worker → LangSmith stitch: if the
+    middleware overwrote a parent id, every log line below the dispatcher
+    would carry a different id and joins would fail.
+    """
+    incoming = "abc123-trace-xyz"
+    async with AsyncClient(
+        transport=ASGITransport(app=patched_core_app.app), base_url="http://test"
+    ) as client:
+        r = await client.get("/health", headers={"x-request-id": incoming})
+    assert r.status_code == 200
+    assert r.headers.get("x-request-id") == incoming

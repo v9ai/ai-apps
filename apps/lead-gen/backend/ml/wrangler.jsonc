@@ -4,9 +4,6 @@
   "main": "src/index.js",
   "compatibility_date": "2026-04-01",
   "observability": { "enabled": true },
-  "vars": {
-    "ICP_EMBED_DIM": "1024"
-  },
   "containers": [
     {
       "class_name": "MlContainer",

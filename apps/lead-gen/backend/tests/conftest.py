@@ -30,12 +30,21 @@ def _reset_remote_adapter_cache() -> Any:
     monkeypatch ``ML_URL`` / ``RESEARCH_URL`` would otherwise see a cached
     adapter built under a previous test's env. Reset before and after each
     test so isolation matches the pre-cache behaviour.
+
+    Also reset the per-adapter circuit-breaker registry — it is keyed by
+    adapter name on a module-level dict, so a test that trips the breaker
+    on ``jobbert_ner`` would otherwise leave a still-open breaker that any
+    later test re-using the same adapter name would inherit (the property
+    suite hits this — unrelated round-trip tests fail with
+    ``RemoteUnavailable``).
     """
     try:
-        from core.remote_graphs import reset_adapter_cache
+        from core.remote_graphs import _CircuitBreaker, reset_adapter_cache
     except Exception:  # noqa: BLE001 — torch/transitive imports may fail in some envs
         yield
         return
     reset_adapter_cache()
+    _CircuitBreaker.reset_all()
     yield
     reset_adapter_cache()
+    _CircuitBreaker.reset_all()

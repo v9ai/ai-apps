@@ -4,6 +4,14 @@
   "main": "src/index.js",
   "compatibility_date": "2026-04-01",
   "observability": { "enabled": true },
+  "vars": {
+    // research_agent + agentic_search both call the LLM via OpenAI-compatible
+    // chat-completions; without these, src/index.js forwards an empty string
+    // and the graphs fail at request-time. Mirrors core's defaults so the two
+    // containers reason against the same model unless overridden by a secret.
+    "LLM_BASE_URL": "https://api.deepseek.com",
+    "LLM_MODEL": "deepseek-chat"
+  },
   "containers": [
     {
       "class_name": "ResearchContainer",

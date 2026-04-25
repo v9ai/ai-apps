@@ -37,6 +37,7 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import BaseModel
 
 from leadgen_agent.auth import make_bearer_token_middleware
+from leadgen_agent.observability import make_request_id_middleware
 
 # Import the 6 source graphs. Five have ``build_graph(checkpointer)``; the
 # scholar wrapper defined in research_graphs.scholar does too.
@@ -159,6 +160,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="lead-gen research", lifespan=lifespan)
 app.add_middleware(BearerTokenMiddleware)
+# Added after bearer so it runs first (LIFO) — correlation id is attached to
+# every response, including 401s that never reach a handler.
+app.add_middleware(make_request_id_middleware())
 
 
 class RunRequest(BaseModel):

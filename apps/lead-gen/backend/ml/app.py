@@ -34,6 +34,7 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 from leadgen_agent.auth import make_bearer_token_middleware  # noqa: E402
+from leadgen_agent.observability import make_request_id_middleware  # noqa: E402
 
 # Import the compiled graphs. Each module eagerly loads its model at import
 # time (gated by ML_EAGER_LOAD) so the first request is fast.
@@ -132,6 +133,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="lead-gen ML LangGraph", lifespan=lifespan)
 app.add_middleware(BearerTokenMiddleware)
+# Added after bearer so it runs first (LIFO) — correlation id is attached to
+# every response, including 401s that never reach a handler.
+app.add_middleware(make_request_id_middleware())
 
 
 class RunRequest(BaseModel):

@@ -53,6 +53,7 @@ from pydantic import BaseModel
 
 from leadgen_agent.admin_chat_graph import build_graph as build_admin_chat
 from leadgen_agent.auth import make_bearer_token_middleware
+from leadgen_agent.observability import make_request_id_middleware
 from leadgen_agent.classify_paper_graph import build_graph as build_classify_paper
 from leadgen_agent.company_discovery_graph import (
     build_graph as build_company_discovery,
@@ -293,6 +294,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="lead-gen-core", lifespan=lifespan)
 app.add_middleware(BearerTokenMiddleware)
+# Request-id middleware is added AFTER the bearer middleware so it executes
+# FIRST (Starlette runs middlewares LIFO). That way every request — including
+# 401s rejected by the bearer gate — still gets a request id stamped on its
+# response, so an operator can correlate "Unauthorized" log lines back to the
+# upstream Worker call.
+app.add_middleware(make_request_id_middleware())
 
 # Pre-populate ``app.state`` with empty defaults so any handler that imports
 # the module before lifespan completes (e.g. a CF Container readiness probe
