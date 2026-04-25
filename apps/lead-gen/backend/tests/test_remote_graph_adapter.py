@@ -125,36 +125,34 @@ async def test_output_missing_required_field() -> None:
 
 
 @pytest.mark.asyncio
-async def test_non_dict_output_wrapped() -> None:
-    """If the remote returns a bare string (bad deploy), the adapter wraps it
-    in ``{"__raw__": ...}`` so the downstream Pydantic validator gets a real
-    dict instead of crashing with "TypeError: 'str' object has no attribute".
-
-    NOTE: For ``JobbertNerOutput`` specifically all fields have defaults
-    (``schema_version`` defaults, ``spans`` defaults to ``[]``), so the wrapped
-    payload validates as an empty Output rather than raising ValidationError.
-    Pydantic v2 silently ignores the unknown ``__raw__`` key. This test
-    documents that the adapter does NOT crash with TypeError on a non-dict
-    response — graceful degradation is the actual safety property.
+async def test_non_dict_output_raises_protocol_error() -> None:
+    """A bare string from the remote (bad deploy) must raise
+    ``RemoteGraphProtocolError`` — not silently validate as a default-filled
+    empty Output, which used to happen for any contract whose fields all
+    default (e.g. ``JobbertNerOutput``). Surfacing the protocol violation is
+    the real safety property: an empty success would hide the deploy bug
+    and corrupt downstream state until someone noticed missing data.
     """
+    from core.remote_graphs import RemoteGraphProtocolError
+
     fake = FakeRemote("hello")  # a bare string is not a state dict
     adapter = _build_adapter(fake)
 
-    out = await adapter.ainvoke({"text": "react"})
-    # No crash — output is a valid (default-filled) JobbertNerOutput dict.
-    assert isinstance(out, dict)
-    assert out["schema_version"] == SCHEMA_VERSION
-    assert out["spans"] == []
+    with pytest.raises(RemoteGraphProtocolError) as exc_info:
+        await adapter.ainvoke({"text": "react"})
+
+    msg = str(exc_info.value)
+    assert "jobbert_ner" in msg
+    assert "str" in msg
 
 
 @pytest.mark.asyncio
-async def test_non_dict_output_with_strict_output() -> None:
-    """For an Output with required fields the wrap path DOES surface
-    ValidationError, which is the real safety property — no silent TypeError.
-
-    We use ``BgeM3EmbedOutput`` here: ``vectors`` has no default, so wrapping
-    a bare string into ``{"__raw__": "hello"}`` triggers a missing-field error.
-    """
+async def test_non_dict_output_with_strict_output_raises_protocol_error() -> None:
+    """Same protocol-violation path for an Output with required fields. Used
+    to surface as a Pydantic ValidationError mentioning the synthetic
+    ``__raw__`` key — confusing for operators trying to chase the deploy
+    bug. ``RemoteGraphProtocolError`` says exactly what's wrong."""
+    from core.remote_graphs import RemoteGraphProtocolError
     from leadgen_agent.contracts import BgeM3EmbedInput, BgeM3EmbedOutput
 
     adapter = _ValidatedRemoteGraph(
@@ -167,25 +165,47 @@ async def test_non_dict_output_with_strict_output() -> None:
     fake = FakeRemote("hello")
     adapter._remote = fake  # type: ignore[assignment]
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(RemoteGraphProtocolError) as exc_info:
         await adapter.ainvoke({"texts": ["x"]})
 
     msg = str(exc_info.value)
-    assert "vectors" in msg or "BgeM3EmbedOutput" in msg
+    assert "bge_m3_embed" in msg
+    assert "str" in msg
 
 
 @pytest.mark.asyncio
-async def test_none_output_wrapped() -> None:
-    """``None`` is also non-dict; same wrap path. For JobbertNerOutput (all
-    fields default) this validates cleanly to an empty Output. The fact that
-    no exception leaks to the caller is the contract we lock in."""
+async def test_none_output_raises_protocol_error() -> None:
+    """``None`` is also non-dict; same protocol-violation path."""
+    from core.remote_graphs import RemoteGraphProtocolError
+
     fake = FakeRemote(None)
     adapter = _build_adapter(fake)
 
-    out = await adapter.ainvoke({"text": "react"})
-    assert isinstance(out, dict)
-    assert out["schema_version"] == SCHEMA_VERSION
-    assert out["spans"] == []
+    with pytest.raises(RemoteGraphProtocolError) as exc_info:
+        await adapter.ainvoke({"text": "react"})
+
+    msg = str(exc_info.value)
+    assert "NoneType" in msg
+
+
+@pytest.mark.asyncio
+async def test_protocol_error_is_not_retried() -> None:
+    """A non-dict response is a deploy bug, not transient — the retry loop
+    must not re-issue the call. Today ``_is_retryable`` doesn't classify
+    ``RemoteGraphProtocolError`` because the error fires *after* the retry
+    loop returns; this test pins that boundary so a later refactor that
+    moves the check inside the loop also keeps the protocol error
+    non-retryable."""
+    from core.remote_graphs import RemoteGraphProtocolError
+
+    fake = FakeRemote("hello")
+    adapter = _build_adapter(fake)
+
+    with pytest.raises(RemoteGraphProtocolError):
+        await adapter.ainvoke({"text": "react"})
+
+    # Exactly one HTTP call — no retry loop firing on the bad response.
+    assert len(fake.calls) == 1
 
 
 @pytest.mark.asyncio

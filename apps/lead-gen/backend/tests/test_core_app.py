@@ -95,13 +95,39 @@ async def test_app_imports_and_starts(patched_core_app: Any) -> None:
 
 
 async def test_health_endpoint(patched_core_app: Any) -> None:
-    # /health is in _PUBLIC_PATHS and does not need ``app.state.graphs``.
+    """``/health`` stays liveness-only when the lifespan has not run, so it
+    reports ``adapters: []`` and ``adapters_ready: False`` without touching
+    ``app.state.graphs``.
+    """
     async with AsyncClient(
         transport=ASGITransport(app=patched_core_app.app), base_url="http://test"
     ) as client:
         r = await client.get("/health")
     assert r.status_code == 200
-    assert r.json() == {"status": "ok"}
+    body = r.json()
+    assert body["status"] == "ok"
+    assert body["adapters"] == []
+    assert body["adapters_ready"] is False
+
+
+async def test_health_endpoint_lists_warmed_adapters(patched_core_app: Any) -> None:
+    """When the lifespan has wired adapters, ``/health`` exposes the names so
+    a dispatcher can distinguish a clean boot from a degraded one (no
+    ML_URL / RESEARCH_URL) without grepping logs."""
+    ca = patched_core_app
+    ca.app.state.remote_adapters = {
+        "jobbert_ner": object(),
+        "bge_m3_embed": object(),
+    }
+    async with AsyncClient(
+        transport=ASGITransport(app=ca.app), base_url="http://test"
+    ) as client:
+        r = await client.get("/health")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "ok"
+    assert body["adapters"] == ["bge_m3_embed", "jobbert_ner"]
+    assert body["adapters_ready"] is True
 
 
 async def test_linkedin_router_mounted(patched_core_app: Any) -> None:
@@ -168,3 +194,102 @@ async def test_runs_wait_validates_assistant_id_required(patched_core_app: Any) 
     # Missing assistant_id and input both surface in the error list.
     locations = {tuple(err["loc"]) for err in body["detail"]}
     assert ("body", "assistant_id") in locations
+
+
+# ─── Adapter injection: parity between sync and async run paths ─────────
+
+
+def test_build_run_configurable_injects_jobbert_for_contact_enrich(
+    patched_core_app: Any,
+) -> None:
+    """Sync ``/runs/wait`` and async ``_run_graph_bg`` must agree on what
+    lands in ``configurable``. Without the shared helper the async path
+    silently dropped ``jobbert_ner_adapter`` and ``extract_skills`` returned
+    empty skill lists for every background run.
+    """
+    ca = patched_core_app
+    sentinel = object()
+    ca.app.state.remote_adapters = {"jobbert_ner": sentinel}
+
+    cfg = ca._build_run_configurable("contact_enrich", "tid-123")
+
+    assert cfg["thread_id"] == "tid-123"
+    assert cfg["jobbert_ner_adapter"] is sentinel
+
+
+def test_build_run_configurable_omits_adapter_for_other_assistants(
+    patched_core_app: Any,
+) -> None:
+    """Only ``contact_enrich`` consumes ``jobbert_ner_adapter`` today; every
+    other assistant should get the bare ``thread_id`` so unrelated graphs
+    don't see a stray key in ``configurable``."""
+    ca = patched_core_app
+    ca.app.state.remote_adapters = {"jobbert_ner": object()}
+
+    cfg = ca._build_run_configurable("email_compose", "tid-1")
+
+    assert cfg == {"thread_id": "tid-1"}
+
+
+def test_build_run_configurable_handles_missing_remote_adapters(
+    patched_core_app: Any,
+) -> None:
+    """If the lifespan boot logged a warning and left ``remote_adapters``
+    empty (ML_URL absent in local dev), the helper must not crash — graphs
+    that need the adapter will surface ``adapter is None`` themselves."""
+    ca = patched_core_app
+    ca.app.state.remote_adapters = {}
+
+    cfg = ca._build_run_configurable("contact_enrich", "tid-x")
+
+    assert cfg == {"thread_id": "tid-x"}
+    assert "jobbert_ner_adapter" not in cfg
+
+
+async def test_async_run_path_injects_jobbert_for_contact_enrich(
+    patched_core_app: Any,
+) -> None:
+    """Regression guard: ``POST /threads/{tid}/runs`` for ``contact_enrich``
+    must hand the jobbert adapter to the graph. Pre-fix, the async path
+    skipped injection and ``extract_skills`` saw ``adapter is None``.
+
+    We patch the compiled ``contact_enrich`` graph with a recorder, fire the
+    async route, and assert the recorder saw the adapter in
+    ``config["configurable"]``.
+    """
+    import asyncio as _asyncio
+
+    ca = patched_core_app
+    sentinel = object()
+    captured: dict[str, Any] = {}
+
+    class _RecordingGraph:
+        async def ainvoke(
+            self, payload: dict[str, Any], config: dict[str, Any] | None = None
+        ) -> dict[str, Any]:
+            captured["config"] = config
+            captured["payload"] = payload
+            return {"ok": True}
+
+    async with _booted_app(ca) as client:
+        ca.app.state.remote_adapters = {"jobbert_ner": sentinel}
+        ca.app.state.graphs["contact_enrich"] = _RecordingGraph()
+
+        r = await client.post(
+            "/threads/tid-async/runs",
+            json={"assistant_id": "contact_enrich", "input": {"contact_id": 1}},
+        )
+        assert r.status_code == 200, r.text
+        run_id = r.json()["run_id"]
+
+        # Wait for the background task to record. _async_run_tasks holds a
+        # strong ref so we can ``gather`` to await completion deterministically.
+        for _ in range(50):
+            if ca._async_runs[run_id]["status"] != "running":
+                break
+            await _asyncio.sleep(0.01)
+
+    assert ca._async_runs[run_id]["status"] == "success"
+    cfg = captured["config"]["configurable"]
+    assert cfg["thread_id"] == "tid-async"
+    assert cfg["jobbert_ner_adapter"] is sentinel

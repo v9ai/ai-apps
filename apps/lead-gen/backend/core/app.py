@@ -266,9 +266,51 @@ class RunRequest(BaseModel):
     thread_id: str | None = None
 
 
+def _build_run_configurable(assistant_id: str, thread_id: str) -> dict[str, Any]:
+    """Build the ``configurable`` dict the FastAPI runtime hands to a graph.
+
+    Single source of truth for adapter injection so both the sync
+    ``/runs/wait`` path and the async ``/threads/{tid}/runs`` background
+    runner stay aligned. Without this helper the async path silently degrades
+    every assistant that needs a remote adapter (the ``extract_skills`` node
+    on ``contact_enrich`` was the immediate symptom — no skills extracted in
+    background runs because ``configurable["jobbert_ner_adapter"]`` was
+    missing).
+    """
+    configurable: dict[str, Any] = {"thread_id": thread_id}
+    if assistant_id == "contact_enrich":
+        # extract_skills hits the ML container via the configurable adapter to
+        # avoid a circular import of ``core.remote_graphs`` from leadgen_agent.
+        remote_adapters = getattr(app.state, "remote_adapters", {})
+        jobbert = remote_adapters.get("jobbert_ner")
+        if jobbert is not None:
+            configurable["jobbert_ner_adapter"] = jobbert
+    return configurable
+
+
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> dict[str, Any]:
+    """Liveness + remote-adapter readiness.
+
+    The lifespan boot intentionally tolerates a missing ``ML_URL`` /
+    ``RESEARCH_URL`` so local dev runs without the cross-container hop. In
+    production that same path leaves ``app.state.remote_adapters = {}`` and
+    cross-container graphs 500 on first call. Exposing the adapter list on
+    ``/health`` lets uptime monitors and the dispatcher Worker distinguish a
+    clean boot (8 adapters wired) from a degraded one (0) without grepping
+    the lifespan log.
+
+    Status stays ``"ok"`` regardless because the route is also the dumb
+    liveness probe — turning it red on missing adapters would force
+    rolling-restart loops in environments that legitimately run without the
+    ML/research containers.
+    """
+    adapters = sorted(getattr(app.state, "remote_adapters", {}).keys())
+    return {
+        "status": "ok",
+        "adapters": adapters,
+        "adapters_ready": len(adapters) > 0,
+    }
 
 
 @app.post("/runs/wait")
@@ -279,14 +321,7 @@ async def runs_wait(req: RunRequest) -> dict[str, Any]:
             status_code=404, detail=f"Unknown assistant_id: {req.assistant_id}"
         )
     thread_id = req.thread_id or str(uuid.uuid4())
-    configurable: dict[str, Any] = {"thread_id": thread_id}
-    # Inject the jobbert NER adapter for the contact_enrich graph so the
-    # extract_skills node can call the ML container without a circular import.
-    if req.assistant_id == "contact_enrich":
-        remote_adapters = getattr(app.state, "remote_adapters", {})
-        jobbert = remote_adapters.get("jobbert_ner")
-        if jobbert is not None:
-            configurable["jobbert_ner_adapter"] = jobbert
+    configurable = _build_run_configurable(req.assistant_id, thread_id)
     config: dict[str, Any] = {"configurable": configurable}
     return await graph.ainvoke(req.input, config=config)
 
@@ -347,7 +382,9 @@ async def _run_graph_bg(
         record["status"] = "error"
         record["error"] = f"Unknown assistant_id: {assistant_id}"
         return
-    config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
+    config: dict[str, Any] = {
+        "configurable": _build_run_configurable(assistant_id, thread_id)
+    }
     try:
         result = await graph.ainvoke(payload, config=config)
         record["output"] = result

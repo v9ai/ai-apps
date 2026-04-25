@@ -101,6 +101,18 @@ class RemoteUnavailable(RuntimeError):
     """
 
 
+class RemoteGraphProtocolError(RuntimeError):
+    """Raised when ``RemoteGraph.ainvoke`` returns something that is not a state
+    dict.
+
+    LangGraph Server always emits a state dict on success; a bare string or
+    ``None`` indicates a bad deploy on the remote side. Surfacing a typed
+    error keeps that signal loud instead of letting it silently validate as
+    an empty default-filled Output (which used to happen for any contract
+    whose fields all have defaults, masking the real problem).
+    """
+
+
 class _CircuitBreaker:
     """Per-adapter consecutive-failure breaker.
 
@@ -423,10 +435,16 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
 
         raw_output = await self._invoke_remote_with_retry(state_dict, config=config)
         if not isinstance(raw_output, dict):
-            # Defensive — LangGraph Server always returns a state dict, but a
-            # bad deploy could return a raw string/null. Wrap so the Pydantic
-            # error has a useful payload instead of a silent TypeError.
-            raw_output = {"__raw__": raw_output}
+            # Defensive: LangGraph Server always returns a state dict; a bare
+            # string / None means the remote side served a broken deploy. We
+            # used to wrap it in ``{"__raw__": raw_output}`` and let Pydantic
+            # complain, but for any Output whose fields all default that
+            # silently validated to an empty success — a false positive that
+            # hid the real problem. A typed error surfaces the protocol
+            # violation regardless of the Output schema.
+            raise RemoteGraphProtocolError(
+                f"{self._name}: expected a state dict, got {type(raw_output).__name__}"
+            )
 
         # Validates both shape and schema_version; raises ContractsVersionMismatch
         # on drift so the next deploy fails fast instead of corrupting state.
@@ -455,7 +473,9 @@ class _ValidatedRemoteGraph[InT: BaseModel, OutT: BaseModel]:
 
         raw_output = await self._invoke_remote_with_retry(state_dict, config=config)
         if not isinstance(raw_output, dict):
-            raw_output = {"__raw__": raw_output}
+            raise RemoteGraphProtocolError(
+                f"{self._name}: expected a state dict, got {type(raw_output).__name__}"
+            )
 
         _, out = validate_remote_call(
             self._input_cls, self._output_cls, state_dict, raw_output
@@ -821,6 +841,7 @@ __all__ = [
     "DEFAULT_TIMEOUT",
     "ML_TIMEOUT",
     "RESEARCH_TIMEOUT",
+    "RemoteGraphProtocolError",
     "RemoteUnavailable",
     "TimeoutTuple",
     "aclose_all_adapters",
