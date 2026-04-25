@@ -72,6 +72,8 @@ class BogdanDiscussionState(TypedDict, total=False):
     # Internal — scaffold
     _scaffold: dict
     _child_age: Optional[int]
+    # Internal — extended context (compact, rule-based, fully relevant)
+    _extended: dict
     # Internal — retrieval
     _query: str
     _retrieved_entities: list[dict]
@@ -258,6 +260,238 @@ async def load_scaffold_context(state: BogdanDiscussionState) -> dict:
     return {"_scaffold": scaffold, "_child_age": child_age}
 
 
+# ── Extended context (rule-based, no embedding search) ───────────────────
+
+def _truncate(text: Optional[str], n: int = 200) -> str:
+    if not text:
+        return ""
+    s = str(text).strip().replace("\n", " ")
+    return s if len(s) <= n else s[: n - 1] + "…"
+
+
+async def load_extended_context(state: BogdanDiscussionState) -> dict:
+    """Pull every other family-member-scoped table that the original graph ignored.
+    Each block is rendered as a compact markdown section; the prompt then
+    instructs the LLM to reuse parent language, build on prior guides, and
+    reference active habits with concrete numbers.
+    """
+    family_member_id = state.get("family_member_id")
+    user_email = state.get("user_email")
+    job_id = state.get("job_id")
+    if not family_member_id or not user_email:
+        return {}
+
+    ext: dict[str, str] = {}
+    try:
+        async with await psycopg.AsyncConnection.connect(_conn_str()) as conn:
+            async with conn.cursor() as cur:
+                # 1. Affirmations (active)
+                await cur.execute(
+                    "SELECT text, category FROM affirmations "
+                    "WHERE family_member_id = %s AND user_id = %s AND is_active = 1 "
+                    "ORDER BY created_at DESC LIMIT 30",
+                    (family_member_id, user_email),
+                )
+                rows = await cur.fetchall()
+                if rows:
+                    lines = [f"- ({cat}) \"{_truncate(t, 160)}\"" for t, cat in rows]
+                    ext["affirmations_block"] = (
+                        f"### Affirmations Bogdan responds to ({len(rows)})\n" + "\n".join(lines)
+                    )
+
+                # 2. Active habits + last 14 days adherence
+                await cur.execute(
+                    "SELECT id, title, frequency, target_count, description "
+                    "FROM habits "
+                    "WHERE family_member_id = %s AND user_id = %s AND status = 'active' "
+                    "ORDER BY created_at DESC",
+                    (family_member_id, user_email),
+                )
+                habit_rows = await cur.fetchall()
+                if habit_rows:
+                    habit_ids = [h[0] for h in habit_rows]
+                    placeholders = ",".join(["%s"] * len(habit_ids))
+                    await cur.execute(
+                        f"SELECT habit_id, COUNT(*)::int AS days_logged, "
+                        f"SUM(count)::int AS total_count "
+                        f"FROM habit_logs "
+                        f"WHERE habit_id IN ({placeholders}) "
+                        f"AND logged_date::date >= (CURRENT_DATE - INTERVAL '14 days') "
+                        f"GROUP BY habit_id",
+                        habit_ids,
+                    )
+                    log_rows = await cur.fetchall()
+                    log_map = {hid: (days, total) for hid, days, total in log_rows}
+                    lines = []
+                    for h_id, h_title, h_freq, h_target, h_desc in habit_rows:
+                        days, total = log_map.get(h_id, (0, 0))
+                        adherence = f"{days}/14 days logged"
+                        if h_freq == "daily" and h_target:
+                            adherence += f", target {h_target}/day, total {total}"
+                        line = f"- **{h_title}** ({h_freq}) — {adherence}"
+                        if h_desc:
+                            line += f"\n  {_truncate(h_desc, 160)}"
+                        lines.append(line)
+                    ext["habits_block"] = (
+                        f"### Active Habits & Last 14d Adherence ({len(habit_rows)})\n"
+                        + "\n".join(lines)
+                    )
+
+                # 3. Latest routine analysis
+                await cur.execute(
+                    "SELECT summary, gaps, optimization_suggestions "
+                    "FROM routine_analyses "
+                    "WHERE family_member_id = %s AND user_id = %s "
+                    "ORDER BY created_at DESC LIMIT 1",
+                    (family_member_id, user_email),
+                )
+                ra_row = await cur.fetchone()
+                if ra_row:
+                    ra_summary, ra_gaps, ra_opt = ra_row
+                    parts = [f"Summary: {_truncate(ra_summary, 400)}"]
+                    try:
+                        gaps = json.loads(ra_gaps) if ra_gaps else []
+                        if gaps:
+                            top = gaps[:4]
+                            top_str = "; ".join(
+                                _truncate(g if isinstance(g, str) else (g.get("description") or g.get("gap") or json.dumps(g)), 120)
+                                for g in top
+                            )
+                            parts.append(f"Gaps: {top_str}")
+                    except Exception:
+                        pass
+                    try:
+                        opts = json.loads(ra_opt) if ra_opt else []
+                        if opts:
+                            top = opts[:4]
+                            top_str = "; ".join(
+                                _truncate(o if isinstance(o, str) else (o.get("suggestion") or o.get("description") or json.dumps(o)), 120)
+                                for o in top
+                            )
+                            parts.append(f"Optimization: {top_str}")
+                    except Exception:
+                        pass
+                    ext["routine_block"] = "### Latest Routine Analysis\n" + "\n".join(f"- {p}" for p in parts)
+
+                # 4. Latest deep_goal_analyses per active goal
+                goal_ids = (state.get("_scaffold") or {}).get("goal_ids") or []
+                if goal_ids:
+                    placeholders = ",".join(["%s"] * len(goal_ids))
+                    await cur.execute(
+                        f"SELECT DISTINCT ON (goal_id) goal_id, summary, parent_advice, priority_recommendations "
+                        f"FROM deep_goal_analyses "
+                        f"WHERE goal_id IN ({placeholders}) AND user_id = %s "
+                        f"ORDER BY goal_id, created_at DESC",
+                        goal_ids + [user_email],
+                    )
+                    rows = await cur.fetchall()
+                    if rows:
+                        lines = []
+                        for g_id, g_sum, g_advice, g_prio in rows:
+                            line = f"- [GoalID:{g_id}] {_truncate(g_sum, 280)}"
+                            try:
+                                advice = json.loads(g_advice) if g_advice else []
+                                if advice:
+                                    sample = advice[:2]
+                                    bits = []
+                                    for a in sample:
+                                        if isinstance(a, dict):
+                                            bits.append(_truncate(a.get("advice") or a.get("text") or a.get("description") or json.dumps(a), 120))
+                                        else:
+                                            bits.append(_truncate(str(a), 120))
+                                    line += f"\n  parentAdvice: {' | '.join(bits)}"
+                            except Exception:
+                                pass
+                            lines.append(line)
+                        ext["goal_analyses_block"] = (
+                            f"### Per-Goal Deep Analyses ({len(rows)})\n" + "\n".join(lines)
+                        )
+
+                # 5. Therapeutic games (Romanian first)
+                await cur.execute(
+                    "SELECT type, title, estimated_minutes, description "
+                    "FROM games "
+                    "WHERE family_member_id = %s AND user_id = %s "
+                    "AND (language IS NULL OR language IN ('ro', 'romanian')) "
+                    "ORDER BY created_at DESC LIMIT 8",
+                    (family_member_id, user_email),
+                )
+                rows = await cur.fetchall()
+                if rows:
+                    lines = []
+                    for g_type, g_title, g_min, g_desc in rows:
+                        line = f"- [{g_type}] **{g_title}**"
+                        if g_min:
+                            line += f" (~{g_min} min)"
+                        if g_desc:
+                            line += f" — {_truncate(g_desc, 120)}"
+                        lines.append(line)
+                    ext["games_block"] = (
+                        f"### Therapeutic Games Already Available ({len(rows)})\n" + "\n".join(lines)
+                    )
+
+                # 6. Last 2 prior bogdan_discussion_guides — for de-duplication
+                await cur.execute(
+                    "SELECT behavior_summary, talking_points, created_at "
+                    "FROM bogdan_discussion_guides "
+                    "WHERE family_member_id = %s AND user_id = %s "
+                    "ORDER BY created_at DESC LIMIT 2",
+                    (family_member_id, user_email),
+                )
+                rows = await cur.fetchall()
+                if rows:
+                    lines = []
+                    for b_sum, b_tps_text, b_created in rows:
+                        try:
+                            tps = json.loads(b_tps_text) if b_tps_text else []
+                        except Exception:
+                            tps = []
+                        top_points = "; ".join(
+                            _truncate(t.get("point") if isinstance(t, dict) else str(t), 120)
+                            for t in tps[:3]
+                        )
+                        date_str = str(b_created)[:10] if b_created else "?"
+                        lines.append(
+                            f"- ({date_str}) summary: {_truncate(b_sum, 200)}\n"
+                            f"  prior talking points: {top_points}"
+                        )
+                    ext["prior_guides_block"] = (
+                        f"### Prior Guides — DO NOT REPEAT VERBATIM ({len(rows)})\n" + "\n".join(lines)
+                    )
+
+                # 7. Pre-curated therapeutic questions (linked to active goals/issues)
+                issue_ids = (state.get("_scaffold") or {}).get("issue_ids") or []
+                fk_ids = list(set(goal_ids + issue_ids))
+                if fk_ids:
+                    placeholders = ",".join(["%s"] * len(fk_ids))
+                    await cur.execute(
+                        f"SELECT question, rationale "
+                        f"FROM therapeutic_questions "
+                        f"WHERE goal_id IN ({placeholders}) OR issue_id IN ({placeholders}) "
+                        f"ORDER BY generated_at DESC LIMIT 6",
+                        fk_ids + fk_ids,
+                    )
+                    rows = await cur.fetchall()
+                    if rows:
+                        lines = [
+                            f"- \"{_truncate(q, 200)}\" — {_truncate(r, 140)}"
+                            for q, r in rows
+                        ]
+                        ext["questions_block"] = (
+                            f"### Pre-curated Therapeutic Questions ({len(rows)})\n" + "\n".join(lines)
+                        )
+    except Exception as exc:
+        # Non-fatal — extended context is additive; continue without it.
+        print(f"[bogdan_discussion.load_extended_context] failed (continuing without extended context): {exc}")
+        if job_id:
+            await _update_job_progress(job_id, 15)
+        return {"_extended": {}}
+
+    if job_id:
+        await _update_job_progress(job_id, 15)
+    return {"_extended": ext}
+
+
 def _build_query_text(scaffold: dict, child_age: Optional[int]) -> str:
     """Synthesize a focused query string from the scaffold for semantic retrieval."""
     parts = ["Parent seeking to have a therapeutic discussion with their child."]
@@ -351,12 +585,14 @@ async def retrieve_and_compose(state: BogdanDiscussionState) -> dict:
     if job_id:
         await _update_job_progress(job_id, 55)
 
+    extended = state.get("_extended") or {}
     prompt = _compose_prompt(
         scaffold=scaffold,
         retrieved_entities=reranked_entities,
         retrieved_research=reranked_research,
         child_age=child_age,
         is_ro=is_ro,
+        extended=extended,
     )
 
     return {
