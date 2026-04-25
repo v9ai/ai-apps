@@ -34,6 +34,7 @@ from .deep_icp_graph import _dsn, _product_brief
 from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
+    deepseek_model_name,
     make_llm,
     merge_node_telemetry,
 )
@@ -629,7 +630,7 @@ async def write_rationale(state: _PricingStateWithError) -> dict:
     telemetry = merge_node_telemetry(telemetry, "write_rationale", tel)
     meta = product_intel_graph_meta(
         graph="pricing",
-        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro"),
+        model=deepseek_model_name("deep"),
         agent_timings=state.get("agent_timings") or {},
         telemetry=telemetry,
         totals=compute_totals(telemetry),

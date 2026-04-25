@@ -43,6 +43,7 @@ from .deep_icp_graph import _dsn
 from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
+    deepseek_model_name,
     make_llm,
     merge_node_telemetry,
 )
@@ -704,7 +705,7 @@ async def stress_test(state: PositioningState) -> dict:
         return delta
 
     # Final — assemble PositioningStatement and persist.
-    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
+    model = deepseek_model_name("deep")
     telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
     # include this node's own call in the telemetry we persist
     telemetry = merge_node_telemetry(telemetry, "stress_test", tel)

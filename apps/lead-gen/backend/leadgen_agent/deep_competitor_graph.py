@@ -55,7 +55,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
 from .deep_icp_graph import _dsn, _product_brief
-from .llm import ainvoke_json, make_llm
+from .llm import ainvoke_json, deepseek_model_name, make_llm
 from .loaders import fetch_url
 from .notify import notify_complete, notify_error
 from .product_intel_schemas import product_intel_graph_meta
@@ -1016,7 +1016,7 @@ async def synthesize(state: DeepCompetitorState) -> dict:
 
     meta = product_intel_graph_meta(
         graph="deep_competitor",
-        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro"),
+        model=deepseek_model_name("deep"),
         agent_timings=state.get("agent_timings") or {},
     )
     analysis = {

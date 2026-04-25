@@ -60,6 +60,7 @@ from .deep_icp_graph import _dsn, _product_brief
 from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
+    deepseek_model_name,
     make_llm,
     merge_node_telemetry,
 )
@@ -678,7 +679,7 @@ async def synthesize_report(state: _ProductIntelStateWithError) -> dict:
     totals = compute_totals(telemetry)
     meta = product_intel_graph_meta(
         graph="product_intel",
-        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro"),
+        model=deepseek_model_name("deep"),
         agent_timings=state.get("agent_timings") or {},
         telemetry=telemetry,
         totals=totals,

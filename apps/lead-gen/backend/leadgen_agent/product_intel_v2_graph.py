@@ -58,7 +58,7 @@ from langgraph.graph import END, START, StateGraph
 from . import gtm_graph, pricing_graph
 from ._subgraph_stream import stream_subgraph
 from .deep_icp_graph import _dsn
-from .llm import ainvoke_json, compute_totals, make_llm
+from .llm import ainvoke_json, compute_totals, deepseek_model_name, make_llm
 from .notify import notify_complete, notify_error
 from .product_intel_schemas import (
     ProductIntelReport,
@@ -615,7 +615,7 @@ async def synthesize_report(state: ProductIntelV2State) -> dict:
     totals = compute_totals(telemetry) if telemetry else None
     meta = product_intel_graph_meta(
         graph="product_intel_v2",
-        model=os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro"),
+        model=deepseek_model_name("deep"),
         agent_timings=state.get("agent_timings") or {},
         telemetry=telemetry if telemetry else None,
         totals=totals,

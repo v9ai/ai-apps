@@ -45,9 +45,11 @@ def _anthropic_available() -> bool:
 
 
 def judge_model_label() -> str:
+    from leadgen_agent.llm import deepseek_model_name
+
     if strong_judge_requested() and _anthropic_available() and os.environ.get("ANTHROPIC_API_KEY"):
         return os.environ.get("STRONG_JUDGE_MODEL", "claude-opus-4-7")
-    return os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
+    return deepseek_model_name("deep")
 
 
 def judge_available() -> bool:

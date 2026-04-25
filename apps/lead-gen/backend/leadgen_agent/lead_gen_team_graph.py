@@ -37,6 +37,7 @@ from .deep_icp_graph import _dsn
 from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
+    deepseek_model_name,
     make_llm,
     merge_node_telemetry,
 )
@@ -326,7 +327,7 @@ async def persist(state: LeadGenTeamState) -> dict:
         except psycopg.Error as e:
             return {"_error": f"persist: {e}"}
 
-    model = os.environ.get("DEEPSEEK_MODEL_DEEP", "deepseek-v4-pro")
+    model = deepseek_model_name("deep")
     telemetry = (state.get("graph_meta") or {}).get("telemetry") or {}
     meta = product_intel_graph_meta(
         graph="lead_gen_team",
