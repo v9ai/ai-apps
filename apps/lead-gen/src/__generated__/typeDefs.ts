@@ -409,12 +409,21 @@ type Contact {
   dmReasons: [String!]!
   doNotContact: Boolean!
   email: String
+  emailCandidates: JSON
   emailVerified: Boolean
   emails: [String!]!
+  enrichStatus: JSON
   firstName: String!
   forwardingAlias: String
   forwardingAliasRuleId: String
+  ghMatchArm: String
+  ghMatchEvidenceRef: JSON
+  ghMatchScore: Float
+  ghMatchStatus: String
   githubHandle: String
+  githubProfile: JSON
+  homepageExtract: JSON
+  homepageUrl: String
   id: Int!
   isDecisionMaker: Boolean
   lastContactedAt: String
@@ -431,9 +440,12 @@ type Contact {
   nbSuggestedCorrection: String
   nextTouchScore: Float
   notes: String
+  openalexProfile: JSON
+  orcidProfile: JSON
   papers: [ContactPaper!]!
   papersEnrichedAt: String
   position: String
+  scholarProfile: JSON
   seniority: String
   slug: String
   tags: [String!]!

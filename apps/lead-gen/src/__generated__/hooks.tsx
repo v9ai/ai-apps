@@ -469,12 +469,21 @@ export type Contact = {
   dmReasons: Array<Scalars['String']['output']>;
   doNotContact: Scalars['Boolean']['output'];
   email: Maybe<Scalars['String']['output']>;
+  emailCandidates: Maybe<Scalars['JSON']['output']>;
   emailVerified: Maybe<Scalars['Boolean']['output']>;
   emails: Array<Scalars['String']['output']>;
+  enrichStatus: Maybe<Scalars['JSON']['output']>;
   firstName: Scalars['String']['output'];
   forwardingAlias: Maybe<Scalars['String']['output']>;
   forwardingAliasRuleId: Maybe<Scalars['String']['output']>;
+  ghMatchArm: Maybe<Scalars['String']['output']>;
+  ghMatchEvidenceRef: Maybe<Scalars['JSON']['output']>;
+  ghMatchScore: Maybe<Scalars['Float']['output']>;
+  ghMatchStatus: Maybe<Scalars['String']['output']>;
   githubHandle: Maybe<Scalars['String']['output']>;
+  githubProfile: Maybe<Scalars['JSON']['output']>;
+  homepageExtract: Maybe<Scalars['JSON']['output']>;
+  homepageUrl: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   isDecisionMaker: Maybe<Scalars['Boolean']['output']>;
   lastContactedAt: Maybe<Scalars['String']['output']>;
@@ -491,9 +500,12 @@ export type Contact = {
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
   nextTouchScore: Maybe<Scalars['Float']['output']>;
   notes: Maybe<Scalars['String']['output']>;
+  openalexProfile: Maybe<Scalars['JSON']['output']>;
+  orcidProfile: Maybe<Scalars['JSON']['output']>;
   papers: Array<ContactPaper>;
   papersEnrichedAt: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
+  scholarProfile: Maybe<Scalars['JSON']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
@@ -4129,7 +4141,7 @@ export type GetContactQueryVariables = Exact<{
 }>;
 
 
-export type GetContactQuery = { __typename?: 'Query', contact: { __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, emails: Array<string>, bouncedEmails: Array<string>, linkedinUrl: string | null, company: string | null, companyId: number | null, position: string | null, emailVerified: boolean | null, doNotContact: boolean, githubHandle: string | null, telegramHandle: string | null, tags: Array<string>, notes: string | null, forwardingAlias: string | null, forwardingAliasRuleId: string | null, nbStatus: string | null, nbResult: string | null, nbFlags: Array<string>, nbSuggestedCorrection: string | null, createdAt: string, updatedAt: string, aiProfile: { __typename?: 'ContactAIProfile', trigger: string, enrichedAt: string, linkedinHeadline: string | null, linkedinBio: string | null, specialization: string | null, skills: Array<string>, researchAreas: Array<string>, experienceLevel: string, synthesisConfidence: number, synthesisRationale: string | null, githubBio: string | null, githubTopLanguages: Array<string>, githubTotalStars: number, githubAiRepos: Array<{ __typename?: 'ContactAIGitHubRepo', name: string, description: string | null, stars: number, topics: Array<string> }>, workExperience: Array<{ __typename?: 'ContactWorkExperience', company: string, companyLogo: string | null, title: string, employmentType: string | null, startDate: string, endDate: string | null, duration: string | null, location: string | null, description: string | null, skills: Array<string> }> } | null } | null };
+export type GetContactQuery = { __typename?: 'Query', contact: { __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, emails: Array<string>, bouncedEmails: Array<string>, linkedinUrl: string | null, company: string | null, companyId: number | null, position: string | null, emailVerified: boolean | null, doNotContact: boolean, githubHandle: string | null, telegramHandle: string | null, tags: Array<string>, notes: string | null, forwardingAlias: string | null, forwardingAliasRuleId: string | null, nbStatus: string | null, nbResult: string | null, nbFlags: Array<string>, nbSuggestedCorrection: string | null, createdAt: string, updatedAt: string, openalexProfile: any | null, orcidProfile: any | null, scholarProfile: any | null, githubProfile: any | null, homepageUrl: string | null, homepageExtract: any | null, emailCandidates: any | null, enrichStatus: any | null, ghMatchStatus: string | null, ghMatchScore: number | null, ghMatchArm: string | null, ghMatchEvidenceRef: any | null, aiProfile: { __typename?: 'ContactAIProfile', trigger: string, enrichedAt: string, linkedinHeadline: string | null, linkedinBio: string | null, specialization: string | null, skills: Array<string>, researchAreas: Array<string>, experienceLevel: string, synthesisConfidence: number, synthesisRationale: string | null, githubBio: string | null, githubTopLanguages: Array<string>, githubTotalStars: number, githubAiRepos: Array<{ __typename?: 'ContactAIGitHubRepo', name: string, description: string | null, stars: number, topics: Array<string> }>, workExperience: Array<{ __typename?: 'ContactWorkExperience', company: string, companyLogo: string | null, title: string, employmentType: string | null, startDate: string, endDate: string | null, duration: string | null, location: string | null, description: string | null, skills: Array<string> }> } | null } | null };
 
 export type UpdateContactMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -6293,6 +6305,18 @@ export const GetContactDocument = gql`
         skills
       }
     }
+    openalexProfile
+    orcidProfile
+    scholarProfile
+    githubProfile
+    homepageUrl
+    homepageExtract
+    emailCandidates
+    enrichStatus
+    ghMatchStatus
+    ghMatchScore
+    ghMatchArm
+    ghMatchEvidenceRef
   }
 }
     `;

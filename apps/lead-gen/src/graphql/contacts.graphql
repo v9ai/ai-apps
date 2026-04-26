@@ -58,6 +58,21 @@ query GetContact($id: Int, $slug: String) {
         skills
       }
     }
+    # Paper-author enrichment fan-out — JSONB payloads from
+    # contact_enrich_paper_author_graph. Frontend renders them in a
+    # collapsible panel when the contact is paper-tagged.
+    openalexProfile
+    orcidProfile
+    scholarProfile
+    githubProfile
+    homepageUrl
+    homepageExtract
+    emailCandidates
+    enrichStatus
+    ghMatchStatus
+    ghMatchScore
+    ghMatchArm
+    ghMatchEvidenceRef
   }
 }
 

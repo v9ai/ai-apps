@@ -138,6 +138,23 @@ type Contact {
   # Paper + tag enrichment (populated by enrichContactPapersAndTags)
   papers: [ContactPaper!]!
   papersEnrichedAt: String
+  # ── Paper-author enrichment fan-out (contact_enrich_paper_author_graph) ──
+  # Each is the raw JSONB payload persisted by its respective enricher node.
+  # `null` means the enricher hasn't run for this contact (or returned no
+  # data). The frontend renders these on the contact detail page when the
+  # contact is paper-tagged.
+  openalexProfile: JSON
+  orcidProfile: JSON
+  scholarProfile: JSON
+  githubProfile: JSON
+  homepageUrl: String
+  homepageExtract: JSON
+  emailCandidates: JSON
+  enrichStatus: JSON
+  ghMatchStatus: String
+  ghMatchScore: Float
+  ghMatchArm: String
+  ghMatchEvidenceRef: JSON
   createdAt: String!
   updatedAt: String!
 }

@@ -212,6 +212,16 @@ export const contacts = pgTable(
     gh_match_evidence_ref: text("gh_match_evidence_ref"),
     linkedin_profile: jsonb("linkedin_profile"),
     openalex_profile: jsonb("openalex_profile"),
+    // ── Paper-author enrichment fan-out branches ─────────────────────────
+    // Populated by contact_enrich_paper_author_graph in the lead-gen backend.
+    // All nullable; presence indicates the corresponding enricher ran.
+    orcid_profile: jsonb("orcid_profile"),
+    scholar_profile: jsonb("scholar_profile"),
+    github_profile: jsonb("github_profile"),
+    homepage_url: text("homepage_url"),
+    homepage_extract: jsonb("homepage_extract"),
+    email_candidates: jsonb("email_candidates"),
+    enrich_status: jsonb("enrich_status"),
     conversation_stage: text("conversation_stage"),
     authenticity_score: real("authenticity_score"),
     authenticity_verdict: text("authenticity_verdict"),

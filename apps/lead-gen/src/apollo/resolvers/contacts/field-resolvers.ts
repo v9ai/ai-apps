@@ -246,6 +246,49 @@ export const Contact = {
   authenticityFlags(parent: DbContact) {
     return cachedParseArray(parent, "authenticity_flags", parent.authenticity_flags);
   },
+  // ── Paper-author enrichment fan-out (jsonb passthroughs) ─────────────
+  // The contact_enrich_paper_author_graph backend persists rich JSONB blobs
+  // here. Drizzle's `jsonb()` columns auto-parse so we just pass through;
+  // the `gh_match_evidence_ref` column is text holding JSON, so we parse it.
+  openalexProfile(parent: DbContact) {
+    return (parent as unknown as { openalex_profile: unknown }).openalex_profile ?? null;
+  },
+  orcidProfile(parent: DbContact) {
+    return (parent as unknown as { orcid_profile: unknown }).orcid_profile ?? null;
+  },
+  scholarProfile(parent: DbContact) {
+    return (parent as unknown as { scholar_profile: unknown }).scholar_profile ?? null;
+  },
+  githubProfile(parent: DbContact) {
+    return (parent as unknown as { github_profile: unknown }).github_profile ?? null;
+  },
+  homepageUrl(parent: DbContact) {
+    return (parent as unknown as { homepage_url: string | null }).homepage_url ?? null;
+  },
+  homepageExtract(parent: DbContact) {
+    return (parent as unknown as { homepage_extract: unknown }).homepage_extract ?? null;
+  },
+  emailCandidates(parent: DbContact) {
+    return (parent as unknown as { email_candidates: unknown }).email_candidates ?? null;
+  },
+  enrichStatus(parent: DbContact) {
+    return (parent as unknown as { enrich_status: unknown }).enrich_status ?? null;
+  },
+  ghMatchStatus(parent: DbContact) {
+    return (parent as unknown as { gh_match_status: string | null }).gh_match_status ?? null;
+  },
+  ghMatchScore(parent: DbContact) {
+    return (parent as unknown as { gh_match_score: number | null }).gh_match_score ?? null;
+  },
+  ghMatchArm(parent: DbContact) {
+    return (parent as unknown as { gh_match_arm: string | null }).gh_match_arm ?? null;
+  },
+  ghMatchEvidenceRef(parent: DbContact) {
+    const raw = (parent as unknown as { gh_match_evidence_ref: string | null })
+      .gh_match_evidence_ref;
+    if (!raw) return null;
+    return cachedParse<unknown>(parent, "gh_match_evidence_ref", raw, null);
+  },
 };
 
 // Company.contacts field resolver (defined by contacts module since contacts owns this relationship)
