@@ -1324,10 +1324,18 @@ async def resolve_github_handle(state: ContactEnrichPaperAuthorState) -> dict:
 
 
 def _persist_github_profile(contact_id: int, payload: dict[str, Any]) -> bool:
-    """UPDATE contacts.github_profile = payload jsonb."""
+    """UPDATE contacts.github_profile = payload, and (when present) promote
+    the LinkedIn URL extracted from social_accounts onto contacts.linkedin_url
+    when it is currently NULL/empty.
+
+    Both UPDATEs run in the same transaction. The LinkedIn promotion uses a
+    triple-bind ``%s`` so the WHERE clause skips the row entirely when the
+    payload had no LinkedIn social account — avoids a redundant write.
+    """
     dsn = os.environ.get("NEON_DATABASE_URL", "").strip()
     if not dsn:
         return False
+    li_url = (payload.get("linkedin_url") or "").strip() or None
     try:
         with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
             with conn.cursor() as cur:
@@ -1336,52 +1344,81 @@ def _persist_github_profile(contact_id: int, payload: dict[str, Any]) -> bool:
                     "updated_at = NOW() WHERE id = %s",
                     (json.dumps(payload), contact_id),
                 )
-                return cur.rowcount > 0
+                wrote = cur.rowcount > 0
+                # Promote LinkedIn URL only when one was extracted AND the
+                # contact's column is currently empty. The third %s NULL-guards
+                # the entire UPDATE so this is a no-op when li_url is None.
+                cur.execute(
+                    "UPDATE contacts SET linkedin_url = %s, updated_at = NOW() "
+                    "WHERE id = %s "
+                    "  AND (linkedin_url IS NULL OR linkedin_url = '') "
+                    "  AND %s IS NOT NULL",
+                    (li_url, contact_id, li_url),
+                )
+                return wrote
     except psycopg.Error as e:
         log.warning("failed to persist github_profile for %s: %s", contact_id, e)
         return False
 
 
-async def _gh_user_repos(
-    client: httpx.AsyncClient, login: str, *, per_page: int = 100
-) -> list[dict[str, Any]]:
-    """Fetch one page of the user's owned, non-fork repos sorted by push date."""
-    res = await client.get(
-        f"{_GH_API_BASE}/users/{login}/repos",
-        params={"per_page": str(per_page), "sort": "pushed", "type": "owner"},
-        headers=_gh_headers(),
+async def _gh_hydrate_profile_gql(
+    client: httpx.AsyncClient, login: str
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Fetch the full enrichment payload for one user in a single GraphQL call.
+
+    Returns ``(user_node, rate_limit)``. ``user_node`` is None when GitHub
+    returns ``data.user == null`` (handle does not resolve). Raises
+    ``_gh_graphql.NotFoundError`` for the parallel ``errors[].type=NOT_FOUND``
+    case so callers can map both into the ``not_found`` status.
+    """
+    data, _errors = await _gh_graphql.post(
+        client, _GH_GQL_HYDRATE_QUERY, {"login": login}
     )
-    if res.status_code != 200:
-        return []
-    repos = res.json()
-    if not isinstance(repos, list):
-        return []
-    return [r for r in repos if isinstance(r, dict) and not r.get("fork")]
+    user_node = data.get("user")
+    rl_raw = data.get("rateLimit") or {}
+    rate_limit: dict[str, Any] = {
+        "cost": int(rl_raw.get("cost") or 0),
+        "remaining": int(rl_raw.get("remaining") or 0),
+        "reset_at": rl_raw.get("resetAt") or "",
+    }
+    if not isinstance(user_node, dict):
+        return None, rate_limit
+    return user_node, rate_limit
 
 
-async def _gh_repo_languages(
-    client: httpx.AsyncClient, full_name: str
-) -> dict[str, int]:
-    """GET /repos/{owner}/{repo}/languages → {lang: bytes}."""
-    res = await client.get(
-        f"{_GH_API_BASE}/repos/{full_name}/languages", headers=_gh_headers()
-    )
-    if res.status_code != 200:
-        return {}
-    data = res.json()
-    return data if isinstance(data, dict) else {}
-
-
-def _build_github_profile(
-    user: dict[str, Any], repos: list[dict[str, Any]], lang_bytes: dict[str, int]
+def _build_github_profile_v2(
+    user: dict[str, Any], rate_limit: dict[str, Any] | None = None
 ) -> dict[str, Any]:
-    """Aggregate user payload + repo list + per-repo language bytes."""
-    # top languages by bytes (with fallback to repo-count if /languages was empty)
+    """Translate a hydrated GraphQL User node into the v2 ``github_profile``.
+
+    Preserves every v1 key downstream consumers depend on (buyer-fit reads
+    ``company_org`` / ``org_logins`` / ``ai_topic_hits`` / ``hireable``;
+    topic_taxonomy reads ``top_topics``). Adds v2 keys: ``org_logins``,
+    ``social_accounts``, ``linkedin_url``, ``repositories_contributed_to``,
+    ``contributions_last_year``, ``total_commits``/``prs``/``issues``,
+    ``is_sponsorable``, ``hireable_known``, ``pinned_source``,
+    ``gql_rate_limit``. Bumps ``schema_version`` to 2.
+    """
+    # ── repositories: top languages, topics, pinned-fallback, last-push ─────
+    repos_conn = user.get("repositories") or {}
+    repo_nodes = [r for r in (repos_conn.get("nodes") or []) if isinstance(r, dict)]
+
+    lang_bytes: dict[str, int] = {}
     lang_repo_counts: dict[str, int] = {}
-    for r in repos:
-        lang = r.get("language")
-        if isinstance(lang, str) and lang:
-            lang_repo_counts[lang] = lang_repo_counts.get(lang, 0) + 1
+    for r in repo_nodes:
+        primary = (r.get("primaryLanguage") or {}).get("name")
+        if isinstance(primary, str) and primary:
+            lang_repo_counts[primary] = lang_repo_counts.get(primary, 0) + 1
+        edges = ((r.get("languages") or {}).get("edges") or [])
+        for e in edges:
+            if not isinstance(e, dict):
+                continue
+            node = e.get("node") or {}
+            name = node.get("name") if isinstance(node, dict) else None
+            size = int(e.get("size") or 0)
+            if isinstance(name, str) and name and size > 0:
+                lang_bytes[name] = lang_bytes.get(name, 0) + size
+
     top_languages = sorted(
         (
             {"name": k, "bytes": v, "repo_count": lang_repo_counts.get(k, 0)}
@@ -1400,80 +1437,171 @@ def _build_github_profile(
             reverse=True,
         )[:5]
 
-    # top topics across owned repos
     topic_counts: dict[str, int] = {}
-    for r in repos:
-        for t in r.get("topics") or []:
-            if isinstance(t, str) and t:
-                key = t.strip().lower()
+    for r in repo_nodes:
+        rt_nodes = ((r.get("repositoryTopics") or {}).get("nodes") or [])
+        for rt in rt_nodes:
+            if not isinstance(rt, dict):
+                continue
+            tobj = rt.get("topic") or {}
+            tname = tobj.get("name") if isinstance(tobj, dict) else None
+            if isinstance(tname, str) and tname:
+                key = tname.strip().lower()
                 topic_counts[key] = topic_counts.get(key, 0) + 1
     top_topics = [
         {"name": name, "count": count}
         for name, count in sorted(topic_counts.items(), key=lambda kv: kv[1], reverse=True)
     ][:5]
 
-    pinned_like = sorted(
-        (r for r in repos if not r.get("fork")),
-        key=lambda r: int(r.get("stargazers_count") or 0),
-        reverse=True,
-    )[:6]
-    pinned_repos = [
-        {
-            "name": r.get("name") or "",
-            "full_name": r.get("full_name") or "",
-            "html_url": r.get("html_url") or "",
-            "stars": int(r.get("stargazers_count") or 0),
-            "language": r.get("language") or "",
-            "description": (r.get("description") or "")[:300],
-            "topics": list(r.get("topics") or []),
-            "pushed_at": r.get("pushed_at") or "",
-        }
-        for r in pinned_like
-    ]
-
     last_push_at = ""
-    for r in repos:
-        ts = r.get("pushed_at") or ""
+    for r in repo_nodes:
+        ts = r.get("pushedAt") or ""
         if ts and ts > last_push_at:
             last_push_at = ts
+
+    # ── pinned: actual pinnedItems first, fall back to top-stars ────────────
+    pinned_nodes = (((user.get("pinnedItems") or {}).get("nodes")) or [])
+    pinned_actual = [p for p in pinned_nodes if isinstance(p, dict)]
+    if pinned_actual:
+        pinned_source = "actual"
+        pinned_src = pinned_actual
+    else:
+        pinned_source = "stars_fallback"
+        pinned_src = sorted(
+            repo_nodes,
+            key=lambda r: int(r.get("stargazerCount") or 0),
+            reverse=True,
+        )[:6]
+
+    pinned_repos: list[dict[str, Any]] = []
+    for r in pinned_src[:6]:
+        rt_nodes = ((r.get("repositoryTopics") or {}).get("nodes") or [])
+        topics = [
+            (rt.get("topic") or {}).get("name") or ""
+            for rt in rt_nodes
+            if isinstance(rt, dict)
+        ]
+        pinned_repos.append({
+            "name": r.get("name") or "",
+            "full_name": r.get("nameWithOwner") or "",
+            "html_url": r.get("url") or "",
+            "stars": int(r.get("stargazerCount") or 0),
+            "language": (r.get("primaryLanguage") or {}).get("name") or "",
+            "description": (r.get("description") or "")[:300],
+            "topics": [t for t in topics if t],
+            "pushed_at": r.get("pushedAt") or "",
+        })
 
     ai_topic_hits = sorted(
         kw for kw in _AI_TOPIC_KEYWORDS
         if any(kw in (t.get("name") or "") for t in top_topics)
     )
 
+    # ── identity & contact channels ─────────────────────────────────────────
     company_raw = (user.get("company") or "").strip()
     company_org = company_raw.lstrip("@").lower() if company_raw else ""
 
+    # ── organizations (the buyer-fit bug fix) ───────────────────────────────
+    org_nodes = ((user.get("organizations") or {}).get("nodes") or [])
+    org_logins = [
+        (o.get("login") or "").strip()
+        for o in org_nodes
+        if isinstance(o, dict) and (o.get("login") or "").strip()
+    ]
+    org_names = [
+        (o.get("name") or "").strip()
+        for o in org_nodes
+        if isinstance(o, dict) and (o.get("name") or "").strip()
+    ]
+
+    # ── social accounts → LinkedIn promotion ────────────────────────────────
+    social_nodes = ((user.get("socialAccounts") or {}).get("nodes") or [])
+    social_accounts = [
+        {
+            "provider": (s.get("provider") or "").upper(),
+            "url": s.get("url") or "",
+            "display_name": s.get("displayName") or "",
+        }
+        for s in social_nodes
+        if isinstance(s, dict)
+    ]
+    linkedin_url: str | None = None
+    for s in social_accounts:
+        if s["provider"] == "LINKEDIN" and s["url"]:
+            linkedin_url = s["url"]
+            break
+
+    # ── contributions ───────────────────────────────────────────────────────
+    cc = user.get("contributionsCollection") or {}
+    cal = cc.get("contributionCalendar") or {}
+    total_commits = int(cc.get("totalCommitContributions") or 0)
+    total_prs = int(cc.get("totalPullRequestContributions") or 0)
+    total_issues = int(cc.get("totalIssueContributions") or 0)
+    total_repos_contrib = int(cc.get("totalRepositoriesWithContributedCommits") or 0)
+    contributions_last_year = int(cal.get("totalContributions") or 0)
+
+    contributed_to = ((user.get("repositoriesContributedTo") or {}).get("nodes") or [])
+    repositories_contributed_to = [
+        {
+            "name_with_owner": r.get("nameWithOwner") or "",
+            "stars": int(r.get("stargazerCount") or 0),
+        }
+        for r in contributed_to
+        if isinstance(r, dict)
+    ]
+
+    is_sponsorable = bool(
+        ((user.get("sponsorshipsAsMaintainer") or {}).get("totalCount") or 0) > 0
+        or user.get("sponsorsListing")
+    )
+    hireable_raw = user.get("isHireable")
+    hireable_known = hireable_raw is not None
+
     return {
+        # ── PRESERVED v1 keys (downstream consumers depend on these) ───────
         "login": user.get("login") or "",
-        "github_id": int(user.get("id") or 0),
-        "html_url": user.get("html_url") or "",
+        "github_id": int(user.get("databaseId") or 0),
+        "html_url": user.get("url") or "",
         "name": user.get("name"),
         "bio": user.get("bio"),
         "company": company_raw or None,
         "company_org": company_org or None,
         "location": user.get("location"),
-        "blog": user.get("blog"),
-        "twitter_username": user.get("twitter_username"),
+        "blog": user.get("websiteUrl"),  # GraphQL → REST rename
+        "twitter_username": user.get("twitterUsername"),
         "email_public": user.get("email"),
-        "hireable": user.get("hireable"),
-        "public_repos": int(user.get("public_repos") or 0),
-        "public_gists": int(user.get("public_gists") or 0),
-        "followers": int(user.get("followers") or 0),
-        "following": int(user.get("following") or 0),
-        "gh_created_at": user.get("created_at") or "",
-        "gh_updated_at": user.get("updated_at") or "",
+        "hireable": hireable_raw,
+        "public_repos": int(((user.get("publicRepositories") or {}).get("totalCount")) or 0),
+        "public_gists": int(((user.get("publicGists") or {}).get("totalCount")) or 0),
+        "followers": int(((user.get("followers") or {}).get("totalCount")) or 0),
+        "following": int(((user.get("following") or {}).get("totalCount")) or 0),
+        "gh_created_at": user.get("createdAt") or "",
+        "gh_updated_at": user.get("updatedAt") or "",
         "last_push_at": last_push_at,
         "top_languages": top_languages,
         "top_topics": top_topics,
         "pinned_repos": pinned_repos,
         "ai_topic_hits": ai_topic_hits,
-        "owned_repo_count": len(repos),
-        "fork_repo_count": 0,  # we already filtered forks out
+        "owned_repo_count": int(repos_conn.get("totalCount") or len(repo_nodes)),
+        "fork_repo_count": 0,  # filtered server-side via isFork: false
         "status": "ok",
         "fetched_at": datetime.now(timezone.utc).isoformat(),
-        "schema_version": 1,
+        # ── NEW v2 keys ────────────────────────────────────────────────────
+        "org_logins": org_logins,
+        "org_names": org_names,
+        "social_accounts": social_accounts,
+        "linkedin_url": linkedin_url,
+        "repositories_contributed_to": repositories_contributed_to,
+        "total_commits": total_commits,
+        "total_prs": total_prs,
+        "total_issues": total_issues,
+        "total_repos_contributed_to": total_repos_contrib,
+        "contributions_last_year": contributions_last_year,
+        "is_sponsorable": is_sponsorable,
+        "hireable_known": hireable_known,
+        "pinned_source": pinned_source,
+        "gql_rate_limit": rate_limit or {},
+        "schema_version": 2,
     }
 
 
@@ -1483,16 +1611,16 @@ def _gh_status_sentinel(login: str, status: str, detail: str = "") -> dict[str, 
         "status": status,
         "status_detail": detail or None,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
-        "schema_version": 1,
+        "schema_version": 2,
     }
 
 
 async def enrich_github_profile(state: ContactEnrichPaperAuthorState) -> dict:
-    """Fetch full GH user metadata + repo aggregations and persist to contacts.
+    """Fetch full GH user metadata + repo aggregations via ONE GraphQL call.
 
-    Runs after `resolve_github_handle`. Reads `state.github_login` (set on
-    'hit') and skips otherwise. ~12 REST calls / contact: 1 user + 1 repos +
-    up to 10 /languages.
+    Runs after ``resolve_github_handle``. Reads ``state.github_login`` (set on
+    'hit') and skips otherwise. Single GraphQL request replaces the prior
+    ~12 REST calls (1 user + 1 repos + up to 10 /languages).
     """
     contact = state.get("contact") or {}
     contact_id = contact.get("id")
@@ -1515,64 +1643,44 @@ async def enrich_github_profile(state: ContactEnrichPaperAuthorState) -> dict:
     try:
         gate = _enrich_gates.gh_gate()
         async with gate:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                user_res = await client.get(
-                    f"{_GH_API_BASE}/users/{login}", headers=_gh_headers()
-                )
-                if user_res.status_code == 404:
-                    payload = _gh_status_sentinel(login, "not_found")
-                    _persist_github_profile(contact_id, payload)
-                    return {
-                        "github_profile": payload,
-                        "github_profile_status": "not_found",
-                        "enrichers_completed": ["github_profile"],
-                    }
-                if user_res.status_code == 451:
-                    payload = _gh_status_sentinel(login, "legal_hold")
-                    _persist_github_profile(contact_id, payload)
-                    return {
-                        "github_profile": payload,
-                        "github_profile_status": "legal_hold",
-                        "enrichers_completed": ["github_profile"],
-                    }
-                if user_res.status_code == 401:
-                    return {
-                        "github_profile_status": "auth_error",
-                        "enrichers_completed": ["github_profile"],
-                    }
-                if user_res.status_code == 403 and "x-ratelimit-remaining" in user_res.headers:
-                    payload = _gh_status_sentinel(login, "rate_limited")
-                    _persist_github_profile(contact_id, payload)
-                    return {
-                        "github_profile_status": "rate_limited",
-                        "enrichers_completed": ["github_profile"],
-                    }
-                if user_res.status_code != 200:
-                    return {
-                        "github_profile_status": "transient_error",
-                        "enrichers_completed": ["github_profile"],
-                    }
-                user = user_res.json()
-                if not isinstance(user, dict):
-                    return {
-                        "github_profile_status": "transient_error",
-                        "enrichers_completed": ["github_profile"],
-                    }
-
-                repos = await _gh_user_repos(client, login, per_page=100)
-                # Top 10 repos by stars get /languages calls.
-                top_for_lang = sorted(
-                    repos, key=lambda r: int(r.get("stargazers_count") or 0), reverse=True
-                )[:10]
-                lang_results = await asyncio.gather(
-                    *[_gh_repo_languages(client, r.get("full_name") or "") for r in top_for_lang],
-                    return_exceptions=True,
-                )
-                aggregate_lang_bytes: dict[str, int] = {}
-                for r in lang_results:
-                    if isinstance(r, dict):
-                        for k, v in r.items():
-                            aggregate_lang_bytes[k] = aggregate_lang_bytes.get(k, 0) + int(v or 0)
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                user, rate_limit = await _gh_hydrate_profile_gql(client, login)
+    except _gh_graphql.NotFoundError:
+        payload = _gh_status_sentinel(login, "not_found")
+        _persist_github_profile(contact_id, payload)
+        return {
+            "github_profile": payload,
+            "github_profile_status": "not_found",
+            "enrichers_completed": ["github_profile"],
+        }
+    except _gh_graphql.LegalHoldError:
+        payload = _gh_status_sentinel(login, "legal_hold")
+        _persist_github_profile(contact_id, payload)
+        return {
+            "github_profile": payload,
+            "github_profile_status": "legal_hold",
+            "enrichers_completed": ["github_profile"],
+        }
+    except _gh_graphql.AuthError as e:
+        log.warning("gh graphql auth error: %s", e)
+        return {
+            "github_profile_status": "auth_error",
+            "enrichers_completed": ["github_profile"],
+        }
+    except _gh_graphql.RateLimitError as e:
+        log.warning("gh graphql rate limited: %s", e)
+        payload = _gh_status_sentinel(login, "rate_limited")
+        _persist_github_profile(contact_id, payload)
+        return {
+            "github_profile_status": "rate_limited",
+            "enrichers_completed": ["github_profile"],
+        }
+    except _gh_graphql.GraphQLError as e:
+        log.warning("gh graphql error for %s: %s", login, e)
+        return {
+            "github_profile_status": "transient_error",
+            "enrichers_completed": ["github_profile"],
+        }
     except httpx.HTTPError as e:
         log.warning("gh profile transport error for %s: %s", login, e)
         return {
@@ -1586,7 +1694,16 @@ async def enrich_github_profile(state: ContactEnrichPaperAuthorState) -> dict:
             "enrichers_completed": ["github_profile"],
         }
 
-    payload = _build_github_profile(user, repos, aggregate_lang_bytes)
+    if user is None:
+        payload = _gh_status_sentinel(login, "not_found")
+        _persist_github_profile(contact_id, payload)
+        return {
+            "github_profile": payload,
+            "github_profile_status": "not_found",
+            "enrichers_completed": ["github_profile"],
+        }
+
+    payload = _build_github_profile_v2(user, rate_limit)
     _persist_github_profile(contact_id, payload)
     return {
         "github_profile": payload,
