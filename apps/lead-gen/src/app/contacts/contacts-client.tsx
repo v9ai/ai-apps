@@ -281,16 +281,12 @@ export function ContactsClient() {
         </Flex>
       )}
 
-      {totalPages > 1 && (
-        <Flex justify="center" align="center" gap="3" mt="4">
-          <button className={button({ variant: "ghost", size: "md" })} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-            <ChevronLeftIcon /> Previous
-          </button>
-          <Text size="2" color="gray">Page {page + 1} of {totalPages}</Text>
-          <button className={button({ variant: "ghost", size: "md" })} disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
-            Next <ChevronRightIcon />
-          </button>
-        </Flex>
+      {hasMore && (
+        <Box ref={sentinelRef} py="4">
+          <Flex justify="center">
+            {loadingMore ? <Spinner size="2" /> : <Text size="2" color="gray">Scroll for more…</Text>}
+          </Flex>
+        </Box>
       )}
     </Container>
   );
