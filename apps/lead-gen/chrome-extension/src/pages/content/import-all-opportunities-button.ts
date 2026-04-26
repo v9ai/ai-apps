@@ -189,7 +189,7 @@ function scheduleAutoImport() {
     }
 
     safeSendMessage(
-      { action: "importAllOpportunitiesFromJobsSearch", singlePage: true },
+      { action: "importAllOpportunitiesFromJobsSearch" },
       (response) => {
         if (!response?.success) {
           // Reset URL gate so the next nav retries this same query.

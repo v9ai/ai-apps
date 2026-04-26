@@ -973,67 +973,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     sendResponse({ success: true });
 
-    const singlePage = !!(message as { singlePage?: boolean }).singlePage;
-
     const notifyTab = async (data: Record<string, unknown>) => {
       try {
         await chrome.tabs.sendMessage(tabId, { action: "importAllProgress", ...data });
       } catch { /* tab closed */ }
     };
 
-    // Forward content-script paginationProgress events back to the same tab
-    // so the floating button can render "page N/total".
-    const progressListener = (msg: unknown) => {
-      const m = msg as { action?: string; currentPage?: number; totalPages?: number; jobsCollected?: number };
-      if (m?.action === "paginationProgress") {
-        notifyTab({
-          status: `Page ${m.currentPage}/${m.totalPages} — ${m.jobsCollected ?? 0} collected`,
-          currentPage: m.currentPage,
-          totalPages: m.totalPages,
-        });
-      }
-    };
-    chrome.runtime.onMessage.addListener(progressListener);
-
     (async () => {
       startKeepAlive();
       try {
-        await notifyTab({ status: "Checking pagination..." });
+        await notifyTab({ status: "Scraping current page..." });
 
-        const paginationResp = singlePage
-          ? null
-          : await chrome.tabs
-              .sendMessage(tabId, { action: "getPaginationInfo" })
-              .catch(() => null);
-
-        let scraped: { jobs: unknown[]; companies: unknown[]; pagesScraped: number };
-        if (paginationResp?.paginationInfo) {
-          const { totalPages } = paginationResp.paginationInfo as { totalPages: number };
-          await notifyTab({ status: `Scraping ${totalPages} pages...` });
-          const r = await chrome.tabs.sendMessage(tabId, {
-            action: "extractJobsWithPagination",
-          });
-          if (!r?.success) {
-            await notifyTab({ error: r?.error || "Pagination failed" });
-            return;
-          }
-          scraped = {
-            jobs: r.jobs ?? [],
-            companies: r.companies ?? [],
-            pagesScraped: r.pagesScraped ?? 1,
-          };
-        } else {
-          await notifyTab({ status: "Scraping current page..." });
-          const r = await chrome.tabs.sendMessage(tabId, { action: "extractJobs" });
-          const c = await chrome.tabs
-            .sendMessage(tabId, { action: "extractCompaniesFromJobs" })
-            .catch(() => ({ companies: [] }));
-          scraped = {
-            jobs: r?.jobs ?? [],
-            companies: c?.companies ?? [],
-            pagesScraped: 1,
-          };
-        }
+        const r = await chrome.tabs.sendMessage(tabId, { action: "extractJobs" });
+        const c = await chrome.tabs
+          .sendMessage(tabId, { action: "extractCompaniesFromJobs" })
+          .catch(() => ({ companies: [] }));
+        const scraped = {
+          jobs: r?.jobs ?? [],
+          companies: c?.companies ?? [],
+          pagesScraped: 1,
+        };
 
         if (scraped.jobs.length === 0) {
           await notifyTab({ error: "No job cards found on the page" });
@@ -1086,7 +1045,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } catch (err) {
         await notifyTab({ error: err instanceof Error ? err.message : String(err) });
       } finally {
-        chrome.runtime.onMessage.removeListener(progressListener);
         stopKeepAlive();
       }
     })();
