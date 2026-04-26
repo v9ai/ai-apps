@@ -20,6 +20,7 @@ const PUBLIC_CORE_PREFIXES = [
   "/health",
   "/ok",
   "/info",
+  "/__debug/",
 ];
 
 const INTERNAL_ONLY_PREFIXES = ["/_ml/", "/_research/"];
@@ -114,7 +115,14 @@ export default {
     }
 
     // 2. /ok + /info bypass auth so health probes + CF Tail work.
-    if (url.pathname === "/ok" || url.pathname === "/info") {
+    //    /__debug/* also bypasses auth — temporary diagnostic endpoints
+    //    on lead-gen-core for the live Container-DO 500 incident; remove
+    //    the /__debug/ branch once the root cause is fixed and verified.
+    if (
+      url.pathname === "/ok" ||
+      url.pathname === "/info" ||
+      url.pathname.startsWith("/__debug/")
+    ) {
       return forwardToContainer(request, env.CORE, "core", env);
     }
 

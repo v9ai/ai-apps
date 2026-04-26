@@ -206,120 +206,140 @@ async def lifespan(app: FastAPI):
         async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
             app.state.checkpointer_alive = True
             _boot("checkpointer_context_entered")
-        # Idempotent: creates the checkpointer tables on first run, no-ops after.
-        await checkpointer.setup()
-        graphs: dict[str, Any] = {
-            "admin_chat": build_admin_chat(checkpointer),
-            "classify_paper": build_classify_paper(checkpointer),
-            "company_discovery": build_company_discovery(checkpointer),
-            "company_enrichment": build_company_enrichment(checkpointer),
-            "competitors_team": build_competitors_team(checkpointer),
-            "contact_discovery": build_contact_discovery(checkpointer),
-            "contact_enrich": build_contact_enrich(checkpointer),
-            "contact_enrich_sales": build_contact_enrich_sales(checkpointer),
-            "contact_enrich_paper_author": build_contact_enrich_paper_author(
-                checkpointer
-            ),
-            "contact_enrich_paper_authors_batch": build_contact_enrich_paper_authors_batch(
-                checkpointer
-            ),
-            "deep_icp": build_deep_icp(checkpointer),
-            "email_compose": build_email_compose(checkpointer),
-            "email_outreach": build_email_outreach(checkpointer),
-            "email_reply": build_email_reply(checkpointer),
-            "gtm": build_gtm(checkpointer),
-            "icp_team": build_icp_team(checkpointer),
-            "lead_gen_team": build_lead_gen_team(checkpointer),
-            "positioning": build_positioning(checkpointer),
-            "pricing": build_pricing(checkpointer),
-            "product_intel": build_product_intel(checkpointer),
-            "score_contact": build_score_contact(checkpointer),
-            "text_to_sql": build_text_to_sql(checkpointer),
-        }
-        graphs.update(_build_optional_graphs(checkpointer))
-        app.state.graphs = graphs
+            # Idempotent: creates the checkpointer tables on first run, no-ops after.
+            await checkpointer.setup()
+            _boot("checkpointer_setup_ok")
+            graphs: dict[str, Any] = {
+                "admin_chat": build_admin_chat(checkpointer),
+                "classify_paper": build_classify_paper(checkpointer),
+                "company_discovery": build_company_discovery(checkpointer),
+                "company_enrichment": build_company_enrichment(checkpointer),
+                "competitors_team": build_competitors_team(checkpointer),
+                "contact_discovery": build_contact_discovery(checkpointer),
+                "contact_enrich": build_contact_enrich(checkpointer),
+                "contact_enrich_sales": build_contact_enrich_sales(checkpointer),
+                "contact_enrich_paper_author": build_contact_enrich_paper_author(
+                    checkpointer
+                ),
+                "contact_enrich_paper_authors_batch": build_contact_enrich_paper_authors_batch(
+                    checkpointer
+                ),
+                "deep_icp": build_deep_icp(checkpointer),
+                "email_compose": build_email_compose(checkpointer),
+                "email_outreach": build_email_outreach(checkpointer),
+                "email_reply": build_email_reply(checkpointer),
+                "gtm": build_gtm(checkpointer),
+                "icp_team": build_icp_team(checkpointer),
+                "lead_gen_team": build_lead_gen_team(checkpointer),
+                "positioning": build_positioning(checkpointer),
+                "pricing": build_pricing(checkpointer),
+                "product_intel": build_product_intel(checkpointer),
+                "score_contact": build_score_contact(checkpointer),
+                "text_to_sql": build_text_to_sql(checkpointer),
+            }
+            graphs.update(_build_optional_graphs(checkpointer))
+            app.state.graphs = graphs
+            _boot(f"graphs_compiled count={len(graphs)}")
 
-        # Build RemoteGraph adapters once at startup so a missing ML_URL /
-        # RESEARCH_URL env var fails fast instead of at the first call.
-        # Individual graphs that need them read from ``app.state.remote_adapters``
-        # or import the helpers from ``core.remote_graphs`` directly.
-        try:
-            app.state.remote_adapters = build_all_remote_adapters()
+            # Build RemoteGraph adapters once at startup so a missing ML_URL /
+            # RESEARCH_URL env var fails fast instead of at the first call.
+            # Individual graphs that need them read from ``app.state.remote_adapters``
+            # or import the helpers from ``core.remote_graphs`` directly.
+            try:
+                app.state.remote_adapters = build_all_remote_adapters()
+                log.info(
+                    "Remote adapters wired: %s", list(app.state.remote_adapters)
+                )
+                _boot(f"remote_adapters_built count={len(app.state.remote_adapters)}")
+            except Exception as exc:  # noqa: BLE001
+                # Don't kill the container if ML_URL/RESEARCH_URL are absent in
+                # local dev — log loudly and leave the adapters empty so any graph
+                # that tries to invoke one raises a clear error instead.
+                log.warning(
+                    "build_all_remote_adapters failed (%s: %s) — cross-container "
+                    "graphs will 500 until ML_URL/RESEARCH_URL are set",
+                    type(exc).__name__,
+                    exc,
+                )
+                app.state.remote_adapters = {}
+                _boot(f"remote_adapters_failed {type(exc).__name__}: {exc}")
+
             log.info(
-                "Remote adapters wired: %s", list(app.state.remote_adapters)
+                "Graphs compiled with AsyncPostgresSaver: %s",
+                list(app.state.graphs),
             )
-        except Exception as exc:  # noqa: BLE001
-            # Don't kill the container if ML_URL/RESEARCH_URL are absent in
-            # local dev — log loudly and leave the adapters empty so any graph
-            # that tries to invoke one raises a clear error instead.
-            log.warning(
-                "build_all_remote_adapters failed (%s: %s) — cross-container "
-                "graphs will 500 until ML_URL/RESEARCH_URL are set",
-                type(exc).__name__,
-                exc,
-            )
-            app.state.remote_adapters = {}
+            _boot("lifespan_ready")
+            try:
+                yield
+            finally:
+                # Graceful shutdown: drain in-flight background tasks so any
+                # AsyncPostgresSaver writes commit before the checkpointer
+                # context exits. CF Containers send SIGTERM on abandonment;
+                # uvicorn translates that into lifespan-shutdown — without an
+                # explicit drain, partially-applied graph state would be lost.
+                #
+                # Time-bounded so a stuck graph cannot block container teardown
+                # past CF's grace period (~30s).
+                _GRACEFUL_SHUTDOWN_S = float(
+                    os.environ.get("GRACEFUL_SHUTDOWN_S", "20")
+                )
+                inflight = [
+                    t
+                    for t in (
+                        *_async_run_tasks,
+                        *_positioning_inflight,
+                        *_lead_gen_inflight,
+                    )
+                    if not t.done()
+                ]
+                if inflight:
+                    log.info(
+                        "draining %d in-flight background tasks (timeout=%.0fs)",
+                        len(inflight),
+                        _GRACEFUL_SHUTDOWN_S,
+                    )
+                    try:
+                        await asyncio.wait_for(
+                            asyncio.gather(*inflight, return_exceptions=True),
+                            timeout=_GRACEFUL_SHUTDOWN_S,
+                        )
+                    except asyncio.TimeoutError:
+                        log.warning(
+                            "graceful drain timed out after %.0fs — cancelling "
+                            "%d remaining tasks",
+                            _GRACEFUL_SHUTDOWN_S,
+                            sum(1 for t in inflight if not t.done()),
+                        )
+                        for t in inflight:
+                            if not t.done():
+                                t.cancel()
+                        # Give cancellations a tick to propagate so
+                        # ``CancelledError`` raises inside the graph and lets
+                        # ``finally`` clauses release pool connections.
+                        await asyncio.gather(*inflight, return_exceptions=True)
 
-        log.info(
-            "Graphs compiled with AsyncPostgresSaver: %s",
-            list(app.state.graphs),
-        )
+                # Close pooled httpx connections held by the cached RemoteGraph
+                # adapters. Best-effort: each adapter's aclose() already swallows
+                # per-client errors so a misbehaving remote can't block shutdown.
+                try:
+                    await aclose_all_adapters()
+                except Exception:  # noqa: BLE001
+                    log.exception("aclose_all_adapters raised during shutdown")
+    except Exception as exc:  # noqa: BLE001
+        # Capture the boot error so /__debug/state can surface it. The container
+        # MUST stay alive (yield) so debug endpoints remain reachable; without
+        # this except clause uvicorn would crash on ASGI lifespan.startup.failed
+        # and CF would surface a bare "Internal Server Error" with no log line.
+        tb = traceback.format_exc()
+        log.error("LIFESPAN STARTUP FAILED:\n%s", tb)
+        app.state.lifespan_error = tb
+        app.state.boot_log.append(f"lifespan_exception {type(exc).__name__}: {exc}")
+        # Yield so FastAPI considers startup complete; debug routes survive,
+        # /runs/wait will 503-ish via missing graphs.
         try:
             yield
         finally:
-            # Graceful shutdown: drain in-flight background tasks so any
-            # AsyncPostgresSaver writes commit before the checkpointer
-            # context exits. CF Containers send SIGTERM on abandonment;
-            # uvicorn translates that into lifespan-shutdown — without an
-            # explicit drain, partially-applied graph state would be lost.
-            #
-            # Time-bounded so a stuck graph cannot block container teardown
-            # past CF's grace period (~30s).
-            _GRACEFUL_SHUTDOWN_S = float(
-                os.environ.get("GRACEFUL_SHUTDOWN_S", "20")
-            )
-            inflight = [
-                t
-                for t in (
-                    *_async_run_tasks,
-                    *_positioning_inflight,
-                    *_lead_gen_inflight,
-                )
-                if not t.done()
-            ]
-            if inflight:
-                log.info(
-                    "draining %d in-flight background tasks (timeout=%.0fs)",
-                    len(inflight),
-                    _GRACEFUL_SHUTDOWN_S,
-                )
-                try:
-                    await asyncio.wait_for(
-                        asyncio.gather(*inflight, return_exceptions=True),
-                        timeout=_GRACEFUL_SHUTDOWN_S,
-                    )
-                except asyncio.TimeoutError:
-                    log.warning(
-                        "graceful drain timed out after %.0fs — cancelling "
-                        "%d remaining tasks",
-                        _GRACEFUL_SHUTDOWN_S,
-                        sum(1 for t in inflight if not t.done()),
-                    )
-                    for t in inflight:
-                        if not t.done():
-                            t.cancel()
-                    # Give cancellations a tick to propagate so
-                    # ``CancelledError`` raises inside the graph and lets
-                    # ``finally`` clauses release pool connections.
-                    await asyncio.gather(*inflight, return_exceptions=True)
-
-            # Close pooled httpx connections held by the cached RemoteGraph
-            # adapters. Best-effort: each adapter's aclose() already swallows
-            # per-client errors so a misbehaving remote can't block shutdown.
-            try:
-                await aclose_all_adapters()
-            except Exception:  # noqa: BLE001
-                log.exception("aclose_all_adapters raised during shutdown")
+            pass
 
 
 app = FastAPI(title="lead-gen-core", lifespan=lifespan)
@@ -410,6 +430,91 @@ async def runs_wait(req: RunRequest) -> dict[str, Any]:
             configurable["jobbert_ner_adapter"] = jobbert
     config: dict[str, Any] = {"configurable": configurable}
     return await graph.ainvoke(req.input, config=config)
+
+
+# ── temporary diagnostic endpoints ────────────────────────────────────────
+# These are intentionally unauthenticated (added to ``_PUBLIC_PATHS`` and to
+# the dispatcher's ``PUBLIC_CORE_PREFIXES``) so an operator can hit them
+# from a browser without a bearer token while diagnosing the live
+# Container-DO 500. They return diagnostic-only data — no secrets, no PII —
+# so leaving them open during the incident is acceptable. Remove once the
+# fix is verified in prod.
+
+
+@app.get("/__debug/state")
+async def debug_state() -> dict[str, Any]:
+    """Snapshot of lifespan completion + cached app.state primitives."""
+    graphs_attr = getattr(app.state, "graphs", None)
+    return {
+        "has_graphs_attr": hasattr(app.state, "graphs"),
+        "graph_keys": sorted(graphs_attr.keys()) if isinstance(graphs_attr, dict) else [],
+        "lifespan_error": getattr(app.state, "lifespan_error", None),
+        "checkpointer_alive": getattr(app.state, "checkpointer_alive", None),
+        "boot_log": getattr(app.state, "boot_log", []),
+        "remote_adapters": sorted(
+            (getattr(app.state, "remote_adapters", {}) or {}).keys()
+        ),
+        "env_present": {
+            "DATABASE_URL": bool(os.environ.get("DATABASE_URL", "").strip()),
+            "NEON_DATABASE_URL": bool(os.environ.get("NEON_DATABASE_URL", "").strip()),
+            "LANGGRAPH_AUTH_TOKEN": bool(os.environ.get("LANGGRAPH_AUTH_TOKEN", "").strip()),
+            "ML_URL": bool(os.environ.get("ML_URL", "").strip()),
+            "RESEARCH_URL": bool(os.environ.get("RESEARCH_URL", "").strip()),
+            "ML_INTERNAL_AUTH_TOKEN": bool(os.environ.get("ML_INTERNAL_AUTH_TOKEN", "").strip()),
+            "RESEARCH_INTERNAL_AUTH_TOKEN": bool(
+                os.environ.get("RESEARCH_INTERNAL_AUTH_TOKEN", "").strip()
+            ),
+            "DEEPSEEK_API_KEY": bool(os.environ.get("DEEPSEEK_API_KEY", "").strip()),
+        },
+    }
+
+
+@app.post("/__debug/runs_wait")
+async def debug_runs_wait(req: RunRequest) -> JSONResponse:
+    """Mirror of /runs/wait that always returns the full traceback as JSON."""
+    graphs = getattr(app.state, "graphs", {}) or {}
+    graph = graphs.get(req.assistant_id)
+    if graph is None:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "ok": False,
+                "stage": "lookup",
+                "error": f"Unknown assistant_id: {req.assistant_id}",
+                "available": sorted(graphs.keys()),
+                "lifespan_error": getattr(app.state, "lifespan_error", None),
+                "boot_log": getattr(app.state, "boot_log", []),
+            },
+        )
+    thread_id = req.thread_id or str(uuid.uuid4())
+    configurable: dict[str, Any] = {"thread_id": thread_id}
+    if req.assistant_id == "contact_enrich":
+        remote_adapters = getattr(app.state, "remote_adapters", {})
+        jobbert = remote_adapters.get("jobbert_ner")
+        if jobbert is not None:
+            configurable["jobbert_ner_adapter"] = jobbert
+    config: dict[str, Any] = {"configurable": configurable}
+    try:
+        result = await graph.ainvoke(req.input, config=config)
+        return JSONResponse(
+            status_code=200,
+            content={"ok": True, "thread_id": thread_id, "output": result},
+        )
+    except Exception as exc:  # noqa: BLE001
+        tb = traceback.format_exc()
+        log.error("DEBUG /runs_wait %s failed:\n%s", req.assistant_id, tb)
+        return JSONResponse(
+            status_code=200,
+            content={
+                "ok": False,
+                "stage": "ainvoke",
+                "assistant_id": req.assistant_id,
+                "thread_id": thread_id,
+                "error_type": type(exc).__name__,
+                "error_msg": str(exc),
+                "traceback": tb,
+            },
+        )
 
 
 # ── Async run pattern (LangGraph-compat REST surface) ─────────────────────
