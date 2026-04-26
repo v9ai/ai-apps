@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { css } from "styled-system/css";
-import { Header } from "./_components/Header";
+import { Sidebar } from "./_components/Sidebar";
 import { Providers } from "./_components/Providers";
 import "./globals.css";
 
@@ -19,9 +19,18 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
-          <Header />
-          <div className={css({ position: "relative", zIndex: 1 })}>
-            {children}
+          <div className={css({ display: "flex", minH: "100vh" })}>
+            <Sidebar />
+            <main
+              className={css({
+                flex: 1,
+                minW: 0,
+                position: "relative",
+                zIndex: 1,
+              })}
+            >
+              {children}
+            </main>
           </div>
         </Providers>
       </body>

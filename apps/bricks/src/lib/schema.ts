@@ -50,6 +50,12 @@ export const scripts = pgTable("scripts", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const hubTypeDocs = pgTable("hub_type_docs", {
+  hubType: text("hub_type").primaryKey(),
+  docsUrl: text("docs_url").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const userHubs = pgTable("user_hubs", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
