@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { css } from "styled-system/css";
 import { HubType, hubDisplayName, hubColor, hubPorts } from "@/lib/parser";
+import { GAMES } from "@/lib/games";
 
 interface HubDetail {
   id: number;
@@ -229,6 +230,120 @@ export default function HubPage() {
           </div>
         </section>
       )}
+
+      <section className={css({ mt: "10" })}>
+        <div
+          className={css({
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            mb: "3",
+            gap: "3",
+          })}
+        >
+          <h2
+            className={css({
+              fontSize: "lg",
+              fontWeight: "900",
+              fontFamily: "display",
+              color: "ink.primary",
+            })}
+          >
+            Games
+          </h2>
+          <Link
+            href="/games"
+            className={css({
+              fontSize: "xs",
+              fontWeight: "700",
+              fontFamily: "display",
+              color: "ink.muted",
+              textDecoration: "none",
+              _hover: { color: "lego.orange" },
+            })}
+          >
+            Browse all →
+          </Link>
+        </div>
+        <p
+          className={css({
+            fontSize: "xs",
+            color: "ink.muted",
+            mb: "4",
+          })}
+        >
+          Play on {hub.name}
+        </p>
+        <div
+          className={css({
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+            gap: "3",
+          })}
+        >
+          {GAMES.map((game) => (
+            <Link
+              key={game.title}
+              href="/games"
+              className={css({
+                position: "relative",
+                bg: "plate.surface",
+                border: "1px solid",
+                borderColor: "plate.border",
+                rounded: "brick",
+                boxShadow: "brick",
+                p: "4",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1",
+                overflow: "hidden",
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+                _hover: {
+                  borderColor: "plate.borderHover",
+                  transform: "translateY(-1px)",
+                },
+              })}
+            >
+              <div
+                aria-hidden="true"
+                className={css({
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  h: "3px",
+                })}
+                style={{ background: game.accent }}
+              />
+              <span
+                className={css({
+                  mt: "1",
+                  fontFamily: "display",
+                  fontWeight: "900",
+                  fontSize: "sm",
+                  color: "ink.primary",
+                  letterSpacing: "-0.01em",
+                })}
+              >
+                {game.title}
+              </span>
+              <span
+                className={css({
+                  fontSize: "10px",
+                  fontFamily: "display",
+                  fontWeight: "800",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "ink.faint",
+                })}
+              >
+                Coming soon
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <section className={css({ mt: "10", pt: "6", borderTop: "1px solid", borderColor: "plate.border" })}>
         <button
