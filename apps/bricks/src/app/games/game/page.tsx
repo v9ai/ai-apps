@@ -77,9 +77,14 @@ export default function GamePage() {
     streamRef.current?.stop();
     streamRef.current = null;
     frameRef.current = null;
+    setBattery(null);
     setGameStatus("calibrating");
 
     await hub.deploy(IMU_QUEST_SCRIPT);
+    if (hub.status === "error") {
+      setGameStatus("idle");
+      return;
+    }
 
     const stream = startImuStream({
       onFrame: (f) => {
