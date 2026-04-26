@@ -43,6 +43,13 @@ export const GAMES: GameCard[] = [
     accent: "#A855F7",
   },
   {
+    title: "IMU Quest",
+    titleRo: "Provocarea IMU",
+    tagline: "Five-round motion challenge that exercises every IMU sensor on the Essential Hub.",
+    taglineRo: "Cinci runde de mișcare care pun la treabă fiecare senzor IMU al Essential Hub.",
+    accent: "#0EA5E9",
+  },
+  {
     title: "Beacon Tag",
     titleRo: "Vânătoare de balize",
     tagline: "Find the broadcasting hub before its signal fades.",
