@@ -148,10 +148,100 @@ const SHARED_CAPABILITIES: CapabilityGroup[] = [
   },
 ];
 
+const IMU_GROUP: CapabilityGroup = {
+  id: "imu",
+  titleEn: "IMU (motion sensor)",
+  titleRo: "IMU (senzor de mișcare)",
+  descEn: "Built-in inertial measurement unit — detect tilt, acceleration, rotation, and heading.",
+  descRo: "Unitate inerțială integrată — detectează înclinarea, accelerația, rotația și direcția (heading).",
+  methods: [
+    {
+      signature: "imu.ready()",
+      descEn: "Returns True once the IMU is calibrated and ready to use.",
+      descRo: "Întoarce True când IMU-ul este calibrat și gata de folosit.",
+    },
+    {
+      signature: "imu.stationary()",
+      descEn: "Returns True if the hub is currently not moving.",
+      descRo: "Întoarce True dacă hub-ul stă nemișcat în acest moment.",
+    },
+    {
+      signature: "imu.up()",
+      descEn: "Returns which side of the hub is currently facing up (Side.TOP, BOTTOM, FRONT, BACK, LEFT, RIGHT).",
+      descRo: "Întoarce ce parte a hub-ului este orientată în sus (Side.TOP, BOTTOM, FRONT, BACK, LEFT, RIGHT).",
+    },
+    {
+      signature: "imu.tilt(calibrated=True)",
+      descEn: "Returns (pitch, roll) angles in degrees relative to the horizontal plane.",
+      descRo: "Întoarce unghiurile (pitch, roll) în grade, raportate la planul orizontal.",
+    },
+    {
+      signature: "imu.acceleration(axis=None, calibrated=True)",
+      descEn: "Returns acceleration in mm/s² — for one axis if given, otherwise a 3D vector.",
+      descRo: "Întoarce accelerația în mm/s² — pe o axă, dacă este dată, altfel ca vector 3D.",
+    },
+    {
+      signature: "imu.angular_velocity(axis=None, calibrated=True)",
+      descEn: "Returns rotational velocity in deg/s — single axis if given, otherwise a 3D vector.",
+      descRo: "Întoarce viteza unghiulară în grade/s — pe o axă, dacă este dată, altfel ca vector 3D.",
+    },
+    {
+      signature: "imu.heading()",
+      descEn: "Returns the cumulative heading angle in degrees, useful for driving in a straight line or turning by a fixed amount.",
+      descRo: "Întoarce unghiul cumulativ de heading în grade — util pentru deplasare în linie dreaptă sau viraje exacte.",
+    },
+    {
+      signature: "imu.reset_heading(angle)",
+      descEn: "Resets the heading to the given angle (commonly 0).",
+      descRo: "Resetează heading-ul la unghiul dat (de obicei 0).",
+    },
+    {
+      signature: "imu.rotation(axis, calibrated=True)",
+      descEn: "Returns the cumulative rotation around a single axis in degrees.",
+      descRo: "Întoarce rotația cumulativă în jurul unei singure axe, în grade.",
+    },
+    {
+      signature: "imu.orientation()",
+      descEn: "Returns the 3D rotation matrix describing the hub's orientation.",
+      descRo: "Întoarce matricea de rotație 3D care descrie orientarea hub-ului.",
+    },
+    {
+      signature: "imu.settings(...)",
+      descEn: "Configures IMU thresholds, calibration bias, scale, and other tuning parameters.",
+      descRo: "Configurează pragurile IMU, bias-ul de calibrare, scala și alți parametri de reglare.",
+    },
+  ],
+};
+
+const CHARGER_GROUP: CapabilityGroup = {
+  id: "charger",
+  titleEn: "USB charger",
+  titleRo: "Încărcător USB",
+  descEn: "Monitor the built-in USB charging circuit — detect when a charger is plugged in and read charge state.",
+  descRo: "Monitorizează circuitul de încărcare USB integrat — detectează prezența încărcătorului și citește starea încărcării.",
+  methods: [
+    {
+      signature: "charger.connected()",
+      descEn: "Returns True when a USB charger is plugged in.",
+      descRo: "Întoarce True când un încărcător USB este conectat.",
+    },
+    {
+      signature: "charger.current()",
+      descEn: "Returns the charging current in milliamps.",
+      descRo: "Întoarce curentul de încărcare, în miliamperi.",
+    },
+    {
+      signature: "charger.status()",
+      descEn: "Returns a numeric charge state code (1–4): discharging, charging, complete, or fault.",
+      descRo: "Întoarce un cod numeric pentru starea de încărcare (1–4): descărcare, încărcare, complet sau eroare.",
+    },
+  ],
+};
+
 export const HUB_CAPABILITIES: Record<HubType, CapabilityGroup[]> = {
   CityHub: SHARED_CAPABILITIES,
   TechnicHub: SHARED_CAPABILITIES,
   MoveHub: SHARED_CAPABILITIES,
   PrimeHub: SHARED_CAPABILITIES,
-  EssentialHub: SHARED_CAPABILITIES,
+  EssentialHub: [...SHARED_CAPABILITIES, IMU_GROUP, CHARGER_GROUP],
 };

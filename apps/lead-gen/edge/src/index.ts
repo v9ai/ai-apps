@@ -159,7 +159,7 @@ function corsHeaders(req: Request): HeadersInit {
   const origin = req.headers.get("origin") ?? "*";
   return {
     "access-control-allow-origin": origin,
-    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
     "access-control-allow-headers": ALLOW_HEADERS,
     "access-control-max-age": "86400",
     vary: "origin",
@@ -214,21 +214,31 @@ function validateJobs(input: unknown): {
   valid: ValidJob[];
   skippedInvalid: number;
   skippedDuplicate: number;
+  invalidSamples: Array<{ reason: string; title?: string; company?: string; url?: string }>;
 } {
   if (!input || typeof input !== "object" || !Array.isArray((input as { jobs?: unknown }).jobs)) {
-    return { valid: [], skippedInvalid: 0, skippedDuplicate: 0 };
+    return { valid: [], skippedInvalid: 0, skippedDuplicate: 0, invalidSamples: [] };
   }
   const seen = new Set<string>();
   const valid: ValidJob[] = [];
   let skippedInvalid = 0;
   let skippedDuplicate = 0;
+  const invalidSamples: Array<{ reason: string; title?: string; company?: string; url?: string }> = [];
 
   for (const raw of (input as { jobs: IncomingJob[] }).jobs) {
     const title = asString(raw?.title);
     const company = asString(raw?.company);
     const url = asString(raw?.url);
-    if (!title || !company || !url) {
+    if (!title || !url) {
       skippedInvalid++;
+      if (invalidSamples.length < 5) {
+        invalidSamples.push({
+          reason: !title ? "missing-title" : "missing-url",
+          title: title ?? undefined,
+          company: company ?? undefined,
+          url: url ?? undefined,
+        });
+      }
       continue;
     }
     if (seen.has(url)) {
@@ -238,7 +248,9 @@ function validateJobs(input: unknown): {
     seen.add(url);
     valid.push({
       title,
-      company,
+      // company is now optional — opportunities without a company still
+      // import (company_id NULL) so we don't drop legit job cards.
+      company: company ?? "",
       url,
       companyLinkedinUrl: asString(raw?.companyLinkedinUrl),
       location: asString(raw?.location),
@@ -247,7 +259,7 @@ function validateJobs(input: unknown): {
       archived: raw?.archived ? 1 : 0,
     });
   }
-  return { valid, skippedInvalid, skippedDuplicate };
+  return { valid, skippedInvalid, skippedDuplicate, invalidSamples };
 }
 
 async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
@@ -271,19 +283,37 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
     return json(req, { error: "Invalid JSON" }, 400);
   }
 
-  const { valid, skippedInvalid, skippedDuplicate } = validateJobs(body);
+  const { valid, skippedInvalid, skippedDuplicate, invalidSamples } = validateJobs(body);
+  console.log(
+    JSON.stringify({
+      msg: "jobs/d1/import received",
+      received: Array.isArray((body as { jobs?: unknown[] })?.jobs)
+        ? (body as { jobs: unknown[] }).jobs.length
+        : 0,
+      valid: valid.length,
+      skippedInvalid,
+      skippedDuplicate,
+      invalidSamples,
+    }),
+  );
   if (valid.length === 0) {
     return json(req, {
       inserted: 0,
       skipped: skippedInvalid + skippedDuplicate,
       total: skippedInvalid + skippedDuplicate,
-      detail: { skippedInvalid, skippedDuplicate, skippedExisting: 0 },
+      detail: { skippedInvalid, skippedDuplicate, skippedExisting: 0, invalidSamples },
     });
   }
 
   // 1. Upsert companies (INSERT OR IGNORE) so each unique company gets a row.
-  const keyByJob = valid.map((j) => companyKey(j.company, j.companyLinkedinUrl));
-  const uniqueKeys = Array.from(new Set(keyByJob));
+  //    Jobs whose `company` is empty get keyByJob[i] = null and skip the
+  //    company link entirely (opportunity.company_id stays NULL).
+  const keyByJob: Array<string | null> = valid.map((j) =>
+    j.company ? companyKey(j.company, j.companyLinkedinUrl) : null,
+  );
+  const uniqueKeys = Array.from(
+    new Set(keyByJob.filter((k): k is string => k !== null)),
+  );
 
   const companyRows = uniqueKeys.map((key) => {
     const j = valid[keyByJob.indexOf(key)];
@@ -322,7 +352,7 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
       j.description,
       JSON.stringify({ scrapedAt: new Date().toISOString() }),
       JSON.stringify(["linkedin"]),
-      companyIdMap.get(keyByJob[i]) ?? null,
+      keyByJob[i] ? companyIdMap.get(keyByJob[i] as string) ?? null : null,
       j.location,
       j.salary,
       j.archived,
@@ -349,12 +379,72 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
   });
 }
 
+// ── D1 read: Next.js server lists D1 opportunities for /opportunities page ──
+//
+// GET /api/jobs/d1/opportunities?limit=500
+//   headers: Authorization: Bearer <JOBS_D1_TOKEN>
+//   reply:   { rows: D1OpportunityRow[] }
+
+interface D1OpportunityListRow {
+  id: string;
+  title: string;
+  url: string | null;
+  source: string | null;
+  status: string;
+  tags: string | null;
+  location: string | null;
+  salary: string | null;
+  archived: number;
+  created_at: string;
+  updated_at: string;
+  company_name: string | null;
+  company_key: string | null;
+}
+
+async function handleJobsD1List(req: Request, env: Env): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "GET") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  const url = new URL(req.url);
+  const limitRaw = Number(url.searchParams.get("limit") ?? "500");
+  const limit = Number.isFinite(limitRaw)
+    ? Math.min(2000, Math.max(1, Math.floor(limitRaw)))
+    : 500;
+
+  const res = await env.DB.prepare(
+    `SELECT o.id, o.title, o.url, o.source, o.status, o.tags,
+            o.location, o.salary, o.archived, o.created_at, o.updated_at,
+            c.name AS company_name, c.key AS company_key
+       FROM opportunities o
+       LEFT JOIN companies c ON c.id = o.company_id
+       ORDER BY o.created_at DESC
+       LIMIT ?`,
+  )
+    .bind(limit)
+    .all<D1OpportunityListRow>();
+
+  return json(req, { rows: res.results ?? [] });
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
 
     if (url.pathname === "/api/jobs/d1/import") {
       return handleJobsD1Import(req, env);
+    }
+    if (url.pathname === "/api/jobs/d1/opportunities") {
+      return handleJobsD1List(req, env);
     }
 
     const { tier, key, bodyText } = await classify(req, url);
