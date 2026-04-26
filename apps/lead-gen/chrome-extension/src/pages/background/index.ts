@@ -965,6 +965,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   // ── Bulk import: every visible LinkedIn job-search card → D1 opportunities ──
+  //
+  // Two paths:
+  //   • Multi-page (default on /jobs/search with pagination): the content
+  //     script paginates and fires `savePageBatch` per page. We POST each
+  //     page to D1 as it arrives so partial progress survives a closed tab.
+  //   • Single-page (`singlePage: true`, or no pagination on the page):
+  //     scrape current page and POST once.
   if (message.action === "importAllOpportunitiesFromJobsSearch") {
     const tabId = sender.tab?.id;
     if (!tabId) {
@@ -973,24 +980,167 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     sendResponse({ success: true });
 
+    const singlePage = !!(message as { singlePage?: boolean }).singlePage;
+
     const notifyTab = async (data: Record<string, unknown>) => {
       try {
         await chrome.tabs.sendMessage(tabId, { action: "importAllProgress", ...data });
       } catch { /* tab closed */ }
     };
 
+    // Running totals for multi-page mode. Reported in the final `done` msg.
+    let totalInserted = 0;
+    let totalSkipped = 0;
+    let totalReceived = 0;
+    let pagesSaved = 0;
+    let lastSaveError: string | null = null;
+    // Chain saves so per-page POSTs serialize — keeps accumulators race-free
+    // and avoids hammering the edge worker.
+    let savePromise: Promise<void> = Promise.resolve();
+
+    const progressListener = (msg: unknown) => {
+      const m = msg as {
+        action?: string;
+        currentPage?: number;
+        totalPages?: number;
+        jobsCollected?: number;
+      };
+      if (m?.action === "paginationProgress") {
+        notifyTab({
+          status: `Page ${m.currentPage}/${m.totalPages} — ${m.jobsCollected ?? 0} collected`,
+          currentPage: m.currentPage,
+          totalPages: m.totalPages,
+        });
+      }
+    };
+    chrome.runtime.onMessage.addListener(progressListener);
+
+    const savePageListener = (msg: unknown) => {
+      const m = msg as {
+        action?: string;
+        pageNumber?: number;
+        totalPages?: number;
+        jobs?: Array<{
+          title?: string;
+          company?: string;
+          url?: string;
+          location?: string;
+          salary?: string;
+          description?: string;
+          archived?: boolean;
+        }>;
+        companies?: Array<{ name?: string; linkedin_url?: string }>;
+      };
+      if (m?.action !== "savePageBatch") return;
+
+      const pageNumber = m.pageNumber ?? 0;
+      const totalPages = m.totalPages ?? 0;
+      const pageJobs = m.jobs ?? [];
+      const pageCompanies = m.companies ?? [];
+
+      const companyLinkedinByName = new Map<string, string>();
+      for (const co of pageCompanies) {
+        if (co?.name && co?.linkedin_url) companyLinkedinByName.set(co.name, co.linkedin_url);
+      }
+
+      const payload: D1JobInput[] = pageJobs
+        .filter((j) => j.title && j.company && j.url)
+        .map((j) => ({
+          title: j.title!,
+          company: j.company!,
+          url: j.url!,
+          companyLinkedinUrl: j.company ? companyLinkedinByName.get(j.company) ?? null : null,
+          location: j.location ?? null,
+          salary: j.salary ?? null,
+          description: j.description ?? null,
+          archived: !!j.archived,
+        }));
+
+      savePromise = savePromise.then(async () => {
+        if (payload.length === 0) {
+          pagesSaved++;
+          return;
+        }
+        const result = await importJobsToD1(payload);
+        totalReceived += payload.length;
+        if (result.ok) {
+          totalInserted += result.inserted;
+          totalSkipped += result.skipped;
+          pagesSaved++;
+          await notifyTab({
+            status: `Page ${pageNumber}/${totalPages} — ${totalInserted} imported / ${totalSkipped} skipped`,
+            currentPage: pageNumber,
+            totalPages,
+          });
+        } else {
+          lastSaveError = result.error || "Save failed";
+          await notifyTab({
+            status: `Page ${pageNumber} save failed: ${lastSaveError}`,
+            currentPage: pageNumber,
+            totalPages,
+          });
+        }
+      }).catch((err) => {
+        lastSaveError = err instanceof Error ? err.message : String(err);
+      });
+    };
+    chrome.runtime.onMessage.addListener(savePageListener);
+
     (async () => {
       startKeepAlive();
       try {
-        await notifyTab({ status: "Scraping current page..." });
+        await notifyTab({ status: "Checking pagination..." });
 
+        const paginationResp = singlePage
+          ? null
+          : await chrome.tabs
+              .sendMessage(tabId, { action: "getPaginationInfo" })
+              .catch(() => null);
+
+        if (paginationResp?.paginationInfo) {
+          // Multi-page: content script fires savePageBatch per page; the
+          // savePageListener above POSTs each immediately. We just await
+          // pagination completion and drain in-flight saves.
+          const { totalPages } = paginationResp.paginationInfo as { totalPages: number };
+          await notifyTab({ status: `Scraping ${totalPages} pages...` });
+          const r = await chrome.tabs.sendMessage(tabId, {
+            action: "extractJobsWithPagination",
+          });
+          if (!r?.success) {
+            await notifyTab({ error: r?.error || "Pagination failed" });
+            return;
+          }
+
+          await savePromise;
+
+          if (totalReceived === 0) {
+            await notifyTab({ error: lastSaveError || "No job cards found across pages" });
+            return;
+          }
+
+          const pagesScraped = r.pagesScraped ?? pagesSaved;
+          await notifyTab({
+            done: true,
+            inserted: totalInserted,
+            skipped: totalSkipped,
+            total: totalReceived,
+            pagesScraped,
+            status: lastSaveError
+              ? `Imported ${totalInserted} / errors: ${lastSaveError}`
+              : `Imported ${totalInserted} / skipped ${totalSkipped} (${pagesScraped} pages)`,
+          });
+          return;
+        }
+
+        // Single-page path.
+        await notifyTab({ status: "Scraping current page..." });
         const r = await chrome.tabs.sendMessage(tabId, { action: "extractJobs" });
         const c = await chrome.tabs
           .sendMessage(tabId, { action: "extractCompaniesFromJobs" })
           .catch(() => ({ companies: [] }));
         const scraped = {
-          jobs: r?.jobs ?? [],
-          companies: c?.companies ?? [],
+          jobs: (r?.jobs ?? []) as unknown[],
+          companies: (c?.companies ?? []) as unknown[],
           pagesScraped: 1,
         };
 
@@ -999,10 +1149,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return;
         }
 
-        // Index extracted companies by name → linkedin_url so each job gets enrichment.
         const companyLinkedinByName = new Map<string, string>();
-        for (const c of scraped.companies as Array<{ name?: string; linkedin_url?: string }>) {
-          if (c?.name && c?.linkedin_url) companyLinkedinByName.set(c.name, c.linkedin_url);
+        for (const co of scraped.companies as Array<{ name?: string; linkedin_url?: string }>) {
+          if (co?.name && co?.linkedin_url) companyLinkedinByName.set(co.name, co.linkedin_url);
         }
 
         const payload: D1JobInput[] = (scraped.jobs as Array<{
@@ -1045,6 +1194,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } catch (err) {
         await notifyTab({ error: err instanceof Error ? err.message : String(err) });
       } finally {
+        chrome.runtime.onMessage.removeListener(progressListener);
+        chrome.runtime.onMessage.removeListener(savePageListener);
         stopKeepAlive();
       }
     })();

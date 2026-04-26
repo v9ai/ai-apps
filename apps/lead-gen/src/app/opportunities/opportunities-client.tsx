@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Container, Heading, Text, Table, Badge, Flex, Button } from "@radix-ui/themes";
+import { Container, Heading, Text, Table, Badge, Flex, Button, IconButton } from "@radix-ui/themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExternalLinkIcon, EyeNoneIcon, Cross2Icon } from "@radix-ui/react-icons";
@@ -342,37 +342,37 @@ export function OpportunitiesClient({
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Flex gap="2" align="center">
+                    <Flex gap="3" align="center">
                       <Button
-                        size="1"
+                        size="2"
                         variant="ghost"
                         color="gray"
                         onClick={() => handleArchiveD1(opp.id, opp.company_key, opp.company_name)}
                         title="Block company (hide all jobs from this company)"
                       >
-                        <EyeNoneIcon width={12} height={12} /> Block
+                        <EyeNoneIcon width={14} height={14} /> Block
                       </Button>
                       {opp.location && (
                         <Button
-                          size="1"
+                          size="2"
                           variant="ghost"
                           color="gray"
                           onClick={() => handleBlockLocation(opp.location)}
                           title={`Block location "${opp.location}" (substring match, hides any row containing this)`}
                         >
-                          <EyeNoneIcon width={12} height={12} /> Loc
+                          <EyeNoneIcon width={14} height={14} /> Loc
                         </Button>
                       )}
-                      <Button
-                        size="1"
+                      <IconButton
+                        size="2"
                         variant="ghost"
                         color="gray"
                         onClick={() => handleHide(opp.id, "d1")}
                         title="Remove this entry from the list"
                         aria-label="Remove"
                       >
-                        <Cross2Icon width={12} height={12} />
-                      </Button>
+                        <Cross2Icon width={14} height={14} />
+                      </IconButton>
                     </Flex>
                   </Table.Cell>
                 </Table.Row>
