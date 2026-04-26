@@ -20,6 +20,8 @@ const BTN_ATTR = "data-lg-import-all-btn";
 
 let importAllBtn: HTMLButtonElement | null = null;
 let lastUrl = "";
+let lastAutoImportedUrl = "";
+let autoImportTimer: ReturnType<typeof setTimeout> | null = null;
 
 function isOnJobsSearchPage(): boolean {
   if (!window.location.hostname.includes("linkedin.com")) return false;
@@ -159,6 +161,48 @@ function syncWithRetries() {
   });
 }
 
+// ── Auto-import on each jobs-search navigation ─────────────────────
+//
+// Each time the URL changes to a new jobs-search query/page, wait for
+// the cards to settle, then scrape just the current page and POST it
+// to D1. Tracks `lastAutoImportedUrl` to avoid re-running on the same
+// URL (e.g. SPA re-renders that don't change the search).
+
+function scheduleAutoImport() {
+  if (!isOnJobsSearchPage()) return;
+  const url = window.location.href;
+  if (url === lastAutoImportedUrl) return;
+  if (autoImportTimer) clearTimeout(autoImportTimer);
+  autoImportTimer = setTimeout(() => {
+    if (teardownIfDead()) return;
+    if (!isOnJobsSearchPage()) return;
+    if (window.location.href !== url) return; // URL changed mid-debounce
+    lastAutoImportedUrl = url;
+
+    const btn = importAllBtn;
+    if (btn && !btn.disabled) {
+      btn.disabled = true;
+      btn.textContent = "Auto-importing this page...";
+      btn.style.backgroundColor = COLOR_BUSY;
+    }
+
+    safeSendMessage(
+      { action: "importAllOpportunitiesFromJobsSearch", singlePage: true },
+      (response) => {
+        if (!response?.success) {
+          // Reset URL gate so the next nav retries this same query.
+          lastAutoImportedUrl = "";
+          if (btn) {
+            btn.textContent = response?.error || "Auto-import failed";
+            btn.style.backgroundColor = COLOR_ERROR;
+            setTimeout(() => resetIdle(btn), 4000);
+          }
+        }
+      },
+    );
+  }, 2500);
+}
+
 // ── History patch (shared flag — won't double-patch) ───────────────
 
 const HISTORY_PATCH_FLAG = "__lgHistoryPatched";
@@ -210,6 +254,7 @@ function init() {
   }
 
   syncWithRetries();
+  scheduleAutoImport();
 
   const obs = makeLeadingEdgeObserver();
   obs.observe(document.body, { childList: true, subtree: true });
@@ -220,6 +265,7 @@ function init() {
     if (window.location.href === lastUrl) return;
     lastUrl = window.location.href;
     syncWithRetries();
+    scheduleAutoImport();
   });
 
   const urlPoll = setInterval(() => {
@@ -227,6 +273,7 @@ function init() {
     if (window.location.href !== lastUrl) {
       lastUrl = window.location.href;
       syncWithRetries();
+      scheduleAutoImport();
     }
   }, 500);
   _intervals.push(urlPoll);

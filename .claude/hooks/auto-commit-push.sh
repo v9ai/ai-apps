@@ -57,11 +57,57 @@ fi
 # Use Claude's final message as commit message
 LAST_MSG=$(echo "$INPUT" | jq -r '.last_assistant_message // empty' 2>/dev/null)
 
+# Fallback: pull the last assistant text turn from the transcript file
+if [ -z "$LAST_MSG" ]; then
+    TRANSCRIPT=$(echo "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null)
+    if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
+        LAST_MSG=$(python3 - "$TRANSCRIPT" <<'PY' 2>/dev/null || true
+import json, sys
+last = ""
+with open(sys.argv[1]) as f:
+    for line in f:
+        try:
+            e = json.loads(line)
+        except Exception:
+            continue
+        if e.get("type") != "assistant":
+            continue
+        for c in (e.get("message", {}) or {}).get("content", []) or []:
+            if isinstance(c, dict) and c.get("type") == "text":
+                t = (c.get("text") or "").strip()
+                if t:
+                    last = t
+print(last)
+PY
+)
+    fi
+fi
+
 if [ -n "$LAST_MSG" ]; then
-    # First non-empty line → subject, rest → body
-    SUBJECT=$(echo "$LAST_MSG" | grep -v '^\s*$' | head -1 | sed 's/[[:space:]]*$//')
-    BODY=$(echo "$LAST_MSG" | tail -n +2)
-    SUBJECT="${TAG:+${TAG}: }${SUBJECT}"
+    # First non-empty line as candidate subject
+    RAW_SUBJECT=$(printf '%s\n' "$LAST_MSG" | awk 'NF { print; exit }')
+    # Strip basic markdown (backticks, **bold**, *italic*)
+    RAW_SUBJECT=$(printf '%s' "$RAW_SUBJECT" | sed -E 's/`([^`]+)`/\1/g; s/\*\*([^*]+)\*\*/\1/g; s/\*([^*]+)\*/\1/g')
+    # Take first sentence — text up to the first .!? followed by space (or end)
+    SUBJECT=$(printf '%s' "$RAW_SUBJECT" | sed -E 's/^([^.!?]*[.!?])[[:space:]].*$/\1/')
+    # Strip trailing whitespace, colons, dashes, em/en-dashes
+    SUBJECT=$(printf '%s' "$SUBJECT" | sed -E 's/[[:space:]:—–-]+$//')
+    # Truncate to 72 chars with ellipsis
+    if [ "${#SUBJECT}" -gt 72 ]; then
+        SUBJECT="$(printf '%s' "$SUBJECT" | cut -c1-69)..."
+    fi
+    # If subject collapsed to empty or a section-header label, fall back
+    case "$(printf '%s' "$SUBJECT" | tr '[:upper:]' '[:lower:]')" in
+        ""|summary|notes|changes) SUBJECT="" ;;
+    esac
+
+    if [ -n "$SUBJECT" ]; then
+        BODY="$LAST_MSG"
+        SUBJECT="${TAG:+${TAG}: }${SUBJECT}"
+    else
+        SUBJECT="chore${TAG}: auto-commit"
+        BODY="$LAST_MSG"
+    fi
 else
     SUBJECT="chore${TAG}: auto-commit"
     BODY=""

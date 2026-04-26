@@ -973,6 +973,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     sendResponse({ success: true });
 
+    const singlePage = !!(message as { singlePage?: boolean }).singlePage;
+
     const notifyTab = async (data: Record<string, unknown>) => {
       try {
         await chrome.tabs.sendMessage(tabId, { action: "importAllProgress", ...data });
@@ -998,9 +1000,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         await notifyTab({ status: "Checking pagination..." });
 
-        const paginationResp = await chrome.tabs
-          .sendMessage(tabId, { action: "getPaginationInfo" })
-          .catch(() => null);
+        const paginationResp = singlePage
+          ? null
+          : await chrome.tabs
+              .sendMessage(tabId, { action: "getPaginationInfo" })
+              .catch(() => null);
 
         let scraped: { jobs: unknown[]; companies: unknown[]; pagesScraped: number };
         if (paginationResp?.paginationInfo) {
