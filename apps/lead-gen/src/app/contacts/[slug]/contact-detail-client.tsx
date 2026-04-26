@@ -20,6 +20,7 @@ import { useStreamingEmail } from "@/hooks/useStreamingEmail";
 import { useStreamingReply } from "@/hooks/useStreamingReply";
 import { button } from "@/recipes/button";
 import { FollowUpEmailDialog, SCHEDULE_DELAYS } from "@/components/emails/follow-up-email-dialog";
+import { PaperAuthorEnrichmentCard } from "@/components/paper-author-enrichment-card";
 import {
   Badge,
   Box,
@@ -2338,6 +2339,24 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
             </Box>
           </Card>
         )}
+
+        {/* Paper-Author Enrichment — populated by contact_enrich_paper_author_graph
+            for every paper-tagged contact. Renders openalex / orcid / scholar /
+            github / homepage / email-candidate JSONB blobs. The card itself
+            no-ops if nothing is set. */}
+        <PaperAuthorEnrichmentCard
+          openalexProfile={contact.openalexProfile}
+          orcidProfile={contact.orcidProfile}
+          scholarProfile={contact.scholarProfile}
+          githubProfile={contact.githubProfile}
+          homepageUrl={contact.homepageUrl ?? null}
+          homepageExtract={contact.homepageExtract}
+          emailCandidates={contact.emailCandidates}
+          ghMatchStatus={contact.ghMatchStatus ?? null}
+          ghMatchScore={contact.ghMatchScore ?? null}
+          ghMatchArm={contact.ghMatchArm ?? null}
+          ghMatchEvidenceRef={contact.ghMatchEvidenceRef}
+        />
 
         {/* Bottom actions */}
         <Flex gap="2" wrap="wrap">
