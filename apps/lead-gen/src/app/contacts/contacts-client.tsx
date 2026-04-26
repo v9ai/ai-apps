@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useGetContactsQuery,
   useCreateContactMutation,
@@ -29,8 +29,6 @@ import {
   InfoCircledIcon,
   LinkedInLogoIcon,
   MagnifyingGlassIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   PlusIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
@@ -46,13 +44,12 @@ export function ContactsClient() {
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page, setPage] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleSearch = useCallback((val: string) => {
     setSearch(val);
-    setPage(0);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => setDebouncedSearch(val), 300);
   }, []);
@@ -64,21 +61,21 @@ export function ContactsClient() {
       else params.delete("tag");
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname);
-      setPage(0);
     },
     [searchParams, router, pathname],
   );
 
-  const { data, loading, refetch } = useGetContactsQuery({
+  const { data, loading, refetch, fetchMore } = useGetContactsQuery({
     variables: {
       search: debouncedSearch || undefined,
       tag: activeTag || undefined,
       limit: PAGE_SIZE,
-      offset: page * PAGE_SIZE,
+      offset: 0,
       // Admin list — show flagged rows so admins can review/unflag them.
       includeFlagged: true,
     },
     fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
   });
 
   const [createContact, { loading: creating }] = useCreateContactMutation();
@@ -86,7 +83,47 @@ export function ContactsClient() {
 
   const contactsList = data?.contacts?.contacts ?? [];
   const totalCount = data?.contacts?.totalCount ?? 0;
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const hasMore = contactsList.length < totalCount;
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const loadingMoreRef = useRef(false);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+        if (loadingMoreRef.current) return;
+        loadingMoreRef.current = true;
+        setLoadingMore(true);
+        fetchMore({
+          variables: { offset: contactsList.length },
+          updateQuery: (prev, { fetchMoreResult }) => {
+            if (!fetchMoreResult) return prev;
+            return {
+              ...prev,
+              contacts: {
+                ...fetchMoreResult.contacts,
+                contacts: [
+                  ...prev.contacts.contacts,
+                  ...fetchMoreResult.contacts.contacts,
+                ],
+              },
+            };
+          },
+        })
+          .finally(() => {
+            loadingMoreRef.current = false;
+            setLoadingMore(false);
+          });
+      },
+      { rootMargin: "400px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, contactsList.length, fetchMore]);
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
