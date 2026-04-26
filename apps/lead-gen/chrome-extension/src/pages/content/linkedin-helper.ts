@@ -1436,99 +1436,170 @@ function extractOpportunityFromDOM(): {
   description: string;
   hiringContact: { name: string; linkedinUrl: string; position: string } | null;
 } {
-  // Title
-  const titleEl =
-    document.querySelector("h1.t-24.t-bold.inline") ||
-    document.querySelector(".job-details-jobs-unified-top-card__job-title h1") ||
-    document.querySelector(".jobs-details h1");
-  const title = titleEl?.textContent?.trim() || "";
-
-  // Company
-  const companyLinkEl = document.querySelector<HTMLAnchorElement>(
-    ".job-details-jobs-unified-top-card__company-name a",
-  );
-  const companyName = companyLinkEl?.textContent?.trim() || "";
-  let companyLinkedinUrl = "";
-  if (companyLinkEl?.href) {
-    try {
-      const u = new URL(companyLinkEl.href, window.location.origin);
-      const m = u.pathname.match(/^\/company\/([^/]+)/);
-      if (m) companyLinkedinUrl = `https://www.linkedin.com/company/${m[1]}/`;
-    } catch { /* skip */ }
-  }
-
-  // Salary, remote, employment type from fit-level buttons
-  let salary = "";
-  let remoteType = "";
-  let employmentType = "";
-  const fitButtons = document.querySelectorAll(".job-details-fit-level-preferences button");
-  for (const btn of fitButtons) {
-    const text = btn.textContent?.trim() || "";
-    if (/[\$\£\€]|\/yr|\/hr|\/mo/i.test(text)) {
-      salary = text.replace(/^\s*✓\s*/, "").trim();
-    } else if (/\b(remote|hybrid|on-?\s?site)\b/i.test(text)) {
-      remoteType = text.replace(/^\s*✓\s*/, "").trim();
-    } else if (/\b(full-?\s?time|part-?\s?time|contract|temporary|internship|volunteer)\b/i.test(text)) {
-      employmentType = text.replace(/^\s*✓\s*/, "").trim();
-    }
-  }
-
-  // Location from tertiary description
-  let location = "";
-  const tertiaryDesc = document.querySelector(
-    ".job-details-jobs-unified-top-card__tertiary-description-container",
-  );
-  if (tertiaryDesc) {
-    const firstSpan = tertiaryDesc.querySelector(".tvm__text--low-emphasis");
-    if (firstSpan) location = firstSpan.textContent?.trim() || "";
-  }
-
-  // Applied status
-  let appliedStatus = "";
-  const appliedEl = document.querySelector(
-    ".artdeco-inline-feedback--success .artdeco-inline-feedback__message",
-  );
-  if (appliedEl) appliedStatus = appliedEl.textContent?.trim() || "";
-
-  // Canonical job URL
   const jobId = getJobId();
   const jobUrl = jobId
     ? `https://www.linkedin.com/jobs/view/${jobId}/`
     : window.location.href.split("?")[0];
 
-  // Job description
-  const descEl = document.querySelector("#job-details");
-  const description = descEl?.textContent?.trim() || "";
+  // ── Company: aria-label sits on a <div> inside the company <a> ──
+  const companyDiv = document.querySelector('[aria-label^="Company, "]');
+  const outerA =
+    (companyDiv?.closest("a") as HTMLAnchorElement | null) ??
+    (document.querySelector(
+      'a[href*="/company/"][href*="/life/"]',
+    ) as HTMLAnchorElement | null);
+  let companyName = "";
+  let companyLinkedinUrl = "";
+  const aria = companyDiv?.getAttribute("aria-label") ?? "";
+  const ariaName = aria.replace(/^Company,\s*/, "").replace(/\.$/, "").trim();
+  if (ariaName) companyName = ariaName;
+  if (!companyName && outerA) {
+    const inner =
+      outerA.querySelector("a")?.textContent?.trim() ??
+      outerA.textContent?.trim() ??
+      "";
+    if (inner && inner.length < 120) companyName = inner;
+  }
+  if (outerA?.href) {
+    try {
+      const u = new URL(outerA.href, window.location.origin);
+      const m = u.pathname.match(/^\/company\/([^/]+)/);
+      if (m) companyLinkedinUrl = `https://www.linkedin.com/company/${m[1]}/`;
+    } catch { /* skip */ }
+  }
 
-  // Hiring team contact — use .hirer-card__hirer-information directly because
-  // .job-details-people-who-can-help__section--two-pane matches both the
-  // connections card AND the hiring team card; querySelector returns the wrong one.
-  let hiringContact: { name: string; linkedinUrl: string; position: string } | null = null;
-  const hirerCard = document.querySelector(".hirer-card__hirer-information");
-  if (hirerCard) {
-    const nameEl = hirerCard.querySelector(".jobs-poster__name strong");
-    const contactName = nameEl?.textContent?.trim() || "";
-    if (contactName) {
-      let contactLinkedinUrl = "";
-      const profileLink = hirerCard.querySelector<HTMLAnchorElement>(
-        'a[href*="/in/"]',
-      );
-      if (profileLink?.href) {
-        try {
-          const u = new URL(profileLink.href, window.location.origin);
-          const m = u.pathname.match(/^\/in\/([^/]+)/);
-          if (m) contactLinkedinUrl = `https://www.linkedin.com/in/${m[1]}/`;
-        } catch { /* skip */ }
+  // ── Title: DOM walk near the company anchor → document.title → stub ──
+  let title = "";
+  if (outerA) {
+    const container = outerA.parentElement;
+    let cursor: Element | null = container;
+    for (let hops = 0; hops < 6 && cursor && !title; hops++) {
+      const ps = cursor.querySelectorAll("p");
+      for (const p of Array.from(ps)) {
+        const txt = p.textContent?.trim() ?? "";
+        if (txt.length < 5 || txt.length > 300) continue;
+        if (txt.includes(" · ")) continue;
+        if (/^application status$/i.test(txt)) continue;
+        if (/^about the (job|company)$/i.test(txt)) continue;
+        if (outerA.contains(p)) continue;
+        title = txt;
+        break;
       }
-
-      const positionEl = hirerCard.querySelector(
-        ".text-body-small.t-black",
-      );
-      const position = positionEl?.textContent?.trim() || "";
-
-      hiringContact = { name: contactName, linkedinUrl: contactLinkedinUrl, position };
+      cursor = cursor.nextElementSibling ?? cursor.parentElement;
     }
   }
+  if (!title && document.title) {
+    let t = document.title
+      .replace(/^\(\d+\+?\)\s*/, "")
+      .replace(/\s*\|\s*LinkedIn\s*$/i, "")
+      .trim();
+    if (companyName && t.endsWith(` - ${companyName}`)) {
+      t = t.slice(0, -(` - ${companyName}`).length).trim();
+    }
+    title = t;
+  }
+  if (!title && jobId) title = `LinkedIn job ${jobId}`;
+
+  // ── Description: stable componentkey + testid ──
+  const aboutJobNode = document.querySelector(
+    '[componentkey^="JobDetails_AboutTheJob_"]',
+  );
+  const descNode = aboutJobNode?.querySelector(
+    '[data-testid="expandable-text-box"]',
+  ) as HTMLElement | null;
+  const description = descNode?.innerText?.trim() || "";
+
+  // ── Location: first <p> with a " · " separator near the top ──
+  let location = "";
+  const allP = document.querySelectorAll("p");
+  for (const p of Array.from(allP)) {
+    const txt = p.textContent?.trim() ?? "";
+    if (txt.length > 0 && txt.length < 200 && txt.split(/\s·\s/).length >= 2) {
+      const first = txt.split(/\s·\s/)[0]?.trim();
+      if (first && !/^promoted by hirer/i.test(first)) {
+        location = first;
+        break;
+      }
+    }
+  }
+
+  // ── Tag chips (Remote / Hybrid / Full-time / etc.) — find <a>s whose
+  // href matches the current job and whose text is one of the known chip values.
+  let remoteType = "";
+  let employmentType = "";
+  const chipAnchors = jobId
+    ? document.querySelectorAll(`a[href*="/jobs/view/${jobId}"]`)
+    : document.querySelectorAll('a[href*="/jobs/view/"]');
+  for (const a of Array.from(chipAnchors)) {
+    const txt = a.textContent?.trim() ?? "";
+    if (!txt || txt.length > 40) continue;
+    if (!remoteType && /^(remote|hybrid|on[-\s]?site)$/i.test(txt)) remoteType = txt;
+    else if (
+      !employmentType &&
+      /^(full[-\s]?time|part[-\s]?time|contract|temporary|internship|volunteer)$/i.test(txt)
+    )
+      employmentType = txt;
+    if (remoteType && employmentType) break;
+  }
+
+  // ── Salary: scan description for a currency range ──
+  let salary = "";
+  if (description) {
+    const m = description.match(
+      /[£€$]\s?\d{1,3}(?:[,\d]{3})*(?:\.\d+)?(?:\s?[kKmM])?\s*[-–—to]+\s*[£€$]?\s?\d{1,3}(?:[,\d]{3})*(?:\.\d+)?(?:\s?[kKmM])?/,
+    );
+    if (m) salary = m[0].trim();
+  }
+
+  // ── Applied status: look for a <p> that says "Application submitted" ──
+  let appliedStatus = "";
+  for (const p of Array.from(allP)) {
+    const txt = p.textContent?.trim() ?? "";
+    if (/^application (submitted|sent|received)$/i.test(txt)) {
+      appliedStatus = txt;
+      break;
+    }
+  }
+
+  // ── Hiring contact: look inside the PeopleWhoCanHelp SDUI section ──
+  let hiringContact: { name: string; linkedinUrl: string; position: string } | null = null;
+  const peopleSection =
+    document.querySelector(
+      '[componentkey^="JobDetailsPeopleWhoCanHelpSlot_"]',
+    ) ??
+    document.querySelector(
+      '[data-sdui-component*="peopleWhoCanHelp"]',
+    );
+  if (peopleSection) {
+    const profileLink = peopleSection.querySelector<HTMLAnchorElement>(
+      'a[href*="/in/"]',
+    );
+    if (profileLink?.href) {
+      let contactLinkedinUrl = "";
+      try {
+        const u = new URL(profileLink.href, window.location.origin);
+        const m = u.pathname.match(/^\/in\/([^/]+)/);
+        if (m) contactLinkedinUrl = `https://www.linkedin.com/in/${m[1]}/`;
+      } catch { /* skip */ }
+      const aria = profileLink.getAttribute("aria-label")?.trim() || "";
+      const text = profileLink.textContent?.trim() || "";
+      const contactName = (aria || text).split("\n")[0].trim();
+      if (contactName) {
+        hiringContact = { name: contactName, linkedinUrl: contactLinkedinUrl, position: "" };
+      }
+    }
+  }
+
+  console.debug("[lg-import-opp]", {
+    url: window.location.href,
+    jobId,
+    title,
+    companyName,
+    location,
+    remoteType,
+    employmentType,
+    hasDesc: !!description,
+  });
 
   return {
     title,
