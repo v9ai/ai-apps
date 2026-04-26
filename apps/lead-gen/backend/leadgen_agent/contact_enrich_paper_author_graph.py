@@ -2694,8 +2694,16 @@ async def enrich_orcid_profile(state: ContactEnrichPaperAuthorState) -> dict:
     for u in urls_raw:
         if not isinstance(u, dict):
             continue
-        url_val = (u.get("url") or {}).get("value") or ""
-        url_name = (u.get("url-name") or {}).get("value") or ""
+        # ORCID returns these as either {"value": "..."} or sometimes a bare
+        # string depending on the record's vintage. Guard both fields.
+        url_obj = u.get("url")
+        url_val = url_obj.get("value") if isinstance(url_obj, dict) else ""
+        url_name_obj = u.get("url-name")
+        url_name = (
+            url_name_obj.get("value") if isinstance(url_name_obj, dict) else ""
+        )
+        url_val = url_val or ""
+        url_name = url_name or ""
         if url_val:
             researcher_urls.append({
                 "kind": _classify_url_kind(url_val),
