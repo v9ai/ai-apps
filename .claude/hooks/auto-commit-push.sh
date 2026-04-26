@@ -86,8 +86,8 @@ fi
 if [ -n "$LAST_MSG" ]; then
     # First non-empty line as candidate subject
     RAW_SUBJECT=$(printf '%s\n' "$LAST_MSG" | awk 'NF { print; exit }')
-    # Strip basic markdown (backticks, **bold**, *italic*)
-    RAW_SUBJECT=$(printf '%s' "$RAW_SUBJECT" | sed -E 's/`([^`]+)`/\1/g; s/\*\*([^*]+)\*\*/\1/g; s/\*([^*]+)\*/\1/g')
+    # Strip basic markdown (heading prefix, backticks, **bold**, *italic*)
+    RAW_SUBJECT=$(printf '%s' "$RAW_SUBJECT" | sed -E 's/^#+[[:space:]]*//; s/`([^`]+)`/\1/g; s/\*\*([^*]+)\*\*/\1/g; s/\*([^*]+)\*/\1/g')
     # Take first sentence — text up to the first .!? followed by space (or end)
     SUBJECT=$(printf '%s' "$RAW_SUBJECT" | sed -E 's/^([^.!?]*[.!?])[[:space:]].*$/\1/')
     # Strip trailing whitespace, colons, dashes, em/en-dashes

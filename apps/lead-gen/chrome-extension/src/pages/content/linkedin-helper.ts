@@ -2067,10 +2067,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Extract jobs + companies from current page
         const currentJobs = extractLinkedInJobData();
+        const currentCompanies = extractCompaniesFromJobCards();
         allJobs.push(...currentJobs);
-        extractCompaniesFromJobCards().forEach((c) => {
+        currentCompanies.forEach((c) => {
           const key = c.linkedin_url || c.name.toLowerCase();
           if (!companyMap.has(key)) companyMap.set(key, c);
+        });
+
+        // Flush this page to the background as soon as it's scraped — the
+        // background POSTs to D1 right away so partial progress survives if
+        // the user closes the tab or LinkedIn rate-limits mid-scrape.
+        safeSendMessage({
+          action: "savePageBatch",
+          pageNumber: startPage,
+          totalPages,
+          jobs: currentJobs,
+          companies: currentCompanies,
         });
 
         // Send progress update
@@ -2094,13 +2106,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           // Extract jobs + companies from new page
           const pageJobs = extractLinkedInJobData();
+          const pageCompanies = extractCompaniesFromJobCards();
           allJobs.push(...pageJobs);
-          extractCompaniesFromJobCards().forEach((c) => {
+          pageCompanies.forEach((c) => {
             const key = c.linkedin_url || c.name.toLowerCase();
             if (!companyMap.has(key)) companyMap.set(key, c);
           });
 
           actualPagesScraped++;
+
+          // Flush this page to background.
+          safeSendMessage({
+            action: "savePageBatch",
+            pageNumber: page,
+            totalPages,
+            jobs: pageJobs,
+            companies: pageCompanies,
+          });
 
           // Send progress update
           safeSendMessage({
