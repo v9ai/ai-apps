@@ -33,12 +33,15 @@ fi
 # Refuse to commit if any tracked file has unresolved conflict markers.
 git diff --check > /dev/null 2>&1 || exit 0
 
-git add -A -- . ':!.env*' ':!*.local'
+git add -A -- . ':!.env*' ':!*.local' 2>/dev/null || true
+
+# Nothing actually staged? (e.g. only dirty submodule content, no gitlink move) — bail.
+git diff --cached --quiet && exit 0
 
 # Detect scope from changed files (e.g. apps/knowledge -> knowledge)
 FILES=$(git diff --cached --name-only)
-SCOPE=$(echo "$FILES" | sed -n 's|^apps/\([^/]*\)/.*|\1|p' | sort -u)
-N_SCOPE=$(echo "$SCOPE" | grep -c . 2>/dev/null || echo 0)
+SCOPE=$(printf '%s\n' "$FILES" | sed -n 's|^apps/\([^/]*\)/.*|\1|p' | sort -u)
+N_SCOPE=$(printf '%s' "$SCOPE" | grep -c .)
 
 if [ "$N_SCOPE" -eq 1 ] && [ -n "$SCOPE" ]; then
     TAG="($SCOPE)"
