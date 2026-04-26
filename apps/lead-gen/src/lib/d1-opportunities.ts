@@ -14,11 +14,13 @@ export type D1OpportunityRow = {
   company_key: string | null;
 };
 
+const DEFAULT_EDGE_WORKER_URL = "https://agenticleadgen-edge.eeeew.workers.dev";
+
 export async function fetchD1Opportunities(): Promise<D1OpportunityRow[]> {
-  const base = process.env.EDGE_WORKER_URL;
+  const base = process.env.EDGE_WORKER_URL ?? DEFAULT_EDGE_WORKER_URL;
   const token = process.env.JOBS_D1_TOKEN;
-  if (!base || !token) {
-    console.warn("[d1-opportunities] EDGE_WORKER_URL or JOBS_D1_TOKEN missing — skipping D1 fetch");
+  if (!token) {
+    console.warn("[d1-opportunities] JOBS_D1_TOKEN missing — skipping D1 fetch");
     return [];
   }
 
