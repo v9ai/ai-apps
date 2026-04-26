@@ -96,11 +96,13 @@ async function callBatch(
     assistant_id: "contact_enrich_paper_authors_batch",
     input,
   });
-  // Server-side wall-clock budget is BUDGET_S; client adds 240s headroom for
-  // queue wait (langgraph dev's single-worker queue routinely sits at 100s+
-  // when other graphs are running) plus synth/persist + HTTP framing on the
-  // way back. Empirically a successful 480s run completes in ~590s wall time.
-  const timeoutMs = (BUDGET_S + 240) * 1000;
+  // Server-side wall-clock budget is BUDGET_S; client adds 1800s (30 min)
+  // headroom because the langgraph dev single-worker queue can serialize
+  // 3-5 orphan runs from prior aborted scripts ahead of us. The server
+  // doesn't notice client disconnects, so each orphan still runs to
+  // completion (~8 min each). 30 min absorbs that worst case while still
+  // catching genuinely stuck servers within ~half an hour.
+  const timeoutMs = (BUDGET_S + 1800) * 1000;
 
   const t0 = Date.now();
   const res = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
