@@ -29,7 +29,7 @@ from leadgen_agent.contact_enrich_paper_author_graph import (
 
 def _run(coro):
     """Sync runner — keeps tests readable without pytest-asyncio."""
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 # --------------------------------------------------------------------------- #

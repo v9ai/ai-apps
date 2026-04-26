@@ -12,7 +12,7 @@ import pytest
 
 from leadgen_agent.buyer_fit_classifier import classify_buyer_fit
 from leadgen_agent.contact_enrich_paper_author_graph import (
-    _build_github_profile,
+    _build_github_profile_v2,
     _canonical_linkedin_url,
     _classify_url_kind,
     _extract_emails_from_pdf_text,
@@ -245,51 +245,80 @@ def test_pdf_email_extract_at_dot_obfuscation() -> None:
     assert "jane@cs.cmu.edu" in emails
 
 
-def test_build_github_profile_aggregates() -> None:
+def test_build_github_profile_v2_aggregates() -> None:
+    """v2 builder consumes a hydrated GraphQL User node (different shape)."""
     user = {
         "login": "alice",
-        "id": 12345,
-        "html_url": "https://github.com/alice",
+        "databaseId": 12345,
+        "url": "https://github.com/alice",
         "name": "Alice Researcher",
         "bio": "ML engineer",
         "company": "@anthropic",
         "location": "SF",
-        "blog": "alice.dev",
-        "public_repos": 30,
-        "followers": 500,
-        "created_at": "2015-01-01T00:00:00Z",
-        "updated_at": "2026-04-01T00:00:00Z",
-        "hireable": True,
+        "websiteUrl": "alice.dev",
+        "twitterUsername": None,
+        "email": None,
+        "isHireable": True,
+        "createdAt": "2015-01-01T00:00:00Z",
+        "updatedAt": "2026-04-01T00:00:00Z",
+        "socialAccounts": {"nodes": []},
+        "organizations": {"nodes": [{"login": "anthropic", "name": "Anthropic"}]},
+        "followers": {"totalCount": 500},
+        "following": {"totalCount": 60},
+        "publicRepositories": {"totalCount": 30},
+        "publicGists": {"totalCount": 0},
+        "contributionsCollection": {
+            "totalCommitContributions": 0, "totalPullRequestContributions": 0,
+            "totalIssueContributions": 0, "totalRepositoriesWithContributedCommits": 0,
+            "contributionCalendar": {"totalContributions": 0},
+        },
+        "pinnedItems": {"nodes": []},
+        "repositoriesContributedTo": {"nodes": []},
+        "repositories": {
+            "totalCount": 2,
+            "nodes": [
+                {
+                    "name": "agents-llm", "nameWithOwner": "alice/agents-llm",
+                    "url": "https://github.com/alice/agents-llm",
+                    "description": "", "stargazerCount": 1000, "forkCount": 0,
+                    "pushedAt": "2026-04-20T12:00:00Z",
+                    "primaryLanguage": {"name": "Python"},
+                    "languages": {"edges": [{"size": 50000, "node": {"name": "Python"}}]},
+                    "repositoryTopics": {"nodes": [
+                        {"topic": {"name": "llm"}}, {"topic": {"name": "agents"}},
+                    ]},
+                },
+                {
+                    "name": "rag-eval", "nameWithOwner": "alice/rag-eval",
+                    "url": "https://github.com/alice/rag-eval",
+                    "description": "", "stargazerCount": 200, "forkCount": 0,
+                    "pushedAt": "2026-03-01T00:00:00Z",
+                    "primaryLanguage": {"name": "Python"},
+                    "languages": {"edges": [
+                        {"size": 8000, "node": {"name": "Jupyter Notebook"}},
+                    ]},
+                    "repositoryTopics": {"nodes": [
+                        {"topic": {"name": "rag"}}, {"topic": {"name": "evaluation"}},
+                    ]},
+                },
+            ],
+        },
+        "sponsorshipsAsMaintainer": {"totalCount": 0},
+        "sponsorsListing": None,
     }
-    repos = [
-        {
-            "name": "agents-llm",
-            "full_name": "alice/agents-llm",
-            "stargazers_count": 1000,
-            "language": "Python",
-            "topics": ["llm", "agents"],
-            "pushed_at": "2026-04-20T12:00:00Z",
-            "fork": False,
-        },
-        {
-            "name": "rag-eval",
-            "full_name": "alice/rag-eval",
-            "stargazers_count": 200,
-            "language": "Python",
-            "topics": ["rag", "evaluation"],
-            "pushed_at": "2026-03-01T00:00:00Z",
-            "fork": False,
-        },
-    ]
-    lang_bytes = {"Python": 50000, "Jupyter Notebook": 8000}
-    p = _build_github_profile(user, repos, lang_bytes)
+    p = _build_github_profile_v2(user, {"cost": 7})
     assert p["login"] == "alice"
     assert p["company_org"] == "anthropic"
     assert p["last_push_at"] == "2026-04-20T12:00:00Z"
     assert p["status"] == "ok"
+    assert p["schema_version"] == 2
     # ai_topic_hits should pick up llm + rag + agents.
     assert "llm" in p["ai_topic_hits"]
     assert "rag" in p["ai_topic_hits"]
     assert "agents" in p["ai_topic_hits"]
-    assert p["pinned_repos"][0]["name"] == "agents-llm"  # sorted by stars
+    # No actual pinnedItems → falls back to top stars.
+    assert p["pinned_source"] == "stars_fallback"
+    assert p["pinned_repos"][0]["name"] == "agents-llm"
     assert p["top_languages"][0]["name"] == "Python"
+    # Bug fix: org_logins now populated.
+    assert p["org_logins"] == ["anthropic"]
