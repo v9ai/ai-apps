@@ -8,6 +8,7 @@ import {
   startImuStream,
   type ImuFrame,
   type ImuStreamHandle,
+  type BatteryReading,
   IMU_QUEST_SCRIPT,
   SIDE,
 } from "@/lib/imu-stream";
@@ -47,6 +48,7 @@ export default function GamePage() {
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const [hudFrame, setHudFrame] = useState<ImuFrame | null>(null);
+  const [battery, setBattery] = useState<BatteryReading | null>(null);
 
   // --- Hub lifecycle -----------------------------------------------------
   useEffect(() => {
@@ -85,6 +87,9 @@ export default function GamePage() {
       },
       onOrientation: (m) => {
         orientationRef.current = m;
+      },
+      onBattery: (b) => {
+        setBattery(b);
       },
     });
     streamRef.current = stream;
@@ -240,7 +245,7 @@ export default function GamePage() {
         <Overlay status={gameStatus} score={score} bestScore={bestScore} onPlay={handlePlay} canPlay={hubStatus === "connected" || hubStatus === "running"} />
       </div>
 
-      <Hud frame={hudFrame} score={score} bestScore={bestScore} />
+      <Hud frame={hudFrame} battery={battery} score={score} bestScore={bestScore} />
     </main>
   );
 }
@@ -594,17 +599,97 @@ function Overlay({
   );
 }
 
-function Hud({ frame, score, bestScore }: { frame: ImuFrame | null; score: number; bestScore: number }) {
+function Hud({
+  frame,
+  battery,
+  score,
+  bestScore,
+}: {
+  frame: ImuFrame | null;
+  battery: BatteryReading | null;
+  score: number;
+  bestScore: number;
+}) {
   return (
-    <div className={css({ mt: "4", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "3" })}>
+    <div className={css({ mt: "4", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "3" })}>
       <Stat label="Score" value={String(score)} />
       <Stat label="Best" value={String(bestScore)} />
+      <Battery reading={battery} />
       <Stat label="Pitch" value={fmt(frame?.pitch)} unit="°" />
       <Stat label="Roll" value={fmt(frame?.roll)} unit="°" />
       <Stat label="Heading" value={fmt(frame?.heading)} unit="°" />
       <Stat label="Spin Z" value={fmt(frame?.avZ)} unit="°/s" />
       <Stat label="Accel" value={fmt(frame?.accelMag, 0)} unit="mm/s²" />
       <Stat label="Up face" value={frame ? sideName(frame.up) : "—"} />
+    </div>
+  );
+}
+
+const BATTERY_EMPTY_MV = 6500;
+const BATTERY_FULL_MV = 8200;
+
+function Battery({ reading }: { reading: BatteryReading | null }) {
+  const pct = reading
+    ? Math.max(0, Math.min(1, (reading.voltageMv - BATTERY_EMPTY_MV) / (BATTERY_FULL_MV - BATTERY_EMPTY_MV)))
+    : 0;
+  const pctInt = Math.round(pct * 100);
+  const fillColor =
+    !reading ? "rgba(255,255,255,0.15)" :
+    pct >= 0.5 ? "#22c55e" :
+    pct >= 0.2 ? "#f59e0b" :
+    "#ef4444";
+
+  const showCurrent = reading && Math.abs(reading.currentMa) >= 5;
+  const charging = reading ? reading.currentMa > 0 : false;
+
+  return (
+    <div className={css({ p: "2.5", rounded: "brick", border: "1px solid", borderColor: "plate.border", bg: "plate.surface" })}>
+      <div className={css({ fontSize: "10px", fontFamily: "display", fontWeight: "800", letterSpacing: "0.08em", textTransform: "uppercase", color: "ink.faint" })}>
+        Battery
+      </div>
+
+      <div className={css({ mt: "1.5", display: "flex", alignItems: "center", gap: "2" })}>
+        {/* Battery body */}
+        <div
+          className={css({
+            position: "relative",
+            flex: 1,
+            h: "4",
+            rounded: "sm",
+            border: "1px solid",
+            borderColor: "rgba(255,255,255,0.25)",
+            bg: "rgba(255,255,255,0.05)",
+            overflow: "hidden",
+          })}
+        >
+          <div
+            className={css({ position: "absolute", top: 0, left: 0, bottom: 0, transition: "width 0.4s ease, background 0.4s ease" })}
+            style={{ width: `${pctInt}%`, background: fillColor }}
+          />
+        </div>
+        {/* Battery cap */}
+        <div
+          aria-hidden="true"
+          className={css({ w: "1", h: "2", rounded: "sm", bg: "rgba(255,255,255,0.25)" })}
+        />
+      </div>
+
+      <div className={css({ mt: "1", display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "2" })}>
+        <span className={css({ fontFamily: "ui-monospace, monospace", fontSize: "sm", color: "ink.primary" })}>
+          {reading ? `${(reading.voltageMv / 1000).toFixed(2)} V` : "—"}
+          <span className={css({ ml: "1.5", color: "ink.muted", fontSize: "xs" })}>
+            {reading ? `${pctInt}%` : ""}
+          </span>
+        </span>
+        {showCurrent && reading && (
+          <span
+            className={css({ fontFamily: "ui-monospace, monospace", fontSize: "10px" })}
+            style={{ color: charging ? "#22c55e" : "rgba(255,255,255,0.55)" }}
+          >
+            {charging ? "+" : ""}{Math.round(reading.currentMa)} mA
+          </span>
+        )}
+      </div>
     </div>
   );
 }

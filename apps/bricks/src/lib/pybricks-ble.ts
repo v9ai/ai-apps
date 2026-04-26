@@ -49,7 +49,7 @@ export function createHub(): PybricksHub {
 
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 20000);
+        const timeout = setTimeout(() => controller.abort(), 45000);
 
         const res = await fetch(`${DEPLOY_SERVER}/connect`, {
           method: "POST",
@@ -76,7 +76,9 @@ export function createHub(): PybricksHub {
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") {
           setError(
-            "Connection timed out.\nMake sure the hub is on and showing a flashing blue light."
+            "Connection timed out.\n" +
+              "Make sure the hub is on and the light is flashing blue.\n" +
+              "If the script crashed earlier, hold the hub button until it powers off, then press it again to wake it.",
           );
         } else {
           setError(SERVER_DOWN_MSG);

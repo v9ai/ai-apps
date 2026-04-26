@@ -23,9 +23,15 @@ export interface ImuFrame {
   accelMag: number;
 }
 
+export interface BatteryReading {
+  voltageMv: number;
+  currentMa: number;
+}
+
 export interface ParserCallbacks {
   onFrame: (f: ImuFrame) => void;
   onOrientation?: (m: number[]) => void;
+  onBattery?: (b: BatteryReading) => void;
   onReady?: () => void;
 }
 
@@ -70,6 +76,17 @@ export function createTelemetryParser(cb: ParserCallbacks): TelemetryParser {
         .slice(1)
         .map((s) => parseFloat(s));
       if (nums.length === 9) cb.onOrientation(nums);
+      return;
+    }
+    if (line.startsWith("B ") && cb.onBattery) {
+      const p = line.split(/\s+/);
+      if (p.length >= 3) {
+        const v = parseFloat(p[1]);
+        const i = parseFloat(p[2]);
+        if (!Number.isNaN(v) && !Number.isNaN(i)) {
+          cb.onBattery({ voltageMv: v, currentMa: i });
+        }
+      }
     }
   }
 
@@ -112,6 +129,7 @@ export function startImuStream(cb: HttpStreamCallbacks): ImuStreamHandle {
   const parser = createTelemetryParser({
     onFrame: cb.onFrame,
     onOrientation: cb.onOrientation,
+    onBattery: cb.onBattery,
     onReady: () => {
       cb.onStatus?.("ready");
       cb.onReady?.();
@@ -213,6 +231,7 @@ while True:
             m[1, 0], m[1, 1], m[1, 2],
             m[2, 0], m[2, 1], m[2, 2],
         )
+        print("B", hub.battery.voltage(), hub.battery.current())
 
     if still:
         hub.light.on(Color.GREEN)

@@ -65,6 +65,7 @@ while True:
             m[1, 0], m[1, 1], m[1, 2],
             m[2, 0], m[2, 1], m[2, 2],
         )
+        print("B", hub.battery.voltage(), hub.battery.current())
 
     # Status light gives quick visual feedback to the player.
     if still:

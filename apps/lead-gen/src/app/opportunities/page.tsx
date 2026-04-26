@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { opportunities, companies, contacts } from "@/db/schema";
+import { opportunities, companies, contacts, blockedLocations } from "@/db/schema";
 import { eq, desc, or, isNull } from "drizzle-orm";
 import { fetchD1Opportunities } from "@/lib/d1-opportunities";
 import { OpportunitiesClient } from "./opportunities-client";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function OpportunitiesPage() {
-  const [rows, d1Pending, blockedKeys] = await Promise.all([
+  const [rows, d1Pending, blockedKeys, blockedLocs] = await Promise.all([
     db
       .select({
         id: opportunities.id,
@@ -39,12 +39,19 @@ export default async function OpportunitiesPage() {
       .orderBy(desc(opportunities.created_at)),
     fetchD1Opportunities(),
     db.select({ key: companies.key }).from(companies).where(eq(companies.blocked, true)),
+    db.select({ pattern: blockedLocations.pattern, label: blockedLocations.label }).from(blockedLocations),
   ]);
 
   const blockedKeySet = new Set(blockedKeys.map((r) => r.key));
-  const d1Visible = d1Pending.filter(
-    (d) => !d.company_key || !blockedKeySet.has(d.company_key),
-  );
+  const blockedPatterns = blockedLocs.map((r) => r.pattern);
+  const d1Visible = d1Pending.filter((d) => {
+    if (d.company_key && blockedKeySet.has(d.company_key)) return false;
+    if (d.location) {
+      const loc = d.location.toLowerCase();
+      if (blockedPatterns.some((p) => loc.includes(p))) return false;
+    }
+    return true;
+  });
 
   return <OpportunitiesClient opportunities={rows} d1Pending={d1Visible} />;
 }

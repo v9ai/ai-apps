@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExternalLinkIcon, EyeNoneIcon } from "@radix-ui/react-icons";
 import { EvalStatsPanel } from "./eval-stats-panel";
-import { blockOpportunityCompany, blockD1OpportunityCompany } from "./actions";
+import { blockOpportunityCompany, blockD1OpportunityCompany, blockLocation } from "./actions";
 import type { D1OpportunityRow } from "@/lib/d1-opportunities";
 
 type OpportunityRow = {
@@ -95,6 +95,27 @@ export function OpportunitiesClient({
         return;
       }
       hideCompanyRows(id, res.companyKey);
+      router.refresh();
+    });
+  }
+
+  function handleBlockLocation(label: string | null) {
+    if (!label) return;
+    const pattern = label.trim().toLowerCase();
+    if (!pattern) return;
+    setHidden((prev) => {
+      const next = new Set(prev);
+      for (const d of d1Pending) {
+        if (d.location && d.location.toLowerCase().includes(pattern)) next.add(d.id);
+      }
+      return next;
+    });
+    startTransition(async () => {
+      const res = await blockLocation(label);
+      if ("error" in res) {
+        console.error("[block location]", res.error);
+        return;
+      }
       router.refresh();
     });
   }
@@ -286,15 +307,28 @@ export function OpportunitiesClient({
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Button
-                      size="1"
-                      variant="ghost"
-                      color="gray"
-                      onClick={() => handleArchiveD1(opp.id, opp.company_key, opp.company_name)}
-                      title="Block company (hide all jobs from this company)"
-                    >
-                      <EyeNoneIcon width={12} height={12} /> Block
-                    </Button>
+                    <Flex gap="2" align="center">
+                      <Button
+                        size="1"
+                        variant="ghost"
+                        color="gray"
+                        onClick={() => handleArchiveD1(opp.id, opp.company_key, opp.company_name)}
+                        title="Block company (hide all jobs from this company)"
+                      >
+                        <EyeNoneIcon width={12} height={12} /> Block
+                      </Button>
+                      {opp.location && (
+                        <Button
+                          size="1"
+                          variant="ghost"
+                          color="gray"
+                          onClick={() => handleBlockLocation(opp.location)}
+                          title={`Block location "${opp.location}" (substring match, hides any row containing this)`}
+                        >
+                          <EyeNoneIcon width={12} height={12} /> Loc
+                        </Button>
+                      )}
+                    </Flex>
                   </Table.Cell>
                 </Table.Row>
               ))}

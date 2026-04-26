@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { checkIsAdmin } from "@/lib/admin";
 import { db } from "@/db";
-import { opportunities, companies } from "@/db/schema";
+import { opportunities, companies, blockedLocations } from "@/db/schema";
 
 export async function deleteOpportunity(id: string) {
   const { isAdmin } = await checkIsAdmin();
@@ -123,4 +123,22 @@ export async function blockD1OpportunityCompany(
 
   revalidatePath("/opportunities");
   return { ok: true, companyKey: null };
+}
+
+type BlockLocResult = { ok: true; pattern: string } | { error: string };
+
+export async function blockLocation(label: string): Promise<BlockLocResult> {
+  const { isAdmin } = await checkIsAdmin();
+  if (!isAdmin) return { error: "Forbidden" };
+
+  const pattern = label.trim().toLowerCase();
+  if (!pattern) return { error: "Empty location" };
+
+  await db
+    .insert(blockedLocations)
+    .values({ pattern, label: label.trim() })
+    .onConflictDoNothing();
+
+  revalidatePath("/opportunities");
+  return { ok: true, pattern };
 }

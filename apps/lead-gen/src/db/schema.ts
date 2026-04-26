@@ -456,6 +456,19 @@ export const opportunities = pgTable(
 export type Opportunity = typeof opportunities.$inferSelect;
 export type NewOpportunity = typeof opportunities.$inferInsert;
 
+// Block-list of opportunity locations. `pattern` is the lowercased substring;
+// any opportunity whose lowercased location string contains a pattern is hidden.
+export const blockedLocations = pgTable(
+  "blocked_locations",
+  {
+    id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
+    pattern: text("pattern").notNull(),
+    label: text("label"),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+
 // Intent Signals (company-level buying/hiring signals detected by finetuned Qwen)
 export const intentSignals = pgTable(
   "intent_signals",
