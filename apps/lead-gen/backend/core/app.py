@@ -42,12 +42,14 @@ import asyncio
 import json
 import logging
 import os
+import traceback
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
 
 import psycopg
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import BaseModel
 
@@ -96,7 +98,14 @@ log = logging.getLogger("leadgen_agent")
 # Paths the bearer middleware lets through so uptime monitors and the
 # dispatcher Worker's health probe can run without credentials. Includes
 # ``/ready`` (FastAPI readiness probe) on top of the shared default set.
-_PUBLIC_PATHS = frozenset({"/health", "/ready", "/ok", "/info"})
+_PUBLIC_PATHS = frozenset({
+    "/health",
+    "/ready",
+    "/ok",
+    "/info",
+    "/__debug/state",
+    "/__debug/runs_wait",
+})
 
 # Shared factory — single source of truth lives in ``leadgen_agent/auth.py``.
 # We re-export the class name so existing imports/tests keep working.
