@@ -4,6 +4,9 @@ import { eq, desc } from "drizzle-orm";
 import { fetchD1Opportunities } from "@/lib/d1-opportunities";
 import { OpportunitiesClient } from "./opportunities-client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function OpportunitiesPage() {
   const [rows, d1Pending] = await Promise.all([
     db
