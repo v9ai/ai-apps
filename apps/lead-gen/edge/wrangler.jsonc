@@ -15,8 +15,7 @@
     {
       "binding": "DB",
       "database_name": "lead-gen-jobs",
-      // Replace with the real id after `wrangler d1 create lead-gen-jobs`.
-      "database_id": "REPLACE_WITH_D1_ID",
+      "database_id": "9531f206-acb4-4024-8d7c-d88e7b73bceb",
       "migrations_dir": "migrations"
     }
   ],

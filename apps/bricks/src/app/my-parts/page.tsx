@@ -732,72 +732,79 @@ export default function MyPartsPage() {
                   boxShadow: "plate",
                   px: "3",
                   py: "2.5",
+                  transition: "all 0.15s ease",
+                  _hover: { borderColor: "lego.orange", transform: "translateY(-1px)" },
                 })}
               >
-                {opt ? (
-                  <a
-                    href={opt.docs}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`${hubDisplayName(hub.hubType as HubType)} — Pybricks docs`}
-                    className={css({
-                      flexShrink: 0,
-                      display: "inline-flex",
-                      transition: "transform 0.15s ease",
-                      _hover: { transform: "translateY(-1px) scale(1.05)" },
-                    })}
-                  >
+                <Link
+                  href={`/hubs/${hub.id}`}
+                  className={css({
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "3",
+                    flex: 1,
+                    minW: 0,
+                    textDecoration: "none",
+                    color: "inherit",
+                  })}
+                >
+                  {opt ? (
                     <img
                       src={opt.img}
                       alt={hub.hubType}
-                      className={css({ w: "10", h: "10", objectFit: "contain" })}
+                      className={css({
+                        w: "10",
+                        h: "10",
+                        objectFit: "contain",
+                        flexShrink: 0,
+                      })}
                     />
-                  </a>
-                ) : (
-                  <div
-                    className={css({
-                      w: "10",
-                      h: "10",
-                      rounded: "stud",
-                      bg: "lego.blue",
-                      boxShadow: "stud",
-                      flexShrink: 0,
-                    })}
-                  />
-                )}
-                <div className={css({ flex: 1, minW: 0 })}>
-                  <span
-                    className={css({
-                      fontSize: "sm",
-                      fontWeight: "700",
-                      fontFamily: "display",
-                      color: "ink.primary",
-                      display: "block",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    })}
-                  >
-                    {hub.name}
-                  </span>
-                  <span className={css({ fontSize: "xs", color: "ink.muted" })}>
+                  ) : (
+                    <div
+                      className={css({
+                        w: "10",
+                        h: "10",
+                        rounded: "stud",
+                        bg: "lego.blue",
+                        boxShadow: "stud",
+                        flexShrink: 0,
+                      })}
+                    />
+                  )}
+                  <div className={css({ flex: 1, minW: 0 })}>
                     <span
                       className={css({
-                        display: "inline-block",
-                        px: "1.5",
-                        py: "0.5",
-                        rounded: "md",
-                        fontSize: "10px",
+                        fontSize: "sm",
                         fontWeight: "700",
-                        mr: "1",
+                        fontFamily: "display",
+                        color: "ink.primary",
+                        display: "block",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       })}
-                      style={{ backgroundColor: color + "20", color }}
                     >
-                      {hubDisplayName(hub.hubType as HubType)}
+                      {hub.name}
                     </span>
-                    {hub.bleName && `BLE: ${hub.bleName}`}
-                  </span>
-                </div>
+                    <span className={css({ fontSize: "xs", color: "ink.muted" })}>
+                      <span
+                        className={css({
+                          display: "inline-block",
+                          px: "1.5",
+                          py: "0.5",
+                          rounded: "md",
+                          fontSize: "10px",
+                          fontWeight: "700",
+                          mr: "1",
+                        })}
+                        style={{ backgroundColor: color + "20", color }}
+                      >
+                        {hubDisplayName(hub.hubType as HubType)}
+                      </span>
+                      {hub.bleName && `BLE: ${hub.bleName}`}
+                    </span>
+                  </div>
+                </Link>
                 <button
                   onClick={() => handleRemoveHub(hub.id)}
                   className={css({

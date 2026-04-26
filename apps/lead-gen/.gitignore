@@ -29,6 +29,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# wrangler local secrets (root .gitignore covers .env* but not .dev.vars)
+**/.dev.vars
+**/.dev.vars.*
+
 # env files (can opt-in for commiting if needed)
 .env
 .env.local
