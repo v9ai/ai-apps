@@ -1,3 +1,4 @@
+import { uniqBy } from "lodash";
 import { db } from "@/db";
 import { opportunities, companies, contacts, blockedLocations } from "@/db/schema";
 import { eq, desc, or, isNull } from "drizzle-orm";
@@ -44,14 +45,36 @@ export default async function OpportunitiesPage() {
 
   const blockedKeySet = new Set(blockedKeys.map((r) => r.key));
   const blockedPatterns = blockedLocs.map((r) => r.pattern);
+
+  // Dedup PG rows by normalized URL (uniqBy keeps the first occurrence — `rows`
+  // is ordered created_at DESC, so the newest wins). Rows without a URL are
+  // keyed by id so they're never collapsed together.
+  const dedupedPg = uniqBy(rows, (r) => normalizeUrl(r.url) ?? `id:${r.id}`);
+  const seenPgUrls = new Set(
+    dedupedPg.map((r) => normalizeUrl(r.url)).filter((u): u is string => !!u),
+  );
+
+  // Hide D1 rows whose URL already exists in PG (dedup across stores).
   const d1Visible = d1Pending.filter((d) => {
     if (d.company_key && blockedKeySet.has(d.company_key)) return false;
     if (d.location) {
       const loc = d.location.toLowerCase();
       if (blockedPatterns.some((p) => loc.includes(p))) return false;
     }
+    const norm = normalizeUrl(d.url);
+    if (norm && seenPgUrls.has(norm)) return false;
     return true;
   });
 
-  return <OpportunitiesClient opportunities={rows} d1Pending={d1Visible} />;
+  return <OpportunitiesClient opportunities={dedupedPg} d1Pending={d1Visible} />;
+}
+
+function normalizeUrl(u: string | null): string | null {
+  if (!u) return null;
+  try {
+    const url = new URL(u);
+    return `${url.origin}${url.pathname.replace(/\/+$/, "")}`.toLowerCase();
+  } catch {
+    return u.toLowerCase().split("?")[0].split("#")[0].replace(/\/+$/, "") || null;
+  }
 }
