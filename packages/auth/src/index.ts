@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { toNextJsHandler } from "better-auth/next-js";
+import { bearer } from "better-auth/plugins";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -35,7 +36,11 @@ export function createAuth(db: any, schema?: Record<string, unknown>, options?: 
     baseURL,
     database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: { enabled: true },
-    plugins: [nextCookies()],
+    // bearer() lets non-cookie clients (the Chrome extension) authenticate
+    // by sending the session token as `Authorization: Bearer <token>`.
+    // It validates the signature against the same sessions table, so it's
+    // not a separate auth surface — just a different transport.
+    plugins: [nextCookies(), bearer()],
     trustedOrigins: origins.length > 0 ? origins : undefined,
   });
 }
