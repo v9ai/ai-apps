@@ -1024,6 +1024,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           title?: string;
           company?: string;
           url?: string;
+          companyLinkedinUrl?: string | null;
           location?: string;
           salary?: string;
           description?: string;
@@ -1044,12 +1045,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       const payload: D1JobInput[] = pageJobs
-        .filter((j) => j.title && j.company && j.url)
+        .filter((j) => j.title && j.url)
         .map((j) => ({
           title: j.title!,
-          company: j.company!,
+          company: j.company ?? "",
           url: j.url!,
-          companyLinkedinUrl: j.company ? companyLinkedinByName.get(j.company) ?? null : null,
+          companyLinkedinUrl:
+            j.companyLinkedinUrl ??
+            (j.company ? companyLinkedinByName.get(j.company) ?? null : null),
           location: j.location ?? null,
           salary: j.salary ?? null,
           description: j.description ?? null,
@@ -1158,17 +1161,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           title?: string;
           company?: string;
           url?: string;
+          companyLinkedinUrl?: string | null;
           location?: string;
           salary?: string;
           description?: string;
           archived?: boolean;
         }>)
-          .filter((j) => j.title && j.company && j.url)
+          .filter((j) => j.title && j.url)
           .map((j) => ({
             title: j.title!,
-            company: j.company!,
+            company: j.company ?? "",
             url: j.url!,
-            companyLinkedinUrl: j.company ? companyLinkedinByName.get(j.company) ?? null : null,
+            companyLinkedinUrl:
+              j.companyLinkedinUrl ??
+              (j.company ? companyLinkedinByName.get(j.company) ?? null : null),
             location: j.location ?? null,
             salary: j.salary ?? null,
             description: j.description ?? null,

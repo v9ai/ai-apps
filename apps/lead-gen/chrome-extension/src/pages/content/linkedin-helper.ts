@@ -1842,10 +1842,100 @@ function extractJobData() {
   if (genericJobsCount > 0) {
     return extractGenericJobData();
   } else if (isLinkedIn) {
+    // Single-job detail pages (URL rewritten when a search card is clicked).
+    if (window.location.pathname.startsWith("/jobs/view/")) {
+      const detail = extractLinkedInJobDetailPage();
+      if (detail.length > 0) return detail;
+      // Fall through to card scraper if the detail panel isn't present
+      // (e.g. search sidebar still mounted with cards).
+    }
     return extractLinkedInJobData();
   }
 
   return [];
+}
+
+// Extract a single job from the /jobs/view/{id} detail panel.
+// LinkedIn's CSS class names are hashed and rotate, so we anchor to:
+//   - componentkey="JobDetails_AboutTheJob_<jobId>" (description container)
+//   - data-testid="expandable-text-box" (description text node)
+//   - aria-label="Company, <name>." (company anchor)
+//   - document.title (job title — stable format)
+function extractLinkedInJobDetailPage() {
+  const idMatch = window.location.pathname.match(/\/jobs\/view\/(\d+)/);
+  if (!idMatch) return [];
+  const jobId = idMatch[1];
+
+  // Company anchor: aria-label always begins with "Company, " on this view.
+  const companyAnchor = document.querySelector(
+    'a[aria-label^="Company, "]',
+  ) as HTMLAnchorElement | null;
+  let company: string | null = null;
+  let companyLinkedinUrl: string | null = null;
+  if (companyAnchor) {
+    companyLinkedinUrl = companyAnchor.href || null;
+    const aria = companyAnchor.getAttribute("aria-label") || "";
+    company = aria.replace(/^Company,\s*/, "").replace(/\.$/, "").trim() || null;
+  }
+
+  // Title via document.title — LinkedIn formats it as either
+  // "Job Title | LinkedIn" or "Job Title - Company | LinkedIn".
+  let title: string | null = null;
+  if (document.title) {
+    let t = document.title.replace(/\s*\|\s*LinkedIn\s*$/i, "").trim();
+    if (company && t.endsWith(` - ${company}`)) {
+      t = t.slice(0, -(` - ${company}`).length).trim();
+    }
+    title = t || null;
+  }
+
+  // Description: stable componentkey + testid.
+  const aboutJobNode = document.querySelector(
+    '[componentkey^="JobDetails_AboutTheJob_"]',
+  );
+  const descNode = aboutJobNode?.querySelector(
+    '[data-testid="expandable-text-box"]',
+  ) as HTMLElement | null;
+  const description = descNode?.innerText?.trim() || null;
+
+  // Location: the first <p> with a " · " separator near the top of the panel
+  // (format: "EMEA · 6 days ago · Over 100 applicants").
+  let location: string | null = null;
+  const allP = document.querySelectorAll("p");
+  for (const p of Array.from(allP)) {
+    const txt = p.textContent?.trim() ?? "";
+    if (txt.length > 0 && txt.length < 200 && txt.split(/\s·\s/).length >= 2) {
+      const first = txt.split(/\s·\s/)[0]?.trim();
+      if (first && !/^promoted by hirer/i.test(first)) {
+        location = first;
+        break;
+      }
+    }
+  }
+
+  // Salary: scan the description for a currency range.
+  let salary: string | null = null;
+  if (description) {
+    const m = description.match(
+      /[£€$]\s?\d{1,3}(?:[,\d]{3})*(?:\.\d+)?(?:\s?[kKmM])?\s*[-–—to]+\s*[£€$]?\s?\d{1,3}(?:[,\d]{3})*(?:\.\d+)?(?:\s?[kKmM])?/,
+    );
+    if (m) salary = m[0].trim();
+  }
+
+  if (!title) return [];
+
+  return [
+    {
+      title,
+      company: company ?? "",
+      url: `https://www.linkedin.com/jobs/view/${jobId}/`,
+      companyLinkedinUrl,
+      location,
+      salary,
+      description,
+      archived: false,
+    },
+  ];
 }
 
 // Extract LinkedIn job data

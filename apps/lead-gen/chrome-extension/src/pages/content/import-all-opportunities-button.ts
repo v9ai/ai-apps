@@ -26,7 +26,12 @@ let autoImportTimer: ReturnType<typeof setTimeout> | null = null;
 function isOnJobsSearchPage(): boolean {
   if (!window.location.hostname.includes("linkedin.com")) return false;
   const p = window.location.pathname;
-  return p === "/jobs/search/" || p === "/jobs/search" || p.startsWith("/jobs/search/");
+  return (
+    p === "/jobs/search/" ||
+    p === "/jobs/search" ||
+    p.startsWith("/jobs/search/") ||
+    p.startsWith("/jobs/view/")
+  );
 }
 
 // ── Button states ──────────────────────────────────────────────────
