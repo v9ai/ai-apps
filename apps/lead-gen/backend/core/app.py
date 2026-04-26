@@ -157,34 +157,55 @@ def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    db_url = (
-        os.environ.get("DATABASE_URL", "").strip()
-        or os.environ.get("NEON_DATABASE_URL", "").strip()
-    )
-    if not db_url:
-        raise RuntimeError(
-            "DATABASE_URL (or NEON_DATABASE_URL) env var is required. Use the "
-            "Neon pooled connection string (hostname contains '-pooler') with "
-            "sslmode=require."
-        )
+    # Initialize diagnostic state so /__debug/state survives even if the
+    # lifespan body fails before populating these. The whole body is wrapped
+    # in try/except below so the container stays alive on startup errors —
+    # otherwise a Neon reachability hang or any boot-time exception would
+    # crash uvicorn before we can surface the traceback over HTTP.
+    app.state.boot_log = []
+    app.state.lifespan_error = None
+    app.state.checkpointer_alive = False
 
-    # Ensure LinkedIn cache tables exist before the Chrome-extension routes
-    # start serving traffic. Idempotent — runs the CREATE TABLE IF NOT EXISTS
-    # once per cold start.
-    #
-    # ``ensure_linkedin_tables`` opens a sync ``psycopg.connect`` which would
-    # block the asyncio event loop on cold-start (CF marks the Container
-    # "alive" while uvicorn cannot service /health). Push the blocking call
-    # into a worker thread so the loop stays responsive.
+    def _boot(msg: str) -> None:
+        app.state.boot_log.append(msg)
+        log.info("boot: %s", msg)
+
     try:
-        await asyncio.to_thread(ensure_linkedin_tables)
-    except Exception:  # noqa: BLE001
-        log.exception(
-            "ensure_linkedin_tables failed — /linkedin/* endpoints may 500 "
-            "until the DDL runs"
+        _boot("lifespan_enter")
+        db_url = (
+            os.environ.get("DATABASE_URL", "").strip()
+            or os.environ.get("NEON_DATABASE_URL", "").strip()
         )
+        if not db_url:
+            raise RuntimeError(
+                "DATABASE_URL (or NEON_DATABASE_URL) env var is required. Use the "
+                "Neon pooled connection string (hostname contains '-pooler') with "
+                "sslmode=require."
+            )
+        _boot(f"db_url_present host={db_url.split('@', 1)[-1].split('/', 1)[0] if '@' in db_url else 'unknown'}")
 
-    async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
+        # Ensure LinkedIn cache tables exist before the Chrome-extension routes
+        # start serving traffic. Idempotent — runs the CREATE TABLE IF NOT EXISTS
+        # once per cold start.
+        #
+        # ``ensure_linkedin_tables`` opens a sync ``psycopg.connect`` which would
+        # block the asyncio event loop on cold-start (CF marks the Container
+        # "alive" while uvicorn cannot service /health). Push the blocking call
+        # into a worker thread so the loop stays responsive.
+        try:
+            await asyncio.to_thread(ensure_linkedin_tables)
+            _boot("ensure_linkedin_tables_ok")
+        except Exception as exc:  # noqa: BLE001
+            log.exception(
+                "ensure_linkedin_tables failed — /linkedin/* endpoints may 500 "
+                "until the DDL runs"
+            )
+            _boot(f"ensure_linkedin_tables_failed {type(exc).__name__}: {exc}")
+
+        _boot("opening_async_postgres_saver")
+        async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
+            app.state.checkpointer_alive = True
+            _boot("checkpointer_context_entered")
         # Idempotent: creates the checkpointer tables on first run, no-ops after.
         await checkpointer.setup()
         graphs: dict[str, Any] = {
