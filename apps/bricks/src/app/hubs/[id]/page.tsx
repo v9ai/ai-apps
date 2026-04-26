@@ -6,6 +6,8 @@ import Link from "next/link";
 import { css } from "styled-system/css";
 import { HubType, hubDisplayName, hubColor, hubPorts } from "@/lib/parser";
 import { GAMES } from "@/lib/games";
+import { useLanguage } from "@/lib/language";
+import { HUB_CAPABILITIES } from "@/lib/hub-capabilities";
 
 interface HubDetail {
   id: number;
@@ -24,9 +26,46 @@ const HUB_IMG: Record<string, string> = {
   EssentialHub: "/hubs/hub-essential.png",
 };
 
+const LABELS = {
+  en: {
+    loading: "Loading…",
+    notFound: "Hub not found",
+    backToParts: "← Back to My Parts",
+    myParts: "← My Parts",
+    pybricksDocs: "Pybricks {hub} docs →",
+    capabilities: "Capabilities",
+    ports: "Ports",
+    games: "Games",
+    browseAll: "Browse all →",
+    playOn: "Play on {name}",
+    deleteHub: "Delete hub",
+    deleting: "Deleting…",
+    confirmDelete: 'Delete "{name}"?',
+    bleLabel: "BLE",
+  },
+  ro: {
+    loading: "Se încarcă…",
+    notFound: "Hub negăsit",
+    backToParts: "← Înapoi la Piesele mele",
+    myParts: "← Piesele mele",
+    pybricksDocs: "Documentație Pybricks {hub} →",
+    capabilities: "Capabilități",
+    ports: "Porturi",
+    games: "Jocuri",
+    browseAll: "Vezi toate →",
+    playOn: "Joacă pe {name}",
+    deleteHub: "Șterge hub",
+    deleting: "Se șterge…",
+    confirmDelete: 'Ștergi "{name}"?',
+    bleLabel: "BLE",
+  },
+} as const;
+
 export default function HubPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = LABELS[language === "ro" ? "ro" : "en"];
   const [hub, setHub] = useState<HubDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +87,7 @@ export default function HubPage() {
 
   async function handleDelete() {
     if (!hub) return;
-    if (!confirm(`Delete "${hub.name}"?`)) return;
+    if (!confirm(t.confirmDelete.replace("{name}", hub.name))) return;
     setDeleting(true);
     const res = await fetch(`/api/hubs/${hub.id}`, { method: "DELETE" });
     if (res.ok) {
@@ -61,7 +100,7 @@ export default function HubPage() {
   if (loading) {
     return (
       <main className={css({ maxW: "3xl", mx: "auto", px: "5", py: "10" })}>
-        <p className={css({ color: "ink.muted", fontSize: "sm" })}>Loading…</p>
+        <p className={css({ color: "ink.muted", fontSize: "sm" })}>{t.loading}</p>
       </main>
     );
   }
@@ -70,7 +109,7 @@ export default function HubPage() {
     return (
       <main className={css({ maxW: "3xl", mx: "auto", px: "5", py: "10" })}>
         <p className={css({ color: "lego.red", fontSize: "sm", fontWeight: "700" })}>
-          {error || "Hub not found"}
+          {error || t.notFound}
         </p>
         <Link
           href="/my-parts"
@@ -82,7 +121,7 @@ export default function HubPage() {
             textDecoration: "underline",
           })}
         >
-          ← Back to My Parts
+          {t.backToParts}
         </Link>
       </main>
     );
@@ -92,6 +131,7 @@ export default function HubPage() {
   const color = hubColor(hubType);
   const img = HUB_IMG[hub.hubType];
   const ports = hubPorts(hubType);
+  const capabilities = HUB_CAPABILITIES[hubType] ?? [];
 
   return (
     <main className={css({ maxW: "3xl", mx: "auto", px: "5", py: "10" })}>
@@ -105,7 +145,7 @@ export default function HubPage() {
           _hover: { color: "lego.orange" },
         })}
       >
-        ← My Parts
+        {t.myParts}
       </Link>
 
       <div
@@ -158,7 +198,7 @@ export default function HubPage() {
             </span>
             {hub.bleName && (
               <span className={css({ fontSize: "xs", color: "ink.muted" })}>
-                BLE: <span className={css({ fontWeight: "700", color: "ink.primary" })}>{hub.bleName}</span>
+                {t.bleLabel}: <span className={css({ fontWeight: "700", color: "ink.primary" })}>{hub.bleName}</span>
               </span>
             )}
           </div>
@@ -188,8 +228,114 @@ export default function HubPage() {
             _hover: { bg: "#0080D0", transform: "translateY(-1px)" },
           })}
         >
-          Pybricks {hubDisplayName(hubType)} docs →
+          {t.pybricksDocs.replace("{hub}", hubDisplayName(hubType))}
         </a>
+      )}
+
+      {capabilities.length > 0 && (
+        <section className={css({ mt: "8" })}>
+          <h2
+            className={css({
+              fontSize: "lg",
+              fontWeight: "900",
+              fontFamily: "display",
+              color: "ink.primary",
+              mb: "4",
+            })}
+          >
+            {t.capabilities}
+          </h2>
+          <div className={css({ display: "flex", flexDirection: "column", gap: "3" })}>
+            {capabilities.map((group) => (
+              <article
+                key={group.id}
+                className={css({
+                  position: "relative",
+                  bg: "plate.surface",
+                  border: "2px solid",
+                  borderColor: "plate.border",
+                  rounded: "brick",
+                  boxShadow: "brick",
+                  p: "5",
+                  overflow: "hidden",
+                })}
+              >
+                <div
+                  aria-hidden="true"
+                  className={css({
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    h: "3px",
+                  })}
+                  style={{ background: color }}
+                />
+                <h3
+                  className={css({
+                    fontSize: "md",
+                    fontWeight: "900",
+                    fontFamily: "display",
+                    color: "ink.primary",
+                    letterSpacing: "-0.01em",
+                  })}
+                >
+                  {language === "ro" ? group.titleRo : group.titleEn}
+                </h3>
+                <p
+                  className={css({
+                    mt: "1",
+                    fontSize: "sm",
+                    color: "ink.muted",
+                    lineHeight: "1.5",
+                  })}
+                >
+                  {language === "ro" ? group.descRo : group.descEn}
+                </p>
+                <ul
+                  className={css({
+                    mt: "4",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "3",
+                    listStyle: "none",
+                    p: 0,
+                  })}
+                >
+                  {group.methods.map((m) => (
+                    <li key={m.signature}>
+                      <code
+                        className={css({
+                          display: "inline-block",
+                          fontFamily: "mono",
+                          fontSize: "xs",
+                          fontWeight: "700",
+                          bg: "plate.raised",
+                          color: "ink.primary",
+                          px: "2",
+                          py: "0.5",
+                          rounded: "md",
+                        })}
+                      >
+                        {m.signature}
+                      </code>
+                      <p
+                        className={css({
+                          mt: "1",
+                          fontSize: "xs",
+                          color: "ink.muted",
+                          lineHeight: "1.5",
+                        })}
+                      >
+                        {language === "ro" ? m.descRo : m.descEn}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </section>
       )}
 
       {ports.length > 0 && (
@@ -203,7 +349,7 @@ export default function HubPage() {
               mb: "3",
             })}
           >
-            Ports
+            {t.ports}
           </h2>
           <div className={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
             {ports.map((p) => (
@@ -249,7 +395,7 @@ export default function HubPage() {
               color: "ink.primary",
             })}
           >
-            Games
+            {t.games}
           </h2>
           <Link
             href="/games"
@@ -262,7 +408,7 @@ export default function HubPage() {
               _hover: { color: "lego.orange" },
             })}
           >
-            Browse all →
+            {t.browseAll}
           </Link>
         </div>
         <p
@@ -272,7 +418,7 @@ export default function HubPage() {
             mb: "4",
           })}
         >
-          Play on {hub.name}
+          {t.playOn.replace("{name}", hub.name)}
         </p>
         <div
           className={css({
@@ -366,7 +512,7 @@ export default function HubPage() {
             _disabled: { opacity: 0.5, cursor: "not-allowed" },
           })}
         >
-          {deleting ? "Deleting…" : "Delete hub"}
+          {deleting ? t.deleting : t.deleteHub}
         </button>
       </section>
     </main>
