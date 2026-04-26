@@ -114,7 +114,20 @@ async function callBatch(
     throw new Error(`/runs/wait ${res.status}: ${text.slice(0, 240)}`);
   }
   const elapsedMs = Date.now() - t0;
-  const result = (await res.json()) as BatchResult;
+  const rawBody = await res.text();
+  let result: BatchResult;
+  try {
+    result = JSON.parse(rawBody) as BatchResult;
+  } catch {
+    result = {};
+  }
+  // When the server returns an empty/odd payload (langgraph dev's /runs/wait
+  // sometimes does this on queue contention or thread reuse), surface the
+  // body so the operator can see what came back instead of silently logging
+  // total=0.
+  if ((result.total ?? 0) === 0 && !result.stop_reason) {
+    console.log(`  └─ unexpected body (${rawBody.length}b): ${rawBody.slice(0, 200)}`);
+  }
   console.log(
     `[iter ${iteration}] total=${result.total ?? 0} ` +
       `openalex=${result.counts?.openalex ?? 0} ` +
@@ -217,13 +230,16 @@ async function main(): Promise<void> {
       break;
     }
     // Stuck-server bail-out: a 200 response with total=0 AND no recognizable
-    // stop_reason means the server-side run errored out before producing the
-    // expected payload (typical signature: a node raised mid-batch and the
-    // graph returned an empty state). Looping forever here just burns the
-    // queue. Two consecutive stuck iterations = abort.
+    // stop_reason can happen for two reasons:
+    //   1. langgraph dev's /runs/wait returned an empty payload (transient —
+    //      queue contention, in-flight run on the same thread, etc). The
+    //      server may still be processing other runs successfully.
+    //   2. The server-side run errored out (terminal — restart needed).
+    // We can't tell them apart from the client; abort after 5 consecutive
+    // stuck iters so transient blips don't kill a long drain.
     if ((result.total ?? 0) === 0 && !result.stop_reason) {
       stuckIters += 1;
-      if (stuckIters >= 2) {
+      if (stuckIters >= 5) {
         console.error(
           `[iter ${iter}] aborting — ${stuckIters} consecutive iterations returned total=0 ` +
             `with no stop_reason; server is likely crashing mid-batch (check langgraph dev log)`,
