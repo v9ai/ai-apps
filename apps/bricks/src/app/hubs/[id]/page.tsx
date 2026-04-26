@@ -42,6 +42,7 @@ const LABELS = {
     deleting: "Deleting…",
     confirmDelete: 'Delete "{name}"?',
     bleLabel: "BLE",
+    comingSoon: "Coming soon",
   },
   ro: {
     loading: "Se încarcă…",
@@ -58,6 +59,7 @@ const LABELS = {
     deleting: "Se șterge…",
     confirmDelete: 'Ștergi "{name}"?',
     bleLabel: "BLE",
+    comingSoon: "În curând",
   },
 } as const;
 
@@ -472,10 +474,21 @@ export default function HubPage() {
                   letterSpacing: "-0.01em",
                 })}
               >
-                {game.title}
+                {language === "ro" ? game.titleRo : game.title}
               </span>
               <span
                 className={css({
+                  mt: "1",
+                  fontSize: "xs",
+                  color: "ink.muted",
+                  lineHeight: "1.4",
+                })}
+              >
+                {language === "ro" ? game.taglineRo : game.tagline}
+              </span>
+              <span
+                className={css({
+                  mt: "2",
                   fontSize: "10px",
                   fontFamily: "display",
                   fontWeight: "800",
@@ -484,7 +497,7 @@ export default function HubPage() {
                   color: "ink.faint",
                 })}
               >
-                Coming soon
+                {t.comingSoon}
               </span>
             </Link>
           ))}
