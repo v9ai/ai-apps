@@ -1,18 +1,30 @@
 /**
  * Opportunity classifier — structured extraction + fit scoring from raw_context.
  *
- * Calls fine-tuned Qwen via local mlx_lm.server. Local-only: no cloud fallback,
- * per user preference (all LoRA adapters for lead-gen use local teacher + student).
+ * Speaks OpenAI-compatible chat completions over `LLM_BASE_URL`. Two supported
+ * backends:
  *
- * Serves the adapter at `mlx-training/models/opportunity-score`. Start server with:
- *   mlx_lm.server \
- *     --model mlx-community/Qwen2.5-3B-Instruct-4bit \
- *     --adapter-path mlx-training/models/opportunity-score \
- *     --port 8080
+ *   1. Cloudflare Workers AI via the `lead-gen-opportunity-llm` Worker
+ *      (Mistral-7B-Instruct-v0.2 + LoRA trained on opportunity gold labels).
+ *      Used in production / Vercel.
+ *
+ *   2. Local mlx_lm.server (Qwen2.5-3B + LoRA at mlx-training/models/opportunity-score).
+ *      Optional dev shortcut. Start with:
+ *        mlx_lm.server \
+ *          --model mlx-community/Qwen2.5-3B-Instruct-4bit \
+ *          --adapter-path mlx-training/models/opportunity-score \
+ *          --port 8080
+ *
+ * The teacher labeling pipeline (mlx-training/export_opportunity_labels.py)
+ * stays local-only by design — only the student inference moved to CF.
  *
  * Env:
- *   LLM_BASE_URL           — e.g. http://localhost:8080/v1
- *   LLM_MODEL_OPPORTUNITY  — override model name (defaults to base Qwen2.5-3B if unset)
+ *   LLM_BASE_URL           — e.g. https://lead-gen-opportunity-llm.<sub>.workers.dev/v1
+ *                            or http://localhost:8080/v1 for local dev
+ *   LLM_API_KEY            — bearer token (matches OPPORTUNITY_LLM_SHARED_SECRET on the Worker;
+ *                            ignored by local mlx_lm.server)
+ *   LLM_MODEL_OPPORTUNITY  — override model name (defaults to mistral-opportunity-lora when
+ *                            unset on CF, base Qwen2.5-3B locally)
  */
 
 import OpenAI from "openai";
@@ -83,7 +95,7 @@ export async function classifyOpportunityLLM(input: {
   const url = process.env.LLM_BASE_URL;
   if (!url) throw new Error("LLM_BASE_URL not set");
 
-  const client = new OpenAI({ apiKey: "local", baseURL: url });
+  const client = new OpenAI({ apiKey: process.env.LLM_API_KEY ?? "local", baseURL: url });
   const model =
     process.env.LLM_MODEL_OPPORTUNITY ??
     process.env.LLM_MODEL ??

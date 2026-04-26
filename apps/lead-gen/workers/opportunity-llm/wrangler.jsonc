@@ -1,0 +1,54 @@
+// Cloudflare Worker fronting Workers AI + Mistral LoRA for lead-gen opportunity scoring.
+//
+// DEPLOY:
+//   pnpm install
+//   wrangler secret put OPPORTUNITY_LLM_SHARED_SECRET     # random 32+ char token
+//   pnpm deploy
+//   # after LoRA upload (Phase C):
+//   wrangler secret put OPPORTUNITY_FINETUNE_ID            # UUID from `wrangler ai finetune list`
+//
+// TRAIN LORA ON M1 (local MLX — fully CF-compatible, no external compute):
+//   # Phase A — gold-labeled chat-format JSONL (uses local Qwen teacher for tags/seniority/tldr)
+//   LLM_BASE_URL=http://localhost:8080/v1 \
+//     python3 mlx-training/export_opportunity_labels.py
+//   cd mlx-training/peft
+//   pip install -r requirements.txt
+//   python convert_opportunity_data.py        # -> ../data/opportunity-score-mistral/{train,valid}.jsonl
+//   # Phase B — LoRA fine-tune on Mistral-7B
+//   python -m mlx_lm lora \
+//     --model mlx-community/Mistral-7B-Instruct-v0.2-4bit \
+//     --train \
+//     --data ../data/opportunity-score-mistral \
+//     --adapter-path ../models/opportunity-score-mistral \
+//     --max-seq-length 1024 --batch-size 2 --iters 400 \
+//     --learning-rate 1e-5 --lora-layers 16
+//   # Phase C — convert MLX adapter to PEFT, then to CF upload format
+//   python mlx_adapter_to_peft.py \
+//     --mlx-adapter ../models/opportunity-score-mistral/adapters.safetensors \
+//     --out ./out/opportunity-adapter/final \
+//     --base-model mistralai/Mistral-7B-Instruct-v0.2
+//   python postprocess_adapter.py ./out/opportunity-adapter/final --model-type mistral
+//
+// UPLOAD LORA TO CF (after training):
+//   npx wrangler ai finetune create \
+//     @cf/mistral/mistral-7b-instruct-v0.2-lora \
+//     opportunity-score-v1 \
+//     ../../mlx-training/peft/out/opportunity-adapter/final/cf-upload
+//
+// WIRE INTO NEXT.JS (Vercel env vars):
+//   LLM_BASE_URL          -> "https://lead-gen-opportunity-llm.<SUBDOMAIN>.workers.dev/v1"
+//   LLM_MODEL_OPPORTUNITY -> "mistral-opportunity-lora"
+//   LLM_API_KEY           -> same value as OPPORTUNITY_LLM_SHARED_SECRET on this Worker
+//   Do not flip prod env until this Worker is deployed or every classifier call will 401/404.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lead-gen-opportunity-llm",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-01",
+  "observability": { "enabled": true },
+  "ai": { "binding": "AI" },
+  "vars": {
+    "MODEL_NAME": "@cf/mistral/mistral-7b-instruct-v0.2-lora",
+    "MODEL_ALIAS": "mistral-opportunity-lora"
+  }
+}
