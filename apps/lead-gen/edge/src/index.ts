@@ -375,7 +375,7 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
     inserted,
     skipped,
     total: valid.length + skippedInvalid + skippedDuplicate,
-    detail: { skippedInvalid, skippedDuplicate, skippedExisting },
+    detail: { skippedInvalid, skippedDuplicate, skippedExisting, invalidSamples },
   });
 }
 

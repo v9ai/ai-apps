@@ -5,6 +5,7 @@ import { Container, Heading, Text, Table, Badge, Flex } from "@radix-ui/themes";
 import Link from "next/link";
 import { ExternalLinkIcon } from "@radix-ui/react-icons";
 import { EvalStatsPanel } from "./eval-stats-panel";
+import type { D1OpportunityRow } from "@/lib/d1-opportunities";
 
 type OpportunityRow = {
   id: string;
@@ -38,7 +39,13 @@ const statusColors: Record<string, "green" | "blue" | "orange" | "red" | "gray" 
   closed: "gray",
 };
 
-export function OpportunitiesClient({ opportunities }: { opportunities: OpportunityRow[] }) {
+export function OpportunitiesClient({
+  opportunities,
+  d1Pending,
+}: {
+  opportunities: OpportunityRow[];
+  d1Pending: D1OpportunityRow[];
+}) {
   const filtered = useMemo(() => {
     return opportunities.filter((opp) => {
       const parsed: string[] = opp.tags ? JSON.parse(opp.tags) : [];
@@ -142,6 +149,70 @@ export function OpportunitiesClient({ opportunities }: { opportunities: Opportun
             })}
           </Table.Body>
         </Table.Root>
+      )}
+
+      {d1Pending.length > 0 && (
+        <>
+          <Flex justify="between" align="center" mt="6" mb="3">
+            <Heading size="4">Pending (D1)</Heading>
+            <Badge color="orange" size="2">{d1Pending.length}</Badge>
+          </Flex>
+          <Table.Root variant="surface">
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeaderCell>Title</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Company</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Location</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Salary</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Added</Table.ColumnHeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {d1Pending.map((opp) => (
+                <Table.Row key={opp.id}>
+                  <Table.Cell>
+                    <Flex align="center" gap="1">
+                      {opp.url ? (
+                        <a href={opp.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+                          <Text size="2" weight="medium" color="blue">{opp.title}</Text>
+                        </a>
+                      ) : (
+                        <Text size="2" weight="medium">{opp.title}</Text>
+                      )}
+                      {opp.url && (
+                        <ExternalLinkIcon width={12} height={12} style={{ color: "var(--gray-9)" }} />
+                      )}
+                    </Flex>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="2" color={opp.company_name ? undefined : "gray"}>
+                      {opp.company_name ?? "-"}
+                    </Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="2" color={opp.location ? undefined : "gray"}>
+                      {opp.location ?? "-"}
+                    </Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="2" color={opp.salary ? undefined : "gray"}>
+                      {opp.salary ?? "-"}
+                    </Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Badge color={statusColors[opp.status] ?? "gray"}>{opp.status}</Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="1" color="gray">
+                      {new Date(opp.created_at).toLocaleDateString()}
+                    </Text>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        </>
       )}
     </Container>
   );
