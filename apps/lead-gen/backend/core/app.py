@@ -203,7 +203,27 @@ async def lifespan(app: FastAPI):
             _boot(f"ensure_linkedin_tables_failed {type(exc).__name__}: {exc}")
 
         _boot("opening_async_postgres_saver")
-        async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
+        # Use a connection POOL instead of a single long-lived connection.
+        # Neon's pooler closes idle connections after a short timeout (default
+        # ~5 minutes); a single shared connection breaks every /runs/wait
+        # invocation with `psycopg.OperationalError: the connection is closed`
+        # once the pool drops it. AsyncConnectionPool transparently
+        # re-establishes connections per checkout.
+        from psycopg_pool import AsyncConnectionPool  # noqa: PLC0415
+
+        # Neon pooler caps a single project at ~20 connections by default; we
+        # share with the per-branch psycopg.connect calls inside graph nodes,
+        # so keep the checkpointer pool conservative. open=False + explicit
+        # pool.open() avoids the deprecation warning.
+        async with AsyncConnectionPool(
+            db_url,
+            min_size=1,
+            max_size=8,
+            open=False,
+            kwargs={"autocommit": True, "prepare_threshold": 0},
+        ) as pool:
+            await pool.open(wait=True, timeout=15)
+            checkpointer = AsyncPostgresSaver(pool)
             app.state.checkpointer_alive = True
             _boot("checkpointer_context_entered")
             # Idempotent: creates the checkpointer tables on first run, no-ops after.
