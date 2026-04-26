@@ -121,12 +121,32 @@ async function callBatch(
   } catch {
     result = {};
   }
-  // When the server returns an empty/odd payload (langgraph dev's /runs/wait
-  // sometimes does this on queue contention or thread reuse), surface the
-  // body so the operator can see what came back instead of silently logging
-  // total=0.
-  if ((result.total ?? 0) === 0 && !result.stop_reason) {
-    console.log(`  └─ unexpected body (${rawBody.length}b): ${rawBody.slice(0, 200)}`);
+  // LangGraph's /runs/wait returns ONLY the keys declared in the state
+  // TypedDict (ContactEnrichPaperAuthorState). The batch graph's
+  // batch_enrich node returns total/stop_reason/counts/elapsed_s but those
+  // aren't in the state schema, so they get filtered out. Reconstruct from
+  // `enriched` (which IS in the state) — count it directly.
+  const enrichedList = Array.isArray(result.enriched) ? result.enriched : [];
+  if (result.total === undefined) result.total = enrichedList.length;
+  if (!result.counts) {
+    const counts = { openalex: 0, existing: 0, no_match: 0, load_error: 0 };
+    for (const r of enrichedList) {
+      const src = r?.resolve_source ?? "";
+      if (src === "openalex") counts.openalex += 1;
+      else if (src === "existing") counts.existing += 1;
+      else counts.no_match += 1;
+    }
+    result.counts = counts;
+  }
+  // Derive stop_reason when missing: empty list = drained; non-empty = the
+  // server hit its server-side wall-clock or count cap. We can't tell which
+  // without the field, but treat non-empty lists as "more to do, continue".
+  if (!result.stop_reason) {
+    result.stop_reason = enrichedList.length === 0 ? "drained" : "budget_exhausted";
+  }
+  if (rawBody.length > 0 && enrichedList.length === 0) {
+    // Genuinely empty response on the wire — diagnostic dump for the operator.
+    console.log(`  └─ empty enriched list (${rawBody.length}b): ${rawBody.slice(0, 200)}`);
   }
   console.log(
     `[iter ${iteration}] total=${result.total ?? 0} ` +
