@@ -102,6 +102,8 @@ function createButton(): HTMLButtonElement {
     if (!document.body.contains(btn)) return;
 
     if (msg.error) {
+      // Reset URL gate so the next page nav retries.
+      lastAutoImportedUrl = "";
       btn.textContent = String(msg.error).slice(0, 80);
       btn.style.backgroundColor = COLOR_ERROR;
       setTimeout(() => resetIdle(btn), 5000);
