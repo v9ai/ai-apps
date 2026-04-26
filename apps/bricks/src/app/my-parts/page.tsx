@@ -13,12 +13,12 @@ interface UserHub {
   bleName: string;
 }
 
-const HUB_OPTIONS: { type: HubType; img: string }[] = [
-  { type: "CityHub", img: "/hubs/hub-city.png" },
-  { type: "TechnicHub", img: "/hubs/hub-technic.png" },
-  { type: "MoveHub", img: "/hubs/hub-move.png" },
-  { type: "PrimeHub", img: "/hubs/hub-prime.png" },
-  { type: "EssentialHub", img: "/hubs/hub-essential.png" },
+const HUB_OPTIONS: { type: HubType; img: string; docs: string }[] = [
+  { type: "CityHub", img: "/hubs/hub-city.png", docs: "https://docs.pybricks.com/en/latest/hubs/cityhub.html" },
+  { type: "TechnicHub", img: "/hubs/hub-technic.png", docs: "https://docs.pybricks.com/en/latest/hubs/technichub.html" },
+  { type: "MoveHub", img: "/hubs/hub-move.png", docs: "https://docs.pybricks.com/en/latest/hubs/movehub.html" },
+  { type: "PrimeHub", img: "/hubs/hub-prime.png", docs: "https://docs.pybricks.com/en/latest/hubs/primehub.html" },
+  { type: "EssentialHub", img: "/hubs/hub-essential.png", docs: "https://docs.pybricks.com/en/latest/hubs/essentialhub.html" },
 ];
 
 interface UserPart {
@@ -735,16 +735,24 @@ export default function MyPartsPage() {
                 })}
               >
                 {opt ? (
-                  <img
-                    src={opt.img}
-                    alt={hub.hubType}
+                  <a
+                    href={opt.docs}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`${hubDisplayName(hub.hubType as HubType)} — Pybricks docs`}
                     className={css({
-                      w: "10",
-                      h: "10",
-                      objectFit: "contain",
                       flexShrink: 0,
+                      display: "inline-flex",
+                      transition: "transform 0.15s ease",
+                      _hover: { transform: "translateY(-1px) scale(1.05)" },
                     })}
-                  />
+                  >
+                    <img
+                      src={opt.img}
+                      alt={hub.hubType}
+                      className={css({ w: "10", h: "10", objectFit: "contain" })}
+                    />
+                  </a>
                 ) : (
                   <div
                     className={css({
