@@ -125,6 +125,60 @@ export async function blockD1OpportunityCompany(
   return { ok: true, companyKey: null };
 }
 
+type HideResult = { ok: true } | { error: string };
+
+export async function hideOpportunity(id: string): Promise<HideResult> {
+  const { isAdmin } = await checkIsAdmin();
+  if (!isAdmin) return { error: "Forbidden" };
+
+  const found = await db
+    .select({ tags: opportunities.tags })
+    .from(opportunities)
+    .where(eq(opportunities.id, id))
+    .limit(1);
+  if (found.length === 0) return { error: "Not found" };
+
+  let current: string[] = [];
+  try {
+    const parsed = found[0]!.tags ? JSON.parse(found[0]!.tags) : [];
+    if (Array.isArray(parsed)) current = parsed.filter((t): t is string => typeof t === "string");
+  } catch {
+    current = [];
+  }
+  if (!current.includes("excluded")) {
+    await db
+      .update(opportunities)
+      .set({ tags: JSON.stringify([...current, "excluded"]), updated_at: new Date().toISOString() })
+      .where(eq(opportunities.id, id));
+  }
+
+  revalidatePath("/opportunities");
+  return { ok: true };
+}
+
+export async function hideD1Opportunity(id: string): Promise<HideResult> {
+  const { isAdmin } = await checkIsAdmin();
+  if (!isAdmin) return { error: "Forbidden" };
+
+  const base = process.env.EDGE_WORKER_URL ?? "https://agenticleadgen-edge.eeeew.workers.dev";
+  const token = process.env.JOBS_D1_TOKEN;
+  if (!token) return { error: "JOBS_D1_TOKEN not configured" };
+
+  const res = await fetch(`${base.replace(/\/$/, "")}/api/jobs/d1/opportunities/archive`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({ id }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    return { error: `worker ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}` };
+  }
+
+  revalidatePath("/opportunities");
+  return { ok: true };
+}
+
 type BlockLocResult = { ok: true; pattern: string } | { error: string };
 
 export async function blockLocation(label: string): Promise<BlockLocResult> {

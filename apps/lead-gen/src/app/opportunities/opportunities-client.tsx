@@ -4,9 +4,15 @@ import { useMemo, useState, useTransition } from "react";
 import { Container, Heading, Text, Table, Badge, Flex, Button } from "@radix-ui/themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ExternalLinkIcon, EyeNoneIcon } from "@radix-ui/react-icons";
+import { ExternalLinkIcon, EyeNoneIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { EvalStatsPanel } from "./eval-stats-panel";
-import { blockOpportunityCompany, blockD1OpportunityCompany, blockLocation } from "./actions";
+import {
+  blockOpportunityCompany,
+  blockD1OpportunityCompany,
+  blockLocation,
+  hideOpportunity,
+  hideD1Opportunity,
+} from "./actions";
 import type { D1OpportunityRow } from "@/lib/d1-opportunities";
 
 type OpportunityRow = {
@@ -95,6 +101,23 @@ export function OpportunitiesClient({
         return;
       }
       hideCompanyRows(id, res.companyKey);
+      router.refresh();
+    });
+  }
+
+  function handleHide(id: string, source: "pg" | "d1") {
+    setHidden((prev) => new Set(prev).add(id));
+    startTransition(async () => {
+      const res = source === "pg" ? await hideOpportunity(id) : await hideD1Opportunity(id);
+      if ("error" in res) {
+        setHidden((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        console.error("[hide]", res.error);
+        return;
+      }
       router.refresh();
     });
   }
@@ -231,15 +254,27 @@ export function OpportunitiesClient({
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Button
-                      size="1"
-                      variant="ghost"
-                      color="gray"
-                      onClick={() => handleBlockPg(opp.id)}
-                      title="Block company (hide all jobs from this company)"
-                    >
-                      <EyeNoneIcon width={12} height={12} /> Block
-                    </Button>
+                    <Flex gap="2" align="center">
+                      <Button
+                        size="1"
+                        variant="ghost"
+                        color="gray"
+                        onClick={() => handleBlockPg(opp.id)}
+                        title="Block company (hide all jobs from this company)"
+                      >
+                        <EyeNoneIcon width={12} height={12} /> Block
+                      </Button>
+                      <Button
+                        size="1"
+                        variant="ghost"
+                        color="gray"
+                        onClick={() => handleHide(opp.id, "pg")}
+                        title="Remove this entry from the list"
+                        aria-label="Remove"
+                      >
+                        <Cross2Icon width={12} height={12} />
+                      </Button>
+                    </Flex>
                   </Table.Cell>
                 </Table.Row>
               );
@@ -328,6 +363,16 @@ export function OpportunitiesClient({
                           <EyeNoneIcon width={12} height={12} /> Loc
                         </Button>
                       )}
+                      <Button
+                        size="1"
+                        variant="ghost"
+                        color="gray"
+                        onClick={() => handleHide(opp.id, "d1")}
+                        title="Remove this entry from the list"
+                        aria-label="Remove"
+                      >
+                        <Cross2Icon width={12} height={12} />
+                      </Button>
                     </Flex>
                   </Table.Cell>
                 </Table.Row>
