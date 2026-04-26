@@ -15,6 +15,8 @@ export { RateLimiter } from "./rate-limiter";
 interface Env {
   ORIGIN: string;
   RL: DurableObjectNamespace;
+  DB: D1Database;
+  JOBS_D1_TOKEN: string;
 }
 
 type Tier = "anon" | "authed" | "admin-mutation";
@@ -121,9 +123,239 @@ function buildOriginRequest(
   });
 }
 
+// ── D1 import: chrome-extension "Import all opportunities" on /jobs/search ──
+//
+// POST /api/jobs/d1/import
+//   headers: Authorization: Bearer <JOBS_D1_TOKEN>
+//   body:    { jobs: Array<{ title, company, url, companyLinkedinUrl?,
+//                            location?, salary?, description?, archived? }> }
+//   reply:   { inserted, skipped, total }
+
+interface IncomingJob {
+  title?: unknown;
+  company?: unknown;
+  url?: unknown;
+  companyLinkedinUrl?: unknown;
+  location?: unknown;
+  salary?: unknown;
+  description?: unknown;
+  archived?: unknown;
+}
+
+interface ValidJob {
+  title: string;
+  company: string;
+  url: string;
+  companyLinkedinUrl: string | null;
+  location: string | null;
+  salary: string | null;
+  description: string | null;
+  archived: 0 | 1;
+}
+
+const ALLOW_HEADERS = "authorization, content-type";
+
+function corsHeaders(req: Request): HeadersInit {
+  const origin = req.headers.get("origin") ?? "*";
+  return {
+    "access-control-allow-origin": origin,
+    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-headers": ALLOW_HEADERS,
+    "access-control-max-age": "86400",
+    vary: "origin",
+  };
+}
+
+function json(req: Request, body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders(req),
+      "content-type": "application/json; charset=utf-8",
+    },
+  });
+}
+
+function constantTimeEq(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+}
+
+function companyKey(name: string, linkedinUrl: string | null): string {
+  if (linkedinUrl) {
+    const m = linkedinUrl.match(/\/company\/([^/?#]+)/);
+    if (m) return `li:${m[1].toLowerCase()}`;
+  }
+  return `name:${slugify(name) || "unknown"}`;
+}
+
+function newOpportunityId(): string {
+  const rand = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+  return `opp_${Date.now()}_${rand}`;
+}
+
+function asString(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t.length === 0 ? null : t;
+}
+
+function validateJobs(input: unknown): {
+  valid: ValidJob[];
+  skippedInvalid: number;
+  skippedDuplicate: number;
+} {
+  if (!input || typeof input !== "object" || !Array.isArray((input as { jobs?: unknown }).jobs)) {
+    return { valid: [], skippedInvalid: 0, skippedDuplicate: 0 };
+  }
+  const seen = new Set<string>();
+  const valid: ValidJob[] = [];
+  let skippedInvalid = 0;
+  let skippedDuplicate = 0;
+
+  for (const raw of (input as { jobs: IncomingJob[] }).jobs) {
+    const title = asString(raw?.title);
+    const company = asString(raw?.company);
+    const url = asString(raw?.url);
+    if (!title || !company || !url) {
+      skippedInvalid++;
+      continue;
+    }
+    if (seen.has(url)) {
+      skippedDuplicate++;
+      continue;
+    }
+    seen.add(url);
+    valid.push({
+      title,
+      company,
+      url,
+      companyLinkedinUrl: asString(raw?.companyLinkedinUrl),
+      location: asString(raw?.location),
+      salary: asString(raw?.salary),
+      description: asString(raw?.description),
+      archived: raw?.archived ? 1 : 0,
+    });
+  }
+  return { valid, skippedInvalid, skippedDuplicate };
+}
+
+async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "POST") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return json(req, { error: "Invalid JSON" }, 400);
+  }
+
+  const { valid, skippedInvalid, skippedDuplicate } = validateJobs(body);
+  if (valid.length === 0) {
+    return json(req, {
+      inserted: 0,
+      skipped: skippedInvalid + skippedDuplicate,
+      total: skippedInvalid + skippedDuplicate,
+      detail: { skippedInvalid, skippedDuplicate, skippedExisting: 0 },
+    });
+  }
+
+  // 1. Upsert companies (INSERT OR IGNORE) so each unique company gets a row.
+  const keyByJob = valid.map((j) => companyKey(j.company, j.companyLinkedinUrl));
+  const uniqueKeys = Array.from(new Set(keyByJob));
+
+  const companyRows = uniqueKeys.map((key) => {
+    const j = valid[keyByJob.indexOf(key)];
+    return env.DB.prepare(
+      `INSERT OR IGNORE INTO companies (key, name, linkedin_url, location)
+       VALUES (?, ?, ?, ?)`,
+    ).bind(key, j.company, j.companyLinkedinUrl, j.location);
+  });
+  if (companyRows.length > 0) await env.DB.batch(companyRows);
+
+  // 2. Resolve company_id per key.
+  const placeholders = uniqueKeys.map(() => "?").join(",");
+  const companyIdMap = new Map<string, number>();
+  if (uniqueKeys.length > 0) {
+    const idRes = await env.DB.prepare(
+      `SELECT id, key FROM companies WHERE key IN (${placeholders})`,
+    )
+      .bind(...uniqueKeys)
+      .all<{ id: number; key: string }>();
+    for (const row of idRes.results ?? []) companyIdMap.set(row.key, row.id);
+  }
+
+  // 3. Insert opportunities (INSERT OR IGNORE on UNIQUE url).
+  const oppStatements = valid.map((j, i) =>
+    env.DB.prepare(
+      `INSERT OR IGNORE INTO opportunities
+        (id, title, url, source, status, raw_context, metadata, tags,
+         company_id, location, salary, archived)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(
+      newOpportunityId(),
+      j.title,
+      j.url,
+      "linkedin",
+      j.archived ? "archived" : "open",
+      j.description,
+      JSON.stringify({ scrapedAt: new Date().toISOString() }),
+      JSON.stringify(["linkedin"]),
+      companyIdMap.get(keyByJob[i]) ?? null,
+      j.location,
+      j.salary,
+      j.archived,
+    ),
+  );
+
+  let inserted = 0;
+  if (oppStatements.length > 0) {
+    const results = await env.DB.batch(oppStatements);
+    for (const r of results) {
+      const meta = (r as { meta?: { changes?: number } }).meta;
+      if (meta?.changes) inserted += meta.changes;
+    }
+  }
+
+  const skippedExisting = valid.length - inserted;
+  const skipped = skippedInvalid + skippedDuplicate + skippedExisting;
+
+  return json(req, {
+    inserted,
+    skipped,
+    total: valid.length + skippedInvalid + skippedDuplicate,
+    detail: { skippedInvalid, skippedDuplicate, skippedExisting },
+  });
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
+
+    if (url.pathname === "/api/jobs/d1/import") {
+      return handleJobsD1Import(req, env);
+    }
 
     const { tier, key, bodyText } = await classify(req, url);
     const limit = LIMITS[tier];

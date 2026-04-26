@@ -1,6 +1,7 @@
 // Background service worker — message listener & orchestrator
 import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts, runUnifiedPipeline, scrapeRecruiterPosts, scrapeContactPostsSingle } from "../../services/post-scraper";
 import { gqlRequest } from "../../services/graphql";
+import { importJobsToD1, type D1JobInput } from "../../services/jobs-d1-importer";
 import { startKeepAlive, stopKeepAlive, waitForTabLoad, clickSeeMore, randomDelay } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled, extractFullProfileData, parseName, parseHeadline } from "./profile-browsing";
 import { browseCompanies, setCompanyCancelled } from "./company-browsing";
@@ -956,6 +957,132 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } catch (err) {
         await notifyTab({ error: err instanceof Error ? err.message : String(err) });
       } finally {
+        stopKeepAlive();
+      }
+    })();
+
+    return true;
+  }
+
+  // ── Bulk import: every visible LinkedIn job-search card → D1 opportunities ──
+  if (message.action === "importAllOpportunitiesFromJobsSearch") {
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+
+    const notifyTab = async (data: Record<string, unknown>) => {
+      try {
+        await chrome.tabs.sendMessage(tabId, { action: "importAllProgress", ...data });
+      } catch { /* tab closed */ }
+    };
+
+    // Forward content-script paginationProgress events back to the same tab
+    // so the floating button can render "page N/total".
+    const progressListener = (msg: unknown) => {
+      const m = msg as { action?: string; currentPage?: number; totalPages?: number; jobsCollected?: number };
+      if (m?.action === "paginationProgress") {
+        notifyTab({
+          status: `Page ${m.currentPage}/${m.totalPages} — ${m.jobsCollected ?? 0} collected`,
+          currentPage: m.currentPage,
+          totalPages: m.totalPages,
+        });
+      }
+    };
+    chrome.runtime.onMessage.addListener(progressListener);
+
+    (async () => {
+      startKeepAlive();
+      try {
+        await notifyTab({ status: "Checking pagination..." });
+
+        const paginationResp = await chrome.tabs
+          .sendMessage(tabId, { action: "getPaginationInfo" })
+          .catch(() => null);
+
+        let scraped: { jobs: unknown[]; companies: unknown[]; pagesScraped: number };
+        if (paginationResp?.paginationInfo) {
+          const { totalPages } = paginationResp.paginationInfo as { totalPages: number };
+          await notifyTab({ status: `Scraping ${totalPages} pages...` });
+          const r = await chrome.tabs.sendMessage(tabId, {
+            action: "extractJobsWithPagination",
+          });
+          if (!r?.success) {
+            await notifyTab({ error: r?.error || "Pagination failed" });
+            return;
+          }
+          scraped = {
+            jobs: r.jobs ?? [],
+            companies: r.companies ?? [],
+            pagesScraped: r.pagesScraped ?? 1,
+          };
+        } else {
+          await notifyTab({ status: "Scraping current page..." });
+          const r = await chrome.tabs.sendMessage(tabId, { action: "extractJobs" });
+          const c = await chrome.tabs
+            .sendMessage(tabId, { action: "extractCompaniesFromJobs" })
+            .catch(() => ({ companies: [] }));
+          scraped = {
+            jobs: r?.jobs ?? [],
+            companies: c?.companies ?? [],
+            pagesScraped: 1,
+          };
+        }
+
+        if (scraped.jobs.length === 0) {
+          await notifyTab({ error: "No job cards found on the page" });
+          return;
+        }
+
+        // Index extracted companies by name → linkedin_url so each job gets enrichment.
+        const companyLinkedinByName = new Map<string, string>();
+        for (const c of scraped.companies as Array<{ name?: string; linkedin_url?: string }>) {
+          if (c?.name && c?.linkedin_url) companyLinkedinByName.set(c.name, c.linkedin_url);
+        }
+
+        const payload: D1JobInput[] = (scraped.jobs as Array<{
+          title?: string;
+          company?: string;
+          url?: string;
+          location?: string;
+          salary?: string;
+          description?: string;
+          archived?: boolean;
+        }>)
+          .filter((j) => j.title && j.company && j.url)
+          .map((j) => ({
+            title: j.title!,
+            company: j.company!,
+            url: j.url!,
+            companyLinkedinUrl: j.company ? companyLinkedinByName.get(j.company) ?? null : null,
+            location: j.location ?? null,
+            salary: j.salary ?? null,
+            description: j.description ?? null,
+            archived: !!j.archived,
+          }));
+
+        await notifyTab({ status: `Saving ${payload.length} to D1...` });
+        const result = await importJobsToD1(payload);
+
+        if (!result.ok) {
+          await notifyTab({ error: result.error || "D1 import failed" });
+          return;
+        }
+
+        await notifyTab({
+          done: true,
+          inserted: result.inserted,
+          skipped: result.skipped,
+          total: result.total,
+          pagesScraped: scraped.pagesScraped,
+          status: `Imported ${result.inserted} / skipped ${result.skipped} (${scraped.pagesScraped} pages)`,
+        });
+      } catch (err) {
+        await notifyTab({ error: err instanceof Error ? err.message : String(err) });
+      } finally {
+        chrome.runtime.onMessage.removeListener(progressListener);
         stopKeepAlive();
       }
     })();

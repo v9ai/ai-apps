@@ -6,10 +6,20 @@
   "vars": {
     // Eventual Vercel project URL. For dev, any public URL works.
     "ORIGIN": "https://agenticleadgen.xyz"
+    // JOBS_D1_TOKEN is provisioned via `wrangler secret put JOBS_D1_TOKEN`.
   },
   "durable_objects": {
     "bindings": [{ "name": "RL", "class_name": "RateLimiter" }]
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "lead-gen-jobs",
+      // Replace with the real id after `wrangler d1 create lead-gen-jobs`.
+      "database_id": "REPLACE_WITH_D1_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["RateLimiter"] }
   ],
