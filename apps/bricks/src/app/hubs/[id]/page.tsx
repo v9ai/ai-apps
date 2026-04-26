@@ -432,7 +432,7 @@ export default function HubPage() {
           {GAMES.map((game) => (
             <Link
               key={game.title}
-              href="/games"
+              href={game.href ?? "/games"}
               className={css({
                 position: "relative",
                 bg: "plate.surface",
@@ -494,10 +494,10 @@ export default function HubPage() {
                   fontWeight: "800",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
-                  color: "ink.faint",
+                  color: game.href ? "lego.orange" : "ink.faint",
                 })}
               >
-                {t.comingSoon}
+                {game.href ? "Play →" : t.comingSoon}
               </span>
             </Link>
           ))}

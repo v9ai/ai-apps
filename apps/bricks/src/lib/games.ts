@@ -4,6 +4,7 @@ export interface GameCard {
   tagline: string;
   taglineRo: string;
   accent: string;
+  href?: string;
 }
 
 export const GAMES: GameCard[] = [
@@ -45,9 +46,10 @@ export const GAMES: GameCard[] = [
   {
     title: "IMU Quest",
     titleRo: "Provocarea IMU",
-    tagline: "Five-round motion challenge that exercises every IMU sensor on the Essential Hub.",
-    taglineRo: "Cinci runde de mișcare care pun la treabă fiecare senzor IMU al Essential Hub.",
+    tagline: "Tilt your Essential Hub to pilot a ship through asteroids — every IMU sensor wired in.",
+    taglineRo: "Înclină Essential Hub-ul ca să pilotezi nava printre asteroizi — toți senzorii IMU implicați.",
     accent: "#0EA5E9",
+    href: "/games/game",
   },
   {
     title: "Beacon Tag",
