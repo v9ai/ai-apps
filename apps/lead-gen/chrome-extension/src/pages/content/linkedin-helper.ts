@@ -1824,7 +1824,7 @@ function extractCompaniesFromFeedPosts(): Array<{ name: string; linkedin_url: st
 }
 
 // Function to extract job data including salary
-function extractJobData() {
+async function extractJobData() {
   // Detect the page type
   const isLinkedIn = window.location.hostname.includes("linkedin.com");
 
@@ -1844,7 +1844,7 @@ function extractJobData() {
   } else if (isLinkedIn) {
     // Single-job detail pages (URL rewritten when a search card is clicked).
     if (window.location.pathname.startsWith("/jobs/view/")) {
-      const detail = extractLinkedInJobDetailPage();
+      const detail = await extractLinkedInJobDetailPage();
       if (detail.length > 0) return detail;
       // Fall through to card scraper if the detail panel isn't present
       // (e.g. search sidebar still mounted with cards).
@@ -1855,51 +1855,94 @@ function extractJobData() {
   return [];
 }
 
+// Poll for the AboutTheJob component; LinkedIn's SPA renders the panel async.
+async function waitForAboutJobNode(timeoutMs = 5000): Promise<Element | null> {
+  const intervalMs = 250;
+  const tries = Math.ceil(timeoutMs / intervalMs);
+  for (let i = 0; i < tries; i++) {
+    const node = document.querySelector('[componentkey^="JobDetails_AboutTheJob_"]');
+    if (node) return node;
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  return document.querySelector('[componentkey^="JobDetails_AboutTheJob_"]');
+}
+
+// Walk from the company anchor's container to the next sibling <p> with
+// substantial text and no " · " separators — that's the title.
+function findTitleNearCompany(outerA: Element | null): string | null {
+  if (!outerA) return null;
+  const container = outerA.parentElement;
+  if (!container) return null;
+  // Search forward through siblings (and their descendants) for a candidate <p>.
+  let cursor: Element | null = container;
+  for (let hops = 0; hops < 6 && cursor; hops++) {
+    const ps = cursor.querySelectorAll("p");
+    for (const p of Array.from(ps)) {
+      const txt = p.textContent?.trim() ?? "";
+      if (txt.length < 5 || txt.length > 300) continue;
+      if (txt.includes(" · ")) continue;
+      if (/^application status$/i.test(txt)) continue;
+      if (/^about the (job|company)$/i.test(txt)) continue;
+      // Skip the company-name <p> which sits inside the company anchor block.
+      if (outerA.contains(p)) continue;
+      return txt;
+    }
+    cursor = cursor.nextElementSibling ?? cursor.parentElement;
+  }
+  return null;
+}
+
 // Extract a single job from the /jobs/view/{id} detail panel.
-// LinkedIn's CSS class names are hashed and rotate, so we anchor to:
-//   - componentkey="JobDetails_AboutTheJob_<jobId>" (description container)
-//   - data-testid="expandable-text-box" (description text node)
-//   - aria-label="Company, <name>." (company anchor)
-//   - document.title (job title — stable format)
-function extractLinkedInJobDetailPage() {
+// LinkedIn's CSS classes are hashed; we anchor to stable hooks:
+//   - componentkey="JobDetails_AboutTheJob_<jobId>"
+//   - data-testid="expandable-text-box"
+//   - aria-label="Company, <name>." (on a <div> inside the company <a>)
+async function extractLinkedInJobDetailPage() {
   const idMatch = window.location.pathname.match(/\/jobs\/view\/(\d+)/);
   if (!idMatch) return [];
   const jobId = idMatch[1];
 
-  // Company anchor: aria-label always begins with "Company, " on this view.
-  const companyAnchor = document.querySelector(
-    'a[aria-label^="Company, "]',
-  ) as HTMLAnchorElement | null;
-  let company: string | null = null;
-  let companyLinkedinUrl: string | null = null;
-  if (companyAnchor) {
-    companyLinkedinUrl = companyAnchor.href || null;
-    const aria = companyAnchor.getAttribute("aria-label") || "";
-    company = aria.replace(/^Company,\s*/, "").replace(/\.$/, "").trim() || null;
+  const aboutJobNode = await waitForAboutJobNode(5000);
+
+  // Company: the aria-label sits on a <div> inside the company <a>.
+  const companyDiv = document.querySelector('[aria-label^="Company, "]');
+  const outerA =
+    (companyDiv?.closest("a") as HTMLAnchorElement | null) ??
+    (document.querySelector(
+      'a[href*="/company/"][href*="/life/"]',
+    ) as HTMLAnchorElement | null);
+  const companyLinkedinUrl = outerA?.href || null;
+  const aria = companyDiv?.getAttribute("aria-label") ?? "";
+  let company = aria.replace(/^Company,\s*/, "").replace(/\.$/, "").trim() || null;
+  if (!company && outerA) {
+    const innerText =
+      outerA.querySelector("a")?.textContent?.trim() ??
+      outerA.textContent?.trim() ??
+      "";
+    if (innerText && innerText.length < 120) company = innerText;
   }
 
-  // Title via document.title — LinkedIn formats it as either
-  // "Job Title | LinkedIn" or "Job Title - Company | LinkedIn".
-  let title: string | null = null;
-  if (document.title) {
-    let t = document.title.replace(/\s*\|\s*LinkedIn\s*$/i, "").trim();
+  // Title: prefer DOM walk near the company anchor, else document.title, else stub.
+  let title: string | null = findTitleNearCompany(outerA);
+  if (!title && document.title) {
+    let t = document.title
+      .replace(/^\(\d+\+?\)\s*/, "") // strip "(99+) " notification prefix
+      .replace(/\s*\|\s*LinkedIn\s*$/i, "")
+      .trim();
     if (company && t.endsWith(` - ${company}`)) {
       t = t.slice(0, -(` - ${company}`).length).trim();
     }
     title = t || null;
   }
+  if (!title) title = `LinkedIn job ${jobId}`;
 
   // Description: stable componentkey + testid.
-  const aboutJobNode = document.querySelector(
-    '[componentkey^="JobDetails_AboutTheJob_"]',
-  );
   const descNode = aboutJobNode?.querySelector(
     '[data-testid="expandable-text-box"]',
   ) as HTMLElement | null;
   const description = descNode?.innerText?.trim() || null;
 
-  // Location: the first <p> with a " · " separator near the top of the panel
-  // (format: "EMEA · 6 days ago · Over 100 applicants").
+  // Location: first <p> with two " · " separators near the top of the panel.
   let location: string | null = null;
   const allP = document.querySelectorAll("p");
   for (const p of Array.from(allP)) {
@@ -1913,7 +1956,7 @@ function extractLinkedInJobDetailPage() {
     }
   }
 
-  // Salary: scan the description for a currency range.
+  // Salary: scan description for a currency range.
   let salary: string | null = null;
   if (description) {
     const m = description.match(
@@ -1922,7 +1965,14 @@ function extractLinkedInJobDetailPage() {
     if (m) salary = m[0].trim();
   }
 
-  if (!title) return [];
+  console.debug("[lg-detail-scraper]", {
+    url: window.location.href,
+    jobId,
+    title,
+    company,
+    location,
+    hasDesc: !!description,
+  });
 
   return [
     {
@@ -2129,9 +2179,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!isSupportedSite) return false;
 
   if (message.action === "extractJobs") {
-    const jobs = extractJobData();
-    sendResponse({ jobs });
-    return true;
+    extractJobData().then((jobs) => sendResponse({ jobs }));
+    return true; // keep the message channel open for async sendResponse
   }
 
   if (message.action === "extractJobsWithPagination") {

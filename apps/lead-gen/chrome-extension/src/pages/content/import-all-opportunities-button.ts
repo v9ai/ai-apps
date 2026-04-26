@@ -30,7 +30,8 @@ function isOnJobsSearchPage(): boolean {
     p === "/jobs/search/" ||
     p === "/jobs/search" ||
     p.startsWith("/jobs/search/") ||
-    p.startsWith("/jobs/view/")
+    p.startsWith("/jobs/view/") ||
+    p.startsWith("/jobs/collections/")
   );
 }
 
