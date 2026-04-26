@@ -175,6 +175,8 @@ async function main(): Promise<void> {
   let processed = 0;
   let drained = false;
   let lastStop = "";
+  let stuckIters = 0; // consecutive iterations that returned total=0 with no
+                     // recognizable stop_reason → server-side crash, bail out
 
   for (let iter = 1; iter <= MAX_ITERS; iter += 1) {
     const remainingCap =
@@ -211,6 +213,24 @@ async function main(): Promise<void> {
     if (result.stop_reason && result.stop_reason.startsWith("load_error:")) {
       console.error(`[iter ${iter}] aborting — server reported ${result.stop_reason}`);
       break;
+    }
+    // Stuck-server bail-out: a 200 response with total=0 AND no recognizable
+    // stop_reason means the server-side run errored out before producing the
+    // expected payload (typical signature: a node raised mid-batch and the
+    // graph returned an empty state). Looping forever here just burns the
+    // queue. Two consecutive stuck iterations = abort.
+    if ((result.total ?? 0) === 0 && !result.stop_reason) {
+      stuckIters += 1;
+      if (stuckIters >= 2) {
+        console.error(
+          `[iter ${iter}] aborting — ${stuckIters} consecutive iterations returned total=0 ` +
+            `with no stop_reason; server is likely crashing mid-batch (check langgraph dev log)`,
+        );
+        lastStop = "client_stuck_server_empty_response";
+        break;
+      }
+    } else {
+      stuckIters = 0;
     }
     // budget_exhausted / count_reached → loop and call again.
   }

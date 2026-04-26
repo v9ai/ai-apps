@@ -30,5 +30,17 @@
     // and `wrangler deploy` (the digest is non-secret — just a hash).
     // The raw token lives in sub-Worker secrets only.
     "LANGGRAPH_AUTH_TOKEN_HASH": "3c4c65d4a6e6e818fa0e55a4b3fdd314189c65b3c66d50d52622d0539f6e75ab"
-  }
+  },
+  // ── Legacy DO purge ──────────────────────────────────────────────────────
+  // This worker (lead-gen-langgraph) was a monolithic Container DO before the
+  // 3-container split. The legacy `LeadgenContainer` DO class persisted at
+  // the platform level after dispatcher.js removed its binding, and continued
+  // returning bare 500s for /runs/wait against the public hostname.
+  // Declarative deletion forces CF to purge instances of the class on next
+  // deploy. SQLite state inside the DO is lost; thread/run checkpoints of
+  // record live in Neon via AsyncPostgresSaver, so any resumable state
+  // survives.
+  "migrations": [
+    { "tag": "v_remove_legacy_container", "deleted_classes": ["LeadgenContainer"] }
+  ]
 }
