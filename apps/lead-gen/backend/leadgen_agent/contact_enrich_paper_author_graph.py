@@ -769,10 +769,15 @@ async def classify_buyer_fit_node(
 # --------------------------------------------------------------------------- #
 
 
-# ── GitHub handle resolver (Phase A1) ────────────────────────────────────────
+# ── GitHub GraphQL enrichment ────────────────────────────────────────────────
+# Single-source GraphQL replaces ~75 REST calls (5-arm search × candidates ×
+# hydration) and the ~12-call profile hydrate (1 user + 1 repos + 10
+# languages). Two queries: ResolveAuthor (~2 cost points, used by
+# resolve_github_handle) and HydrateUser (~7 cost points, used by
+# enrich_github_profile). Caps nested ``first:`` values to keep cost low.
 
-_GH_API_BASE = "https://api.github.com"
-_GH_USER_AGENT = "lead-gen-paper-author-enrichment/1.0"
+from . import _gh_graphql
+
 _GH_HIT_THRESHOLD = 0.70
 _GH_LOW_CONF_THRESHOLD = 0.45
 
@@ -781,16 +786,92 @@ _AI_TOPIC_KEYWORDS: tuple[str, ...] = (
     "mlops", "fine-tuning", "diffusion", "neural-networks",
 )
 
+_GH_GQL_RESOLVE_QUERY = """
+query ResolveAuthor(
+  $qOrcid: String!, $qNameAffil: String!, $qNameCountry: String!,
+  $qFullname: String!, $qNameTopic: String!,
+  $runOrcid: Boolean!, $runAffil: Boolean!,
+  $runCountry: Boolean!, $runTopic: Boolean!
+) {
+  orcid_exact: search(query: $qOrcid, type: USER, first: 3)
+      @include(if: $runOrcid) { ...CandidateConn }
+  name_affil: search(query: $qNameAffil, type: USER, first: 3)
+      @include(if: $runAffil) { ...CandidateConn }
+  name_country: search(query: $qNameCountry, type: USER, first: 3)
+      @include(if: $runCountry) { ...CandidateConn }
+  fullname: search(query: $qFullname, type: USER, first: 3) {
+    ...CandidateConn
+  }
+  name_topic: search(query: $qNameTopic, type: USER, first: 3)
+      @include(if: $runTopic) { ...CandidateConn }
+  rateLimit { cost remaining resetAt }
+}
 
-def _gh_headers() -> dict[str, str]:
-    headers = {
-        "User-Agent": _GH_USER_AGENT,
-        "Accept": "application/vnd.github+json",
+fragment CandidateConn on SearchResultItemConnection {
+  nodes {
+    ... on User {
+      login name bio company location websiteUrl twitterUsername
+      followers { totalCount }
+      organizations(first: 3) { nodes { login } }
+      topRepos: repositories(
+        first: 3, ownerAffiliations: OWNER, isFork: false,
+        orderBy: { field: STARGAZERS, direction: DESC }
+      ) { nodes { primaryLanguage { name } } }
     }
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
-    if token:
-        headers["Authorization"] = f"token {token}"
-    return headers
+  }
+}
+"""
+
+_GH_GQL_HYDRATE_QUERY = """
+query HydrateUser($login: String!) {
+  user(login: $login) {
+    login databaseId url
+    name bio company location email websiteUrl twitterUsername
+    avatarUrl isHireable createdAt updatedAt
+    socialAccounts(first: 10) { nodes { provider url displayName } }
+    organizations(first: 20) { nodes { login name } }
+    followers { totalCount }
+    following { totalCount }
+    publicRepositories: repositories(privacy: PUBLIC) { totalCount }
+    publicGists: gists(privacy: PUBLIC) { totalCount }
+    contributionsCollection {
+      totalCommitContributions
+      totalPullRequestContributions
+      totalIssueContributions
+      totalRepositoriesWithContributedCommits
+      contributionCalendar { totalContributions }
+    }
+    pinnedItems(first: 6, types: [REPOSITORY]) {
+      nodes { ... on Repository {
+        name nameWithOwner stargazerCount pushedAt
+        primaryLanguage { name }
+        repositoryTopics(first: 10) { nodes { topic { name } } }
+      } }
+    }
+    repositoriesContributedTo(
+      first: 10, contributionTypes: [COMMIT, PULL_REQUEST]
+    ) { nodes { nameWithOwner stargazerCount } }
+    repositories(
+      first: 30, ownerAffiliations: OWNER, isFork: false, privacy: PUBLIC,
+      orderBy: { field: STARGAZERS, direction: DESC }
+    ) {
+      totalCount
+      nodes {
+        name nameWithOwner url description
+        stargazerCount forkCount pushedAt
+        primaryLanguage { name }
+        languages(first: 10, orderBy: { field: SIZE, direction: DESC }) {
+          edges { size node { name } }
+        }
+        repositoryTopics(first: 10) { nodes { topic { name } } }
+      }
+    }
+    sponsorshipsAsMaintainer(first: 1) { totalCount }
+    sponsorsListing { name }
+  }
+  rateLimit { cost remaining resetAt }
+}
+"""
 
 
 def _institution_token(institution: str) -> str:
@@ -927,63 +1008,109 @@ def _gh_score_candidate(
     return score, evidence
 
 
-async def _gh_search_users(
-    client: httpx.AsyncClient, query: str, per_page: int = 5
-) -> list[dict[str, Any]]:
-    """Issue one GH Search Users call, return the items list (may be empty)."""
-    res = await client.get(
-        f"{_GH_API_BASE}/search/users",
-        params={"q": query, "per_page": str(per_page)},
-        headers=_gh_headers(),
-    )
-    if res.status_code != 200:
-        log.info("github search non-200 (%s) for q=%r", res.status_code, query)
-        return []
-    data = res.json() if res.headers.get("content-type", "").startswith("application/json") else {}
-    items = data.get("items") if isinstance(data, dict) else None
-    return [c for c in (items or []) if isinstance(c, dict)]
+def _gh_node_to_rest_shape(node: dict[str, Any]) -> dict[str, Any]:
+    """Flatten a GraphQL User search-result node into the REST-style dict that
+    ``_gh_score_candidate`` consumes. Coerces nulls to empty strings / zeros so
+    downstream ``(x or "")`` patterns behave identically to REST responses.
+
+    Maps GraphQL → REST: ``websiteUrl`` → ``blog``;
+    ``followers.totalCount`` → ``followers`` (int).
+    """
+    followers = (node.get("followers") or {}).get("totalCount") or 0
+    return {
+        "login": node.get("login") or "",
+        "name": node.get("name") or "",
+        "bio": node.get("bio") or "",
+        "company": node.get("company") or "",
+        "location": node.get("location") or "",
+        "blog": node.get("websiteUrl") or "",
+        "followers": int(followers),
+    }
 
 
-async def _gh_get_user(
-    client: httpx.AsyncClient, login: str
-) -> dict[str, Any] | None:
-    """Hydrate a single GH user (bio, company, location, followers, …)."""
-    res = await client.get(
-        f"{_GH_API_BASE}/users/{login}", headers=_gh_headers()
-    )
-    if res.status_code != 200:
-        return None
-    return res.json() if isinstance(res.json(), dict) else None
-
-
-async def _gh_top_repo_languages(
-    client: httpx.AsyncClient, login: str, limit: int = 5
-) -> list[str]:
-    """Return up to `limit` primary languages from the user's top recent repos."""
-    res = await client.get(
-        f"{_GH_API_BASE}/users/{login}/repos",
-        params={"per_page": "10", "sort": "pushed", "type": "owner"},
-        headers=_gh_headers(),
-    )
-    if res.status_code != 200:
-        return []
-    repos = res.json()
-    if not isinstance(repos, list):
-        return []
+def _gh_node_top_languages(node: dict[str, Any]) -> list[str]:
+    """Pull primary languages from a search-result node's ``topRepos`` list."""
+    repos = ((node.get("topRepos") or {}).get("nodes") or [])
     langs: list[str] = []
     seen: set[str] = set()
     for r in repos:
         if not isinstance(r, dict):
             continue
-        if r.get("fork"):
-            continue
-        lang = r.get("language")
-        if isinstance(lang, str) and lang and lang not in seen:
-            seen.add(lang)
-            langs.append(lang)
-        if len(langs) >= limit:
-            break
+        primary = r.get("primaryLanguage") or {}
+        name = primary.get("name") if isinstance(primary, dict) else None
+        if isinstance(name, str) and name and name not in seen:
+            seen.add(name)
+            langs.append(name)
     return langs
+
+
+_GH_ARM_ORDER: tuple[str, ...] = (
+    "orcid_exact", "name_affil", "name_country", "fullname", "name_topic",
+)
+
+
+async def _gh_resolve_arms_gql(
+    client: httpx.AsyncClient,
+    *,
+    first: str,
+    last: str,
+    orcid: str,
+    inst_token: str,
+    institution_country: str,
+    top_topic: str,
+) -> tuple[dict[str, dict[str, Any]], dict[str, list[str]], dict[str, Any]]:
+    """Fire all 5 search arms in ONE GraphQL request.
+
+    Arms with empty inputs are skipped via ``@include`` flags. Returns:
+      - ``by_login``: one User node per unique candidate login (first arm wins).
+      - ``arms_matched``: ``login -> [arm_id, ...]`` in arm-priority order.
+      - ``rate_limit``: ``{cost, remaining, reset_at}`` from the response.
+
+    Raises ``_gh_graphql.GraphQLError`` subclasses on transport / API failures —
+    callers map them to the existing ``api_error`` sentinel.
+    """
+    full_name = f"{first} {last}".strip()
+    variables: dict[str, Any] = {
+        "qOrcid": (f"{orcid} in:bio" if orcid else ""),
+        "qNameAffil": (f'"{full_name}" {inst_token} in:bio,fullname' if inst_token else ""),
+        "qNameCountry": (f'"{full_name}" location:{institution_country}' if institution_country else ""),
+        "qFullname": f'fullname:"{full_name}"',
+        "qNameTopic": "",
+        "runOrcid": bool(orcid),
+        "runAffil": bool(inst_token),
+        "runCountry": bool(institution_country),
+        "runTopic": False,
+    }
+    if top_topic:
+        topic_kw = (top_topic.split() or [top_topic])[0]
+        variables["qNameTopic"] = f'"{full_name}" {topic_kw} in:bio'
+        variables["runTopic"] = True
+
+    data, _errors = await _gh_graphql.post(
+        client, _GH_GQL_RESOLVE_QUERY, variables
+    )
+
+    by_login: dict[str, dict[str, Any]] = {}
+    arms_matched: dict[str, list[str]] = {}
+    for arm_id in _GH_ARM_ORDER:
+        arm_data = data.get(arm_id) or {}
+        for node in arm_data.get("nodes") or []:
+            if not isinstance(node, dict):
+                continue
+            login = node.get("login")
+            if not isinstance(login, str) or not login:
+                continue
+            if login not in by_login:
+                by_login[login] = node
+            arms_matched.setdefault(login, []).append(arm_id)
+
+    rl_raw = data.get("rateLimit") or {}
+    rate_limit: dict[str, Any] = {
+        "cost": int(rl_raw.get("cost") or 0),
+        "remaining": int(rl_raw.get("remaining") or 0),
+        "reset_at": rl_raw.get("resetAt") or "",
+    }
+    return by_login, arms_matched, rate_limit
 
 
 def _persist_gh_match(
@@ -1036,19 +1163,24 @@ def _persist_gh_match(
 
 
 async def resolve_github_handle(state: ContactEnrichPaperAuthorState) -> dict:
-    """Resolve a GitHub handle for the contact via 5-arm Search Users strategy.
+    """Resolve a GitHub handle for the contact via 5-arm GraphQL search.
 
-    Arms tried in order, stop on first arm with score >= _GH_HIT_THRESHOLD:
-      1. orcid_exact   - "<orcid> in:bio"          (when state.orcid is set)
-      2. name_affil    - "<First Last> <inst>"     (when state.institution set)
-      3. name_country  - "<First Last> location:*" (when institution_country set)
-      4. fullname      - 'fullname:"<First Last>"'
-      5. name_topic    - "<First Last> <topic>"    (when state.topics[0] set)
+    Arms (sent in ONE batched request via aliased ``search`` queries; arms with
+    empty inputs are skipped via ``@include`` flags):
+      1. orcid_exact   - ``<orcid> in:bio``          (when state.orcid set)
+      2. name_affil    - ``"<First Last>" <inst> in:bio,fullname``
+      3. name_country  - ``"<First Last>" location:*``
+      4. fullname      - ``fullname:"<First Last>"``           (always run)
+      5. name_topic    - ``"<First Last>" <topic> in:bio``
 
-    Bands: >=0.70 hit, 0.45-0.70 low_conf, <0.45 no_match. ORCID hit
-    short-circuits to 'hit' immediately.
+    Each candidate is scored once even if it appears in multiple arms; the
+    winning arm is the highest-priority arm in which it appeared (arm order
+    listed above).
 
-    Defensive: any HTTP / parse error returns api_error and lets sibling
+    Bands: >=0.70 hit, 0.45-0.70 low_conf, <0.45 no_match. ORCID literal in
+    bio short-circuits to score >= 0.95.
+
+    Defensive: any GraphQL / transport error → ``api_error`` and sibling
     branches finish unaffected.
     """
     contact = state.get("contact") or {}
@@ -1082,61 +1214,71 @@ async def resolve_github_handle(state: ContactEnrichPaperAuthorState) -> dict:
     topics = state.get("topics") or []
     top_topic = topics[0] if topics else ""
 
-    full_name = f"{first} {last}"
-    arms: list[tuple[str, str]] = []
-    if orcid:
-        arms.append(("orcid_exact", f"{orcid} in:bio"))
-    if inst_token:
-        arms.append(("name_affil", f'"{full_name}" {inst_token} in:bio,fullname'))
-    if institution_country:
-        arms.append(("name_country", f'"{full_name}" location:{institution_country}'))
-    arms.append(("fullname", f'fullname:"{full_name}"'))
-    if top_topic:
-        topic_kw = top_topic.split()[0] if top_topic.split() else top_topic
-        arms.append(("name_topic", f'"{full_name}" {topic_kw} in:bio'))
-
     best_score = 0.0
     best_login: str | None = None
-    best_arm = arms[0][0] if arms else "fullname"
+    best_arm = "fullname"
     best_evidence: dict[str, Any] = {}
+    rate_limit: dict[str, Any] = {}
 
     try:
         gate = _enrich_gates.gh_gate()
         async with gate:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                for arm_id, query in arms:
-                    items = await _gh_search_users(client, query, per_page=5)
-                    if not items:
-                        continue
-                    for cand in items[:5]:
-                        login = cand.get("login")
-                        if not isinstance(login, str) or not login:
-                            continue
-                        # Hydrate user details (bio, company, followers).
-                        full = await _gh_get_user(client, login)
-                        if not full:
-                            continue
-                        langs = await _gh_top_repo_languages(client, login)
-                        score, evidence = _gh_score_candidate(
-                            full,
-                            first=first,
-                            last=last,
-                            orcid=orcid,
-                            institution_token=inst_token,
-                            top_topic=top_topic,
-                            top_repo_languages=langs,
-                        )
-                        evidence["arm"] = arm_id
-                        evidence["query"] = query
-                        if score > best_score:
-                            best_score = score
-                            best_login = login
-                            best_arm = arm_id
-                            best_evidence = evidence
-                    if best_score >= _GH_HIT_THRESHOLD:
-                        break
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                by_login, arms_matched, rate_limit = await _gh_resolve_arms_gql(
+                    client,
+                    first=first,
+                    last=last,
+                    orcid=orcid,
+                    inst_token=inst_token,
+                    institution_country=institution_country,
+                    top_topic=top_topic,
+                )
+                for login, node in by_login.items():
+                    rest_shape = _gh_node_to_rest_shape(node)
+                    langs = _gh_node_top_languages(node)
+                    score, evidence = _gh_score_candidate(
+                        rest_shape,
+                        first=first,
+                        last=last,
+                        orcid=orcid,
+                        institution_token=inst_token,
+                        top_topic=top_topic,
+                        top_repo_languages=langs,
+                    )
+                    matched = arms_matched.get(login, [])
+                    evidence["arm"] = matched[0] if matched else "fullname"
+                    evidence["arms_matched"] = matched
+                    if score > best_score:
+                        best_score = score
+                        best_login = login
+                        best_arm = evidence["arm"]
+                        best_evidence = evidence
+    except _gh_graphql.AuthError as e:
+        log.warning("gh graphql auth error: %s", e)
+        _persist_gh_match(contact_id, None, 0.0, "api_error", best_arm, {"error": "auth"})
+        return {
+            "github_handle_status": "api_error",
+            "github_handle_arm": best_arm,
+            "enrichers_completed": ["github_handle"],
+        }
+    except _gh_graphql.RateLimitError as e:
+        log.warning("gh graphql rate limited: %s", e)
+        _persist_gh_match(contact_id, None, 0.0, "api_error", best_arm, {"error": "rate_limited"})
+        return {
+            "github_handle_status": "api_error",
+            "github_handle_arm": best_arm,
+            "enrichers_completed": ["github_handle"],
+        }
+    except _gh_graphql.GraphQLError as e:
+        log.warning("gh graphql error: %s", e)
+        _persist_gh_match(contact_id, None, 0.0, "api_error", best_arm, {"error": str(e)[:200]})
+        return {
+            "github_handle_status": "api_error",
+            "github_handle_arm": best_arm,
+            "enrichers_completed": ["github_handle"],
+        }
     except httpx.HTTPError as e:
-        log.warning("gh search transport error: %s", e)
+        log.warning("gh graphql transport error: %s", e)
         _persist_gh_match(contact_id, None, 0.0, "api_error", best_arm, {"error": str(e)})
         return {
             "github_handle_status": "api_error",
@@ -1144,7 +1286,7 @@ async def resolve_github_handle(state: ContactEnrichPaperAuthorState) -> dict:
             "enrichers_completed": ["github_handle"],
         }
     except Exception as e:  # noqa: BLE001 — node must not raise
-        log.warning("gh search unexpected error: %s", e)
+        log.warning("gh graphql unexpected error: %s", e)
         _persist_gh_match(contact_id, None, 0.0, "api_error", best_arm, {"error": str(e)})
         return {
             "github_handle_status": "api_error",
@@ -1158,6 +1300,9 @@ async def resolve_github_handle(state: ContactEnrichPaperAuthorState) -> dict:
         status = "low_conf"
     else:
         status = "no_match"
+
+    if rate_limit:
+        best_evidence.setdefault("rate_limit", rate_limit)
 
     _persist_gh_match(
         contact_id, best_login, best_score, status, best_arm, best_evidence

@@ -505,22 +505,19 @@ class GhClient:
     # ── GraphQL ───────────────────────────────────────────────────────────
 
     async def graphql(self, query: str, variables: dict[str, Any] | None = None) -> dict[str, Any]:
-        body: dict[str, Any] = {"query": query}
-        if variables:
-            body["variables"] = variables
-        resp = await self._client.post(GITHUB_GRAPHQL, json=body)
-        if resp.status_code in (429, 403):
-            raise _RateLimitError(resp.headers.get("x-ratelimit-reset", "unknown"))
-        if resp.status_code >= 400:
-            raise RuntimeError(f"GraphQL {resp.status_code}: {resp.text[:400]}")
-        raw = resp.json()
-        data = raw.get("data")
-        errors = raw.get("errors")
-        if errors and (data is None or data == {}):
-            raise RuntimeError(f"GraphQL errors: {json.dumps(errors)[:400]}")
-        if errors:
-            log.warning("GraphQL partial success: %d errors", len(errors))
-        return data or {}
+        # Delegate transport + error mapping to the shared helper. Callers of
+        # this method depend on the legacy contract: returns ``data`` dict,
+        # raises ``_RateLimitError`` on throttling and ``RuntimeError`` on
+        # everything else — preserve that here.
+        from . import _gh_graphql
+
+        try:
+            data, _errors = await _gh_graphql.post(self._client, query, variables)
+            return data
+        except _gh_graphql.RateLimitError as e:
+            raise _RateLimitError(getattr(e, "reset_at", "unknown")) from e
+        except _gh_graphql.GraphQLError as e:
+            raise RuntimeError(str(e)) from e
 
     async def get_users_graphql(self, logins: Sequence[str]) -> list[dict[str, Any]]:
         if not logins:
