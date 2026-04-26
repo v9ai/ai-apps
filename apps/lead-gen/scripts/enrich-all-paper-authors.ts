@@ -96,9 +96,11 @@ async function callBatch(
     assistant_id: "contact_enrich_paper_authors_batch",
     input,
   });
-  // Wall-clock budget is server-side; client timeout adds 60s headroom for
-  // synth/persist + HTTP framing on the way back.
-  const timeoutMs = (BUDGET_S + 60) * 1000;
+  // Server-side wall-clock budget is BUDGET_S; client adds 240s headroom for
+  // queue wait (langgraph dev's single-worker queue routinely sits at 100s+
+  // when other graphs are running) plus synth/persist + HTTP framing on the
+  // way back. Empirically a successful 480s run completes in ~590s wall time.
+  const timeoutMs = (BUDGET_S + 240) * 1000;
 
   const t0 = Date.now();
   const res = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
