@@ -99,7 +99,7 @@ export default function HubPage() {
 
   if (loading) {
     return (
-      <main className={css({ maxW: "3xl", mx: "auto", px: "5", py: "10" })}>
+      <main className={css({ w: "full", px: { base: "5", md: "8" }, py: "10" })}>
         <p className={css({ color: "ink.muted", fontSize: "sm" })}>{t.loading}</p>
       </main>
     );
@@ -107,7 +107,7 @@ export default function HubPage() {
 
   if (error || !hub) {
     return (
-      <main className={css({ maxW: "3xl", mx: "auto", px: "5", py: "10" })}>
+      <main className={css({ w: "full", px: { base: "5", md: "8" }, py: "10" })}>
         <p className={css({ color: "lego.red", fontSize: "sm", fontWeight: "700" })}>
           {error || t.notFound}
         </p>
@@ -134,7 +134,7 @@ export default function HubPage() {
   const capabilities = HUB_CAPABILITIES[hubType] ?? [];
 
   return (
-    <main className={css({ maxW: "3xl", mx: "auto", px: "5", py: "10" })}>
+    <main className={css({ w: "full", px: { base: "5", md: "8" }, py: "10" })}>
       <Link
         href="/my-parts"
         className={css({

@@ -427,6 +427,7 @@ async function handleJobsD1List(req: Request, env: Env): Promise<Response> {
             c.name AS company_name, c.key AS company_key
        FROM opportunities o
        LEFT JOIN companies c ON c.id = o.company_id
+       WHERE COALESCE(o.archived, 0) = 0
        ORDER BY o.created_at DESC
        LIMIT ?`,
   )
@@ -434,6 +435,49 @@ async function handleJobsD1List(req: Request, env: Env): Promise<Response> {
     .all<D1OpportunityListRow>();
 
   return json(req, { rows: res.results ?? [] });
+}
+
+// ── D1 archive: hide a D1 opportunity from the /opportunities page ──
+//
+// POST /api/jobs/d1/opportunities/archive
+//   headers: Authorization: Bearer <JOBS_D1_TOKEN>
+//   body:    { id: string }
+//   reply:   { archived: boolean }
+
+async function handleJobsD1Archive(req: Request, env: Env): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "POST") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return json(req, { error: "Invalid JSON" }, 400);
+  }
+
+  const id = asString((body as { id?: unknown })?.id);
+  if (!id) return json(req, { error: "Missing id" }, 400);
+
+  const res = await env.DB.prepare(
+    `UPDATE opportunities SET archived = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+  )
+    .bind(id)
+    .run();
+
+  const changes = (res as { meta?: { changes?: number } }).meta?.changes ?? 0;
+  if (changes === 0) return json(req, { error: "Not found" }, 404);
+
+  return json(req, { archived: true });
 }
 
 export default {
@@ -445,6 +489,9 @@ export default {
     }
     if (url.pathname === "/api/jobs/d1/opportunities") {
       return handleJobsD1List(req, env);
+    }
+    if (url.pathname === "/api/jobs/d1/opportunities/archive") {
+      return handleJobsD1Archive(req, env);
     }
 
     const { tier, key, bodyText } = await classify(req, url);

@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
-import { Container, Heading, Text, Table, Badge, Flex } from "@radix-ui/themes";
+import { useMemo, useState, useTransition } from "react";
+import { Container, Heading, Text, Table, Badge, Flex, Button } from "@radix-ui/themes";
 import Link from "next/link";
-import { ExternalLinkIcon } from "@radix-ui/react-icons";
+import { useRouter } from "next/navigation";
+import { ExternalLinkIcon, EyeNoneIcon } from "@radix-ui/react-icons";
 import { EvalStatsPanel } from "./eval-stats-panel";
+import { blockOpportunity, archiveD1Opportunity } from "./actions";
 import type { D1OpportunityRow } from "@/lib/d1-opportunities";
 
 type OpportunityRow = {
@@ -46,12 +48,56 @@ export function OpportunitiesClient({
   opportunities: OpportunityRow[];
   d1Pending: D1OpportunityRow[];
 }) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+
   const filtered = useMemo(() => {
     return opportunities.filter((opp) => {
+      if (hidden.has(opp.id)) return false;
       const parsed: string[] = opp.tags ? JSON.parse(opp.tags) : [];
       return !parsed.includes("excluded");
     });
-  }, [opportunities]);
+  }, [opportunities, hidden]);
+
+  const visibleD1 = useMemo(
+    () => d1Pending.filter((d) => !hidden.has(d.id)),
+    [d1Pending, hidden],
+  );
+
+  function handleBlockPg(id: string) {
+    setHidden((prev) => new Set(prev).add(id));
+    startTransition(async () => {
+      const res = await blockOpportunity(id);
+      if (res?.error) {
+        setHidden((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        console.error("[block]", res.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  function handleArchiveD1(id: string) {
+    setHidden((prev) => new Set(prev).add(id));
+    startTransition(async () => {
+      const res = await archiveD1Opportunity(id);
+      if (res?.error) {
+        setHidden((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        console.error("[archive d1]", res.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
 
   return (
     <Container size="4" p="6">
@@ -79,6 +125,7 @@ export function OpportunitiesClient({
               <Table.ColumnHeaderCell>Score</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Added</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell></Table.ColumnHeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -144,6 +191,17 @@ export function OpportunitiesClient({
                       {new Date(opp.created_at).toLocaleDateString()}
                     </Text>
                   </Table.Cell>
+                  <Table.Cell>
+                    <Button
+                      size="1"
+                      variant="ghost"
+                      color="gray"
+                      onClick={() => handleBlockPg(opp.id)}
+                      title="Block (hide from list)"
+                    >
+                      <EyeNoneIcon width={12} height={12} /> Block
+                    </Button>
+                  </Table.Cell>
                 </Table.Row>
               );
             })}
@@ -151,11 +209,11 @@ export function OpportunitiesClient({
         </Table.Root>
       )}
 
-      {d1Pending.length > 0 && (
+      {visibleD1.length > 0 && (
         <>
           <Flex justify="between" align="center" mt="6" mb="3">
             <Heading size="4">Pending (D1)</Heading>
-            <Badge color="orange" size="2">{d1Pending.length}</Badge>
+            <Badge color="orange" size="2">{visibleD1.length}</Badge>
           </Flex>
           <Table.Root variant="surface">
             <Table.Header>
@@ -166,10 +224,11 @@ export function OpportunitiesClient({
                 <Table.ColumnHeaderCell>Salary</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Added</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell></Table.ColumnHeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {d1Pending.map((opp) => (
+              {visibleD1.map((opp) => (
                 <Table.Row key={opp.id}>
                   <Table.Cell>
                     <Flex align="center" gap="1">
@@ -207,6 +266,17 @@ export function OpportunitiesClient({
                     <Text size="1" color="gray">
                       {new Date(opp.created_at).toLocaleDateString()}
                     </Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Button
+                      size="1"
+                      variant="ghost"
+                      color="gray"
+                      onClick={() => handleArchiveD1(opp.id)}
+                      title="Block (hide from list)"
+                    >
+                      <EyeNoneIcon width={12} height={12} /> Block
+                    </Button>
                   </Table.Cell>
                 </Table.Row>
               ))}
