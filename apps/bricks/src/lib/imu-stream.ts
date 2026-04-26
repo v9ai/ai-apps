@@ -23,24 +23,100 @@ export interface ImuFrame {
   accelMag: number;
 }
 
+export interface ParserCallbacks {
+  onFrame: (f: ImuFrame) => void;
+  onOrientation?: (m: number[]) => void;
+  onReady?: () => void;
+}
+
+export interface TelemetryParser {
+  feed(text: string): void;
+  reset(): void;
+}
+
+export function createTelemetryParser(cb: ParserCallbacks): TelemetryParser {
+  let buffer = "";
+
+  function parseLine(line: string) {
+    if (!line) return;
+    if (line === "READY") {
+      cb.onReady?.();
+      return;
+    }
+    if (line.startsWith("T ")) {
+      const p = line.split(/\s+/);
+      if (p.length < 11) return;
+      const ax = parseFloat(p[3]);
+      const ay = parseFloat(p[4]);
+      const az = parseFloat(p[5]);
+      cb.onFrame({
+        pitch: parseFloat(p[1]),
+        roll: parseFloat(p[2]),
+        ax,
+        ay,
+        az,
+        heading: parseFloat(p[6]),
+        rotZ: parseFloat(p[7]),
+        avZ: parseFloat(p[8]),
+        up: parseInt(p[9], 10),
+        stationary: p[10] === "1",
+        accelMag: Math.sqrt(ax * ax + ay * ay + az * az),
+      });
+      return;
+    }
+    if (line.startsWith("O ") && cb.onOrientation) {
+      const nums = line
+        .split(/\s+/)
+        .slice(1)
+        .map((s) => parseFloat(s));
+      if (nums.length === 9) cb.onOrientation(nums);
+    }
+  }
+
+  return {
+    feed(text: string) {
+      if (!text) return;
+      buffer += text;
+      let nl: number;
+      while ((nl = buffer.indexOf("\n")) !== -1) {
+        const line = buffer.slice(0, nl).trim();
+        buffer = buffer.slice(nl + 1);
+        parseLine(line);
+      }
+    },
+    reset() {
+      buffer = "";
+    },
+  };
+}
+
+// --- HTTP poll transport (used in local-server mode) -------------------
+
 export interface ImuStreamHandle {
   stop(): void;
   ready: Promise<void>;
 }
 
-interface Callbacks {
-  onFrame: (f: ImuFrame) => void;
-  onOrientation?: (m: number[]) => void;
+interface HttpStreamCallbacks extends ParserCallbacks {
   onStatus?: (status: "polling" | "ready" | "error") => void;
 }
 
-export function startImuStream(cb: Callbacks): ImuStreamHandle {
+export function startImuStream(cb: HttpStreamCallbacks): ImuStreamHandle {
   let stopped = false;
   let cursor = 0;
-  let buffer = "";
   let resolveReady: () => void = () => {};
   const ready = new Promise<void>((res) => {
     resolveReady = res;
+  });
+
+  const parser = createTelemetryParser({
+    onFrame: cb.onFrame,
+    onOrientation: cb.onOrientation,
+    onReady: () => {
+      cb.onStatus?.("ready");
+      cb.onReady?.();
+      resolveReady();
+    },
   });
 
   cb.onStatus?.("polling");
@@ -54,55 +130,11 @@ export function startImuStream(cb: Callbacks): ImuStreamHandle {
           const full = data.output ?? "";
           if (full.length < cursor) {
             cursor = 0;
-            buffer = "";
+            parser.reset();
           }
           const tail = full.slice(cursor);
           cursor = full.length;
-          buffer += tail;
-
-          let nl: number;
-          while ((nl = buffer.indexOf("\n")) !== -1) {
-            const line = buffer.slice(0, nl).trim();
-            buffer = buffer.slice(nl + 1);
-            if (!line) continue;
-
-            if (line === "READY") {
-              cb.onStatus?.("ready");
-              resolveReady();
-              continue;
-            }
-
-            if (line.startsWith("T ")) {
-              const p = line.split(/\s+/);
-              if (p.length < 11) continue;
-              const ax = parseFloat(p[3]);
-              const ay = parseFloat(p[4]);
-              const az = parseFloat(p[5]);
-              const frame: ImuFrame = {
-                pitch: parseFloat(p[1]),
-                roll: parseFloat(p[2]),
-                ax,
-                ay,
-                az,
-                heading: parseFloat(p[6]),
-                rotZ: parseFloat(p[7]),
-                avZ: parseFloat(p[8]),
-                up: parseInt(p[9], 10),
-                stationary: p[10] === "1",
-                accelMag: Math.sqrt(ax * ax + ay * ay + az * az),
-              };
-              cb.onFrame(frame);
-              continue;
-            }
-
-            if (line.startsWith("O ") && cb.onOrientation) {
-              const nums = line
-                .split(/\s+/)
-                .slice(1)
-                .map((s) => parseFloat(s));
-              if (nums.length === 9) cb.onOrientation(nums);
-            }
-          }
+          parser.feed(tail);
         } else {
           cb.onStatus?.("error");
         }
@@ -123,6 +155,9 @@ export function startImuStream(cb: Callbacks): ImuStreamHandle {
   };
 }
 
+// --- Inline script source ---------------------------------------------
+// Kept in sync with apps/bricks/scripts/imu_quest.py — used by the local-mode
+// "Deploy & play" button to upload via the Python deploy server.
 export const IMU_QUEST_SCRIPT = `from pybricks.hubs import EssentialHub
 from pybricks.parameters import Color, Side, Axis
 from pybricks.tools import wait

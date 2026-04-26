@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExternalLinkIcon, EyeNoneIcon } from "@radix-ui/react-icons";
 import { EvalStatsPanel } from "./eval-stats-panel";
-import { blockOpportunity, archiveD1Opportunity } from "./actions";
+import { blockOpportunityCompany, blockD1OpportunityCompany } from "./actions";
 import type { D1OpportunityRow } from "@/lib/d1-opportunities";
 
 type OpportunityRow = {
@@ -65,36 +65,54 @@ export function OpportunitiesClient({
     [d1Pending, hidden],
   );
 
+  function hideCompanyRows(clickedId: string, companyKey: string | null) {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      next.add(clickedId);
+      if (companyKey) {
+        for (const o of opportunities) {
+          if (o.company_key === companyKey) next.add(o.id);
+        }
+        for (const d of d1Pending) {
+          if (d.company_key === companyKey) next.add(d.id);
+        }
+      }
+      return next;
+    });
+  }
+
   function handleBlockPg(id: string) {
     setHidden((prev) => new Set(prev).add(id));
     startTransition(async () => {
-      const res = await blockOpportunity(id);
-      if (res?.error) {
+      const res = await blockOpportunityCompany(id);
+      if ("error" in res) {
         setHidden((prev) => {
           const next = new Set(prev);
           next.delete(id);
           return next;
         });
-        console.error("[block]", res.error);
+        console.error("[block company]", res.error);
         return;
       }
+      hideCompanyRows(id, res.companyKey);
       router.refresh();
     });
   }
 
-  function handleArchiveD1(id: string) {
+  function handleArchiveD1(id: string, companyKey: string | null, companyName: string | null) {
     setHidden((prev) => new Set(prev).add(id));
     startTransition(async () => {
-      const res = await archiveD1Opportunity(id);
-      if (res?.error) {
+      const res = await blockD1OpportunityCompany(id, companyKey, companyName);
+      if ("error" in res) {
         setHidden((prev) => {
           const next = new Set(prev);
           next.delete(id);
           return next;
         });
-        console.error("[archive d1]", res.error);
+        console.error("[block d1 company]", res.error);
         return;
       }
+      hideCompanyRows(id, res.companyKey);
       router.refresh();
     });
   }
@@ -197,7 +215,7 @@ export function OpportunitiesClient({
                       variant="ghost"
                       color="gray"
                       onClick={() => handleBlockPg(opp.id)}
-                      title="Block (hide from list)"
+                      title="Block company (hide all jobs from this company)"
                     >
                       <EyeNoneIcon width={12} height={12} /> Block
                     </Button>
@@ -272,8 +290,8 @@ export function OpportunitiesClient({
                       size="1"
                       variant="ghost"
                       color="gray"
-                      onClick={() => handleArchiveD1(opp.id)}
-                      title="Block (hide from list)"
+                      onClick={() => handleArchiveD1(opp.id, opp.company_key, opp.company_name)}
+                      title="Block company (hide all jobs from this company)"
                     >
                       <EyeNoneIcon width={12} height={12} /> Block
                     </Button>

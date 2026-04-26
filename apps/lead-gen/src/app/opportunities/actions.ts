@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { checkIsAdmin } from "@/lib/admin";
 import { db } from "@/db";
-import { opportunities } from "@/db/schema";
+import { opportunities, companies } from "@/db/schema";
 
 export async function deleteOpportunity(id: string) {
   const { isAdmin } = await checkIsAdmin();
@@ -41,42 +41,70 @@ export async function updateOpportunityTags(id: string, tags: string[]) {
   return { tags };
 }
 
-export async function blockOpportunity(id: string) {
+type BlockResult = { ok: true; companyKey: string | null } | { error: string };
+
+export async function blockOpportunityCompany(id: string): Promise<BlockResult> {
   const { isAdmin } = await checkIsAdmin();
   if (!isAdmin) return { error: "Forbidden" };
 
-  const existing = await db
-    .select({ tags: opportunities.tags })
+  const found = await db
+    .select({ company_id: opportunities.company_id, tags: opportunities.tags })
     .from(opportunities)
     .where(eq(opportunities.id, id))
     .limit(1);
 
-  if (existing.length === 0) return { error: "Not found" };
+  if (found.length === 0) return { error: "Not found" };
+  const opp = found[0]!;
+
+  if (opp.company_id != null) {
+    const updated = await db
+      .update(companies)
+      .set({ blocked: true })
+      .where(eq(companies.id, opp.company_id))
+      .returning({ key: companies.key });
+
+    revalidatePath("/opportunities");
+    return { ok: true, companyKey: updated[0]?.key ?? null };
+  }
 
   let current: string[] = [];
   try {
-    const parsed = existing[0]!.tags ? JSON.parse(existing[0]!.tags) : [];
+    const parsed = opp.tags ? JSON.parse(opp.tags) : [];
     if (Array.isArray(parsed)) current = parsed.filter((t): t is string => typeof t === "string");
   } catch {
     current = [];
   }
-  if (current.includes("excluded")) {
-    return { ok: true };
+  if (!current.includes("excluded")) {
+    await db
+      .update(opportunities)
+      .set({ tags: JSON.stringify([...current, "excluded"]), updated_at: new Date().toISOString() })
+      .where(eq(opportunities.id, id));
   }
-  const next = [...current, "excluded"];
-
-  await db
-    .update(opportunities)
-    .set({ tags: JSON.stringify(next), updated_at: new Date().toISOString() })
-    .where(eq(opportunities.id, id));
 
   revalidatePath("/opportunities");
-  return { ok: true };
+  return { ok: true, companyKey: null };
 }
 
-export async function archiveD1Opportunity(id: string) {
+export async function blockD1OpportunityCompany(
+  id: string,
+  key: string | null,
+  name: string | null,
+): Promise<BlockResult> {
   const { isAdmin } = await checkIsAdmin();
   if (!isAdmin) return { error: "Forbidden" };
+
+  if (key) {
+    await db
+      .insert(companies)
+      .values({ key, name: name ?? key, blocked: true })
+      .onConflictDoUpdate({
+        target: companies.key,
+        set: { blocked: true },
+      });
+
+    revalidatePath("/opportunities");
+    return { ok: true, companyKey: key };
+  }
 
   const base = process.env.EDGE_WORKER_URL ?? "https://agenticleadgen-edge.eeeew.workers.dev";
   const token = process.env.JOBS_D1_TOKEN;
@@ -84,19 +112,15 @@ export async function archiveD1Opportunity(id: string) {
 
   const res = await fetch(`${base.replace(/\/$/, "")}/api/jobs/d1/opportunities/archive`, {
     method: "POST",
-    headers: {
-      authorization: `Bearer ${token}`,
-      "content-type": "application/json",
-    },
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
     body: JSON.stringify({ id }),
     cache: "no-store",
   });
-
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     return { error: `worker ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}` };
   }
 
   revalidatePath("/opportunities");
-  return { ok: true };
+  return { ok: true, companyKey: null };
 }
