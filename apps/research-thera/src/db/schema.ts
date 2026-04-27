@@ -1423,6 +1423,43 @@ export const medicationInteractions = pgTable(
   ],
 );
 
+export const conditionDeepResearch = pgTable(
+  "condition_deep_research",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    familyMemberId: integer("family_member_id").references(() => familyMembers.id, {
+      onDelete: "cascade",
+    }),
+    conditionSlug: text("condition_slug").notNull(),
+    conditionName: text("condition_name").notNull(),
+    language: text("language").notNull().default("ro"),
+    pathophysiology: jsonb("pathophysiology"),
+    ageManifestations: jsonb("age_manifestations"),
+    evidenceBasedTreatments: jsonb("evidence_based_treatments"),
+    comorbidities: jsonb("comorbidities"),
+    redFlags: jsonb("red_flags"),
+    sourceUrls: jsonb("source_urls").notNull().default(sql`'[]'::jsonb`),
+    freshUntil: timestamp("fresh_until", { withTimezone: true }),
+    generatedAt: timestamp("generated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("condition_deep_research_user_idx").on(table.userId),
+    index("condition_deep_research_fm_idx").on(table.familyMemberId),
+    uniqueIndex("condition_deep_research_dedup_idx").on(
+      table.userId,
+      table.familyMemberId,
+      table.conditionSlug,
+      table.language,
+    ),
+  ],
+);
+
 export const medicationCorrelations = pgTable(
   "medication_correlations",
   {
