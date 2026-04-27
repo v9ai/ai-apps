@@ -114,6 +114,64 @@ function toMedicalLetter(r: Record<string, unknown>): MedicalLetter {
   };
 }
 
+// ────────────────────────────────────────────────────────────────────
+// Family documents (PDFs / Drive links scoped to a family member)
+// ────────────────────────────────────────────────────────────────────
+
+export type FamilyDocument = {
+  id: string;
+  userId: string;
+  familyMemberId: number;
+  title: string;
+  documentType: string;
+  documentDate: string | null;
+  source: string | null;
+  content: string | null;
+  externalUrl: string | null;
+  fileName: string | null;
+  filePath: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+};
+
+function toFamilyDocument(r: Record<string, unknown>): FamilyDocument {
+  return {
+    id: r.id as string,
+    userId: r.user_id as string,
+    familyMemberId: Number(r.family_member_id),
+    title: r.title as string,
+    documentType: r.document_type as string,
+    documentDate:
+      r.document_date instanceof Date
+        ? r.document_date.toISOString().slice(0, 10)
+        : (r.document_date as string | null) ?? null,
+    source: (r.source as string | null) ?? null,
+    content: (r.content as string | null) ?? null,
+    externalUrl: (r.external_url as string | null) ?? null,
+    fileName: (r.file_name as string | null) ?? null,
+    filePath: (r.file_path as string | null) ?? null,
+    metadata: (r.metadata as Record<string, unknown> | null) ?? null,
+    createdAt:
+      r.created_at instanceof Date
+        ? r.created_at.toISOString()
+        : (r.created_at as string),
+  };
+}
+
+export async function listFamilyDocuments(
+  familyMemberId: number,
+  userId: string,
+): Promise<FamilyDocument[]> {
+  const rows = await neonSql`
+    SELECT id, user_id, family_member_id, title, document_type, document_date,
+           source, content, external_url, file_name, file_path, metadata, created_at
+    FROM family_documents
+    WHERE family_member_id = ${familyMemberId} AND user_id = ${userId}
+    ORDER BY COALESCE(document_date::timestamptz, created_at) DESC
+  `;
+  return rows.map(toFamilyDocument);
+}
+
 export async function listMedicalLetters(
   doctorId: string,
   userId: string,
