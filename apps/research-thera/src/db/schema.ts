@@ -11,6 +11,7 @@ export const familyMembers = pgTable("family_members", {
   relationship: text("relationship"),
   dateOfBirth: text("date_of_birth"),
   bio: text("bio"),
+  allergies: text("allergies"),
   email: text("email"),
   phone: text("phone"),
   location: text("location"),
