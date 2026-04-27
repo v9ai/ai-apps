@@ -267,61 +267,23 @@ export function CompanyPostsClient({ companyKey }: { companyKey: string }) {
           </TabNav.Root>
         </Box>
 
-        {/* Summary */}
-        {result && (
-          <Flex gap="4" align="center" wrap="wrap">
+        {/* Toolbar */}
+        <Flex gap="3" align="center" wrap="wrap">
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
+            onClick={() => void refetch()}
+            disabled={postsLoading}
+          >
+            {postsLoading ? <Spinner size="1" /> : <ReloadIcon />}
+            Refresh
+          </button>
+          {result && (
             <Text size="2" color="gray">
               {result.postsCount} post{result.postsCount !== 1 ? "s" : ""} from{" "}
               {result.peopleCount} {result.peopleCount === 1 ? "person" : "people"}
             </Text>
-          </Flex>
-        )}
-
-        {/* Toolbar */}
-        {allPosts.length > 0 && (
-          <Flex gap="2" wrap="wrap" align="center">
-            <Box style={{ minWidth: 220, flex: "1 1 220px" }}>
-              <TextField.Root
-                placeholder="Search posts…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              >
-                <TextField.Slot>
-                  <MagnifyingGlassIcon />
-                </TextField.Slot>
-              </TextField.Root>
-            </Box>
-            <Select.Root
-              value={authorFilter}
-              onValueChange={(v) => setAuthorFilter(v)}
-            >
-              <Select.Trigger variant="soft" placeholder="Author" />
-              <Select.Content>
-                <Select.Item value="all">All authors</Select.Item>
-                {authors.map((name) => (
-                  <Select.Item key={name} value={name}>
-                    {name}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select.Root>
-            <Select.Root
-              value={sortMode}
-              onValueChange={(v) => setSortMode(v as SortMode)}
-            >
-              <Select.Trigger variant="soft" />
-              <Select.Content>
-                <Select.Item value="recent">Most recent</Select.Item>
-                <Select.Item value="engagement">Top engagement</Select.Item>
-              </Select.Content>
-            </Select.Root>
-            {(search || authorFilter !== "all") && (
-              <Text size="1" color="gray">
-                {filteredPosts.length} of {allPosts.length}
-              </Text>
-            )}
-          </Flex>
-        )}
+          )}
+        </Flex>
 
         {/* Body */}
         {postsError ? (
@@ -333,11 +295,11 @@ export function CompanyPostsClient({ companyKey }: { companyKey: string }) {
               Failed to load posts: {postsError.message}
             </Callout.Text>
           </Callout.Root>
-        ) : postsLoading ? (
+        ) : postsLoading && posts.length === 0 ? (
           <Flex justify="center" py="6">
             <Spinner size="3" />
           </Flex>
-        ) : allPosts.length === 0 ? (
+        ) : posts.length === 0 ? (
           <Callout.Root color="gray" variant="soft">
             <Callout.Icon>
               <InfoCircledIcon />
@@ -346,17 +308,13 @@ export function CompanyPostsClient({ companyKey }: { companyKey: string }) {
               No posts have been scraped for this company yet.
             </Callout.Text>
           </Callout.Root>
-        ) : filteredPosts.length === 0 ? (
-          <Callout.Root color="gray" variant="soft">
-            <Callout.Icon>
-              <InfoCircledIcon />
-            </Callout.Icon>
-            <Callout.Text>No posts match your filters.</Callout.Text>
-          </Callout.Root>
         ) : (
           <Flex direction="column" gap="3">
-            {filteredPosts.map((post, idx) => (
-              <PostCard key={post.postUrl ?? `${post.personName}-${idx}`} post={post} />
+            {posts.map((post, idx) => (
+              <PostCard
+                key={post.postUrl ?? `${post.personName}-${idx}`}
+                post={post}
+              />
             ))}
           </Flex>
         )}
