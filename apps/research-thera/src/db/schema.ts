@@ -1330,3 +1330,94 @@ export const memoryBaseline = pgTable(
   (table) => [uniqueIndex("mb_user_idx").on(table.userId)],
 );
 
+// ── Medication deep-research fact tables ──────────────────────────
+// Drug-level (universal) facts keyed on `drug_slug` = first-word lowercased
+// of the medication name. Populated by the medication_deep_research LangGraph.
+
+export const medicationPharmacology = pgTable("medication_pharmacology", {
+  drugSlug: text("drug_slug").primaryKey(),
+  genericName: text("generic_name"),
+  brandNames: jsonb("brand_names").notNull().default(sql`'[]'::jsonb`),
+  atcCode: text("atc_code"),
+  moa: text("moa"),
+  halfLife: text("half_life"),
+  peakTime: text("peak_time"),
+  metabolism: text("metabolism"),
+  excretion: text("excretion"),
+  sourceUrl: text("source_url"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const medicationIndications = pgTable(
+  "medication_indications",
+  {
+    id: serial("id").primaryKey(),
+    drugSlug: text("drug_slug").notNull(),
+    kind: text("kind").notNull(),
+    condition: text("condition").notNull(),
+    evidenceLevel: text("evidence_level"),
+    source: text("source"),
+    sourceUrl: text("source_url"),
+    confidence: integer("confidence"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("medication_indications_slug_idx").on(table.drugSlug),
+    uniqueIndex("medication_indications_dedup_idx").on(table.drugSlug, table.kind, table.condition),
+  ],
+);
+
+export const medicationDosing = pgTable(
+  "medication_dosing",
+  {
+    id: serial("id").primaryKey(),
+    drugSlug: text("drug_slug").notNull(),
+    population: text("population").notNull(),
+    ageBand: text("age_band"),
+    weightBand: text("weight_band"),
+    doseText: text("dose_text").notNull(),
+    frequency: text("frequency"),
+    maxDaily: text("max_daily"),
+    sourceUrl: text("source_url"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("medication_dosing_slug_idx").on(table.drugSlug)],
+  // medication_dosing_dedup_idx exists in DB as a UNIQUE INDEX over expressions
+  // (COALESCE on age_band/weight_band) — drizzle-kit can't model expression
+  // indexes today, so it's intentionally omitted here.
+);
+
+export const medicationAdverseEvents = pgTable(
+  "medication_adverse_events",
+  {
+    id: serial("id").primaryKey(),
+    drugSlug: text("drug_slug").notNull(),
+    event: text("event").notNull(),
+    frequencyBand: text("frequency_band").notNull(),
+    severity: text("severity"),
+    sourceUrl: text("source_url"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("medication_adverse_events_slug_idx").on(table.drugSlug),
+    uniqueIndex("medication_adverse_events_dedup_idx").on(table.drugSlug, table.event, table.frequencyBand),
+  ],
+);
+
+export const medicationInteractions = pgTable(
+  "medication_interactions",
+  {
+    id: serial("id").primaryKey(),
+    drugSlug: text("drug_slug").notNull(),
+    interactingDrug: text("interacting_drug").notNull(),
+    severity: text("severity").notNull(),
+    mechanism: text("mechanism"),
+    recommendation: text("recommendation"),
+    sourceUrl: text("source_url"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("medication_interactions_slug_idx").on(table.drugSlug),
+    uniqueIndex("medication_interactions_dedup_idx").on(table.drugSlug, table.interactingDrug),
+  ],
+);
