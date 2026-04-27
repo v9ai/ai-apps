@@ -9,6 +9,7 @@ query Allergies {
     createdAt
     familyMember {
       id
+      slug
       firstName
       name
     }

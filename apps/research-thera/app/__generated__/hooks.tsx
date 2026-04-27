@@ -3366,7 +3366,7 @@ export type AddSymptomMutation = { __typename?: 'Mutation', addSymptom: { __type
 export type AllergiesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type AllergiesQuery = { __typename?: 'Query', allergies: Array<{ __typename?: 'Allergy', id: string, familyMemberId?: number | null, kind: AllergyKind, name: string, severity?: string | null, notes?: string | null, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null }> };
+export type AllergiesQuery = { __typename?: 'Query', allergies: Array<{ __typename?: 'Allergy', id: string, familyMemberId?: number | null, kind: AllergyKind, name: string, severity?: string | null, notes?: string | null, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null } | null }> };
 
 export type AppointmentsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4991,6 +4991,7 @@ export const AllergiesDocument = gql`
     createdAt
     familyMember {
       id
+      slug
       firstName
       name
     }
