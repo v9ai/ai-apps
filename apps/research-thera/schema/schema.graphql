@@ -2157,9 +2157,11 @@ type DeleteRoutineAnalysisResult {
 type Condition {
   id: ID!
   userId: String!
+  familyMemberId: Int
   name: String!
   notes: String
   createdAt: String!
+  familyMember: FamilyMember
 }
 
 input AddConditionInput {

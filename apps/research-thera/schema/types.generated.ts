@@ -380,6 +380,8 @@ export type CognitiveScoresInput = {
 export type Condition = {
   __typename?: 'Condition';
   createdAt: Scalars['String']['output'];
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
@@ -3420,7 +3422,7 @@ export type ResolversTypes = {
   CognitiveCheckIn: ResolverTypeWrapper<CognitiveCheckIn>;
   CognitiveCheckInInput: CognitiveCheckInInput;
   CognitiveScoresInput: CognitiveScoresInput;
-  Condition: ResolverTypeWrapper<Condition>;
+  Condition: ResolverTypeWrapper<Omit<Condition, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
   Contact: ResolverTypeWrapper<Contact>;
   ContactFeedback: ResolverTypeWrapper<Omit<ContactFeedback, 'familyMember' | 'issues' | 'source' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, issues: Array<ResolversTypes['Issue']>, source?: Maybe<ResolversTypes['FeedbackSource']>, stories: Array<ResolversTypes['Story']> }>;
   Conversation: ResolverTypeWrapper<Conversation>;
@@ -3650,7 +3652,7 @@ export type ResolversParentTypes = {
   CognitiveCheckIn: CognitiveCheckIn;
   CognitiveCheckInInput: CognitiveCheckInInput;
   CognitiveScoresInput: CognitiveScoresInput;
-  Condition: Condition;
+  Condition: Omit<Condition, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   Contact: Contact;
   ContactFeedback: Omit<ContactFeedback, 'familyMember' | 'issues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, issues: Array<ResolversParentTypes['Issue']>, stories: Array<ResolversParentTypes['Story']> };
   Conversation: Conversation;
@@ -4029,6 +4031,8 @@ export type CognitiveCheckInResolvers<ContextType = GraphQLContext, ParentType e
 
 export type ConditionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Condition'] = ResolversParentTypes['Condition']> = {
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
+  familyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

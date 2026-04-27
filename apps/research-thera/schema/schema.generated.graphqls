@@ -343,6 +343,8 @@ input CognitiveScoresInput {
 
 type Condition {
   createdAt: String!
+  familyMember: FamilyMember
+  familyMemberId: Int
   id: ID!
   name: String!
   notes: String

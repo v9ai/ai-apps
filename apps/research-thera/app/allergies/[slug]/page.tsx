@@ -11,10 +11,11 @@ import {
   Spinner,
   Text,
 } from "@radix-ui/themes";
-import { ArrowLeft, ShieldAlert, Pill } from "lucide-react";
+import { ArrowLeft, ShieldAlert, Pill, Heart } from "lucide-react";
 import Link from "next/link";
 import {
   useAllergiesQuery,
+  useConditionsQuery,
   useGetFamilyMemberQuery,
   useMedicationsQuery,
 } from "../../__generated__/hooks";
@@ -55,10 +56,17 @@ function PersonAllergiesContent({ slug }: { slug: string }) {
     loading: medsLoading,
     error: medsError,
   } = useMedicationsQuery();
+  const {
+    data: conditionsData,
+    loading: conditionsLoading,
+    error: conditionsError,
+  } = useConditionsQuery();
 
   const member = memberData?.familyMember;
-  const loading = memberLoading || allergiesLoading || medsLoading;
-  const error = memberError ?? allergiesError ?? medsError;
+  const loading =
+    memberLoading || allergiesLoading || medsLoading || conditionsLoading;
+  const error =
+    memberError ?? allergiesError ?? medsError ?? conditionsError;
 
   if (loading) {
     return (
@@ -100,6 +108,9 @@ function PersonAllergiesContent({ slug }: { slug: string }) {
   );
   const personMedications = (medsData?.medications ?? []).filter(
     (m) => m.familyMemberId === member.id,
+  );
+  const personConditions = (conditionsData?.conditions ?? []).filter(
+    (c) => c.familyMemberId === member.id,
   );
   const personDisplayName = member.firstName + (member.name ? ` (${member.name})` : "");
 
@@ -178,6 +189,37 @@ function PersonAllergiesContent({ slug }: { slug: string }) {
           </Flex>
         )}
 
+        {personConditions.length > 0 && (
+          <>
+            <Separator size="4" />
+            <Flex direction="column" gap="3">
+              <Flex align="center" gap="2">
+                <Heart size={18} color="var(--gray-11)" />
+                <Heading size="4">
+                  Conditions ({personConditions.length})
+                </Heading>
+              </Flex>
+              <Flex
+                direction="column"
+                gap="3"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                }}
+              >
+                {personConditions.map((c) => (
+                  <ConditionCard
+                    key={c.id}
+                    name={c.name}
+                    notes={c.notes ?? null}
+                    createdAt={c.createdAt}
+                  />
+                ))}
+              </Flex>
+            </Flex>
+          </>
+        )}
+
         {personMedications.length > 0 && (
           <>
             <Separator size="4" />
@@ -213,6 +255,48 @@ function PersonAllergiesContent({ slug }: { slug: string }) {
         )}
       </Flex>
     </Box>
+  );
+}
+
+function ConditionCard({
+  name,
+  notes,
+  createdAt,
+}: {
+  name: string;
+  notes: string | null;
+  createdAt: string;
+}) {
+  return (
+    <Card>
+      <Flex direction="column" gap="2">
+        <Flex align="center" gap="2" wrap="wrap">
+          <Text size="2" weight="medium">
+            {name}
+          </Text>
+          <Badge color="indigo" variant="soft" size="1">
+            Active
+          </Badge>
+        </Flex>
+        {notes && (
+          <Text
+            size="1"
+            color="gray"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 4,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {notes}
+          </Text>
+        )}
+        <Text size="1" color="gray">
+          Recorded {new Date(createdAt).toLocaleDateString()}
+        </Text>
+      </Flex>
+    </Card>
   );
 }
 

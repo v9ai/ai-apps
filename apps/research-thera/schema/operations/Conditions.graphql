@@ -1,8 +1,15 @@
 query Conditions {
   conditions {
     id
+    familyMemberId
     name
     notes
     createdAt
+    familyMember {
+      id
+      slug
+      firstName
+      name
+    }
   }
 }

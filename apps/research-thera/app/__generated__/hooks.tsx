@@ -383,6 +383,8 @@ export type CognitiveScoresInput = {
 export type Condition = {
   __typename?: 'Condition';
   createdAt: Scalars['String']['output'];
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
@@ -3447,7 +3449,7 @@ export type DeleteClaimCardMutation = { __typename?: 'Mutation', deleteClaimCard
 export type ConditionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ConditionsQuery = { __typename?: 'Query', conditions: Array<{ __typename?: 'Condition', id: string, name: string, notes?: string | null, createdAt: string }> };
+export type ConditionsQuery = { __typename?: 'Query', conditions: Array<{ __typename?: 'Condition', id: string, familyMemberId?: number | null, name: string, notes?: string | null, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null } | null }> };
 
 export type ConvertIssueToGoalMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -5553,9 +5555,16 @@ export const ConditionsDocument = gql`
     query Conditions {
   conditions {
     id
+    familyMemberId
     name
     notes
     createdAt
+    familyMember {
+      id
+      slug
+      firstName
+      name
+    }
   }
 }
     `;
