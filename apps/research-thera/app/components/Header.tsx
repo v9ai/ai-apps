@@ -12,6 +12,7 @@ export { SIDEBAR_WIDTH };
 const NAV_LINKS = [
   { href: "/allergies", label: "Allergies & Intolerances" },
   { href: "/books", label: "Books" },
+  { href: "/conditions", label: "Conditions" },
   { href: "/discussions", label: "Discuții" },
   { href: "/family", label: "Family" },
   { href: "/games", label: "Games" },
