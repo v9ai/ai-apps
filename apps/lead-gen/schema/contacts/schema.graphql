@@ -95,6 +95,7 @@ type Contact {
   bouncedEmails: [String!]!
   company: String
   companyId: Int
+  companyKey: String
   position: String
   userId: String
   nbStatus: String

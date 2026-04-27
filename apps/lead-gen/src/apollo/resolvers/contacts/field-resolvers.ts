@@ -155,6 +155,11 @@ export const Contact = {
     const co = await context.loaders.company.load(parent.company_id);
     return co?.name ?? null;
   },
+  async companyKey(parent: DbContact, _args: unknown, context: GraphQLContext) {
+    if (!parent.company_id) return null;
+    const co = await context.loaders.company.load(parent.company_id);
+    return co?.key ?? null;
+  },
   profile(parent: DbContact) {
     if (!parent.profile) return null;
     const raw = cachedParse<Record<string, unknown>>(parent, "profile", parent.profile, null as unknown as Record<string, unknown>);

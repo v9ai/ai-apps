@@ -16,10 +16,9 @@ import {
   companies,
   companySnapshots,
   companyFacts,
-  linkedinPosts,
   intentSignals,
 } from "@/db/schema";
-import { eq, and, desc, inArray, isNull, sql } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import { tagIntentSignalsProducts } from "./tag-intent-signals-products";
 import {
   VALID_SIGNAL_TYPES,
@@ -31,6 +30,7 @@ import {
   ensureLLMReachable,
   type DetectedSignal,
 } from "@/lib/intent/detector";
+import { listD1Posts } from "@/lib/posts-d1-client";
 
 // ── Config ──────────────────────────────────────────────────────
 
@@ -68,12 +68,8 @@ async function gatherCompanyText(companyId: number): Promise<string[]> {
         ),
       )
       .limit(5),
-    db
-      .select({ content: linkedinPosts.content })
-      .from(linkedinPosts)
-      .where(eq(linkedinPosts.company_id, companyId))
-      .orderBy(desc(linkedinPosts.created_at))
-      .limit(5),
+    // Posts are now in Cloudflare D1; fetch via the edge worker.
+    listD1Posts({ companyId, limit: 5 }).catch(() => []),
   ]);
 
   const texts: string[] = [];
@@ -84,7 +80,8 @@ async function gatherCompanyText(companyId: number): Promise<string[]> {
     if (f.value_text) texts.push(f.value_text.slice(0, 1000));
   }
   for (const p of posts) {
-    if (p.content) texts.push(p.content.slice(0, 1000));
+    const t = p.post_text ?? p.content;
+    if (t) texts.push(t.slice(0, 1000));
   }
 
   return texts;

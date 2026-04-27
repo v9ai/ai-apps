@@ -14,7 +14,6 @@ import {
   companies,
   companySnapshots,
   companyFacts,
-  linkedinPosts,
   intentSignals,
   intentSignalProducts,
   competitors,
@@ -22,6 +21,7 @@ import {
   competitorIntegrations,
 } from "@/db/schema";
 import { eq, and, inArray, desc } from "drizzle-orm";
+import { listD1Posts } from "@/lib/posts-d1-client";
 
 const DECAY_DAYS = 60;
 
@@ -87,12 +87,10 @@ async function buildHaystackForCompany(
           ]),
         ),
       ),
-    db
-      .select({ content: linkedinPosts.content })
-      .from(linkedinPosts)
-      .where(eq(linkedinPosts.company_id, companyId))
-      .orderBy(desc(linkedinPosts.created_at))
-      .limit(10),
+    // LinkedIn posts now live in Cloudflare D1 (see migrations/0002_posts.sql
+    // and edge worker /api/posts/d1). Fetch via the edge client; failures
+    // shouldn't break detection — fall back to empty.
+    listD1Posts({ companyId, limit: 10 }).catch(() => []),
   ]);
 
   const out: Haystack[] = [];
@@ -104,7 +102,8 @@ async function buildHaystackForCompany(
     if (f.value_text) out.push({ text: f.value_text, source: f.field });
   }
   for (const p of posts) {
-    if (p.content) out.push({ text: p.content, source: "linkedin_post" });
+    const t = p.post_text ?? p.content;
+    if (t) out.push({ text: t, source: "linkedin_post" });
   }
   return out;
 }

@@ -1,12 +1,14 @@
-import type { QueryResolvers } from "./../../types.generated";
+import type { QueryResolvers, ResolversTypes } from "./../../types.generated";
 import { sql } from "@/src/db/neon";
+
+type DeepResearchResult = NonNullable<ResolversTypes["MedicationDeepResearch"]>;
 
 function normSlug(raw: string): string {
   const m = raw.trim().toLowerCase().match(/^[a-z0-9]+/);
   return m ? m[0] : "";
 }
 
-export const medicationDeepResearch: QueryResolvers['medicationDeepResearch'] = async (_parent, args, ctx) => {
+export const medicationDeepResearch: QueryResolvers['medicationDeepResearch'] = async (_parent, args, ctx): Promise<DeepResearchResult | null> => {
   const userEmail = ctx.userEmail;
   if (!userEmail) throw new Error("Authentication required");
 
@@ -111,7 +113,7 @@ export const medicationDeepResearch: QueryResolvers['medicationDeepResearch'] = 
     ORDER BY mc.confidence DESC, mc.id ASC
   `) as Array<Record<string, unknown>>;
 
-  return {
+  const result = {
     medication: {
       id: med.id,
       userId: med.user_id,
@@ -213,4 +215,5 @@ export const medicationDeepResearch: QueryResolvers['medicationDeepResearch'] = 
       createdAt: String(r.created_at),
     })),
   };
+  return result as unknown as DeepResearchResult;
 };

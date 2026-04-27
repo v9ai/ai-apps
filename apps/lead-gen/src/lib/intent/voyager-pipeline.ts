@@ -19,11 +19,11 @@ import { db } from "@/db";
 import {
   companies,
   intentSignals,
-  linkedinPosts,
   type Company,
   type NewIntentSignal,
 } from "@/db/schema";
-import { eq, and, desc, gte, sql, count, inArray } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
+import { listD1Posts } from "@/lib/posts-d1-client";
 import { SKILL_TAXONOMY } from "@/schema/contracts/skill-taxonomy";
 import type { ExtractedSkill } from "@/ml/post-analyzer";
 
@@ -303,31 +303,24 @@ export async function fetchVoyagerJobs(
     Date.now() - lookbackDays * 24 * 60 * 60 * 1000,
   ).toISOString();
 
-  const rows = await db
-    .select()
-    .from(linkedinPosts)
-    .where(
-      and(
-        eq(linkedinPosts.type, "job"),
-        gte(linkedinPosts.scraped_at, cutoff),
-      ),
-    )
-    .orderBy(desc(linkedinPosts.scraped_at))
-    .limit(limit);
-
-  return rows.map((row) => ({
-    id: row.id,
-    company_id: row.company_id,
-    title: row.title,
-    content: row.content,
-    location: row.location,
-    employment_type: row.employment_type,
-    posted_at: row.posted_at,
-    scraped_at: row.scraped_at,
-    url: row.url,
-    skills: parseSkills(row.skills),
-    raw_data: parseRawData(row.raw_data),
-  }));
+  // Posts/jobs now in D1; fetch via the edge worker. Filter `scraped_at >= cutoff`
+  // client-side until the list endpoint exposes a `scrapedAfter` query param.
+  const rows = await listD1Posts({ type: "job", limit });
+  return rows
+    .filter((row) => (row.scraped_at ?? "") >= cutoff)
+    .map((row) => ({
+      id: row.id,
+      company_id: row.company_id,
+      title: row.title,
+      content: row.content ?? row.post_text,
+      location: row.location,
+      employment_type: row.employment_type,
+      posted_at: row.posted_at,
+      scraped_at: row.scraped_at,
+      url: row.post_url,
+      skills: parseSkills(row.skills),
+      raw_data: parseRawData(row.raw_data),
+    }));
 }
 
 // ── Stage 2: Deduplication ───────────────────────────────────────────────────
@@ -800,18 +793,12 @@ export async function detectGrowthSignal(
     Date.now() - GROWTH_CONFIG.windowDays * 24 * 60 * 60 * 1000,
   ).toISOString();
 
-  const [result] = await db
-    .select({ count: count() })
-    .from(linkedinPosts)
-    .where(
-      and(
-        eq(linkedinPosts.company_id, companyId),
-        eq(linkedinPosts.type, "job"),
-        gte(linkedinPosts.scraped_at, cutoff),
-      ),
-    );
-
-  const jobCount = result?.count ?? 0;
+  // Counts come from D1 now. The list-and-filter pattern is fine here —
+  // per-company job rows fit comfortably in a single page.
+  const recent = await listD1Posts({ companyId, type: "job", limit: 500 });
+  const jobCount = recent.filter(
+    (row) => (row.scraped_at ?? "") >= cutoff,
+  ).length;
   if (jobCount < GROWTH_CONFIG.minActiveJobs) return null;
 
   // Logarithmic confidence curve (saturates at GROWTH_CONFIG.saturatingJobCount)
@@ -886,32 +873,14 @@ export async function detectVelocitySignal(
     now - VELOCITY_CONFIG.baselineWindowDays * 24 * 60 * 60 * 1000,
   ).toISOString();
 
-  // Count jobs in recent and baseline windows in parallel
-  const [recentResult, baselineResult] = await Promise.all([
-    db
-      .select({ count: count() })
-      .from(linkedinPosts)
-      .where(
-        and(
-          eq(linkedinPosts.company_id, companyId),
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.scraped_at, recentCutoff),
-        ),
-      ),
-    db
-      .select({ count: count() })
-      .from(linkedinPosts)
-      .where(
-        and(
-          eq(linkedinPosts.company_id, companyId),
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.scraped_at, baselineCutoff),
-        ),
-      ),
-  ]);
-
-  const recentCount = recentResult[0]?.count ?? 0;
-  const baselineCount = baselineResult[0]?.count ?? 0;
+  // Single D1 fetch covers both windows; filter client-side.
+  const allJobs = await listD1Posts({ companyId, type: "job", limit: 500 });
+  const recentCount = allJobs.filter(
+    (row) => (row.scraped_at ?? "") >= recentCutoff,
+  ).length;
+  const baselineCount = allJobs.filter(
+    (row) => (row.scraped_at ?? "") >= baselineCutoff,
+  ).length;
 
   // Need minimum recent jobs to avoid noise
   if (recentCount < VELOCITY_CONFIG.minRecentJobs) return null;

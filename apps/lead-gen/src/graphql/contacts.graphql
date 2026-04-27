@@ -10,6 +10,7 @@ query GetContact($id: Int, $slug: String) {
     linkedinUrl
     company
     companyId
+    companyKey
     position
     emailVerified
     doNotContact
