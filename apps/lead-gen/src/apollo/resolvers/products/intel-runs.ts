@@ -21,6 +21,7 @@ import {
   productIntelAssistantId,
   startGraphRun,
 } from "@/lib/langgraph-client";
+import { publishIntelRunUpdate } from "@/lib/gateway-publish";
 import type {
   MutationAnalyzeProductPricingAsyncArgs,
   MutationAnalyzeProductGtmAsyncArgs,
@@ -108,6 +109,20 @@ async function kickoff(
   await db.insert(productIntelRunSecrets).values({
     run_id: appRunId,
     secret: webhookSecret,
+  });
+
+  await publishIntelRunUpdate({
+    productId,
+    kind,
+    intelRun: {
+      id: appRunId,
+      productId,
+      kind,
+      status: "running",
+      startedAt: new Date().toISOString(),
+      finishedAt: null,
+      error: null,
+    },
   });
 
   return {
