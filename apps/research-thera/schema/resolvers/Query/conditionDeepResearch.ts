@@ -57,7 +57,8 @@ export const conditionDeepResearch: NonNullable<QueryResolvers['conditionDeepRes
   const rows = (await sql`
     SELECT id::text AS id, user_id, family_member_id, condition_slug,
            condition_name, language, pathophysiology, age_manifestations,
-           evidence_based_treatments, comorbidities, red_flags, source_urls,
+           evidence_based_treatments, comorbidities, red_flags,
+           proximity_assessment, criteria_match, source_urls,
            fresh_until, generated_at, updated_at
     FROM condition_deep_research
     WHERE user_id = ${userEmail}
@@ -92,6 +93,37 @@ export const conditionDeepResearch: NonNullable<QueryResolvers['conditionDeepRes
       notes: string | null;
     }> | null;
     red_flags: Array<{ flag: string; action: string | null }> | null;
+    proximity_assessment: {
+      score: number;
+      label: string;
+      confidence: string;
+      rationale: string;
+      supporting_evidence?: string[];
+      contradicting_evidence?: string[];
+      missing_evidence?: string[];
+      recommended_next_step?: string | null;
+    } | null;
+    criteria_match: {
+      framework?: string;
+      criterion_a_inattention?: {
+        matched_symptoms?: Array<{ symptom: string; evidence: string }>;
+        matched_count?: number;
+        threshold_met?: boolean;
+      };
+      criterion_a_hyperactivity_impulsivity?: {
+        matched_symptoms?: Array<{ symptom: string; evidence: string }>;
+        matched_count?: number;
+        threshold_met?: boolean;
+      };
+      presentation?: string | null;
+      criterion_b_age_onset?: { met?: boolean; evidence?: string | null };
+      criterion_c_settings?: { met?: boolean; evidence?: string | null };
+      criterion_d_impairment?: { met?: boolean; evidence?: string | null };
+      criterion_e_differential?: {
+        ruled_out?: boolean;
+        notes?: string | null;
+      };
+    } | null;
     source_urls: string[] | null;
     fresh_until: string | null;
     generated_at: string;

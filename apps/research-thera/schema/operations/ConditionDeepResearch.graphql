@@ -11,6 +11,34 @@ query ConditionDeepResearch($slug: String!, $memberSlug: String!, $language: Str
       ageYears
       dateOfBirth
     }
+    proximityAssessment {
+      score
+      label
+      confidence
+      rationale
+      supportingEvidence
+      contradictingEvidence
+      missingEvidence
+      recommendedNextStep
+    }
+    criteriaMatch {
+      framework
+      presentation
+      criterionAInattention {
+        matchedSymptoms { symptom evidence }
+        matchedCount
+        thresholdMet
+      }
+      criterionAHyperactivityImpulsivity {
+        matchedSymptoms { symptom evidence }
+        matchedCount
+        thresholdMet
+      }
+      criterionBAgeOnset { met evidence }
+      criterionCSettings { met evidence }
+      criterionDImpairment { met evidence }
+      criterionEDifferential { ruledOut notes }
+    }
     pathophysiology {
       summary
       mechanisms
