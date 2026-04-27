@@ -199,7 +199,7 @@
           "Medication deep research LangGraph persists pharmacology across 6 tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) → /medications/[slug] panels.",
           "Deep issue analysis LangGraph clusters issues into thematic patterns with timeline + family-system insights, root-cause analysis, and research-mapped priority recommendations.",
           "AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → gpt-4o-mini-tts → R2.",
-          "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): ~2,350 candidates / 7 sources → DeepSeek + 0.72 quality gate → top 20 as 1024-dim pgvector.",
+          "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): 7 sources → DeepSeek + 0.72 quality gate → top 20 as 1024-dim pgvector.",
           "~70-table Drizzle/PostgreSQL post agentic-healthcare merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables incl. 8 pgvector."
         ]
       },
