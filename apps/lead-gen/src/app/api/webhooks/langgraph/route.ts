@@ -28,6 +28,7 @@ import {
   products,
 } from "@/db/schema";
 import { PRODUCT_INTEL_VERSION } from "@/lib/intelVersion";
+import { publishIntelRunUpdate } from "@/lib/gateway-publish";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -167,6 +168,23 @@ export async function POST(req: NextRequest) {
       .set(patch)
       .where(eq(products.id, run.product_id));
   }
+
+  await publishIntelRunUpdate({
+    productId: run.product_id,
+    kind: run.kind,
+    intelRun: {
+      id: appRunId,
+      productId: run.product_id,
+      kind: run.kind,
+      status: payload.status,
+      startedAt: (run.started_at instanceof Date
+        ? run.started_at
+        : new Date(run.started_at as string)
+      ).toISOString(),
+      finishedAt: nowIso,
+      error: payload.error ?? null,
+    },
+  });
 
   return NextResponse.json({ ok: true });
 }

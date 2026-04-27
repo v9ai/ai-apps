@@ -3519,6 +3519,18 @@ export type SourceType =
   | 'MANUAL'
   | 'PARTNER';
 
+export type Subscription = {
+  __typename?: 'Subscription';
+  /** Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling. */
+  intelRunStatus: IntelRun;
+};
+
+
+export type SubscriptionIntelRunStatusArgs = {
+  kind?: InputMaybe<Scalars['String']['input']>;
+  productId: Scalars['Int']['input'];
+};
+
 export type SyncResendResult = {
   __typename?: 'SyncResendResult';
   error: Maybe<Scalars['String']['output']>;
@@ -4179,6 +4191,7 @@ export type ResolversTypes = {
   SkillsDemandReport: ResolverTypeWrapper<Partial<SkillsDemandReport>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
+  Subscription: ResolverTypeWrapper<Record<PropertyKey, never>>;
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
   SyncVoyagerJobsInput: ResolverTypeWrapper<Partial<SyncVoyagerJobsInput>>;
   SyncVoyagerJobsResult: ResolverTypeWrapper<Partial<SyncVoyagerJobsResult>>;
@@ -4426,6 +4439,7 @@ export type ResolversParentTypes = {
   SkillMatchResult: Partial<SkillMatchResult>;
   SkillsDemandReport: Partial<SkillsDemandReport>;
   String: Partial<Scalars['String']['output']>;
+  Subscription: Record<PropertyKey, never>;
   SyncResendResult: Partial<SyncResendResult>;
   SyncVoyagerJobsInput: Partial<SyncVoyagerJobsInput>;
   SyncVoyagerJobsResult: Partial<SyncVoyagerJobsResult>;
@@ -6394,6 +6408,10 @@ export type SkillsDemandReportResolvers<ContextType = GraphQLContext, ParentType
   totalJobsAnalyzed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
+export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
+  intelRunStatus?: SubscriptionResolver<ResolversTypes['IntelRun'], "intelRunStatus", ParentType, ContextType, RequireFields<SubscriptionIntelRunStatusArgs, 'productId'>>;
+};
+
 export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SyncResendResult'] = ResolversParentTypes['SyncResendResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   skippedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -6770,6 +6788,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SkillDemand?: SkillDemandResolvers<ContextType>;
   SkillMatchResult?: SkillMatchResultResolvers<ContextType>;
   SkillsDemandReport?: SkillsDemandReportResolvers<ContextType>;
+  Subscription?: SubscriptionResolvers<ContextType>;
   SyncResendResult?: SyncResendResultResolvers<ContextType>;
   SyncVoyagerJobsResult?: SyncVoyagerJobsResultResolvers<ContextType>;
   ThreadMessage?: ThreadMessageResolvers<ContextType>;

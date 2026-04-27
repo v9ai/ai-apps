@@ -4,6 +4,7 @@ packages:
   - "apps/lead-gen/chrome-extension"
   - "apps/lead-gen/workers/email-llm"
   - "apps/lead-gen/workers/opportunity-llm"
+  - "apps/lead-gen/gateway"
   - "apps/research-thera/backend"
   - "packages/*"
   - "pypackages/how_it_works"

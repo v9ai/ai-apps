@@ -1,0 +1,18 @@
+{
+  "name": "@lead-gen/gateway",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker GraphQL gateway: HTTP queries/mutations proxied to Vercel origin; subscriptions handled natively via Durable Object pubsub.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dry": "wrangler deploy --dry-run"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260401.0",
+    "typescript": "^5.9.2",
+    "wrangler": "^4.0.0"
+  }
+}

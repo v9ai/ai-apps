@@ -6,6 +6,7 @@ scalar Upload
 
 type Query
 type Mutation
+type Subscription
 
 enum SourceType {
   COMMONCRAWL

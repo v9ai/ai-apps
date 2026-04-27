@@ -90,6 +90,17 @@ query PublicIntelRuns($productId: Int!, $kind: String) {
   }
 }
 
+subscription IntelRunStatus($productId: Int!, $kind: String) {
+  intelRunStatus(productId: $productId, kind: $kind) {
+    id
+    kind
+    status
+    startedAt
+    finishedAt
+    error
+  }
+}
+
 mutation UpsertProduct($input: ProductInput!) {
   upsertProduct(input: $input) {
     ...ProductCore

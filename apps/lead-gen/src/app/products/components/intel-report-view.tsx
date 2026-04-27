@@ -15,8 +15,8 @@ import { button } from "@/recipes/button";
 import {
   useProductBySlugQuery,
   useRunFullProductIntelAsyncMutation,
-  usePublicIntelRunsQuery,
 } from "@/__generated__/hooks";
+import { useIntelRunLive } from "@/lib/use-intel-run-live";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import type { ProductIntelReportResult } from "@/lib/langgraph-client";
@@ -305,19 +305,10 @@ export function ProductIntelPage({ slug }: { slug: string }) {
 
   const productId = data?.productBySlug?.id ?? 0;
 
-  const { data: runsData, stopPolling } = usePublicIntelRunsQuery({
-    variables: { productId, kind: "product_intel" },
-    pollInterval: 2000,
-    skip: !productId,
-    fetchPolicy: "cache-and-network",
-  });
+  const { data: runsData } = useIntelRunLive(productId, "product_intel");
 
   const latestRun = runsData?.productIntelRuns?.[0];
   const terminal = latestRun ? TERMINAL_STATUSES.has(latestRun.status) : true;
-
-  if (latestRun && terminal) {
-    stopPolling();
-  }
 
   if (authLoading) return <LoadingShell />;
   if (!user) return <SignInGate />;

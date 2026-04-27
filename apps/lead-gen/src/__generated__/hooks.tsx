@@ -3519,6 +3519,18 @@ export type SourceType =
   | 'MANUAL'
   | 'PARTNER';
 
+export type Subscription = {
+  __typename?: 'Subscription';
+  /** Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling. */
+  intelRunStatus: IntelRun;
+};
+
+
+export type SubscriptionIntelRunStatusArgs = {
+  kind?: InputMaybe<Scalars['String']['input']>;
+  productId: Scalars['Int']['input'];
+};
+
 export type SyncResendResult = {
   __typename?: 'SyncResendResult';
   error: Maybe<Scalars['String']['output']>;
@@ -4583,6 +4595,14 @@ export type PublicIntelRunsQueryVariables = Exact<{
 
 
 export type PublicIntelRunsQuery = { __typename?: 'Query', productIntelRuns: Array<{ __typename?: 'IntelRun', id: string, kind: string, status: string, startedAt: string, finishedAt: string | null, error: string | null }> };
+
+export type IntelRunStatusSubscriptionVariables = Exact<{
+  productId: Scalars['Int']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type IntelRunStatusSubscription = { __typename?: 'Subscription', intelRunStatus: { __typename?: 'IntelRun', id: string, kind: string, status: string, startedAt: string, finishedAt: string | null, error: string | null } };
 
 export type UpsertProductMutationVariables = Exact<{
   input: ProductInput;
@@ -9079,6 +9099,42 @@ export type PublicIntelRunsQueryHookResult = ReturnType<typeof usePublicIntelRun
 export type PublicIntelRunsLazyQueryHookResult = ReturnType<typeof usePublicIntelRunsLazyQuery>;
 export type PublicIntelRunsSuspenseQueryHookResult = ReturnType<typeof usePublicIntelRunsSuspenseQuery>;
 export type PublicIntelRunsQueryResult = Apollo.QueryResult<PublicIntelRunsQuery, PublicIntelRunsQueryVariables>;
+export const IntelRunStatusDocument = gql`
+    subscription IntelRunStatus($productId: Int!, $kind: String) {
+  intelRunStatus(productId: $productId, kind: $kind) {
+    id
+    kind
+    status
+    startedAt
+    finishedAt
+    error
+  }
+}
+    `;
+
+/**
+ * __useIntelRunStatusSubscription__
+ *
+ * To run a query within a React component, call `useIntelRunStatusSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useIntelRunStatusSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useIntelRunStatusSubscription({
+ *   variables: {
+ *      productId: // value for 'productId'
+ *      kind: // value for 'kind'
+ *   },
+ * });
+ */
+export function useIntelRunStatusSubscription(baseOptions: Apollo.SubscriptionHookOptions<IntelRunStatusSubscription, IntelRunStatusSubscriptionVariables> & ({ variables: IntelRunStatusSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<IntelRunStatusSubscription, IntelRunStatusSubscriptionVariables>(IntelRunStatusDocument, options);
+      }
+export type IntelRunStatusSubscriptionHookResult = ReturnType<typeof useIntelRunStatusSubscription>;
+export type IntelRunStatusSubscriptionResult = Apollo.SubscriptionResult<IntelRunStatusSubscription>;
 export const UpsertProductDocument = gql`
     mutation UpsertProduct($input: ProductInput!) {
   upsertProduct(input: $input) {

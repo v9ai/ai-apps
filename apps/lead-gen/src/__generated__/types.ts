@@ -3516,6 +3516,18 @@ export type SourceType =
   | 'MANUAL'
   | 'PARTNER';
 
+export type Subscription = {
+  __typename: 'Subscription';
+  /** Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling. */
+  intelRunStatus: IntelRun;
+};
+
+
+export type SubscriptionIntelRunStatusArgs = {
+  kind?: InputMaybe<Scalars['String']['input']>;
+  productId: Scalars['Int']['input'];
+};
+
 export type SyncResendResult = {
   __typename: 'SyncResendResult';
   error: Maybe<Scalars['String']['output']>;

@@ -6,7 +6,12 @@ import {
   InMemoryCache,
   HttpLink,
   ApolloProvider,
+  split,
+  type ApolloLink,
 } from "@apollo/client";
+import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { getMainDefinition } from "@apollo/client/utilities";
+import { createClient } from "graphql-ws";
 import merge from "deepmerge";
 
 // Re-export ApolloProvider for convenience
@@ -14,14 +19,44 @@ export { ApolloProvider };
 
 let apolloClient: ApolloClient<any> | undefined;
 
-function createIsomorphLink() {
-  return new HttpLink({
+const GATEWAY_HTTP =
+  process.env.NEXT_PUBLIC_GATEWAY_URL ?? "/api/graphql";
+const GATEWAY_WS = process.env.NEXT_PUBLIC_GATEWAY_WS_URL ?? "";
+
+function createIsomorphLink(): ApolloLink {
+  const httpLink = new HttpLink({
     uri:
       typeof window === "undefined"
         ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/graphql"
-        : "/api/graphql",
+        : GATEWAY_HTTP,
     credentials: "same-origin",
   });
+
+  // Subscriptions only run in the browser. On the server, return the HTTP
+  // link unchanged — server-rendered components do not subscribe.
+  if (typeof window === "undefined" || !GATEWAY_WS) {
+    return httpLink;
+  }
+
+  const wsLink = new GraphQLWsLink(
+    createClient({
+      url: GATEWAY_WS,
+      lazy: true,
+      retryAttempts: 5,
+    }),
+  );
+
+  return split(
+    ({ query }) => {
+      const def = getMainDefinition(query);
+      return (
+        def.kind === "OperationDefinition" &&
+        def.operation === "subscription"
+      );
+    },
+    wsLink,
+    httpLink,
+  );
 }
 
 function createApolloClient() {

@@ -88,6 +88,11 @@ extend type Query {
   productLeads(slug: String!, tier: String, limit: Int = 50, offset: Int = 0): ProductLeadsConnection!
 }
 
+extend type Subscription {
+  "Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling."
+  intelRunStatus(productId: Int!, kind: String): IntelRun!
+}
+
 extend type Mutation {
   upsertProduct(input: ProductInput!): Product!
   deleteProduct(id: Int!): Boolean!

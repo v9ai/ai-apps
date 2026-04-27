@@ -5,6 +5,7 @@ export const typeDefs = /* GraphQL */ `
 schema {
   query: Query
   mutation: Mutation
+  subscription: Subscription
 }
 
 type AnalyzeCompanyResponse {
@@ -2350,6 +2351,13 @@ enum SourceType {
   LIVE_FETCH
   MANUAL
   PARTNER
+}
+
+type Subscription {
+  """
+  Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling.
+  """
+  intelRunStatus(kind: String, productId: Int!): IntelRun!
 }
 
 type SyncResendResult {

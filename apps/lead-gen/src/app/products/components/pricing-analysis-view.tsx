@@ -17,8 +17,8 @@ import { button } from "@/recipes/button";
 import {
   useProductBySlugQuery,
   useAnalyzeProductPricingAsyncMutation,
-  usePublicIntelRunsQuery,
 } from "@/__generated__/hooks";
+import { useIntelRunLive } from "@/lib/use-intel-run-live";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import type { PricingStrategyResult } from "@/lib/langgraph-client";
@@ -836,19 +836,10 @@ export function ProductPricingPage({ slug }: { slug: string }) {
 
   const productId = data?.productBySlug?.id ?? 0;
 
-  const { data: runsData, stopPolling } = usePublicIntelRunsQuery({
-    variables: { productId, kind: "pricing" },
-    pollInterval: 2000,
-    skip: !productId,
-    fetchPolicy: "cache-and-network",
-  });
+  const { data: runsData } = useIntelRunLive(productId, "pricing");
 
   const latestRun = runsData?.productIntelRuns?.[0];
   const terminal = latestRun ? TERMINAL_STATUSES.has(latestRun.status) : true;
-
-  if (latestRun && terminal) {
-    stopPolling();
-  }
 
   if (authLoading) {
     return (

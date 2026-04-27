@@ -43,6 +43,7 @@
     "crates",
     "consultancies",
     "edge",
-    "workers"
+    "workers",
+    "gateway"
   ]
 }

@@ -69,6 +69,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "graphql": "^16.12.0",
+    "graphql-ws": "^6.0.8",
     "llama-parse": "^0.1.0",
     "llamaindex": "^0.12.1",
     "lodash": "^4.17.23",
