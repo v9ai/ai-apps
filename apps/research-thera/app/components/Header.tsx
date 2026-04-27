@@ -10,19 +10,19 @@ import { SIDEBAR_WIDTH } from "./sidebar-constants";
 export { SIDEBAR_WIDTH };
 
 const NAV_LINKS = [
-  { href: "/issues", label: "Issues" },
+  { href: "/allergies", label: "Allergies & Intolerances" },
+  { href: "/books", label: "Books" },
+  { href: "/discussions", label: "Discuții" },
+  { href: "/family", label: "Family" },
+  { href: "/games", label: "Games" },
   { href: "/goals", label: "Goals" },
   { href: "/habits", label: "Habits" },
-  { href: "/routines", label: "Routines" },
-  { href: "/notes", label: "Notes" },
-  { href: "/stories", label: "Stories" },
-  { href: "/books", label: "Books" },
-  { href: "/family", label: "Family" },
+  { href: "/issues", label: "Issues" },
   { href: "/journal", label: "Journal" },
-  { href: "/discussions", label: "Discuții" },
-  { href: "/games", label: "Games" },
-  { href: "/allergies", label: "Allergies & Intolerances" },
   { href: "/medications", label: "Medications" },
+  { href: "/notes", label: "Notes" },
+  { href: "/routines", label: "Routines" },
+  { href: "/stories", label: "Stories" },
 ];
 
 export function Header() {

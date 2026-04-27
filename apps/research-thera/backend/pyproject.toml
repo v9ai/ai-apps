@@ -41,6 +41,12 @@ build-backend = "setuptools.build_meta"
 where = ["."]
 include = ["research_agent*", "healthcare*"]
 
+# Local `research-client` lives at pypackages/research — without this override,
+# uv resolves a totally unrelated PyPI `research-client` (Linguistic Anthropology
+# Research Toolkit) that pins ancient greenlet/gevent which fail to compile.
+[tool.uv.sources]
+research-client = { path = "../../../pypackages/research", editable = true }
+
 [dependency-groups]
 dev = [
     "langgraph-cli[inmem]>=0.4.14",
