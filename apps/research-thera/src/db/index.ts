@@ -45,6 +45,7 @@ import {
   upsertCognitiveBaseline as _upsertCognitiveBaseline,
   createCheckIn as _createCheckIn,
   getHealthcareSummary as _getHealthcareSummary,
+  listBloodTests as _listBloodTests,
 } from "./healthcare";
 
 // Re-export healthcare functions so they're reachable as top-level exports
@@ -92,6 +93,7 @@ export {
   _upsertCognitiveBaseline as upsertCognitiveBaseline,
   _createCheckIn as createCheckIn,
   _getHealthcareSummary as getHealthcareSummary,
+  _listBloodTests as listBloodTests,
 };
 export type {
   Condition,
@@ -108,6 +110,7 @@ export type {
   CognitiveBaseline,
   CognitiveCheckIn,
   HealthcareSummary,
+  BloodTest,
 } from "./healthcare";
 
 /**
@@ -4318,5 +4321,7 @@ export const db = {
   createCheckIn: _createCheckIn,
   // Healthcare — Dashboard summary
   getHealthcareSummary: _getHealthcareSummary,
+  // Healthcare — Blood tests
+  listBloodTests: _listBloodTests,
 };
 

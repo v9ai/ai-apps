@@ -213,6 +213,62 @@ export async function markerTrend(
   }));
 }
 
+// ── Blood test upload + delete (Python /upload, /blood-tests/{id}) ──
+
+export type UploadResult = {
+  testId: string;
+  markersCount: number;
+  status: string;
+};
+
+export async function uploadBloodTestToPython(
+  file: File,
+  userId: string,
+  testDate: string | null,
+): Promise<UploadResult> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("user_id", userId);
+  if (testDate) form.append("test_date", testDate);
+
+  const res = await fetch(`${BACKEND_URL}/upload`, {
+    method: "POST",
+    body: form,
+    headers: INTERNAL_API_KEY ? { "x-api-key": INTERNAL_API_KEY } : undefined,
+    signal: AbortSignal.timeout(280_000),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "Unknown error");
+    throw new Error(`Healthcare /upload failed (${res.status}): ${detail}`);
+  }
+  const data = (await res.json()) as {
+    test_id: string;
+    markers_count: number;
+    status: string;
+  };
+  return {
+    testId: data.test_id,
+    markersCount: data.markers_count,
+    status: data.status,
+  };
+}
+
+export async function deleteBloodTestViaPython(
+  testId: string,
+  userId: string,
+): Promise<void> {
+  const res = await fetch(
+    `${BACKEND_URL}/blood-tests/${encodeURIComponent(testId)}?user_id=${encodeURIComponent(userId)}`,
+    { method: "DELETE", headers: headers() },
+  );
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "Unknown error");
+    throw new Error(
+      `Healthcare /blood-tests delete failed (${res.status}): ${detail}`,
+    );
+  }
+}
+
 export async function sendHealthcareChat(
   messages: ChatTurn[],
   userId: string,

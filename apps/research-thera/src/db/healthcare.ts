@@ -44,6 +44,59 @@ export type HealthcareSummary = {
   protocolsCount: number;
 };
 
+// ────────────────────────────────────────────────────────────────────
+// Blood tests (rows only — embedding/upload happens in Python /upload)
+// ────────────────────────────────────────────────────────────────────
+
+export type BloodTest = {
+  id: string;
+  userId: string;
+  fileName: string;
+  filePath: string;
+  status: string;
+  testDate: string | null;
+  errorMessage: string | null;
+  uploadedAt: string;
+  markersCount: number;
+};
+
+function toBloodTest(r: Record<string, unknown>): BloodTest {
+  return {
+    id: r.id as string,
+    userId: r.user_id as string,
+    fileName: r.file_name as string,
+    filePath: r.file_path as string,
+    status: r.status as string,
+    testDate:
+      r.test_date instanceof Date
+        ? r.test_date.toISOString().slice(0, 10)
+        : (r.test_date as string | null) ?? null,
+    errorMessage: (r.error_message as string | null) ?? null,
+    uploadedAt:
+      r.uploaded_at instanceof Date
+        ? r.uploaded_at.toISOString()
+        : (r.uploaded_at as string),
+    markersCount: r.markers_count == null ? 0 : Number(r.markers_count),
+  };
+}
+
+export async function listBloodTests(userId: string): Promise<BloodTest[]> {
+  const rows = await neonSql`
+    SELECT t.id, t.user_id, t.file_name, t.file_path, t.status, t.test_date,
+           t.error_message, t.uploaded_at,
+           COALESCE(m.cnt, 0) AS markers_count
+    FROM blood_tests t
+    LEFT JOIN (
+      SELECT test_id, COUNT(*)::int AS cnt
+      FROM blood_markers
+      GROUP BY test_id
+    ) m ON m.test_id = t.id
+    WHERE t.user_id = ${userId}
+    ORDER BY COALESCE(t.test_date::timestamptz, t.uploaded_at) DESC
+  `;
+  return rows.map(toBloodTest);
+}
+
 export async function getHealthcareSummary(
   userId: string,
 ): Promise<HealthcareSummary> {
