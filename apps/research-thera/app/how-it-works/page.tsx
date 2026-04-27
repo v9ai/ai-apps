@@ -3,7 +3,7 @@ import { HowItWorksClient } from "./how-it-works-client";
 
 export const metadata: Metadata = {
   title: "How It Works",
-  description: "A therapeutic platform for families — connecting goals, journals, issues, and habits with peer-reviewed research via AI agents and a GraphQL API",
+  description: "A therapeutic + clinical-intelligence platform — therapeutic goals, journals, issues, and habits backed by a 7-node research pipeline; plus a LlamaIndex healthcare layer for blood tests, derived clinical ratios, conditions, medications, brain protocols, and a 5-stage chat pipeline. 6 AI agents over a GraphQL API.",
 };
 
 export default function HowItWorksPage() {

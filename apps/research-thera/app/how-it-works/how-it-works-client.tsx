@@ -6,11 +6,12 @@ import { PipelineFlow, SearchFlow, ExtractPersistFlow, RagAgentFlow, DataFlowDia
 // ── Shared styles ────────────────────────────────────────────────────────────
 
 const prose: React.CSSProperties = {
-  maxWidth: 900,
-  margin: "0 auto",
-  padding: "0 1rem 4rem",
+  width: "calc(100vw - var(--sidebar-offset, 0px))",
+  marginLeft: "calc(50% - 50vw + (var(--sidebar-offset, 0px) / 2))",
+  padding: "0 2rem 4rem",
   lineHeight: 1.75,
   fontSize: "1.05rem",
+  boxSizing: "border-box",
 };
 
 const sectionHead: React.CSSProperties = {
@@ -713,7 +714,7 @@ function PageHeader() {
     >
       <h2 style={{ fontSize: "1.75rem", fontWeight: 700, margin: 0 }}>How It Works</h2>
       <p style={{ color: "var(--gray-a8, rgba(255,255,255,0.4))", margin: "0.5rem 0 0", fontSize: "0.95rem" }}>
-        A therapeutic platform for families — connecting goals, journals, issues, and habits with evidence-based research via 4 AI agents, a 7-node research pipeline, and a GraphQL API.
+        A therapeutic + clinical-intelligence platform for families — therapeutic goals, journals, issues, and habits backed by a 7-node research pipeline; plus a LlamaIndex-powered healthcare layer for blood tests, derived clinical ratios, and a 5-stage chat pipeline. 6 AI agents (3 LangGraph + 1 LlamaIndex + 2 AI SDK) over a GraphQL API.
       </p>
     </div>
   );
@@ -937,7 +938,7 @@ export function HowItWorksClient() {
       <hr style={divider} />
       <h3 style={sectionHead}>Platform Features</h3>
       <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
-        Seven feature areas spanning therapeutic goal management, family coordination, journaling, behavioral tracking, evidence verification, interactive stories, and AI-generated audio.
+        Eight feature areas: therapeutic goal management, family coordination, journaling, behavioral tracking, evidence verification, interactive stories, AI-generated audio, and the LlamaIndex healthcare layer (blood tests, clinical ratios, conditions, medications, brain protocols, clinical chat).
       </p>
       <PlatformFeaturesGrid />
 
@@ -945,7 +946,7 @@ export function HowItWorksClient() {
       <hr style={divider} />
       <h3 style={sectionHead}>AI Agents</h3>
       <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
-        Four DeepSeek-powered agents — two Python LangGraph agents for research and analysis, two TypeScript AI SDK agents for stories and therapeutic audio.
+        Six agents: three Python LangGraph (research + deep analysis + medication deep research), one Python LlamaIndex (healthcare chat — explicitly not LangGraph), and two TypeScript AI SDK agents (stories + therapeutic audio).
       </p>
       <AIAgentsSection />
 

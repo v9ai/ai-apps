@@ -323,6 +323,24 @@ async def analyze(state: CompanyProblemsState) -> dict:
             "\n\nHomepage / scraped marketing copy (raw, may include nav noise):\n"
             + snapshot
         )
+    posts = company.get("posts") or []
+    if posts:
+        # Cap aggregate post text so a flood of posts can't dominate the prompt.
+        # 60 KB ≈ ~15K tokens; deepseek-v4-pro handles this comfortably.
+        joined: list[str] = []
+        budget = 60_000
+        for i, p in enumerate(posts, 1):
+            entry = f"\n--- post {i} ---\n{p.strip()}"
+            if budget - len(entry) < 0:
+                break
+            joined.append(entry)
+            budget -= len(entry)
+        parts.append(
+            "\n\nRecent LinkedIn posts from people at this company "
+            "(their own words about live mandates, market commentary, "
+            "team capacity, and operational pain — strong evidence):"
+            + "".join(joined)
+        )
     user_msg = "".join(parts)
 
     llm = make_deepseek_pro(temperature=0.1)
