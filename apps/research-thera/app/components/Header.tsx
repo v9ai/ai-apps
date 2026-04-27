@@ -45,7 +45,7 @@ export function Header() {
           borderRight: "1px solid var(--gray-a4)",
         }}
       >
-        <Flex direction="column" height="100%" p="4" gap="5">
+        <Flex direction="column" height="100%" px="4" py="5" gap="6">
           <Link
             href="/"
             aria-label="ResearchThera — home"
@@ -57,7 +57,7 @@ export function Header() {
           </Link>
 
           <nav aria-label="Main navigation" style={{ flex: 1 }}>
-            <Flex direction="column" gap="1">
+            <Flex direction="column" gap="2">
               {NAV_LINKS.map((link) => {
                 const isActive = pathname.startsWith(link.href);
                 return (
