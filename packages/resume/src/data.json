@@ -198,7 +198,7 @@
           "Local-only Apple Silicon inference — Qwen2.5-7B-Instruct-4bit on mlx_lm.server, FastEmbed via ONNX — zero API calls, zero PHI egress; LLM_BASE_URL swappable for remote.",
           "Medication deep research LangGraph agent persists pharmacology across 6 tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) powering /medications/[slug] panels.",
           "Deep issue analysis LangGraph agent clusters a child's issues into thematic patterns with timeline + family-system insights, root-cause analysis, and research-relevance-mapped priority recommendations.",
-          "TypeScript AI SDK agents (generateObject + Zod): storyTeller (3-part CYOA, TTS-optimized) + therapeutic (CBT/ACT/DBT/MBSR/LEGO-Based Therapy) → OpenAI gpt-4o-mini-tts → Cloudflare R2.",
+          "TypeScript AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → gpt-4o-mini-tts → R2.",
           "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): ~2,350 candidates from 7 sources → DeepSeek with 0.72 blended-quality gate → top 20 as 1024-dim pgvector.",
           "~70-table Drizzle/PostgreSQL schema post agentic-healthcare merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables incl. 8 pgvector embedding tables."
         ]
