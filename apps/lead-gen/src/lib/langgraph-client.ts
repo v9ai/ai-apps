@@ -693,7 +693,8 @@ export function runFullProductIntel(input: {
 // The sync wrappers above block a Vercel function up to 300s — fine for Apollo
 // Sandbox, cron, and tests, too long for real UI flows. The async helpers
 // below kick off the run on the CF Container, return a run id in <2s, and let
-// the container POST back to /api/webhooks/langgraph when it finishes.
+// the container POST back to the CF gateway's /internal/run-finished when
+// it finishes (the Vercel /api/webhooks/langgraph route was removed).
 //
 // See migrations/0058_add_product_intel_runs.sql for the tracking table and
 // backend/leadgen_agent/notify.py for the graph-side webhook notifier.
@@ -725,8 +726,9 @@ async function lgFetch(path: string, init: RequestInit): Promise<Response> {
 /**
  * Kick off a LangGraph run in the background. Returns as soon as the container
  * accepts the run — does NOT wait for the graph to finish. The graph's
- * `notify_complete` terminal node POSTs the final state to
- * `${APP_URL}/api/webhooks/langgraph` signed with `webhookSecret`.
+ * `notify_complete` terminal node POSTs the final state to the Cloudflare
+ * gateway's `${GATEWAY_URL}/internal/run-finished`, signed with `GATEWAY_HMAC`.
+ * The gateway updates Postgres + broadcasts to subscribed WebSocket clients.
  *
  * Callers should INSERT a product_intel_runs row with the returned ids BEFORE
  * returning to the GraphQL client, so a fast webhook can't arrive before the

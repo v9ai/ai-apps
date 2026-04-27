@@ -138,19 +138,18 @@ async def test_notify_complete_posts_signed_payload() -> None:
         # Case-insensitive header lookup — BaseHTTPRequestHandler preserves case
         # from the wire; httpx sends lowercase, but don't depend on that.
         lower = {k.lower(): v for k, v in headers.items()}
-        assert "x-app-signature" in lower
-        assert "x-app-run-id" in lower
-        assert lower["x-app-run-id"] == app_run_id
+        assert "x-signature" in lower
 
-        # Re-derive the signature exactly the way the TS handler does.
+        # Re-derive the signature exactly the way the gateway verifier does.
         expected_sig = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-        assert hmac.compare_digest(lower["x-app-signature"], expected_sig), (
+        assert hmac.compare_digest(lower["x-signature"], expected_sig), (
             "signature mismatch — Python-side body bytes drifted from what the "
-            "TS verifier expects (likely a json.dumps formatting change)"
+            "gateway verifier expects (likely a json.dumps formatting change)"
         )
 
-        # Payload shape must match the TS webhook contract.
+        # Payload shape must match the gateway /internal/run-finished contract.
         decoded = json.loads(body)
+        assert decoded.get("appRunId") == app_run_id
         assert decoded.get("status") == "success"
         assert decoded.get("output", {}).get("pricing") == pricing
     finally:

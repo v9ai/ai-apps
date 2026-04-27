@@ -2,7 +2,8 @@
  * Resolvers + kickoff helper for the async LangGraph run pattern.
  *
  * Mutations return an IntelRunAccepted in <2s; the graph runs on the CF
- * Container for 1–3 min and closes the loop via /api/webhooks/langgraph.
+ * Container for 1–3 min and closes the loop by POSTing to the gateway's
+ * /internal/run-finished endpoint (the Vercel webhook was removed).
  *
  * Query productIntelRun(id) supports a lightweight reconcile path: if the
  * webhook was lost but LangGraph already reports `error`, we flip the row
