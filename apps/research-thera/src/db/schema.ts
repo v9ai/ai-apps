@@ -901,6 +901,7 @@ export const medications = pgTable(
     notes: text("notes"),
     startDate: date("start_date"),
     endDate: date("end_date"),
+    isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
