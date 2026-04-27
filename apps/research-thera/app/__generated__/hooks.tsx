@@ -26,9 +26,27 @@ export type ActionableRecommendation = {
   title: Scalars['String']['output'];
 };
 
+export type AddAppointmentInput = {
+  appointmentDate?: InputMaybe<Scalars['String']['input']>;
+  doctorId?: InputMaybe<Scalars['ID']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  provider?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
+};
+
 export type AddConditionInput = {
   name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AddDoctorInput = {
+  address?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
+  specialty?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AddMedicationInput = {
@@ -71,6 +89,19 @@ export type AnticipatedReaction = {
   howToRespond: Scalars['String']['output'];
   likelihood: Scalars['String']['output'];
   reaction: Scalars['String']['output'];
+};
+
+export type Appointment = {
+  __typename?: 'Appointment';
+  appointmentDate?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  doctorId?: Maybe<Scalars['ID']['output']>;
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  provider?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
 };
 
 export type AudioAsset = {
@@ -551,6 +582,11 @@ export type DeleteAffirmationResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteAppointmentResult = {
+  __typename?: 'DeleteAppointmentResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteBehaviorObservationResult = {
   __typename?: 'DeleteBehaviorObservationResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -588,6 +624,11 @@ export type DeleteDeepAnalysisResult = {
 export type DeleteDiscussionGuideResult = {
   __typename?: 'DeleteDiscussionGuideResult';
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteDoctorResult = {
+  __typename?: 'DeleteDoctorResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -736,6 +777,19 @@ export type DiscussionGuideCritique = {
   refined: Scalars['Boolean']['output'];
   scores: CritiqueScores;
   weakSections: Array<Scalars['String']['output']>;
+};
+
+export type Doctor = {
+  __typename?: 'Doctor';
+  address?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  email?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  phone?: Maybe<Scalars['String']['output']>;
+  specialty?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
 };
 
 export type EmotionalLandscape = {
@@ -1299,7 +1353,9 @@ export type MicroScript = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addAppointment: Appointment;
   addCondition: Condition;
+  addDoctor: Doctor;
   addMedication: Medication;
   addSymptom: Symptom;
   buildClaimCards: BuildClaimCardsResult;
@@ -1323,6 +1379,7 @@ export type Mutation = {
   createSubGoal: Goal;
   createTeacherFeedback: TeacherFeedback;
   deleteAffirmation: DeleteAffirmationResult;
+  deleteAppointment: DeleteAppointmentResult;
   deleteBehaviorObservation: DeleteBehaviorObservationResult;
   deleteClaimCard: Scalars['Boolean']['output'];
   deleteCondition: DeleteConditionResult;
@@ -1332,6 +1389,7 @@ export type Mutation = {
   deleteDeepAnalysis: DeleteDeepAnalysisResult;
   deleteDeepIssueAnalysis: DeleteDeepAnalysisResult;
   deleteDiscussionGuide: DeleteDiscussionGuideResult;
+  deleteDoctor: DeleteDoctorResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
   deleteGame: DeleteGameResult;
   deleteGoal: DeleteGoalResult;
@@ -1405,8 +1463,18 @@ export type Mutation = {
 };
 
 
+export type MutationAddAppointmentArgs = {
+  input: AddAppointmentInput;
+};
+
+
 export type MutationAddConditionArgs = {
   input: AddConditionInput;
+};
+
+
+export type MutationAddDoctorArgs = {
+  input: AddDoctorInput;
 };
 
 
@@ -1531,6 +1599,11 @@ export type MutationDeleteAffirmationArgs = {
 };
 
 
+export type MutationDeleteAppointmentArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteBehaviorObservationArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1573,6 +1646,11 @@ export type MutationDeleteDeepIssueAnalysisArgs = {
 
 export type MutationDeleteDiscussionGuideArgs = {
   journalEntryId: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteDoctorArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2144,6 +2222,7 @@ export type Query = {
   allRecommendedBooks: Array<RecommendedBook>;
   allStories: Array<Story>;
   allTags: Array<Scalars['String']['output']>;
+  appointments: Array<Appointment>;
   audioFromR2?: Maybe<AudioFromR2Result>;
   behaviorObservation?: Maybe<BehaviorObservation>;
   behaviorObservations: Array<BehaviorObservation>;
@@ -2162,6 +2241,7 @@ export type Query = {
   deepAnalysis?: Maybe<DeepAnalysis>;
   deepIssueAnalyses: Array<DeepIssueAnalysis>;
   deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
+  doctors: Array<Doctor>;
   familyMember?: Maybe<FamilyMember>;
   familyMembers: Array<FamilyMember>;
   game?: Maybe<Game>;
@@ -2926,12 +3006,26 @@ export type VaultUnlockResult = {
   unlocked: Scalars['Boolean']['output'];
 };
 
+export type AddAppointmentMutationVariables = Exact<{
+  input: AddAppointmentInput;
+}>;
+
+
+export type AddAppointmentMutation = { __typename?: 'Mutation', addAppointment: { __typename?: 'Appointment', id: string, title: string, doctorId?: string | null, familyMemberId?: number | null, provider?: string | null, notes?: string | null, appointmentDate?: string | null, createdAt: string } };
+
 export type AddConditionMutationVariables = Exact<{
   input: AddConditionInput;
 }>;
 
 
 export type AddConditionMutation = { __typename?: 'Mutation', addCondition: { __typename?: 'Condition', id: string, name: string, notes?: string | null, createdAt: string } };
+
+export type AddDoctorMutationVariables = Exact<{
+  input: AddDoctorInput;
+}>;
+
+
+export type AddDoctorMutation = { __typename?: 'Mutation', addDoctor: { __typename?: 'Doctor', id: string, name: string, specialty?: string | null, phone?: string | null, email?: string | null, address?: string | null, notes?: string | null, createdAt: string } };
 
 export type AddMedicationMutationVariables = Exact<{
   input: AddMedicationInput;
@@ -2946,6 +3040,11 @@ export type AddSymptomMutationVariables = Exact<{
 
 
 export type AddSymptomMutation = { __typename?: 'Mutation', addSymptom: { __typename?: 'Symptom', id: string, description: string, severity?: string | null, loggedAt: string, createdAt: string } };
+
+export type AppointmentsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AppointmentsQuery = { __typename?: 'Query', appointments: Array<{ __typename?: 'Appointment', id: string, title: string, doctorId?: string | null, familyMemberId?: number | null, provider?: string | null, notes?: string | null, appointmentDate?: string | null, createdAt: string }> };
 
 export type BogdanDiscussionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3133,6 +3232,13 @@ export type DeleteAffirmationMutationVariables = Exact<{
 
 export type DeleteAffirmationMutation = { __typename?: 'Mutation', deleteAffirmation: { __typename?: 'DeleteAffirmationResult', success: boolean, message?: string | null } };
 
+export type DeleteAppointmentMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteAppointmentMutation = { __typename?: 'Mutation', deleteAppointment: { __typename?: 'DeleteAppointmentResult', success: boolean } };
+
 export type DeleteBehaviorObservationMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -3188,6 +3294,13 @@ export type DeleteDiscussionGuideMutationVariables = Exact<{
 
 
 export type DeleteDiscussionGuideMutation = { __typename?: 'Mutation', deleteDiscussionGuide: { __typename?: 'DeleteDiscussionGuideResult', success: boolean, message?: string | null } };
+
+export type DeleteDoctorMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteDoctorMutation = { __typename?: 'Mutation', deleteDoctor: { __typename?: 'DeleteDoctorResult', success: boolean } };
 
 export type DeleteFamilyMemberMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3330,6 +3443,11 @@ export type DeleteTherapeuticQuestionsMutationVariables = Exact<{
 
 
 export type DeleteTherapeuticQuestionsMutation = { __typename?: 'Mutation', deleteTherapeuticQuestions: { __typename?: 'DeleteQuestionsResult', success: boolean, message?: string | null, deletedCount: number } };
+
+export type DoctorsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DoctorsQuery = { __typename?: 'Query', doctors: Array<{ __typename?: 'Doctor', id: string, name: string, specialty?: string | null, phone?: string | null, email?: string | null, address?: string | null, notes?: string | null, createdAt: string }> };
 
 export type ExtractContactFeedbackIssuesMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -4095,6 +4213,46 @@ export type VaultStatusQueryVariables = Exact<{ [key: string]: never; }>;
 export type VaultStatusQuery = { __typename?: 'Query', vaultStatus: { __typename?: 'VaultStatus', unlocked: boolean, available: boolean } };
 
 
+export const AddAppointmentDocument = gql`
+    mutation AddAppointment($input: AddAppointmentInput!) {
+  addAppointment(input: $input) {
+    id
+    title
+    doctorId
+    familyMemberId
+    provider
+    notes
+    appointmentDate
+    createdAt
+  }
+}
+    `;
+export type AddAppointmentMutationFn = Apollo.MutationFunction<AddAppointmentMutation, AddAppointmentMutationVariables>;
+
+/**
+ * __useAddAppointmentMutation__
+ *
+ * To run a mutation, you first call `useAddAppointmentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddAppointmentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addAppointmentMutation, { data, loading, error }] = useAddAppointmentMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddAppointmentMutation(baseOptions?: Apollo.MutationHookOptions<AddAppointmentMutation, AddAppointmentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddAppointmentMutation, AddAppointmentMutationVariables>(AddAppointmentDocument, options);
+      }
+export type AddAppointmentMutationHookResult = ReturnType<typeof useAddAppointmentMutation>;
+export type AddAppointmentMutationResult = Apollo.MutationResult<AddAppointmentMutation>;
+export type AddAppointmentMutationOptions = Apollo.BaseMutationOptions<AddAppointmentMutation, AddAppointmentMutationVariables>;
 export const AddConditionDocument = gql`
     mutation AddCondition($input: AddConditionInput!) {
   addCondition(input: $input) {
@@ -4131,6 +4289,46 @@ export function useAddConditionMutation(baseOptions?: Apollo.MutationHookOptions
 export type AddConditionMutationHookResult = ReturnType<typeof useAddConditionMutation>;
 export type AddConditionMutationResult = Apollo.MutationResult<AddConditionMutation>;
 export type AddConditionMutationOptions = Apollo.BaseMutationOptions<AddConditionMutation, AddConditionMutationVariables>;
+export const AddDoctorDocument = gql`
+    mutation AddDoctor($input: AddDoctorInput!) {
+  addDoctor(input: $input) {
+    id
+    name
+    specialty
+    phone
+    email
+    address
+    notes
+    createdAt
+  }
+}
+    `;
+export type AddDoctorMutationFn = Apollo.MutationFunction<AddDoctorMutation, AddDoctorMutationVariables>;
+
+/**
+ * __useAddDoctorMutation__
+ *
+ * To run a mutation, you first call `useAddDoctorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddDoctorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addDoctorMutation, { data, loading, error }] = useAddDoctorMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddDoctorMutation(baseOptions?: Apollo.MutationHookOptions<AddDoctorMutation, AddDoctorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddDoctorMutation, AddDoctorMutationVariables>(AddDoctorDocument, options);
+      }
+export type AddDoctorMutationHookResult = ReturnType<typeof useAddDoctorMutation>;
+export type AddDoctorMutationResult = Apollo.MutationResult<AddDoctorMutation>;
+export type AddDoctorMutationOptions = Apollo.BaseMutationOptions<AddDoctorMutation, AddDoctorMutationVariables>;
 export const AddMedicationDocument = gql`
     mutation AddMedication($input: AddMedicationInput!) {
   addMedication(input: $input) {
@@ -4208,6 +4406,55 @@ export function useAddSymptomMutation(baseOptions?: Apollo.MutationHookOptions<A
 export type AddSymptomMutationHookResult = ReturnType<typeof useAddSymptomMutation>;
 export type AddSymptomMutationResult = Apollo.MutationResult<AddSymptomMutation>;
 export type AddSymptomMutationOptions = Apollo.BaseMutationOptions<AddSymptomMutation, AddSymptomMutationVariables>;
+export const AppointmentsDocument = gql`
+    query Appointments {
+  appointments {
+    id
+    title
+    doctorId
+    familyMemberId
+    provider
+    notes
+    appointmentDate
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useAppointmentsQuery__
+ *
+ * To run a query within a React component, call `useAppointmentsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAppointmentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAppointmentsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useAppointmentsQuery(baseOptions?: Apollo.QueryHookOptions<AppointmentsQuery, AppointmentsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<AppointmentsQuery, AppointmentsQueryVariables>(AppointmentsDocument, options);
+      }
+export function useAppointmentsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AppointmentsQuery, AppointmentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<AppointmentsQuery, AppointmentsQueryVariables>(AppointmentsDocument, options);
+        }
+// @ts-ignore
+export function useAppointmentsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<AppointmentsQuery, AppointmentsQueryVariables>): Apollo.UseSuspenseQueryResult<AppointmentsQuery, AppointmentsQueryVariables>;
+export function useAppointmentsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AppointmentsQuery, AppointmentsQueryVariables>): Apollo.UseSuspenseQueryResult<AppointmentsQuery | undefined, AppointmentsQueryVariables>;
+export function useAppointmentsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AppointmentsQuery, AppointmentsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<AppointmentsQuery, AppointmentsQueryVariables>(AppointmentsDocument, options);
+        }
+export type AppointmentsQueryHookResult = ReturnType<typeof useAppointmentsQuery>;
+export type AppointmentsLazyQueryHookResult = ReturnType<typeof useAppointmentsLazyQuery>;
+export type AppointmentsSuspenseQueryHookResult = ReturnType<typeof useAppointmentsSuspenseQuery>;
+export type AppointmentsQueryResult = Apollo.QueryResult<AppointmentsQuery, AppointmentsQueryVariables>;
 export const BogdanDiscussionsDocument = gql`
     query BogdanDiscussions {
   bogdanDiscussions {
@@ -5502,6 +5749,39 @@ export function useDeleteAffirmationMutation(baseOptions?: Apollo.MutationHookOp
 export type DeleteAffirmationMutationHookResult = ReturnType<typeof useDeleteAffirmationMutation>;
 export type DeleteAffirmationMutationResult = Apollo.MutationResult<DeleteAffirmationMutation>;
 export type DeleteAffirmationMutationOptions = Apollo.BaseMutationOptions<DeleteAffirmationMutation, DeleteAffirmationMutationVariables>;
+export const DeleteAppointmentDocument = gql`
+    mutation DeleteAppointment($id: ID!) {
+  deleteAppointment(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteAppointmentMutationFn = Apollo.MutationFunction<DeleteAppointmentMutation, DeleteAppointmentMutationVariables>;
+
+/**
+ * __useDeleteAppointmentMutation__
+ *
+ * To run a mutation, you first call `useDeleteAppointmentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteAppointmentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteAppointmentMutation, { data, loading, error }] = useDeleteAppointmentMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteAppointmentMutation(baseOptions?: Apollo.MutationHookOptions<DeleteAppointmentMutation, DeleteAppointmentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteAppointmentMutation, DeleteAppointmentMutationVariables>(DeleteAppointmentDocument, options);
+      }
+export type DeleteAppointmentMutationHookResult = ReturnType<typeof useDeleteAppointmentMutation>;
+export type DeleteAppointmentMutationResult = Apollo.MutationResult<DeleteAppointmentMutation>;
+export type DeleteAppointmentMutationOptions = Apollo.BaseMutationOptions<DeleteAppointmentMutation, DeleteAppointmentMutationVariables>;
 export const DeleteBehaviorObservationDocument = gql`
     mutation DeleteBehaviorObservation($id: Int!) {
   deleteBehaviorObservation(id: $id) {
@@ -5772,6 +6052,39 @@ export function useDeleteDiscussionGuideMutation(baseOptions?: Apollo.MutationHo
 export type DeleteDiscussionGuideMutationHookResult = ReturnType<typeof useDeleteDiscussionGuideMutation>;
 export type DeleteDiscussionGuideMutationResult = Apollo.MutationResult<DeleteDiscussionGuideMutation>;
 export type DeleteDiscussionGuideMutationOptions = Apollo.BaseMutationOptions<DeleteDiscussionGuideMutation, DeleteDiscussionGuideMutationVariables>;
+export const DeleteDoctorDocument = gql`
+    mutation DeleteDoctor($id: ID!) {
+  deleteDoctor(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteDoctorMutationFn = Apollo.MutationFunction<DeleteDoctorMutation, DeleteDoctorMutationVariables>;
+
+/**
+ * __useDeleteDoctorMutation__
+ *
+ * To run a mutation, you first call `useDeleteDoctorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDoctorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteDoctorMutation, { data, loading, error }] = useDeleteDoctorMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteDoctorMutation(baseOptions?: Apollo.MutationHookOptions<DeleteDoctorMutation, DeleteDoctorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteDoctorMutation, DeleteDoctorMutationVariables>(DeleteDoctorDocument, options);
+      }
+export type DeleteDoctorMutationHookResult = ReturnType<typeof useDeleteDoctorMutation>;
+export type DeleteDoctorMutationResult = Apollo.MutationResult<DeleteDoctorMutation>;
+export type DeleteDoctorMutationOptions = Apollo.BaseMutationOptions<DeleteDoctorMutation, DeleteDoctorMutationVariables>;
 export const DeleteFamilyMemberDocument = gql`
     mutation DeleteFamilyMember($id: Int!) {
   deleteFamilyMember(id: $id) {
@@ -6456,6 +6769,55 @@ export function useDeleteTherapeuticQuestionsMutation(baseOptions?: Apollo.Mutat
 export type DeleteTherapeuticQuestionsMutationHookResult = ReturnType<typeof useDeleteTherapeuticQuestionsMutation>;
 export type DeleteTherapeuticQuestionsMutationResult = Apollo.MutationResult<DeleteTherapeuticQuestionsMutation>;
 export type DeleteTherapeuticQuestionsMutationOptions = Apollo.BaseMutationOptions<DeleteTherapeuticQuestionsMutation, DeleteTherapeuticQuestionsMutationVariables>;
+export const DoctorsDocument = gql`
+    query Doctors {
+  doctors {
+    id
+    name
+    specialty
+    phone
+    email
+    address
+    notes
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useDoctorsQuery__
+ *
+ * To run a query within a React component, call `useDoctorsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDoctorsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDoctorsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useDoctorsQuery(baseOptions?: Apollo.QueryHookOptions<DoctorsQuery, DoctorsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<DoctorsQuery, DoctorsQueryVariables>(DoctorsDocument, options);
+      }
+export function useDoctorsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<DoctorsQuery, DoctorsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<DoctorsQuery, DoctorsQueryVariables>(DoctorsDocument, options);
+        }
+// @ts-ignore
+export function useDoctorsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<DoctorsQuery, DoctorsQueryVariables>): Apollo.UseSuspenseQueryResult<DoctorsQuery, DoctorsQueryVariables>;
+export function useDoctorsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DoctorsQuery, DoctorsQueryVariables>): Apollo.UseSuspenseQueryResult<DoctorsQuery | undefined, DoctorsQueryVariables>;
+export function useDoctorsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DoctorsQuery, DoctorsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<DoctorsQuery, DoctorsQueryVariables>(DoctorsDocument, options);
+        }
+export type DoctorsQueryHookResult = ReturnType<typeof useDoctorsQuery>;
+export type DoctorsLazyQueryHookResult = ReturnType<typeof useDoctorsLazyQuery>;
+export type DoctorsSuspenseQueryHookResult = ReturnType<typeof useDoctorsSuspenseQuery>;
+export type DoctorsQueryResult = Apollo.QueryResult<DoctorsQuery, DoctorsQueryVariables>;
 export const ExtractContactFeedbackIssuesDocument = gql`
     mutation ExtractContactFeedbackIssues($id: Int!) {
   extractContactFeedbackIssues(id: $id) {

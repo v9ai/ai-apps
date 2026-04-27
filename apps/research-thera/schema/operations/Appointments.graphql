@@ -1,0 +1,12 @@
+query Appointments {
+  appointments {
+    id
+    title
+    doctorId
+    familyMemberId
+    provider
+    notes
+    appointmentDate
+    createdAt
+  }
+}

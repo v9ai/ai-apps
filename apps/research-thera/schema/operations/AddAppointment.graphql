@@ -1,0 +1,12 @@
+mutation AddAppointment($input: AddAppointmentInput!) {
+  addAppointment(input: $input) {
+    id
+    title
+    doctorId
+    familyMemberId
+    provider
+    notes
+    appointmentDate
+    createdAt
+  }
+}

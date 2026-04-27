@@ -1,0 +1,5 @@
+mutation DeleteDoctor($id: ID!) {
+  deleteDoctor(id: $id) {
+    success
+  }
+}

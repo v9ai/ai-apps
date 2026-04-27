@@ -269,6 +269,12 @@ type Query {
 
   # Healthcare — Symptoms
   symptoms: [Symptom!]!
+
+  # Healthcare — Doctors
+  doctors: [Doctor!]!
+
+  # Healthcare — Appointments
+  appointments: [Appointment!]!
 }
 
 type Mutation {
@@ -462,6 +468,14 @@ type Mutation {
   # Healthcare — Symptoms
   addSymptom(input: AddSymptomInput!): Symptom!
   deleteSymptom(id: ID!): DeleteSymptomResult!
+
+  # Healthcare — Doctors
+  addDoctor(input: AddDoctorInput!): Doctor!
+  deleteDoctor(id: ID!): DeleteDoctorResult!
+
+  # Healthcare — Appointments
+  addAppointment(input: AddAppointmentInput!): Appointment!
+  deleteAppointment(id: ID!): DeleteAppointmentResult!
 }
 
 type Subscription {
@@ -2169,5 +2183,63 @@ input AddSymptomInput {
 }
 
 type DeleteSymptomResult {
+  success: Boolean!
+}
+
+# ============================================
+# Healthcare — Doctors
+# ============================================
+
+type Doctor {
+  id: ID!
+  userId: String!
+  name: String!
+  specialty: String
+  phone: String
+  email: String
+  address: String
+  notes: String
+  createdAt: String!
+}
+
+input AddDoctorInput {
+  name: String!
+  specialty: String
+  phone: String
+  email: String
+  address: String
+  notes: String
+}
+
+type DeleteDoctorResult {
+  success: Boolean!
+}
+
+# ============================================
+# Healthcare — Appointments
+# ============================================
+
+type Appointment {
+  id: ID!
+  userId: String!
+  doctorId: ID
+  familyMemberId: Int
+  title: String!
+  provider: String
+  notes: String
+  appointmentDate: String
+  createdAt: String!
+}
+
+input AddAppointmentInput {
+  title: String!
+  doctorId: ID
+  familyMemberId: Int
+  provider: String
+  notes: String
+  appointmentDate: String
+}
+
+type DeleteAppointmentResult {
   success: Boolean!
 }

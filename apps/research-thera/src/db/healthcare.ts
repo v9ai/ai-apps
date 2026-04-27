@@ -316,3 +316,180 @@ export async function embedSymptom(
           embedding = EXCLUDED.embedding
   `;
 }
+
+// ────────────────────────────────────────────────────────────────────
+// Doctors
+// ────────────────────────────────────────────────────────────────────
+
+export type Doctor = {
+  id: string;
+  userId: string;
+  name: string;
+  specialty: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+function toDoctor(r: Record<string, unknown>): Doctor {
+  return {
+    id: r.id as string,
+    userId: r.user_id as string,
+    name: r.name as string,
+    specialty: (r.specialty as string | null) ?? null,
+    phone: (r.phone as string | null) ?? null,
+    email: (r.email as string | null) ?? null,
+    address: (r.address as string | null) ?? null,
+    notes: (r.notes as string | null) ?? null,
+    createdAt:
+      r.created_at instanceof Date
+        ? r.created_at.toISOString()
+        : (r.created_at as string),
+  };
+}
+
+export async function listDoctors(userId: string): Promise<Doctor[]> {
+  const rows = await neonSql`
+    SELECT id, user_id, name, specialty, phone, email, address, notes, created_at
+    FROM doctors
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+  `;
+  return rows.map(toDoctor);
+}
+
+export async function createDoctor(params: {
+  userId: string;
+  name: string;
+  specialty: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  notes: string | null;
+}): Promise<Doctor> {
+  const rows = await neonSql`
+    INSERT INTO doctors (user_id, name, specialty, phone, email, address, notes)
+    VALUES (${params.userId}, ${params.name}, ${params.specialty}, ${params.phone}, ${params.email}, ${params.address}, ${params.notes})
+    RETURNING id, user_id, name, specialty, phone, email, address, notes, created_at
+  `;
+  return toDoctor(rows[0]);
+}
+
+export async function deleteDoctor(id: string, userId: string): Promise<void> {
+  await neonSql`
+    DELETE FROM doctors
+    WHERE id = ${id} AND user_id = ${userId}
+  `;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Appointments
+// ────────────────────────────────────────────────────────────────────
+
+export type Appointment = {
+  id: string;
+  userId: string;
+  doctorId: string | null;
+  familyMemberId: number | null;
+  title: string;
+  provider: string | null;
+  notes: string | null;
+  appointmentDate: string | null;
+  createdAt: string;
+};
+
+function toAppointment(r: Record<string, unknown>): Appointment {
+  return {
+    id: r.id as string,
+    userId: r.user_id as string,
+    doctorId: (r.doctor_id as string | null) ?? null,
+    familyMemberId:
+      r.family_member_id == null ? null : (r.family_member_id as number),
+    title: r.title as string,
+    provider: (r.provider as string | null) ?? null,
+    notes: (r.notes as string | null) ?? null,
+    appointmentDate:
+      r.appointment_date instanceof Date
+        ? r.appointment_date.toISOString().slice(0, 10)
+        : (r.appointment_date as string | null) ?? null,
+    createdAt:
+      r.created_at instanceof Date
+        ? r.created_at.toISOString()
+        : (r.created_at as string),
+  };
+}
+
+export async function listAppointments(userId: string): Promise<Appointment[]> {
+  const rows = await neonSql`
+    SELECT id, user_id, doctor_id, family_member_id, title, provider, notes, appointment_date, created_at
+    FROM appointments
+    WHERE user_id = ${userId}
+    ORDER BY appointment_date DESC NULLS LAST, created_at DESC
+  `;
+  return rows.map(toAppointment);
+}
+
+export async function createAppointment(params: {
+  userId: string;
+  doctorId: string | null;
+  familyMemberId: number | null;
+  title: string;
+  provider: string | null;
+  notes: string | null;
+  appointmentDate: string | null;
+}): Promise<Appointment> {
+  const rows = await neonSql`
+    INSERT INTO appointments (user_id, doctor_id, family_member_id, title, provider, notes, appointment_date)
+    VALUES (${params.userId}, ${params.doctorId}, ${params.familyMemberId}, ${params.title}, ${params.provider}, ${params.notes}, ${params.appointmentDate})
+    RETURNING id, user_id, doctor_id, family_member_id, title, provider, notes, appointment_date, created_at
+  `;
+  return toAppointment(rows[0]);
+}
+
+export async function deleteAppointment(id: string, userId: string): Promise<void> {
+  await neonSql`
+    DELETE FROM appointments
+    WHERE id = ${id} AND user_id = ${userId}
+  `;
+}
+
+function formatAppointment(
+  title: string,
+  provider: string | null,
+  notes: string | null,
+  appointmentDate: string | null,
+): string {
+  const lines = [`Appointment: ${title}`];
+  if (provider) lines.push(`Provider: ${provider}`);
+  if (appointmentDate) lines.push(`Date: ${appointmentDate}`);
+  if (notes) lines.push(`Notes: ${notes}`);
+  return lines.join("\n");
+}
+
+export async function embedAppointment(
+  appointmentId: string,
+  userId: string,
+  title: string,
+  opts: {
+    provider: string | null;
+    notes: string | null;
+    appointmentDate: string | null;
+  },
+): Promise<void> {
+  const content = formatAppointment(
+    title,
+    opts.provider,
+    opts.notes,
+    opts.appointmentDate,
+  );
+  const embedding = await generateEmbedding(content);
+  await neonSql`
+    INSERT INTO appointment_embeddings (appointment_id, user_id, content, embedding)
+    VALUES (${appointmentId}, ${userId}, ${content}, ${vec(embedding)}::vector)
+    ON CONFLICT (appointment_id) DO UPDATE
+      SET content = EXCLUDED.content,
+          embedding = EXCLUDED.embedding
+  `;
+}

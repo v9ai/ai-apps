@@ -6,9 +6,27 @@ type ActionableRecommendation {
   title: String!
 }
 
+input AddAppointmentInput {
+  appointmentDate: String
+  doctorId: ID
+  familyMemberId: Int
+  notes: String
+  provider: String
+  title: String!
+}
+
 input AddConditionInput {
   name: String!
   notes: String
+}
+
+input AddDoctorInput {
+  address: String
+  email: String
+  name: String!
+  notes: String
+  phone: String
+  specialty: String
 }
 
 input AddMedicationInput {
@@ -49,6 +67,18 @@ type AnticipatedReaction {
   howToRespond: String!
   likelihood: String!
   reaction: String!
+}
+
+type Appointment {
+  appointmentDate: String
+  createdAt: String!
+  doctorId: ID
+  familyMemberId: Int
+  id: ID!
+  notes: String
+  provider: String
+  title: String!
+  userId: String!
 }
 
 type AudioAsset {
@@ -505,6 +535,10 @@ type DeleteAffirmationResult {
   success: Boolean!
 }
 
+type DeleteAppointmentResult {
+  success: Boolean!
+}
+
 type DeleteBehaviorObservationResult {
   message: String
   success: Boolean!
@@ -535,6 +569,10 @@ type DeleteDeepAnalysisResult {
 
 type DeleteDiscussionGuideResult {
   message: String
+  success: Boolean!
+}
+
+type DeleteDoctorResult {
   success: Boolean!
 }
 
@@ -662,6 +700,18 @@ type DiscussionGuideCritique {
   refined: Boolean!
   scores: CritiqueScores!
   weakSections: [String!]!
+}
+
+type Doctor {
+  address: String
+  createdAt: String!
+  email: String
+  id: ID!
+  name: String!
+  notes: String
+  phone: String
+  specialty: String
+  userId: String!
 }
 
 type EmotionalLandscape {
@@ -1178,7 +1228,9 @@ type MicroScript {
 }
 
 type Mutation {
+  addAppointment(input: AddAppointmentInput!): Appointment!
   addCondition(input: AddConditionInput!): Condition!
+  addDoctor(input: AddDoctorInput!): Doctor!
   addMedication(input: AddMedicationInput!): Medication!
   addSymptom(input: AddSymptomInput!): Symptom!
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
@@ -1202,6 +1254,7 @@ type Mutation {
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
   createTeacherFeedback(input: CreateTeacherFeedbackInput!): TeacherFeedback!
   deleteAffirmation(id: Int!): DeleteAffirmationResult!
+  deleteAppointment(id: ID!): DeleteAppointmentResult!
   deleteBehaviorObservation(id: Int!): DeleteBehaviorObservationResult!
   deleteClaimCard(id: ID!): Boolean!
   deleteCondition(id: ID!): DeleteConditionResult!
@@ -1211,6 +1264,7 @@ type Mutation {
   deleteDeepAnalysis(id: Int!): DeleteDeepAnalysisResult!
   deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
   deleteDiscussionGuide(journalEntryId: Int!): DeleteDiscussionGuideResult!
+  deleteDoctor(id: ID!): DeleteDoctorResult!
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
   deleteGame(id: Int!): DeleteGameResult!
   deleteGoal(id: Int!): DeleteGoalResult!
@@ -1440,6 +1494,7 @@ type Query {
   allRecommendedBooks(category: String): [RecommendedBook!]!
   allStories: [Story!]!
   allTags: [String!]!
+  appointments: [Appointment!]!
   audioFromR2(key: String!): AudioFromR2Result
   behaviorObservation(id: Int!): BehaviorObservation
   behaviorObservations(familyMemberId: Int!, goalId: Int): [BehaviorObservation!]!
@@ -1458,6 +1513,7 @@ type Query {
   deepAnalysis(id: Int!): DeepAnalysis
   deepIssueAnalyses(familyMemberId: Int!): [DeepIssueAnalysis!]!
   deepIssueAnalysis(id: Int!): DeepIssueAnalysis
+  doctors: [Doctor!]!
   familyMember(id: Int, slug: String): FamilyMember
   familyMembers: [FamilyMember!]!
   game(id: Int!): Game

@@ -1,0 +1,12 @@
+query Doctors {
+  doctors {
+    id
+    name
+    specialty
+    phone
+    email
+    address
+    notes
+    createdAt
+  }
+}

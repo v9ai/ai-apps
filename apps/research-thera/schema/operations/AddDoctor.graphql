@@ -1,0 +1,12 @@
+mutation AddDoctor($input: AddDoctorInput!) {
+  addDoctor(input: $input) {
+    id
+    name
+    specialty
+    phone
+    email
+    address
+    notes
+    createdAt
+  }
+}

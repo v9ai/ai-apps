@@ -15,6 +15,13 @@ import {
   createSymptom as _createSymptom,
   deleteSymptom as _deleteSymptom,
   embedSymptom as _embedSymptom,
+  listDoctors as _listDoctors,
+  createDoctor as _createDoctor,
+  deleteDoctor as _deleteDoctor,
+  listAppointments as _listAppointments,
+  createAppointment as _createAppointment,
+  deleteAppointment as _deleteAppointment,
+  embedAppointment as _embedAppointment,
 } from "./healthcare";
 
 // Re-export healthcare functions so they're reachable as top-level exports
@@ -32,8 +39,21 @@ export {
   _createSymptom as createSymptom,
   _deleteSymptom as deleteSymptom,
   _embedSymptom as embedSymptom,
+  _listDoctors as listDoctors,
+  _createDoctor as createDoctor,
+  _deleteDoctor as deleteDoctor,
+  _listAppointments as listAppointments,
+  _createAppointment as createAppointment,
+  _deleteAppointment as deleteAppointment,
+  _embedAppointment as embedAppointment,
 };
-export type { Condition, Medication, Symptom } from "./healthcare";
+export type {
+  Condition,
+  Medication,
+  Symptom,
+  Doctor,
+  Appointment,
+} from "./healthcare";
 
 /**
  * Convert a SQL string with `?` placeholders to PostgreSQL `$N` style,
@@ -4207,5 +4227,14 @@ export const db = {
   createSymptom: _createSymptom,
   deleteSymptom: _deleteSymptom,
   embedSymptom: _embedSymptom,
+  // Healthcare — Doctors
+  listDoctors: _listDoctors,
+  createDoctor: _createDoctor,
+  deleteDoctor: _deleteDoctor,
+  // Healthcare — Appointments
+  listAppointments: _listAppointments,
+  createAppointment: _createAppointment,
+  deleteAppointment: _deleteAppointment,
+  embedAppointment: _embedAppointment,
 };
 

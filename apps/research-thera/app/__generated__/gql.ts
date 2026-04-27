@@ -14,9 +14,12 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
+    "mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": typeof types.AddAppointmentDocument,
     "mutation AddCondition($input: AddConditionInput!) {\n  addCondition(input: $input) {\n    id\n    name\n    notes\n    createdAt\n  }\n}": typeof types.AddConditionDocument,
+    "mutation AddDoctor($input: AddDoctorInput!) {\n  addDoctor(input: $input) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": typeof types.AddDoctorDocument,
     "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": typeof types.AddMedicationDocument,
     "mutation AddSymptom($input: AddSymptomInput!) {\n  addSymptom(input: $input) {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}": typeof types.AddSymptomDocument,
+    "query Appointments {\n  appointments {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": typeof types.AppointmentsDocument,
     "query BogdanDiscussions {\n  bogdanDiscussions {\n    id\n    familyMemberId\n    childAge\n    behaviorSummary\n    createdAt\n  }\n}": typeof types.BogdanDiscussionsDocument,
     "mutation CheckNoteClaims($input: CheckNoteClaimsInput!) {\n  checkNoteClaims(input: $input) {\n    success\n    message\n    noteId\n    cards {\n      id\n      claim\n      scope {\n        population\n        intervention\n        comparator\n        outcome\n        timeframe\n        setting\n      }\n      verdict\n      confidence\n      evidence {\n        paper {\n          title\n          doi\n          url\n          year\n          source\n          authors\n          abstract\n          journal\n        }\n        polarity\n        excerpt\n        rationale\n        score\n        locator {\n          section\n          page\n          url\n        }\n      }\n      queries\n      createdAt\n      updatedAt\n      provenance {\n        generatedBy\n        model\n        sourceTools\n      }\n      notes\n    }\n  }\n}": typeof types.CheckNoteClaimsDocument,
     "mutation BuildClaimCardsFromText {\n  buildClaimCards(\n    input: {text: \"\"\"\n      Cognitive Behavioral Therapy is effective for treating anxiety disorders.\n      CBT reduces anxiety symptoms by 60-80% in most patients.\n      The effects of CBT persist for years after treatment ends.\n    \"\"\", perSourceLimit: 10, topK: 5, useLlmJudge: true, sources: [CROSSREF, SEMANTIC_SCHOLAR, PUBMED]}\n  ) {\n    cards {\n      id\n      claim\n      verdict\n      confidence\n      evidence {\n        paper {\n          title\n          authors\n          doi\n          year\n          journal\n          oaUrl\n        }\n        polarity\n        excerpt\n        rationale\n        score\n      }\n      queries\n      provenance {\n        generatedBy\n        model\n        sourceTools\n      }\n      createdAt\n    }\n  }\n}\n\nmutation BuildClaimCardsFromClaims {\n  buildClaimCards(\n    input: {claims: [\"Mindfulness meditation reduces stress in adults with GAD\", \"Exercise therapy improves mood in adults with major depressive disorder\"], perSourceLimit: 8, topK: 4, useLlmJudge: false, sources: [SEMANTIC_SCHOLAR, OPENALEX]}\n  ) {\n    cards {\n      id\n      claim\n      verdict\n      confidence\n      evidence {\n        paper {\n          title\n          doi\n        }\n        polarity\n        score\n      }\n    }\n  }\n}\n\nquery GetClaimCard {\n  claimCard(id: \"claim_abc123def456\") {\n    id\n    claim\n    verdict\n    confidence\n    evidence {\n      paper {\n        title\n        authors\n        doi\n        url\n        year\n        journal\n      }\n      polarity\n      excerpt\n      rationale\n      score\n    }\n    scope {\n      population\n      intervention\n      outcome\n    }\n    notes\n    createdAt\n    updatedAt\n  }\n}\n\nquery GetClaimCardsForNote {\n  claimCardsForNote(noteId: 1) {\n    id\n    claim\n    verdict\n    confidence\n    evidence {\n      paper {\n        title\n        doi\n      }\n      polarity\n    }\n    createdAt\n  }\n}\n\nmutation RefreshClaimCard {\n  refreshClaimCard(id: \"claim_abc123def456\") {\n    id\n    claim\n    verdict\n    confidence\n    evidence {\n      paper {\n        title\n        doi\n        year\n      }\n      polarity\n      score\n    }\n    updatedAt\n  }\n}\n\nmutation DeleteClaimCard {\n  deleteClaimCard(id: \"claim_abc123def456\")\n}": typeof types.BuildClaimCardsFromTextDocument,
@@ -40,6 +43,7 @@ type Documents = {
     "mutation CreateSubGoal($goalId: Int!, $input: CreateSubGoalInput!) {\n  createSubGoal(goalId: $goalId, input: $input) {\n    id\n    slug\n    title\n    description\n    status\n    parentGoalId\n    createdAt\n    updatedAt\n    familyMemberId\n  }\n}": typeof types.CreateSubGoalDocument,
     "mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {\n  createTeacherFeedback(input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": typeof types.CreateTeacherFeedbackDocument,
     "mutation DeleteAffirmation($id: Int!) {\n  deleteAffirmation(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteAffirmationDocument,
+    "mutation DeleteAppointment($id: ID!) {\n  deleteAppointment(id: $id) {\n    success\n  }\n}": typeof types.DeleteAppointmentDocument,
     "mutation DeleteBehaviorObservation($id: Int!) {\n  deleteBehaviorObservation(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteBehaviorObservationDocument,
     "mutation DeleteCondition($id: ID!) {\n  deleteCondition(id: $id) {\n    success\n  }\n}": typeof types.DeleteConditionDocument,
     "mutation DeleteContact($id: Int!) {\n  deleteContact(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteContactDocument,
@@ -48,6 +52,7 @@ type Documents = {
     "mutation DeleteDeepAnalysis($id: Int!) {\n  deleteDeepAnalysis(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteDeepAnalysisDocument,
     "mutation DeleteDeepIssueAnalysis($id: Int!) {\n  deleteDeepIssueAnalysis(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteDeepIssueAnalysisDocument,
     "mutation DeleteDiscussionGuide($journalEntryId: Int!) {\n  deleteDiscussionGuide(journalEntryId: $journalEntryId) {\n    success\n    message\n  }\n}": typeof types.DeleteDiscussionGuideDocument,
+    "mutation DeleteDoctor($id: ID!) {\n  deleteDoctor(id: $id) {\n    success\n  }\n}": typeof types.DeleteDoctorDocument,
     "mutation DeleteFamilyMember($id: Int!) {\n  deleteFamilyMember(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteFamilyMemberDocument,
     "mutation DeleteGame($id: Int!) {\n  deleteGame(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteGameDocument,
     "mutation DeleteGoal($id: Int!) {\n  deleteGoal(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteGoalDocument,
@@ -68,6 +73,7 @@ type Documents = {
     "mutation DeleteSymptom($id: ID!) {\n  deleteSymptom(id: $id) {\n    success\n  }\n}": typeof types.DeleteSymptomDocument,
     "mutation DeleteTeacherFeedback($id: Int!) {\n  deleteTeacherFeedback(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteTeacherFeedbackDocument,
     "mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {\n  deleteTherapeuticQuestions(\n    goalId: $goalId\n    issueId: $issueId\n    journalEntryId: $journalEntryId\n  ) {\n    success\n    message\n    deletedCount\n  }\n}": typeof types.DeleteTherapeuticQuestionsDocument,
+    "query Doctors {\n  doctors {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": typeof types.DoctorsDocument,
     "mutation ExtractContactFeedbackIssues($id: Int!) {\n  extractContactFeedbackIssues(id: $id) {\n    id\n    extracted\n    extractedIssues {\n      title\n      description\n      category\n      severity\n      recommendations\n    }\n  }\n}": typeof types.ExtractContactFeedbackIssuesDocument,
     "mutation GenerateAffirmationsForFamilyMember($familyMemberId: Int!, $count: Int, $categoryFocus: AffirmationCategory, $language: String) {\n  generateAffirmationsForFamilyMember(\n    familyMemberId: $familyMemberId\n    count: $count\n    categoryFocus: $categoryFocus\n    language: $language\n  ) {\n    success\n    message\n    count\n    affirmations {\n      id\n      familyMemberId\n      userId\n      text\n      category\n      isActive\n      createdAt\n      updatedAt\n    }\n  }\n}": typeof types.GenerateAffirmationsForFamilyMemberDocument,
     "mutation GenerateAudio($goalId: Int!, $storyId: Int, $text: String, $language: String, $voice: String) {\n  generateAudio(\n    goalId: $goalId\n    storyId: $storyId\n    text: $text\n    language: $language\n    voice: $voice\n  ) {\n    success\n    message\n    jobId\n    audioUrl\n  }\n}": typeof types.GenerateAudioDocument,
@@ -170,9 +176,12 @@ type Documents = {
     "query VaultStatus {\n  vaultStatus {\n    unlocked\n    available\n  }\n}": typeof types.VaultStatusDocument,
 };
 const documents: Documents = {
+    "mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": types.AddAppointmentDocument,
     "mutation AddCondition($input: AddConditionInput!) {\n  addCondition(input: $input) {\n    id\n    name\n    notes\n    createdAt\n  }\n}": types.AddConditionDocument,
+    "mutation AddDoctor($input: AddDoctorInput!) {\n  addDoctor(input: $input) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": types.AddDoctorDocument,
     "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": types.AddMedicationDocument,
     "mutation AddSymptom($input: AddSymptomInput!) {\n  addSymptom(input: $input) {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}": types.AddSymptomDocument,
+    "query Appointments {\n  appointments {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": types.AppointmentsDocument,
     "query BogdanDiscussions {\n  bogdanDiscussions {\n    id\n    familyMemberId\n    childAge\n    behaviorSummary\n    createdAt\n  }\n}": types.BogdanDiscussionsDocument,
     "mutation CheckNoteClaims($input: CheckNoteClaimsInput!) {\n  checkNoteClaims(input: $input) {\n    success\n    message\n    noteId\n    cards {\n      id\n      claim\n      scope {\n        population\n        intervention\n        comparator\n        outcome\n        timeframe\n        setting\n      }\n      verdict\n      confidence\n      evidence {\n        paper {\n          title\n          doi\n          url\n          year\n          source\n          authors\n          abstract\n          journal\n        }\n        polarity\n        excerpt\n        rationale\n        score\n        locator {\n          section\n          page\n          url\n        }\n      }\n      queries\n      createdAt\n      updatedAt\n      provenance {\n        generatedBy\n        model\n        sourceTools\n      }\n      notes\n    }\n  }\n}": types.CheckNoteClaimsDocument,
     "mutation BuildClaimCardsFromText {\n  buildClaimCards(\n    input: {text: \"\"\"\n      Cognitive Behavioral Therapy is effective for treating anxiety disorders.\n      CBT reduces anxiety symptoms by 60-80% in most patients.\n      The effects of CBT persist for years after treatment ends.\n    \"\"\", perSourceLimit: 10, topK: 5, useLlmJudge: true, sources: [CROSSREF, SEMANTIC_SCHOLAR, PUBMED]}\n  ) {\n    cards {\n      id\n      claim\n      verdict\n      confidence\n      evidence {\n        paper {\n          title\n          authors\n          doi\n          year\n          journal\n          oaUrl\n        }\n        polarity\n        excerpt\n        rationale\n        score\n      }\n      queries\n      provenance {\n        generatedBy\n        model\n        sourceTools\n      }\n      createdAt\n    }\n  }\n}\n\nmutation BuildClaimCardsFromClaims {\n  buildClaimCards(\n    input: {claims: [\"Mindfulness meditation reduces stress in adults with GAD\", \"Exercise therapy improves mood in adults with major depressive disorder\"], perSourceLimit: 8, topK: 4, useLlmJudge: false, sources: [SEMANTIC_SCHOLAR, OPENALEX]}\n  ) {\n    cards {\n      id\n      claim\n      verdict\n      confidence\n      evidence {\n        paper {\n          title\n          doi\n        }\n        polarity\n        score\n      }\n    }\n  }\n}\n\nquery GetClaimCard {\n  claimCard(id: \"claim_abc123def456\") {\n    id\n    claim\n    verdict\n    confidence\n    evidence {\n      paper {\n        title\n        authors\n        doi\n        url\n        year\n        journal\n      }\n      polarity\n      excerpt\n      rationale\n      score\n    }\n    scope {\n      population\n      intervention\n      outcome\n    }\n    notes\n    createdAt\n    updatedAt\n  }\n}\n\nquery GetClaimCardsForNote {\n  claimCardsForNote(noteId: 1) {\n    id\n    claim\n    verdict\n    confidence\n    evidence {\n      paper {\n        title\n        doi\n      }\n      polarity\n    }\n    createdAt\n  }\n}\n\nmutation RefreshClaimCard {\n  refreshClaimCard(id: \"claim_abc123def456\") {\n    id\n    claim\n    verdict\n    confidence\n    evidence {\n      paper {\n        title\n        doi\n        year\n      }\n      polarity\n      score\n    }\n    updatedAt\n  }\n}\n\nmutation DeleteClaimCard {\n  deleteClaimCard(id: \"claim_abc123def456\")\n}": types.BuildClaimCardsFromTextDocument,
@@ -196,6 +205,7 @@ const documents: Documents = {
     "mutation CreateSubGoal($goalId: Int!, $input: CreateSubGoalInput!) {\n  createSubGoal(goalId: $goalId, input: $input) {\n    id\n    slug\n    title\n    description\n    status\n    parentGoalId\n    createdAt\n    updatedAt\n    familyMemberId\n  }\n}": types.CreateSubGoalDocument,
     "mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {\n  createTeacherFeedback(input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": types.CreateTeacherFeedbackDocument,
     "mutation DeleteAffirmation($id: Int!) {\n  deleteAffirmation(id: $id) {\n    success\n    message\n  }\n}": types.DeleteAffirmationDocument,
+    "mutation DeleteAppointment($id: ID!) {\n  deleteAppointment(id: $id) {\n    success\n  }\n}": types.DeleteAppointmentDocument,
     "mutation DeleteBehaviorObservation($id: Int!) {\n  deleteBehaviorObservation(id: $id) {\n    success\n    message\n  }\n}": types.DeleteBehaviorObservationDocument,
     "mutation DeleteCondition($id: ID!) {\n  deleteCondition(id: $id) {\n    success\n  }\n}": types.DeleteConditionDocument,
     "mutation DeleteContact($id: Int!) {\n  deleteContact(id: $id) {\n    success\n    message\n  }\n}": types.DeleteContactDocument,
@@ -204,6 +214,7 @@ const documents: Documents = {
     "mutation DeleteDeepAnalysis($id: Int!) {\n  deleteDeepAnalysis(id: $id) {\n    success\n    message\n  }\n}": types.DeleteDeepAnalysisDocument,
     "mutation DeleteDeepIssueAnalysis($id: Int!) {\n  deleteDeepIssueAnalysis(id: $id) {\n    success\n    message\n  }\n}": types.DeleteDeepIssueAnalysisDocument,
     "mutation DeleteDiscussionGuide($journalEntryId: Int!) {\n  deleteDiscussionGuide(journalEntryId: $journalEntryId) {\n    success\n    message\n  }\n}": types.DeleteDiscussionGuideDocument,
+    "mutation DeleteDoctor($id: ID!) {\n  deleteDoctor(id: $id) {\n    success\n  }\n}": types.DeleteDoctorDocument,
     "mutation DeleteFamilyMember($id: Int!) {\n  deleteFamilyMember(id: $id) {\n    success\n    message\n  }\n}": types.DeleteFamilyMemberDocument,
     "mutation DeleteGame($id: Int!) {\n  deleteGame(id: $id) {\n    success\n    message\n  }\n}": types.DeleteGameDocument,
     "mutation DeleteGoal($id: Int!) {\n  deleteGoal(id: $id) {\n    success\n    message\n  }\n}": types.DeleteGoalDocument,
@@ -224,6 +235,7 @@ const documents: Documents = {
     "mutation DeleteSymptom($id: ID!) {\n  deleteSymptom(id: $id) {\n    success\n  }\n}": types.DeleteSymptomDocument,
     "mutation DeleteTeacherFeedback($id: Int!) {\n  deleteTeacherFeedback(id: $id) {\n    success\n    message\n  }\n}": types.DeleteTeacherFeedbackDocument,
     "mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {\n  deleteTherapeuticQuestions(\n    goalId: $goalId\n    issueId: $issueId\n    journalEntryId: $journalEntryId\n  ) {\n    success\n    message\n    deletedCount\n  }\n}": types.DeleteTherapeuticQuestionsDocument,
+    "query Doctors {\n  doctors {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": types.DoctorsDocument,
     "mutation ExtractContactFeedbackIssues($id: Int!) {\n  extractContactFeedbackIssues(id: $id) {\n    id\n    extracted\n    extractedIssues {\n      title\n      description\n      category\n      severity\n      recommendations\n    }\n  }\n}": types.ExtractContactFeedbackIssuesDocument,
     "mutation GenerateAffirmationsForFamilyMember($familyMemberId: Int!, $count: Int, $categoryFocus: AffirmationCategory, $language: String) {\n  generateAffirmationsForFamilyMember(\n    familyMemberId: $familyMemberId\n    count: $count\n    categoryFocus: $categoryFocus\n    language: $language\n  ) {\n    success\n    message\n    count\n    affirmations {\n      id\n      familyMemberId\n      userId\n      text\n      category\n      isActive\n      createdAt\n      updatedAt\n    }\n  }\n}": types.GenerateAffirmationsForFamilyMemberDocument,
     "mutation GenerateAudio($goalId: Int!, $storyId: Int, $text: String, $language: String, $voice: String) {\n  generateAudio(\n    goalId: $goalId\n    storyId: $storyId\n    text: $text\n    language: $language\n    voice: $voice\n  ) {\n    success\n    message\n    jobId\n    audioUrl\n  }\n}": types.GenerateAudioDocument,
@@ -343,7 +355,15 @@ export function gql(source: string): unknown;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}"): (typeof documents)["mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "mutation AddCondition($input: AddConditionInput!) {\n  addCondition(input: $input) {\n    id\n    name\n    notes\n    createdAt\n  }\n}"): (typeof documents)["mutation AddCondition($input: AddConditionInput!) {\n  addCondition(input: $input) {\n    id\n    name\n    notes\n    createdAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "mutation AddDoctor($input: AddDoctorInput!) {\n  addDoctor(input: $input) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}"): (typeof documents)["mutation AddDoctor($input: AddDoctorInput!) {\n  addDoctor(input: $input) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -352,6 +372,10 @@ export function gql(source: "mutation AddMedication($input: AddMedicationInput!)
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "mutation AddSymptom($input: AddSymptomInput!) {\n  addSymptom(input: $input) {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}"): (typeof documents)["mutation AddSymptom($input: AddSymptomInput!) {\n  addSymptom(input: $input) {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "query Appointments {\n  appointments {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}"): (typeof documents)["query Appointments {\n  appointments {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -447,6 +471,10 @@ export function gql(source: "mutation DeleteAffirmation($id: Int!) {\n  deleteAf
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "mutation DeleteAppointment($id: ID!) {\n  deleteAppointment(id: $id) {\n    success\n  }\n}"): (typeof documents)["mutation DeleteAppointment($id: ID!) {\n  deleteAppointment(id: $id) {\n    success\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "mutation DeleteBehaviorObservation($id: Int!) {\n  deleteBehaviorObservation(id: $id) {\n    success\n    message\n  }\n}"): (typeof documents)["mutation DeleteBehaviorObservation($id: Int!) {\n  deleteBehaviorObservation(id: $id) {\n    success\n    message\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -476,6 +504,10 @@ export function gql(source: "mutation DeleteDeepIssueAnalysis($id: Int!) {\n  de
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "mutation DeleteDiscussionGuide($journalEntryId: Int!) {\n  deleteDiscussionGuide(journalEntryId: $journalEntryId) {\n    success\n    message\n  }\n}"): (typeof documents)["mutation DeleteDiscussionGuide($journalEntryId: Int!) {\n  deleteDiscussionGuide(journalEntryId: $journalEntryId) {\n    success\n    message\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "mutation DeleteDoctor($id: ID!) {\n  deleteDoctor(id: $id) {\n    success\n  }\n}"): (typeof documents)["mutation DeleteDoctor($id: ID!) {\n  deleteDoctor(id: $id) {\n    success\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -556,6 +588,10 @@ export function gql(source: "mutation DeleteTeacherFeedback($id: Int!) {\n  dele
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {\n  deleteTherapeuticQuestions(\n    goalId: $goalId\n    issueId: $issueId\n    journalEntryId: $journalEntryId\n  ) {\n    success\n    message\n    deletedCount\n  }\n}"): (typeof documents)["mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {\n  deleteTherapeuticQuestions(\n    goalId: $goalId\n    issueId: $issueId\n    journalEntryId: $journalEntryId\n  ) {\n    success\n    message\n    deletedCount\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "query Doctors {\n  doctors {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}"): (typeof documents)["query Doctors {\n  doctors {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
