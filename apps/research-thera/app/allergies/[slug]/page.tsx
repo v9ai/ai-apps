@@ -12,6 +12,7 @@ import {
   Text,
 } from "@radix-ui/themes";
 import { ArrowLeft, ShieldAlert, Pill, Heart } from "lucide-react";
+import { words } from "lodash";
 import Link from "next/link";
 import {
   useAllergiesQuery,
@@ -322,9 +323,10 @@ function MedicationCard({
     d ? new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : null;
   const start = formatDate(startDate);
   const end = formatDate(endDate);
+  const slug = (words(name)[0] ?? "").toLowerCase();
   return (
     <Link
-      href={`/medications/m/${id}`}
+      href={`/medications/${slug}`}
       style={{ textDecoration: "none", color: "inherit" }}
     >
       <Card style={{ cursor: "pointer", height: "100%" }}>

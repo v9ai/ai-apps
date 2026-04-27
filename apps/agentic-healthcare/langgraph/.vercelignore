@@ -1,6 +1,0 @@
-__pycache__
-*.egg-info
-.venv
-uv.lock
-benchmark_inference.py
-serve.sh
