@@ -76,6 +76,7 @@ _GRAPH_PATHS: dict[str, str] = {
     "affirmations": "research_agent.affirmations_graph:graph",
     "bogdan_discussion": "research_agent.bogdan_discussion_graph:graph",
     "books": "research_agent.books_graph:graph",
+    "condition_deep_research": "research_agent.condition_deep_research_graph:graph",
     "deep_analysis": "research_agent.deep_analysis_graph:graph",
     "deep_analysis_v2": "research_agent.deep_analysis_v2_graph:graph",
     "deep_goal_analysis": "research_agent.deep_goal_analysis_graph:graph",

@@ -231,18 +231,6 @@
           "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
           "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI."
         ]
-      },
-      {
-        "id": "3",
-        "name": "Law Adversarial",
-        "description": "6-agent adversarial debate pipeline with citation verification and fabrication detection, jurisdiction precedent analysis, red-teaming and safety evals with Promptfoo YAML suites and DeepTeam attack methods.",
-        "githubUrl": "https://github.com/v9ai/law-adversarial",
-        "websiteUrl": "https://law-adversarial.vercel.app",
-        "highlights": [
-          "6-agent adversarial pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
-          "Citation verification and fabrication detection with chain-of-thought audit trails.",
-          "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics; DeepTeam safety red-teaming via 7 attack methods."
-        ]
       }
     ]
   },
