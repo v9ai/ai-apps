@@ -602,7 +602,8 @@ async def fetch_medications_for_slug(
                 """
                 SELECT m.id::text, m.name, m.dosage, m.frequency, m.notes,
                        m.start_date, m.end_date, m.family_member_id,
-                       fm.first_name, fm.age_years, fm.date_of_birth
+                       fm.first_name, fm.age_years, fm.date_of_birth,
+                       fm.preferred_language
                 FROM medications m
                 LEFT JOIN family_members fm ON fm.id = m.family_member_id
                 WHERE m.user_id = %s
@@ -626,5 +627,6 @@ async def fetch_medications_for_slug(
             "family_member_first_name": r[8],
             "family_member_age_years": r[9],
             "family_member_date_of_birth": str(r[10]) if r[10] else None,
+            "family_member_preferred_language": r[11],
         })
     return out

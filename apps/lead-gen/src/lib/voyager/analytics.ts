@@ -263,7 +263,7 @@ export class VoyagerAnalytics {
 
   /**
    * Detect company hiring velocity: jobs posted per week, trend detection.
-   * Uses linkedinPosts (type='job') grouped by company.
+    // (removed linkedinPosts reference — analytics stubbed pending d1 dispatcher)
    */
   async getCompanyHiringVelocity(
     limit = 20,
@@ -413,20 +413,14 @@ export class VoyagerAnalytics {
     const currentFrom = daysAgo(days);
     const previousFrom = daysAgo(days * 2);
 
-    const conditions: SQL[] = [eq(linkedinPosts.type, "job")];
-    if (query) {
-      conditions.push(
-        sql`(LOWER(${linkedinPosts.title}) LIKE ${"%" + query.toLowerCase() + "%"} OR LOWER(${linkedinPosts.content}) LIKE ${"%" + query.toLowerCase() + "%"})`,
-      );
-    }
-
+    // (analytics stubbed pending d1 dispatcher)
+    void query;
     // Current period
-    const currentPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
-
+    const currentPosts = ([] as any[]) /* TODO(d1-analytics) */;
     // Previous period
-    const previousPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
+    const previousPosts = ([] as any[]) /* TODO(d1-analytics) */;
 
-    const extractBand = (posts: LinkedInPost[]): SalaryBand => {
+    const extractBand = (posts: any[]): SalaryBand => {
       const salaries: { min: number; max: number; currency: string }[] = [];
       for (const post of posts) {
         if (!post.content) continue;
@@ -464,7 +458,7 @@ export class VoyagerAnalytics {
     const medianDelta = computeGrowthRate(currentBand.median, previousBand.median);
 
     // By region
-    const regionMap = new Map<string, LinkedInPost[]>();
+    const regionMap = new Map<string, any[]>();
     for (const post of currentPosts) {
       const loc = post.location ?? "Unknown";
       if (!regionMap.has(loc)) regionMap.set(loc, []);
@@ -476,7 +470,7 @@ export class VoyagerAnalytics {
       .sort((a, b) => b.band.median - a.band.median);
 
     // By seniority (heuristic from title)
-    const seniorityBuckets = new Map<string, LinkedInPost[]>();
+    const seniorityBuckets = new Map<string, any[]>();
     for (const post of currentPosts) {
       const title = (post.title ?? "").toLowerCase();
       let level = "mid";
@@ -519,21 +513,10 @@ export class VoyagerAnalytics {
     const currentFrom = daysAgo(days);
     const previousFrom = daysAgo(days * 2);
 
-    const conditions: SQL[] = [
-      eq(linkedinPosts.type, "job"),
-      sql`${linkedinPosts.skills} IS NOT NULL`,
-    ];
-    if (query) {
-      conditions.push(
-        sql`(LOWER(${linkedinPosts.title}) LIKE ${"%" + query.toLowerCase() + "%"} OR LOWER(${linkedinPosts.content}) LIKE ${"%" + query.toLowerCase() + "%"})`,
-      );
-    }
-
-    // Current period analyzed posts
-    const currentPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
-
-    // Previous period for trend comparison
-    const previousPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
+    // (analytics stubbed pending d1 dispatcher)
+    void query;
+    const currentPosts = ([] as any[]) /* TODO(d1-analytics) */;
+    const previousPosts = ([] as any[]) /* TODO(d1-analytics) */;
 
     type SkillEntry = { tag: string; label: string; confidence: number };
 
@@ -695,7 +678,7 @@ export class VoyagerAnalytics {
   /**
    * Analyze repost frequency — jobs that keep appearing indicate hard-to-fill roles.
    * Uses voyagerSnapshots.repost_analysis for pre-computed data,
-   * falls back to linkedinPosts deduplication.
+    // (removed linkedinPosts reference — analytics stubbed pending d1 dispatcher)
    */
   async getRepostAnalysis(): Promise<RepostReport> {
     // Check voyagerSnapshots for recent repost analysis

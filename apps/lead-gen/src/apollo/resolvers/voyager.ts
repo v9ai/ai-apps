@@ -242,7 +242,7 @@ function voyagerCardToD1PostInput(
     employment_type: card.employmentType,
     posted_at: card.postedAt,
     voyager_urn: card.urn,
-    voyager_workplace_type: card.workplaceType,
+    voyager_workplace_type: card.workplaceType != null ? String(card.workplaceType) : null,
     raw_data: JSON.stringify({
       voyager: true,
       urn: card.urn,

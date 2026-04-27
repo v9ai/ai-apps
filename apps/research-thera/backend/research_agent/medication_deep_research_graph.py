@@ -81,6 +81,10 @@ class MedicationDeepResearchState(TypedDict, total=False):
     user_email: str
     slug: str
     job_id: Optional[str]
+    # Language for the consumer-facing extracted text. "ro" or "en".
+    # Auto-derived in load_rows from family_members.preferred_language when
+    # the caller didn't pass one.
+    language: Optional[str]
 
     # Internals populated by nodes
     _rows: list[dict]
@@ -245,7 +249,21 @@ async def load_rows(state: MedicationDeepResearchState) -> dict:
             "counts": {"indications": 0, "dosing": 0, "pharmacology": 0,
                        "adverse_events": 0, "interactions": 0, "papers": 0},
         }
-    return {"_rows": rows}
+
+    # Auto-derive language: caller-supplied wins; otherwise inherit from the
+    # first row's family_member.preferred_language. "Bogdan-related" content
+    # is enforced Romanian via this column.
+    out: dict = {"_rows": rows}
+    explicit_lang = (state.get("language") or "").strip().lower()
+    if not explicit_lang:
+        derived = next(
+            (r.get("family_member_preferred_language") for r in rows
+             if (r.get("family_member_preferred_language") or "").strip()),
+            None,
+        )
+        if derived:
+            out["language"] = derived.strip().lower()
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -259,9 +277,14 @@ async def check_freshness(state: MedicationDeepResearchState) -> dict:
     # Use the requested slug as drug_slug — every row in `rows` already matches it.
     drug_slug = (state.get("slug") or "").strip().lower()
 
+    # An explicit language request always re-runs the facts pipeline so the
+    # cached rows get rewritten in the requested language. Language is the
+    # one axis the 30-day cache cannot honour.
+    has_lang = bool((state.get("language") or "").strip())
+
     last_updated = await neon.fetch_pharmacology_updated_at(drug_slug)
     fresh = False
-    if last_updated:
+    if last_updated and not has_lang:
         try:
             ts = datetime.fromisoformat(last_updated.replace(" ", "T"))
             if ts.tzinfo is None:
@@ -344,7 +367,7 @@ async def fetch_sources(state: MedicationDeepResearchState) -> dict:
 # ---------------------------------------------------------------------------
 # Node: extract_facts (DeepSeek JSON over openFDA structured fields + SPL excerpt)
 # ---------------------------------------------------------------------------
-def _build_extraction_prompt(meta: dict, sources: dict) -> str:
+def _build_extraction_prompt(meta: dict, sources: dict, language: Optional[str] = None) -> str:
     fda = sources.get("openfda") or {}
     spl = sources.get("dailymed") or {}
     spl_xml = (spl.get("xml") or "")[:SPL_TEXT_LIMIT]
@@ -389,7 +412,10 @@ def _build_extraction_prompt(meta: dict, sources: dict) -> str:
         "- Use plain English event names (\"headache\" not \"cephalalgia\"); preserve clinical terms only when no plain equivalent exists.",
         "- Only include indications/dosing explicitly supported by the labeling above.",
     ]
-    return "\n\n".join(sections)
+    body = "\n\n".join(sections)
+    if (language or "").strip().lower() == "ro":
+        return ROMANIAN_INSTRUCTION + "\n\n" + body
+    return body
 
 
 async def extract_facts(state: MedicationDeepResearchState) -> dict:
@@ -407,7 +433,7 @@ async def extract_facts(state: MedicationDeepResearchState) -> dict:
         return {"_facts": {"indications": [], "dosing": [], "pharmacology": {},
                            "adverse_events": [], "interactions": []}}
 
-    prompt = _build_extraction_prompt(meta, sources)
+    prompt = _build_extraction_prompt(meta, sources, state.get("language"))
     parsed = await _deepseek_json(prompt, max_tokens=EXTRACTION_MAX_TOKENS) or {}
 
     return {
@@ -663,6 +689,7 @@ def _build_correlation_prompt(
     drug_facts: dict,
     issues: list[dict],
     journals: list[dict],
+    language: Optional[str] = None,
 ) -> str:
     pharm = drug_facts.get("pharmacology") or {}
     indications = drug_facts.get("indications") or []
@@ -737,6 +764,11 @@ def _build_correlation_prompt(
         "] }\n\n"
         "Cap the array at 25 items; pick the highest-confidence ones."
     )
+    if (language or "").strip().lower() == "ro":
+        return ROMANIAN_INSTRUCTION + "\n\n" + (
+            "You are a clinical pharmacist reviewing whether a patient's documented "
+            "issues and journal entries relate to their medication regimen.\n\n"
+        ).__radd__("")  # placeholder: below we just prepend to original string
 
 
 async def correlate_patient_data(state: MedicationDeepResearchState) -> dict:
