@@ -199,7 +199,7 @@
           "Deep issue analysis LangGraph: thematic clusters, timeline + family-system insights, root-cause, research-mapped priorities.",
           "AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → R2.",
           "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): 7 sources → DeepSeek + 0.72 gate → top 20 as 1024-dim pgvector.",
-          "~70-table Drizzle/Postgres schema after the agentic-healthcare merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables including 8 pgvector embedding tables."
+          "~70-table Drizzle/Postgres schema: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables including 8 pgvector embedding tables."
         ]
       },
       {
