@@ -1,0 +1,173 @@
+"use client";
+
+import { use } from "react";
+import {
+  Badge,
+  Box,
+  Button,
+  Flex,
+  Heading,
+  Separator,
+  Spinner,
+  Text,
+} from "@radix-ui/themes";
+import { ArrowLeft, ShieldAlert } from "lucide-react";
+import Link from "next/link";
+import {
+  useAllergiesQuery,
+  useGetFamilyMemberQuery,
+} from "../../__generated__/hooks";
+import { AuthGate } from "../../components/AuthGate";
+import { AddAllergyForm } from "../add-allergy-form";
+import { AllergyCard } from "../allergy-card";
+
+export default function PersonAllergiesPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
+  return (
+    <AuthGate
+      pageName="Allergies"
+      description="Sign in to view this person's allergies."
+    >
+      <PersonAllergiesContent slug={slug} />
+    </AuthGate>
+  );
+}
+
+function PersonAllergiesContent({ slug }: { slug: string }) {
+  const {
+    data: memberData,
+    loading: memberLoading,
+    error: memberError,
+  } = useGetFamilyMemberQuery({ variables: { slug } });
+  const {
+    data: allergiesData,
+    loading: allergiesLoading,
+    error: allergiesError,
+  } = useAllergiesQuery();
+
+  const member = memberData?.familyMember;
+  const loading = memberLoading || allergiesLoading;
+  const error = memberError ?? allergiesError;
+
+  if (loading) {
+    return (
+      <Flex justify="center" py="9">
+        <Spinner size="3" />
+      </Flex>
+    );
+  }
+
+  if (error) {
+    return (
+      <Flex direction="column" align="center" p="6" gap="2">
+        <Text color="red">Error loading allergies</Text>
+        <Text size="1" color="gray">
+          {error.message}
+        </Text>
+      </Flex>
+    );
+  }
+
+  if (!member) {
+    return (
+      <Flex direction="column" align="center" gap="3" py="9">
+        <Heading size="4">Person not found</Heading>
+        <Text size="2" color="gray">
+          We couldn&apos;t find anyone with the slug &ldquo;{slug}&rdquo;.
+        </Text>
+        <Link href="/allergies">
+          <Button variant="soft">
+            <ArrowLeft size={14} /> Back to all allergies
+          </Button>
+        </Link>
+      </Flex>
+    );
+  }
+
+  const personAllergies = (allergiesData?.allergies ?? []).filter(
+    (a) => a.familyMemberId === member.id,
+  );
+  const personDisplayName = member.firstName + (member.name ? ` (${member.name})` : "");
+
+  return (
+    <Box py="6">
+      <Flex direction="column" gap="6">
+        <Flex direction="column" gap="2">
+          <Link href="/allergies" style={{ textDecoration: "none" }}>
+            <Flex align="center" gap="1">
+              <ArrowLeft size={14} color="var(--gray-10)" />
+              <Text size="2" color="gray">
+                All allergies
+              </Text>
+            </Flex>
+          </Link>
+          <Flex align="center" gap="3" wrap="wrap">
+            <Heading size={{ initial: "6", md: "8" }} weight="bold">
+              {personDisplayName}
+            </Heading>
+            {member.relationship && (
+              <Badge color="cyan" variant="soft">
+                {member.relationship}
+              </Badge>
+            )}
+          </Flex>
+          <Text size="3" color="gray">
+            Allergies &amp; intolerances for {member.firstName}.
+          </Text>
+        </Flex>
+
+        <Separator size="4" />
+
+        <Flex direction="column" gap="3">
+          <Heading size="4">Add an entry for {member.firstName}</Heading>
+          <AddAllergyForm lockedFamilyMemberId={member.id} />
+        </Flex>
+
+        <Separator size="4" />
+
+        {personAllergies.length === 0 ? (
+          <Flex direction="column" align="center" gap="3" py="9">
+            <ShieldAlert size={48} color="var(--gray-8)" />
+            <Heading size="4">
+              No allergies recorded for {member.firstName} yet
+            </Heading>
+            <Text size="2" color="gray">
+              Add an entry above to start tracking.
+            </Text>
+          </Flex>
+        ) : (
+          <Flex direction="column" gap="3">
+            <Heading size="4">
+              Entries ({personAllergies.length})
+            </Heading>
+            <Flex
+              direction="column"
+              gap="3"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              }}
+            >
+              {personAllergies.map((a) => (
+                <AllergyCard
+                  key={a.id}
+                  id={a.id}
+                  kind={a.kind}
+                  name={a.name}
+                  severity={a.severity ?? null}
+                  notes={a.notes ?? null}
+                  createdAt={a.createdAt}
+                  personLabel={null}
+                />
+              ))}
+            </Flex>
+          </Flex>
+        )}
+      </Flex>
+    </Box>
+  );
+}
