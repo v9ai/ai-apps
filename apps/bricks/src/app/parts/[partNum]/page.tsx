@@ -140,40 +140,6 @@ export default function PartPage() {
     return () => controller.abort();
   }, [sets, setsLoading, partNum]);
 
-  // Fallback: use LangGraph discover-mocs for set-type items or when standard flow yields nothing
-  const [discoveryDone, setDiscoveryDone] = useState(false);
-  useEffect(() => {
-    if (!part || loading || discoveryDone) return;
-    if (mocs.length > 0) return;
-    if (part.colors.length > 0 && setsLoading) return;
-
-    setDiscoveryDone(true);
-    setMocsLoading(true);
-
-    fetch(`/api/parts/${encodeURIComponent(partNum)}/discover-mocs`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Discovery failed");
-        return res.json();
-      })
-      .then((data) => {
-        const discovered: Moc[] = (data.mocs ?? []).map(
-          (m: { moc_id: string; name: string; year: number; num_parts: number; image_url: string | null; moc_url: string; designer: string; top_pick?: boolean }) => ({
-            mocId: m.moc_id,
-            name: m.name,
-            year: m.year,
-            numParts: m.num_parts,
-            imageUrl: m.image_url,
-            mocUrl: m.moc_url,
-            designer: m.designer,
-            topPick: m.top_pick,
-          })
-        );
-        setMocs(discovered);
-      })
-      .catch(() => {})
-      .finally(() => setMocsLoading(false));
-  }, [part, loading, mocs.length, partNum, setsLoading, discoveryDone]);
-
   async function loadMoreSets() {
     if (!selectedColor) return;
     const nextPage = setsPage + 1;

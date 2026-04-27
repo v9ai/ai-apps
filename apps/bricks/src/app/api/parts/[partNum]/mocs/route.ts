@@ -31,9 +31,10 @@ export async function POST(
     return NextResponse.json({ mocs: [] });
   }
 
-  // Fetch MOC alternates for each set in parallel (cap at 10 to avoid rate limits)
+  // Fetch MOC alternates for each set in parallel. Dedupe first, then cap at 50
+  // to keep the fan-out bounded against Rebrickable rate limits.
   const headers = { Authorization: `key ${API_KEY}` };
-  const batch = setNums.slice(0, 10);
+  const batch = Array.from(new Set(setNums)).slice(0, 50);
 
   const results = await Promise.allSettled(
     batch.map(async (setNum) => {
