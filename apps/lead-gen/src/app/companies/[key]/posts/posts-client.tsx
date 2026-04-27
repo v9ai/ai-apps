@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   useGetCompanyQuery,
   useGetCompanyScrapedPostsQuery,
@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { formatDistanceToNow, parseISO, isValid } from "date-fns";
+import { button } from "@/recipes/button";
 import {
   Badge,
   Box,
@@ -17,12 +18,10 @@ import {
   Container,
   Flex,
   Link as RadixLink,
-  Select,
   Separator,
   Spinner,
   TabNav,
   Text,
-  TextField,
 } from "@radix-ui/themes";
 import {
   ArrowLeftIcon,
@@ -31,11 +30,9 @@ import {
   ExternalLinkIcon,
   HeartIcon,
   InfoCircledIcon,
-  MagnifyingGlassIcon,
+  ReloadIcon,
   Share1Icon,
 } from "@radix-ui/react-icons";
-
-type SortMode = "recent" | "engagement";
 
 type ScrapedPost = {
   personName: string;

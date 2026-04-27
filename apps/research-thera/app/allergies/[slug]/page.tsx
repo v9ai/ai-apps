@@ -241,6 +241,7 @@ function PersonAllergiesContent({ slug }: { slug: string }) {
                 {personMedications.map((m) => (
                   <MedicationCard
                     key={m.id}
+                    id={m.id}
                     name={m.name}
                     dosage={m.dosage ?? null}
                     frequency={m.frequency ?? null}
@@ -301,6 +302,7 @@ function ConditionCard({
 }
 
 function MedicationCard({
+  id,
   name,
   dosage,
   frequency,
@@ -308,6 +310,7 @@ function MedicationCard({
   startDate,
   endDate,
 }: {
+  id: string;
   name: string;
   dosage: string | null;
   frequency: string | null;
@@ -320,8 +323,12 @@ function MedicationCard({
   const start = formatDate(startDate);
   const end = formatDate(endDate);
   return (
-    <Card>
-      <Flex direction="column" gap="2">
+    <Link
+      href={`/medications/m/${id}`}
+      style={{ textDecoration: "none", color: "inherit" }}
+    >
+      <Card style={{ cursor: "pointer", height: "100%" }}>
+        <Flex direction="column" gap="2">
         <Flex align="center" gap="2" wrap="wrap">
           <Text size="2" weight="medium">
             {name}
@@ -356,7 +363,8 @@ function MedicationCard({
             {notes}
           </Text>
         )}
-      </Flex>
-    </Card>
+        </Flex>
+      </Card>
+    </Link>
   );
 }
