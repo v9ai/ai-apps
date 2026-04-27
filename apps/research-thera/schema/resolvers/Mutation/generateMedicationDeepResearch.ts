@@ -8,9 +8,7 @@ function normalizeSlug(raw: string): string {
   return match ? match[0] : "";
 }
 
-export const generateMedicationDeepResearch: NonNullable<
-  MutationResolvers["generateMedicationDeepResearch"]
-> = async (_parent, args, ctx) => {
+export const generateMedicationDeepResearch: NonNullable<MutationResolvers['generateMedicationDeepResearch']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) {
     throw new Error("Authentication required");

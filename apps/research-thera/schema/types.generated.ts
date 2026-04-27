@@ -1502,6 +1502,7 @@ export type JobType =
   | 'AUDIO'
   | 'DEEP_ANALYSIS'
   | 'LONGFORM'
+  | 'MEDICATION_DEEP_RESEARCH'
   | 'QUESTIONS'
   | 'RECOMMENDED_BOOKS'
   | 'RESEARCH'
@@ -1707,6 +1708,7 @@ export type Mutation = {
   generateHabitsFromIssue: GenerateHabitsResult;
   generateJournalAnalysis: GenerateJournalAnalysisResult;
   generateLongFormText: GenerateLongFormTextResult;
+  generateMedicationDeepResearch: GenerateResearchResult;
   generateOpenAIAudio: GenerateOpenAIAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
@@ -2167,6 +2169,11 @@ export type MutationgenerateLongFormTextArgs = {
   language?: InputMaybe<Scalars['String']['input']>;
   minutes?: InputMaybe<Scalars['Int']['input']>;
   userContext?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationgenerateMedicationDeepResearchArgs = {
+  slug: Scalars['String']['input'];
 };
 
 
@@ -3710,7 +3717,7 @@ export type ResolversTypes = {
   JobError: ResolverTypeWrapper<JobError>;
   JobResult: ResolverTypeWrapper<JobResult>;
   JobStatus: ResolverTypeWrapper<'RUNNING' | 'SUCCEEDED' | 'FAILED'>;
-  JobType: ResolverTypeWrapper<'AUDIO' | 'RESEARCH' | 'QUESTIONS' | 'LONGFORM' | 'DEEP_ANALYSIS' | 'RECOMMENDED_BOOKS' | 'ROUTINE_ANALYSIS'>;
+  JobType: ResolverTypeWrapper<'AUDIO' | 'RESEARCH' | 'QUESTIONS' | 'LONGFORM' | 'DEEP_ANALYSIS' | 'RECOMMENDED_BOOKS' | 'ROUTINE_ANALYSIS' | 'MEDICATION_DEEP_RESEARCH'>;
   JournalAnalysis: ResolverTypeWrapper<JournalAnalysis>;
   JournalEntry: ResolverTypeWrapper<Omit<JournalEntry, 'familyMember' | 'goal' | 'issue'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, goal?: Maybe<ResolversTypes['Goal']>, issue?: Maybe<ResolversTypes['Issue']> }>;
   LanguageExample: ResolverTypeWrapper<LanguageExample>;
@@ -5030,7 +5037,7 @@ export type JobResultResolvers<ContextType = GraphQLContext, ParentType extends 
 
 export type JobStatusResolvers = EnumResolverSignature<{ FAILED?: any, RUNNING?: any, SUCCEEDED?: any }, ResolversTypes['JobStatus']>;
 
-export type JobTypeResolvers = EnumResolverSignature<{ AUDIO?: any, DEEP_ANALYSIS?: any, LONGFORM?: any, QUESTIONS?: any, RECOMMENDED_BOOKS?: any, RESEARCH?: any, ROUTINE_ANALYSIS?: any }, ResolversTypes['JobType']>;
+export type JobTypeResolvers = EnumResolverSignature<{ AUDIO?: any, DEEP_ANALYSIS?: any, LONGFORM?: any, MEDICATION_DEEP_RESEARCH?: any, QUESTIONS?: any, RECOMMENDED_BOOKS?: any, RESEARCH?: any, ROUTINE_ANALYSIS?: any }, ResolversTypes['JobType']>;
 
 export type JournalAnalysisResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['JournalAnalysis'] = ResolversParentTypes['JournalAnalysis']> = {
   actionableRecommendations?: Resolver<Array<ResolversTypes['ActionableRecommendation']>, ParentType, ContextType>;
@@ -5215,6 +5222,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateHabitsFromIssue?: Resolver<ResolversTypes['GenerateHabitsResult'], ParentType, ContextType, RequireFields<MutationgenerateHabitsFromIssueArgs, 'issueId'>>;
   generateJournalAnalysis?: Resolver<ResolversTypes['GenerateJournalAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateJournalAnalysisArgs, 'journalEntryId'>>;
   generateLongFormText?: Resolver<ResolversTypes['GenerateLongFormTextResult'], ParentType, ContextType, Partial<MutationgenerateLongFormTextArgs>>;
+  generateMedicationDeepResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, RequireFields<MutationgenerateMedicationDeepResearchArgs, 'slug'>>;
   generateOpenAIAudio?: Resolver<ResolversTypes['GenerateOpenAIAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateOpenAIAudioArgs, 'input'>>;
   generateParentAdvice?: Resolver<ResolversTypes['GenerateParentAdviceResult'], ParentType, ContextType, RequireFields<MutationgenerateParentAdviceArgs, 'goalId'>>;
   generateRecommendedBooks?: Resolver<ResolversTypes['GenerateRecommendedBooksResult'], ParentType, ContextType, Partial<MutationgenerateRecommendedBooksArgs>>;

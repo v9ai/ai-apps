@@ -1380,6 +1380,7 @@ enum JobType {
   AUDIO
   DEEP_ANALYSIS
   LONGFORM
+  MEDICATION_DEEP_RESEARCH
   QUESTIONS
   RECOMMENDED_BOOKS
   RESEARCH
@@ -1576,6 +1577,7 @@ type Mutation {
   generateHabitsFromIssue(count: Int, issueId: Int!): GenerateHabitsResult!
   generateJournalAnalysis(journalEntryId: Int!): GenerateJournalAnalysisResult!
   generateLongFormText(familyMemberId: Int, feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int, language: String, minutes: Int, userContext: String): GenerateLongFormTextResult!
+  generateMedicationDeepResearch(slug: String!): GenerateResearchResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
   generateRecommendedBooks(goalId: Int, journalEntryId: Int): GenerateRecommendedBooksResult!

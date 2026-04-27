@@ -21,13 +21,18 @@ import {
 } from "@/db/schema";
 import { eq, and, desc, inArray, isNull, sql } from "drizzle-orm";
 import { tagIntentSignalsProducts } from "./tag-intent-signals-products";
+import {
+  VALID_SIGNAL_TYPES,
+  INTENT_WEIGHTS,
+  computeFreshness,
+  computeIntentScore,
+  stripMarkdownFences,
+  callLocalLLM,
+  ensureLLMReachable,
+  type DetectedSignal,
+} from "@/lib/intent/detector";
 
 // ── Config ──────────────────────────────────────────────────────
-
-const LLM_BASE_URL =
-  process.env.LLM_BASE_URL ?? "http://localhost:8080/v1";
-const LLM_MODEL =
-  process.env.LLM_MODEL ?? "mlx-community/Qwen2.5-3B-Instruct-4bit";
 
 const SYSTEM_PROMPT = `You detect buying/hiring intent signals in B2B company content.
 Analyze the text and identify all relevant signals.
@@ -43,96 +48,6 @@ Signal types:
 
 If no signals detected, return: {"signals": []}
 CRITICAL: Respond with ONLY a valid JSON object, no markdown.`;
-
-const VALID_SIGNAL_TYPES = new Set([
-  "hiring_intent",
-  "tech_adoption",
-  "growth_signal",
-  "budget_cycle",
-  "leadership_change",
-  "product_launch",
-]);
-
-const INTENT_WEIGHTS: Record<string, number> = {
-  hiring_intent: 30,
-  tech_adoption: 20,
-  growth_signal: 25,
-  budget_cycle: 15,
-  leadership_change: 5,
-  product_launch: 5,
-  competitor_mention: 40,
-};
-
-// ── Helpers ─────────────────────────────────────────────────────
-
-function computeFreshness(detectedAt: string, decayDays: number): number {
-  const daysSince =
-    (Date.now() - new Date(detectedAt).getTime()) / (1000 * 60 * 60 * 24);
-  if (decayDays <= 0) return 0;
-  const k = 0.693 / decayDays;
-  return Math.exp(-k * daysSince);
-}
-
-function computeIntentScore(
-  signals: Array<{
-    signal_type: string;
-    confidence: number;
-    detected_at: string;
-    decay_days: number;
-  }>,
-): number {
-  if (signals.length === 0) return 0;
-
-  let weightedSum = 0;
-  let totalWeight = 0;
-
-  for (const [signalType, weight] of Object.entries(INTENT_WEIGHTS)) {
-    const best = signals
-      .filter((s) => s.signal_type === signalType)
-      .reduce((max, s) => {
-        const f = computeFreshness(s.detected_at, s.decay_days);
-        return Math.max(max, s.confidence * f);
-      }, 0);
-
-    weightedSum += best * weight;
-    totalWeight += weight;
-  }
-
-  return totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 0;
-}
-
-async function callLocalLLM(userText: string): Promise<string> {
-  const resp = await fetch(`${LLM_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: LLM_MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userText },
-      ],
-      temperature: 0.1,
-      max_tokens: 1024,
-    }),
-  });
-
-  if (!resp.ok) {
-    throw new Error(`LLM API ${resp.status}: ${await resp.text()}`);
-  }
-
-  const body = (await resp.json()) as {
-    choices: Array<{ message: { content: string } }>;
-  };
-  return body.choices[0]?.message?.content ?? "";
-}
-
-function stripMarkdownFences(raw: string): string {
-  let s = raw.trim();
-  if (s.startsWith("```json")) s = s.slice(7);
-  else if (s.startsWith("```")) s = s.slice(3);
-  if (s.endsWith("```")) s = s.slice(0, -3);
-  return s.trim();
-}
 
 // ── Gather text for a company ──────────────────────────────────
 
@@ -177,13 +92,6 @@ async function gatherCompanyText(companyId: number): Promise<string[]> {
 
 // ── Detect signals for one company ─────────────────────────────
 
-interface DetectedSignal {
-  signal_type: string;
-  confidence: number;
-  evidence: string[];
-  decay_days: number;
-}
-
 async function detectForCompany(
   company: { id: number; name: string; key: string },
   texts: string[],
@@ -193,7 +101,7 @@ async function detectForCompany(
   const combinedText = texts.join("\n\n---\n\n").slice(0, 3000);
   const userText = `Company: ${company.name} (${company.key})\n\nContent:\n${combinedText}`;
 
-  const raw = await callLocalLLM(userText);
+  const raw = await callLocalLLM(SYSTEM_PROMPT, userText);
   const json = stripMarkdownFences(raw);
 
   const parsed = JSON.parse(json) as { signals: DetectedSignal[] };
@@ -277,12 +185,9 @@ async function main() {
 
   // Check LLM is reachable
   try {
-    const r = await fetch(`${LLM_BASE_URL}/models`);
-    if (!r.ok) throw new Error(`${r.status}`);
-  } catch {
-    console.error(
-      `ERROR: Cannot reach LLM at ${LLM_BASE_URL}. Start with: make intent-serve`,
-    );
+    await ensureLLMReachable();
+  } catch (e: any) {
+    console.error(`ERROR: ${e.message}. Start with: make intent-serve`);
     process.exit(1);
   }
 

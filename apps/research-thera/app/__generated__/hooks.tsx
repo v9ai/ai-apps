@@ -1516,6 +1516,7 @@ export enum JobType {
   Audio = 'AUDIO',
   DeepAnalysis = 'DEEP_ANALYSIS',
   Longform = 'LONGFORM',
+  MedicationDeepResearch = 'MEDICATION_DEEP_RESEARCH',
   Questions = 'QUESTIONS',
   RecommendedBooks = 'RECOMMENDED_BOOKS',
   Research = 'RESEARCH',
@@ -1722,6 +1723,7 @@ export type Mutation = {
   generateHabitsFromIssue: GenerateHabitsResult;
   generateJournalAnalysis: GenerateJournalAnalysisResult;
   generateLongFormText: GenerateLongFormTextResult;
+  generateMedicationDeepResearch: GenerateResearchResult;
   generateOpenAIAudio: GenerateOpenAiAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
@@ -2182,6 +2184,11 @@ export type MutationGenerateLongFormTextArgs = {
   language?: InputMaybe<Scalars['String']['input']>;
   minutes?: InputMaybe<Scalars['Int']['input']>;
   userContext?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationGenerateMedicationDeepResearchArgs = {
+  slug: Scalars['String']['input'];
 };
 
 
@@ -4149,6 +4156,13 @@ export type GenerateLongFormTextRomanianMutationVariables = Exact<{
 
 
 export type GenerateLongFormTextRomanianMutation = { __typename?: 'Mutation', generateLongFormText: { __typename?: 'GenerateLongFormTextResult', success: boolean, message?: string | null, text?: string | null, audioUrl?: string | null, manifestUrl?: string | null, segmentUrls?: Array<string> | null } };
+
+export type GenerateMedicationDeepResearchMutationVariables = Exact<{
+  slug: Scalars['String']['input'];
+}>;
+
+
+export type GenerateMedicationDeepResearchMutation = { __typename?: 'Mutation', generateMedicationDeepResearch: { __typename?: 'GenerateResearchResult', success: boolean, message?: string | null, jobId?: string | null, count?: number | null } };
 
 export type GenerateOpenAiAudioMutationVariables = Exact<{
   input: GenerateOpenAiAudioInput;
@@ -8684,6 +8698,42 @@ export function useGenerateLongFormTextRomanianMutation(baseOptions?: Apollo.Mut
 export type GenerateLongFormTextRomanianMutationHookResult = ReturnType<typeof useGenerateLongFormTextRomanianMutation>;
 export type GenerateLongFormTextRomanianMutationResult = Apollo.MutationResult<GenerateLongFormTextRomanianMutation>;
 export type GenerateLongFormTextRomanianMutationOptions = Apollo.BaseMutationOptions<GenerateLongFormTextRomanianMutation, GenerateLongFormTextRomanianMutationVariables>;
+export const GenerateMedicationDeepResearchDocument = gql`
+    mutation GenerateMedicationDeepResearch($slug: String!) {
+  generateMedicationDeepResearch(slug: $slug) {
+    success
+    message
+    jobId
+    count
+  }
+}
+    `;
+export type GenerateMedicationDeepResearchMutationFn = Apollo.MutationFunction<GenerateMedicationDeepResearchMutation, GenerateMedicationDeepResearchMutationVariables>;
+
+/**
+ * __useGenerateMedicationDeepResearchMutation__
+ *
+ * To run a mutation, you first call `useGenerateMedicationDeepResearchMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateMedicationDeepResearchMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateMedicationDeepResearchMutation, { data, loading, error }] = useGenerateMedicationDeepResearchMutation({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *   },
+ * });
+ */
+export function useGenerateMedicationDeepResearchMutation(baseOptions?: Apollo.MutationHookOptions<GenerateMedicationDeepResearchMutation, GenerateMedicationDeepResearchMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateMedicationDeepResearchMutation, GenerateMedicationDeepResearchMutationVariables>(GenerateMedicationDeepResearchDocument, options);
+      }
+export type GenerateMedicationDeepResearchMutationHookResult = ReturnType<typeof useGenerateMedicationDeepResearchMutation>;
+export type GenerateMedicationDeepResearchMutationResult = Apollo.MutationResult<GenerateMedicationDeepResearchMutation>;
+export type GenerateMedicationDeepResearchMutationOptions = Apollo.BaseMutationOptions<GenerateMedicationDeepResearchMutation, GenerateMedicationDeepResearchMutationVariables>;
 export const GenerateOpenAiAudioDocument = gql`
     mutation GenerateOpenAIAudio($input: GenerateOpenAIAudioInput!) {
   generateOpenAIAudio(input: $input) {
