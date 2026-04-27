@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import boto3
-from config import settings
+from .config import settings
 
 _client = None
 

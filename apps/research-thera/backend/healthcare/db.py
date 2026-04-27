@@ -10,7 +10,7 @@ from typing import Any, Generator
 import psycopg
 from psycopg_pool import ConnectionPool
 from pgvector.psycopg import register_vector
-from config import settings
+from .config import settings
 
 
 def _configure_conn(conn: psycopg.Connection) -> None:

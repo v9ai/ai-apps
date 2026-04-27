@@ -15,7 +15,7 @@ from __future__ import annotations
 from llama_index.core.retrievers import BaseRetriever
 from llama_index.core.schema import NodeWithScore, QueryBundle, TextNode
 
-from db import (
+from .db import (
     search_appointments,
     search_blood_tests,
     search_conditions,
@@ -25,7 +25,7 @@ from db import (
     search_marker_trend,
     search_symptoms,
 )
-from embeddings import generate_embedding
+from .embeddings import generate_embedding
 
 
 # ── Confidence-scaled k-limit ────────────────────────────────────────────

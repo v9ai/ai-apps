@@ -11,8 +11,8 @@ import logging
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
-from config import settings
-from db import (
+from ..config import settings
+from ..db import (
     search_appointments,
     search_blood_tests,
     search_conditions,
@@ -21,7 +21,7 @@ from db import (
     search_medications,
     search_symptoms,
 )
-from embeddings import generate_embedding
+from ..embeddings import generate_embedding
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/search", tags=["search"])

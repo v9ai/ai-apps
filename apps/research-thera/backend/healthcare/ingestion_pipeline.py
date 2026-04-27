@@ -12,13 +12,13 @@ from llama_index.core import Document
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.schema import BaseNode, TextNode, TransformComponent
 
-from embeddings import (
+from .embeddings import (
     build_health_state_node,
     build_marker_nodes,
     build_test_document,
     get_embed_model,
 )
-from parsers import parse_markers
+from .parsers import parse_markers
 
 
 class BloodTestNodeParser(TransformComponent):

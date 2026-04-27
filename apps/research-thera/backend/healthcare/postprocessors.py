@@ -24,7 +24,7 @@ from llama_index.core.postprocessor.types import BaseNodePostprocessor
 from llama_index.core.schema import NodeWithScore, QueryBundle
 from pydantic import Field, PrivateAttr
 
-from llm_backend import llm_call
+from .llm_backend import llm_call
 
 logger = logging.getLogger(__name__)
 

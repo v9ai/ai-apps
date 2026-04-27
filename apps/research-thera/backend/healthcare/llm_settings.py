@@ -10,8 +10,8 @@ from __future__ import annotations
 from llama_index.core import Settings
 from llama_index.llms.openai_like import OpenAILike
 
-from config import settings as app_settings
-from embeddings import get_embed_model
+from .config import settings as app_settings
+from .embeddings import get_embed_model
 
 
 def configure_llamaindex() -> None:

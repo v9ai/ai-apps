@@ -11,14 +11,14 @@ import logging
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
-from config import settings
-from db import (
+from ..config import settings
+from ..db import (
     upsert_appointment_embedding,
     upsert_condition_embedding,
     upsert_medication_embedding,
     upsert_symptom_embedding,
 )
-from embeddings import (
+from ..embeddings import (
     format_appointment_for_embedding,
     format_condition_for_embedding,
     format_medication_for_embedding,

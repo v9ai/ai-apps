@@ -21,8 +21,8 @@ from llama_index.core import Document
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.schema import BaseNode, MetadataMode, TextNode
 
-from config import settings
-from db import (
+from ..config import settings
+from ..db import (
     delete_blood_test,
     get_blood_test_file_path,
     insert_blood_markers,
@@ -32,16 +32,16 @@ from db import (
     upsert_blood_test_embedding,
     upsert_health_state_embedding,
 )
-from embeddings import (
+from ..embeddings import (
     build_health_state_node,
     build_marker_nodes,
     build_test_document,
     compute_derived_metrics,
     get_embed_model,
 )
-from ingestion_pipeline import BloodTestNodeParser, build_ingestion_pipeline
-from parsers import parse_markers
-from storage import delete_file, upload_file
+from ..ingestion_pipeline import BloodTestNodeParser, build_ingestion_pipeline
+from ..parsers import parse_markers
+from ..storage import delete_file, upload_file
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

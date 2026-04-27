@@ -15,7 +15,7 @@ from fastembed import TextEmbedding
 from llama_index.core.schema import Document, MetadataMode, TextNode
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
 
-from parsers import Marker
+from .parsers import Marker
 
 logger = logging.getLogger(__name__)
 

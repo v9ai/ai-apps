@@ -36,10 +36,10 @@ from llama_index.core.chat_engine import ContextChatEngine
 from llama_index.core.postprocessor import SimilarityPostprocessor
 from llama_index.core.prompts import PromptTemplate
 
-from config import settings
-from llm_backend import llm_call as _llm_call
-from postprocessors import ClinicalRelevancePostprocessor
-from retrievers import (
+from .config import settings
+from .llm_backend import llm_call as _llm_call
+from .postprocessors import ClinicalRelevancePostprocessor
+from .retrievers import (
     CompositeRetriever,
     build_retriever_for_intent,
 )

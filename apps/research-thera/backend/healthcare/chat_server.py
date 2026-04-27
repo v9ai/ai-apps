@@ -16,18 +16,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from llm_settings import configure_llamaindex
+from .llm_settings import configure_llamaindex
 
 configure_llamaindex()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from routes.upload import router as upload_router
-from routes.embed import router as embed_router
-from routes.search import router as search_router
-from config import settings
-from chat_pipeline import run_chat
+from .routes.upload import router as upload_router
+from .routes.embed import router as embed_router
+from .routes.search import router as search_router
+from .config import settings
+from .chat_pipeline import run_chat
 
 app = FastAPI(title="Blood Marker Intelligence Chat")
 app.add_middleware(
