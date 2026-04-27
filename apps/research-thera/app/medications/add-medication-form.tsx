@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Button, Flex, TextField, TextArea, Text } from "@radix-ui/themes";
+import {
+  Box,
+  Button,
+  Flex,
+  Switch,
+  TextField,
+  TextArea,
+  Text,
+} from "@radix-ui/themes";
 import {
   useAddMedicationMutation,
   MedicationsDocument,
@@ -9,6 +17,7 @@ import {
 
 export function AddMedicationForm() {
   const [error, setError] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(true);
   const [addMedication, { loading }] = useAddMedicationMutation({
     refetchQueries: [{ query: MedicationsDocument }],
   });
@@ -31,10 +40,12 @@ export function AddMedicationForm() {
             notes: ((fd.get("notes") as string) ?? "").trim() || null,
             startDate: ((fd.get("startDate") as string) ?? "") || null,
             endDate: ((fd.get("endDate") as string) ?? "") || null,
+            isActive,
           },
         },
       });
       form.reset();
+      setIsActive(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add medication");
     }
@@ -82,6 +93,15 @@ export function AddMedicationForm() {
             Notes (optional)
           </Text>
           <TextArea name="notes" placeholder="Any relevant details…" rows={2} />
+        </Flex>
+        <Flex align="center" gap="2" asChild>
+          <label>
+            <Switch
+              checked={isActive}
+              onCheckedChange={setIsActive}
+            />
+            <Text size="2">Currently taking</Text>
+          </label>
         </Flex>
         {error && (
           <Text size="2" color="red">

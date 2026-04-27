@@ -42,6 +42,8 @@ export default function MedicationsPage() {
 function MedicationsContent() {
   const { data, loading, error } = useMedicationsQuery();
   const meds = data?.medications ?? [];
+  const current = meds.filter((m) => m.isActive);
+  const past = meds.filter((m) => !m.isActive);
 
   return (
     <Box py="6">
@@ -89,34 +91,65 @@ function MedicationsContent() {
           </Flex>
         )}
 
-        {!loading && !error && meds.length > 0 && (
-          <Flex direction="column" gap="3">
-            <Heading size="4">Your medications ({meds.length})</Heading>
-            <Flex
-              direction="column"
-              gap="3"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              }}
-            >
-              {meds.map((m) => (
-                <MedicationCard
-                  key={m.id}
-                  id={m.id}
-                  name={m.name}
-                  dosage={m.dosage ?? null}
-                  frequency={m.frequency ?? null}
-                  notes={m.notes ?? null}
-                  startDate={m.startDate ?? null}
-                  endDate={m.endDate ?? null}
-                />
-              ))}
-            </Flex>
-          </Flex>
+        {!loading && !error && current.length > 0 && (
+          <MedicationGrid title={`Currently taking (${current.length})`} meds={current} />
+        )}
+
+        {!loading && !error && past.length > 0 && (
+          <MedicationGrid title={`Past (${past.length})`} meds={past} muted />
         )}
       </Flex>
     </Box>
+  );
+}
+
+function MedicationGrid({
+  title,
+  meds,
+  muted = false,
+}: {
+  title: string;
+  meds: ReadonlyArray<{
+    id: string;
+    name: string;
+    dosage?: string | null;
+    frequency?: string | null;
+    notes?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    isActive: boolean;
+  }>;
+  muted?: boolean;
+}) {
+  return (
+    <Flex direction="column" gap="3">
+      <Heading size="4" color={muted ? "gray" : undefined}>
+        {title}
+      </Heading>
+      <Flex
+        direction="column"
+        gap="3"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          opacity: muted ? 0.7 : 1,
+        }}
+      >
+        {meds.map((m) => (
+          <MedicationCard
+            key={m.id}
+            id={m.id}
+            name={m.name}
+            dosage={m.dosage ?? null}
+            frequency={m.frequency ?? null}
+            notes={m.notes ?? null}
+            startDate={m.startDate ?? null}
+            endDate={m.endDate ?? null}
+            isActive={m.isActive}
+          />
+        ))}
+      </Flex>
+    </Flex>
   );
 }
 
@@ -128,6 +161,7 @@ function MedicationCard({
   notes,
   startDate,
   endDate,
+  isActive,
 }: {
   id: string;
   name: string;
@@ -136,8 +170,12 @@ function MedicationCard({
   notes: string | null;
   startDate: string | null;
   endDate: string | null;
+  isActive: boolean;
 }) {
   const [deleteMed, { loading: deleting }] = useDeleteMedicationMutation({
+    refetchQueries: [{ query: MedicationsDocument }],
+  });
+  const [setActive, { loading: toggling }] = useSetMedicationActiveMutation({
     refetchQueries: [{ query: MedicationsDocument }],
   });
 
@@ -205,6 +243,19 @@ function MedicationCard({
               <Info size={14} />
             </Link>
           )}
+          <Button
+            variant="ghost"
+            color="gray"
+            size="1"
+            disabled={toggling}
+            aria-label={isActive ? "Mark as past" : "Mark as currently taking"}
+            title={isActive ? "Mark as past" : "Mark as currently taking"}
+            onClick={() =>
+              setActive({ variables: { id, isActive: !isActive } })
+            }
+          >
+            <RotateCcw size={14} />
+          </Button>
           <AlertDialog.Root>
             <AlertDialog.Trigger>
               <Button
