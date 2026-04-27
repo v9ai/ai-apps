@@ -314,11 +314,11 @@ type CorrelationItem = {
   relatedEntityId: number;
   correlationType: string;
   confidence: number;
-  matchedFact: string | null;
-  rationale: string | null;
-  relatedTitle: string | null;
-  relatedDescription: string | null;
-  relatedDate: string | null;
+  matchedFact?: string | null;
+  rationale?: string | null;
+  relatedTitle?: string | null;
+  relatedDescription?: string | null;
+  relatedDate?: string | null;
 };
 
 function CorrelationCard({ c }: { c: CorrelationItem }) {

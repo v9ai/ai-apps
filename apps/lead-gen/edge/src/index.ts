@@ -496,6 +496,7 @@ interface PostInput {
   tenant_id?: string;
   type?: "post" | "job";
   company_key: string;
+  company_id?: number | null;
   contact_id?: number | null;
   author_kind?: "company" | "person";
   author_name?: string | null;
@@ -535,7 +536,7 @@ interface PostInput {
 }
 
 const POST_COLUMNS = [
-  "tenant_id", "type", "company_key", "contact_id",
+  "tenant_id", "type", "company_key", "company_id", "contact_id",
   "author_kind", "author_name", "author_url",
   "post_url", "post_text", "title", "content",
   "posted_date", "posted_at", "scraped_at",
@@ -554,6 +555,7 @@ function postInputToBindings(p: PostInput): unknown[] {
     p.tenant_id ?? "public",
     p.type ?? "post",
     p.company_key,
+    p.company_id ?? null,
     p.contact_id ?? null,
     p.author_kind ?? "company",
     p.author_name ?? null,
@@ -652,6 +654,74 @@ async function handlePostsD1Upsert(req: Request, env: Env): Promise<Response> {
   return json(req, { upserted, skipped });
 }
 
+// ── D1 posts CRUD ──
+//
+// GET    /api/posts/d1            ?type=&companyId=&companyKey=&contactId=&limit=&offset=
+// GET    /api/posts/d1/:id
+// DELETE /api/posts/d1/:id
+//   headers: Authorization: Bearer <JOBS_D1_TOKEN>
+
+async function handlePostsD1List(req: Request, env: Env): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "GET") return json(req, { error: "Method not allowed" }, 405);
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  const url = new URL(req.url);
+  const type = url.searchParams.get("type");
+  const companyId = url.searchParams.get("companyId");
+  const companyKey = url.searchParams.get("companyKey");
+  const contactId = url.searchParams.get("contactId");
+  const tenantId = url.searchParams.get("tenantId") ?? "public";
+  const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 1), 500);
+  const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0", 10) || 0, 0);
+
+  const conds: string[] = ["tenant_id = ?"];
+  const binds: unknown[] = [tenantId];
+  if (type) { conds.push("type = ?"); binds.push(type); }
+  if (companyId) { conds.push("company_id = ?"); binds.push(parseInt(companyId, 10)); }
+  if (companyKey) { conds.push("company_key = ?"); binds.push(companyKey); }
+  if (contactId) { conds.push("contact_id = ?"); binds.push(parseInt(contactId, 10)); }
+
+  const sqlText = `SELECT * FROM posts WHERE ${conds.join(" AND ")} ORDER BY id DESC LIMIT ? OFFSET ?`;
+  const res = await env.DB.prepare(sqlText).bind(...binds, limit, offset).all();
+  const posts = (res.results ?? []) as Array<Record<string, unknown>>;
+  return json(req, { count: posts.length, posts });
+}
+
+async function handlePostsD1GetOrDelete(
+  req: Request,
+  env: Env,
+  id: number,
+): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  if (req.method === "GET") {
+    const r = await env.DB.prepare(`SELECT * FROM posts WHERE id = ?`).bind(id).first();
+    if (!r) return json(req, { error: "Not found" }, 404);
+    return json(req, { post: r });
+  }
+  if (req.method === "DELETE") {
+    const r = await env.DB.prepare(`DELETE FROM posts WHERE id = ?`).bind(id).run();
+    const changes = (r as { meta?: { changes?: number } }).meta?.changes ?? 0;
+    return json(req, { deleted: changes > 0, changes });
+  }
+  return json(req, { error: "Method not allowed" }, 405);
+}
+
 // ── D1 posts read: fetch LinkedIn posts for a company by slug ──
 //
 // GET /api/companies/:slug/posts/d1[?limit=N]
@@ -719,6 +789,17 @@ export default {
     // POST /api/posts/d1/upsert
     if (url.pathname === "/api/posts/d1/upsert") {
       return handlePostsD1Upsert(req, env);
+    }
+
+    // GET /api/posts/d1
+    if (url.pathname === "/api/posts/d1") {
+      return handlePostsD1List(req, env);
+    }
+
+    // GET / DELETE /api/posts/d1/:id
+    {
+      const m = /^\/api\/posts\/d1\/(\d+)\/?$/.exec(url.pathname);
+      if (m) return handlePostsD1GetOrDelete(req, env, parseInt(m[1], 10));
     }
 
     const { tier, key, bodyText } = await classify(req, url);

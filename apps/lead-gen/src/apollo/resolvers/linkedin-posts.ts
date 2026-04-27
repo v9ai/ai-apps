@@ -1,23 +1,105 @@
-import { linkedinPosts, type LinkedInPost as DbLinkedInPost } from "@/db/schema";
-import { eq, and, sql, isNull, inArray, type SQL } from "drizzle-orm";
+import { companies } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import {
+  listD1Posts,
+  getD1Post,
+  upsertD1Posts,
+  deleteD1Post,
+  type D1PostRow,
+  type UpsertPostInput,
+} from "@/lib/posts-d1-client";
 
-// ─── Field resolver (snake_case DB → camelCase GQL) ──────────────────────────
+// ─── Field resolver (D1 row → GQL camelCase) ─────────────────────────────────
 
 const LinkedInPost = {
-  companyId:      (p: DbLinkedInPost) => p.company_id ?? null,
-  contactId:      (p: DbLinkedInPost) => p.contact_id ?? null,
-  authorName:     (p: DbLinkedInPost) => p.author_name ?? null,
-  authorUrl:      (p: DbLinkedInPost) => p.author_url ?? null,
-  employmentType: (p: DbLinkedInPost) => p.employment_type ?? null,
-  postedAt:       (p: DbLinkedInPost) => p.posted_at ?? null,
-  scrapedAt:      (p: DbLinkedInPost) => p.scraped_at,
-  rawData:        (p: DbLinkedInPost) => p.raw_data ? JSON.parse(p.raw_data) : null,
-  skills:         (p: DbLinkedInPost) => p.skills ? JSON.parse(p.skills) : null,
-  analyzedAt:     (p: DbLinkedInPost) => p.analyzed_at ?? null,
-  createdAt:      (p: DbLinkedInPost) => p.created_at,
+  url:            (p: D1PostRow) => p.post_url,
+  companyId:      (p: D1PostRow) => p.company_id,
+  contactId:      (p: D1PostRow) => p.contact_id,
+  authorName:     (p: D1PostRow) => p.author_name,
+  authorUrl:      (p: D1PostRow) => p.author_url,
+  employmentType: (p: D1PostRow) => p.employment_type,
+  postedAt:       (p: D1PostRow) => p.posted_at,
+  scrapedAt:      (p: D1PostRow) => p.scraped_at,
+  rawData:        (p: D1PostRow) => p.raw_data ? JSON.parse(p.raw_data) : null,
+  skills:         (p: D1PostRow) => p.skills ? JSON.parse(p.skills) : null,
+  analyzedAt:     (p: D1PostRow) => p.analyzed_at,
+  // D1 has no separate created_at; expose scraped_at to satisfy the schema field.
+  createdAt:      (p: D1PostRow) => p.scraped_at,
 };
+
+// ─── Helpers: resolve companyId → companies row for denormalization ─────────
+
+async function resolveCompanyById(
+  ctx: GraphQLContext,
+  id: number,
+): Promise<{ key: string; name: string } | null> {
+  const [row] = await ctx.db
+    .select({ key: companies.key, name: companies.name })
+    .from(companies)
+    .where(eq(companies.id, id))
+    .limit(1);
+  return row ?? null;
+}
+
+async function resolveCompaniesByIds(
+  ctx: GraphQLContext,
+  ids: number[],
+): Promise<Map<number, { key: string; name: string }>> {
+  if (ids.length === 0) return new Map();
+  const rows = await ctx.db
+    .select({ id: companies.id, key: companies.key, name: companies.name })
+    .from(companies)
+    .where(inArray(companies.id, ids));
+  return new Map(rows.map((r) => [r.id, { key: r.key, name: r.name }]));
+}
+
+interface UpsertGqlInput {
+  url: string;
+  type: "post" | "job";
+  companyId?: number | null;
+  contactId?: number | null;
+  title?: string | null;
+  content?: string | null;
+  authorName?: string | null;
+  authorUrl?: string | null;
+  location?: string | null;
+  employmentType?: string | null;
+  postedAt?: string | null;
+  rawData?: unknown;
+}
+
+function gqlInputToD1(
+  input: UpsertGqlInput,
+  company: { key: string; name: string } | null,
+): UpsertPostInput | null {
+  // company_key is required by the D1 schema; if no company resolves, fall
+  // back to a synthetic slug derived from companyId so writes never silently
+  // drop. Synthetic keys only happen if the chrome extension sends a
+  // companyId that doesn't exist in Neon, which is unexpected.
+  const company_key =
+    company?.key ?? (input.companyId != null ? `_id_${input.companyId}` : null);
+  if (!company_key) return null;
+
+  return {
+    type: input.type,
+    company_key,
+    company_id: input.companyId ?? null,
+    company_name: company?.name ?? null,
+    contact_id: input.contactId ?? null,
+    author_name: input.authorName ?? null,
+    author_url: input.authorUrl ?? null,
+    post_url: input.url,
+    post_text: input.content ?? null,
+    title: input.title ?? null,
+    content: input.content ?? null,
+    location: input.location ?? null,
+    employment_type: input.employmentType ?? null,
+    posted_at: input.postedAt ?? null,
+    raw_data: input.rawData != null ? JSON.stringify(input.rawData) : null,
+  };
+}
 
 // ─── Resolver map ─────────────────────────────────────────────────────────────
 
@@ -31,248 +113,126 @@ export const linkedinPostResolvers = {
       context: GraphQLContext,
     ) {
       if (!context.userId) throw new Error("Unauthorized");
-      const [row] = await context.db
-        .select()
-        .from(linkedinPosts)
-        .where(eq(linkedinPosts.id, args.id))
-        .limit(1);
-      return row ?? null;
+      return getD1Post(args.id);
     },
 
     async linkedinPosts(
       _parent: unknown,
-      args: { type?: string | null; companyId?: number | null; limit?: number | null; offset?: number | null },
+      args: {
+        type?: string | null;
+        companyId?: number | null;
+        limit?: number | null;
+        offset?: number | null;
+      },
       context: GraphQLContext,
     ) {
       if (!context.userId) throw new Error("Unauthorized");
-
-      const limit  = Math.min(args.limit  ?? 50, 200);
-      const offset = args.offset ?? 0;
-
-      const conditions: SQL[] = [];
-      if (args.type)      conditions.push(eq(linkedinPosts.type, args.type as "post" | "job"));
-      if (args.companyId) conditions.push(eq(linkedinPosts.company_id, args.companyId));
-
-      const rows = await context.db
-        .select()
-        .from(linkedinPosts)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(linkedinPosts.id)
-        .limit(limit)
-        .offset(offset);
-
-      return rows;
+      return listD1Posts({
+        type: (args.type as "post" | "job" | undefined) ?? undefined,
+        companyId: args.companyId ?? undefined,
+        limit: Math.min(args.limit ?? 50, 200),
+        offset: args.offset ?? 0,
+      });
     },
 
+    // similarPosts is deferred until the edge `/api/posts/d1/similar` route
+    // ships (Phase 2-B). The current data set is too small to justify the
+    // build now; returning [] keeps the schema field non-throwing.
     async similarPosts(
       _parent: unknown,
-      args: { postId: number; limit?: number | null; minScore?: number | null },
+      _args: { postId: number; limit?: number | null; minScore?: number | null },
       context: GraphQLContext,
     ) {
       if (!context.userId) throw new Error("Unauthorized");
-
-      const limit = args.limit ?? 10;
-      const minScore = args.minScore ?? 0.3;
-
-      try {
-        const [source] = await context.db
-          .select()
-          .from(linkedinPosts)
-          .where(eq(linkedinPosts.id, args.postId))
-          .limit(1);
-
-        if (!source) return [];
-
-        // Read the job_embedding via raw SQL (vector column not in Drizzle schema)
-        const embResult = await context.db.execute(
-          sql`SELECT job_embedding as emb FROM linkedin_posts WHERE id = ${args.postId} AND job_embedding IS NOT NULL`,
-        );
-        const embRow = embResult.rows?.[0] as { emb: number[] } | undefined;
-        if (!embRow?.emb) return [];
-
-        const vecLiteral = `[${(embRow.emb as number[]).join(",")}]`;
-        const vecParam = sql.raw(`'${vecLiteral}'::vector`);
-
-        const results = await context.db
-          .select({
-            post: linkedinPosts,
-            similarity: sql<number>`1 - (job_embedding <=> ${vecParam})`.as("similarity"),
-          })
-          .from(linkedinPosts)
-          .where(
-            and(
-              sql`job_embedding IS NOT NULL`,
-              sql`${linkedinPosts.id} != ${args.postId}`,
-            ),
-          )
-          .orderBy(sql`job_embedding <=> ${vecParam}`)
-          .limit(limit);
-
-        return results
-          .filter((r) => r.similarity >= minScore)
-          .map((r) => ({ post: r.post, similarity: r.similarity }));
-      } catch {
-        return [];
-      }
+      return [];
     },
   },
 
   Mutation: {
     async upsertLinkedInPost(
       _parent: unknown,
-      args: {
-        input: {
-          url: string;
-          type: "post" | "job";
-          companyId?: number | null;
-          contactId?: number | null;
-          title?: string | null;
-          content?: string | null;
-          authorName?: string | null;
-          authorUrl?: string | null;
-          location?: string | null;
-          employmentType?: string | null;
-          postedAt?: string | null;
-          rawData?: unknown;
-        };
-      },
+      args: { input: UpsertGqlInput },
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
+      const company = args.input.companyId != null
+        ? await resolveCompanyById(context, args.input.companyId)
+        : null;
+      const d1Input = gqlInputToD1(args.input, company);
+      if (!d1Input) throw new Error("companyId required to derive company_key");
 
-      const { input } = args;
-      const values = {
-        url:             input.url,
-        type:            input.type,
-        company_id:      input.companyId   ?? null,
-        contact_id:      input.contactId   ?? null,
-        title:           input.title       ?? null,
-        content:         input.content     ?? null,
-        author_name:     input.authorName  ?? null,
-        author_url:      input.authorUrl   ?? null,
-        location:        input.location    ?? null,
-        employment_type: input.employmentType ?? null,
-        posted_at:       input.postedAt    ?? null,
-        raw_data:        input.rawData != null ? JSON.stringify(input.rawData) : null,
-      };
-
-      const [row] = await context.db
-        .insert(linkedinPosts)
-        .values(values)
-        .onConflictDoUpdate({
-          target: linkedinPosts.url,
-          set: {
-            type:            values.type,
-            company_id:      values.company_id,
-            contact_id:      values.contact_id,
-            title:           values.title,
-            content:         values.content,
-            author_name:     values.author_name,
-            author_url:      values.author_url,
-            location:        values.location,
-            employment_type: values.employment_type,
-            posted_at:       values.posted_at,
-            raw_data:        values.raw_data,
-          },
-        })
-        .returning();
-
-      return row;
+      await upsertD1Posts([d1Input]);
+      // Read back the row to return a fully populated LinkedInPost. Lookup by
+      // post_url since IDs are not deterministic.
+      const [row] = await listD1Posts({
+        companyKey: d1Input.company_key,
+        limit: 200,
+      });
+      // listD1Posts returns by id desc; find the actual row by url.
+      const all = await listD1Posts({
+        companyKey: d1Input.company_key,
+        limit: 500,
+      });
+      return all.find((r) => r.post_url === d1Input.post_url) ?? row ?? null;
     },
 
     async upsertLinkedInPosts(
       _parent: unknown,
-      args: {
-        inputs: Array<{
-          url: string;
-          type: "post" | "job";
-          companyId?: number | null;
-          contactId?: number | null;
-          title?: string | null;
-          content?: string | null;
-          authorName?: string | null;
-          authorUrl?: string | null;
-          location?: string | null;
-          employmentType?: string | null;
-          postedAt?: string | null;
-          rawData?: unknown;
-        }>;
-      },
+      args: { inputs: UpsertGqlInput[] },
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
 
-      let inserted = 0;
-      let updated = 0;
+      const companyIds = Array.from(
+        new Set(
+          args.inputs
+            .map((i) => i.companyId)
+            .filter((v): v is number => v != null),
+        ),
+      );
+      const companyMap = await resolveCompaniesByIds(context, companyIds);
+
+      const d1Inputs: UpsertPostInput[] = [];
       const errors: string[] = [];
+      for (const input of args.inputs) {
+        const company = input.companyId != null
+          ? companyMap.get(input.companyId) ?? null
+          : null;
+        const mapped = gqlInputToD1(input, company);
+        if (!mapped) {
+          errors.push(`row missing company_key (url=${input.url})`);
+          continue;
+        }
+        d1Inputs.push(mapped);
+      }
 
-      // Process in chunks of 50 to avoid overly large SQL statements
-      const CHUNK = 50;
-      for (let i = 0; i < args.inputs.length; i += CHUNK) {
-        const chunk = args.inputs.slice(i, i + CHUNK);
-        const rows = chunk.map((input) => ({
-          url:             input.url,
-          type:            input.type,
-          company_id:      input.companyId   ?? null,
-          contact_id:      input.contactId   ?? null,
-          title:           input.title       ?? null,
-          content:         input.content     ?? null,
-          author_name:     input.authorName  ?? null,
-          author_url:      input.authorUrl   ?? null,
-          location:        input.location    ?? null,
-          employment_type: input.employmentType ?? null,
-          posted_at:       input.postedAt    ?? null,
-          raw_data:        input.rawData != null ? JSON.stringify(input.rawData) : null,
-        }));
-
+      let upserted = 0;
+      let skipped = 0;
+      const CHUNK = 100;
+      for (let i = 0; i < d1Inputs.length; i += CHUNK) {
         try {
-          // Check which URLs already exist to distinguish inserts from updates
-          const chunkUrls = rows.map((r) => r.url);
-          const existing = await context.db
-            .select({ url: linkedinPosts.url })
-            .from(linkedinPosts)
-            .where(inArray(linkedinPosts.url, chunkUrls));
-          const existingUrls = new Set(existing.map((r) => r.url));
-
-          const result = await context.db
-            .insert(linkedinPosts)
-            .values(rows)
-            .onConflictDoUpdate({
-              target: linkedinPosts.url,
-              set: {
-                type:            sql`excluded.type`,
-                company_id:      sql`excluded.company_id`,
-                contact_id:      sql`excluded.contact_id`,
-                title:           sql`excluded.title`,
-                content:         sql`excluded.content`,
-                author_name:     sql`excluded.author_name`,
-                author_url:      sql`excluded.author_url`,
-                location:        sql`excluded.location`,
-                employment_type: sql`excluded.employment_type`,
-                posted_at:       sql`excluded.posted_at`,
-                raw_data:        sql`excluded.raw_data`,
-                scraped_at:      sql`now()::text`,
-              },
-            })
-            .returning();
-
-          for (const row of result) {
-            if (existingUrls.has(row.url)) {
-              updated++;
-            } else {
-              inserted++;
-            }
-          }
-        } catch (err) {
-          errors.push(err instanceof Error ? err.message : String(err));
+          const r = await upsertD1Posts(d1Inputs.slice(i, i + CHUNK));
+          upserted += r.upserted;
+          skipped += r.skipped;
+        } catch (e: any) {
+          errors.push(e.message ?? String(e));
         }
       }
 
-      return { success: errors.length === 0, inserted, updated, errors };
+      // The legacy contract returned { inserted, updated } — D1 doesn't
+      // distinguish on UPSERT, so we report both as `upserted` summed into
+      // `inserted` and leave `updated` at 0. Callers (chrome extension)
+      // don't act on the split.
+      return {
+        success: errors.length === 0,
+        inserted: upserted,
+        updated: 0,
+        errors,
+      };
     },
 
     async deleteLinkedInPost(
@@ -283,85 +243,21 @@ export const linkedinPostResolvers = {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
-      await context.db
-        .delete(linkedinPosts)
-        .where(eq(linkedinPosts.id, args.id));
-      return true;
+      return deleteD1Post(args.id);
     },
 
+    // analyzeLinkedInPosts ran LLM analysis and wrote skills + embeddings
+    // back to Neon via raw SQL. Deferred along with similarPosts; UI paths
+    // that depended on it are dormant. Returns a no-op success shape.
     async analyzeLinkedInPosts(
       _parent: unknown,
-      args: { postIds?: number[] | null; limit?: number | null },
+      _args: { postIds?: number[] | null; limit?: number | null },
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
-
-      let analyzed = 0;
-      let failed = 0;
-      const errors: string[] = [];
-
-      try {
-        const { analyzePostBatch } = await import("@/ml/post-analyzer");
-
-        // Fetch target posts: by IDs or un-analyzed posts
-        const targetPosts = args.postIds?.length
-          ? await context.db
-              .select()
-              .from(linkedinPosts)
-              .where(sql`${linkedinPosts.id} = ANY(${args.postIds})`)
-          : await context.db
-              .select()
-              .from(linkedinPosts)
-              .where(isNull(linkedinPosts.analyzed_at))
-              .limit(Math.min(args.limit ?? 50, 200));
-
-        // Filter to posts with content
-        const postsWithContent = targetPosts.filter(
-          (p) => p.content && p.content.trim().length > 10,
-        );
-
-        if (postsWithContent.length === 0) {
-          return { success: true, analyzed: 0, failed: 0, errors: [] };
-        }
-
-        // Batch analyze
-        const results = await analyzePostBatch(
-          postsWithContent.map((p) => ({ id: p.id, content: p.content! })),
-        );
-
-        // Update DB in chunks of 20
-        const CHUNK = 20;
-        const entries = Array.from(results.entries());
-        for (let i = 0; i < entries.length; i += CHUNK) {
-          const chunk = entries.slice(i, i + CHUNK);
-          for (const [postId, analysis] of chunk) {
-            try {
-              const vecLiteral = `[${analysis.jobEmbedding.join(",")}]`;
-              await context.db.execute(
-                sql`UPDATE linkedin_posts SET
-                  skills = ${JSON.stringify(analysis.skills)},
-                  analyzed_at = ${analysis.analyzedAt},
-                  job_embedding = ${sql.raw(`'${vecLiteral}'::vector`)}
-                WHERE id = ${postId}`,
-              );
-              analyzed++;
-            } catch (err) {
-              failed++;
-              errors.push(
-                `Post ${postId}: ${err instanceof Error ? err.message : String(err)}`,
-              );
-            }
-          }
-        }
-      } catch (err) {
-        errors.push(
-          `Analysis init failed: ${err instanceof Error ? err.message : String(err)}`,
-        );
-      }
-
-      return { success: failed === 0, analyzed, failed, errors };
+      return { analyzed: 0, errors: ["deferred: posts-d1 analyze pipeline not yet wired"] };
     },
   },
 };

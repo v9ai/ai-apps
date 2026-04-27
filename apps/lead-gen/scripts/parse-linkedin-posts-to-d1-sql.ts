@@ -2,10 +2,31 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse, type HTMLElement } from "node-html-parser";
 
-const COMPANY_KEY = "durlston-partners";
-const AUTHOR_KIND = "company";
-const INPUT = join(process.cwd(), "linkedin-posts.txt");
-const OUTPUT = join(process.cwd(), "edge/seeds/durlston-partners-posts.sql");
+// CLI overrides — fall back to the original Durlston-company defaults so
+// existing invocations still work.
+function flagStr(name: string, fallback: string): string {
+  const i = process.argv.indexOf(`--${name}`);
+  return i >= 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith("--")
+    ? process.argv[i + 1]
+    : fallback;
+}
+function flagOpt(name: string): string | null {
+  const i = process.argv.indexOf(`--${name}`);
+  return i >= 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith("--")
+    ? process.argv[i + 1]
+    : null;
+}
+
+const COMPANY_KEY = flagStr("company-key", "durlston-partners");
+const AUTHOR_KIND = flagStr("author-kind", "company"); // 'company' | 'person'
+const CONTACT_ID = flagOpt("contact-id"); // numeric string when author-kind=person
+const AUTHOR_NAME_OVERRIDE = flagOpt("author-name");
+const AUTHOR_URL_OVERRIDE = flagOpt("author-url");
+const INPUT = flagStr("input", join(process.cwd(), "linkedin-posts.txt"));
+const OUTPUT = flagStr(
+  "output",
+  join(process.cwd(), `edge/seeds/${COMPANY_KEY}-posts.sql`),
+);
 
 interface ExtractedPost {
   postUrl: string | null;
@@ -137,6 +158,12 @@ function sqlString(v: string | null | undefined): string {
 }
 
 function toInsert(p: ExtractedPost): string {
+  // For person-authored profile-page scrapes, the author is the same on every
+  // row and is supplied via CLI; the page itself doesn't carry per-post actor
+  // markup the way a feed does, so prefer the overrides when set.
+  const authorName = AUTHOR_NAME_OVERRIDE ?? p.authorName;
+  const authorUrl = AUTHOR_URL_OVERRIDE ?? p.authorUrl;
+
   const cols = [
     "company_key",
     "author_kind",
@@ -155,8 +182,8 @@ function toInsert(p: ExtractedPost): string {
   const vals = [
     sqlString(COMPANY_KEY),
     sqlString(AUTHOR_KIND),
-    sqlString(p.authorName),
-    sqlString(p.authorUrl),
+    sqlString(authorName),
+    sqlString(authorUrl),
     sqlString(p.postUrl),
     sqlString(p.postText),
     sqlString(p.postedDate),
@@ -167,6 +194,10 @@ function toInsert(p: ExtractedPost): string {
     p.isRepost ? "1" : "0",
     sqlString(p.originalAuthor),
   ];
+  if (CONTACT_ID) {
+    cols.push("contact_id");
+    vals.push(String(parseInt(CONTACT_ID, 10)));
+  }
   return `INSERT OR IGNORE INTO posts (${cols.join(", ")}) VALUES (${vals.join(", ")});`;
 }
 
