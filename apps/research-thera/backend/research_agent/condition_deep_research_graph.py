@@ -879,7 +879,43 @@ async def extract_facts(state: ConditionDeepResearchState) -> dict:
         '      "flag": string,  // a symptom or pattern that warrants escalation\n'
         '      "action": string | null  // what a parent / clinician should do\n'
         "    }\n"
-        "  ]  // 3-6 red flags\n"
+        "  ],  // 3-6 red flags\n"
+        '  "criteria_match": {  // DSM-5 ADHD criteria mapped against the personal file\n'
+        '    "framework": "DSM-5 ADHD",\n'
+        '    "criterion_a_inattention": {\n'
+        '      "matched_symptoms": [{ "symptom": string, "evidence": string }],\n'
+        '        // For each of the 9 DSM-5 inattention symptoms (often misses details, '
+        'difficulty sustaining attention, doesn\'t seem to listen, fails to follow through, '
+        'difficulty organizing, avoids sustained mental effort, loses things, easily distracted, '
+        'forgetful in daily activities), ONLY include it if the personal file contains explicit '
+        'evidence. Quote the evidence string verbatim.\n'
+        '      "matched_count": integer 0-9,\n'
+        '      "threshold_met": boolean  // true if matched_count >= 6 (children) or >= 5 (>=17yo)\n'
+        "    },\n"
+        '    "criterion_a_hyperactivity_impulsivity": {\n'
+        '      "matched_symptoms": [{ "symptom": string, "evidence": string }],\n'
+        '        // For each of the 9 DSM-5 hyperactivity-impulsivity symptoms (fidgets, leaves '
+        'seat, runs/climbs inappropriately, can\'t play quietly, "on the go", talks excessively, '
+        'blurts out answers, difficulty waiting turn, interrupts others), same evidence rule.\n'
+        '      "matched_count": integer 0-9,\n'
+        '      "threshold_met": boolean\n'
+        "    },\n"
+        '    "presentation": "predominantly_inattentive" | "predominantly_hyperactive_impulsive" | "combined" | "subthreshold",\n'
+        '    "criterion_b_age_onset":  { "met": boolean, "evidence": string },  // symptoms before age 12\n'
+        '    "criterion_c_settings":   { "met": boolean, "evidence": string },  // present in 2+ settings\n'
+        '    "criterion_d_impairment": { "met": boolean, "evidence": string },  // documented functional impairment\n'
+        '    "criterion_e_differential": { "ruled_out": boolean, "notes": string }  // not better explained by another condition\n'
+        "  },\n"
+        '  "proximity_assessment": {  // PRIMARY OUTPUT — derived from criteria_match + clinical judgment\n'
+        '    "score": integer 0-100,  // 100 = strongest match across ALL criteria\n'
+        '    "label": "very_likely" | "likely" | "possible" | "unlikely" | "very_unlikely",\n'
+        '    "confidence": "high" | "moderate" | "low",  // reflects evidence depth, not your certainty about ADHD\n'
+        '    "rationale": string,  // 2-4 sentences synthesizing the criteria_match into a verdict\n'
+        '    "supporting_evidence": [string],  // bullets quoting specific records (date + content)\n'
+        '    "contradicting_evidence": [string],  // bullets of what argues against ADHD\n'
+        '    "missing_evidence": [string],  // what would sharpen the assessment (e.g. "Vanderbilt teacher rating", "history before age 12", "structured classroom observation")\n'
+        '    "recommended_next_step": string  // concrete clinical next action\n'
+        "  }\n"
         "}"
     )
 
@@ -970,6 +1006,8 @@ async def persist(state: ConditionDeepResearchState) -> dict:
     evidence_based_treatments = facts.get("evidence_based_treatments") or []
     comorbidities = facts.get("comorbidities") or []
     red_flags = facts.get("red_flags") or []
+    criteria_match = facts.get("criteria_match") or None
+    proximity_assessment = facts.get("proximity_assessment") or None
 
     async with neon.connection() as conn:
         async with conn.cursor() as cur:
@@ -978,13 +1016,13 @@ async def persist(state: ConditionDeepResearchState) -> dict:
                 INSERT INTO condition_deep_research (
                     user_id, family_member_id, condition_slug, condition_name, language,
                     pathophysiology, age_manifestations, evidence_based_treatments,
-                    comorbidities, red_flags, source_urls, fresh_until,
-                    generated_at, updated_at
+                    comorbidities, red_flags, criteria_match, proximity_assessment,
+                    source_urls, fresh_until, generated_at, updated_at
                 ) VALUES (
                     %s, %s, %s, %s, %s,
                     %s::jsonb, %s::jsonb, %s::jsonb,
-                    %s::jsonb, %s::jsonb, %s::jsonb, %s,
-                    NOW(), NOW()
+                    %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
+                    %s::jsonb, %s, NOW(), NOW()
                 )
                 ON CONFLICT (user_id, family_member_id, condition_slug, language)
                 DO UPDATE SET
@@ -994,6 +1032,8 @@ async def persist(state: ConditionDeepResearchState) -> dict:
                     evidence_based_treatments = EXCLUDED.evidence_based_treatments,
                     comorbidities = EXCLUDED.comorbidities,
                     red_flags = EXCLUDED.red_flags,
+                    criteria_match = EXCLUDED.criteria_match,
+                    proximity_assessment = EXCLUDED.proximity_assessment,
                     source_urls = EXCLUDED.source_urls,
                     fresh_until = EXCLUDED.fresh_until,
                     generated_at = NOW(),
@@ -1011,6 +1051,8 @@ async def persist(state: ConditionDeepResearchState) -> dict:
                     json.dumps(evidence_based_treatments),
                     json.dumps(comorbidities),
                     json.dumps(red_flags),
+                    json.dumps(criteria_match) if criteria_match else None,
+                    json.dumps(proximity_assessment) if proximity_assessment else None,
                     json.dumps([]),
                     fresh_until,
                 ),
@@ -1029,11 +1071,15 @@ async def persist(state: ConditionDeepResearchState) -> dict:
                     evidence_based_treatments,
                     comorbidities,
                     red_flags,
+                    criteria_match,
+                    proximity_assessment,
                 ) if v
             ),
             "treatments": len(evidence_based_treatments),
             "comorbidities": len(comorbidities),
             "red_flags": len(red_flags),
+            "proximity_score": (proximity_assessment or {}).get("score"),
+            "proximity_label": (proximity_assessment or {}).get("label"),
         },
     }
 

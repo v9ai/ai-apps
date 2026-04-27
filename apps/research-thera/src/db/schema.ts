@@ -1439,6 +1439,8 @@ export const conditionDeepResearch = pgTable(
     evidenceBasedTreatments: jsonb("evidence_based_treatments"),
     comorbidities: jsonb("comorbidities"),
     redFlags: jsonb("red_flags"),
+    proximityAssessment: jsonb("proximity_assessment"),
+    criteriaMatch: jsonb("criteria_match"),
     sourceUrls: jsonb("source_urls").notNull().default(sql`'[]'::jsonb`),
     freshUntil: timestamp("fresh_until", { withTimezone: true }),
     generatedAt: timestamp("generated_at", { withTimezone: true })

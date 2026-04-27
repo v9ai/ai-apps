@@ -2382,12 +2382,57 @@ type ConditionRedFlag {
   action: String
 }
 
+type ConditionMatchedSymptom {
+  symptom: String!
+  evidence: String!
+}
+
+type ConditionCriterionASymptomGroup {
+  matchedSymptoms: [ConditionMatchedSymptom!]!
+  matchedCount: Int!
+  thresholdMet: Boolean!
+}
+
+type ConditionCriterionCheck {
+  met: Boolean!
+  evidence: String
+}
+
+type ConditionDifferentialCheck {
+  ruledOut: Boolean!
+  notes: String
+}
+
+type ConditionCriteriaMatchAdhd {
+  framework: String!
+  criterionAInattention: ConditionCriterionASymptomGroup
+  criterionAHyperactivityImpulsivity: ConditionCriterionASymptomGroup
+  presentation: String
+  criterionBAgeOnset: ConditionCriterionCheck
+  criterionCSettings: ConditionCriterionCheck
+  criterionDImpairment: ConditionCriterionCheck
+  criterionEDifferential: ConditionDifferentialCheck
+}
+
+type ConditionProximityAssessment {
+  score: Int!
+  label: String!
+  confidence: String!
+  rationale: String!
+  supportingEvidence: [String!]!
+  contradictingEvidence: [String!]!
+  missingEvidence: [String!]!
+  recommendedNextStep: String
+}
+
 type ConditionDeepResearch {
   id: ID!
   conditionSlug: String!
   conditionName: String!
   language: String!
   familyMember: FamilyMember
+  proximityAssessment: ConditionProximityAssessment
+  criteriaMatch: ConditionCriteriaMatchAdhd
   pathophysiology: ConditionPathophysiology
   ageManifestations: [ConditionAgeManifestation!]!
   evidenceBasedTreatments: [ConditionTreatment!]!

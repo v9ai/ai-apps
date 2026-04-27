@@ -231,7 +231,8 @@
           "Knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
           "Per-user Bayesian knowledge tracing (p_mastery, p_transit, p_slip, p_guess per concept), novice → expert classification.",
           "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
-          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI."
+          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI.",
+          "5 LangGraph workflows on a FastAPI backend (article_generate, app_prep, chat, course_review, memorize_generate) with Udemy course scraping → DeepSeek rubric review."
         ]
       }
     ]
