@@ -170,10 +170,6 @@ export function CompanyPostsClient({ companyKey }: { companyKey: string }) {
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const [search, setSearch] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("recent");
-  const [authorFilter, setAuthorFilter] = useState<string>("all");
-
   const { data: companyData, loading: companyLoading } = useGetCompanyQuery({
     variables: { key: companyKey },
     skip: !isAdmin,
@@ -185,56 +181,22 @@ export function CompanyPostsClient({ companyKey }: { companyKey: string }) {
     data: postsData,
     loading: postsLoading,
     error: postsError,
+    refetch,
   } = useGetCompanyScrapedPostsQuery({
     variables: { companySlug: companyKey },
     skip: !isAdmin,
   });
 
   const result = postsData?.companyScrapedPosts;
-  const allPosts = useMemo<ScrapedPost[]>(
-    () => (result?.posts ?? []) as ScrapedPost[],
-    [result],
-  );
-
-  const authors = useMemo(() => {
-    const names = new Set<string>();
-    for (const p of allPosts) names.add(p.personName);
-    return Array.from(names).sort();
-  }, [allPosts]);
-
-  const filteredPosts = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    let list = allPosts.filter((p) => {
-      if (authorFilter !== "all" && p.personName !== authorFilter) return false;
-      if (!term) return true;
-      const haystack = [
-        p.personName,
-        p.personHeadline,
-        p.postText,
-        p.originalAuthor,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(term);
-    });
-
-    if (sortMode === "recent") {
-      list = list.slice().sort((a, b) => {
+  const posts = useMemo<ScrapedPost[]>(
+    () =>
+      ((result?.posts ?? []) as ScrapedPost[]).slice().sort((a, b) => {
         const ad = a.postedDate ? parseISO(a.postedDate).getTime() : 0;
         const bd = b.postedDate ? parseISO(b.postedDate).getTime() : 0;
         return bd - ad;
-      });
-    } else {
-      list = list.slice().sort((a, b) => {
-        const ae = a.reactionsCount + a.commentsCount + a.repostsCount;
-        const be = b.reactionsCount + b.commentsCount + b.repostsCount;
-        return be - ae;
-      });
-    }
-
-    return list;
-  }, [allPosts, search, authorFilter, sortMode]);
+      }),
+    [result],
+  );
 
   if (!isAdmin) {
     return (
