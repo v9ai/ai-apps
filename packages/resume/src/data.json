@@ -186,6 +186,23 @@
     "aiProjects": [
       {
         "id": "0",
+        "name": "ResearchThera.com",
+        "description": "Multi-agent orchestration with LLM quality gating, clinical research ingestion from 7 sources, RAG-powered vector search, runtime prompt versioning with distributed tracing, automated quality evals with Harbor containerized harness. Clinical biomarker trajectory analysis across derived metrics, AI-driven risk classification with cosine embedding similarity, pgvector search, server actions, automated accuracy evals with Braintrust experiment tracking.",
+        "githubUrl": "https://github.com/v9ai/research-thera",
+        "websiteUrl": "https://researchthera.com",
+        "highlights": [
+          "Agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
+          "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
+          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
+          "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2 via background tasks.",
+          "Harbor eval harness: containerized trials across 6-20 non-deterministic agents with standardized grader format.",
+          "Biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
+          "Risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
+          "7 server actions with 15 test cases covering diverse metabolic profiles."
+        ]
+      },
+      {
+        "id": "1",
         "name": "Agentic Lead Gen",
         "description": "Autonomous B2B lead generation platform with a 5-agent agentic pipeline (Discovery Scout → Enrichment Specialist → Contact Hunter + QA Auditor → Outreach Composer), GraphQL API backed by Neon PostgreSQL, LLM-powered company enrichment, multilingual JobBERT-v3 embeddings via HuggingFace Inference API, MLX local scoring at 4,618 embeddings/sec, and LangSmith observability.",
         "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
@@ -203,18 +220,6 @@
         ]
       },
       {
-        "id": "1",
-        "name": "Agentic Healthcare",
-        "description": "Clinical biomarker trajectory analysis across derived metrics, AI-driven risk classification with cosine embedding similarity, pgvector search, server actions, automated accuracy evals with Braintrust experiment tracking.",
-        "githubUrl": "https://github.com/v9ai/agentic-healthcare",
-        "websiteUrl": "https://agentic-healthcare.vercel.app",
-        "highlights": [
-          "Biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
-          "Risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
-          "7 server actions with 15 test cases covering diverse metabolic profiles."
-        ]
-      },
-      {
         "id": "2",
         "name": "Knowledge",
         "description": "Knowledge graph with pgvector cosine similarity search, Bayesian mastery tracing per user per concept, automated quality evals with DeepEval RAG triad, LangGraph multi-agent fan-out/fan-in editorial pipeline.",
@@ -229,20 +234,6 @@
       },
       {
         "id": "3",
-        "name": "ResearchThera.com",
-        "description": "Multi-agent orchestration with LLM quality gating, clinical research ingestion from 7 sources, RAG-powered vector search, runtime prompt versioning with distributed tracing, automated quality evals with Harbor containerized harness.",
-        "githubUrl": "https://github.com/v9ai/research-thera",
-        "websiteUrl": "https://researchthera.com",
-        "highlights": [
-          "Agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
-          "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
-          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
-          "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2 via background tasks.",
-          "Harbor eval harness: containerized trials across 6-20 non-deterministic agents with standardized grader format."
-        ]
-      },
-      {
-        "id": "4",
         "name": "Law Adversarial",
         "description": "6-agent adversarial debate pipeline with citation verification and fabrication detection, jurisdiction precedent analysis, red-teaming and safety evals with Promptfoo YAML suites and DeepTeam attack methods.",
         "githubUrl": "https://github.com/v9ai/law-adversarial",
