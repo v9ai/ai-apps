@@ -1,0 +1,7 @@
+mutation GenerateRegimenAnalysis($slug: String!, $language: String) {
+  generateRegimenAnalysis(slug: $slug, language: $language) {
+    success
+    message
+    jobId
+  }
+}

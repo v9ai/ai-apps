@@ -1,0 +1,19 @@
+query RegimenAnalysis($slug: String!) {
+  regimenAnalysis(slug: $slug) {
+    id
+    slug
+    severityOverall
+    summary
+    flags {
+      type
+      drugs
+      severity
+      message
+      recommendation
+    }
+    missingFacts
+    medsCount
+    language
+    updatedAt
+  }
+}

@@ -163,6 +163,7 @@ type Query {
   allTags: [String!]!
   research(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int, medicationId: ID): [Research!]!
   medicationDeepResearch(slug: String!, memberSlug: String!): MedicationDeepResearch
+  regimenAnalysis(slug: String!): RegimenAnalysis
   conditionDeepResearch(slug: String!, memberSlug: String!, language: String): ConditionDeepResearch
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
@@ -324,6 +325,7 @@ type Mutation {
   # Async generation workflows
   generateResearch(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int, medicationId: ID): GenerateResearchResult!
   generateMedicationDeepResearch(slug: String!, language: String): GenerateResearchResult!
+  generateRegimenAnalysis(slug: String!, language: String): GenerateResearchResult!
   generateConditionDeepResearch(slug: String!, memberSlug: String!, language: String): GenerateResearchResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
@@ -2324,6 +2326,26 @@ type MedicationDeepResearch {
   adverseEvents: [MedicationAdverseEvent!]!
   interactions: [MedicationInteraction!]!
   correlations: [MedicationCorrelation!]!
+}
+
+type RegimenFlag {
+  type: String!
+  drugs: [String!]!
+  severity: String!
+  message: String!
+  recommendation: String
+}
+
+type RegimenAnalysis {
+  id: ID!
+  slug: String!
+  severityOverall: String
+  summary: String
+  flags: [RegimenFlag!]!
+  missingFacts: [String!]!
+  medsCount: Int!
+  language: String
+  updatedAt: String!
 }
 
 # ============================================
