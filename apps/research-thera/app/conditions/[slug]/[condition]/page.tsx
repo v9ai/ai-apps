@@ -20,6 +20,7 @@ import {
   useGetFamilyMemberQuery,
 } from "../../../__generated__/hooks";
 import { AuthGate } from "../../../components/AuthGate";
+import { ConditionDeepResearchPanel } from "../../../components/ConditionDeepResearchPanel";
 
 function slugify(name: string): string {
   return words(name).map((w) => w.toLowerCase()).join("-");
@@ -185,6 +186,11 @@ function PersonConditionDetailContent({
             </Flex>
           </Flex>
         </Card>
+
+        <ConditionDeepResearchPanel
+          conditionSlug={conditionSlug}
+          memberSlug={person}
+        />
 
         <Box>
           <Link

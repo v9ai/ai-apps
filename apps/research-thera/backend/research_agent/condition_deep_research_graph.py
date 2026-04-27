@@ -26,7 +26,6 @@ Light graph: no external sources, single LLM call. Concurrency can be > 1.
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import re
@@ -548,48 +547,19 @@ async def persist(state: ConditionDeepResearchState) -> dict:
 # Node: fan_out_papers (fire-and-forget)
 # ---------------------------------------------------------------------------
 async def fan_out_papers(state: ConditionDeepResearchState) -> dict:
-    """Schedule a therapy_research run scoped to this condition + family member.
+    """Reserved hook for fan-out into therapy_research papers.
 
-    Best-effort: failures here do not fail the parent run. The papers will
-    flow into the existing therapy_research table and be visible alongside
-    the structured deep-research card on the page.
+    The existing generate_therapy_research_graph is keyed on goal/issue/
+    feedback IDs and has no native condition entry point. Skipping for now —
+    structured deep research alone is the primary value; paper fan-out
+    becomes a follow-up that either:
+      (a) extends generate_therapy_research with a condition entry, or
+      (b) adds a thin per-condition paper graph.
     """
     job_id = state.get("job_id")
     await _update_job_progress(job_id, 90)
-
-    fm = state.get("_family_member") or {}
-    cond = state.get("_condition_row") or {}
     counts = dict(state.get("counts") or {})
-
-    # No family member = nothing to fan out to (paper search is family-scoped).
-    if not fm.get("id"):
-        counts.setdefault("papers", 0)
-        return {"counts": counts}
-
-    try:
-        # Lazy import to avoid pulling the heavy paper graph into module init.
-        from .generate_therapy_research_graph import graph as paper_graph  # noqa: WPS433
-
-        cond_name = cond.get("name") or state["condition_slug"]
-        await asyncio.wait_for(
-            paper_graph.ainvoke(
-                {
-                    "user_email": state["user_email"],
-                    "family_member_id": fm["id"],
-                    "subject": cond_name,
-                    "language": (state.get("language") or "ro").strip().lower(),
-                    "source_kind": "condition",
-                    "source_slug": state["condition_slug"].strip().lower(),
-                }
-            ),
-            timeout=600,
-        )
-        counts["papers"] = counts.get("papers", 0) + 1
-    except asyncio.TimeoutError:
-        print("[condition_deep_research] paper fan-out timed out")
-    except Exception as exc:
-        print(f"[condition_deep_research] paper fan-out failed: {exc}")
-
+    counts.setdefault("papers", 0)
     return {"counts": counts}
 
 

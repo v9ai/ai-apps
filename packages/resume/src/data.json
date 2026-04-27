@@ -197,6 +197,7 @@
           "8 dedicated 1024-dim pgvector tables (blood_test, blood_marker hybrid FTS+vector, health_state, condition, medication, symptom, appointment, allergy), each with a BaseRetriever subclass; search_marker_trend for longitudinal queries.",
           "Local-only Apple Silicon inference — Qwen2.5-7B-Instruct-4bit on mlx_lm.server, FastEmbed via ONNX — zero API calls, zero PHI egress; LLM_BASE_URL swappable for remote.",
           "Medication deep research LangGraph agent persists pharmacology across 6 tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) powering /medications/[slug] panels.",
+          "TypeScript AI SDK agents (generateObject + Zod): storyTeller produces 3-part choose-your-own-adventure stories with TTS-optimized prose; therapeutic agent generates audio-first guidance grounded in CBT, ACT, DBT, MBSR, and LEGO-Based Therapy (LeGoff) — streamed to Cloudflare R2 via OpenAI gpt-4o-mini-tts.",
           "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): ~2,350 candidates from 7 sources → DeepSeek with 0.72 blended-quality gate → top 20 as 1024-dim pgvector.",
           "~70-table Drizzle/PostgreSQL schema post agentic-healthcare merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables incl. 8 pgvector embedding tables."
         ]
