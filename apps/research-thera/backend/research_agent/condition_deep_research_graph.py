@@ -131,12 +131,47 @@ def _age_to_tier(age: Optional[int]) -> str:
     return "adult"
 
 
+def _render_timeline_block(timeline: dict) -> str:
+    """Render timeline anchors so the LLM can reason about med-vs-symptom ordering."""
+    if not timeline:
+        return ""
+    lines = ["### Timeline anchors (CRITICAL for differential)"]
+    if timeline.get("earliest_recorded_symptom_date"):
+        lines.append(
+            f"- Earliest recorded behavioral symptom in this file: "
+            f"{timeline['earliest_recorded_symptom_date']}"
+        )
+    for src_key, label in [
+        ("earliest_issue", "earliest issue"),
+        ("earliest_observation", "earliest behavior observation"),
+        ("earliest_teacher_feedback", "earliest teacher feedback"),
+        ("earliest_journal", "earliest journal entry"),
+    ]:
+        if timeline.get(src_key):
+            lines.append(f"  · {label}: {timeline[src_key]}")
+    actives = timeline.get("active_medications_with_start_date") or []
+    if actives:
+        lines.append("- Active medications and their start dates:")
+        for m in actives:
+            flag = (
+                "  ⚠ STARTED BEFORE first recorded symptom — possible iatrogenic confound"
+                if m.get("started_before_first_recorded_symptom")
+                else "  (started AFTER first recorded symptom)"
+            )
+            lines.append(f"  · {m['name']} since {m['start_date']}\n{flag}")
+    return "\n".join(lines)
+
+
 def _render_evidence_block(evidence: dict) -> str:
     """Render the personal evidence dict as compact, prompt-friendly markdown."""
     if not evidence:
         return ""
 
     sections: list[str] = []
+
+    timeline_block = _render_timeline_block(evidence.get("timeline") or {})
+    if timeline_block:
+        sections.append(timeline_block)
 
     def _section(title: str, items: list[dict], render_item) -> None:
         if not items:
@@ -764,10 +799,12 @@ async def gather_personal_evidence(state: ConditionDeepResearchState) -> dict:
                     "name": r[0],
                     "dosage": r[1],
                     "frequency": r[2],
-                    "notes": (r[3] or "")[:300] if r[3] else None,
+                    # Keep medication notes nearly verbatim — drug names + safety
+                    # warnings are load-bearing for differential diagnosis.
+                    "notes": (r[3] or "")[:1200] if r[3] else None,
                     "is_active": bool(r[4]) if r[4] is not None else True,
-                    "start_date": str(r[5]) if r[5] else None,
-                    "end_date": str(r[6]) if r[6] else None,
+                    "start_date": str(r[5])[:10] if r[5] else None,
+                    "end_date": str(r[6])[:10] if r[6] else None,
                 }
                 for r in await cur.fetchall()
             ]
@@ -796,6 +833,53 @@ async def gather_personal_evidence(state: ConditionDeepResearchState) -> dict:
                 if (r[0] or "").strip().lower() != cond_name.strip().lower()
             ]
 
+    # Compute timeline anchors so the LLM can reason about temporal ordering
+    # between symptom onset and active medications — critical for ruling out
+    # iatrogenic etiology (e.g. montelukast neuropsychiatric side effects).
+    def _earliest(items: list[dict], key: str) -> str | None:
+        dates = sorted(
+            {(it.get(key) or "").strip()[:10] for it in items if it.get(key)}
+        )
+        return dates[0] if dates else None
+
+    earliest_journal = _earliest(journal, "date")
+    earliest_observation = _earliest(observations, "date")
+    earliest_teacher = _earliest(teacher_feedbacks, "date")
+    earliest_issue = _earliest(issues, "date")
+    earliest_symptom_record = min(
+        d
+        for d in (
+            earliest_journal,
+            earliest_observation,
+            earliest_teacher,
+            earliest_issue,
+        )
+        if d
+    ) if any(
+        (earliest_journal, earliest_observation, earliest_teacher, earliest_issue)
+    ) else None
+
+    timeline = {
+        "earliest_recorded_symptom_date": earliest_symptom_record,
+        "earliest_journal": earliest_journal,
+        "earliest_observation": earliest_observation,
+        "earliest_teacher_feedback": earliest_teacher,
+        "earliest_issue": earliest_issue,
+        "active_medications_with_start_date": [
+            {
+                "name": m["name"],
+                "start_date": m.get("start_date"),
+                "started_before_first_recorded_symptom": (
+                    bool(m.get("start_date"))
+                    and bool(earliest_symptom_record)
+                    and m["start_date"] < earliest_symptom_record
+                ),
+            }
+            for m in medications
+            if m.get("is_active") and m.get("start_date")
+        ],
+    }
+
     evidence = {
         "characteristics": characteristics,
         "issues": issues,
@@ -808,9 +892,13 @@ async def gather_personal_evidence(state: ConditionDeepResearchState) -> dict:
         "medications": medications,
         "allergies": allergies,
         "other_conditions": other_conditions,
+        "timeline": timeline,
     }
 
-    counts = {k: len(v) for k, v in evidence.items()}
+    counts = {
+        k: len(v) if isinstance(v, list) else (1 if v else 0)
+        for k, v in evidence.items()
+    }
     print(f"[condition_deep_research] gathered evidence: {counts}")
 
     return {"_personal_evidence": evidence}
@@ -943,9 +1031,44 @@ async def extract_facts(state: ConditionDeepResearchState) -> dict:
             "behavior observations.\n"
             "- In `red_flags`, be EXTRA concrete — if the file shows escalating "
             "intensity / frequency in observations, surface that pattern.\n"
+            "\n"
+            "IATROGENIC / DIFFERENTIAL CHECK (mandatory for ADHD assessment):\n"
+            "Before declaring a high-confidence ADHD verdict, you MUST scan the "
+            "active medication list for known causes of ADHD-like symptoms. "
+            "Watch list (any of these can mimic or worsen ADHD presentation in "
+            "children — list each one you find in the file under "
+            "`proximity_assessment.contradicting_evidence` AND in "
+            "`criteria_match.criterion_e_differential.notes`, and lower the "
+            "score accordingly):\n"
+            "  · MONTELUKAST (Singulair) — FDA black-box warning (March 2020) "
+            "for serious neuropsychiatric events including agitation, "
+            "aggression, anxiety, depression, sleep disturbance, attention "
+            "and memory impairment, hyperactivity, and irritability. "
+            "Especially relevant in pediatric patients.\n"
+            "  · Systemic / inhaled CORTICOSTEROIDS (prednisone, beclometasone, "
+            "fluticasone) — mood lability, hyperactivity, insomnia.\n"
+            "  · Pseudoephedrine / sympathomimetics — restlessness, attention "
+            "deficits.\n"
+            "  · Benzodiazepines — paradoxical disinhibition in children.\n"
+            "  · Antihistamines (1st-generation — diphenhydramine) — "
+            "paradoxical agitation in young children.\n"
+            "  · Antiepileptics (levetiracetam, topiramate) — irritability, "
+            "attention problems.\n"
+            "  · Beta-agonists (albuterol/salbutamol) — tremor, jitteriness.\n"
+            "Use the timeline anchors to check causality: if a watch-list "
+            "medication was STARTED BEFORE the earliest recorded symptom date, "
+            "iatrogenic etiology becomes the leading differential and "
+            "criterion E ('not better explained by another condition') CANNOT "
+            "be ruled out without first trialing discontinuation. In that "
+            "case set `criterion_e_differential.ruled_out=false`, knock the "
+            "proximity score down by AT LEAST 25 points from where pure "
+            "symptom-count would put it, label as `possible` or lower, and "
+            "make the recommended_next_step a structured drug-holiday or "
+            "alternative agent trial under medical supervision.\n"
+            "\n"
             "When you reference the personal file, do so concisely (e.g. "
-            "\"per 2026-03-12 teacher feedback\", \"per existing methylphenidate "
-            "regimen\").\n\n"
+            "\"per 2026-03-12 teacher feedback\", \"per active Singulair "
+            "regimen since 2025-08\").\n\n"
             f"{evidence_block}\n\n"
             if evidence_block
             else ""
