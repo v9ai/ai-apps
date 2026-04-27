@@ -1,16 +1,19 @@
 import { useMemo } from "react";
-import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { BatchHttpLink } from "@apollo/client/link/batch-http";
 import merge from "deepmerge";
 
 let apolloClient: ApolloClient<any> | undefined;
 
 function createIsomorphLink() {
-  return new HttpLink({
+  return new BatchHttpLink({
     uri:
       typeof window === "undefined"
         ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/graphql"
         : "/api/graphql",
     credentials: "same-origin",
+    batchInterval: 20,
+    batchMax: 10,
   });
 }
 

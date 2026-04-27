@@ -25,6 +25,7 @@ const schema = makeExecutableSchema({ typeDefs, resolvers });
 const apolloServer = new ApolloServer<GraphQLContext>({
   schema,
   plugins: [vaultCookiePlugin],
+  allowBatchedHttpRequests: true,
 });
 
 const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
