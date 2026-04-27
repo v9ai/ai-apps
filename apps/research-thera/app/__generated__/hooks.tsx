@@ -62,6 +62,7 @@ export type AddMedicationInput = {
   endDate?: InputMaybe<Scalars['String']['input']>;
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   frequency?: InputMaybe<Scalars['String']['input']>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
   startDate?: InputMaybe<Scalars['String']['input']>;
@@ -1598,6 +1599,7 @@ export type Medication = {
   familyMemberId?: Maybe<Scalars['Int']['output']>;
   frequency?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   startDate?: Maybe<Scalars['String']['output']>;
@@ -1737,6 +1739,7 @@ export type Mutation = {
   refreshClaimCard: ClaimCard;
   sendConversationMessage: Conversation;
   sendHealthcareChatMessage: HealthcareChatResponse;
+  setMedicationActive: Medication;
   setMemoryBaseline: MemoryBaseline;
   setNoteVisibility: Note;
   setTagLanguage: Scalars['Boolean']['output'];
@@ -2276,6 +2279,12 @@ export type MutationSendConversationMessageArgs = {
 
 export type MutationSendHealthcareChatMessageArgs = {
   input: HealthcareChatInput;
+};
+
+
+export type MutationSetMedicationActiveArgs = {
+  id: Scalars['ID']['input'];
+  isActive: Scalars['Boolean']['input'];
 };
 
 
@@ -3520,7 +3529,7 @@ export type AddMedicationMutationVariables = Exact<{
 }>;
 
 
-export type AddMedicationMutation = { __typename?: 'Mutation', addMedication: { __typename?: 'Medication', id: string, familyMemberId?: number | null, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string } };
+export type AddMedicationMutation = { __typename?: 'Mutation', addMedication: { __typename?: 'Medication', id: string, familyMemberId?: number | null, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string } };
 
 export type AddMemoryEntryMutationVariables = Exact<{
   input: AddMemoryEntryInput;
@@ -4610,7 +4619,7 @@ export type MedicationQuery = { __typename?: 'Query', medication?: { __typename?
 export type MedicationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MedicationsQuery = { __typename?: 'Query', medications: Array<{ __typename?: 'Medication', id: string, familyMemberId?: number | null, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null } | null }> };
+export type MedicationsQuery = { __typename?: 'Query', medications: Array<{ __typename?: 'Medication', id: string, familyMemberId?: number | null, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null } | null }> };
 
 export type MemoryEntriesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4659,6 +4668,14 @@ export type SendHealthcareChatMessageMutationVariables = Exact<{
 
 
 export type SendHealthcareChatMessageMutation = { __typename?: 'Mutation', sendHealthcareChatMessage: { __typename?: 'HealthcareChatResponse', answer: string, intent: string, intentConfidence: number, retrievalSources: Array<string>, citations: Array<string>, guardPassed: boolean, guardIssues: Array<string> } };
+
+export type SetMedicationActiveMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  isActive: Scalars['Boolean']['input'];
+}>;
+
+
+export type SetMedicationActiveMutation = { __typename?: 'Mutation', setMedicationActive: { __typename?: 'Medication', id: string, isActive: boolean } };
 
 export type SetMemoryBaselineMutationVariables = Exact<{
   input: SetMemoryBaselineInput;
@@ -5044,6 +5061,7 @@ export const AddMedicationDocument = gql`
     notes
     startDate
     endDate
+    isActive
     createdAt
   }
 }
@@ -13050,6 +13068,7 @@ export const MedicationsDocument = gql`
     notes
     startDate
     endDate
+    isActive
     createdAt
     familyMember {
       id
@@ -13461,6 +13480,41 @@ export function useSendHealthcareChatMessageMutation(baseOptions?: Apollo.Mutati
 export type SendHealthcareChatMessageMutationHookResult = ReturnType<typeof useSendHealthcareChatMessageMutation>;
 export type SendHealthcareChatMessageMutationResult = Apollo.MutationResult<SendHealthcareChatMessageMutation>;
 export type SendHealthcareChatMessageMutationOptions = Apollo.BaseMutationOptions<SendHealthcareChatMessageMutation, SendHealthcareChatMessageMutationVariables>;
+export const SetMedicationActiveDocument = gql`
+    mutation SetMedicationActive($id: ID!, $isActive: Boolean!) {
+  setMedicationActive(id: $id, isActive: $isActive) {
+    id
+    isActive
+  }
+}
+    `;
+export type SetMedicationActiveMutationFn = Apollo.MutationFunction<SetMedicationActiveMutation, SetMedicationActiveMutationVariables>;
+
+/**
+ * __useSetMedicationActiveMutation__
+ *
+ * To run a mutation, you first call `useSetMedicationActiveMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetMedicationActiveMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setMedicationActiveMutation, { data, loading, error }] = useSetMedicationActiveMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      isActive: // value for 'isActive'
+ *   },
+ * });
+ */
+export function useSetMedicationActiveMutation(baseOptions?: Apollo.MutationHookOptions<SetMedicationActiveMutation, SetMedicationActiveMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetMedicationActiveMutation, SetMedicationActiveMutationVariables>(SetMedicationActiveDocument, options);
+      }
+export type SetMedicationActiveMutationHookResult = ReturnType<typeof useSetMedicationActiveMutation>;
+export type SetMedicationActiveMutationResult = Apollo.MutationResult<SetMedicationActiveMutation>;
+export type SetMedicationActiveMutationOptions = Apollo.BaseMutationOptions<SetMedicationActiveMutation, SetMedicationActiveMutationVariables>;
 export const SetMemoryBaselineDocument = gql`
     mutation SetMemoryBaseline($input: SetMemoryBaselineInput!) {
   setMemoryBaseline(input: $input) {

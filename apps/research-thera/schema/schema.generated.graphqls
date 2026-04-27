@@ -42,6 +42,7 @@ input AddMedicationInput {
   endDate: String
   familyMemberId: Int
   frequency: String
+  isActive: Boolean
   name: String!
   notes: String
   startDate: String
@@ -1456,6 +1457,7 @@ type Medication {
   familyMemberId: Int
   frequency: String
   id: ID!
+  isActive: Boolean!
   name: String!
   notes: String
   startDate: String
@@ -1591,6 +1593,7 @@ type Mutation {
   refreshClaimCard(id: ID!): ClaimCard!
   sendConversationMessage(conversationId: Int!, message: String!): Conversation!
   sendHealthcareChatMessage(input: HealthcareChatInput!): HealthcareChatResponse!
+  setMedicationActive(id: ID!, isActive: Boolean!): Medication!
   setMemoryBaseline(input: SetMemoryBaselineInput!): MemoryBaseline!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
   setTagLanguage(language: String!, tag: String!): Boolean!

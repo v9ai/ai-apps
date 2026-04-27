@@ -64,6 +64,7 @@ export type AddMedicationInput = {
   endDate?: InputMaybe<Scalars['String']['input']>;
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   frequency?: InputMaybe<Scalars['String']['input']>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
   startDate?: InputMaybe<Scalars['String']['input']>;
@@ -1583,6 +1584,7 @@ export type Medication = {
   familyMemberId?: Maybe<Scalars['Int']['output']>;
   frequency?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   startDate?: Maybe<Scalars['String']['output']>;
@@ -1722,6 +1724,7 @@ export type Mutation = {
   refreshClaimCard: ClaimCard;
   sendConversationMessage: Conversation;
   sendHealthcareChatMessage: HealthcareChatResponse;
+  setMedicationActive: Medication;
   setMemoryBaseline: MemoryBaseline;
   setNoteVisibility: Note;
   setTagLanguage: Scalars['Boolean']['output'];
@@ -2261,6 +2264,12 @@ export type MutationsendConversationMessageArgs = {
 
 export type MutationsendHealthcareChatMessageArgs = {
   input: HealthcareChatInput;
+};
+
+
+export type MutationsetMedicationActiveArgs = {
+  id: Scalars['ID']['input'];
+  isActive: Scalars['Boolean']['input'];
 };
 
 
@@ -3545,13 +3554,13 @@ export type ResolversTypes = {
   AddConditionInput: AddConditionInput;
   AddDoctorInput: AddDoctorInput;
   AddMedicationInput: AddMedicationInput;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   AddMemoryEntryInput: AddMemoryEntryInput;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   AddProtocolInput: AddProtocolInput;
   AddSupplementInput: AddSupplementInput;
   AddSymptomInput: AddSymptomInput;
   Affirmation: ResolverTypeWrapper<Omit<Affirmation, 'category'> & { category: ResolversTypes['AffirmationCategory'] }>;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   AffirmationCategory: ResolverTypeWrapper<'GRATITUDE' | 'STRENGTH' | 'ENCOURAGEMENT' | 'GROWTH' | 'SELF_WORTH'>;
   Allergy: ResolverTypeWrapper<Omit<Allergy, 'familyMember' | 'kind'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, kind: ResolversTypes['AllergyKind'] }>;
   AllergyKind: ResolverTypeWrapper<'allergy' | 'intolerance'>;
@@ -3790,13 +3799,13 @@ export type ResolversParentTypes = {
   AddConditionInput: AddConditionInput;
   AddDoctorInput: AddDoctorInput;
   AddMedicationInput: AddMedicationInput;
+  Boolean: Scalars['Boolean']['output'];
   AddMemoryEntryInput: AddMemoryEntryInput;
   Float: Scalars['Float']['output'];
   AddProtocolInput: AddProtocolInput;
   AddSupplementInput: AddSupplementInput;
   AddSymptomInput: AddSymptomInput;
   Affirmation: Affirmation;
-  Boolean: Scalars['Boolean']['output'];
   Allergy: Omit<Allergy, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   AnticipatedReaction: AnticipatedReaction;
   Appointment: Appointment;
@@ -5087,6 +5096,7 @@ export type MedicationResolvers<ContextType = GraphQLContext, ParentType extends
   familyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   frequency?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   startDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5222,6 +5232,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   refreshClaimCard?: Resolver<ResolversTypes['ClaimCard'], ParentType, ContextType, RequireFields<MutationrefreshClaimCardArgs, 'id'>>;
   sendConversationMessage?: Resolver<ResolversTypes['Conversation'], ParentType, ContextType, RequireFields<MutationsendConversationMessageArgs, 'conversationId' | 'message'>>;
   sendHealthcareChatMessage?: Resolver<ResolversTypes['HealthcareChatResponse'], ParentType, ContextType, RequireFields<MutationsendHealthcareChatMessageArgs, 'input'>>;
+  setMedicationActive?: Resolver<ResolversTypes['Medication'], ParentType, ContextType, RequireFields<MutationsetMedicationActiveArgs, 'id' | 'isActive'>>;
   setMemoryBaseline?: Resolver<ResolversTypes['MemoryBaseline'], ParentType, ContextType, RequireFields<MutationsetMemoryBaselineArgs, 'input'>>;
   setNoteVisibility?: Resolver<ResolversTypes['Note'], ParentType, ContextType, RequireFields<MutationsetNoteVisibilityArgs, 'noteId' | 'visibility'>>;
   setTagLanguage?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationsetTagLanguageArgs, 'language' | 'tag'>>;

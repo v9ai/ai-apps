@@ -389,6 +389,7 @@ export type Medication = {
   notes: string | null;
   startDate: string | null;
   endDate: string | null;
+  isActive: boolean;
   createdAt: string;
 };
 
@@ -410,6 +411,7 @@ function toMedication(r: Record<string, unknown>): Medication {
       r.end_date instanceof Date
         ? r.end_date.toISOString().slice(0, 10)
         : (r.end_date as string | null) ?? null,
+    isActive: r.is_active as boolean,
     createdAt:
       r.created_at instanceof Date
         ? r.created_at.toISOString()
@@ -419,10 +421,10 @@ function toMedication(r: Record<string, unknown>): Medication {
 
 export async function listMedications(userId: string): Promise<Medication[]> {
   const rows = await neonSql`
-    SELECT id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, created_at
+    SELECT id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, is_active, created_at
     FROM medications
     WHERE user_id = ${userId}
-    ORDER BY created_at DESC
+    ORDER BY is_active DESC, created_at DESC
   `;
   return rows.map(toMedication);
 }
@@ -432,7 +434,7 @@ export async function getMedicationById(
   userId: string,
 ): Promise<Medication | null> {
   const rows = await neonSql`
-    SELECT id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, created_at
+    SELECT id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, is_active, created_at
     FROM medications
     WHERE id = ${id} AND user_id = ${userId}
     LIMIT 1
@@ -449,13 +451,28 @@ export async function createMedication(params: {
   notes: string | null;
   startDate: string | null;
   endDate: string | null;
+  isActive?: boolean;
 }): Promise<Medication> {
   const rows = await neonSql`
-    INSERT INTO medications (user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date)
-    VALUES (${params.userId}, ${params.familyMemberId ?? null}, ${params.name}, ${params.dosage}, ${params.frequency}, ${params.notes}, ${params.startDate}, ${params.endDate})
-    RETURNING id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, created_at
+    INSERT INTO medications (user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, is_active)
+    VALUES (${params.userId}, ${params.familyMemberId ?? null}, ${params.name}, ${params.dosage}, ${params.frequency}, ${params.notes}, ${params.startDate}, ${params.endDate}, ${params.isActive ?? true})
+    RETURNING id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, is_active, created_at
   `;
   return toMedication(rows[0]);
+}
+
+export async function setMedicationActive(
+  id: string,
+  userId: string,
+  isActive: boolean,
+): Promise<Medication | null> {
+  const rows = await neonSql`
+    UPDATE medications
+    SET is_active = ${isActive}
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, is_active, created_at
+  `;
+  return rows[0] ? toMedication(rows[0]) : null;
 }
 
 export async function deleteMedication(id: string, userId: string): Promise<void> {

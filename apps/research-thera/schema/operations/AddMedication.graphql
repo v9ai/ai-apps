@@ -8,6 +8,7 @@ mutation AddMedication($input: AddMedicationInput!) {
     notes
     startDate
     endDate
+    isActive
     createdAt
   }
 }

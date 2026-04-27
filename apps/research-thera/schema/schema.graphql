@@ -496,6 +496,7 @@ type Mutation {
 
   # Healthcare — Medications
   addMedication(input: AddMedicationInput!): Medication!
+  setMedicationActive(id: ID!, isActive: Boolean!): Medication!
   deleteMedication(id: ID!): DeleteMedicationResult!
 
   # Healthcare — Symptoms
@@ -2211,6 +2212,7 @@ type Medication {
   notes: String
   startDate: String
   endDate: String
+  isActive: Boolean!
   createdAt: String!
   familyMember: FamilyMember
 }
@@ -2223,6 +2225,7 @@ input AddMedicationInput {
   notes: String
   startDate: String
   endDate: String
+  isActive: Boolean
 }
 
 type DeleteMedicationResult {

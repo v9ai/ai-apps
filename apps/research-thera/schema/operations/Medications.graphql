@@ -8,6 +8,7 @@ query Medications {
     notes
     startDate
     endDate
+    isActive
     createdAt
     familyMember {
       id

@@ -10,6 +10,7 @@ import {
   listMedications as _listMedications,
   getMedicationById as _getMedicationById,
   createMedication as _createMedication,
+  setMedicationActive as _setMedicationActive,
   deleteMedication as _deleteMedication,
   embedMedication as _embedMedication,
   listSymptoms as _listSymptoms,
@@ -65,6 +66,7 @@ export {
   _listMedications as listMedications,
   _getMedicationById as getMedicationById,
   _createMedication as createMedication,
+  _setMedicationActive as setMedicationActive,
   _deleteMedication as deleteMedication,
   _embedMedication as embedMedication,
   _listSymptoms as listSymptoms,
@@ -4299,6 +4301,7 @@ export const db = {
   listMedications: _listMedications,
   getMedicationById: _getMedicationById,
   createMedication: _createMedication,
+  setMedicationActive: _setMedicationActive,
   deleteMedication: _deleteMedication,
   embedMedication: _embedMedication,
   // Healthcare — Symptoms

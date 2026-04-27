@@ -1,0 +1,6 @@
+mutation SetMedicationActive($id: ID!, $isActive: Boolean!) {
+  setMedicationActive(id: $id, isActive: $isActive) {
+    id
+    isActive
+  }
+}

@@ -12,13 +12,14 @@ import {
   Button,
   AlertDialog,
 } from "@radix-ui/themes";
-import { ArrowLeft, Pill, Trash2 } from "lucide-react";
+import { ArrowLeft, Info, Pill, RotateCcw, Trash2 } from "lucide-react";
 import { words } from "lodash";
 import Link from "next/link";
 import { useParams, useRouter, notFound } from "next/navigation";
 import {
   useMedicationsQuery,
   useDeleteMedicationMutation,
+  useSetMedicationActiveMutation,
   MedicationsDocument,
 } from "../../__generated__/hooks";
 import { AuthGate } from "../../components/AuthGate";
@@ -72,6 +73,8 @@ function PersonView({
 }) {
   const { data, loading, error } = useMedicationsQuery();
   const meds = (data?.medications ?? []).filter((m) => filter(m.name));
+  const current = meds.filter((m) => m.isActive);
+  const past = meds.filter((m) => !m.isActive);
 
   return (
     <Box py="6">
@@ -112,36 +115,68 @@ function PersonView({
           </Flex>
         )}
 
-        {!loading && !error && meds.length > 0 && (
-          <Flex direction="column" gap="3">
-            <Heading size="4">
-              {label}'s medications ({meds.length})
-            </Heading>
-            <Flex
-              direction="column"
-              gap="3"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              }}
-            >
-              {meds.map((m) => (
-                <MedicationCard
-                  key={m.id}
-                  id={m.id}
-                  name={m.name}
-                  dosage={m.dosage ?? null}
-                  frequency={m.frequency ?? null}
-                  notes={m.notes ?? null}
-                  startDate={m.startDate ?? null}
-                  endDate={m.endDate ?? null}
-                />
-              ))}
-            </Flex>
-          </Flex>
+        {!loading && !error && current.length > 0 && (
+          <MedicationSection
+            title={`Currently taking (${current.length})`}
+            meds={current}
+          />
+        )}
+
+        {!loading && !error && past.length > 0 && (
+          <MedicationSection title={`Past (${past.length})`} meds={past} muted />
         )}
       </Flex>
     </Box>
+  );
+}
+
+function MedicationSection({
+  title,
+  meds,
+  muted = false,
+}: {
+  title: string;
+  meds: ReadonlyArray<{
+    id: string;
+    name: string;
+    dosage?: string | null;
+    frequency?: string | null;
+    notes?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    isActive: boolean;
+  }>;
+  muted?: boolean;
+}) {
+  return (
+    <Flex direction="column" gap="3">
+      <Heading size="4" color={muted ? "gray" : undefined}>
+        {title}
+      </Heading>
+      <Flex
+        direction="column"
+        gap="3"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          opacity: muted ? 0.7 : 1,
+        }}
+      >
+        {meds.map((m) => (
+          <MedicationCard
+            key={m.id}
+            id={m.id}
+            name={m.name}
+            dosage={m.dosage ?? null}
+            frequency={m.frequency ?? null}
+            notes={m.notes ?? null}
+            startDate={m.startDate ?? null}
+            endDate={m.endDate ?? null}
+            isActive={m.isActive}
+          />
+        ))}
+      </Flex>
+    </Flex>
   );
 }
 
@@ -276,6 +311,7 @@ function MedicationCard({
   notes,
   startDate,
   endDate,
+  isActive,
 }: {
   id: string;
   name: string;
@@ -284,8 +320,12 @@ function MedicationCard({
   notes: string | null;
   startDate: string | null;
   endDate: string | null;
+  isActive: boolean;
 }) {
   const [deleteMed, { loading: deleting }] = useDeleteMedicationMutation({
+    refetchQueries: [{ query: MedicationsDocument }],
+  });
+  const [setActive, { loading: toggling }] = useSetMedicationActiveMutation({
     refetchQueries: [{ query: MedicationsDocument }],
   });
 
@@ -339,40 +379,68 @@ function MedicationCard({
           </Flex>
         </Link>
 
-        <AlertDialog.Root>
-          <AlertDialog.Trigger>
-            <Button
-              variant="ghost"
-              color="gray"
-              size="1"
-              disabled={deleting}
-              aria-label="Delete medication"
+        <Flex direction="column" align="end" gap="1" style={{ flexShrink: 0 }}>
+          {slugify(name) === "singulair" && (
+            <Link
+              href="/medications/singulair"
+              aria-label="Singulair patient information leaflet"
+              style={{
+                display: "inline-flex",
+                color: "var(--gray-11)",
+                padding: 4,
+              }}
             >
-              <Trash2 size={14} />
-            </Button>
-          </AlertDialog.Trigger>
-          <AlertDialog.Content maxWidth="400px">
-            <AlertDialog.Title>Delete medication?</AlertDialog.Title>
-            <AlertDialog.Description size="2">
-              This medication will be permanently removed.
-            </AlertDialog.Description>
-            <Flex gap="3" mt="4" justify="end">
-              <AlertDialog.Cancel>
-                <Button variant="soft" color="gray">
-                  Cancel
-                </Button>
-              </AlertDialog.Cancel>
-              <AlertDialog.Action>
-                <Button
-                  color="red"
-                  onClick={() => deleteMed({ variables: { id } })}
-                >
-                  Delete
-                </Button>
-              </AlertDialog.Action>
-            </Flex>
-          </AlertDialog.Content>
-        </AlertDialog.Root>
+              <Info size={14} />
+            </Link>
+          )}
+          <Button
+            variant="ghost"
+            color="gray"
+            size="1"
+            disabled={toggling}
+            aria-label={isActive ? "Mark as past" : "Mark as currently taking"}
+            title={isActive ? "Mark as past" : "Mark as currently taking"}
+            onClick={() =>
+              setActive({ variables: { id, isActive: !isActive } })
+            }
+          >
+            <RotateCcw size={14} />
+          </Button>
+          <AlertDialog.Root>
+            <AlertDialog.Trigger>
+              <Button
+                variant="ghost"
+                color="gray"
+                size="1"
+                disabled={deleting}
+                aria-label="Delete medication"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </AlertDialog.Trigger>
+            <AlertDialog.Content maxWidth="400px">
+              <AlertDialog.Title>Delete medication?</AlertDialog.Title>
+              <AlertDialog.Description size="2">
+                This medication will be permanently removed.
+              </AlertDialog.Description>
+              <Flex gap="3" mt="4" justify="end">
+                <AlertDialog.Cancel>
+                  <Button variant="soft" color="gray">
+                    Cancel
+                  </Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action>
+                  <Button
+                    color="red"
+                    onClick={() => deleteMed({ variables: { id } })}
+                  >
+                    Delete
+                  </Button>
+                </AlertDialog.Action>
+              </Flex>
+            </AlertDialog.Content>
+          </AlertDialog.Root>
+        </Flex>
       </Flex>
     </Card>
   );

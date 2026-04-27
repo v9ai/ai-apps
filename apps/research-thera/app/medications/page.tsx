@@ -12,12 +12,13 @@ import {
   Button,
   AlertDialog,
 } from "@radix-ui/themes";
-import { Info, Pill, Trash2 } from "lucide-react";
+import { Info, Pill, RotateCcw, Trash2 } from "lucide-react";
 import { words } from "lodash";
 import Link from "next/link";
 import {
   useMedicationsQuery,
   useDeleteMedicationMutation,
+  useSetMedicationActiveMutation,
   MedicationsDocument,
 } from "../__generated__/hooks";
 import { AuthGate } from "../components/AuthGate";

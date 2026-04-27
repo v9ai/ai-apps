@@ -17,6 +17,7 @@ export const addMedication: NonNullable<MutationResolvers['addMedication']> = as
   const notes = args.input.notes?.trim() || null;
   const startDate = args.input.startDate || null;
   const endDate = args.input.endDate || null;
+  const isActive = args.input.isActive ?? true;
 
   const medication = await db.createMedication({
     userId: userEmail,
@@ -27,6 +28,7 @@ export const addMedication: NonNullable<MutationResolvers['addMedication']> = as
     notes,
     startDate,
     endDate,
+    isActive,
   });
 
   try {
