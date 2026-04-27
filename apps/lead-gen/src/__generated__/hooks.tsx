@@ -1306,6 +1306,17 @@ export type IntelRunAccepted = {
   status: Scalars['String']['output'];
 };
 
+export type IntelRunProgress = {
+  __typename?: 'IntelRunProgress';
+  completedStages: Maybe<Array<Scalars['String']['output']>>;
+  elapsedMs: Maybe<Scalars['Int']['output']>;
+  kind: Scalars['String']['output'];
+  productId: Scalars['Int']['output'];
+  runId: Scalars['ID']['output'];
+  stage: Scalars['String']['output'];
+  subgraphNode: Maybe<Scalars['String']['output']>;
+};
+
 export type IntentDashboard = {
   __typename?: 'IntentDashboard';
   companiesWithIntent: Scalars['Int']['output'];
@@ -3521,8 +3532,16 @@ export type SourceType =
 
 export type Subscription = {
   __typename?: 'Subscription';
+  /** Per-node streaming progress for a running IntelRun. Pushed by graph nodes via the gateway as each stage starts. */
+  intelRunProgress: IntelRunProgress;
   /** Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling. */
   intelRunStatus: IntelRun;
+};
+
+
+export type SubscriptionIntelRunProgressArgs = {
+  kind?: InputMaybe<Scalars['String']['input']>;
+  productId: Scalars['Int']['input'];
 };
 
 
@@ -4603,6 +4622,14 @@ export type IntelRunStatusSubscriptionVariables = Exact<{
 
 
 export type IntelRunStatusSubscription = { __typename?: 'Subscription', intelRunStatus: { __typename?: 'IntelRun', id: string, kind: string, status: string, startedAt: string, finishedAt: string | null, error: string | null } };
+
+export type IntelRunProgressSubscriptionVariables = Exact<{
+  productId: Scalars['Int']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type IntelRunProgressSubscription = { __typename?: 'Subscription', intelRunProgress: { __typename?: 'IntelRunProgress', runId: string, productId: number, kind: string, stage: string, subgraphNode: string | null, elapsedMs: number | null, completedStages: Array<string> | null } };
 
 export type UpsertProductMutationVariables = Exact<{
   input: ProductInput;
@@ -9135,6 +9162,43 @@ export function useIntelRunStatusSubscription(baseOptions: Apollo.SubscriptionHo
       }
 export type IntelRunStatusSubscriptionHookResult = ReturnType<typeof useIntelRunStatusSubscription>;
 export type IntelRunStatusSubscriptionResult = Apollo.SubscriptionResult<IntelRunStatusSubscription>;
+export const IntelRunProgressDocument = gql`
+    subscription IntelRunProgress($productId: Int!, $kind: String) {
+  intelRunProgress(productId: $productId, kind: $kind) {
+    runId
+    productId
+    kind
+    stage
+    subgraphNode
+    elapsedMs
+    completedStages
+  }
+}
+    `;
+
+/**
+ * __useIntelRunProgressSubscription__
+ *
+ * To run a query within a React component, call `useIntelRunProgressSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useIntelRunProgressSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useIntelRunProgressSubscription({
+ *   variables: {
+ *      productId: // value for 'productId'
+ *      kind: // value for 'kind'
+ *   },
+ * });
+ */
+export function useIntelRunProgressSubscription(baseOptions: Apollo.SubscriptionHookOptions<IntelRunProgressSubscription, IntelRunProgressSubscriptionVariables> & ({ variables: IntelRunProgressSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<IntelRunProgressSubscription, IntelRunProgressSubscriptionVariables>(IntelRunProgressDocument, options);
+      }
+export type IntelRunProgressSubscriptionHookResult = ReturnType<typeof useIntelRunProgressSubscription>;
+export type IntelRunProgressSubscriptionResult = Apollo.SubscriptionResult<IntelRunProgressSubscription>;
 export const UpsertProductDocument = gql`
     mutation UpsertProduct($input: ProductInput!) {
   upsertProduct(input: $input) {

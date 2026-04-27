@@ -13,6 +13,7 @@ import {
   type ClientMessage,
   type ServerMessage,
   type Filter,
+  type SubscriptionKind,
 } from "./protocol";
 
 interface ConnAttachment {
@@ -21,7 +22,8 @@ interface ConnAttachment {
   acked: boolean;
 }
 
-interface PublishEvent {
+interface IntelRunStatusEvent {
+  type: "intelRunStatus";
   productId: number;
   kind: string;
   intelRun: {
@@ -34,6 +36,23 @@ interface PublishEvent {
     error: string | null;
   };
 }
+
+interface IntelRunProgressEvent {
+  type: "intelRunProgress";
+  productId: number;
+  kind: string;
+  intelRunProgress: {
+    runId: string;
+    productId: number;
+    kind: string;
+    stage: string;
+    subgraphNode: string | null;
+    elapsedMs: number | null;
+    completedStages: string[] | null;
+  };
+}
+
+type PublishEvent = IntelRunStatusEvent | IntelRunProgressEvent;
 
 export class JobPubSub {
   state: DurableObjectState;
@@ -136,11 +155,17 @@ export class JobPubSub {
 
   private broadcast(event: PublishEvent): void {
     const sockets = this.state.getWebSockets();
+    const subscriptionKind: SubscriptionKind = event.type;
     const eventForMatch = {
-      kind: "intelRunStatus" as const,
+      kind: subscriptionKind,
       productId: event.productId,
       opKind: event.kind,
     };
+    const dataPayload =
+      event.type === "intelRunStatus"
+        ? { intelRunStatus: event.intelRun }
+        : { intelRunProgress: event.intelRunProgress };
+
     for (const ws of sockets) {
       const att = ws.deserializeAttachment() as ConnAttachment | null;
       if (!att) continue;
@@ -149,7 +174,7 @@ export class JobPubSub {
           sendMessage(ws, {
             type: "next",
             id: subId,
-            payload: { data: { intelRunStatus: event.intelRun } },
+            payload: { data: dataPayload },
           });
         }
       }

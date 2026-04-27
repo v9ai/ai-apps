@@ -1303,6 +1303,17 @@ export type IntelRunAccepted = {
   status: Scalars['String']['output'];
 };
 
+export type IntelRunProgress = {
+  __typename: 'IntelRunProgress';
+  completedStages: Maybe<Array<Scalars['String']['output']>>;
+  elapsedMs: Maybe<Scalars['Int']['output']>;
+  kind: Scalars['String']['output'];
+  productId: Scalars['Int']['output'];
+  runId: Scalars['ID']['output'];
+  stage: Scalars['String']['output'];
+  subgraphNode: Maybe<Scalars['String']['output']>;
+};
+
 export type IntentDashboard = {
   __typename: 'IntentDashboard';
   companiesWithIntent: Scalars['Int']['output'];
@@ -3518,8 +3529,16 @@ export type SourceType =
 
 export type Subscription = {
   __typename: 'Subscription';
+  /** Per-node streaming progress for a running IntelRun. Pushed by graph nodes via the gateway as each stage starts. */
+  intelRunProgress: IntelRunProgress;
   /** Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling. */
   intelRunStatus: IntelRun;
+};
+
+
+export type SubscriptionIntelRunProgressArgs = {
+  kind?: InputMaybe<Scalars['String']['input']>;
+  productId: Scalars['Int']['input'];
 };
 
 

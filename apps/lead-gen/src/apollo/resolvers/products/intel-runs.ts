@@ -134,52 +134,49 @@ async function kickoff(
   };
 }
 
+/**
+ * The async kickoff mutations are now served by the Cloudflare GraphQL
+ * gateway (`apps/lead-gen/gateway/src/graphql/handlers.ts`). The Apollo
+ * client routes them to the gateway via `NEXT_PUBLIC_GATEWAY_URL`.
+ *
+ * These Vercel resolvers are deliberately retained as throwers so that any
+ * mis-routed traffic — e.g. a stale client cache that still points at
+ * `/api/graphql`, or a server-side script bypassing the gateway — surfaces
+ * loudly in logs instead of silently double-running graphs.
+ *
+ * The dead `kickoff` helper above is intentionally left in place during the
+ * cutover so we can revert quickly if needed; remove in Phase 5.
+ */
+function gatewayMoved(op: string): never {
+  throw new GraphQLError(
+    `Mutation.${op} has moved to the Cloudflare gateway — set NEXT_PUBLIC_GATEWAY_URL on the client.`,
+    { extensions: { code: "MOVED_TO_GATEWAY", op } },
+  );
+}
+
 export const intelRunMutations = {
-  async analyzeProductPricingAsync(
+  analyzeProductPricingAsync(
     _p: unknown,
-    args: MutationAnalyzeProductPricingAsyncArgs,
-    context: GraphQLContext,
-  ) {
-    return kickoff(
-      "pricing",
-      "pricing",
-      {},
-      args.id,
-      context,
-      args.resumeFromRunId,
-    );
+    _args: MutationAnalyzeProductPricingAsyncArgs,
+    _context: GraphQLContext,
+  ): never {
+    gatewayMoved("analyzeProductPricingAsync");
   },
 
-  async analyzeProductGTMAsync(
+  analyzeProductGTMAsync(
     _p: unknown,
-    args: MutationAnalyzeProductGtmAsyncArgs,
-    context: GraphQLContext,
-  ) {
-    return kickoff(
-      "gtm",
-      "gtm",
-      {},
-      args.id,
-      context,
-      args.resumeFromRunId,
-    );
+    _args: MutationAnalyzeProductGtmAsyncArgs,
+    _context: GraphQLContext,
+  ): never {
+    gatewayMoved("analyzeProductGTMAsync");
   },
 
-  async runFullProductIntelAsync(
+  runFullProductIntelAsync(
     _p: unknown,
-    args: MutationRunFullProductIntelAsyncArgs,
-    context: GraphQLContext,
-  ) {
-    // kind stays "product_intel" — stable taxonomy across v1/v2. Only the
-    // LangGraph assistant id swaps based on PRODUCT_INTEL_GRAPH_VERSION.
-    return kickoff(
-      "product_intel",
-      productIntelAssistantId(),
-      { force_refresh: Boolean(args.forceRefresh) },
-      args.id,
-      context,
-      args.resumeFromRunId,
-    );
+    _args: MutationRunFullProductIntelAsyncArgs,
+    _context: GraphQLContext,
+  ): never {
+    gatewayMoved("runFullProductIntelAsync");
   },
 };
 

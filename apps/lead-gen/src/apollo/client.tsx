@@ -29,7 +29,10 @@ function createIsomorphLink(): ApolloLink {
       typeof window === "undefined"
         ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/graphql"
         : GATEWAY_HTTP,
-    credentials: "same-origin",
+    // `include` so Better Auth cookies flow when the gateway is on a sibling
+    // subdomain (e.g. gateway.agenticleadgen.xyz). Same-origin requests still
+    // send cookies normally.
+    credentials: "include",
   });
 
   // Subscriptions only run in the browser. On the server, return the HTTP

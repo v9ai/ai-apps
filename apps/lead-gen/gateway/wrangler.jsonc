@@ -3,11 +3,19 @@
   "name": "agenticleadgen-gateway",
   "main": "src/index.ts",
   "compatibility_date": "2026-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "rules": [
+    { "type": "Text", "globs": ["**/*.graphql"], "fallthrough": true }
+  ],
   "vars": {
-    "ORIGIN": "https://agenticleadgen.xyz"
+    "ORIGIN": "https://agenticleadgen.xyz",
+    "GATEWAY_URL": "https://agenticleadgen-gateway.eeeew.workers.dev",
+    "LANGGRAPH_URL": "https://lead-gen-langgraph.eeeew.workers.dev",
+    "PRODUCT_INTEL_GRAPH_VERSION": "v1"
     // Secrets (set via `wrangler secret put`):
-    //   - GATEWAY_HMAC      — shared with Vercel + LangGraph for /internal/* auth
-    //   - NEON_DATABASE_URL — for product_intel_runs + products writes
+    //   - GATEWAY_HMAC          — shared with Vercel + LangGraph for /internal/* auth
+    //   - NEON_DATABASE_URL     — for product_intel_runs + products writes
+    //   - LANGGRAPH_AUTH_TOKEN  — bearer token for the lead-gen-langgraph dispatcher
   },
   "durable_objects": {
     "bindings": [

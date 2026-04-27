@@ -39,8 +39,13 @@ export type ServerMessage =
  * Parsed subscription filter. The gateway recognizes a closed set of
  * subscriptions; unknown ones are rejected.
  */
-export type Filter =
-  | { kind: "intelRunStatus"; productId: number; opKind: string | null };
+export type SubscriptionKind = "intelRunStatus" | "intelRunProgress";
+
+export interface Filter {
+  kind: SubscriptionKind;
+  productId: number;
+  opKind: string | null;
+}
 
 /**
  * Parse the incoming subscription document to produce a Filter.
@@ -52,12 +57,19 @@ export function parseFilter(
   query: string,
   variables: Record<string, unknown> | undefined,
 ): Filter | null {
-  if (!query.includes("intelRunStatus")) return null;
   const productId = Number(variables?.productId);
   if (!Number.isFinite(productId)) return null;
   const opKind =
     typeof variables?.kind === "string" ? (variables.kind as string) : null;
-  return { kind: "intelRunStatus", productId, opKind };
+
+  let kind: SubscriptionKind | null = null;
+  // Order matters: progress is more specific than status; check first to
+  // avoid the substring match ("intelRunProgress" contains "intelRun").
+  if (query.includes("intelRunProgress")) kind = "intelRunProgress";
+  else if (query.includes("intelRunStatus")) kind = "intelRunStatus";
+  if (!kind) return null;
+
+  return { kind, productId, opKind };
 }
 
 /**
@@ -65,7 +77,7 @@ export function parseFilter(
  */
 export function eventMatches(
   filter: Filter,
-  event: { kind: "intelRunStatus"; productId: number; opKind: string },
+  event: { kind: SubscriptionKind; productId: number; opKind: string },
 ): boolean {
   if (filter.kind !== event.kind) return false;
   if (filter.productId !== event.productId) return false;

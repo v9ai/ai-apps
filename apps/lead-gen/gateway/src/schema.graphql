@@ -1,0 +1,64 @@
+"""
+GraphQL surface served by the Cloudflare gateway. Subset of the main
+lead-gen schema (apps/lead-gen/schema/products/schema.graphql) — only the
+IntelRun + Product fields needed by the product detail pages.
+
+Keep this in sync with the upstream schema: kind/status enums and field shapes
+must match so the cache normalization in the browser works after a swap.
+"""
+
+scalar DateTime
+scalar JSON
+
+type Product {
+  id: Int!
+  name: String!
+  url: String!
+  domain: String
+  slug: String
+  description: String
+  pricingAnalysis: JSON
+  pricingAnalyzedAt: String
+  gtmAnalysis: JSON
+  gtmAnalyzedAt: String
+  intelReport: JSON
+  intelReportAt: String
+}
+
+type IntelRun {
+  id: ID!
+  productId: Int!
+  kind: String!
+  status: String!
+  startedAt: DateTime!
+  finishedAt: DateTime
+  error: String
+  output: JSON
+}
+
+type IntelRunAccepted {
+  runId: ID!
+  productId: Int!
+  kind: String!
+  status: String!
+}
+
+type Query {
+  productBySlug(slug: String!): Product
+  productIntelRun(id: ID!): IntelRun
+  productIntelRuns(productId: Int!, kind: String): [IntelRun!]!
+}
+
+type Mutation {
+  analyzeProductPricingAsync(id: Int!, resumeFromRunId: ID): IntelRunAccepted!
+  analyzeProductGTMAsync(id: Int!, resumeFromRunId: ID): IntelRunAccepted!
+  runFullProductIntelAsync(
+    id: Int!
+    forceRefresh: Boolean
+    resumeFromRunId: ID
+  ): IntelRunAccepted!
+}
+
+type Subscription {
+  intelRunStatus(productId: Int!, kind: String): IntelRun!
+}

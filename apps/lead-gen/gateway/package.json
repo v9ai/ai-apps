@@ -3,19 +3,28 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Cloudflare Worker GraphQL gateway: HTTP queries/mutations proxied to Vercel origin; subscriptions handled natively via Durable Object pubsub.",
+  "description": "Cloudflare Worker GraphQL gateway: Apollo Server on Hono for the IntelRun GraphQL surface (queries + mutations), JobPubSub Durable Object for subscriptions, /internal/run-finished for LangGraph completion. Reads/writes Neon directly so polling-driven traffic never touches Vercel.",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "codegen": "graphql-codegen",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "deploy:dry": "wrangler deploy --dry-run"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260401.0",
+    "@graphql-codegen/cli": "^5.0.3",
+    "@graphql-codegen/typescript": "^4.1.2",
+    "@graphql-codegen/typescript-resolvers": "^4.4.1",
     "typescript": "^5.9.2",
     "wrangler": "^4.0.0"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0"
+    "@apollo/server": "^5.4.0",
+    "@as-integrations/cloudflare-workers": "^1.1.1",
+    "@neondatabase/serverless": "^1.1.0",
+    "drizzle-orm": "^0.45.1",
+    "graphql": "^16.13.2",
+    "hono": "^4.12.14"
   }
 }

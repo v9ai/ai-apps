@@ -1306,6 +1306,17 @@ export type IntelRunAccepted = {
   status: Scalars['String']['output'];
 };
 
+export type IntelRunProgress = {
+  __typename?: 'IntelRunProgress';
+  completedStages: Maybe<Array<Scalars['String']['output']>>;
+  elapsedMs: Maybe<Scalars['Int']['output']>;
+  kind: Scalars['String']['output'];
+  productId: Scalars['Int']['output'];
+  runId: Scalars['ID']['output'];
+  stage: Scalars['String']['output'];
+  subgraphNode: Maybe<Scalars['String']['output']>;
+};
+
 export type IntentDashboard = {
   __typename?: 'IntentDashboard';
   companiesWithIntent: Scalars['Int']['output'];
@@ -3521,8 +3532,16 @@ export type SourceType =
 
 export type Subscription = {
   __typename?: 'Subscription';
+  /** Per-node streaming progress for a running IntelRun. Pushed by graph nodes via the gateway as each stage starts. */
+  intelRunProgress: IntelRunProgress;
   /** Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling. */
   intelRunStatus: IntelRun;
+};
+
+
+export type SubscriptionIntelRunProgressArgs = {
+  kind?: InputMaybe<Scalars['String']['input']>;
+  productId: Scalars['Int']['input'];
 };
 
 
@@ -4091,6 +4110,7 @@ export type ResolversTypes = {
   Int: ResolverTypeWrapper<Partial<Scalars['Int']['output']>>;
   IntelRun: ResolverTypeWrapper<Partial<IntelRun>>;
   IntelRunAccepted: ResolverTypeWrapper<Partial<IntelRunAccepted>>;
+  IntelRunProgress: ResolverTypeWrapper<Partial<IntelRunProgress>>;
   IntentDashboard: ResolverTypeWrapper<Partial<IntentDashboard>>;
   IntentScore: ResolverTypeWrapper<Partial<IntentScore>>;
   IntentSignal: ResolverTypeWrapper<Partial<IntentSignal>>;
@@ -4343,6 +4363,7 @@ export type ResolversParentTypes = {
   Int: Partial<Scalars['Int']['output']>;
   IntelRun: Partial<IntelRun>;
   IntelRunAccepted: Partial<IntelRunAccepted>;
+  IntelRunProgress: Partial<IntelRunProgress>;
   IntentDashboard: Partial<IntentDashboard>;
   IntentScore: Partial<IntentScore>;
   IntentSignal: Partial<IntentSignal>;
@@ -5417,6 +5438,16 @@ export type IntelRunAcceptedResolvers<ContextType = GraphQLContext, ParentType e
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type IntelRunProgressResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntelRunProgress'] = ResolversParentTypes['IntelRunProgress']> = {
+  completedStages?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  elapsedMs?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  kind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  productId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  runId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  stage?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  subgraphNode?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
 export type IntentDashboardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntentDashboard'] = ResolversParentTypes['IntentDashboard']> = {
   companiesWithIntent?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   recentSignals?: Resolver<Array<ResolversTypes['IntentSignal']>, ParentType, ContextType>;
@@ -6409,6 +6440,7 @@ export type SkillsDemandReportResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
+  intelRunProgress?: SubscriptionResolver<ResolversTypes['IntelRunProgress'], "intelRunProgress", ParentType, ContextType, RequireFields<SubscriptionIntelRunProgressArgs, 'productId'>>;
   intelRunStatus?: SubscriptionResolver<ResolversTypes['IntelRun'], "intelRunStatus", ParentType, ContextType, RequireFields<SubscriptionIntelRunStatusArgs, 'productId'>>;
 };
 
@@ -6699,6 +6731,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   IndustryGrowth?: IndustryGrowthResolvers<ContextType>;
   IntelRun?: IntelRunResolvers<ContextType>;
   IntelRunAccepted?: IntelRunAcceptedResolvers<ContextType>;
+  IntelRunProgress?: IntelRunProgressResolvers<ContextType>;
   IntentDashboard?: IntentDashboardResolvers<ContextType>;
   IntentScore?: IntentScoreResolvers<ContextType>;
   IntentSignal?: IntentSignalResolvers<ContextType>;

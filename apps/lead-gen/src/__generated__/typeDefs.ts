@@ -1199,6 +1199,16 @@ type IntelRunAccepted {
   status: String!
 }
 
+type IntelRunProgress {
+  completedStages: [String!]
+  elapsedMs: Int
+  kind: String!
+  productId: Int!
+  runId: ID!
+  stage: String!
+  subgraphNode: String
+}
+
 type IntentDashboard {
   companiesWithIntent: Int!
   recentSignals: [IntentSignal!]!
@@ -2354,6 +2364,10 @@ enum SourceType {
 }
 
 type Subscription {
+  """
+  Per-node streaming progress for a running IntelRun. Pushed by graph nodes via the gateway as each stage starts.
+  """
+  intelRunProgress(kind: String, productId: Int!): IntelRunProgress!
   """
   Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling.
   """

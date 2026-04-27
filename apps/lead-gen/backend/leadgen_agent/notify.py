@@ -169,6 +169,43 @@ def _write_progress_sync(run_id: str, payload: dict[str, Any]) -> None:
         log.warning("progress update failed (non-fatal): %s", e)
 
 
+async def _push_progress_to_gateway(
+    run_id: str,
+    payload: dict[str, Any],
+) -> None:
+    """Best-effort POST to the gateway's /internal/progress endpoint.
+
+    Drives live ``Subscription.intelRunProgress`` events to subscribed
+    clients. Signed with the same global GATEWAY_HMAC used by
+    notify_complete. Failures are swallowed.
+    """
+    gateway_url = os.environ.get("GATEWAY_URL", "").rstrip("/")
+    secret = os.environ.get("GATEWAY_HMAC", "")
+    if not gateway_url or not secret:
+        return
+    body_payload: dict[str, Any] = {"appRunId": run_id, "stage": payload["stage"]}
+    if payload.get("subgraph_node"):
+        body_payload["subgraphNode"] = payload["subgraph_node"]
+    if payload.get("elapsed_ms") is not None:
+        body_payload["elapsedMs"] = payload["elapsed_ms"]
+    if payload.get("completed_stages"):
+        body_payload["completedStages"] = payload["completed_stages"]
+    body = json.dumps(body_payload).encode()
+    sig = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    try:
+        async with httpx.AsyncClient(timeout=2) as client:
+            await client.post(
+                f"{gateway_url}/internal/progress",
+                content=body,
+                headers={
+                    "content-type": "application/json",
+                    "x-signature": sig,
+                },
+            )
+    except Exception as e:  # noqa: BLE001
+        log.warning("gateway progress push failed (non-fatal): %s", e)
+
+
 async def update_progress(
     state: dict[str, Any],
     *,
@@ -178,23 +215,13 @@ async def update_progress(
 ) -> None:
     """Persist a progress snapshot for the current run.
 
-    Parameters
-    ----------
-    state
-        Full graph state. ``app_run_id`` (set by ``startGraphRun``) is the
-        product_intel_runs PK; absent on sync /runs/wait calls, in which case
-        this helper no-ops.
-    stage
-        Human-readable node name (pass ``__name__`` / ``fn.__name__`` at the
-        top of each node).
-    subgraph_node
-        For the supervisor graph: the name of the currently executing
-        sub-subgraph node. Optional.
-    completed_stages
-        Ordered list of stages already finished. Optional — callers that
-        already maintain ``agent_timings`` typically derive it from keys.
+    Two side effects:
+      1. Writes the snapshot to ``product_intel_runs.progress`` (legacy path
+         — used as authoritative state for replay / SSR).
+      2. Pushes the snapshot to the Cloudflare gateway's ``/internal/progress``
+         endpoint, which broadcasts it to graphql-ws subscribers.
 
-    The function never raises — DB failures are logged and swallowed.
+    Both are best-effort and never raise.
     """
     run_id = state.get("app_run_id")
     if not run_id:
@@ -221,6 +248,13 @@ async def update_progress(
         await asyncio.to_thread(_write_progress_sync, str(run_id), payload)
     except Exception as e:  # noqa: BLE001 — belt-and-braces; never crash node
         log.warning("update_progress dispatch failed (non-fatal): %s", e)
+
+    # Live push — independent of DB write so a transient gateway error doesn't
+    # block subsequent nodes.
+    try:
+        await _push_progress_to_gateway(str(run_id), payload)
+    except Exception as e:  # noqa: BLE001
+        log.warning("gateway progress push dispatch failed (non-fatal): %s", e)
 
 
 def progress_start_marker() -> dict[str, Any]:
