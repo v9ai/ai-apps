@@ -43,6 +43,7 @@ import AddIssueButton from "@/app/components/AddIssueButton";
 import { getSeverityColor, getCategoryColor } from "@/app/lib/issue-colors";
 import { DeepAnalysisPanel } from "@/app/components/DeepAnalysisPanel";
 import { DeepAnalysisSubjectType } from "@/app/__generated__/hooks";
+import { FamilyDocumentsSection } from "./family-documents-section";
 
 const RELATIONSHIP_OPTIONS = [
   "self",
@@ -583,6 +584,9 @@ function FamilyMemberContent() {
           )}
         </Flex>
       </Card>
+
+      {/* Family documents (migrated from agentic-healthcare; hidden when empty) */}
+      <FamilyDocumentsSection familyMemberId={memberId} />
 
       {/* Goals */}
       <Card>
