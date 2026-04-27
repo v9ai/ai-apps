@@ -103,10 +103,28 @@ def _coerce_problem(p: Any) -> dict[str, Any] | None:
 # ── Node 1: load ─────────────────────────────────────────────────────────────
 
 
+# Fields written by deep_scrape / enrichment into company_facts that aren't
+# reflected on the companies row but carry signal the LLM should see.
+EXTRA_FACT_FIELDS = (
+    "target_market",
+    "pricing_model",
+    "employee_range",
+    "remote_policy",
+    "funding_stage",
+    "tech_stack",
+    "key_features",
+    "competitors",
+    "key_people",
+    "office_locations",
+    "one_line_summary",
+)
+
+
 async def load(state: CompanyProblemsState) -> dict:
-    """Fetch the enriched company row plus the latest classification fact.
-    Sets ``_error`` on missing input or DB failure so downstream nodes
-    short-circuit cleanly."""
+    """Fetch the enriched company row, the latest classification fact, the
+    latest scraped homepage text, and any extra facts written by deep_scrape
+    that aren't reflected on the row. Sets ``_error`` on missing input or DB
+    failure so downstream nodes short-circuit cleanly."""
     company_id = state.get("company_id")
     if company_id is None:
         return {"_error": "company_id is required"}
@@ -115,6 +133,9 @@ async def load(state: CompanyProblemsState) -> dict:
         dsn = _dsn()
     except RuntimeError as e:
         return {"_error": str(e)}
+
+    extra_facts: dict[str, Any] = {}
+    snapshot_text: str = ""
 
     try:
         with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
@@ -136,7 +157,7 @@ async def load(state: CompanyProblemsState) -> dict:
                 cols = [d[0] for d in cur.description or []]
                 rec = dict(zip(cols, row))
 
-                # Latest classification.home fact — has has_open_roles, remote_policy, reason
+                # Latest classification.home fact — has has_open_roles, remote_policy, reason.
                 cur.execute(
                     """
                     SELECT value_json
@@ -147,6 +168,46 @@ async def load(state: CompanyProblemsState) -> dict:
                     (int(company_id),),
                 )
                 fact_row = cur.fetchone()
+
+                # Latest value per field for the deep_scrape extras. Distinct
+                # ON keeps the most-recent value when the same field has been
+                # written multiple times.
+                cur.execute(
+                    """
+                    SELECT DISTINCT ON (field) field, value_text, value_json
+                    FROM company_facts
+                    WHERE company_id = %s AND field = ANY(%s)
+                    ORDER BY field, id DESC
+                    """,
+                    (int(company_id), list(EXTRA_FACT_FIELDS)),
+                )
+                for f, vtxt, vjson in cur.fetchall():
+                    if vtxt:
+                        extra_facts[f] = vtxt
+                    elif vjson:
+                        try:
+                            extra_facts[f] = (
+                                json.loads(vjson) if isinstance(vjson, str) else vjson
+                            )
+                        except (TypeError, ValueError):
+                            pass
+
+                # Latest scraped page text — richer than `description` because
+                # deep_scrape captures multi-section marketing copy. Cap at 4 KB
+                # so a verbose homepage doesn't blow the LLM context.
+                cur.execute(
+                    """
+                    SELECT text_sample
+                    FROM company_snapshots
+                    WHERE company_id = %s AND text_sample IS NOT NULL
+                      AND length(text_sample) > 0
+                    ORDER BY id DESC LIMIT 1
+                    """,
+                    (int(company_id),),
+                )
+                snap = cur.fetchone()
+                if snap and snap[0]:
+                    snapshot_text = (snap[0] or "")[:4000]
     except psycopg.Error as e:
         return {"_error": f"db error loading company: {e}"}
 
@@ -173,6 +234,8 @@ async def load(state: CompanyProblemsState) -> dict:
             "services": rec.get("services"),
             "service_taxonomy": rec.get("service_taxonomy"),
             "industries": rec.get("industries"),
+            "extra_facts": extra_facts,
+            "snapshot_text": snapshot_text,
         },
         "classification": classification,
     }
@@ -227,11 +290,19 @@ async def analyze(state: CompanyProblemsState) -> dict:
         "services": company.get("services"),
         "service_taxonomy": company.get("service_taxonomy"),
         "industries": company.get("industries"),
-        "remote_policy": classification.get("remote_policy"),
+        "remote_policy": classification.get("remote_policy") or (company.get("extra_facts") or {}).get("remote_policy"),
         "has_open_roles": classification.get("has_open_roles"),
         "classification_reason": classification.get("reason"),
+        "extra_facts": company.get("extra_facts") or {},
     }
-    user_msg = "Company profile:\n" + json.dumps(profile, indent=2, default=str)
+    parts = ["Company profile:\n" + json.dumps(profile, indent=2, default=str)]
+    snapshot = company.get("snapshot_text") or ""
+    if snapshot:
+        parts.append(
+            "\n\nHomepage / scraped marketing copy (raw, may include nav noise):\n"
+            + snapshot
+        )
+    user_msg = "".join(parts)
 
     llm = make_deepseek_pro(temperature=0.1)
     try:
