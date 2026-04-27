@@ -36,6 +36,8 @@ const LABELS = {
     newScript: "+ New script",
     capabilities: "Capabilities",
     ports: "Ports",
+    scripts: "Scripts",
+    noScripts: "No scripts yet for this hub.",
     games: "Games",
     browseAll: "Browse all →",
     playOn: "Play on {name}",
@@ -54,6 +56,8 @@ const LABELS = {
     newScript: "+ Script nou",
     capabilities: "Capabilități",
     ports: "Porturi",
+    scripts: "Scripturi",
+    noScripts: "Niciun script încă pentru acest hub.",
     games: "Jocuri",
     browseAll: "Vezi toate →",
     playOn: "Joacă pe {name}",
@@ -74,6 +78,9 @@ export default function HubPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [hubScripts, setHubScripts] = useState<
+    { slug: string; filename: string; title: string; titleRo: string | null; heroImage: string | null }[]
+  >([]);
 
   useEffect(() => {
     fetch(`/api/hubs/${id}`)
@@ -87,6 +94,13 @@ export default function HubPage() {
       .then(setHub)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    fetch(`/api/hubs/${id}/scripts`)
+      .then((r) => (r.ok ? r.json() : { scripts: [] }))
+      .then((data) => setHubScripts(data.scripts ?? []))
+      .catch(() => setHubScripts([]));
   }, [id]);
 
   async function handleDelete() {
@@ -409,6 +423,113 @@ export default function HubPage() {
           </div>
         </section>
       )}
+
+      <section className={css({ mt: "10" })}>
+        <div
+          className={css({
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            mb: "3",
+            gap: "3",
+          })}
+        >
+          <h2
+            className={css({
+              fontSize: "lg",
+              fontWeight: "900",
+              fontFamily: "display",
+              color: "ink.primary",
+            })}
+          >
+            {t.scripts}
+          </h2>
+          <Link
+            href="/scripts"
+            className={css({
+              fontSize: "xs",
+              fontWeight: "700",
+              fontFamily: "display",
+              color: "ink.muted",
+              textDecoration: "none",
+              _hover: { color: "lego.orange" },
+            })}
+          >
+            {t.browseAll}
+          </Link>
+        </div>
+        {hubScripts.length === 0 ? (
+          <p className={css({ fontSize: "sm", color: "ink.faint" })}>{t.noScripts}</p>
+        ) : (
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gap: "3",
+            })}
+          >
+            {hubScripts.map((s) => (
+              <Link
+                key={s.slug}
+                href={`/scripts#${s.slug}`}
+                className={css({
+                  position: "relative",
+                  bg: "plate.surface",
+                  border: "1px solid",
+                  borderColor: "plate.border",
+                  rounded: "brick",
+                  boxShadow: "brick",
+                  p: "4",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1",
+                  overflow: "hidden",
+                  textDecoration: "none",
+                  transition: "all 0.15s ease",
+                  _hover: {
+                    borderColor: "plate.borderHover",
+                    transform: "translateY(-1px)",
+                  },
+                })}
+              >
+                <div
+                  aria-hidden="true"
+                  className={css({
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    h: "3px",
+                  })}
+                  style={{ background: color }}
+                />
+                <span
+                  className={css({
+                    mt: "1",
+                    fontFamily: "display",
+                    fontWeight: "900",
+                    fontSize: "sm",
+                    color: "ink.primary",
+                    letterSpacing: "-0.01em",
+                    textTransform: "capitalize",
+                  })}
+                >
+                  {(language === "ro" && s.titleRo) || s.title}
+                </span>
+                <span
+                  className={css({
+                    fontSize: "xs",
+                    color: "ink.faint",
+                    fontFamily: "mono",
+                  })}
+                >
+                  {s.filename}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className={css({ mt: "10" })}>
         <div
