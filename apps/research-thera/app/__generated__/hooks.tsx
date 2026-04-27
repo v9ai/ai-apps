@@ -26,6 +26,11 @@ export type ActionableRecommendation = {
   title: Scalars['String']['output'];
 };
 
+export type AddConditionInput = {
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Affirmation = {
   __typename?: 'Affirmation';
   category: AffirmationCategory;
@@ -229,6 +234,15 @@ export enum ClaimVerdict {
   Supported = 'SUPPORTED',
   Unverified = 'UNVERIFIED'
 }
+
+export type Condition = {
+  __typename?: 'Condition';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
 
 export type Contact = {
   __typename?: 'Contact';
@@ -525,6 +539,11 @@ export type DeleteAffirmationResult = {
 export type DeleteBehaviorObservationResult = {
   __typename?: 'DeleteBehaviorObservationResult';
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteConditionResult = {
+  __typename?: 'DeleteConditionResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1242,6 +1261,7 @@ export type MicroScript = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addCondition: Condition;
   buildClaimCards: BuildClaimCardsResult;
   checkNoteClaims: CheckNoteClaimsResult;
   convertIssueToGoal: Goal;
@@ -1265,6 +1285,7 @@ export type Mutation = {
   deleteAffirmation: DeleteAffirmationResult;
   deleteBehaviorObservation: DeleteBehaviorObservationResult;
   deleteClaimCard: Scalars['Boolean']['output'];
+  deleteCondition: DeleteConditionResult;
   deleteContact: DeleteContactResult;
   deleteContactFeedback: DeleteContactFeedbackResult;
   deleteConversation: DeleteConversationResult;
@@ -1339,6 +1360,11 @@ export type Mutation = {
   updateStory: Story;
   updateTeacherFeedback: TeacherFeedback;
   updateUserSettings: UserSettings;
+};
+
+
+export type MutationAddConditionArgs = {
+  input: AddConditionInput;
 };
 
 
@@ -1459,6 +1485,11 @@ export type MutationDeleteBehaviorObservationArgs = {
 
 
 export type MutationDeleteClaimCardArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteConditionArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -2057,6 +2088,8 @@ export type Query = {
   bogdanDiscussions: Array<BogdanDiscussionGuide>;
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
+  condition?: Maybe<Condition>;
+  conditions: Array<Condition>;
   contact?: Maybe<Contact>;
   contactFeedback?: Maybe<ContactFeedback>;
   contactFeedbacks: Array<ContactFeedback>;
@@ -2143,6 +2176,11 @@ export type QueryClaimCardArgs = {
 
 export type QueryClaimCardsForNoteArgs = {
   noteId: Scalars['Int']['input'];
+};
+
+
+export type QueryConditionArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2814,6 +2852,13 @@ export type VaultUnlockResult = {
   unlocked: Scalars['Boolean']['output'];
 };
 
+export type AddConditionMutationVariables = Exact<{
+  input: AddConditionInput;
+}>;
+
+
+export type AddConditionMutation = { __typename?: 'Mutation', addCondition: { __typename?: 'Condition', id: string, name: string, notes?: string | null, createdAt: string } };
+
 export type BogdanDiscussionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -2855,6 +2900,11 @@ export type DeleteClaimCardMutationVariables = Exact<{ [key: string]: never; }>;
 
 
 export type DeleteClaimCardMutation = { __typename?: 'Mutation', deleteClaimCard: boolean };
+
+export type ConditionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ConditionsQuery = { __typename?: 'Query', conditions: Array<{ __typename?: 'Condition', id: string, name: string, notes?: string | null, createdAt: string }> };
 
 export type ConvertIssueToGoalMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3001,6 +3051,13 @@ export type DeleteBehaviorObservationMutationVariables = Exact<{
 
 
 export type DeleteBehaviorObservationMutation = { __typename?: 'Mutation', deleteBehaviorObservation: { __typename?: 'DeleteBehaviorObservationResult', success: boolean, message?: string | null } };
+
+export type DeleteConditionMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteConditionMutation = { __typename?: 'Mutation', deleteCondition: { __typename?: 'DeleteConditionResult', success: boolean } };
 
 export type DeleteContactMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3926,6 +3983,42 @@ export type VaultStatusQueryVariables = Exact<{ [key: string]: never; }>;
 export type VaultStatusQuery = { __typename?: 'Query', vaultStatus: { __typename?: 'VaultStatus', unlocked: boolean, available: boolean } };
 
 
+export const AddConditionDocument = gql`
+    mutation AddCondition($input: AddConditionInput!) {
+  addCondition(input: $input) {
+    id
+    name
+    notes
+    createdAt
+  }
+}
+    `;
+export type AddConditionMutationFn = Apollo.MutationFunction<AddConditionMutation, AddConditionMutationVariables>;
+
+/**
+ * __useAddConditionMutation__
+ *
+ * To run a mutation, you first call `useAddConditionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddConditionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addConditionMutation, { data, loading, error }] = useAddConditionMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddConditionMutation(baseOptions?: Apollo.MutationHookOptions<AddConditionMutation, AddConditionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddConditionMutation, AddConditionMutationVariables>(AddConditionDocument, options);
+      }
+export type AddConditionMutationHookResult = ReturnType<typeof useAddConditionMutation>;
+export type AddConditionMutationResult = Apollo.MutationResult<AddConditionMutation>;
+export type AddConditionMutationOptions = Apollo.BaseMutationOptions<AddConditionMutation, AddConditionMutationVariables>;
 export const BogdanDiscussionsDocument = gql`
     query BogdanDiscussions {
   bogdanDiscussions {
@@ -4357,6 +4450,51 @@ export function useDeleteClaimCardMutation(baseOptions?: Apollo.MutationHookOpti
 export type DeleteClaimCardMutationHookResult = ReturnType<typeof useDeleteClaimCardMutation>;
 export type DeleteClaimCardMutationResult = Apollo.MutationResult<DeleteClaimCardMutation>;
 export type DeleteClaimCardMutationOptions = Apollo.BaseMutationOptions<DeleteClaimCardMutation, DeleteClaimCardMutationVariables>;
+export const ConditionsDocument = gql`
+    query Conditions {
+  conditions {
+    id
+    name
+    notes
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useConditionsQuery__
+ *
+ * To run a query within a React component, call `useConditionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useConditionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useConditionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useConditionsQuery(baseOptions?: Apollo.QueryHookOptions<ConditionsQuery, ConditionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ConditionsQuery, ConditionsQueryVariables>(ConditionsDocument, options);
+      }
+export function useConditionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ConditionsQuery, ConditionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ConditionsQuery, ConditionsQueryVariables>(ConditionsDocument, options);
+        }
+// @ts-ignore
+export function useConditionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ConditionsQuery, ConditionsQueryVariables>): Apollo.UseSuspenseQueryResult<ConditionsQuery, ConditionsQueryVariables>;
+export function useConditionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ConditionsQuery, ConditionsQueryVariables>): Apollo.UseSuspenseQueryResult<ConditionsQuery | undefined, ConditionsQueryVariables>;
+export function useConditionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ConditionsQuery, ConditionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ConditionsQuery, ConditionsQueryVariables>(ConditionsDocument, options);
+        }
+export type ConditionsQueryHookResult = ReturnType<typeof useConditionsQuery>;
+export type ConditionsLazyQueryHookResult = ReturnType<typeof useConditionsLazyQuery>;
+export type ConditionsSuspenseQueryHookResult = ReturnType<typeof useConditionsSuspenseQuery>;
+export type ConditionsQueryResult = Apollo.QueryResult<ConditionsQuery, ConditionsQueryVariables>;
 export const ConvertIssueToGoalDocument = gql`
     mutation ConvertIssueToGoal($id: Int!, $input: CreateGoalInput!) {
   convertIssueToGoal(id: $id, input: $input) {
@@ -5209,6 +5347,39 @@ export function useDeleteBehaviorObservationMutation(baseOptions?: Apollo.Mutati
 export type DeleteBehaviorObservationMutationHookResult = ReturnType<typeof useDeleteBehaviorObservationMutation>;
 export type DeleteBehaviorObservationMutationResult = Apollo.MutationResult<DeleteBehaviorObservationMutation>;
 export type DeleteBehaviorObservationMutationOptions = Apollo.BaseMutationOptions<DeleteBehaviorObservationMutation, DeleteBehaviorObservationMutationVariables>;
+export const DeleteConditionDocument = gql`
+    mutation DeleteCondition($id: ID!) {
+  deleteCondition(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteConditionMutationFn = Apollo.MutationFunction<DeleteConditionMutation, DeleteConditionMutationVariables>;
+
+/**
+ * __useDeleteConditionMutation__
+ *
+ * To run a mutation, you first call `useDeleteConditionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteConditionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteConditionMutation, { data, loading, error }] = useDeleteConditionMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteConditionMutation(baseOptions?: Apollo.MutationHookOptions<DeleteConditionMutation, DeleteConditionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteConditionMutation, DeleteConditionMutationVariables>(DeleteConditionDocument, options);
+      }
+export type DeleteConditionMutationHookResult = ReturnType<typeof useDeleteConditionMutation>;
+export type DeleteConditionMutationResult = Apollo.MutationResult<DeleteConditionMutation>;
+export type DeleteConditionMutationOptions = Apollo.BaseMutationOptions<DeleteConditionMutation, DeleteConditionMutationVariables>;
 export const DeleteContactDocument = gql`
     mutation DeleteContact($id: Int!) {
   deleteContact(id: $id) {

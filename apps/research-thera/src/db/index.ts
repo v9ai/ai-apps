@@ -1,6 +1,23 @@
 import { sql as neonSql } from "./neon";
 import { safeJsonParse } from "../lib/safe-json";
 import { GraphQLError } from "graphql";
+import {
+  listConditions as _listConditions,
+  getCondition as _getCondition,
+  createCondition as _createCondition,
+  deleteCondition as _deleteCondition,
+  embedCondition as _embedCondition,
+} from "./healthcare";
+
+// Re-export healthcare functions so they're reachable as top-level exports
+export {
+  _listConditions as listConditions,
+  _getCondition as getCondition,
+  _createCondition as createCondition,
+  _deleteCondition as deleteCondition,
+  _embedCondition as embedCondition,
+};
+export type { Condition } from "./healthcare";
 
 /**
  * Convert a SQL string with `?` placeholders to PostgreSQL `$N` style,
@@ -4158,5 +4175,11 @@ export const db = {
   deleteGame,
   logGameCompletion,
   listGameCompletions,
+  // Healthcare — Conditions
+  listConditions: _listConditions,
+  getCondition: _getCondition,
+  createCondition: _createCondition,
+  deleteCondition: _deleteCondition,
+  embedCondition: _embedCondition,
 };
 

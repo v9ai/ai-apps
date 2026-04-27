@@ -259,6 +259,10 @@ type Query {
 
   # Tag language rules (per-user override for AI-generated content language)
   tagLanguage(tag: String!): String
+
+  # Healthcare — Conditions
+  conditions: [Condition!]!
+  condition(id: ID!): Condition
 }
 
 type Mutation {
@@ -440,6 +444,10 @@ type Mutation {
   deleteGame(id: Int!): DeleteGameResult!
   logGameCompletion(input: LogGameCompletionInput!): GameCompletion!
   generateGame(input: GenerateGameInput!): Game!
+
+  # Healthcare — Conditions
+  addCondition(input: AddConditionInput!): Condition!
+  deleteCondition(id: ID!): DeleteConditionResult!
 }
 
 type Subscription {
@@ -2075,4 +2083,25 @@ type GenerateRoutineAnalysisResult {
 type DeleteRoutineAnalysisResult {
   success: Boolean!
   message: String
+}
+
+# ============================================
+# Healthcare — Conditions
+# ============================================
+
+type Condition {
+  id: ID!
+  userId: String!
+  name: String!
+  notes: String
+  createdAt: String!
+}
+
+input AddConditionInput {
+  name: String!
+  notes: String
+}
+
+type DeleteConditionResult {
+  success: Boolean!
 }

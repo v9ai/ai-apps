@@ -1,0 +1,8 @@
+mutation AddCondition($input: AddConditionInput!) {
+  addCondition(input: $input) {
+    id
+    name
+    notes
+    createdAt
+  }
+}

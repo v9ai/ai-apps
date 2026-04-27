@@ -28,6 +28,11 @@ export type ActionableRecommendation = {
   title: Scalars['String']['output'];
 };
 
+export type AddConditionInput = {
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Affirmation = {
   __typename?: 'Affirmation';
   category: AffirmationCategory;
@@ -227,6 +232,15 @@ export type ClaimVerdict =
   | 'MIXED'
   | 'SUPPORTED'
   | 'UNVERIFIED';
+
+export type Condition = {
+  __typename?: 'Condition';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
 
 export type Contact = {
   __typename?: 'Contact';
@@ -521,6 +535,11 @@ export type DeleteAffirmationResult = {
 export type DeleteBehaviorObservationResult = {
   __typename?: 'DeleteBehaviorObservationResult';
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteConditionResult = {
+  __typename?: 'DeleteConditionResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1228,6 +1247,7 @@ export type MicroScript = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addCondition: Condition;
   buildClaimCards: BuildClaimCardsResult;
   checkNoteClaims: CheckNoteClaimsResult;
   convertIssueToGoal: Goal;
@@ -1251,6 +1271,7 @@ export type Mutation = {
   deleteAffirmation: DeleteAffirmationResult;
   deleteBehaviorObservation: DeleteBehaviorObservationResult;
   deleteClaimCard: Scalars['Boolean']['output'];
+  deleteCondition: DeleteConditionResult;
   deleteContact: DeleteContactResult;
   deleteContactFeedback: DeleteContactFeedbackResult;
   deleteConversation: DeleteConversationResult;
@@ -1325,6 +1346,11 @@ export type Mutation = {
   updateStory: Story;
   updateTeacherFeedback: TeacherFeedback;
   updateUserSettings: UserSettings;
+};
+
+
+export type MutationaddConditionArgs = {
+  input: AddConditionInput;
 };
 
 
@@ -1445,6 +1471,11 @@ export type MutationdeleteBehaviorObservationArgs = {
 
 
 export type MutationdeleteClaimCardArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationdeleteConditionArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -2036,6 +2067,8 @@ export type Query = {
   bogdanDiscussions: Array<BogdanDiscussionGuide>;
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
+  condition?: Maybe<Condition>;
+  conditions: Array<Condition>;
   contact?: Maybe<Contact>;
   contactFeedback?: Maybe<ContactFeedback>;
   contactFeedbacks: Array<ContactFeedback>;
@@ -2122,6 +2155,11 @@ export type QueryclaimCardArgs = {
 
 export type QueryclaimCardsForNoteArgs = {
   noteId: Scalars['Int']['input'];
+};
+
+
+export type QueryconditionArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2867,6 +2905,7 @@ export type ResolversTypes = {
   ActionableRecommendation: ResolverTypeWrapper<ActionableRecommendation>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
+  AddConditionInput: AddConditionInput;
   Affirmation: ResolverTypeWrapper<Omit<Affirmation, 'category'> & { category: ResolversTypes['AffirmationCategory'] }>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   AffirmationCategory: ResolverTypeWrapper<'GRATITUDE' | 'STRENGTH' | 'ENCOURAGEMENT' | 'GROWTH' | 'SELF_WORTH'>;
@@ -2891,6 +2930,7 @@ export type ResolversTypes = {
   ClaimProvenance: ResolverTypeWrapper<ClaimProvenance>;
   ClaimScope: ResolverTypeWrapper<ClaimScope>;
   ClaimVerdict: ResolverTypeWrapper<'CONTRADICTED' | 'INSUFFICIENT' | 'MIXED' | 'SUPPORTED' | 'UNVERIFIED'>;
+  Condition: ResolverTypeWrapper<Condition>;
   Contact: ResolverTypeWrapper<Contact>;
   ContactFeedback: ResolverTypeWrapper<Omit<ContactFeedback, 'familyMember' | 'issues' | 'source' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, issues: Array<ResolversTypes['Issue']>, source?: Maybe<ResolversTypes['FeedbackSource']>, stories: Array<ResolversTypes['Story']> }>;
   Conversation: ResolverTypeWrapper<Conversation>;
@@ -2919,6 +2959,7 @@ export type ResolversTypes = {
   DeepIssueAnalysis: ResolverTypeWrapper<Omit<DeepIssueAnalysis, 'familyMember' | 'triggerIssue'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, triggerIssue?: Maybe<ResolversTypes['Issue']> }>;
   DeleteAffirmationResult: ResolverTypeWrapper<DeleteAffirmationResult>;
   DeleteBehaviorObservationResult: ResolverTypeWrapper<DeleteBehaviorObservationResult>;
+  DeleteConditionResult: ResolverTypeWrapper<DeleteConditionResult>;
   DeleteContactFeedbackResult: ResolverTypeWrapper<DeleteContactFeedbackResult>;
   DeleteContactResult: ResolverTypeWrapper<DeleteContactResult>;
   DeleteConversationResult: ResolverTypeWrapper<DeleteConversationResult>;
@@ -3063,6 +3104,7 @@ export type ResolversParentTypes = {
   ActionableRecommendation: ActionableRecommendation;
   String: Scalars['String']['output'];
   Int: Scalars['Int']['output'];
+  AddConditionInput: AddConditionInput;
   Affirmation: Affirmation;
   Boolean: Scalars['Boolean']['output'];
   AnticipatedReaction: AnticipatedReaction;
@@ -3083,6 +3125,7 @@ export type ResolversParentTypes = {
   ID: Scalars['ID']['output'];
   ClaimProvenance: ClaimProvenance;
   ClaimScope: ClaimScope;
+  Condition: Condition;
   Contact: Contact;
   ContactFeedback: Omit<ContactFeedback, 'familyMember' | 'issues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, issues: Array<ResolversParentTypes['Issue']>, stories: Array<ResolversParentTypes['Story']> };
   Conversation: Conversation;
@@ -3109,6 +3152,7 @@ export type ResolversParentTypes = {
   DeepIssueAnalysis: Omit<DeepIssueAnalysis, 'familyMember' | 'triggerIssue'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, triggerIssue?: Maybe<ResolversParentTypes['Issue']> };
   DeleteAffirmationResult: DeleteAffirmationResult;
   DeleteBehaviorObservationResult: DeleteBehaviorObservationResult;
+  DeleteConditionResult: DeleteConditionResult;
   DeleteContactFeedbackResult: DeleteContactFeedbackResult;
   DeleteContactResult: DeleteContactResult;
   DeleteConversationResult: DeleteConversationResult;
@@ -3387,6 +3431,14 @@ export type ClaimScopeResolvers<ContextType = GraphQLContext, ParentType extends
 
 export type ClaimVerdictResolvers = EnumResolverSignature<{ CONTRADICTED?: any, INSUFFICIENT?: any, MIXED?: any, SUPPORTED?: any, UNVERIFIED?: any }, ResolversTypes['ClaimVerdict']>;
 
+export type ConditionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Condition'] = ResolversParentTypes['Condition']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type ContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Contact'] = ResolversParentTypes['Contact']> = {
   ageYears?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3521,6 +3573,10 @@ export type DeleteAffirmationResultResolvers<ContextType = GraphQLContext, Paren
 
 export type DeleteBehaviorObservationResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteBehaviorObservationResult'] = ResolversParentTypes['DeleteBehaviorObservationResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type DeleteConditionResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteConditionResult'] = ResolversParentTypes['DeleteConditionResult']> = {
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
@@ -4094,6 +4150,7 @@ export type MicroScriptResolvers<ContextType = GraphQLContext, ParentType extend
 };
 
 export type MutationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
+  addCondition?: Resolver<ResolversTypes['Condition'], ParentType, ContextType, RequireFields<MutationaddConditionArgs, 'input'>>;
   buildClaimCards?: Resolver<ResolversTypes['BuildClaimCardsResult'], ParentType, ContextType, RequireFields<MutationbuildClaimCardsArgs, 'input'>>;
   checkNoteClaims?: Resolver<ResolversTypes['CheckNoteClaimsResult'], ParentType, ContextType, RequireFields<MutationcheckNoteClaimsArgs, 'input'>>;
   convertIssueToGoal?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationconvertIssueToGoalArgs, 'id' | 'input'>>;
@@ -4117,6 +4174,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteAffirmation?: Resolver<ResolversTypes['DeleteAffirmationResult'], ParentType, ContextType, RequireFields<MutationdeleteAffirmationArgs, 'id'>>;
   deleteBehaviorObservation?: Resolver<ResolversTypes['DeleteBehaviorObservationResult'], ParentType, ContextType, RequireFields<MutationdeleteBehaviorObservationArgs, 'id'>>;
   deleteClaimCard?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationdeleteClaimCardArgs, 'id'>>;
+  deleteCondition?: Resolver<ResolversTypes['DeleteConditionResult'], ParentType, ContextType, RequireFields<MutationdeleteConditionArgs, 'id'>>;
   deleteContact?: Resolver<ResolversTypes['DeleteContactResult'], ParentType, ContextType, RequireFields<MutationdeleteContactArgs, 'id'>>;
   deleteContactFeedback?: Resolver<ResolversTypes['DeleteContactFeedbackResult'], ParentType, ContextType, RequireFields<MutationdeleteContactFeedbackArgs, 'id'>>;
   deleteConversation?: Resolver<ResolversTypes['DeleteConversationResult'], ParentType, ContextType, RequireFields<MutationdeleteConversationArgs, 'id'>>;
@@ -4319,6 +4377,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   bogdanDiscussions?: Resolver<Array<ResolversTypes['BogdanDiscussionGuide']>, ParentType, ContextType>;
   claimCard?: Resolver<Maybe<ResolversTypes['ClaimCard']>, ParentType, ContextType, RequireFields<QueryclaimCardArgs, 'id'>>;
   claimCardsForNote?: Resolver<Array<ResolversTypes['ClaimCard']>, ParentType, ContextType, RequireFields<QueryclaimCardsForNoteArgs, 'noteId'>>;
+  condition?: Resolver<Maybe<ResolversTypes['Condition']>, ParentType, ContextType, RequireFields<QueryconditionArgs, 'id'>>;
+  conditions?: Resolver<Array<ResolversTypes['Condition']>, ParentType, ContextType>;
   contact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, Partial<QuerycontactArgs>>;
   contactFeedback?: Resolver<Maybe<ResolversTypes['ContactFeedback']>, ParentType, ContextType, RequireFields<QuerycontactFeedbackArgs, 'id'>>;
   contactFeedbacks?: Resolver<Array<ResolversTypes['ContactFeedback']>, ParentType, ContextType, RequireFields<QuerycontactFeedbacksArgs, 'contactId' | 'familyMemberId'>>;
@@ -4664,6 +4724,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ClaimProvenance?: ClaimProvenanceResolvers<ContextType>;
   ClaimScope?: ClaimScopeResolvers<ContextType>;
   ClaimVerdict?: ClaimVerdictResolvers;
+  Condition?: ConditionResolvers<ContextType>;
   Contact?: ContactResolvers<ContextType>;
   ContactFeedback?: ContactFeedbackResolvers<ContextType>;
   Conversation?: ConversationResolvers<ContextType>;
@@ -4677,6 +4738,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeepIssueAnalysis?: DeepIssueAnalysisResolvers<ContextType>;
   DeleteAffirmationResult?: DeleteAffirmationResultResolvers<ContextType>;
   DeleteBehaviorObservationResult?: DeleteBehaviorObservationResultResolvers<ContextType>;
+  DeleteConditionResult?: DeleteConditionResultResolvers<ContextType>;
   DeleteContactFeedbackResult?: DeleteContactFeedbackResultResolvers<ContextType>;
   DeleteContactResult?: DeleteContactResultResolvers<ContextType>;
   DeleteConversationResult?: DeleteConversationResultResolvers<ContextType>;

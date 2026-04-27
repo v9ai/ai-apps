@@ -1,0 +1,8 @@
+query Conditions {
+  conditions {
+    id
+    name
+    notes
+    createdAt
+  }
+}

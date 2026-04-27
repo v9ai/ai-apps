@@ -6,6 +6,11 @@ type ActionableRecommendation {
   title: String!
 }
 
+input AddConditionInput {
+  name: String!
+  notes: String
+}
+
 type Affirmation {
   category: AffirmationCategory!
   createdAt: String!
@@ -193,6 +198,14 @@ enum ClaimVerdict {
   MIXED
   SUPPORTED
   UNVERIFIED
+}
+
+type Condition {
+  createdAt: String!
+  id: ID!
+  name: String!
+  notes: String
+  userId: String!
 }
 
 type Contact {
@@ -479,6 +492,10 @@ type DeleteAffirmationResult {
 
 type DeleteBehaviorObservationResult {
   message: String
+  success: Boolean!
+}
+
+type DeleteConditionResult {
   success: Boolean!
 }
 
@@ -1126,6 +1143,7 @@ type MicroScript {
 }
 
 type Mutation {
+  addCondition(input: AddConditionInput!): Condition!
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
   convertIssueToGoal(id: Int!, input: CreateGoalInput!): Goal!
@@ -1149,6 +1167,7 @@ type Mutation {
   deleteAffirmation(id: Int!): DeleteAffirmationResult!
   deleteBehaviorObservation(id: Int!): DeleteBehaviorObservationResult!
   deleteClaimCard(id: ID!): Boolean!
+  deleteCondition(id: ID!): DeleteConditionResult!
   deleteContact(id: Int!): DeleteContactResult!
   deleteContactFeedback(id: Int!): DeleteContactFeedbackResult!
   deleteConversation(id: Int!): DeleteConversationResult!
@@ -1388,6 +1407,8 @@ type Query {
   bogdanDiscussions: [BogdanDiscussionGuide!]!
   claimCard(id: ID!): ClaimCard
   claimCardsForNote(noteId: Int!): [ClaimCard!]!
+  condition(id: ID!): Condition
+  conditions: [Condition!]!
   contact(id: Int, slug: String): Contact
   contactFeedback(id: Int!): ContactFeedback
   contactFeedbacks(contactId: Int!, familyMemberId: Int!): [ContactFeedback!]!

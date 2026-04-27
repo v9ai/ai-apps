@@ -1,0 +1,5 @@
+mutation DeleteCondition($id: ID!) {
+  deleteCondition(id: $id) {
+    success
+  }
+}
