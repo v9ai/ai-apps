@@ -195,7 +195,6 @@
           "7 clinical ratios/upload, JSONB on health_state, authored thresholds: TG/HDL (McLaughlin), TC/HDL (Castelli), HDL/LDL (Millán), NLR (Fest), De Ritis AST/ALT, BUN/Creatinine (Hosten), TyG (Simental-Mendía).",
           "5-stage LlamaIndex chat (no LangGraph): triage → re_triage (<0.7, ≤2) → route → ContextChatEngine (Similarity + ClinicalRelevance + CompactAndRefine) → guard. 9 intents, CompositeRetriever fan-out, k-scaling (≥0.8 / ≥0.6 1.5× / else 2×).",
           "8 pgvector tables (blood_test, blood_marker FTS+vector, health_state, condition, medication, symptom, appointment, allergy) each with a BaseRetriever; search_marker_trend for longitudinal.",
-          "Local-only Apple Silicon: Qwen2.5-7B-Instruct-4bit on mlx_lm.server + FastEmbed/ONNX — zero API, zero PHI; LLM_BASE_URL swappable.",
           "Medication deep research LangGraph → 6 pharmacology tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) → /medications/[slug].",
           "Deep issue analysis LangGraph: thematic clusters, timeline + family-system insights, root-cause, research-mapped priorities.",
           "AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → gpt-4o-mini-tts → R2.",
