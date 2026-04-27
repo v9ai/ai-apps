@@ -377,11 +377,34 @@ type ConditionComorbidity {
   prevalence: String
 }
 
+type ConditionCriteriaMatchAdhd {
+  criterionAHyperactivityImpulsivity: ConditionCriterionASymptomGroup
+  criterionAInattention: ConditionCriterionASymptomGroup
+  criterionBAgeOnset: ConditionCriterionCheck
+  criterionCSettings: ConditionCriterionCheck
+  criterionDImpairment: ConditionCriterionCheck
+  criterionEDifferential: ConditionDifferentialCheck
+  framework: String!
+  presentation: String
+}
+
+type ConditionCriterionASymptomGroup {
+  matchedCount: Int!
+  matchedSymptoms: [ConditionMatchedSymptom!]!
+  thresholdMet: Boolean!
+}
+
+type ConditionCriterionCheck {
+  evidence: String
+  met: Boolean!
+}
+
 type ConditionDeepResearch {
   ageManifestations: [ConditionAgeManifestation!]!
   comorbidities: [ConditionComorbidity!]!
   conditionName: String!
   conditionSlug: String!
+  criteriaMatch: ConditionCriteriaMatchAdhd
   evidenceBasedTreatments: [ConditionTreatment!]!
   familyMember: FamilyMember
   freshUntil: String
@@ -389,14 +412,36 @@ type ConditionDeepResearch {
   id: ID!
   language: String!
   pathophysiology: ConditionPathophysiology
+  proximityAssessment: ConditionProximityAssessment
   redFlags: [ConditionRedFlag!]!
   sourceUrls: [String!]!
   updatedAt: String!
 }
 
+type ConditionDifferentialCheck {
+  notes: String
+  ruledOut: Boolean!
+}
+
+type ConditionMatchedSymptom {
+  evidence: String!
+  symptom: String!
+}
+
 type ConditionPathophysiology {
   mechanisms: [String!]!
   summary: String!
+}
+
+type ConditionProximityAssessment {
+  confidence: String!
+  contradictingEvidence: [String!]!
+  label: String!
+  missingEvidence: [String!]!
+  rationale: String!
+  recommendedNextStep: String
+  score: Int!
+  supportingEvidence: [String!]!
 }
 
 type ConditionRedFlag {

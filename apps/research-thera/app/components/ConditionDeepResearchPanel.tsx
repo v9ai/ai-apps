@@ -13,7 +13,18 @@ import {
   Spinner,
   Text,
 } from "@radix-ui/themes";
-import { AlertTriangle, Brain, Microscope, RefreshCw, Stethoscope, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  Brain,
+  Check,
+  ClipboardList,
+  Microscope,
+  RefreshCw,
+  Stethoscope,
+  Target,
+  Users,
+  X,
+} from "lucide-react";
 import {
   useConditionDeepResearchQuery,
   useGenerateConditionDeepResearchMutation,
@@ -38,6 +49,38 @@ const EVIDENCE_COLORS: Record<
   weak: "amber",
   expert_opinion: "gray",
   experimental: "purple",
+};
+
+const PROXIMITY_COLORS: Record<
+  string,
+  "red" | "orange" | "amber" | "blue" | "green" | "gray"
+> = {
+  very_likely: "red",
+  likely: "orange",
+  possible: "amber",
+  unlikely: "blue",
+  very_unlikely: "green",
+};
+
+const PROXIMITY_LABELS: Record<string, string> = {
+  very_likely: "Foarte probabil",
+  likely: "Probabil",
+  possible: "Posibil",
+  unlikely: "Puțin probabil",
+  very_unlikely: "Foarte puțin probabil",
+};
+
+const CONFIDENCE_LABELS: Record<string, string> = {
+  high: "încredere ridicată",
+  moderate: "încredere moderată",
+  low: "încredere scăzută",
+};
+
+const PRESENTATION_LABELS: Record<string, string> = {
+  predominantly_inattentive: "Predominant neatent",
+  predominantly_hyperactive_impulsive: "Predominant hiperactiv-impulsiv",
+  combined: "Combinat",
+  subthreshold: "Sub prag",
 };
 
 export function ConditionDeepResearchPanel({
@@ -153,6 +196,14 @@ export function ConditionDeepResearchPanel({
 
         {research && (
           <Flex direction="column" gap="4">
+            {research.proximityAssessment && (
+              <ProximityCard assessment={research.proximityAssessment} />
+            )}
+
+            {research.criteriaMatch && (
+              <CriteriaMatchSection criteria={research.criteriaMatch} />
+            )}
+
             {research.pathophysiology && (
               <Section icon={<Brain size={16} />} title="Fiziopatologie">
                 <Text size="2" style={{ lineHeight: 1.6 }}>

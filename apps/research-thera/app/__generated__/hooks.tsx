@@ -420,12 +420,38 @@ export type ConditionComorbidity = {
   prevalence?: Maybe<Scalars['String']['output']>;
 };
 
+export type ConditionCriteriaMatchAdhd = {
+  __typename?: 'ConditionCriteriaMatchAdhd';
+  criterionAHyperactivityImpulsivity?: Maybe<ConditionCriterionASymptomGroup>;
+  criterionAInattention?: Maybe<ConditionCriterionASymptomGroup>;
+  criterionBAgeOnset?: Maybe<ConditionCriterionCheck>;
+  criterionCSettings?: Maybe<ConditionCriterionCheck>;
+  criterionDImpairment?: Maybe<ConditionCriterionCheck>;
+  criterionEDifferential?: Maybe<ConditionDifferentialCheck>;
+  framework: Scalars['String']['output'];
+  presentation?: Maybe<Scalars['String']['output']>;
+};
+
+export type ConditionCriterionASymptomGroup = {
+  __typename?: 'ConditionCriterionASymptomGroup';
+  matchedCount: Scalars['Int']['output'];
+  matchedSymptoms: Array<ConditionMatchedSymptom>;
+  thresholdMet: Scalars['Boolean']['output'];
+};
+
+export type ConditionCriterionCheck = {
+  __typename?: 'ConditionCriterionCheck';
+  evidence?: Maybe<Scalars['String']['output']>;
+  met: Scalars['Boolean']['output'];
+};
+
 export type ConditionDeepResearch = {
   __typename?: 'ConditionDeepResearch';
   ageManifestations: Array<ConditionAgeManifestation>;
   comorbidities: Array<ConditionComorbidity>;
   conditionName: Scalars['String']['output'];
   conditionSlug: Scalars['String']['output'];
+  criteriaMatch?: Maybe<ConditionCriteriaMatchAdhd>;
   evidenceBasedTreatments: Array<ConditionTreatment>;
   familyMember?: Maybe<FamilyMember>;
   freshUntil?: Maybe<Scalars['String']['output']>;
@@ -433,15 +459,40 @@ export type ConditionDeepResearch = {
   id: Scalars['ID']['output'];
   language: Scalars['String']['output'];
   pathophysiology?: Maybe<ConditionPathophysiology>;
+  proximityAssessment?: Maybe<ConditionProximityAssessment>;
   redFlags: Array<ConditionRedFlag>;
   sourceUrls: Array<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type ConditionDifferentialCheck = {
+  __typename?: 'ConditionDifferentialCheck';
+  notes?: Maybe<Scalars['String']['output']>;
+  ruledOut: Scalars['Boolean']['output'];
+};
+
+export type ConditionMatchedSymptom = {
+  __typename?: 'ConditionMatchedSymptom';
+  evidence: Scalars['String']['output'];
+  symptom: Scalars['String']['output'];
 };
 
 export type ConditionPathophysiology = {
   __typename?: 'ConditionPathophysiology';
   mechanisms: Array<Scalars['String']['output']>;
   summary: Scalars['String']['output'];
+};
+
+export type ConditionProximityAssessment = {
+  __typename?: 'ConditionProximityAssessment';
+  confidence: Scalars['String']['output'];
+  contradictingEvidence: Array<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+  missingEvidence: Array<Scalars['String']['output']>;
+  rationale: Scalars['String']['output'];
+  recommendedNextStep?: Maybe<Scalars['String']['output']>;
+  score: Scalars['Int']['output'];
+  supportingEvidence: Array<Scalars['String']['output']>;
 };
 
 export type ConditionRedFlag = {
@@ -3834,7 +3885,7 @@ export type ConditionDeepResearchQueryVariables = Exact<{
 }>;
 
 
-export type ConditionDeepResearchQuery = { __typename?: 'Query', conditionDeepResearch?: { __typename?: 'ConditionDeepResearch', id: string, conditionSlug: string, conditionName: string, language: string, sourceUrls: Array<string>, freshUntil?: string | null, generatedAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, ageYears?: number | null, dateOfBirth?: string | null } | null, pathophysiology?: { __typename?: 'ConditionPathophysiology', summary: string, mechanisms: Array<string> } | null, ageManifestations: Array<{ __typename?: 'ConditionAgeManifestation', developmentalTier: string, manifestations: Array<string>, notes?: string | null }>, evidenceBasedTreatments: Array<{ __typename?: 'ConditionTreatment', name: string, category: string, evidenceLevel?: string | null, ageAppropriate?: string | null, notes?: string | null }>, comorbidities: Array<{ __typename?: 'ConditionComorbidity', name: string, prevalence?: string | null, notes?: string | null }>, redFlags: Array<{ __typename?: 'ConditionRedFlag', flag: string, action?: string | null }> } | null };
+export type ConditionDeepResearchQuery = { __typename?: 'Query', conditionDeepResearch?: { __typename?: 'ConditionDeepResearch', id: string, conditionSlug: string, conditionName: string, language: string, sourceUrls: Array<string>, freshUntil?: string | null, generatedAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, ageYears?: number | null, dateOfBirth?: string | null } | null, proximityAssessment?: { __typename?: 'ConditionProximityAssessment', score: number, label: string, confidence: string, rationale: string, supportingEvidence: Array<string>, contradictingEvidence: Array<string>, missingEvidence: Array<string>, recommendedNextStep?: string | null } | null, criteriaMatch?: { __typename?: 'ConditionCriteriaMatchAdhd', framework: string, presentation?: string | null, criterionAInattention?: { __typename?: 'ConditionCriterionASymptomGroup', matchedCount: number, thresholdMet: boolean, matchedSymptoms: Array<{ __typename?: 'ConditionMatchedSymptom', symptom: string, evidence: string }> } | null, criterionAHyperactivityImpulsivity?: { __typename?: 'ConditionCriterionASymptomGroup', matchedCount: number, thresholdMet: boolean, matchedSymptoms: Array<{ __typename?: 'ConditionMatchedSymptom', symptom: string, evidence: string }> } | null, criterionBAgeOnset?: { __typename?: 'ConditionCriterionCheck', met: boolean, evidence?: string | null } | null, criterionCSettings?: { __typename?: 'ConditionCriterionCheck', met: boolean, evidence?: string | null } | null, criterionDImpairment?: { __typename?: 'ConditionCriterionCheck', met: boolean, evidence?: string | null } | null, criterionEDifferential?: { __typename?: 'ConditionDifferentialCheck', ruledOut: boolean, notes?: string | null } | null } | null, pathophysiology?: { __typename?: 'ConditionPathophysiology', summary: string, mechanisms: Array<string> } | null, ageManifestations: Array<{ __typename?: 'ConditionAgeManifestation', developmentalTier: string, manifestations: Array<string>, notes?: string | null }>, evidenceBasedTreatments: Array<{ __typename?: 'ConditionTreatment', name: string, category: string, evidenceLevel?: string | null, ageAppropriate?: string | null, notes?: string | null }>, comorbidities: Array<{ __typename?: 'ConditionComorbidity', name: string, prevalence?: string | null, notes?: string | null }>, redFlags: Array<{ __typename?: 'ConditionRedFlag', flag: string, action?: string | null }> } | null };
 
 export type ConditionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -6104,6 +6155,52 @@ export const ConditionDeepResearchDocument = gql`
       firstName
       ageYears
       dateOfBirth
+    }
+    proximityAssessment {
+      score
+      label
+      confidence
+      rationale
+      supportingEvidence
+      contradictingEvidence
+      missingEvidence
+      recommendedNextStep
+    }
+    criteriaMatch {
+      framework
+      presentation
+      criterionAInattention {
+        matchedSymptoms {
+          symptom
+          evidence
+        }
+        matchedCount
+        thresholdMet
+      }
+      criterionAHyperactivityImpulsivity {
+        matchedSymptoms {
+          symptom
+          evidence
+        }
+        matchedCount
+        thresholdMet
+      }
+      criterionBAgeOnset {
+        met
+        evidence
+      }
+      criterionCSettings {
+        met
+        evidence
+      }
+      criterionDImpairment {
+        met
+        evidence
+      }
+      criterionEDifferential {
+        ruledOut
+        notes
+      }
     }
     pathophysiology {
       summary

@@ -24,6 +24,7 @@ import {
 } from "../../__generated__/hooks";
 import { AuthGate } from "../../components/AuthGate";
 import { MontelukastSafetyPanel } from "../../components/MontelukastSafetyPanel";
+import { RegimenAnalysisPanel } from "../../components/RegimenAnalysisPanel";
 
 const PERSONS: Record<
   string,
@@ -56,7 +57,11 @@ export default function MedicationSlugPage() {
       description="Sign in to access your records."
     >
       {personConfig ? (
-        <PersonView label={personConfig.label} filter={personConfig.filter} />
+        <PersonView
+          slug={slug as "me" | "bogdan"}
+          label={personConfig.label}
+          filter={personConfig.filter}
+        />
       ) : (
         <MedicationDetail slug={slug} />
       )}
@@ -65,9 +70,11 @@ export default function MedicationSlugPage() {
 }
 
 function PersonView({
+  slug,
   label,
   filter,
 }: {
+  slug: "me" | "bogdan";
   label: string;
   filter: (name: string) => boolean;
 }) {
@@ -113,6 +120,10 @@ function PersonView({
               Nothing matches {label}.
             </Text>
           </Flex>
+        )}
+
+        {!loading && !error && current.length > 0 && (
+          <RegimenAnalysisPanel slug={slug} />
         )}
 
         {!loading && !error && current.length > 0 && (

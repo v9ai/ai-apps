@@ -155,6 +155,82 @@ export const conditionDeepResearch: NonNullable<QueryResolvers['conditionDeepRes
       createdAt: fm.created_at,
       updatedAt: fm.updated_at,
     },
+    proximityAssessment: r.proximity_assessment
+      ? {
+          score: r.proximity_assessment.score,
+          label: r.proximity_assessment.label,
+          confidence: r.proximity_assessment.confidence,
+          rationale: r.proximity_assessment.rationale,
+          supportingEvidence: r.proximity_assessment.supporting_evidence ?? [],
+          contradictingEvidence:
+            r.proximity_assessment.contradicting_evidence ?? [],
+          missingEvidence: r.proximity_assessment.missing_evidence ?? [],
+          recommendedNextStep:
+            r.proximity_assessment.recommended_next_step ?? null,
+        }
+      : null,
+    criteriaMatch: r.criteria_match
+      ? {
+          framework: r.criteria_match.framework ?? "DSM-5 ADHD",
+          presentation: r.criteria_match.presentation ?? null,
+          criterionAInattention: r.criteria_match.criterion_a_inattention
+            ? {
+                matchedSymptoms: (
+                  r.criteria_match.criterion_a_inattention.matched_symptoms ?? []
+                ).map((s) => ({ symptom: s.symptom, evidence: s.evidence })),
+                matchedCount:
+                  r.criteria_match.criterion_a_inattention.matched_count ?? 0,
+                thresholdMet:
+                  r.criteria_match.criterion_a_inattention.threshold_met ??
+                  false,
+              }
+            : null,
+          criterionAHyperactivityImpulsivity: r.criteria_match
+            .criterion_a_hyperactivity_impulsivity
+            ? {
+                matchedSymptoms: (
+                  r.criteria_match.criterion_a_hyperactivity_impulsivity
+                    .matched_symptoms ?? []
+                ).map((s) => ({ symptom: s.symptom, evidence: s.evidence })),
+                matchedCount:
+                  r.criteria_match.criterion_a_hyperactivity_impulsivity
+                    .matched_count ?? 0,
+                thresholdMet:
+                  r.criteria_match.criterion_a_hyperactivity_impulsivity
+                    .threshold_met ?? false,
+              }
+            : null,
+          criterionBAgeOnset: r.criteria_match.criterion_b_age_onset
+            ? {
+                met: r.criteria_match.criterion_b_age_onset.met ?? false,
+                evidence:
+                  r.criteria_match.criterion_b_age_onset.evidence ?? null,
+              }
+            : null,
+          criterionCSettings: r.criteria_match.criterion_c_settings
+            ? {
+                met: r.criteria_match.criterion_c_settings.met ?? false,
+                evidence:
+                  r.criteria_match.criterion_c_settings.evidence ?? null,
+              }
+            : null,
+          criterionDImpairment: r.criteria_match.criterion_d_impairment
+            ? {
+                met: r.criteria_match.criterion_d_impairment.met ?? false,
+                evidence:
+                  r.criteria_match.criterion_d_impairment.evidence ?? null,
+              }
+            : null,
+          criterionEDifferential: r.criteria_match.criterion_e_differential
+            ? {
+                ruledOut:
+                  r.criteria_match.criterion_e_differential.ruled_out ?? false,
+                notes:
+                  r.criteria_match.criterion_e_differential.notes ?? null,
+              }
+            : null,
+        }
+      : null,
     pathophysiology: r.pathophysiology
       ? {
           summary: r.pathophysiology.summary,

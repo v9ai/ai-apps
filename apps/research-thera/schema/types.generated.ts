@@ -417,12 +417,38 @@ export type ConditionComorbidity = {
   prevalence?: Maybe<Scalars['String']['output']>;
 };
 
+export type ConditionCriteriaMatchAdhd = {
+  __typename?: 'ConditionCriteriaMatchAdhd';
+  criterionAHyperactivityImpulsivity?: Maybe<ConditionCriterionASymptomGroup>;
+  criterionAInattention?: Maybe<ConditionCriterionASymptomGroup>;
+  criterionBAgeOnset?: Maybe<ConditionCriterionCheck>;
+  criterionCSettings?: Maybe<ConditionCriterionCheck>;
+  criterionDImpairment?: Maybe<ConditionCriterionCheck>;
+  criterionEDifferential?: Maybe<ConditionDifferentialCheck>;
+  framework: Scalars['String']['output'];
+  presentation?: Maybe<Scalars['String']['output']>;
+};
+
+export type ConditionCriterionASymptomGroup = {
+  __typename?: 'ConditionCriterionASymptomGroup';
+  matchedCount: Scalars['Int']['output'];
+  matchedSymptoms: Array<ConditionMatchedSymptom>;
+  thresholdMet: Scalars['Boolean']['output'];
+};
+
+export type ConditionCriterionCheck = {
+  __typename?: 'ConditionCriterionCheck';
+  evidence?: Maybe<Scalars['String']['output']>;
+  met: Scalars['Boolean']['output'];
+};
+
 export type ConditionDeepResearch = {
   __typename?: 'ConditionDeepResearch';
   ageManifestations: Array<ConditionAgeManifestation>;
   comorbidities: Array<ConditionComorbidity>;
   conditionName: Scalars['String']['output'];
   conditionSlug: Scalars['String']['output'];
+  criteriaMatch?: Maybe<ConditionCriteriaMatchAdhd>;
   evidenceBasedTreatments: Array<ConditionTreatment>;
   familyMember?: Maybe<FamilyMember>;
   freshUntil?: Maybe<Scalars['String']['output']>;
@@ -430,15 +456,40 @@ export type ConditionDeepResearch = {
   id: Scalars['ID']['output'];
   language: Scalars['String']['output'];
   pathophysiology?: Maybe<ConditionPathophysiology>;
+  proximityAssessment?: Maybe<ConditionProximityAssessment>;
   redFlags: Array<ConditionRedFlag>;
   sourceUrls: Array<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type ConditionDifferentialCheck = {
+  __typename?: 'ConditionDifferentialCheck';
+  notes?: Maybe<Scalars['String']['output']>;
+  ruledOut: Scalars['Boolean']['output'];
+};
+
+export type ConditionMatchedSymptom = {
+  __typename?: 'ConditionMatchedSymptom';
+  evidence: Scalars['String']['output'];
+  symptom: Scalars['String']['output'];
 };
 
 export type ConditionPathophysiology = {
   __typename?: 'ConditionPathophysiology';
   mechanisms: Array<Scalars['String']['output']>;
   summary: Scalars['String']['output'];
+};
+
+export type ConditionProximityAssessment = {
+  __typename?: 'ConditionProximityAssessment';
+  confidence: Scalars['String']['output'];
+  contradictingEvidence: Array<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+  missingEvidence: Array<Scalars['String']['output']>;
+  rationale: Scalars['String']['output'];
+  recommendedNextStep?: Maybe<Scalars['String']['output']>;
+  score: Scalars['Int']['output'];
+  supportingEvidence: Array<Scalars['String']['output']>;
 };
 
 export type ConditionRedFlag = {
@@ -3802,8 +3853,14 @@ export type ResolversTypes = {
   Condition: ResolverTypeWrapper<Omit<Condition, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
   ConditionAgeManifestation: ResolverTypeWrapper<ConditionAgeManifestation>;
   ConditionComorbidity: ResolverTypeWrapper<ConditionComorbidity>;
+  ConditionCriteriaMatchAdhd: ResolverTypeWrapper<ConditionCriteriaMatchAdhd>;
+  ConditionCriterionASymptomGroup: ResolverTypeWrapper<ConditionCriterionASymptomGroup>;
+  ConditionCriterionCheck: ResolverTypeWrapper<ConditionCriterionCheck>;
   ConditionDeepResearch: ResolverTypeWrapper<Omit<ConditionDeepResearch, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
+  ConditionDifferentialCheck: ResolverTypeWrapper<ConditionDifferentialCheck>;
+  ConditionMatchedSymptom: ResolverTypeWrapper<ConditionMatchedSymptom>;
   ConditionPathophysiology: ResolverTypeWrapper<ConditionPathophysiology>;
+  ConditionProximityAssessment: ResolverTypeWrapper<ConditionProximityAssessment>;
   ConditionRedFlag: ResolverTypeWrapper<ConditionRedFlag>;
   ConditionTreatment: ResolverTypeWrapper<ConditionTreatment>;
   Contact: ResolverTypeWrapper<Contact>;
@@ -4057,8 +4114,14 @@ export type ResolversParentTypes = {
   Condition: Omit<Condition, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   ConditionAgeManifestation: ConditionAgeManifestation;
   ConditionComorbidity: ConditionComorbidity;
+  ConditionCriteriaMatchAdhd: ConditionCriteriaMatchAdhd;
+  ConditionCriterionASymptomGroup: ConditionCriterionASymptomGroup;
+  ConditionCriterionCheck: ConditionCriterionCheck;
   ConditionDeepResearch: Omit<ConditionDeepResearch, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
+  ConditionDifferentialCheck: ConditionDifferentialCheck;
+  ConditionMatchedSymptom: ConditionMatchedSymptom;
   ConditionPathophysiology: ConditionPathophysiology;
+  ConditionProximityAssessment: ConditionProximityAssessment;
   ConditionRedFlag: ConditionRedFlag;
   ConditionTreatment: ConditionTreatment;
   Contact: Contact;
@@ -4489,11 +4552,34 @@ export type ConditionComorbidityResolvers<ContextType = GraphQLContext, ParentTy
   prevalence?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
+export type ConditionCriteriaMatchAdhdResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionCriteriaMatchAdhd'] = ResolversParentTypes['ConditionCriteriaMatchAdhd']> = {
+  criterionAHyperactivityImpulsivity?: Resolver<Maybe<ResolversTypes['ConditionCriterionASymptomGroup']>, ParentType, ContextType>;
+  criterionAInattention?: Resolver<Maybe<ResolversTypes['ConditionCriterionASymptomGroup']>, ParentType, ContextType>;
+  criterionBAgeOnset?: Resolver<Maybe<ResolversTypes['ConditionCriterionCheck']>, ParentType, ContextType>;
+  criterionCSettings?: Resolver<Maybe<ResolversTypes['ConditionCriterionCheck']>, ParentType, ContextType>;
+  criterionDImpairment?: Resolver<Maybe<ResolversTypes['ConditionCriterionCheck']>, ParentType, ContextType>;
+  criterionEDifferential?: Resolver<Maybe<ResolversTypes['ConditionDifferentialCheck']>, ParentType, ContextType>;
+  framework?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  presentation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type ConditionCriterionASymptomGroupResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionCriterionASymptomGroup'] = ResolversParentTypes['ConditionCriterionASymptomGroup']> = {
+  matchedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  matchedSymptoms?: Resolver<Array<ResolversTypes['ConditionMatchedSymptom']>, ParentType, ContextType>;
+  thresholdMet?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type ConditionCriterionCheckResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionCriterionCheck'] = ResolversParentTypes['ConditionCriterionCheck']> = {
+  evidence?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  met?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type ConditionDeepResearchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionDeepResearch'] = ResolversParentTypes['ConditionDeepResearch']> = {
   ageManifestations?: Resolver<Array<ResolversTypes['ConditionAgeManifestation']>, ParentType, ContextType>;
   comorbidities?: Resolver<Array<ResolversTypes['ConditionComorbidity']>, ParentType, ContextType>;
   conditionName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   conditionSlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  criteriaMatch?: Resolver<Maybe<ResolversTypes['ConditionCriteriaMatchAdhd']>, ParentType, ContextType>;
   evidenceBasedTreatments?: Resolver<Array<ResolversTypes['ConditionTreatment']>, ParentType, ContextType>;
   familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
   freshUntil?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -4501,14 +4587,36 @@ export type ConditionDeepResearchResolvers<ContextType = GraphQLContext, ParentT
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   language?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   pathophysiology?: Resolver<Maybe<ResolversTypes['ConditionPathophysiology']>, ParentType, ContextType>;
+  proximityAssessment?: Resolver<Maybe<ResolversTypes['ConditionProximityAssessment']>, ParentType, ContextType>;
   redFlags?: Resolver<Array<ResolversTypes['ConditionRedFlag']>, ParentType, ContextType>;
   sourceUrls?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type ConditionDifferentialCheckResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionDifferentialCheck'] = ResolversParentTypes['ConditionDifferentialCheck']> = {
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  ruledOut?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type ConditionMatchedSymptomResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionMatchedSymptom'] = ResolversParentTypes['ConditionMatchedSymptom']> = {
+  evidence?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  symptom?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type ConditionPathophysiologyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionPathophysiology'] = ResolversParentTypes['ConditionPathophysiology']> = {
   mechanisms?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   summary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ConditionProximityAssessmentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionProximityAssessment'] = ResolversParentTypes['ConditionProximityAssessment']> = {
+  confidence?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  contradictingEvidence?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  missingEvidence?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  rationale?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  recommendedNextStep?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  supportingEvidence?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type ConditionRedFlagResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionRedFlag'] = ResolversParentTypes['ConditionRedFlag']> = {
@@ -6202,8 +6310,14 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Condition?: ConditionResolvers<ContextType>;
   ConditionAgeManifestation?: ConditionAgeManifestationResolvers<ContextType>;
   ConditionComorbidity?: ConditionComorbidityResolvers<ContextType>;
+  ConditionCriteriaMatchAdhd?: ConditionCriteriaMatchAdhdResolvers<ContextType>;
+  ConditionCriterionASymptomGroup?: ConditionCriterionASymptomGroupResolvers<ContextType>;
+  ConditionCriterionCheck?: ConditionCriterionCheckResolvers<ContextType>;
   ConditionDeepResearch?: ConditionDeepResearchResolvers<ContextType>;
+  ConditionDifferentialCheck?: ConditionDifferentialCheckResolvers<ContextType>;
+  ConditionMatchedSymptom?: ConditionMatchedSymptomResolvers<ContextType>;
   ConditionPathophysiology?: ConditionPathophysiologyResolvers<ContextType>;
+  ConditionProximityAssessment?: ConditionProximityAssessmentResolvers<ContextType>;
   ConditionRedFlag?: ConditionRedFlagResolvers<ContextType>;
   ConditionTreatment?: ConditionTreatmentResolvers<ContextType>;
   Contact?: ContactResolvers<ContextType>;

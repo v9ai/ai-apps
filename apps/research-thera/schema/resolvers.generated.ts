@@ -232,8 +232,14 @@ import    { CognitiveCheckIn } from './resolvers/CognitiveCheckIn';
 import    { Condition } from './resolvers/Condition';
 import    { ConditionAgeManifestation } from './resolvers/ConditionAgeManifestation';
 import    { ConditionComorbidity } from './resolvers/ConditionComorbidity';
+import    { ConditionCriteriaMatchAdhd } from './resolvers/ConditionCriteriaMatchAdhd';
+import    { ConditionCriterionASymptomGroup } from './resolvers/ConditionCriterionASymptomGroup';
+import    { ConditionCriterionCheck } from './resolvers/ConditionCriterionCheck';
 import    { ConditionDeepResearch } from './resolvers/ConditionDeepResearch';
+import    { ConditionDifferentialCheck } from './resolvers/ConditionDifferentialCheck';
+import    { ConditionMatchedSymptom } from './resolvers/ConditionMatchedSymptom';
 import    { ConditionPathophysiology } from './resolvers/ConditionPathophysiology';
+import    { ConditionProximityAssessment } from './resolvers/ConditionProximityAssessment';
 import    { ConditionRedFlag } from './resolvers/ConditionRedFlag';
 import    { ConditionTreatment } from './resolvers/ConditionTreatment';
 import    { Contact } from './resolvers/Contact';
@@ -410,8 +416,14 @@ CognitiveCheckIn: CognitiveCheckIn,
 Condition: Condition,
 ConditionAgeManifestation: ConditionAgeManifestation,
 ConditionComorbidity: ConditionComorbidity,
+ConditionCriteriaMatchAdhd: ConditionCriteriaMatchAdhd,
+ConditionCriterionASymptomGroup: ConditionCriterionASymptomGroup,
+ConditionCriterionCheck: ConditionCriterionCheck,
 ConditionDeepResearch: ConditionDeepResearch,
+ConditionDifferentialCheck: ConditionDifferentialCheck,
+ConditionMatchedSymptom: ConditionMatchedSymptom,
 ConditionPathophysiology: ConditionPathophysiology,
+ConditionProximityAssessment: ConditionProximityAssessment,
 ConditionRedFlag: ConditionRedFlag,
 ConditionTreatment: ConditionTreatment,
 Contact: Contact,
