@@ -822,6 +822,652 @@ async function cmdFollowup() {
   rl.close();
 }
 
+// ── send-one ────────────────────────────────────────────────────
+
+interface ContactRow {
+  id: number;
+  first_name: string;
+  last_name: string | null;
+  email: string;
+  forwarding_alias: string | null;
+  do_not_contact: boolean | null;
+}
+
+async function loadContact(idArg: string | null, emailArg: string | null): Promise<ContactRow> {
+  if (idArg) {
+    const id = parseInt(idArg, 10);
+    if (!Number.isFinite(id)) die(`--id must be a number, got ${idArg}`);
+    const rows = (await sql`
+      SELECT id, first_name, last_name, email, forwarding_alias, do_not_contact
+      FROM contacts WHERE id = ${id} LIMIT 1
+    `) as unknown as ContactRow[];
+    if (rows.length === 0) die(`No contact with id=${id}`);
+    return rows[0];
+  }
+  if (emailArg) {
+    const rows = (await sql`
+      SELECT id, first_name, last_name, email, forwarding_alias, do_not_contact
+      FROM contacts WHERE lower(email) = lower(${emailArg}) LIMIT 1
+    `) as unknown as ContactRow[];
+    if (rows.length === 0) die(`No contact with email=${emailArg}`);
+    return rows[0];
+  }
+  die("--id or --email is required");
+}
+
+async function ensureAlias(
+  contact: ContactRow,
+  aliasArg: string | null,
+  templateName: CpnTemplate,
+  dryRun: boolean,
+): Promise<{ alias: string | null; wrote: boolean }> {
+  const wantsAlias = templateName === "cpn_email_ready" || aliasArg !== null;
+  if (!wantsAlias) return { alias: contact.forwarding_alias, wrote: false };
+
+  let alias = aliasArg ? sanitizeAlias(aliasArg) : null;
+  if (!alias && contact.forwarding_alias) alias = contact.forwarding_alias;
+
+  if (templateName === "cpn_email_ready" && !alias) {
+    die("cpn_email_ready requires --alias (contact has no existing forwarding_alias)");
+  }
+  if (!alias) return { alias: contact.forwarding_alias, wrote: false };
+
+  if (RESERVED_ALIASES.has(alias.toLowerCase())) die(`Alias '${alias}' is reserved`);
+
+  if (
+    contact.forwarding_alias &&
+    aliasArg !== null &&
+    contact.forwarding_alias.toLowerCase() !== alias.toLowerCase()
+  ) {
+    die(
+      `Contact already has forwarding_alias='${contact.forwarding_alias}' but --alias='${alias}' was passed. Pick one.`,
+    );
+  }
+
+  if (alias.toLowerCase() !== (contact.forwarding_alias ?? "").toLowerCase()) {
+    const clash = (await sql`
+      SELECT id FROM contacts
+      WHERE lower(forwarding_alias) = lower(${alias}) AND id <> ${contact.id}
+      LIMIT 1
+    `) as unknown as { id: number }[];
+    if (clash.length > 0) die(`Alias '${alias}' is already used by contact ${clash[0].id}`);
+  }
+
+  if (alias === contact.forwarding_alias) return { alias, wrote: false };
+
+  if (dryRun) {
+    console.log(`  [dry-run] would set forwarding_alias='${alias}' on contact ${contact.id}`);
+    return { alias, wrote: false };
+  }
+
+  await sql`
+    UPDATE contacts
+    SET forwarding_alias = ${alias}, updated_at = now()::text
+    WHERE id = ${contact.id}
+  `;
+  return { alias, wrote: true };
+}
+
+async function findParentEmailId(contactId: number): Promise<number | null> {
+  const rows = (await sql`
+    SELECT id FROM contact_emails
+    WHERE contact_id = ${contactId} AND tags LIKE '%cpn-outreach%'
+    ORDER BY id DESC LIMIT 1
+  `) as unknown as { id: number }[];
+  return rows.length > 0 ? rows[0].id : null;
+}
+
+async function alreadySent(contactId: number, tagMatch: string): Promise<boolean> {
+  const rows = (await sql`
+    SELECT id FROM contact_emails
+    WHERE contact_id = ${contactId}
+      AND tags LIKE ${"%" + tagMatch + "%"}
+      AND resend_id IS NOT NULL AND resend_id <> ''
+    LIMIT 1
+  `) as unknown as { id: number }[];
+  return rows.length > 0;
+}
+
+async function cmdSendOne() {
+  const templateArg = flagStr("template") as CpnTemplate | null;
+  if (!templateArg || !(templateArg in TEMPLATE_META)) {
+    die(`--template required, one of: ${Object.keys(TEMPLATE_META).join(", ")}`);
+  }
+  const template = templateArg;
+  const dryRun = flag("dry-run");
+  const autoSend = flag("auto");
+  const force = flag("force");
+
+  const contact = await loadContact(flagStr("id"), flagStr("email"));
+  if (contact.do_not_contact) die(`Contact ${contact.id} is marked do_not_contact`);
+  if (!contact.email) die(`Contact ${contact.id} has no email`);
+
+  const meta = TEMPLATE_META[template];
+  if (!force && (await alreadySent(contact.id, meta.tagMatch))) {
+    console.log(
+      `Already sent '${template}' to contact ${contact.id} (tag ${meta.tagMatch}). Use --force to resend.`,
+    );
+    return;
+  }
+
+  const { alias, wrote: aliasWrote } = await ensureAlias(contact, flagStr("alias"), template, dryRun);
+  const firstName = contact.first_name?.trim() || "there";
+  const fullName = `${contact.first_name} ${contact.last_name ?? ""}`.trim();
+  const { subject, text, to } = buildTemplate(template, firstName, contact.email, alias);
+  const parentEmailId = await findParentEmailId(contact.id);
+
+  console.log(`\n── CPN send-one ──`);
+  console.log(`  Contact:  [${contact.id}] ${fullName} <${contact.email}>`);
+  if (alias) {
+    console.log(`  Alias:    ${alias}@${ALIAS_DOMAIN}${aliasWrote ? " (newly set)" : ""}`);
+  }
+  console.log(`  Template: ${template}`);
+  console.log(`  To:       ${to}`);
+  console.log(`  Subject:  ${subject}`);
+  console.log(`  Parent:   ${parentEmailId ?? "(none)"}`);
+  console.log(`  Tags:     ${meta.tagsJson}`);
+  console.log(`\n${text.split("\n").map((l) => `  ${l}`).join("\n")}\n`);
+
+  if (dryRun) {
+    console.log("[dry-run] no Resend call, no DB insert.");
+    return;
+  }
+
+  if (!autoSend) {
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (q: string) => new Promise<string>((r) => rl.question(q, r));
+    const answer = (await ask("[S]end / [Q]uit? ")).trim().toLowerCase();
+    rl.close();
+    if (answer === "q" || (answer && answer !== "s")) {
+      console.log("Cancelled.");
+      return;
+    }
+  }
+
+  const result = await resend.emails.send({ from: FROM, to, subject, text });
+  if (result.error) die(`Resend failed: ${result.error.message}`);
+  const resendId = result.data?.id ?? "";
+
+  await sql`
+    INSERT INTO contact_emails
+      (contact_id, resend_id, from_email, to_emails, subject, text_content, status,
+       sent_at, tags, recipient_name, parent_email_id, sequence_type, sequence_number,
+       created_at, updated_at)
+    VALUES
+      (${contact.id}, ${resendId}, 'contact@vadim.blog',
+       ${JSON.stringify([to])}, ${subject}, ${text}, 'sent',
+       now()::text, ${meta.tagsJson}, ${fullName}, ${parentEmailId},
+       ${meta.sequenceType}, ${meta.sequenceNumber}, now()::text, now()::text)
+  `;
+
+  console.log(`✓ Sent (resend_id=${resendId}), logged to contact_emails.`);
+}
+
+// ── training-path (bulk) ────────────────────────────────────────
+
+async function cmdTrainingPath() {
+  const dryRun = flag("dry-run");
+  const autoSend = flag("auto");
+  const onlyIdRaw = flagStr("only-id");
+  const onlyId = onlyIdRaw ? parseInt(onlyIdRaw, 10) : null;
+
+  const meta = TEMPLATE_META.cpn_training_path;
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  const ask = (q: string) => new Promise<string>((r) => rl.question(q, r));
+
+  const rawTargets = (await sql`
+    SELECT DISTINCT ON (c.email)
+      c.id AS contact_id, c.first_name, c.last_name, c.email, c.company
+    FROM received_emails re
+    JOIN contacts c        ON c.id = re.matched_contact_id
+    JOIN contact_emails ce ON ce.contact_id = c.id
+    WHERE re.classification = 'interested'
+      AND ce.tags LIKE '%cpn-outreach%'
+      AND LOWER(c.first_name) <> 'lisa'
+      AND NOT EXISTS (
+        SELECT 1 FROM contact_emails ce2
+        WHERE ce2.contact_id = c.id
+          AND ce2.tags LIKE '%cpn-training-path%'
+          AND ce2.resend_id IS NOT NULL AND ce2.resend_id <> ''
+      )
+    ORDER BY c.email, c.first_name
+  `) as unknown as {
+    contact_id: number;
+    first_name: string;
+    last_name: string | null;
+    email: string;
+    company: string | null;
+  }[];
+
+  const targets = onlyId !== null ? rawTargets.filter((t) => t.contact_id === onlyId) : rawTargets;
+
+  console.log(`\n  CPN Training Path bulk`);
+  console.log(`  Targets: ${targets.length}${onlyId !== null ? ` (filtered from ${rawTargets.length})` : ""}`);
+  console.log(`  Mode:    ${dryRun ? "DRY RUN" : autoSend ? "AUTO SEND" : "INTERACTIVE"}\n`);
+
+  if (targets.length === 0) {
+    console.log("  Nothing to send.\n");
+    rl.close();
+    return;
+  }
+
+  let sent = 0, skipped = 0, failed = 0;
+
+  for (let i = 0; i < targets.length; i++) {
+    const t = targets[i];
+    const name = `${t.first_name} ${t.last_name ?? ""}`.trim();
+    const { subject, text } = buildCpnTrainingPath(t.first_name);
+
+    const outboundRows = (await sql`
+      SELECT id FROM contact_emails
+      WHERE contact_id = ${t.contact_id} AND tags LIKE '%cpn-outreach%'
+      ORDER BY id ASC
+    `) as unknown as { id: number }[];
+    const parentEmailId = outboundRows.length > 0 ? outboundRows[outboundRows.length - 1].id : null;
+
+    console.log(`── [${i + 1}/${targets.length}] ${name} <${t.email}>${t.company ? ` @ ${t.company}` : ""}`);
+    console.log(`  Subject: ${subject}`);
+
+    if (dryRun) { skipped++; continue; }
+
+    let action = "s";
+    if (!autoSend) {
+      const answer = await ask("  [S]end / s[K]ip / [Q]uit? ");
+      action = answer.trim().toLowerCase() || "s";
+    }
+    if (action === "q") { console.log("\n  Quitting early.\n"); break; }
+    if (action === "k") { skipped++; console.log("  → Skipped\n"); continue; }
+
+    try {
+      const result = await resend.emails.send({ from: FROM, to: t.email, subject, text });
+      if (result.error) {
+        failed++;
+        console.log(`  ✗ Failed: ${result.error.message}\n`);
+        continue;
+      }
+      await sql`
+        INSERT INTO contact_emails
+          (contact_id, resend_id, from_email, to_emails, subject, text_content, status,
+           sent_at, tags, recipient_name, parent_email_id, sequence_type, sequence_number,
+           created_at, updated_at)
+        VALUES
+          (${t.contact_id}, ${result.data?.id ?? ""}, 'contact@vadim.blog',
+           ${JSON.stringify([t.email])}, ${subject}, ${text}, 'sent',
+           now()::text, ${meta.tagsJson}, ${name}, ${parentEmailId},
+           ${meta.sequenceType}, ${meta.sequenceNumber}, now()::text, now()::text)
+      `;
+      sent++;
+      console.log(`  ✓ Sent\n`);
+      if (autoSend) await sleep(500);
+    } catch (err) {
+      failed++;
+      console.log(`  ✗ Error: ${err instanceof Error ? err.message : String(err)}\n`);
+    }
+  }
+
+  console.log(`\n── Summary ──\n  Sent: ${sent}  Skipped: ${skipped}  Failed: ${failed}\n`);
+  rl.close();
+}
+
+// ── assign-aliases (bulk auto) ──────────────────────────────────
+
+async function cmdAssignAliases() {
+  const dryRun = flag("dry-run");
+
+  const eligible = (await sql`
+    SELECT id, first_name, last_name, email, forwarding_alias
+    FROM contacts
+    WHERE tags LIKE '%cpn-outreach%'
+      AND forwarding_alias IS NULL
+      AND COALESCE(do_not_contact, false) = false
+      AND email IS NOT NULL AND email <> ''
+    ORDER BY id ASC
+  `) as unknown as {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    forwarding_alias: string | null;
+  }[];
+
+  console.log(`\n  CPN auto-assign aliases: ${eligible.length} eligible (mode: ${dryRun ? "DRY RUN" : "LIVE"})\n`);
+
+  async function aliasTaken(alias: string): Promise<boolean> {
+    if (RESERVED_ALIASES.has(alias)) return true;
+    const rows = (await sql`
+      SELECT id FROM contacts WHERE lower(forwarding_alias) = lower(${alias}) LIMIT 1
+    `) as unknown as { id: number }[];
+    return rows.length > 0;
+  }
+
+  async function pickAlias(first: string, last: string, id: number): Promise<string> {
+    const f = sanitizeAlias(first).toLowerCase();
+    const l = sanitizeAlias(last).toLowerCase();
+    const li = l.slice(0, 1);
+    const candidates: string[] = [];
+    if (f) {
+      candidates.push(f);
+      if (li) candidates.push(`${f}.${li}`);
+      if (l && l !== f) candidates.push(`${f}.${l}`);
+      for (let n = 2; n <= 99; n++) candidates.push(`${f}${n}`);
+    } else if (l) {
+      candidates.push(l);
+      for (let n = 2; n <= 99; n++) candidates.push(`${l}${n}`);
+    }
+    candidates.push(`user${id}`);
+    for (const c of candidates) {
+      if (!c) continue;
+      if (!(await aliasTaken(c))) return c;
+    }
+    throw new Error(`no alias found for contact ${id}`);
+  }
+
+  let n = 0;
+  const sample: { id: number; name: string; email: string; alias: string }[] = [];
+  for (const r of eligible) {
+    const alias = await pickAlias(r.first_name, r.last_name ?? "", r.id);
+    if (!dryRun) {
+      await sql`
+        UPDATE contacts SET forwarding_alias = ${alias}, updated_at = now()::text WHERE id = ${r.id}
+      `;
+    }
+    n++;
+    if (sample.length < 10) {
+      sample.push({
+        id: r.id,
+        name: `${r.first_name} ${r.last_name ?? ""}`.trim(),
+        email: r.email,
+        alias,
+      });
+    }
+    if (n % 50 === 0) console.log(`  ${n}/${eligible.length}`);
+  }
+
+  console.log(`\n  ${dryRun ? "Would assign" : "Assigned"}: ${n}\n  First 10:`);
+  for (const s of sample) {
+    console.log(`    [${s.id}] ${s.name} <${s.email}>  →  ${s.alias}@${ALIAS_DOMAIN}`);
+  }
+  console.log();
+}
+
+// ── audit-missing (read-only) ──────────────────────────────────
+
+async function cmdAuditMissing() {
+  const rows = (await sql`
+    WITH interested AS (
+      SELECT DISTINCT c.id
+      FROM contacts c
+      JOIN contact_emails ce ON ce.contact_id = c.id
+      WHERE ce.tags LIKE '%cpn-outreach%'
+        AND ce.reply_received = true
+        AND ce.reply_classification ILIKE 'interested%'
+    ),
+    onboarded AS (
+      SELECT DISTINCT contact_id
+      FROM contact_emails
+      WHERE subject = 'Your @vadim.blog email is ready - start the courses'
+        AND status IN ('sent','delivered')
+    )
+    SELECT
+      c.id,
+      trim(c.first_name || ' ' || COALESCE(c.last_name,'')) AS name,
+      c.email,
+      c.do_not_contact AS dnc,
+      (c.bounced_emails IS NOT NULL
+        AND c.bounced_emails::text NOT IN ('[]','null','')) AS bounced,
+      (SELECT ce.subject FROM contact_emails ce
+        WHERE ce.contact_id = c.id AND ce.status IN ('sent','delivered')
+        ORDER BY ce.id DESC LIMIT 1) AS last_out_subject,
+      (SELECT COUNT(*)::int FROM contact_emails ce
+        WHERE ce.contact_id = c.id
+          AND (ce.text_content ILIKE '%@vadim.blog%' OR ce.subject ILIKE '%@vadim.blog%')) AS vadim_blog_mentions,
+      (SELECT LEFT(regexp_replace(re.text_content, '\\s+', ' ', 'g'), 140)
+        FROM received_emails re
+        JOIN contact_emails ce ON ce.in_reply_to_received_id = re.id
+        WHERE ce.contact_id = c.id AND ce.reply_classification ILIKE 'interested%'
+        ORDER BY ce.id DESC LIMIT 1) AS classify_excerpt
+    FROM contacts c
+    WHERE c.id IN (SELECT id FROM interested)
+      AND c.id NOT IN (SELECT contact_id FROM onboarded)
+    ORDER BY c.first_name NULLS LAST, c.last_name NULLS LAST
+  `) as unknown as {
+    id: number;
+    name: string;
+    email: string;
+    dnc: boolean;
+    bounced: boolean;
+    last_out_subject: string | null;
+    vadim_blog_mentions: number;
+    classify_excerpt: string | null;
+  }[];
+
+  console.log(`Total missing onboarding: ${rows.length}\n`);
+  console.log(
+    "id     | name                              | email                                     | dnc | bnc | vb# | last_out_subject                                         | classify_excerpt",
+  );
+  console.log("-".repeat(220));
+  for (const r of rows) {
+    console.log(
+      [
+        String(r.id).padEnd(6),
+        (r.name || "").padEnd(33).slice(0, 33),
+        (r.email || "").padEnd(41).slice(0, 41),
+        r.dnc ? "Y  " : "   ",
+        r.bounced ? "Y  " : "   ",
+        String(r.vadim_blog_mentions).padEnd(3),
+        (r.last_out_subject || "").padEnd(56).slice(0, 56),
+        (r.classify_excerpt || "").slice(0, 120),
+      ].join(" | "),
+    );
+  }
+
+  const actionable = rows.filter((r) => !r.dnc && !r.bounced);
+  console.log(`\nActionable (not DNC, not bounced): ${actionable.length}`);
+  console.log(`Blocked (DNC or bounced):          ${rows.length - actionable.length}`);
+}
+
+// ── cohort-status (read-only) ──────────────────────────────────
+
+async function cmdCohortStatus() {
+  const REQUIRED_COURSES = [
+    "Introduction to agent skills",
+    "Building with the Claude API",
+    "Introduction to Model Context Protocol",
+    "Claude Code in Action",
+  ];
+
+  const cohort = (await sql`
+    SELECT DISTINCT c.id, c.first_name, c.last_name, c.email, c.forwarding_alias AS alias_email
+    FROM contacts c
+    JOIN contact_emails ce ON ce.contact_id = c.id
+    WHERE ce.subject = 'Your @vadim.blog email is ready - start the courses'
+      AND ce.resend_id IS NOT NULL AND ce.resend_id <> ''
+    ORDER BY c.first_name
+  `) as unknown as {
+    id: number;
+    first_name: string;
+    last_name: string | null;
+    email: string;
+    alias_email: string | null;
+  }[];
+
+  console.log(`Cohort size: ${cohort.length}\n`);
+
+  const results: {
+    name: string;
+    email: string;
+    alias: string | null;
+    completions: Record<string, string | null>;
+    complete: boolean;
+    missing: string[];
+    extras: string[];
+  }[] = [];
+
+  for (const c of cohort) {
+    const name = `${c.first_name} ${c.last_name ?? ""}`.trim();
+
+    const emails = c.alias_email
+      ? ((await sql`
+          SELECT received_at, subject FROM received_emails
+          WHERE subject ILIKE '%completion of%'
+            AND (matched_contact_id = ${c.id}
+                 OR to_emails::text ILIKE ${"%" + c.alias_email + "%"})
+          ORDER BY received_at ASC
+        `) as unknown as { received_at: string; subject: string }[])
+      : ((await sql`
+          SELECT received_at, subject FROM received_emails
+          WHERE subject ILIKE '%completion of%' AND matched_contact_id = ${c.id}
+          ORDER BY received_at ASC
+        `) as unknown as { received_at: string; subject: string }[]);
+
+    const completions: Record<string, string | null> = {};
+    for (const course of REQUIRED_COURSES) {
+      const hit = emails.find((e) => e.subject.toLowerCase().includes(`completion of ${course.toLowerCase()}`));
+      completions[course] = hit ? hit.received_at : null;
+    }
+    const extras = emails
+      .filter((e) => {
+        const subj = e.subject.toLowerCase();
+        return !REQUIRED_COURSES.some((rc) => subj.includes(`completion of ${rc.toLowerCase()}`));
+      })
+      .map((e) => e.subject);
+    const missing = REQUIRED_COURSES.filter((rc) => !completions[rc]);
+    results.push({
+      name,
+      email: c.email,
+      alias: c.alias_email,
+      completions,
+      complete: missing.length === 0,
+      missing,
+      extras,
+    });
+  }
+
+  console.log("── CPN cohort completion status ──\n");
+  for (const r of results) {
+    console.log(`${r.complete ? "✓" : "✗"} ${r.name} <${r.email}>${r.alias ? ` (${r.alias})` : ""}`);
+    for (const course of REQUIRED_COURSES) {
+      const when = r.completions[course];
+      console.log(`   ${when ? "  ✓" : "  ✗"} ${course}${when ? "  " + when : "  — not completed"}`);
+    }
+    if (r.extras.length > 0) console.log(`   ⚠ off-path completions: ${r.extras.join(", ")}`);
+    console.log();
+  }
+
+  const done = results.filter((r) => r.complete).length;
+  console.log(`── Summary: ${done}/${results.length} complete ──`);
+  for (const r of results) {
+    console.log(
+      `  ${r.complete ? "✓" : "✗"} ${r.name.padEnd(30)} ${r.complete ? "all 4 done" : `missing: ${r.missing.join(", ")}`}`,
+    );
+  }
+}
+
+// ── custom (ad-hoc one-off send) ───────────────────────────────
+
+async function cmdCustom() {
+  const dryRun = flag("dry-run");
+  const autoSend = flag("auto");
+  const subject = flagStr("subject");
+  const bodyArg = flagStr("body");
+  const bodyFile = flagStr("body-file");
+  const tagsJson = flagStr("tags") ?? '["cpn-outreach","cpn-custom"]';
+  const sequenceType = flagStr("sequence-type") ?? "custom";
+  const idsRaw = flagStr("id");
+  const emailsRaw = flagStr("email");
+
+  if (!subject) die("--subject is required");
+  const body = bodyArg ?? (bodyFile ? readFileSync(bodyFile, "utf-8") : null);
+  if (!body) die("--body or --body-file is required");
+  if (!idsRaw && !emailsRaw) die("--id or --email is required (comma-separated for multiple)");
+
+  const ids = idsRaw ? idsRaw.split(",").map((s) => parseInt(s.trim(), 10)).filter(Number.isFinite) : [];
+  const emails = emailsRaw ? emailsRaw.split(",").map((s) => s.trim()).filter(Boolean) : [];
+
+  const targets: ContactRow[] = [];
+  for (const id of ids) {
+    const rows = (await sql`
+      SELECT id, first_name, last_name, email, forwarding_alias, do_not_contact
+      FROM contacts WHERE id = ${id} LIMIT 1
+    `) as unknown as ContactRow[];
+    if (rows.length === 0) die(`No contact with id=${id}`);
+    targets.push(rows[0]);
+  }
+  for (const e of emails) {
+    const rows = (await sql`
+      SELECT id, first_name, last_name, email, forwarding_alias, do_not_contact
+      FROM contacts WHERE lower(email) = lower(${e}) LIMIT 1
+    `) as unknown as ContactRow[];
+    if (rows.length === 0) die(`No contact with email=${e}`);
+    targets.push(rows[0]);
+  }
+
+  console.log(`\n── CPN custom send ──`);
+  console.log(`  Targets: ${targets.length}`);
+  console.log(`  Subject: ${subject}`);
+  console.log(`  Tags:    ${tagsJson}`);
+  console.log(`  Mode:    ${dryRun ? "DRY RUN" : autoSend ? "AUTO SEND" : "INTERACTIVE"}\n`);
+  console.log(`${body.split("\n").map((l) => `  ${l}`).join("\n")}\n`);
+
+  if (dryRun) {
+    for (const t of targets) {
+      console.log(`  [dry-run] would send to [${t.id}] ${t.first_name} <${t.email}>`);
+    }
+    return;
+  }
+
+  const rl = autoSend ? null : createInterface({ input: process.stdin, output: process.stdout });
+  const ask = (q: string) => new Promise<string>((r) => rl!.question(q, r));
+
+  let sent = 0, skipped = 0, failed = 0;
+  for (let i = 0; i < targets.length; i++) {
+    const t = targets[i];
+    if (t.do_not_contact) {
+      skipped++;
+      console.log(`  → Skipped [${t.id}] ${t.email} (do_not_contact)\n`);
+      continue;
+    }
+    const fullName = `${t.first_name} ${t.last_name ?? ""}`.trim();
+    console.log(`── [${i + 1}/${targets.length}] ${fullName} <${t.email}>`);
+
+    if (rl) {
+      const answer = (await ask("  [S]end / s[K]ip / [Q]uit? ")).trim().toLowerCase();
+      if (answer === "q") break;
+      if (answer === "k") { skipped++; continue; }
+    }
+
+    const parentEmailId = await findParentEmailId(t.id);
+    try {
+      const result = await resend.emails.send({ from: FROM, to: t.email, subject, text: body });
+      if (result.error) {
+        failed++;
+        console.log(`  ✗ Failed: ${result.error.message}\n`);
+        continue;
+      }
+      await sql`
+        INSERT INTO contact_emails
+          (contact_id, resend_id, from_email, to_emails, subject, text_content, status,
+           sent_at, tags, recipient_name, parent_email_id, sequence_type, sequence_number,
+           created_at, updated_at)
+        VALUES
+          (${t.id}, ${result.data?.id ?? ""}, 'contact@vadim.blog',
+           ${JSON.stringify([t.email])}, ${subject}, ${body}, 'sent',
+           now()::text, ${tagsJson}, ${fullName}, ${parentEmailId},
+           ${sequenceType}, '0', now()::text, now()::text)
+      `;
+      sent++;
+      console.log(`  ✓ Sent\n`);
+      if (autoSend) await sleep(500);
+    } catch (err) {
+      failed++;
+      console.log(`  ✗ Error: ${err instanceof Error ? err.message : String(err)}\n`);
+    }
+  }
+  rl?.close();
+
+  console.log(`\n── Summary ──\n  Sent: ${sent}  Skipped: ${skipped}  Failed: ${failed}\n`);
+}
+
 // ── CLI router ─────────────────────────────────────────────────
 
 const COMMANDS: Record<string, () => Promise<void>> = {
@@ -830,6 +1476,12 @@ const COMMANDS: Record<string, () => Promise<void>> = {
   send: cmdSend,
   sync: cmdSync,
   followup: cmdFollowup,
+  "send-one": cmdSendOne,
+  "training-path": cmdTrainingPath,
+  "assign-aliases": cmdAssignAliases,
+  "audit-missing": cmdAuditMissing,
+  "cohort-status": cmdCohortStatus,
+  custom: cmdCustom,
 };
 
 const cmd = process.argv[2];
@@ -837,12 +1489,26 @@ if (!cmd || !COMMANDS[cmd]) {
   console.log(`
   Usage: npx tsx scripts/cpn.ts <command> [flags]
 
-  Commands:
-    import     Import contacts from CSV + queue emails     [--dry-run] [--offset N]
-    campaign   Direct send from CSV via Resend             [--dry-run] [--limit N] [--batch-size N] [--delay N] [--offset N] [--per-day N] [--schedule-minutes N]
-    send       Flush queued emails from DB
-    sync       Sync replies from Resend + classify
-    followup   Follow up on needs_response contacts        [--dry-run] [--auto]
+  Pipeline:
+    import         Import contacts from CSV + queue emails    [--dry-run] [--offset N]
+    campaign       Direct send from CSV via Resend            [--dry-run] [--limit N] [--batch-size N] [--delay N] [--offset N] [--per-day N] [--schedule-minutes N]
+    send           Flush queued emails from DB
+    sync           Sync replies from Resend + classify
+    followup       Follow up on needs_response contacts       [--dry-run] [--auto]
+
+  Templates:
+    send-one       Send one CPN template to one contact       --template <cpn_followup|cpn_training_path|cpn_email_ready|cpn_waiting_reply> (--id N | --email E) [--alias X] [--auto] [--dry-run] [--force]
+    training-path  Bulk cpn_training_path to interested       [--dry-run] [--auto] [--only-id N]
+
+  Aliases:
+    assign-aliases Auto-assign forwarding_alias               [--dry-run]
+
+  Audits (read-only):
+    audit-missing  Interested-but-not-onboarded report
+    cohort-status  4-course completion table
+
+  Ad-hoc:
+    custom         One-off send to N contacts                 (--id N[,N...] | --email E[,E...]) --subject "..." (--body "..." | --body-file PATH) [--tags '[...]'] [--sequence-type X] [--auto] [--dry-run]
 `);
   process.exit(cmd ? 1 : 0);
 }
