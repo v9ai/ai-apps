@@ -19,6 +19,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import time
 from typing import Any
 
@@ -35,12 +36,37 @@ log = logging.getLogger(__name__)
 
 GH_MEMBER_CAP = 25  # hard cap per batch — avoid burning GitHub rate limit
 
+# Generic tokens that on their own don't anchor a paper search to a specific
+# company. When a company name is composed only of these (e.g. "Capital
+# Partners", "AI Group"), the papers_branch query collapses to a substring
+# match and pulls unrelated researchers — see the Durlston Partners incident
+# (2026-04-27) where 18 false-positive Researcher contacts were inserted.
+PAPERS_BRANCH_STOPWORDS: set[str] = {
+    "partners", "solutions", "group", "capital", "ventures", "labs",
+    "consulting", "advisors", "associates", "holdings", "systems",
+    "technologies", "tech", "services", "ai", "ml", "data", "analytics",
+    "inc", "llc", "ltd", "corp", "company", "co", "studio", "studios",
+    "agency", "team", "global", "international", "worldwide", "the",
+}
+
+# Categories where paper-author discovery is structurally inapplicable —
+# researchers don't work at staffing/agency firms.
+PAPERS_BRANCH_BLOCKED_CATEGORIES: set[str] = {"STAFFING", "AGENCY", "CONSULTANCY"}
+
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 
 def _name_key(first: str, last: str) -> tuple[str, str]:
     return (first.strip().lower(), last.strip().lower())
+
+
+def _has_unique_anchor(company_name: str) -> bool:
+    """True if the name has at least one token of length >= 4 not in the
+    stopword set. Without one, a paper search degrades into substring matches
+    on the generic word."""
+    tokens = [t for t in re.split(r"[^a-z0-9]+", company_name.lower()) if t]
+    return any(len(t) >= 4 and t not in PAPERS_BRANCH_STOPWORDS for t in tokens)
 
 
 def _email_guesses(first: str, last: str, domain: str) -> list[str]:
@@ -76,7 +102,7 @@ async def load(state: ContactDiscoveryState) -> dict:
         return {"_error": str(e)}
 
     sql = """
-        SELECT id, name, canonical_domain, github_org
+        SELECT id, name, canonical_domain, github_org, category
         FROM companies
         WHERE id = %s
         LIMIT 1
@@ -99,6 +125,7 @@ async def load(state: ContactDiscoveryState) -> dict:
             "name": rec.get("name") or "",
             "canonical_domain": rec.get("canonical_domain") or "",
             "github_org": rec.get("github_org") or "",
+            "category": (rec.get("category") or "").upper(),
         }
     }
 
@@ -194,13 +221,25 @@ async def papers_branch(state: ContactDiscoveryState) -> dict:
     t0 = time.perf_counter()
     company = state.get("company") or {}
     company_name = (company.get("name") or "").strip()
+    category = (company.get("category") or "").upper()
     if not company_name:
+        return {"papers": [], "agent_timings": {"papers_branch": round(time.perf_counter() - t0, 3)}}
+
+    if category in PAPERS_BRANCH_BLOCKED_CATEGORIES:
+        log.info("papers_branch: skipping — category=%s for '%s'", category, company_name)
+        return {"papers": [], "agent_timings": {"papers_branch": round(time.perf_counter() - t0, 3)}}
+
+    if not _has_unique_anchor(company_name):
+        log.info("papers_branch: skipping — no unique anchor token in '%s'", company_name)
         return {"papers": [], "agent_timings": {"papers_branch": round(time.perf_counter() - t0, 3)}}
 
     try:
         from research_client import search_papers  # lazy import — dep is optional
 
-        query = f"{company_name} AI"
+        # Quote the company name so the search engine treats it as a phrase
+        # rather than free-text tokens. Generic words like "partners" can
+        # otherwise pull unrelated authors.
+        query = f'"{company_name}" AI'
         raw = await search_papers(query, limit=20)
     except Exception as e:
         log.warning("papers_branch: search_papers failed: %s", e)
