@@ -1,0 +1,8 @@
+mutation GenerateMedicationDeepResearch($slug: String!) {
+  generateMedicationDeepResearch(slug: $slug) {
+    success
+    message
+    jobId
+    count
+  }
+}

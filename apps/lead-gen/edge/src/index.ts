@@ -480,6 +480,50 @@ async function handleJobsD1Archive(req: Request, env: Env): Promise<Response> {
   return json(req, { archived: true });
 }
 
+// ── D1 posts read: fetch LinkedIn posts for a company by slug ──
+//
+// GET /api/companies/:slug/posts/d1[?limit=N]
+//   headers: Authorization: Bearer <JOBS_D1_TOKEN>
+//   reply:   { company_key, count, posts: [...] }
+
+async function handleCompanyPostsD1(
+  req: Request,
+  env: Env,
+  slug: string,
+): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "GET") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  const url = new URL(req.url);
+  const limitRaw = parseInt(url.searchParams.get("limit") ?? "1000", 10);
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 5000) : 1000;
+
+  const res = await env.DB.prepare(
+    `SELECT id, company_key, author_kind, author_name, author_url, post_url,
+            post_text, posted_date, reactions_count, comments_count, reposts_count,
+            media_type, is_repost, original_author, scraped_at
+       FROM posts
+      WHERE company_key = ?
+      ORDER BY id DESC
+      LIMIT ?`,
+  )
+    .bind(slug, limit)
+    .all();
+
+  const posts = (res.results ?? []) as Array<Record<string, unknown>>;
+  return json(req, { company_key: slug, count: posts.length, posts });
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
@@ -492,6 +536,12 @@ export default {
     }
     if (url.pathname === "/api/jobs/d1/opportunities/archive") {
       return handleJobsD1Archive(req, env);
+    }
+
+    // GET /api/companies/:slug/posts/d1
+    {
+      const m = /^\/api\/companies\/([^/]+)\/posts\/d1\/?$/.exec(url.pathname);
+      if (m) return handleCompanyPostsD1(req, env, decodeURIComponent(m[1]));
     }
 
     const { tier, key, bodyText } = await classify(req, url);
