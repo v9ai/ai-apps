@@ -1,6 +1,7 @@
 import DataLoader from "dataloader";
 import { eq, inArray } from "drizzle-orm";
 import type { DbInstance } from "@/db";
+import { listD1Posts, type D1PostRow } from "@/lib/posts-d1-client";
 import {
   companies,
   companyFacts,
@@ -9,7 +10,6 @@ import {
   contacts,
   contactEmails,
   emailCampaigns,
-  linkedinPosts,
   intentSignals,
   receivedEmails,
   opportunities,
@@ -27,7 +27,6 @@ import type {
   Contact,
   ContactEmail,
   EmailCampaign,
-  LinkedInPost,
   IntentSignal,
   ReceivedEmail,
   Opportunity,

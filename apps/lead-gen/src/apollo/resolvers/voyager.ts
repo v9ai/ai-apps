@@ -11,14 +11,15 @@
  * the token; in dev/scripts it can be passed via the x-voyager-csrf header.
  */
 
-import { eq, and, inArray, sql, desc } from "drizzle-orm";
-import { linkedinPosts, companies, intentSignals } from "@/db/schema";
+import { eq, and, inArray, desc } from "drizzle-orm";
+import { companies, intentSignals } from "@/db/schema";
 import type {
   Company as DbCompany,
   NewIntentSignal,
 } from "@/db/schema";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import { listD1Posts, upsertD1Posts, type UpsertPostInput } from "@/lib/posts-d1-client";
 
 // ── Voyager API constants ────────────────────────────────────────────
 
@@ -223,29 +224,25 @@ function extractCsrfToken(context: GraphQLContext): string {
 
 // ── Helpers: Voyager → linkedin_posts mapping ────────────────────────
 
-function voyagerCardToLinkedInPostValues(
+function voyagerCardToD1PostInput(
   card: VoyagerJobCard,
   companyId: number | null,
-): {
-  url: string;
-  type: "job";
-  company_id: number | null;
-  title: string | null;
-  content: string | null;
-  location: string | null;
-  employment_type: string | null;
-  posted_at: string | null;
-  raw_data: string;
-} {
+  companyKey: string,
+  companyName: string | null,
+): UpsertPostInput {
   return {
-    url: card.url,
-    type: "job" as const,
+    type: "job",
+    company_key: companyKey,
     company_id: companyId,
+    company_name: companyName,
+    post_url: card.url,
     title: card.title,
     content: null, // Voyager jobCards don't include full description
     location: card.location,
     employment_type: card.employmentType,
     posted_at: card.postedAt,
+    voyager_urn: card.urn,
+    voyager_workplace_type: card.workplaceType,
     raw_data: JSON.stringify({
       voyager: true,
       urn: card.urn,
@@ -441,23 +438,23 @@ export const voyagerResolvers = {
       const limit = Math.min(args.limit ?? 50, 200);
       const offset = args.offset ?? 0;
 
-      // Query linkedin_posts where type='job', company_id matches,
-      // and raw_data contains voyager metadata
-      const rows = await context.db
-        .select()
-        .from(linkedinPosts)
-        .where(
-          and(
-            eq(linkedinPosts.company_id, args.companyId),
-            eq(linkedinPosts.type, "job"),
-            sql`${linkedinPosts.raw_data}::jsonb->>'voyager' = 'true'`,
-          ),
-        )
-        .orderBy(desc(linkedinPosts.posted_at))
-        .limit(limit)
-        .offset(offset);
-
-      return rows;
+      // Posts now in D1; the raw_data->>'voyager' filter happens client-side.
+      // The list is page-bounded so a wider fetch + filter is fine.
+      const all = await listD1Posts({
+        type: "job",
+        companyId: args.companyId,
+        limit: Math.min(limit + offset + 100, 500),
+      });
+      const filtered = all.filter((p) => {
+        if (!p.raw_data) return false;
+        try {
+          const r = JSON.parse(p.raw_data);
+          return r?.voyager === true;
+        } catch {
+          return false;
+        }
+      });
+      return filtered.slice(offset, offset + limit);
     },
 
     /**
@@ -617,34 +614,24 @@ export const voyagerResolvers = {
           const companyId = matchedCompany?.id ?? null;
           if (matchedCompany) totalCompaniesMatched++;
 
-          // Upsert job cards into linkedin_posts
+          // Upsert job cards into D1 `posts`. D1 requires company_key — the
+          // matched company always has one; if there's no match (companyId
+          // null), fall back to a synthetic key derived from the LinkedIn
+          // numericId so we don't drop rows.
           if (cards.length > 0) {
-            const CHUNK = 50;
+            const company_key = matchedCompany?.key ?? `_voyager_${numericId}`;
+            const company_name = matchedCompany?.name ?? null;
+
+            const CHUNK = 100;
             for (let i = 0; i < cards.length; i += CHUNK) {
               const chunk = cards.slice(i, i + CHUNK);
-              const values = chunk.map((card) =>
-                voyagerCardToLinkedInPostValues(card, companyId),
+              const inputs: UpsertPostInput[] = chunk.map((card) =>
+                voyagerCardToD1PostInput(card, companyId, company_key, company_name),
               );
 
               try {
-                const result = await context.db
-                  .insert(linkedinPosts)
-                  .values(values)
-                  .onConflictDoUpdate({
-                    target: linkedinPosts.url,
-                    set: {
-                      type: sql`excluded.type`,
-                      company_id: sql`excluded.company_id`,
-                      title: sql`excluded.title`,
-                      location: sql`excluded.location`,
-                      employment_type: sql`excluded.employment_type`,
-                      posted_at: sql`excluded.posted_at`,
-                      raw_data: sql`excluded.raw_data`,
-                    },
-                  })
-                  .returning();
-
-                totalUpserted += result.length;
+                const r = await upsertD1Posts(inputs);
+                totalUpserted += r.upserted;
               } catch (err) {
                 errors.push(
                   `Upsert chunk for company ${numericId}: ${err instanceof Error ? err.message : String(err)}`,
