@@ -171,6 +171,19 @@ function WizardPage() {
     }
   }, [searchParams]);
 
+  // Pre-select the hub when arriving from /hubs/[id] with ?hub=PrimeHub.
+  // Only fires once on mount with a valid hub type — subsequent step changes
+  // must not snap back to step 1.
+  useEffect(() => {
+    const hubParam = searchParams.get("hub");
+    const valid: HubType[] = ["EssentialHub", "TechnicHub", "MoveHub", "PrimeHub", "CityHub"];
+    if (hubParam && (valid as string[]).includes(hubParam)) {
+      setHub(hubParam as HubType);
+      setStep((s) => (s === 0 ? 1 : s));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selectHub = useCallback((h: HubType) => {
     setHub(h);
     setStep(1);

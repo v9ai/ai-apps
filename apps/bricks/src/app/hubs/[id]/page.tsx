@@ -33,6 +33,7 @@ const LABELS = {
     backToParts: "← Back to My Parts",
     myParts: "← My Parts",
     pybricksDocs: "Pybricks {hub} docs →",
+    newScript: "+ New script",
     capabilities: "Capabilities",
     ports: "Ports",
     games: "Games",
@@ -50,6 +51,7 @@ const LABELS = {
     backToParts: "← Înapoi la Piesele mele",
     myParts: "← Piesele mele",
     pybricksDocs: "Documentație Pybricks {hub} →",
+    newScript: "+ Script nou",
     capabilities: "Capabilități",
     ports: "Porturi",
     games: "Jocuri",
@@ -207,18 +209,15 @@ export default function HubPage() {
         </div>
       </div>
 
-      {hub.docsUrl && (
-        <a
-          href={hub.docsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+      <div className={css({ mt: "5", display: "flex", flexWrap: "wrap", gap: "3" })}>
+        <Link
+          href={`/scripts/new?hub=${encodeURIComponent(hub.hubType)}`}
           className={css({
-            mt: "5",
             display: "inline-flex",
             alignItems: "center",
             gap: "2",
             rounded: "brick",
-            bg: "lego.blue",
+            bg: "lego.red",
             px: "5",
             py: "2.5",
             fontSize: "sm",
@@ -227,12 +226,44 @@ export default function HubPage() {
             color: "white",
             textDecoration: "none",
             transition: "all 0.15s ease",
-            _hover: { bg: "#0080D0", transform: "translateY(-1px)" },
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #A30008, 0 3px 6px rgba(0,0,0,0.3)",
+            _hover: {
+              bg: "#FF1A1A",
+              transform: "translateY(-1px)",
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 0 #A30008, 0 5px 10px rgba(0,0,0,0.35)",
+            },
           })}
         >
-          {t.pybricksDocs.replace("{hub}", hubDisplayName(hubType))}
-        </a>
-      )}
+          {t.newScript}
+        </Link>
+        {hub.docsUrl && (
+          <a
+            href={hub.docsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={css({
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "2",
+              rounded: "brick",
+              bg: "lego.blue",
+              px: "5",
+              py: "2.5",
+              fontSize: "sm",
+              fontWeight: "800",
+              fontFamily: "display",
+              color: "white",
+              textDecoration: "none",
+              transition: "all 0.15s ease",
+              _hover: { bg: "#0080D0", transform: "translateY(-1px)" },
+            })}
+          >
+            {t.pybricksDocs.replace("{hub}", hubDisplayName(hubType))}
+          </a>
+        )}
+      </div>
 
       {capabilities.length > 0 && (
         <section className={css({ mt: "8" })}>
