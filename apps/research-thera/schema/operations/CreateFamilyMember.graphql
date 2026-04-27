@@ -11,6 +11,7 @@ mutation CreateFamilyMember($input: CreateFamilyMemberInput!) {
     ageYears
     dateOfBirth
     bio
+    allergies
     createdAt
     updatedAt
   }

@@ -13,6 +13,7 @@ query GetFamilyMember($id: Int, $slug: String) {
     occupation
     dateOfBirth
     bio
+    allergies
     createdAt
     updatedAt
     shares {

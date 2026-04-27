@@ -329,6 +329,7 @@ export type CreateContactInput = {
 
 export type CreateFamilyMemberInput = {
   ageYears?: InputMaybe<Scalars['Int']['input']>;
+  allergies?: InputMaybe<Scalars['String']['input']>;
   bio?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
@@ -738,6 +739,7 @@ export type FamilyMember = {
   __typename?: 'FamilyMember';
   affirmations: Array<Affirmation>;
   ageYears?: Maybe<Scalars['Int']['output']>;
+  allergies?: Maybe<Scalars['String']['output']>;
   behaviorObservations: Array<BehaviorObservation>;
   bio?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
@@ -2700,6 +2702,7 @@ export type UpdateContactInput = {
 
 export type UpdateFamilyMemberInput = {
   ageYears?: InputMaybe<Scalars['Int']['input']>;
+  allergies?: InputMaybe<Scalars['String']['input']>;
   bio?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
@@ -2903,7 +2906,7 @@ export type CreateFamilyMemberMutationVariables = Exact<{
 }>;
 
 
-export type CreateFamilyMemberMutation = { __typename?: 'Mutation', createFamilyMember: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, ageYears?: number | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string } };
+export type CreateFamilyMemberMutation = { __typename?: 'Mutation', createFamilyMember: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, ageYears?: number | null, dateOfBirth?: string | null, bio?: string | null, allergies?: string | null, createdAt: string, updatedAt: string } };
 
 export type CreateGameMutationVariables = Exact<{
   input: CreateGameInput;
@@ -3457,12 +3460,12 @@ export type GetFamilyMemberQueryVariables = Exact<{
 }>;
 
 
-export type GetFamilyMemberQuery = { __typename?: 'Query', familyMember?: { __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, goals: Array<{ __typename?: 'Goal', id: number, title: string, status: string, description?: string | null, createdAt: string }>, behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, familyMemberId: number, goalId?: number | null, createdBy: string, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string, updatedAt: string }>, teacherFeedbacks: Array<{ __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string }>, issues: Array<{ __typename?: 'Issue', id: number, feedbackId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string }>, relationships: Array<{ __typename?: 'Relationship', id: number, createdBy: string, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, context?: string | null, startDate?: string | null, status: RelationshipStatus, createdAt: string, updatedAt: string, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null }> } | null };
+export type GetFamilyMemberQuery = { __typename?: 'Query', familyMember?: { __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, allergies?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, goals: Array<{ __typename?: 'Goal', id: number, title: string, status: string, description?: string | null, createdAt: string }>, behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, familyMemberId: number, goalId?: number | null, createdBy: string, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string, updatedAt: string }>, teacherFeedbacks: Array<{ __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string }>, issues: Array<{ __typename?: 'Issue', id: number, feedbackId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string }>, relationships: Array<{ __typename?: 'Relationship', id: number, createdBy: string, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, context?: string | null, startDate?: string | null, status: RelationshipStatus, createdAt: string, updatedAt: string, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null }> } | null };
 
 export type GetFamilyMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetFamilyMembersQuery = { __typename?: 'Query', familyMembers: Array<{ __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, relationships: Array<{ __typename?: 'Relationship', id: number, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, status: RelationshipStatus, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null }> }> };
+export type GetFamilyMembersQuery = { __typename?: 'Query', familyMembers: Array<{ __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, allergies?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, relationships: Array<{ __typename?: 'Relationship', id: number, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, status: RelationshipStatus, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null }> }> };
 
 export type GetGameQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3830,7 +3833,7 @@ export type UpdateFamilyMemberMutationVariables = Exact<{
 }>;
 
 
-export type UpdateFamilyMemberMutation = { __typename?: 'Mutation', updateFamilyMember: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, ageYears?: number | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string } };
+export type UpdateFamilyMemberMutation = { __typename?: 'Mutation', updateFamilyMember: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, ageYears?: number | null, dateOfBirth?: string | null, bio?: string | null, allergies?: string | null, createdAt: string, updatedAt: string } };
 
 export type UpdateGameMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -4633,6 +4636,7 @@ export const CreateFamilyMemberDocument = gql`
     ageYears
     dateOfBirth
     bio
+    allergies
     createdAt
     updatedAt
   }
@@ -8064,6 +8068,7 @@ export const GetFamilyMemberDocument = gql`
     occupation
     dateOfBirth
     bio
+    allergies
     createdAt
     updatedAt
     shares {
@@ -8198,6 +8203,7 @@ export const GetFamilyMembersDocument = gql`
     occupation
     dateOfBirth
     bio
+    allergies
     createdAt
     updatedAt
     shares {
@@ -11276,6 +11282,7 @@ export const UpdateFamilyMemberDocument = gql`
     ageYears
     dateOfBirth
     bio
+    allergies
     createdAt
     updatedAt
   }

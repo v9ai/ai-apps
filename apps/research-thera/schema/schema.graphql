@@ -1037,6 +1037,7 @@ type FamilyMember {
   relationship: String
   dateOfBirth: String
   bio: String
+  allergies: String
   email: String
   phone: String
   location: String
@@ -1059,6 +1060,7 @@ input CreateFamilyMemberInput {
   relationship: String
   dateOfBirth: String
   bio: String
+  allergies: String
   email: String
   phone: String
   location: String
@@ -1072,6 +1074,7 @@ input UpdateFamilyMemberInput {
   relationship: String
   dateOfBirth: String
   bio: String
+  allergies: String
   email: String
   phone: String
   location: String

@@ -289,6 +289,7 @@ input CreateContactInput {
 
 input CreateFamilyMemberInput {
   ageYears: Int
+  allergies: String
   bio: String
   dateOfBirth: String
   email: String
@@ -663,6 +664,7 @@ type ExtractedIssue {
 type FamilyMember {
   affirmations: [Affirmation!]!
   ageYears: Int
+  allergies: String
   behaviorObservations(goalId: Int): [BehaviorObservation!]!
   bio: String
   createdAt: String!
@@ -1739,6 +1741,7 @@ input UpdateContactInput {
 
 input UpdateFamilyMemberInput {
   ageYears: Int
+  allergies: String
   bio: String
   dateOfBirth: String
   email: String

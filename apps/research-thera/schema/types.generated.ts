@@ -327,6 +327,7 @@ export type CreateContactInput = {
 
 export type CreateFamilyMemberInput = {
   ageYears?: InputMaybe<Scalars['Int']['input']>;
+  allergies?: InputMaybe<Scalars['String']['input']>;
   bio?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
@@ -732,6 +733,7 @@ export type FamilyMember = {
   __typename?: 'FamilyMember';
   affirmations: Array<Affirmation>;
   ageYears?: Maybe<Scalars['Int']['output']>;
+  allergies?: Maybe<Scalars['String']['output']>;
   behaviorObservations: Array<BehaviorObservation>;
   bio?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
@@ -2677,6 +2679,7 @@ export type UpdateContactInput = {
 
 export type UpdateFamilyMemberInput = {
   ageYears?: InputMaybe<Scalars['Int']['input']>;
+  allergies?: InputMaybe<Scalars['String']['input']>;
   bio?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
@@ -3692,6 +3695,7 @@ export type ExtractedIssueResolvers<ContextType = GraphQLContext, ParentType ext
 export type FamilyMemberResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FamilyMember'] = ResolversParentTypes['FamilyMember']> = {
   affirmations?: Resolver<Array<ResolversTypes['Affirmation']>, ParentType, ContextType>;
   ageYears?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  allergies?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   behaviorObservations?: Resolver<Array<ResolversTypes['BehaviorObservation']>, ParentType, ContextType, Partial<FamilyMemberbehaviorObservationsArgs>>;
   bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

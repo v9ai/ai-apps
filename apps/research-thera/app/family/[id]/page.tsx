@@ -10,6 +10,7 @@ import {
   Badge,
   Spinner,
   Button,
+  Callout,
   TextField,
   TextArea,
   Select,
@@ -17,7 +18,7 @@ import {
   AlertDialog,
   Separator,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon, Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, ExclamationTriangleIcon, Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
@@ -115,6 +116,7 @@ function FamilyMemberContent() {
   const [editAgeYears, setEditAgeYears] = useState("");
   const [editDateOfBirth, setEditDateOfBirth] = useState("");
   const [editBio, setEditBio] = useState("");
+  const [editAllergies, setEditAllergies] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
 
   // Share form state
@@ -203,6 +205,7 @@ function FamilyMemberContent() {
     setEditAgeYears(member.ageYears ? String(member.ageYears) : "");
     setEditDateOfBirth(member.dateOfBirth ?? "");
     setEditBio(member.bio ?? "");
+    setEditAllergies(member.allergies ?? "");
     setEditError(null);
     setEditOpen(true);
   }
@@ -227,6 +230,7 @@ function FamilyMemberContent() {
           ageYears: editAgeYears ? parseInt(editAgeYears, 10) : undefined,
           dateOfBirth: editDateOfBirth || undefined,
           bio: editBio.trim() || undefined,
+          allergies: editAllergies.trim() || undefined,
         },
       },
     });
@@ -359,13 +363,25 @@ function FamilyMemberContent() {
                 </Text>
               </Flex>
             )}
+            {member.allergies && (
+              <Callout.Root color="red" size="1">
+                <Callout.Icon>
+                  <ExclamationTriangleIcon />
+                </Callout.Icon>
+                <Callout.Text>
+                  <Text weight="medium">Alergii: </Text>
+                  {member.allergies}
+                </Callout.Text>
+              </Callout.Root>
+            )}
             {!member.email &&
               !member.phone &&
               !member.location &&
               !member.occupation &&
               !member.ageYears &&
               !member.dateOfBirth &&
-              !member.bio && (
+              !member.bio &&
+              !member.allergies && (
                 <Text size="2" color="gray">
                   No additional details
                 </Text>
@@ -1013,6 +1029,18 @@ function FamilyMemberContent() {
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
                   rows={3}
+                  disabled={updating}
+                />
+              </label>
+              <label>
+                <Text as="div" size="2" mb="1" weight="medium">
+                  Alergii
+                </Text>
+                <TextArea
+                  placeholder="ex. polen, alune, lactate"
+                  value={editAllergies}
+                  onChange={(e) => setEditAllergies(e.target.value)}
+                  rows={2}
                   disabled={updating}
                 />
               </label>

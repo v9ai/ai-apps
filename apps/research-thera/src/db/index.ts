@@ -32,6 +32,7 @@ export async function listFamilyMembers(userId: string) {
     relationship: (row.relationship as string) || null,
     dateOfBirth: (row.date_of_birth as string) || null,
     bio: (row.bio as string) || null,
+    allergies: (row.allergies as string) || null,
     email: (row.email as string) || null,
     phone: (row.phone as string) || null,
     location: (row.location as string) || null,
@@ -55,6 +56,7 @@ export async function getFamilyMember(id: number) {
     relationship: (row.relationship as string) || null,
     dateOfBirth: (row.date_of_birth as string) || null,
     bio: (row.bio as string) || null,
+    allergies: (row.allergies as string) || null,
     email: (row.email as string) || null,
     phone: (row.phone as string) || null,
     location: (row.location as string) || null,
@@ -78,6 +80,7 @@ export async function getSelfFamilyMember(userId: string) {
     relationship: (row.relationship as string) || null,
     dateOfBirth: (row.date_of_birth as string) || null,
     bio: (row.bio as string) || null,
+    allergies: (row.allergies as string) || null,
     email: (row.email as string) || null,
     phone: (row.phone as string) || null,
     location: (row.location as string) || null,
@@ -101,6 +104,7 @@ export async function getFamilyMemberBySlug(slug: string, userId: string) {
     relationship: (row.relationship as string) || null,
     dateOfBirth: (row.date_of_birth as string) || null,
     bio: (row.bio as string) || null,
+    allergies: (row.allergies as string) || null,
     email: (row.email as string) || null,
     phone: (row.phone as string) || null,
     location: (row.location as string) || null,
@@ -143,6 +147,7 @@ export async function createFamilyMember(params: {
   relationship?: string | null;
   dateOfBirth?: string | null;
   bio?: string | null;
+  allergies?: string | null;
   email?: string | null;
   phone?: string | null;
   location?: string | null;
@@ -150,8 +155,8 @@ export async function createFamilyMember(params: {
 }): Promise<number> {
   const slug = await generateFamilyMemberSlug(params.firstName, params.userId);
   const rows = await neonSql`
-    INSERT INTO family_members (user_id, slug, first_name, name, age_years, relationship, date_of_birth, bio, email, phone, location, occupation, created_at, updated_at)
-    VALUES (${params.userId}, ${slug}, ${params.firstName}, ${params.name ?? null}, ${params.ageYears ?? null}, ${params.relationship ?? null}, ${params.dateOfBirth ?? null}, ${params.bio ?? null}, ${params.email ?? null}, ${params.phone ?? null}, ${params.location ?? null}, ${params.occupation ?? null}, NOW(), NOW())
+    INSERT INTO family_members (user_id, slug, first_name, name, age_years, relationship, date_of_birth, bio, allergies, email, phone, location, occupation, created_at, updated_at)
+    VALUES (${params.userId}, ${slug}, ${params.firstName}, ${params.name ?? null}, ${params.ageYears ?? null}, ${params.relationship ?? null}, ${params.dateOfBirth ?? null}, ${params.bio ?? null}, ${params.allergies ?? null}, ${params.email ?? null}, ${params.phone ?? null}, ${params.location ?? null}, ${params.occupation ?? null}, NOW(), NOW())
     RETURNING id`;
   return rows[0].id as number;
 }
@@ -166,6 +171,7 @@ export async function updateFamilyMember(
     relationship?: string | null;
     dateOfBirth?: string | null;
     bio?: string | null;
+    allergies?: string | null;
     email?: string | null;
     phone?: string | null;
     location?: string | null;
@@ -181,6 +187,7 @@ export async function updateFamilyMember(
   if (params.relationship !== undefined) { sets.push("relationship = ?"); args.push(params.relationship); }
   if (params.dateOfBirth !== undefined) { sets.push("date_of_birth = ?"); args.push(params.dateOfBirth); }
   if (params.bio !== undefined) { sets.push("bio = ?"); args.push(params.bio); }
+  if (params.allergies !== undefined) { sets.push("allergies = ?"); args.push(params.allergies); }
   if (params.email !== undefined) { sets.push("email = ?"); args.push(params.email); }
   if (params.phone !== undefined) { sets.push("phone = ?"); args.push(params.phone); }
   if (params.location !== undefined) { sets.push("location = ?"); args.push(params.location); }
@@ -308,6 +315,7 @@ export async function getSharedFamilyMembers(viewerEmail: string) {
     relationship: (row.relationship as string) || null,
     dateOfBirth: (row.date_of_birth as string) || null,
     bio: (row.bio as string) || null,
+    allergies: (row.allergies as string) || null,
     email: (row.email as string) || null,
     phone: (row.phone as string) || null,
     location: (row.location as string) || null,
@@ -3533,6 +3541,7 @@ export async function findFamilyMemberByFirstName(userId: string, firstName: str
     relationship: (row.relationship as string) || null,
     dateOfBirth: (row.date_of_birth as string) || null,
     bio: (row.bio as string) || null,
+    allergies: (row.allergies as string) || null,
     email: (row.email as string) || null,
     phone: (row.phone as string) || null,
     location: (row.location as string) || null,

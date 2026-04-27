@@ -22,6 +22,7 @@ export const createFamilyMember: NonNullable<MutationResolvers['createFamilyMemb
     relationship: args.input.relationship ?? null,
     dateOfBirth: args.input.dateOfBirth ?? null,
     bio: args.input.bio ?? null,
+    allergies: args.input.allergies ?? null,
     email: args.input.email ?? null,
     phone: args.input.phone ?? null,
     location: args.input.location ?? null,

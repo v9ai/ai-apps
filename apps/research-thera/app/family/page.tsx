@@ -72,6 +72,7 @@ function FamilyListContent() {
   const [ageYears, setAgeYears] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [bio, setBio] = useState("");
+  const [allergies, setAllergies] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -114,6 +115,7 @@ function FamilyListContent() {
     setAgeYears("");
     setDateOfBirth("");
     setBio("");
+    setAllergies("");
     setFormError(null);
   }
 
@@ -137,6 +139,7 @@ function FamilyListContent() {
           ageYears: ageYears ? parseInt(ageYears, 10) : undefined,
           dateOfBirth: dateOfBirth || undefined,
           bio: bio.trim() || undefined,
+          allergies: allergies.trim() || undefined,
         },
       },
     });
@@ -348,6 +351,18 @@ function FamilyListContent() {
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     rows={3}
+                    disabled={creating}
+                  />
+                </label>
+                <label>
+                  <Text as="div" size="2" mb="1" weight="medium">
+                    Alergii
+                  </Text>
+                  <TextArea
+                    placeholder="ex. polen, alune, lactate"
+                    value={allergies}
+                    onChange={(e) => setAllergies(e.target.value)}
+                    rows={2}
                     disabled={creating}
                   />
                 </label>

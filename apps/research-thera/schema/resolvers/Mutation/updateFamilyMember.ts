@@ -18,6 +18,7 @@ export const updateFamilyMember: NonNullable<MutationResolvers['updateFamilyMemb
     relationship: args.input.relationship,
     dateOfBirth: args.input.dateOfBirth,
     bio: args.input.bio,
+    allergies: args.input.allergies,
     email: args.input.email,
     phone: args.input.phone,
     location: args.input.location,
