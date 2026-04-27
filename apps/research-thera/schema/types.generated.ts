@@ -971,6 +971,22 @@ export type ExtractedIssue = {
   title: Scalars['String']['output'];
 };
 
+export type FamilyDocument = {
+  __typename?: 'FamilyDocument';
+  content?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  documentDate?: Maybe<Scalars['String']['output']>;
+  documentType: Scalars['String']['output'];
+  externalUrl?: Maybe<Scalars['String']['output']>;
+  familyMemberId: Scalars['Int']['output'];
+  fileName?: Maybe<Scalars['String']['output']>;
+  filePath?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  source?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
 export type FamilyMember = {
   __typename?: 'FamilyMember';
   affirmations: Array<Affirmation>;
@@ -2629,6 +2645,7 @@ export type Query = {
   deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
   doctor?: Maybe<Doctor>;
   doctors: Array<Doctor>;
+  familyDocuments: Array<FamilyDocument>;
   familyMember?: Maybe<FamilyMember>;
   familyMembers: Array<FamilyMember>;
   game?: Maybe<Game>;
@@ -2774,6 +2791,11 @@ export type QuerydeepIssueAnalysisArgs = {
 
 export type QuerydoctorArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryfamilyDocumentsArgs = {
+  familyMemberId: Scalars['Int']['input'];
 };
 
 
@@ -3629,6 +3651,7 @@ export type ResolversTypes = {
   EvidenceLocator: ResolverTypeWrapper<EvidenceLocator>;
   EvidencePolarity: ResolverTypeWrapper<'CONTRADICTS' | 'IRRELEVANT' | 'MIXED' | 'SUPPORTS'>;
   ExtractedIssue: ResolverTypeWrapper<ExtractedIssue>;
+  FamilyDocument: ResolverTypeWrapper<FamilyDocument>;
   FamilyMember: ResolverTypeWrapper<Omit<FamilyMember, 'affirmations' | 'behaviorObservations' | 'goals' | 'issues' | 'relationships' | 'shares' | 'teacherFeedbacks'> & { affirmations: Array<ResolversTypes['Affirmation']>, behaviorObservations: Array<ResolversTypes['BehaviorObservation']>, goals: Array<ResolversTypes['Goal']>, issues: Array<ResolversTypes['Issue']>, relationships: Array<ResolversTypes['Relationship']>, shares: Array<ResolversTypes['FamilyMemberShare']>, teacherFeedbacks: Array<ResolversTypes['TeacherFeedback']> }>;
   FamilyMemberShare: ResolverTypeWrapper<Omit<FamilyMemberShare, 'role'> & { role: ResolversTypes['FamilyMemberShareRole'] }>;
   FamilyMemberShareRole: ResolverTypeWrapper<'EDITOR'>;
@@ -3864,6 +3887,7 @@ export type ResolversParentTypes = {
   EvidenceItem: EvidenceItem;
   EvidenceLocator: EvidenceLocator;
   ExtractedIssue: ExtractedIssue;
+  FamilyDocument: FamilyDocument;
   FamilyMember: Omit<FamilyMember, 'affirmations' | 'behaviorObservations' | 'goals' | 'issues' | 'relationships' | 'shares' | 'teacherFeedbacks'> & { affirmations: Array<ResolversParentTypes['Affirmation']>, behaviorObservations: Array<ResolversParentTypes['BehaviorObservation']>, goals: Array<ResolversParentTypes['Goal']>, issues: Array<ResolversParentTypes['Issue']>, relationships: Array<ResolversParentTypes['Relationship']>, shares: Array<ResolversParentTypes['FamilyMemberShare']>, teacherFeedbacks: Array<ResolversParentTypes['TeacherFeedback']> };
   FamilyMemberShare: FamilyMemberShare;
   FamilySystemInsight: FamilySystemInsight;
@@ -4563,6 +4587,21 @@ export type ExtractedIssueResolvers<ContextType = GraphQLContext, ParentType ext
   recommendations?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type FamilyDocumentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FamilyDocument'] = ResolversParentTypes['FamilyDocument']> = {
+  content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  documentDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  documentType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  externalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  familyMemberId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  fileName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  filePath?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type FamilyMemberResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FamilyMember'] = ResolversParentTypes['FamilyMember']> = {
@@ -5390,6 +5429,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   deepIssueAnalysis?: Resolver<Maybe<ResolversTypes['DeepIssueAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepIssueAnalysisArgs, 'id'>>;
   doctor?: Resolver<Maybe<ResolversTypes['Doctor']>, ParentType, ContextType, RequireFields<QuerydoctorArgs, 'id'>>;
   doctors?: Resolver<Array<ResolversTypes['Doctor']>, ParentType, ContextType>;
+  familyDocuments?: Resolver<Array<ResolversTypes['FamilyDocument']>, ParentType, ContextType, RequireFields<QueryfamilyDocumentsArgs, 'familyMemberId'>>;
   familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType, Partial<QueryfamilyMemberArgs>>;
   familyMembers?: Resolver<Array<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
   game?: Resolver<Maybe<ResolversTypes['Game']>, ParentType, ContextType, RequireFields<QuerygameArgs, 'id'>>;
@@ -5808,6 +5848,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   EvidenceLocator?: EvidenceLocatorResolvers<ContextType>;
   EvidencePolarity?: EvidencePolarityResolvers;
   ExtractedIssue?: ExtractedIssueResolvers<ContextType>;
+  FamilyDocument?: FamilyDocumentResolvers<ContextType>;
   FamilyMember?: FamilyMemberResolvers<ContextType>;
   FamilyMemberShare?: FamilyMemberShareResolvers<ContextType>;
   FamilyMemberShareRole?: FamilyMemberShareRoleResolvers;

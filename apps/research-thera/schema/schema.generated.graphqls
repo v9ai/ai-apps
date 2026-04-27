@@ -886,6 +886,21 @@ type ExtractedIssue {
   title: String!
 }
 
+type FamilyDocument {
+  content: String
+  createdAt: String!
+  documentDate: String
+  documentType: String!
+  externalUrl: String
+  familyMemberId: Int!
+  fileName: String
+  filePath: String
+  id: ID!
+  source: String
+  title: String!
+  userId: String!
+}
+
 type FamilyMember {
   affirmations: [Affirmation!]!
   ageYears: Int
@@ -1820,6 +1835,7 @@ type Query {
   deepIssueAnalysis(id: Int!): DeepIssueAnalysis
   doctor(id: ID!): Doctor
   doctors: [Doctor!]!
+  familyDocuments(familyMemberId: Int!): [FamilyDocument!]!
   familyMember(id: Int, slug: String): FamilyMember
   familyMembers: [FamilyMember!]!
   game(id: Int!): Game

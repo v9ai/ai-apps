@@ -303,6 +303,9 @@ type Query {
   # Healthcare — Doctor detail + medical letters
   doctor(id: ID!): Doctor
   medicalLetters(doctorId: ID!): [MedicalLetter!]!
+
+  # Healthcare — Family documents (PDFs / Drive links scoped to a family member)
+  familyDocuments(familyMemberId: Int!): [FamilyDocument!]!
 }
 
 # (chat mutation lives under Mutation type below)
@@ -2628,4 +2631,23 @@ type MedicalLetter {
 
 type DeleteMedicalLetterResult {
   success: Boolean!
+}
+
+# ============================================
+# Healthcare — Family documents (read-only surface; data was migrated 2026-04-27)
+# ============================================
+
+type FamilyDocument {
+  id: ID!
+  userId: String!
+  familyMemberId: Int!
+  title: String!
+  documentType: String!
+  documentDate: String
+  source: String
+  content: String
+  externalUrl: String
+  fileName: String
+  filePath: String
+  createdAt: String!
 }

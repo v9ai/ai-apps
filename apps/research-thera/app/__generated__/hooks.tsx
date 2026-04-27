@@ -978,6 +978,22 @@ export type ExtractedIssue = {
   title: Scalars['String']['output'];
 };
 
+export type FamilyDocument = {
+  __typename?: 'FamilyDocument';
+  content?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  documentDate?: Maybe<Scalars['String']['output']>;
+  documentType: Scalars['String']['output'];
+  externalUrl?: Maybe<Scalars['String']['output']>;
+  familyMemberId: Scalars['Int']['output'];
+  fileName?: Maybe<Scalars['String']['output']>;
+  filePath?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  source?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
 export type FamilyMember = {
   __typename?: 'FamilyMember';
   affirmations: Array<Affirmation>;
@@ -2651,6 +2667,7 @@ export type Query = {
   deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
   doctor?: Maybe<Doctor>;
   doctors: Array<Doctor>;
+  familyDocuments: Array<FamilyDocument>;
   familyMember?: Maybe<FamilyMember>;
   familyMembers: Array<FamilyMember>;
   game?: Maybe<Game>;
@@ -2796,6 +2813,11 @@ export type QueryDeepIssueAnalysisArgs = {
 
 export type QueryDoctorArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryFamilyDocumentsArgs = {
+  familyMemberId: Scalars['Int']['input'];
 };
 
 
@@ -4002,6 +4024,13 @@ export type ExtractContactFeedbackIssuesMutationVariables = Exact<{
 
 
 export type ExtractContactFeedbackIssuesMutation = { __typename?: 'Mutation', extractContactFeedbackIssues: { __typename?: 'ContactFeedback', id: number, extracted: boolean, extractedIssues?: Array<{ __typename?: 'ExtractedIssue', title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null }> | null } };
+
+export type FamilyDocumentsQueryVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type FamilyDocumentsQuery = { __typename?: 'Query', familyDocuments: Array<{ __typename?: 'FamilyDocument', id: string, title: string, documentType: string, documentDate?: string | null, source?: string | null, content?: string | null, externalUrl?: string | null, fileName?: string | null, filePath?: string | null, createdAt: string }> };
 
 export type GenerateAffirmationsForFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -8021,6 +8050,58 @@ export function useExtractContactFeedbackIssuesMutation(baseOptions?: Apollo.Mut
 export type ExtractContactFeedbackIssuesMutationHookResult = ReturnType<typeof useExtractContactFeedbackIssuesMutation>;
 export type ExtractContactFeedbackIssuesMutationResult = Apollo.MutationResult<ExtractContactFeedbackIssuesMutation>;
 export type ExtractContactFeedbackIssuesMutationOptions = Apollo.BaseMutationOptions<ExtractContactFeedbackIssuesMutation, ExtractContactFeedbackIssuesMutationVariables>;
+export const FamilyDocumentsDocument = gql`
+    query FamilyDocuments($familyMemberId: Int!) {
+  familyDocuments(familyMemberId: $familyMemberId) {
+    id
+    title
+    documentType
+    documentDate
+    source
+    content
+    externalUrl
+    fileName
+    filePath
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useFamilyDocumentsQuery__
+ *
+ * To run a query within a React component, call `useFamilyDocumentsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFamilyDocumentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFamilyDocumentsQuery({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useFamilyDocumentsQuery(baseOptions: Apollo.QueryHookOptions<FamilyDocumentsQuery, FamilyDocumentsQueryVariables> & ({ variables: FamilyDocumentsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FamilyDocumentsQuery, FamilyDocumentsQueryVariables>(FamilyDocumentsDocument, options);
+      }
+export function useFamilyDocumentsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FamilyDocumentsQuery, FamilyDocumentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FamilyDocumentsQuery, FamilyDocumentsQueryVariables>(FamilyDocumentsDocument, options);
+        }
+// @ts-ignore
+export function useFamilyDocumentsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<FamilyDocumentsQuery, FamilyDocumentsQueryVariables>): Apollo.UseSuspenseQueryResult<FamilyDocumentsQuery, FamilyDocumentsQueryVariables>;
+export function useFamilyDocumentsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<FamilyDocumentsQuery, FamilyDocumentsQueryVariables>): Apollo.UseSuspenseQueryResult<FamilyDocumentsQuery | undefined, FamilyDocumentsQueryVariables>;
+export function useFamilyDocumentsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<FamilyDocumentsQuery, FamilyDocumentsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FamilyDocumentsQuery, FamilyDocumentsQueryVariables>(FamilyDocumentsDocument, options);
+        }
+export type FamilyDocumentsQueryHookResult = ReturnType<typeof useFamilyDocumentsQuery>;
+export type FamilyDocumentsLazyQueryHookResult = ReturnType<typeof useFamilyDocumentsLazyQuery>;
+export type FamilyDocumentsSuspenseQueryHookResult = ReturnType<typeof useFamilyDocumentsSuspenseQuery>;
+export type FamilyDocumentsQueryResult = Apollo.QueryResult<FamilyDocumentsQuery, FamilyDocumentsQueryVariables>;
 export const GenerateAffirmationsForFamilyMemberDocument = gql`
     mutation GenerateAffirmationsForFamilyMember($familyMemberId: Int!, $count: Int, $categoryFocus: AffirmationCategory, $language: String) {
   generateAffirmationsForFamilyMember(

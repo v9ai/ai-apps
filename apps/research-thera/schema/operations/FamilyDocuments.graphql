@@ -1,0 +1,14 @@
+query FamilyDocuments($familyMemberId: Int!) {
+  familyDocuments(familyMemberId: $familyMemberId) {
+    id
+    title
+    documentType
+    documentDate
+    source
+    content
+    externalUrl
+    fileName
+    filePath
+    createdAt
+  }
+}
