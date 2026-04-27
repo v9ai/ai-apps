@@ -14,7 +14,12 @@ import {
   AlertDialog,
 } from "@radix-ui/themes";
 import { ArrowLeft, Heart, Trash2 } from "lucide-react";
+import { words } from "lodash";
 import Link from "next/link";
+
+function slugify(name: string): string {
+  return words(name).map((w) => w.toLowerCase()).join("-");
+}
 import {
   useConditionsQuery,
   useDeleteConditionMutation,
@@ -145,6 +150,7 @@ function PersonConditionsContent({ slug }: { slug: string }) {
                   name={c.name}
                   notes={c.notes ?? null}
                   createdAt={c.createdAt}
+                  detailHref={`/conditions/${slug}/${slugify(c.name)}`}
                 />
               ))}
             </Box>
@@ -160,11 +166,13 @@ function ConditionCard({
   name,
   notes,
   createdAt,
+  detailHref,
 }: {
   id: string;
   name: string;
   notes: string | null;
   createdAt: string;
+  detailHref: string;
 }) {
   const [deleteCondition, { loading: deleting }] = useDeleteConditionMutation({
     refetchQueries: [{ query: ConditionsDocument }],
@@ -175,9 +183,11 @@ function ConditionCard({
       <Flex justify="between" align="start" gap="2">
         <Flex direction="column" gap="2" style={{ flexGrow: 1, minWidth: 0 }}>
           <Flex align="center" gap="2" wrap="wrap">
-            <Text size="2" weight="medium">
-              {name}
-            </Text>
+            <Link href={detailHref} style={{ textDecoration: "none" }}>
+              <Text size="2" weight="medium">
+                {name}
+              </Text>
+            </Link>
             <Badge color="indigo" variant="soft" size="1">
               Active
             </Badge>
