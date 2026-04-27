@@ -112,7 +112,15 @@ function PersonConditionDetailContent({
   }
 
   return (
-    <Box py="6">
+    <Box
+      py="6"
+      style={{
+        width: "calc(100vw - var(--sidebar-offset, 0px))",
+        marginLeft: "calc(50% - 50vw + (var(--sidebar-offset, 0px) / 2))",
+        padding: "1.5rem 2rem 4rem",
+        boxSizing: "border-box",
+      }}
+    >
       <Flex direction="column" gap="6">
         <Flex direction="column" gap="2">
           <Flex align="center" gap="2" wrap="wrap">
