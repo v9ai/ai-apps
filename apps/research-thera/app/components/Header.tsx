@@ -63,7 +63,7 @@ export function Header() {
                 return (
                   <Button
                     key={link.href}
-                    variant={isActive ? "soft" : "ghost"}
+                    variant="ghost"
                     size="2"
                     color={isActive ? "indigo" : "gray"}
                     highContrast={isActive}
