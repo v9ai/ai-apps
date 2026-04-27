@@ -46,7 +46,11 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 # ---------------------------------------------------------------------------
 # Tunables
 # ---------------------------------------------------------------------------
-FRESHNESS_DAYS = 30
+# No cache: every run pulls the latest personal file end-to-end so a
+# clinical decision (e.g. stopping a medication) immediately reshapes the
+# next assessment. The fresh_until column is still written for audit but
+# `check_freshness` is hard-wired to always go through extract_facts.
+FRESHNESS_DAYS = 30  # kept for the audit timestamp column only
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 EXTRACTION_MAX_TOKENS = 6144
 
@@ -557,52 +561,53 @@ async def load_context(state: ConditionDeepResearchState) -> dict:
 # Node: check_freshness
 # ---------------------------------------------------------------------------
 async def check_freshness(state: ConditionDeepResearchState) -> dict:
+    """Cache disabled — always run extract_facts against the latest data.
+
+    We still look up the existing row's id so persist can UPSERT in place
+    (the unique constraint on user/fm/slug/language handles this either way,
+    but having the id surfaces it in finalize for audit logs).
+    """
     user_email = state["user_email"].strip().lower()
     fm = state.get("_family_member") or {}
     condition_slug = state["condition_slug"].strip().lower()
     language = (state.get("language") or "ro").strip().lower()
     job_id = state.get("job_id")
 
+    await _update_job_progress(job_id, 15)
+
     if not fm.get("id"):
         return {"_cache_hit": False}
-
-    await _update_job_progress(job_id, 15)
 
     async with neon.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "SELECT id::text, fresh_until FROM condition_deep_research "
+                "SELECT id::text FROM condition_deep_research "
                 "WHERE user_id = %s AND family_member_id = %s "
                 "AND condition_slug = %s AND language = %s LIMIT 1",
                 (user_email, fm["id"], condition_slug, language),
             )
             row = await cur.fetchone()
 
-    if not row:
-        return {"_cache_hit": False}
-
-    fresh_until = row[1]
-    if fresh_until and fresh_until > datetime.now(timezone.utc):
-        return {"_cache_hit": True, "_research_id": row[0]}
-
-    return {"_cache_hit": False, "_research_id": row[0]}
+    return {"_cache_hit": False, "_research_id": row[0] if row else None}
 
 
 # ---------------------------------------------------------------------------
 # Node: gather_personal_evidence
 # ---------------------------------------------------------------------------
-# Per-table soft caps so the prompt stays bounded even for very active users.
+# Per-table caps. Set high enough to effectively pull the whole personal file
+# for any realistic user. The graph runs against ALL recorded data — the caps
+# exist only as runaway protection in case a row count is in the thousands.
 _PERSON_LIMITS = {
-    "characteristics": 30,
-    "issues": 25,
-    "journal": 20,
-    "observations": 25,
-    "teacher": 10,
-    "contact": 10,
-    "goals": 15,
-    "habits": 15,
-    "medications": 20,
-    "allergies": 30,
+    "characteristics": 500,
+    "issues": 500,
+    "journal": 500,
+    "observations": 500,
+    "teacher": 200,
+    "contact": 200,
+    "goals": 200,
+    "habits": 200,
+    "medications": 200,
+    "allergies": 200,
 }
 
 

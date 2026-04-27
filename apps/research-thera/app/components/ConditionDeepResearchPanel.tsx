@@ -150,11 +150,6 @@ export function ConditionDeepResearchPanel({
           <Flex align="center" gap="2">
             <Microscope size={18} color="var(--indigo-10)" />
             <Heading size="4">Cercetare clinică profundă</Heading>
-            {research && (
-              <Badge color="green" variant="soft" size="1">
-                Cache 30 zile
-              </Badge>
-            )}
           </Flex>
           <Button
             variant="soft"
@@ -365,16 +360,9 @@ export function ConditionDeepResearchPanel({
             )}
 
             <Separator size="4" />
-            <Flex justify="between" wrap="wrap" gap="2">
-              <Text size="1" color="gray">
-                Generat: {new Date(research.generatedAt).toLocaleString()}
-              </Text>
-              {research.freshUntil && (
-                <Text size="1" color="gray">
-                  Cache valabil până: {new Date(research.freshUntil).toLocaleDateString()}
-                </Text>
-              )}
-            </Flex>
+            <Text size="1" color="gray">
+              Generat: {new Date(research.generatedAt).toLocaleString()} · rulează pe toate datele înregistrate
+            </Text>
           </Flex>
         )}
       </Flex>
