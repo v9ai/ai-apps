@@ -5,6 +5,9 @@
   "compatibility_date": "2026-04-01",
   "vars": {
     "ORIGIN": "https://agenticleadgen.xyz"
+    // Secrets (set via `wrangler secret put`):
+    //   - GATEWAY_HMAC      — shared with Vercel + LangGraph for /internal/* auth
+    //   - NEON_DATABASE_URL — for product_intel_runs + products writes
   },
   "durable_objects": {
     "bindings": [
