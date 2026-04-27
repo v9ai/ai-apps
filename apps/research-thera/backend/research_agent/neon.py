@@ -661,3 +661,73 @@ async def fetch_medications_for_slug(
             "family_member_preferred_language": r[11],
         })
     return out
+
+
+async def fetch_active_medications_for_person(
+    user_email: str,
+    slug: str,
+) -> list[dict]:
+    """Return active medications for a "person view" (slug='me' or 'bogdan'),
+    matching the same name filter the frontend applies in
+    ``app/medications/[slug]/page.tsx``:
+      - 'me'     → name does NOT start with 'singulair' (case-insensitive first word)
+      - 'bogdan' → name starts with 'singulair'
+
+    Each row is joined with medication_pharmacology to surface ATC code (used
+    downstream for duplicate-therapy detection by ATC level-3 group)."""
+    slug = (slug or "").strip().lower()
+    if slug not in {"me", "bogdan"}:
+        return []
+
+    if slug == "bogdan":
+        slug_clause = "lower(split_part(m.name, ' ', 1)) = 'singulair'"
+    else:
+        slug_clause = "lower(split_part(m.name, ' ', 1)) <> 'singulair'"
+
+    sql_query = f"""
+        SELECT m.id::text,
+               m.name,
+               m.dosage,
+               m.frequency,
+               m.notes,
+               m.start_date,
+               m.end_date,
+               m.family_member_id,
+               lower(split_part(m.name, ' ', 1)) AS drug_slug,
+               fm.first_name,
+               fm.preferred_language,
+               mp.atc_code,
+               mp.generic_name
+        FROM medications m
+        LEFT JOIN family_members fm ON fm.id = m.family_member_id
+        LEFT JOIN medication_pharmacology mp
+               ON mp.drug_slug = lower(split_part(m.name, ' ', 1))
+        WHERE m.user_id = %s
+          AND m.is_active = TRUE
+          AND {slug_clause}
+        ORDER BY m.name ASC
+    """
+
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(sql_query, (user_email,))
+            rows = await cur.fetchall()
+
+    out: list[dict] = []
+    for r in rows:
+        out.append({
+            "id": r[0],
+            "name": r[1],
+            "dosage": r[2],
+            "frequency": r[3],
+            "notes": r[4],
+            "start_date": str(r[5]) if r[5] else None,
+            "end_date": str(r[6]) if r[6] else None,
+            "family_member_id": r[7],
+            "drug_slug": r[8],
+            "family_member_first_name": r[9],
+            "family_member_preferred_language": r[10],
+            "atc_code": r[11],
+            "generic_name": r[12],
+        })
+    return out
