@@ -59,7 +59,7 @@ export function AudioPlayer({
   const { data: jobData, stopPolling } = useGetGenerationJobQuery({
     variables: { id: pollingJobId! },
     skip: !pollingJobId,
-    pollInterval: 5000,
+    pollInterval: 15000,
     onError: () => {
       stopPolling();
       setPollingJobId(null);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NextLink from "next/link";
 import {
@@ -58,15 +59,21 @@ export default function JobDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const { data, loading, error } = useGetGenerationJobQuery({
+  const { data, loading, error, stopPolling } = useGetGenerationJobQuery({
     variables: { id },
     skip: !id,
-    pollInterval: 5000,
+    pollInterval: 15000,
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "cache-and-network",
   });
 
   const job = data?.generationJob;
+
+  useEffect(() => {
+    if (job && job.status !== "RUNNING") {
+      stopPolling();
+    }
+  }, [job, stopPolling]);
 
   if (loading && !job) {
     return (

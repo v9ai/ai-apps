@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   Box,
   Card,
@@ -40,10 +41,22 @@ export default function BloodTestsPage() {
 }
 
 function BloodTestsContent() {
-  const { data, loading, error } = useBloodTestsQuery({
-    pollInterval: 5000, // poll while uploads are processing
+  const { data, loading, error, startPolling, stopPolling } = useBloodTestsQuery({
+    pollInterval: 15000,
   });
   const tests = data?.bloodTests ?? [];
+
+  const anyInFlight = tests.some(
+    (t) => t.status === "pending" || t.status === "processing",
+  );
+
+  useEffect(() => {
+    if (anyInFlight) {
+      startPolling(15000);
+    } else {
+      stopPolling();
+    }
+  }, [anyInFlight, startPolling, stopPolling]);
 
   return (
     <Box py="6">

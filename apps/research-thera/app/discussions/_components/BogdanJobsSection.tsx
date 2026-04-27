@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   Badge,
   Box,
@@ -48,13 +49,23 @@ function formatElapsedRo(iso: string): string {
 }
 
 export function BogdanJobsSection() {
-  const { data, loading } = useGetBogdanDiscussionJobsQuery({
-    pollInterval: 5000,
+  const { data, loading, startPolling, stopPolling } = useGetBogdanDiscussionJobsQuery({
+    pollInterval: 15000,
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
   });
 
   const jobs = (data?.generationJobs ?? []).slice(0, 10);
+
+  const anyRunning = jobs.some((j) => j.status === "RUNNING");
+
+  useEffect(() => {
+    if (anyRunning) {
+      startPolling(15000);
+    } else {
+      stopPolling();
+    }
+  }, [anyRunning, startPolling, stopPolling]);
 
   if (!jobs.length && !loading) return null;
   if (!jobs.length) return null;

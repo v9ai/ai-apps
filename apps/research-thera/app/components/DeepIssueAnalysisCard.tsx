@@ -83,7 +83,7 @@ export function DeepIssueAnalysisCard({
   const { data: deepAnalysisJobData, stopPolling: stopDeepAnalysisPolling } = useGetGenerationJobQuery({
     variables: { id: deepAnalysisJobId! },
     skip: !deepAnalysisJobId,
-    pollInterval: 5000,
+    pollInterval: 15000,
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "network-only",
   });

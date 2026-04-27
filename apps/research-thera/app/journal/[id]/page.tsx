@@ -122,7 +122,7 @@ function JournalEntryContent() {
     useGetGenerationJobQuery({
       variables: { id: researchJobId! },
       skip: !researchJobId,
-      pollInterval: 5000,
+      pollInterval: 15000,
       notifyOnNetworkStatusChange: true,
       fetchPolicy: "network-only",
     });
@@ -217,7 +217,7 @@ function JournalEntryContent() {
   const { data: storyJobData } = useGetGenerationJobQuery({
     variables: { id: storyJobId! },
     skip: !storyJobId,
-    pollInterval: 5000,
+    pollInterval: 15000,
   });
 
   useEffect(() => {
@@ -282,7 +282,7 @@ function JournalEntryContent() {
     useGetGenerationJobQuery({
       variables: { id: analysisJobId! },
       skip: !analysisJobId,
-      pollInterval: 5000,
+      pollInterval: 15000,
       notifyOnNetworkStatusChange: true,
       fetchPolicy: "network-only",
     });

@@ -28,7 +28,7 @@ function GeneratingContent() {
   const { data, stopPolling } = useGetGenerationJobQuery({
     variables: { id: jobId },
     skip: !jobId,
-    pollInterval: 5000,
+    pollInterval: 15000,
     fetchPolicy: "network-only",
   });
 

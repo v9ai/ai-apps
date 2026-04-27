@@ -67,7 +67,7 @@ export default function JournalRecommendedBooksSection({
   const { data: jobData, stopPolling } = useGetGenerationJobQuery({
     variables: { id: jobId! },
     skip: !jobId,
-    pollInterval: 5000,
+    pollInterval: 15000,
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "network-only",
   });
