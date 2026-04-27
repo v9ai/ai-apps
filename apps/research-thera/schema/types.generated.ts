@@ -1314,6 +1314,20 @@ export type HealthcareChatTurn = {
   role: Scalars['String']['input'];
 };
 
+export type HealthcareMarkerTrendHit = {
+  __typename?: 'HealthcareMarkerTrendHit';
+  content: Scalars['String']['output'];
+  fileName: Scalars['String']['output'];
+  flag: Scalars['String']['output'];
+  markerId: Scalars['ID']['output'];
+  markerName: Scalars['String']['output'];
+  similarity: Scalars['Float']['output'];
+  testDate?: Maybe<Scalars['String']['output']>;
+  testId: Scalars['ID']['output'];
+  unit: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
 export type HealthcareMultiSearchResult = {
   __typename?: 'HealthcareMultiSearchResult';
   appointments: Array<HealthcareSearchHit>;
@@ -2575,6 +2589,7 @@ export type Query = {
   goals: Array<Goal>;
   habit?: Maybe<Habit>;
   habits: Array<Habit>;
+  healthcareMarkerTrend: Array<HealthcareMarkerTrendHit>;
   healthcareSearch: HealthcareMultiSearchResult;
   healthcareSummary: HealthcareSummary;
   issue?: Maybe<Issue>;
@@ -2761,6 +2776,12 @@ export type QueryhabitArgs = {
 export type QueryhabitsArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryhealthcareMarkerTrendArgs = {
+  markerName?: InputMaybe<Scalars['String']['input']>;
+  query: Scalars['String']['input'];
 };
 
 
@@ -3571,6 +3592,7 @@ export type ResolversTypes = {
   HealthcareChatInput: HealthcareChatInput;
   HealthcareChatResponse: ResolverTypeWrapper<HealthcareChatResponse>;
   HealthcareChatTurn: HealthcareChatTurn;
+  HealthcareMarkerTrendHit: ResolverTypeWrapper<HealthcareMarkerTrendHit>;
   HealthcareMultiSearchResult: ResolverTypeWrapper<HealthcareMultiSearchResult>;
   HealthcareSearchHit: ResolverTypeWrapper<HealthcareSearchHit>;
   HealthcareSearchMarkerHit: ResolverTypeWrapper<HealthcareSearchMarkerHit>;
@@ -3795,6 +3817,7 @@ export type ResolversParentTypes = {
   HealthcareChatInput: HealthcareChatInput;
   HealthcareChatResponse: HealthcareChatResponse;
   HealthcareChatTurn: HealthcareChatTurn;
+  HealthcareMarkerTrendHit: HealthcareMarkerTrendHit;
   HealthcareMultiSearchResult: HealthcareMultiSearchResult;
   HealthcareSearchHit: HealthcareSearchHit;
   HealthcareSearchMarkerHit: HealthcareSearchMarkerHit;
@@ -4733,6 +4756,19 @@ export type HealthcareChatResponseResolvers<ContextType = GraphQLContext, Parent
   retrievalSources?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
+export type HealthcareMarkerTrendHitResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HealthcareMarkerTrendHit'] = ResolversParentTypes['HealthcareMarkerTrendHit']> = {
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  fileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  flag?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  markerId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  markerName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  testDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  testId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  unit?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  value?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type HealthcareMultiSearchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HealthcareMultiSearchResult'] = ResolversParentTypes['HealthcareMultiSearchResult']> = {
   appointments?: Resolver<Array<ResolversTypes['HealthcareSearchHit']>, ParentType, ContextType>;
   conditions?: Resolver<Array<ResolversTypes['HealthcareSearchHit']>, ParentType, ContextType>;
@@ -5252,6 +5288,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   goals?: Resolver<Array<ResolversTypes['Goal']>, ParentType, ContextType, Partial<QuerygoalsArgs>>;
   habit?: Resolver<Maybe<ResolversTypes['Habit']>, ParentType, ContextType, RequireFields<QueryhabitArgs, 'id'>>;
   habits?: Resolver<Array<ResolversTypes['Habit']>, ParentType, ContextType, Partial<QueryhabitsArgs>>;
+  healthcareMarkerTrend?: Resolver<Array<ResolversTypes['HealthcareMarkerTrendHit']>, ParentType, ContextType, RequireFields<QueryhealthcareMarkerTrendArgs, 'query'>>;
   healthcareSearch?: Resolver<ResolversTypes['HealthcareMultiSearchResult'], ParentType, ContextType, RequireFields<QueryhealthcareSearchArgs, 'query'>>;
   healthcareSummary?: Resolver<ResolversTypes['HealthcareSummary'], ParentType, ContextType>;
   issue?: Resolver<Maybe<ResolversTypes['Issue']>, ParentType, ContextType, RequireFields<QueryissueArgs, 'id'>>;
@@ -5684,6 +5721,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   HabitLog?: HabitLogResolvers<ContextType>;
   HabitStatus?: HabitStatusResolvers;
   HealthcareChatResponse?: HealthcareChatResponseResolvers<ContextType>;
+  HealthcareMarkerTrendHit?: HealthcareMarkerTrendHitResolvers<ContextType>;
   HealthcareMultiSearchResult?: HealthcareMultiSearchResultResolvers<ContextType>;
   HealthcareSearchHit?: HealthcareSearchHitResolvers<ContextType>;
   HealthcareSearchMarkerHit?: HealthcareSearchMarkerHitResolvers<ContextType>;

@@ -292,6 +292,9 @@ type Query {
 
   # Healthcare — Multi-entity vector search (proxies Python /search/multi at :2024)
   healthcareSearch(query: String!): HealthcareMultiSearchResult!
+
+  # Healthcare — Per-marker trend (proxies Python /search/trend at :2024)
+  healthcareMarkerTrend(query: String!, markerName: String): [HealthcareMarkerTrendHit!]!
 }
 
 # (chat mutation lives under Mutation type below)
@@ -2557,4 +2560,17 @@ type HealthcareMultiSearchResult {
   medications: [HealthcareSearchHit!]!
   symptoms: [HealthcareSearchHit!]!
   appointments: [HealthcareSearchHit!]!
+}
+
+type HealthcareMarkerTrendHit {
+  markerId: ID!
+  testId: ID!
+  markerName: String!
+  content: String!
+  similarity: Float!
+  value: String!
+  unit: String!
+  flag: String!
+  testDate: String
+  fileName: String!
 }

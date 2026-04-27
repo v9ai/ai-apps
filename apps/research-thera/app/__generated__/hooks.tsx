@@ -1327,6 +1327,20 @@ export type HealthcareChatTurn = {
   role: Scalars['String']['input'];
 };
 
+export type HealthcareMarkerTrendHit = {
+  __typename?: 'HealthcareMarkerTrendHit';
+  content: Scalars['String']['output'];
+  fileName: Scalars['String']['output'];
+  flag: Scalars['String']['output'];
+  markerId: Scalars['ID']['output'];
+  markerName: Scalars['String']['output'];
+  similarity: Scalars['Float']['output'];
+  testDate?: Maybe<Scalars['String']['output']>;
+  testId: Scalars['ID']['output'];
+  unit: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
 export type HealthcareMultiSearchResult = {
   __typename?: 'HealthcareMultiSearchResult';
   appointments: Array<HealthcareSearchHit>;
@@ -2597,6 +2611,7 @@ export type Query = {
   goals: Array<Goal>;
   habit?: Maybe<Habit>;
   habits: Array<Habit>;
+  healthcareMarkerTrend: Array<HealthcareMarkerTrendHit>;
   healthcareSearch: HealthcareMultiSearchResult;
   healthcareSummary: HealthcareSummary;
   issue?: Maybe<Issue>;
@@ -2783,6 +2798,12 @@ export type QueryHabitArgs = {
 export type QueryHabitsArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryHealthcareMarkerTrendArgs = {
+  markerName?: InputMaybe<Scalars['String']['input']>;
+  query: Scalars['String']['input'];
 };
 
 
@@ -4387,6 +4408,14 @@ export type GetTherapeuticQuestionsQueryVariables = Exact<{
 
 
 export type GetTherapeuticQuestionsQuery = { __typename?: 'Query', therapeuticQuestions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, journalEntryId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> };
+
+export type HealthcareMarkerTrendQueryVariables = Exact<{
+  query: Scalars['String']['input'];
+  markerName?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type HealthcareMarkerTrendQuery = { __typename?: 'Query', healthcareMarkerTrend: Array<{ __typename?: 'HealthcareMarkerTrendHit', markerId: string, testId: string, markerName: string, value: string, unit: string, flag: string, testDate?: string | null, fileName: string, similarity: number }> };
 
 export type HealthcareSearchQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -12082,6 +12111,58 @@ export type GetTherapeuticQuestionsQueryHookResult = ReturnType<typeof useGetThe
 export type GetTherapeuticQuestionsLazyQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsLazyQuery>;
 export type GetTherapeuticQuestionsSuspenseQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsSuspenseQuery>;
 export type GetTherapeuticQuestionsQueryResult = Apollo.QueryResult<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>;
+export const HealthcareMarkerTrendDocument = gql`
+    query HealthcareMarkerTrend($query: String!, $markerName: String) {
+  healthcareMarkerTrend(query: $query, markerName: $markerName) {
+    markerId
+    testId
+    markerName
+    value
+    unit
+    flag
+    testDate
+    fileName
+    similarity
+  }
+}
+    `;
+
+/**
+ * __useHealthcareMarkerTrendQuery__
+ *
+ * To run a query within a React component, call `useHealthcareMarkerTrendQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHealthcareMarkerTrendQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHealthcareMarkerTrendQuery({
+ *   variables: {
+ *      query: // value for 'query'
+ *      markerName: // value for 'markerName'
+ *   },
+ * });
+ */
+export function useHealthcareMarkerTrendQuery(baseOptions: Apollo.QueryHookOptions<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables> & ({ variables: HealthcareMarkerTrendQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables>(HealthcareMarkerTrendDocument, options);
+      }
+export function useHealthcareMarkerTrendLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables>(HealthcareMarkerTrendDocument, options);
+        }
+// @ts-ignore
+export function useHealthcareMarkerTrendSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables>): Apollo.UseSuspenseQueryResult<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables>;
+export function useHealthcareMarkerTrendSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables>): Apollo.UseSuspenseQueryResult<HealthcareMarkerTrendQuery | undefined, HealthcareMarkerTrendQueryVariables>;
+export function useHealthcareMarkerTrendSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables>(HealthcareMarkerTrendDocument, options);
+        }
+export type HealthcareMarkerTrendQueryHookResult = ReturnType<typeof useHealthcareMarkerTrendQuery>;
+export type HealthcareMarkerTrendLazyQueryHookResult = ReturnType<typeof useHealthcareMarkerTrendLazyQuery>;
+export type HealthcareMarkerTrendSuspenseQueryHookResult = ReturnType<typeof useHealthcareMarkerTrendSuspenseQuery>;
+export type HealthcareMarkerTrendQueryResult = Apollo.QueryResult<HealthcareMarkerTrendQuery, HealthcareMarkerTrendQueryVariables>;
 export const HealthcareSearchDocument = gql`
     query HealthcareSearch($query: String!) {
   healthcareSearch(query: $query) {

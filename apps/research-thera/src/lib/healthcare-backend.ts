@@ -157,6 +157,62 @@ export async function multiSearch(
   };
 }
 
+export type MarkerTrendHit = {
+  markerId: string;
+  testId: string;
+  markerName: string;
+  content: string;
+  similarity: number;
+  value: string;
+  unit: string;
+  flag: string;
+  testDate: string | null;
+  fileName: string;
+};
+
+export async function markerTrend(
+  query: string,
+  userId: string,
+  markerName: string | null,
+): Promise<MarkerTrendHit[]> {
+  const res = await fetch(`${BACKEND_URL}/search/trend`, {
+    method: "POST",
+    headers: headers(true),
+    body: JSON.stringify({ query, user_id: userId, marker_name: markerName }),
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "Unknown error");
+    throw new Error(`Healthcare /search/trend failed (${res.status}): ${detail}`);
+  }
+  const data = (await res.json()) as {
+    results: Array<{
+      marker_id: string;
+      test_id: string;
+      marker_name: string;
+      content: string;
+      similarity: number;
+      value: string;
+      unit: string;
+      flag: string;
+      test_date?: string | null;
+      file_name: string;
+    }>;
+  };
+  return data.results.map((r) => ({
+    markerId: r.marker_id,
+    testId: r.test_id,
+    markerName: r.marker_name,
+    content: r.content,
+    similarity: r.similarity,
+    value: r.value,
+    unit: r.unit,
+    flag: r.flag,
+    testDate: r.test_date ?? null,
+    fileName: r.file_name,
+  }));
+}
+
 export async function sendHealthcareChat(
   messages: ChatTurn[],
   userId: string,

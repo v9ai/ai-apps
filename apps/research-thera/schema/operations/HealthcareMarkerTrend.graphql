@@ -1,0 +1,13 @@
+query HealthcareMarkerTrend($query: String!, $markerName: String) {
+  healthcareMarkerTrend(query: $query, markerName: $markerName) {
+    markerId
+    testId
+    markerName
+    value
+    unit
+    flag
+    testDate
+    fileName
+    similarity
+  }
+}

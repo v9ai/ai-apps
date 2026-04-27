@@ -1207,6 +1207,19 @@ input HealthcareChatTurn {
   role: String!
 }
 
+type HealthcareMarkerTrendHit {
+  content: String!
+  fileName: String!
+  flag: String!
+  markerId: ID!
+  markerName: String!
+  similarity: Float!
+  testDate: String
+  testId: ID!
+  unit: String!
+  value: String!
+}
+
 type HealthcareMultiSearchResult {
   appointments: [HealthcareSearchHit!]!
   conditions: [HealthcareSearchHit!]!
@@ -1782,6 +1795,7 @@ type Query {
   goals(familyMemberId: Int, status: String, tag: String): [Goal!]!
   habit(id: Int!): Habit
   habits(familyMemberId: Int, status: String): [Habit!]!
+  healthcareMarkerTrend(markerName: String, query: String!): [HealthcareMarkerTrendHit!]!
   healthcareSearch(query: String!): HealthcareMultiSearchResult!
   healthcareSummary: HealthcareSummary!
   issue(id: Int!): Issue
