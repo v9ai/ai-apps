@@ -26,6 +26,7 @@
     "deep_scrape": "leadgen_agent.deep_scrape_graph:graph",
     "company_discovery": "leadgen_agent.company_discovery_graph:graph",
     "company_enrichment": "leadgen_agent.company_enrichment_graph:graph",
+    "company_problems": "leadgen_agent.company_problems_graph:graph",
     "contact_discovery": "leadgen_agent.contact_discovery_graph:graph",
     "score_contact": "leadgen_agent.score_contact_graph:graph",
     "vertical_discovery": "leadgen_agent.vertical_discovery_graph:graph",

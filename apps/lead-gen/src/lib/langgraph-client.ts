@@ -376,6 +376,40 @@ export function enrichCompany(input: {
   );
 }
 
+export interface CompanyProblem {
+  problem: string;
+  role_affected: string;
+  ai_solution: string;
+  evidence: string;
+  confidence: number;
+}
+
+export interface CompanyProblemsResult {
+  company_id: number;
+  company_name: string | null;
+  category: string | null;
+  problems: CompanyProblem[];
+  facts_persisted: number;
+  model: string;
+  telemetry: Record<string, unknown>;
+  totals: Record<string, unknown>;
+}
+
+/**
+ * Run after `enrichCompany` to identify operational problems at the company
+ * that an AI engineering shop can plausibly solve. Persists each problem as
+ * a row in `company_facts` with `extractor_version='problems-v1'`.
+ */
+export function analyzeCompanyProblems(input: {
+  companyId: number;
+}): Promise<CompanyProblemsResult> {
+  return runGraph<CompanyProblemsResult>(
+    "company_problems",
+    { company_id: input.companyId },
+    { timeoutMs: 60_000 },
+  );
+}
+
 /**
  * Discover new contacts for a company via three parallel sources: GitHub org
  * members (capped at 25), paper authors from research_client.search_papers,
