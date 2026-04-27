@@ -250,7 +250,7 @@ export async function detectCompetitorMentions(
     : undefined;
 
   const companyRows = await db
-    .select({ id: companies.id, tenant_id: companies.tenant_id })
+    .select({ id: companies.id })
     .from(companies)
     .where(companyWhere);
 
@@ -260,13 +260,7 @@ export async function detectCompetitorMentions(
     const haystacks = await buildHaystackForCompany(company.id);
     if (haystacks.length === 0) continue;
 
-    // Only evaluate competitors in the same tenant.
-    const tenantCompetitors = competitorsToScan.filter(
-      (c) => c.tenant_id === company.tenant_id,
-    );
-    if (tenantCompetitors.length === 0) continue;
-
-    for (const competitor of tenantCompetitors) {
+    for (const competitor of competitorsToScan) {
       const hit = scoreCompetitorInHaystacks(competitor, haystacks);
       if (!hit) continue;
 

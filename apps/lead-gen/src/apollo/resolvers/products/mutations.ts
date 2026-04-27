@@ -23,8 +23,7 @@ import type {
 } from "@/__generated__/resolvers-types";
 
 // Products are a global SaaS catalog (see queries.ts). Writes use the
-// unscoped http db so admins can mutate rows regardless of tenant cookie.
-// Access is gated by isAdminEmail() — same guard as before.
+// unscoped http db; access is gated by isAdminEmail().
 
 function requireAdmin(context: GraphQLContext): void {
   if (!context.userId) {

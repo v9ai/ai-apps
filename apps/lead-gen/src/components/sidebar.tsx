@@ -118,7 +118,7 @@ export function Sidebar() {
           })}
         </Flex>
 
-        {/* footer: tenant + auth + github + toggle */}
+        {/* footer: auth + github + toggle */}
         <Flex
           direction="column"
           gap="3"

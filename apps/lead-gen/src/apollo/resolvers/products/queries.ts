@@ -10,8 +10,8 @@ import type {
 } from "@/__generated__/resolvers-types";
 
 // Products are the SaaS's own catalog (see /products) — not per-tenant data.
-// Use the unscoped http db so the catalog is visible regardless of the
-// caller's tenant cookie. Write-side guard is isAdminEmail() in mutations.ts.
+// Use the unscoped http db so the catalog stays visible to anonymous callers.
+// Write-side guard is isAdminEmail() in mutations.ts.
 //
 // READ ACCESS IS INTENTIONALLY PUBLIC — including the four AI-analysis jsonb
 // columns (icp_analysis, pricing_analysis, gtm_analysis, intel_report). These
