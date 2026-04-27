@@ -68,7 +68,14 @@ export function Header() {
                     color={isActive ? "indigo" : "gray"}
                     highContrast={isActive}
                     asChild
-                    style={{ justifyContent: "flex-start" }}
+                    style={{
+                      justifyContent: "flex-start",
+                      ...(isActive && {
+                        borderLeft: "2px solid var(--indigo-9)",
+                        paddingLeft: "10px",
+                        background: "var(--indigo-a3)",
+                      }),
+                    }}
                   >
                     <Link href={link.href}>{link.label}</Link>
                   </Button>
