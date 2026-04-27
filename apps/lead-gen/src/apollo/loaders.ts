@@ -181,20 +181,17 @@ export function createLoaders(db: DbInstance) {
       { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),
 
-    linkedinPostsByCompany: new DataLoader<number, LinkedInPost[]>(
+    linkedinPostsByCompany: new DataLoader<number, D1PostRow[]>(
       async (companyIds) => {
-        const rows = await db
-          .select()
-          .from(linkedinPosts)
-          .where(inArray(linkedinPosts.company_id, [...companyIds]));
-        const byCompany = new Map<number, LinkedInPost[]>();
-        for (const row of rows) {
-          if (row.company_id == null) continue;
-          const arr = byCompany.get(row.company_id);
-          if (arr) arr.push(row);
-          else byCompany.set(row.company_id, [row]);
-        }
-        return companyIds.map((id) => byCompany.get(id) ?? []);
+        // Posts now live in D1; the edge worker has no batched-by-id-list
+        // endpoint, so we issue one list call per id. Volumes are modest
+        // (DataLoader batches per request) and most companies have zero rows.
+        const lists = await Promise.all(
+          [...companyIds].map((id) =>
+            listD1Posts({ companyId: id, limit: 200 }).catch(() => []),
+          ),
+        );
+        return lists;
       },
       { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),

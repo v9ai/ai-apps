@@ -60,6 +60,18 @@ _VALID_INDICATION_KINDS = {"primary", "off_label"}
 _VALID_CORRELATION_TYPES = {"possible_side_effect", "indication_match", "temporal", "other"}
 _VALID_RELATED_ENTITY_TYPES = {"issue", "journal_entry", "observation", "teacher_feedback"}
 
+ROMANIAN_INSTRUCTION = (
+    "IMPORTANT: Respond entirely in Romanian. Every string field in your JSON output "
+    "must be written in natural, fluent clinical Romanian. Translate event names, "
+    "rationales, dosing instructions, mechanisms, and recommendations. "
+    "Do NOT translate: drug brand names, generic INN, ATC codes, RxCUIs, ICD codes, "
+    "patient names, or proper nouns. Preserve enum values exactly as English "
+    "lowercase tokens: 'primary'/'off_label', 'adult'/'pediatric'/'elderly'/'renal'/"
+    "'hepatic', 'common'/'uncommon'/'rare'/'black_box', 'contraindicated'/'major'/"
+    "'moderate'/'minor', 'possible_side_effect'/'indication_match'/'temporal'/'other', "
+    "'issue'/'journal_entry'."
+)
+
 
 # ---------------------------------------------------------------------------
 # State

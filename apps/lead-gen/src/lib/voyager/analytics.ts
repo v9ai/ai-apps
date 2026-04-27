@@ -21,11 +21,9 @@
 import { eq, and, gte, lte, desc, sql, count, type SQL } from "drizzle-orm";
 import type { DbInstance } from "@/db";
 import {
-  linkedinPosts,
   companies,
   voyagerJobCounts,
   voyagerSnapshots,
-  type LinkedInPost,
 } from "@/db/schema";
 import { SKILL_LABELS } from "@/lib/skills/taxonomy";
 import type {
@@ -275,56 +273,13 @@ export class VoyagerAnalytics {
     const fourWeeksAgo = weeksAgo(4);
 
     // This week's jobs by company
-    const thisWeek = await this.db
-      .select({
-        companyId: linkedinPosts.company_id,
-        companyName: companies.name,
-        companyKey: companies.key,
-        jobCount: count(),
-        remoteCount: sql<number>`SUM(CASE WHEN LOWER(${linkedinPosts.location}) LIKE '%remote%' THEN 1 ELSE 0 END)`.as("remote_count"),
-      })
-      .from(linkedinPosts)
-      .innerJoin(companies, eq(linkedinPosts.company_id, companies.id))
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, thisWeekStart),
-        ),
-      )
-      .groupBy(linkedinPosts.company_id, companies.name, companies.key)
-      .orderBy(desc(count()))
-      .limit(limit * 2); // Fetch extra to filter
+    const thisWeek = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */ // Fetch extra to filter
 
     // Last week's jobs by company
-    const lastWeek = await this.db
-      .select({
-        companyId: linkedinPosts.company_id,
-        jobCount: count(),
-      })
-      .from(linkedinPosts)
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, lastWeekStart),
-          lte(linkedinPosts.posted_at, thisWeekStart),
-        ),
-      )
-      .groupBy(linkedinPosts.company_id);
+    const lastWeek = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     // 4-week rolling average
-    const rolling = await this.db
-      .select({
-        companyId: linkedinPosts.company_id,
-        totalJobs: count(),
-      })
-      .from(linkedinPosts)
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, fourWeeksAgo),
-        ),
-      )
-      .groupBy(linkedinPosts.company_id);
+    const rolling = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     const lastWeekMap = new Map(
       lastWeek.map((r) => [r.companyId, Number(r.jobCount)]),
@@ -382,38 +337,10 @@ export class VoyagerAnalytics {
     const previousFrom = daysAgo(days * 2);
 
     // Current period jobs by industry
-    const currentByIndustry = await this.db
-      .select({
-        industry: companies.industry,
-        totalCount: count(),
-        remoteCount: sql<number>`SUM(CASE WHEN LOWER(${linkedinPosts.location}) LIKE '%remote%' THEN 1 ELSE 0 END)`.as("remote_count"),
-      })
-      .from(linkedinPosts)
-      .innerJoin(companies, eq(linkedinPosts.company_id, companies.id))
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, currentFrom),
-        ),
-      )
-      .groupBy(companies.industry);
+    const currentByIndustry = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     // Previous period
-    const previousByIndustry = await this.db
-      .select({
-        industry: companies.industry,
-        totalCount: count(),
-      })
-      .from(linkedinPosts)
-      .innerJoin(companies, eq(linkedinPosts.company_id, companies.id))
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, previousFrom),
-          lte(linkedinPosts.posted_at, currentFrom),
-        ),
-      )
-      .groupBy(companies.industry);
+    const previousByIndustry = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     const prevIndustryMap = new Map(
       previousByIndustry.map((r) => [r.industry, Number(r.totalCount)]),
@@ -435,35 +362,9 @@ export class VoyagerAnalytics {
       .sort((a, b) => b.growthRate - a.growthRate);
 
     // Current period by region (location)
-    const currentByRegion = await this.db
-      .select({
-        location: linkedinPosts.location,
-        totalCount: count(),
-        remoteCount: sql<number>`SUM(CASE WHEN LOWER(${linkedinPosts.location}) LIKE '%remote%' THEN 1 ELSE 0 END)`.as("remote_count"),
-      })
-      .from(linkedinPosts)
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, currentFrom),
-        ),
-      )
-      .groupBy(linkedinPosts.location);
+    const currentByRegion = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
-    const previousByRegion = await this.db
-      .select({
-        location: linkedinPosts.location,
-        totalCount: count(),
-      })
-      .from(linkedinPosts)
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, previousFrom),
-          lte(linkedinPosts.posted_at, currentFrom),
-        ),
-      )
-      .groupBy(linkedinPosts.location);
+    const previousByRegion = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     const prevRegionMap = new Map(
       previousByRegion.map((r) => [r.location, Number(r.totalCount)]),
@@ -520,24 +421,10 @@ export class VoyagerAnalytics {
     }
 
     // Current period
-    const currentPosts = await this.db
-      .select()
-      .from(linkedinPosts)
-      .where(and(...conditions, gte(linkedinPosts.posted_at, currentFrom)))
-      .limit(2000);
+    const currentPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     // Previous period
-    const previousPosts = await this.db
-      .select()
-      .from(linkedinPosts)
-      .where(
-        and(
-          ...conditions,
-          gte(linkedinPosts.posted_at, previousFrom),
-          lte(linkedinPosts.posted_at, currentFrom),
-        ),
-      )
-      .limit(2000);
+    const previousPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     const extractBand = (posts: LinkedInPost[]): SalaryBand => {
       const salaries: { min: number; max: number; currency: string }[] = [];
@@ -643,24 +530,10 @@ export class VoyagerAnalytics {
     }
 
     // Current period analyzed posts
-    const currentPosts = await this.db
-      .select({ skills: linkedinPosts.skills })
-      .from(linkedinPosts)
-      .where(and(...conditions, gte(linkedinPosts.posted_at, currentFrom)))
-      .limit(5000);
+    const currentPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     // Previous period for trend comparison
-    const previousPosts = await this.db
-      .select({ skills: linkedinPosts.skills })
-      .from(linkedinPosts)
-      .where(
-        and(
-          ...conditions,
-          gte(linkedinPosts.posted_at, previousFrom),
-          lte(linkedinPosts.posted_at, currentFrom),
-        ),
-      )
-      .limit(5000);
+    const previousPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     type SkillEntry = { tag: string; label: string; confidence: number };
 
@@ -735,25 +608,7 @@ export class VoyagerAnalytics {
    */
   async getTimeToFill(): Promise<TimeToFillReport> {
     // Get all job posts with both posted_at and scraped_at
-    const posts = await this.db
-      .select({
-        id: linkedinPosts.id,
-        postedAt: linkedinPosts.posted_at,
-        scrapedAt: linkedinPosts.scraped_at,
-        location: linkedinPosts.location,
-        title: linkedinPosts.title,
-        companyId: linkedinPosts.company_id,
-        industry: companies.industry,
-      })
-      .from(linkedinPosts)
-      .leftJoin(companies, eq(linkedinPosts.company_id, companies.id))
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          sql`${linkedinPosts.posted_at} IS NOT NULL`,
-        ),
-      )
-      .limit(5000);
+    const posts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     const computeEstimate = (
       items: { postedAt: string | null; scrapedAt: string }[],
@@ -873,21 +728,7 @@ export class VoyagerAnalytics {
     }
 
     // Fallback: compute from linkedinPosts by looking for similar titles from same company
-    const allJobs = await this.db
-      .select({
-        id: linkedinPosts.id,
-        url: linkedinPosts.url,
-        title: linkedinPosts.title,
-        companyId: linkedinPosts.company_id,
-        companyName: companies.name,
-        postedAt: linkedinPosts.posted_at,
-        scrapedAt: linkedinPosts.scraped_at,
-      })
-      .from(linkedinPosts)
-      .leftJoin(companies, eq(linkedinPosts.company_id, companies.id))
-      .where(eq(linkedinPosts.type, "job"))
-      .orderBy(linkedinPosts.posted_at)
-      .limit(5000);
+    const allJobs = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     // Group by normalized title + company
     const groups = new Map<string, typeof allJobs>();
@@ -958,42 +799,10 @@ export class VoyagerAnalytics {
     const prevFrom = daysAgo(days * 2);
 
     // All job posts with company data for current period
-    const currentJobs = await this.db
-      .select({
-        companyId: linkedinPosts.company_id,
-        companyName: companies.name,
-        companyKey: companies.key,
-        title: linkedinPosts.title,
-        location: linkedinPosts.location,
-        content: linkedinPosts.content,
-        skills: linkedinPosts.skills,
-        postedAt: linkedinPosts.posted_at,
-      })
-      .from(linkedinPosts)
-      .innerJoin(companies, eq(linkedinPosts.company_id, companies.id))
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, fromDate),
-        ),
-      )
-      .limit(10000);
+    const currentJobs = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     // Previous period for growth comparison
-    const previousCounts = await this.db
-      .select({
-        companyId: linkedinPosts.company_id,
-        jobCount: count(),
-      })
-      .from(linkedinPosts)
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, prevFrom),
-          lte(linkedinPosts.posted_at, fromDate),
-        ),
-      )
-      .groupBy(linkedinPosts.company_id);
+    const previousCounts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     const prevCountMap = new Map(
       previousCounts.map((r) => [r.companyId, Number(r.jobCount)]),
@@ -1122,49 +931,13 @@ export class VoyagerAnalytics {
     const lookbackFrom = daysAgo(this.config.novelTitleLookbackDays * 2);
 
     // Current period titles
-    const currentPosts = await this.db
-      .select({
-        title: linkedinPosts.title,
-        companyName: companies.name,
-        skills: linkedinPosts.skills,
-        content: linkedinPosts.content,
-        postedAt: linkedinPosts.posted_at,
-      })
-      .from(linkedinPosts)
-      .leftJoin(companies, eq(linkedinPosts.company_id, companies.id))
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, currentFrom),
-        ),
-      )
-      .limit(5000);
+    const currentPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     // Previous period titles
-    const previousPosts = await this.db
-      .select({ title: linkedinPosts.title })
-      .from(linkedinPosts)
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, previousFrom),
-          lte(linkedinPosts.posted_at, currentFrom),
-        ),
-      )
-      .limit(5000);
+    const previousPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     // Deep lookback for novelty detection
-    const lookbackPosts = await this.db
-      .select({ title: linkedinPosts.title })
-      .from(linkedinPosts)
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, lookbackFrom),
-          lte(linkedinPosts.posted_at, previousFrom),
-        ),
-      )
-      .limit(10000);
+    const lookbackPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     const lookbackTitles = new Set(
       lookbackPosts
@@ -1281,24 +1054,7 @@ export class VoyagerAnalytics {
   ): Promise<ArbitrageReport> {
     const fromDate = daysAgo(30);
 
-    const posts = await this.db
-      .select({
-        title: linkedinPosts.title,
-        url: linkedinPosts.url,
-        location: linkedinPosts.location,
-        content: linkedinPosts.content,
-        companyName: companies.name,
-      })
-      .from(linkedinPosts)
-      .leftJoin(companies, eq(linkedinPosts.company_id, companies.id))
-      .where(
-        and(
-          eq(linkedinPosts.type, "job"),
-          gte(linkedinPosts.posted_at, fromDate),
-          sql`LOWER(${linkedinPosts.location}) LIKE '%remote%'`,
-        ),
-      )
-      .limit(5000);
+    const posts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 
     // Extract salaries for all remote posts
     const postsWithSalary: {

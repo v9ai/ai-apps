@@ -38,6 +38,7 @@ export const familyMembers = pgTable("family_members", {
   ageYears: integer("age_years"),
   relationship: text("relationship"),
   dateOfBirth: text("date_of_birth"),
+  preferredLanguage: text("preferred_language"),
   bio: text("bio"),
   allergies: text("allergies"),
   email: text("email"),
