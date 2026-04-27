@@ -21,6 +21,7 @@ const NAV_LINKS = [
   { href: "/journal", label: "Journal" },
   { href: "/discussions", label: "Discuții" },
   { href: "/games", label: "Games" },
+  { href: "/allergies", label: "Allergies & Intolerances" },
 ];
 
 export function Header() {
