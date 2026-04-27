@@ -30,6 +30,9 @@ import {
   useGenerateConditionDeepResearchMutation,
   useGetGenerationJobQuery,
   ConditionDeepResearchDocument,
+  type ConditionProximityAssessment,
+  type ConditionCriteriaMatchAdhd,
+  type ConditionMatchedSymptom,
 } from "../__generated__/hooks";
 
 const TIER_LABELS: Record<string, string> = {
@@ -398,5 +401,294 @@ function Section({
       </Flex>
       {children}
     </Box>
+  );
+}
+
+function ProximityCard({
+  assessment,
+}: {
+  assessment: ConditionProximityAssessment;
+}) {
+  const color = PROXIMITY_COLORS[assessment.label] ?? "gray";
+  const labelText = PROXIMITY_LABELS[assessment.label] ?? assessment.label;
+  const confText =
+    CONFIDENCE_LABELS[assessment.confidence] ?? assessment.confidence;
+
+  return (
+    <Card
+      style={{
+        borderTop: `4px solid var(--${color}-9)`,
+        background: `var(--${color}-2)`,
+      }}
+    >
+      <Flex direction="column" gap="3" p="2">
+        <Flex justify="between" align="center" gap="3" wrap="wrap">
+          <Flex align="center" gap="3">
+            <Target size={20} color={`var(--${color}-10)`} />
+            <Heading size="4">Cât de aproape este de ADHD?</Heading>
+          </Flex>
+          <Flex align="center" gap="2">
+            <Badge color={color} variant="solid" size="2">
+              {labelText}
+            </Badge>
+            <Badge color="gray" variant="soft" size="1">
+              {confText}
+            </Badge>
+          </Flex>
+        </Flex>
+
+        <Flex align="baseline" gap="3">
+          <Text
+            size="9"
+            weight="bold"
+            style={{ color: `var(--${color}-11)`, lineHeight: 1 }}
+          >
+            {assessment.score}
+          </Text>
+          <Text size="3" color="gray">
+            / 100 potrivire cu criteriile DSM-5
+          </Text>
+        </Flex>
+
+        <Text size="2" style={{ lineHeight: 1.6 }}>
+          {assessment.rationale}
+        </Text>
+
+        <Flex direction={{ initial: "column", sm: "row" }} gap="3">
+          <Box style={{ flex: 1 }}>
+            <Flex align="center" gap="2" mb="1">
+              <Check size={14} color="var(--green-10)" />
+              <Text size="1" weight="bold" color="green">
+                Susține diagnosticul ({assessment.supportingEvidence.length})
+              </Text>
+            </Flex>
+            {assessment.supportingEvidence.length > 0 ? (
+              <ul style={{ margin: 0, paddingLeft: "1.1rem" }}>
+                {assessment.supportingEvidence.map((s, i) => (
+                  <li key={i}>
+                    <Text size="2">{s}</Text>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Text size="1" color="gray">
+                — niciun element identificat —
+              </Text>
+            )}
+          </Box>
+
+          <Box style={{ flex: 1 }}>
+            <Flex align="center" gap="2" mb="1">
+              <X size={14} color="var(--red-10)" />
+              <Text size="1" weight="bold" color="red">
+                Contrazice ({assessment.contradictingEvidence.length})
+              </Text>
+            </Flex>
+            {assessment.contradictingEvidence.length > 0 ? (
+              <ul style={{ margin: 0, paddingLeft: "1.1rem" }}>
+                {assessment.contradictingEvidence.map((s, i) => (
+                  <li key={i}>
+                    <Text size="2">{s}</Text>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Text size="1" color="gray">
+                — niciun element identificat —
+              </Text>
+            )}
+          </Box>
+        </Flex>
+
+        {assessment.missingEvidence.length > 0 && (
+          <Callout.Root color="amber" size="1">
+            <Callout.Icon>
+              <ClipboardList size={14} />
+            </Callout.Icon>
+            <Callout.Text>
+              <Text size="1" weight="bold" as="span">
+                Date care ar clarifica evaluarea:{" "}
+              </Text>
+              {assessment.missingEvidence.join(" · ")}
+            </Callout.Text>
+          </Callout.Root>
+        )}
+
+        {assessment.recommendedNextStep && (
+          <Box
+            p="3"
+            style={{
+              borderLeft: `3px solid var(--${color}-9)`,
+              background: "var(--gray-2)",
+              borderRadius: 4,
+            }}
+          >
+            <Text size="1" color="gray" weight="bold" mr="1">
+              Următorul pas recomandat:
+            </Text>
+            <Text size="2">{assessment.recommendedNextStep}</Text>
+          </Box>
+        )}
+      </Flex>
+    </Card>
+  );
+}
+
+function CriteriaMatchSection({
+  criteria,
+}: {
+  criteria: ConditionCriteriaMatchAdhd;
+}) {
+  const presentation = criteria.presentation
+    ? PRESENTATION_LABELS[criteria.presentation] ?? criteria.presentation
+    : null;
+
+  return (
+    <Section
+      icon={<ClipboardList size={16} />}
+      title={`Potrivire cu criteriile ${criteria.framework}`}
+    >
+      <Flex direction="column" gap="3">
+        {presentation && (
+          <Box>
+            <Text size="1" color="gray">
+              Prezentare:{" "}
+            </Text>
+            <Badge color="indigo" variant="soft" size="1">
+              {presentation}
+            </Badge>
+          </Box>
+        )}
+
+        {criteria.criterionAInattention && (
+          <CriterionABlock
+            label="Criteriul A1 — Neatenție"
+            group={criteria.criterionAInattention}
+          />
+        )}
+
+        {criteria.criterionAHyperactivityImpulsivity && (
+          <CriterionABlock
+            label="Criteriul A2 — Hiperactivitate-impulsivitate"
+            group={criteria.criterionAHyperactivityImpulsivity}
+          />
+        )}
+
+        <Flex direction="column" gap="2">
+          <CriterionRow
+            label="B — Debut înainte de 12 ani"
+            met={criteria.criterionBAgeOnset?.met ?? false}
+            evidence={criteria.criterionBAgeOnset?.evidence ?? null}
+          />
+          <CriterionRow
+            label="C — Prezent în ≥2 contexte"
+            met={criteria.criterionCSettings?.met ?? false}
+            evidence={criteria.criterionCSettings?.evidence ?? null}
+          />
+          <CriterionRow
+            label="D — Afectare funcțională documentată"
+            met={criteria.criterionDImpairment?.met ?? false}
+            evidence={criteria.criterionDImpairment?.evidence ?? null}
+          />
+          <CriterionRow
+            label="E — Diferențial: nu se explică prin altă afecțiune"
+            met={criteria.criterionEDifferential?.ruledOut ?? false}
+            evidence={criteria.criterionEDifferential?.notes ?? null}
+          />
+        </Flex>
+      </Flex>
+    </Section>
+  );
+}
+
+function CriterionABlock({
+  label,
+  group,
+}: {
+  label: string;
+  group: {
+    matchedSymptoms: ConditionMatchedSymptom[];
+    matchedCount: number;
+    thresholdMet: boolean;
+  };
+}) {
+  return (
+    <Box>
+      <Flex align="center" justify="between" wrap="wrap" gap="2" mb="1">
+        <Text size="2" weight="bold">
+          {label}
+        </Text>
+        <Flex align="center" gap="2">
+          <Badge
+            color={group.thresholdMet ? "red" : "gray"}
+            variant="soft"
+            size="1"
+          >
+            {group.matchedCount} / 9 simptome
+          </Badge>
+          {group.thresholdMet && (
+            <Badge color="red" variant="solid" size="1">
+              prag depășit
+            </Badge>
+          )}
+        </Flex>
+      </Flex>
+      {group.matchedSymptoms.length > 0 ? (
+        <Flex direction="column" gap="1">
+          {group.matchedSymptoms.map((s, i) => (
+            <Box
+              key={i}
+              p="2"
+              style={{
+                background: "var(--gray-2)",
+                borderRadius: 4,
+                borderLeft: "2px solid var(--red-8)",
+              }}
+            >
+              <Text size="2" weight="medium" as="div">
+                {s.symptom}
+              </Text>
+              <Text size="1" color="gray" as="div" mt="1">
+                {s.evidence}
+              </Text>
+            </Box>
+          ))}
+        </Flex>
+      ) : (
+        <Text size="1" color="gray">
+          Niciun simptom susținut explicit de evidență.
+        </Text>
+      )}
+    </Box>
+  );
+}
+
+function CriterionRow({
+  label,
+  met,
+  evidence,
+}: {
+  label: string;
+  met: boolean;
+  evidence: string | null;
+}) {
+  return (
+    <Flex align="start" gap="2">
+      {met ? (
+        <Check size={16} color="var(--green-10)" style={{ marginTop: 2 }} />
+      ) : (
+        <X size={16} color="var(--gray-9)" style={{ marginTop: 2 }} />
+      )}
+      <Box style={{ flex: 1 }}>
+        <Text size="2" weight={met ? "medium" : "regular"}>
+          {label}
+        </Text>
+        {evidence && (
+          <Text size="1" color="gray" as="div" mt="1">
+            {evidence}
+          </Text>
+        )}
+      </Box>
+    </Flex>
   );
 }
