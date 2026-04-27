@@ -1,9 +1,10 @@
-query GetResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int) {
-  research(goalId: $goalId, issueId: $issueId, feedbackId: $feedbackId, journalEntryId: $journalEntryId) {
+query GetResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int, $medicationId: ID) {
+  research(goalId: $goalId, issueId: $issueId, feedbackId: $feedbackId, journalEntryId: $journalEntryId, medicationId: $medicationId) {
     id
     goalId
     feedbackId
     journalEntryId
+    medicationId
     title
     authors
     year
