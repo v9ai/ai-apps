@@ -301,6 +301,38 @@ export const papers: Paper[] = [
       "The Python research agent fetches 3x the requested limit from multi-source search, then reranks with the cross-encoder to surface the most relevant papers before LLM reasoning",
     categoryColor: "var(--red-9)",
   },
+  {
+    slug: "llamaindex",
+    number: 11,
+    title: "LlamaIndex + LlamaParse",
+    category: "AI / RAG",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "LlamaIndex",
+    year: 2024,
+    finding:
+      "Composable RAG framework — IngestionPipeline, ContextChatEngine, retrievers, postprocessors — plus LlamaParse for high-fidelity PDF/lab-report extraction",
+    relevance:
+      "Powers the entire healthcare chat + ingestion stack. Lab PDFs go through LlamaParse → IngestionPipeline → FastEmbed embeddings stored across 8 health-specific pgvector tables. Chat uses ContextChatEngine with intent-routed retrievers (markers, derived_ratios, trajectory, conditions, medications, symptoms, appointments, general_health) and a SimilarityPostprocessor + ClinicalRelevancePostprocessor pipeline.",
+    url: "https://docs.llamaindex.ai/",
+    categoryColor: "var(--green-9)",
+  },
+  {
+    slug: "fastembed",
+    number: 12,
+    title: "FastEmbed (BAAI/bge-large-en-v1.5)",
+    category: "AI / ML",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Qdrant",
+    year: 2024,
+    finding:
+      "Local ONNX-runtime embedding model — BAAI/bge-large-en-v1.5 (1024-dim) — no API calls, no cold-start lag",
+    relevance:
+      "All healthcare embeddings (blood tests, blood markers, conditions, medications, symptoms, appointments, allergies, health-state snapshots) run locally via FastEmbed exposed as a LlamaIndex-compatible FastEmbedEmbedding so the IngestionPipeline can use it as a transformation step.",
+    url: "https://github.com/qdrant/fastembed",
+    categoryColor: "var(--cyan-9)",
+  },
 ];
 
 // ─── Key Metrics ───────────────────────────────────────────────────
@@ -473,6 +505,18 @@ export const platformFeatures: FeatureCategory[] = [
       { name: "Claim Cards", description: "Extract and verify factual claims from notes. Verdicts: supported, contradicted, mixed, insufficient. Confidence scoring, evidence items with source paper links", color: "var(--orange-9)" },
       { name: "Research Integration", description: "7 academic sources (Crossref, PubMed, Semantic Scholar, OpenAlex, arXiv, Europe PMC, DataCite). 7-node pipeline + Python ReAct agent with cross-encoder reranking", color: "var(--orange-9)" },
       { name: "Note Sharing", description: "Notes linked to goals, journals, issues, stories. READER/EDITOR sharing roles, slug-based public URLs, claim card integration", color: "var(--orange-9)" },
+    ],
+  },
+  {
+    category: "Healthcare (LlamaIndex)",
+    color: "var(--green-9)",
+    features: [
+      { name: "Blood Tests", description: "Upload lab PDFs. LlamaParse extracts structured marker data (name, value, unit, reference range, flag). Stored in blood_tests + blood_markers, plus a derived health-state snapshot per upload", color: "var(--green-9)" },
+      { name: "Conditions, Medications, Symptoms, Allergies", description: "Per-family-member health records with per-person routes (/conditions/[slug]/[condition], /medications/[slug], /allergies/[slug]). Each record is embedded with LlamaIndex Document/TextNode builders and stored in dedicated pgvector tables", color: "var(--green-9)" },
+      { name: "Appointments & Doctors", description: "Track providers (family_member_doctors), upcoming visits, and medical letters. Appointments are embedded for chat retrieval alongside other clinical context", color: "var(--green-9)" },
+      { name: "Derived Clinical Ratios", description: "TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis (AST/ALT), BUN/Creatinine, TyG Index — automatically computed per upload with optimal/borderline/elevated/low risk classification and authored references (McLaughlin, Castelli, Millán, Fest, De Ritis, Hosten, Simental-Mendía)", color: "var(--green-9)" },
+      { name: "Clinical Chat", description: "LlamaIndex ContextChatEngine with intent triage (9 intents: markers, derived_ratios, trajectory, conditions, medications, symptoms, appointments, general_health, safety_refusal). Multi-intent fan-out via CompositeRetriever, post-retrieval guard re-check, safety refusal short-circuit", color: "var(--green-9)" },
+      { name: "Brain & Memory Protocols", description: "Brain-health protocols with linked supplements, cognitive baselines, recurring check-ins, and memory entries — connecting health data with cognitive trajectory tracking", color: "var(--green-9)" },
     ],
   },
 ];
