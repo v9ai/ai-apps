@@ -1,5 +1,5 @@
 import { sql as neonSql } from "./neon";
-import { pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers";
+import type { FeatureExtractionPipeline } from "@huggingface/transformers";
 
 // ────────────────────────────────────────────────────────────────────
 // Embedding pipeline (singleton — bge-large-en-v1.5, 1024-dim)
@@ -10,6 +10,7 @@ let _pipeline: FeatureExtractionPipeline | null = null;
 
 async function getEmbedder(): Promise<FeatureExtractionPipeline> {
   if (!_pipeline) {
+    const { pipeline } = await import("@huggingface/transformers");
     // @ts-expect-error — union too complex for HF transformers overloads
     _pipeline = await pipeline("feature-extraction", "Xenova/bge-large-en-v1.5", {
       dtype: "q8",
