@@ -721,7 +721,7 @@ def _build_correlation_prompt(
 
     age_str = f", age {member_age}" if member_age else ""
 
-    return (
+    body = (
         f"You are a clinical pharmacist reviewing whether a patient's documented "
         f"issues and journal entries relate to their medication regimen.\n\n"
         f"## Patient\n{member_name}{age_str}\n\n"
@@ -765,10 +765,8 @@ def _build_correlation_prompt(
         "Cap the array at 25 items; pick the highest-confidence ones."
     )
     if (language or "").strip().lower() == "ro":
-        return ROMANIAN_INSTRUCTION + "\n\n" + (
-            "You are a clinical pharmacist reviewing whether a patient's documented "
-            "issues and journal entries relate to their medication regimen.\n\n"
-        ).__radd__("")  # placeholder: below we just prepend to original string
+        return ROMANIAN_INSTRUCTION + "\n\n" + body
+    return body
 
 
 async def correlate_patient_data(state: MedicationDeepResearchState) -> dict:
@@ -812,6 +810,13 @@ async def correlate_patient_data(state: MedicationDeepResearchState) -> dict:
         if not patient["issues"] and not patient["journals"]:
             continue
 
+        # Per-row language override: if the family_member has a preferred
+        # language, it wins over the workflow-level state.language so each
+        # patient gets content in their own language. Bogdan has 'ro' on
+        # family_members.preferred_language, so his correlations land in RO.
+        row_lang = (row.get("family_member_preferred_language") or "").strip().lower() \
+                   or (state.get("language") or "").strip().lower() \
+                   or None
         prompt = _build_correlation_prompt(
             member_name=row.get("family_member_first_name") or f"Member {fm_id}",
             member_age=_resolve_age(row.get("family_member_age_years"), row.get("family_member_date_of_birth")),
@@ -819,6 +824,7 @@ async def correlate_patient_data(state: MedicationDeepResearchState) -> dict:
             drug_facts=facts,
             issues=patient["issues"],
             journals=patient["journals"],
+            language=row_lang,
         )
 
         parsed = await _deepseek_json(prompt, max_tokens=4096) or {}

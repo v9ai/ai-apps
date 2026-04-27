@@ -2263,6 +2263,7 @@ export type MutationgenerateLongFormTextArgs = {
 
 
 export type MutationgenerateMedicationDeepResearchArgs = {
+  language?: InputMaybe<Scalars['String']['input']>;
   slug: Scalars['String']['input'];
 };
 

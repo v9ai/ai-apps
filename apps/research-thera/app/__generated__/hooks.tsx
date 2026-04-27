@@ -2278,6 +2278,7 @@ export type MutationGenerateLongFormTextArgs = {
 
 
 export type MutationGenerateMedicationDeepResearchArgs = {
+  language?: InputMaybe<Scalars['String']['input']>;
   slug: Scalars['String']['input'];
 };
 
@@ -4256,6 +4257,7 @@ export type GenerateLongFormTextRomanianMutation = { __typename?: 'Mutation', ge
 
 export type GenerateMedicationDeepResearchMutationVariables = Exact<{
   slug: Scalars['String']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -8804,8 +8806,8 @@ export type GenerateLongFormTextRomanianMutationHookResult = ReturnType<typeof u
 export type GenerateLongFormTextRomanianMutationResult = Apollo.MutationResult<GenerateLongFormTextRomanianMutation>;
 export type GenerateLongFormTextRomanianMutationOptions = Apollo.BaseMutationOptions<GenerateLongFormTextRomanianMutation, GenerateLongFormTextRomanianMutationVariables>;
 export const GenerateMedicationDeepResearchDocument = gql`
-    mutation GenerateMedicationDeepResearch($slug: String!) {
-  generateMedicationDeepResearch(slug: $slug) {
+    mutation GenerateMedicationDeepResearch($slug: String!, $language: String) {
+  generateMedicationDeepResearch(slug: $slug, language: $language) {
     success
     message
     jobId
@@ -8829,6 +8831,7 @@ export type GenerateMedicationDeepResearchMutationFn = Apollo.MutationFunction<G
  * const [generateMedicationDeepResearchMutation, { data, loading, error }] = useGenerateMedicationDeepResearchMutation({
  *   variables: {
  *      slug: // value for 'slug'
+ *      language: // value for 'language'
  *   },
  * });
  */

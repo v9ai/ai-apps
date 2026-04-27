@@ -24,6 +24,8 @@ export const generateMedicationDeepResearch: NonNullable<MutationResolvers['gene
   const jobId = crypto.randomUUID();
   await db.createGenerationJob(jobId, userEmail, "MEDICATION_DEEP_RESEARCH");
 
+  const language = (args.language ?? undefined)?.trim().toLowerCase() || undefined;
+
   try {
     const { threadId, runId } = await startGraphRun(
       "medication_deep_research",
@@ -32,6 +34,7 @@ export const generateMedicationDeepResearch: NonNullable<MutationResolvers['gene
           user_email: userEmail,
           slug,
           job_id: jobId,
+          language,
         },
       },
       undefined,

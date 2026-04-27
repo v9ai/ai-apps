@@ -8,7 +8,7 @@ function normSlug(raw: string): string {
   return m ? m[0] : "";
 }
 
-export const medicationDeepResearch: QueryResolvers['medicationDeepResearch'] = async (_parent, args, ctx): Promise<DeepResearchResult | null> => {
+export const medicationDeepResearch: NonNullable<QueryResolvers['medicationDeepResearch']> = async (_parent, args, ctx): Promise<DeepResearchResult | null> => {
   const userEmail = ctx.userEmail;
   if (!userEmail) throw new Error("Authentication required");
 

@@ -1,5 +1,5 @@
-mutation GenerateMedicationDeepResearch($slug: String!) {
-  generateMedicationDeepResearch(slug: $slug) {
+mutation GenerateMedicationDeepResearch($slug: String!, $language: String) {
+  generateMedicationDeepResearch(slug: $slug, language: $language) {
     success
     message
     jobId

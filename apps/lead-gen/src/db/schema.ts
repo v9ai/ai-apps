@@ -356,61 +356,10 @@ export const receivedEmails = pgTable(
 export type ReceivedEmail = typeof receivedEmails.$inferSelect;
 export type NewReceivedEmail = typeof receivedEmails.$inferInsert;
 
-// LinkedIn Posts (unified table for posts and job listings — jobs have type='job')
-export const linkedinPosts = pgTable(
-  "linkedin_posts",
-  {
-    id: serial("id").primaryKey(),
-    tenant_id: tenantIdColumn(),
-    type: text("type", { enum: ["post", "job"] }).notNull().default("post"),
-    url: text("url").notNull(),           // LinkedIn canonical URL (unique)
-
-    company_id: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
-    contact_id: integer("contact_id").references(() => contacts.id, { onDelete: "set null" }),
-
-    title: text("title"),                 // job title or post headline
-    content: text("content"),            // full post text or job description
-    author_name: text("author_name"),    // display name
-    author_url: text("author_url"),      // author LinkedIn profile URL
-
-    location: text("location"),          // job: location string
-    employment_type: text("employment_type"), // job: full-time / contract / etc.
-
-    posted_at: text("posted_at"),        // when posted on LinkedIn (ISO)
-    scraped_at: text("scraped_at").notNull().default(sql`now()::text`),
-
-    raw_data: text("raw_data"),          // JSON blob for anything extra
-
-    // TechWolf model analysis (JobBERT-v2 + ConTeXT skill extraction)
-    skills: text("skills"),              // JSON array of ExtractedSkill[]
-    analyzed_at: text("analyzed_at"),    // ISO timestamp of last TechWolf analysis
-    // job_embedding vector(768) added via migration — accessed with raw SQL
-
-    // --- Voyager API fields ---
-    voyager_urn: text("voyager_urn"),                       // LinkedIn URN e.g. urn:li:fsd_jobPosting:12345
-    voyager_workplace_type: text("voyager_workplace_type"), // "remote" | "hybrid" | "on-site"
-    voyager_salary_min: integer("voyager_salary_min"),
-    voyager_salary_max: integer("voyager_salary_max"),
-    voyager_salary_currency: text("voyager_salary_currency"), // ISO 4217: "USD", "EUR", etc.
-    voyager_apply_url: text("voyager_apply_url"),            // external apply URL
-    voyager_poster_urn: text("voyager_poster_urn"),          // URN of the person who posted
-    voyager_listed_at: text("voyager_listed_at"),            // epoch ms or ISO when LinkedIn listed it
-    voyager_reposted: boolean("voyager_reposted").default(false),
-
-    created_at: text("created_at").notNull().default(sql`now()::text`),
-  },
-  (table) => [
-    uniqueIndex("idx_linkedin_posts_url").on(table.url),
-    index("idx_linkedin_posts_type").on(table.type),
-    index("idx_linkedin_posts_company_id").on(table.company_id),
-    index("idx_linkedin_posts_contact_id").on(table.contact_id),
-    uniqueIndex("idx_linkedin_posts_voyager_urn").on(table.voyager_urn),
-    index("idx_linkedin_posts_workplace_type").on(table.voyager_workplace_type),
-  ],
-);
-
-export type LinkedInPost = typeof linkedinPosts.$inferSelect;
-export type NewLinkedInPost = typeof linkedinPosts.$inferInsert;
+// LinkedIn posts and jobs are now stored in Cloudflare D1 (binding `DB` in
+// the edge worker — see apps/lead-gen/edge/migrations/000{2,3,4}_*.sql).
+// All readers/writers go through src/lib/posts-d1-client.ts. The Neon
+// `linkedin_posts` table was dropped on 2026-04-27 after the cutover.
 
 // Opportunities (job listings / contracts tracked for application pipeline)
 export const opportunities = pgTable(
@@ -681,7 +630,6 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   companySnapshots: many(companySnapshots),
   contacts: many(contacts),
   emailCampaigns: many(emailCampaigns),
-  linkedinPosts: many(linkedinPosts),
   intentSignals: many(intentSignals),
   voyagerJobCounts: many(voyagerJobCounts),
 }));
@@ -706,7 +654,6 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
     references: [companies.id],
   }),
   emails: many(contactEmails),
-  linkedinPosts: many(linkedinPosts),
 }));
 
 export const contactEmailsRelations = relations(contactEmails, ({ one }) => ({
@@ -749,16 +696,7 @@ export const intentSignalProductsRelations = relations(
   }),
 );
 
-export const linkedinPostsRelations = relations(linkedinPosts, ({ one }) => ({
-  company: one(companies, {
-    fields: [linkedinPosts.company_id],
-    references: [companies.id],
-  }),
-  contact: one(contacts, {
-    fields: [linkedinPosts.contact_id],
-    references: [contacts.id],
-  }),
-}));
+// linkedinPostsRelations removed — posts moved to Cloudflare D1.
 
 export const voyagerJobCountsRelations = relations(voyagerJobCounts, ({ one }) => ({
   company: one(companies, {
