@@ -3,11 +3,19 @@
  * Unified CPN (Claude Partner Network) pipeline script.
  *
  * Usage:
- *   npx tsx scripts/cpn.ts import   [--dry-run] [--offset N]
- *   npx tsx scripts/cpn.ts campaign [--dry-run] [--limit N] [--batch-size N] [--delay N] [--offset N] [--per-day N] [--schedule-minutes N]
- *   npx tsx scripts/cpn.ts send                                      # flush queued emails
- *   npx tsx scripts/cpn.ts sync                                      # sync replies from Resend
- *   npx tsx scripts/cpn.ts followup [--dry-run] [--auto]
+ *   npx tsx scripts/cpn.ts import         [--dry-run] [--offset N]
+ *   npx tsx scripts/cpn.ts campaign       [--dry-run] [--limit N] [--batch-size N] [--delay N] [--offset N] [--per-day N] [--schedule-minutes N]
+ *   npx tsx scripts/cpn.ts send                                                      # flush queued emails
+ *   npx tsx scripts/cpn.ts sync                                                      # sync replies from Resend
+ *   npx tsx scripts/cpn.ts followup       [--dry-run] [--auto]
+ *   npx tsx scripts/cpn.ts send-one       --template <name> (--id N | --email E) [--alias X] [--auto] [--dry-run] [--force]
+ *   npx tsx scripts/cpn.ts training-path  [--dry-run] [--auto] [--only-id N]         # bulk cpn_training_path to interested contacts
+ *   npx tsx scripts/cpn.ts assign-aliases [--dry-run]                                 # auto-assign forwarding_alias to cpn-outreach contacts without one
+ *   npx tsx scripts/cpn.ts audit-missing                                              # interested-but-not-onboarded report
+ *   npx tsx scripts/cpn.ts cohort-status                                              # 4-course completion table
+ *   npx tsx scripts/cpn.ts custom         (--id N[,N...] | --email E[,E...]) --subject "..." (--body "..." | --body-file PATH) [--tags '[...]'] [--sequence-type X] [--auto] [--dry-run]
+ *
+ * Templates for `send-one`: cpn_followup | cpn_training_path | cpn_email_ready | cpn_waiting_reply
  */
 
 import { config } from "dotenv";
@@ -20,6 +28,11 @@ import Papa from "papaparse";
 import { neon } from "@neondatabase/serverless";
 import { Resend } from "resend";
 import { classifyReply, stripQuotedText } from "@/lib/email/reply-classifier";
+import {
+  buildCpnTrainingPath,
+  buildCpnEmailReady,
+  buildCpnWaitingReply,
+} from "@/lib/email/cpn-followup";
 
 // ── Shared ─────────────────────────────────────────────────────
 
@@ -36,8 +49,107 @@ function flagVal(name: string, fallback: number): number {
   return idx !== -1 ? parseInt(process.argv[idx + 1], 10) : fallback;
 }
 
+function flagStr(name: string): string | null {
+  const idx = process.argv.indexOf(`--${name}`);
+  if (idx === -1) return null;
+  const raw = process.argv[idx + 1];
+  return raw && !raw.startsWith("--") ? raw : null;
+}
+
+function die(msg: string): never {
+  console.error(`✗ ${msg}`);
+  process.exit(1);
+}
+
 const sql = neon(process.env.NEON_DATABASE_URL!);
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// ── Alias helpers (mirrors src/app/api/contacts/forwarding-alias/route.ts) ──
+
+const ALIAS_DOMAIN = "vadim.blog";
+const RESERVED_ALIASES = new Set([
+  "contact",
+  "postmaster",
+  "abuse",
+  "hostmaster",
+  "admin",
+  "noreply",
+  "no-reply",
+]);
+
+function sanitizeAlias(raw: string): string {
+  return raw.trim().replace(/[^A-Za-z0-9._-]/g, "").slice(0, 64);
+}
+
+// ── Single-contact template dispatch (used by send-one) ────────
+
+type CpnTemplate =
+  | "cpn_followup"
+  | "cpn_training_path"
+  | "cpn_email_ready"
+  | "cpn_waiting_reply";
+
+interface TemplateMeta {
+  tagsJson: string;
+  tagMatch: string;
+  sequenceType: string;
+  sequenceNumber: string;
+}
+
+const TEMPLATE_META: Record<CpnTemplate, TemplateMeta> = {
+  cpn_followup: {
+    tagsJson: '["cpn-outreach","cpn-followup-1"]',
+    tagMatch: "cpn-followup-1",
+    sequenceType: "followup_1",
+    sequenceNumber: "1",
+  },
+  cpn_training_path: {
+    tagsJson: '["cpn-outreach","cpn-training-path"]',
+    tagMatch: "cpn-training-path",
+    sequenceType: "followup_2",
+    sequenceNumber: "2",
+  },
+  cpn_email_ready: {
+    tagsJson: '["cpn-outreach","cpn-email-ready"]',
+    tagMatch: "cpn-email-ready",
+    sequenceType: "followup_3",
+    sequenceNumber: "3",
+  },
+  cpn_waiting_reply: {
+    tagsJson: '["cpn-outreach","cpn-waiting-reply"]',
+    tagMatch: "cpn-waiting-reply",
+    sequenceType: "followup_2_reminder",
+    sequenceNumber: "2",
+  },
+};
+
+function buildTemplate(
+  name: CpnTemplate,
+  firstName: string,
+  contactEmail: string,
+  alias: string | null,
+): { subject: string; text: string; to: string } {
+  switch (name) {
+    case "cpn_followup": {
+      const { subject, text } = buildFollowup(firstName);
+      return { subject, text, to: contactEmail };
+    }
+    case "cpn_training_path": {
+      const { subject, text } = buildCpnTrainingPath(firstName);
+      return { subject, text, to: contactEmail };
+    }
+    case "cpn_waiting_reply": {
+      const { subject, text } = buildCpnWaitingReply(firstName);
+      return { subject, text, to: contactEmail };
+    }
+    case "cpn_email_ready": {
+      if (!alias) die("cpn_email_ready needs an alias");
+      const aliasEmail = `${alias}@${ALIAS_DOMAIN}`;
+      const { subject, text } = buildCpnEmailReady(firstName, aliasEmail, contactEmail);
+      return { subject, text, to: aliasEmail };
+    }
+  }
+}
 
 // ── CSV types & helpers ─────────────────────────────────��──────
 
