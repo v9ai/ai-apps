@@ -187,18 +187,18 @@
       {
         "id": "0",
         "name": "ResearchThera.com",
-        "description": "Multi-agent orchestration with LLM quality gating, clinical research ingestion from 7 sources, RAG-powered vector search, runtime prompt versioning with distributed tracing, automated quality evals with Harbor containerized harness. Clinical biomarker trajectory analysis across derived metrics, AI-driven risk classification with cosine embedding similarity, pgvector search, server actions, automated accuracy evals with Braintrust experiment tracking.",
+        "description": "Therapeutic + clinical-intelligence platform for families. LlamaIndex-powered healthcare RAG ingests lab PDFs into 8 pgvector tables with 7 derived clinical ratios and a 5-stage local-only clinical chat pipeline; a 7-node LangGraph research generator surfaces evidence-based therapeutic content across 7 academic sources. 6 AI agents (3 Python LangGraph + 1 Python LlamaIndex + 2 TypeScript AI SDK) over a GraphQL API.",
         "githubUrl": "https://github.com/v9ai/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "Agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
-          "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
-          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
-          "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2 via background tasks.",
-          "Harbor eval harness: containerized trials across 6-20 non-deterministic agents with standardized grader format.",
-          "Biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
-          "Risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
-          "7 server actions with 15 test cases covering diverse metabolic profiles."
+          "LlamaIndex healthcare layer — blood-test PDFs → LlamaParse → custom BloodTestNodeParser (3-tier fallback: HTML tables → Romanian/EU FormKeysValues → tab/multi-space free-text) → FastEmbed (BAAI/bge-large-en-v1.5, 1024-dim, local ONNX) IngestionPipeline emitting blood_test + N blood_marker + health_state nodes per upload.",
+          "7 derived clinical ratios per upload with authored risk thresholds — TG/HDL (McLaughlin), TC/HDL (Castelli), HDL/LDL (Millán), NLR (Fest), De Ritis AST/ALT, BUN/Creatinine (Hosten), TyG Index (Simental-Mendía) — stored as JSONB on health_state alongside the embedding.",
+          "5-stage clinical chat pipeline (pure LlamaIndex, no LangGraph): triage → re_triage (confidence < 0.7, max 2 attempts) → route → ContextChatEngine (SimilarityPostprocessor + ClinicalRelevancePostprocessor + CompactAndRefine) → guard re-check; 9 intents with multi-intent CompositeRetriever fan-out and confidence-scaled k widening (≥0.8 → base, ≥0.6 → 1.5×, else 2×).",
+          "8 dedicated 1024-dim pgvector tables (blood_test, blood_marker hybrid FTS+vector, health_state, condition, medication, symptom, appointment, allergy) each paired with a BaseRetriever subclass; search_marker_trend powers longitudinal trajectory queries.",
+          "Local-only inference on Apple Silicon — mlx_lm.server with Qwen2.5-7B-Instruct-4bit, FastEmbed via ONNX Runtime — zero API calls, no PHI egress; LLM_BASE_URL is a one-line swap to a remote model.",
+          "Medication deep research LangGraph agent mines drug-biomarker interactions and persists structured pharmacology across 6 tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) powering /medications/[slug] research panels.",
+          "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): ~2,350 candidates across 7 academic sources → DeepSeek scoring with 0.72 blended-quality gate → top 20 stored as 1024-dim pgvector embeddings.",
+          "~70 PostgreSQL tables via Drizzle ORM after the agentic-healthcare merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables (blood tests, conditions, medications, symptoms, appointments, brain protocols, medication pharmacology, plus the 8 pgvector embedding tables)."
         ]
       },
       {
