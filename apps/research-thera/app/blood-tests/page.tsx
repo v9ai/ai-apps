@@ -12,7 +12,7 @@ import {
   Button,
   AlertDialog,
 } from "@radix-ui/themes";
-import { Droplets, Trash2 } from "lucide-react";
+import { Droplets, Eye, Trash2 } from "lucide-react";
 import {
   useBloodTestsQuery,
   useDeleteBloodTestMutation,
@@ -175,18 +175,35 @@ function BloodTestRow({
           )}
         </Flex>
 
-        <AlertDialog.Root>
-          <AlertDialog.Trigger>
-            <Button
-              variant="ghost"
-              color="gray"
-              size="1"
-              disabled={deleting}
-              aria-label="Delete blood test"
+        <Flex gap="1" align="center">
+          <Button
+            asChild
+            variant="ghost"
+            color="gray"
+            size="1"
+            aria-label="View PDF"
+          >
+            <a
+              href={`/api/healthcare/blood-test-file/${id}`}
+              target="_blank"
+              rel="noreferrer"
             >
-              <Trash2 size={14} />
-            </Button>
-          </AlertDialog.Trigger>
+              <Eye size={14} />
+            </a>
+          </Button>
+
+          <AlertDialog.Root>
+            <AlertDialog.Trigger>
+              <Button
+                variant="ghost"
+                color="gray"
+                size="1"
+                disabled={deleting}
+                aria-label="Delete blood test"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </AlertDialog.Trigger>
           <AlertDialog.Content maxWidth="400px">
             <AlertDialog.Title>Delete blood test?</AlertDialog.Title>
             <AlertDialog.Description size="2">
@@ -210,6 +227,7 @@ function BloodTestRow({
             </Flex>
           </AlertDialog.Content>
         </AlertDialog.Root>
+        </Flex>
       </Flex>
     </Card>
   );

@@ -13,7 +13,7 @@ import {
   Button,
   AlertDialog,
 } from "@radix-ui/themes";
-import { ArrowLeft, FileText, Mail, MapPin, Phone, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, FileText, Mail, MapPin, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import {
   useDoctorQuery,
@@ -204,18 +204,35 @@ function LetterRow({
           </Flex>
         </Flex>
 
-        <AlertDialog.Root>
-          <AlertDialog.Trigger>
-            <Button
-              variant="ghost"
-              color="gray"
-              size="1"
-              disabled={deleting}
-              aria-label="Delete letter"
+        <Flex gap="1" align="center">
+          <Button
+            asChild
+            variant="ghost"
+            color="gray"
+            size="1"
+            aria-label="View letter"
+          >
+            <a
+              href={`/api/healthcare/medical-letter-file/${id}`}
+              target="_blank"
+              rel="noreferrer"
             >
-              <Trash2 size={14} />
-            </Button>
-          </AlertDialog.Trigger>
+              <Eye size={14} />
+            </a>
+          </Button>
+
+          <AlertDialog.Root>
+            <AlertDialog.Trigger>
+              <Button
+                variant="ghost"
+                color="gray"
+                size="1"
+                disabled={deleting}
+                aria-label="Delete letter"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </AlertDialog.Trigger>
           <AlertDialog.Content maxWidth="400px">
             <AlertDialog.Title>Delete letter?</AlertDialog.Title>
             <AlertDialog.Description size="2">
@@ -239,6 +256,7 @@ function LetterRow({
             </Flex>
           </AlertDialog.Content>
         </AlertDialog.Root>
+        </Flex>
       </Flex>
     </Card>
   );
