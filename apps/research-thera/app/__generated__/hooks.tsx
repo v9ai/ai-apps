@@ -237,6 +237,19 @@ export enum BehaviorObservationType {
   TargetOccurred = 'TARGET_OCCURRED'
 }
 
+export type BloodTest = {
+  __typename?: 'BloodTest';
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  fileName: Scalars['String']['output'];
+  filePath: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  markersCount: Scalars['Int']['output'];
+  status: Scalars['String']['output'];
+  testDate?: Maybe<Scalars['String']['output']>;
+  uploadedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
 export type BogdanDiscussionGuide = {
   __typename?: 'BogdanDiscussionGuide';
   anticipatedReactions: Array<AnticipatedReaction>;
@@ -696,6 +709,11 @@ export type DeleteAppointmentResult = {
 export type DeleteBehaviorObservationResult = {
   __typename?: 'DeleteBehaviorObservationResult';
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteBloodTestResult = {
+  __typename?: 'DeleteBloodTestResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1623,6 +1641,7 @@ export type Mutation = {
   deleteAllergy: DeleteAllergyResult;
   deleteAppointment: DeleteAppointmentResult;
   deleteBehaviorObservation: DeleteBehaviorObservationResult;
+  deleteBloodTest: DeleteBloodTestResult;
   deleteClaimCard: Scalars['Boolean']['output'];
   deleteCondition: DeleteConditionResult;
   deleteContact: DeleteContactResult;
@@ -1882,6 +1901,11 @@ export type MutationDeleteAppointmentArgs = {
 
 export type MutationDeleteBehaviorObservationArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteBloodTestArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2584,6 +2608,7 @@ export type Query = {
   audioFromR2?: Maybe<AudioFromR2Result>;
   behaviorObservation?: Maybe<BehaviorObservation>;
   behaviorObservations: Array<BehaviorObservation>;
+  bloodTests: Array<BloodTest>;
   bogdanDiscussions: Array<BogdanDiscussionGuide>;
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
@@ -3469,6 +3494,11 @@ export type AppointmentsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type AppointmentsQuery = { __typename?: 'Query', appointments: Array<{ __typename?: 'Appointment', id: string, title: string, doctorId?: string | null, familyMemberId?: number | null, provider?: string | null, notes?: string | null, appointmentDate?: string | null, createdAt: string }> };
 
+export type BloodTestsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BloodTestsQuery = { __typename?: 'Query', bloodTests: Array<{ __typename?: 'BloodTest', id: string, fileName: string, status: string, testDate?: string | null, errorMessage?: string | null, uploadedAt: string, markersCount: number }> };
+
 export type BogdanDiscussionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -3675,6 +3705,13 @@ export type DeleteBehaviorObservationMutationVariables = Exact<{
 
 
 export type DeleteBehaviorObservationMutation = { __typename?: 'Mutation', deleteBehaviorObservation: { __typename?: 'DeleteBehaviorObservationResult', success: boolean, message?: string | null } };
+
+export type DeleteBloodTestMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteBloodTestMutation = { __typename?: 'Mutation', deleteBloodTest: { __typename?: 'DeleteBloodTestResult', success: boolean } };
 
 export type DeleteConditionMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5200,6 +5237,54 @@ export type AppointmentsQueryHookResult = ReturnType<typeof useAppointmentsQuery
 export type AppointmentsLazyQueryHookResult = ReturnType<typeof useAppointmentsLazyQuery>;
 export type AppointmentsSuspenseQueryHookResult = ReturnType<typeof useAppointmentsSuspenseQuery>;
 export type AppointmentsQueryResult = Apollo.QueryResult<AppointmentsQuery, AppointmentsQueryVariables>;
+export const BloodTestsDocument = gql`
+    query BloodTests {
+  bloodTests {
+    id
+    fileName
+    status
+    testDate
+    errorMessage
+    uploadedAt
+    markersCount
+  }
+}
+    `;
+
+/**
+ * __useBloodTestsQuery__
+ *
+ * To run a query within a React component, call `useBloodTestsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useBloodTestsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBloodTestsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useBloodTestsQuery(baseOptions?: Apollo.QueryHookOptions<BloodTestsQuery, BloodTestsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<BloodTestsQuery, BloodTestsQueryVariables>(BloodTestsDocument, options);
+      }
+export function useBloodTestsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<BloodTestsQuery, BloodTestsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<BloodTestsQuery, BloodTestsQueryVariables>(BloodTestsDocument, options);
+        }
+// @ts-ignore
+export function useBloodTestsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<BloodTestsQuery, BloodTestsQueryVariables>): Apollo.UseSuspenseQueryResult<BloodTestsQuery, BloodTestsQueryVariables>;
+export function useBloodTestsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BloodTestsQuery, BloodTestsQueryVariables>): Apollo.UseSuspenseQueryResult<BloodTestsQuery | undefined, BloodTestsQueryVariables>;
+export function useBloodTestsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BloodTestsQuery, BloodTestsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<BloodTestsQuery, BloodTestsQueryVariables>(BloodTestsDocument, options);
+        }
+export type BloodTestsQueryHookResult = ReturnType<typeof useBloodTestsQuery>;
+export type BloodTestsLazyQueryHookResult = ReturnType<typeof useBloodTestsLazyQuery>;
+export type BloodTestsSuspenseQueryHookResult = ReturnType<typeof useBloodTestsSuspenseQuery>;
+export type BloodTestsQueryResult = Apollo.QueryResult<BloodTestsQuery, BloodTestsQueryVariables>;
 export const BogdanDiscussionsDocument = gql`
     query BogdanDiscussions {
   bogdanDiscussions {
@@ -6601,6 +6686,39 @@ export function useDeleteBehaviorObservationMutation(baseOptions?: Apollo.Mutati
 export type DeleteBehaviorObservationMutationHookResult = ReturnType<typeof useDeleteBehaviorObservationMutation>;
 export type DeleteBehaviorObservationMutationResult = Apollo.MutationResult<DeleteBehaviorObservationMutation>;
 export type DeleteBehaviorObservationMutationOptions = Apollo.BaseMutationOptions<DeleteBehaviorObservationMutation, DeleteBehaviorObservationMutationVariables>;
+export const DeleteBloodTestDocument = gql`
+    mutation DeleteBloodTest($id: ID!) {
+  deleteBloodTest(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteBloodTestMutationFn = Apollo.MutationFunction<DeleteBloodTestMutation, DeleteBloodTestMutationVariables>;
+
+/**
+ * __useDeleteBloodTestMutation__
+ *
+ * To run a mutation, you first call `useDeleteBloodTestMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteBloodTestMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteBloodTestMutation, { data, loading, error }] = useDeleteBloodTestMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteBloodTestMutation(baseOptions?: Apollo.MutationHookOptions<DeleteBloodTestMutation, DeleteBloodTestMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteBloodTestMutation, DeleteBloodTestMutationVariables>(DeleteBloodTestDocument, options);
+      }
+export type DeleteBloodTestMutationHookResult = ReturnType<typeof useDeleteBloodTestMutation>;
+export type DeleteBloodTestMutationResult = Apollo.MutationResult<DeleteBloodTestMutation>;
+export type DeleteBloodTestMutationOptions = Apollo.BaseMutationOptions<DeleteBloodTestMutation, DeleteBloodTestMutationVariables>;
 export const DeleteConditionDocument = gql`
     mutation DeleteCondition($id: ID!) {
   deleteCondition(id: $id) {

@@ -235,6 +235,19 @@ export type BehaviorObservationType =
   | 'REFUSAL'
   | 'TARGET_OCCURRED';
 
+export type BloodTest = {
+  __typename?: 'BloodTest';
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  fileName: Scalars['String']['output'];
+  filePath: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  markersCount: Scalars['Int']['output'];
+  status: Scalars['String']['output'];
+  testDate?: Maybe<Scalars['String']['output']>;
+  uploadedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
 export type BogdanDiscussionGuide = {
   __typename?: 'BogdanDiscussionGuide';
   anticipatedReactions: Array<AnticipatedReaction>;
@@ -691,6 +704,11 @@ export type DeleteAppointmentResult = {
 export type DeleteBehaviorObservationResult = {
   __typename?: 'DeleteBehaviorObservationResult';
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteBloodTestResult = {
+  __typename?: 'DeleteBloodTestResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1608,6 +1626,7 @@ export type Mutation = {
   deleteAllergy: DeleteAllergyResult;
   deleteAppointment: DeleteAppointmentResult;
   deleteBehaviorObservation: DeleteBehaviorObservationResult;
+  deleteBloodTest: DeleteBloodTestResult;
   deleteClaimCard: Scalars['Boolean']['output'];
   deleteCondition: DeleteConditionResult;
   deleteContact: DeleteContactResult;
@@ -1867,6 +1886,11 @@ export type MutationdeleteAppointmentArgs = {
 
 export type MutationdeleteBehaviorObservationArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationdeleteBloodTestArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2562,6 +2586,7 @@ export type Query = {
   audioFromR2?: Maybe<AudioFromR2Result>;
   behaviorObservation?: Maybe<BehaviorObservation>;
   behaviorObservations: Array<BehaviorObservation>;
+  bloodTests: Array<BloodTest>;
   bogdanDiscussions: Array<BogdanDiscussionGuide>;
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
@@ -3473,6 +3498,7 @@ export type ResolversTypes = {
   BehaviorIntensity: ResolverTypeWrapper<'LOW' | 'MEDIUM' | 'HIGH'>;
   BehaviorObservation: ResolverTypeWrapper<Omit<BehaviorObservation, 'familyMember' | 'goal' | 'intensity' | 'observationType'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, goal?: Maybe<ResolversTypes['Goal']>, intensity?: Maybe<ResolversTypes['BehaviorIntensity']>, observationType: ResolversTypes['BehaviorObservationType'] }>;
   BehaviorObservationType: ResolverTypeWrapper<'REFUSAL' | 'TARGET_OCCURRED' | 'AVOIDANCE' | 'PARTIAL'>;
+  BloodTest: ResolverTypeWrapper<BloodTest>;
   BogdanDiscussionGuide: ResolverTypeWrapper<BogdanDiscussionGuide>;
   BuildClaimCardsInput: BuildClaimCardsInput;
   BuildClaimCardsResult: ResolverTypeWrapper<Omit<BuildClaimCardsResult, 'cards'> & { cards: Array<ResolversTypes['ClaimCard']> }>;
@@ -3518,6 +3544,7 @@ export type ResolversTypes = {
   DeleteAllergyResult: ResolverTypeWrapper<DeleteAllergyResult>;
   DeleteAppointmentResult: ResolverTypeWrapper<DeleteAppointmentResult>;
   DeleteBehaviorObservationResult: ResolverTypeWrapper<DeleteBehaviorObservationResult>;
+  DeleteBloodTestResult: ResolverTypeWrapper<DeleteBloodTestResult>;
   DeleteConditionResult: ResolverTypeWrapper<DeleteConditionResult>;
   DeleteContactFeedbackResult: ResolverTypeWrapper<DeleteContactFeedbackResult>;
   DeleteContactResult: ResolverTypeWrapper<DeleteContactResult>;
@@ -3709,6 +3736,7 @@ export type ResolversParentTypes = {
   AudioMetadata: AudioMetadata;
   AudioSegmentInfo: AudioSegmentInfo;
   BehaviorObservation: Omit<BehaviorObservation, 'familyMember' | 'goal'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, goal?: Maybe<ResolversParentTypes['Goal']> };
+  BloodTest: BloodTest;
   BogdanDiscussionGuide: BogdanDiscussionGuide;
   BuildClaimCardsInput: BuildClaimCardsInput;
   BuildClaimCardsResult: Omit<BuildClaimCardsResult, 'cards'> & { cards: Array<ResolversParentTypes['ClaimCard']> };
@@ -3751,6 +3779,7 @@ export type ResolversParentTypes = {
   DeleteAllergyResult: DeleteAllergyResult;
   DeleteAppointmentResult: DeleteAppointmentResult;
   DeleteBehaviorObservationResult: DeleteBehaviorObservationResult;
+  DeleteBloodTestResult: DeleteBloodTestResult;
   DeleteConditionResult: DeleteConditionResult;
   DeleteContactFeedbackResult: DeleteContactFeedbackResult;
   DeleteContactResult: DeleteContactResult;
@@ -4012,6 +4041,18 @@ export type BehaviorObservationResolvers<ContextType = GraphQLContext, ParentTyp
 
 export type BehaviorObservationTypeResolvers = EnumResolverSignature<{ AVOIDANCE?: any, PARTIAL?: any, REFUSAL?: any, TARGET_OCCURRED?: any }, ResolversTypes['BehaviorObservationType']>;
 
+export type BloodTestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BloodTest'] = ResolversParentTypes['BloodTest']> = {
+  errorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  fileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  filePath?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  markersCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  testDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  uploadedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type BogdanDiscussionGuideResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BogdanDiscussionGuide'] = ResolversParentTypes['BogdanDiscussionGuide']> = {
   anticipatedReactions?: Resolver<Array<ResolversTypes['AnticipatedReaction']>, ParentType, ContextType>;
   behaviorSummary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -4256,6 +4297,10 @@ export type DeleteAppointmentResultResolvers<ContextType = GraphQLContext, Paren
 
 export type DeleteBehaviorObservationResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteBehaviorObservationResult'] = ResolversParentTypes['DeleteBehaviorObservationResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type DeleteBloodTestResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteBloodTestResult'] = ResolversParentTypes['DeleteBloodTestResult']> = {
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
@@ -5012,6 +5057,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteAllergy?: Resolver<ResolversTypes['DeleteAllergyResult'], ParentType, ContextType, RequireFields<MutationdeleteAllergyArgs, 'id'>>;
   deleteAppointment?: Resolver<ResolversTypes['DeleteAppointmentResult'], ParentType, ContextType, RequireFields<MutationdeleteAppointmentArgs, 'id'>>;
   deleteBehaviorObservation?: Resolver<ResolversTypes['DeleteBehaviorObservationResult'], ParentType, ContextType, RequireFields<MutationdeleteBehaviorObservationArgs, 'id'>>;
+  deleteBloodTest?: Resolver<ResolversTypes['DeleteBloodTestResult'], ParentType, ContextType, RequireFields<MutationdeleteBloodTestArgs, 'id'>>;
   deleteClaimCard?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationdeleteClaimCardArgs, 'id'>>;
   deleteCondition?: Resolver<ResolversTypes['DeleteConditionResult'], ParentType, ContextType, RequireFields<MutationdeleteConditionArgs, 'id'>>;
   deleteContact?: Resolver<ResolversTypes['DeleteContactResult'], ParentType, ContextType, RequireFields<MutationdeleteContactArgs, 'id'>>;
@@ -5261,6 +5307,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   audioFromR2?: Resolver<Maybe<ResolversTypes['AudioFromR2Result']>, ParentType, ContextType, RequireFields<QueryaudioFromR2Args, 'key'>>;
   behaviorObservation?: Resolver<Maybe<ResolversTypes['BehaviorObservation']>, ParentType, ContextType, RequireFields<QuerybehaviorObservationArgs, 'id'>>;
   behaviorObservations?: Resolver<Array<ResolversTypes['BehaviorObservation']>, ParentType, ContextType, RequireFields<QuerybehaviorObservationsArgs, 'familyMemberId'>>;
+  bloodTests?: Resolver<Array<ResolversTypes['BloodTest']>, ParentType, ContextType>;
   bogdanDiscussions?: Resolver<Array<ResolversTypes['BogdanDiscussionGuide']>, ParentType, ContextType>;
   claimCard?: Resolver<Maybe<ResolversTypes['ClaimCard']>, ParentType, ContextType, RequireFields<QueryclaimCardArgs, 'id'>>;
   claimCardsForNote?: Resolver<Array<ResolversTypes['ClaimCard']>, ParentType, ContextType, RequireFields<QueryclaimCardsForNoteArgs, 'noteId'>>;
@@ -5625,6 +5672,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   BehaviorIntensity?: BehaviorIntensityResolvers;
   BehaviorObservation?: BehaviorObservationResolvers<ContextType>;
   BehaviorObservationType?: BehaviorObservationTypeResolvers;
+  BloodTest?: BloodTestResolvers<ContextType>;
   BogdanDiscussionGuide?: BogdanDiscussionGuideResolvers<ContextType>;
   BuildClaimCardsResult?: BuildClaimCardsResultResolvers<ContextType>;
   CheckNoteClaimsResult?: CheckNoteClaimsResultResolvers<ContextType>;
@@ -5651,6 +5699,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteAllergyResult?: DeleteAllergyResultResolvers<ContextType>;
   DeleteAppointmentResult?: DeleteAppointmentResultResolvers<ContextType>;
   DeleteBehaviorObservationResult?: DeleteBehaviorObservationResultResolvers<ContextType>;
+  DeleteBloodTestResult?: DeleteBloodTestResultResolvers<ContextType>;
   DeleteConditionResult?: DeleteConditionResultResolvers<ContextType>;
   DeleteContactFeedbackResult?: DeleteContactFeedbackResultResolvers<ContextType>;
   DeleteContactResult?: DeleteContactResultResolvers<ContextType>;

@@ -1,0 +1,11 @@
+query BloodTests {
+  bloodTests {
+    id
+    fileName
+    status
+    testDate
+    errorMessage
+    uploadedAt
+    markersCount
+  }
+}

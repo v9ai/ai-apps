@@ -295,6 +295,9 @@ type Query {
 
   # Healthcare — Per-marker trend (proxies Python /search/trend at :2024)
   healthcareMarkerTrend(query: String!, markerName: String): [HealthcareMarkerTrendHit!]!
+
+  # Healthcare — Blood tests list
+  bloodTests: [BloodTest!]!
 }
 
 # (chat mutation lives under Mutation type below)
@@ -519,6 +522,9 @@ type Mutation {
 
   # Healthcare — Chat (proxies to merged Python /chat at :2024)
   sendHealthcareChatMessage(input: HealthcareChatInput!): HealthcareChatResponse!
+
+  # Healthcare — Blood tests (delete proxies Python DELETE /blood-tests/{id})
+  deleteBloodTest(id: ID!): DeleteBloodTestResult!
 }
 
 type Subscription {
@@ -2573,4 +2579,24 @@ type HealthcareMarkerTrendHit {
   flag: String!
   testDate: String
   fileName: String!
+}
+
+# ============================================
+# Healthcare — Blood tests
+# ============================================
+
+type BloodTest {
+  id: ID!
+  userId: String!
+  fileName: String!
+  filePath: String!
+  status: String!
+  testDate: String
+  errorMessage: String
+  uploadedAt: String!
+  markersCount: Int!
+}
+
+type DeleteBloodTestResult {
+  success: Boolean!
 }

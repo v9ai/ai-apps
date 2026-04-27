@@ -207,6 +207,18 @@ enum BehaviorObservationType {
   TARGET_OCCURRED
 }
 
+type BloodTest {
+  errorMessage: String
+  fileName: String!
+  filePath: String!
+  id: ID!
+  markersCount: Int!
+  status: String!
+  testDate: String
+  uploadedAt: String!
+  userId: String!
+}
+
 type BogdanDiscussionGuide {
   anticipatedReactions: [AnticipatedReaction!]!
   behaviorSummary: String!
@@ -643,6 +655,10 @@ type DeleteAppointmentResult {
 
 type DeleteBehaviorObservationResult {
   message: String
+  success: Boolean!
+}
+
+type DeleteBloodTestResult {
   success: Boolean!
 }
 
@@ -1482,6 +1498,7 @@ type Mutation {
   deleteAllergy(id: ID!): DeleteAllergyResult!
   deleteAppointment(id: ID!): DeleteAppointmentResult!
   deleteBehaviorObservation(id: Int!): DeleteBehaviorObservationResult!
+  deleteBloodTest(id: ID!): DeleteBloodTestResult!
   deleteClaimCard(id: ID!): Boolean!
   deleteCondition(id: ID!): DeleteConditionResult!
   deleteContact(id: Int!): DeleteContactResult!
@@ -1768,6 +1785,7 @@ type Query {
   audioFromR2(key: String!): AudioFromR2Result
   behaviorObservation(id: Int!): BehaviorObservation
   behaviorObservations(familyMemberId: Int!, goalId: Int): [BehaviorObservation!]!
+  bloodTests: [BloodTest!]!
   bogdanDiscussions: [BogdanDiscussionGuide!]!
   claimCard(id: ID!): ClaimCard
   claimCardsForNote(noteId: Int!): [ClaimCard!]!
