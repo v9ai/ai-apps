@@ -1606,6 +1606,96 @@ export type Medication = {
   userId: Scalars['String']['output'];
 };
 
+export type MedicationAdverseEvent = {
+  __typename?: 'MedicationAdverseEvent';
+  drugSlug: Scalars['String']['output'];
+  event: Scalars['String']['output'];
+  frequencyBand: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  severity?: Maybe<Scalars['String']['output']>;
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationCorrelation = {
+  __typename?: 'MedicationCorrelation';
+  confidence: Scalars['Int']['output'];
+  correlationType: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  matchedFact?: Maybe<Scalars['String']['output']>;
+  medicationId: Scalars['ID']['output'];
+  rationale?: Maybe<Scalars['String']['output']>;
+  relatedDate?: Maybe<Scalars['String']['output']>;
+  relatedDescription?: Maybe<Scalars['String']['output']>;
+  relatedEntityId: Scalars['Int']['output'];
+  relatedEntityType: Scalars['String']['output'];
+  relatedTitle?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationDeepResearch = {
+  __typename?: 'MedicationDeepResearch';
+  adverseEvents: Array<MedicationAdverseEvent>;
+  correlations: Array<MedicationCorrelation>;
+  dosing: Array<MedicationDosing>;
+  familyMember?: Maybe<FamilyMember>;
+  indications: Array<MedicationIndication>;
+  interactions: Array<MedicationInteraction>;
+  medication: Medication;
+  pharmacology?: Maybe<MedicationPharmacology>;
+};
+
+export type MedicationDosing = {
+  __typename?: 'MedicationDosing';
+  ageBand?: Maybe<Scalars['String']['output']>;
+  doseText: Scalars['String']['output'];
+  drugSlug: Scalars['String']['output'];
+  frequency?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  maxDaily?: Maybe<Scalars['String']['output']>;
+  population: Scalars['String']['output'];
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+  weightBand?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationIndication = {
+  __typename?: 'MedicationIndication';
+  condition: Scalars['String']['output'];
+  confidence?: Maybe<Scalars['Int']['output']>;
+  drugSlug: Scalars['String']['output'];
+  evidenceLevel?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  kind: Scalars['String']['output'];
+  source?: Maybe<Scalars['String']['output']>;
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationInteraction = {
+  __typename?: 'MedicationInteraction';
+  drugSlug: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  interactingDrug: Scalars['String']['output'];
+  mechanism?: Maybe<Scalars['String']['output']>;
+  recommendation?: Maybe<Scalars['String']['output']>;
+  severity: Scalars['String']['output'];
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationPharmacology = {
+  __typename?: 'MedicationPharmacology';
+  atcCode?: Maybe<Scalars['String']['output']>;
+  brandNames: Array<Scalars['String']['output']>;
+  drugSlug: Scalars['String']['output'];
+  excretion?: Maybe<Scalars['String']['output']>;
+  genericName?: Maybe<Scalars['String']['output']>;
+  halfLife?: Maybe<Scalars['String']['output']>;
+  metabolism?: Maybe<Scalars['String']['output']>;
+  moa?: Maybe<Scalars['String']['output']>;
+  peakTime?: Maybe<Scalars['String']['output']>;
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type MemoryBaseline = {
   __typename?: 'MemoryBaseline';
   id: Scalars['ID']['output'];
@@ -2704,6 +2794,7 @@ export type Query = {
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
   medicalLetters: Array<MedicalLetter>;
   medication?: Maybe<Medication>;
+  medicationDeepResearch?: Maybe<MedicationDeepResearch>;
   medications: Array<Medication>;
   memoryBaseline?: Maybe<MemoryBaseline>;
   memoryEntries: Array<MemoryEntry>;
@@ -2940,6 +3031,12 @@ export type QueryMedicalLettersArgs = {
 
 export type QueryMedicationArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryMedicationDeepResearchArgs = {
+  memberSlug: Scalars['String']['input'];
+  slug: Scalars['String']['input'];
 };
 
 
@@ -4629,6 +4726,14 @@ export type MedicationQueryVariables = Exact<{
 
 export type MedicationQuery = { __typename?: 'Query', medication?: { __typename?: 'Medication', id: string, familyMemberId?: number | null, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null, relationship?: string | null, ageYears?: number | null } | null } | null };
 
+export type MedicationDeepResearchQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+  memberSlug: Scalars['String']['input'];
+}>;
+
+
+export type MedicationDeepResearchQuery = { __typename?: 'Query', medicationDeepResearch?: { __typename?: 'MedicationDeepResearch', medication: { __typename?: 'Medication', id: string, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, familyMemberId?: number | null }, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, ageYears?: number | null, dateOfBirth?: string | null } | null, pharmacology?: { __typename?: 'MedicationPharmacology', drugSlug: string, genericName?: string | null, brandNames: Array<string>, atcCode?: string | null, moa?: string | null, halfLife?: string | null, peakTime?: string | null, metabolism?: string | null, excretion?: string | null, sourceUrl?: string | null, updatedAt: string } | null, indications: Array<{ __typename?: 'MedicationIndication', id: string, kind: string, condition: string, evidenceLevel?: string | null, sourceUrl?: string | null }>, dosing: Array<{ __typename?: 'MedicationDosing', id: string, population: string, ageBand?: string | null, weightBand?: string | null, doseText: string, frequency?: string | null, maxDaily?: string | null, sourceUrl?: string | null }>, adverseEvents: Array<{ __typename?: 'MedicationAdverseEvent', id: string, event: string, frequencyBand: string, severity?: string | null, sourceUrl?: string | null }>, interactions: Array<{ __typename?: 'MedicationInteraction', id: string, interactingDrug: string, severity: string, mechanism?: string | null, recommendation?: string | null, sourceUrl?: string | null }>, correlations: Array<{ __typename?: 'MedicationCorrelation', id: string, medicationId: string, relatedEntityType: string, relatedEntityId: number, correlationType: string, confidence: number, rationale?: string | null, matchedFact?: string | null, relatedTitle?: string | null, relatedDescription?: string | null, relatedDate?: string | null, createdAt: string }> } | null };
+
 export type MedicationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -5061,6 +5166,7 @@ export const LockVaultDocument = {"kind":"Document","definitions":[{"kind":"Oper
 export const LogGameCompletionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"LogGameCompletion"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"LogGameCompletionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"logGameCompletion"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"gameId"}},{"kind":"Field","name":{"kind":"Name","value":"durationSeconds"}},{"kind":"Field","name":{"kind":"Name","value":"responses"}},{"kind":"Field","name":{"kind":"Name","value":"linkedNoteId"}},{"kind":"Field","name":{"kind":"Name","value":"completedAt"}}]}}]}}]} as unknown as DocumentNode<LogGameCompletionMutation, LogGameCompletionMutationVariables>;
 export const LogHabitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"LogHabit"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"habitId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"loggedDate"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"count"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"notes"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"logHabit"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"habitId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"habitId"}}},{"kind":"Argument","name":{"kind":"Name","value":"loggedDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"loggedDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"count"},"value":{"kind":"Variable","name":{"kind":"Name","value":"count"}}},{"kind":"Argument","name":{"kind":"Name","value":"notes"},"value":{"kind":"Variable","name":{"kind":"Name","value":"notes"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"habitId"}},{"kind":"Field","name":{"kind":"Name","value":"loggedDate"}},{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"notes"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<LogHabitMutation, LogHabitMutationVariables>;
 export const MedicationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Medication"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"medication"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"familyMemberId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dosage"}},{"kind":"Field","name":{"kind":"Name","value":"frequency"}},{"kind":"Field","name":{"kind":"Name","value":"notes"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"endDate"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"familyMember"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"relationship"}},{"kind":"Field","name":{"kind":"Name","value":"ageYears"}}]}}]}}]}}]} as unknown as DocumentNode<MedicationQuery, MedicationQueryVariables>;
+export const MedicationDeepResearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MedicationDeepResearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"memberSlug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"medicationDeepResearch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}},{"kind":"Argument","name":{"kind":"Name","value":"memberSlug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"memberSlug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"medication"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dosage"}},{"kind":"Field","name":{"kind":"Name","value":"frequency"}},{"kind":"Field","name":{"kind":"Name","value":"notes"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"endDate"}},{"kind":"Field","name":{"kind":"Name","value":"familyMemberId"}}]}},{"kind":"Field","name":{"kind":"Name","value":"familyMember"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"ageYears"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfBirth"}}]}},{"kind":"Field","name":{"kind":"Name","value":"pharmacology"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"drugSlug"}},{"kind":"Field","name":{"kind":"Name","value":"genericName"}},{"kind":"Field","name":{"kind":"Name","value":"brandNames"}},{"kind":"Field","name":{"kind":"Name","value":"atcCode"}},{"kind":"Field","name":{"kind":"Name","value":"moa"}},{"kind":"Field","name":{"kind":"Name","value":"halfLife"}},{"kind":"Field","name":{"kind":"Name","value":"peakTime"}},{"kind":"Field","name":{"kind":"Name","value":"metabolism"}},{"kind":"Field","name":{"kind":"Name","value":"excretion"}},{"kind":"Field","name":{"kind":"Name","value":"sourceUrl"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"indications"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"condition"}},{"kind":"Field","name":{"kind":"Name","value":"evidenceLevel"}},{"kind":"Field","name":{"kind":"Name","value":"sourceUrl"}}]}},{"kind":"Field","name":{"kind":"Name","value":"dosing"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"population"}},{"kind":"Field","name":{"kind":"Name","value":"ageBand"}},{"kind":"Field","name":{"kind":"Name","value":"weightBand"}},{"kind":"Field","name":{"kind":"Name","value":"doseText"}},{"kind":"Field","name":{"kind":"Name","value":"frequency"}},{"kind":"Field","name":{"kind":"Name","value":"maxDaily"}},{"kind":"Field","name":{"kind":"Name","value":"sourceUrl"}}]}},{"kind":"Field","name":{"kind":"Name","value":"adverseEvents"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"event"}},{"kind":"Field","name":{"kind":"Name","value":"frequencyBand"}},{"kind":"Field","name":{"kind":"Name","value":"severity"}},{"kind":"Field","name":{"kind":"Name","value":"sourceUrl"}}]}},{"kind":"Field","name":{"kind":"Name","value":"interactions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"interactingDrug"}},{"kind":"Field","name":{"kind":"Name","value":"severity"}},{"kind":"Field","name":{"kind":"Name","value":"mechanism"}},{"kind":"Field","name":{"kind":"Name","value":"recommendation"}},{"kind":"Field","name":{"kind":"Name","value":"sourceUrl"}}]}},{"kind":"Field","name":{"kind":"Name","value":"correlations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"medicationId"}},{"kind":"Field","name":{"kind":"Name","value":"relatedEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"relatedEntityId"}},{"kind":"Field","name":{"kind":"Name","value":"correlationType"}},{"kind":"Field","name":{"kind":"Name","value":"confidence"}},{"kind":"Field","name":{"kind":"Name","value":"rationale"}},{"kind":"Field","name":{"kind":"Name","value":"matchedFact"}},{"kind":"Field","name":{"kind":"Name","value":"relatedTitle"}},{"kind":"Field","name":{"kind":"Name","value":"relatedDescription"}},{"kind":"Field","name":{"kind":"Name","value":"relatedDate"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]}}]} as unknown as DocumentNode<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>;
 export const MedicationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Medications"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"medications"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"familyMemberId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dosage"}},{"kind":"Field","name":{"kind":"Name","value":"frequency"}},{"kind":"Field","name":{"kind":"Name","value":"notes"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"endDate"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"familyMember"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<MedicationsQuery, MedicationsQueryVariables>;
 export const MemoryEntriesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MemoryEntries"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"memoryEntries"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"context"}},{"kind":"Field","name":{"kind":"Name","value":"protocolId"}},{"kind":"Field","name":{"kind":"Name","value":"overallScore"}},{"kind":"Field","name":{"kind":"Name","value":"shortTermScore"}},{"kind":"Field","name":{"kind":"Name","value":"longTermScore"}},{"kind":"Field","name":{"kind":"Name","value":"workingMemoryScore"}},{"kind":"Field","name":{"kind":"Name","value":"recallSpeed"}},{"kind":"Field","name":{"kind":"Name","value":"loggedAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"memoryBaseline"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"overallScore"}},{"kind":"Field","name":{"kind":"Name","value":"shortTermScore"}},{"kind":"Field","name":{"kind":"Name","value":"longTermScore"}},{"kind":"Field","name":{"kind":"Name","value":"workingMemoryScore"}},{"kind":"Field","name":{"kind":"Name","value":"recallSpeed"}},{"kind":"Field","name":{"kind":"Name","value":"recordedAt"}}]}}]}}]} as unknown as DocumentNode<MemoryEntriesQuery, MemoryEntriesQueryVariables>;
 export const ProtocolDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Protocol"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"protocol"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"protocol"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"targetAreas"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"notes"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"endDate"}},{"kind":"Field","name":{"kind":"Name","value":"supplementCount"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"supplements"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dosage"}},{"kind":"Field","name":{"kind":"Name","value":"frequency"}},{"kind":"Field","name":{"kind":"Name","value":"mechanism"}},{"kind":"Field","name":{"kind":"Name","value":"targetAreas"}},{"kind":"Field","name":{"kind":"Name","value":"notes"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"baseline"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"memoryScore"}},{"kind":"Field","name":{"kind":"Name","value":"focusScore"}},{"kind":"Field","name":{"kind":"Name","value":"processingSpeedScore"}},{"kind":"Field","name":{"kind":"Name","value":"moodScore"}},{"kind":"Field","name":{"kind":"Name","value":"sleepScore"}},{"kind":"Field","name":{"kind":"Name","value":"recordedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"checkIns"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"memoryScore"}},{"kind":"Field","name":{"kind":"Name","value":"focusScore"}},{"kind":"Field","name":{"kind":"Name","value":"processingSpeedScore"}},{"kind":"Field","name":{"kind":"Name","value":"moodScore"}},{"kind":"Field","name":{"kind":"Name","value":"sleepScore"}},{"kind":"Field","name":{"kind":"Name","value":"sideEffects"}},{"kind":"Field","name":{"kind":"Name","value":"notes"}},{"kind":"Field","name":{"kind":"Name","value":"recordedAt"}}]}}]}}]}}]} as unknown as DocumentNode<ProtocolQuery, ProtocolQueryVariables>;

@@ -1607,6 +1607,96 @@ export type Medication = {
   userId: Scalars['String']['output'];
 };
 
+export type MedicationAdverseEvent = {
+  __typename?: 'MedicationAdverseEvent';
+  drugSlug: Scalars['String']['output'];
+  event: Scalars['String']['output'];
+  frequencyBand: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  severity?: Maybe<Scalars['String']['output']>;
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationCorrelation = {
+  __typename?: 'MedicationCorrelation';
+  confidence: Scalars['Int']['output'];
+  correlationType: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  matchedFact?: Maybe<Scalars['String']['output']>;
+  medicationId: Scalars['ID']['output'];
+  rationale?: Maybe<Scalars['String']['output']>;
+  relatedDate?: Maybe<Scalars['String']['output']>;
+  relatedDescription?: Maybe<Scalars['String']['output']>;
+  relatedEntityId: Scalars['Int']['output'];
+  relatedEntityType: Scalars['String']['output'];
+  relatedTitle?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationDeepResearch = {
+  __typename?: 'MedicationDeepResearch';
+  adverseEvents: Array<MedicationAdverseEvent>;
+  correlations: Array<MedicationCorrelation>;
+  dosing: Array<MedicationDosing>;
+  familyMember?: Maybe<FamilyMember>;
+  indications: Array<MedicationIndication>;
+  interactions: Array<MedicationInteraction>;
+  medication: Medication;
+  pharmacology?: Maybe<MedicationPharmacology>;
+};
+
+export type MedicationDosing = {
+  __typename?: 'MedicationDosing';
+  ageBand?: Maybe<Scalars['String']['output']>;
+  doseText: Scalars['String']['output'];
+  drugSlug: Scalars['String']['output'];
+  frequency?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  maxDaily?: Maybe<Scalars['String']['output']>;
+  population: Scalars['String']['output'];
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+  weightBand?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationIndication = {
+  __typename?: 'MedicationIndication';
+  condition: Scalars['String']['output'];
+  confidence?: Maybe<Scalars['Int']['output']>;
+  drugSlug: Scalars['String']['output'];
+  evidenceLevel?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  kind: Scalars['String']['output'];
+  source?: Maybe<Scalars['String']['output']>;
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationInteraction = {
+  __typename?: 'MedicationInteraction';
+  drugSlug: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  interactingDrug: Scalars['String']['output'];
+  mechanism?: Maybe<Scalars['String']['output']>;
+  recommendation?: Maybe<Scalars['String']['output']>;
+  severity: Scalars['String']['output'];
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationPharmacology = {
+  __typename?: 'MedicationPharmacology';
+  atcCode?: Maybe<Scalars['String']['output']>;
+  brandNames: Array<Scalars['String']['output']>;
+  drugSlug: Scalars['String']['output'];
+  excretion?: Maybe<Scalars['String']['output']>;
+  genericName?: Maybe<Scalars['String']['output']>;
+  halfLife?: Maybe<Scalars['String']['output']>;
+  metabolism?: Maybe<Scalars['String']['output']>;
+  moa?: Maybe<Scalars['String']['output']>;
+  peakTime?: Maybe<Scalars['String']['output']>;
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type MemoryBaseline = {
   __typename?: 'MemoryBaseline';
   id: Scalars['ID']['output'];
@@ -2705,6 +2795,7 @@ export type Query = {
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
   medicalLetters: Array<MedicalLetter>;
   medication?: Maybe<Medication>;
+  medicationDeepResearch?: Maybe<MedicationDeepResearch>;
   medications: Array<Medication>;
   memoryBaseline?: Maybe<MemoryBaseline>;
   memoryEntries: Array<MemoryEntry>;
@@ -2941,6 +3032,12 @@ export type QueryMedicalLettersArgs = {
 
 export type QueryMedicationArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryMedicationDeepResearchArgs = {
+  memberSlug: Scalars['String']['input'];
+  slug: Scalars['String']['input'];
 };
 
 
@@ -4629,6 +4726,14 @@ export type MedicationQueryVariables = Exact<{
 
 
 export type MedicationQuery = { __typename?: 'Query', medication?: { __typename?: 'Medication', id: string, familyMemberId?: number | null, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null, relationship?: string | null, ageYears?: number | null } | null } | null };
+
+export type MedicationDeepResearchQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+  memberSlug: Scalars['String']['input'];
+}>;
+
+
+export type MedicationDeepResearchQuery = { __typename?: 'Query', medicationDeepResearch?: { __typename?: 'MedicationDeepResearch', medication: { __typename?: 'Medication', id: string, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, familyMemberId?: number | null }, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, ageYears?: number | null, dateOfBirth?: string | null } | null, pharmacology?: { __typename?: 'MedicationPharmacology', drugSlug: string, genericName?: string | null, brandNames: Array<string>, atcCode?: string | null, moa?: string | null, halfLife?: string | null, peakTime?: string | null, metabolism?: string | null, excretion?: string | null, sourceUrl?: string | null, updatedAt: string } | null, indications: Array<{ __typename?: 'MedicationIndication', id: string, kind: string, condition: string, evidenceLevel?: string | null, sourceUrl?: string | null }>, dosing: Array<{ __typename?: 'MedicationDosing', id: string, population: string, ageBand?: string | null, weightBand?: string | null, doseText: string, frequency?: string | null, maxDaily?: string | null, sourceUrl?: string | null }>, adverseEvents: Array<{ __typename?: 'MedicationAdverseEvent', id: string, event: string, frequencyBand: string, severity?: string | null, sourceUrl?: string | null }>, interactions: Array<{ __typename?: 'MedicationInteraction', id: string, interactingDrug: string, severity: string, mechanism?: string | null, recommendation?: string | null, sourceUrl?: string | null }>, correlations: Array<{ __typename?: 'MedicationCorrelation', id: string, medicationId: string, relatedEntityType: string, relatedEntityId: number, correlationType: string, confidence: number, rationale?: string | null, matchedFact?: string | null, relatedTitle?: string | null, relatedDescription?: string | null, relatedDate?: string | null, createdAt: string }> } | null };
 
 export type MedicationsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -13107,6 +13212,125 @@ export type MedicationQueryHookResult = ReturnType<typeof useMedicationQuery>;
 export type MedicationLazyQueryHookResult = ReturnType<typeof useMedicationLazyQuery>;
 export type MedicationSuspenseQueryHookResult = ReturnType<typeof useMedicationSuspenseQuery>;
 export type MedicationQueryResult = Apollo.QueryResult<MedicationQuery, MedicationQueryVariables>;
+export const MedicationDeepResearchDocument = gql`
+    query MedicationDeepResearch($slug: String!, $memberSlug: String!) {
+  medicationDeepResearch(slug: $slug, memberSlug: $memberSlug) {
+    medication {
+      id
+      name
+      dosage
+      frequency
+      notes
+      startDate
+      endDate
+      familyMemberId
+    }
+    familyMember {
+      id
+      slug
+      firstName
+      ageYears
+      dateOfBirth
+    }
+    pharmacology {
+      drugSlug
+      genericName
+      brandNames
+      atcCode
+      moa
+      halfLife
+      peakTime
+      metabolism
+      excretion
+      sourceUrl
+      updatedAt
+    }
+    indications {
+      id
+      kind
+      condition
+      evidenceLevel
+      sourceUrl
+    }
+    dosing {
+      id
+      population
+      ageBand
+      weightBand
+      doseText
+      frequency
+      maxDaily
+      sourceUrl
+    }
+    adverseEvents {
+      id
+      event
+      frequencyBand
+      severity
+      sourceUrl
+    }
+    interactions {
+      id
+      interactingDrug
+      severity
+      mechanism
+      recommendation
+      sourceUrl
+    }
+    correlations {
+      id
+      medicationId
+      relatedEntityType
+      relatedEntityId
+      correlationType
+      confidence
+      rationale
+      matchedFact
+      relatedTitle
+      relatedDescription
+      relatedDate
+      createdAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useMedicationDeepResearchQuery__
+ *
+ * To run a query within a React component, call `useMedicationDeepResearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMedicationDeepResearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMedicationDeepResearchQuery({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *      memberSlug: // value for 'memberSlug'
+ *   },
+ * });
+ */
+export function useMedicationDeepResearchQuery(baseOptions: Apollo.QueryHookOptions<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables> & ({ variables: MedicationDeepResearchQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>(MedicationDeepResearchDocument, options);
+      }
+export function useMedicationDeepResearchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>(MedicationDeepResearchDocument, options);
+        }
+// @ts-ignore
+export function useMedicationDeepResearchSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>): Apollo.UseSuspenseQueryResult<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>;
+export function useMedicationDeepResearchSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>): Apollo.UseSuspenseQueryResult<MedicationDeepResearchQuery | undefined, MedicationDeepResearchQueryVariables>;
+export function useMedicationDeepResearchSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>(MedicationDeepResearchDocument, options);
+        }
+export type MedicationDeepResearchQueryHookResult = ReturnType<typeof useMedicationDeepResearchQuery>;
+export type MedicationDeepResearchLazyQueryHookResult = ReturnType<typeof useMedicationDeepResearchLazyQuery>;
+export type MedicationDeepResearchSuspenseQueryHookResult = ReturnType<typeof useMedicationDeepResearchSuspenseQuery>;
+export type MedicationDeepResearchQueryResult = Apollo.QueryResult<MedicationDeepResearchQuery, MedicationDeepResearchQueryVariables>;
 export const MedicationsDocument = gql`
     query Medications {
   medications {

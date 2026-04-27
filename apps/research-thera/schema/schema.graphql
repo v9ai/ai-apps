@@ -162,6 +162,7 @@ type Query {
   goal(id: Int, slug: String): Goal
   allTags: [String!]!
   research(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int, medicationId: ID): [Research!]!
+  medicationDeepResearch(slug: String!, memberSlug: String!): MedicationDeepResearch
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
   allRecommendedBooks(category: String): [RecommendedBook!]!
@@ -2232,6 +2233,94 @@ input AddMedicationInput {
 
 type DeleteMedicationResult {
   success: Boolean!
+}
+
+# ============================================
+# Medication deep-research — drug-level facts + per-patient correlations
+# ============================================
+
+type MedicationPharmacology {
+  drugSlug: String!
+  genericName: String
+  brandNames: [String!]!
+  atcCode: String
+  moa: String
+  halfLife: String
+  peakTime: String
+  metabolism: String
+  excretion: String
+  sourceUrl: String
+  updatedAt: String!
+}
+
+type MedicationIndication {
+  id: ID!
+  drugSlug: String!
+  kind: String!
+  condition: String!
+  evidenceLevel: String
+  source: String
+  sourceUrl: String
+  confidence: Int
+}
+
+type MedicationDosing {
+  id: ID!
+  drugSlug: String!
+  population: String!
+  ageBand: String
+  weightBand: String
+  doseText: String!
+  frequency: String
+  maxDaily: String
+  sourceUrl: String
+}
+
+type MedicationAdverseEvent {
+  id: ID!
+  drugSlug: String!
+  event: String!
+  frequencyBand: String!
+  severity: String
+  sourceUrl: String
+}
+
+type MedicationInteraction {
+  id: ID!
+  drugSlug: String!
+  interactingDrug: String!
+  severity: String!
+  mechanism: String
+  recommendation: String
+  sourceUrl: String
+}
+
+type MedicationCorrelation {
+  id: ID!
+  medicationId: ID!
+  familyMemberId: Int
+  relatedEntityType: String!
+  relatedEntityId: Int!
+  correlationType: String!
+  confidence: Int!
+  rationale: String
+  matchedFact: String
+  createdAt: String!
+  # Joined from issues / journal_entries
+  relatedTitle: String
+  relatedDescription: String
+  relatedDate: String
+}
+
+type MedicationDeepResearch {
+  medication: Medication!
+  familyMember: FamilyMember
+  pharmacology: MedicationPharmacology
+  indications: [MedicationIndication!]!
+  dosing: [MedicationDosing!]!
+  adverseEvents: [MedicationAdverseEvent!]!
+  interactions: [MedicationInteraction!]!
+  correlations: [MedicationCorrelation!]!
 }
 
 # ============================================

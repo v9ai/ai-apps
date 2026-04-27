@@ -480,6 +480,173 @@ async function handleJobsD1Archive(req: Request, env: Env): Promise<Response> {
   return json(req, { archived: true });
 }
 
+// ── D1 posts upsert: single or batch insert/update by URL ──
+//
+// POST /api/posts/d1/upsert
+//   headers: Authorization: Bearer <JOBS_D1_TOKEN>
+//   body:    { inputs: PostInput[] }  // single-element array allowed
+//   reply:   { upserted: number, skipped: number }
+//
+// Each input row is matched on (tenant_id, post_url) — existing rows have
+// their non-null fields overwritten; new rows are inserted. Designed to be
+// called from the backfill script and from Apollo resolvers (chrome-extension
+// upsert path). All 40 columns are accepted; missing fields default to NULL.
+
+interface PostInput {
+  tenant_id?: string;
+  type?: "post" | "job";
+  company_key: string;
+  contact_id?: number | null;
+  author_kind?: "company" | "person";
+  author_name?: string | null;
+  author_url?: string | null;
+  post_url: string;
+  post_text?: string | null;
+  title?: string | null;
+  content?: string | null;
+  posted_date?: string | null;
+  posted_at?: string | null;
+  scraped_at?: string | null;
+  reactions_count?: number;
+  comments_count?: number;
+  reposts_count?: number;
+  media_type?: string;
+  is_repost?: boolean;
+  original_author?: string | null;
+  location?: string | null;
+  employment_type?: string | null;
+  raw_data?: string | null;
+  skills?: string | null;
+  analyzed_at?: string | null;
+  job_embedding?: string | null;
+  voyager_urn?: string | null;
+  voyager_workplace_type?: string | null;
+  voyager_salary_min?: number | null;
+  voyager_salary_max?: number | null;
+  voyager_salary_currency?: string | null;
+  voyager_apply_url?: string | null;
+  voyager_poster_urn?: string | null;
+  voyager_listed_at?: string | null;
+  voyager_reposted?: boolean;
+  company_name?: string | null;
+  company_industry?: string | null;
+  company_size_range?: string | null;
+  company_location?: string | null;
+}
+
+const POST_COLUMNS = [
+  "tenant_id", "type", "company_key", "contact_id",
+  "author_kind", "author_name", "author_url",
+  "post_url", "post_text", "title", "content",
+  "posted_date", "posted_at", "scraped_at",
+  "reactions_count", "comments_count", "reposts_count",
+  "media_type", "is_repost", "original_author",
+  "location", "employment_type",
+  "raw_data", "skills", "analyzed_at", "job_embedding",
+  "voyager_urn", "voyager_workplace_type",
+  "voyager_salary_min", "voyager_salary_max", "voyager_salary_currency",
+  "voyager_apply_url", "voyager_poster_urn", "voyager_listed_at", "voyager_reposted",
+  "company_name", "company_industry", "company_size_range", "company_location",
+] as const;
+
+function postInputToBindings(p: PostInput): unknown[] {
+  return [
+    p.tenant_id ?? "public",
+    p.type ?? "post",
+    p.company_key,
+    p.contact_id ?? null,
+    p.author_kind ?? "company",
+    p.author_name ?? null,
+    p.author_url ?? null,
+    p.post_url,
+    p.post_text ?? null,
+    p.title ?? null,
+    p.content ?? null,
+    p.posted_date ?? null,
+    p.posted_at ?? null,
+    p.scraped_at ?? null,
+    p.reactions_count ?? 0,
+    p.comments_count ?? 0,
+    p.reposts_count ?? 0,
+    p.media_type ?? "none",
+    p.is_repost ? 1 : 0,
+    p.original_author ?? null,
+    p.location ?? null,
+    p.employment_type ?? null,
+    p.raw_data ?? null,
+    p.skills ?? null,
+    p.analyzed_at ?? null,
+    p.job_embedding ?? null,
+    p.voyager_urn ?? null,
+    p.voyager_workplace_type ?? null,
+    p.voyager_salary_min ?? null,
+    p.voyager_salary_max ?? null,
+    p.voyager_salary_currency ?? null,
+    p.voyager_apply_url ?? null,
+    p.voyager_poster_urn ?? null,
+    p.voyager_listed_at ?? null,
+    p.voyager_reposted ? 1 : 0,
+    p.company_name ?? null,
+    p.company_industry ?? null,
+    p.company_size_range ?? null,
+    p.company_location ?? null,
+  ];
+}
+
+async function handlePostsD1Upsert(req: Request, env: Env): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "POST") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  let body: { inputs?: PostInput[] };
+  try {
+    body = (await req.json()) as { inputs?: PostInput[] };
+  } catch {
+    return json(req, { error: "Invalid JSON" }, 400);
+  }
+  const inputs = Array.isArray(body.inputs) ? body.inputs : [];
+  if (inputs.length === 0) return json(req, { upserted: 0, skipped: 0 });
+
+  const valid = inputs.filter((p) => p && p.company_key && p.post_url);
+  const skipped = inputs.length - valid.length;
+  if (valid.length === 0) return json(req, { upserted: 0, skipped });
+
+  const placeholders = "(" + POST_COLUMNS.map(() => "?").join(", ") + ")";
+  const updateSet = POST_COLUMNS
+    .filter((c) => c !== "tenant_id" && c !== "post_url")
+    .map((c) => `${c} = COALESCE(excluded.${c}, posts.${c})`)
+    .join(", ");
+  const sql =
+    `INSERT INTO posts (${POST_COLUMNS.join(", ")}) VALUES ${placeholders} ` +
+    `ON CONFLICT(tenant_id, post_url) WHERE post_url IS NOT NULL DO UPDATE SET ${updateSet}`;
+
+  // D1 batches one prepared statement per row — keeps each round-trip small.
+  const stmts = valid.map((p) => env.DB.prepare(sql).bind(...postInputToBindings(p)));
+
+  // Chunk so a single batch never exceeds D1's per-request size budget.
+  const CHUNK = 100;
+  let upserted = 0;
+  for (let i = 0; i < stmts.length; i += CHUNK) {
+    const slice = stmts.slice(i, i + CHUNK);
+    const results = await env.DB.batch(slice);
+    for (const r of results) {
+      const changes = (r as { meta?: { changes?: number } }).meta?.changes ?? 0;
+      upserted += changes;
+    }
+  }
+
+  return json(req, { upserted, skipped });
+}
+
 // ── D1 posts read: fetch LinkedIn posts for a company by slug ──
 //
 // GET /api/companies/:slug/posts/d1[?limit=N]
@@ -542,6 +709,11 @@ export default {
     {
       const m = /^\/api\/companies\/([^/]+)\/posts\/d1\/?$/.exec(url.pathname);
       if (m) return handleCompanyPostsD1(req, env, decodeURIComponent(m[1]));
+    }
+
+    // POST /api/posts/d1/upsert
+    if (url.pathname === "/api/posts/d1/upsert") {
+      return handlePostsD1Upsert(req, env);
     }
 
     const { tier, key, bodyText } = await classify(req, url);

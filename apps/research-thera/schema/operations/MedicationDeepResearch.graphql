@@ -1,0 +1,80 @@
+query MedicationDeepResearch($slug: String!, $memberSlug: String!) {
+  medicationDeepResearch(slug: $slug, memberSlug: $memberSlug) {
+    medication {
+      id
+      name
+      dosage
+      frequency
+      notes
+      startDate
+      endDate
+      familyMemberId
+    }
+    familyMember {
+      id
+      slug
+      firstName
+      ageYears
+      dateOfBirth
+    }
+    pharmacology {
+      drugSlug
+      genericName
+      brandNames
+      atcCode
+      moa
+      halfLife
+      peakTime
+      metabolism
+      excretion
+      sourceUrl
+      updatedAt
+    }
+    indications {
+      id
+      kind
+      condition
+      evidenceLevel
+      sourceUrl
+    }
+    dosing {
+      id
+      population
+      ageBand
+      weightBand
+      doseText
+      frequency
+      maxDaily
+      sourceUrl
+    }
+    adverseEvents {
+      id
+      event
+      frequencyBand
+      severity
+      sourceUrl
+    }
+    interactions {
+      id
+      interactingDrug
+      severity
+      mechanism
+      recommendation
+      sourceUrl
+    }
+    correlations {
+      id
+      medicationId
+      relatedEntityType
+      relatedEntityId
+      correlationType
+      confidence
+      rationale
+      matchedFact
+      relatedTitle
+      relatedDescription
+      relatedDate
+      createdAt
+    }
+  }
+}

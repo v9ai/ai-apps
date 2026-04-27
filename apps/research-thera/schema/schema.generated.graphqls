@@ -1465,6 +1465,89 @@ type Medication {
   userId: String!
 }
 
+type MedicationAdverseEvent {
+  drugSlug: String!
+  event: String!
+  frequencyBand: String!
+  id: ID!
+  severity: String
+  sourceUrl: String
+}
+
+type MedicationCorrelation {
+  confidence: Int!
+  correlationType: String!
+  createdAt: String!
+  familyMemberId: Int
+  id: ID!
+  matchedFact: String
+  medicationId: ID!
+  rationale: String
+  relatedDate: String
+  relatedDescription: String
+  relatedEntityId: Int!
+  relatedEntityType: String!
+  relatedTitle: String
+}
+
+type MedicationDeepResearch {
+  adverseEvents: [MedicationAdverseEvent!]!
+  correlations: [MedicationCorrelation!]!
+  dosing: [MedicationDosing!]!
+  familyMember: FamilyMember
+  indications: [MedicationIndication!]!
+  interactions: [MedicationInteraction!]!
+  medication: Medication!
+  pharmacology: MedicationPharmacology
+}
+
+type MedicationDosing {
+  ageBand: String
+  doseText: String!
+  drugSlug: String!
+  frequency: String
+  id: ID!
+  maxDaily: String
+  population: String!
+  sourceUrl: String
+  weightBand: String
+}
+
+type MedicationIndication {
+  condition: String!
+  confidence: Int
+  drugSlug: String!
+  evidenceLevel: String
+  id: ID!
+  kind: String!
+  source: String
+  sourceUrl: String
+}
+
+type MedicationInteraction {
+  drugSlug: String!
+  id: ID!
+  interactingDrug: String!
+  mechanism: String
+  recommendation: String
+  severity: String!
+  sourceUrl: String
+}
+
+type MedicationPharmacology {
+  atcCode: String
+  brandNames: [String!]!
+  drugSlug: String!
+  excretion: String
+  genericName: String
+  halfLife: String
+  metabolism: String
+  moa: String
+  peakTime: String
+  sourceUrl: String
+  updatedAt: String!
+}
+
 type MemoryBaseline {
   id: ID!
   longTermScore: Float
@@ -1862,6 +1945,7 @@ type Query {
   latestBogdanDiscussion: BogdanDiscussionGuide
   medicalLetters(doctorId: ID!): [MedicalLetter!]!
   medication(id: ID!): Medication
+  medicationDeepResearch(memberSlug: String!, slug: String!): MedicationDeepResearch
   medications: [Medication!]!
   memoryBaseline: MemoryBaseline
   memoryEntries: [MemoryEntry!]!

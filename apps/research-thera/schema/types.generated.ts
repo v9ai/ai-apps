@@ -1592,6 +1592,96 @@ export type Medication = {
   userId: Scalars['String']['output'];
 };
 
+export type MedicationAdverseEvent = {
+  __typename?: 'MedicationAdverseEvent';
+  drugSlug: Scalars['String']['output'];
+  event: Scalars['String']['output'];
+  frequencyBand: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  severity?: Maybe<Scalars['String']['output']>;
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationCorrelation = {
+  __typename?: 'MedicationCorrelation';
+  confidence: Scalars['Int']['output'];
+  correlationType: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  matchedFact?: Maybe<Scalars['String']['output']>;
+  medicationId: Scalars['ID']['output'];
+  rationale?: Maybe<Scalars['String']['output']>;
+  relatedDate?: Maybe<Scalars['String']['output']>;
+  relatedDescription?: Maybe<Scalars['String']['output']>;
+  relatedEntityId: Scalars['Int']['output'];
+  relatedEntityType: Scalars['String']['output'];
+  relatedTitle?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationDeepResearch = {
+  __typename?: 'MedicationDeepResearch';
+  adverseEvents: Array<MedicationAdverseEvent>;
+  correlations: Array<MedicationCorrelation>;
+  dosing: Array<MedicationDosing>;
+  familyMember?: Maybe<FamilyMember>;
+  indications: Array<MedicationIndication>;
+  interactions: Array<MedicationInteraction>;
+  medication: Medication;
+  pharmacology?: Maybe<MedicationPharmacology>;
+};
+
+export type MedicationDosing = {
+  __typename?: 'MedicationDosing';
+  ageBand?: Maybe<Scalars['String']['output']>;
+  doseText: Scalars['String']['output'];
+  drugSlug: Scalars['String']['output'];
+  frequency?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  maxDaily?: Maybe<Scalars['String']['output']>;
+  population: Scalars['String']['output'];
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+  weightBand?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationIndication = {
+  __typename?: 'MedicationIndication';
+  condition: Scalars['String']['output'];
+  confidence?: Maybe<Scalars['Int']['output']>;
+  drugSlug: Scalars['String']['output'];
+  evidenceLevel?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  kind: Scalars['String']['output'];
+  source?: Maybe<Scalars['String']['output']>;
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationInteraction = {
+  __typename?: 'MedicationInteraction';
+  drugSlug: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  interactingDrug: Scalars['String']['output'];
+  mechanism?: Maybe<Scalars['String']['output']>;
+  recommendation?: Maybe<Scalars['String']['output']>;
+  severity: Scalars['String']['output'];
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type MedicationPharmacology = {
+  __typename?: 'MedicationPharmacology';
+  atcCode?: Maybe<Scalars['String']['output']>;
+  brandNames: Array<Scalars['String']['output']>;
+  drugSlug: Scalars['String']['output'];
+  excretion?: Maybe<Scalars['String']['output']>;
+  genericName?: Maybe<Scalars['String']['output']>;
+  halfLife?: Maybe<Scalars['String']['output']>;
+  metabolism?: Maybe<Scalars['String']['output']>;
+  moa?: Maybe<Scalars['String']['output']>;
+  peakTime?: Maybe<Scalars['String']['output']>;
+  sourceUrl?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type MemoryBaseline = {
   __typename?: 'MemoryBaseline';
   id: Scalars['ID']['output'];
@@ -2683,6 +2773,7 @@ export type Query = {
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
   medicalLetters: Array<MedicalLetter>;
   medication?: Maybe<Medication>;
+  medicationDeepResearch?: Maybe<MedicationDeepResearch>;
   medications: Array<Medication>;
   memoryBaseline?: Maybe<MemoryBaseline>;
   memoryEntries: Array<MemoryEntry>;
@@ -2919,6 +3010,12 @@ export type QuerymedicalLettersArgs = {
 
 export type QuerymedicationArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QuerymedicationDeepResearchArgs = {
+  memberSlug: Scalars['String']['input'];
+  slug: Scalars['String']['input'];
 };
 
 
@@ -3725,6 +3822,13 @@ export type ResolversTypes = {
   LogGameCompletionInput: LogGameCompletionInput;
   MedicalLetter: ResolverTypeWrapper<MedicalLetter>;
   Medication: ResolverTypeWrapper<Omit<Medication, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
+  MedicationAdverseEvent: ResolverTypeWrapper<MedicationAdverseEvent>;
+  MedicationCorrelation: ResolverTypeWrapper<MedicationCorrelation>;
+  MedicationDeepResearch: ResolverTypeWrapper<Omit<MedicationDeepResearch, 'familyMember' | 'medication'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, medication: ResolversTypes['Medication'] }>;
+  MedicationDosing: ResolverTypeWrapper<MedicationDosing>;
+  MedicationIndication: ResolverTypeWrapper<MedicationIndication>;
+  MedicationInteraction: ResolverTypeWrapper<MedicationInteraction>;
+  MedicationPharmacology: ResolverTypeWrapper<MedicationPharmacology>;
   MemoryBaseline: ResolverTypeWrapper<MemoryBaseline>;
   MemoryEntry: ResolverTypeWrapper<MemoryEntry>;
   MicroScript: ResolverTypeWrapper<MicroScript>;
@@ -3953,6 +4057,13 @@ export type ResolversParentTypes = {
   LogGameCompletionInput: LogGameCompletionInput;
   MedicalLetter: MedicalLetter;
   Medication: Omit<Medication, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
+  MedicationAdverseEvent: MedicationAdverseEvent;
+  MedicationCorrelation: MedicationCorrelation;
+  MedicationDeepResearch: Omit<MedicationDeepResearch, 'familyMember' | 'medication'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, medication: ResolversParentTypes['Medication'] };
+  MedicationDosing: MedicationDosing;
+  MedicationIndication: MedicationIndication;
+  MedicationInteraction: MedicationInteraction;
+  MedicationPharmacology: MedicationPharmacology;
   MemoryBaseline: MemoryBaseline;
   MemoryEntry: MemoryEntry;
   MicroScript: MicroScript;
@@ -5110,6 +5221,89 @@ export type MedicationResolvers<ContextType = GraphQLContext, ParentType extends
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type MedicationAdverseEventResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MedicationAdverseEvent'] = ResolversParentTypes['MedicationAdverseEvent']> = {
+  drugSlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  event?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  frequencyBand?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  severity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sourceUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type MedicationCorrelationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MedicationCorrelation'] = ResolversParentTypes['MedicationCorrelation']> = {
+  confidence?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  correlationType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  familyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  matchedFact?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  medicationId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  rationale?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  relatedDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  relatedDescription?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  relatedEntityId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  relatedEntityType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  relatedTitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type MedicationDeepResearchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MedicationDeepResearch'] = ResolversParentTypes['MedicationDeepResearch']> = {
+  adverseEvents?: Resolver<Array<ResolversTypes['MedicationAdverseEvent']>, ParentType, ContextType>;
+  correlations?: Resolver<Array<ResolversTypes['MedicationCorrelation']>, ParentType, ContextType>;
+  dosing?: Resolver<Array<ResolversTypes['MedicationDosing']>, ParentType, ContextType>;
+  familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
+  indications?: Resolver<Array<ResolversTypes['MedicationIndication']>, ParentType, ContextType>;
+  interactions?: Resolver<Array<ResolversTypes['MedicationInteraction']>, ParentType, ContextType>;
+  medication?: Resolver<ResolversTypes['Medication'], ParentType, ContextType>;
+  pharmacology?: Resolver<Maybe<ResolversTypes['MedicationPharmacology']>, ParentType, ContextType>;
+};
+
+export type MedicationDosingResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MedicationDosing'] = ResolversParentTypes['MedicationDosing']> = {
+  ageBand?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  doseText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  drugSlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  frequency?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  maxDaily?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  population?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  sourceUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  weightBand?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type MedicationIndicationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MedicationIndication'] = ResolversParentTypes['MedicationIndication']> = {
+  condition?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  confidence?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  drugSlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  evidenceLevel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  kind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sourceUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type MedicationInteractionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MedicationInteraction'] = ResolversParentTypes['MedicationInteraction']> = {
+  drugSlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  interactingDrug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  mechanism?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  recommendation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  severity?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  sourceUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type MedicationPharmacologyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MedicationPharmacology'] = ResolversParentTypes['MedicationPharmacology']> = {
+  atcCode?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  brandNames?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  drugSlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  excretion?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  genericName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  halfLife?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  metabolism?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  moa?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  peakTime?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sourceUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type MemoryBaselineResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MemoryBaseline'] = ResolversParentTypes['MemoryBaseline']> = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   longTermScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
@@ -5470,6 +5664,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   latestBogdanDiscussion?: Resolver<Maybe<ResolversTypes['BogdanDiscussionGuide']>, ParentType, ContextType>;
   medicalLetters?: Resolver<Array<ResolversTypes['MedicalLetter']>, ParentType, ContextType, RequireFields<QuerymedicalLettersArgs, 'doctorId'>>;
   medication?: Resolver<Maybe<ResolversTypes['Medication']>, ParentType, ContextType, RequireFields<QuerymedicationArgs, 'id'>>;
+  medicationDeepResearch?: Resolver<Maybe<ResolversTypes['MedicationDeepResearch']>, ParentType, ContextType, RequireFields<QuerymedicationDeepResearchArgs, 'memberSlug' | 'slug'>>;
   medications?: Resolver<Array<ResolversTypes['Medication']>, ParentType, ContextType>;
   memoryBaseline?: Resolver<Maybe<ResolversTypes['MemoryBaseline']>, ParentType, ContextType>;
   memoryEntries?: Resolver<Array<ResolversTypes['MemoryEntry']>, ParentType, ContextType>;
@@ -5920,6 +6115,13 @@ export type Resolvers<ContextType = GraphQLContext> = {
   LanguageGuide?: LanguageGuideResolvers<ContextType>;
   MedicalLetter?: MedicalLetterResolvers<ContextType>;
   Medication?: MedicationResolvers<ContextType>;
+  MedicationAdverseEvent?: MedicationAdverseEventResolvers<ContextType>;
+  MedicationCorrelation?: MedicationCorrelationResolvers<ContextType>;
+  MedicationDeepResearch?: MedicationDeepResearchResolvers<ContextType>;
+  MedicationDosing?: MedicationDosingResolvers<ContextType>;
+  MedicationIndication?: MedicationIndicationResolvers<ContextType>;
+  MedicationInteraction?: MedicationInteractionResolvers<ContextType>;
+  MedicationPharmacology?: MedicationPharmacologyResolvers<ContextType>;
   MemoryBaseline?: MemoryBaselineResolvers<ContextType>;
   MemoryEntry?: MemoryEntryResolvers<ContextType>;
   MicroScript?: MicroScriptResolvers<ContextType>;
