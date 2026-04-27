@@ -42,8 +42,12 @@ export default async function ContactPostsPage({ params }: Props) {
     ? (await db.select().from(companies).where(eq(companies.id, contact.company_id)).limit(1))[0]
     : null;
 
+  // D1 `posts` rows use the schema default tenant_id='public' (the SQL
+  // INSERTs in seeds/*-posts.sql don't specify it). Don't pass tenantId
+  // here — let posts-d1-client default to "public" so we actually get
+  // the rows back. The Neon contacts table uses tenant_id='vadim' for
+  // historical reasons; the two stores aren't expected to match.
   const posts = await listD1Posts({
-    tenantId: contact.tenant_id ?? "vadim",
     contactId: contact.id,
     limit: 1000,
   });

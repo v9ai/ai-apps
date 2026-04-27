@@ -8,6 +8,7 @@
  */
 
 const TENANT_ID = "public";
+const DEFAULT_EDGE_URL = "https://agenticleadgen-edge.eeeew.workers.dev";
 
 function envOrThrow(name: string): string {
   const v = process.env[name];
@@ -15,12 +16,26 @@ function envOrThrow(name: string): string {
   return v;
 }
 
+/**
+ * The edge worker URL is set as `LEAD_GEN_EDGE_URL` in local .env and as
+ * `EDGE_WORKER_URL` in Vercel prod (different name, same value). Accept
+ * either and fall back to the canonical `*.workers.dev` host so server
+ * components don't 500 when the alias isn't set on a particular env.
+ */
+function resolveEdgeUrl(): string {
+  return (
+    process.env.LEAD_GEN_EDGE_URL ||
+    process.env.EDGE_WORKER_URL ||
+    DEFAULT_EDGE_URL
+  );
+}
+
 async function edge<T>(
   method: "GET" | "POST" | "DELETE",
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const baseUrl = envOrThrow("LEAD_GEN_EDGE_URL");
+  const baseUrl = resolveEdgeUrl();
   const token = envOrThrow("JOBS_D1_TOKEN");
   const r = await fetch(`${baseUrl}${path}`, {
     method,
