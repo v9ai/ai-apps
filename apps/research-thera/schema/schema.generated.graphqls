@@ -1713,6 +1713,7 @@ type Mutation {
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
   generateRecommendedBooks(goalId: Int, journalEntryId: Int): GenerateRecommendedBooksResult!
+  generateRegimenAnalysis(language: String, slug: String!): GenerateResearchResult!
   generateResearch(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int, medicationId: ID): GenerateResearchResult!
   generateRoutineAnalysis(familyMemberId: Int!): GenerateRoutineAnalysisResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
@@ -2007,6 +2008,7 @@ type Query {
   protocols: [Protocol!]!
   publicDiscussionGuide(journalEntryId: Int!): PublicDiscussionGuideResult
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
+  regimenAnalysis(slug: String!): RegimenAnalysis
   relationship(id: Int!): Relationship
   relationships(subjectId: Int!, subjectType: PersonType!): [Relationship!]!
   research(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int, medicationId: ID): [Research!]!
@@ -2038,6 +2040,26 @@ type RecommendedBook {
   updatedAt: String!
   whyRecommended: String!
   year: Int
+}
+
+type RegimenAnalysis {
+  flags: [RegimenFlag!]!
+  id: ID!
+  language: String
+  medsCount: Int!
+  missingFacts: [String!]!
+  severityOverall: String
+  slug: String!
+  summary: String
+  updatedAt: String!
+}
+
+type RegimenFlag {
+  drugs: [String!]!
+  message: String!
+  recommendation: String
+  severity: String!
+  type: String!
 }
 
 type Relationship {

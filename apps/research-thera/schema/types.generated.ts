@@ -1857,6 +1857,7 @@ export type Mutation = {
   generateOpenAIAudio: GenerateOpenAIAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
+  generateRegimenAnalysis: GenerateResearchResult;
   generateResearch: GenerateResearchResult;
   generateRoutineAnalysis: GenerateRoutineAnalysisResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
@@ -2344,6 +2345,12 @@ export type MutationgenerateParentAdviceArgs = {
 export type MutationgenerateRecommendedBooksArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationgenerateRegimenAnalysisArgs = {
+  language?: InputMaybe<Scalars['String']['input']>;
+  slug: Scalars['String']['input'];
 };
 
 
@@ -2849,6 +2856,7 @@ export type Query = {
   protocols: Array<Protocol>;
   publicDiscussionGuide?: Maybe<PublicDiscussionGuideResult>;
   recommendedBooks: Array<RecommendedBook>;
+  regimenAnalysis?: Maybe<RegimenAnalysis>;
   relationship?: Maybe<Relationship>;
   relationships: Array<Relationship>;
   research: Array<Research>;
@@ -3118,6 +3126,11 @@ export type QueryrecommendedBooksArgs = {
 };
 
 
+export type QueryregimenAnalysisArgs = {
+  slug: Scalars['String']['input'];
+};
+
+
 export type QueryrelationshipArgs = {
   id: Scalars['Int']['input'];
 };
@@ -3195,6 +3208,28 @@ export type RecommendedBook = {
   updatedAt: Scalars['String']['output'];
   whyRecommended: Scalars['String']['output'];
   year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type RegimenAnalysis = {
+  __typename?: 'RegimenAnalysis';
+  flags: Array<RegimenFlag>;
+  id: Scalars['ID']['output'];
+  language?: Maybe<Scalars['String']['output']>;
+  medsCount: Scalars['Int']['output'];
+  missingFacts: Array<Scalars['String']['output']>;
+  severityOverall?: Maybe<Scalars['String']['output']>;
+  slug: Scalars['String']['output'];
+  summary?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type RegimenFlag = {
+  __typename?: 'RegimenFlag';
+  drugs: Array<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  recommendation?: Maybe<Scalars['String']['output']>;
+  severity: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type Relationship = {
@@ -3931,6 +3966,8 @@ export type ResolversTypes = {
   PublicDiscussionGuideResult: ResolverTypeWrapper<PublicDiscussionGuideResult>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   RecommendedBook: ResolverTypeWrapper<RecommendedBook>;
+  RegimenAnalysis: ResolverTypeWrapper<RegimenAnalysis>;
+  RegimenFlag: ResolverTypeWrapper<RegimenFlag>;
   Relationship: ResolverTypeWrapper<Omit<Relationship, 'related' | 'relatedType' | 'status' | 'subject' | 'subjectType'> & { related?: Maybe<ResolversTypes['RelationshipPerson']>, relatedType: ResolversTypes['PersonType'], status: ResolversTypes['RelationshipStatus'], subject?: Maybe<ResolversTypes['RelationshipPerson']>, subjectType: ResolversTypes['PersonType'] }>;
   RelationshipPerson: ResolverTypeWrapper<Omit<RelationshipPerson, 'type'> & { type: ResolversTypes['PersonType'] }>;
   RelationshipStatus: ResolverTypeWrapper<'ACTIVE' | 'ENDED'>;
@@ -4165,6 +4202,8 @@ export type ResolversParentTypes = {
   PublicDiscussionGuideResult: PublicDiscussionGuideResult;
   Query: Record<PropertyKey, never>;
   RecommendedBook: RecommendedBook;
+  RegimenAnalysis: RegimenAnalysis;
+  RegimenFlag: RegimenFlag;
   Relationship: Omit<Relationship, 'related' | 'subject'> & { related?: Maybe<ResolversParentTypes['RelationshipPerson']>, subject?: Maybe<ResolversParentTypes['RelationshipPerson']> };
   RelationshipPerson: RelationshipPerson;
   Research: Omit<Research, 'goal'> & { goal?: Maybe<ResolversParentTypes['Goal']> };
@@ -5551,6 +5590,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateOpenAIAudio?: Resolver<ResolversTypes['GenerateOpenAIAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateOpenAIAudioArgs, 'input'>>;
   generateParentAdvice?: Resolver<ResolversTypes['GenerateParentAdviceResult'], ParentType, ContextType, RequireFields<MutationgenerateParentAdviceArgs, 'goalId'>>;
   generateRecommendedBooks?: Resolver<ResolversTypes['GenerateRecommendedBooksResult'], ParentType, ContextType, Partial<MutationgenerateRecommendedBooksArgs>>;
+  generateRegimenAnalysis?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, RequireFields<MutationgenerateRegimenAnalysisArgs, 'slug'>>;
   generateResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, Partial<MutationgenerateResearchArgs>>;
   generateRoutineAnalysis?: Resolver<ResolversTypes['GenerateRoutineAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateRoutineAnalysisArgs, 'familyMemberId'>>;
   generateTherapeuticQuestions?: Resolver<ResolversTypes['GenerateQuestionsResult'], ParentType, ContextType, Partial<MutationgenerateTherapeuticQuestionsArgs>>;
@@ -5808,6 +5848,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   protocols?: Resolver<Array<ResolversTypes['Protocol']>, ParentType, ContextType>;
   publicDiscussionGuide?: Resolver<Maybe<ResolversTypes['PublicDiscussionGuideResult']>, ParentType, ContextType, RequireFields<QuerypublicDiscussionGuideArgs, 'journalEntryId'>>;
   recommendedBooks?: Resolver<Array<ResolversTypes['RecommendedBook']>, ParentType, ContextType, Partial<QueryrecommendedBooksArgs>>;
+  regimenAnalysis?: Resolver<Maybe<ResolversTypes['RegimenAnalysis']>, ParentType, ContextType, RequireFields<QueryregimenAnalysisArgs, 'slug'>>;
   relationship?: Resolver<Maybe<ResolversTypes['Relationship']>, ParentType, ContextType, RequireFields<QueryrelationshipArgs, 'id'>>;
   relationships?: Resolver<Array<ResolversTypes['Relationship']>, ParentType, ContextType, RequireFields<QueryrelationshipsArgs, 'subjectId' | 'subjectType'>>;
   research?: Resolver<Array<ResolversTypes['Research']>, ParentType, ContextType, Partial<QueryresearchArgs>>;
@@ -5839,6 +5880,26 @@ export type RecommendedBookResolvers<ContextType = GraphQLContext, ParentType ex
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   whyRecommended?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+};
+
+export type RegimenAnalysisResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RegimenAnalysis'] = ResolversParentTypes['RegimenAnalysis']> = {
+  flags?: Resolver<Array<ResolversTypes['RegimenFlag']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  language?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  medsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  missingFacts?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  severityOverall?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  summary?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type RegimenFlagResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RegimenFlag'] = ResolversParentTypes['RegimenFlag']> = {
+  drugs?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  recommendation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  severity?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type RelationshipResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Relationship'] = ResolversParentTypes['Relationship']> = {
@@ -6285,6 +6346,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PublicDiscussionGuideResult?: PublicDiscussionGuideResultResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RecommendedBook?: RecommendedBookResolvers<ContextType>;
+  RegimenAnalysis?: RegimenAnalysisResolvers<ContextType>;
+  RegimenFlag?: RegimenFlagResolvers<ContextType>;
   Relationship?: RelationshipResolvers<ContextType>;
   RelationshipPerson?: RelationshipPersonResolvers<ContextType>;
   RelationshipStatus?: RelationshipStatusResolvers;

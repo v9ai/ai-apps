@@ -1872,6 +1872,7 @@ export type Mutation = {
   generateOpenAIAudio: GenerateOpenAiAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
+  generateRegimenAnalysis: GenerateResearchResult;
   generateResearch: GenerateResearchResult;
   generateRoutineAnalysis: GenerateRoutineAnalysisResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
@@ -2359,6 +2360,12 @@ export type MutationGenerateParentAdviceArgs = {
 export type MutationGenerateRecommendedBooksArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationGenerateRegimenAnalysisArgs = {
+  language?: InputMaybe<Scalars['String']['input']>;
+  slug: Scalars['String']['input'];
 };
 
 
@@ -2871,6 +2878,7 @@ export type Query = {
   protocols: Array<Protocol>;
   publicDiscussionGuide?: Maybe<PublicDiscussionGuideResult>;
   recommendedBooks: Array<RecommendedBook>;
+  regimenAnalysis?: Maybe<RegimenAnalysis>;
   relationship?: Maybe<Relationship>;
   relationships: Array<Relationship>;
   research: Array<Research>;
@@ -3140,6 +3148,11 @@ export type QueryRecommendedBooksArgs = {
 };
 
 
+export type QueryRegimenAnalysisArgs = {
+  slug: Scalars['String']['input'];
+};
+
+
 export type QueryRelationshipArgs = {
   id: Scalars['Int']['input'];
 };
@@ -3217,6 +3230,28 @@ export type RecommendedBook = {
   updatedAt: Scalars['String']['output'];
   whyRecommended: Scalars['String']['output'];
   year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type RegimenAnalysis = {
+  __typename?: 'RegimenAnalysis';
+  flags: Array<RegimenFlag>;
+  id: Scalars['ID']['output'];
+  language?: Maybe<Scalars['String']['output']>;
+  medsCount: Scalars['Int']['output'];
+  missingFacts: Array<Scalars['String']['output']>;
+  severityOverall?: Maybe<Scalars['String']['output']>;
+  slug: Scalars['String']['output'];
+  summary?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type RegimenFlag = {
+  __typename?: 'RegimenFlag';
+  drugs: Array<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  recommendation?: Maybe<Scalars['String']['output']>;
+  severity: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type Relationship = {
@@ -4373,6 +4408,14 @@ export type GenerateRecommendedBooksMutationVariables = Exact<{
 
 export type GenerateRecommendedBooksMutation = { __typename?: 'Mutation', generateRecommendedBooks: { __typename?: 'GenerateRecommendedBooksResult', success: boolean, message?: string | null, jobId?: string | null, books: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string }> } };
 
+export type GenerateRegimenAnalysisMutationVariables = Exact<{
+  slug: Scalars['String']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GenerateRegimenAnalysisMutation = { __typename?: 'Mutation', generateRegimenAnalysis: { __typename?: 'GenerateResearchResult', success: boolean, message?: string | null, jobId?: string | null } };
+
 export type GenerateResearchMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
@@ -4862,6 +4905,13 @@ export type RecordCognitiveCheckInMutationVariables = Exact<{
 
 
 export type RecordCognitiveCheckInMutation = { __typename?: 'Mutation', recordCognitiveCheckIn: { __typename?: 'CognitiveCheckIn', id: string, memoryScore?: number | null, focusScore?: number | null, processingSpeedScore?: number | null, moodScore?: number | null, sleepScore?: number | null, sideEffects?: string | null, notes?: string | null, recordedAt: string } };
+
+export type RegimenAnalysisQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+}>;
+
+
+export type RegimenAnalysisQuery = { __typename?: 'Query', regimenAnalysis?: { __typename?: 'RegimenAnalysis', id: string, slug: string, severityOverall?: string | null, summary?: string | null, missingFacts: Array<string>, medsCount: number, language?: string | null, updatedAt: string, flags: Array<{ __typename?: 'RegimenFlag', type: string, drugs: Array<string>, severity: string, message: string, recommendation?: string | null }> } | null };
 
 export type SendConversationMessageMutationVariables = Exact<{
   conversationId: Scalars['Int']['input'];
@@ -9179,6 +9229,42 @@ export function useGenerateRecommendedBooksMutation(baseOptions?: Apollo.Mutatio
 export type GenerateRecommendedBooksMutationHookResult = ReturnType<typeof useGenerateRecommendedBooksMutation>;
 export type GenerateRecommendedBooksMutationResult = Apollo.MutationResult<GenerateRecommendedBooksMutation>;
 export type GenerateRecommendedBooksMutationOptions = Apollo.BaseMutationOptions<GenerateRecommendedBooksMutation, GenerateRecommendedBooksMutationVariables>;
+export const GenerateRegimenAnalysisDocument = gql`
+    mutation GenerateRegimenAnalysis($slug: String!, $language: String) {
+  generateRegimenAnalysis(slug: $slug, language: $language) {
+    success
+    message
+    jobId
+  }
+}
+    `;
+export type GenerateRegimenAnalysisMutationFn = Apollo.MutationFunction<GenerateRegimenAnalysisMutation, GenerateRegimenAnalysisMutationVariables>;
+
+/**
+ * __useGenerateRegimenAnalysisMutation__
+ *
+ * To run a mutation, you first call `useGenerateRegimenAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateRegimenAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateRegimenAnalysisMutation, { data, loading, error }] = useGenerateRegimenAnalysisMutation({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *      language: // value for 'language'
+ *   },
+ * });
+ */
+export function useGenerateRegimenAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<GenerateRegimenAnalysisMutation, GenerateRegimenAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateRegimenAnalysisMutation, GenerateRegimenAnalysisMutationVariables>(GenerateRegimenAnalysisDocument, options);
+      }
+export type GenerateRegimenAnalysisMutationHookResult = ReturnType<typeof useGenerateRegimenAnalysisMutation>;
+export type GenerateRegimenAnalysisMutationResult = Apollo.MutationResult<GenerateRegimenAnalysisMutation>;
+export type GenerateRegimenAnalysisMutationOptions = Apollo.BaseMutationOptions<GenerateRegimenAnalysisMutation, GenerateRegimenAnalysisMutationVariables>;
 export const GenerateResearchDocument = gql`
     mutation GenerateResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int, $medicationId: ID) {
   generateResearch(
@@ -13886,6 +13972,63 @@ export function useRecordCognitiveCheckInMutation(baseOptions?: Apollo.MutationH
 export type RecordCognitiveCheckInMutationHookResult = ReturnType<typeof useRecordCognitiveCheckInMutation>;
 export type RecordCognitiveCheckInMutationResult = Apollo.MutationResult<RecordCognitiveCheckInMutation>;
 export type RecordCognitiveCheckInMutationOptions = Apollo.BaseMutationOptions<RecordCognitiveCheckInMutation, RecordCognitiveCheckInMutationVariables>;
+export const RegimenAnalysisDocument = gql`
+    query RegimenAnalysis($slug: String!) {
+  regimenAnalysis(slug: $slug) {
+    id
+    slug
+    severityOverall
+    summary
+    flags {
+      type
+      drugs
+      severity
+      message
+      recommendation
+    }
+    missingFacts
+    medsCount
+    language
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useRegimenAnalysisQuery__
+ *
+ * To run a query within a React component, call `useRegimenAnalysisQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRegimenAnalysisQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRegimenAnalysisQuery({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *   },
+ * });
+ */
+export function useRegimenAnalysisQuery(baseOptions: Apollo.QueryHookOptions<RegimenAnalysisQuery, RegimenAnalysisQueryVariables> & ({ variables: RegimenAnalysisQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>(RegimenAnalysisDocument, options);
+      }
+export function useRegimenAnalysisLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>(RegimenAnalysisDocument, options);
+        }
+// @ts-ignore
+export function useRegimenAnalysisSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>): Apollo.UseSuspenseQueryResult<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>;
+export function useRegimenAnalysisSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>): Apollo.UseSuspenseQueryResult<RegimenAnalysisQuery | undefined, RegimenAnalysisQueryVariables>;
+export function useRegimenAnalysisSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>(RegimenAnalysisDocument, options);
+        }
+export type RegimenAnalysisQueryHookResult = ReturnType<typeof useRegimenAnalysisQuery>;
+export type RegimenAnalysisLazyQueryHookResult = ReturnType<typeof useRegimenAnalysisLazyQuery>;
+export type RegimenAnalysisSuspenseQueryHookResult = ReturnType<typeof useRegimenAnalysisSuspenseQuery>;
+export type RegimenAnalysisQueryResult = Apollo.QueryResult<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>;
 export const SendConversationMessageDocument = gql`
     mutation SendConversationMessage($conversationId: Int!, $message: String!) {
   sendConversationMessage(conversationId: $conversationId, message: $message) {
