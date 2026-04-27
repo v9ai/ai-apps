@@ -1,23 +1,19 @@
 import type { JournalEntryResolvers } from './../types.generated';
-import { getFamilyMember, getGoal, getIssueByJournalEntryId, getJournalAnalysis, getDiscussionGuide } from "@/src/db";
+import { getIssueByJournalEntryId, getJournalAnalysis, getDiscussionGuide } from "@/src/db";
 
 export const JournalEntry: JournalEntryResolvers = {
-  familyMember: async (parent) => {
+  familyMember: async (parent, _args, ctx) => {
     if (!parent.familyMemberId) return null;
-    const fm = await getFamilyMember(parent.familyMemberId);
+    const fm = await ctx.loaders.familyMember.load(parent.familyMemberId);
     if (!fm) return null;
     return fm as any;
   },
   goal: async (parent, _args, ctx) => {
     if (!parent.goalId) return null;
-    const userEmail = ctx.userEmail;
-    if (!userEmail) return null;
-    try {
-      const goal = await getGoal(parent.goalId, userEmail);
-      return goal as any;
-    } catch {
-      return null;
-    }
+    const goal = await ctx.loaders.goal.load(parent.goalId);
+    if (!goal) return null;
+    if (ctx.userEmail && goal.userId !== ctx.userEmail) return null;
+    return goal as any;
   },
   issue: async (parent, _args, ctx) => {
     const userEmail = ctx.userEmail;

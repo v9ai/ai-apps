@@ -1,9 +1,9 @@
 import type { DeepIssueAnalysisResolvers } from './../types.generated';
-import { getFamilyMember, getIssue } from "@/src/db";
+import { getIssue } from "@/src/db";
 
 export const DeepIssueAnalysis: DeepIssueAnalysisResolvers = {
-  familyMember: async (parent) => {
-    const fm = await getFamilyMember(parent.familyMemberId);
+  familyMember: async (parent, _args, ctx) => {
+    const fm = await ctx.loaders.familyMember.load(parent.familyMemberId);
     if (!fm) return null;
     return fm as any;
   },

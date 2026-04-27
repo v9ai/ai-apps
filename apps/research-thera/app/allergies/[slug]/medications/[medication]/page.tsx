@@ -5,7 +5,6 @@ import {
   Badge,
   Box,
   Button,
-  Callout,
   Card,
   Flex,
   Heading,
@@ -15,10 +14,8 @@ import {
   Text,
 } from "@radix-ui/themes";
 import {
-  AlertTriangle,
   ArrowLeft,
   ExternalLink,
-  Eye,
   Heart,
   Pill,
   Search,
@@ -34,6 +31,7 @@ import {
   useMedicationQuery,
 } from "../../../../__generated__/hooks";
 import { AuthGate } from "../../../../components/AuthGate";
+import { MontelukastSafetyPanel } from "../../../../components/MontelukastSafetyPanel";
 
 export default function PersonMedicationDetailPage({
   params,
@@ -209,31 +207,6 @@ function PersonMedicationDetailContent({
           </Card>
         </Section>
 
-        {/* FDA boxed warning — show for montelukast/Singulair */}
-        {isMontelukast && (
-          <Callout.Root color="red" variant="surface">
-            <Callout.Icon>
-              <AlertTriangle size={18} />
-            </Callout.Icon>
-            <Callout.Text>
-              <Text weight="bold">FDA Boxed Warning (March 2020) — </Text>
-              Montelukast carries a boxed warning for serious neuropsychiatric
-              events, including agitation, depression, sleep disturbance,
-              suicidal thoughts, and behavior changes. Risk is reported in
-              children and adolescents. Discuss benefits versus risks with the
-              prescribing doctor and stop the drug + seek care if any of these
-              appear.{" "}
-              <RadixLink
-                href="https://www.fda.gov/drugs/drug-safety-and-availability/fda-requires-boxed-warning-about-serious-mental-health-side-effects-asthma-and-allergy-drug"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                FDA notice <ExternalLink size={12} style={{ display: "inline" }} />
-              </RadixLink>
-            </Callout.Text>
-          </Callout.Root>
-        )}
-
         {/* Allergies treated */}
         {personAllergies.length > 0 && (
           <Section
@@ -315,53 +288,7 @@ function PersonMedicationDetailContent({
           </Section>
         )}
 
-        {/* What to watch for */}
-        {isMontelukast && (
-          <Section
-            icon={<Eye size={18} color="var(--gray-11)" />}
-            title="What to watch for"
-          >
-            <Card>
-              <Flex direction="column" gap="2" p="3" asChild>
-                <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
-                  <li>
-                    <Text size="2">
-                      Sleep changes — insomnia, nightmares, sleepwalking
-                    </Text>
-                  </li>
-                  <li>
-                    <Text size="2">
-                      Mood — irritability, anxiety, depression, tearfulness
-                    </Text>
-                  </li>
-                  <li>
-                    <Text size="2">
-                      Behavior — aggression, agitation, restlessness, attention
-                      changes
-                    </Text>
-                  </li>
-                  <li>
-                    <Text size="2">
-                      Any suicidal ideation — stop and seek care immediately
-                    </Text>
-                  </li>
-                  <li>
-                    <Text size="2">
-                      Allergy control — daytime/nighttime symptoms, rescue
-                      inhaler use
-                    </Text>
-                  </li>
-                  <li>
-                    <Text size="2" color="gray">
-                      Log observations in /journal or /discussions for the
-                      prescribing doctor visit.
-                    </Text>
-                  </li>
-                </ul>
-              </Flex>
-            </Card>
-          </Section>
-        )}
+        {isMontelukast && <MontelukastSafetyPanel />}
 
         <Separator size="4" />
 

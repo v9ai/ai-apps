@@ -22,6 +22,7 @@ import {
   MedicationsDocument,
 } from "../../__generated__/hooks";
 import { AuthGate } from "../../components/AuthGate";
+import { MontelukastSafetyPanel } from "../../components/MontelukastSafetyPanel";
 
 const PERSONS: Record<
   string,
@@ -174,6 +175,8 @@ function MedicationDetail({ slug }: { slug: string }) {
   const med = data?.medications.find((m) => slugify(m.name) === slug);
   if (!med) notFound();
 
+  const isMontelukast = /singulair|montelukast/i.test(med.name);
+
   return (
     <Box py="6">
       <Flex direction="column" gap="5">
@@ -229,6 +232,8 @@ function MedicationDetail({ slug }: { slug: string }) {
             )}
           </Flex>
         </Card>
+
+        {isMontelukast && <MontelukastSafetyPanel />}
 
         <AlertDialog.Root>
           <AlertDialog.Trigger>

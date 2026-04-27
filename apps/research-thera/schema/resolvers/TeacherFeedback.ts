@@ -1,9 +1,8 @@
 import type { TeacherFeedbackResolvers } from './../types.generated';
-import { getFamilyMember } from "@/src/db";
 
 export const TeacherFeedback: TeacherFeedbackResolvers = {
-  familyMember: async (parent) => {
-    const fm = await getFamilyMember(parent.familyMemberId);
+  familyMember: async (parent, _args, ctx) => {
+    const fm = await ctx.loaders.familyMember.load(parent.familyMemberId);
     if (!fm) return null;
     return fm as any;
   },

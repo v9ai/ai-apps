@@ -1,21 +1,17 @@
 import type { BehaviorObservationResolvers } from './../types.generated';
-import { getFamilyMember, getGoal } from "@/src/db";
 
 export const BehaviorObservation: BehaviorObservationResolvers = {
-  familyMember: async (parent) => {
-    const fm = await getFamilyMember(parent.familyMemberId);
+  familyMember: async (parent, _args, ctx) => {
+    const fm = await ctx.loaders.familyMember.load(parent.familyMemberId);
     if (!fm) return null;
     return fm as any;
   },
   goal: async (parent, _args, ctx) => {
     if (!parent.goalId) return null;
-    const userEmail = ctx.userEmail;
-    if (!userEmail) return null;
-    try {
-      const goal = await getGoal(parent.goalId, userEmail);
-      return goal as any;
-    } catch {
-      return null;
-    }
+    const goal = await ctx.loaders.goal.load(parent.goalId);
+    if (!goal) return null;
+    // Honor the original ownership check: hide goals not owned by the caller.
+    if (ctx.userEmail && goal.userId !== ctx.userEmail) return null;
+    return goal as any;
   },
 };

@@ -1,5 +1,5 @@
 import type { IssueResolvers } from './../types.generated';
-import { getContactFeedback, getContactsForIssue, getFamilyMember, getJournalEntry, getLinkedIssues, getScreenshotsForIssue, listConversationsForIssue, listStoriesForIssue, listTherapeuticQuestions } from "@/src/db";
+import { getContactFeedback, getContactsForIssue, getJournalEntry, getLinkedIssues, getScreenshotsForIssue, listConversationsForIssue, listStoriesForIssue, listTherapeuticQuestions } from "@/src/db";
 
 export const Issue: IssueResolvers = {
   feedback: async (parent) => {
@@ -30,14 +30,14 @@ export const Issue: IssueResolvers = {
       updatedAt: entry.updatedAt,
     } as any;
   },
-  familyMember: async (parent) => {
-    const fm = await getFamilyMember(parent.familyMemberId);
+  familyMember: async (parent, _args, ctx) => {
+    const fm = await ctx.loaders.familyMember.load(parent.familyMemberId);
     if (!fm) return null;
     return fm as any;
   },
-  relatedFamilyMember: async (parent) => {
+  relatedFamilyMember: async (parent, _args, ctx) => {
     if (!parent.relatedFamilyMemberId) return null;
-    const fm = await getFamilyMember(parent.relatedFamilyMemberId);
+    const fm = await ctx.loaders.familyMember.load(parent.relatedFamilyMemberId);
     if (!fm) return null;
     return fm as any;
   },
