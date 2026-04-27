@@ -634,6 +634,198 @@ async def fanout_papers_per_row(state: MedicationDeepResearchState) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Node: correlate_patient_data
+#
+# For every (medication_row, family_member) pair, load the patient's issues +
+# journal entries and ask DeepSeek to surface relationships against the drug's
+# fact profile (BBW & adverse events → possible side-effect; conditions →
+# indication match; medication start/end vs entry_date → temporal). Persisted
+# to medication_correlations so the medication detail page can render
+# "what does this drug mean for THIS patient?"
+# ---------------------------------------------------------------------------
+def _build_correlation_prompt(
+    *,
+    member_name: str,
+    member_age: Optional[int],
+    medication_row: dict,
+    drug_facts: dict,
+    issues: list[dict],
+    journals: list[dict],
+) -> str:
+    pharm = drug_facts.get("pharmacology") or {}
+    indications = drug_facts.get("indications") or []
+    aes = drug_facts.get("adverse_events") or []
+    interactions = drug_facts.get("interactions") or []
+
+    bbw_lines = [a["event"] for a in aes if a.get("frequency_band") == "black_box"]
+    common_aes = [a["event"] for a in aes if a.get("frequency_band") in ("common", "uncommon")][:30]
+
+    indication_lines = [f"- {i['kind']}: {i['condition']}" for i in indications]
+    bbw_chunk = ("\n".join(f"- BBW: {b}" for b in bbw_lines)) or "- (none)"
+    common_chunk = ("\n".join(f"- {a}" for a in common_aes)) or "- (none documented)"
+    interaction_chunk = (
+        "\n".join(f"- {i['interacting_drug']} ({i['severity']})" for i in interactions[:20])
+        or "- (none)"
+    )
+
+    issues_chunk = "\n".join([
+        f"- ISSUE id={i['id']} [{(i.get('severity') or '?').upper()}] {i.get('title','')} "
+        f"({i.get('category') or ''}): {(i.get('description') or '')[:240]}"
+        for i in issues
+    ]) or "- (none)"
+    journals_chunk = "\n".join([
+        f"- JOURNAL id={j['id']} {j.get('entry_date','?')} "
+        f"{('mood:' + j['mood'] + ' ') if j.get('mood') else ''}"
+        f"{j.get('title','')}: {(j.get('content') or '')[:240]}"
+        for j in journals
+    ]) or "- (none)"
+
+    age_str = f", age {member_age}" if member_age else ""
+
+    return (
+        f"You are a clinical pharmacist reviewing whether a patient's documented "
+        f"issues and journal entries relate to their medication regimen.\n\n"
+        f"## Patient\n{member_name}{age_str}\n\n"
+        f"## Medication regimen\n"
+        f"- Drug: {medication_row.get('name')}\n"
+        f"- Generic: {pharm.get('generic_name') or 'unknown'}\n"
+        f"- Dosage: {medication_row.get('dosage') or '?'}\n"
+        f"- Frequency: {medication_row.get('frequency') or '?'}\n"
+        f"- Started: {medication_row.get('start_date') or '?'}\n"
+        f"- Ended: {medication_row.get('end_date') or 'ongoing'}\n"
+        f"- Notes: {medication_row.get('notes') or ''}\n\n"
+        f"## Drug fact profile\n"
+        f"### Approved indications\n" + ("\n".join(indication_lines) or "- (none)") + "\n\n"
+        f"### FDA black-box warnings\n{bbw_chunk}\n\n"
+        f"### Common/uncommon adverse events\n{common_chunk}\n\n"
+        f"### Notable interactions\n{interaction_chunk}\n\n"
+        f"## Patient issues ({len(issues)})\n{issues_chunk}\n\n"
+        f"## Patient journal entries ({len(journals)})\n{journals_chunk}\n\n"
+        "## Task\n"
+        "For each issue or journal entry that plausibly relates to this medication, "
+        "emit a correlation row. Be CONSERVATIVE — skip unrelated entries. Prioritise "
+        "matches against black-box warnings.\n\n"
+        "Correlation types:\n"
+        "  - possible_side_effect: the entry's symptom matches one of the drug's documented AEs/BBWs.\n"
+        "  - indication_match: the entry describes one of the drug's approved indications "
+        "(i.e. the drug is being used appropriately for that complaint).\n"
+        "  - temporal: the entry's date is meaningfully tied to the medication's start/end date "
+        "(symptom emerged after starting / resolved after stopping). Only emit when start_date or "
+        "end_date is known.\n\n"
+        "Output ONLY this JSON shape:\n"
+        "{ \"correlations\": [\n"
+        "  {\n"
+        '    "related_entity_type": "issue" | "journal_entry",\n'
+        '    "related_entity_id":   <int from the lists above>,\n'
+        '    "correlation_type":    "possible_side_effect" | "indication_match" | "temporal" | "other",\n'
+        '    "matched_fact":        "short label of the matched fact, e.g. \\\"BBW: sleep disturbance\\\" or \\\"indication: asthma\\\"",\n'
+        '    "rationale":           "1-2 sentences citing the entry text and the matched fact",\n'
+        '    "confidence":          0-100\n'
+        "  }\n"
+        "] }\n\n"
+        "Cap the array at 25 items; pick the highest-confidence ones."
+    )
+
+
+async def correlate_patient_data(state: MedicationDeepResearchState) -> dict:
+    rows = state.get("_rows") or []
+    if not rows:
+        return {}
+
+    user_email = (state.get("user_email") or "").strip().lower()
+    drug_slug = (state.get("_drug_meta") or {}).get("drug_slug") or state.get("slug")
+    if not drug_slug:
+        return {}
+
+    await _update_job_progress(state.get("job_id"), 88)
+
+    # On a freshness cache hit, _facts is empty — read drug facts back from DB.
+    facts = state.get("_facts")
+    if not facts:
+        facts = await neon.fetch_drug_facts(drug_slug)
+
+    counts = dict(state.get("counts") or {})
+    counts.setdefault("correlations", 0)
+
+    # One DeepSeek call per unique (medication_row, family_member) pair.
+    seen: set[tuple[str, Optional[int]]] = set()
+    for row in rows:
+        key = (row["id"], row.get("family_member_id"))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        fm_id = row.get("family_member_id")
+        if not fm_id:
+            continue  # nothing to correlate against — skip rows without a patient
+
+        try:
+            patient = await neon.fetch_patient_clinical_data(user_email, fm_id)
+        except Exception as exc:
+            print(f"[medication_deep_research] correlate fetch failed for fm={fm_id}: {exc}")
+            continue
+
+        if not patient["issues"] and not patient["journals"]:
+            continue
+
+        prompt = _build_correlation_prompt(
+            member_name=row.get("family_member_first_name") or f"Member {fm_id}",
+            member_age=_resolve_age(row.get("family_member_age_years"), row.get("family_member_date_of_birth")),
+            medication_row=row,
+            drug_facts=facts,
+            issues=patient["issues"],
+            journals=patient["journals"],
+        )
+
+        parsed = await _deepseek_json(prompt, max_tokens=4096) or {}
+        items = parsed.get("correlations") or []
+        valid_issue_ids = {i["id"] for i in patient["issues"]}
+        valid_journal_ids = {j["id"] for j in patient["journals"]}
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            etype = (item.get("related_entity_type") or "").strip().lower()
+            if etype not in _VALID_RELATED_ENTITY_TYPES:
+                continue
+            try:
+                eid = int(item.get("related_entity_id"))
+            except (TypeError, ValueError):
+                continue
+            # Defence: only persist correlations against IDs we actually loaded.
+            if etype == "issue" and eid not in valid_issue_ids:
+                continue
+            if etype == "journal_entry" and eid not in valid_journal_ids:
+                continue
+            ctype = (item.get("correlation_type") or "").strip().lower()
+            if ctype not in _VALID_CORRELATION_TYPES:
+                continue
+            try:
+                conf = max(0, min(100, int(item.get("confidence") or 50)))
+            except (TypeError, ValueError):
+                conf = 50
+            rationale = (item.get("rationale") or "").strip()[:1000] or None
+            matched = (item.get("matched_fact") or "").strip()[:300] or None
+
+            try:
+                await neon.upsert_medication_correlation(
+                    medication_id=row["id"],
+                    family_member_id=fm_id,
+                    related_entity_type=etype,
+                    related_entity_id=eid,
+                    correlation_type=ctype,
+                    confidence=conf,
+                    rationale=rationale,
+                    matched_fact=matched,
+                )
+                counts["correlations"] += 1
+            except Exception as exc:
+                print(f"[medication_deep_research] correlation UPSERT failed: {exc}")
+
+    return {"counts": counts}
+
+
+# ---------------------------------------------------------------------------
 # Node: finalize
 # ---------------------------------------------------------------------------
 async def finalize(state: MedicationDeepResearchState) -> dict:
@@ -655,7 +847,8 @@ async def finalize(state: MedicationDeepResearchState) -> dict:
         f"{counts.get('dosing',0)} dosing rules, "
         f"{counts.get('adverse_events',0)} AEs, "
         f"{counts.get('interactions',0)} interactions, "
-        f"{counts.get('papers',0)} paper run(s)"
+        f"{counts.get('papers',0)} paper run(s), "
+        f"{counts.get('correlations',0)} patient correlations"
     )
     message = "; ".join(msg_parts)
 
@@ -681,6 +874,7 @@ def create_medication_deep_research_graph(checkpointer=None):
     builder.add_node("extract_facts", extract_facts, retry=_LLM_RETRY)
     builder.add_node("persist_facts", persist_facts)
     builder.add_node("fanout_papers_per_row", fanout_papers_per_row)
+    builder.add_node("correlate_patient_data", correlate_patient_data, retry=_LLM_RETRY)
     builder.add_node("finalize", finalize)
 
     builder.add_edge(START, "load_rows")
@@ -694,7 +888,8 @@ def create_medication_deep_research_graph(checkpointer=None):
     builder.add_edge("fetch_sources", "extract_facts")
     builder.add_edge("extract_facts", "persist_facts")
     builder.add_edge("persist_facts", "fanout_papers_per_row")
-    builder.add_edge("fanout_papers_per_row", "finalize")
+    builder.add_edge("fanout_papers_per_row", "correlate_patient_data")
+    builder.add_edge("correlate_patient_data", "finalize")
     builder.add_edge("finalize", END)
     return builder.compile(checkpointer=checkpointer) if checkpointer else builder.compile()
 
