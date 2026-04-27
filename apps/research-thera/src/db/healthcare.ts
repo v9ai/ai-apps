@@ -80,6 +80,105 @@ function toBloodTest(r: Record<string, unknown>): BloodTest {
   };
 }
 
+// ────────────────────────────────────────────────────────────────────
+// Medical letters (PDFs uploaded against a doctor)
+// ────────────────────────────────────────────────────────────────────
+
+export type MedicalLetter = {
+  id: string;
+  userId: string;
+  doctorId: string;
+  fileName: string;
+  filePath: string;
+  description: string | null;
+  letterDate: string | null;
+  uploadedAt: string;
+};
+
+function toMedicalLetter(r: Record<string, unknown>): MedicalLetter {
+  return {
+    id: r.id as string,
+    userId: r.user_id as string,
+    doctorId: r.doctor_id as string,
+    fileName: r.file_name as string,
+    filePath: r.file_path as string,
+    description: (r.description as string | null) ?? null,
+    letterDate:
+      r.letter_date instanceof Date
+        ? r.letter_date.toISOString().slice(0, 10)
+        : (r.letter_date as string | null) ?? null,
+    uploadedAt:
+      r.uploaded_at instanceof Date
+        ? r.uploaded_at.toISOString()
+        : (r.uploaded_at as string),
+  };
+}
+
+export async function listMedicalLetters(
+  doctorId: string,
+  userId: string,
+): Promise<MedicalLetter[]> {
+  const rows = await neonSql`
+    SELECT id, user_id, doctor_id, file_name, file_path, description, letter_date, uploaded_at
+    FROM medical_letters
+    WHERE doctor_id = ${doctorId} AND user_id = ${userId}
+    ORDER BY COALESCE(letter_date::timestamptz, uploaded_at) DESC
+  `;
+  return rows.map(toMedicalLetter);
+}
+
+export async function getMedicalLetter(
+  id: string,
+  userId: string,
+): Promise<MedicalLetter | null> {
+  const rows = await neonSql`
+    SELECT id, user_id, doctor_id, file_name, file_path, description, letter_date, uploaded_at
+    FROM medical_letters
+    WHERE id = ${id} AND user_id = ${userId}
+    LIMIT 1
+  `;
+  return rows[0] ? toMedicalLetter(rows[0]) : null;
+}
+
+export async function createMedicalLetter(params: {
+  userId: string;
+  doctorId: string;
+  fileName: string;
+  filePath: string;
+  description: string | null;
+  letterDate: string | null;
+}): Promise<MedicalLetter> {
+  const rows = await neonSql`
+    INSERT INTO medical_letters (user_id, doctor_id, file_name, file_path, description, letter_date)
+    VALUES (${params.userId}, ${params.doctorId}, ${params.fileName}, ${params.filePath}, ${params.description}, ${params.letterDate})
+    RETURNING id, user_id, doctor_id, file_name, file_path, description, letter_date, uploaded_at
+  `;
+  return toMedicalLetter(rows[0]);
+}
+
+export async function deleteMedicalLetterRow(
+  id: string,
+  userId: string,
+): Promise<void> {
+  await neonSql`
+    DELETE FROM medical_letters
+    WHERE id = ${id} AND user_id = ${userId}
+  `;
+}
+
+export async function getDoctor(
+  id: string,
+  userId: string,
+): Promise<Doctor | null> {
+  const rows = await neonSql`
+    SELECT id, user_id, name, specialty, phone, email, address, notes, created_at
+    FROM doctors
+    WHERE id = ${id} AND user_id = ${userId}
+    LIMIT 1
+  `;
+  return rows[0] ? toDoctor(rows[0]) : null;
+}
+
 export async function listBloodTests(userId: string): Promise<BloodTest[]> {
   const rows = await neonSql`
     SELECT t.id, t.user_id, t.file_name, t.file_path, t.status, t.test_date,
@@ -270,8 +369,22 @@ export async function listMedications(userId: string): Promise<Medication[]> {
   return rows.map(toMedication);
 }
 
+export async function getMedicationById(
+  id: string,
+  userId: string,
+): Promise<Medication | null> {
+  const rows = await neonSql`
+    SELECT id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, created_at
+    FROM medications
+    WHERE id = ${id} AND user_id = ${userId}
+    LIMIT 1
+  `;
+  return rows[0] ? toMedication(rows[0]) : null;
+}
+
 export async function createMedication(params: {
   userId: string;
+  familyMemberId?: number | null;
   name: string;
   dosage: string | null;
   frequency: string | null;
@@ -280,9 +393,9 @@ export async function createMedication(params: {
   endDate: string | null;
 }): Promise<Medication> {
   const rows = await neonSql`
-    INSERT INTO medications (user_id, name, dosage, frequency, notes, start_date, end_date)
-    VALUES (${params.userId}, ${params.name}, ${params.dosage}, ${params.frequency}, ${params.notes}, ${params.startDate}, ${params.endDate})
-    RETURNING id, user_id, name, dosage, frequency, notes, start_date, end_date, created_at
+    INSERT INTO medications (user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date)
+    VALUES (${params.userId}, ${params.familyMemberId ?? null}, ${params.name}, ${params.dosage}, ${params.frequency}, ${params.notes}, ${params.startDate}, ${params.endDate})
+    RETURNING id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, created_at
   `;
   return toMedication(rows[0]);
 }

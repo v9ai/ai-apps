@@ -18,7 +18,7 @@ export const research: NonNullable<QueryResolvers['research']> = async (
     new GraphQLError("Not found", { extensions: { code: "NOT_FOUND" } });
 
   // therapy_research has no user_id; ownership flows through
-  // goal_id / issue_id / feedback_id / journal_entry_id.
+  // goal_id / issue_id / feedback_id / journal_entry_id / medication_id.
   if (args.journalEntryId != null) {
     const entry = await db.getJournalEntry(args.journalEntryId, userEmail);
     if (!entry) throw notFound();
@@ -38,11 +38,16 @@ export const research: NonNullable<QueryResolvers['research']> = async (
       throw notFound();
     }
   }
+  if (args.medicationId != null) {
+    const med = await db.getMedicationById(args.medicationId, userEmail);
+    if (!med) throw notFound();
+  }
 
   return listTherapyResearch(
     args.goalId ?? undefined,
     args.issueId ?? undefined,
     args.feedbackId ?? undefined,
     args.journalEntryId ?? undefined,
+    args.medicationId ?? undefined,
   );
 };

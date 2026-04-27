@@ -13,6 +13,7 @@ import {
   AlertDialog,
 } from "@radix-ui/themes";
 import { Pill, Trash2 } from "lucide-react";
+import { words } from "lodash";
 import Link from "next/link";
 import {
   useMedicationsQuery,
@@ -21,6 +22,10 @@ import {
 } from "../__generated__/hooks";
 import { AuthGate } from "../components/AuthGate";
 import { AddMedicationForm } from "./add-medication-form";
+
+function slugify(name: string): string {
+  return (words(name)[0] ?? "").toLowerCase();
+}
 
 export default function MedicationsPage() {
   return (
@@ -139,7 +144,7 @@ function MedicationCard({
     <Card>
       <Flex justify="between" align="start" gap="2">
         <Link
-          href={`/medications/m/${id}`}
+          href={`/medications/${slugify(name)}`}
           style={{
             flexGrow: 1,
             minWidth: 0,

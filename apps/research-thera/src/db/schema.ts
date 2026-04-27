@@ -126,6 +126,7 @@ export const therapyResearch = pgTable("therapy_research", {
   evidenceLevel: text("evidence_level"),
   issueId: integer("issue_id"),
   journalEntryId: integer("journal_entry_id"),
+  medicationId: uuid("medication_id"),
   relevanceScore: integer("relevance_score").notNull(),
   extractedBy: text("extracted_by").notNull(),
   extractionConfidence: integer("extraction_confidence").notNull(),
@@ -890,6 +891,10 @@ export const medications = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: text("user_id").notNull(),
+    familyMemberId: integer("family_member_id").references(
+      () => familyMembers.id,
+      { onDelete: "set null" },
+    ),
     name: text("name").notNull(),
     dosage: text("dosage"),
     frequency: text("frequency"),
@@ -898,7 +903,10 @@ export const medications = pgTable(
     endDate: date("end_date"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("medications_user_idx").on(table.userId)],
+  (table) => [
+    index("medications_user_idx").on(table.userId),
+    index("medications_family_member_idx").on(table.familyMemberId),
+  ],
 );
 
 export const symptoms = pgTable(

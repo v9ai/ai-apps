@@ -60,6 +60,7 @@ export type AddDoctorInput = {
 export type AddMedicationInput = {
   dosage?: InputMaybe<Scalars['String']['input']>;
   endDate?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   frequency?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -800,6 +801,11 @@ export type DeleteJournalAnalysisResult = {
 export type DeleteJournalEntryResult = {
   __typename?: 'DeleteJournalEntryResult';
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteMedicalLetterResult = {
+  __typename?: 'DeleteMedicalLetterResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1555,6 +1561,18 @@ export type LogGameCompletionInput = {
   responses?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type MedicalLetter = {
+  __typename?: 'MedicalLetter';
+  description?: Maybe<Scalars['String']['output']>;
+  doctorId: Scalars['ID']['output'];
+  fileName: Scalars['String']['output'];
+  filePath: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  letterDate?: Maybe<Scalars['String']['output']>;
+  uploadedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
 export type Medication = {
   __typename?: 'Medication';
   createdAt: Scalars['String']['output'];
@@ -1660,6 +1678,7 @@ export type Mutation = {
   deleteIssueScreenshot: DeleteIssueScreenshotResult;
   deleteJournalAnalysis: DeleteJournalAnalysisResult;
   deleteJournalEntry: DeleteJournalEntryResult;
+  deleteMedicalLetter: DeleteMedicalLetterResult;
   deleteMedication: DeleteMedicationResult;
   deleteMemoryEntry: DeleteMemoryEntryResult;
   deleteNote: DeleteNoteResult;
@@ -1999,6 +2018,11 @@ export type MutationDeleteJournalEntryArgs = {
 };
 
 
+export type MutationDeleteMedicalLetterArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteMedicationArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2164,6 +2188,7 @@ export type MutationGenerateResearchArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+  medicationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -2624,6 +2649,7 @@ export type Query = {
   deepAnalysis?: Maybe<DeepAnalysis>;
   deepIssueAnalyses: Array<DeepIssueAnalysis>;
   deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
+  doctor?: Maybe<Doctor>;
   doctors: Array<Doctor>;
   familyMember?: Maybe<FamilyMember>;
   familyMembers: Array<FamilyMember>;
@@ -2644,6 +2670,8 @@ export type Query = {
   journalEntries: Array<JournalEntry>;
   journalEntry?: Maybe<JournalEntry>;
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
+  medicalLetters: Array<MedicalLetter>;
+  medication?: Maybe<Medication>;
   medications: Array<Medication>;
   memoryBaseline?: Maybe<MemoryBaseline>;
   memoryEntries: Array<MemoryEntry>;
@@ -2766,6 +2794,11 @@ export type QueryDeepIssueAnalysisArgs = {
 };
 
 
+export type QueryDoctorArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryFamilyMemberArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
@@ -2863,6 +2896,16 @@ export type QueryJournalEntryArgs = {
 };
 
 
+export type QueryMedicalLettersArgs = {
+  doctorId: Scalars['ID']['input'];
+};
+
+
+export type QueryMedicationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryNoteArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
@@ -2907,6 +2950,7 @@ export type QueryResearchArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+  medicationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -3018,6 +3062,7 @@ export type Research = {
   journal?: Maybe<Scalars['String']['output']>;
   journalEntryId?: Maybe<Scalars['Int']['output']>;
   keyFindings: Array<Scalars['String']['output']>;
+  medicationId?: Maybe<Scalars['ID']['output']>;
   relevanceScore: Scalars['Float']['output'];
   therapeuticGoalType: Scalars['String']['output'];
   therapeuticTechniques: Array<Scalars['String']['output']>;
@@ -3453,7 +3498,7 @@ export type AddMedicationMutationVariables = Exact<{
 }>;
 
 
-export type AddMedicationMutation = { __typename?: 'Mutation', addMedication: { __typename?: 'Medication', id: string, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string } };
+export type AddMedicationMutation = { __typename?: 'Mutation', addMedication: { __typename?: 'Medication', id: string, familyMemberId?: number | null, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string } };
 
 export type AddMemoryEntryMutationVariables = Exact<{
   input: AddMemoryEntryInput;
@@ -3839,6 +3884,13 @@ export type DeleteJournalRecommendedBooksMutationVariables = Exact<{
 
 export type DeleteJournalRecommendedBooksMutation = { __typename?: 'Mutation', deleteRecommendedBooks: { __typename?: 'DeleteRecommendedBooksResult', success: boolean, message?: string | null, deletedCount: number } };
 
+export type DeleteMedicalLetterMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteMedicalLetterMutation = { __typename?: 'Mutation', deleteMedicalLetter: { __typename?: 'DeleteMedicalLetterResult', success: boolean } };
+
 export type DeleteMedicationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -3931,6 +3983,13 @@ export type DeleteTherapeuticQuestionsMutationVariables = Exact<{
 
 
 export type DeleteTherapeuticQuestionsMutation = { __typename?: 'Mutation', deleteTherapeuticQuestions: { __typename?: 'DeleteQuestionsResult', success: boolean, message?: string | null, deletedCount: number } };
+
+export type DoctorQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DoctorQuery = { __typename?: 'Query', doctor?: { __typename?: 'Doctor', id: string, name: string, specialty?: string | null, phone?: string | null, email?: string | null, address?: string | null, notes?: string | null, createdAt: string } | null, medicalLetters: Array<{ __typename?: 'MedicalLetter', id: string, fileName: string, filePath: string, description?: string | null, letterDate?: string | null, uploadedAt: string }> };
 
 export type DoctorsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4510,6 +4569,13 @@ export type LogHabitMutationVariables = Exact<{
 
 export type LogHabitMutation = { __typename?: 'Mutation', logHabit: { __typename?: 'HabitLog', id: number, habitId: number, loggedDate: string, count: number, notes?: string | null, createdAt: string } };
 
+export type MedicationQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type MedicationQuery = { __typename?: 'Query', medication?: { __typename?: 'Medication', id: string, familyMemberId?: number | null, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null, relationship?: string | null, ageYears?: number | null } | null } | null };
+
 export type MedicationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -4940,6 +5006,7 @@ export const AddMedicationDocument = gql`
     mutation AddMedication($input: AddMedicationInput!) {
   addMedication(input: $input) {
     id
+    familyMemberId
     name
     dosage
     frequency
@@ -7325,6 +7392,39 @@ export function useDeleteJournalRecommendedBooksMutation(baseOptions?: Apollo.Mu
 export type DeleteJournalRecommendedBooksMutationHookResult = ReturnType<typeof useDeleteJournalRecommendedBooksMutation>;
 export type DeleteJournalRecommendedBooksMutationResult = Apollo.MutationResult<DeleteJournalRecommendedBooksMutation>;
 export type DeleteJournalRecommendedBooksMutationOptions = Apollo.BaseMutationOptions<DeleteJournalRecommendedBooksMutation, DeleteJournalRecommendedBooksMutationVariables>;
+export const DeleteMedicalLetterDocument = gql`
+    mutation DeleteMedicalLetter($id: ID!) {
+  deleteMedicalLetter(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteMedicalLetterMutationFn = Apollo.MutationFunction<DeleteMedicalLetterMutation, DeleteMedicalLetterMutationVariables>;
+
+/**
+ * __useDeleteMedicalLetterMutation__
+ *
+ * To run a mutation, you first call `useDeleteMedicalLetterMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMedicalLetterMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMedicalLetterMutation, { data, loading, error }] = useDeleteMedicalLetterMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteMedicalLetterMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMedicalLetterMutation, DeleteMedicalLetterMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteMedicalLetterMutation, DeleteMedicalLetterMutationVariables>(DeleteMedicalLetterDocument, options);
+      }
+export type DeleteMedicalLetterMutationHookResult = ReturnType<typeof useDeleteMedicalLetterMutation>;
+export type DeleteMedicalLetterMutationResult = Apollo.MutationResult<DeleteMedicalLetterMutation>;
+export type DeleteMedicalLetterMutationOptions = Apollo.BaseMutationOptions<DeleteMedicalLetterMutation, DeleteMedicalLetterMutationVariables>;
 export const DeleteMedicationDocument = gql`
     mutation DeleteMedication($id: ID!) {
   deleteMedication(id: $id) {
@@ -7771,6 +7871,64 @@ export function useDeleteTherapeuticQuestionsMutation(baseOptions?: Apollo.Mutat
 export type DeleteTherapeuticQuestionsMutationHookResult = ReturnType<typeof useDeleteTherapeuticQuestionsMutation>;
 export type DeleteTherapeuticQuestionsMutationResult = Apollo.MutationResult<DeleteTherapeuticQuestionsMutation>;
 export type DeleteTherapeuticQuestionsMutationOptions = Apollo.BaseMutationOptions<DeleteTherapeuticQuestionsMutation, DeleteTherapeuticQuestionsMutationVariables>;
+export const DoctorDocument = gql`
+    query Doctor($id: ID!) {
+  doctor(id: $id) {
+    id
+    name
+    specialty
+    phone
+    email
+    address
+    notes
+    createdAt
+  }
+  medicalLetters(doctorId: $id) {
+    id
+    fileName
+    filePath
+    description
+    letterDate
+    uploadedAt
+  }
+}
+    `;
+
+/**
+ * __useDoctorQuery__
+ *
+ * To run a query within a React component, call `useDoctorQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDoctorQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDoctorQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDoctorQuery(baseOptions: Apollo.QueryHookOptions<DoctorQuery, DoctorQueryVariables> & ({ variables: DoctorQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<DoctorQuery, DoctorQueryVariables>(DoctorDocument, options);
+      }
+export function useDoctorLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<DoctorQuery, DoctorQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<DoctorQuery, DoctorQueryVariables>(DoctorDocument, options);
+        }
+// @ts-ignore
+export function useDoctorSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<DoctorQuery, DoctorQueryVariables>): Apollo.UseSuspenseQueryResult<DoctorQuery, DoctorQueryVariables>;
+export function useDoctorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DoctorQuery, DoctorQueryVariables>): Apollo.UseSuspenseQueryResult<DoctorQuery | undefined, DoctorQueryVariables>;
+export function useDoctorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DoctorQuery, DoctorQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<DoctorQuery, DoctorQueryVariables>(DoctorDocument, options);
+        }
+export type DoctorQueryHookResult = ReturnType<typeof useDoctorQuery>;
+export type DoctorLazyQueryHookResult = ReturnType<typeof useDoctorLazyQuery>;
+export type DoctorSuspenseQueryHookResult = ReturnType<typeof useDoctorSuspenseQuery>;
+export type DoctorQueryResult = Apollo.QueryResult<DoctorQuery, DoctorQueryVariables>;
 export const DoctorsDocument = gql`
     query Doctors {
   doctors {
@@ -12734,6 +12892,65 @@ export function useLogHabitMutation(baseOptions?: Apollo.MutationHookOptions<Log
 export type LogHabitMutationHookResult = ReturnType<typeof useLogHabitMutation>;
 export type LogHabitMutationResult = Apollo.MutationResult<LogHabitMutation>;
 export type LogHabitMutationOptions = Apollo.BaseMutationOptions<LogHabitMutation, LogHabitMutationVariables>;
+export const MedicationDocument = gql`
+    query Medication($id: ID!) {
+  medication(id: $id) {
+    id
+    familyMemberId
+    name
+    dosage
+    frequency
+    notes
+    startDate
+    endDate
+    createdAt
+    familyMember {
+      id
+      slug
+      firstName
+      name
+      relationship
+      ageYears
+    }
+  }
+}
+    `;
+
+/**
+ * __useMedicationQuery__
+ *
+ * To run a query within a React component, call `useMedicationQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMedicationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMedicationQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useMedicationQuery(baseOptions: Apollo.QueryHookOptions<MedicationQuery, MedicationQueryVariables> & ({ variables: MedicationQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MedicationQuery, MedicationQueryVariables>(MedicationDocument, options);
+      }
+export function useMedicationLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MedicationQuery, MedicationQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MedicationQuery, MedicationQueryVariables>(MedicationDocument, options);
+        }
+// @ts-ignore
+export function useMedicationSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<MedicationQuery, MedicationQueryVariables>): Apollo.UseSuspenseQueryResult<MedicationQuery, MedicationQueryVariables>;
+export function useMedicationSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MedicationQuery, MedicationQueryVariables>): Apollo.UseSuspenseQueryResult<MedicationQuery | undefined, MedicationQueryVariables>;
+export function useMedicationSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MedicationQuery, MedicationQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MedicationQuery, MedicationQueryVariables>(MedicationDocument, options);
+        }
+export type MedicationQueryHookResult = ReturnType<typeof useMedicationQuery>;
+export type MedicationLazyQueryHookResult = ReturnType<typeof useMedicationLazyQuery>;
+export type MedicationSuspenseQueryHookResult = ReturnType<typeof useMedicationSuspenseQuery>;
+export type MedicationQueryResult = Apollo.QueryResult<MedicationQuery, MedicationQueryVariables>;
 export const MedicationsDocument = gql`
     query Medications {
   medications {

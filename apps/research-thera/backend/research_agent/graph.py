@@ -74,7 +74,7 @@ QUERY DESIGN:
 IMPORTANT RULES:
 - You MUST call save_research_papers. Do NOT skip this step or just describe what you would save.
 - Do NOT write a long narrative before calling save_research_papers — the tool call must come first.
-- The goal_id, feedback_id, issue_id, or journal_entry_id will be provided in the user message — include whichever is given in the save_research_papers call.
+- The goal_id, feedback_id, issue_id, journal_entry_id, or medication_id will be provided in the user message — include whichever is given in the save_research_papers call.
 - Weight evidence level: meta-analysis > systematic review > RCT > cohort > case study
 - Extract concrete therapeutic techniques from each paper
 - Identify outcome measures and their effect sizes when available
@@ -160,13 +160,14 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
     @tool
     async def save_research_papers(papers_json: str) -> str:
         """Save the final curated research papers to the database. Call this ONCE at the end
-        with a JSON string containing: {"goal_id": <int> OR "feedback_id": <int> OR "issue_id": <int> OR "journal_entry_id": <int>,
+        with a JSON string containing: {"goal_id": <int> OR "feedback_id": <int> OR "issue_id": <int> OR "journal_entry_id": <int> OR "medication_id": <uuid string>,
         "therapeutic_goal_type": "<string>",
         "papers": [{"title": "...", "authors": ["..."], "year": 2024, "doi": "10.xxx",
         "url": "...", "abstract": "...", "key_findings": ["..."], "therapeutic_techniques": ["..."],
         "evidence_level": "rct", "relevance_score": 0.85}]}. This persists the papers so the
         therapist can review them later. Use goal_id when research was triggered for a goal,
-        issue_id for an issue, feedback_id for feedback, journal_entry_id for a journal entry."""
+        issue_id for an issue, feedback_id for feedback, journal_entry_id for a journal entry,
+        medication_id for a medication."""
         try:
             data = json.loads(papers_json)
         except json.JSONDecodeError as e:
@@ -176,8 +177,9 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
         issue_id = data.get("issue_id")
         goal_id = data.get("goal_id")
         journal_entry_id = data.get("journal_entry_id")
-        if not feedback_id and not issue_id and not goal_id and not journal_entry_id:
-            return "Error: one of goal_id, feedback_id, issue_id, or journal_entry_id is required"
+        medication_id = data.get("medication_id")
+        if not feedback_id and not issue_id and not goal_id and not journal_entry_id and not medication_id:
+            return "Error: one of goal_id, feedback_id, issue_id, journal_entry_id, or medication_id is required"
 
         therapeutic_goal_type = data.get("therapeutic_goal_type", "")
         papers = data.get("papers", [])
@@ -209,6 +211,7 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
                     issue_id=issue_id,
                     goal_id=goal_id,
                     journal_entry_id=journal_entry_id,
+                    medication_id=medication_id,
                 )
                 saved += 1
             except Exception as e:

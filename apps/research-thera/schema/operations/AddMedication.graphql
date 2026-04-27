@@ -1,6 +1,7 @@
 mutation AddMedication($input: AddMedicationInput!) {
   addMedication(input: $input) {
     id
+    familyMemberId
     name
     dosage
     frequency

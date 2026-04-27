@@ -1,5 +1,5 @@
-mutation GenerateResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int) {
-  generateResearch(goalId: $goalId, issueId: $issueId, feedbackId: $feedbackId, journalEntryId: $journalEntryId) {
+mutation GenerateResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int, $medicationId: ID) {
+  generateResearch(goalId: $goalId, issueId: $issueId, feedbackId: $feedbackId, journalEntryId: $journalEntryId, medicationId: $medicationId) {
     success
     message
     jobId

@@ -175,6 +175,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
   const issueId = args.issueId ?? undefined;
   const feedbackId = args.feedbackId ?? undefined;
   const journalEntryId = args.journalEntryId ?? undefined;
+  const medicationId = args.medicationId ?? undefined;
 
   if (goalId) {
     await db.getGoal(goalId, userEmail);
@@ -188,7 +189,55 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
   let prompt: string;
   let evalPromptContext: string;
   let relatedFamilyMember: Awaited<ReturnType<typeof db.getFamilyMember>> | null = null;
-  if (feedbackId) {
+  if (medicationId) {
+    const med = await db.getMedicationById(medicationId, userEmail);
+    if (!med) throw new Error("Medication not found");
+
+    let memberContext = "";
+    let medicationSiblingSection = "";
+    let subjectProfile = "";
+    if (med.familyMemberId) {
+      try {
+        const fm = await db.getFamilyMember(med.familyMemberId);
+        if (fm) memberContext = `Patient: ${memberLabel(fm)}`;
+        const allIssues = await db.getIssuesForFamilyMember(med.familyMemberId, undefined, userEmail);
+        medicationSiblingSection = buildSiblingIssuesSection(allIssues);
+        subjectProfile = await buildSubjectProfile(med.familyMemberId, userEmail);
+      } catch (err) {
+        console.warn("[generateResearch] medication subject profile failed:", err instanceof Error ? err.message : err);
+      }
+    } else {
+      try {
+        const self = await db.getSelfFamilyMember(userEmail);
+        if (self) memberContext = `Patient: ${memberLabel(self)}`;
+      } catch { /* non-fatal */ }
+    }
+
+    const contextLines = [
+      `medication_id: ${medicationId}`,
+      `Drug: ${med.name}`,
+      med.dosage ? `Dosage: ${med.dosage}` : "",
+      med.frequency ? `Frequency: ${med.frequency}` : "",
+      med.startDate ? `Started: ${med.startDate}` : "",
+      med.endDate ? `Ended: ${med.endDate}` : "",
+      med.notes ? `Notes: ${med.notes}` : "",
+      memberContext,
+      subjectProfile,
+      medicationSiblingSection,
+    ].filter(Boolean);
+    evalPromptContext = contextLines.join("\n");
+    prompt = [
+      `Find evidence-based clinical research for the following medication regimen:`,
+      ``,
+      ...contextLines,
+      ``,
+      `Search for: efficacy in the indicated condition, age-appropriate dosing, safety profile (especially adverse events relevant to the patient's age and comorbidities), drug interactions, and long-term outcomes.`,
+      `When the patient is a child, prioritize pediatric-specific safety findings and any boxed/black-box warnings.`,
+      `Only save papers with real abstracts (not "None", "...", or empty). Skip papers lacking abstracts.`,
+      ``,
+      `IMPORTANT: When calling save_research_papers, use medication_id: "${medicationId}" — do NOT use goal_id, issue_id, feedback_id, or journal_entry_id.`,
+    ].join("\n");
+  } else if (feedbackId) {
     const feedback = await db.getContactFeedback(feedbackId, userEmail);
     if (!feedback) throw new Error("Feedback not found");
     let feedbackSiblingSection = "";
@@ -345,7 +394,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       `IMPORTANT: When calling save_research_papers, use goal_id: ${goalId} — do NOT use issue_id or feedback_id.`,
     ].join("\n");
   } else {
-    throw new Error("Either goalId, issueId, feedbackId, or journalEntryId is required");
+    throw new Error("Either goalId, issueId, feedbackId, journalEntryId, or medicationId is required");
   }
 
   const hasRelatedMember = relatedFamilyMember !== null;
@@ -364,6 +413,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
           issueId: issueId ?? null,
           feedbackId: feedbackId ?? null,
           journalEntryId: journalEntryId ?? null,
+          medicationId: medicationId ?? null,
           hasRelatedMember,
           evalPromptContext,
           plannedQueries: plannedQueries ?? undefined,

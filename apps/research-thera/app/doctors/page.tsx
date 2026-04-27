@@ -13,6 +13,7 @@ import {
   AlertDialog,
 } from "@radix-ui/themes";
 import { Stethoscope, Trash2, Mail, Phone, MapPin } from "lucide-react";
+import Link from "next/link";
 import {
   useDoctorsQuery,
   useDeleteDoctorMutation,
@@ -139,9 +140,14 @@ function DoctorCard({
       <Flex justify="between" align="start" gap="2">
         <Flex direction="column" gap="2" style={{ flexGrow: 1, minWidth: 0 }}>
           <Flex align="center" gap="2" wrap="wrap">
-            <Text size="2" weight="medium">
-              {name}
-            </Text>
+            <Link
+              href={`/doctors/${id}`}
+              style={{ textDecoration: "none", color: "inherit" }}
+            >
+              <Text size="2" weight="medium">
+                {name}
+              </Text>
+            </Link>
             {specialty && (
               <Badge color="cyan" variant="soft" size="1">
                 {specialty}

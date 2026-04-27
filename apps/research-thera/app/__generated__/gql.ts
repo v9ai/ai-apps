@@ -18,7 +18,7 @@ type Documents = {
     "mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": typeof types.AddAppointmentDocument,
     "mutation AddCondition($input: AddConditionInput!) {\n  addCondition(input: $input) {\n    id\n    name\n    notes\n    createdAt\n  }\n}": typeof types.AddConditionDocument,
     "mutation AddDoctor($input: AddDoctorInput!) {\n  addDoctor(input: $input) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": typeof types.AddDoctorDocument,
-    "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": typeof types.AddMedicationDocument,
+    "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": typeof types.AddMedicationDocument,
     "mutation AddMemoryEntry($input: AddMemoryEntryInput!) {\n  addMemoryEntry(input: $input) {\n    id\n    category\n    description\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n  }\n}": typeof types.AddMemoryEntryDocument,
     "mutation AddProtocol($input: AddProtocolInput!) {\n  addProtocol(input: $input) {\n    id\n    name\n    slug\n    status\n    targetAreas\n    supplementCount\n    createdAt\n  }\n}": typeof types.AddProtocolDocument,
     "mutation AddSupplement($protocolId: ID!, $input: AddSupplementInput!) {\n  addSupplement(protocolId: $protocolId, input: $input) {\n    id\n    name\n    dosage\n    frequency\n    mechanism\n    notes\n    url\n    createdAt\n  }\n}": typeof types.AddSupplementDocument,
@@ -71,6 +71,7 @@ type Documents = {
     "mutation DeleteJournalAnalysis($journalEntryId: Int!) {\n  deleteJournalAnalysis(journalEntryId: $journalEntryId) {\n    success\n    message\n  }\n}": typeof types.DeleteJournalAnalysisDocument,
     "mutation DeleteJournalEntry($id: Int!) {\n  deleteJournalEntry(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteJournalEntryDocument,
     "mutation DeleteJournalRecommendedBooks($journalEntryId: Int!) {\n  deleteRecommendedBooks(journalEntryId: $journalEntryId) {\n    success\n    message\n    deletedCount\n  }\n}": typeof types.DeleteJournalRecommendedBooksDocument,
+    "mutation DeleteMedicalLetter($id: ID!) {\n  deleteMedicalLetter(id: $id) {\n    success\n  }\n}": typeof types.DeleteMedicalLetterDocument,
     "mutation DeleteMedication($id: ID!) {\n  deleteMedication(id: $id) {\n    success\n  }\n}": typeof types.DeleteMedicationDocument,
     "mutation DeleteMemoryEntry($id: ID!) {\n  deleteMemoryEntry(id: $id) {\n    success\n  }\n}": typeof types.DeleteMemoryEntryDocument,
     "mutation DeleteNote($id: Int!) {\n  deleteNote(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteNoteDocument,
@@ -84,6 +85,7 @@ type Documents = {
     "mutation DeleteSymptom($id: ID!) {\n  deleteSymptom(id: $id) {\n    success\n  }\n}": typeof types.DeleteSymptomDocument,
     "mutation DeleteTeacherFeedback($id: Int!) {\n  deleteTeacherFeedback(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteTeacherFeedbackDocument,
     "mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {\n  deleteTherapeuticQuestions(\n    goalId: $goalId\n    issueId: $issueId\n    journalEntryId: $journalEntryId\n  ) {\n    success\n    message\n    deletedCount\n  }\n}": typeof types.DeleteTherapeuticQuestionsDocument,
+    "query Doctor($id: ID!) {\n  doctor(id: $id) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n  medicalLetters(doctorId: $id) {\n    id\n    fileName\n    filePath\n    description\n    letterDate\n    uploadedAt\n  }\n}": typeof types.DoctorDocument,
     "query Doctors {\n  doctors {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": typeof types.DoctorsDocument,
     "mutation ExtractContactFeedbackIssues($id: Int!) {\n  extractContactFeedbackIssues(id: $id) {\n    id\n    extracted\n    extractedIssues {\n      title\n      description\n      category\n      severity\n      recommendations\n    }\n  }\n}": typeof types.ExtractContactFeedbackIssuesDocument,
     "mutation GenerateAffirmationsForFamilyMember($familyMemberId: Int!, $count: Int, $categoryFocus: AffirmationCategory, $language: String) {\n  generateAffirmationsForFamilyMember(\n    familyMemberId: $familyMemberId\n    count: $count\n    categoryFocus: $categoryFocus\n    language: $language\n  ) {\n    success\n    message\n    count\n    affirmations {\n      id\n      familyMemberId\n      userId\n      text\n      category\n      isActive\n      createdAt\n      updatedAt\n    }\n  }\n}": typeof types.GenerateAffirmationsForFamilyMemberDocument,
@@ -162,6 +164,7 @@ type Documents = {
     "mutation LockVault {\n  lockVault {\n    unlocked\n  }\n}": typeof types.LockVaultDocument,
     "mutation LogGameCompletion($input: LogGameCompletionInput!) {\n  logGameCompletion(input: $input) {\n    id\n    gameId\n    durationSeconds\n    responses\n    linkedNoteId\n    completedAt\n  }\n}": typeof types.LogGameCompletionDocument,
     "mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {\n  logHabit(\n    habitId: $habitId\n    loggedDate: $loggedDate\n    count: $count\n    notes: $notes\n  ) {\n    id\n    habitId\n    loggedDate\n    count\n    notes\n    createdAt\n  }\n}": typeof types.LogHabitDocument,
+    "query Medication($id: ID!) {\n  medication(id: $id) {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n    familyMember {\n      id\n      slug\n      firstName\n      name\n      relationship\n      ageYears\n    }\n  }\n}": typeof types.MedicationDocument,
     "query Medications {\n  medications {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n    familyMember {\n      id\n      slug\n      firstName\n      name\n    }\n  }\n}": typeof types.MedicationsDocument,
     "query MemoryEntries {\n  memoryEntries {\n    id\n    category\n    description\n    context\n    protocolId\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n    createdAt\n  }\n  memoryBaseline {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}": typeof types.MemoryEntriesDocument,
     "query Protocol($slug: String!) {\n  protocol(slug: $slug) {\n    protocol {\n      id\n      name\n      slug\n      targetAreas\n      status\n      notes\n      startDate\n      endDate\n      supplementCount\n      createdAt\n      updatedAt\n    }\n    supplements {\n      id\n      name\n      dosage\n      frequency\n      mechanism\n      targetAreas\n      notes\n      url\n      createdAt\n    }\n    baseline {\n      id\n      memoryScore\n      focusScore\n      processingSpeedScore\n      moodScore\n      sleepScore\n      recordedAt\n    }\n    checkIns {\n      id\n      memoryScore\n      focusScore\n      processingSpeedScore\n      moodScore\n      sleepScore\n      sideEffects\n      notes\n      recordedAt\n    }\n  }\n}": typeof types.ProtocolDocument,
@@ -202,7 +205,7 @@ const documents: Documents = {
     "mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": types.AddAppointmentDocument,
     "mutation AddCondition($input: AddConditionInput!) {\n  addCondition(input: $input) {\n    id\n    name\n    notes\n    createdAt\n  }\n}": types.AddConditionDocument,
     "mutation AddDoctor($input: AddDoctorInput!) {\n  addDoctor(input: $input) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": types.AddDoctorDocument,
-    "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": types.AddMedicationDocument,
+    "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": types.AddMedicationDocument,
     "mutation AddMemoryEntry($input: AddMemoryEntryInput!) {\n  addMemoryEntry(input: $input) {\n    id\n    category\n    description\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n  }\n}": types.AddMemoryEntryDocument,
     "mutation AddProtocol($input: AddProtocolInput!) {\n  addProtocol(input: $input) {\n    id\n    name\n    slug\n    status\n    targetAreas\n    supplementCount\n    createdAt\n  }\n}": types.AddProtocolDocument,
     "mutation AddSupplement($protocolId: ID!, $input: AddSupplementInput!) {\n  addSupplement(protocolId: $protocolId, input: $input) {\n    id\n    name\n    dosage\n    frequency\n    mechanism\n    notes\n    url\n    createdAt\n  }\n}": types.AddSupplementDocument,
@@ -255,6 +258,7 @@ const documents: Documents = {
     "mutation DeleteJournalAnalysis($journalEntryId: Int!) {\n  deleteJournalAnalysis(journalEntryId: $journalEntryId) {\n    success\n    message\n  }\n}": types.DeleteJournalAnalysisDocument,
     "mutation DeleteJournalEntry($id: Int!) {\n  deleteJournalEntry(id: $id) {\n    success\n    message\n  }\n}": types.DeleteJournalEntryDocument,
     "mutation DeleteJournalRecommendedBooks($journalEntryId: Int!) {\n  deleteRecommendedBooks(journalEntryId: $journalEntryId) {\n    success\n    message\n    deletedCount\n  }\n}": types.DeleteJournalRecommendedBooksDocument,
+    "mutation DeleteMedicalLetter($id: ID!) {\n  deleteMedicalLetter(id: $id) {\n    success\n  }\n}": types.DeleteMedicalLetterDocument,
     "mutation DeleteMedication($id: ID!) {\n  deleteMedication(id: $id) {\n    success\n  }\n}": types.DeleteMedicationDocument,
     "mutation DeleteMemoryEntry($id: ID!) {\n  deleteMemoryEntry(id: $id) {\n    success\n  }\n}": types.DeleteMemoryEntryDocument,
     "mutation DeleteNote($id: Int!) {\n  deleteNote(id: $id) {\n    success\n    message\n  }\n}": types.DeleteNoteDocument,
@@ -268,6 +272,7 @@ const documents: Documents = {
     "mutation DeleteSymptom($id: ID!) {\n  deleteSymptom(id: $id) {\n    success\n  }\n}": types.DeleteSymptomDocument,
     "mutation DeleteTeacherFeedback($id: Int!) {\n  deleteTeacherFeedback(id: $id) {\n    success\n    message\n  }\n}": types.DeleteTeacherFeedbackDocument,
     "mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {\n  deleteTherapeuticQuestions(\n    goalId: $goalId\n    issueId: $issueId\n    journalEntryId: $journalEntryId\n  ) {\n    success\n    message\n    deletedCount\n  }\n}": types.DeleteTherapeuticQuestionsDocument,
+    "query Doctor($id: ID!) {\n  doctor(id: $id) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n  medicalLetters(doctorId: $id) {\n    id\n    fileName\n    filePath\n    description\n    letterDate\n    uploadedAt\n  }\n}": types.DoctorDocument,
     "query Doctors {\n  doctors {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": types.DoctorsDocument,
     "mutation ExtractContactFeedbackIssues($id: Int!) {\n  extractContactFeedbackIssues(id: $id) {\n    id\n    extracted\n    extractedIssues {\n      title\n      description\n      category\n      severity\n      recommendations\n    }\n  }\n}": types.ExtractContactFeedbackIssuesDocument,
     "mutation GenerateAffirmationsForFamilyMember($familyMemberId: Int!, $count: Int, $categoryFocus: AffirmationCategory, $language: String) {\n  generateAffirmationsForFamilyMember(\n    familyMemberId: $familyMemberId\n    count: $count\n    categoryFocus: $categoryFocus\n    language: $language\n  ) {\n    success\n    message\n    count\n    affirmations {\n      id\n      familyMemberId\n      userId\n      text\n      category\n      isActive\n      createdAt\n      updatedAt\n    }\n  }\n}": types.GenerateAffirmationsForFamilyMemberDocument,
@@ -346,6 +351,7 @@ const documents: Documents = {
     "mutation LockVault {\n  lockVault {\n    unlocked\n  }\n}": types.LockVaultDocument,
     "mutation LogGameCompletion($input: LogGameCompletionInput!) {\n  logGameCompletion(input: $input) {\n    id\n    gameId\n    durationSeconds\n    responses\n    linkedNoteId\n    completedAt\n  }\n}": types.LogGameCompletionDocument,
     "mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {\n  logHabit(\n    habitId: $habitId\n    loggedDate: $loggedDate\n    count: $count\n    notes: $notes\n  ) {\n    id\n    habitId\n    loggedDate\n    count\n    notes\n    createdAt\n  }\n}": types.LogHabitDocument,
+    "query Medication($id: ID!) {\n  medication(id: $id) {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n    familyMember {\n      id\n      slug\n      firstName\n      name\n      relationship\n      ageYears\n    }\n  }\n}": types.MedicationDocument,
     "query Medications {\n  medications {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n    familyMember {\n      id\n      slug\n      firstName\n      name\n    }\n  }\n}": types.MedicationsDocument,
     "query MemoryEntries {\n  memoryEntries {\n    id\n    category\n    description\n    context\n    protocolId\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n    createdAt\n  }\n  memoryBaseline {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}": types.MemoryEntriesDocument,
     "query Protocol($slug: String!) {\n  protocol(slug: $slug) {\n    protocol {\n      id\n      name\n      slug\n      targetAreas\n      status\n      notes\n      startDate\n      endDate\n      supplementCount\n      createdAt\n      updatedAt\n    }\n    supplements {\n      id\n      name\n      dosage\n      frequency\n      mechanism\n      targetAreas\n      notes\n      url\n      createdAt\n    }\n    baseline {\n      id\n      memoryScore\n      focusScore\n      processingSpeedScore\n      moodScore\n      sleepScore\n      recordedAt\n    }\n    checkIns {\n      id\n      memoryScore\n      focusScore\n      processingSpeedScore\n      moodScore\n      sleepScore\n      sideEffects\n      notes\n      recordedAt\n    }\n  }\n}": types.ProtocolDocument,
@@ -415,7 +421,7 @@ export function gql(source: "mutation AddDoctor($input: AddDoctorInput!) {\n  ad
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}"): (typeof documents)["mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}"];
+export function gql(source: "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}"): (typeof documents)["mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -627,6 +633,10 @@ export function gql(source: "mutation DeleteJournalRecommendedBooks($journalEntr
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "mutation DeleteMedicalLetter($id: ID!) {\n  deleteMedicalLetter(id: $id) {\n    success\n  }\n}"): (typeof documents)["mutation DeleteMedicalLetter($id: ID!) {\n  deleteMedicalLetter(id: $id) {\n    success\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "mutation DeleteMedication($id: ID!) {\n  deleteMedication(id: $id) {\n    success\n  }\n}"): (typeof documents)["mutation DeleteMedication($id: ID!) {\n  deleteMedication(id: $id) {\n    success\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -676,6 +686,10 @@ export function gql(source: "mutation DeleteTeacherFeedback($id: Int!) {\n  dele
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {\n  deleteTherapeuticQuestions(\n    goalId: $goalId\n    issueId: $issueId\n    journalEntryId: $journalEntryId\n  ) {\n    success\n    message\n    deletedCount\n  }\n}"): (typeof documents)["mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {\n  deleteTherapeuticQuestions(\n    goalId: $goalId\n    issueId: $issueId\n    journalEntryId: $journalEntryId\n  ) {\n    success\n    message\n    deletedCount\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "query Doctor($id: ID!) {\n  doctor(id: $id) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n  medicalLetters(doctorId: $id) {\n    id\n    fileName\n    filePath\n    description\n    letterDate\n    uploadedAt\n  }\n}"): (typeof documents)["query Doctor($id: ID!) {\n  doctor(id: $id) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n  medicalLetters(doctorId: $id) {\n    id\n    fileName\n    filePath\n    description\n    letterDate\n    uploadedAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -988,6 +1002,10 @@ export function gql(source: "mutation LogGameCompletion($input: LogGameCompletio
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {\n  logHabit(\n    habitId: $habitId\n    loggedDate: $loggedDate\n    count: $count\n    notes: $notes\n  ) {\n    id\n    habitId\n    loggedDate\n    count\n    notes\n    createdAt\n  }\n}"): (typeof documents)["mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {\n  logHabit(\n    habitId: $habitId\n    loggedDate: $loggedDate\n    count: $count\n    notes: $notes\n  ) {\n    id\n    habitId\n    loggedDate\n    count\n    notes\n    createdAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "query Medication($id: ID!) {\n  medication(id: $id) {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n    familyMember {\n      id\n      slug\n      firstName\n      name\n      relationship\n      ageYears\n    }\n  }\n}"): (typeof documents)["query Medication($id: ID!) {\n  medication(id: $id) {\n    id\n    familyMemberId\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n    familyMember {\n      id\n      slug\n      firstName\n      name\n      relationship\n      ageYears\n    }\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

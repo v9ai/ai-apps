@@ -62,6 +62,7 @@ export type AddDoctorInput = {
 export type AddMedicationInput = {
   dosage?: InputMaybe<Scalars['String']['input']>;
   endDate?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   frequency?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -795,6 +796,11 @@ export type DeleteJournalAnalysisResult = {
 export type DeleteJournalEntryResult = {
   __typename?: 'DeleteJournalEntryResult';
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteMedicalLetterResult = {
+  __typename?: 'DeleteMedicalLetterResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1540,6 +1546,18 @@ export type LogGameCompletionInput = {
   responses?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type MedicalLetter = {
+  __typename?: 'MedicalLetter';
+  description?: Maybe<Scalars['String']['output']>;
+  doctorId: Scalars['ID']['output'];
+  fileName: Scalars['String']['output'];
+  filePath: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  letterDate?: Maybe<Scalars['String']['output']>;
+  uploadedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
 export type Medication = {
   __typename?: 'Medication';
   createdAt: Scalars['String']['output'];
@@ -1645,6 +1663,7 @@ export type Mutation = {
   deleteIssueScreenshot: DeleteIssueScreenshotResult;
   deleteJournalAnalysis: DeleteJournalAnalysisResult;
   deleteJournalEntry: DeleteJournalEntryResult;
+  deleteMedicalLetter: DeleteMedicalLetterResult;
   deleteMedication: DeleteMedicationResult;
   deleteMemoryEntry: DeleteMemoryEntryResult;
   deleteNote: DeleteNoteResult;
@@ -1984,6 +2003,11 @@ export type MutationdeleteJournalEntryArgs = {
 };
 
 
+export type MutationdeleteMedicalLetterArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationdeleteMedicationArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2149,6 +2173,7 @@ export type MutationgenerateResearchArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+  medicationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -2602,6 +2627,7 @@ export type Query = {
   deepAnalysis?: Maybe<DeepAnalysis>;
   deepIssueAnalyses: Array<DeepIssueAnalysis>;
   deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
+  doctor?: Maybe<Doctor>;
   doctors: Array<Doctor>;
   familyMember?: Maybe<FamilyMember>;
   familyMembers: Array<FamilyMember>;
@@ -2622,6 +2648,8 @@ export type Query = {
   journalEntries: Array<JournalEntry>;
   journalEntry?: Maybe<JournalEntry>;
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
+  medicalLetters: Array<MedicalLetter>;
+  medication?: Maybe<Medication>;
   medications: Array<Medication>;
   memoryBaseline?: Maybe<MemoryBaseline>;
   memoryEntries: Array<MemoryEntry>;
@@ -2744,6 +2772,11 @@ export type QuerydeepIssueAnalysisArgs = {
 };
 
 
+export type QuerydoctorArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryfamilyMemberArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
@@ -2841,6 +2874,16 @@ export type QueryjournalEntryArgs = {
 };
 
 
+export type QuerymedicalLettersArgs = {
+  doctorId: Scalars['ID']['input'];
+};
+
+
+export type QuerymedicationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QuerynoteArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
@@ -2885,6 +2928,7 @@ export type QueryresearchArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+  medicationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -2995,6 +3039,7 @@ export type Research = {
   journal?: Maybe<Scalars['String']['output']>;
   journalEntryId?: Maybe<Scalars['Int']['output']>;
   keyFindings: Array<Scalars['String']['output']>;
+  medicationId?: Maybe<Scalars['ID']['output']>;
   relevanceScore: Scalars['Float']['output'];
   therapeuticGoalType: Scalars['String']['output'];
   therapeuticTechniques: Array<Scalars['String']['output']>;
@@ -3560,6 +3605,7 @@ export type ResolversTypes = {
   DeleteIssueScreenshotResult: ResolverTypeWrapper<DeleteIssueScreenshotResult>;
   DeleteJournalAnalysisResult: ResolverTypeWrapper<DeleteJournalAnalysisResult>;
   DeleteJournalEntryResult: ResolverTypeWrapper<DeleteJournalEntryResult>;
+  DeleteMedicalLetterResult: ResolverTypeWrapper<DeleteMedicalLetterResult>;
   DeleteMedicationResult: ResolverTypeWrapper<DeleteMedicationResult>;
   DeleteMemoryEntryResult: ResolverTypeWrapper<DeleteMemoryEntryResult>;
   DeleteNoteResult: ResolverTypeWrapper<DeleteNoteResult>;
@@ -3638,6 +3684,7 @@ export type ResolversTypes = {
   LanguageExample: ResolverTypeWrapper<LanguageExample>;
   LanguageGuide: ResolverTypeWrapper<LanguageGuide>;
   LogGameCompletionInput: LogGameCompletionInput;
+  MedicalLetter: ResolverTypeWrapper<MedicalLetter>;
   Medication: ResolverTypeWrapper<Omit<Medication, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
   MemoryBaseline: ResolverTypeWrapper<MemoryBaseline>;
   MemoryEntry: ResolverTypeWrapper<MemoryEntry>;
@@ -3795,6 +3842,7 @@ export type ResolversParentTypes = {
   DeleteIssueScreenshotResult: DeleteIssueScreenshotResult;
   DeleteJournalAnalysisResult: DeleteJournalAnalysisResult;
   DeleteJournalEntryResult: DeleteJournalEntryResult;
+  DeleteMedicalLetterResult: DeleteMedicalLetterResult;
   DeleteMedicationResult: DeleteMedicationResult;
   DeleteMemoryEntryResult: DeleteMemoryEntryResult;
   DeleteNoteResult: DeleteNoteResult;
@@ -3863,6 +3911,7 @@ export type ResolversParentTypes = {
   LanguageExample: LanguageExample;
   LanguageGuide: LanguageGuide;
   LogGameCompletionInput: LogGameCompletionInput;
+  MedicalLetter: MedicalLetter;
   Medication: Omit<Medication, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   MemoryBaseline: MemoryBaseline;
   MemoryEntry: MemoryEntry;
@@ -4372,6 +4421,10 @@ export type DeleteJournalAnalysisResultResolvers<ContextType = GraphQLContext, P
 
 export type DeleteJournalEntryResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteJournalEntryResult'] = ResolversParentTypes['DeleteJournalEntryResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type DeleteMedicalLetterResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteMedicalLetterResult'] = ResolversParentTypes['DeleteMedicalLetterResult']> = {
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
@@ -4976,6 +5029,17 @@ export type LanguageGuideResolvers<ContextType = GraphQLContext, ParentType exte
   whatToSay?: Resolver<Array<ResolversTypes['LanguageExample']>, ParentType, ContextType>;
 };
 
+export type MedicalLetterResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MedicalLetter'] = ResolversParentTypes['MedicalLetter']> = {
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  doctorId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  fileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  filePath?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  letterDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  uploadedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type MedicationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Medication'] = ResolversParentTypes['Medication']> = {
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   dosage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5076,6 +5140,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteIssueScreenshot?: Resolver<ResolversTypes['DeleteIssueScreenshotResult'], ParentType, ContextType, RequireFields<MutationdeleteIssueScreenshotArgs, 'id'>>;
   deleteJournalAnalysis?: Resolver<ResolversTypes['DeleteJournalAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteJournalAnalysisArgs, 'journalEntryId'>>;
   deleteJournalEntry?: Resolver<ResolversTypes['DeleteJournalEntryResult'], ParentType, ContextType, RequireFields<MutationdeleteJournalEntryArgs, 'id'>>;
+  deleteMedicalLetter?: Resolver<ResolversTypes['DeleteMedicalLetterResult'], ParentType, ContextType, RequireFields<MutationdeleteMedicalLetterArgs, 'id'>>;
   deleteMedication?: Resolver<ResolversTypes['DeleteMedicationResult'], ParentType, ContextType, RequireFields<MutationdeleteMedicationArgs, 'id'>>;
   deleteMemoryEntry?: Resolver<ResolversTypes['DeleteMemoryEntryResult'], ParentType, ContextType, RequireFields<MutationdeleteMemoryEntryArgs, 'id'>>;
   deleteNote?: Resolver<ResolversTypes['DeleteNoteResult'], ParentType, ContextType, RequireFields<MutationdeleteNoteArgs, 'id'>>;
@@ -5323,6 +5388,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   deepAnalysis?: Resolver<Maybe<ResolversTypes['DeepAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepAnalysisArgs, 'id'>>;
   deepIssueAnalyses?: Resolver<Array<ResolversTypes['DeepIssueAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepIssueAnalysesArgs, 'familyMemberId'>>;
   deepIssueAnalysis?: Resolver<Maybe<ResolversTypes['DeepIssueAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepIssueAnalysisArgs, 'id'>>;
+  doctor?: Resolver<Maybe<ResolversTypes['Doctor']>, ParentType, ContextType, RequireFields<QuerydoctorArgs, 'id'>>;
   doctors?: Resolver<Array<ResolversTypes['Doctor']>, ParentType, ContextType>;
   familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType, Partial<QueryfamilyMemberArgs>>;
   familyMembers?: Resolver<Array<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
@@ -5343,6 +5409,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   journalEntries?: Resolver<Array<ResolversTypes['JournalEntry']>, ParentType, ContextType, Partial<QueryjournalEntriesArgs>>;
   journalEntry?: Resolver<Maybe<ResolversTypes['JournalEntry']>, ParentType, ContextType, RequireFields<QueryjournalEntryArgs, 'id'>>;
   latestBogdanDiscussion?: Resolver<Maybe<ResolversTypes['BogdanDiscussionGuide']>, ParentType, ContextType>;
+  medicalLetters?: Resolver<Array<ResolversTypes['MedicalLetter']>, ParentType, ContextType, RequireFields<QuerymedicalLettersArgs, 'doctorId'>>;
+  medication?: Resolver<Maybe<ResolversTypes['Medication']>, ParentType, ContextType, RequireFields<QuerymedicationArgs, 'id'>>;
   medications?: Resolver<Array<ResolversTypes['Medication']>, ParentType, ContextType>;
   memoryBaseline?: Resolver<Maybe<ResolversTypes['MemoryBaseline']>, ParentType, ContextType>;
   memoryEntries?: Resolver<Array<ResolversTypes['MemoryEntry']>, ParentType, ContextType>;
@@ -5430,6 +5498,7 @@ export type ResearchResolvers<ContextType = GraphQLContext, ParentType extends R
   journal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   journalEntryId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   keyFindings?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  medicationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   relevanceScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   therapeuticGoalType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   therapeuticTechniques?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5715,6 +5784,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteIssueScreenshotResult?: DeleteIssueScreenshotResultResolvers<ContextType>;
   DeleteJournalAnalysisResult?: DeleteJournalAnalysisResultResolvers<ContextType>;
   DeleteJournalEntryResult?: DeleteJournalEntryResultResolvers<ContextType>;
+  DeleteMedicalLetterResult?: DeleteMedicalLetterResultResolvers<ContextType>;
   DeleteMedicationResult?: DeleteMedicationResultResolvers<ContextType>;
   DeleteMemoryEntryResult?: DeleteMemoryEntryResultResolvers<ContextType>;
   DeleteNoteResult?: DeleteNoteResultResolvers<ContextType>;
@@ -5788,6 +5858,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   JournalEntry?: JournalEntryResolvers<ContextType>;
   LanguageExample?: LanguageExampleResolvers<ContextType>;
   LanguageGuide?: LanguageGuideResolvers<ContextType>;
+  MedicalLetter?: MedicalLetterResolvers<ContextType>;
   Medication?: MedicationResolvers<ContextType>;
   MemoryBaseline?: MemoryBaselineResolvers<ContextType>;
   MemoryEntry?: MemoryEntryResolvers<ContextType>;

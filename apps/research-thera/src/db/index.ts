@@ -8,6 +8,7 @@ import {
   deleteCondition as _deleteCondition,
   embedCondition as _embedCondition,
   listMedications as _listMedications,
+  getMedicationById as _getMedicationById,
   createMedication as _createMedication,
   deleteMedication as _deleteMedication,
   embedMedication as _embedMedication,
@@ -46,6 +47,11 @@ import {
   createCheckIn as _createCheckIn,
   getHealthcareSummary as _getHealthcareSummary,
   listBloodTests as _listBloodTests,
+  listMedicalLetters as _listMedicalLetters,
+  getMedicalLetter as _getMedicalLetter,
+  createMedicalLetter as _createMedicalLetter,
+  deleteMedicalLetterRow as _deleteMedicalLetterRow,
+  getDoctor as _getDoctor,
 } from "./healthcare";
 
 // Re-export healthcare functions so they're reachable as top-level exports
@@ -56,6 +62,7 @@ export {
   _deleteCondition as deleteCondition,
   _embedCondition as embedCondition,
   _listMedications as listMedications,
+  _getMedicationById as getMedicationById,
   _createMedication as createMedication,
   _deleteMedication as deleteMedication,
   _embedMedication as embedMedication,
@@ -94,6 +101,11 @@ export {
   _createCheckIn as createCheckIn,
   _getHealthcareSummary as getHealthcareSummary,
   _listBloodTests as listBloodTests,
+  _listMedicalLetters as listMedicalLetters,
+  _getMedicalLetter as getMedicalLetter,
+  _createMedicalLetter as createMedicalLetter,
+  _deleteMedicalLetterRow as deleteMedicalLetterRow,
+  _getDoctor as getDoctor,
 };
 export type {
   Condition,
@@ -111,6 +123,7 @@ export type {
   CognitiveCheckIn,
   HealthcareSummary,
   BloodTest,
+  MedicalLetter,
 } from "./healthcare";
 
 /**
@@ -738,11 +751,14 @@ export async function upsertTherapyResearch(
   }
 }
 
-export async function listTherapyResearch(goalId?: number, issueId?: number, feedbackId?: number, journalEntryId?: number) {
+export async function listTherapyResearch(goalId?: number, issueId?: number, feedbackId?: number, journalEntryId?: number, medicationId?: string) {
   let sqlStr = `SELECT * FROM therapy_research WHERE `;
   const args: any[] = [];
 
-  if (journalEntryId != null) {
+  if (medicationId != null) {
+    sqlStr += `medication_id = ?::uuid`;
+    args.push(medicationId);
+  } else if (journalEntryId != null) {
     sqlStr += `journal_entry_id = ?`;
     args.push(journalEntryId);
   } else if (feedbackId != null) {
@@ -772,6 +788,7 @@ export async function listTherapyResearch(goalId?: number, issueId?: number, fee
     feedbackId: (row.feedback_id as number) || null,
     issueId: (row.issue_id as number) || null,
     journalEntryId: (row.journal_entry_id as number) || null,
+    medicationId: (row.medication_id as string) || null,
     therapeuticGoalType: row.therapeutic_goal_type as string,
     title: row.title as string,
     authors: safeJsonParse(row.authors as string, []) as string[],
@@ -4277,6 +4294,7 @@ export const db = {
   embedCondition: _embedCondition,
   // Healthcare — Medications
   listMedications: _listMedications,
+  getMedicationById: _getMedicationById,
   createMedication: _createMedication,
   deleteMedication: _deleteMedication,
   embedMedication: _embedMedication,
@@ -4323,5 +4341,11 @@ export const db = {
   getHealthcareSummary: _getHealthcareSummary,
   // Healthcare — Blood tests
   listBloodTests: _listBloodTests,
+  // Healthcare — Medical letters
+  listMedicalLetters: _listMedicalLetters,
+  getMedicalLetter: _getMedicalLetter,
+  createMedicalLetter: _createMedicalLetter,
+  deleteMedicalLetterRow: _deleteMedicalLetterRow,
+  getDoctor: _getDoctor,
 };
 

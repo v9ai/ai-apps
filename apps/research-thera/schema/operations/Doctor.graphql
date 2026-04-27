@@ -1,0 +1,20 @@
+query Doctor($id: ID!) {
+  doctor(id: $id) {
+    id
+    name
+    specialty
+    phone
+    email
+    address
+    notes
+    createdAt
+  }
+  medicalLetters(doctorId: $id) {
+    id
+    fileName
+    filePath
+    description
+    letterDate
+    uploadedAt
+  }
+}

@@ -161,7 +161,7 @@ type Query {
   goals(familyMemberId: Int, status: String, tag: String): [Goal!]!
   goal(id: Int, slug: String): Goal
   allTags: [String!]!
-  research(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int): [Research!]!
+  research(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int, medicationId: ID): [Research!]!
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
   allRecommendedBooks(category: String): [RecommendedBook!]!
@@ -266,6 +266,7 @@ type Query {
 
   # Healthcare — Medications
   medications: [Medication!]!
+  medication(id: ID!): Medication
 
   # Healthcare — Symptoms
   symptoms: [Symptom!]!
@@ -298,6 +299,10 @@ type Query {
 
   # Healthcare — Blood tests list
   bloodTests: [BloodTest!]!
+
+  # Healthcare — Doctor detail + medical letters
+  doctor(id: ID!): Doctor
+  medicalLetters(doctorId: ID!): [MedicalLetter!]!
 }
 
 # (chat mutation lives under Mutation type below)
@@ -312,7 +317,7 @@ type Mutation {
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
 
   # Async generation workflows
-  generateResearch(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int): GenerateResearchResult!
+  generateResearch(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int, medicationId: ID): GenerateResearchResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
@@ -525,6 +530,9 @@ type Mutation {
 
   # Healthcare — Blood tests (delete proxies Python DELETE /blood-tests/{id})
   deleteBloodTest(id: ID!): DeleteBloodTestResult!
+
+  # Healthcare — Medical letters (R2-backed; upload via /api route, not GraphQL)
+  deleteMedicalLetter(id: ID!): DeleteMedicalLetterResult!
 }
 
 type Subscription {
@@ -643,6 +651,7 @@ type Research {
   feedbackId: Int
   issueId: Int
   journalEntryId: Int
+  medicationId: ID
   therapeuticGoalType: String!
   title: String!
   authors: [String!]!
@@ -2205,6 +2214,7 @@ type Medication {
 
 input AddMedicationInput {
   name: String!
+  familyMemberId: Int
   dosage: String
   frequency: String
   notes: String
@@ -2598,5 +2608,24 @@ type BloodTest {
 }
 
 type DeleteBloodTestResult {
+  success: Boolean!
+}
+
+# ============================================
+# Healthcare — Medical letters
+# ============================================
+
+type MedicalLetter {
+  id: ID!
+  userId: String!
+  doctorId: ID!
+  fileName: String!
+  filePath: String!
+  description: String
+  letterDate: String
+  uploadedAt: String!
+}
+
+type DeleteMedicalLetterResult {
   success: Boolean!
 }

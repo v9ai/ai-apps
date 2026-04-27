@@ -40,6 +40,7 @@ input AddDoctorInput {
 input AddMedicationInput {
   dosage: String
   endDate: String
+  familyMemberId: Int
   frequency: String
   name: String!
   notes: String
@@ -733,6 +734,10 @@ type DeleteJournalEntryResult {
   success: Boolean!
 }
 
+type DeleteMedicalLetterResult {
+  success: Boolean!
+}
+
 type DeleteMedicationResult {
   success: Boolean!
 }
@@ -1417,6 +1422,17 @@ input LogGameCompletionInput {
   responses: String
 }
 
+type MedicalLetter {
+  description: String
+  doctorId: ID!
+  fileName: String!
+  filePath: String!
+  id: ID!
+  letterDate: String
+  uploadedAt: String!
+  userId: String!
+}
+
 type Medication {
   createdAt: String!
   dosage: String
@@ -1517,6 +1533,7 @@ type Mutation {
   deleteIssueScreenshot(id: Int!): DeleteIssueScreenshotResult!
   deleteJournalAnalysis(journalEntryId: Int!): DeleteJournalAnalysisResult!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
+  deleteMedicalLetter(id: ID!): DeleteMedicalLetterResult!
   deleteMedication(id: ID!): DeleteMedicationResult!
   deleteMemoryEntry(id: ID!): DeleteMemoryEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
@@ -1545,7 +1562,7 @@ type Mutation {
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
   generateRecommendedBooks(goalId: Int, journalEntryId: Int): GenerateRecommendedBooksResult!
-  generateResearch(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): GenerateResearchResult!
+  generateResearch(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int, medicationId: ID): GenerateResearchResult!
   generateRoutineAnalysis(familyMemberId: Int!): GenerateRoutineAnalysisResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   linkContactToIssue(contactId: Int!, issueId: Int!): IssueContactLink!
@@ -1801,6 +1818,7 @@ type Query {
   deepAnalysis(id: Int!): DeepAnalysis
   deepIssueAnalyses(familyMemberId: Int!): [DeepIssueAnalysis!]!
   deepIssueAnalysis(id: Int!): DeepIssueAnalysis
+  doctor(id: ID!): Doctor
   doctors: [Doctor!]!
   familyMember(id: Int, slug: String): FamilyMember
   familyMembers: [FamilyMember!]!
@@ -1821,6 +1839,8 @@ type Query {
   journalEntries(familyMemberId: Int, fromDate: String, goalId: Int, mood: String, tag: String, toDate: String): [JournalEntry!]!
   journalEntry(id: Int!): JournalEntry
   latestBogdanDiscussion: BogdanDiscussionGuide
+  medicalLetters(doctorId: ID!): [MedicalLetter!]!
+  medication(id: ID!): Medication
   medications: [Medication!]!
   memoryBaseline: MemoryBaseline
   memoryEntries: [MemoryEntry!]!
@@ -1834,7 +1854,7 @@ type Query {
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
   relationship(id: Int!): Relationship
   relationships(subjectId: Int!, subjectType: PersonType!): [Relationship!]!
-  research(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): [Research!]!
+  research(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int, medicationId: ID): [Research!]!
   routineAnalyses(familyMemberId: Int!): [RoutineAnalysis!]!
   routineAnalysis(id: Int!): RoutineAnalysis
   stories(goalId: Int!): [Story!]!
@@ -1911,6 +1931,7 @@ type Research {
   journal: String
   journalEntryId: Int
   keyFindings: [String!]!
+  medicationId: ID
   relevanceScore: Float!
   therapeuticGoalType: String!
   therapeuticTechniques: [String!]!

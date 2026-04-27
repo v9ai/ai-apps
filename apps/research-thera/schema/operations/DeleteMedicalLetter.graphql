@@ -1,0 +1,5 @@
+mutation DeleteMedicalLetter($id: ID!) {
+  deleteMedicalLetter(id: $id) {
+    success
+  }
+}

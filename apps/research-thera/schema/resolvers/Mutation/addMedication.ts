@@ -11,6 +11,7 @@ export const addMedication: NonNullable<MutationResolvers['addMedication']> = as
 
   const name = args.input.name.trim();
   if (!name) throw new Error("Medication name is required");
+  const familyMemberId = args.input.familyMemberId ?? null;
   const dosage = args.input.dosage?.trim() || null;
   const frequency = args.input.frequency?.trim() || null;
   const notes = args.input.notes?.trim() || null;
@@ -19,6 +20,7 @@ export const addMedication: NonNullable<MutationResolvers['addMedication']> = as
 
   const medication = await db.createMedication({
     userId: userEmail,
+    familyMemberId,
     name,
     dosage,
     frequency,

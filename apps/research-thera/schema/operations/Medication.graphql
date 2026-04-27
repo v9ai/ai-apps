@@ -1,0 +1,21 @@
+query Medication($id: ID!) {
+  medication(id: $id) {
+    id
+    familyMemberId
+    name
+    dosage
+    frequency
+    notes
+    startDate
+    endDate
+    createdAt
+    familyMember {
+      id
+      slug
+      firstName
+      name
+      relationship
+      ageYears
+    }
+  }
+}
