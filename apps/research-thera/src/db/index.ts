@@ -7,6 +7,14 @@ import {
   createCondition as _createCondition,
   deleteCondition as _deleteCondition,
   embedCondition as _embedCondition,
+  listMedications as _listMedications,
+  createMedication as _createMedication,
+  deleteMedication as _deleteMedication,
+  embedMedication as _embedMedication,
+  listSymptoms as _listSymptoms,
+  createSymptom as _createSymptom,
+  deleteSymptom as _deleteSymptom,
+  embedSymptom as _embedSymptom,
 } from "./healthcare";
 
 // Re-export healthcare functions so they're reachable as top-level exports
@@ -16,8 +24,16 @@ export {
   _createCondition as createCondition,
   _deleteCondition as deleteCondition,
   _embedCondition as embedCondition,
+  _listMedications as listMedications,
+  _createMedication as createMedication,
+  _deleteMedication as deleteMedication,
+  _embedMedication as embedMedication,
+  _listSymptoms as listSymptoms,
+  _createSymptom as createSymptom,
+  _deleteSymptom as deleteSymptom,
+  _embedSymptom as embedSymptom,
 };
-export type { Condition } from "./healthcare";
+export type { Condition, Medication, Symptom } from "./healthcare";
 
 /**
  * Convert a SQL string with `?` placeholders to PostgreSQL `$N` style,
@@ -4181,5 +4197,15 @@ export const db = {
   createCondition: _createCondition,
   deleteCondition: _deleteCondition,
   embedCondition: _embedCondition,
+  // Healthcare — Medications
+  listMedications: _listMedications,
+  createMedication: _createMedication,
+  deleteMedication: _deleteMedication,
+  embedMedication: _embedMedication,
+  // Healthcare — Symptoms
+  listSymptoms: _listSymptoms,
+  createSymptom: _createSymptom,
+  deleteSymptom: _deleteSymptom,
+  embedSymptom: _embedSymptom,
 };
 

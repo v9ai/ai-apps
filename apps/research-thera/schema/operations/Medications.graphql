@@ -1,0 +1,12 @@
+query Medications {
+  medications {
+    id
+    name
+    dosage
+    frequency
+    notes
+    startDate
+    endDate
+    createdAt
+  }
+}

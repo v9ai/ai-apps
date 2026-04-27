@@ -1,0 +1,9 @@
+mutation AddSymptom($input: AddSymptomInput!) {
+  addSymptom(input: $input) {
+    id
+    description
+    severity
+    loggedAt
+    createdAt
+  }
+}

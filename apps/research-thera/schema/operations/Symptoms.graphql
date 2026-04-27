@@ -1,0 +1,9 @@
+query Symptoms {
+  symptoms {
+    id
+    description
+    severity
+    loggedAt
+    createdAt
+  }
+}

@@ -1,0 +1,5 @@
+mutation DeleteSymptom($id: ID!) {
+  deleteSymptom(id: $id) {
+    success
+  }
+}

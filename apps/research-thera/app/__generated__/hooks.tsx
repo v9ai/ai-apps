@@ -31,6 +31,21 @@ export type AddConditionInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type AddMedicationInput = {
+  dosage?: InputMaybe<Scalars['String']['input']>;
+  endDate?: InputMaybe<Scalars['String']['input']>;
+  frequency?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  startDate?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AddSymptomInput = {
+  description: Scalars['String']['input'];
+  loggedAt?: InputMaybe<Scalars['String']['input']>;
+  severity?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Affirmation = {
   __typename?: 'Affirmation';
   category: AffirmationCategory;
@@ -623,6 +638,11 @@ export type DeleteJournalEntryResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteMedicationResult = {
+  __typename?: 'DeleteMedicationResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteNoteResult = {
   __typename?: 'DeleteNoteResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -665,6 +685,11 @@ export type DeleteRoutineAnalysisResult = {
 export type DeleteStoryResult = {
   __typename?: 'DeleteStoryResult';
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteSymptomResult = {
+  __typename?: 'DeleteSymptomResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1252,6 +1277,19 @@ export type LogGameCompletionInput = {
   responses?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Medication = {
+  __typename?: 'Medication';
+  createdAt: Scalars['String']['output'];
+  dosage?: Maybe<Scalars['String']['output']>;
+  endDate?: Maybe<Scalars['String']['output']>;
+  frequency?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  startDate?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
+
 export type MicroScript = {
   __typename?: 'MicroScript';
   childResponse: Scalars['String']['output'];
@@ -1262,6 +1300,8 @@ export type MicroScript = {
 export type Mutation = {
   __typename?: 'Mutation';
   addCondition: Condition;
+  addMedication: Medication;
+  addSymptom: Symptom;
   buildClaimCards: BuildClaimCardsResult;
   checkNoteClaims: CheckNoteClaimsResult;
   convertIssueToGoal: Goal;
@@ -1301,12 +1341,14 @@ export type Mutation = {
   deleteIssueScreenshot: DeleteIssueScreenshotResult;
   deleteJournalAnalysis: DeleteJournalAnalysisResult;
   deleteJournalEntry: DeleteJournalEntryResult;
+  deleteMedication: DeleteMedicationResult;
   deleteNote: DeleteNoteResult;
   deleteRecommendedBooks: DeleteRecommendedBooksResult;
   deleteRelationship: DeleteRelationshipResult;
   deleteResearch: DeleteResearchResult;
   deleteRoutineAnalysis: DeleteRoutineAnalysisResult;
   deleteStory: DeleteStoryResult;
+  deleteSymptom: DeleteSymptomResult;
   deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
   extractContactFeedbackIssues: ContactFeedback;
@@ -1365,6 +1407,16 @@ export type Mutation = {
 
 export type MutationAddConditionArgs = {
   input: AddConditionInput;
+};
+
+
+export type MutationAddMedicationArgs = {
+  input: AddMedicationInput;
+};
+
+
+export type MutationAddSymptomArgs = {
+  input: AddSymptomInput;
 };
 
 
@@ -1569,6 +1621,11 @@ export type MutationDeleteJournalEntryArgs = {
 };
 
 
+export type MutationDeleteMedicationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteNoteArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1597,6 +1654,11 @@ export type MutationDeleteRoutineAnalysisArgs = {
 
 export type MutationDeleteStoryArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteSymptomArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2116,6 +2178,7 @@ export type Query = {
   journalEntries: Array<JournalEntry>;
   journalEntry?: Maybe<JournalEntry>;
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
+  medications: Array<Medication>;
   mySharedFamilyMembers: Array<FamilyMember>;
   mySharedNotes: Array<Note>;
   note?: Maybe<Note>;
@@ -2129,6 +2192,7 @@ export type Query = {
   routineAnalysis?: Maybe<RoutineAnalysis>;
   stories: Array<Story>;
   story?: Maybe<Story>;
+  symptoms: Array<Symptom>;
   tagLanguage?: Maybe<Scalars['String']['output']>;
   teacherFeedback?: Maybe<TeacherFeedback>;
   teacherFeedbacks: Array<TeacherFeedback>;
@@ -2618,6 +2682,16 @@ export type SubscriptionResearchJobStatusArgs = {
   jobId: Scalars['String']['input'];
 };
 
+export type Symptom = {
+  __typename?: 'Symptom';
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  loggedAt: Scalars['String']['output'];
+  severity?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
+
 export type TalkingPoint = {
   __typename?: 'TalkingPoint';
   citations?: Maybe<Array<Citation>>;
@@ -2858,6 +2932,20 @@ export type AddConditionMutationVariables = Exact<{
 
 
 export type AddConditionMutation = { __typename?: 'Mutation', addCondition: { __typename?: 'Condition', id: string, name: string, notes?: string | null, createdAt: string } };
+
+export type AddMedicationMutationVariables = Exact<{
+  input: AddMedicationInput;
+}>;
+
+
+export type AddMedicationMutation = { __typename?: 'Mutation', addMedication: { __typename?: 'Medication', id: string, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string } };
+
+export type AddSymptomMutationVariables = Exact<{
+  input: AddSymptomInput;
+}>;
+
+
+export type AddSymptomMutation = { __typename?: 'Mutation', addSymptom: { __typename?: 'Symptom', id: string, description: string, severity?: string | null, loggedAt: string, createdAt: string } };
 
 export type BogdanDiscussionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3171,6 +3259,13 @@ export type DeleteJournalRecommendedBooksMutationVariables = Exact<{
 
 export type DeleteJournalRecommendedBooksMutation = { __typename?: 'Mutation', deleteRecommendedBooks: { __typename?: 'DeleteRecommendedBooksResult', success: boolean, message?: string | null, deletedCount: number } };
 
+export type DeleteMedicationMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteMedicationMutation = { __typename?: 'Mutation', deleteMedication: { __typename?: 'DeleteMedicationResult', success: boolean } };
+
 export type DeleteNoteMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -3212,6 +3307,13 @@ export type DeleteStoryMutationVariables = Exact<{
 
 
 export type DeleteStoryMutation = { __typename?: 'Mutation', deleteStory: { __typename?: 'DeleteStoryResult', success: boolean, message?: string | null } };
+
+export type DeleteSymptomMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteSymptomMutation = { __typename?: 'Mutation', deleteSymptom: { __typename?: 'DeleteSymptomResult', success: boolean } };
 
 export type DeleteTeacherFeedbackMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3782,6 +3884,11 @@ export type LogHabitMutationVariables = Exact<{
 
 export type LogHabitMutation = { __typename?: 'Mutation', logHabit: { __typename?: 'HabitLog', id: number, habitId: number, loggedDate: string, count: number, notes?: string | null, createdAt: string } };
 
+export type MedicationsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MedicationsQuery = { __typename?: 'Query', medications: Array<{ __typename?: 'Medication', id: string, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string }> };
+
 export type SendConversationMessageMutationVariables = Exact<{
   conversationId: Scalars['Int']['input'];
   message: Scalars['String']['input'];
@@ -3798,6 +3905,11 @@ export type ShareFamilyMemberMutationVariables = Exact<{
 
 
 export type ShareFamilyMemberMutation = { __typename?: 'Mutation', shareFamilyMember: { __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string } };
+
+export type SymptomsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SymptomsQuery = { __typename?: 'Query', symptoms: Array<{ __typename?: 'Symptom', id: string, description: string, severity?: string | null, loggedAt: string, createdAt: string }> };
 
 export type TagLanguageQueryVariables = Exact<{
   tag: Scalars['String']['input'];
@@ -4019,6 +4131,83 @@ export function useAddConditionMutation(baseOptions?: Apollo.MutationHookOptions
 export type AddConditionMutationHookResult = ReturnType<typeof useAddConditionMutation>;
 export type AddConditionMutationResult = Apollo.MutationResult<AddConditionMutation>;
 export type AddConditionMutationOptions = Apollo.BaseMutationOptions<AddConditionMutation, AddConditionMutationVariables>;
+export const AddMedicationDocument = gql`
+    mutation AddMedication($input: AddMedicationInput!) {
+  addMedication(input: $input) {
+    id
+    name
+    dosage
+    frequency
+    notes
+    startDate
+    endDate
+    createdAt
+  }
+}
+    `;
+export type AddMedicationMutationFn = Apollo.MutationFunction<AddMedicationMutation, AddMedicationMutationVariables>;
+
+/**
+ * __useAddMedicationMutation__
+ *
+ * To run a mutation, you first call `useAddMedicationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddMedicationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addMedicationMutation, { data, loading, error }] = useAddMedicationMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddMedicationMutation(baseOptions?: Apollo.MutationHookOptions<AddMedicationMutation, AddMedicationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddMedicationMutation, AddMedicationMutationVariables>(AddMedicationDocument, options);
+      }
+export type AddMedicationMutationHookResult = ReturnType<typeof useAddMedicationMutation>;
+export type AddMedicationMutationResult = Apollo.MutationResult<AddMedicationMutation>;
+export type AddMedicationMutationOptions = Apollo.BaseMutationOptions<AddMedicationMutation, AddMedicationMutationVariables>;
+export const AddSymptomDocument = gql`
+    mutation AddSymptom($input: AddSymptomInput!) {
+  addSymptom(input: $input) {
+    id
+    description
+    severity
+    loggedAt
+    createdAt
+  }
+}
+    `;
+export type AddSymptomMutationFn = Apollo.MutationFunction<AddSymptomMutation, AddSymptomMutationVariables>;
+
+/**
+ * __useAddSymptomMutation__
+ *
+ * To run a mutation, you first call `useAddSymptomMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddSymptomMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addSymptomMutation, { data, loading, error }] = useAddSymptomMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddSymptomMutation(baseOptions?: Apollo.MutationHookOptions<AddSymptomMutation, AddSymptomMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddSymptomMutation, AddSymptomMutationVariables>(AddSymptomDocument, options);
+      }
+export type AddSymptomMutationHookResult = ReturnType<typeof useAddSymptomMutation>;
+export type AddSymptomMutationResult = Apollo.MutationResult<AddSymptomMutation>;
+export type AddSymptomMutationOptions = Apollo.BaseMutationOptions<AddSymptomMutation, AddSymptomMutationVariables>;
 export const BogdanDiscussionsDocument = gql`
     query BogdanDiscussions {
   bogdanDiscussions {
@@ -5920,6 +6109,39 @@ export function useDeleteJournalRecommendedBooksMutation(baseOptions?: Apollo.Mu
 export type DeleteJournalRecommendedBooksMutationHookResult = ReturnType<typeof useDeleteJournalRecommendedBooksMutation>;
 export type DeleteJournalRecommendedBooksMutationResult = Apollo.MutationResult<DeleteJournalRecommendedBooksMutation>;
 export type DeleteJournalRecommendedBooksMutationOptions = Apollo.BaseMutationOptions<DeleteJournalRecommendedBooksMutation, DeleteJournalRecommendedBooksMutationVariables>;
+export const DeleteMedicationDocument = gql`
+    mutation DeleteMedication($id: ID!) {
+  deleteMedication(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteMedicationMutationFn = Apollo.MutationFunction<DeleteMedicationMutation, DeleteMedicationMutationVariables>;
+
+/**
+ * __useDeleteMedicationMutation__
+ *
+ * To run a mutation, you first call `useDeleteMedicationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMedicationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMedicationMutation, { data, loading, error }] = useDeleteMedicationMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteMedicationMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMedicationMutation, DeleteMedicationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteMedicationMutation, DeleteMedicationMutationVariables>(DeleteMedicationDocument, options);
+      }
+export type DeleteMedicationMutationHookResult = ReturnType<typeof useDeleteMedicationMutation>;
+export type DeleteMedicationMutationResult = Apollo.MutationResult<DeleteMedicationMutation>;
+export type DeleteMedicationMutationOptions = Apollo.BaseMutationOptions<DeleteMedicationMutation, DeleteMedicationMutationVariables>;
 export const DeleteNoteDocument = gql`
     mutation DeleteNote($id: Int!) {
   deleteNote(id: $id) {
@@ -6126,6 +6348,39 @@ export function useDeleteStoryMutation(baseOptions?: Apollo.MutationHookOptions<
 export type DeleteStoryMutationHookResult = ReturnType<typeof useDeleteStoryMutation>;
 export type DeleteStoryMutationResult = Apollo.MutationResult<DeleteStoryMutation>;
 export type DeleteStoryMutationOptions = Apollo.BaseMutationOptions<DeleteStoryMutation, DeleteStoryMutationVariables>;
+export const DeleteSymptomDocument = gql`
+    mutation DeleteSymptom($id: ID!) {
+  deleteSymptom(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteSymptomMutationFn = Apollo.MutationFunction<DeleteSymptomMutation, DeleteSymptomMutationVariables>;
+
+/**
+ * __useDeleteSymptomMutation__
+ *
+ * To run a mutation, you first call `useDeleteSymptomMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteSymptomMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteSymptomMutation, { data, loading, error }] = useDeleteSymptomMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteSymptomMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSymptomMutation, DeleteSymptomMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteSymptomMutation, DeleteSymptomMutationVariables>(DeleteSymptomDocument, options);
+      }
+export type DeleteSymptomMutationHookResult = ReturnType<typeof useDeleteSymptomMutation>;
+export type DeleteSymptomMutationResult = Apollo.MutationResult<DeleteSymptomMutation>;
+export type DeleteSymptomMutationOptions = Apollo.BaseMutationOptions<DeleteSymptomMutation, DeleteSymptomMutationVariables>;
 export const DeleteTeacherFeedbackDocument = gql`
     mutation DeleteTeacherFeedback($id: Int!) {
   deleteTeacherFeedback(id: $id) {
@@ -10933,6 +11188,55 @@ export function useLogHabitMutation(baseOptions?: Apollo.MutationHookOptions<Log
 export type LogHabitMutationHookResult = ReturnType<typeof useLogHabitMutation>;
 export type LogHabitMutationResult = Apollo.MutationResult<LogHabitMutation>;
 export type LogHabitMutationOptions = Apollo.BaseMutationOptions<LogHabitMutation, LogHabitMutationVariables>;
+export const MedicationsDocument = gql`
+    query Medications {
+  medications {
+    id
+    name
+    dosage
+    frequency
+    notes
+    startDate
+    endDate
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useMedicationsQuery__
+ *
+ * To run a query within a React component, call `useMedicationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMedicationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMedicationsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMedicationsQuery(baseOptions?: Apollo.QueryHookOptions<MedicationsQuery, MedicationsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MedicationsQuery, MedicationsQueryVariables>(MedicationsDocument, options);
+      }
+export function useMedicationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MedicationsQuery, MedicationsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MedicationsQuery, MedicationsQueryVariables>(MedicationsDocument, options);
+        }
+// @ts-ignore
+export function useMedicationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<MedicationsQuery, MedicationsQueryVariables>): Apollo.UseSuspenseQueryResult<MedicationsQuery, MedicationsQueryVariables>;
+export function useMedicationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MedicationsQuery, MedicationsQueryVariables>): Apollo.UseSuspenseQueryResult<MedicationsQuery | undefined, MedicationsQueryVariables>;
+export function useMedicationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MedicationsQuery, MedicationsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MedicationsQuery, MedicationsQueryVariables>(MedicationsDocument, options);
+        }
+export type MedicationsQueryHookResult = ReturnType<typeof useMedicationsQuery>;
+export type MedicationsLazyQueryHookResult = ReturnType<typeof useMedicationsLazyQuery>;
+export type MedicationsSuspenseQueryHookResult = ReturnType<typeof useMedicationsSuspenseQuery>;
+export type MedicationsQueryResult = Apollo.QueryResult<MedicationsQuery, MedicationsQueryVariables>;
 export const SendConversationMessageDocument = gql`
     mutation SendConversationMessage($conversationId: Int!, $message: String!) {
   sendConversationMessage(conversationId: $conversationId, message: $message) {
@@ -11017,6 +11321,52 @@ export function useShareFamilyMemberMutation(baseOptions?: Apollo.MutationHookOp
 export type ShareFamilyMemberMutationHookResult = ReturnType<typeof useShareFamilyMemberMutation>;
 export type ShareFamilyMemberMutationResult = Apollo.MutationResult<ShareFamilyMemberMutation>;
 export type ShareFamilyMemberMutationOptions = Apollo.BaseMutationOptions<ShareFamilyMemberMutation, ShareFamilyMemberMutationVariables>;
+export const SymptomsDocument = gql`
+    query Symptoms {
+  symptoms {
+    id
+    description
+    severity
+    loggedAt
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useSymptomsQuery__
+ *
+ * To run a query within a React component, call `useSymptomsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSymptomsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSymptomsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useSymptomsQuery(baseOptions?: Apollo.QueryHookOptions<SymptomsQuery, SymptomsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SymptomsQuery, SymptomsQueryVariables>(SymptomsDocument, options);
+      }
+export function useSymptomsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SymptomsQuery, SymptomsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SymptomsQuery, SymptomsQueryVariables>(SymptomsDocument, options);
+        }
+// @ts-ignore
+export function useSymptomsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<SymptomsQuery, SymptomsQueryVariables>): Apollo.UseSuspenseQueryResult<SymptomsQuery, SymptomsQueryVariables>;
+export function useSymptomsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SymptomsQuery, SymptomsQueryVariables>): Apollo.UseSuspenseQueryResult<SymptomsQuery | undefined, SymptomsQueryVariables>;
+export function useSymptomsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SymptomsQuery, SymptomsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SymptomsQuery, SymptomsQueryVariables>(SymptomsDocument, options);
+        }
+export type SymptomsQueryHookResult = ReturnType<typeof useSymptomsQuery>;
+export type SymptomsLazyQueryHookResult = ReturnType<typeof useSymptomsLazyQuery>;
+export type SymptomsSuspenseQueryHookResult = ReturnType<typeof useSymptomsSuspenseQuery>;
+export type SymptomsQueryResult = Apollo.QueryResult<SymptomsQuery, SymptomsQueryVariables>;
 export const TagLanguageDocument = gql`
     query TagLanguage($tag: String!) {
   tagLanguage(tag: $tag)

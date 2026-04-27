@@ -1,0 +1,52 @@
+{
+  "_generated_at": "2026-04-27",
+  "_source_neon_project": "young-shadow-74777159",
+  "_target_neon_project": "wandering-dew-31821015",
+  "_user_id_remap": {
+    "lJdCCXSxzqFTyavBgzgYZtM2hRLbAgmX": "88de14cf-ff9d-4f5b-942d-e7f85b0c1e0c"
+  },
+  "_family_member_id_uuid_to_int": {
+    "78d83322-f14f-4909-a441-2cb7a2200685": 2,
+    "87157eba-7e6f-4dfb-8d21-f1669a6e9a8c": 3
+  },
+  "tables": {
+    "appointment_embeddings":   { "target": "appointment_embeddings",   "rows": 0,   "transforms": ["user_id"] },
+    "appointments":             { "target": "appointments",             "rows": 2,   "transforms": ["user_id", "family_member_id_uuid_to_int"] },
+    "blood_marker_embeddings":  { "target": "blood_marker_embeddings",  "rows": 792, "transforms": ["user_id"] },
+    "blood_markers":            { "target": "blood_markers",            "rows": 847, "transforms": [] },
+    "blood_test_embeddings":    { "target": "blood_test_embeddings",    "rows": 46,  "transforms": ["user_id"] },
+    "blood_tests":              { "target": "blood_tests",              "rows": 54,  "transforms": ["user_id"] },
+    "brain_health_protocols":   { "target": "brain_health_protocols",   "rows": 2,   "transforms": ["user_id"] },
+    "cognitive_baselines":      { "target": "cognitive_baselines",      "rows": 0,   "transforms": [] },
+    "cognitive_check_ins":      { "target": "cognitive_check_ins",      "rows": 0,   "transforms": [] },
+    "condition_embeddings":     { "target": "condition_embeddings",     "rows": 0,   "transforms": ["user_id"] },
+    "conditions":               { "target": "conditions",               "rows": 2,   "transforms": ["user_id"] },
+    "doctors":                  { "target": "doctors",                  "rows": 3,   "transforms": ["user_id"] },
+    "family_documents":         { "target": "family_documents",         "rows": 9,   "transforms": ["user_id", "family_member_id_uuid_to_int", "file_path_rewrite"] },
+    "family_member_doctors":    { "target": "family_member_doctors",    "rows": 2,   "transforms": ["family_member_id_uuid_to_int"] },
+    "health_state_embeddings":  { "target": "health_state_embeddings",  "rows": 45,  "transforms": ["user_id"] },
+    "medical_letters":          { "target": "medical_letters",          "rows": 0,   "transforms": ["user_id"] },
+    "medication_embeddings":    { "target": "medication_embeddings",    "rows": 0,   "transforms": ["user_id"] },
+    "medications":              { "target": "medications",              "rows": 0,   "transforms": ["user_id"] },
+    "memory_baseline":          { "target": "memory_baseline",          "rows": 0,   "transforms": ["user_id"] },
+    "memory_entries":           { "target": "memory_entries",           "rows": 0,   "transforms": ["user_id"] },
+    "protocol_supplements":     { "target": "protocol_supplements",     "rows": 20,  "transforms": [] },
+    "researches":               { "target": "health_researches",        "rows": 5,   "transforms": ["user_id"], "rename": true },
+    "symptom_embeddings":       { "target": "symptom_embeddings",       "rows": 0,   "transforms": ["user_id"] },
+    "symptoms":                 { "target": "symptoms",                 "rows": 0,   "transforms": ["user_id"] }
+  },
+  "skipped": {
+    "family_members":    { "reason": "locked decision: research-thera's family_members wins. Healthcare has 2 rows with rich clinical notes that are NOT being preserved automatically — flag to user." },
+    "journal_entries":   { "reason": "locked decision: research-thera's journal_entries wins. 1 healthcare row dropped." },
+    "journal_embeddings":{ "reason": "0 rows in source; target table does not exist." },
+    "health_memories":   { "reason": "3 rows in source; target table does not exist (chat memory layer being rebuilt per merge plan)." },
+    "user_session_account_verification": { "reason": "auth tables — research-thera's Better Auth manages these." },
+    "__drizzle_migrations": { "reason": "migration metadata; not user data." }
+  },
+  "notes": {
+    "vector_columns": "blood_test/blood_marker/condition/medication/symptom/appointment/health_state embeddings.embedding is a USER-DEFINED type (pgvector). Use parameterized binding through @neondatabase/serverless to avoid quoting issues.",
+    "uuid_columns_self_consistent": "Within healthcare, source uuid PKs reference each other consistently (blood_markers.test_id → blood_tests.id, etc.). Preserving source ids verbatim during INSERT keeps these references intact.",
+    "no_integer_pk_collisions": "All migrated tables use uuid PKs except family_member_doctors (composite PK on family_member_id+doctor_id) and family_documents (uuid PK). No setval needed.",
+    "auth_user_count": "Source has 1 user (nicolai.vadim@gmail.com); target has 3 (vadim, elena, inspector2). Only the vadim row's data is migrated."
+  }
+}

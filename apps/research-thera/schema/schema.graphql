@@ -263,6 +263,12 @@ type Query {
   # Healthcare — Conditions
   conditions: [Condition!]!
   condition(id: ID!): Condition
+
+  # Healthcare — Medications
+  medications: [Medication!]!
+
+  # Healthcare — Symptoms
+  symptoms: [Symptom!]!
 }
 
 type Mutation {
@@ -448,6 +454,14 @@ type Mutation {
   # Healthcare — Conditions
   addCondition(input: AddConditionInput!): Condition!
   deleteCondition(id: ID!): DeleteConditionResult!
+
+  # Healthcare — Medications
+  addMedication(input: AddMedicationInput!): Medication!
+  deleteMedication(id: ID!): DeleteMedicationResult!
+
+  # Healthcare — Symptoms
+  addSymptom(input: AddSymptomInput!): Symptom!
+  deleteSymptom(id: ID!): DeleteSymptomResult!
 }
 
 type Subscription {
@@ -2103,5 +2117,57 @@ input AddConditionInput {
 }
 
 type DeleteConditionResult {
+  success: Boolean!
+}
+
+# ============================================
+# Healthcare — Medications
+# ============================================
+
+type Medication {
+  id: ID!
+  userId: String!
+  name: String!
+  dosage: String
+  frequency: String
+  notes: String
+  startDate: String
+  endDate: String
+  createdAt: String!
+}
+
+input AddMedicationInput {
+  name: String!
+  dosage: String
+  frequency: String
+  notes: String
+  startDate: String
+  endDate: String
+}
+
+type DeleteMedicationResult {
+  success: Boolean!
+}
+
+# ============================================
+# Healthcare — Symptoms
+# ============================================
+
+type Symptom {
+  id: ID!
+  userId: String!
+  description: String!
+  severity: String
+  loggedAt: String!
+  createdAt: String!
+}
+
+input AddSymptomInput {
+  description: String!
+  severity: String
+  loggedAt: String
+}
+
+type DeleteSymptomResult {
   success: Boolean!
 }

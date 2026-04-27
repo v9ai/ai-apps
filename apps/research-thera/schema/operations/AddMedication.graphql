@@ -1,0 +1,12 @@
+mutation AddMedication($input: AddMedicationInput!) {
+  addMedication(input: $input) {
+    id
+    name
+    dosage
+    frequency
+    notes
+    startDate
+    endDate
+    createdAt
+  }
+}

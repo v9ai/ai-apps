@@ -11,6 +11,21 @@ input AddConditionInput {
   notes: String
 }
 
+input AddMedicationInput {
+  dosage: String
+  endDate: String
+  frequency: String
+  name: String!
+  notes: String
+  startDate: String
+}
+
+input AddSymptomInput {
+  description: String!
+  loggedAt: String
+  severity: String
+}
+
 type Affirmation {
   category: AffirmationCategory!
   createdAt: String!
@@ -562,6 +577,10 @@ type DeleteJournalEntryResult {
   success: Boolean!
 }
 
+type DeleteMedicationResult {
+  success: Boolean!
+}
+
 type DeleteNoteResult {
   message: String
   success: Boolean!
@@ -597,6 +616,10 @@ type DeleteRoutineAnalysisResult {
 
 type DeleteStoryResult {
   message: String
+  success: Boolean!
+}
+
+type DeleteSymptomResult {
   success: Boolean!
 }
 
@@ -1136,6 +1159,18 @@ input LogGameCompletionInput {
   responses: String
 }
 
+type Medication {
+  createdAt: String!
+  dosage: String
+  endDate: String
+  frequency: String
+  id: ID!
+  name: String!
+  notes: String
+  startDate: String
+  userId: String!
+}
+
 type MicroScript {
   childResponse: String!
   parentFollowUp: String!
@@ -1144,6 +1179,8 @@ type MicroScript {
 
 type Mutation {
   addCondition(input: AddConditionInput!): Condition!
+  addMedication(input: AddMedicationInput!): Medication!
+  addSymptom(input: AddSymptomInput!): Symptom!
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
   convertIssueToGoal(id: Int!, input: CreateGoalInput!): Goal!
@@ -1183,12 +1220,14 @@ type Mutation {
   deleteIssueScreenshot(id: Int!): DeleteIssueScreenshotResult!
   deleteJournalAnalysis(journalEntryId: Int!): DeleteJournalAnalysisResult!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
+  deleteMedication(id: ID!): DeleteMedicationResult!
   deleteNote(id: Int!): DeleteNoteResult!
   deleteRecommendedBooks(goalId: Int, journalEntryId: Int): DeleteRecommendedBooksResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   deleteRoutineAnalysis(id: Int!): DeleteRoutineAnalysisResult!
   deleteStory(id: Int!): DeleteStoryResult!
+  deleteSymptom(id: ID!): DeleteSymptomResult!
   deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
@@ -1435,6 +1474,7 @@ type Query {
   journalEntries(familyMemberId: Int, fromDate: String, goalId: Int, mood: String, tag: String, toDate: String): [JournalEntry!]!
   journalEntry(id: Int!): JournalEntry
   latestBogdanDiscussion: BogdanDiscussionGuide
+  medications: [Medication!]!
   mySharedFamilyMembers: [FamilyMember!]!
   mySharedNotes: [Note!]!
   note(id: Int, slug: String): Note
@@ -1448,6 +1488,7 @@ type Query {
   routineAnalysis(id: Int!): RoutineAnalysis
   stories(goalId: Int!): [Story!]!
   story(id: Int!): Story
+  symptoms: [Symptom!]!
   tagLanguage(tag: String!): String
   teacherFeedback(id: Int!): TeacherFeedback
   teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
@@ -1647,6 +1688,15 @@ type StreakSummary {
 type Subscription {
   audioJobStatus(jobId: String!): GenerationJob!
   researchJobStatus(jobId: String!): GenerationJob!
+}
+
+type Symptom {
+  createdAt: String!
+  description: String!
+  id: ID!
+  loggedAt: String!
+  severity: String
+  userId: String!
 }
 
 type TalkingPoint {

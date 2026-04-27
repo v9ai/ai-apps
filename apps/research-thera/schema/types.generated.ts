@@ -33,6 +33,21 @@ export type AddConditionInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type AddMedicationInput = {
+  dosage?: InputMaybe<Scalars['String']['input']>;
+  endDate?: InputMaybe<Scalars['String']['input']>;
+  frequency?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  startDate?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AddSymptomInput = {
+  description: Scalars['String']['input'];
+  loggedAt?: InputMaybe<Scalars['String']['input']>;
+  severity?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Affirmation = {
   __typename?: 'Affirmation';
   category: AffirmationCategory;
@@ -619,6 +634,11 @@ export type DeleteJournalEntryResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteMedicationResult = {
+  __typename?: 'DeleteMedicationResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteNoteResult = {
   __typename?: 'DeleteNoteResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -661,6 +681,11 @@ export type DeleteRoutineAnalysisResult = {
 export type DeleteStoryResult = {
   __typename?: 'DeleteStoryResult';
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteSymptomResult = {
+  __typename?: 'DeleteSymptomResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1238,6 +1263,19 @@ export type LogGameCompletionInput = {
   responses?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Medication = {
+  __typename?: 'Medication';
+  createdAt: Scalars['String']['output'];
+  dosage?: Maybe<Scalars['String']['output']>;
+  endDate?: Maybe<Scalars['String']['output']>;
+  frequency?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  startDate?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
+
 export type MicroScript = {
   __typename?: 'MicroScript';
   childResponse: Scalars['String']['output'];
@@ -1248,6 +1286,8 @@ export type MicroScript = {
 export type Mutation = {
   __typename?: 'Mutation';
   addCondition: Condition;
+  addMedication: Medication;
+  addSymptom: Symptom;
   buildClaimCards: BuildClaimCardsResult;
   checkNoteClaims: CheckNoteClaimsResult;
   convertIssueToGoal: Goal;
@@ -1287,12 +1327,14 @@ export type Mutation = {
   deleteIssueScreenshot: DeleteIssueScreenshotResult;
   deleteJournalAnalysis: DeleteJournalAnalysisResult;
   deleteJournalEntry: DeleteJournalEntryResult;
+  deleteMedication: DeleteMedicationResult;
   deleteNote: DeleteNoteResult;
   deleteRecommendedBooks: DeleteRecommendedBooksResult;
   deleteRelationship: DeleteRelationshipResult;
   deleteResearch: DeleteResearchResult;
   deleteRoutineAnalysis: DeleteRoutineAnalysisResult;
   deleteStory: DeleteStoryResult;
+  deleteSymptom: DeleteSymptomResult;
   deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
   extractContactFeedbackIssues: ContactFeedback;
@@ -1351,6 +1393,16 @@ export type Mutation = {
 
 export type MutationaddConditionArgs = {
   input: AddConditionInput;
+};
+
+
+export type MutationaddMedicationArgs = {
+  input: AddMedicationInput;
+};
+
+
+export type MutationaddSymptomArgs = {
+  input: AddSymptomInput;
 };
 
 
@@ -1555,6 +1607,11 @@ export type MutationdeleteJournalEntryArgs = {
 };
 
 
+export type MutationdeleteMedicationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationdeleteNoteArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1583,6 +1640,11 @@ export type MutationdeleteRoutineAnalysisArgs = {
 
 export type MutationdeleteStoryArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationdeleteSymptomArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2095,6 +2157,7 @@ export type Query = {
   journalEntries: Array<JournalEntry>;
   journalEntry?: Maybe<JournalEntry>;
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
+  medications: Array<Medication>;
   mySharedFamilyMembers: Array<FamilyMember>;
   mySharedNotes: Array<Note>;
   note?: Maybe<Note>;
@@ -2108,6 +2171,7 @@ export type Query = {
   routineAnalysis?: Maybe<RoutineAnalysis>;
   stories: Array<Story>;
   story?: Maybe<Story>;
+  symptoms: Array<Symptom>;
   tagLanguage?: Maybe<Scalars['String']['output']>;
   teacherFeedback?: Maybe<TeacherFeedback>;
   teacherFeedbacks: Array<TeacherFeedback>;
@@ -2595,6 +2659,16 @@ export type SubscriptionresearchJobStatusArgs = {
   jobId: Scalars['String']['input'];
 };
 
+export type Symptom = {
+  __typename?: 'Symptom';
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  loggedAt: Scalars['String']['output'];
+  severity?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
+
 export type TalkingPoint = {
   __typename?: 'TalkingPoint';
   citations?: Maybe<Array<Citation>>;
@@ -2906,6 +2980,8 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   AddConditionInput: AddConditionInput;
+  AddMedicationInput: AddMedicationInput;
+  AddSymptomInput: AddSymptomInput;
   Affirmation: ResolverTypeWrapper<Omit<Affirmation, 'category'> & { category: ResolversTypes['AffirmationCategory'] }>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   AffirmationCategory: ResolverTypeWrapper<'GRATITUDE' | 'STRENGTH' | 'ENCOURAGEMENT' | 'GROWTH' | 'SELF_WORTH'>;
@@ -2973,6 +3049,7 @@ export type ResolversTypes = {
   DeleteIssueScreenshotResult: ResolverTypeWrapper<DeleteIssueScreenshotResult>;
   DeleteJournalAnalysisResult: ResolverTypeWrapper<DeleteJournalAnalysisResult>;
   DeleteJournalEntryResult: ResolverTypeWrapper<DeleteJournalEntryResult>;
+  DeleteMedicationResult: ResolverTypeWrapper<DeleteMedicationResult>;
   DeleteNoteResult: ResolverTypeWrapper<DeleteNoteResult>;
   DeleteQuestionsResult: ResolverTypeWrapper<DeleteQuestionsResult>;
   DeleteRecommendedBooksResult: ResolverTypeWrapper<DeleteRecommendedBooksResult>;
@@ -2980,6 +3057,7 @@ export type ResolversTypes = {
   DeleteResearchResult: ResolverTypeWrapper<DeleteResearchResult>;
   DeleteRoutineAnalysisResult: ResolverTypeWrapper<DeleteRoutineAnalysisResult>;
   DeleteStoryResult: ResolverTypeWrapper<DeleteStoryResult>;
+  DeleteSymptomResult: ResolverTypeWrapper<DeleteSymptomResult>;
   DeleteTeacherFeedbackResult: ResolverTypeWrapper<DeleteTeacherFeedbackResult>;
   DevelopmentalContext: ResolverTypeWrapper<DevelopmentalContext>;
   DevelopmentalTier: ResolverTypeWrapper<'EARLY_CHILDHOOD' | 'MIDDLE_CHILDHOOD' | 'EARLY_ADOLESCENCE' | 'LATE_ADOLESCENCE' | 'ADULT'>;
@@ -3036,6 +3114,7 @@ export type ResolversTypes = {
   LanguageExample: ResolverTypeWrapper<LanguageExample>;
   LanguageGuide: ResolverTypeWrapper<LanguageGuide>;
   LogGameCompletionInput: LogGameCompletionInput;
+  Medication: ResolverTypeWrapper<Medication>;
   MicroScript: ResolverTypeWrapper<MicroScript>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Note: ResolverTypeWrapper<Omit<Note, 'claimCards' | 'goal' | 'linkedResearch' | 'shares' | 'visibility'> & { claimCards?: Maybe<Array<ResolversTypes['ClaimCard']>>, goal?: Maybe<ResolversTypes['Goal']>, linkedResearch?: Maybe<Array<ResolversTypes['Research']>>, shares: Array<ResolversTypes['NoteShare']>, visibility: ResolversTypes['NoteVisibility'] }>;
@@ -3071,6 +3150,7 @@ export type ResolversTypes = {
   Story: ResolverTypeWrapper<Omit<Story, 'goal' | 'issue'> & { goal?: Maybe<ResolversTypes['Goal']>, issue?: Maybe<ResolversTypes['Issue']> }>;
   StreakSummary: ResolverTypeWrapper<StreakSummary>;
   Subscription: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  Symptom: ResolverTypeWrapper<Symptom>;
   TalkingPoint: ResolverTypeWrapper<TalkingPoint>;
   TeacherFeedback: ResolverTypeWrapper<Omit<TeacherFeedback, 'familyMember' | 'source'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, source?: Maybe<ResolversTypes['FeedbackSource']> }>;
   TextSegment: ResolverTypeWrapper<TextSegment>;
@@ -3105,6 +3185,8 @@ export type ResolversParentTypes = {
   String: Scalars['String']['output'];
   Int: Scalars['Int']['output'];
   AddConditionInput: AddConditionInput;
+  AddMedicationInput: AddMedicationInput;
+  AddSymptomInput: AddSymptomInput;
   Affirmation: Affirmation;
   Boolean: Scalars['Boolean']['output'];
   AnticipatedReaction: AnticipatedReaction;
@@ -3166,6 +3248,7 @@ export type ResolversParentTypes = {
   DeleteIssueScreenshotResult: DeleteIssueScreenshotResult;
   DeleteJournalAnalysisResult: DeleteJournalAnalysisResult;
   DeleteJournalEntryResult: DeleteJournalEntryResult;
+  DeleteMedicationResult: DeleteMedicationResult;
   DeleteNoteResult: DeleteNoteResult;
   DeleteQuestionsResult: DeleteQuestionsResult;
   DeleteRecommendedBooksResult: DeleteRecommendedBooksResult;
@@ -3173,6 +3256,7 @@ export type ResolversParentTypes = {
   DeleteResearchResult: DeleteResearchResult;
   DeleteRoutineAnalysisResult: DeleteRoutineAnalysisResult;
   DeleteStoryResult: DeleteStoryResult;
+  DeleteSymptomResult: DeleteSymptomResult;
   DeleteTeacherFeedbackResult: DeleteTeacherFeedbackResult;
   DevelopmentalContext: DevelopmentalContext;
   DiscussionGuide: DiscussionGuide;
@@ -3219,6 +3303,7 @@ export type ResolversParentTypes = {
   LanguageExample: LanguageExample;
   LanguageGuide: LanguageGuide;
   LogGameCompletionInput: LogGameCompletionInput;
+  Medication: Medication;
   MicroScript: MicroScript;
   Mutation: Record<PropertyKey, never>;
   Note: Omit<Note, 'claimCards' | 'goal' | 'linkedResearch' | 'shares'> & { claimCards?: Maybe<Array<ResolversParentTypes['ClaimCard']>>, goal?: Maybe<ResolversParentTypes['Goal']>, linkedResearch?: Maybe<Array<ResolversParentTypes['Research']>>, shares: Array<ResolversParentTypes['NoteShare']> };
@@ -3245,6 +3330,7 @@ export type ResolversParentTypes = {
   Story: Omit<Story, 'goal' | 'issue'> & { goal?: Maybe<ResolversParentTypes['Goal']>, issue?: Maybe<ResolversParentTypes['Issue']> };
   StreakSummary: StreakSummary;
   Subscription: Record<PropertyKey, never>;
+  Symptom: Symptom;
   TalkingPoint: TalkingPoint;
   TeacherFeedback: Omit<TeacherFeedback, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   TextSegment: TextSegment;
@@ -3643,6 +3729,10 @@ export type DeleteJournalEntryResultResolvers<ContextType = GraphQLContext, Pare
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type DeleteMedicationResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteMedicationResult'] = ResolversParentTypes['DeleteMedicationResult']> = {
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type DeleteNoteResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteNoteResult'] = ResolversParentTypes['DeleteNoteResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -3678,6 +3768,10 @@ export type DeleteRoutineAnalysisResultResolvers<ContextType = GraphQLContext, P
 
 export type DeleteStoryResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteStoryResult'] = ResolversParentTypes['DeleteStoryResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type DeleteSymptomResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteSymptomResult'] = ResolversParentTypes['DeleteSymptomResult']> = {
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
@@ -4143,6 +4237,18 @@ export type LanguageGuideResolvers<ContextType = GraphQLContext, ParentType exte
   whatToSay?: Resolver<Array<ResolversTypes['LanguageExample']>, ParentType, ContextType>;
 };
 
+export type MedicationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Medication'] = ResolversParentTypes['Medication']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  dosage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  endDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  frequency?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  startDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type MicroScriptResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MicroScript'] = ResolversParentTypes['MicroScript']> = {
   childResponse?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   parentFollowUp?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -4151,6 +4257,8 @@ export type MicroScriptResolvers<ContextType = GraphQLContext, ParentType extend
 
 export type MutationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   addCondition?: Resolver<ResolversTypes['Condition'], ParentType, ContextType, RequireFields<MutationaddConditionArgs, 'input'>>;
+  addMedication?: Resolver<ResolversTypes['Medication'], ParentType, ContextType, RequireFields<MutationaddMedicationArgs, 'input'>>;
+  addSymptom?: Resolver<ResolversTypes['Symptom'], ParentType, ContextType, RequireFields<MutationaddSymptomArgs, 'input'>>;
   buildClaimCards?: Resolver<ResolversTypes['BuildClaimCardsResult'], ParentType, ContextType, RequireFields<MutationbuildClaimCardsArgs, 'input'>>;
   checkNoteClaims?: Resolver<ResolversTypes['CheckNoteClaimsResult'], ParentType, ContextType, RequireFields<MutationcheckNoteClaimsArgs, 'input'>>;
   convertIssueToGoal?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationconvertIssueToGoalArgs, 'id' | 'input'>>;
@@ -4190,12 +4298,14 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteIssueScreenshot?: Resolver<ResolversTypes['DeleteIssueScreenshotResult'], ParentType, ContextType, RequireFields<MutationdeleteIssueScreenshotArgs, 'id'>>;
   deleteJournalAnalysis?: Resolver<ResolversTypes['DeleteJournalAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteJournalAnalysisArgs, 'journalEntryId'>>;
   deleteJournalEntry?: Resolver<ResolversTypes['DeleteJournalEntryResult'], ParentType, ContextType, RequireFields<MutationdeleteJournalEntryArgs, 'id'>>;
+  deleteMedication?: Resolver<ResolversTypes['DeleteMedicationResult'], ParentType, ContextType, RequireFields<MutationdeleteMedicationArgs, 'id'>>;
   deleteNote?: Resolver<ResolversTypes['DeleteNoteResult'], ParentType, ContextType, RequireFields<MutationdeleteNoteArgs, 'id'>>;
   deleteRecommendedBooks?: Resolver<ResolversTypes['DeleteRecommendedBooksResult'], ParentType, ContextType, Partial<MutationdeleteRecommendedBooksArgs>>;
   deleteRelationship?: Resolver<ResolversTypes['DeleteRelationshipResult'], ParentType, ContextType, RequireFields<MutationdeleteRelationshipArgs, 'id'>>;
   deleteResearch?: Resolver<ResolversTypes['DeleteResearchResult'], ParentType, ContextType, RequireFields<MutationdeleteResearchArgs, 'goalId'>>;
   deleteRoutineAnalysis?: Resolver<ResolversTypes['DeleteRoutineAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteRoutineAnalysisArgs, 'id'>>;
   deleteStory?: Resolver<ResolversTypes['DeleteStoryResult'], ParentType, ContextType, RequireFields<MutationdeleteStoryArgs, 'id'>>;
+  deleteSymptom?: Resolver<ResolversTypes['DeleteSymptomResult'], ParentType, ContextType, RequireFields<MutationdeleteSymptomArgs, 'id'>>;
   deleteTeacherFeedback?: Resolver<ResolversTypes['DeleteTeacherFeedbackResult'], ParentType, ContextType, RequireFields<MutationdeleteTeacherFeedbackArgs, 'id'>>;
   deleteTherapeuticQuestions?: Resolver<ResolversTypes['DeleteQuestionsResult'], ParentType, ContextType, Partial<MutationdeleteTherapeuticQuestionsArgs>>;
   extractContactFeedbackIssues?: Resolver<ResolversTypes['ContactFeedback'], ParentType, ContextType, RequireFields<MutationextractContactFeedbackIssuesArgs, 'id'>>;
@@ -4405,6 +4515,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   journalEntries?: Resolver<Array<ResolversTypes['JournalEntry']>, ParentType, ContextType, Partial<QueryjournalEntriesArgs>>;
   journalEntry?: Resolver<Maybe<ResolversTypes['JournalEntry']>, ParentType, ContextType, RequireFields<QueryjournalEntryArgs, 'id'>>;
   latestBogdanDiscussion?: Resolver<Maybe<ResolversTypes['BogdanDiscussionGuide']>, ParentType, ContextType>;
+  medications?: Resolver<Array<ResolversTypes['Medication']>, ParentType, ContextType>;
   mySharedFamilyMembers?: Resolver<Array<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
   mySharedNotes?: Resolver<Array<ResolversTypes['Note']>, ParentType, ContextType>;
   note?: Resolver<Maybe<ResolversTypes['Note']>, ParentType, ContextType, Partial<QuerynoteArgs>>;
@@ -4418,6 +4529,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   routineAnalysis?: Resolver<Maybe<ResolversTypes['RoutineAnalysis']>, ParentType, ContextType, RequireFields<QueryroutineAnalysisArgs, 'id'>>;
   stories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType, RequireFields<QuerystoriesArgs, 'goalId'>>;
   story?: Resolver<Maybe<ResolversTypes['Story']>, ParentType, ContextType, RequireFields<QuerystoryArgs, 'id'>>;
+  symptoms?: Resolver<Array<ResolversTypes['Symptom']>, ParentType, ContextType>;
   tagLanguage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<QuerytagLanguageArgs, 'tag'>>;
   teacherFeedback?: Resolver<Maybe<ResolversTypes['TeacherFeedback']>, ParentType, ContextType, RequireFields<QueryteacherFeedbackArgs, 'id'>>;
   teacherFeedbacks?: Resolver<Array<ResolversTypes['TeacherFeedback']>, ParentType, ContextType, RequireFields<QueryteacherFeedbacksArgs, 'familyMemberId'>>;
@@ -4608,6 +4720,15 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   researchJobStatus?: SubscriptionResolver<ResolversTypes['GenerationJob'], "researchJobStatus", ParentType, ContextType, RequireFields<SubscriptionresearchJobStatusArgs, 'jobId'>>;
 };
 
+export type SymptomResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Symptom'] = ResolversParentTypes['Symptom']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  loggedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  severity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type TalkingPointResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TalkingPoint'] = ResolversParentTypes['TalkingPoint']> = {
   citations?: Resolver<Maybe<Array<ResolversTypes['Citation']>>, ParentType, ContextType>;
   explanation?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -4752,6 +4873,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteIssueScreenshotResult?: DeleteIssueScreenshotResultResolvers<ContextType>;
   DeleteJournalAnalysisResult?: DeleteJournalAnalysisResultResolvers<ContextType>;
   DeleteJournalEntryResult?: DeleteJournalEntryResultResolvers<ContextType>;
+  DeleteMedicationResult?: DeleteMedicationResultResolvers<ContextType>;
   DeleteNoteResult?: DeleteNoteResultResolvers<ContextType>;
   DeleteQuestionsResult?: DeleteQuestionsResultResolvers<ContextType>;
   DeleteRecommendedBooksResult?: DeleteRecommendedBooksResultResolvers<ContextType>;
@@ -4759,6 +4881,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteResearchResult?: DeleteResearchResultResolvers<ContextType>;
   DeleteRoutineAnalysisResult?: DeleteRoutineAnalysisResultResolvers<ContextType>;
   DeleteStoryResult?: DeleteStoryResultResolvers<ContextType>;
+  DeleteSymptomResult?: DeleteSymptomResultResolvers<ContextType>;
   DeleteTeacherFeedbackResult?: DeleteTeacherFeedbackResultResolvers<ContextType>;
   DevelopmentalContext?: DevelopmentalContextResolvers<ContextType>;
   DevelopmentalTier?: DevelopmentalTierResolvers;
@@ -4812,6 +4935,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   JournalEntry?: JournalEntryResolvers<ContextType>;
   LanguageExample?: LanguageExampleResolvers<ContextType>;
   LanguageGuide?: LanguageGuideResolvers<ContextType>;
+  Medication?: MedicationResolvers<ContextType>;
   MicroScript?: MicroScriptResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Note?: NoteResolvers<ContextType>;
@@ -4847,6 +4971,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Story?: StoryResolvers<ContextType>;
   StreakSummary?: StreakSummaryResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
+  Symptom?: SymptomResolvers<ContextType>;
   TalkingPoint?: TalkingPointResolvers<ContextType>;
   TeacherFeedback?: TeacherFeedbackResolvers<ContextType>;
   TextSegment?: TextSegmentResolvers<ContextType>;
