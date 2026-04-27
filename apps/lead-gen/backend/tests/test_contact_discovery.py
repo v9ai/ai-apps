@@ -49,9 +49,10 @@ def test_sanitize_local_preserves_hyphens():
 
 
 def test_sanitize_local_drops_unicode_diacritics():
-    # Diacritics are not in [a-z0-9._-]; we drop them rather than transliterate.
-    # Tradeoff: under-guess > malformed address.
-    assert _sanitize_local("Jan-René") == "jan-rn"
+    # Diacritics are not in [a-z0-9._-]; we drop the bare diacritic char and
+    # keep its plain neighbours rather than transliterate. Tradeoff:
+    # under-guess > malformed address.
+    assert _sanitize_local("Jan-René") == "jan-ren"
 
 
 def test_sanitize_local_trims_leading_trailing_dots():
