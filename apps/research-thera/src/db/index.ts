@@ -52,6 +52,7 @@ import {
   createMedicalLetter as _createMedicalLetter,
   deleteMedicalLetterRow as _deleteMedicalLetterRow,
   getDoctor as _getDoctor,
+  listFamilyDocuments as _listFamilyDocuments,
 } from "./healthcare";
 
 // Re-export healthcare functions so they're reachable as top-level exports
@@ -106,6 +107,7 @@ export {
   _createMedicalLetter as createMedicalLetter,
   _deleteMedicalLetterRow as deleteMedicalLetterRow,
   _getDoctor as getDoctor,
+  _listFamilyDocuments as listFamilyDocuments,
 };
 export type {
   Condition,
@@ -124,6 +126,7 @@ export type {
   HealthcareSummary,
   BloodTest,
   MedicalLetter,
+  FamilyDocument,
 } from "./healthcare";
 
 /**
@@ -4347,5 +4350,7 @@ export const db = {
   createMedicalLetter: _createMedicalLetter,
   deleteMedicalLetterRow: _deleteMedicalLetterRow,
   getDoctor: _getDoctor,
+  // Healthcare — Family documents
+  listFamilyDocuments: _listFamilyDocuments,
 };
 
