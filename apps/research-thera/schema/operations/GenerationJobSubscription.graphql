@@ -1,0 +1,47 @@
+subscription GenerationJobSubscription($jobId: String!) {
+  generationJob(jobId: $jobId) {
+    id
+    type
+    goalId
+    storyId
+    status
+    progress
+    createdAt
+    result {
+      audioUrl
+      progress
+      stage
+      count
+      message
+      diagnostics {
+        searchCount
+        enrichedCount
+        extractedCount
+        qualifiedCount
+        persistedCount
+        searchUsedFallback
+        enrichedDropped
+      }
+    }
+    error {
+      message
+    }
+    updatedAt
+  }
+}
+
+subscription UserGenerationJobsSubscription {
+  userGenerationJobs {
+    id
+    type
+    goalId
+    storyId
+    status
+    progress
+    createdAt
+    updatedAt
+    error {
+      message
+    }
+  }
+}

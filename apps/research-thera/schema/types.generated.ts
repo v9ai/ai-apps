@@ -3475,17 +3475,12 @@ export type StreakSummary = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  audioJobStatus: GenerationJob;
-  researchJobStatus: GenerationJob;
+  generationJob: GenerationJob;
+  userGenerationJobs: GenerationJob;
 };
 
 
-export type SubscriptionaudioJobStatusArgs = {
-  jobId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionresearchJobStatusArgs = {
+export type SubscriptiongenerationJobArgs = {
   jobId: Scalars['String']['input'];
 };
 
@@ -6172,8 +6167,8 @@ export type StreakSummaryResolvers<ContextType = GraphQLContext, ParentType exte
 };
 
 export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
-  audioJobStatus?: SubscriptionResolver<ResolversTypes['GenerationJob'], "audioJobStatus", ParentType, ContextType, RequireFields<SubscriptionaudioJobStatusArgs, 'jobId'>>;
-  researchJobStatus?: SubscriptionResolver<ResolversTypes['GenerationJob'], "researchJobStatus", ParentType, ContextType, RequireFields<SubscriptionresearchJobStatusArgs, 'jobId'>>;
+  generationJob?: SubscriptionResolver<ResolversTypes['GenerationJob'], "generationJob", ParentType, ContextType, RequireFields<SubscriptiongenerationJobArgs, 'jobId'>>;
+  userGenerationJobs?: SubscriptionResolver<ResolversTypes['GenerationJob'], "userGenerationJobs", ParentType, ContextType>;
 };
 
 export type SymptomResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Symptom'] = ResolversParentTypes['Symptom']> = {

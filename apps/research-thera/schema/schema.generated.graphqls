@@ -2288,8 +2288,8 @@ type StreakSummary {
 }
 
 type Subscription {
-  audioJobStatus(jobId: String!): GenerationJob!
-  researchJobStatus(jobId: String!): GenerationJob!
+  generationJob(jobId: String!): GenerationJob!
+  userGenerationJobs: GenerationJob!
 }
 
 type Symptom {

@@ -546,8 +546,8 @@ type Mutation {
 }
 
 type Subscription {
-  researchJobStatus(jobId: String!): GenerationJob!
-  audioJobStatus(jobId: String!): GenerationJob!
+  generationJob(jobId: String!): GenerationJob!
+  userGenerationJobs: GenerationJob!
 }
 
 # ============================================

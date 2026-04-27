@@ -3499,17 +3499,12 @@ export type StreakSummary = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  audioJobStatus: GenerationJob;
-  researchJobStatus: GenerationJob;
+  generationJob: GenerationJob;
+  userGenerationJobs: GenerationJob;
 };
 
 
-export type SubscriptionAudioJobStatusArgs = {
-  jobId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionResearchJobStatusArgs = {
+export type SubscriptionGenerationJobArgs = {
   jobId: Scalars['String']['input'];
 };
 
@@ -4493,6 +4488,18 @@ export type GenerateTherapeuticQuestionsMutationVariables = Exact<{
 
 
 export type GenerateTherapeuticQuestionsMutation = { __typename?: 'Mutation', generateTherapeuticQuestions: { __typename?: 'GenerateQuestionsResult', success: boolean, message?: string | null, jobId?: string | null, questions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, journalEntryId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> } };
+
+export type GenerationJobSubscriptionSubscriptionVariables = Exact<{
+  jobId: Scalars['String']['input'];
+}>;
+
+
+export type GenerationJobSubscriptionSubscription = { __typename?: 'Subscription', generationJob: { __typename?: 'GenerationJob', id: string, type: JobType, goalId?: number | null, storyId?: number | null, status: JobStatus, progress: number, createdAt: string, updatedAt: string, result?: { __typename?: 'JobResult', audioUrl?: string | null, progress?: number | null, stage?: string | null, count?: number | null, message?: string | null, diagnostics?: { __typename?: 'PipelineDiagnostics', searchCount?: number | null, enrichedCount?: number | null, extractedCount?: number | null, qualifiedCount?: number | null, persistedCount?: number | null, searchUsedFallback?: boolean | null, enrichedDropped?: number | null } | null } | null, error?: { __typename?: 'JobError', message: string } | null } };
+
+export type UserGenerationJobsSubscriptionSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UserGenerationJobsSubscriptionSubscription = { __typename?: 'Subscription', userGenerationJobs: { __typename?: 'GenerationJob', id: string, type: JobType, goalId?: number | null, storyId?: number | null, status: JobStatus, progress: number, createdAt: string, updatedAt: string, error?: { __typename?: 'JobError', message: string } | null } };
 
 export type GetAffirmationsQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -9497,6 +9504,101 @@ export function useGenerateTherapeuticQuestionsMutation(baseOptions?: Apollo.Mut
 export type GenerateTherapeuticQuestionsMutationHookResult = ReturnType<typeof useGenerateTherapeuticQuestionsMutation>;
 export type GenerateTherapeuticQuestionsMutationResult = Apollo.MutationResult<GenerateTherapeuticQuestionsMutation>;
 export type GenerateTherapeuticQuestionsMutationOptions = Apollo.BaseMutationOptions<GenerateTherapeuticQuestionsMutation, GenerateTherapeuticQuestionsMutationVariables>;
+export const GenerationJobSubscriptionDocument = gql`
+    subscription GenerationJobSubscription($jobId: String!) {
+  generationJob(jobId: $jobId) {
+    id
+    type
+    goalId
+    storyId
+    status
+    progress
+    createdAt
+    result {
+      audioUrl
+      progress
+      stage
+      count
+      message
+      diagnostics {
+        searchCount
+        enrichedCount
+        extractedCount
+        qualifiedCount
+        persistedCount
+        searchUsedFallback
+        enrichedDropped
+      }
+    }
+    error {
+      message
+    }
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGenerationJobSubscriptionSubscription__
+ *
+ * To run a query within a React component, call `useGenerationJobSubscriptionSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGenerationJobSubscriptionSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGenerationJobSubscriptionSubscription({
+ *   variables: {
+ *      jobId: // value for 'jobId'
+ *   },
+ * });
+ */
+export function useGenerationJobSubscriptionSubscription(baseOptions: Apollo.SubscriptionHookOptions<GenerationJobSubscriptionSubscription, GenerationJobSubscriptionSubscriptionVariables> & ({ variables: GenerationJobSubscriptionSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<GenerationJobSubscriptionSubscription, GenerationJobSubscriptionSubscriptionVariables>(GenerationJobSubscriptionDocument, options);
+      }
+export type GenerationJobSubscriptionSubscriptionHookResult = ReturnType<typeof useGenerationJobSubscriptionSubscription>;
+export type GenerationJobSubscriptionSubscriptionResult = Apollo.SubscriptionResult<GenerationJobSubscriptionSubscription>;
+export const UserGenerationJobsSubscriptionDocument = gql`
+    subscription UserGenerationJobsSubscription {
+  userGenerationJobs {
+    id
+    type
+    goalId
+    storyId
+    status
+    progress
+    createdAt
+    updatedAt
+    error {
+      message
+    }
+  }
+}
+    `;
+
+/**
+ * __useUserGenerationJobsSubscriptionSubscription__
+ *
+ * To run a query within a React component, call `useUserGenerationJobsSubscriptionSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useUserGenerationJobsSubscriptionSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUserGenerationJobsSubscriptionSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useUserGenerationJobsSubscriptionSubscription(baseOptions?: Apollo.SubscriptionHookOptions<UserGenerationJobsSubscriptionSubscription, UserGenerationJobsSubscriptionSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<UserGenerationJobsSubscriptionSubscription, UserGenerationJobsSubscriptionSubscriptionVariables>(UserGenerationJobsSubscriptionDocument, options);
+      }
+export type UserGenerationJobsSubscriptionSubscriptionHookResult = ReturnType<typeof useUserGenerationJobsSubscriptionSubscription>;
+export type UserGenerationJobsSubscriptionSubscriptionResult = Apollo.SubscriptionResult<UserGenerationJobsSubscriptionSubscription>;
 export const GetAffirmationsDocument = gql`
     query GetAffirmations($familyMemberId: Int!) {
   affirmations(familyMemberId: $familyMemberId) {
