@@ -1,16 +1,13 @@
 """Raw httpx LLM client — OpenAI-compatible chat completions with no SDK wrapper.
 
-Talks directly to the /v1/chat/completions endpoint served by mlx_lm.server
-(Apple Silicon) or any other OpenAI-compatible server.
-No openai package in the hot path; only httpx is required.
-
-Start local inference:
-  ./serve.sh   (or: mlx_lm.server --model mlx-community/Qwen2.5-7B-Instruct-4bit --port 8080)
+Talks directly to /v1/chat/completions on whichever OpenAI-compatible server
+LLM_BASE_URL points at. Default is DeepSeek; swap via env to use any other
+provider (or a local OpenAI-compatible server).
 
 Configure via env (or .env):
-  LLM_BASE_URL   (default: http://localhost:8080)
-  LLM_MODEL      (default: mlx-community/Qwen2.5-7B-Instruct-4bit)
-  LLM_API_KEY    (default: unused)
+  LLM_BASE_URL   (default: https://api.deepseek.com/v1)
+  LLM_MODEL      (default: deepseek-chat)
+  LLM_API_KEY    (required for hosted providers)
 """
 
 from __future__ import annotations

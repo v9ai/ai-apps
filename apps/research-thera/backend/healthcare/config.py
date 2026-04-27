@@ -9,17 +9,16 @@ class Settings(BaseSettings):
     # Neon PostgreSQL
     database_url: str
 
-    # Cloudflare R2
+    # Cloudflare R2 (research-thera consolidated bucket holds healthcare data flat)
     r2_account_id: str = ""
     r2_access_key_id: str = ""
     r2_secret_access_key: str = ""
-    r2_bucket_name: str = "healthcare-blood-tests"
+    r2_bucket_name: str = "research-thera"
 
-    # LLM — mlx_lm.server (OpenAI-compatible, runs locally on Apple Silicon)
-    # Start: mlx_lm.server --model mlx-community/Qwen2.5-7B-Instruct-4bit --port 8080
-    llm_base_url: str = "http://localhost:8080"
-    llm_model: str = "mlx-community/Qwen2.5-7B-Instruct-4bit"
-    llm_api_key: str = "unused"
+    # LLM — DeepSeek by default (OpenAI-compatible). Override via env vars to swap.
+    llm_base_url: str = "https://api.deepseek.com/v1"
+    llm_model: str = "deepseek-chat"
+    llm_api_key: str = ""
 
     # Internal API key (shared secret between Next.js ↔ Python)
     internal_api_key: str = ""
