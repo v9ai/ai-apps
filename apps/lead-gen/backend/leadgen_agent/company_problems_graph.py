@@ -136,6 +136,7 @@ async def load(state: CompanyProblemsState) -> dict:
 
     extra_facts: dict[str, Any] = {}
     snapshot_text: str = ""
+    posts: list[str] = []
 
     try:
         with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
@@ -208,6 +209,25 @@ async def load(state: CompanyProblemsState) -> dict:
                 snap = cur.fetchone()
                 if snap and snap[0]:
                     snapshot_text = (snap[0] or "")[:4000]
+
+                # LinkedIn posts captured as intent_signals — recruiters' own
+                # words about live mandates, market commentary, and team capacity.
+                # Much richer evidence than the homepage marketing copy.
+                # Dedup + cap to keep prompt bounded.
+                cur.execute(
+                    """
+                    SELECT DISTINCT ON (raw_text) raw_text, detected_at
+                    FROM intent_signals
+                    WHERE company_id = %s
+                      AND source_type = 'linkedin_post'
+                      AND raw_text IS NOT NULL
+                      AND length(raw_text) > 0
+                    ORDER BY raw_text, detected_at DESC
+                    LIMIT 100
+                    """,
+                    (int(company_id),),
+                )
+                posts = [r[0] for r in cur.fetchall() if r[0]]
     except psycopg.Error as e:
         return {"_error": f"db error loading company: {e}"}
 
@@ -236,6 +256,7 @@ async def load(state: CompanyProblemsState) -> dict:
             "industries": rec.get("industries"),
             "extra_facts": extra_facts,
             "snapshot_text": snapshot_text,
+            "posts": posts,
         },
         "classification": classification,
     }
