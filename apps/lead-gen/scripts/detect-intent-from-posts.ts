@@ -121,7 +121,8 @@ async function detectBatch(
   let parsed: { signals?: PostSignal[] };
   try {
     parsed = JSON.parse(json);
-  } catch {
+  } catch (e: any) {
+    console.error(`  parse error: ${e.message}\n  raw: ${json.slice(0, 200)}`);
     return [];
   }
 

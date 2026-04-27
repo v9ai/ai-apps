@@ -559,7 +559,7 @@ async def persist(state: ContactDiscoveryState) -> dict:
     insert_sql = """
         INSERT INTO contacts
             (tenant_id, first_name, last_name, company_id, position,
-             github_handle, linkedin_url, email, tags, ai_profile,
+             github_handle, linkedin_url, email, tags, profile,
              papers, created_at, updated_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now()::text, now()::text)
         ON CONFLICT DO NOTHING
@@ -577,7 +577,7 @@ async def persist(state: ContactDiscoveryState) -> dict:
                     papers_json = json.dumps(papers_list) if papers_list else None
 
                     tags_list = ["contact-discovery"] + list(c.get("sources") or [c.get("source") or ""])
-                    ai_profile = {
+                    profile = {
                         "confidence": c.get("confidence"),
                         "sources": c.get("sources") or [c.get("source")],
                         "email_guesses": email_guesses,
@@ -598,7 +598,7 @@ async def persist(state: ContactDiscoveryState) -> dict:
                                 c.get("linkedin_url") or None,
                                 email,
                                 json.dumps(tags_list),
-                                json.dumps(ai_profile),
+                                json.dumps(profile),
                                 papers_json,
                             ),
                         )

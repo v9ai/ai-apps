@@ -444,7 +444,7 @@ export const nodeDetails: Record<string, NodeDetail> = {
     color: "green",
   },
   "db-contacts": {
-    description: "One contact row per person per company. Fields: email, authority_score, next_touch_score, lora_tier, ai_profile (jsonb), forwarding_alias (CPN). Tagged provenance array (src:* / skill:* / seniority:*) lets the UI explain why a contact surfaced.",
+    description: "One contact row per person per company. Fields: email, authority_score, next_touch_score, lora_tier, profile (jsonb), forwarding_alias (CPN). Tagged provenance array (src:* / skill:* / seniority:*) lets the UI explain why a contact surfaced.",
     tech: [{ name: "contacts table" }, { name: "tag provenance" }],
     dataIn: "contact discovery writes",
     dataOut: "outreach reads + scoring inputs",

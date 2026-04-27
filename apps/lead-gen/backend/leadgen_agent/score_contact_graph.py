@@ -57,7 +57,7 @@ def _load_profile(contact_id: int) -> str:
     sql = """
         SELECT c.first_name, c.last_name, c.position, c.linkedin_url, c.github_handle,
                c.seniority, c.department, c.is_decision_maker, c.authority_score,
-               c.ai_profile, co.name AS company_name, co.website AS company_website,
+               c.profile, co.name AS company_name, co.website AS company_website,
                co.description AS company_description, co.size AS company_size
         FROM contacts c
         LEFT JOIN companies co ON co.id = c.company_id
@@ -73,13 +73,13 @@ def _load_profile(contact_id: int) -> str:
             cols = [d[0] for d in cur.description or []]
     rec = dict(zip(cols, row))
 
-    ai_profile: dict[str, Any] = {}
-    raw_ai = rec.get("ai_profile")
-    if isinstance(raw_ai, str) and raw_ai:
+    profile: dict[str, Any] = {}
+    raw_profile = rec.get("profile")
+    if isinstance(raw_profile, str) and raw_profile:
         try:
-            ai_profile = json.loads(raw_ai)
+            profile = json.loads(raw_profile)
         except json.JSONDecodeError:
-            ai_profile = {}
+            profile = {}
 
     lines = [
         f"NAME: {rec.get('first_name', '')} {rec.get('last_name', '')}".strip(),
@@ -93,14 +93,14 @@ def _load_profile(contact_id: int) -> str:
         lines.append(f"LINKEDIN: {rec['linkedin_url']}")
     if rec.get("github_handle"):
         lines.append(f"GITHUB: {rec['github_handle']}")
-    if ai_profile.get("linkedinHeadline"):
-        lines.append(f"HEADLINE: {ai_profile['linkedinHeadline']}")
-    if ai_profile.get("linkedinBio"):
-        lines.append(f"BIO: {ai_profile['linkedinBio'][:400]}")
-    if ai_profile.get("skills"):
-        lines.append("SKILLS: " + ", ".join(ai_profile["skills"][:12]))
-    if ai_profile.get("experienceLevel"):
-        lines.append(f"EXPERIENCE_LEVEL: {ai_profile['experienceLevel']}")
+    if profile.get("linkedinHeadline"):
+        lines.append(f"HEADLINE: {profile['linkedinHeadline']}")
+    if profile.get("linkedinBio"):
+        lines.append(f"BIO: {profile['linkedinBio'][:400]}")
+    if profile.get("skills"):
+        lines.append("SKILLS: " + ", ".join(profile["skills"][:12]))
+    if profile.get("experienceLevel"):
+        lines.append(f"EXPERIENCE_LEVEL: {profile['experienceLevel']}")
     if rec.get("seniority"):
         lines.append(f"SENIORITY: {rec['seniority']}")
     if rec.get("department"):

@@ -72,7 +72,7 @@ async def load_contact(state: ContactEnrichState) -> dict:
 
     sql = """
         SELECT c.id, c.first_name, c.last_name, c.position, c.linkedin_url,
-               c.github_handle, c.seniority, c.department, c.ai_profile, c.tags,
+               c.github_handle, c.seniority, c.department, c.profile, c.tags,
                co.name AS company_name, co.website AS company_website,
                co.description AS company_description
         FROM contacts c
@@ -92,10 +92,10 @@ async def load_contact(state: ContactEnrichState) -> dict:
         return {"error": f"db error: {e}"}
 
     rec = dict(zip(cols, row))
-    ai_profile = _parse_json_text(rec.get("ai_profile")) or {}
+    profile = _parse_json_text(rec.get("profile")) or {}
     existing_tags_raw = _parse_json_text(rec.get("tags"))
     existing_tags = [str(t) for t in existing_tags_raw] if isinstance(existing_tags_raw, list) else []
-    research_areas_raw = ai_profile.get("research_areas") if isinstance(ai_profile, dict) else None
+    research_areas_raw = profile.get("research_areas") if isinstance(profile, dict) else None
     existing_research_areas = (
         [str(t) for t in research_areas_raw] if isinstance(research_areas_raw, list) else []
     )
@@ -110,7 +110,7 @@ async def load_contact(state: ContactEnrichState) -> dict:
             "github_handle": rec.get("github_handle") or "",
             "seniority": rec.get("seniority") or "",
             "department": rec.get("department") or "",
-            "ai_profile": ai_profile if isinstance(ai_profile, dict) else {},
+            "profile": profile if isinstance(profile, dict) else {},
         },
         "company": {
             "name": rec.get("company_name") or "",

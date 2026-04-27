@@ -70,10 +70,17 @@ export function computeIntentScore(signals: ScoreableSignal[]): number {
 
 export function stripMarkdownFences(raw: string): string {
   let s = raw.trim();
+  // Drop Qwen / chat-template control tokens that occasionally leak into content.
+  s = s.replace(/<\|(?:im_end|im_start|endoftext)\|>/g, "");
   if (s.startsWith("```json")) s = s.slice(7);
   else if (s.startsWith("```")) s = s.slice(3);
   if (s.endsWith("```")) s = s.slice(0, -3);
-  return s.trim();
+  s = s.trim();
+  // Defensively narrow to the outermost JSON object — strips any trailing prose / tokens.
+  const first = s.indexOf("{");
+  const last = s.lastIndexOf("}");
+  if (first >= 0 && last > first) s = s.slice(first, last + 1);
+  return s;
 }
 
 export interface LLMOptions {

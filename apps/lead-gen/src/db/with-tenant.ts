@@ -5,7 +5,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import ws from "ws";
 import * as schema from "./schema";
 import { db as httpDb } from "./index";
-import type { TenantKey } from "@/lib/tenants";
+import { TENANT } from "@/lib/tenants";
 
 // Neon WebSocket needs a WS implementation in Node runtimes; browsers get it for free.
 if (typeof globalThis.WebSocket === "undefined") {
@@ -36,7 +36,6 @@ const storage = new AsyncLocalStorage<TenantDb>();
  * is filtered by the RLS policy on tenant-scoped tables.
  */
 export async function withTenantDb<T>(
-  tenantKey: TenantKey,
   fn: (db: TenantDb) => Promise<T>,
 ): Promise<T> {
   const db = drizzle(getPool(), { schema });
@@ -44,7 +43,7 @@ export async function withTenantDb<T>(
     // Switch to the non-BYPASSRLS role so the tenant_isolation policy actually
     // filters. neondb_owner has rolbypassrls=true and would otherwise ignore it.
     await tx.execute(sql`SET LOCAL ROLE app_tenant`);
-    await tx.execute(sql`SELECT set_config('app.tenant', ${tenantKey}, true)`);
+    await tx.execute(sql`SELECT set_config('app.tenant', ${TENANT}, true)`);
     return storage.run(tx as TenantDb, () => fn(tx as TenantDb));
   });
 }

@@ -53,7 +53,7 @@ async def lookup_contact(state: EmailOutreachState) -> dict:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, position, seniority, department, ai_profile
+                    SELECT id, position, seniority, department, profile
                     FROM contacts
                     WHERE lower(email) = %s
                     LIMIT 1
