@@ -76,11 +76,29 @@ export function stripMarkdownFences(raw: string): string {
   else if (s.startsWith("```")) s = s.slice(3);
   if (s.endsWith("```")) s = s.slice(0, -3);
   s = s.trim();
-  // Defensively narrow to the outermost JSON object — strips any trailing prose / tokens.
-  const first = s.indexOf("{");
-  const last = s.lastIndexOf("}");
-  if (first >= 0 && last > first) s = s.slice(first, last + 1);
-  return s;
+  // Walk from the first `{` and stop at the matching close — robust to trailing
+  // tokens or stray extra braces ("...}]}}<|im_end|>").
+  const start = s.indexOf("{");
+  if (start < 0) return s;
+  let depth = 0;
+  let inStr = false;
+  let escape = false;
+  for (let i = start; i < s.length; i++) {
+    const ch = s[i];
+    if (escape) { escape = false; continue; }
+    if (inStr) {
+      if (ch === "\\") escape = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return s.slice(start, i + 1);
+    }
+  }
+  return s.slice(start);
 }
 
 export interface LLMOptions {

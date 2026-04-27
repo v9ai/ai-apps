@@ -57,6 +57,8 @@ _VALID_POPULATIONS = {"adult", "pediatric", "elderly", "renal", "hepatic"}
 _VALID_FREQUENCY_BANDS = {"common", "uncommon", "rare", "black_box"}
 _VALID_SEVERITIES = {"contraindicated", "major", "moderate", "minor"}
 _VALID_INDICATION_KINDS = {"primary", "off_label"}
+_VALID_CORRELATION_TYPES = {"possible_side_effect", "indication_match", "temporal", "other"}
+_VALID_RELATED_ENTITY_TYPES = {"issue", "journal_entry", "observation", "teacher_feedback"}
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +80,7 @@ class MedicationDeepResearchState(TypedDict, total=False):
     # Outputs
     success: bool
     message: str
-    counts: dict      # {indications, dosing, pharmacology, adverse_events, interactions, papers}
+    counts: dict      # {indications, dosing, pharmacology, adverse_events, interactions, papers, correlations}
     error: str
 
 

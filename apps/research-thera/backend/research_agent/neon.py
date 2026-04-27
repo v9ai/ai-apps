@@ -443,6 +443,136 @@ async def upsert_medication_interaction(
             )
 
 
+async def upsert_medication_correlation(
+    medication_id: str,
+    family_member_id: Optional[int],
+    related_entity_type: str,  # 'issue' | 'journal_entry' | 'observation' | 'teacher_feedback'
+    related_entity_id: int,
+    correlation_type: str,  # 'possible_side_effect' | 'indication_match' | 'temporal' | 'other'
+    confidence: int = 50,
+    rationale: Optional[str] = None,
+    matched_fact: Optional[str] = None,
+) -> None:
+    """Idempotent insert. Dedup key: (medication_id, related_entity_type,
+    related_entity_id, correlation_type)."""
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                INSERT INTO medication_correlations (
+                    medication_id, family_member_id, related_entity_type,
+                    related_entity_id, correlation_type, confidence,
+                    rationale, matched_fact
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (medication_id, related_entity_type, related_entity_id, correlation_type)
+                DO UPDATE SET
+                    confidence    = GREATEST(EXCLUDED.confidence, medication_correlations.confidence),
+                    rationale     = COALESCE(EXCLUDED.rationale,     medication_correlations.rationale),
+                    matched_fact  = COALESCE(EXCLUDED.matched_fact,  medication_correlations.matched_fact)
+                """,
+                (medication_id, family_member_id, related_entity_type,
+                 related_entity_id, correlation_type, confidence,
+                 rationale, matched_fact),
+            )
+
+
+async def fetch_patient_clinical_data(
+    user_email: str,
+    family_member_id: int,
+    issues_limit: int = 30,
+    journals_limit: int = 30,
+) -> dict:
+    """Return issues + recent journal entries for a family member. Used by
+    the medication_deep_research correlation node to cross-reference patient
+    data against the medication's known fact profile."""
+    out: dict = {"issues": [], "journals": []}
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT id, title, description, category, severity, recommendations
+                FROM issues
+                WHERE family_member_id = %s AND user_id = %s
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (family_member_id, user_email, issues_limit),
+            )
+            for r in await cur.fetchall():
+                out["issues"].append({
+                    "id": r[0], "title": r[1], "description": r[2],
+                    "category": r[3], "severity": r[4], "recommendations": r[5],
+                })
+
+            await cur.execute(
+                """
+                SELECT id, title, content, mood, entry_date, tags
+                FROM journal_entries
+                WHERE family_member_id = %s AND user_id = %s
+                ORDER BY entry_date DESC
+                LIMIT %s
+                """,
+                (family_member_id, user_email, journals_limit),
+            )
+            for r in await cur.fetchall():
+                out["journals"].append({
+                    "id": r[0], "title": r[1], "content": r[2],
+                    "mood": r[3], "entry_date": str(r[4]) if r[4] else None,
+                    "tags": r[5],
+                })
+    return out
+
+
+async def fetch_drug_facts(drug_slug: str) -> dict:
+    """Read back the drug-level facts (indications, dosing, AEs, BBW,
+    interactions). Used by the correlation node when the freshness gate hit
+    the cache and the in-flight ``_facts`` state was never populated."""
+    out: dict = {
+        "pharmacology": {},
+        "indications": [],
+        "dosing": [],
+        "adverse_events": [],
+        "interactions": [],
+    }
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT generic_name, atc_code, moa, half_life FROM medication_pharmacology WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+            row = await cur.fetchone()
+            if row:
+                out["pharmacology"] = {
+                    "generic_name": row[0], "atc_code": row[1], "moa": row[2], "half_life": row[3],
+                }
+            await cur.execute(
+                "SELECT kind, condition FROM medication_indications WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+            for r in await cur.fetchall():
+                out["indications"].append({"kind": r[0], "condition": r[1]})
+            await cur.execute(
+                "SELECT population, age_band, dose_text FROM medication_dosing WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+            for r in await cur.fetchall():
+                out["dosing"].append({"population": r[0], "age_band": r[1], "dose_text": r[2]})
+            await cur.execute(
+                "SELECT event, frequency_band FROM medication_adverse_events WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+            for r in await cur.fetchall():
+                out["adverse_events"].append({"event": r[0], "frequency_band": r[1]})
+            await cur.execute(
+                "SELECT interacting_drug, severity FROM medication_interactions WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+            for r in await cur.fetchall():
+                out["interactions"].append({"interacting_drug": r[0], "severity": r[1]})
+    return out
+
+
 async def fetch_pharmacology_updated_at(drug_slug: str) -> Optional[str]:
     """Return the ``updated_at`` ISO timestamp for a drug's pharmacology row,
     or None when nothing has been persisted yet. Drives the 30-day freshness
