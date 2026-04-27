@@ -749,7 +749,17 @@ export async function startGraphRun(
   }
 
   const appRunId = randomUUID();
+  // Per-run secret retained for the legacy product_intel_runs.webhook_secret
+  // column (and the migration window where rows can still verify with it).
+  // The gateway uses a global GATEWAY_HMAC, but the column is non-null in DB.
   const webhookSecret = randomBytes(32).toString("hex");
+  const gatewayUrl = process.env.GATEWAY_URL?.replace(/\/$/, "");
+  const gatewayHmac = process.env.GATEWAY_HMAC;
+  if (!gatewayUrl || !gatewayHmac) {
+    throw new Error(
+      "GATEWAY_URL and GATEWAY_HMAC must be set (LangGraph posts run completion to the CF gateway).",
+    );
+  }
 
   let threadId: string;
   if (options.resumeThreadId) {
@@ -780,8 +790,8 @@ export async function startGraphRun(
       assistant_id: assistantId,
       input: {
         ...input,
-        webhook_url: `${appUrl.replace(/\/$/, "")}/api/webhooks/langgraph`,
-        webhook_secret: webhookSecret,
+        webhook_url: `${gatewayUrl}/internal/run-finished`,
+        webhook_secret: gatewayHmac,
         app_run_id: appRunId,
       },
       multitask_strategy: "enqueue",
